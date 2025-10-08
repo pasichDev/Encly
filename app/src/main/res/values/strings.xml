@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name"> Мої Нотатки </string>
+    <string name="app_name"> Encly </string>
     <string name="delete_tag">Видалити мітку</string>
     <string name="delete_tag_desrpt">Цю мітку буде видалено з усіх ваших нотаток. Самі нотатки не видалятимуться</string>
     <string name="delete">Видалити</string>
