@@ -52,6 +52,11 @@ object ReminderStore {
         }
     }
 
+    /** Replaces all stored reminders with [records] in a single write. */
+    fun replaceAll(context: Context, records: List<ReminderRecord>) {
+        save(context, records)
+    }
+
     private fun save(context: Context, records: List<ReminderRecord>) {
         prefs(context).edit { putString(KEY_REMINDERS, Json.encodeToString(records)) }
     }

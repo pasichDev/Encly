@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.pasich.encly.core.security.AuthenticationManager
 import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.authenticateWithBiometric
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -27,15 +28,12 @@ class AuthSetupViewModel @Inject constructor(
 
     /** Runs a biometric prompt and, on success, enables biometric unlock. */
     fun enableBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
-        biometricManager.authenticate(
-            activity,
+        activity.authenticateWithBiometric(
+            biometricManager,
             BiometricManager.BiometricType.SETTINGS_TOGGLE,
-            object : BiometricManager.BiometricCallback {
-                override fun onSuccess() = onResult(authenticationManager.activateBiometricAuth())
-                override fun onError(errorCode: Int, errorMessage: String) = onResult(false)
-                override fun onFailed() {}
-                override fun onCancelled() = onResult(false)
-            }
+            onSuccess = { onResult(authenticationManager.activateBiometricAuth()) },
+            onError = { onResult(false) },
+            onCancelled = { onResult(false) }
         )
     }
 

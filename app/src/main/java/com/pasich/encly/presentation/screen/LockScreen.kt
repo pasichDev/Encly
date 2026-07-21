@@ -1,18 +1,7 @@
 package com.pasich.encly.presentation.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,21 +11,16 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
+import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.viewmodel.LockViewModel
 import kotlinx.coroutines.delay
 
@@ -72,6 +56,12 @@ fun LockScreen(
         if (viewModel.unlock()) goHome() else error = "Не вдалося відкрити базу даних"
     }
 
+    fun promptBiometric() {
+        if (activity != null && viewModel.lockoutRemainingMillis() <= 0) {
+            viewModel.authenticateBiometric(activity) { ok -> if (ok) completeUnlock() }
+        }
+    }
+
     // Live lockout countdown
     LaunchedEffect(Unit) {
         while (true) {
@@ -84,9 +74,7 @@ fun LockScreen(
 
     // Auto-prompt biometric on first entry (if enabled and not locked out)
     LaunchedEffect(Unit) {
-        if (biometricEnabled && activity != null && viewModel.lockoutRemainingMillis() <= 0) {
-            viewModel.authenticateBiometric(activity) { ok -> if (ok) completeUnlock() }
-        }
+        if (biometricEnabled) promptBiometric()
     }
 
     // Verify once 4 digits are entered
@@ -104,83 +92,23 @@ fun LockScreen(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_lock),
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+    PinEntryScaffold(
+        title = "Розблокуйте нотатки",
+        subtitle = if (lockoutSeconds > 0) "Забагато спроб. Спробуйте через ${lockoutSeconds}с"
+        else "Введіть PIN-код для доступу",
+        subtitleIsError = lockoutSeconds > 0,
+        error = error
+    ) {
+        PinCodeWidget(
+            pinInput = input,
+            onPinChange = { if (input.length < 4 && lockoutSeconds <= 0L) input += it },
+            onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
+        )
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Розблокуйте нотатки",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (lockoutSeconds > 0) {
-                    Text(
-                        text = "Забагато спроб. Спробуйте через ${lockoutSeconds}с",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    Text(
-                        text = "Введіть PIN-код для доступу",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                error?.let {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                PinCodeWidget(
-                    pinInput = input,
-                    onPinChange = { if (input.length < 4 && lockoutSeconds <= 0L) input += it },
-                    onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
-                )
-
-                if (biometricEnabled && activity != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    TextButton(onClick = {
-                        if (viewModel.lockoutRemainingMillis() <= 0) {
-                            viewModel.authenticateBiometric(activity) { ok -> if (ok) completeUnlock() }
-                        }
-                    }) {
-                        Text("Використати біометрію")
-                    }
-                }
+        if (biometricEnabled && activity != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TextButton(onClick = { promptBiometric() }) {
+                Text("Використати біометрію")
             }
         }
     }

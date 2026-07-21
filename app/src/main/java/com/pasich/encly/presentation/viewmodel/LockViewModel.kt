@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.authenticateWithBiometric
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -34,15 +35,12 @@ class LockViewModel @Inject constructor(
 
     /** Runs a biometric prompt; [onResult] is invoked with true only on success. */
     fun authenticateBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
-        biometricManager.authenticate(
-            activity,
+        activity.authenticateWithBiometric(
+            biometricManager,
             BiometricManager.BiometricType.APP_UNLOCK,
-            object : BiometricManager.BiometricCallback {
-                override fun onSuccess() = onResult(true)
-                override fun onError(errorCode: Int, errorMessage: String) {} // fall back to PIN
-                override fun onFailed() {} // let the user retry
-                override fun onCancelled() {} // fall back to PIN
-            }
+            onSuccess = { onResult(true) },
+            onError = { onResult(false) },
+            onCancelled = { onResult(false) }
         )
     }
 }

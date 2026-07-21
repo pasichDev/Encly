@@ -51,11 +51,14 @@ class SecurityManager @Inject constructor(
             return InitialStatus.LOSS_CRYPTO
         }
 
-        // PIN is mandatory. Route through auth: lock if a PIN is set, otherwise force setup.
+        // PIN is mandatory. Exhaustive over AuthStrategy so no state can silently
+        // fall through to an unauthenticated unlock: lock if a PIN is set, else force setup.
         return when (authenticationManager.isAuthStrategy()) {
             AuthStrategy.PIN, AuthStrategy.PIN_BIOMETRIC -> InitialStatus.AUTH
-            AuthStrategy.NONE, AuthStrategy.RECOVERY_DATA -> InitialStatus.SETUP_AUTH
-            else -> if (unlockDatabase()) InitialStatus.MAIN else InitialStatus.LOSS_DATABASE
+            AuthStrategy.NONE,
+            AuthStrategy.RECOVERY_DATA,
+            AuthStrategy.SEED_PHRASE,
+            AuthStrategy.SEED_PHRASE_BIOMETRIC -> InitialStatus.SETUP_AUTH
         }
     }
 
