@@ -3,7 +3,13 @@ package com.pasich.encly
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -51,11 +57,19 @@ fun App(
     navController: NavHostController, startDestination: String
 ) {
     AppTheme {
-        // Edge-to-edge (forced on Android 15+/targetSdk 36): the status bar stays
-        // transparent and the app draws behind it. Each screen insets its own top
-        // content (Scaffold screens do this automatically; others use statusBarsPadding).
-        AppNavHost(
-            navController = navController, startDestination = startDestination
-        )
+        // Edge-to-edge is forced on Android 15+/targetSdk 36. Inset the whole app by
+        // the status bar once (windowInsetsPadding also consumes it, so Scaffold
+        // screens don't double-pad). The transparent status bar then sits over the
+        // app-colored windowBackground (see themes.xml), so it blends with the app
+        // instead of showing content under it or a black strip.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+        ) {
+            AppNavHost(
+                navController = navController, startDestination = startDestination
+            )
+        }
     }
 }
