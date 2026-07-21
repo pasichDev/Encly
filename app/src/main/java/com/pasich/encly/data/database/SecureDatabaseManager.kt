@@ -128,6 +128,12 @@ class SecureDatabaseManager @Inject constructor(
         Log.d(TAG, "Базу скинуто")
     }
 
+    /** Full wipe: closes the database and deletes its files from disk. */
+    fun wipe() {
+        reset()
+        deleteDatabaseFiles()
+    }
+
     companion object {
         private const val TAG = "SecureDatabaseManager"
         private const val DB_NAME = "database.db"

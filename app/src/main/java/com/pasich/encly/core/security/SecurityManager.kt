@@ -135,6 +135,18 @@ class SecurityManager @Inject constructor(
  //       return seedPhraseManager.isUserManuallyCreatedKeyByDecryption()
  //   }
 
+    /**
+     * Wipes all encrypted data and security state (DB files, seed prefs, Keystore keys,
+     * integrity HMAC, auth prefs) for the unrecoverable-loss path, then resets to
+     * onboarding. Everything is lost by design (zero-knowledge model).
+     */
+    fun wipeAndReset() {
+        secureDatabaseManager.wipe()
+        seedPhraseManager.wipe()
+        secureStoragePrefs.edit { clear() }
+        securityStatus = InitialStatus.ONBOARDING
+    }
+
     fun getSettingsAuth(): AuthSettings {
         return AuthSettings(
             authType = authenticationManager.getAuthType(),

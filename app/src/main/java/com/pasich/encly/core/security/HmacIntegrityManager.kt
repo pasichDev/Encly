@@ -79,4 +79,13 @@ class HmacIntegrityManager @Inject constructor(
     fun clearHmac() {
         prefs.edit { remove(INTEGRITY_HMAC_KEY) }
     }
+
+    /** Full wipe: clears stored HMAC and deletes the Keystore signing key. */
+    fun wipe() {
+        prefs.edit { clear() }
+        try {
+            keyStore.deleteEntry(KEY_ALIAS)
+        } catch (_: Exception) {
+        }
+    }
 }

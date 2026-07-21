@@ -244,6 +244,20 @@ class SeedPhraseManager @Inject constructor(
         }
     }
 
+    /**
+     * Full wipe for unrecoverable-loss reset: clears all seed prefs (hashes, KDF salt),
+     * deletes the Keystore master key, and wipes the integrity HMAC. After this the app
+     * starts fresh from onboarding.
+     */
+    fun wipe() {
+        prefs.edit { clear() }
+        try {
+            keyStore.deleteEntry(KEY_ALIAS)
+        } catch (_: Exception) {
+        }
+        hmacIntegrityManager.wipe()
+    }
+
 
     /**
      * Tells whether the seed phrase was created by the user (USER_MANAGED).

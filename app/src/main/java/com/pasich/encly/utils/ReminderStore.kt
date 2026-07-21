@@ -70,4 +70,9 @@ object ReminderStore {
         prefs(context).edit { remove(KEY_PENDING_COMPLETE) }
         return set.mapNotNull { it.toLongOrNull() }
     }
+
+    /** Removes all stored reminders and queued completions (used on a full data wipe). */
+    fun clear(context: Context) {
+        prefs(context).edit { clear() }
+    }
 }

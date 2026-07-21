@@ -81,30 +81,20 @@
 
 ## Phase 2 — Feature completeness (закрити TODO і зламані флоу)
 
-- [ ] **P0** **Нагадування задач — «без тіла нотатки» (узгоджено).** Через конфлікт з auth-gate
-  (БД залочена, коли спрацьовує alarm) нагадування НЕ читають зашифровану БД:
-  - При створенні/зміні задачі з нагадуванням зберігати мінімальний запис (id, заголовок, час)
-    у plaintext-сховищі (prefs) + в extras PendingIntent; планувати alarm.
-  - `TaskReminderReceiver`: показувати нотифікацію із заголовка/часу з extras/prefs (без DAO).
-  - `BootReceiver`/`rescheduleAllReminders`: перепланувати з plaintext-сховища.
-  - Дії complete/snooze: snooze = переплан (plaintext); complete/tap = відкрити застосунок
-    (пройти unlock), звірити з БД після розблокування. Компроміс: метадані задачі поза шифруванням.
-- [ ] **P0** **Справжнє відновлення.** `LossRecoveryScreen` confirm зараз = `println` (`NavHost.kt:95`).
-  Має: wipe seed (`clearStoredSeed`) + файли БД (`deleteDatabaseFiles`/`reset`) + prefs → рестарт у onboarding.
-  Бажано — re-entry сід-фрази (`verifyMnemonic`) перед деструктивним wipe. Обробити і `LOSS_CRYPTO`, і `LOSS_DATABASE`.
-- [ ] **P0** **DI DB provisioning risk.** `LocalDataModule.provideAppDatabase` (@Singleton) один раз бере `getDatabase()`;
-  коли залочено — повертається **незашифрована in-memory** БД і кешується на весь процес. Не роздавати
-  `AppDatabase`/DAO як eager-singleton від `getDatabase()`; маршрутизувати доступ через менеджер за поточним станом unlock;
-  ніколи не віддавати тихий in-memory fallback для реальних даних.
-- [ ] **P1** **Serialization round-trip loss** (`BlockSerialization.kt:32-58`): зберігати рівень заголовка (H1–H4,
-  зараз усе → H1) і тип списку (numbered vs check, зараз усе → LIST_CHECK).
-- [ ] **P1** **Note copy** (`EditNoteViewModel.kt:191-208`): `updateNoteState(isCopy=true)` рахує copy і **викидає результат** —
-  метадані копії губляться. Присвоїти в `_state`.
+- [x] **P0** **Нагадування задач — «без тіла нотатки».** `ReminderStore` (plaintext) тримає мінімум
+  (id/заголовок/опис/час); `TaskReminderReceiver` будує нотифікацію з extras (без БД);
+  reboot-reschedule зі store; snooze = переплан з extras; complete = черга pending-complete,
+  застосовується в `TasksViewModel` після unlock. Нотифікації → device-тест.
+- [x] **P0** **Справжнє відновлення.** `LossRecoveryScreen` → `LossRecoveryViewModel.wipeAllData()`:
+  повний wipe (БД-файли, seed-prefs, Keystore-ключі, integrity HMAC, auth-prefs, ReminderStore) →
+  рестарт у onboarding. TODO: опційний re-entry сід-фрази перед wipe.
+- [x] **P0** **DI DB provisioning risk** — закрито в Phase 1b: `getDatabase()` тепер fail-loud, тихого in-memory нема.
+- [x] **P1** **Serialization round-trip loss**: зберігаються рівень заголовка (H1–H4) і тип списку (numbered/check).
+- [x] **P1** **Note copy**: `updateNoteState(isCopy=true)` тепер присвоює копію в `_state`.
 - [ ] **P1** Onboarding: додати крок вибору PIN/біометрії (зараз `SecurityChoiceSlide` лише seed vs skip).
-- [ ] **P1** `SecuritySettingsViewModel.toggleAuthType` (`:66-68`) — порожня заглушка, що керує security-налаштуванням; реалізувати + оновлення стану.
-- [ ] **P1** `EditNoteBottomSheet` Delete (`:178`) і Duplicate (`:156`) — порожні лямбди; підключити або сховати
-  (Delete виглядає деструктивним, але нічого не робить).
-- [ ] **P1** User-facing помилки для: невірний PIN, пошкоджена БД, фейл декрипту нотатки
+- [ ] **P1** `SecuritySettingsViewModel.toggleAuthType` — порожня заглушка; реалізувати + оновлення стану.
+- [x] **P1** `EditNoteBottomSheet` Delete/Duplicate підключено (Delete → в кошик, Duplicate → нова копія).
+- [~] **P1** User-facing помилки: додано для невірного PIN (LockScreen) і recovery; фейл декрипту нотатки — лишається
   (зараз тихий empty-editor / dead-end — і наступний save може перезаписати нечитабельні дані).
 - [ ] **P2** `skipSecuritySetup()` race: `nextPage()` викликається синхронно до завершення async-збереження ключів.
 - [ ] **P2** `SettingsActivity` рендерить `SettingsScreen(navController = null)` — навігація звідти → NPE/no-op.

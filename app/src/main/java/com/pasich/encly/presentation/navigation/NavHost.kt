@@ -1,10 +1,12 @@
 package com.pasich.encly.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
+import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
 import com.pasich.encly.presentation.effects.animationScreens
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
@@ -91,10 +93,13 @@ fun AppNavHost(
         }
 
         animationScreens(NavRoutes.LossDataRoute.name) {
-            LossRecoveryScreen {
-                // Наприклад: очистити SharedPreferences або скинути навігацію
-                println("Очистити всі дані 🧹")
-            }
+            val recoveryViewModel: LossRecoveryViewModel = hiltViewModel()
+            LossRecoveryScreen(onRecoveryConfirmed = {
+                recoveryViewModel.wipeAllData()
+                navController.navigate(NavRoutes.OnboardingRoute.name) {
+                    popUpTo(NavRoutes.LossDataRoute.name) { inclusive = true }
+                }
+            })
         }
         animationScreens(NavRoutes.PinCodeConfig.name) {
             PinCodeConfigScreen(navController)
