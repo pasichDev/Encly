@@ -38,7 +38,7 @@ interface NotesDao {
     suspend fun getNoteById(noteId: Long): Note?
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    fun insertNote(note: Note): Long
+    suspend fun insertNote(note: Note): Long
 
     @Update
     suspend fun updateNote(note: Note): Int

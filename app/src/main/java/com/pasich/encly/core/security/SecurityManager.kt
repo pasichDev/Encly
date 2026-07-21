@@ -30,8 +30,14 @@ class SecurityManager @Inject constructor(
 
     var securityStatus = InitialStatus.NO
 
-    init {
-        securityStatus = initializeSecurity()
+    /**
+     * Resolves the startup state. Runs Keystore/crypto/prefs reads that must NOT be on
+     * the main thread — call it from a background dispatcher (see MainActivity).
+     */
+    fun resolveInitialStatus(): InitialStatus {
+        val status = initializeSecurity()
+        securityStatus = status
+        return status
     }
 
     /**
