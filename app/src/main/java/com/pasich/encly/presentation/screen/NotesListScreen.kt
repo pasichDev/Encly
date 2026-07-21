@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import com.pasich.encly.presentation.effects.NoteSkeleton
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -144,6 +147,20 @@ fun NotesList(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
+            // Skeleton placeholder while the (encrypted) notes are loading for the first time.
+            AnimatedVisibility(
+                visible = state.baseState.isLoading && state.notes.isEmpty(),
+                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 300))
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    repeat(4) {
+                        NoteSkeleton()
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+
             AnimatedVisibility(
                 visible = state.notes.isEmpty() && !state.baseState.isLoading,
                 enter = fadeIn(animationSpec = tween(durationMillis = 300)),

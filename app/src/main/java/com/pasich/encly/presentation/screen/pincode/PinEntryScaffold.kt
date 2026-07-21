@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,6 +25,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
+
+/**
+ * Full-screen loading shown while the auth screens do heavy off-thread work
+ * (PBKDF2 PIN hashing, opening the encrypted database).
+ */
+@Composable
+fun AuthLoading(message: String) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
 
 /**
  * Shared visual scaffold for the PIN / auth screens (setup, unlock): a lock icon,

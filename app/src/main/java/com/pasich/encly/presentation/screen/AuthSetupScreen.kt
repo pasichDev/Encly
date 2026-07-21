@@ -4,6 +4,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,6 +14,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.compose.ui.platform.LocalContext
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.viewmodel.AuthSetupViewModel
@@ -21,7 +23,8 @@ private enum class SetupStep { CREATE_PIN, CONFIRM_PIN, BIOMETRIC }
 
 /**
  * Mandatory security setup after onboarding: create a PIN and, when available, enable
- * biometric unlock. On completion the database is unlocked and the app opens.
+ * biometric unlock. On completion the database is unlocked and the app opens. PIN
+ * hashing and DB unlock run off the main thread and show a loading state.
  */
 @Composable
 fun AuthSetupScreen(
@@ -29,6 +32,7 @@ fun AuthSetupScreen(
     viewModel: AuthSetupViewModel = hiltViewModel()
 ) {
     val activity = LocalContext.current as? FragmentActivity
+    val busy by viewModel.busy.collectAsState()
 
     var step by remember { mutableStateOf(SetupStep.CREATE_PIN) }
     var firstPin by remember { mutableStateOf("") }
@@ -42,7 +46,9 @@ fun AuthSetupScreen(
     }
 
     fun finish() {
-        if (viewModel.finishSetup()) goHome() else error = "Не вдалося відкрити базу даних"
+        viewModel.finishSetup { ok ->
+            if (ok) goHome() else error = "Не вдалося відкрити базу даних"
+        }
     }
 
     fun afterPinSet() {
@@ -61,24 +67,22 @@ fun AuthSetupScreen(
                 }
 
                 SetupStep.CONFIRM_PIN -> {
-                    when {
-                        input != firstPin -> {
-                            error = "PIN-коди не збігаються"
-                            input = ""
-                            firstPin = ""
-                            step = SetupStep.CREATE_PIN
-                        }
-
-                        viewModel.setPin(input) -> {
-                            input = ""
-                            afterPinSet()
-                        }
-
-                        else -> {
-                            error = "Не вдалося зберегти PIN"
-                            input = ""
-                            firstPin = ""
-                            step = SetupStep.CREATE_PIN
+                    if (input != firstPin) {
+                        error = "PIN-коди не збігаються"
+                        input = ""
+                        firstPin = ""
+                        step = SetupStep.CREATE_PIN
+                    } else {
+                        val pin = input
+                        input = ""
+                        viewModel.setPin(pin) { ok ->
+                            if (ok) {
+                                afterPinSet()
+                            } else {
+                                error = "Не вдалося зберегти PIN"
+                                firstPin = ""
+                                step = SetupStep.CREATE_PIN
+                            }
                         }
                     }
                 }
@@ -93,6 +97,11 @@ fun AuthSetupScreen(
         if (step == SetupStep.BIOMETRIC && activity != null) {
             viewModel.enableBiometric(activity) { ok -> if (ok) finish() }
         }
+    }
+
+    if (busy) {
+        AuthLoading("Зачекайте…")
+        return
     }
 
     val title = when (step) {

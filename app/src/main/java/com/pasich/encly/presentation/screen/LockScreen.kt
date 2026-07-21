@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -19,15 +20,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.viewmodel.LockViewModel
+import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import kotlinx.coroutines.delay
 
 /**
  * App-unlock screen shown when a PIN-based lock is configured. Verifies the PIN
  * (with a progressive lockout) and optionally a biometric prompt, then unlocks the
- * encrypted database and navigates home. It never accesses note data before unlock.
+ * encrypted database and navigates home. Verification and DB unlock run off the main
+ * thread and show a loading state. It never accesses note data before unlock.
  */
 @Composable
 fun LockScreen(
@@ -35,6 +39,7 @@ fun LockScreen(
     viewModel: LockViewModel = hiltViewModel()
 ) {
     val activity = LocalContext.current as? FragmentActivity
+    val busy by viewModel.busy.collectAsState()
 
     var input by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -52,13 +57,13 @@ fun LockScreen(
         }
     }
 
-    fun completeUnlock() {
-        if (viewModel.unlock()) goHome() else error = "Не вдалося відкрити базу даних"
-    }
-
     fun promptBiometric() {
         if (activity != null && viewModel.lockoutRemainingMillis() <= 0) {
-            viewModel.authenticateBiometric(activity) { ok -> if (ok) completeUnlock() }
+            viewModel.authenticateBiometric(activity) { authed ->
+                if (authed) viewModel.unlock { ok ->
+                    if (ok) goHome() else error = "Не вдалося відкрити базу даних"
+                }
+            }
         }
     }
 
@@ -80,16 +85,29 @@ fun LockScreen(
     // Verify once 4 digits are entered
     LaunchedEffect(input) {
         if (input.length == 4) {
-            when {
-                viewModel.lockoutRemainingMillis() > 0 -> input = ""
-                viewModel.verifyPin(input) -> completeUnlock()
-                else -> {
-                    error = "Невірний PIN-код"
-                    input = ""
-                    lockoutSeconds = (viewModel.lockoutRemainingMillis() + 999) / 1000
+            if (viewModel.lockoutRemainingMillis() > 0) {
+                input = ""
+                return@LaunchedEffect
+            }
+            val pin = input
+            input = ""
+            viewModel.authenticatePin(pin) { result ->
+                when (result) {
+                    PinUnlockResult.SUCCESS -> goHome()
+                    PinUnlockResult.WRONG_PIN -> {
+                        error = "Невірний PIN-код"
+                        lockoutSeconds = (viewModel.lockoutRemainingMillis() + 999) / 1000
+                    }
+
+                    PinUnlockResult.DB_ERROR -> error = "Не вдалося відкрити базу даних"
                 }
             }
         }
+    }
+
+    if (busy) {
+        AuthLoading("Розблокування…")
+        return
     }
 
     PinEntryScaffold(
