@@ -29,9 +29,9 @@ class BlockDeserializer : JsonDeserializer<Block> {
                 text = MutableStateFlow(jsonObject.get("text")?.asString ?: "")
             )
 
-            "H1" -> Block.HBlock(
+            "H1", "H2", "H3", "H4" -> Block.HBlock(
                 text = MutableStateFlow(jsonObject.get("text")?.asString ?: ""),
-                blockType = BlockType.H1
+                blockType = BlockType.valueOf(blockType)
             )
 
             "QUOTE" -> Block.QuoteBlock(
@@ -50,12 +50,14 @@ class BlockDeserializer : JsonDeserializer<Block> {
             )
 
             "SEPARATOR" -> Block.SeparatorBlock()
-            "LIST" -> Block.ListBlock(
+            // "LIST" kept as a legacy alias for checklists.
+            "LIST", "LIST_CHECK", "LIST_NUMBER" -> Block.ListBlock(
                 items = MutableStateFlow(
                     jsonObject.getAsJsonArray("items")
-                ?.map {
-                    ItemListBlock(it.asJsonObject.get("value")?.asString ?: "")
-                } ?: listOf(ItemListBlock(""))), blockType = BlockType.LIST_CHECK)
+                        ?.map {
+                            ItemListBlock(it.asJsonObject.get("value")?.asString ?: "")
+                        } ?: listOf(ItemListBlock(""))),
+                blockType = if (blockType == "LIST_NUMBER") BlockType.LIST_NUMBER else BlockType.LIST_CHECK)
 
             else -> throw JsonParseException("Unknown block type: $blockType")
         }
@@ -79,7 +81,8 @@ class BlockSerializer : JsonSerializer<Block> {
 
             is Block.HBlock -> {
                 if (src.text.value.isBlank()) return JsonNull.INSTANCE
-                jsonObject.addProperty("blockType", "H1")
+                // Preserve the heading level (H1..H4) instead of collapsing to H1.
+                jsonObject.addProperty("blockType", src.blockType.name)
                 jsonObject.addProperty("text", src.text.value)
             }
 
@@ -104,11 +107,12 @@ class BlockSerializer : JsonSerializer<Block> {
 
 
             is Block.ListBlock -> {
-                // Прибрати порожні пункти зі списку
+                // Drop empty list items
                 val nonEmptyItems = src.items.value.filter { it.value.isNotBlank() }
                 if (nonEmptyItems.isEmpty()) return JsonNull.INSTANCE
 
-                jsonObject.addProperty("blockType", "LIST")
+                // Preserve the list kind (numbered vs checklist).
+                jsonObject.addProperty("blockType", src.blockType.name)
                 val itemsArray = context?.serialize(nonEmptyItems)
                 jsonObject.add("items", itemsArray)
             }

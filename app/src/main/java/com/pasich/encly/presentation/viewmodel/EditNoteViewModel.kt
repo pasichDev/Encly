@@ -186,23 +186,23 @@ class EditNoteViewModel
     }
 
     /**
-     * Обновляет состояние заметки в зависимости от режима (копия или оригинал)
+     * Updates the note state depending on the mode (copy or original).
      */
     private fun updateNoteState(
         note: Note,
         isCopy: Boolean,
     ) {
         if (isCopy) {
-            // Если это копирование, то создаем новую заметку с новым ID
-            note.copy(
+            // Copy: create a new note (id = -1) so it is saved as a fresh record.
+            val copy = note.copy(
                 id = -1,
-                title = note.title + (" (Copy)"),
+                title = note.title + " (Copy)",
                 date = System.currentTimeMillis(),
                 tagId = note.tagId ?: -1L,
             )
-
+            _state.value = LoadNoteState(note = copy, backupNote = copy)
         } else {
-            // Если это загрузка существующей заметки, то используем ее ID
+            // Existing note: keep its id.
             _state.value = LoadNoteState(note = note, backupNote = note)
         }
     }
@@ -665,6 +665,38 @@ class EditNoteViewModel
             } else {
                 Log.e("EditNoteViewModel", "Failed to restore note with ID: $currentNoteId")
             }
+        }
+    }
+
+    /**
+     * Moves the current note to the trash (soft delete). Returns true on success.
+     * Suspends until the write completes so the caller can safely navigate away after.
+     */
+    suspend fun noteMoveToTrash(): Boolean {
+        val currentNote = _state.value.note
+        if (currentNote.id == -1L) return false
+        val blocksJson = BlockConverter.blocksToJson(blocks)
+        return updateNoteTrashStatusUseCase.invoke(currentNote.copy(value = blocksJson), true)
+    }
+
+    /**
+     * Inserts a copy of the current note (title + " (Copy)") as a new record.
+     * Returns the new note id, or -1 on failure.
+     */
+    suspend fun noteDuplicate(): Long {
+        val currentNote = _state.value.note
+        val blocksJson = BlockConverter.blocksToJson(blocks)
+        return try {
+            notesRepository.insertNote(
+                Note.new(
+                    title = currentNote.title + " (Copy)",
+                    value = blocksJson,
+                    tagId = currentNote.tagId
+                )
+            )
+        } catch (e: Exception) {
+            Log.e("EditNoteViewModel", "Error duplicating note: ${e.message}")
+            -1L
         }
     }
 

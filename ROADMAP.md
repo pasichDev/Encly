@@ -81,11 +81,14 @@
 
 ## Phase 2 — Feature completeness (закрити TODO і зламані флоу)
 
-- [ ] **P0** **Нагадування задач працюють.** Зараз alarm спрацьовує в порожні ресівери (тіла закоментовані,
-  посилаються на видалений `AppDatabase.getInstance` — навіть не компілюються):
-  - `TaskReminderReceiver.onReceive`, `TaskReminderService.checkAndShowReminders`,
-    `TaskReminderScheduler.rescheduleAllReminders` (reboot), `TaskNotificationReceiver` (complete/snooze).
-  - Явно вирішити проблему "БД залочена, коли спрацьовує alarm".
+- [ ] **P0** **Нагадування задач — «без тіла нотатки» (узгоджено).** Через конфлікт з auth-gate
+  (БД залочена, коли спрацьовує alarm) нагадування НЕ читають зашифровану БД:
+  - При створенні/зміні задачі з нагадуванням зберігати мінімальний запис (id, заголовок, час)
+    у plaintext-сховищі (prefs) + в extras PendingIntent; планувати alarm.
+  - `TaskReminderReceiver`: показувати нотифікацію із заголовка/часу з extras/prefs (без DAO).
+  - `BootReceiver`/`rescheduleAllReminders`: перепланувати з plaintext-сховища.
+  - Дії complete/snooze: snooze = переплан (plaintext); complete/tap = відкрити застосунок
+    (пройти unlock), звірити з БД після розблокування. Компроміс: метадані задачі поза шифруванням.
 - [ ] **P0** **Справжнє відновлення.** `LossRecoveryScreen` confirm зараз = `println` (`NavHost.kt:95`).
   Має: wipe seed (`clearStoredSeed`) + файли БД (`deleteDatabaseFiles`/`reset`) + prefs → рестарт у onboarding.
   Бажано — re-entry сід-фрази (`verifyMnemonic`) перед деструктивним wipe. Обробити і `LOSS_CRYPTO`, і `LOSS_DATABASE`.

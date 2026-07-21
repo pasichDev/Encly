@@ -363,6 +363,20 @@ fun EditNoteScreen(
                             }"
                         )
                     }
+
+                    EditNoteBottomSheetAction.DUPLICATE -> {
+                        scope.launch {
+                            viewModel.noteDuplicate()
+                            closeScreen()
+                        }
+                    }
+
+                    EditNoteBottomSheetAction.TRASH -> {
+                        scope.launch {
+                            viewModel.noteMoveToTrash()
+                            closeScreen()
+                        }
+                    }
                 }
             }
         )

@@ -106,13 +106,15 @@ class SecurityManager @Inject constructor(
         return secureStoragePrefs.getBoolean(ONBOARDING_SHOWN_KEY, false)
     }
 
-    /** Позначити, що онбординг уже пройдено */
+    /**
+     * Marks onboarding as completed. Only records it once the keys are valid
+     * (integrity verified) — otherwise there is nothing to protect yet.
+     */
     fun setOnboardingShown(): Boolean {
-        if (!seedPhraseManager.verificationKeyData()) {
+        if (seedPhraseManager.verificationKeyData()) {
             secureStoragePrefs.edit {
                 putBoolean(ONBOARDING_SHOWN_KEY, true)
             }
-
             return true
         }
         return false

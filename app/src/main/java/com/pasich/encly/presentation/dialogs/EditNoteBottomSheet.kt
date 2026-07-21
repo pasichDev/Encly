@@ -45,7 +45,7 @@ import com.pasich.encly.ui.theme.roboto
 import com.pasich.encly.ui.theme.sourceSans
 
 enum class EditNoteBottomSheetAction {
-    SHARE, CLOSE_NO_SAVE
+    SHARE, CLOSE_NO_SAVE, DUPLICATE, TRASH
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -153,8 +153,8 @@ fun EditNoteBottomSheet(
                                     icon = painterResource(R.drawable.ic_duplicate),
                                     roundPosition = RoundPosition.Medium,
                                     action = {
-                                        // TODO
-
+                                        onAction(EditNoteBottomSheetAction.DUPLICATE)
+                                        onDismiss()
                                     })
                             }
                             item {
@@ -175,7 +175,9 @@ fun EditNoteBottomSheet(
                                     icon = painterResource(R.drawable.ic_delete),
                                     roundPosition = RoundPosition.Last,
                                     confirmationRequest = MaterialTheme.colorScheme.error,
-                                    action = {   // TODO
+                                    action = {
+                                        onAction(EditNoteBottomSheetAction.TRASH)
+                                        onDismiss()
                                     })
                             }
                         }
