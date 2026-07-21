@@ -29,6 +29,15 @@ class CentralizedFocusManager {
     private val _shouldIgnoreFocus = mutableStateOf(false)
     val shouldIgnoreFocus: Boolean get() = _shouldIgnoreFocus.value
 
+    // Owned scope for deferred focus work; cancelled in dispose() so retry coroutines
+    // don't outlive the owning ViewModel (avoids a leak / focus mutation after teardown).
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    /** Cancels any in-flight focus coroutines. Call from the owner's onCleared(). */
+    fun dispose() {
+        scope.cancel()
+    }
+
     // Callback for moving the cursor to the end of the text
     private val cursorToEndCallbacks = mutableStateMapOf<Int, () -> Unit>()
 
@@ -276,7 +285,7 @@ class CentralizedFocusManager {
         }
 
         // Use a coroutine for deferred execution
-        CoroutineScope(Dispatchers.Main).launch {
+        scope.launch {
             delay(delayMillis)
             setFocus(index, ignore)
             AppLogger.d("CentralizedFocusManager", "delayedSetFocus: focus set to index $index after delay")
@@ -299,7 +308,7 @@ class CentralizedFocusManager {
             return
         }
 
-        CoroutineScope(Dispatchers.Main).launch {
+        scope.launch {
             var attempts = 0
             while (attempts < maxRetries) {
                 AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: attempt ${attempts + 1}/$maxRetries for index $index")

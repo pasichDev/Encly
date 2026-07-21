@@ -19,9 +19,7 @@ import com.pasich.encly.receiver.TaskNotificationReceiver
 object NotificationHelper {
     
     const val CHANNEL_ID = "task_reminders"
-    const val CHANNEL_NAME = "Нагадування завдань"
-    const val CHANNEL_DESCRIPTION = "Сповіщення про завдання"
-    
+
     const val ACTION_COMPLETE_TASK = "com.pasich.encly.COMPLETE_TASK"
     const val ACTION_SNOOZE_TASK = "com.pasich.encly.SNOOZE_TASK"
     const val EXTRA_TASK_ID = "task_id"
@@ -31,8 +29,12 @@ object NotificationHelper {
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = CHANNEL_DESCRIPTION
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notification_channel_name),
+                importance
+            ).apply {
+                description = context.getString(R.string.notification_channel_desc)
                 enableVibration(true)
                 setShowBadge(true)
             }
@@ -88,14 +90,22 @@ object NotificationHelper {
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("Нагадування про завдання")
+            .setContentTitle(context.getString(R.string.reminder_notification_title))
             .setContentText(title)
             .setStyle(NotificationCompat.BigTextStyle().bigText(description ?: title))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .addAction(R.drawable.ic_launcher, "Виконано", completePendingIntent)
-            .addAction(R.drawable.ic_launcher, "Через 10 хв", snoozePendingIntent)
+            .addAction(
+                R.drawable.ic_launcher,
+                context.getString(R.string.reminder_action_done),
+                completePendingIntent
+            )
+            .addAction(
+                R.drawable.ic_launcher,
+                context.getString(R.string.reminder_action_snooze),
+                snoozePendingIntent
+            )
 
         with(NotificationManagerCompat.from(context)) {
             notify(taskId.toInt(), builder.build())

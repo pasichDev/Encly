@@ -115,6 +115,11 @@ class EditNoteViewModel
     val currentFocusIndex: StateFlow<Int> = _focusManager.currentFocusIndex
     val lastInteractionIndex: StateFlow<Int> = _focusManager.lastInteractionIndex
 
+    override fun onCleared() {
+        super.onCleared()
+        _focusManager.dispose()
+    }
+
     init {
         initLoad()
         observeBlocksForLiveSave()
