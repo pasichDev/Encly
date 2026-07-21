@@ -31,35 +31,15 @@ class TaskReminderService : Service() {
     }
     
     private fun checkAndShowReminders() {
-        // TODO
-        /*
-        serviceScope.launch {
-            try {
-                val database = AppDatabase.getInstance(this@TaskReminderService)
-                val currentTime = System.currentTimeMillis()
-                val tasksWithReminders = database.tasksDao().getTasksWithReminder(currentTime)
-                
-                tasksWithReminders.forEach { task ->
-                    if (!task.isCompleted && task.reminderDate != null && task.reminderDate <= currentTime) {
-                        NotificationHelper.showTaskNotification(this@TaskReminderService, task)
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                stopSelf()
-            }
-        }
-
-         */
+        // Reminders now fire via AlarmManager -> TaskReminderReceiver directly, and are
+        // rescheduled from the plaintext ReminderStore; nothing DB-backed to do here.
+        stopSelf()
     }
-    
+
     private fun rescheduleAllReminders() {
         serviceScope.launch {
             try {
                 TaskReminderScheduler.rescheduleAllReminders(this@TaskReminderService)
-            } catch (e: Exception) {
-                e.printStackTrace()
             } finally {
                 stopSelf()
             }

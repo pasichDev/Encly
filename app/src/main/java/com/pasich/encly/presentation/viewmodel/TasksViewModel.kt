@@ -14,6 +14,7 @@ import com.pasich.encly.domain.usecase.task.GetCompletedTasksUseCase
 import com.pasich.encly.domain.usecase.task.GetTasksCountUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskUseCase
+import com.pasich.encly.utils.ReminderStore
 import com.pasich.encly.utils.TaskReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -83,7 +84,21 @@ class TasksViewModel @Inject constructor(
 
 
     init {
+        applyPendingCompletions()
         observeTasks()
+    }
+
+    /**
+     * Applies task completions that were queued from notification "Done" actions while
+     * the database was locked. Runs here because the tasks screen is reached only after
+     * the app is unlocked.
+     */
+    private fun applyPendingCompletions() {
+        viewModelScope.launch {
+            ReminderStore.drainPendingComplete(context).forEach { id ->
+                updateTaskStatusUseCase(id, true)
+            }
+        }
     }
 
     private fun createDateFilters(tasks: List<Task>): List<TaskFilter> {
