@@ -1,4 +1,4 @@
-rootProject.name = "My notes"
+rootProject.name = "Encly"
 include(":app")
 
 dependencyResolutionManagement {

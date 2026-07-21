@@ -209,7 +209,6 @@ class AuthenticationManager @Inject constructor(
      */
     fun getAuthType(): AuthType {
         val authOrdinal = secureStoragePrefs.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
-        println(IntWrapper.unwrap(authOrdinal))
         return AuthType.entries.getOrNull(IntWrapper.unwrap(authOrdinal)) ?: AuthType.NONE
     }
 

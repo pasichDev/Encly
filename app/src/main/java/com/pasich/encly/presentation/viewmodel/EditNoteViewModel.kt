@@ -252,13 +252,11 @@ class EditNoteViewModel
                         is Block.SeparatorBlock -> true
                     }
                 }) else currentNote.value
-                println("savesafasfasfaeer")
                 if (isNoteEmpty()) {
                     _status.value = SaveStatusNote.OLD
                     return@launch
                 }
 
-                println("saveeer")
                 // Выбираем стратегию сохранения (обновление или создание)
                 if (currentNote.id != -1L) {
                     // Проверяем, есть ли изменения в контенте или заголовке

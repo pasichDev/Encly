@@ -137,12 +137,6 @@ dependencies {
     // Biometric Authentication
     implementation("androidx.biometric:biometric:1.1.0")
 
-    // Google Identity Services & Credential Manager
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-    implementation("com.google.auth:google-auth-library-oauth2-http:1.37.1")
-
     // Dagger Hilt - Use KSP consistently
     implementation("com.google.dagger:hilt-android:2.56.2")
     ksp("com.google.dagger:hilt-android-compiler:2.56.2")
@@ -153,7 +147,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
-    implementation("org.jsoup:jsoup:1.21.1")
 
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
@@ -168,10 +161,6 @@ dependencies {
 
     // Compose Text with Google Fonts
     implementation("androidx.compose.ui:ui-text-google-fonts:1.8.3")
-
-    // Google Play In-App Update
-    implementation("com.google.android.play:app-update:2.1.0")
-    implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     implementation("com.composables:icons-lucide:1.1.0")
 

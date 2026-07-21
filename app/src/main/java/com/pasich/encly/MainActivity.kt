@@ -13,15 +13,11 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.presentation.navigation.AppNavHost
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.ui.theme.AppTheme
-import com.pasich.encly.utils.AppUpdateHelper
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
-
-    // Помощник для обновления приложения
-    private lateinit var appUpdateHelper: AppUpdateHelper
 
     @Inject
     lateinit var securityManager: SecurityManager
@@ -30,12 +26,6 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         actionBar?.hide()
-
-        // Проверяем наличие обновлений
-        appUpdateHelper = AppUpdateHelper(this, this)
-        appUpdateHelper.checkForUpdates()
-
-
 
         setContent {
             val navController = rememberNavController()

@@ -8,9 +8,6 @@ import com.pasich.encly.core.security.AuthenticationManager
 import com.pasich.encly.core.security.HmacIntegrityManager
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SeedPhraseManager
-import com.pasich.encly.core.security.old.AuthenticationManagerOLD
-import com.pasich.encly.core.security.old.CryptoManager
-import com.pasich.encly.core.security.old.SecurityManagerOLD
 import com.pasich.encly.data.database.SecureDatabaseManager
 import dagger.Module
 import dagger.Provides
@@ -22,11 +19,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SecurityModule {
-
-    @Provides
-    @Singleton
-    fun provideCryptoManager(): CryptoManager = CryptoManager()
-
 
     @Provides
     @Singleton
@@ -74,23 +66,5 @@ object SecurityModule {
     ): SecurityManager = SecurityManager(
         secureStoragePrefs, seedPhraseManager, secureDatabaseManager, authenticationManager
     )
-
-
-    @Provides
-    @Singleton
-    fun provideAuthenticationManagerOLD(
-        @ApplicationContext context: Context, cryptoManager: CryptoManager
-    ): AuthenticationManagerOLD = AuthenticationManagerOLD(context, cryptoManager)
-
-
-    @Provides
-    @Singleton
-    fun provideSecurityManagerOld(
-        @ApplicationContext context: Context,
-        cryptoManager: CryptoManager,
-        seedPhraseManager: SeedPhraseManager,
-        authenticationManagerOLD: AuthenticationManagerOLD
-    ): SecurityManagerOLD =
-        SecurityManagerOLD(context, cryptoManager, seedPhraseManager, authenticationManagerOLD)
 
 }

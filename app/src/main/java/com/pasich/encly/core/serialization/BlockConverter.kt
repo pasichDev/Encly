@@ -30,8 +30,7 @@ object BlockConverter {
         val type = object : TypeToken<List<Block>>() {}.type
         return try {
             gson.toJson(blocks, type)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
             "[]" // Возвращаем пустой массив в случае ошибки
         }
     }
@@ -46,8 +45,7 @@ object BlockConverter {
         
         return try {
             gson.fromJson(json, object : TypeToken<List<Block>>() {}.type)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
             emptyList()
         }
     }

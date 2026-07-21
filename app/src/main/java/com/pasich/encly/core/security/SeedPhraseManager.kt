@@ -121,8 +121,7 @@ class SeedPhraseManager @Inject constructor(
                 hmacIntegrityManager.storeHmac(hash)
             }
             return true
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
             return false
         }
     }
