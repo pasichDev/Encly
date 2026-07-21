@@ -9,6 +9,7 @@ import com.pasich.encly.presentation.effects.animationScreens
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
+import com.pasich.encly.presentation.screen.LockScreen
 import com.pasich.encly.presentation.screen.LossRecoveryScreen
 import com.pasich.encly.presentation.screen.MainRootScreen
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
@@ -98,6 +99,10 @@ fun AppNavHost(
         animationScreens(NavRoutes.PinCodeConfig.name) {
             PinCodeConfigScreen(navController)
 
+        }
+
+        animationScreens(NavRoutes.LockRoute.name) {
+            LockScreen(navController)
         }
 
 

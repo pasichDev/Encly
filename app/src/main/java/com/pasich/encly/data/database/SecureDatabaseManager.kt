@@ -24,16 +24,15 @@ class SecureDatabaseManager @Inject constructor(
     private var database: AppDatabase? = null
     private var isUnlocked = false
 
+    /**
+     * Returns the unlocked encrypted database. Fails loudly if accessed before
+     * unlock: silently handing back a throwaway in-memory database would route real
+     * writes into volatile, unencrypted storage and lose them. Callers must ensure
+     * the DB is unlocked (post-auth) before touching any DAO.
+     */
     fun getDatabase(): AppDatabase {
-        return if (isUnlocked && database != null) {
-            Log.d(TAG, "Повертаємо реальну розблоковану базу")
-            database!!
-        } else {
-            Log.w(TAG, "База ще не розблокована — повертаємо тимчасову in-memory базу")
-            Room.inMemoryDatabaseBuilder(
-                context.applicationContext, AppDatabase::class.java
-            ).build()
-        }
+        return database?.takeIf { isUnlocked }
+            ?: throw IllegalStateException("Database accessed before unlock — call unlockDatabase() first")
     }
 
 

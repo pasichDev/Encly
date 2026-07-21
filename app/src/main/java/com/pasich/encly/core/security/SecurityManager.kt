@@ -35,32 +35,61 @@ class SecurityManager @Inject constructor(
     }
 
     /**
-     * Метод ініціалізації безпеки повертає InitialStatus та вказує нвагіцію після запуску
+     * Computes the initial app state and, unless a lock is configured, unlocks the DB.
+     *
+     * If the user configured a PIN-based lock, the database is NOT unlocked here —
+     * [InitialStatus.AUTH] is returned so the UI shows the lock screen, and unlock
+     * happens only after successful authentication via [unlockAfterAuth].
      */
     private fun initializeSecurity(): InitialStatus {
-        // Якщо хочеш перевірити ключ, можна зробити так:
-        // if (!seedPhraseManager.isUserManuallyCreatedKeyByDecryption()) {
-        //     // Логіка, якщо ключ створений не вручну
-        // }
-
-        // Перевірка онбордингу
         if (isOnboardingShow()) {
             return InitialStatus.ONBOARDING
         }
 
-        // Перевірка ключів на цілісність
+        // Key integrity check
         if (!seedPhraseManager.verificationKeyData()) {
             return InitialStatus.LOSS_CRYPTO
         }
 
-        // TODO: Додати перевірку автентифікації пін+біометрія або майстерключ
-
-        // Перевірка доступності та розблокування бази даних
-        if (!secureDatabaseManager.unlockDatabase(seedPhraseManager.getEncryptionKeyForData(SaltData.DATABASE))) {
-            return InitialStatus.LOSS_DATABASE
+        // Gate DB unlock behind authentication when a PIN-based lock is set.
+        return when (authenticationManager.isAuthStrategy()) {
+            AuthStrategy.PIN, AuthStrategy.PIN_BIOMETRIC -> InitialStatus.AUTH
+            else -> if (unlockDatabase()) InitialStatus.MAIN else InitialStatus.LOSS_DATABASE
         }
+    }
 
-        return InitialStatus.MAIN
+    /** Derives the DB key from the seed and unlocks the encrypted database. */
+    private fun unlockDatabase(): Boolean =
+        secureDatabaseManager.unlockDatabase(
+            seedPhraseManager.getEncryptionKeyForData(SaltData.DATABASE)
+        )
+
+    /** Auth strategy configured for unlocking the app (PIN / PIN+biometric / none / …). */
+    fun authStrategy(): AuthStrategy = authenticationManager.isAuthStrategy()
+
+    /** Whether biometric unlock is enabled in settings. */
+    fun isBiometricEnabled(): Boolean = authenticationManager.isBiometricEnabled()
+
+    /** Remaining PIN lockout in milliseconds (0 = not locked out). */
+    fun pinLockoutRemainingMillis(): Long = authenticationManager.remainingLockoutMillis()
+
+    /**
+     * Verifies the app PIN. The input is normalized the same way activation stores it
+     * (numeric string), so verification matches.
+     * TODO: PIN activation drops leading zeros (Int.toString); preserve the raw 4-digit
+     * string on both sides in a later pass.
+     */
+    fun verifyPin(pin: String): Boolean =
+        authenticationManager.verifyPinAuth(pin.toIntOrNull()?.toString() ?: pin)
+
+    /**
+     * Unlocks the encrypted database after successful authentication. Call only from
+     * the lock screen once the user has passed PIN/biometric. Updates [securityStatus].
+     */
+    fun unlockAfterAuth(): Boolean {
+        val ok = unlockDatabase()
+        if (ok) securityStatus = InitialStatus.MAIN
+        return ok
     }
 
 

@@ -33,8 +33,8 @@ class MainActivity : FragmentActivity() {
                 InitialStatus.MAIN -> NavRoutes.HomeRoute
                 InitialStatus.ONBOARDING -> NavRoutes.OnboardingRoute
                 InitialStatus.LOSS_DATABASE -> NavRoutes.LossDataRoute
-                InitialStatus.AUTH -> NavRoutes.HomeRoute // TODO
-                InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute  // TODO
+                InitialStatus.AUTH -> NavRoutes.LockRoute
+                InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute  // TODO: dedicated crypto-loss recovery
                 InitialStatus.NO -> return@setContent
             }
 

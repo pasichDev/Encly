@@ -53,12 +53,15 @@
 
 ## Phase 1 — Security core (головний блок довіри)
 
-- [ ] **P0** **Auth gate реально працює.** Зараз PIN зберігається, але **ніколи не перевіряється**
-  (`SecurityManager.initializeSecurity` має `// TODO` і безумовно розблоковує БД на старті).
-  - Keystore-ключ створювати з `setUserAuthenticationRequired(true)` + `setUserAuthenticationParameters(...)`.
-  - Розблокування БД — тільки всередині biometric/PIN `CryptoObject`-флоу.
-  - Прибрати авто-unlock у `SecurityManager.kt:54`.
-  - Зробити `InitialStatus.AUTH` досяжним і обробленим у `MainActivity.kt:46` (→ реальний lock-екран, не Home).
+- [~] **P0** **Auth gate.** App-level gate реалізовано й компілюється:
+  - `initializeSecurity` більше НЕ авто-розблоковує БД, якщо налаштовано PIN — повертає `InitialStatus.AUTH`.
+  - `InitialStatus.AUTH` → новий `LockScreen` (`LockViewModel`): PIN-verify з lockout + опційна біометрія,
+    розблокування БД лише після успіху (`SecurityManager.unlockAfterAuth`).
+  - `SecureDatabaseManager.getDatabase()` тепер fail-loud (кидає), а не тихий in-memory (закриває Phase 2 DI-ризик).
+  - ⚠️ ЛИШАЄТЬСЯ: криптографічна прив'язка Keystore-ключа (`setUserAuthenticationRequired` + `CryptoObject`) —
+    свідомо НЕ зроблено наосліп (ризик необоротного локауту даних); потребує реалізації + валідації на пристрої.
+  - ⚠️ Весь флоу потребує device-тесту (біометрія в емуляторі недоступна) — див. T3-04 у TEST_MATRIX.
+  - TODO: re-lock при поверненні з фону; gate для SEED_PHRASE-стратегії (зараз лише PIN/PIN_BIOMETRIC).
 - [x] **P0** **Справжня сіль.** Статичний `slay`/enum-салт замінено на 16-байтний per-install `SecureRandom`
   (зберігається в prefs). Деривація даних переведена на **HKDF-SHA256** (info = тип даних).
 - [x] **P0** **Зміцнити PIN**: per-PIN сіль + **PBKDF2-HMAC-SHA256 600k** (замість unsalted SHA-256) +
