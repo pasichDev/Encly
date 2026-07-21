@@ -1,7 +1,7 @@
 package com.pasich.encly.core
 
 import com.pasich.encly.core.AppLogger
-import com.pasich.encly.BuildConfig
+import net.sqlcipher.BuildConfig
 
 /**
  * Central application logger.

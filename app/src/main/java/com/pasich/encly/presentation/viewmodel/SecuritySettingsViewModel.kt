@@ -44,23 +44,19 @@ class SecuritySettingsViewModel @Inject constructor(
     }
 
 
-    fun activationPinAuth(target: Int) {
+    fun activationPinAuth(target: String) {
         viewModelScope.launch {
             delay(1500)
-            authUseCase.saveAuthConfigPinCode(target).onSuccess { seedPhrase ->
+            authUseCase.saveAuthConfigPinCode(target).onSuccess {
                 _uiState.value = _uiState.value.copy(
                     authType = AuthType.PIN
                 )
-
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
-                    error = error.message ?: "Помилка створення сід-фрази"
+                    error = error.message ?: "Failed to set PIN"
                 )
             }
-
-
         }
-
     }
 
     fun toggleAuthType(authType: AuthType, callback: () -> Unit){

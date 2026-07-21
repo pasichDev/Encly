@@ -1,6 +1,5 @@
 package com.pasich.encly
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -34,6 +33,7 @@ class MainActivity : FragmentActivity() {
                 InitialStatus.ONBOARDING -> NavRoutes.OnboardingRoute
                 InitialStatus.LOSS_DATABASE -> NavRoutes.LossDataRoute
                 InitialStatus.AUTH -> NavRoutes.LockRoute
+                InitialStatus.SETUP_AUTH -> NavRoutes.AuthSetupRoute
                 InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute  // TODO: dedicated crypto-loss recovery
                 InitialStatus.NO -> return@setContent
             }
@@ -42,29 +42,6 @@ class MainActivity : FragmentActivity() {
                 navController = navController, startDestination = destination.name
             )
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Проверяем статус обновления
-        appUpdateHelper.checkUpdateStatus()
-
-    }
-
-    override fun onPause() {
-        super.onPause()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == AppUpdateHelper.UPDATE_REQUEST_CODE) {
-            appUpdateHelper.processUpdateResult(resultCode)
-        }
-    }
-
-    override fun onDestroy() {
-        appUpdateHelper.cleanup()
-        super.onDestroy()
     }
 }
 

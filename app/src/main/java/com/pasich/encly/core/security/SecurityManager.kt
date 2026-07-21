@@ -7,7 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 enum class InitialStatus {
-    NO, MAIN, ONBOARDING, LOSS_DATABASE, LOSS_CRYPTO, AUTH
+    NO, MAIN, ONBOARDING, LOSS_DATABASE, LOSS_CRYPTO, AUTH, SETUP_AUTH
 }
 
 
@@ -51,9 +51,10 @@ class SecurityManager @Inject constructor(
             return InitialStatus.LOSS_CRYPTO
         }
 
-        // Gate DB unlock behind authentication when a PIN-based lock is set.
+        // PIN is mandatory. Route through auth: lock if a PIN is set, otherwise force setup.
         return when (authenticationManager.isAuthStrategy()) {
             AuthStrategy.PIN, AuthStrategy.PIN_BIOMETRIC -> InitialStatus.AUTH
+            AuthStrategy.NONE, AuthStrategy.RECOVERY_DATA -> InitialStatus.SETUP_AUTH
             else -> if (unlockDatabase()) InitialStatus.MAIN else InitialStatus.LOSS_DATABASE
         }
     }
@@ -73,14 +74,8 @@ class SecurityManager @Inject constructor(
     /** Remaining PIN lockout in milliseconds (0 = not locked out). */
     fun pinLockoutRemainingMillis(): Long = authenticationManager.remainingLockoutMillis()
 
-    /**
-     * Verifies the app PIN. The input is normalized the same way activation stores it
-     * (numeric string), so verification matches.
-     * TODO: PIN activation drops leading zeros (Int.toString); preserve the raw 4-digit
-     * string on both sides in a later pass.
-     */
-    fun verifyPin(pin: String): Boolean =
-        authenticationManager.verifyPinAuth(pin.toIntOrNull()?.toString() ?: pin)
+    /** Verifies the app PIN against the stored hash (raw digits, leading zeros preserved). */
+    fun verifyPin(pin: String): Boolean = authenticationManager.verifyPinAuth(pin)
 
     /**
      * Unlocks the encrypted database after successful authentication. Call only from

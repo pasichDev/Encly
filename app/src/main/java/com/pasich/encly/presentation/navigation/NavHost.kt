@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
 import com.pasich.encly.presentation.effects.animationScreens
 import com.pasich.encly.presentation.screen.AboutScreen
+import com.pasich.encly.presentation.screen.AuthSetupScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
 import com.pasich.encly.presentation.screen.LockScreen
@@ -86,10 +87,15 @@ fun AppNavHost(
         animationScreens(NavRoutes.OnboardingRoute.name) {
             OnboardingScreen(
                 onComplete = {
-                    navController.navigate(NavRoutes.HomeRoute.name) {
+                    // PIN + biometric setup is mandatory before entering the app.
+                    navController.navigate(NavRoutes.AuthSetupRoute.name) {
                         popUpTo(NavRoutes.OnboardingRoute.name) { inclusive = true }
                     }
                 })
+        }
+
+        animationScreens(NavRoutes.AuthSetupRoute.name) {
+            AuthSetupScreen(navController)
         }
 
         animationScreens(NavRoutes.LossDataRoute.name) {

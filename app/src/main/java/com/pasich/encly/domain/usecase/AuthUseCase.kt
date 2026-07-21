@@ -21,16 +21,16 @@ class AuthUseCase @Inject constructor(
      */
 
     fun saveAuthConfigPinCode(
-        pinCode: Int,
+        pinCode: String,
     ): Result<Boolean> {
         return try {
             if (authenticationManager.getAuthType() == AuthType.PIN) {
                 return Result.failure(
-                    IllegalStateException("Помилка. Авторизацію вже ввімкнено")
+                    IllegalStateException("PIN authentication is already enabled")
                 )
             }
 
-            if (authenticationManager.activatePinAuth(pinCode.toString())) {
+            if (authenticationManager.activatePinAuth(pinCode)) {
                 Result.success(true)
             } else {
                 Result.failure(

@@ -78,7 +78,7 @@ fun PinCodeConfigScreen(
                     if (currentInput == firstPin) {
                         animationState = PinAnimationState.SuccessAnimation
                         delay(1200)
-                        securityViewModel.activationPinAuth(firstPin.toInt())
+                        securityViewModel.activationPinAuth(firstPin)
                         navController.popBackStack()
                     } else {
                         errorText = "PIN-коди не збігаються. Спробуйте ще раз."
