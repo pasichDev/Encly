@@ -137,5 +137,11 @@ class SecureDatabaseManager @Inject constructor(
     companion object {
         private const val TAG = "SecureDatabaseManager"
         private const val DB_NAME = "database.db"
+
+        init {
+            // sqlcipher-android does not auto-load its native library (unlike the old
+            // android-database-sqlcipher, which did it in SQLiteDatabase.loadLibs()).
+            System.loadLibrary("sqlcipher")
+        }
     }
 }
