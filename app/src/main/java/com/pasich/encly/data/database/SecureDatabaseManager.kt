@@ -5,7 +5,7 @@ import androidx.room.Room
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 import javax.crypto.SecretKey
 import javax.inject.Inject
@@ -73,7 +73,7 @@ class SecureDatabaseManager @Inject constructor(
             AppLogger.d(TAG, "Initializing Room with encryption")
             database = Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, DB_NAME
-            ).openHelperFactory(SupportFactory(passphraseForRoom))
+            ).openHelperFactory(SupportOpenHelperFactory(passphraseForRoom))
                 .fallbackToDestructiveMigration(false).build()
 
             isUnlocked = true
@@ -86,9 +86,9 @@ class SecureDatabaseManager @Inject constructor(
 
     private fun canOpenDatabase(passphrase: ByteArray): Boolean {
         return try {
-            AppLogger.d(TAG, "Checking database open via SupportFactory")
+            AppLogger.d(TAG, "Checking database open via SupportOpenHelperFactory")
 
-            val factory = SupportFactory(passphrase)
+            val factory = SupportOpenHelperFactory(passphrase)
             val db = Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, DB_NAME
             ).openHelperFactory(factory).build()
