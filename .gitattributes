@@ -1,0 +1,3 @@
+# The Unix Gradle wrapper must stay LF and executable on all platforms.
+gradlew text eol=lf
+*.bat text eol=crlf
