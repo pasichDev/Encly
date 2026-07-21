@@ -1,24 +1,26 @@
 package com.pasich.encly.utils
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
- * Plaintext store of scheduled task reminders, kept OUTSIDE the encrypted database.
+ * Store of scheduled task reminders, kept OUTSIDE the SQLCipher database so alarms can
+ * fire (and be rescheduled after a reboot) while the seed-locked database is unavailable.
  *
- * With the auth gate the database is locked until the user authenticates, but alarms
- * can fire (and must be rescheduled after a reboot) while it is still locked. This
- * store therefore holds only the minimal reminder metadata needed to show/reschedule
- * a notification — id, title, optional description, trigger time — and never note
- * content. It also queues "completed from notification" actions to apply once the app
- * is unlocked.
+ * It holds only the minimal reminder metadata (id, title, optional description, trigger
+ * time) plus a queue of "completed from notification" actions. Storage is
+ * [EncryptedSharedPreferences] (Keystore-backed, independent of the seed) so task
+ * titles/descriptions are encrypted at rest rather than sitting in plaintext prefs.
  */
 object ReminderStore {
-    private const val PREFS = "reminders_store"
+    private const val PREFS = "reminders_store_secure"
     private const val KEY_REMINDERS = "reminders"
     private const val KEY_PENDING_COMPLETE = "pending_complete"
 
@@ -30,8 +32,27 @@ object ReminderStore {
         val triggerAt: Long
     )
 
-    private fun prefs(context: Context) =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    @Volatile
+    private var cachedPrefs: SharedPreferences? = null
+
+    private fun prefs(context: Context): SharedPreferences {
+        cachedPrefs?.let { return it }
+        return synchronized(this) {
+            cachedPrefs ?: run {
+                val appContext = context.applicationContext
+                val masterKey = MasterKey.Builder(appContext)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
+                EncryptedSharedPreferences.create(
+                    appContext,
+                    PREFS,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                ).also { cachedPrefs = it }
+            }
+        }
+    }
 
     fun put(context: Context, record: ReminderRecord) {
         val byId = all(context).associateBy { it.id }.toMutableMap()

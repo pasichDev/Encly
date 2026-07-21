@@ -104,7 +104,7 @@ class TagListViewModel @Inject constructor(
                     is UiState.Success -> {
                         _state.update {
                             it.copy(
-                                listTags = uiState.data!!,
+                                listTags = uiState.data ?: emptyList(),
                                 baseState = it.baseState.copy(isLoading = false)
                             )
                         }
