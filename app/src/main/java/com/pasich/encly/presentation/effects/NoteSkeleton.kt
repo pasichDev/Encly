@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
 /**
- * Компонент для отображения скелетона заголовка и блоков заметки при загрузке
+ * Component that displays a skeleton of the note's title and blocks while loading
  */
 @Composable
 fun NoteSkeleton(modifier: Modifier = Modifier) {
@@ -55,7 +55,7 @@ fun NoteSkeleton(modifier: Modifier = Modifier) {
 }
 
 /**
- * Расширение для применения эффекта мерцания к любому модификатору
+ * Extension for applying the shimmer effect to any modifier
  */
 @Composable
 fun Modifier.shimmerEffect() = this.then(

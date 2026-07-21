@@ -1,14 +1,18 @@
 package com.pasich.encly.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
+import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
 import com.pasich.encly.presentation.effects.animationScreens
 import com.pasich.encly.presentation.screen.AboutScreen
+import com.pasich.encly.presentation.screen.AuthSetupScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
+import com.pasich.encly.presentation.screen.LockScreen
 import com.pasich.encly.presentation.screen.LossRecoveryScreen
 import com.pasich.encly.presentation.screen.MainRootScreen
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
@@ -83,21 +87,33 @@ fun AppNavHost(
         animationScreens(NavRoutes.OnboardingRoute.name) {
             OnboardingScreen(
                 onComplete = {
-                    navController.navigate(NavRoutes.HomeRoute.name) {
+                    // PIN + biometric setup is mandatory before entering the app.
+                    navController.navigate(NavRoutes.AuthSetupRoute.name) {
                         popUpTo(NavRoutes.OnboardingRoute.name) { inclusive = true }
                     }
                 })
         }
 
+        animationScreens(NavRoutes.AuthSetupRoute.name) {
+            AuthSetupScreen(navController)
+        }
+
         animationScreens(NavRoutes.LossDataRoute.name) {
-            LossRecoveryScreen {
-                // Наприклад: очистити SharedPreferences або скинути навігацію
-                println("Очистити всі дані 🧹")
-            }
+            val recoveryViewModel: LossRecoveryViewModel = hiltViewModel()
+            LossRecoveryScreen(onRecoveryConfirmed = {
+                recoveryViewModel.wipeAllData()
+                navController.navigate(NavRoutes.OnboardingRoute.name) {
+                    popUpTo(NavRoutes.LossDataRoute.name) { inclusive = true }
+                }
+            })
         }
         animationScreens(NavRoutes.PinCodeConfig.name) {
             PinCodeConfigScreen(navController)
 
+        }
+
+        animationScreens(NavRoutes.LockRoute.name) {
+            LockScreen(navController)
         }
 
 

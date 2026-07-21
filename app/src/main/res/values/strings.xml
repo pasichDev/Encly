@@ -232,4 +232,11 @@
     <string name="auth_disable_warning">Увага: При вимкненні авторизації PIN-код та біометрія будуть скинуті</string>
     <string name="biometric_disable_error">Помилка: Неможливо вимкнути біометрію як основний метод авторизації</string>
 
+    <!-- Task reminder notifications -->
+    <string name="notification_channel_name">Нагадування завдань</string>
+    <string name="notification_channel_desc">Сповіщення про завдання</string>
+    <string name="reminder_notification_title">Нагадування про завдання</string>
+    <string name="reminder_action_done">Виконано</string>
+    <string name="reminder_action_snooze">Через 10 хв</string>
+
 </resources>

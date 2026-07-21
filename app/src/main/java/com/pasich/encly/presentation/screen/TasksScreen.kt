@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -77,13 +79,13 @@ fun TasksScreen(
     val editingTask by viewModel.editingTask.collectAsState()
     val context = LocalContext.current
 
-    // Централізований стан UI
+    // Centralized UI state
     var screenUiState by remember { mutableStateOf(TasksScreenUiState()) }
 
-    // Состояние прокрутки для LazyColumn
+    // Scroll state for LazyColumn
     val lazyListState = rememberLazyListState()
 
-    // Сброс прокрутки к началу при изменении фильтров
+    // Reset scroll to the top when filters change
     LaunchedEffect(
         uiState.selectedDateFilter,
         uiState.selectedPriorityFilter,
@@ -102,7 +104,7 @@ fun TasksScreen(
     val isShowingCompletedTasks = uiState.selectedCompletedFilter != null
 
 
-    // Перевірка дозволів на сповіщення
+    // Check notification permissions
     NotificationPermissionHandler(
         requestPermissionTrigger = screenUiState.requestPermissionTrigger,
         onPermissionResult = { granted ->
@@ -160,7 +162,7 @@ fun TasksScreen(
                     lineColor = MaterialTheme.colorScheme.error
                 )
 
-            // Панель прогресу
+            // Progress panel
             if (uiState.totalTasksCount > 0) {
                 TaskProgressCard(
                     completionPercentage = uiState.completionPercentage,
@@ -170,7 +172,7 @@ fun TasksScreen(
 
             }
 
-            // Фільтри завдань
+            // Task filters
             TaskFilterChips(
                 availableFilters = uiState.availableFilters,
                 selectedDateFilter = uiState.selectedDateFilter,
@@ -186,7 +188,16 @@ fun TasksScreen(
 
 
 
-            if (uiState.filteredActiveTasks.isEmpty()) {
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+            } else if (uiState.filteredActiveTasks.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -227,7 +238,7 @@ fun TasksScreen(
                     }
                 }
             } else {
-                // Відфільтровані завдання
+                // Filtered tasks
                 LazyColumn(
                     state = lazyListState,
                     modifier = Modifier.fillMaxSize(),
@@ -273,7 +284,7 @@ fun TasksScreen(
             },
             onConfirm = {
                 viewModel.clearCompletedTasks()
-                // Переключаємо фільтр на "Всі завдання" після очищення
+                // Switch the filter to "All tasks" after clearing
                 uiState.availableFilters.find {
                     it.id == "all" && it.type == TaskFilter.Type.DATE
                 }?.let { filter ->

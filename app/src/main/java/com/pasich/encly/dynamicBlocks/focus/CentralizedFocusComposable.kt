@@ -12,7 +12,7 @@ import kotlinx.coroutines.delay
 
 
 /**
- * Композабл-хелпер для обробки автоскролінгу при зміні фокуса
+ * Composable helper for handling auto-scrolling on focus change.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -30,7 +30,7 @@ fun AutoScrollOnFocus(
 }
 
 /**
- * Модифікатор для додавання централізованого управління фокусом
+ * Modifier for adding centralized focus management.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -43,7 +43,7 @@ fun Modifier.centralizedFocusManagement(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var isFocused by remember { mutableStateOf(false) }
 
-    // Обробляємо автоскролінг
+    // Handle auto-scrolling
     if (enableAutoScroll) {
         AutoScrollOnFocus(
             isFocused = isFocused,

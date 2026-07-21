@@ -1,6 +1,6 @@
 package com.pasich.encly.presentation.screen.editnote
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -109,22 +109,22 @@ fun EditNoteScreen(
     }
     var isEditMenuBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    // Функція для коректного закриття екрану
+    // Function for correctly closing the screen
     val closeScreen = {
         scope.launch {
-            // Приховуємо клавіатуру
+            // Hide the keyboard
             keyboardController?.hide()
-            // Знімаємо фокус
+            // Clear focus
             focusManager.clearFocus()
-            // Невелика затримка для завершення анімацій
+            // Small delay to let animations finish
             delay(100)
-            // Закриваємо екран
+            // Close the screen
             navController.popBackStack()
         }
     }
     val imeVisible = WindowInsets.isImeVisible
 
-    // Обробка системної кнопки "Назад"
+    // Handling the system "Back" button
     BackHandler {
         closeScreen()
     }
@@ -277,7 +277,7 @@ fun EditNoteScreen(
                         }
                     }
 
-                    // Skeleton або контент
+                    // Skeleton or content
                     item {
                         Box(modifier = Modifier.fillMaxWidth()) {
                             AnimatedVisibility(
@@ -322,7 +322,7 @@ fun EditNoteScreen(
                                     // DynamicBlocksEditor
                                     DynamicBlocksEditor(
                                         bottomSheetsOpen = { type, block, index ->
-                                            Log.d(
+                                            AppLogger.d(
                                                 "EditNoteScreen",
                                                 "bottomSheetsOpen called with type: $type, index: $index"
                                             )
@@ -340,7 +340,7 @@ fun EditNoteScreen(
             }
         }
 
-        // Меню редактирования
+        // Edit menu
         EditNoteBottomSheet(
             isVisible = isEditMenuBottomSheetVisible,
             onDismiss = { isEditMenuBottomSheetVisible = false },
@@ -362,6 +362,20 @@ fun EditNoteScreen(
                                 )
                             }"
                         )
+                    }
+
+                    EditNoteBottomSheetAction.DUPLICATE -> {
+                        scope.launch {
+                            viewModel.noteDuplicate()
+                            closeScreen()
+                        }
+                    }
+
+                    EditNoteBottomSheetAction.TRASH -> {
+                        scope.launch {
+                            viewModel.noteMoveToTrash()
+                            closeScreen()
+                        }
                     }
                 }
             }

@@ -36,11 +36,10 @@ fun PinCodeWidget(
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        // .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // PIN індикатори
+        // PIN indicators
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
         ) {

@@ -24,7 +24,7 @@ fun BadgeCount(
     backgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer,
     textColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
 ) {
-    if (count <= 0) return // Якщо кількість 0 або менше — нічого не показуємо
+    if (count <= 0) return // If the count is 0 or less, show nothing
 
     val displayText = if (count > maxCount) "$maxCount+" else count.toString()
 

@@ -13,10 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,21 +29,26 @@ class SettingsViewModel @Inject constructor(
     private val _validationMessage = MutableStateFlow<String?>(null)
     val validationMessage: StateFlow<String?> = _validationMessage.asStateFlow()
 
+    // Sane defaults as the initial value; the real stored values arrive asynchronously.
+    // Never block the main thread on the DataStore read (this VM feeds the settings UI).
     val themeSettingsFlow: StateFlow<Triple<Boolean, ThemeType, Boolean>> =
         settingsRepository.combinedThemeSettingsFlow.stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.Eagerly,
-                initialValue = runBlocking { settingsRepository.combinedThemeSettingsFlow.first() })
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = Triple(false, ThemeType.SYSTEM, false)
+        )
 
     val showTasksFlow: StateFlow<Boolean> = settingsRepository.showTasksFlow.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = runBlocking { settingsRepository.showTasksFlow.first() })
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = true
+    )
 
     val simpleEditFlow: StateFlow<Boolean> = settingsRepository.simpleEditFlow.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = runBlocking { settingsRepository.simpleEditFlow.first() })
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
+    )
 
     // Device capabilities
     fun supportsDynamicColors() = deviceCapabilities.supportsDynamicColors()

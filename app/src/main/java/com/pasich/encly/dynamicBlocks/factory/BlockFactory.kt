@@ -4,13 +4,13 @@ import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 
 /**
- * Фабрика для создания блоков разных типов
- * Использует паттерн "Factory Method" для унификации создания блоков
+ * Factory for creating blocks of different types.
+ * Uses the "Factory Method" pattern to unify block creation.
  */
 object BlockFactory {
     /**
-     * Создает блок соответствующего типа
-     * @return созданный блок или null для неподдерживаемых типов
+     * Creates a block of the corresponding type.
+     * @return the created block, or null for unsupported types
      */
     fun createBlock(blockType: BlockType): Block? {
         return when (blockType) {

@@ -1,7 +1,8 @@
 <resources>
     <style name="Theme.Encly" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/black</item>
-        <item name="android:windowBackground">@color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/window_background</item>
     </style>
 
     <style name="Theme.Encly.Splash" parent="Theme.SplashScreen">

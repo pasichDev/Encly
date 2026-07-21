@@ -1,6 +1,6 @@
 package com.pasich.encly.dynamicBlocks.blocks
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -41,7 +41,7 @@ fun HBlock(
 ) {
     val text by block.text.collectAsState()
     val fontStyles = rememberFontStyles()
-    Log.d("HBlock", "HBlock composed: index=$index, text='$text', blockType=${block.blockType}, isLocked=$isLocked")
+    AppLogger.d("HBlock", "HBlock composed: index=$index, text='$text', blockType=${block.blockType}, isLocked=$isLocked")
 
     val textStyle: TextStyle =
         when (block.blockType) {
@@ -70,7 +70,7 @@ fun HBlock(
 
     val oldText = remember { mutableStateOf(text) }
 
-    // Для підтримки встановлення курсора в кінець тексту
+    // To support placing the cursor at the end of the text
     var textFieldValue by remember {
         mutableStateOf(
             androidx.compose.ui.text.input
@@ -78,7 +78,7 @@ fun HBlock(
         )
     }
 
-    // Синхронізуємо textFieldValue з block.text
+    // Synchronize textFieldValue with block.text
     LaunchedEffect(text) {
         if (textFieldValue.text != text) {
             textFieldValue =
@@ -91,7 +91,7 @@ fun HBlock(
         }
     }
 
-    // Реєструємо callback для встановлення курсора в кінець тексту
+    // Register a callback for placing the cursor at the end of the text
     LaunchedEffect(index) {
         if (blockActions is com.pasich.encly.dynamicBlocks.BlockActionsImpl) {
             blockActions.viewModel.focusManager.registerCursorToEndCallback(index) {
@@ -111,7 +111,7 @@ fun HBlock(
         onValueChange = { newValue ->
             textFieldValue = newValue
             val newText = newValue.text
-            Log.d("HBlock", "onValueChange: oldText='$text', newText='$newText'")
+            AppLogger.d("HBlock", "onValueChange: oldText='$text', newText='$newText'")
             if (text != newText) {
                 blockActions.onTextChanged(oldText.value, newText)
                 oldText.value = newText
@@ -123,17 +123,17 @@ fun HBlock(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         keyboardActions =
             KeyboardActions(onNext = {
-                Log.d("HBlock", "onNext called, text='$text', isEmpty=${text.isEmpty()}")
+                AppLogger.d("HBlock", "onNext called, text='$text', isEmpty=${text.isEmpty()}")
 
                 if (text.isEmpty()) {
-                    // Якщо HBlock порожній, замінюємо його на звичайний текстовий блок
-                    Log.d("HBlock", "Empty HBlock - replacing with TextBlock")
+                    // If the HBlock is empty, replace it with a regular text block
+                    AppLogger.d("HBlock", "Empty HBlock - replacing with TextBlock")
                     val newTextBlock = Block.TextBlock()
                     blockActions.onReplaceBlock(newTextBlock)
                 } else {
-                    // Якщо HBlock не порожній, спробувати навігувати до наступного блока
+                    // If the HBlock is not empty, try to navigate to the next block
                     val navigated = blockActions.navigateToNext()
-                    // Якщо навігація неможлива (це останній блок), додати новий параграф
+                    // If navigation is not possible (this is the last block), add a new paragraph
                     if (!navigated) {
                         blockActions.onAddParagraph()
                     }
@@ -144,12 +144,12 @@ fun HBlock(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
                 .onFocusChanged { focusState ->
-                    Log.d("HBlock", "Focus changed: index=$index, isFocused=${focusState.isFocused}")
+                    AppLogger.d("HBlock", "Focus changed: index=$index, isFocused=${focusState.isFocused}")
                     if (focusState.isFocused) {
                         blockActions.updateLastInteractionIndex(index)
                     }
                 }.onKeyEvent { event ->
-                    Log.d("HBlock", "onKeyEvent called: key=${event.key}, text='$text'")
+                    AppLogger.d("HBlock", "onKeyEvent called: key=${event.key}, text='$text'")
                     KeyboardUtils.handleKeyEvent(
                         event = event,
                         text = text,
@@ -160,18 +160,18 @@ fun HBlock(
                             blockActions.navigateToPrevious()
                         },
                         onNavigateDown = {
-                            Log.d("HBlock", "onNavigateDown called")
-                            // Спробувати навігувати до наступного блока
+                            AppLogger.d("HBlock", "onNavigateDown called")
+                            // Try to navigate to the next block
                             val navigated = blockActions.navigateToNext()
-                            // Якщо навігація неможлива (це останній блок), додати новий параграф
+                            // If navigation is not possible (this is the last block), add a new paragraph
                             if (!navigated) {
                                 blockActions.onAddParagraph()
                             }
-                            true // Завжди повертаємо true, щоб запобігти додаванню Enter
+                            true // Always return true to prevent adding an Enter
                         },
                         onEnterPressed = {
-                            // Enter обробляється в KeyboardActions.onNext, тому тут не потрібен
-                            Log.d("HBlock", "onEnterPressed in onKeyEvent (should not be called for Enter)")
+                            // Enter is handled in KeyboardActions.onNext, so it is not needed here
+                            AppLogger.d("HBlock", "onEnterPressed in onKeyEvent (should not be called for Enter)")
                             false
                         },
                     )

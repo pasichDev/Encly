@@ -29,7 +29,7 @@ private val provider = GoogleFont.Provider(
     certificates = R.array.com_google_android_gms_fonts_certs
 )
 
-// Заголовки
+// Headings
 val poppins = FontFamily(
     Font(googleFont = GoogleFont("Poppins"), fontProvider = provider)
 )
@@ -42,7 +42,7 @@ val ibmPlex = FontFamily(
     Font(googleFont = GoogleFont("IBM Plex Sans"), fontProvider = provider)
 )
 
-// Текстові
+// Body text
 val roboto = FontFamily(
     Font(googleFont = GoogleFont("Roboto"), fontProvider = provider)
 )

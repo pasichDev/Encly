@@ -1,12 +1,15 @@
 package com.pasich.encly.data.datasource.local
 
 
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.database.dao.NotesDao
 import com.pasich.encly.data.database.dao.TagsDao
 import com.pasich.encly.data.database.dao.TasksDao
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
 import javax.inject.Inject
+
+private const val TAG = "DatabaseLocalDataSource"
 
 class DatabaseLocalDataSource @Inject constructor(
     private val notesDao: NotesDao,
@@ -23,6 +26,7 @@ class DatabaseLocalDataSource @Inject constructor(
         return try {
             notesDao.insertNote(note)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "insertNote failed", e)
             0
         }
     }
@@ -32,7 +36,8 @@ class DatabaseLocalDataSource @Inject constructor(
         return try {
             notesDao.updateNote(note)
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "updateNote failed", e)
             false
         }
     }
@@ -41,7 +46,8 @@ class DatabaseLocalDataSource @Inject constructor(
         return try {
             notesDao.deleteNoteById(id)
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "deleteNoteById failed", e)
             false
         }
     }

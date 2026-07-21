@@ -36,7 +36,7 @@ fun TagItem(
         ),
         modifier = modifier
             .padding(vertical = 8.dp)
-            .alpha(if (item.isVisible) 1f else 0.6f), // Напівпрозорість для прихованих тегів
+            .alpha(if (item.isVisible) 1f else 0.6f), // Semi-transparency for hidden tags
         border = null,
     ) {
         Row(
@@ -52,7 +52,7 @@ fun TagItem(
                 )
             )
 
-            // Іконка для прихованих тегів
+            // Icon for hidden tags
             if (!item.isVisible) {
                 Icon(
                     painter = painterResource(R.drawable.ic_unvisible),

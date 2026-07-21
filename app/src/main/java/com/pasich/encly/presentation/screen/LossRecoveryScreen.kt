@@ -98,7 +98,7 @@ fun LossRecoveryScreen(
 
             Spacer(modifier = Modifier.height(60.dp))
 
-            // Кнопка з Hold-to-Activate
+            // Hold-to-Activate button
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

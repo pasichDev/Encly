@@ -1,6 +1,6 @@
 package com.pasich.encly.domain.usecase.note
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.repository.NotesRepository
 import javax.inject.Inject
@@ -14,7 +14,7 @@ class UpdateNoteTrashStatusUseCase @Inject constructor(
             val tNote = targetNote.copy(isTrash = isTrash)
             repository.updateNote(tNote)
         } catch (e: Exception) {
-            Log.e("NoteToTrashUserCase", "Error: ${e.message}")
+            AppLogger.e("NoteToTrashUserCase", "Error: ${e.message}")
             false
         }
     }

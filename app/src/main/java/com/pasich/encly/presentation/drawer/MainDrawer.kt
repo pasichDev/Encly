@@ -82,24 +82,24 @@ fun MainDrawer(
     val showTasks by settingsViewModel.showTasksFlow.collectAsState()
     val drawerWidth = getDrawerWidth()
 
-    // Стан для пошуку
+    // State for search
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
 
-    // Збереження недавніх пошукових запитів (можна винести в ViewModel)
+    // Storing recent search queries (can be moved into the ViewModel)
     var recentSearches by rememberSaveable { mutableStateOf(listOf<String>()) }
 
-    // Додавання до недавніх пошуків при пошуку
+    // Add to recent searches when searching
     fun addToRecentSearches(query: String) {
         if (query.isNotBlank() && !recentSearches.contains(query)) {
-            recentSearches = listOf(query) + recentSearches.take(4) // Зберігаємо тільки 5 останніх
+            recentSearches = listOf(query) + recentSearches.take(4) // Keep only the last 5
         }
     }
 
-    // Отримуємо нотатки для пошуку
+    // Get the notes for searching
     val state by noteListViewModel.state.collectAsStateWithLifecycle()
 
-    // Фільтровані нотатки на основі пошукового запиту
+    // Notes filtered based on the search query
     val filteredNotes = remember(searchQuery, state.notes) {
         if (searchQuery.isBlank()) {
             emptyList()
@@ -163,7 +163,7 @@ fun MainDrawer(
         )
     }
 
-    /*  // Динамічно формуємо список елементів залежно від налаштувань та авторизації
+    /*  // Dynamically build the list of items depending on settings and authorization
 val items = listOfNotNull(
     NavigationItem(tagsTitle, R.drawable.ic_tags, badgeCount = totalTags),
     if (!showTasks) NavigationItem(
@@ -240,7 +240,7 @@ val items = listOfNotNull(
             tonalElevation = 4.dp,
             shape = RoundedCornerShape(16.dp),
             content = {
-                // Контент результатів пошуку
+                // Search results content
                 AnimatedVisibility(
                     visible = filteredNotes.isNotEmpty(),
                     enter = fadeIn(animationSpec = tween(300)),
@@ -268,7 +268,7 @@ val items = listOfNotNull(
                             )
                         }
 
-                        // Показуємо індикатор, якщо є ще результати
+                        // Show an indicator if there are more results
                         if (filteredNotes.size == 5) {
                             item {
                                 Box(
@@ -290,7 +290,7 @@ val items = listOfNotNull(
                     }
                 }
 
-                // Показуємо повідомлення, якщо немає результатів
+                // Show a message if there are no results
                 AnimatedVisibility(
                     visible = searchQuery.isNotBlank() && filteredNotes.isEmpty(),
                     enter = fadeIn(animationSpec = tween(300)),
@@ -328,7 +328,7 @@ val items = listOfNotNull(
                     }
                 }
 
-                // Показуємо повідомлення, якщо користувач нічого не ввів
+                // Show a message if the user hasn't entered anything
                 AnimatedVisibility(
                     visible = searchQuery.isEmpty(),
                     enter = fadeIn(animationSpec = tween(300)),
@@ -427,11 +427,11 @@ private fun SearchResultItem(
         ) {
 
 
-            // Контент нотатки
+            // Note content
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Заголовок нотатки
+                // Note title
                 HighlightedText(
                     text = title,
                     searchQuery = searchQuery,
@@ -442,7 +442,7 @@ private fun SearchResultItem(
                     maxLines = 1
                 )
 
-                // Превью контенту, якщо він є
+                // Content preview, if any
                 if (content.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     HighlightedText(

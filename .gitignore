@@ -1,6 +1,5 @@
 *.iml
 .gradle
-gradlew
 
 /local.properties
 /.idea
@@ -12,3 +11,12 @@ gradlew
 local.properties
 /app/schemas
 .kotlin
+
+# Local-only planning docs — keep on disk, never commit
+/ROADMAP.md
+/TEST_MATRIX.md
+
+# Release signing — never commit
+keystore.properties
+*.jks
+*.keystore

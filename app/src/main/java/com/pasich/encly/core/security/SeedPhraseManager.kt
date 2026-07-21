@@ -12,27 +12,35 @@ import com.pasich.encly.core.security.SecurityConstants.ENCRYPTED_BLOCK_KEY_TWO
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.KeyStore
 import java.security.MessageDigest
+import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
+import javax.crypto.Mac
 import javax.crypto.SecretKey
-import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
 enum class SaltData {
-    DATABASE, AUTH, MEDIA
+    DATABASE, AUTH
 }
 
 object SecurityConstants {
     const val ENCRYPTED_BLOCK_KEY = "encrypted_seed_block"
 
-    // Обманка для верифікації чи користувач самстворив ключ якщо ENCRYPTED_BLOCK_KEY == ENCRYPTED_BLOCK_KEY_TWO то ручне налаштування
+    // Decoy for verifying whether the user created the key themselves: if ENCRYPTED_BLOCK_KEY == ENCRYPTED_BLOCK_KEY_TWO then it was set up manually
     const val ENCRYPTED_BLOCK_KEY_TWO = "encrypted_seed_block_two"
 }
 
+/**
+ * Manages the BIP39 seed phrase that anchors all data encryption.
+ *
+ * The seed's SHA-256 hash is sealed with an AndroidKeyStore AES-GCM key and stored
+ * in SharedPreferences. Per-type data keys are derived from that hash via HKDF-SHA256
+ * using a per-install random salt. Losing the seed makes the data unrecoverable by
+ * design (zero-knowledge model).
+ */
 @Singleton
 class SeedPhraseManager @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -45,6 +53,9 @@ class SeedPhraseManager @Inject constructor(
 
         const val GCM_TAG_LENGTH = 128
         const val IV_LENGTH = 12
+
+        /** SharedPreferences key for the per-install random HKDF salt. */
+        const val KDF_SALT_KEY = "kdf_salt_v2"
     }
 
 
@@ -78,10 +89,10 @@ class SeedPhraseManager @Inject constructor(
         return (keyStore.getEntry(KEY_ALIAS, null) as KeyStore.SecretKeyEntry).secretKey
     }
 
-    /** Генерує нову 12-слівну сид-фразу */
+    /** Generates a new 12-word seed phrase. */
     fun generateMnemonic(): MnemonicCode = MnemonicCode(WordCount.COUNT_12)
 
-    /** Валідує фразу (кидає виняток якщо недійсна) */
+    /** Validates the phrase (throws an exception if invalid). */
     fun isValidMnemonic(phrase: CharArray): Boolean = try {
         MnemonicCode(phrase).validate()
         true
@@ -89,13 +100,13 @@ class SeedPhraseManager @Inject constructor(
         false
     }
 
-    /** Обчислює SHA-256 хеш фрази */
+    /** Computes the SHA-256 hash of the phrase. */
     fun hashMnemonic(phrase: CharArray): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")
         return digest.digest(String(phrase).toByteArray(Charsets.UTF_8))
     }
 
-    /** Шифрує хеш + IV разом і зберігає в SharedPreferences */
+    /** Encrypts the hash + IV together and stores them in SharedPreferences. */
     fun storeSeedHash(phrase: CharArray, typeKey: String): Boolean {
         val hash = hashMnemonic(phrase)
 
@@ -105,7 +116,7 @@ class SeedPhraseManager @Inject constructor(
             val iv = cipher.iv
             val encrypted = cipher.doFinal(hash)
 
-            // Об’єднуємо IV + зашифрований хеш
+            // Combine IV + encrypted hash
             val combined = ByteArray(iv.size + encrypted.size).apply {
                 System.arraycopy(iv, 0, this, 0, iv.size)
                 System.arraycopy(encrypted, 0, this, iv.size, encrypted.size)
@@ -117,17 +128,19 @@ class SeedPhraseManager @Inject constructor(
                 putString(typeKey, base64)
             }
             if (typeKey == ENCRYPTED_BLOCK_KEY) {
-                // Зберігаємо Hmac для майбутньої перевірки
+                // Store the HMAC for future verification
                 hmacIntegrityManager.storeHmac(hash)
             }
             return true
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
             return false
+        } finally {
+            // Do NOT clear `phrase` — the caller may reuse it (saveKeysStore calls this twice).
+            SensitiveDataCleaner.clear(hash)
         }
     }
 
-    /** 🧠 Перевіряє фразу, розшифровуючи блок з SharedPreferences */
+    /** 🧠 Verifies the phrase by decrypting the block from SharedPreferences. */
     fun verifyMnemonic(phrase: CharArray): Boolean {
         val base64 = prefs.getString(ENCRYPTED_BLOCK_KEY, null) ?: return false
         return try {
@@ -143,7 +156,10 @@ class SeedPhraseManager @Inject constructor(
             val decryptedHash = cipher.doFinal(encrypted)
 
             val inputHash = hashMnemonic(phrase)
-            inputHash.contentEquals(decryptedHash)
+            val matches = inputHash.contentEquals(decryptedHash)
+            SensitiveDataCleaner.clear(decryptedHash)
+            SensitiveDataCleaner.clear(inputHash)
+            matches
         } catch (_: Exception) {
             false
         } finally {
@@ -153,83 +169,101 @@ class SeedPhraseManager @Inject constructor(
 
 
     /**
-     * Повертає SecretKey для шифрування даних, базуючись на хеші сид-фрази (розшифрованому)
-     * та переданій солі.
+     * Returns an AES-256 key for the given data type, derived from the seed-phrase
+     * hash via HKDF-SHA256 (RFC 5869) with a per-install random salt.
      *
-     * @param @salt Сіль, яка використовується для генерації унікального ключа для конкретного типу даних
-     * @return SecretKey для AES шифрування
-     * @throws IllegalStateException якщо хеш сид-фрази не збережено або не вдалося розшифрувати
+     * The IKM (seed hash) already carries high entropy (a 12-word BIP39 phrase ≈ 128
+     * bits), so HKDF is a better and faster fit here than PBKDF2/Argon2. Keys for
+     * different data types are separated by `info = saltType.name`.
+     *
+     * NOTE: changing this derivation makes data encrypted with the old scheme unreadable.
+     *
+     * @throws IllegalStateException if the seed hash is missing or cannot be decrypted
      */
     fun getEncryptionKeyForData(saltType: SaltData): SecretKey {
-        val slay = "ABCDGHFJKALDGFHJBASOKPDNNCVSH*(E"
-
-        // Формуємо сіль у байтах, додаючи потрібну кількість символів з slay
-        val saltBytes = when (saltType) {
-            SaltData.DATABASE -> saltType.name.toByteArray(Charsets.UTF_8) + slay.take(3)
-                .toByteArray(Charsets.UTF_8)
-
-            SaltData.AUTH -> saltType.name.toByteArray(Charsets.UTF_8) + slay.take(7)
-                .toByteArray(Charsets.UTF_8)
-
-            SaltData.MEDIA -> saltType.name.toByteArray(Charsets.UTF_8) + slay.take(1)
-                .toByteArray(Charsets.UTF_8)
-        }
-
-        // Розшифровуємо хеш сид-фрази (має бути байтовий масив)
-        val decryptedHash = decryptSeedHash(ENCRYPTED_BLOCK_KEY)
+        val ikm = decryptSeedHash(ENCRYPTED_BLOCK_KEY)
             ?: throw IllegalStateException("Cannot decrypt seed hash")
+        val salt = getOrCreateKdfSalt()
+        val info = saltType.name.toByteArray(Charsets.UTF_8)
 
-        // Перетворюємо байти у CharArray (припустимо, що decryptedHash - це UTF-8 рядок)
-        val passwordChars = String(decryptedHash, Charsets.UTF_8).toCharArray()
+        val okm = hkdfSha256(ikm = ikm, salt = salt, info = info, length = 32)
+        SensitiveDataCleaner.clear(ikm)
 
-        // Створюємо специфікацію для PBKDF2
-        val specPbkdf2 = PBEKeySpec(passwordChars, saltBytes, 10000, 256)
+        val key = SecretKeySpec(okm, "AES")
+        SensitiveDataCleaner.clear(okm)
+        return key
+    }
 
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val tmp = factory.generateSecret(specPbkdf2)
+    /** Returns (creating on first use) the 16-byte per-install random HKDF salt. */
+    private fun getOrCreateKdfSalt(): ByteArray {
+        prefs.getString(KDF_SALT_KEY, null)?.let {
+            return Base64.decode(it, Base64.NO_WRAP)
+        }
+        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        prefs.edit { putString(KDF_SALT_KEY, Base64.encodeToString(salt, Base64.NO_WRAP)) }
+        return salt
+    }
 
-        SensitiveDataCleaner.clear(decryptedHash)
-        SensitiveDataCleaner.clear(passwordChars)
-        SensitiveDataCleaner.clear(saltBytes)
-
-        // Повертаємо SecretKeySpec для AES
-        return SecretKeySpec(tmp.encoded, "AES")
+    /**
+     * HKDF-SHA256 (RFC 5869). A single expand round suffices for length ≤ 32,
+     * since an HMAC-SHA256 block is 32 bytes.
+     */
+    private fun hkdfSha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
+        require(length in 1..32) { "This HKDF impl supports 1..32 output bytes" }
+        val mac = Mac.getInstance("HmacSHA256")
+        // Extract: PRK = HMAC(salt, IKM)
+        mac.init(SecretKeySpec(salt, "HmacSHA256"))
+        val prk = mac.doFinal(ikm)
+        // Expand: T(1) = HMAC(PRK, info || 0x01)
+        mac.init(SecretKeySpec(prk, "HmacSHA256"))
+        mac.update(info)
+        mac.update(0x01.toByte())
+        val okm = mac.doFinal().copyOf(length)
+        SensitiveDataCleaner.clear(prk)
+        return okm
     }
 
 
-    /** Чи збережено хеш сідфрази */
+    /** Whether the seed-phrase hash is stored. */
     fun hasStoredSeed(): Boolean = prefs.contains(ENCRYPTED_BLOCK_KEY)
 
 
     /**
-     * Верифікації збереженого ключа за допомогою HMAC
-     * Використовується для захисту від пошкодження додатку
+     * Verifies the stored key using HMAC.
+     * Used to protect against corruption/tampering of the app data.
      */
     fun verificationKeyData(): Boolean {
         val hash = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false
         return !hmacIntegrityManager.isHashTampered(hash)
     }
 
-    /** Очищення збережених даних */
-    fun clearStoredSeed() {
-        prefs.edit {
-            remove(ENCRYPTED_BLOCK_KEY)
+    /**
+     * Full wipe for unrecoverable-loss reset: clears all seed prefs (hashes, KDF salt),
+     * deletes the Keystore master key, and wipes the integrity HMAC. After this the app
+     * starts fresh from onboarding.
+     */
+    fun wipe() {
+        prefs.edit { clear() }
+        try {
+            keyStore.deleteEntry(KEY_ALIAS)
+        } catch (_: Exception) {
         }
+        hmacIntegrityManager.wipe()
     }
 
 
     /**
-     * Перевіряє, чи сид-фраза була створена вручну користувачем.
-     * Якщо значення `ENCRYPTED_BLOCK_KEY` і `ENCRYPTED_BLOCK_KEY_TWO` однакові — користувач не вводив фразу.
-     * Якщо різні — користувач ввів власну фразу.
+     * Tells whether the seed phrase was created by the user (USER_MANAGED).
      *
-     * @return true якщо фраза створена вручну, false якщо ні
+     * Onboarding stores both blocks equal for user-managed (`saveKeysStore(target, target)`)
+     * and two different random phrases for auto-managed (`saveKeysStore()`).
+     * Hence: equal blocks ⇒ user-created (true), different ⇒ auto-generated (false).
      */
     fun isUserManuallyCreatedKeyByDecryption(): Boolean {
-        val auto = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false
-        val manual = decryptSeedHash(ENCRYPTED_BLOCK_KEY_TWO) ?: return false
+        val block = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false
+        val blockTwo = decryptSeedHash(ENCRYPTED_BLOCK_KEY_TWO) ?: return false
 
-        return !auto.contentEquals(manual)
+        return block.contentEquals(blockTwo)
     }
 
     private fun decryptSeedHash(key: String): ByteArray? {

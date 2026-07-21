@@ -24,19 +24,3 @@ fun NavGraphBuilder.animationScreens(
     popExitTransition = { defaultScreenExitAnimation() },
     content = content
 )
-
-fun NavGraphBuilder.slideInComposable(
-    route: String,
-    arguments: List<NamedNavArgument> = emptyList(),
-    deepLinks: List<NavDeepLink> = emptyList(),
-    content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit
-) = composable(
-    route = route,
-    arguments = arguments,
-    deepLinks = deepLinks,
-    enterTransition = { slideScreenEnterAnimation() },
-    exitTransition = { defaultScreenExitAnimation() },
-    popEnterTransition = { defaultScreenEnterAnimation() },
-    popExitTransition = { slideScreenExitAnimation() },
-    content = content
-)

@@ -45,7 +45,7 @@ fun FontSizeSlider(
             value = currentSize.toFloat(),
             onValueChange = { onSizeChange(it.toInt()) },
             valueRange = 10f..32f,
-            steps = 21, // 22 кроки від 10 до 32
+            steps = 21, // 22 steps from 10 to 32
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)

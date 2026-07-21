@@ -46,22 +46,22 @@ fun TaskItem(
     onAddToCalendar: ((Task) -> Unit)? = null,
     enabled: Boolean = true
 ) {
-    // Состояние для анимации исчезновения
+    // State for the disappearance animation
     var isRemoving by remember(task.id) { mutableStateOf(false) }
     var shouldComplete by remember(task.id) { mutableStateOf(false) }
 
-    // Анимация исчезновения
+    // Disappearance animation
     val animationProgress by animateFloatAsState(
         targetValue = if (isRemoving) 0f else 1f,
         animationSpec = tween(durationMillis = 400),
         label = "task_removal_animation"
     )
 
-    // Обработка завершения анимации
+    // Handling the animation completion
     LaunchedEffect(shouldComplete) {
         if (shouldComplete) {
             isRemoving = true
-            delay(400) // Ждем завершения анимации
+            delay(400) // Wait for the animation to finish
             onTaskToggle(task.id, true)
             shouldComplete = false
             isRemoving = false
@@ -101,10 +101,10 @@ fun TaskItem(
                     checked = task.isCompleted,
                     onCheckedChange = { isChecked ->
                         if (isChecked && !task.isCompleted) {
-                            // Запускаем анимацию исчезновения для завершения задачи
+                            // Start the disappearance animation to complete the task
                             shouldComplete = true
                         } else if (!isChecked && task.isCompleted) {
-                            // Для отмены завершения сразу вызываем onTaskToggle
+                            // To undo completion, call onTaskToggle immediately
                             onTaskToggle(task.id, false)
                         }
                     },
@@ -184,7 +184,7 @@ fun TaskItem(
 }
 
 
-// Кнопка додавання до календаря (тільки для активних завдань)
+// Add-to-calendar button (only for active tasks)
 /*  if (!task.isCompleted && onAddToCalendar != null) {
       IconButton(
           onClick = { onAddToCalendar(task) },

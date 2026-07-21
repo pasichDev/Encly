@@ -37,7 +37,6 @@ fun PrioritySelectionDialog(
         text = {
             Column {
                 PriorityValues.priorities.forEach { priorityData ->
-                    // val (bgColor, contentColor, icon, label) = quad
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

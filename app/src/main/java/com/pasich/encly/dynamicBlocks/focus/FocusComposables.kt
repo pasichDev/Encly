@@ -6,7 +6,7 @@ import androidx.compose.ui.focus.FocusRequester
 
 
 /**
- * Composable для реєстрації FocusRequester в централізованому менеджері
+ * Composable for registering a FocusRequester in the centralized manager.
  */
 @Composable
 fun RegisterFocusRequester(

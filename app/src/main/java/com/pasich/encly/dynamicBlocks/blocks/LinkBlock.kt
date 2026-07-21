@@ -2,20 +2,15 @@ package com.pasich.encly.dynamicBlocks.blocks
 
 import android.net.Uri
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -35,39 +30,25 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockActions
 import com.pasich.encly.dynamicBlocks.BlockRemoveAction
 import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.jsoup.Jsoup
 
 
-suspend fun fetchMetadata(url: String): LinkDataBlock {
-    return withContext(Dispatchers.IO) {
-        try {
-            val document = Jsoup.connect(url).get()
-            val title = document.title().takeIf { it.isNotBlank() } ?: "No Title"
-            val imageUrl = document.select("meta[property=og:image]").attr("content")
-                .takeIf { it.isNotBlank() } ?: ""
-
-            LinkDataBlock(
-                title = title, imageUrl = imageUrl, url = url, isError = false
-            )
-        } catch (_: Exception) {
-            LinkDataBlock(
-                title = "", imageUrl = "", url = url, isError = true
-            )
-        }
-    }
+/**
+ * Offline-first link block: stores only the user-entered URL and its host as the title.
+ * No network requests (no og:image preview) — the app is fully offline.
+ */
+private fun buildLinkData(rawUrl: String): LinkDataBlock {
+    val url = rawUrl.trim()
+    val title = Uri.parse(url).host ?: url
+    return LinkDataBlock(title = title, imageUrl = "", url = url, isError = false)
 }
 
 @Composable
@@ -75,22 +56,8 @@ fun LinkBlock(
     block: Block.LinkBlock, blockActions: BlockActions?, onClick: () -> Unit, modifier: Modifier, isLocked: Boolean = false
 ) {
     val urlModel by block.block.collectAsState()
-    var isLoading by remember { mutableStateOf(false) }
     val fq = remember { FocusRequester() }
     val fontStyles = rememberFontStyles()
-
-    LaunchedEffect(urlModel) {
-        if (urlModel.url.isNotBlank() && urlModel.title.isEmpty()) {
-            isLoading = true
-            try {
-                block.block.value = fetchMetadata(urlModel.url)
-            } catch (_: Exception) {
-                block.block.value = urlModel.copy(isError = true)
-            } finally {
-                isLoading = false
-            }
-        }
-    }
 
     if (urlModel.url.isBlank()) {
         var inputText by remember { mutableStateOf("") }
@@ -119,7 +86,7 @@ fun LinkBlock(
                     contentDescription = "Add URL",
                     modifier = Modifier.clickable(enabled = !isLocked) {
                         if (inputText.isNotBlank()) {
-                            block.block.value = LinkDataBlock(url = inputText)
+                            block.block.value = buildLinkData(inputText)
                         }
                     })
             },
@@ -147,26 +114,14 @@ fun LinkBlock(
                 .fillMaxWidth()
                 .height(80.dp)
                 .padding(vertical = 8.dp)
-                .clickable(enabled = !isLoading) {
-                    onClick()
-                }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
+                .clickable { onClick() },
+                shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.onSurface
             )
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 when {
-                    isLoading -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-
                     urlModel.isError -> {
                         Column(
                             modifier = Modifier
@@ -197,56 +152,35 @@ fun LinkBlock(
                     }
 
                     else -> {
-                        Row(
-                            modifier = Modifier.padding(0.dp),
-                            horizontalArrangement = Arrangement.Start
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(15.dp)
                         ) {
+                            val domain = Uri.parse(urlModel.url).host ?: urlModel.url
 
-
-                            AsyncImage(
-                                model = urlModel.imageUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(80.dp),
-                                contentScale = ContentScale.Crop
+                            Text(
+                                text = urlModel.title.takeIf { it.isNotBlank() } ?: domain,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontFamily = fontStyles.families.heading,
+                                    fontSize = fontStyles.sizes.textBlock
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
 
-                            Column(
-                                horizontalAlignment = Alignment.Start,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(15.dp)
-                            ) {
-                                Text(
-                                    text = urlModel.title,
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontFamily = fontStyles.families.heading,
-                                        fontSize = fontStyles.sizes.textBlock
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-
-                                val domain = Uri.parse(urlModel.url).host ?: urlModel.url
-
-                                Text(
-                                    text = domain,
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontFamily = fontStyles.families.body,
-                                        fontSize = fontStyles.sizes.textBlock * 0.85f
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-
-                            }
-
-
+                            Text(
+                                text = urlModel.url,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontFamily = fontStyles.families.body,
+                                    fontSize = fontStyles.sizes.textBlock * 0.85f
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }

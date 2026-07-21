@@ -1,16 +1,16 @@
 package com.pasich.encly.dynamicBlocks.focus
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 
 /**
- * Утиліти для обробки клавіатурних подій в блочному редакторі
+ * Utilities for handling keyboard events in the block editor.
  */
 object KeyboardUtils {
     /**
-     * Обробляє клавіатурні події для навігації між блоками
+     * Handles keyboard events for navigation between blocks.
      */
     fun handleKeyEvent(
         event: KeyEvent,
@@ -39,17 +39,17 @@ object KeyboardUtils {
             }
 
             event.key == Key.Enter -> {
-                Log.d("KeyboardUtils", "Enter pressed")
+                AppLogger.d("KeyboardUtils", "Enter pressed")
                 onEnterPressed()
             }
 
             event.key.keyCode == Key.Backspace.keyCode -> {
-                Log.d(
+                AppLogger.d(
                     "KeyboardUtils",
                     "Backspace pressed (keyCode=${event.nativeKeyEvent.keyCode}), text empty: ${text.isEmpty()}",
                 )
                 if (text.isEmpty()) {
-                    Log.d("KeyboardUtils", "Calling onBackspaceEmpty")
+                    AppLogger.d("KeyboardUtils", "Calling onBackspaceEmpty")
                     onBackspaceEmpty()
                     true
                 } else {

@@ -2,22 +2,22 @@ package com.pasich.encly.core.security.wrapper
 
 object StringWrapper {
 
-    private const val PREFIX = "W" // формальний префікс для розпізнавання формату
+    private const val PREFIX = "W" // formal prefix for recognizing the format
     private const val SALT_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
-    // Генерація випадкової солі певної довжини
+    // Generate a random salt of a given length
     private fun generateSalt(length: Int): String {
         return (1..length).map { SALT_CHARS.random() }.joinToString("")
     }
 
-    // Функція обгортки ключа
+    // Key-wrapping function
     fun wrapMasterKey(masterKey: String): String {
-        val saltLength = (4..8).random() // Випадкове число від 4 до 8
+        val saltLength = (4..8).random() // Random number from 4 to 8
         val salt = generateSalt(saltLength)
         return PREFIX + saltLength + salt + masterKey
     }
 
-    // Функція розгортки ключа
+    // Key-unwrapping function
     fun unwrapMasterKey(wrappedKey: String): String? {
         if (!wrappedKey.startsWith(PREFIX)) return null
         return try {

@@ -12,7 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 
 /**
- * Создает кисть с эффектом мерцания для скелетона загрузки
+ * Creates a shimmer-effect brush for the loading skeleton
  */
 @Composable
 fun ShimmerBrush(

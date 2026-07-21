@@ -1,16 +1,21 @@
 package com.pasich.encly.data.database
 
 import android.content.Context
-import android.util.Log
 import androidx.room.Room
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 import javax.crypto.SecretKey
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Owns the SQLCipher-encrypted Room database and its unlocked lifecycle.
+ * The database is opened with a seed-derived passphrase; until unlocked, callers
+ * must not persist real data through it.
+ */
 @Singleton
 class SecureDatabaseManager @Inject constructor(
     @param:ApplicationContext private val context: Context
@@ -19,23 +24,22 @@ class SecureDatabaseManager @Inject constructor(
     private var database: AppDatabase? = null
     private var isUnlocked = false
 
+    /**
+     * Returns the unlocked encrypted database. Fails loudly if accessed before
+     * unlock: silently handing back a throwaway in-memory database would route real
+     * writes into volatile, unencrypted storage and lose them. Callers must ensure
+     * the DB is unlocked (post-auth) before touching any DAO.
+     */
     fun getDatabase(): AppDatabase {
-        return if (isUnlocked && database != null) {
-            Log.d(TAG, "Повертаємо реальну розблоковану базу")
-            database!!
-        } else {
-            Log.w(TAG, "База ще не розблокована — повертаємо тимчасову in-memory базу")
-            Room.inMemoryDatabaseBuilder(
-                context.applicationContext, AppDatabase::class.java
-            ).build()
-        }
+        return database?.takeIf { isUnlocked }
+            ?: throw IllegalStateException("Database accessed before unlock — call unlockDatabase() first")
     }
 
 
     @Synchronized
     fun unlockDatabase(secretKey: SecretKey): Boolean {
         if (isUnlocked) {
-            Log.d(TAG, "База вже розблокована")
+            AppLogger.d(TAG, "Database already unlocked")
             return true
         }
 
@@ -44,88 +48,100 @@ class SecureDatabaseManager @Inject constructor(
             val rawPassphrase = secretKey.encoded
             val passphraseForCheck = rawPassphrase.copyOf()
             val passphraseForRoom = rawPassphrase.copyOf()
-            Log.d(TAG, "Ключ отримано. Довжина: ${rawPassphrase.size} байт")
+            AppLogger.d(TAG, "Key received. Length: ${rawPassphrase.size} bytes")
 
             val dbFile = context.getDatabasePath(DB_NAME)
-            Log.d(TAG, "Шлях до бази: ${dbFile.absolutePath}")
+            AppLogger.d(TAG, "Database path: ${dbFile.absolutePath}")
 
             val state = SQLCipherUtils.getDatabaseState(context, DB_NAME)
-            Log.d(TAG, "Стан бази перед розблокуванням: $state")
+            AppLogger.d(TAG, "Database state before unlock: $state")
 
 
 
             if (state == SQLCipherUtils.State.ENCRYPTED) {
-                Log.d(TAG, "База існує і зашифрована. Перевіряємо чи відкривається")
+                AppLogger.d(TAG, "Database exists and is encrypted. Verifying it opens")
                 if (!canOpenDatabase(passphraseForCheck)) {
-                    Log.e(TAG, "Неможливо відкрити зашифровану базу з цим ключем")
+                    AppLogger.e(TAG, "Cannot open the encrypted database with this key")
                     return false
                 }
             }
 
             if (state == SQLCipherUtils.State.DOES_NOT_EXIST) {
-                Log.d(TAG, "База не існує. Створюємо нову зашифровану базу")
+                AppLogger.d(TAG, "Database does not exist. Creating a new encrypted database")
             }
 
-            Log.d(TAG, "Ініціалізуємо Room з шифруванням")
+            AppLogger.d(TAG, "Initializing Room with encryption")
             database = Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, DB_NAME
-            ).openHelperFactory(SupportFactory(passphraseForRoom))
+            ).openHelperFactory(SupportOpenHelperFactory(passphraseForRoom))
                 .fallbackToDestructiveMigration(false).build()
 
             isUnlocked = true
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Не вдалося розблокувати базу", e)
+            AppLogger.e(TAG, "Failed to unlock the database", e)
             false
         }
     }
 
     private fun canOpenDatabase(passphrase: ByteArray): Boolean {
         return try {
-            Log.d(TAG, "Перевірка відкриття бази через SupportFactory")
+            AppLogger.d(TAG, "Checking database open via SupportOpenHelperFactory")
 
-            val factory = SupportFactory(passphrase)
+            val factory = SupportOpenHelperFactory(passphrase)
             val db = Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, DB_NAME
             ).openHelperFactory(factory).build()
 
-            // Тригерим ініціалізацію
+            // Trigger initialization
             db.openHelper.readableDatabase
             db.close()
 
-            Log.d(TAG, "Базу відкрито успішно")
+            AppLogger.d(TAG, "Database opened successfully")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Помилка відкриття бази", e)
+            AppLogger.e(TAG, "Error opening the database", e)
             false
         }
     }
 
     private fun deleteDatabaseFiles() {
         try {
-            Log.d(TAG, "Видаляємо файли бази даних")
+            AppLogger.d(TAG, "Deleting database files")
             val dbFile = context.getDatabasePath(DB_NAME)
             val wal = File(dbFile.absolutePath + "-wal")
             val shm = File(dbFile.absolutePath + "-shm")
             dbFile.delete()
             wal.delete()
             shm.delete()
-            Log.d(TAG, "Файли бази даних успішно видалено")
+            AppLogger.d(TAG, "Database files deleted successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Не вдалося видалити базу", e)
+            AppLogger.e(TAG, "Failed to delete database files", e)
         }
     }
 
     fun reset() {
-        Log.d(TAG, "Скидаємо базу")
+        AppLogger.d(TAG, "Resetting database")
         database?.close()
         database = null
         isUnlocked = false
-        Log.d(TAG, "Базу скинуто")
+        AppLogger.d(TAG, "Database reset")
+    }
+
+    /** Full wipe: closes the database and deletes its files from disk. */
+    fun wipe() {
+        reset()
+        deleteDatabaseFiles()
     }
 
     companion object {
         private const val TAG = "SecureDatabaseManager"
         private const val DB_NAME = "database.db"
+
+        init {
+            // sqlcipher-android does not auto-load its native library (unlike the old
+            // android-database-sqlcipher, which did it in SQLiteDatabase.loadLibs()).
+            System.loadLibrary("sqlcipher")
+        }
     }
 }

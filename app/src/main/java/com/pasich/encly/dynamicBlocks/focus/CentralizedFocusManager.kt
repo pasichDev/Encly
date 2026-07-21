@@ -1,6 +1,6 @@
 package com.pasich.encly.dynamicBlocks.focus
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.focus.FocusRequester
@@ -10,30 +10,39 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Централізований менеджер фокуса для блочного редактора
- * Управляє фокусом, навігацією між блоками та синхронізацією станів
+ * Centralized focus manager for the block editor.
+ * Manages focus, navigation between blocks, and state synchronization.
  */
 class CentralizedFocusManager {
-    // Карта FocusRequester'ів для кожного блока
+    // Map of FocusRequesters for each block
     private val focusRequesters = mutableStateMapOf<Int, FocusRequester>()
 
-    // Поточний індекс блока з фокусом
+    // Current index of the focused block
     private val _currentFocusIndex = MutableStateFlow(-1)
     val currentFocusIndex: StateFlow<Int> = _currentFocusIndex.asStateFlow()
 
-    // Останній блок, з яким взаємодіяв користувач
+    // The last block the user interacted with
     private val _lastInteractionIndex = MutableStateFlow(0)
     val lastInteractionIndex: StateFlow<Int> = _lastInteractionIndex.asStateFlow()
 
-    // Прапорець, чи потрібно ігнорувати фокус (для деяких типів блоків)
+    // Flag indicating whether focus should be ignored (for some block types)
     private val _shouldIgnoreFocus = mutableStateOf(false)
     val shouldIgnoreFocus: Boolean get() = _shouldIgnoreFocus.value
 
-    // Callback для встановлення курсора в кінець тексту
+    // Owned scope for deferred focus work; cancelled in dispose() so retry coroutines
+    // don't outlive the owning ViewModel (avoids a leak / focus mutation after teardown).
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    /** Cancels any in-flight focus coroutines. Call from the owner's onCleared(). */
+    fun dispose() {
+        scope.cancel()
+    }
+
+    // Callback for moving the cursor to the end of the text
     private val cursorToEndCallbacks = mutableStateMapOf<Int, () -> Unit>()
 
     /**
-     * Реєструє FocusRequester для блока
+     * Registers a FocusRequester for a block.
      */
     fun registerFocusRequester(
         index: Int,
@@ -43,7 +52,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Реєструє callback для встановлення курсора в кінець тексту
+     * Registers a callback for moving the cursor to the end of the text.
      */
     fun registerCursorToEndCallback(
         index: Int,
@@ -53,7 +62,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Видаляє FocusRequester для блока
+     * Removes the FocusRequester for a block.
      */
     fun unregisterFocusRequester(index: Int) {
         focusRequesters.remove(index)
@@ -61,7 +70,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Перевіряє, чи може блок отримати фокус (чи є text field який можна редагувати)
+     * Checks whether a block can receive focus (whether it has an editable text field).
      */
     fun isBlockFocusable(
         index: Int,
@@ -73,35 +82,35 @@ class CentralizedFocusManager {
         return when (block::class.java.simpleName) {
             "TextBlock", "QuoteBlock", "HBlock" -> true
             "LinkBlock" -> {
-                // LinkBlock може отримати фокус тільки якщо URL порожній (режим введення)
+                // LinkBlock can receive focus only if the URL is empty (input mode)
                 try {
-                    // Отримуємо доступ до поля block через рефлексію
+                    // Access the block field via reflection
                     val blockField = block.javaClass.getDeclaredField("block")
                     blockField.isAccessible = true
                     val blockValue = blockField.get(block)
 
-                    // Отримуємо MutableStateFlow
+                    // Get the MutableStateFlow
                     val valueMethod = blockValue.javaClass.getMethod("getValue")
                     val linkDataBlock = valueMethod.invoke(blockValue)
 
-                    // Перевіряємо чи URL порожній
+                    // Check whether the URL is empty
                     val urlField = linkDataBlock.javaClass.getDeclaredField("url")
                     urlField.isAccessible = true
                     val url = urlField.get(linkDataBlock) as? String
 
                     url?.isBlank() == true
                 } catch (e: Exception) {
-                    Log.w("CentralizedFocusManager", "Failed to check LinkBlock focusability: ${e.message}")
+                    AppLogger.w("CentralizedFocusManager", "Failed to check LinkBlock focusability: ${e.message}")
                     false
                 }
             }
-            "ListBlock" -> true // ListBlock має власну логіку фокуса
-            else -> false // SeparatorBlock, ImageBlock тощо не можуть отримати фокус
+            "ListBlock" -> true // ListBlock has its own focus logic
+            else -> false // SeparatorBlock, ImageBlock, etc. cannot receive focus
         }
     }
 
     /**
-     * Знаходить попередній блок, який може отримати фокус
+     * Finds the previous block that can receive focus.
      */
     fun findPreviousFocusableBlock(
         currentIndex: Int,
@@ -112,7 +121,7 @@ class CentralizedFocusManager {
                 return i
             }
         }
-        // Якщо не знайшли попереднього фокусабельного блока, повертаємо перший доступний
+        // If no previous focusable block was found, return the first available one
         for (i in 0 until blocks.size) {
             if (isBlockFocusable(i, blocks)) {
                 return i
@@ -122,26 +131,26 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Встановлює фокус на блок з заданим індексом
+     * Sets focus on the block with the given index.
      */
     fun setFocus(
         index: Int,
         ignore: Boolean = false,
         moveCursorToEnd: Boolean = false,
     ) {
-        Log.d(
+        AppLogger.d(
             "CentralizedFocusManager",
             "setFocus called: index=$index, ignore=$ignore, moveCursorToEnd=$moveCursorToEnd, currentFocus=${_currentFocusIndex.value}",
         )
 
         if (index < 0) {
-            Log.d("CentralizedFocusManager", "setFocus: invalid index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: invalid index $index")
             return
         }
 
-        // Предотвращаем рекурсию - не устанавливаем фокус если он уже на этом индексе
+        // Prevent recursion - do not set focus if it is already on this index
         if (_currentFocusIndex.value == index && !ignore) {
-            Log.d("CentralizedFocusManager", "setFocus: focus already on index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: focus already on index $index")
             return
         }
 
@@ -149,21 +158,21 @@ class CentralizedFocusManager {
         _shouldIgnoreFocus.value = ignore
 
         if (!ignore) {
-            Log.d("CentralizedFocusManager", "setFocus: requesting focus for index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: requesting focus for index $index")
             requestFocusInternal(index)
 
-            // Встановлюємо курсор в кінець тексту якщо потрібно
+            // Move the cursor to the end of the text if needed
             if (moveCursorToEnd) {
                 cursorToEndCallbacks[index]?.invoke()
-                Log.d("CentralizedFocusManager", "setFocus: moved cursor to end for index $index")
+                AppLogger.d("CentralizedFocusManager", "setFocus: moved cursor to end for index $index")
             }
         } else {
-            Log.d("CentralizedFocusManager", "setFocus: ignoring focus request for index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: ignoring focus request for index $index")
         }
     }
 
     /**
-     * Встановлює останній індекс взаємодії
+     * Sets the last interaction index.
      */
     fun setLastInteraction(index: Int) {
         if (index >= 0) {
@@ -172,7 +181,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Обновляет текущий индекс фокуса без вызова requestFocus (для избежания рекурсии)
+     * Updates the current focus index without calling requestFocus (to avoid recursion).
      */
     fun updateCurrentFocusIndex(index: Int) {
         if (index >= 0) {
@@ -181,26 +190,26 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Навігація до наступного блока
+     * Navigation to the next block.
      */
     fun moveToNext(totalBlocks: Int): Boolean {
         val current = _currentFocusIndex.value
         val next = (current + 1).coerceAtMost(totalBlocks - 1)
 
-        Log.d("CentralizedFocusManager", "moveToNext: current=$current, next=$next, totalBlocks=$totalBlocks")
+        AppLogger.d("CentralizedFocusManager", "moveToNext: current=$current, next=$next, totalBlocks=$totalBlocks")
 
         if (next != current) {
             setFocus(next)
             setLastInteraction(next)
-            Log.d("CentralizedFocusManager", "moveToNext: success, moved to $next")
+            AppLogger.d("CentralizedFocusManager", "moveToNext: success, moved to $next")
             return true
         }
-        Log.d("CentralizedFocusManager", "moveToNext: failed, already at last block")
+        AppLogger.d("CentralizedFocusManager", "moveToNext: failed, already at last block")
         return false
     }
 
     /**
-     * Навігація до попереднього блока
+     * Navigation to the previous block.
      */
     fun moveToPrevious(blocks: List<Any>? = null): Boolean {
         val current = _currentFocusIndex.value
@@ -220,7 +229,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Очищає фокус
+     * Clears focus.
      */
     fun clearFocus() {
         _currentFocusIndex.value = -1
@@ -228,30 +237,30 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Перевіряє, чи готовий FocusRequester для блока
+     * Checks whether the FocusRequester for a block is ready.
      */
     fun isFocusReady(index: Int): Boolean = focusRequesters.containsKey(index)
 
     /**
-     * Внутрішній метод для запиту фокуса
+     * Internal method for requesting focus.
      */
     private fun requestFocusInternal(index: Int) {
-        Log.d("CentralizedFocusManager", "requestFocusInternal: index=$index, hasFocusRequester=${focusRequesters.containsKey(index)}")
+        AppLogger.d("CentralizedFocusManager", "requestFocusInternal: index=$index, hasFocusRequester=${focusRequesters.containsKey(index)}")
         focusRequesters[index]?.let { focusRequester ->
             try {
-                Log.d("CentralizedFocusManager", "requestFocusInternal: requesting focus for index $index")
+                AppLogger.d("CentralizedFocusManager", "requestFocusInternal: requesting focus for index $index")
                 focusRequester.requestFocus()
-                Log.d("CentralizedFocusManager", "requestFocusInternal: focus request completed for index $index")
+                AppLogger.d("CentralizedFocusManager", "requestFocusInternal: focus request completed for index $index")
             } catch (e: Exception) {
-                Log.e("CentralizedFocusManager", "requestFocusInternal: error requesting focus for index $index: ${e.message}")
+                AppLogger.e("CentralizedFocusManager", "requestFocusInternal: error requesting focus for index $index: ${e.message}")
             }
         } ?: run {
-            Log.w("CentralizedFocusManager", "requestFocusInternal: no FocusRequester found for index $index")
+            AppLogger.w("CentralizedFocusManager", "requestFocusInternal: no FocusRequester found for index $index")
         }
     }
 
     /**
-     * Очищає всі дані
+     * Clears all data.
      */
     fun cleanup() {
         focusRequesters.clear()
@@ -261,30 +270,30 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Відкладене встановлення фокуса на блок з заданим індексом
+     * Deferred setting of focus on the block with the given index.
      */
     fun delayedSetFocus(
         index: Int,
         delayMillis: Long,
         ignore: Boolean = false,
     ) {
-        Log.d("CentralizedFocusManager", "delayedSetFocus called: index=$index, delay=$delayMillis, ignore=$ignore")
+        AppLogger.d("CentralizedFocusManager", "delayedSetFocus called: index=$index, delay=$delayMillis, ignore=$ignore")
 
         if (index < 0) {
-            Log.d("CentralizedFocusManager", "delayedSetFocus: invalid index $index")
+            AppLogger.d("CentralizedFocusManager", "delayedSetFocus: invalid index $index")
             return
         }
 
-        // Використовуємо корутину для відкладеного виконання
-        CoroutineScope(Dispatchers.Main).launch {
+        // Use a coroutine for deferred execution
+        scope.launch {
             delay(delayMillis)
             setFocus(index, ignore)
-            Log.d("CentralizedFocusManager", "delayedSetFocus: focus set to index $index after delay")
+            AppLogger.d("CentralizedFocusManager", "delayedSetFocus: focus set to index $index after delay")
         }
     }
 
     /**
-     * Встановлює фокус на блок з заданим індексом з відкладенням та повторними спробами
+     * Sets focus on the block with the given index, with a delay and retry attempts.
      */
     fun setFocusWithRetry(
         index: Int,
@@ -292,31 +301,31 @@ class CentralizedFocusManager {
         maxRetries: Int = 3,
         delayMs: Long = 100L,
     ) {
-        Log.d("CentralizedFocusManager", "setFocusWithRetry called: index=$index, ignore=$ignore, maxRetries=$maxRetries")
+        AppLogger.d("CentralizedFocusManager", "setFocusWithRetry called: index=$index, ignore=$ignore, maxRetries=$maxRetries")
 
         if (index < 0) {
-            Log.d("CentralizedFocusManager", "setFocusWithRetry: invalid index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: invalid index $index")
             return
         }
 
-        CoroutineScope(Dispatchers.Main).launch {
+        scope.launch {
             var attempts = 0
             while (attempts < maxRetries) {
-                Log.d("CentralizedFocusManager", "setFocusWithRetry: attempt ${attempts + 1}/$maxRetries for index $index")
+                AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: attempt ${attempts + 1}/$maxRetries for index $index")
 
                 if (focusRequesters.containsKey(index)) {
-                    Log.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester found, setting focus")
+                    AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester found, setting focus")
                     setFocus(index, ignore)
                     break
                 } else {
-                    Log.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester not ready, waiting...")
+                    AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester not ready, waiting...")
                     delay(delayMs)
                     attempts++
                 }
             }
 
             if (attempts >= maxRetries) {
-                Log.w("CentralizedFocusManager", "setFocusWithRetry: failed to set focus after $maxRetries attempts for index $index")
+                AppLogger.w("CentralizedFocusManager", "setFocusWithRetry: failed to set focus after $maxRetries attempts for index $index")
             }
         }
     }

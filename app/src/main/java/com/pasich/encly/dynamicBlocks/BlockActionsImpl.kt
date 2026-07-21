@@ -1,6 +1,6 @@
 package com.pasich.encly.dynamicBlocks
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 
 class BlockActionsImpl(
@@ -9,12 +9,12 @@ class BlockActionsImpl(
     val viewModel: EditNoteViewModel,
 ) : BlockActions {
     override fun onAddParagraph() {
-        Log.d("BlockActionsImpl", "onAddParagraph called: index=$index")
+        AppLogger.d("BlockActionsImpl", "onAddParagraph called: index=$index")
         viewModel.addBlockAfter(index, BlockType.TEXT)
     }
 
     override fun onRemoveBlock(blockRemoveAction: BlockRemoveAction) {
-        Log.d("BlockActionsImpl", "onRemoveBlock called: action=$blockRemoveAction, blockType=${block::class.simpleName}, index=$index")
+        AppLogger.d("BlockActionsImpl", "onRemoveBlock called: action=$blockRemoveAction, blockType=${block::class.simpleName}, index=$index")
 
         if (blockRemoveAction == BlockRemoveAction.REMOVE_BACKSPACE_LIST) {
             if (viewModel.blocks.size > 1) {
@@ -26,7 +26,7 @@ class BlockActionsImpl(
     }
 
     override fun onReplaceBlock(newBlock: Block) {
-        Log.d(
+        AppLogger.d(
             "BlockActionsImpl",
             "onReplaceBlock called: oldType=${block::class.simpleName}, newType=${newBlock::class.simpleName}, index=$index",
         )
@@ -52,30 +52,30 @@ class BlockActionsImpl(
     }
 
     /**
-     * Обробляє навігацію між блоками
+     * Handles navigation between blocks.
      */
     override fun navigateToNext(): Boolean {
-        Log.d(
+        AppLogger.d(
             "BlockActionsImpl",
             "navigateToNext called: current block index=$index, current focus=${viewModel.focusManager.currentFocusIndex.value}, blocks.size=${viewModel.blocks.size}",
         )
         val result = viewModel.focusManager.moveToNext(viewModel.blocks.size)
-        Log.d("BlockActionsImpl", "navigateToNext result: $result")
+        AppLogger.d("BlockActionsImpl", "navigateToNext result: $result")
         return result
     }
 
     /**
-     * Обробляє навігацію до попереднього блока
+     * Handles navigation to the previous block.
      */
     override fun navigateToPrevious(): Boolean {
-        Log.d("BlockActionsImpl", "navigateToPrevious called: current index=$index")
+        AppLogger.d("BlockActionsImpl", "navigateToPrevious called: current index=$index")
         val result = viewModel.focusManager.moveToPrevious(viewModel.blocks)
-        Log.d("BlockActionsImpl", "navigateToPrevious result: $result")
+        AppLogger.d("BlockActionsImpl", "navigateToPrevious result: $result")
         return result
     }
 
     /**
-     * Встановлює фокус на поточний блок
+     * Sets focus on the current block.
      */
     fun requestFocus() {
         viewModel.setFocusedBlockIndex(index)

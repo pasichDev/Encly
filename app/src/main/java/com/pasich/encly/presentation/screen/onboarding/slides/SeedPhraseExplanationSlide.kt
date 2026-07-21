@@ -59,7 +59,7 @@ fun SeedPhraseExplanationSlide(
     onBack: () -> Unit
 ) {
     SlideLayout {
-        // Заголовок з анімацією
+        // Animated title
         AnimatedText(
             text = "🔐 Що таке сід-фраза?",
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
@@ -79,7 +79,7 @@ fun SeedPhraseExplanationSlide(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Анімовані картки з поясненнями
+        // Animated explanation cards
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -107,12 +107,12 @@ fun SeedPhraseExplanationSlide(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Попередження
+        // Warning
         AnimatedWarningCard()
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Кнопки навігації
+        // Navigation buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -170,7 +170,7 @@ private fun AnimatedFeatureCard(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Іконка з глоу-ефектом
+                // Icon with a glow effect
                 val infiniteTransition = rememberInfiniteTransition(label = "glow")
                 val glowAlpha by infiniteTransition.animateFloat(
                     initialValue = 0.2f,
@@ -186,7 +186,7 @@ private fun AnimatedFeatureCard(
                     modifier = Modifier.size(48.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Глоу-ефект
+                    // Glow effect
                     Box(
                         modifier = Modifier
                             .size(48.dp)
@@ -202,7 +202,7 @@ private fun AnimatedFeatureCard(
                             )
                     )
 
-                    // Іконка
+                    // Icon
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
@@ -213,7 +213,7 @@ private fun AnimatedFeatureCard(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // Текст
+                // Text
                 Column {
                     Text(
                         text = title,

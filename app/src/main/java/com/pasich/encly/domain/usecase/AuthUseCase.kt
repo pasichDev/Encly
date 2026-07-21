@@ -13,24 +13,24 @@ class AuthUseCase @Inject constructor(
 ) {
 
     /**
-     * Зберігає PIN-код як конфігурацію авторизації через authenticationManager.
+     * Saves the PIN code as the authentication configuration via authenticationManager.
      *
-     * @param pinCode PIN-код, який слід зберегти
-     * @return Result.success("Okay") — якщо збереження пройшло успішно,
-     *         Result.failure — якщо виникла помилка під час збереження або шифрування.
+     * @param pinCode the PIN code to save
+     * @return Result.success("Okay") if saving succeeded,
+     *         Result.failure if an error occurred during saving or encryption.
      */
 
     fun saveAuthConfigPinCode(
-        pinCode: Int,
+        pinCode: String,
     ): Result<Boolean> {
         return try {
             if (authenticationManager.getAuthType() == AuthType.PIN) {
                 return Result.failure(
-                    IllegalStateException("Помилка. Авторизацію вже ввімкнено")
+                    IllegalStateException("PIN authentication is already enabled")
                 )
             }
 
-            if (authenticationManager.activatePinAuth(pinCode.toString())) {
+            if (authenticationManager.activatePinAuth(pinCode)) {
                 Result.success(true)
             } else {
                 Result.failure(

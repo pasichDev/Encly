@@ -53,7 +53,7 @@ class NoteListViewModel @Inject constructor(
         viewModelScope.launch {
             getNoteSortOptionUseCase().collect { sortOption ->
                 _state.update { it.copy(noteSortOption = sortOption) }
-                // Перезавантажуємо нотатки з новим сортуванням
+                // Reload the notes with the new sorting
                 reloadCurrentView()
             }
         }

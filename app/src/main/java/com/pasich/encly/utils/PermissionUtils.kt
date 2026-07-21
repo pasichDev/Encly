@@ -29,7 +29,7 @@ import androidx.core.content.ContextCompat
 
 @Composable
 fun NotificationPermissionHandler(
-    requestPermissionTrigger: Int = 0, // змінюється при повторному запиті
+    requestPermissionTrigger: Int = 0, // changes on a repeated request
     onPermissionResult: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
@@ -45,7 +45,7 @@ fun NotificationPermissionHandler(
         }
     }
 
-    // Перевіряємо дозвіл при першому запуску
+    // Check the permission on first launch
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val hasPermission = ContextCompat.checkSelfPermission(
@@ -58,7 +58,7 @@ fun NotificationPermissionHandler(
         }
     }
 
-    // Обробляємо ручний запит дозволу
+    // Handle the manual permission request
     LaunchedEffect(requestPermissionTrigger) {
         if (requestPermissionTrigger > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             when {
@@ -144,7 +144,7 @@ fun NotificationPermissionHandler(
                 TextButton(
                     onClick = {
                         permissionDenied = false
-                        // Відкриваємо налаштування додатка
+                        // Open the app settings
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                             data = Uri.fromParts("package", context.packageName, null)
                         }

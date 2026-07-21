@@ -54,7 +54,7 @@ fun CompletionSlide(
     onComplete: () -> Unit, securityType: SecurityType? = null
 ) {
     SlideLayout {
-        // Анімація успіху
+        // Success animation
         var showSuccess by remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
             delay(300)
@@ -114,7 +114,7 @@ fun CompletionSlide(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Мотиваційна картка
+        // Motivational card
         AnimatedMotivationCard()
 
         Spacer(modifier = Modifier.weight(1f))
@@ -159,7 +159,7 @@ private fun AnimatedMotivationCard() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Lucide.Lamp, // або твоя SVG-ікона
+                    imageVector = Lucide.Lamp, // or your own SVG icon
                     contentDescription = null,
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary

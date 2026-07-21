@@ -3,19 +3,19 @@ package com.pasich.encly.dynamicBlocks
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * Интерфейс для блоков, содержащих текст
- * Используется для единообразной обработки текстовых блоков разных типов
+ * Interface for blocks that contain text.
+ * Used for uniform handling of text blocks of different types.
  */
 interface TextualBlock {
     val text: MutableStateFlow<String>
     
     /**
-     * Проверяет пуст ли текст в блоке
+     * Checks whether the block's text is empty.
      */
     fun isEmpty(): Boolean = text.value.isEmpty()
     
     /**
-     * Добавляет текст в конец
+     * Appends text to the end.
      */
     fun appendText(addition: String) {
         text.value = text.value + addition

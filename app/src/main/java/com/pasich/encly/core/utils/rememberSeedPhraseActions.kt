@@ -24,7 +24,7 @@ class SeedPhraseActions(
     private val onCopySuccess: () -> Unit
 ) {
     /**
-     * Копіює сід-фразу в буфер обміну
+     * Copies the seed phrase to the clipboard.
      */
     fun copyToClipboard(seedPhrase: String) {
         val clipboard = ContextCompat.getSystemService(context, ClipboardManager::class.java)

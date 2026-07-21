@@ -19,18 +19,22 @@ import com.pasich.encly.receiver.TaskNotificationReceiver
 object NotificationHelper {
     
     const val CHANNEL_ID = "task_reminders"
-    const val CHANNEL_NAME = "Нагадування завдань"
-    const val CHANNEL_DESCRIPTION = "Сповіщення про завдання"
-    
+
     const val ACTION_COMPLETE_TASK = "com.pasich.encly.COMPLETE_TASK"
     const val ACTION_SNOOZE_TASK = "com.pasich.encly.SNOOZE_TASK"
     const val EXTRA_TASK_ID = "task_id"
+    const val EXTRA_TASK_TITLE = "task_title"
+    const val EXTRA_TASK_DESCRIPTION = "task_description"
     
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = CHANNEL_DESCRIPTION
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notification_channel_name),
+                importance
+            ).apply {
+                description = context.getString(R.string.notification_channel_desc)
                 enableVibration(true)
                 setShowBadge(true)
             }
@@ -41,61 +45,70 @@ object NotificationHelper {
         }
     }
     
-    fun showTaskNotification(context: Context, task: Task) {
+    fun showTaskNotification(context: Context, task: Task) =
+        showTaskNotification(context, task.id, task.title, task.description)
+
+    /**
+     * Shows a reminder notification from primitive fields, so it can be built without
+     * reading the encrypted database (which may be locked when the alarm fires). The
+     * snooze action carries the title/description so it can reschedule without the DB.
+     */
+    fun showTaskNotification(context: Context, taskId: Long, title: String, description: String?) {
         if (!hasNotificationPermission(context)) {
             return
         }
-        
+
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-        
+
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context, task.id.toInt(), intent,
+            context, taskId.toInt(), intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        
+
         // Action buttons
         val completeIntent = Intent(context, TaskNotificationReceiver::class.java).apply {
             action = ACTION_COMPLETE_TASK
-            putExtra(EXTRA_TASK_ID, task.id)
+            putExtra(EXTRA_TASK_ID, taskId)
         }
         val completePendingIntent = PendingIntent.getBroadcast(
-            context, (task.id * 2).toInt(), completeIntent,
+            context, (taskId * 2).toInt(), completeIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        
+
         val snoozeIntent = Intent(context, TaskNotificationReceiver::class.java).apply {
             action = ACTION_SNOOZE_TASK
-            putExtra(EXTRA_TASK_ID, task.id)
+            putExtra(EXTRA_TASK_ID, taskId)
+            putExtra(EXTRA_TASK_TITLE, title)
+            putExtra(EXTRA_TASK_DESCRIPTION, description)
         }
         val snoozePendingIntent = PendingIntent.getBroadcast(
-            context, (task.id * 2 + 1).toInt(), snoozeIntent,
+            context, (taskId * 2 + 1).toInt(), snoozeIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        
+
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("Нагадування про завдання")
-            .setContentText(task.title)
-            .setStyle(NotificationCompat.BigTextStyle()
-                .bigText(task.description ?: task.title))
+            .setContentTitle(context.getString(R.string.reminder_notification_title))
+            .setContentText(title)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(description ?: title))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .addAction(
                 R.drawable.ic_launcher,
-                "Виконано",
+                context.getString(R.string.reminder_action_done),
                 completePendingIntent
             )
             .addAction(
                 R.drawable.ic_launcher,
-                "Через 10 хв",
+                context.getString(R.string.reminder_action_snooze),
                 snoozePendingIntent
             )
-        
+
         with(NotificationManagerCompat.from(context)) {
-            notify(task.id.toInt(), builder.build())
+            notify(taskId.toInt(), builder.build())
         }
     }
     

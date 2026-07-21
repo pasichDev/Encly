@@ -7,11 +7,13 @@ import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.domain.usecase.AuthUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
@@ -26,48 +28,39 @@ class SecuritySettingsViewModel @Inject constructor(
     val uiState: StateFlow<SecuritySettingsUiState> = _uiState.asStateFlow()
 
     init {
-        observeSecurityState()
+        loadSecurityState()
     }
 
-    private fun observeSecurityState() {
-
-        val authSettings = securityManager.getSettingsAuth()
-        val biometricAvailable = biometricManager.isStrongBiometricAvailable()
-
-        _uiState.value = _uiState.value.copy(
-            isUserCreatedSeedKey = authSettings.isUserCreatedSeedKey,
-            authType = authSettings.authType,
-            biometricEnable = authSettings.isBiometricEnabled,
-            isBiometricAvailable = biometricAvailable
-        )
-
+    // Reads auth settings off the main thread (getSettingsAuth does Keystore decrypts).
+    private fun loadSecurityState() {
+        viewModelScope.launch {
+            val authSettings = withContext(Dispatchers.IO) { securityManager.getSettingsAuth() }
+            val biometricAvailable = biometricManager.isStrongBiometricAvailable()
+            _uiState.value = _uiState.value.copy(
+                isUserCreatedSeedKey = authSettings.isUserCreatedSeedKey,
+                authType = authSettings.authType,
+                biometricEnable = authSettings.isBiometricEnabled,
+                isBiometricAvailable = biometricAvailable
+            )
+        }
     }
 
 
-    fun activationPinAuth(target: Int) {
+    fun activationPinAuth(target: String) {
         viewModelScope.launch {
             delay(1500)
-            authUseCase.saveAuthConfigPinCode(target).onSuccess { seedPhrase ->
+            // PBKDF2 PIN hashing runs off the main thread.
+            withContext(Dispatchers.Default) { authUseCase.saveAuthConfigPinCode(target) }.onSuccess {
                 _uiState.value = _uiState.value.copy(
                     authType = AuthType.PIN
                 )
-
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
-                    error = error.message ?: "Помилка створення сід-фрази"
+                    error = error.message ?: "Failed to set PIN"
                 )
             }
-
-
         }
-
     }
-
-    fun toggleAuthType(authType: AuthType, callback: () -> Unit){
-
-    }
-
-    //TODO Не онвлюєтся стан після включення та помилки
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)

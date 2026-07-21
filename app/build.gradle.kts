@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
@@ -5,6 +7,15 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+}
+
+// Static analysis. Existing findings are captured in detekt-baseline.xml so only
+// NEW issues fail; run `./gradlew :app:detektBaseline` to refresh the snapshot.
+detekt {
+    buildUponDefaultConfig = true
+    parallel = true
+    baseline = file("$projectDir/detekt-baseline.xml")
 }
 
 android {
@@ -41,11 +52,29 @@ android {
 
 
 
+    // Release signing is read from an untracked keystore.properties (or Play upload key).
+    // When absent (e.g. CI without secrets), the release build is simply left unsigned.
+    signingConfigs {
+        create("release") {
+            val propsFile = rootProject.file("keystore.properties")
+            if (propsFile.exists()) {
+                val props = Properties().apply { propsFile.inputStream().use { load(it) } }
+                storeFile = props.getProperty("storeFile")?.let { file(it) }
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
+            if (rootProject.file("keystore.properties").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -137,12 +166,6 @@ dependencies {
     // Biometric Authentication
     implementation("androidx.biometric:biometric:1.1.0")
 
-    // Google Identity Services & Credential Manager
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-    implementation("com.google.auth:google-auth-library-oauth2-http:1.37.1")
-
     // Dagger Hilt - Use KSP consistently
     implementation("com.google.dagger:hilt-android:2.56.2")
     ksp("com.google.dagger:hilt-android-compiler:2.56.2")
@@ -153,13 +176,13 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
-    implementation("org.jsoup:jsoup:1.21.1")
 
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
     // Cipher
-    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation("net.zetetic:sqlcipher-android:4.6.1")
+    implementation("androidx.sqlite:sqlite-ktx:2.5.2")
     implementation("cash.z.ecc.android:kotlin-bip39:1.0.9")
 
 
@@ -168,10 +191,6 @@ dependencies {
 
     // Compose Text with Google Fonts
     implementation("androidx.compose.ui:ui-text-google-fonts:1.8.3")
-
-    // Google Play In-App Update
-    implementation("com.google.android.play:app-update:2.1.0")
-    implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     implementation("com.composables:icons-lucide:1.1.0")
 

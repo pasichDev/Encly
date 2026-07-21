@@ -40,7 +40,7 @@ fun TextBlock(
     val fontStyles = rememberFontStyles()
     val oldText = remember { mutableStateOf(text) }
 
-    // Для підтримки встановлення курсора в кінець тексту
+    // To support placing the cursor at the end of the text
     var textFieldValue by remember {
         mutableStateOf(
             TextFieldValue(
@@ -49,7 +49,7 @@ fun TextBlock(
         )
     }
 
-    // Синхронізуємо textFieldValue з block.text
+    // Synchronize textFieldValue with block.text
     LaunchedEffect(text) {
         if (textFieldValue.text != text) {
             textFieldValue =
@@ -61,7 +61,7 @@ fun TextBlock(
         }
     }
 
-    // Реєструємо callback для встановлення курсора в кінець тексту
+    // Register a callback for placing the cursor at the end of the text
     LaunchedEffect(index) {
         if (blockActions is com.pasich.encly.dynamicBlocks.BlockActionsImpl) {
             blockActions.viewModel.focusManager.registerCursorToEndCallback(index) {

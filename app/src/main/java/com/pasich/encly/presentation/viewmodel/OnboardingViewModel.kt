@@ -14,14 +14,14 @@ import javax.inject.Inject
 
 enum class SecurityType {
     /**
-     * Користувач створив власну сід-фразу і керує нею самостійно.
-     * Потребує введення сід-фрази для розблокування після перезапуску.
+     * The user created their own seed phrase and manages it themselves.
+     * Requires entering the seed phrase to unlock after a restart.
      */
     USER_MANAGED,
 
     /**
-     * Використовується автоматична fallback сід-фраза.
-     * Система автоматично розблоковується без участі користувача.
+     * An automatic fallback seed phrase is used.
+     * The system unlocks automatically without user involvement.
      */
     AUTO_MANAGED
 }
@@ -38,24 +38,24 @@ class OnboardingViewModel @Inject constructor(
     val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
 
     /*
-    * Переходить до слайду створення сід-фрази (не створює ключ)
+    * Navigates to the seed phrase creation slide (does not create a key)
     */
     fun navigateToSeedPhraseCreation() {
         _uiState.value = _uiState.value.copy(
             securityType = SecurityType.USER_MANAGED
         )
-        // Переходимо до слайду показу сід-фрази (третя сторінка)
+        // Navigate to the seed phrase display slide (third page)
         _currentPage.value = 2
         createUserManagedSecurity()
     }
 
     /**
-     * Створює власну сід-фразу (тепер викликається на слайді сід-фрази)
+     * Creates the user's own seed phrase (now invoked on the seed phrase slide)
      */
     fun createUserManagedSecurity() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            delay(1300L) // Спеціально затримуємо для плавності
+            delay(1300L) // Intentional delay for smoothness
 
             onboardingUseCase.getMnemonicCode().onSuccess { seedPhrase ->
                 _uiState.value = _uiState.value.copy(
@@ -70,7 +70,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     /**
-     * Пропускає створення сід-фрази (auto-managed режим)
+     * Skips seed phrase creation (auto-managed mode)
      */
     fun skipSecuritySetup() {
         viewModelScope.launch {
@@ -80,6 +80,9 @@ class OnboardingViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false, securityType = SecurityType.AUTO_MANAGED, isComplete = false
                 )
+                // Advance only after keys are stored and the DB is unlocked (avoids a race
+                // where the completion slide renders before setup finishes).
+                nextPage()
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false, error = error.message ?: "Помилка ініціалізації системи"
@@ -103,7 +106,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     /**
-     * Завершує весь процес онбордінгу та вносить відмітку про його показ
+     * Completes the entire onboarding process and records that it was shown
      */
     fun completeOnboarding() {
         _uiState.value = _uiState.value.copy(isComplete = true)
@@ -111,13 +114,13 @@ class OnboardingViewModel @Inject constructor(
     }
 
     /**
-     * Починає верифікацію сід-фрази
+     * Starts seed phrase verification
      */
     fun startSeedPhraseVerification() {
         val words = _uiState.value.phase.split(" ").filter { it.isNotBlank() }
         if (words.size < 3) return
 
-        // Вибираємо 3 випадкових слова для перевірки
+        // Pick 3 random words to verify
         val randomIndices = words.indices.shuffled().take(3)
         val verificationWords = randomIndices.map { index ->
             index to words[index]
@@ -132,13 +135,13 @@ class OnboardingViewModel @Inject constructor(
     }
 
     /**
-     * Оновлює відповідь користувача для конкретного слова
+     * Updates the user's answer for a specific word
      */
     fun updateUserAnswer(wordIndex: Int, answer: String) {
         val currentAnswers = _uiState.value.userAnswers.toMutableMap()
         currentAnswers[wordIndex] = answer.trim().lowercase()
 
-        // Перевіряємо, чи всі відповіді правильні
+        // Check whether all answers are correct
         val verificationWords = _uiState.value.verificationWords
         val isComplete = verificationWords.all { (index, word) ->
             currentAnswers[index]?.equals(word.lowercase(), ignoreCase = true) == true
@@ -151,12 +154,12 @@ class OnboardingViewModel @Inject constructor(
     }
 
     /**
-     * Завершує верифікацію та переходить до наступного кроку
+     * Completes verification and moves to the next step
      */
     fun completeVerification() {
         if (_uiState.value.isVerificationComplete) {
             val target = _uiState.value.phase.toCharArray()
-            // Записуємо ключ в кейстор для його подальшого збереження
+            // Write the key to the keystore for its subsequent storage
             viewModelScope.launch {
                 onboardingUseCase.saveKeysStore(target, target)
             }
@@ -164,13 +167,13 @@ class OnboardingViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isVerificationMode = false
             )
-            // Переходимо до CompletionSlide
+            // Navigate to the CompletionSlide
             nextPage()
         }
     }
 
     /**
-     * Скасовує верифікацію та повертається до відображення сід-фрази
+     * Cancels verification and returns to displaying the seed phrase
      */
     fun cancelVerification() {
         _uiState.value = _uiState.value.copy(
@@ -189,8 +192,8 @@ class OnboardingViewModel @Inject constructor(
         val isComplete: Boolean = false,
         val securityType: SecurityType? = null,
         val isVerificationMode: Boolean = false,
-        val verificationWords: List<Pair<Int, String>> = emptyList(), // індекс слова + саме слово
-        val userAnswers: Map<Int, String> = emptyMap(), // індекс -> відповідь користувача
+        val verificationWords: List<Pair<Int, String>> = emptyList(), // word index + the word itself
+        val userAnswers: Map<Int, String> = emptyMap(), // index -> user's answer
         val isVerificationComplete: Boolean = false
     )
 }

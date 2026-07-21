@@ -60,13 +60,13 @@ fun QuoteBlock(
                 .width(4.dp)
                 .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
         )
-        // Для отслеживания предыдущего значения текста
+        // To track the previous text value
         val oldText = remember { mutableStateOf(text) }
-        
-        // Для підтримки встановлення курсора в кінець тексту
+
+        // To support placing the cursor at the end of the text
         var textFieldValue by remember { mutableStateOf(androidx.compose.ui.text.input.TextFieldValue(text)) }
-        
-        // Синхронізуємо textFieldValue з block.text
+
+        // Synchronize textFieldValue with block.text
         LaunchedEffect(text) {
             if (textFieldValue.text != text) {
                 textFieldValue = androidx.compose.ui.text.input.TextFieldValue(
@@ -76,7 +76,7 @@ fun QuoteBlock(
             }
         }
         
-        // Реєструємо callback для встановлення курсора в кінець тексту
+        // Register a callback for placing the cursor at the end of the text
         LaunchedEffect(index) {
             if (blockActions is com.pasich.encly.dynamicBlocks.BlockActionsImpl) {
                 blockActions.viewModel.focusManager.registerCursorToEndCallback(index) {
@@ -94,7 +94,7 @@ fun QuoteBlock(
             onValueChange = { newValue ->
                 textFieldValue = newValue
                 val newText = newValue.text
-                // Регистрируем изменение текста для отмены/повтора
+                // Register the text change for undo/redo
                 if (text != newText) {
                     blockActions.onTextChanged(oldText.value, newText)
                     oldText.value = newText
@@ -124,13 +124,13 @@ fun QuoteBlock(
                         },
                         onNavigateUp = { blockActions.navigateToPrevious() },
                         onNavigateDown = { 
-                            // Спробувати навігувати до наступного блока
+                            // Try to navigate to the next block
                             val navigated = blockActions.navigateToNext()
-                            // Якщо навігація неможлива (це останній блок), додати новий параграф
+                            // If navigation is not possible (this is the last block), add a new paragraph
                             if (!navigated) {
                                 blockActions.onAddParagraph()
                             }
-                            true // Завжди повертаємо true, щоб запобігти додаванню Enter
+                            true // Always return true to prevent adding an Enter
                         }
                     )
                 }

@@ -3,7 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import android.content.Context
 import android.content.Intent
 import android.provider.CalendarContract
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.data.model.Task
@@ -14,6 +14,7 @@ import com.pasich.encly.domain.usecase.task.GetCompletedTasksUseCase
 import com.pasich.encly.domain.usecase.task.GetTasksCountUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskUseCase
+import com.pasich.encly.utils.ReminderStore
 import com.pasich.encly.utils.TaskReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,7 +26,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
 
-// Фільтри для завдань
+// Filters for tasks
 data class TaskFilter(
     val id: String,
     val label: String,
@@ -37,17 +38,9 @@ data class TaskFilter(
     }
 }
 
-// Групи завдань за датами
-data class TaskGroup(
-    val title: String,
-    val tasks: List<Task>,
-    val isOverdue: Boolean = false
-)
-
 data class TasksUiState(
     val activeTasks: List<Task> = emptyList(),
     val completedTasks: List<Task> = emptyList(),
-    val taskGroups: List<TaskGroup> = emptyList(),
     val activeTasksCount: Int = 0,
     val completedTasksCount: Int = 0,
     val totalTasksCount: Int = 0,
@@ -83,7 +76,21 @@ class TasksViewModel @Inject constructor(
 
 
     init {
+        applyPendingCompletions()
         observeTasks()
+    }
+
+    /**
+     * Applies task completions that were queued from notification "Done" actions while
+     * the database was locked. Runs here because the tasks screen is reached only after
+     * the app is unlocked.
+     */
+    private fun applyPendingCompletions() {
+        viewModelScope.launch {
+            ReminderStore.drainPendingComplete(context).forEach { id ->
+                updateTaskStatusUseCase(id, true)
+            }
+        }
     }
 
     private fun createDateFilters(tasks: List<Task>): List<TaskFilter> {
@@ -139,7 +146,7 @@ class TasksViewModel @Inject constructor(
     ): List<Task> {
         var filtered = tasks
 
-        // Фільтрація за датою
+        // Filter by date
         dateFilter?.let { filter ->
             when (filter.id) {
                 "today" -> {
@@ -187,7 +194,7 @@ class TasksViewModel @Inject constructor(
             }
         }
 
-        // Фільтрація за пріоритетом
+        // Filter by priority
         priorityFilter?.let { filter ->
             when (filter.id) {
                 "priority_high" -> filtered = filtered.filter { it.priority == 2 }
@@ -209,12 +216,12 @@ class TasksViewModel @Inject constructor(
             ) { activeTasks, completedTasks, activeCount, completedCount ->
                 val currentState = _uiState.value
 
-                // Автоматично встановлюємо початковий фільтр, якщо жоден не вибраний
+                // Automatically set the initial filter if none is selected
                 val (selectedDateFilter, selectedCompletedFilter) = if (
                     currentState.selectedDateFilter == null &&
                     currentState.selectedCompletedFilter == null
                 ) {
-                    // Перевіряємо чи є завдання на сьогодні
+                    // Check whether there are tasks for today
                     val today = Calendar.getInstance().apply {
                         set(Calendar.HOUR_OF_DAY, 0)
                         set(Calendar.MINUTE, 0)
@@ -228,7 +235,7 @@ class TasksViewModel @Inject constructor(
                     }
 
                     if (todayTasks.isNotEmpty()) {
-                        // Є завдання на сьогодні - вибираємо "Сьогодні"
+                        // There are tasks for today - select "Today"
                         TaskFilter(
                             "today",
                             "Сьогодні",
@@ -236,7 +243,7 @@ class TasksViewModel @Inject constructor(
                             TaskFilter.Type.DATE
                         ) to null
                     } else {
-                        // Немає завдань на сьогодні - вибираємо "Всі завдання"
+                        // No tasks for today - select "All tasks"
                         TaskFilter(
                             "all",
                             "Всі завдання",
@@ -262,7 +269,7 @@ class TasksViewModel @Inject constructor(
                 val priorityFilters = createPriorityFilters(activeTasks)
                 val completedFilter = createCompletedFilter(completedTasks)
 
-                // Якщо вибрано фільтр виконаних, не показуємо пріоритетні фільтри
+                // If the completed filter is selected, do not show the priority filters
                 val availableFilters = if (selectedCompletedFilter != null) {
                     listOf(completedFilter)
                 } else {
@@ -278,7 +285,6 @@ class TasksViewModel @Inject constructor(
                     activeTasks = activeTasks.sortedByDescending { it.priority },
                     completedTasks = completedTasks.sortedByDescending { it.priority },
                     filteredActiveTasks = filteredTasks,
-                    taskGroups = emptyList(),
                     activeTasksCount = activeCount,
                     completedTasksCount = completedCount,
                     totalTasksCount = totalTasks,
@@ -328,7 +334,7 @@ class TasksViewModel @Inject constructor(
             )
             val taskId = addTaskUseCase(task)
 
-            // Планування нагадування якщо потрібно
+            // Schedule a reminder if needed
             if (reminderDate != null) {
                 val insertedTask = task.copy(id = taskId)
                 TaskReminderScheduler.scheduleReminder(context, insertedTask)
@@ -362,7 +368,7 @@ class TasksViewModel @Inject constructor(
 
                 updateTaskUseCase(updatedTask)
 
-                // Оновлюємо нагадування
+                // Update the reminder
                 TaskReminderScheduler.cancelReminder(context, taskId)
                 if (reminderDate != null) {
                     TaskReminderScheduler.scheduleReminder(context, updatedTask)
@@ -378,7 +384,7 @@ class TasksViewModel @Inject constructor(
         viewModelScope.launch {
             updateTaskStatusUseCase(taskId, isCompleted)
 
-            // Скасовуємо нагадування якщо завдання виконано
+            // Cancel the reminder if the task is completed
             if (isCompleted) {
                 TaskReminderScheduler.cancelReminder(context, taskId)
             }
@@ -399,9 +405,9 @@ class TasksViewModel @Inject constructor(
 
         when (filter.type) {
             TaskFilter.Type.DATE -> {
-                // Не дозволяємо скидати фільтр дати, якщо він вже вибраний
+                // Do not allow resetting the date filter if it is already selected
                 val newDateFilter = if (currentState.selectedDateFilter?.id == filter.id) {
-                    currentState.selectedDateFilter // Залишаємо вибраним
+                    currentState.selectedDateFilter // Keep it selected
                 } else {
                     filter
                 }
@@ -413,9 +419,8 @@ class TasksViewModel @Inject constructor(
 
                 _uiState.value = currentState.copy(
                     selectedDateFilter = newDateFilter,
-                    selectedCompletedFilter = null, // Скидаємо фільтр виконаних
+                    selectedCompletedFilter = null, // Reset the completed filter
                     filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                    taskGroups = emptyList()
                 )
             }
 
@@ -430,17 +435,16 @@ class TasksViewModel @Inject constructor(
 
                 _uiState.value = currentState.copy(
                     selectedPriorityFilter = newPriorityFilter,
-                    selectedCompletedFilter = null, // Скидаємо фільтр виконаних
+                    selectedCompletedFilter = null, // Reset the completed filter
                     filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                    taskGroups = emptyList()
                 )
             }
 
             TaskFilter.Type.COMPLETED -> {
-                // Не дозволяємо скидати фільтр COMPLETED, якщо він вже вибраний
+                // Do not allow resetting the COMPLETED filter if it is already selected
                 val newCompletedFilter =
                     if (currentState.selectedCompletedFilter?.id == filter.id) {
-                        currentState.selectedCompletedFilter // Залишаємо вибраним
+                        currentState.selectedCompletedFilter // Keep it selected
                     } else {
                         filter
                     }
@@ -448,7 +452,7 @@ class TasksViewModel @Inject constructor(
                 val filteredTasks = if (newCompletedFilter != null) {
                     currentState.completedTasks
                 } else {
-                    // Якщо скидаємо COMPLETED, вибираємо "Всі завдання" за замовчуванням
+                    // If resetting COMPLETED, select "All tasks" by default
                     TaskFilter(
                         "all",
                         "Всі завдання",
@@ -469,7 +473,6 @@ class TasksViewModel @Inject constructor(
                     selectedPriorityFilter = null,
                     selectedCompletedFilter = newCompletedFilter,
                     filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                    taskGroups = emptyList()
                 )
             }
         }
@@ -483,10 +486,10 @@ class TasksViewModel @Inject constructor(
                 putExtra(CalendarContract.Events.TITLE, task.title)
                 putExtra(CalendarContract.Events.DESCRIPTION, task.description ?: "")
 
-                // Якщо є дата нагадування, використовуємо її, інакше поточну дату
+                // If there is a reminder date, use it; otherwise use the current date
                 val startTime = task.reminderDate ?: System.currentTimeMillis()
                 putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime)
-                putExtra(CalendarContract.EXTRA_EVENT_END_TIME, startTime + 3600000) // +1 година
+                putExtra(CalendarContract.EXTRA_EVENT_END_TIME, startTime + 3600000) // +1 hour
 
                 putExtra(
                     CalendarContract.Events.AVAILABILITY,
@@ -496,7 +499,7 @@ class TasksViewModel @Inject constructor(
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
         } catch (e: Exception) {
-            Log.e("TasksViewModel", "Failed to add task to calendar", e)
+            AppLogger.e("TasksViewModel", "Failed to add task to calendar", e)
 
         }
     }

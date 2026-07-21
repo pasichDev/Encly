@@ -580,12 +580,11 @@ fun TagEditItem(
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 8.dp)
                 ) {
 
-                    // Иконка с ручкой перетаскивания
+                    // Icon with a drag handle
                     IconButton(
                         onClick = {},
                         modifier = Modifier
                             .size(24.dp)
-                        //  .draggableHandle()
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_drag),

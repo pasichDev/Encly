@@ -15,8 +15,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Централізований менеджер для роботи з біометричною автентифікацією
- * Об'єднує всі сценарії використання BiometricPrompt у додатку
+ * Centralized manager for biometric authentication.
+ * Consolidates all BiometricPrompt usage scenarios in the app.
  */
 @Singleton
 class BiometricManager @Inject constructor(
@@ -24,7 +24,7 @@ class BiometricManager @Inject constructor(
 ) {
 
     /**
-     * Статуси біометричної автентифікації
+     * Biometric authentication statuses.
      */
     enum class BiometricStatus {
         AVAILABLE,
@@ -37,17 +37,17 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Типи біометричного prompt'у
+     * Biometric prompt types.
      */
     enum class BiometricType {
-        APP_UNLOCK,           // Розблокування додатку
-        MASTER_KEY_ACCESS,    // Доступ до майстер-ключа
-        SETTINGS_TOGGLE,      // Увімкнення/вимкнення біометрії в налаштуваннях
-        GENERAL              // Загальне використання
+        APP_UNLOCK,           // App unlock
+        MASTER_KEY_ACCESS,    // Master key access
+        SETTINGS_TOGGLE,      // Enable/disable biometrics in settings
+        GENERAL              // General use
     }
 
     /**
-     * Результат біометричної автентифікації
+     * Biometric authentication result.
      */
     sealed class BiometricResult {
         object Success : BiometricResult()
@@ -57,7 +57,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Callback для результатів автентифікації
+     * Callback for authentication results.
      */
     interface BiometricCallback {
         fun onSuccess()
@@ -66,10 +66,7 @@ class BiometricManager @Inject constructor(
         fun onCancelled() {}
     }
 
-    /**
-     * Перевіряє доступність біометричної автентифікації
-     * TODO ПРИБРАТИ
-     */
+    /** Checks whether weak biometric authentication is available. */
     fun isBiometricAvailable(): Boolean {
         val biometricManager = AndroidBiometricManager.from(context)
         return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK)) {
@@ -79,7 +76,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Перевіряє доступність сильної біометричної автентифікації
+     * Checks whether strong biometric authentication is available.
      */
     fun isStrongBiometricAvailable(): Boolean {
         val biometricManager = AndroidBiometricManager.from(context)
@@ -90,7 +87,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Отримує детальний статус біометричної автентифікації
+     * Gets the detailed biometric authentication status.
      */
     fun getBiometricStatus(): BiometricStatus {
         val biometricManager = AndroidBiometricManager.from(context)
@@ -107,7 +104,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Створює біометричний prompt для автентифікації
+     * Creates a biometric prompt for authentication.
      */
     fun createBiometricPrompt(
         activity: FragmentActivity,
@@ -141,7 +138,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Створює prompt info в залежності від типу використання
+     * Creates prompt info depending on the usage type.
      */
     fun createPromptInfo(type: BiometricType, customConfig: PromptConfig? = null): BiometricPrompt.PromptInfo {
         val config = customConfig ?: getDefaultConfig(type)
@@ -165,7 +162,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Запускає біометричну автентифікацію
+     * Launches biometric authentication.
      */
     fun authenticate(
         activity: FragmentActivity,
@@ -189,7 +186,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Асинхронна версія автентифікації з корутинами
+     * Coroutine-based asynchronous version of authentication.
      */
     suspend fun authenticateAsync(
         activity: FragmentActivity,
@@ -220,7 +217,7 @@ class BiometricManager @Inject constructor(
     }
 
     /**
-     * Конфігурація для prompt'у
+     * Configuration for the prompt.
      */
     data class PromptConfig(
         val title: String,
@@ -230,7 +227,7 @@ class BiometricManager @Inject constructor(
     )
 
     /**
-     * Отримує дефолтну конфігурацію для кожного типу
+     * Returns the default configuration for each type.
      */
     private fun getDefaultConfig(type: BiometricType): PromptConfig {
         return when (type) {
@@ -263,7 +260,7 @@ class BiometricManager @Inject constructor(
 }
 
 /**
- * Composable helper для роботи з біометричним менеджером
+ * Composable helper for working with the biometric manager.
  */
 @Composable
 fun rememberBiometricManager(
@@ -273,7 +270,7 @@ fun rememberBiometricManager(
 }
 
 /**
- * Extension для FragmentActivity для зручного використання
+ * Extension for FragmentActivity for convenient use.
  */
 fun FragmentActivity.authenticateWithBiometric(
     biometricManager: BiometricManager,
@@ -295,7 +292,7 @@ fun FragmentActivity.authenticateWithBiometric(
 }
 
 /**
- * Coroutine extension для асинхронної автентифікації
+ * Coroutine extension for asynchronous authentication.
  */
 fun FragmentActivity.authenticateWithBiometricAsync(
     biometricManager: BiometricManager,
