@@ -94,9 +94,11 @@
 - [ ] **P1** Onboarding: додати крок вибору PIN/біометрії (зараз `SecurityChoiceSlide` лише seed vs skip).
 - [ ] **P1** `SecuritySettingsViewModel.toggleAuthType` — порожня заглушка; реалізувати + оновлення стану.
 - [x] **P1** `EditNoteBottomSheet` Delete/Duplicate підключено (Delete → в кошик, Duplicate → нова копія).
-- [~] **P1** User-facing помилки: додано для невірного PIN (LockScreen) і recovery; фейл декрипту нотатки — лишається
+- [~] **P1** User-facing помилки: додано для невірного PIN (LockScreen) і recovery. Фейл декрипту нотатки —
+  додано **guard** (`contentLoadFailed`): якщо вміст не розпарсився, `saveNote` не перезапише оригінал.
+  Явне UI-повідомлення користувачу — ще лишається.
   (зараз тихий empty-editor / dead-end — і наступний save може перезаписати нечитабельні дані).
-- [ ] **P2** `skipSecuritySetup()` race: `nextPage()` викликається синхронно до завершення async-збереження ключів.
+- [x] **P2** `skipSecuritySetup()` race виправлено: перехід сторінки тепер лише після успішного збереження ключів.
 - [ ] **P2** `SettingsActivity` рендерить `SettingsScreen(navController = null)` — навігація звідти → NPE/no-op.
 - [ ] **P2** `BiometricManager.kt:71` "TODO ПРИБРАТИ" — прибрати `isBiometricAvailable()` якщо його заміняє strong-варіант.
 

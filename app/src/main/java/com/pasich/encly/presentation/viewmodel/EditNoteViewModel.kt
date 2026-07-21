@@ -164,8 +164,12 @@ class EditNoteViewModel
         }
     }
 
+    // True when a note had stored content that could not be parsed/decrypted. Guards
+    // saveNote so a subsequent edit does not overwrite the unreadable original.
+    private var contentLoadFailed = false
+
     /**
-     * Загружает блоки из JSON в заметке
+     * Loads the note's blocks from its JSON content.
      */
     private fun loadBlocksFromNote(note: Note) {
         if (note.value.isNotEmpty()) {
@@ -175,12 +179,15 @@ class EditNoteViewModel
                     _blocks.clear()
                     _blocks.addAll(loadedBlocks)
                     updateUndoRedoState()
+                } else {
+                    // Non-empty stored content but nothing parsed back — treat as a
+                    // load failure and protect the original from being overwritten.
+                    contentLoadFailed = true
+                    Log.e("EditNoteViewModel", "Note content present but failed to parse")
                 }
             } catch (e: Exception) {
-                Log.e(
-                    "EditNoteViewModel",
-                    "Error converting blocks from JSON: ${e.message}",
-                )
+                contentLoadFailed = true
+                Log.e("EditNoteViewModel", "Error converting blocks from JSON: ${e.message}")
             }
         }
     }
@@ -237,6 +244,11 @@ class EditNoteViewModel
 
     fun saveNote(actionButton: Boolean = false, saveBackupVersion: Boolean = false) {
         if (isReadTrashOnly) return
+        // Never overwrite content that failed to load/decrypt.
+        if (contentLoadFailed) {
+            _status.value = SaveStatusNote.OLD
+            return
+        }
         _status.value = SaveStatusNote.SAVING
 
         val currentNote = if (saveBackupVersion) _state.value.backupNote else _state.value.note

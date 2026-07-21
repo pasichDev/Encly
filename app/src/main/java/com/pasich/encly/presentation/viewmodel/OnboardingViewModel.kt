@@ -80,6 +80,9 @@ class OnboardingViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false, securityType = SecurityType.AUTO_MANAGED, isComplete = false
                 )
+                // Advance only after keys are stored and the DB is unlocked (avoids a race
+                // where the completion slide renders before setup finishes).
+                nextPage()
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false, error = error.message ?: "Помилка ініціалізації системи"

@@ -188,11 +188,8 @@ fun OnboardingScreen(
                     page == 1 -> {
                         SecurityChoiceSlide(
                             onCreateSeedPhrase = { viewModel.navigateToSeedPhraseCreation() },
-                            onSkipSecurity = {
-                                viewModel.skipSecuritySetup()
-                                // Переходимо до завершальної сторінки для AUTO режиму
-                                viewModel.nextPage()
-                            },
+                            // skipSecuritySetup advances the page itself once setup completes.
+                            onSkipSecurity = { viewModel.skipSecuritySetup() },
                         )
                     }
 
