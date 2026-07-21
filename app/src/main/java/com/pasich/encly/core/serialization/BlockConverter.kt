@@ -7,11 +7,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 
 /**
- * Конвертер для преобразования блоков в JSON и обратно
- * Использует кастомные сериализаторы и десериализаторы
+ * Converter for transforming blocks to JSON and back.
+ * Uses custom serializers and deserializers.
  */
 object BlockConverter {
-    // Создаем Gson-инстанс с кастомными адаптерами для сериализации
+    // Create a Gson instance with custom serialization adapters
     private val gson by lazy {
         GsonBuilder()
             .registerTypeAdapter(Block::class.java, BlockSerializer())
@@ -22,23 +22,23 @@ object BlockConverter {
     }
 
     /**
-     * Преобразует список блоков в JSON-представление
-     * @param blocks список блоков для сериализации
-     * @return JSON-строка
+     * Converts a list of blocks into a JSON representation.
+     * @param blocks the list of blocks to serialize
+     * @return the JSON string
      */
     fun blocksToJson(blocks: List<Block>): String {
         val type = object : TypeToken<List<Block>>() {}.type
         return try {
             gson.toJson(blocks, type)
         } catch (_: Exception) {
-            "[]" // Возвращаем пустой массив в случае ошибки
+            "[]" // Return an empty array on error
         }
     }
 
     /**
-     * Преобразует JSON в список блоков
-     * @param json строка JSON для десериализации 
-     * @return список блоков или пустой список в случае ошибки
+     * Converts JSON into a list of blocks.
+     * @param json the JSON string to deserialize
+     * @return the list of blocks, or an empty list on error
      */
     fun jsonToBlocks(json: String): List<Block> {
         if (json.isEmpty()) return emptyList()

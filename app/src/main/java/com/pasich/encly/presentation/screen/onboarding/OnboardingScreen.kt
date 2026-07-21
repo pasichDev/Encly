@@ -84,7 +84,7 @@ fun OnboardingScreen(
     val coroutineScope = rememberCoroutineScope()
     var snackType = SnackType.SUCCESS
 
-    // Якщо онбординг вже завершено
+    // If onboarding is already complete
     LaunchedEffect(uiState.isComplete) {
         if (uiState.isComplete) {
             onComplete()
@@ -144,12 +144,12 @@ fun OnboardingScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Прогрес-бар з анімацією
+            // Animated progress bar
             val totalPages = when {
                 uiState.isComplete -> 1
                 uiState.securityType == SecurityType.USER_MANAGED -> 4 // welcome + security + seed phrase + completion
-                uiState.securityType != null -> 3 // welcome + security + completion (для AUTO)
-                else -> 2 // welcome + security choice (поки не вибрано)
+                uiState.securityType != null -> 3 // welcome + security + completion (for AUTO)
+                else -> 2 // welcome + security choice (not chosen yet)
             }
             AnimatedProgressBar(
                 currentPage = currentPage,
@@ -157,7 +157,7 @@ fun OnboardingScreen(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
 
-            // Контент слайдів
+            // Slide content
             AnimatedContent(
                 targetState = currentPage,
                 modifier = Modifier
@@ -175,16 +175,16 @@ fun OnboardingScreen(
                 label = "onboarding_pages"
             ) { page ->
                 when {
-                    // Якщо система вже завершена, нічого не показуємо
+                    // If the process is already complete, show nothing
                     uiState.isComplete -> {}
 
-                    // Перша сторінка - Welcome слайд
+                    // First page - Welcome slide
                     page == 0 -> {
                         WelcomeSlide(
                             onNext = { viewModel.nextPage() })
                     }
 
-                    // Друга сторінка - вибір системи безпеки
+                    // Second page - security option choice
                     page == 1 -> {
                         SecurityChoiceSlide(
                             onCreateSeedPhrase = { viewModel.navigateToSeedPhraseCreation() },
@@ -193,7 +193,7 @@ fun OnboardingScreen(
                         )
                     }
 
-                    // Третя сторінка - показ сід-фрази (тільки для user-managed)
+                    // Third page - show the seed phrase (user-managed only)
                     page == 2 && uiState.securityType == SecurityType.USER_MANAGED -> {
                         SeedPhraseDisplaySlide(
                             uiState = uiState,
@@ -217,7 +217,7 @@ fun OnboardingScreen(
                             onCancelVerification = { viewModel.cancelVerification() })
                     }
 
-                    // CompletionSlide для AUTO режиму (сторінка 2) або для USER_MANAGED (сторінка 3)
+                    // CompletionSlide for AUTO mode (page 2) or for USER_MANAGED (page 3)
                     page == 2 && uiState.securityType == SecurityType.AUTO_MANAGED -> {
                         CompletionSlide(
                             onComplete = {
@@ -227,7 +227,7 @@ fun OnboardingScreen(
                         )
                     }
 
-                    // CompletionSlide для USER_MANAGED після seed phrase
+                    // CompletionSlide for USER_MANAGED after the seed phrase
                     page == 3 && uiState.securityType == SecurityType.USER_MANAGED -> {
                         CompletionSlide(
                             onComplete = {
@@ -239,7 +239,7 @@ fun OnboardingScreen(
                 }
             }
 
-            // Показ помилок
+            // Error display
             AnimatedVisibility(
                 visible = uiState.error != null, enter = slideInVertically(
                     initialOffsetY = { it }, animationSpec = tween(300)
@@ -252,7 +252,7 @@ fun OnboardingScreen(
             }
         }
 
-        // Декоративні елементи
+        // Decorative elements
         DecorativeElements()
     }
 
@@ -325,10 +325,10 @@ private fun ErrorCard(
 
 @Composable
 private fun DecorativeElements() {
-    // Декоративні елементи у фоні
+    // Decorative background elements
     val infiniteTransition = rememberInfiniteTransition(label = "decorative")
 
-    // Плаваючі кружечки
+    // Floating circles
     repeat(3) { index ->
         val offsetY by infiniteTransition.animateFloat(
             initialValue = 0f, targetValue = 30f, animationSpec = infiniteRepeatable(

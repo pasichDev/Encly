@@ -107,7 +107,7 @@ fun MainScreen(
     val isGrid by mainListStateViewModel.isGridNoteList.collectAsState()
     val showTasks by settingsViewModel.showTasksFlow.collectAsState()
 
-    // State restoration для scroll states
+    // State restoration for scroll states
     val listScrollState = rememberLazyListState()
     val gridScrollState = rememberLazyStaggeredGridState()
 
@@ -125,7 +125,7 @@ fun MainScreen(
     }
     val scope = rememberCoroutineScope()
 
-    // Функція для оптимізованої навігації
+    // Function for optimized navigation
     val navigateToEditNote = { noteId: Long, additionalParams: String ->
         val navOptions = NavOptions.Builder()
             .setLaunchSingleTop(true)

@@ -51,7 +51,7 @@ fun MessageBanner(
                 .padding(start = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Кольорова смужка зліва
+            // Colored strip on the left
             Box(
                 modifier = Modifier
                     .width(8.dp)
@@ -62,7 +62,7 @@ fun MessageBanner(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Контент: лоадер + тексти
+            // Content: loader + texts
             Row(
                 modifier = Modifier
                     .padding(vertical = 12.dp, horizontal = 8.dp)

@@ -76,7 +76,7 @@ fun SeedPhraseBottomSheet(
     val context = LocalContext.current
     var showSuccessMessage by remember { mutableStateOf(false) }
 
-    // Використовуємо новий спільний клас для дій з сід-фразою
+    // Use the new shared class for seed phrase actions
     val seedPhraseActions = rememberSeedPhraseActions(
         context = context,
         onFileSaveSuccess = {
@@ -113,7 +113,7 @@ fun SeedPhraseBottomSheet(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Анімована іконка ключа з світінням
+            // Animated key icon with glow
             val infiniteTransition = rememberInfiniteTransition(label = "key_glow")
             val glowAlpha by infiniteTransition.animateFloat(
                 initialValue = 0.3f,
@@ -129,7 +129,7 @@ fun SeedPhraseBottomSheet(
                 modifier = Modifier.size(100.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Світіння
+                // Glow
                 Box(
                     modifier = Modifier
                         .size(100.dp)
@@ -145,7 +145,7 @@ fun SeedPhraseBottomSheet(
                         )
                 )
 
-                // Іконка ключа
+                // Key icon
                 Icon(
                     imageVector = Lucide.Key,
                     contentDescription = null,
@@ -175,7 +175,7 @@ fun SeedPhraseBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Key display card з анімацією
+            // Key display card with animation
             var keyCardVisible by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
@@ -261,7 +261,7 @@ fun SeedPhraseBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action buttons з анімацією
+            // Action buttons with animation
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {

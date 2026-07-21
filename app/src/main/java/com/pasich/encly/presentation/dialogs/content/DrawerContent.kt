@@ -17,27 +17,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
- * Базовый интерфейс для всех контентов боковой панели
+ * Base interface for all drawer panel contents
  */
 sealed interface DrawerContent
 
 /**
- * Основной контент боковой панели с навигационными элементами
+ * Main drawer panel content with navigation elements
  */
 object MainDrawerContent : DrawerContent
 
 /**
- * Контент боковой панели для копирования текста
+ * Drawer panel content for copying text
  */
 object CopyDrawerContent : DrawerContent
 
 /**
- * Контент боковой панели для перевода текста
+ * Drawer panel content for translating text
  */
 object TranslateDrawerContent : DrawerContent
 
 /**
- * Компонент отображающий заголовок с кнопкой назад для контентов
+ * Component that displays a header with a back button for the contents
  */
 @Composable
 fun DrawerHeader(
@@ -73,7 +73,7 @@ fun DrawerHeader(
 
 
 /**
- * Основной контент для экрана перевода
+ * Main content for the translation screen
  */
 @Composable
 fun TranslateContent(
@@ -86,7 +86,7 @@ fun TranslateContent(
             title = "Перевод текста", onBackClick = onBackClick, onCloseClick = onCloseClick
         )
 
-        // Контент для перевода будет добавлен в реализации
+        // Translation content will be added in the implementation
         Text(
             text = "Функция перевода пока не реализована", modifier = Modifier.padding(16.dp)
         )

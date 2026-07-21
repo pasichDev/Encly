@@ -52,7 +52,7 @@ class BlockActionsImpl(
     }
 
     /**
-     * Обробляє навігацію між блоками
+     * Handles navigation between blocks.
      */
     override fun navigateToNext(): Boolean {
         AppLogger.d(
@@ -65,7 +65,7 @@ class BlockActionsImpl(
     }
 
     /**
-     * Обробляє навігацію до попереднього блока
+     * Handles navigation to the previous block.
      */
     override fun navigateToPrevious(): Boolean {
         AppLogger.d("BlockActionsImpl", "navigateToPrevious called: current index=$index")
@@ -75,7 +75,7 @@ class BlockActionsImpl(
     }
 
     /**
-     * Встановлює фокус на поточний блок
+     * Sets focus on the current block.
      */
     fun requestFocus() {
         viewModel.setFocusedBlockIndex(index)

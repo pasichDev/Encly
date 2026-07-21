@@ -111,7 +111,7 @@ private fun FaqContentSection() {
         modifier = Modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Основні функції
+        // Core features
         TitleCard("Основні функції", modifier = Modifier.padding(horizontal = 20.dp))
 
         FaqItem(
@@ -144,7 +144,7 @@ private fun FaqContentSection() {
             answer = "Натисніть іконку пошуку на головному екрані. Введіть ключові слова - пошук працює по назві та вмісту нотаток."
         )
 
-        // Завдання
+        // Tasks
         TitleCard("Завдання", modifier = Modifier.padding(horizontal = 20.dp))
 
         FaqItem(
@@ -162,7 +162,7 @@ private fun FaqContentSection() {
             answer = "У розділі 'Завдання' є вкладки 'Активні' та 'Виконані'. Виконані завдання автоматично переносяться у відповідну вкладку."
         )
 
-        // Безпека
+        // Security
         TitleCard("Безпека та конфіденційність", modifier = Modifier.padding(horizontal = 20.dp))
 
         FaqItem(
@@ -185,7 +185,7 @@ private fun FaqContentSection() {
             answer = "Увімкніть 'Захист вмісту' в налаштуваннях безпеки. Це також заборонить створення скріншотів додатку."
         )
 
-        // Налаштування та персоналізація
+        // Settings and personalization
         TitleCard("Налаштування та персоналізація", modifier = Modifier.padding(horizontal = 20.dp))
 
         FaqItem(
@@ -203,7 +203,7 @@ private fun FaqContentSection() {
             answer = "У налаштуваннях знайдіть 'Простий режим редагування'. Це відключить динамічні блоки та зробить редагування схожим на звичайний текстовий редактор."
         )
 
-        // Проблеми та рішення
+        // Problems and solutions
         TitleCard("Вирішення проблем", modifier = Modifier.padding(horizontal = 20.dp))
 
         FaqItem(

@@ -50,14 +50,14 @@ fun HighlightedText(
                 break
             }
 
-            // Додаємо текст до знайденого слова
+            // Append the text before the found word
             if (index > startIndex) {
                 withStyle(normalStyle) {
                     append(text.substring(startIndex, index))
                 }
             }
 
-            // Додаємо підсвічене слово
+            // Append the highlighted word
             withStyle(highlightStyle) {
                 append(text.substring(index, index + searchQuery.length))
             }

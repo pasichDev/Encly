@@ -11,7 +11,7 @@ fun formatNoteDate(date: Date = Date()): String {
     val currentDate = Calendar.getInstance()
     currentDate.time = Date()
 
-    // Перевірка на сьогодні
+    // Check for today
     if (calendar.get(Calendar.YEAR) == currentDate.get(Calendar.YEAR) && calendar.get(Calendar.DAY_OF_YEAR) == currentDate.get(
             Calendar.DAY_OF_YEAR
         )
@@ -20,7 +20,7 @@ fun formatNoteDate(date: Date = Date()): String {
         return "Сьогодні ${timeFormat.format(date)}"
     }
 
-    // Перевірка на вчора
+    // Check for yesterday
     currentDate.add(Calendar.DAY_OF_YEAR, -1)
     if (calendar.get(Calendar.YEAR) == currentDate.get(Calendar.YEAR) && calendar.get(Calendar.DAY_OF_YEAR) == currentDate.get(
             Calendar.DAY_OF_YEAR
@@ -30,7 +30,7 @@ fun formatNoteDate(date: Date = Date()): String {
         return "Вчора ${timeFormat.format(date)}"
     }
 
-    // Форматування для інших дат
+    // Formatting for other dates
     val dateFormat = SimpleDateFormat("dd MMMM.yyyy HH:mm", Locale.getDefault())
     return dateFormat.format(date)
 }

@@ -3,10 +3,10 @@ package com.pasich.encly.core.security.wrapper
 object IntWrapper {
 
     /**
-     * Обгортає Int шляхом додавання випадкової числової "солі"
-     * та вказання її довжини в останній цифрі.
+     * Wraps an Int by appending a random numeric "salt"
+     * and encoding its length in the last digit.
      *
-     * Формат: [target][salt][@saltLength]
+     * Format: [target][salt][@saltLength]
      */
     fun wrap(target: Int): Int {
         val saltLength = (2..4).random()
@@ -15,9 +15,9 @@ object IntWrapper {
     }
 
     /**
-     * Розгортає обгорнутий Int і повертає оригінальне число (target).
+     * Unwraps a wrapped Int and returns the original number (target).
      *
-     * @return оригінальний Int або 0, якщо не вдалося розпарсити
+     * @return the original Int, or 0 if it could not be parsed.
      */
     fun unwrap(wrapped: Int): Int {
         val wrappedStr = wrapped.toString()

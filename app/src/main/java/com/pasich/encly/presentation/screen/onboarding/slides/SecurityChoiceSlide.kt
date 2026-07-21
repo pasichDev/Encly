@@ -59,7 +59,7 @@ fun SecurityChoiceSlide(
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Заголовок
+        // Title
         AnimatedText(
             text = "Налаштування безпеки", style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold, fontSize = 32.sp

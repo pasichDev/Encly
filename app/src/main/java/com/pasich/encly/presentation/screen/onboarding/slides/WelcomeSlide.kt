@@ -93,7 +93,7 @@ fun WelcomeSlide(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Заголовок з анімацією
+        // Animated title
         AnimatedText(
             text = "My Notes", style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold, fontSize = 32.sp
@@ -112,7 +112,7 @@ fun WelcomeSlide(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Фічі - компактний список
+        // Features - compact list
         val features = listOf(
             Triple(Icons.Default.Edit, "Зміни", "Гнучкий текстовий редактор з розміткою"),
             Triple(Lucide.Tag, "Теги", "Наводь лад у думках за допомогою тем"),

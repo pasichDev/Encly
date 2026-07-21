@@ -76,13 +76,13 @@ fun NoteItem(
     val hapticFeedback = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
 
-    // Контроль анімації зміщення картки вправо (під іконку)
+    // Controls the animation that shifts the card to the right (under the icon)
     val cardOffsetX by animateDpAsState(
         targetValue = if (noteItem.isChecked) 50.dp else 0.dp,
         label = "cardOffset"
     )
 
-    // Контроль прозорості іконки
+    // Controls the icon's opacity
     val iconAlpha by animateFloatAsState(
         targetValue = if (noteItem.isChecked) 1f else 0f,
         label = "iconAlpha"

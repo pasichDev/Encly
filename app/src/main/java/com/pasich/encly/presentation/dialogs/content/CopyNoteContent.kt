@@ -52,7 +52,7 @@ fun CopyNoteContent(
         mutableIntStateOf(0)
     }
 
-    // Преобразование блоков в текст соответствующего формата
+    // Convert blocks into text of the corresponding format
     val noteText by remember(blocks, selectedChoiceIndex) {
         derivedStateOf {
             if (selectedChoiceIndex.intValue == 0) {

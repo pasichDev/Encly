@@ -91,15 +91,15 @@ class SecurityManager @Inject constructor(
     }
 
 
-    /** Чи потрібно показувати онбординг
-     *  Умови для цього, неіснуючий хеш seed-фрази, невідмічений онбординг
+    /** Whether onboarding should be shown.
+     *  Conditions: no stored seed-phrase hash and onboarding not yet marked as shown.
      */
     fun isOnboardingShow(): Boolean {
         return !isOnboardingShown() && !seedPhraseManager.hasStoredSeed()
     }
 
 
-    /** Чи вже показували онбординг */
+    /** Whether onboarding has already been shown. */
     private fun isOnboardingShown(): Boolean {
         return secureStoragePrefs.getBoolean(ONBOARDING_SHOWN_KEY, false)
     }
@@ -118,16 +118,16 @@ class SecurityManager @Inject constructor(
         return false
     }
 
-    /** Створює Seed phase для показу користувачеві **/
+    /** Generates a seed phrase to display to the user. **/
     fun generateMnemonicCode(): CharArray {
         return seedPhraseManager.generateMnemonic().chars
     }
 
     /**
-     * Перевіряє, чи був ключ шифрування створений вручну користувачем (через введення сід-фрази),
-     * а не згенерований автоматично під час першого запуску.
+     * Checks whether the encryption key was created manually by the user (by entering a seed phrase),
+     * rather than generated automatically on first launch.
      *
-     * @return true — якщо ключ створено вручну користувачем, false — якщо згенеровано автоматично
+     * @return true if the key was created manually by the user, false if generated automatically.
      */
   //  fun isUserCreatedKey(): Boolean {
  //       return seedPhraseManager.isUserManuallyCreatedKeyByDecryption()

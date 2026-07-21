@@ -8,7 +8,7 @@ class ReorderTagsUseCase @Inject constructor(
     private val tagsRepository: TagsRepository
 ) {
     suspend operator fun invoke(tags: List<Tag>) {
-        // Оновлюємо позицію для кожного тега
+        // Update the position for each tag
         tags.forEachIndexed { index, tag ->
             val updatedTag = tag.copy(position = index)
             tagsRepository.updateTag(updatedTag)

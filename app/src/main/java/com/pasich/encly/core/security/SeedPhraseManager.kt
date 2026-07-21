@@ -29,7 +29,7 @@ enum class SaltData {
 object SecurityConstants {
     const val ENCRYPTED_BLOCK_KEY = "encrypted_seed_block"
 
-    // Обманка для верифікації чи користувач самстворив ключ якщо ENCRYPTED_BLOCK_KEY == ENCRYPTED_BLOCK_KEY_TWO то ручне налаштування
+    // Decoy for verifying whether the user created the key themselves: if ENCRYPTED_BLOCK_KEY == ENCRYPTED_BLOCK_KEY_TWO then it was set up manually
     const val ENCRYPTED_BLOCK_KEY_TWO = "encrypted_seed_block_two"
 }
 
@@ -89,10 +89,10 @@ class SeedPhraseManager @Inject constructor(
         return (keyStore.getEntry(KEY_ALIAS, null) as KeyStore.SecretKeyEntry).secretKey
     }
 
-    /** Генерує нову 12-слівну сид-фразу */
+    /** Generates a new 12-word seed phrase. */
     fun generateMnemonic(): MnemonicCode = MnemonicCode(WordCount.COUNT_12)
 
-    /** Валідує фразу (кидає виняток якщо недійсна) */
+    /** Validates the phrase (throws an exception if invalid). */
     fun isValidMnemonic(phrase: CharArray): Boolean = try {
         MnemonicCode(phrase).validate()
         true
@@ -100,13 +100,13 @@ class SeedPhraseManager @Inject constructor(
         false
     }
 
-    /** Обчислює SHA-256 хеш фрази */
+    /** Computes the SHA-256 hash of the phrase. */
     fun hashMnemonic(phrase: CharArray): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")
         return digest.digest(String(phrase).toByteArray(Charsets.UTF_8))
     }
 
-    /** Шифрує хеш + IV разом і зберігає в SharedPreferences */
+    /** Encrypts the hash + IV together and stores them in SharedPreferences. */
     fun storeSeedHash(phrase: CharArray, typeKey: String): Boolean {
         val hash = hashMnemonic(phrase)
 
@@ -116,7 +116,7 @@ class SeedPhraseManager @Inject constructor(
             val iv = cipher.iv
             val encrypted = cipher.doFinal(hash)
 
-            // Об’єднуємо IV + зашифрований хеш
+            // Combine IV + encrypted hash
             val combined = ByteArray(iv.size + encrypted.size).apply {
                 System.arraycopy(iv, 0, this, 0, iv.size)
                 System.arraycopy(encrypted, 0, this, iv.size, encrypted.size)
@@ -128,7 +128,7 @@ class SeedPhraseManager @Inject constructor(
                 putString(typeKey, base64)
             }
             if (typeKey == ENCRYPTED_BLOCK_KEY) {
-                // Зберігаємо Hmac для майбутньої перевірки
+                // Store the HMAC for future verification
                 hmacIntegrityManager.storeHmac(hash)
             }
             return true
@@ -140,7 +140,7 @@ class SeedPhraseManager @Inject constructor(
         }
     }
 
-    /** 🧠 Перевіряє фразу, розшифровуючи блок з SharedPreferences */
+    /** 🧠 Verifies the phrase by decrypting the block from SharedPreferences. */
     fun verifyMnemonic(phrase: CharArray): Boolean {
         val base64 = prefs.getString(ENCRYPTED_BLOCK_KEY, null) ?: return false
         return try {
@@ -224,20 +224,20 @@ class SeedPhraseManager @Inject constructor(
     }
 
 
-    /** Чи збережено хеш сідфрази */
+    /** Whether the seed-phrase hash is stored. */
     fun hasStoredSeed(): Boolean = prefs.contains(ENCRYPTED_BLOCK_KEY)
 
 
     /**
-     * Верифікації збереженого ключа за допомогою HMAC
-     * Використовується для захисту від пошкодження додатку
+     * Verifies the stored key using HMAC.
+     * Used to protect against corruption/tampering of the app data.
      */
     fun verificationKeyData(): Boolean {
         val hash = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false
         return !hmacIntegrityManager.isHashTampered(hash)
     }
 
-    /** Очищення збережених даних */
+    /** Clears the stored data. */
     fun clearStoredSeed() {
         prefs.edit {
             remove(ENCRYPTED_BLOCK_KEY)

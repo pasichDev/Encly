@@ -72,12 +72,12 @@ fun SeedPhraseDisplaySlide(
 ) {
     SlideLayout {
         when {
-            // Показуємо завантаження під час створення ключа
+            // Show a loading indicator while the key is being created
             uiState.isLoading -> {
                 LoadingContent()
             }
 
-            // Якщо ключ створений, показуємо його або верифікацію
+            // If the key has been created, show it or the verification step
             uiState.phase.isNotEmpty() && !uiState.isLoading -> {
                 if (uiState.isVerificationMode) {
                     SeedPhraseVerificationContent(
@@ -308,8 +308,8 @@ private fun SeedPhraseGrid(seedPhrase: String) {
 
 @Composable
 private fun HiddenSeedPhraseGrid() {
-    // Для 12 слів у 3 колонки = 4 рядки
-    val gridHeight = (4 * 56 + 3 * 8).dp // 4 рядки по 56dp + 3 проміжки по 8dp
+    // For 12 words in 3 columns = 4 rows
+    val gridHeight = (4 * 56 + 3 * 8).dp // 4 rows of 56dp + 3 gaps of 8dp
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -385,7 +385,7 @@ private fun SeedPhraseVerificationContent(
     onCancel: () -> Unit
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    // Якщо всі слова введені правильно — приховати клавіатуру
+    // If all words are entered correctly, hide the keyboard
     LaunchedEffect(uiState.isVerificationComplete) {
         if (uiState.isVerificationComplete) {
             keyboardController?.hide()
@@ -412,7 +412,7 @@ private fun SeedPhraseVerificationContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Поля для введення слів
+        // Word input fields
         val lastIndex = uiState.verificationWords.lastIndex
         uiState.verificationWords.forEachIndexed { index, (wordIndex, correctWord) ->
             VerificationWordInput(
@@ -437,7 +437,7 @@ private fun SeedPhraseVerificationContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Кнопка підтвердження
+        // Confirmation button
         Button(
             onClick = onCompleteVerification,
             modifier = Modifier.fillMaxWidth(),
@@ -448,7 +448,7 @@ private fun SeedPhraseVerificationContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Кнопка повернення
+        // Back button
         OutlinedButton(
             onClick = onCancel, modifier = Modifier.fillMaxWidth()
         ) {
@@ -466,11 +466,11 @@ private fun VerificationWordInput(
     imeAction: androidx.compose.ui.text.input.ImeAction = androidx.compose.ui.text.input.ImeAction.Next,
     onImeAction: () -> Unit = {}
 ) {
-    // Перевіряємо чи відповідь правильна
+    // Check whether the answer is correct
     val isCorrect =
         userAnswer.trim().equals(correctWord.trim(), ignoreCase = true) && userAnswer.isNotBlank()
 
-    // Анімація кольору бордера
+    // Border color animation
     val borderColor by animateColorAsState(
         targetValue = if (isCorrect) {
             MaterialTheme.colorScheme.primary

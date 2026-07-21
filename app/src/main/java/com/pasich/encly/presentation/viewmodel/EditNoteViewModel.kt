@@ -58,7 +58,7 @@ class EditNoteViewModel
     private val _state = MutableStateFlow(LoadNoteState())
     val state: StateFlow<LoadNoteState> get() = _state
 
-    // Режим редактирования блоков - новое состояние
+    // Block editing mode - new state
     private val _isBlockEditMode = MutableStateFlow(false)
     val isBlockEditMode: StateFlow<Boolean> get() = _isBlockEditMode
 
@@ -91,27 +91,27 @@ class EditNoteViewModel
     )
 
     private val noteId: Long = savedStateHandle["idNote"]
-        ?: -1 // Идентификатор заметки, если создать новую заметку, то будет -1
+        ?: -1 // Note identifier; when creating a new note it will be -1
     internal val copySource: Long =
-        savedStateHandle["copySource"] ?: -1 // Идентификатор заметки для копирования, если указан
+        savedStateHandle["copySource"] ?: -1 // Identifier of the note to copy, if specified
     val isReadTrashOnly: Boolean =
-        savedStateHandle["isReadTrashOnly"] as? Boolean == true // Флаг для чтения заметки только из корзины
+        savedStateHandle["isReadTrashOnly"] as? Boolean == true // Flag for reading a note only from the trash
     internal val addTag: Long = savedStateHandle["addTag"] ?: 0
 
     private val blockOperations = BlockOperations(_blocks)
 
-    // Свойства для управления отменой/повтором
+    // Properties for managing undo/redo
     private val _canUndo = MutableStateFlow(false)
     val canUndo: StateFlow<Boolean> get() = _canUndo
 
     private val _canRedo = MutableStateFlow(false)
     val canRedo: StateFlow<Boolean> get() = _canRedo
 
-    // Централізований менеджер фокуса
+    // Centralized focus manager
     private val _focusManager = CentralizedFocusManager()
     val focusManager: CentralizedFocusManager get() = _focusManager
 
-    // Поточний фокус (для зворотної сумісності)
+    // Current focus (for backward compatibility)
     val currentFocusIndex: StateFlow<Int> = _focusManager.currentFocusIndex
     val lastInteractionIndex: StateFlow<Int> = _focusManager.lastInteractionIndex
 
@@ -131,7 +131,7 @@ class EditNoteViewModel
             }
 
             else -> {
-                // Можна залишити коментар, якщо це нормальний випадок
+                // A comment can be left here if this is a normal case
             }
         }
     }
@@ -145,12 +145,12 @@ class EditNoteViewModel
             try {
                 val note = notesRepository.getNoteById(noteId)
                 note?.let {
-                    // Загружаем блоки из контента заметки
+                    // Load the blocks from the note's content
                     loadBlocksFromNote(it)
 
                     delay(500)
 
-                    // Обновляем состояние заметки в зависимости от режима
+                    // Update the note state depending on the mode
                     updateNoteState(it, isCopy)
 
                     _lockEditor.value = isReadTrashOnly
@@ -219,7 +219,7 @@ class EditNoteViewModel
         var isInitialized = false
         viewModelScope.launch {
             snapshotFlow { _blocks.toList() }.flatMapLatest { blocks ->
-                    // Створюємо потоки для кожного блоку
+                    // Create flows for each block
                     combine(
                         blocks.mapNotNull { block ->
                             when (block) {
@@ -269,9 +269,9 @@ class EditNoteViewModel
                     return@launch
                 }
 
-                // Выбираем стратегию сохранения (обновление или создание)
+                // Choose the save strategy (update or create)
                 if (currentNote.id != -1L) {
-                    // Проверяем, есть ли изменения в контенте или заголовке
+                    // Check whether the content or the title has changed
                     val timestamp = if (_state.value.backupNote.hasContentChanged(
                             blocksJson, _state.value.note.title
                         )
@@ -316,14 +316,14 @@ class EditNoteViewModel
     }
 
     /**
-     * Проверяет, пуста ли заметка (не имеет контента для сохранения)
+     * Checks whether the note is empty (has no content to save)
      */
     private fun isNoteEmpty(): Boolean =
         blocks.isEmpty() || (blocks.size == 1 && blocks[0] is Block.TextBlock && (blocks[0] as Block.TextBlock).text.value.isEmpty())
 
 
     /**
-     * Встановлює фокус на блок
+     * Sets focus on a block
      */
     fun setFocusedBlockIndex(
         index: Int,
@@ -333,14 +333,14 @@ class EditNoteViewModel
     }
 
     /**
-     * Встановлює останній індекс взаємодії
+     * Sets the last interaction index
      */
     fun setLastInteractionIndex(index: Int) {
         _focusManager.setLastInteraction(index)
     }
 
     /**
-     * Обновляет текущий индекс фокуса без вызова requestFocus (для избежания рекурсии)
+     * Updates the current focus index without calling requestFocus (to avoid recursion)
      */
     fun updateCurrentFocusIndex(index: Int) {
         _focusManager.updateCurrentFocusIndex(index)
@@ -349,43 +349,43 @@ class EditNoteViewModel
     fun addBlock(blockType: BlockType) {
         if (isReadTrashOnly) return
 
-        // Определяем индекс для нового блока - используем текущий фокус или последнее взаимодействие
+        // Determine the index for the new block - use the current focus or the last interaction
         val currentFocusIndex = _focusManager.currentFocusIndex.value
         val baseIndex =
             if (currentFocusIndex >= 0) currentFocusIndex else _focusManager.lastInteractionIndex.value
         var targetIndex = (baseIndex + 1).coerceAtMost(blocks.size)
 
-        // Проверяем первый блок и удаляем его, если он пустой текстовый блок
+        // Check the first block and remove it if it is an empty text block
         cleanEmptyFirstBlockIfNeeded()?.let { targetIndex = it }
 
-        // Обрабатываем специальный случай с текстовым блоком
+        // Handle the special case of a text block
         if (blockType == BlockType.TEXT) {
             if (appendTextToLastBlockIfPossible()) {
                 return
             }
         }
 
-        // Если это не специальный случай или он не был обработан, создаем новый блок
+        // If this is not a special case, or it was not handled, create a new block
         val newBlock = createNewBlockByType(blockType) ?: return
 
-        // Добавляем блок и обновляем состояние
+        // Add the block and update the state
         blockOperations.addBlock(targetIndex, newBlock)
         updateUndoRedoState()
 
-        // Устанавливаем фокус на новый блок с небольшой задержкой только если это не ListBlock
+        // Set focus on the new block with a slight delay, only if it is not a ListBlock
         setLastInteractionIndex(targetIndex)
 
-        // Для ListBlock не устанавливаем автоматический фокус
+        // For a ListBlock, do not set focus automatically
         if (blockType != BlockType.LIST_CHECK && blockType != BlockType.LIST_NUMBER) {
             viewModelScope.launch {
-                delay(50) // Небольшая задержка для завершения UI обновлений
+                delay(50) // Slight delay to let the UI updates finish
                 setFocusedBlockIndex(targetIndex)
             }
         }
     }
 
     /**
-     * Добавляет новый блок после указанного индекса
+     * Adds a new block after the specified index
      */
     fun addBlockAfter(
         afterIndex: Int,
@@ -400,29 +400,29 @@ class EditNoteViewModel
 
         val targetIndex = (afterIndex + 1).coerceAtMost(blocks.size)
 
-        // Создаем новый блок
+        // Create a new block
         val newBlock = createNewBlockByType(blockType) ?: return
         AppLogger.d(
             "EditNoteViewModel",
             "Created new block: ${newBlock::class.simpleName}, targetIndex=$targetIndex"
         )
 
-        // Добавляем блок и обновляем состояние
+        // Add the block and update the state
         blockOperations.addBlock(targetIndex, newBlock)
         updateUndoRedoState()
 
-        // Встановлюємо фокус на новий блок завжди (навіть для ListBlock)
-        // Це важливо для правильної прокрутки
+        // Always set focus on the new block (even for a ListBlock)
+        // This is important for correct scrolling
         setLastInteractionIndex(targetIndex)
 
-        // Використовуємо метод з повторними спробами для кращої надійності
+        // Use the retrying method for better reliability
         _focusManager.setFocusWithRetry(targetIndex, maxRetries = 5, delayMs = 50L)
         AppLogger.d("EditNoteViewModel", "Focus set to new block with retry: $targetIndex")
     }
 
     /**
-     * Очищает первый блок, если он пустой текстовый блок
-     * @return Индекс для нового блока (0, если первый был удален) или null
+     * Clears the first block if it is an empty text block
+     * @return The index for the new block (0 if the first one was removed) or null
      */
     private fun cleanEmptyFirstBlockIfNeeded(): Int? {
         val first = blocks.firstOrNull() ?: return null
@@ -435,8 +435,8 @@ class EditNoteViewModel
     }
 
     /**
-     * Пытается добавить перенос строки к последнему текстовому блоку
-     * @return true если текст был добавлен к последнему блоку
+     * Tries to append a line break to the last text block
+     * @return true if the text was appended to the last block
      */
     private fun appendTextToLastBlockIfPossible(): Boolean {
         val lastBlock = _blocks.lastOrNull()
@@ -448,13 +448,13 @@ class EditNoteViewModel
     }
 
     /**
-     * Создает новый блок соответствующего типа используя фабрику
+     * Creates a new block of the appropriate type using the factory
      */
     private fun createNewBlockByType(blockType: BlockType): Block? =
         BlockFactory.createBlock(blockType)
 
     /**
-     * Удаляет блок из заметки с разными стратегиями в зависимости от типа действия удаления
+     * Removes a block from the note using different strategies depending on the removal action type
      */
     fun removeBlock(
         block: Block,
@@ -472,13 +472,13 @@ class EditNoteViewModel
             return
         }
 
-        // Проверяем, можно ли удалить блок (должен остаться хотя бы один блок)
+        // Check whether the block can be removed (at least one block must remain)
         if (blocks.size <= 1 && blockRemoveAction != BlockRemoveAction.REMOVE_BACKSPACE) {
             AppLogger.d("EditNoteViewModel", "Cannot remove: size check failed")
             return
         }
 
-        // Выбираем стратегию удаления в зависимости от действия
+        // Choose the removal strategy depending on the action
         when (blockRemoveAction) {
             BlockRemoveAction.REMOVE -> {
                 AppLogger.d("EditNoteViewModel", "Performing REMOVE")
@@ -503,7 +503,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Проверяет, можно ли удалить текстовый блок (должен быть пустым)
+     * Checks whether a text block can be removed (it must be empty)
      */
     private fun canRemoveTextBlock(block: Block): Boolean {
         AppLogger.d(
@@ -526,7 +526,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Выполняет удаление блока и обновляет фокус
+     * Performs the block removal and updates the focus
      */
     private fun performBlockRemoval(
         index: Int,
@@ -535,7 +535,7 @@ class EditNoteViewModel
 
         blockOperations.removeBlock(index)
         updateUndoRedoState()
-        // Обновляем фокус если требуется
+        // Update the focus if required
         if (isReFocus) {
             val newFocusIndex = _focusManager.findPreviousFocusableBlock(index, _blocks)
             _focusManager.setFocus(newFocusIndex, moveCursorToEnd = true)
@@ -562,10 +562,10 @@ class EditNoteViewModel
             blockOperations.replaceBlock(targetBlockIndex, newBlock)
             updateUndoRedoState()
 
-            // Встановлюємо фокус на заміщений блок завжди
+            // Always set focus on the replaced block
             setLastInteractionIndex(targetBlockIndex)
 
-            // Використовуємо метод з повторними спробами для кращої надійності
+            // Use the retrying method for better reliability
             _focusManager.setFocusWithRetry(targetBlockIndex, maxRetries = 5, delayMs = 50L)
             _focusManager.setLastInteraction(targetBlockIndex)
             updateCurrentFocusIndex(targetBlockIndex)
@@ -583,7 +583,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Регистрирует изменение текста в блоке для поддержки отмены/повтора
+     * Registers a text change in a block to support undo/redo
      */
     fun registerTextChange(
         index: Int,
@@ -595,7 +595,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Регистрирует изменение в блоке для поддержки отмены/повтора
+     * Registers a change in a block to support undo/redo
      */
     fun registerContentChange(
         index: Int,
@@ -607,7 +607,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Отменяет последнее действие
+     * Undoes the last action
      */
     fun undo() {
         if (blockOperations.undo()) {
@@ -616,7 +616,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Повторяет отмененное действие
+     * Redoes the undone action
      */
     fun redo() {
         if (blockOperations.redo()) {
@@ -625,7 +625,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Обновляет состояние возможности отмены/повтора
+     * Updates the undo/redo availability state
      */
     private fun updateUndoRedoState() {
         _canUndo.value = blockOperations.canUndo()
@@ -633,13 +633,13 @@ class EditNoteViewModel
     }
 
     /**
-     * Обновляет заголовок заметки в состоянии
+     * Updates the note title in the state
      */
     fun updateTitle(newTitle: String) {
         _state.value = _state.value.copy(note = state.value.note.copy(title = newTitle))
     }
 
-    // Метод для переключения режима редактирования блоков
+    // Method for toggling the block editing mode
     fun toggleBlockEditMode() {
         _isBlockEditMode.value = !_isBlockEditMode.value
     }
@@ -649,7 +649,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Восстанавливает заметку из корзины
+     * Restores the note from the trash
      */
     fun noteRestore() {
         val currentNote = _state.value.note
@@ -660,16 +660,16 @@ class EditNoteViewModel
             return
         }
 
-        // Получаем актуальное содержимое заметки
+        // Get the current content of the note
         val blocksJson = BlockConverter.blocksToJson(blocks)
 
         viewModelScope.launch {
-            // Обновляем статус заметки через usecase
+            // Update the note status through the use case
             val result = updateNoteTrashStatusUseCase.invoke(
                 currentNote.copy(
                     value = blocksJson,
                 ),
-                false, // false означает "не в корзину", т.е. восстанавливаем
+                false, // false means "not in the trash", i.e. restore
             )
 
             if (result) {
@@ -713,7 +713,7 @@ class EditNoteViewModel
     }
 
     /**
-     * Удаляет заметку полностью из базы данных
+     * Deletes the note completely from the database
      */
     fun noteDelete() {
         val currentNoteId = _state.value.note.id
@@ -725,7 +725,7 @@ class EditNoteViewModel
 
         viewModelScope.launch {
             try {
-                // Видаляємо нотатку з бази даних
+                // Delete the note from the database
                 notesRepository.deleteNoteById(currentNoteId)
                 AppLogger.d("EditNoteViewModel", "Note deleted with ID: $currentNoteId")
             } catch (e: Exception) {
@@ -737,18 +737,18 @@ class EditNoteViewModel
     fun updateTagNote(tagId: Long) {
         val currentNote = _state.value.note
 
-        // Обновляем состояние UI немедленно для отзывчивости интерфейса
+        // Update the UI state immediately for interface responsiveness
         _state.value = _state.value.copy(
             note = currentNote.copy(tagId = tagId),
         )
 
-        // Применяем изменение в БД, если заметка уже сохранена
+        // Apply the change in the database if the note is already saved
         if (currentNote.id != -1L) {
             viewModelScope.launch {
                 updateNoteTagUseCase.invoke(currentNote, tagId)
             }
         }
-        // Если заметка новая, тег будет сохранен вместе с заметкой при следующем сохранении
+        // If the note is new, the tag will be saved together with the note on the next save
     }
 
     fun updateFontSize(size: Int) {
@@ -759,7 +759,7 @@ class EditNoteViewModel
         fontStyleUseCase.setFontStyle(style, viewModelScope)
     }
 
-    fun moveBlock(up: Boolean) { // up = true - вверх, false - вниз
+    fun moveBlock(up: Boolean) { // up = true - move up, false - move down
         val fromIndex = _focusManager.lastInteractionIndex.value
         val toIndex = if (up) fromIndex - 1 else fromIndex + 1
 
@@ -768,7 +768,7 @@ class EditNoteViewModel
         blockOperations.moveBlock(fromIndex, toIndex)
         updateUndoRedoState()
 
-        // Обновляем фокус после перемещения блока
+        // Update the focus after moving the block
         _focusManager.setFocus(toIndex)
         _focusManager.setLastInteraction(toIndex)
     }

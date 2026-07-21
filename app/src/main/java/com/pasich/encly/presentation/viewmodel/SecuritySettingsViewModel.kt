@@ -63,7 +63,7 @@ class SecuritySettingsViewModel @Inject constructor(
 
     }
 
-    //TODO Не онвлюєтся стан після включення та помилки
+    //TODO State is not updated after enabling and on errors
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)

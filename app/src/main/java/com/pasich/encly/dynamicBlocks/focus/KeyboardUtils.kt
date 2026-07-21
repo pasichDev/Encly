@@ -6,11 +6,11 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 
 /**
- * Утиліти для обробки клавіатурних подій в блочному редакторі
+ * Utilities for handling keyboard events in the block editor.
  */
 object KeyboardUtils {
     /**
-     * Обробляє клавіатурні події для навігації між блоками
+     * Handles keyboard events for navigation between blocks.
      */
     fun handleKeyEvent(
         event: KeyEvent,

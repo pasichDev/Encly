@@ -70,7 +70,7 @@ fun HBlock(
 
     val oldText = remember { mutableStateOf(text) }
 
-    // Для підтримки встановлення курсора в кінець тексту
+    // To support placing the cursor at the end of the text
     var textFieldValue by remember {
         mutableStateOf(
             androidx.compose.ui.text.input
@@ -78,7 +78,7 @@ fun HBlock(
         )
     }
 
-    // Синхронізуємо textFieldValue з block.text
+    // Synchronize textFieldValue with block.text
     LaunchedEffect(text) {
         if (textFieldValue.text != text) {
             textFieldValue =
@@ -91,7 +91,7 @@ fun HBlock(
         }
     }
 
-    // Реєструємо callback для встановлення курсора в кінець тексту
+    // Register a callback for placing the cursor at the end of the text
     LaunchedEffect(index) {
         if (blockActions is com.pasich.encly.dynamicBlocks.BlockActionsImpl) {
             blockActions.viewModel.focusManager.registerCursorToEndCallback(index) {
@@ -126,14 +126,14 @@ fun HBlock(
                 AppLogger.d("HBlock", "onNext called, text='$text', isEmpty=${text.isEmpty()}")
 
                 if (text.isEmpty()) {
-                    // Якщо HBlock порожній, замінюємо його на звичайний текстовий блок
+                    // If the HBlock is empty, replace it with a regular text block
                     AppLogger.d("HBlock", "Empty HBlock - replacing with TextBlock")
                     val newTextBlock = Block.TextBlock()
                     blockActions.onReplaceBlock(newTextBlock)
                 } else {
-                    // Якщо HBlock не порожній, спробувати навігувати до наступного блока
+                    // If the HBlock is not empty, try to navigate to the next block
                     val navigated = blockActions.navigateToNext()
-                    // Якщо навігація неможлива (це останній блок), додати новий параграф
+                    // If navigation is not possible (this is the last block), add a new paragraph
                     if (!navigated) {
                         blockActions.onAddParagraph()
                     }
@@ -161,16 +161,16 @@ fun HBlock(
                         },
                         onNavigateDown = {
                             AppLogger.d("HBlock", "onNavigateDown called")
-                            // Спробувати навігувати до наступного блока
+                            // Try to navigate to the next block
                             val navigated = blockActions.navigateToNext()
-                            // Якщо навігація неможлива (це останній блок), додати новий параграф
+                            // If navigation is not possible (this is the last block), add a new paragraph
                             if (!navigated) {
                                 blockActions.onAddParagraph()
                             }
-                            true // Завжди повертаємо true, щоб запобігти додаванню Enter
+                            true // Always return true to prevent adding an Enter
                         },
                         onEnterPressed = {
-                            // Enter обробляється в KeyboardActions.onNext, тому тут не потрібен
+                            // Enter is handled in KeyboardActions.onNext, so it is not needed here
                             AppLogger.d("HBlock", "onEnterPressed in onKeyEvent (should not be called for Enter)")
                             false
                         },

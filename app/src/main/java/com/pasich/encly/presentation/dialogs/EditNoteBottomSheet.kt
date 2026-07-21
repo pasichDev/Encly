@@ -75,7 +75,7 @@ fun EditNoteBottomSheet(
                 when (currentContent) {
                     is MainDrawerContent -> {
 
-                        // Панель выбора стиля шрифта
+                        // Font style selection panel
                         Row(
                             horizontalArrangement = Arrangement.Center,
                             modifier = Modifier
@@ -113,7 +113,7 @@ fun EditNoteBottomSheet(
 
                         Spacer(modifier = Modifier.height(25.dp))
 
-                        // Слайдер для розміру шрифту
+                        // Slider for font size
                         FontSizeSlider(
                             currentSize = fontSize,
                             onSizeChange = { newSize ->

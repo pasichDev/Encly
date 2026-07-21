@@ -127,7 +127,7 @@ class TrashViewModel @Inject constructor(
         val currentNotes = _state.value.notes
         if (currentNotes.isEmpty()) return
         viewModelScope.launch {
-            // Використовуємо новий UseCase для масового видалення з очищенням фотографій
+            // Use the new UseCase for bulk deletion with photo cleanup
             cleanTrashNotesUseCase.invoke()
         }
         toggleAllCheck(false)
@@ -137,10 +137,10 @@ class TrashViewModel @Inject constructor(
         val currentNotes = _state.value.notes
         if (currentNotes.isEmpty()) return
         viewModelScope.launch {
-            // Отримуємо вибрані нотатки
+            // Get the selected notes
             val selectedNotes = currentNotes.filter { it.isChecked }
             if (selectedNotes.isNotEmpty()) {
-                // Використовуємо новий UseCase для видалення вибраних нотаток з очищенням фотографій
+                // Use the new UseCase to delete the selected notes with photo cleanup
                 cleanTrashNotesUseCase.cleanSelectedNotes(selectedNotes)
             }
         }

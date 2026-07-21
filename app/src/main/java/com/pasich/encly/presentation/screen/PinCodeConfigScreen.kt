@@ -95,10 +95,10 @@ fun PinCodeConfigScreen(
     Surface(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (animationState == PinAnimationState.Entering) {
-                // 🔒 Основний UI
+                // 🔒 Main UI
                 AnimatedContent(
                     targetState = step, transitionSpec = {
-                        // Можна змінити анімацію як хочеш
+                        // You can change the animation as you like
                         (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
                             slideOutHorizontally { width -> -width } + fadeOut())
                     }, label = "StepAnimation"
@@ -114,7 +114,7 @@ fun PinCodeConfigScreen(
                 }
 
             } else {
-                // ✅ Анімація успіху
+                // ✅ Success animation
                 SuccessAnimation()
             }
         }
@@ -135,7 +135,7 @@ fun MainPinContent(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 🔒 Іконка
+        // 🔒 Icon
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -153,7 +153,7 @@ fun MainPinContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Заголовок
+        // Title
         Text(
             text = if (step == 1) "Створіть PIN-код" else "Підтвердіть PIN-код",
             style = MaterialTheme.typography.headlineSmall,
@@ -163,7 +163,7 @@ fun MainPinContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Підзаголовок
+        // Subtitle
         Text(
             text = if (step == 1) "Введіть новий PIN-код для захисту нотаток"
             else "Повторно введіть PIN-код для підтвердження",
@@ -205,7 +205,7 @@ fun SuccessAnimation() {
         contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_check), // додай свою галочку
+            painter = painterResource(id = R.drawable.ic_check), // add your own checkmark
             contentDescription = "Успіх",
             modifier = Modifier
                 .size(120.dp)

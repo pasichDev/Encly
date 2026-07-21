@@ -32,22 +32,22 @@ private object EditNoteDefaults {
 }
 
 /**
- * CompositionLocal для базового розміру шрифту
+ * CompositionLocal for the base font size
  */
 val LocalBaseFontSize = compositionLocalOf { EditNoteDefaults.DEFAULT_FONT_SIZE }
 
 /**
- * CompositionLocal для стилю шрифту
+ * CompositionLocal for the font style
  */
 val LocalFontStyle = compositionLocalOf { EditNoteDefaults.DEFAULT_FONT_STYLE }
 
 /**
- * CompositionLocal для простого режиму редагування
+ * CompositionLocal for the simple editing mode
  */
 val LocalSimpleEdit = compositionLocalOf { EditNoteDefaults.DEFAULT_SIMPLE_EDIT }
 
 /**
- * CompositionLocal для готових стилів шрифтів (оптимізація)
+ * CompositionLocal for precomputed font styles (optimization)
  */
 val LocalFontStyles = compositionLocalOf<FontStyles?> { null }
 
@@ -191,7 +191,7 @@ private fun createDefaultFontStyles(): FontStyles {
 }
 
 /**
- * Клас що містить шрифтові сім'ї
+ * Class holding the font families
  */
 data class FontFamilies(
     val heading: FontFamily,
@@ -199,7 +199,7 @@ data class FontFamilies(
 )
 
 /**
- * Клас що містить розміри шрифтів для всіх типів блоків
+ * Class holding font sizes for all block types
  */
 data class FontSizes(
     val textBlock: TextUnit,
@@ -213,7 +213,7 @@ data class FontSizes(
 )
 
 /**
- * Комбінований клас для стилів шрифтів
+ * Combined class for font styles
  */
 data class FontStyles(
     val sizes: FontSizes,

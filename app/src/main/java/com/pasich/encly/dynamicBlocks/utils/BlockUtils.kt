@@ -5,13 +5,13 @@ import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.TextualBlock
 
 /**
- * Утилитарный класс для работы с блоками
- * Содержит общие операции над блоками для уменьшения дублирования кода
+ * Utility class for working with blocks.
+ * Contains common block operations to reduce code duplication.
  */
 object BlockUtils {
 
     /**
-     * Проверяет пустой ли блок
+     * Checks whether the block is empty.
      */
     fun isBlockEmpty(block: Block): Boolean {
         val result = when (block) {

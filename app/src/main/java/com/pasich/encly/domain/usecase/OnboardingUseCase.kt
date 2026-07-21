@@ -17,7 +17,7 @@ class OnboardingUseCase @Inject constructor(
 ) {
 
     /**
-     * Cтворює сід-фразу та повертає для відображення (user-managed режим)
+     * Generates a seed phrase and returns it for display (user-managed mode).
      */
     fun getMnemonicCode(): Result<String> {
         return try {
@@ -29,7 +29,7 @@ class OnboardingUseCase @Inject constructor(
 
 
     /**
-     * Збереження ключів в стор та ініціалізації бд
+     * Saves the keys to the store and initializes the database.
      */
     fun saveKeysStore(
         target: CharArray = securityManager.generateMnemonicCode(),
@@ -41,7 +41,7 @@ class OnboardingUseCase @Inject constructor(
                 ) && seedPhraseManager.storeSeedHash(fake, ENCRYPTED_BLOCK_KEY_TWO)
             ) {
 
-                // Ініціалізуємо базу даних
+                // Initialize the database
                 secureDatabaseManager.unlockDatabase(
                     seedPhraseManager.getEncryptionKeyForData(
                         SaltData.DATABASE
@@ -62,7 +62,7 @@ class OnboardingUseCase @Inject constructor(
 
 
     /**
-     * Завершує онбординг та відмічає показ екрану обордінгу
+     * Completes onboarding and marks the onboarding screen as shown.
      */
     fun completeOnboarding() {
         securityManager.setOnboardingShown()

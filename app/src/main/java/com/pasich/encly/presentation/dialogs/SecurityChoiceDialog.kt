@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 /**
- * Діалог вибору типу безпеки під час онбордингу
+ * Dialog for choosing the security type during onboarding
  */
 @Composable
 fun SecurityChoiceDialog(
@@ -39,7 +39,7 @@ fun SecurityChoiceDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
-                // Варіант 1: Керування користувачем
+                // Option 1: User-managed
                 Card(
                     onClick = onUserManagedSelected,
                     modifier = Modifier.fillMaxWidth(),
@@ -64,7 +64,7 @@ fun SecurityChoiceDialog(
                     }
                 }
                 
-                // Варіант 2: Автоматичне керування  
+                // Option 2: Automatic management
                 Card(
                     onClick = onAutoManagedSelected,
                     modifier = Modifier.fillMaxWidth(),

@@ -48,9 +48,9 @@ fun DynamicBlocksEditor(
 ) {
     val scrollState = rememberScrollState()
 
-    // Передаємо менеджер фокуса до ViewModel
+    // Pass the focus manager to the ViewModel
     viewModel.focusManager.let { vmFocusManager ->
-        // Синхронізуємо з ViewModel
+        // Synchronize with the ViewModel
     }
 
     val blocks = viewModel.blocks
@@ -65,7 +65,7 @@ fun DynamicBlocksEditor(
         AppLogger.d("DynamicBlocksEditor", "Block $i: ${b::class.simpleName}")
     }
 
-    // Відслідковуємо зміни фокуса та запитуємо його
+    // Track focus changes and request focus accordingly
     LaunchedEffect(currentFocusIndex) {
         if (currentFocusIndex != -1 && currentFocusIndex < blocks.size) {
             snapshotFlow {
@@ -82,7 +82,7 @@ fun DynamicBlocksEditor(
     val isLockBlockEdit = isEditMode || isLocked
 
     /**
-     * В нотеботом якщо фокус на текстову блоці пропонувати список дій (відкриття діалогу редагування)
+     * In the note editor, if focus is on a text block, offer a list of actions (opening the edit dialog)
      */
 
     Column(
@@ -98,7 +98,7 @@ fun DynamicBlocksEditor(
             AppLogger.d("DynamicBlocksEditor", "Rendering block $index: ${block::class.simpleName}")
 
             val focusRequester = remember { FocusRequester() }
-            // Реєструємо FocusRequester у централізованому менеджері (тільки для старої системи)
+            // Register the FocusRequester in the centralized manager (only for the legacy system)
             if (!useNewFocusSystem) {
                 RegisterFocusRequester(index, viewModel.focusManager, focusRequester)
             }
@@ -113,15 +113,15 @@ fun DynamicBlocksEditor(
                                 }
                             },
                             enableAutoScroll = true,
-                            scrollDelay = 150L, // Затримка для клавіатури
+                            scrollDelay = 150L, // Delay for the keyboard
                         )
                 } else {
                     Modifier.onFocusChanged { focusState ->
                             if (focusState.isFocused && block !is Block.ListBlock) {
-                                // Уведомляем о том, что блок получил фокус, но не устанавливаем фокус программно
-                                // чтобы избежать рекурсии
+                                // Notify that the block received focus, but do not set focus programmatically
+                                // to avoid recursion
                                 viewModel.setLastInteractionIndex(index)
-                                // Обновляем только состояние индекса фокуса без вызова requestFocus
+                                // Update only the focus index state without calling requestFocus
                                 viewModel.updateCurrentFocusIndex(index)
                             }
                         }

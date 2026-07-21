@@ -40,7 +40,7 @@ fun PinCodeWidget(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // PIN індикатори
+        // PIN indicators
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
         ) {

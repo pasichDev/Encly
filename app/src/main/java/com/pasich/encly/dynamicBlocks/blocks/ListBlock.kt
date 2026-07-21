@@ -55,7 +55,7 @@ fun ListBlock(
     var focusedItemIndex by remember { mutableStateOf<Int?>(null) }
     val focusRequester = remember { FocusRequester() }
 
-    // Відслідковуємо чи це перша ініціалізація списку
+    // Track whether this is the first initialization of the list
     var isInitialized by remember { mutableStateOf(false) }
 
     Column(
@@ -124,7 +124,7 @@ fun ListBlock(
                                 if (focusState.isFocused) {
                                     blockActions.updateLastInteractionIndex(index)
                                     focusedItemIndex =
-                                        itemIndex // Встановлюємо фокус тільки при фактичній взаємодії
+                                        itemIndex // Set focus only on actual interaction
                                 }
                             }
                             .onKeyEvent { event ->
@@ -133,15 +133,15 @@ fun ListBlock(
                                     text = item.value,
                                     onBackspaceEmpty = {
                                         if (itemsList.size == 1) {
-                                            // Якщо це останній елемент, видаляємо весь блок
+                                            // If this is the last item, remove the entire block
                                             blockActions.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE_LIST)
                                         } else {
-                                            // Видаляємо поточний елемент
+                                            // Remove the current item
                                             block.items.value =
                                                 block.items.value.toMutableList().apply {
                                                     removeAt(itemIndex)
                                                 }
-                                            // Встановлюємо фокус на попередній елемент якщо можливо
+                                            // Set focus on the previous item if possible
                                             if (itemIndex > 0) {
                                                 focusedItemIndex = itemIndex - 1
                                             } else if (itemsList.size > 1) {
@@ -153,7 +153,7 @@ fun ListBlock(
                                     onNavigateDown = {
                                         val navigated = blockActions.navigateToNext()
                                         if (!navigated) {
-                                            // Додаємо новий елемент списку після поточного
+                                            // Add a new list item after the current one
                                             block.items.value =
                                                 block.items.value.toMutableList().apply {
                                                     add(itemIndex + 1, ItemListBlock(""))
@@ -164,14 +164,14 @@ fun ListBlock(
                                     },
                                     onEnterPressed = {
                                         if (item.value.isNotEmpty()) {
-                                            // Додаємо новий елемент списку після поточного
+                                            // Add a new list item after the current one
                                             block.items.value =
                                                 block.items.value.toMutableList().apply {
                                                     add(itemIndex + 1, ItemListBlock(""))
                                                 }
                                             focusedItemIndex = itemIndex + 1
                                         } else {
-                                            // На порожньому елементі - виходимо зі списку і створюємо параграф
+                                            // On an empty item - exit the list and create a paragraph
                                             focusedItemIndex = null
                                             if (itemsList.size == 1) {
                                                 blockActions.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE_LIST)
@@ -191,27 +191,27 @@ fun ListBlock(
                         KeyboardActions(
                             onDone = {
                                 if (item.value.isNotEmpty()) {
-                                    // Додаємо новий елемент списку після поточного
+                                    // Add a new list item after the current one
                                     block.items.value =
                                         block.items.value.toMutableList().apply {
                                             add(itemIndex + 1, ItemListBlock(""))
                                         }
-                                    // Встановлюємо фокус на новий елемент
+                                    // Set focus on the new item
                                     focusedItemIndex = itemIndex + 1
                                 } else {
-                                    // Користувач хоче вийти зі списку на порожньому елементі
-                                    focusedItemIndex = null // Очищаємо локальний фокус
+                                    // The user wants to exit the list on an empty item
+                                    focusedItemIndex = null // Clear local focus
 
                                     if (itemsList.size == 1) {
-                                        // Якщо це єдиний елемент у списку, замінюємо весь список на текстовий блок
+                                        // If this is the only item in the list, replace the entire list with a text block
                                         blockActions.onReplaceBlock(Block.TextBlock())
                                     } else {
-                                        // Видаляємо порожній елемент
+                                        // Remove the empty item
                                         block.items.value =
                                             block.items.value.toMutableList().apply {
                                                 removeAt(itemIndex)
                                             }
-                                        // Додаємо новий текстовий параграф після всього списку
+                                        // Add a new text paragraph after the entire list
                                         blockActions.onAddParagraph()
                                     }
                                 }
@@ -244,36 +244,36 @@ fun ListBlock(
         }
     }
 
-    // Керування фокусом для нових елементів списку
+    // Focus management for new list items
     LaunchedEffect(focusedItemIndex) {
         focusedItemIndex?.let {
             focusRequester.requestFocus()
         }
     }
 
-    // Автоматичний фокус на першому елементі при ініціалізації списку
+    // Automatic focus on the first item when the list is initialized
     LaunchedEffect(itemsList, index) {
         if (!isInitialized && itemsList.isNotEmpty()) {
-            // Перевіряємо чи це новий порожній список:
-            // - Перший елемент порожній
-            // - Список містить тільки один елемент
+            // Check whether this is a new empty list:
+            // - The first item is empty
+            // - The list contains only one item
             val firstItem = itemsList.firstOrNull()
             if (firstItem != null &&
                 firstItem.value.isEmpty() &&
                 itemsList.size == 1 &&
                 focusedItemIndex == null
             ) {
-                // Додаємо невелику затримку для завершення рендерингу
+                // Add a small delay to allow rendering to complete
                 kotlinx.coroutines.delay(50)
                 focusedItemIndex = 0
                 isInitialized = true
             } else if (itemsList.isNotEmpty()) {
-                // Якщо список вже має контент, позначаємо як ініціалізований
+                // If the list already has content, mark it as initialized
                 isInitialized = true
             }
         }
     }
 
-    // НЕ встановлюємо автоматичний фокус при створенні списку
-    // Фокус буде встановлений тільки коли користувач явно взаємодіє зі списком
+    // Do NOT set automatic focus when the list is created
+    // Focus will be set only when the user explicitly interacts with the list
 }

@@ -4,29 +4,29 @@ import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 
 /**
- * Конвертер для преобразования блоков заметок в формат Markdown
+ * Converter for transforming note blocks into Markdown format.
  */
 object MarkdownConverter {
 
     /**
-     * Преобразует JSON-представление блоков в Markdown-текст
+     * Converts a JSON representation of blocks into Markdown text.
      *
-     * @param json JSON-строка, содержащая блоки заметки
-     * @return Строка в формате Markdown
+     * @param json JSON string containing the note blocks
+     * @return a string in Markdown format
      */
     fun jsonToMarkdown(json: String): String {
         if (json.isEmpty()) return ""
 
-        // Используем существующий конвертер для получения блоков из JSON
+        // Use the existing converter to obtain blocks from JSON
         val blocks = BlockConverter.jsonToBlocks(json)
         return blocksToMarkdown(blocks)
     }
 
     /**
-     * Преобразует список блоков в Markdown-текст
+     * Converts a list of blocks into Markdown text.
      *
-     * @param blocks Список блоков для преобразования
-     * @return Строка в формате Markdown
+     * @param blocks the list of blocks to convert
+     * @return a string in Markdown format
      */
     fun blocksToMarkdown(blocks: List<Block>): String {
         val markdown = StringBuilder()
@@ -51,7 +51,7 @@ object MarkdownConverter {
                 }
 
                 is Block.QuoteBlock -> {
-                    // Разбиваем текст цитаты на строки и добавляем ">" в начало каждой строки
+                    // Split the quote text into lines and prepend ">" to each line
                     val quoteLines = block.text.value.split("\n")
                     quoteLines.forEach { line ->
                         markdown.append("> $line\n")
@@ -61,7 +61,7 @@ object MarkdownConverter {
 
                 is Block.LinkBlock -> {
                     val linkData = block.block.value
-                    // Если есть заголовок, используем его для текста ссылки, иначе используем URL
+                    // If there is a title, use it as the link text; otherwise use the URL
                     val linkText = linkData.title.ifEmpty { linkData.url }
                     markdown.append("[$linkText](${linkData.url})")
                     markdown.append("\n\n")
@@ -79,7 +79,7 @@ object MarkdownConverter {
                     if (items.isNotEmpty()) {
                         when (block.blockType) {
                             BlockType.LIST_CHECK -> {
-                                // Создаем чекбоксы для каждого элемента
+                                // Create checkboxes for each item
                                 items.forEach { item ->
                                     val checkbox = if (item.isCheck) "[x]" else "[ ]"
                                     markdown.append("$checkbox ${item.value}\n")
@@ -87,14 +87,14 @@ object MarkdownConverter {
                             }
 
                             BlockType.LIST_NUMBER -> {
-                                // Создаем нумерованный список
+                                // Create a numbered list
                                 items.forEachIndexed { index, item ->
                                     markdown.append("${index + 1}. ${item.value}\n")
                                 }
                             }
 
                             else -> {
-                                // Для всех остальных типов создаем маркированный список
+                                // For all other types, create a bulleted list
                                 items.forEach { item ->
                                     markdown.append("* ${item.value}\n")
                                 }

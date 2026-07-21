@@ -73,15 +73,15 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
     }
 
     val showTasksFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[showTasks] ?: true // за замовчуванням показувати завдання
+        preferences[showTasks] ?: true // show tasks by default
     }
 
     val simpleEditFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[simpleEdit] ?: false // за замовчуванням динамічне редагування
+        preferences[simpleEdit] ?: false // dynamic editing by default
     }
 
     val fontSizeFlow: Flow<Int> = dataStore.data.map { preferences ->
-        preferences[fontSize] ?: 16 // за замовчуванням 16sp
+        preferences[fontSize] ?: 16 // 16sp by default
     }
 
     val fontStyleFlow: Flow<FontStyleType> = dataStore.data.map { preferences ->
@@ -148,7 +148,7 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
     fun setFontSize(value: Int, scope: CoroutineScope) {
         scope.launch {
             dataStore.edit { preferences ->
-                preferences[fontSize] = value.coerceIn(10, 32) // обмежуємо діапазон 10-32
+                preferences[fontSize] = value.coerceIn(10, 32) // clamp to the 10-32 range
             }
         }
     }

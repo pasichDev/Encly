@@ -100,7 +100,7 @@ fun SecuritySettingsScreen(
 
             item { Spacer(Modifier.height(20.dp)) }
 
-            // Авторизація
+            // Authorization
             item {
                 Text(
                     text = "Авторизація",
@@ -147,7 +147,7 @@ fun SecuritySettingsScreen(
 
             item { Spacer(Modifier.height(20.dp)) }
 
-            // Інформація про безпеку
+            // Security information
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(

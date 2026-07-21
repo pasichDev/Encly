@@ -3,8 +3,8 @@ package com.pasich.encly.dynamicBlocks
 import androidx.compose.runtime.snapshots.SnapshotStateList
 
 /**
- * Класс для управления операциями над блоками с поддержкой отмены/повтора действий.
- * Поддерживает отмену/повтор изменений структуры блоков и изменений контента внутри блоков.
+ * Class for managing block operations with undo/redo support.
+ * Supports undo/redo of block structure changes and content changes within blocks.
  */
 class BlockOperations(
     private val blocks: SnapshotStateList<Block>,
@@ -13,9 +13,9 @@ class BlockOperations(
     private val redoStack = mutableListOf<Operation>()
 
     /**
-     * Добавляет новый блок по указанному индексу.
-     * @param index индекс для добавления нового блока
-     * @param block новый блок
+     * Adds a new block at the specified index.
+     * @param index index at which to add the new block
+     * @param block the new block
      */
     fun addBlock(
         index: Int,
@@ -24,12 +24,12 @@ class BlockOperations(
         val operation = AddOperation(index, block)
         executeOperation(operation)
         undoStack.add(operation)
-        redoStack.clear() // После новой операции очищаем стек повтора
+        redoStack.clear() // Clear the redo stack after a new operation
     }
 
     /**
-     * Удаляет блок по указанному индексу.
-     * @param index индекс удаляемого блока
+     * Removes the block at the specified index.
+     * @param index index of the block to remove
      */
     fun removeBlock(index: Int) {
         if (index !in blocks.indices) return
@@ -42,9 +42,9 @@ class BlockOperations(
     }
 
     /**
-     * Перемещает блок с одного индекса на другой.
-     * @param fromIndex начальный индекс
-     * @param toIndex конечный индекс
+     * Moves a block from one index to another.
+     * @param fromIndex the starting index
+     * @param toIndex the destination index
      */
     fun moveBlock(
         fromIndex: Int,
@@ -59,9 +59,9 @@ class BlockOperations(
     }
 
     /**
-     * Заменяет блок по указанному индексу новым блоком.
-     * @param index индекс заменяемого блока
-     * @param newBlock новый блок
+     * Replaces the block at the specified index with a new block.
+     * @param index index of the block to replace
+     * @param newBlock the new block
      */
     fun replaceBlock(
         index: Int,
@@ -77,8 +77,8 @@ class BlockOperations(
     }
 
     /**
-     * Отменяет последнюю операцию.
-     * @return true если операция была отменена, иначе false
+     * Undoes the last operation.
+     * @return true if the operation was undone, false otherwise
      */
     fun undo(): Boolean {
         if (undoStack.isEmpty()) return false
@@ -91,8 +91,8 @@ class BlockOperations(
     }
 
     /**
-     * Повторяет ранее отмененную операцию.
-     * @return true если операция была повторена, иначе false
+     * Redoes a previously undone operation.
+     * @return true if the operation was redone, false otherwise
      */
     fun redo(): Boolean {
         if (redoStack.isEmpty()) return false
@@ -104,7 +104,7 @@ class BlockOperations(
     }
 
     /**
-     * Выполняет операцию над списком блоков.
+     * Executes an operation on the block list.
      */
     private fun executeOperation(operation: Operation) {
         when (operation) {
@@ -121,12 +121,12 @@ class BlockOperations(
     }
 
     /**
-     * Получает текущее состояние блоков.
+     * Returns the current state of the blocks.
      */
     fun getCurrentBlocks(): List<Block> = blocks.toList()
 
     /**
-     * Заменяет все блоки на новый список.
+     * Replaces all blocks with a new list.
      */
     fun setBlocks(newBlocks: List<Block>) {
         blocks.clear()
@@ -136,20 +136,20 @@ class BlockOperations(
     }
 
     /**
-     * Проверяет, можно ли отменить операцию.
+     * Checks whether an operation can be undone.
      */
     fun canUndo(): Boolean = undoStack.isNotEmpty()
 
     /**
-     * Проверяет, можно ли повторить операцию.
+     * Checks whether an operation can be redone.
      */
     fun canRedo(): Boolean = redoStack.isNotEmpty()
 
     /**
-     * Регистрирует изменение текста в блоке.
-     * @param index индекс блока
-     * @param oldText старый текст
-     * @param newText новый текст
+     * Registers a text change in a block.
+     * @param index index of the block
+     * @param oldText the old text
+     * @param newText the new text
      */
     fun registerTextChange(
         index: Int,
@@ -164,10 +164,10 @@ class BlockOperations(
     }
 
     /**
-     * Регистрирует изменения в блоке любого типа
-     * @param index индекс блока
-     * @param oldBlock старое состояние блока
-     * @param newBlock новое состояние блока
+     * Registers changes in a block of any type.
+     * @param index index of the block
+     * @param oldBlock the previous state of the block
+     * @param newBlock the new state of the block
      */
     fun registerContentChange(
         index: Int,
@@ -181,17 +181,17 @@ class BlockOperations(
         redoStack.clear()
     }
 
-    // Внутренние классы операций
+    // Internal operation classes
 
     /**
-     * Базовый интерфейс для всех операций.
+     * Base interface for all operations.
      */
     private interface Operation {
         fun createInverse(): Operation
     }
 
     /**
-     * Операция добавления блока.
+     * Block-add operation.
      */
     private inner class AddOperation(
         val index: Int,
@@ -201,7 +201,7 @@ class BlockOperations(
     }
 
     /**
-     * Операция удаления блока.
+     * Block-remove operation.
      */
     private inner class RemoveOperation(
         val index: Int,
@@ -211,7 +211,7 @@ class BlockOperations(
     }
 
     /**
-     * Операция перемещения блока.
+     * Block-move operation.
      */
     private inner class MoveOperation(
         val fromIndex: Int,
@@ -221,7 +221,7 @@ class BlockOperations(
     }
 
     /**
-     * Операция замены блока.
+     * Block-replace operation.
      */
     private inner class ReplaceOperation(
         val index: Int,
@@ -232,7 +232,7 @@ class BlockOperations(
     }
 
     /**
-     * Операция изменения текста в блоке.
+     * Text-change operation within a block.
      */
     private inner class TextChangeOperation(
         val index: Int,
@@ -242,8 +242,8 @@ class BlockOperations(
         override fun createInverse(): Operation = TextChangeOperation(index, newText, oldText)
 
         /**
-         * Выполняет операцию изменения текста.
-         * Использует интерфейс TextualBlock для унифицированной обработки текста
+         * Executes the text-change operation.
+         * Uses the TextualBlock interface for unified text handling.
          */
         fun apply() {
             if (index !in blocks.indices) return
@@ -256,8 +256,8 @@ class BlockOperations(
     }
 
     /**
-     * Операция изменения содержимого блока.
-     * Используется для более сложных блоков, где нужно сохранить всё состояние.
+     * Block content-change operation.
+     * Used for more complex blocks where the entire state needs to be preserved.
      */
     private inner class ContentChangeOperation(
         val index: Int,
@@ -267,8 +267,8 @@ class BlockOperations(
         override fun createInverse(): Operation = ContentChangeOperation(index, newBlock, oldBlock)
 
         /**
-         * Выполняет операцию изменения содержимого.
-         * Полностью заменяет блок на новый.
+         * Executes the content-change operation.
+         * Fully replaces the block with a new one.
          */
         fun apply() {
             if (index !in blocks.indices) return
@@ -278,6 +278,6 @@ class BlockOperations(
 }
 
 /**
- * Расширение для создания BlockOperations из списка блоков.
+ * Extension for creating BlockOperations from a list of blocks.
  */
 fun SnapshotStateList<Block>.toBlockOperations(): BlockOperations = BlockOperations(this)

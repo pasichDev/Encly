@@ -36,11 +36,11 @@ fun TitleField(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var isFocused by remember { mutableStateOf(false) }
 
-    // Автоскролінг при фокусі (тільки для нової системи)
+    // Auto-scroll on focus (only for the new system)
     if (useNewFocusSystem) {
         LaunchedEffect(isFocused) {
             if (isFocused) {
-                delay(100L) // Затримка для клавіатури
+                delay(100L) // Delay for the keyboard
                 bringIntoViewRequester.bringIntoView()
             }
         }

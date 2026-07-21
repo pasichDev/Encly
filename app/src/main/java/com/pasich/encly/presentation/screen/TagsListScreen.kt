@@ -29,16 +29,16 @@ fun TagsList(tagListViewModel: TagListViewModel = hiltViewModel()) {
     val space = 6.dp
     val state by tagListViewModel.state.collectAsStateWithLifecycle()
 
-    // Не показуємо нічого під час завантаження або якщо список порожній
+    // Show nothing while loading or if the list is empty
     if (state.baseState.isLoading || (state.listTags.isEmpty() && !state.baseState.isLoading)) {
         return
     }
 
-    // Анімована поява списку після завантаження
+    // Animated appearance of the list after loading
     AnimatedVisibility(
         visible = !state.baseState.isLoading && state.listTags.isNotEmpty(),
         enter = fadeIn() + slideInVertically(
-            initialOffsetY = { -it / 2 } // З'являється зверху
+            initialOffsetY = { -it / 2 } // Appears from the top
         )
     ) {
         LazyRow(

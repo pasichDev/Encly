@@ -20,19 +20,19 @@ data class Note(
 
 
     /**
-     * Возвращает true, если заметка не содержит ни заголовка, ни содержимого
+     * Returns true if the note contains neither a title nor content.
      */
     fun isEmpty(): Boolean = title.isBlank() && value.isBlank()
 
 
     /**
-     * Проверяет, есть ли изменения в содержимом или заголовке заметки
+     * Checks whether there are changes in the note's content or title.
      */
     internal fun hasContentChanged(newBlocksJson: String, newTitle: String): Boolean {
         if (title != newTitle) {
             return true
         }
-        // Проверяем изменения в контенте блоков
+        // Check for changes in the block content
         return value != newBlocksJson
     }
 

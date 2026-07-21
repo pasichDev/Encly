@@ -5,21 +5,21 @@ import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 
 /**
- * Утилитарный класс для форматирования текста заметок
+ * Utility class for formatting note text.
  */
 object NotesTextFormatter {
 
     fun jsonToPlainText(json: String): String {
         if (json.isEmpty()) return ""
 
-        // Используем существующий конвертер для получения блоков из JSON
+        // Use the existing converter to get blocks from JSON
         val blocks = BlockConverter.jsonToBlocks(json)
         return blocksToPlainText(blocks)
     }
 
 
     /**
-     * Преобразует список блоков в обычный текст без форматирования Markdown
+     * Converts a list of blocks into plain text without Markdown formatting.
      */
     fun blocksToPlainText(blocks: List<Block>): String {
         val text = StringBuilder()
@@ -38,14 +38,14 @@ object NotesTextFormatter {
 
 
                 is Block.QuoteBlock -> {
-                    // Для цитаты добавляем кавычки вместо маркера Markdown
+                    // For quotes, add quotation marks instead of a Markdown marker
                     text.append("«${block.text.value}»")
                     text.append("\n\n")
                 }
 
                 is Block.LinkBlock -> {
                     val linkData = block.block.value
-                    // Если есть заголовок, используем его и добавляем URL в скобках
+                    // If there is a title, use it and append the URL in parentheses
                     if (linkData.title.isNotEmpty()) {
                         text.append("${linkData.title} (${linkData.url})")
                     } else {
@@ -66,7 +66,7 @@ object NotesTextFormatter {
                     if (items.isNotEmpty()) {
                         when (block.blockType) {
                             BlockType.LIST_CHECK -> {
-                                // Для чекбоксов используем [x] или [ ]
+                                // For checkboxes, use [x] or [ ]
                                 items.forEach { item ->
                                     val status = if (item.isCheck) "[x]" else "[ ]"
                                     text.append("$status ${item.value}\n")
@@ -74,14 +74,14 @@ object NotesTextFormatter {
                             }
 
                             BlockType.LIST_NUMBER -> {
-                                // Нумерованные списки оставляем как есть
+                                // Leave numbered lists as they are
                                 items.forEachIndexed { index, item ->
                                     text.append("${index + 1}. ${item.value}\n")
                                 }
                             }
 
                             else -> {
-                                // Для маркированных списков используем дефис
+                                // For bulleted lists, use a hyphen
                                 items.forEach { item ->
                                     text.append("- ${item.value}\n")
                                 }
@@ -92,7 +92,7 @@ object NotesTextFormatter {
                 }
 
                 else -> {
-                    // Можна нічого не робити або логнути
+                    // Can do nothing here or log it
                 }
             }
         }

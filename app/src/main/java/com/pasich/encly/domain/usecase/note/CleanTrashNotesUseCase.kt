@@ -8,30 +8,30 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
- * UseCase для масового видалення нотаток з кошика з очищенням фотографій
+ * UseCase for bulk deletion of notes from the trash, including cleanup of photos.
  */
 class CleanTrashNotesUseCase @Inject constructor(
     private val repository: NotesRepository
 ) {
 
     /**
-     * Видаляє всі нотатки з кошика з очищенням фотографій
+     * Deletes all notes from the trash, including cleanup of photos.
      */
     suspend operator fun invoke(): Boolean = withContext(Dispatchers.IO) {
         return@withContext try {
-            // Отримуємо всі нотатки з кошика
+            // Get all notes from the trash
             repository.getTrashNotes().collect { trashNotes ->
                 if (trashNotes.isNotEmpty()) {
                     AppLogger.d("CleanTrashNotesUseCase", "Deleting ${trashNotes.size} notes from trash")
 
-                    // Потім видаляємо всі нотатки
+                    // Then delete all notes
                     trashNotes.forEach { note ->
                         repository.deleteNoteById(note.id.toLong())
                     }
 
                     AppLogger.d(
                         "CleanTrashNotesUseCase",
-                        "Успішно видалено ${trashNotes.size} нотаток з кошика"
+                        "Deleted ${trashNotes.size} notes from trash"
                     )
                 }
             }
@@ -43,7 +43,7 @@ class CleanTrashNotesUseCase @Inject constructor(
     }
 
     /**
-     * Видаляє вибрані нотатки з кошика з очищенням фотографій
+     * Deletes the selected notes from the trash, including cleanup of photos.
      */
     suspend fun cleanSelectedNotes(selectedNotes: List<Note>): Boolean =
         withContext(Dispatchers.IO) {
@@ -51,18 +51,18 @@ class CleanTrashNotesUseCase @Inject constructor(
                 if (selectedNotes.isNotEmpty()) {
                     AppLogger.d(
                         "CleanTrashNotesUseCase",
-                        "Видалення ${selectedNotes.size} вибраних нотаток"
+                        "Deleting ${selectedNotes.size} selected notes"
                     )
 
 
-                    // Потім видаляємо вибрані нотатки
+                    // Then delete the selected notes
                     selectedNotes.forEach { note ->
                         repository.deleteNoteById(note.id.toLong())
                     }
 
                     AppLogger.d(
                         "CleanTrashNotesUseCase",
-                        "Успішно видалено ${selectedNotes.size} вибраних нотаток"
+                        "Deleted ${selectedNotes.size} selected notes"
                     )
                 }
                 true

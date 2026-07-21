@@ -10,30 +10,30 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Централізований менеджер фокуса для блочного редактора
- * Управляє фокусом, навігацією між блоками та синхронізацією станів
+ * Centralized focus manager for the block editor.
+ * Manages focus, navigation between blocks, and state synchronization.
  */
 class CentralizedFocusManager {
-    // Карта FocusRequester'ів для кожного блока
+    // Map of FocusRequesters for each block
     private val focusRequesters = mutableStateMapOf<Int, FocusRequester>()
 
-    // Поточний індекс блока з фокусом
+    // Current index of the focused block
     private val _currentFocusIndex = MutableStateFlow(-1)
     val currentFocusIndex: StateFlow<Int> = _currentFocusIndex.asStateFlow()
 
-    // Останній блок, з яким взаємодіяв користувач
+    // The last block the user interacted with
     private val _lastInteractionIndex = MutableStateFlow(0)
     val lastInteractionIndex: StateFlow<Int> = _lastInteractionIndex.asStateFlow()
 
-    // Прапорець, чи потрібно ігнорувати фокус (для деяких типів блоків)
+    // Flag indicating whether focus should be ignored (for some block types)
     private val _shouldIgnoreFocus = mutableStateOf(false)
     val shouldIgnoreFocus: Boolean get() = _shouldIgnoreFocus.value
 
-    // Callback для встановлення курсора в кінець тексту
+    // Callback for moving the cursor to the end of the text
     private val cursorToEndCallbacks = mutableStateMapOf<Int, () -> Unit>()
 
     /**
-     * Реєструє FocusRequester для блока
+     * Registers a FocusRequester for a block.
      */
     fun registerFocusRequester(
         index: Int,
@@ -43,7 +43,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Реєструє callback для встановлення курсора в кінець тексту
+     * Registers a callback for moving the cursor to the end of the text.
      */
     fun registerCursorToEndCallback(
         index: Int,
@@ -53,7 +53,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Видаляє FocusRequester для блока
+     * Removes the FocusRequester for a block.
      */
     fun unregisterFocusRequester(index: Int) {
         focusRequesters.remove(index)
@@ -61,7 +61,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Перевіряє, чи може блок отримати фокус (чи є text field який можна редагувати)
+     * Checks whether a block can receive focus (whether it has an editable text field).
      */
     fun isBlockFocusable(
         index: Int,
@@ -73,18 +73,18 @@ class CentralizedFocusManager {
         return when (block::class.java.simpleName) {
             "TextBlock", "QuoteBlock", "HBlock" -> true
             "LinkBlock" -> {
-                // LinkBlock може отримати фокус тільки якщо URL порожній (режим введення)
+                // LinkBlock can receive focus only if the URL is empty (input mode)
                 try {
-                    // Отримуємо доступ до поля block через рефлексію
+                    // Access the block field via reflection
                     val blockField = block.javaClass.getDeclaredField("block")
                     blockField.isAccessible = true
                     val blockValue = blockField.get(block)
 
-                    // Отримуємо MutableStateFlow
+                    // Get the MutableStateFlow
                     val valueMethod = blockValue.javaClass.getMethod("getValue")
                     val linkDataBlock = valueMethod.invoke(blockValue)
 
-                    // Перевіряємо чи URL порожній
+                    // Check whether the URL is empty
                     val urlField = linkDataBlock.javaClass.getDeclaredField("url")
                     urlField.isAccessible = true
                     val url = urlField.get(linkDataBlock) as? String
@@ -95,13 +95,13 @@ class CentralizedFocusManager {
                     false
                 }
             }
-            "ListBlock" -> true // ListBlock має власну логіку фокуса
-            else -> false // SeparatorBlock, ImageBlock тощо не можуть отримати фокус
+            "ListBlock" -> true // ListBlock has its own focus logic
+            else -> false // SeparatorBlock, ImageBlock, etc. cannot receive focus
         }
     }
 
     /**
-     * Знаходить попередній блок, який може отримати фокус
+     * Finds the previous block that can receive focus.
      */
     fun findPreviousFocusableBlock(
         currentIndex: Int,
@@ -112,7 +112,7 @@ class CentralizedFocusManager {
                 return i
             }
         }
-        // Якщо не знайшли попереднього фокусабельного блока, повертаємо перший доступний
+        // If no previous focusable block was found, return the first available one
         for (i in 0 until blocks.size) {
             if (isBlockFocusable(i, blocks)) {
                 return i
@@ -122,7 +122,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Встановлює фокус на блок з заданим індексом
+     * Sets focus on the block with the given index.
      */
     fun setFocus(
         index: Int,
@@ -139,7 +139,7 @@ class CentralizedFocusManager {
             return
         }
 
-        // Предотвращаем рекурсию - не устанавливаем фокус если он уже на этом индексе
+        // Prevent recursion - do not set focus if it is already on this index
         if (_currentFocusIndex.value == index && !ignore) {
             AppLogger.d("CentralizedFocusManager", "setFocus: focus already on index $index")
             return
@@ -152,7 +152,7 @@ class CentralizedFocusManager {
             AppLogger.d("CentralizedFocusManager", "setFocus: requesting focus for index $index")
             requestFocusInternal(index)
 
-            // Встановлюємо курсор в кінець тексту якщо потрібно
+            // Move the cursor to the end of the text if needed
             if (moveCursorToEnd) {
                 cursorToEndCallbacks[index]?.invoke()
                 AppLogger.d("CentralizedFocusManager", "setFocus: moved cursor to end for index $index")
@@ -163,7 +163,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Встановлює останній індекс взаємодії
+     * Sets the last interaction index.
      */
     fun setLastInteraction(index: Int) {
         if (index >= 0) {
@@ -172,7 +172,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Обновляет текущий индекс фокуса без вызова requestFocus (для избежания рекурсии)
+     * Updates the current focus index without calling requestFocus (to avoid recursion).
      */
     fun updateCurrentFocusIndex(index: Int) {
         if (index >= 0) {
@@ -181,7 +181,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Навігація до наступного блока
+     * Navigation to the next block.
      */
     fun moveToNext(totalBlocks: Int): Boolean {
         val current = _currentFocusIndex.value
@@ -200,7 +200,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Навігація до попереднього блока
+     * Navigation to the previous block.
      */
     fun moveToPrevious(blocks: List<Any>? = null): Boolean {
         val current = _currentFocusIndex.value
@@ -220,7 +220,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Очищає фокус
+     * Clears focus.
      */
     fun clearFocus() {
         _currentFocusIndex.value = -1
@@ -228,12 +228,12 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Перевіряє, чи готовий FocusRequester для блока
+     * Checks whether the FocusRequester for a block is ready.
      */
     fun isFocusReady(index: Int): Boolean = focusRequesters.containsKey(index)
 
     /**
-     * Внутрішній метод для запиту фокуса
+     * Internal method for requesting focus.
      */
     private fun requestFocusInternal(index: Int) {
         AppLogger.d("CentralizedFocusManager", "requestFocusInternal: index=$index, hasFocusRequester=${focusRequesters.containsKey(index)}")
@@ -251,7 +251,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Очищає всі дані
+     * Clears all data.
      */
     fun cleanup() {
         focusRequesters.clear()
@@ -261,7 +261,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Відкладене встановлення фокуса на блок з заданим індексом
+     * Deferred setting of focus on the block with the given index.
      */
     fun delayedSetFocus(
         index: Int,
@@ -275,7 +275,7 @@ class CentralizedFocusManager {
             return
         }
 
-        // Використовуємо корутину для відкладеного виконання
+        // Use a coroutine for deferred execution
         CoroutineScope(Dispatchers.Main).launch {
             delay(delayMillis)
             setFocus(index, ignore)
@@ -284,7 +284,7 @@ class CentralizedFocusManager {
     }
 
     /**
-     * Встановлює фокус на блок з заданим індексом з відкладенням та повторними спробами
+     * Sets focus on the block with the given index, with a delay and retry attempts.
      */
     fun setFocusWithRetry(
         index: Int,
