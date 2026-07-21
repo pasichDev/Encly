@@ -21,9 +21,11 @@
 -keep class androidx.lifecycle.LiveData { *; }
 -dontwarn androidx.lifecycle.**
 
-# --- SQLCipher ---
--keep,includedescriptorclasses class net.sqlcipher.** { *; }
--keep,includedescriptorclasses interface net.sqlcipher.** { *; }
+# --- SQLCipher (net.zetetic:sqlcipher-android) ---
+# Keep the classes intact: their names are referenced by the native JNI layer.
+-keep,includedescriptorclasses class net.zetetic.database.** { *; }
+-keep,includedescriptorclasses interface net.zetetic.database.** { *; }
+-dontwarn net.zetetic.database.**
 
 # --- Room ---
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
