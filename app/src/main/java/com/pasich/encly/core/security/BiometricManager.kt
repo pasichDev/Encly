@@ -66,10 +66,7 @@ class BiometricManager @Inject constructor(
         fun onCancelled() {}
     }
 
-    /**
-     * Checks whether biometric authentication is available.
-     * TODO: remove
-     */
+    /** Checks whether weak biometric authentication is available. */
     fun isBiometricAvailable(): Boolean {
         val biometricManager = AndroidBiometricManager.from(context)
         return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK)) {

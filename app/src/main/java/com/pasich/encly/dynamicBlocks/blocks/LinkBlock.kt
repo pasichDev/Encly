@@ -2,20 +2,15 @@ package com.pasich.encly.dynamicBlocks.blocks
 
 import android.net.Uri
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -61,7 +56,6 @@ fun LinkBlock(
     block: Block.LinkBlock, blockActions: BlockActions?, onClick: () -> Unit, modifier: Modifier, isLocked: Boolean = false
 ) {
     val urlModel by block.block.collectAsState()
-    val isLoading = false
     val fq = remember { FocusRequester() }
     val fontStyles = rememberFontStyles()
 
@@ -120,26 +114,14 @@ fun LinkBlock(
                 .fillMaxWidth()
                 .height(80.dp)
                 .padding(vertical = 8.dp)
-                .clickable(enabled = !isLoading) {
-                    onClick()
-                }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
+                .clickable { onClick() },
+                shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.onSurface
             )
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 when {
-                    isLoading -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-
                     urlModel.isError -> {
                         Column(
                             modifier = Modifier

@@ -23,7 +23,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 enum class SaltData {
-    DATABASE, AUTH, MEDIA
+    DATABASE, AUTH
 }
 
 object SecurityConstants {
@@ -235,13 +235,6 @@ class SeedPhraseManager @Inject constructor(
     fun verificationKeyData(): Boolean {
         val hash = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false
         return !hmacIntegrityManager.isHashTampered(hash)
-    }
-
-    /** Clears the stored data. */
-    fun clearStoredSeed() {
-        prefs.edit {
-            remove(ENCRYPTED_BLOCK_KEY)
-        }
     }
 
     /**

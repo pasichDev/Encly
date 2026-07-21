@@ -15,11 +15,4 @@ data class Tag(
     var isVisible: Boolean = true,
     @ColumnInfo(name = "position")
     var position: Int = 0
-) {
-    fun create(nameTag: String, visibility: Boolean = true, position: Int = 0): Tag {
-        this.nameTag = nameTag
-        this.isVisible = visibility
-        this.position = position
-        return this
-    }
-}
+)

@@ -48,11 +48,6 @@ fun DynamicBlocksEditor(
 ) {
     val scrollState = rememberScrollState()
 
-    // Pass the focus manager to the ViewModel
-    viewModel.focusManager.let { vmFocusManager ->
-        // Synchronize with the ViewModel
-    }
-
     val blocks = viewModel.blocks
     val currentFocusIndex by viewModel.currentFocusIndex.collectAsState()
     val isEditMode by viewModel.isBlockEditMode.collectAsState()

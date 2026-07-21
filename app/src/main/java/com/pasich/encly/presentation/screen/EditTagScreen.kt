@@ -585,7 +585,6 @@ fun TagEditItem(
                         onClick = {},
                         modifier = Modifier
                             .size(24.dp)
-                        //  .draggableHandle()
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_drag),

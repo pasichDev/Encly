@@ -124,16 +124,6 @@ class SecurityManager @Inject constructor(
     }
 
     /**
-     * Checks whether the encryption key was created manually by the user (by entering a seed phrase),
-     * rather than generated automatically on first launch.
-     *
-     * @return true if the key was created manually by the user, false if generated automatically.
-     */
-  //  fun isUserCreatedKey(): Boolean {
- //       return seedPhraseManager.isUserManuallyCreatedKeyByDecryption()
- //   }
-
-    /**
      * Wipes all encrypted data and security state (DB files, seed prefs, Keystore keys,
      * integrity HMAC, auth prefs) for the unrecoverable-loss path, then resets to
      * onboarding. Everything is lost by design (zero-knowledge model).

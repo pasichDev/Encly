@@ -59,12 +59,6 @@ class SecuritySettingsViewModel @Inject constructor(
         }
     }
 
-    fun toggleAuthType(authType: AuthType, callback: () -> Unit){
-
-    }
-
-    //TODO State is not updated after enabling and on errors
-
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

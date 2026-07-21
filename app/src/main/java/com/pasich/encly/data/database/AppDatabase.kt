@@ -21,7 +21,3 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tasksDao(): TasksDao
 }
 
-data class Note(val id: Int = 0, val content: String = "")
-data class Tag(val id: Int = 0, val name: String = "")
-data class Task(val id: Int = 0, val done: Boolean = false)
-
