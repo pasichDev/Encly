@@ -1,6 +1,6 @@
 package com.pasich.encly.dynamicBlocks
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -57,12 +57,12 @@ fun DynamicBlocksEditor(
     val currentFocusIndex by viewModel.currentFocusIndex.collectAsState()
     val isEditMode by viewModel.isBlockEditMode.collectAsState()
 
-    Log.d(
+    AppLogger.d(
         "DynamicBlocksEditor",
         "DynamicBlocksEditor composed: blocks.size=${blocks.size}, isLocked=$isLocked, useNewFocusSystem=$useNewFocusSystem",
     )
     blocks.forEachIndexed { i, b ->
-        Log.d("DynamicBlocksEditor", "Block $i: ${b::class.simpleName}")
+        AppLogger.d("DynamicBlocksEditor", "Block $i: ${b::class.simpleName}")
     }
 
     // Відслідковуємо зміни фокуса та запитуємо його
@@ -73,7 +73,7 @@ fun DynamicBlocksEditor(
             }.collect { isReady ->
                 if (isReady && !viewModel.focusManager.shouldIgnoreFocus) {
                     viewModel.focusManager.setFocus(currentFocusIndex)
-                    Log.d("DynamicBlocksEditor", "Новий фокус: блок з індексом $currentFocusIndex")
+                    AppLogger.d("DynamicBlocksEditor", "New focus: block at index $currentFocusIndex")
                 }
             }
         }
@@ -95,7 +95,7 @@ fun DynamicBlocksEditor(
             },
     ) {
         blocks.forEachIndexed { index, block ->
-            Log.d("DynamicBlocksEditor", "Rendering block $index: ${block::class.simpleName}")
+            AppLogger.d("DynamicBlocksEditor", "Rendering block $index: ${block::class.simpleName}")
 
             val focusRequester = remember { FocusRequester() }
             // Реєструємо FocusRequester у централізованому менеджері (тільки для старої системи)

@@ -1,6 +1,6 @@
 package com.pasich.encly.presentation.viewmodel
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.SavedStateHandle
@@ -156,9 +156,9 @@ class EditNoteViewModel
                     _lockEditor.value = isReadTrashOnly
                 }
 
-                Log.d("EditNoteViewModel", "Note loaded successfully with ID: $noteId")
+                AppLogger.d("EditNoteViewModel", "Note loaded successfully with ID: $noteId")
             } catch (e: Exception) {
-                Log.e("EditNoteViewModel", "Error loading note: ${e.message}")
+                AppLogger.e("EditNoteViewModel", "Error loading note: ${e.message}")
             }
             _status.value = SaveStatusNote.OLD
         }
@@ -183,11 +183,11 @@ class EditNoteViewModel
                     // Non-empty stored content but nothing parsed back — treat as a
                     // load failure and protect the original from being overwritten.
                     contentLoadFailed = true
-                    Log.e("EditNoteViewModel", "Note content present but failed to parse")
+                    AppLogger.e("EditNoteViewModel", "Note content present but failed to parse")
                 }
             } catch (e: Exception) {
                 contentLoadFailed = true
-                Log.e("EditNoteViewModel", "Error converting blocks from JSON: ${e.message}")
+                AppLogger.e("EditNoteViewModel", "Error converting blocks from JSON: ${e.message}")
             }
         }
     }
@@ -304,12 +304,12 @@ class EditNoteViewModel
                 }
 
                 _status.value = SaveStatusNote.SAVED
-                Log.d(
+                AppLogger.d(
                     "EditNoteViewModel",
                     "Note saved successfully with ID: ${_state.value.note.id}",
                 )
             } catch (e: Exception) {
-                Log.e("EditNoteViewModel", "Error saving note: ${e.message}")
+                AppLogger.e("EditNoteViewModel", "Error saving note: ${e.message}")
                 _status.value = SaveStatusNote.OLD
             }
         }
@@ -391,7 +391,7 @@ class EditNoteViewModel
         afterIndex: Int,
         blockType: BlockType,
     ) {
-        Log.d(
+        AppLogger.d(
             "EditNoteViewModel",
             "addBlockAfter called: afterIndex=$afterIndex, blockType=$blockType, isReadTrashOnly=$isReadTrashOnly",
         )
@@ -402,7 +402,7 @@ class EditNoteViewModel
 
         // Создаем новый блок
         val newBlock = createNewBlockByType(blockType) ?: return
-        Log.d(
+        AppLogger.d(
             "EditNoteViewModel",
             "Created new block: ${newBlock::class.simpleName}, targetIndex=$targetIndex"
         )
@@ -417,7 +417,7 @@ class EditNoteViewModel
 
         // Використовуємо метод з повторними спробами для кращої надійності
         _focusManager.setFocusWithRetry(targetIndex, maxRetries = 5, delayMs = 50L)
-        Log.d("EditNoteViewModel", "Focus set to new block with retry: $targetIndex")
+        AppLogger.d("EditNoteViewModel", "Focus set to new block with retry: $targetIndex")
     }
 
     /**
@@ -461,42 +461,42 @@ class EditNoteViewModel
         blockRemoveAction: BlockRemoveAction,
         isReFocus: Boolean = true,
     ) {
-        Log.d(
+        AppLogger.d(
             "EditNoteViewModel",
             "removeBlock called: action=$blockRemoveAction, blockType=${block::class.simpleName}"
         )
 
         val index = _blocks.indexOf(block)
         if (index == -1) {
-            Log.d("EditNoteViewModel", "Block not found in list")
+            AppLogger.d("EditNoteViewModel", "Block not found in list")
             return
         }
 
         // Проверяем, можно ли удалить блок (должен остаться хотя бы один блок)
         if (blocks.size <= 1 && blockRemoveAction != BlockRemoveAction.REMOVE_BACKSPACE) {
-            Log.d("EditNoteViewModel", "Cannot remove: size check failed")
+            AppLogger.d("EditNoteViewModel", "Cannot remove: size check failed")
             return
         }
 
         // Выбираем стратегию удаления в зависимости от действия
         when (blockRemoveAction) {
             BlockRemoveAction.REMOVE -> {
-                Log.d("EditNoteViewModel", "Performing REMOVE")
+                AppLogger.d("EditNoteViewModel", "Performing REMOVE")
                 performBlockRemoval(index, isReFocus)
             }
 
             BlockRemoveAction.REMOVE_BACKSPACE -> {
-                Log.d("EditNoteViewModel", "Checking REMOVE_BACKSPACE")
+                AppLogger.d("EditNoteViewModel", "Checking REMOVE_BACKSPACE")
                 if (canRemoveTextBlock(block)) {
-                    Log.d("EditNoteViewModel", "Performing REMOVE_BACKSPACE")
+                    AppLogger.d("EditNoteViewModel", "Performing REMOVE_BACKSPACE")
                     performBlockRemoval(index, isReFocus)
                 } else {
-                    Log.d("EditNoteViewModel", "Cannot remove block with REMOVE_BACKSPACE")
+                    AppLogger.d("EditNoteViewModel", "Cannot remove block with REMOVE_BACKSPACE")
                 }
             }
 
             BlockRemoveAction.REMOVE_BACKSPACE_LIST -> {
-                Log.d("EditNoteViewModel", "Performing REMOVE_BACKSPACE_LIST")
+                AppLogger.d("EditNoteViewModel", "Performing REMOVE_BACKSPACE_LIST")
                 performBlockRemoval(index, isReFocus)
             }
         }
@@ -506,7 +506,7 @@ class EditNoteViewModel
      * Проверяет, можно ли удалить текстовый блок (должен быть пустым)
      */
     private fun canRemoveTextBlock(block: Block): Boolean {
-        Log.d(
+        AppLogger.d(
             "EditNoteViewModel",
             "canRemoveTextBlock: blocks.size=${blocks.size}, isEmpty=${
                 BlockUtils.isBlockEmpty(
@@ -516,12 +516,12 @@ class EditNoteViewModel
         )
 
         if (blocks.size <= 1) {
-            Log.d("EditNoteViewModel", "Cannot remove: only one block left")
+            AppLogger.d("EditNoteViewModel", "Cannot remove: only one block left")
             return false
         }
 
         val isEmpty = BlockUtils.isBlockEmpty(block)
-        Log.d("EditNoteViewModel", "Block empty check result: $isEmpty")
+        AppLogger.d("EditNoteViewModel", "Block empty check result: $isEmpty")
         return isEmpty
     }
 
@@ -547,7 +547,7 @@ class EditNoteViewModel
         targetBlockIndex: Int,
         newBlock: Block,
     ): Boolean {
-        Log.d(
+        AppLogger.d(
             "EditNoteViewModel",
             "replaceBlock called: targetBlockIndex=$targetBlockIndex, oldBlock=${
                 if (targetBlockIndex in _blocks.indices) {
@@ -569,12 +569,12 @@ class EditNoteViewModel
             _focusManager.setFocusWithRetry(targetBlockIndex, maxRetries = 5, delayMs = 50L)
             _focusManager.setLastInteraction(targetBlockIndex)
             updateCurrentFocusIndex(targetBlockIndex)
-            Log.d("EditNoteViewModel", "Focus set to replaced block with retry: $targetBlockIndex")
+            AppLogger.d("EditNoteViewModel", "Focus set to replaced block with retry: $targetBlockIndex")
 
-            Log.d("EditNoteViewModel", "Block replaced successfully")
+            AppLogger.d("EditNoteViewModel", "Block replaced successfully")
             true
         } else {
-            Log.e(
+            AppLogger.e(
                 "EditNoteViewModel",
                 "Invalid index: $targetBlockIndex. Must be between 0 and ${_blocks.size - 1}.",
             )
@@ -656,7 +656,7 @@ class EditNoteViewModel
         val currentNoteId = currentNote.id
 
         if (currentNoteId == -1L) {
-            Log.e("EditNoteViewModel", "Cannot restore note: current note ID is -1")
+            AppLogger.e("EditNoteViewModel", "Cannot restore note: current note ID is -1")
             return
         }
 
@@ -673,9 +673,9 @@ class EditNoteViewModel
             )
 
             if (result) {
-                Log.d("EditNoteViewModel", "Note restored with ID: $currentNoteId")
+                AppLogger.d("EditNoteViewModel", "Note restored with ID: $currentNoteId")
             } else {
-                Log.e("EditNoteViewModel", "Failed to restore note with ID: $currentNoteId")
+                AppLogger.e("EditNoteViewModel", "Failed to restore note with ID: $currentNoteId")
             }
         }
     }
@@ -707,7 +707,7 @@ class EditNoteViewModel
                 )
             )
         } catch (e: Exception) {
-            Log.e("EditNoteViewModel", "Error duplicating note: ${e.message}")
+            AppLogger.e("EditNoteViewModel", "Error duplicating note: ${e.message}")
             -1L
         }
     }
@@ -719,7 +719,7 @@ class EditNoteViewModel
         val currentNoteId = _state.value.note.id
 
         if (currentNoteId == -1L) {
-            Log.e("EditNoteViewModel", "Cannot delete note: current note ID is -1")
+            AppLogger.e("EditNoteViewModel", "Cannot delete note: current note ID is -1")
             return
         }
 
@@ -727,9 +727,9 @@ class EditNoteViewModel
             try {
                 // Видаляємо нотатку з бази даних
                 notesRepository.deleteNoteById(currentNoteId)
-                Log.d("EditNoteViewModel", "Note deleted with ID: $currentNoteId")
+                AppLogger.d("EditNoteViewModel", "Note deleted with ID: $currentNoteId")
             } catch (e: Exception) {
-                Log.e("EditNoteViewModel", "Error deleting note: ${e.message}")
+                AppLogger.e("EditNoteViewModel", "Error deleting note: ${e.message}")
             }
         }
     }

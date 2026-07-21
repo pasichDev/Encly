@@ -1,8 +1,8 @@
 package com.pasich.encly.data.database
 
 import android.content.Context
-import android.util.Log
 import androidx.room.Room
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.sqlcipher.database.SupportFactory
@@ -39,7 +39,7 @@ class SecureDatabaseManager @Inject constructor(
     @Synchronized
     fun unlockDatabase(secretKey: SecretKey): Boolean {
         if (isUnlocked) {
-            Log.d(TAG, "База вже розблокована")
+            AppLogger.d(TAG, "Database already unlocked")
             return true
         }
 
@@ -48,29 +48,29 @@ class SecureDatabaseManager @Inject constructor(
             val rawPassphrase = secretKey.encoded
             val passphraseForCheck = rawPassphrase.copyOf()
             val passphraseForRoom = rawPassphrase.copyOf()
-            Log.d(TAG, "Ключ отримано. Довжина: ${rawPassphrase.size} байт")
+            AppLogger.d(TAG, "Key received. Length: ${rawPassphrase.size} bytes")
 
             val dbFile = context.getDatabasePath(DB_NAME)
-            Log.d(TAG, "Шлях до бази: ${dbFile.absolutePath}")
+            AppLogger.d(TAG, "Database path: ${dbFile.absolutePath}")
 
             val state = SQLCipherUtils.getDatabaseState(context, DB_NAME)
-            Log.d(TAG, "Стан бази перед розблокуванням: $state")
+            AppLogger.d(TAG, "Database state before unlock: $state")
 
 
 
             if (state == SQLCipherUtils.State.ENCRYPTED) {
-                Log.d(TAG, "База існує і зашифрована. Перевіряємо чи відкривається")
+                AppLogger.d(TAG, "Database exists and is encrypted. Verifying it opens")
                 if (!canOpenDatabase(passphraseForCheck)) {
-                    Log.e(TAG, "Неможливо відкрити зашифровану базу з цим ключем")
+                    AppLogger.e(TAG, "Cannot open the encrypted database with this key")
                     return false
                 }
             }
 
             if (state == SQLCipherUtils.State.DOES_NOT_EXIST) {
-                Log.d(TAG, "База не існує. Створюємо нову зашифровану базу")
+                AppLogger.d(TAG, "Database does not exist. Creating a new encrypted database")
             }
 
-            Log.d(TAG, "Ініціалізуємо Room з шифруванням")
+            AppLogger.d(TAG, "Initializing Room with encryption")
             database = Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, DB_NAME
             ).openHelperFactory(SupportFactory(passphraseForRoom))
@@ -79,53 +79,53 @@ class SecureDatabaseManager @Inject constructor(
             isUnlocked = true
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Не вдалося розблокувати базу", e)
+            AppLogger.e(TAG, "Failed to unlock the database", e)
             false
         }
     }
 
     private fun canOpenDatabase(passphrase: ByteArray): Boolean {
         return try {
-            Log.d(TAG, "Перевірка відкриття бази через SupportFactory")
+            AppLogger.d(TAG, "Checking database open via SupportFactory")
 
             val factory = SupportFactory(passphrase)
             val db = Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, DB_NAME
             ).openHelperFactory(factory).build()
 
-            // Тригерим ініціалізацію
+            // Trigger initialization
             db.openHelper.readableDatabase
             db.close()
 
-            Log.d(TAG, "Базу відкрито успішно")
+            AppLogger.d(TAG, "Database opened successfully")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Помилка відкриття бази", e)
+            AppLogger.e(TAG, "Error opening the database", e)
             false
         }
     }
 
     private fun deleteDatabaseFiles() {
         try {
-            Log.d(TAG, "Видаляємо файли бази даних")
+            AppLogger.d(TAG, "Deleting database files")
             val dbFile = context.getDatabasePath(DB_NAME)
             val wal = File(dbFile.absolutePath + "-wal")
             val shm = File(dbFile.absolutePath + "-shm")
             dbFile.delete()
             wal.delete()
             shm.delete()
-            Log.d(TAG, "Файли бази даних успішно видалено")
+            AppLogger.d(TAG, "Database files deleted successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Не вдалося видалити базу", e)
+            AppLogger.e(TAG, "Failed to delete database files", e)
         }
     }
 
     fun reset() {
-        Log.d(TAG, "Скидаємо базу")
+        AppLogger.d(TAG, "Resetting database")
         database?.close()
         database = null
         isUnlocked = false
-        Log.d(TAG, "Базу скинуто")
+        AppLogger.d(TAG, "Database reset")
     }
 
     /** Full wipe: closes the database and deletes its files from disk. */

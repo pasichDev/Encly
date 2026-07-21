@@ -1,6 +1,6 @@
 package com.pasich.encly.domain.usecase.note
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.repository.NotesRepository
 import kotlinx.coroutines.Dispatchers
@@ -22,14 +22,14 @@ class CleanTrashNotesUseCase @Inject constructor(
             // Отримуємо всі нотатки з кошика
             repository.getTrashNotes().collect { trashNotes ->
                 if (trashNotes.isNotEmpty()) {
-                    Log.d("CleanTrashNotesUseCase", "Видалення ${trashNotes.size} нотаток з кошика")
+                    AppLogger.d("CleanTrashNotesUseCase", "Deleting ${trashNotes.size} notes from trash")
 
                     // Потім видаляємо всі нотатки
                     trashNotes.forEach { note ->
                         repository.deleteNoteById(note.id.toLong())
                     }
 
-                    Log.d(
+                    AppLogger.d(
                         "CleanTrashNotesUseCase",
                         "Успішно видалено ${trashNotes.size} нотаток з кошика"
                     )
@@ -37,7 +37,7 @@ class CleanTrashNotesUseCase @Inject constructor(
             }
             true
         } catch (e: Exception) {
-            Log.e("CleanTrashNotesUseCase", "Помилка очищення кошика: ${e.message}")
+            AppLogger.e("CleanTrashNotesUseCase", "Error clearing trash: ${e.message}")
             false
         }
     }
@@ -49,7 +49,7 @@ class CleanTrashNotesUseCase @Inject constructor(
         withContext(Dispatchers.IO) {
             return@withContext try {
                 if (selectedNotes.isNotEmpty()) {
-                    Log.d(
+                    AppLogger.d(
                         "CleanTrashNotesUseCase",
                         "Видалення ${selectedNotes.size} вибраних нотаток"
                     )
@@ -60,14 +60,14 @@ class CleanTrashNotesUseCase @Inject constructor(
                         repository.deleteNoteById(note.id.toLong())
                     }
 
-                    Log.d(
+                    AppLogger.d(
                         "CleanTrashNotesUseCase",
                         "Успішно видалено ${selectedNotes.size} вибраних нотаток"
                     )
                 }
                 true
             } catch (e: Exception) {
-                Log.e("CleanTrashNotesUseCase", "Помилка видалення вибраних нотаток: ${e.message}")
+                AppLogger.e("CleanTrashNotesUseCase", "Error deleting selected notes: ${e.message}")
                 false
             }
         }

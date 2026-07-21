@@ -3,7 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import android.content.Context
 import android.content.Intent
 import android.provider.CalendarContract
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.data.model.Task
@@ -511,7 +511,7 @@ class TasksViewModel @Inject constructor(
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
         } catch (e: Exception) {
-            Log.e("TasksViewModel", "Failed to add task to calendar", e)
+            AppLogger.e("TasksViewModel", "Failed to add task to calendar", e)
 
         }
     }

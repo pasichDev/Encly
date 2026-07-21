@@ -1,6 +1,6 @@
 package com.pasich.encly.dynamicBlocks.focus
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.focus.FocusRequester
@@ -91,7 +91,7 @@ class CentralizedFocusManager {
 
                     url?.isBlank() == true
                 } catch (e: Exception) {
-                    Log.w("CentralizedFocusManager", "Failed to check LinkBlock focusability: ${e.message}")
+                    AppLogger.w("CentralizedFocusManager", "Failed to check LinkBlock focusability: ${e.message}")
                     false
                 }
             }
@@ -129,19 +129,19 @@ class CentralizedFocusManager {
         ignore: Boolean = false,
         moveCursorToEnd: Boolean = false,
     ) {
-        Log.d(
+        AppLogger.d(
             "CentralizedFocusManager",
             "setFocus called: index=$index, ignore=$ignore, moveCursorToEnd=$moveCursorToEnd, currentFocus=${_currentFocusIndex.value}",
         )
 
         if (index < 0) {
-            Log.d("CentralizedFocusManager", "setFocus: invalid index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: invalid index $index")
             return
         }
 
         // Предотвращаем рекурсию - не устанавливаем фокус если он уже на этом индексе
         if (_currentFocusIndex.value == index && !ignore) {
-            Log.d("CentralizedFocusManager", "setFocus: focus already on index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: focus already on index $index")
             return
         }
 
@@ -149,16 +149,16 @@ class CentralizedFocusManager {
         _shouldIgnoreFocus.value = ignore
 
         if (!ignore) {
-            Log.d("CentralizedFocusManager", "setFocus: requesting focus for index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: requesting focus for index $index")
             requestFocusInternal(index)
 
             // Встановлюємо курсор в кінець тексту якщо потрібно
             if (moveCursorToEnd) {
                 cursorToEndCallbacks[index]?.invoke()
-                Log.d("CentralizedFocusManager", "setFocus: moved cursor to end for index $index")
+                AppLogger.d("CentralizedFocusManager", "setFocus: moved cursor to end for index $index")
             }
         } else {
-            Log.d("CentralizedFocusManager", "setFocus: ignoring focus request for index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocus: ignoring focus request for index $index")
         }
     }
 
@@ -187,15 +187,15 @@ class CentralizedFocusManager {
         val current = _currentFocusIndex.value
         val next = (current + 1).coerceAtMost(totalBlocks - 1)
 
-        Log.d("CentralizedFocusManager", "moveToNext: current=$current, next=$next, totalBlocks=$totalBlocks")
+        AppLogger.d("CentralizedFocusManager", "moveToNext: current=$current, next=$next, totalBlocks=$totalBlocks")
 
         if (next != current) {
             setFocus(next)
             setLastInteraction(next)
-            Log.d("CentralizedFocusManager", "moveToNext: success, moved to $next")
+            AppLogger.d("CentralizedFocusManager", "moveToNext: success, moved to $next")
             return true
         }
-        Log.d("CentralizedFocusManager", "moveToNext: failed, already at last block")
+        AppLogger.d("CentralizedFocusManager", "moveToNext: failed, already at last block")
         return false
     }
 
@@ -236,17 +236,17 @@ class CentralizedFocusManager {
      * Внутрішній метод для запиту фокуса
      */
     private fun requestFocusInternal(index: Int) {
-        Log.d("CentralizedFocusManager", "requestFocusInternal: index=$index, hasFocusRequester=${focusRequesters.containsKey(index)}")
+        AppLogger.d("CentralizedFocusManager", "requestFocusInternal: index=$index, hasFocusRequester=${focusRequesters.containsKey(index)}")
         focusRequesters[index]?.let { focusRequester ->
             try {
-                Log.d("CentralizedFocusManager", "requestFocusInternal: requesting focus for index $index")
+                AppLogger.d("CentralizedFocusManager", "requestFocusInternal: requesting focus for index $index")
                 focusRequester.requestFocus()
-                Log.d("CentralizedFocusManager", "requestFocusInternal: focus request completed for index $index")
+                AppLogger.d("CentralizedFocusManager", "requestFocusInternal: focus request completed for index $index")
             } catch (e: Exception) {
-                Log.e("CentralizedFocusManager", "requestFocusInternal: error requesting focus for index $index: ${e.message}")
+                AppLogger.e("CentralizedFocusManager", "requestFocusInternal: error requesting focus for index $index: ${e.message}")
             }
         } ?: run {
-            Log.w("CentralizedFocusManager", "requestFocusInternal: no FocusRequester found for index $index")
+            AppLogger.w("CentralizedFocusManager", "requestFocusInternal: no FocusRequester found for index $index")
         }
     }
 
@@ -268,10 +268,10 @@ class CentralizedFocusManager {
         delayMillis: Long,
         ignore: Boolean = false,
     ) {
-        Log.d("CentralizedFocusManager", "delayedSetFocus called: index=$index, delay=$delayMillis, ignore=$ignore")
+        AppLogger.d("CentralizedFocusManager", "delayedSetFocus called: index=$index, delay=$delayMillis, ignore=$ignore")
 
         if (index < 0) {
-            Log.d("CentralizedFocusManager", "delayedSetFocus: invalid index $index")
+            AppLogger.d("CentralizedFocusManager", "delayedSetFocus: invalid index $index")
             return
         }
 
@@ -279,7 +279,7 @@ class CentralizedFocusManager {
         CoroutineScope(Dispatchers.Main).launch {
             delay(delayMillis)
             setFocus(index, ignore)
-            Log.d("CentralizedFocusManager", "delayedSetFocus: focus set to index $index after delay")
+            AppLogger.d("CentralizedFocusManager", "delayedSetFocus: focus set to index $index after delay")
         }
     }
 
@@ -292,31 +292,31 @@ class CentralizedFocusManager {
         maxRetries: Int = 3,
         delayMs: Long = 100L,
     ) {
-        Log.d("CentralizedFocusManager", "setFocusWithRetry called: index=$index, ignore=$ignore, maxRetries=$maxRetries")
+        AppLogger.d("CentralizedFocusManager", "setFocusWithRetry called: index=$index, ignore=$ignore, maxRetries=$maxRetries")
 
         if (index < 0) {
-            Log.d("CentralizedFocusManager", "setFocusWithRetry: invalid index $index")
+            AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: invalid index $index")
             return
         }
 
         CoroutineScope(Dispatchers.Main).launch {
             var attempts = 0
             while (attempts < maxRetries) {
-                Log.d("CentralizedFocusManager", "setFocusWithRetry: attempt ${attempts + 1}/$maxRetries for index $index")
+                AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: attempt ${attempts + 1}/$maxRetries for index $index")
 
                 if (focusRequesters.containsKey(index)) {
-                    Log.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester found, setting focus")
+                    AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester found, setting focus")
                     setFocus(index, ignore)
                     break
                 } else {
-                    Log.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester not ready, waiting...")
+                    AppLogger.d("CentralizedFocusManager", "setFocusWithRetry: FocusRequester not ready, waiting...")
                     delay(delayMs)
                     attempts++
                 }
             }
 
             if (attempts >= maxRetries) {
-                Log.w("CentralizedFocusManager", "setFocusWithRetry: failed to set focus after $maxRetries attempts for index $index")
+                AppLogger.w("CentralizedFocusManager", "setFocusWithRetry: failed to set focus after $maxRetries attempts for index $index")
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.pasich.encly.domain.usecase.note
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.repository.NotesRepository
 import javax.inject.Inject
@@ -13,7 +13,7 @@ class UpdateNoteDescriptionUseCase @Inject constructor(
         return try {
             repository.updateNote(targetNote.copy(description = description))
         } catch (e: Exception) {
-            Log.e("UpdateNoteDescriptionUseCase", "Error: ${e.message}")
+            AppLogger.e("UpdateNoteDescriptionUseCase", "Error: ${e.message}")
             false
         }
 

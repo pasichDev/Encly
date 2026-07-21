@@ -1,6 +1,6 @@
 package com.pasich.encly.presentation.screen.editnote
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -322,7 +322,7 @@ fun EditNoteScreen(
                                     // DynamicBlocksEditor
                                     DynamicBlocksEditor(
                                         bottomSheetsOpen = { type, block, index ->
-                                            Log.d(
+                                            AppLogger.d(
                                                 "EditNoteScreen",
                                                 "bottomSheetsOpen called with type: $type, index: $index"
                                             )

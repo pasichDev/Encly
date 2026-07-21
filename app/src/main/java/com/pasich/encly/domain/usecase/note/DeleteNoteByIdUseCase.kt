@@ -1,6 +1,6 @@
 package com.pasich.encly.domain.usecase.note
 
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.repository.NotesRepository
 import javax.inject.Inject
 
@@ -12,7 +12,7 @@ class DeleteNoteByIdUseCase @Inject constructor(
         return try {
             repository.deleteNoteById(idNote)
         } catch (e: Exception) {
-            Log.e("DeleteNoteByIdUseCase", "Error: ${e.message}")
+            AppLogger.e("DeleteNoteByIdUseCase", "Error: ${e.message}")
             false
         }
     }

@@ -2,7 +2,7 @@ package com.pasich.encly.core.security.cipher
 
 import android.content.Context
 import android.database.sqlite.SQLiteException
-import android.util.Log
+import com.pasich.encly.core.AppLogger
 import net.sqlcipher.database.SQLiteDatabase
 import java.io.File
 
@@ -99,7 +99,7 @@ object SQLCipherUtils {
                 // Rename the temporary file to the original file name
                 newFile.renameTo(originalFile)
             }.onFailure {
-                Log.e("DatabaseMigration", "Error migrating database", it)
+                AppLogger.e("DatabaseMigration", "Error migrating database", it)
             }
         }
     }
