@@ -12,3 +12,8 @@ gradlew
 local.properties
 /app/schemas
 .kotlin
+
+# Release signing — never commit
+keystore.properties
+*.jks
+*.keystore

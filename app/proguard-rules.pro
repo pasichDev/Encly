@@ -1,66 +1,65 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
+# ProGuard / R8 rules for Encly (offline encrypted notes).
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
+# --- Debuggable, mapping-friendly stack traces ---
 -keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Keep Kotlin metadata
+# Needed for Gson generics and (de)serialization annotations.
+-keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# --- Kotlin ---
 -keep class kotlin.Metadata { *; }
 -keep class kotlin.reflect.** { *; }
 
-# Jetpack Compose
+# --- Jetpack Compose ---
 -keep class androidx.compose.** { *; }
 -dontwarn androidx.compose.**
 
-# Keep ViewModel and LiveData classes
+# --- Lifecycle ---
 -keep class androidx.lifecycle.ViewModel { *; }
 -keep class androidx.lifecycle.LiveData { *; }
-
-# Fix OAuth Drive API failure for release builds
--keepattributes Signature,RuntimeVisibleAnnotations,AnnotationDefault
-
--keepclassmembers class * {
-  @com.google.api.client.util.Key <fields>;
-}
-
--dontwarn com.google.api.client.extensions.android.**
--dontwarn com.google.api.client.googleapis.extensions.android.**
--dontwarn com.google.android.gms.**
-
-# Suppress warnings for certain classes
 -dontwarn androidx.lifecycle.**
--dontwarn com.squareup.okhttp3.**
 
+# --- SQLCipher ---
 -keep,includedescriptorclasses class net.sqlcipher.** { *; }
 -keep,includedescriptorclasses interface net.sqlcipher.** { *; }
 
-# Захист класів авторизації та безпеки
-# Обфускація назв методів і полів для безпеки  
--keepclassmembers class com.pasich.encly.core.security.** {
-    !private <fields>;
-    !private <methods>;
+# --- Room ---
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-dontwarn androidx.room.paging.**
+
+# --- Gson ---
+# Models are (de)serialized (some by reflection via context.serialize), so keep their
+# fields/names intact. Custom Block adapters read fields by name, so names must survive.
+-keep class com.pasich.encly.data.model.** { *; }
+-keep class com.pasich.encly.domain.model.** { *; }
+-keep class com.pasich.encly.dynamicBlocks.Block { *; }
+-keep class com.pasich.encly.dynamicBlocks.Block$* { *; }
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
 }
-
--keepclassmembers class com.pasich.encly.presentation.viewmodel.NewAuthViewModel {
-    !private <fields>;
-    !private <methods>;
+# Gson generic type tokens.
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
 }
+-dontwarn sun.misc.**
 
-# Захист від reverse engineering
--obfuscationdictionary dictionary.txt
--classobfuscationdictionary dictionary.txt
--packageobfuscationdictionary dictionary.txt
+# --- kotlinx.serialization ---
+-keepclassmembers class **$$serializer { *; }
+-keepclasseswithmembers class ** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class com.pasich.encly.**$$serializer { *; }
+-keepclassmembers class com.pasich.encly.** {
+    *** Companion;
+}
+-if @kotlinx.serialization.Serializable class **
+-keep class <1> { *; }
 
-# Видаляємо debug інформацію
+# --- Strip logging in release ---
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);
     public static int v(...);
@@ -69,43 +68,12 @@
     public static int d(...);
     public static int e(...);
 }
-
-# Видаляємо println statements
 -assumenosideeffects class java.io.PrintStream {
     public void println(%);
     public void println(**);
 }
 
-# Додаткова обфускація для критичних класів
--keep class com.pasich.encly.core.security.SecurityManager {
-    public <methods>;
-}
-
--keep class com.pasich.encly.core.security.AuthenticationManager {
-    public <methods>;
-}
-
-# Захищаємо від відображення (reflection)
--keepattributes *Annotation*
--keepattributes InnerClasses
--keepattributes EnclosingMethod
-
-# Видаляємо метадані для безпеки
--keepattributes !SourceFile,!LineNumberTable
-
-# Додатковий захист для security методів
--assumenosideeffects class com.pasich.encly.core.security.SecurityManager {
-    private <methods>;
-}
-
-# Обфускуємо назви методів безпеки
--keepclassmembers class com.pasich.encly.core.security.** {
-    !public <methods>;
-}
-
-# Захищаємо від рефлексії
--keepnames class com.pasich.encly.core.security.SecurityManager
--keepnames class com.pasich.encly.core.security.AuthenticationManager
-
-# Видаляємо unused код для зменшення attack surface
--optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
+# --- Obfuscation dictionaries (reduce readability of the release) ---
+-obfuscationdictionary dictionary.txt
+-classobfuscationdictionary dictionary.txt
+-packageobfuscationdictionary dictionary.txt

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
@@ -41,11 +43,29 @@ android {
 
 
 
+    // Release signing is read from an untracked keystore.properties (or Play upload key).
+    // When absent (e.g. CI without secrets), the release build is simply left unsigned.
+    signingConfigs {
+        create("release") {
+            val propsFile = rootProject.file("keystore.properties")
+            if (propsFile.exists()) {
+                val props = Properties().apply { propsFile.inputStream().use { load(it) } }
+                storeFile = props.getProperty("storeFile")?.let { file(it) }
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
+            if (rootProject.file("keystore.properties").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
