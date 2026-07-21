@@ -38,17 +38,9 @@ data class TaskFilter(
     }
 }
 
-// Task groups by date
-data class TaskGroup(
-    val title: String,
-    val tasks: List<Task>,
-    val isOverdue: Boolean = false
-)
-
 data class TasksUiState(
     val activeTasks: List<Task> = emptyList(),
     val completedTasks: List<Task> = emptyList(),
-    val taskGroups: List<TaskGroup> = emptyList(),
     val activeTasksCount: Int = 0,
     val completedTasksCount: Int = 0,
     val totalTasksCount: Int = 0,
@@ -293,7 +285,6 @@ class TasksViewModel @Inject constructor(
                     activeTasks = activeTasks.sortedByDescending { it.priority },
                     completedTasks = completedTasks.sortedByDescending { it.priority },
                     filteredActiveTasks = filteredTasks,
-                    taskGroups = emptyList(),
                     activeTasksCount = activeCount,
                     completedTasksCount = completedCount,
                     totalTasksCount = totalTasks,
@@ -430,7 +421,6 @@ class TasksViewModel @Inject constructor(
                     selectedDateFilter = newDateFilter,
                     selectedCompletedFilter = null, // Reset the completed filter
                     filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                    taskGroups = emptyList()
                 )
             }
 
@@ -447,7 +437,6 @@ class TasksViewModel @Inject constructor(
                     selectedPriorityFilter = newPriorityFilter,
                     selectedCompletedFilter = null, // Reset the completed filter
                     filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                    taskGroups = emptyList()
                 )
             }
 
@@ -484,7 +473,6 @@ class TasksViewModel @Inject constructor(
                     selectedPriorityFilter = null,
                     selectedCompletedFilter = newCompletedFilter,
                     filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                    taskGroups = emptyList()
                 )
             }
         }

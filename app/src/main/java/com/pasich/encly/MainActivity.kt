@@ -42,7 +42,7 @@ class MainActivity : FragmentActivity() {
                 InitialStatus.LOSS_DATABASE -> NavRoutes.LossDataRoute
                 InitialStatus.AUTH -> NavRoutes.LockRoute
                 InitialStatus.SETUP_AUTH -> NavRoutes.AuthSetupRoute
-                InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute  // TODO: dedicated crypto-loss recovery
+                InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute  // integrity check failed -> recovery (wipe & restart)
                 InitialStatus.NO -> return@setContent
             }
 
