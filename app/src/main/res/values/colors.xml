@@ -7,4 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Matches the app's light Compose background so the transparent status bar
+         area blends with the app instead of showing a black strip. -->
+    <color name="window_background">#FFF9FAEF</color>
 </resources>
