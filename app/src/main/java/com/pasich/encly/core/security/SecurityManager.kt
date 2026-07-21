@@ -11,6 +11,11 @@ enum class InitialStatus {
 }
 
 
+/**
+ * Startup security gate. On construction it determines the initial app state
+ * ([InitialStatus]) — onboarding, crypto/database loss, auth required, or main —
+ * used to route the first screen after launch.
+ */
 @Singleton
 class SecurityManager @Inject constructor(
     private val secureStoragePrefs: SharedPreferences,

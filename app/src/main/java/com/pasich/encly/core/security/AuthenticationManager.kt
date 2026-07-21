@@ -8,7 +8,9 @@ import com.pasich.encly.core.security.wrapper.StringWrapper
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.PBEKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,6 +22,14 @@ enum class AuthStrategy {
     NONE, PIN, PIN_BIOMETRIC, SEED_PHRASE, SEED_PHRASE_BIOMETRIC, RECOVERY_DATA
 }
 
+/**
+ * Handles local PIN and biometric authentication settings.
+ *
+ * The PIN is stored as a PBKDF2-HMAC-SHA256 hash with a per-PIN random salt, then
+ * encrypted under the seed-derived AUTH key. Repeated failures trigger a progressive
+ * lockout. This class governs the auth strategy ([AuthStrategy]); it does not by
+ * itself release any data-encryption key.
+ */
 @Singleton
 class AuthenticationManager @Inject constructor(
     private val secureStoragePrefs: SharedPreferences,
@@ -32,6 +42,12 @@ class AuthenticationManager @Inject constructor(
         private const val AES_MODE = "AES/CBC/PKCS7Padding"
         private const val IV_SIZE = 16 // 128 біт
 
+        // PIN hardening
+        private const val PIN_ATTEMPTS_KEY = "pin_attempts"
+        private const val PIN_LOCKOUT_UNTIL_KEY = "pin_lockout_until"
+        private const val MAX_ATTEMPTS = 5
+        private const val PIN_SALT_SIZE = 16
+        private const val PBKDF2_ITERATIONS = 600_000
     }
 
     /**
@@ -44,27 +60,30 @@ class AuthenticationManager @Inject constructor(
             return false
         }
 
+        val pinChars = code.toCharArray()
         return try {
-            val digest = MessageDigest.getInstance("SHA-256")
-            val hashBytes = digest.digest(code.toByteArray(Charsets.UTF_8))
+            // Per-PIN random salt + slow KDF (PBKDF2-HMAC-SHA256, 600k) instead of
+            // unsalted SHA-256. Format: base64(salt):base64(hash).
+            val salt = ByteArray(PIN_SALT_SIZE).also { SecureRandom().nextBytes(it) }
+            val hash = derivePinHash(pinChars, salt)
+            val stored = Base64.encodeToString(salt, Base64.NO_WRAP) + ":" +
+                    Base64.encodeToString(hash, Base64.NO_WRAP)
+            SensitiveDataCleaner.clear(hash)
 
-            // Перетворюємо байти в HEX рядок
-            val hashHex = hashBytes.joinToString("") { "%02x".format(it) }
+            // Wrap + encrypt with the seed-derived AES key
+            val encryptedPin = encryptData(StringWrapper.wrapMasterKey(stored))
 
-            // Обгортаємо ключ (префікс + сіль + хеш)
-            val pinWrapped = StringWrapper.wrapMasterKey(hashHex)
-
-            // Шифруємо
-            val encryptedPin = encryptData(pinWrapped)
-
-            // Зберігаємо зашифрований рядок у SharedPreferences
             secureStoragePrefs.edit {
                 putString(PIN_CODE_KEY, encryptedPin)
                 putInt(AUTH_TYPE_KEY, IntWrapper.wrap(AuthType.PIN.ordinal))
+                remove(PIN_ATTEMPTS_KEY)
+                remove(PIN_LOCKOUT_UNTIL_KEY)
             }
             true
         } catch (_: Exception) {
             false
+        } finally {
+            SensitiveDataCleaner.clear(pinChars)
         }
     }
 
@@ -75,22 +94,31 @@ class AuthenticationManager @Inject constructor(
      * @return true, якщо PIN-коди співпадають, інакше false.
      */
     fun verifyPinAuth(inputCode: String): Boolean {
-        // Отримуємо зашифрований PIN з SharedPreferences
+        // Rate-limit: while locked out, do not even check
+        if (remainingLockoutMillis() > 0) return false
+
         val encryptedPin = secureStoragePrefs.getString(PIN_CODE_KEY, null) ?: return false
-
-        // Розшифровуємо
         val decryptedPinWrapped = decryptData(encryptedPin) ?: return false
+        val stored = StringWrapper.unwrapMasterKey(decryptedPinWrapped) ?: return false
 
-        // Розгортаємо обгортку, щоб отримати хеш
-        val storedHash = StringWrapper.unwrapMasterKey(decryptedPinWrapped) ?: return false
+        val parts = stored.split(":")
+        if (parts.size != 2) return false
 
-        // Генеруємо хеш від введеного PIN (як в активації)
-        val digest = MessageDigest.getInstance("SHA-256")
-        val inputHashBytes = digest.digest(inputCode.toByteArray(Charsets.UTF_8))
-        val inputHashHex = inputHashBytes.joinToString("") { "%02x".format(it) }
-
-        // Порівнюємо
-        return storedHash == inputHashHex
+        val pinChars = inputCode.toCharArray()
+        return try {
+            val salt = Base64.decode(parts[0], Base64.NO_WRAP)
+            val storedHash = Base64.decode(parts[1], Base64.NO_WRAP)
+            val inputHash = derivePinHash(pinChars, salt)
+            // Constant-time comparison
+            val matches = MessageDigest.isEqual(storedHash, inputHash)
+            SensitiveDataCleaner.clear(inputHash)
+            if (matches) resetAttempts() else recordFailedAttempt()
+            matches
+        } catch (_: Exception) {
+            false
+        } finally {
+            SensitiveDataCleaner.clear(pinChars)
+        }
     }
 
     /**
@@ -213,7 +241,47 @@ class AuthenticationManager @Inject constructor(
     }
 
 
-    /// TODO Реалізувати метод авторизації мастерключ та виключення
+    /**
+     * Milliseconds of PIN lockout still remaining (0 = not locked out).
+     * The UI uses this to show a countdown and block input.
+     */
+    fun remainingLockoutMillis(): Long {
+        val until = secureStoragePrefs.getLong(PIN_LOCKOUT_UNTIL_KEY, 0L)
+        val now = System.currentTimeMillis()
+        return if (until > now) until - now else 0L
+    }
+
+    /** Derives the PIN hash via salted PBKDF2-HMAC-SHA256. */
+    private fun derivePinHash(pin: CharArray, salt: ByteArray): ByteArray {
+        val spec = PBEKeySpec(pin, salt, PBKDF2_ITERATIONS, 256)
+        return try {
+            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
+        } finally {
+            spec.clearPassword()
+        }
+    }
+
+    /** Records a failed attempt; enables a progressive lockout past MAX_ATTEMPTS. */
+    private fun recordFailedAttempt() {
+        val attempts = secureStoragePrefs.getInt(PIN_ATTEMPTS_KEY, 0) + 1
+        secureStoragePrefs.edit {
+            putInt(PIN_ATTEMPTS_KEY, attempts)
+            if (attempts >= MAX_ATTEMPTS) {
+                // 30s * 2^(over), capped at 15 min
+                val over = (attempts - MAX_ATTEMPTS).coerceIn(0, 5)
+                val lockMs = (30_000L shl over).coerceAtMost(15 * 60_000L)
+                putLong(PIN_LOCKOUT_UNTIL_KEY, System.currentTimeMillis() + lockMs)
+            }
+        }
+    }
+
+    /** Clears the attempt counter and lockout (successful login / fresh activation). */
+    private fun resetAttempts() {
+        secureStoragePrefs.edit {
+            remove(PIN_ATTEMPTS_KEY)
+            remove(PIN_LOCKOUT_UNTIL_KEY)
+        }
+    }
 
     /**
      * Шифрує текстовий рядок з використанням AES ключа

@@ -47,8 +47,8 @@ import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 
 
 /**
- * Offline-first link block: зберігає лише введений користувачем URL і його домен як заголовок.
- * Жодних мережевих запитів (без прев'ю og:image) — застосунок повністю офлайн.
+ * Offline-first link block: stores only the user-entered URL and its host as the title.
+ * No network requests (no og:image preview) — the app is fully offline.
  */
 private fun buildLinkData(rawUrl: String): LinkDataBlock {
     val url = rawUrl.trim()

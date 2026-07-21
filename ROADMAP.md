@@ -11,7 +11,8 @@
   мережеве прев'ю лінків (jsoup), Google Play in-app update, а тоді й `INTERNET`/`ACCESS_NETWORK_STATE`.
   Data Safety → «дані не залишають пристрій».
 - **Білінг:** прибрати для v1, лишити Ko-fi/PayPal-посилання.
-- **KDF:** Argon2id.
+- **KDF:** дані — HKDF-SHA256 (IKM = високоентропійний seed-хеш); PIN — PBKDF2-HMAC-SHA256 600k
+  (OWASP), без нативних залежностей заради повного офлайну. Argon2id — опційно пізніше.
 - **SDK:** compileSdk/targetSdk = 36 (Android 16, найновіший стабільний).
 - **Zero-knowledge / recovery:** втратив seed → дані втрачено (жодного backdoor-відновлення).
   Recovery-флоу = re-entry сід-фрази АБО повний wipe + рестарт у onboarding.
@@ -58,18 +59,18 @@
   - Розблокування БД — тільки всередині biometric/PIN `CryptoObject`-флоу.
   - Прибрати авто-unlock у `SecurityManager.kt:54`.
   - Зробити `InitialStatus.AUTH` досяжним і обробленим у `MainActivity.kt:46` (→ реальний lock-екран, не Home).
-- [ ] **P0** **Справжня сіль.** Замінити статичний `slay`/enum-салт (`SeedPhraseManager.kt:164-176`)
-  на 16-байтний per-install `SecureRandom` (зберігати в prefs). Перейти з "SHA-256 → PBKDF2(static salt)" на **HKDF**;
-  не переюзати seed-хеш і як верифікатор, і як ключ-матеріал.
-- [ ] **P0** **Зміцнити PIN** (`AuthenticationManager.kt:48-52`): унікальна сіль + Argon2id/висока вартість
-  замість unsalted SHA-256, і **lockout/rate-limit** після N спроб.
-- [ ] **P0** `android:allowBackup="false"` + реальні exclude-правила для `database.db` і security-prefs
-  (`AndroidManifest.xml:42`, `res/xml-v25/backup_rules.xml`, `data_extraction_rules.xml` — зараз шаблон-заглушка).
-- [ ] **P1** KDF-вартість: Argon2id (64 MiB, t=3) або ≥600k ітерацій PBKDF2 (`SeedPhraseManager.kt:186`, зараз 10k).
-- [ ] **P1** Консистентна зачистка секретів: очищати живий `SecretKeySpec`/`tmp.encoded`, `decryptedHash` у `verifyMnemonic`,
-  `hash` у `storeSeedHash`; PIN тримати як `CharArray`/`ByteArray`, чистити у `finally`.
-- [ ] **P1** Виправити інверсію `isUserManuallyCreatedKeyByDecryption()` (`SeedPhraseManager.kt:228-233`) —
-  зараз повертає false для ручного і true для авто (навпаки задуму); і backwards-guard у `setOnboardingShown()`.
+- [x] **P0** **Справжня сіль.** Статичний `slay`/enum-салт замінено на 16-байтний per-install `SecureRandom`
+  (зберігається в prefs). Деривація даних переведена на **HKDF-SHA256** (info = тип даних).
+- [x] **P0** **Зміцнити PIN**: per-PIN сіль + **PBKDF2-HMAC-SHA256 600k** (замість unsalted SHA-256) +
+  прогресивний **lockout** після 5 спроб (`remainingLockoutMillis()` для UI). Argon2id свідомо НЕ взято
+  (нативна .so, яку не можна перевірити без пристрою) — лишаємось повністю офлайн; легко підмінити пізніше.
+- [x] **P0** `android:allowBackup="false"` + реальні exclude-правила (`database.db`, `security_prefs`,
+  `secure_prefs`, `integrity_prefs`) для cloud-backup і device-transfer.
+- [x] **P1** KDF-вартість: дані — HKDF (IKM високоентропійний); PIN — PBKDF2 600k (OWASP). Стару 10k прибрано.
+- [~] **P1** Зачистка секретів: додано у `storeSeedHash`, `verifyMnemonic`, HKDF (prk/okm/ikm);
+  живий `SecretKeySpec` лишається (потребує рефактору API повернення).
+- [x] **P1** Виправлено інверсію `isUserManuallyCreatedKeyByDecryption()` (equal ⇒ user-managed) + docstring.
+  Backwards-guard у `setOnboardingShown()` — лишається (Phase 2).
 - [ ] **P2** `SQLCipherUtils.kt:83`: не інтерполювати passphrase у сирий `ATTACH … KEY '$password'` — keyed open/PRAGMA.
 - [ ] **P2** Переоцінити `ENCRYPTED_BLOCK_KEY_TWO` "обманку" — це просто прапорець, не контроль; трактувати як untrusted.
 

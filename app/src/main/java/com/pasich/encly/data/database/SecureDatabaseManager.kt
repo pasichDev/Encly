@@ -11,6 +11,11 @@ import javax.crypto.SecretKey
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Owns the SQLCipher-encrypted Room database and its unlocked lifecycle.
+ * The database is opened with a seed-derived passphrase; until unlocked, callers
+ * must not persist real data through it.
+ */
 @Singleton
 class SecureDatabaseManager @Inject constructor(
     @param:ApplicationContext private val context: Context
