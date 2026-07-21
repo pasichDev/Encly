@@ -7,6 +7,15 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+}
+
+// Static analysis. Existing findings are captured in detekt-baseline.xml so only
+// NEW issues fail; run `./gradlew :app:detektBaseline` to refresh the snapshot.
+detekt {
+    buildUponDefaultConfig = true
+    parallel = true
+    baseline = file("$projectDir/detekt-baseline.xml")
 }
 
 android {
