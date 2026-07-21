@@ -104,11 +104,8 @@ fun SupportScreen(
                 description = stringResource(R.string.donation_description)
             )
 
-            // Donation Options
-            DonationOptionsSection(
-                onDonationClick = { amount, type ->
-                }
-            )
+            // Support options — external services only (no in-app purchases).
+            SupportOptionsSection()
 
             // Why Support Section
             WhySupportSection()
@@ -122,119 +119,13 @@ fun SupportScreen(
 }
 
 @Composable
-private fun DonationOptionsSection(
-    onDonationClick: (String, String) -> Unit
-) {
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Google Play", "Інші сервіси")
-
+private fun SupportOptionsSection() {
     Column(
         modifier = Modifier.padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         TitleCard("Варіанти підтримки")
-
-        // Tab Row
-        TabRow(
-            selectedTabIndex = selectedTabIndex,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
-                    text = {
-                        Text(
-                            text = title,
-                            fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (index == 0) Icons.Default.ShoppingCart else Lucide.Donut,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Tab Content
-        when (selectedTabIndex) {
-            0 -> GooglePlayDonationContent(onDonationClick)
-            1 -> ExternalServicesDonationContent()
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DonationCard(
-    title: String,
-    description: String,
-    amount: String,
-    color: Color,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(16.dp),
-                ambientColor = color.copy(alpha = 0.1f)
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(color.copy(alpha = 0.6f)),
-                contentAlignment = Alignment.Center
-            ) {
-
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    lineHeight = 20.sp
-                )
-            }
-
-            Text(
-                text = amount,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-        }
+        ExternalServicesDonationContent()
     }
 }
 
@@ -284,51 +175,6 @@ private fun WhySupportSection() {
 }
 
 @Composable
-private fun GooglePlayDonationContent(
-    onDonationClick: (String, String) -> Unit
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Coffee Donation
-        DonationCard(
-            title = stringResource(R.string.donation_coffee),
-            description = stringResource(R.string.donation_coffee_desc),
-            amount = "30 ₴",
-            color = Color(0xFF8D6E63),
-            onClick = { onDonationClick("30", "coffee") }
-        )
-
-        // Lunch Donation
-        DonationCard(
-            title = stringResource(R.string.donation_lunch),
-            description = stringResource(R.string.donation_lunch_desc),
-            amount = "100 ₴",
-            color = Color(0xFFFF9800),
-            onClick = { onDonationClick("100", "lunch") }
-        )
-
-        // Support Donation
-        DonationCard(
-            title = stringResource(R.string.donation_support),
-            description = stringResource(R.string.donation_support_desc),
-            amount = "200 ₴",
-            color = Color(0xFF2196F3),
-            onClick = { onDonationClick("200", "support") }
-        )
-
-        // Premium Donation
-        DonationCard(
-            title = stringResource(R.string.donation_premium),
-            description = stringResource(R.string.donation_premium_desc),
-            amount = "500 ₴",
-            color = Color(0xFF9C27B0),
-            onClick = { onDonationClick("500", "premium") }
-        )
-    }
-}
-
-@Composable
 private fun ExternalServicesDonationContent() {
     val uriHandler = LocalUriHandler.current
 
@@ -342,7 +188,6 @@ private fun ExternalServicesDonationContent() {
             color = MaterialTheme.colorScheme.onSurface
         )
 
-
         // Ko-fi
         ExternalServiceCard(
             serviceName = "Ko-fi",
@@ -350,17 +195,6 @@ private fun ExternalServicesDonationContent() {
             icon = Icons.Default.Person,
             onClick = {
                 uriHandler.openUri("https://ko-fi.com/pasichdev")
-            }
-        )
-
-
-        // PayPal
-        ExternalServiceCard(
-            serviceName = "PayPal",
-            description = "Пряма підтримка через PayPal.",
-            icon = Icons.Default.Person,
-            onClick = {
-                uriHandler.openUri("https://paypal.me/")
             }
         )
     }

@@ -104,31 +104,28 @@
 
 ## Phase 3 — Billing & store readiness
 
-- [ ] **P0** **Вирішити білінг.** Реалізації немає (лише permission + порожні лямбди в `SupportScreen`).
-  Рекомендація для v1: **прибрати** `com.android.vending.BILLING` і Google-Play-таб донатів,
-  лишити робочі Ko-fi/PayPal (виправити порожній `https://paypal.me/` → `SupportScreen.kt:363`).
-  Мертвий in-app "buy" UI = ризик відхилення Play. (Альтернатива — повноцінний Play Billing, це кілька днів.)
-- [ ] **P0** **Реальний privacy policy URL** замість Tally-заглушки з `// TODO` (`Constant.kt:4`, `LINK_PRIVACY_POLICE`).
-- [ ] **P0** **Data Safety форма** чесно: мережа використовується (jsoup link-preview тягне довільні URL + in-app update),
-  seed можна експортувати через share. Історія "повністю офлайн" — неточна.
+- [x] **P0** **Білінг прибрано.** `BILLING` permission і Google-Play-таб донатів видалено (мертвий in-app "buy"
+  UI = ризик Play). Лишився робочий Ko-fi; зламану PayPal-картку прибрано (додати з реальним handle за бажанням).
+- [ ] **P0** **Реальний privacy policy URL** замість Tally-заглушки (`Constant.kt`, `LINK_PRIVACY_POLICE`).
+  ⚠️ ТВОЯ ДІЯ: потрібен реальний лінк (тепер простий — застосунок офлайн, даних не збирає).
+- [x] **P0** **Data Safety** спрощено: застосунок повністю офлайн, дані не залишають пристрій (мережу прибрано в Phase 0).
 
 ---
 
 ## Phase 4 — Build, ProGuard & CI
 
-- [ ] **P0** **Release `signingConfig`** — зараз `assembleRelease` дає **непідписаний APK**. Читати з `keystore.properties`/env
-  (не комітити), або upload-key + Play App Signing.
-- [ ] **P0** **ProGuard keep-правила для kotlinx.serialization і Gson** (обидва відсутні) — інакше краш/тихий фейл
-  (де)серіалізації в release. Перевірити реальним `assembleRelease` + smoke-тест.
-- [ ] **P1** GitHub Actions CI: `lintDebug` + `testDebugUnitTest` + `assembleRelease` (Java 21);
-  androidTest — на емуляторі. Виставити `lint.abortOnError = true` (або окремий lint-гейт).
-- [ ] **P2** Розв'язати конфлікт `-keepattributes SourceFile,LineNumberTable` vs `!SourceFile,!LineNumberTable`
-  у proguard; вантажити mapping у Play. Прибрати мертві правила (`com.google.api.client.**`, `okhttp3`).
-- [ ] **P2** Manifest hygiene: `BootReceiver` `exported=false`; прибрати `BIND_REMOTEVIEWS` (не тримається),
-  `USE_FINGERPRINT` (deprecated), фейковий `ACTION_CREATE_SHORTCUT`; переоцінити `USE_EXACT_ALARM`
-  (Play-restricted); звузити `<queries scheme="*">`; переглянути `SettingsActivity exported=true`.
+- [x] **P0** **Release `signingConfig`** — читається з untracked `keystore.properties` (gitignored);
+  без нього білд лишається unsigned (CI без секретів працює). ⚠️ ТВОЯ ДІЯ: створити keystore + `keystore.properties`
+  (або Play App Signing з upload-key).
+- [x] **P0** **ProGuard keep-правила для kotlinx.serialization і Gson** додано; прибрано небезпечний
+  `-assumenosideeffects` на приватних методах `SecurityManager` (R8 міг викинути виклик unlock).
+  Перевірено `assembleRelease` (зелено). Device smoke-тест — за тобою.
+- [x] **P1** GitHub Actions CI: `lintDebug` + `testDebugUnitTest` + `assembleRelease` (Java 21) — `.github/workflows/android.yml`.
+- [x] **P2** Конфлікт `-keepattributes` розв'язано (лишили SourceFile/LineNumberTable + renamesourcefile); мертві правила прибрано.
+- [~] **P2** Manifest: `BootReceiver exported=false`, прибрано `BIND_REMOTEVIEWS`/`USE_FINGERPRINT`/`ACTION_CREATE_SHORTCUT`.
+  Лишається: `USE_EXACT_ALARM` (Play-restricted — рішення за тобою), `<queries scheme="*">`, `SettingsActivity exported`.
 - [ ] **P2** Автоматизувати `versionCode`/`versionName`.
-- [ ] **P2** App-update: не форсити `IMMEDIATE` на будь-яке оновлення (re-trigger після dismiss) — FLEXIBLE + priority.
+- [x] **P2** App-update прибрано повністю (Phase 0, offline) — форсований IMMEDIATE зник разом із ним.
 
 ---
 
