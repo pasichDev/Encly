@@ -1,7 +1,11 @@
 package com.pasich.encly.presentation.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,13 +29,15 @@ import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
+import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import kotlinx.coroutines.delay
 
 /**
- * App-unlock screen shown when a PIN-based lock is configured. Verifies the PIN
- * (with a progressive lockout) and optionally a biometric prompt, then unlocks the
- * encrypted database and navigates home. Verification and DB unlock run off the main
- * thread and show a loading state. It never accesses note data before unlock.
+ * App-unlock screen shown when a lock is configured. Depending on the strategy it verifies
+ * either a PIN (with a progressive lockout) or a re-entered seed phrase, optionally preceded
+ * by a biometric prompt, then unlocks the encrypted database and navigates home. Verification
+ * and DB unlock run off the main thread. It never accesses note data before unlock, and the
+ * system back button is blocked so the lock cannot be dismissed without authenticating.
  */
 @Composable
 fun LockScreen(
@@ -40,13 +46,14 @@ fun LockScreen(
 ) {
     val activity = LocalContext.current as? FragmentActivity
     val busy by viewModel.busy.collectAsState()
+    val seedStrategy = remember { viewModel.isSeedStrategy() }
 
-    var input by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
-    var lockoutSeconds by remember { mutableLongStateOf(0L) }
+    // Block the back button: a lock screen must not be dismissible without authenticating.
+    BackHandler(enabled = true) { }
 
     val biometricEnabled = remember {
-        viewModel.strategy() == AuthStrategy.PIN_BIOMETRIC &&
+        (viewModel.strategy() == AuthStrategy.PIN_BIOMETRIC ||
+                viewModel.strategy() == AuthStrategy.SEED_PHRASE_BIOMETRIC) &&
                 viewModel.biometricEnabled() &&
                 viewModel.biometricAvailable()
     }
@@ -60,14 +67,51 @@ fun LockScreen(
     fun promptBiometric() {
         if (activity != null && viewModel.lockoutRemainingMillis() <= 0) {
             viewModel.authenticateBiometric(activity) { authed ->
-                if (authed) viewModel.unlock { ok ->
-                    if (ok) goHome() else error = "Не вдалося відкрити базу даних"
-                }
+                if (authed) viewModel.unlock { ok -> if (ok) goHome() }
             }
         }
     }
 
-    // Live lockout countdown
+    // Auto-prompt biometric on first entry (if enabled and not locked out).
+    LaunchedEffect(Unit) {
+        if (biometricEnabled) promptBiometric()
+    }
+
+    if (busy) {
+        AuthLoading("Розблокування…")
+        return
+    }
+
+    if (seedStrategy) {
+        SeedLockContent(
+            viewModel = viewModel,
+            biometricEnabled = biometricEnabled && activity != null,
+            onUnlocked = ::goHome,
+            onPromptBiometric = ::promptBiometric
+        )
+    } else {
+        PinLockContent(
+            viewModel = viewModel,
+            biometricEnabled = biometricEnabled && activity != null,
+            onUnlocked = ::goHome,
+            onPromptBiometric = ::promptBiometric
+        )
+    }
+}
+
+/** PIN entry with progressive lockout. */
+@Composable
+private fun PinLockContent(
+    viewModel: LockViewModel,
+    biometricEnabled: Boolean,
+    onUnlocked: () -> Unit,
+    onPromptBiometric: () -> Unit
+) {
+    var input by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var lockoutSeconds by remember { mutableLongStateOf(0L) }
+
+    // Live lockout countdown.
     LaunchedEffect(Unit) {
         while (true) {
             val remaining = viewModel.lockoutRemainingMillis()
@@ -77,12 +121,7 @@ fun LockScreen(
         }
     }
 
-    // Auto-prompt biometric on first entry (if enabled and not locked out)
-    LaunchedEffect(Unit) {
-        if (biometricEnabled) promptBiometric()
-    }
-
-    // Verify once 4 digits are entered
+    // Verify once 4 digits are entered.
     LaunchedEffect(input) {
         if (input.length == 4) {
             if (viewModel.lockoutRemainingMillis() > 0) {
@@ -93,7 +132,7 @@ fun LockScreen(
             input = ""
             viewModel.authenticatePin(pin) { result ->
                 when (result) {
-                    PinUnlockResult.SUCCESS -> goHome()
+                    PinUnlockResult.SUCCESS -> onUnlocked()
                     PinUnlockResult.WRONG_PIN -> {
                         error = "Невірний PIN-код"
                         lockoutSeconds = (viewModel.lockoutRemainingMillis() + 999) / 1000
@@ -103,11 +142,6 @@ fun LockScreen(
                 }
             }
         }
-    }
-
-    if (busy) {
-        AuthLoading("Розблокування…")
-        return
     }
 
     PinEntryScaffold(
@@ -123,9 +157,64 @@ fun LockScreen(
             onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )
 
-        if (biometricEnabled && activity != null) {
+        if (biometricEnabled) {
             Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = { promptBiometric() }) {
+            TextButton(onClick = onPromptBiometric) {
+                Text("Використати біометрію")
+            }
+        }
+    }
+}
+
+/** Seed-phrase entry: re-enter the phrase to unlock (verified against the stored hash). */
+@Composable
+private fun SeedLockContent(
+    viewModel: LockViewModel,
+    biometricEnabled: Boolean,
+    onUnlocked: () -> Unit,
+    onPromptBiometric: () -> Unit
+) {
+    var phrase by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    PinEntryScaffold(
+        title = "Розблокуйте нотатки",
+        subtitle = "Введіть вашу сід-фразу для доступу",
+        subtitleIsError = false,
+        error = error
+    ) {
+        OutlinedTextField(
+            value = phrase,
+            onValueChange = {
+                phrase = it
+                error = null
+            },
+            label = { Text("Сід-фраза") },
+            minLines = 3,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = {
+                viewModel.authenticateSeed(phrase) { result ->
+                    when (result) {
+                        SeedUnlockResult.SUCCESS -> onUnlocked()
+                        SeedUnlockResult.WRONG_SEED -> error = "Невірна сід-фраза"
+                        SeedUnlockResult.DB_ERROR -> error = "Не вдалося відкрити базу даних"
+                    }
+                }
+            },
+            enabled = phrase.isNotBlank(),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Розблокувати")
+        }
+
+        if (biometricEnabled) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TextButton(onClick = onPromptBiometric) {
                 Text("Використати біометрію")
             }
         }

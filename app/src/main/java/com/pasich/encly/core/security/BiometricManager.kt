@@ -66,17 +66,10 @@ class BiometricManager @Inject constructor(
         fun onCancelled() {}
     }
 
-    /** Checks whether weak biometric authentication is available. */
-    fun isBiometricAvailable(): Boolean {
-        val biometricManager = AndroidBiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK)) {
-            AndroidBiometricManager.BIOMETRIC_SUCCESS -> true
-            else -> false
-        }
-    }
-
     /**
-     * Checks whether strong biometric authentication is available.
+     * Checks whether strong (Class 3) biometric authentication is available.
+     * This is the single availability check used across the app; the former weak-biometric
+     * variant was removed because every biometric flow here requires strong authenticators.
      */
     fun isStrongBiometricAvailable(): Boolean {
         val biometricManager = AndroidBiometricManager.from(context)
@@ -91,7 +84,7 @@ class BiometricManager @Inject constructor(
      */
     fun getBiometricStatus(): BiometricStatus {
         val biometricManager = AndroidBiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK)) {
+        return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG)) {
             AndroidBiometricManager.BIOMETRIC_SUCCESS -> BiometricStatus.AVAILABLE
             AndroidBiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> BiometricStatus.NO_HARDWARE
             AndroidBiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> BiometricStatus.HARDWARE_UNAVAILABLE
@@ -149,13 +142,12 @@ class BiometricManager @Inject constructor(
             .setNegativeButtonText(config.negativeButtonText)
 
         config.description?.let { builder.setDescription(it) }
-        
+
+        // Always require Class 3 (strong) biometrics: this app gates every biometric entry
+        // point on isStrongBiometricAvailable(), so a weak authenticator here would be
+        // inconsistent and could pass availability yet fail the actual prompt.
         builder.setAllowedAuthenticators(
-            if (type == BiometricType.APP_UNLOCK) {
-                AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG
-            } else {
-                AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK
-            }
+            AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG
         )
 
         return builder.build()
@@ -170,7 +162,7 @@ class BiometricManager @Inject constructor(
         callback: BiometricCallback,
         customConfig: PromptConfig? = null
     ) {
-        if (!isBiometricAvailable()) {
+        if (!isStrongBiometricAvailable()) {
             callback.onError(-1, "Біометрична автентифікація недоступна")
             return
         }

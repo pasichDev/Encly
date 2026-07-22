@@ -1,5 +1,16 @@
 import java.util.Properties
 
+// Derive the app version from the tracked root `version.properties` so versionName and
+// versionCode always stay in sync and only one file needs bumping per release.
+val versionProps = Properties().apply {
+    rootProject.file("version.properties").inputStream().use { load(it) }
+}
+val appVersionMajor = versionProps.getProperty("VERSION_MAJOR").trim().toInt()
+val appVersionMinor = versionProps.getProperty("VERSION_MINOR").trim().toInt()
+val appVersionPatch = versionProps.getProperty("VERSION_PATCH").trim().toInt()
+val appVersionName = "$appVersionMajor.$appVersionMinor.$appVersionPatch"
+val appVersionCode = appVersionMajor * 10000 + appVersionMinor * 100 + appVersionPatch
+
 plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
@@ -15,6 +26,7 @@ plugins {
 detekt {
     buildUponDefaultConfig = true
     parallel = true
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
     baseline = file("$projectDir/detekt-baseline.xml")
 }
 
@@ -26,8 +38,8 @@ android {
         applicationId = "com.pasich.encly"
         minSdk = 26
         targetSdk = 36
-        versionCode = 30
-        versionName = "1.1.1"
+        versionCode = appVersionCode
+        versionName = appVersionName
     }
 
     packaging {
@@ -146,6 +158,8 @@ dependencies {
     implementation("androidx.compose.ui:ui:$composeVersion")
     implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
+    // ProcessLifecycleOwner for app foreground/background detection (auto re-lock).
+    implementation("androidx.lifecycle:lifecycle-process:2.9.1")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.compose.material3:material3:$materialVersion")
     implementation("androidx.compose.material3:material3-window-size-class:$materialVersion")

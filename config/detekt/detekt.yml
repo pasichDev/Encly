@@ -1,0 +1,6 @@
+# Project detekt overrides, layered on top of the default config
+# (buildUponDefaultConfig = true). Only rules that need tuning are listed here.
+naming:
+  FunctionNaming:
+    # Jetpack Compose @Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']

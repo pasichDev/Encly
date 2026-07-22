@@ -289,19 +289,20 @@ class AuthenticationManager @Inject constructor(
      */
     private fun encryptData(data: String): String? {
         return try {
-            val secretKey = seedPhraseManager.getEncryptionKeyForData(SaltData.AUTH)
-            val cipher = Cipher.getInstance(AES_MODE)
-            val iv = ByteArray(IV_SIZE)
-            SecureRandom().nextBytes(iv)
-            val ivSpec = IvParameterSpec(iv)
+            seedPhraseManager.useEncryptionKeyForData(SaltData.AUTH) { secretKey ->
+                val cipher = Cipher.getInstance(AES_MODE)
+                val iv = ByteArray(IV_SIZE)
+                SecureRandom().nextBytes(iv)
+                val ivSpec = IvParameterSpec(iv)
 
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec)
-            val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec)
+                val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
 
-            // Prepend the IV to the encrypted data (the IV is needed for decryption)
-            val combined = iv + encryptedBytes
+                // Prepend the IV to the encrypted data (the IV is needed for decryption)
+                val combined = iv + encryptedBytes
 
-            Base64.encodeToString(combined, Base64.DEFAULT)
+                Base64.encodeToString(combined, Base64.DEFAULT)
+            }
         } catch (_: Exception) {
             null
         }
@@ -312,19 +313,19 @@ class AuthenticationManager @Inject constructor(
      */
     private fun decryptData(encryptedData: String): String? {
         return try {
-            val secretKey = seedPhraseManager.getEncryptionKeyForData(SaltData.AUTH)
+            seedPhraseManager.useEncryptionKeyForData(SaltData.AUTH) { secretKey ->
+                val combined = Base64.decode(encryptedData, Base64.DEFAULT)
 
-            val combined = Base64.decode(encryptedData, Base64.DEFAULT)
+                val iv = combined.copyOfRange(0, IV_SIZE)
+                val encryptedBytes = combined.copyOfRange(IV_SIZE, combined.size)
 
-            val iv = combined.copyOfRange(0, IV_SIZE)
-            val encryptedBytes = combined.copyOfRange(IV_SIZE, combined.size)
+                val cipher = Cipher.getInstance(AES_MODE)
+                val ivSpec = IvParameterSpec(iv)
+                cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec)
 
-            val cipher = Cipher.getInstance(AES_MODE)
-            val ivSpec = IvParameterSpec(iv)
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec)
-
-            val decryptedBytes = cipher.doFinal(encryptedBytes)
-            String(decryptedBytes, Charsets.UTF_8)
+                val decryptedBytes = cipher.doFinal(encryptedBytes)
+                String(decryptedBytes, Charsets.UTF_8)
+            }
         } catch (_: Exception) {
             null
         }

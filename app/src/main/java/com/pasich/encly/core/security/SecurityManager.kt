@@ -57,22 +57,25 @@ class SecurityManager @Inject constructor(
             return InitialStatus.LOSS_CRYPTO
         }
 
-        // PIN is mandatory. Exhaustive over AuthStrategy so no state can silently
-        // fall through to an unauthenticated unlock: lock if a PIN is set, else force setup.
+        // A lock is mandatory. Exhaustive over AuthStrategy so no state can silently fall
+        // through to an unauthenticated unlock: route every configured strategy (PIN or
+        // seed-phrase, with or without biometric) to the lock screen; otherwise force setup.
         return when (authenticationManager.isAuthStrategy()) {
-            AuthStrategy.PIN, AuthStrategy.PIN_BIOMETRIC -> InitialStatus.AUTH
-            AuthStrategy.NONE,
-            AuthStrategy.RECOVERY_DATA,
+            AuthStrategy.PIN,
+            AuthStrategy.PIN_BIOMETRIC,
             AuthStrategy.SEED_PHRASE,
-            AuthStrategy.SEED_PHRASE_BIOMETRIC -> InitialStatus.SETUP_AUTH
+            AuthStrategy.SEED_PHRASE_BIOMETRIC -> InitialStatus.AUTH
+
+            AuthStrategy.NONE,
+            AuthStrategy.RECOVERY_DATA -> InitialStatus.SETUP_AUTH
         }
     }
 
     /** Derives the DB key from the seed and unlocks the encrypted database. */
     private fun unlockDatabase(): Boolean =
-        secureDatabaseManager.unlockDatabase(
-            seedPhraseManager.getEncryptionKeyForData(SaltData.DATABASE)
-        )
+        seedPhraseManager.useEncryptionKeyForData(SaltData.DATABASE) { key ->
+            secureDatabaseManager.unlockDatabase(key)
+        }
 
     /** Auth strategy configured for unlocking the app (PIN / PIN+biometric / none / …). */
     fun authStrategy(): AuthStrategy = authenticationManager.isAuthStrategy()
@@ -101,6 +104,33 @@ class SecurityManager @Inject constructor(
         if (ok) securityStatus = InitialStatus.MAIN
         return ok
     }
+
+    /**
+     * Re-locks the app: closes the encrypted database and marks the state as [InitialStatus.AUTH]
+     * so the next foreground entry must pass the lock screen again. Called when the app goes to
+     * the background (see the session auto-lock observer). Re-unlock re-derives the DB key from the
+     * stored seed hash — no seed/PIN re-entry is needed for the key, only re-authentication.
+     */
+    fun lock() {
+        secureDatabaseManager.reset()
+        securityStatus = InitialStatus.AUTH
+    }
+
+    /** Whether a re-authentication strategy is configured (so the app can be re-locked). */
+    fun isLockable(): Boolean = when (authenticationManager.isAuthStrategy()) {
+        AuthStrategy.PIN,
+        AuthStrategy.PIN_BIOMETRIC,
+        AuthStrategy.SEED_PHRASE,
+        AuthStrategy.SEED_PHRASE_BIOMETRIC -> true
+
+        AuthStrategy.NONE, AuthStrategy.RECOVERY_DATA -> false
+    }
+
+    /** Whether the encrypted database is currently unlocked. */
+    fun isDatabaseUnlocked(): Boolean = secureDatabaseManager.isDatabaseUnlocked()
+
+    /** Verifies a re-entered seed phrase against the stored hash (constant-time). */
+    fun verifySeed(phrase: CharArray): Boolean = seedPhraseManager.verifyMnemonic(phrase)
 
 
     /** Whether onboarding should be shown.

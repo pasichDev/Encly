@@ -11,17 +11,20 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.presentation.navigation.AppNavHost
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.ui.theme.AppTheme
@@ -36,6 +39,9 @@ class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var securityManager: SecurityManager
+
+    @Inject
+    lateinit var sessionLockManager: SessionLockManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -64,6 +70,18 @@ class MainActivity : FragmentActivity() {
                 // integrity check failed -> recovery (wipe & restart)
                 InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute
                 InitialStatus.NO -> return@setContent
+            }
+
+            // Auto re-lock: when the app was backgrounded and re-locked, route back to the
+            // lock screen. collectAsStateWithLifecycle defers the emission until the app is
+            // foregrounded again, so navigation happens on return, not while in the background.
+            val locked by sessionLockManager.locked.collectAsStateWithLifecycle()
+            LaunchedEffect(locked) {
+                if (locked) {
+                    navController.navigate(NavRoutes.LockRoute.name) {
+                        launchSingleTop = true
+                    }
+                }
             }
 
             App(

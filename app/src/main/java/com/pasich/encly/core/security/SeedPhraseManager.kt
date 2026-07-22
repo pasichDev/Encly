@@ -22,15 +22,23 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.security.auth.DestroyFailedException
+import javax.security.auth.Destroyable
 
 enum class SaltData {
     DATABASE, AUTH
 }
 
 object SecurityConstants {
+    /** The only trusted key material source: the encrypted hash of the real seed phrase. */
     const val ENCRYPTED_BLOCK_KEY = "encrypted_seed_block"
 
-    // Decoy for verifying whether the user created the key themselves: if ENCRYPTED_BLOCK_KEY == ENCRYPTED_BLOCK_KEY_TWO then it was set up manually
+    // UNTRUSTED provisioning marker — NOT a security control. Holds a second encrypted hash
+    // that equals block-one only for user-managed setups, letting the app infer the
+    // provisioning mode (user-created vs auto-generated). It never feeds key derivation
+    // (see buildEncryptionKeyForData, which uses ENCRYPTED_BLOCK_KEY only). Treat any value
+    // read from it as attacker-controllable: it may only gate cosmetic/UX branches, never
+    // access to data.
     const val ENCRYPTED_BLOCK_KEY_TWO = "encrypted_seed_block_two"
 }
 
@@ -187,7 +195,29 @@ class SeedPhraseManager @Inject constructor(
      *
      * @throws IllegalStateException if the seed hash is missing or cannot be decrypted
      */
-    fun getEncryptionKeyForData(saltType: SaltData): SecretKey {
+    /**
+     * Runs [block] with the freshly derived data key for [saltType], then best-effort destroys it.
+     *
+     * Prefer this over holding a returned [SecretKey]: the key reference is confined to [block]
+     * (GC-eligible immediately after) and [Destroyable.destroy] is attempted where the platform
+     * supports it. The raw HKDF bytes are always zeroized during derivation; [SecretKeySpec] keeps
+     * an internal copy the JCA cannot wipe on most Android versions, so this confinement is
+     * defense-in-depth, not a hard guarantee.
+     */
+    fun <T> useEncryptionKeyForData(saltType: SaltData, block: (SecretKey) -> T): T {
+        val key = buildEncryptionKeyForData(saltType)
+        return try {
+            block(key)
+        } finally {
+            try {
+                (key as? Destroyable)?.takeUnless { it.isDestroyed }?.destroy()
+            } catch (_: DestroyFailedException) {
+                // SecretKeySpec.destroy() is unsupported on most Android versions — acceptable.
+            }
+        }
+    }
+
+    private fun buildEncryptionKeyForData(saltType: SaltData): SecretKey {
         val ikm = decryptSeedHash(ENCRYPTED_BLOCK_KEY)
             ?: throw IllegalStateException("Cannot decrypt seed hash")
         val salt = getOrCreateKdfSalt()
@@ -265,6 +295,10 @@ class SeedPhraseManager @Inject constructor(
      * Onboarding stores both blocks equal for user-managed (`saveKeysStore(target, target)`)
      * and two different random phrases for auto-managed (`saveKeysStore()`).
      * Hence: equal blocks ⇒ user-created (true), different ⇒ auto-generated (false).
+     *
+     * This is a provisioning-mode hint derived from the UNTRUSTED [ENCRYPTED_BLOCK_KEY_TWO]
+     * marker — use it only for UX branches (e.g. which settings copy to show), never as an
+     * authorization or data-access gate.
      */
     fun isUserManuallyCreatedKeyByDecryption(): Boolean {
         val block = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false

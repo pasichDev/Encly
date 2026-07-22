@@ -42,11 +42,9 @@ class OnboardingUseCase @Inject constructor(
             ) {
 
                 // Initialize the database
-                secureDatabaseManager.unlockDatabase(
-                    seedPhraseManager.getEncryptionKeyForData(
-                        SaltData.DATABASE
-                    )
-                )
+                seedPhraseManager.useEncryptionKeyForData(SaltData.DATABASE) { key ->
+                    secureDatabaseManager.unlockDatabase(key)
+                }
                 Result.success(
                     value = "Okay"
                 )

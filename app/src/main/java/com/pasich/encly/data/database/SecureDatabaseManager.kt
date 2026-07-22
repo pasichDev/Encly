@@ -25,6 +25,9 @@ class SecureDatabaseManager @Inject constructor(
     private var database: AppDatabase? = null
     private var isUnlocked = false
 
+    /** Whether the database is currently unlocked (open). */
+    fun isDatabaseUnlocked(): Boolean = isUnlocked
+
     /**
      * Returns the unlocked encrypted database. Fails loudly if accessed before
      * unlock: silently handing back a throwaway in-memory database would route real
