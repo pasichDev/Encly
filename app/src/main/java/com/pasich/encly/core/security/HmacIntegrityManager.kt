@@ -1,11 +1,13 @@
 package com.pasich.encly.core.security
 
 import android.content.Context
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.core.content.edit
 import java.security.KeyStore
+import java.security.MessageDigest
 import javax.crypto.KeyGenerator
 import javax.crypto.Mac
 import javax.crypto.SecretKey
@@ -41,6 +43,11 @@ class HmacIntegrityManager @Inject constructor(
                 KEY_ALIAS, KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
             ).apply {
                 setKeySize(256)
+                // Bind HMAC verification to an unlocked device (API 28+): the integrity
+                // key cannot be exercised while the device is locked.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    setUnlockedDeviceRequired(true)
+                }
             }.build()
             keyGenerator.init(spec)
             keyGenerator.generateKey()
@@ -73,7 +80,8 @@ class HmacIntegrityManager @Inject constructor(
         mac.init(getHmacKey())
         val expectedHmac = mac.doFinal(hash)
 
-        return !expectedHmac.contentEquals(savedHmac)
+        // Constant-time compare to avoid a local timing side channel.
+        return !MessageDigest.isEqual(expectedHmac, savedHmac)
     }
 
     /** Full wipe: clears stored HMAC and deletes the Keystore signing key. */

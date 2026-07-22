@@ -3,6 +3,7 @@ package com.pasich.encly.data.database
 import android.content.Context
 import androidx.room.Room
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -44,9 +45,11 @@ class SecureDatabaseManager @Inject constructor(
         }
 
 
+        // Hoisted so they can be zeroized in `finally`. passphraseForRoom is a separate
+        // copy retained by the open-helper factory, so wiping these two is safe.
+        val rawPassphrase = secretKey.encoded
+        val passphraseForCheck = rawPassphrase.copyOf()
         return try {
-            val rawPassphrase = secretKey.encoded
-            val passphraseForCheck = rawPassphrase.copyOf()
             val passphraseForRoom = rawPassphrase.copyOf()
             AppLogger.d(TAG, "Key received. Length: ${rawPassphrase.size} bytes")
 
@@ -81,6 +84,10 @@ class SecureDatabaseManager @Inject constructor(
         } catch (e: Exception) {
             AppLogger.e(TAG, "Failed to unlock the database", e)
             false
+        } finally {
+            // Wipe the local key copies; the factory keeps its own passphraseForRoom.
+            SensitiveDataCleaner.clear(rawPassphrase)
+            SensitiveDataCleaner.clear(passphraseForCheck)
         }
     }
 

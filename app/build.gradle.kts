@@ -103,7 +103,12 @@ android {
     }
 
     lint {
-        abortOnError = false
+        // Actually gate CI on lint: fail the build on errors. Pre-existing issues are
+        // captured in lint-baseline.xml so only newly introduced ones break the build
+        // (mirrors the detekt new-code baseline approach).
+        abortOnError = true
+        warningsAsErrors = false
+        baseline = file("lint-baseline.xml")
     }
 
     kotlin {

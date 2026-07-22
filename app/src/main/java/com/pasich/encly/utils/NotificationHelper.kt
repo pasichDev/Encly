@@ -1,5 +1,6 @@
 package com.pasich.encly.utils
 
+import android.annotation.SuppressLint
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -53,6 +54,9 @@ object NotificationHelper {
      * reading the encrypted database (which may be locked when the alarm fires). The
      * snooze action carries the title/description so it can reschedule without the DB.
      */
+    // The POST_NOTIFICATIONS permission IS checked below via hasNotificationPermission();
+    // lint cannot trace the guard through the helper method, hence the suppression.
+    @SuppressLint("MissingPermission")
     fun showTaskNotification(context: Context, taskId: Long, title: String, description: String?) {
         if (!hasNotificationPermission(context)) {
             return

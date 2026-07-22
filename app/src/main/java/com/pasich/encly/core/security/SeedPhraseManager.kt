@@ -1,6 +1,7 @@
 package com.pasich.encly.core.security
 
 import android.content.Context
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -78,6 +79,11 @@ class SeedPhraseManager @Inject constructor(
                 setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 setKeySize(256)
+                // Make the seed-sealing key unusable while the device is locked,
+                // so the DB key cannot be derived at rest. Requires API 28+.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    setUnlockedDeviceRequired(true)
+                }
             }.build()
             keyGenerator.init(spec)
             keyGenerator.generateKey()
@@ -156,7 +162,8 @@ class SeedPhraseManager @Inject constructor(
             val decryptedHash = cipher.doFinal(encrypted)
 
             val inputHash = hashMnemonic(phrase)
-            val matches = inputHash.contentEquals(decryptedHash)
+            // Constant-time compare to avoid a local timing side channel.
+            val matches = MessageDigest.isEqual(inputHash, decryptedHash)
             SensitiveDataCleaner.clear(decryptedHash)
             SensitiveDataCleaner.clear(inputHash)
             matches

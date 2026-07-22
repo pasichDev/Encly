@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.core.di.ApplicationScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.SavedStateHandle
@@ -24,6 +25,7 @@ import com.pasich.encly.dynamicBlocks.factory.BlockFactory
 import com.pasich.encly.dynamicBlocks.focus.CentralizedFocusManager
 import com.pasich.encly.dynamicBlocks.utils.BlockUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -46,6 +48,7 @@ enum class SaveStatusNote {
 
 @HiltViewModel
 class EditNoteViewModel
+@Suppress("LongParameterList") // Hilt-injected dependencies; grouping them would only obscure wiring.
 @Inject constructor(
     private val notesRepository: NotesRepository,
     savedStateHandle: SavedStateHandle,
@@ -53,7 +56,8 @@ class EditNoteViewModel
     private val updateNoteTagUseCase: UpdateNoteTagUseCase,
     private val fontSizeUseCase: FontSizeUseCase,
     private val fontStyleUseCase: FontStyleUseCase,
-    private val simpleEditUseCase: SimpleEditUseCase
+    private val simpleEditUseCase: SimpleEditUseCase,
+    @ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoadNoteState())
     val state: StateFlow<LoadNoteState> get() = _state
@@ -116,9 +120,12 @@ class EditNoteViewModel
     val lastInteractionIndex: StateFlow<Int> = _focusManager.lastInteractionIndex
 
     override fun onCleared() {
-        // Persist any pending edits, then tear down the focus manager:
-        // dispose() cancels in-flight focus coroutines, cleanup() clears its state.
-        saveNote()
+        // Persist any pending edits on the application scope: viewModelScope is already
+        // cancelled during clearing, so a save launched there would never run (silent
+        // data loss for title-only edits and edits inside the last debounce window).
+        appScope.launch { persistNote() }
+        // Tear down the focus manager: dispose() cancels in-flight focus coroutines,
+        // cleanup() clears its state.
         _focusManager.dispose()
         _focusManager.cleanup()
         super.onCleared()
@@ -227,99 +234,116 @@ class EditNoteViewModel
     private fun observeBlocksForLiveSave() {
         var isInitialized = false
         viewModelScope.launch {
-            snapshotFlow { _blocks.toList() }.flatMapLatest { blocks ->
-                    // Create flows for each block
-                    combine(
-                        blocks.mapNotNull { block ->
-                            when (block) {
-                                is Block.TextBlock -> block.text
-                                is Block.HBlock -> block.text
-                                is Block.QuoteBlock -> block.text
-                                is Block.LinkBlock -> block.block.map { it.url }
-                                is Block.ListBlock -> block.items.map { it.toString() }
-                                else -> null
-                            }
-                        },
-                    ) { it.toList() }
-                }.debounce(2000).collect {
-                    if (isInitialized) {
-                        saveNote()
-                    } else {
-                        isInitialized = true
-                    }
+            val blocksFlow = snapshotFlow { _blocks.toList() }.flatMapLatest { blocks ->
+                // Create flows for each block
+                combine(
+                    blocks.mapNotNull { block ->
+                        when (block) {
+                            is Block.TextBlock -> block.text
+                            is Block.HBlock -> block.text
+                            is Block.QuoteBlock -> block.text
+                            is Block.LinkBlock -> block.block.map { it.url }
+                            is Block.ListBlock -> block.items.map { it.toString() }
+                            else -> null
+                        }
+                    },
+                ) { it.toList() }
+            }
+            // Also observe the title so title-only edits trigger the debounced autosave.
+            val titleFlow = _state.map { it.note.title }
+            combine(blocksFlow, titleFlow) { _, _ -> Unit }.debounce(2000).collect {
+                if (isInitialized) {
+                    saveNote()
+                } else {
+                    isInitialized = true
                 }
+            }
         }
     }
 
     fun saveNote(actionButton: Boolean = false, saveBackupVersion: Boolean = false) {
-        if (isReadTrashOnly) return
-        // Never overwrite content that failed to load/decrypt.
-        if (contentLoadFailed) {
-            _status.value = SaveStatusNote.OLD
+        viewModelScope.launch { persistNote(actionButton, saveBackupVersion) }
+    }
+
+    /**
+     * Persists the current note. Kept as a plain `suspend` function (not tied to
+     * [viewModelScope]) so it can be invoked from [onCleared] on [appScope] — the
+     * exit-save must survive ViewModel teardown, otherwise title-only edits and
+     * edits made in the final debounce window would be silently lost.
+     */
+    private suspend fun persistNote(
+        actionButton: Boolean = false,
+        saveBackupVersion: Boolean = false,
+    ) {
+        // Skip read-only notes; never overwrite content that failed to load/decrypt.
+        if (isReadTrashOnly || contentLoadFailed) {
+            if (contentLoadFailed) _status.value = SaveStatusNote.OLD
             return
         }
         _status.value = SaveStatusNote.SAVING
 
         val currentNote = if (saveBackupVersion) _state.value.backupNote else _state.value.note
-        viewModelScope.launch {
-            try {
-                val blocksJson = if (!saveBackupVersion) BlockConverter.blocksToJson(blocks.filter {
-                    when (it) {
-                        is Block.TextBlock -> it.text.value.isNotBlank()
-                        is Block.HBlock -> it.text.value.isNotBlank()
-                        is Block.QuoteBlock -> it.text.value.isNotBlank()
-                        is Block.ListBlock -> it.items.value.any { item -> item.value.isNotBlank() }
-                        is Block.LinkBlock -> true
-                        is Block.SeparatorBlock -> true
-                    }
-                }) else currentNote.value
-                if (isNoteEmpty()) {
-                    _status.value = SaveStatusNote.OLD
-                    return@launch
-                }
-
-                // Choose the save strategy (update or create)
-                if (currentNote.id != -1L) {
-                    // Check whether the content or the title has changed
-                    val timestamp = if (_state.value.backupNote.hasContentChanged(
-                            blocksJson, _state.value.note.title
-                        )
-                    ) System.currentTimeMillis() else currentNote.date
-                    withContext(Dispatchers.IO) {
-                        notesRepository.updateNote(
-                            currentNote.copy(
-                                value = blocksJson,
-                                date = timestamp,
-                            ),
-                        )
-                    }
-                } else {
-                    withContext(Dispatchers.IO) {
-                        if (saveBackupVersion) return@withContext
-                        val insertedId = notesRepository.insertNote(
-                            Note.new(
-                                title = currentNote.title,
-                                value = blocksJson,
-                                tagId = currentNote.tagId
-                            ),
-                        )
-                        if (!actionButton) {
-                            _state.value = _state.value.copy(
-                                note = currentNote.copy(id = insertedId),
-                            )
-                        }
-                    }
-
-                }
-
-                _status.value = SaveStatusNote.SAVED
-                AppLogger.d(
-                    "EditNoteViewModel",
-                    "Note saved successfully with ID: ${_state.value.note.id}",
-                )
-            } catch (e: Exception) {
-                AppLogger.e("EditNoteViewModel", "Error saving note: ${e.message}")
+        try {
+            val blocksJson = if (saveBackupVersion) currentNote.value else serializeNonBlankBlocks()
+            if (isNoteEmpty()) {
                 _status.value = SaveStatusNote.OLD
+                return
+            }
+
+            // Choose the save strategy (update existing vs create new).
+            if (currentNote.id != -1L) {
+                updateExistingNote(currentNote, blocksJson)
+            } else if (!saveBackupVersion) {
+                insertNewNote(currentNote, blocksJson, actionButton)
+            }
+
+            _status.value = SaveStatusNote.SAVED
+            AppLogger.d("EditNoteViewModel", "Note saved successfully with ID: ${_state.value.note.id}")
+        } catch (e: Exception) {
+            AppLogger.e("EditNoteViewModel", "Error saving note: ${e.message}")
+            _status.value = SaveStatusNote.OLD
+        }
+    }
+
+    /** Serializes the current blocks, dropping blank text-bearing blocks. */
+    private fun serializeNonBlankBlocks(): String = BlockConverter.blocksToJson(
+        blocks.filter { block ->
+            when (block) {
+                is Block.TextBlock -> block.text.value.isNotBlank()
+                is Block.HBlock -> block.text.value.isNotBlank()
+                is Block.QuoteBlock -> block.text.value.isNotBlank()
+                is Block.ListBlock -> block.items.value.any { item -> item.value.isNotBlank() }
+                is Block.LinkBlock -> true
+                is Block.SeparatorBlock -> true
+            }
+        },
+    )
+
+    private suspend fun updateExistingNote(currentNote: Note, blocksJson: String) {
+        // Bump the timestamp only when content or title actually changed.
+        val timestamp = if (
+            _state.value.backupNote.hasContentChanged(blocksJson, _state.value.note.title)
+        ) System.currentTimeMillis() else currentNote.date
+        withContext(Dispatchers.IO) {
+            notesRepository.updateNote(currentNote.copy(value = blocksJson, date = timestamp))
+        }
+    }
+
+    private suspend fun insertNewNote(
+        currentNote: Note,
+        blocksJson: String,
+        actionButton: Boolean,
+    ) {
+        withContext(Dispatchers.IO) {
+            val insertedId = notesRepository.insertNote(
+                Note.new(
+                    title = currentNote.title,
+                    value = blocksJson,
+                    tagId = currentNote.tagId,
+                ),
+            )
+            if (!actionButton) {
+                _state.value = _state.value.copy(note = currentNote.copy(id = insertedId))
             }
         }
     }
