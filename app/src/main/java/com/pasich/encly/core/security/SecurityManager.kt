@@ -80,6 +80,12 @@ class SecurityManager @Inject constructor(
     /** Whether biometric unlock is enabled in settings. */
     fun isBiometricEnabled(): Boolean = authenticationManager.isBiometricEnabled()
 
+    /** Enables biometric unlock; returns false if no PIN/seed auth is configured yet. */
+    fun enableBiometric(): Boolean = authenticationManager.activateBiometricAuth()
+
+    /** Disables biometric unlock. */
+    fun disableBiometric() = authenticationManager.deactivateBiometricAuth()
+
     /** Remaining PIN lockout in milliseconds (0 = not locked out). */
     fun pinLockoutRemainingMillis(): Long = authenticationManager.remainingLockoutMillis()
 

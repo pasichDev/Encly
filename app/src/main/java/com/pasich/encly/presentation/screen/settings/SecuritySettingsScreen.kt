@@ -128,17 +128,7 @@ fun SecuritySettingsScreen(
                             Switch(
                                 checked = securityState.biometricEnable,
                                 enabled = securityState.isBiometricAvailable,
-                                onCheckedChange = {
-                                    /* authViewModel.toggleBiometric(
-                                         context,
-                                         activity,
-                                         it,
-                                         onError = { errorMessage ->
-                                             showError(errorMessage)
-                                         }
-
-                                     )  */
-                                })
+                                onCheckedChange = { securityViewModel.toggleBiometric(it) })
                         })
                 }
             }

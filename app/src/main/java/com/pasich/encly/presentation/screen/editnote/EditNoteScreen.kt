@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.screen.editnote
 
+import android.widget.Toast
 import com.pasich.encly.core.AppLogger
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -34,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -101,6 +103,19 @@ fun EditNoteScreen(
     var isDialogVisible by remember { mutableStateOf(false) }
     val noteState by viewModel.state.collectAsState()
     val lastInteractionIndex by viewModel.lastInteractionIndex.collectAsState()
+    val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+
+    // Warn the user when stored content could not be read, instead of showing a silent
+    // blank editor. Editing/saving is already guarded so the unreadable data is preserved.
+    LaunchedEffect(contentLoadFailed) {
+        if (contentLoadFailed) {
+            Toast.makeText(
+                currentContext,
+                currentContext.getString(R.string.note_load_failed),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
 
     var bottomSheetsType by rememberSaveable {
         mutableStateOf(

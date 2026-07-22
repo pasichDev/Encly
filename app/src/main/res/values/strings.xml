@@ -239,4 +239,6 @@
     <string name="reminder_action_done">Виконано</string>
     <string name="reminder_action_snooze">Через 10 хв</string>
 
+    <string name="note_load_failed">Не вдалося прочитати вміст нотатки. Щоб не пошкодити дані, редагування вимкнено.</string>
+
 </resources>

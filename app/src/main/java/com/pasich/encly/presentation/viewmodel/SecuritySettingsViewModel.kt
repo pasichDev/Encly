@@ -62,6 +62,32 @@ class SecuritySettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Enables or disables biometric unlock and reflects the real persisted state in the UI.
+     * Enabling can fail if no PIN/seed auth is configured — in that case the switch stays off
+     * and an error is surfaced, so the toggle never lies about what was actually saved.
+     */
+    fun toggleBiometric(enable: Boolean) {
+        viewModelScope.launch {
+            val applied = withContext(Dispatchers.IO) {
+                if (enable) {
+                    securityManager.enableBiometric()
+                } else {
+                    securityManager.disableBiometric()
+                    false
+                }
+            }
+            if (enable && !applied) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Спочатку налаштуйте PIN або сід-фразу"
+                )
+            }
+            _uiState.value = _uiState.value.copy(
+                biometricEnable = securityManager.isBiometricEnabled()
+            )
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
