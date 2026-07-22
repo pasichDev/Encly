@@ -116,8 +116,12 @@ class EditNoteViewModel
     val lastInteractionIndex: StateFlow<Int> = _focusManager.lastInteractionIndex
 
     override fun onCleared() {
-        super.onCleared()
+        // Persist any pending edits, then tear down the focus manager:
+        // dispose() cancels in-flight focus coroutines, cleanup() clears its state.
+        saveNote()
         _focusManager.dispose()
+        _focusManager.cleanup()
+        super.onCleared()
     }
 
     init {
@@ -819,14 +823,6 @@ class EditNoteViewModel
             setFocusedBlockIndex(_blocks.size - 1)
         }
     }
-
-
-    override fun onCleared() {
-        super.onCleared()
-        saveNote()
-        _focusManager.cleanup()
-    }
-
 }
 
 data class LoadNoteState(
