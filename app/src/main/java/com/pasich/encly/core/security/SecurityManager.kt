@@ -59,6 +59,8 @@ class SecurityManager @Inject constructor(
 
     fun biometricAvailable(): Boolean = biometricManager.isStrongBiometricAvailable()
 
+    fun hasRecoverySeed(): Boolean = seedPhraseManager.hasRecoverySeed()
+
     fun configurePin(pin: String): Boolean {
         val dek = currentKeyCopy() ?: return false
         return try {
