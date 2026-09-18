@@ -438,31 +438,5 @@ class TasksViewModel @Inject constructor(
     }
 
 
-    fun addTaskToCalendar(task: Task, context: Context) {
-        try {
-            val intent = Intent(Intent.ACTION_INSERT).apply {
-                data = CalendarContract.Events.CONTENT_URI
-                putExtra(CalendarContract.Events.TITLE, task.title)
-                putExtra(CalendarContract.Events.DESCRIPTION, task.description ?: "")
-
-                // If there is a reminder date, use it; otherwise use the current date
-                val startTime = task.reminderDate ?: System.currentTimeMillis()
-                putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime)
-                putExtra(CalendarContract.EXTRA_EVENT_END_TIME, startTime + 3600000) // +1 hour
-
-                putExtra(
-                    CalendarContract.Events.AVAILABILITY,
-                    CalendarContract.Events.AVAILABILITY_BUSY
-                )
-            }
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            AppLogger.e("TasksViewModel", "Failed to add task to calendar", e)
-
-        }
-    }
-
-
 }
 
