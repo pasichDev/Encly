@@ -27,11 +27,6 @@ sealed interface DrawerContent
 object MainDrawerContent : DrawerContent
 
 /**
- * Drawer panel content for copying text
- */
-object CopyDrawerContent : DrawerContent
-
-/**
  * Drawer panel content for translating text
  */
 object TranslateDrawerContent : DrawerContent
