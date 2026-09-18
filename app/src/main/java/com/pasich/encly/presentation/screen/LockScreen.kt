@@ -23,6 +23,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
@@ -66,8 +67,8 @@ fun LockScreen(
 
     fun promptBiometric() {
         if (activity != null && viewModel.lockoutRemainingMillis() <= 0) {
-            viewModel.authenticateBiometric(activity) { authed ->
-                if (authed) viewModel.unlock { ok -> if (ok) goHome() }
+            viewModel.authenticateBiometric(activity) { unlocked ->
+                if (unlocked) goHome()
             }
         }
     }
@@ -121,9 +122,9 @@ private fun PinLockContent(
         }
     }
 
-    // Verify once 4 digits are entered.
+    // Verify once all six digits are entered.
     LaunchedEffect(input) {
-        if (input.length == 4) {
+        if (input.length == PIN_LENGTH) {
             if (viewModel.lockoutRemainingMillis() > 0) {
                 input = ""
                 return@LaunchedEffect
@@ -153,7 +154,7 @@ private fun PinLockContent(
     ) {
         PinCodeWidget(
             pinInput = input,
-            onPinChange = { if (input.length < 4 && lockoutSeconds <= 0L) input += it },
+            onPinChange = { if (input.length < PIN_LENGTH && lockoutSeconds <= 0L) input += it },
             onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )
 
