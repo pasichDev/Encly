@@ -1,8 +1,5 @@
 package com.pasich.encly.presentation.dialogs.blocks
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +15,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,7 +35,6 @@ fun ActionLinkBottomSheet(
     onDismiss: () -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
-    val context = LocalContext.current
 
 
     if (settings.isBottomSheetVisible) {
@@ -72,17 +67,6 @@ fun ActionLinkBottomSheet(
                             LazyColumn(
                                 modifier = Modifier.padding(16.dp)
                             ) {
-                                item {
-                                    ModalBoxItem(
-                                        title = stringResource(R.string.copy_link),
-                                        icon = painterResource(R.drawable.ic_copy),
-                                        roundPosition = RoundPosition.First,
-                                        enable = settings.blockMove != 1,
-                                        action = {
-                                            copyToClipboard(context, urlModel.url)
-                                            onDismiss()
-                                        })
-                                }
 
                                 item {
                                     ModalBoxItem(
@@ -146,9 +130,3 @@ fun ActionLinkBottomSheet(
 
 }
 
-
-fun copyToClipboard(context: Context, text: String) {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clip = ClipData.newPlainText("Url", text)
-    clipboard.setPrimaryClip(clip)
-}
