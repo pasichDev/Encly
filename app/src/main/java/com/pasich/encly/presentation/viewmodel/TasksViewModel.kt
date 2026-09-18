@@ -1,9 +1,5 @@
 package com.pasich.encly.presentation.viewmodel
 
-import android.content.Context
-import android.content.Intent
-import android.provider.CalendarContract
-import com.pasich.encly.core.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.data.model.Task
@@ -15,7 +11,6 @@ import com.pasich.encly.domain.usecase.task.GetTasksCountUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,7 +48,6 @@ data class TasksUiState(
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val getActiveTasksUseCase: GetActiveTasksUseCase,
     private val getCompletedTasksUseCase: GetCompletedTasksUseCase,
     private val getTasksCountUseCase: GetTasksCountUseCase,
@@ -316,7 +310,7 @@ class TasksViewModel @Inject constructor(
                 priority = priority,
                 categoryId = categoryId
             )
-            val taskId = addTaskUseCase(task)
+            addTaskUseCase(task)
 
             hideAddTaskDialog()
         }
