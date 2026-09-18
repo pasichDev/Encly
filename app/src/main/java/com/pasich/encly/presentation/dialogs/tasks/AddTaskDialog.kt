@@ -42,7 +42,6 @@ import kotlinx.coroutines.delay
 fun AddTaskDialog(
     onDismiss: () -> Unit,
     sheetState: SheetState,
-    isGrantedNotification: Boolean = false,
     onAddTask: (title: String, description: String?, reminderDate: Long?, priority: Int) -> Unit,
     editTask: Task? = null,
     onEditTask: ((taskId: Long, title: String, description: String?, reminderDate: Long?, priority: Int) -> Unit)? = null
@@ -149,7 +148,7 @@ fun AddTaskDialog(
                     DateTimeSelector(
                         selectedDateTime = reminderDate,
                         onDateTimeSelected = { reminderDate = it },
-                        isEnabled = isGrantedNotification
+                        isEnabled = true
                     )
 
                     Spacer(Modifier.width(15.dp))
