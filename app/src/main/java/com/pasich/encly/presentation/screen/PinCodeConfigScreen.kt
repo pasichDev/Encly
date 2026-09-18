@@ -35,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import kotlinx.coroutines.delay
@@ -63,23 +63,30 @@ fun PinCodeConfigScreen(
     var currentInput by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf<String?>(null) }
     var animationState by remember { mutableStateOf(PinAnimationState.Entering) }
-    LocalContext.current
 
     LaunchedEffect(currentInput) {
-        if (currentInput.length == 4 && animationState == PinAnimationState.Entering) {
+        if (currentInput.length == PIN_LENGTH && animationState == PinAnimationState.Entering) {
             when (step) {
                 1 -> {
                     firstPin = currentInput
                     currentInput = ""
+                    errorText = null
                     step = 2
                 }
 
                 2 -> {
                     if (currentInput == firstPin) {
-                        animationState = PinAnimationState.SuccessAnimation
-                        delay(1200)
-                        securityViewModel.activationPinAuth(firstPin)
-                        navController.popBackStack()
+                        val newPin = firstPin
+                        currentInput = ""
+                        securityViewModel.activationPinAuth(newPin) { ok ->
+                            if (ok) {
+                                animationState = PinAnimationState.SuccessAnimation
+                            } else {
+                                errorText = "Не вдалося оновити PIN. Спробуйте ще раз."
+                                firstPin = ""
+                                step = 1
+                            }
+                        }
                     } else {
                         errorText = "PIN-коди не збігаються. Спробуйте ще раз."
                         firstPin = ""
@@ -88,6 +95,13 @@ fun PinCodeConfigScreen(
                     }
                 }
             }
+        }
+    }
+
+    LaunchedEffect(animationState) {
+        if (animationState == PinAnimationState.SuccessAnimation) {
+            delay(600)
+            navController.popBackStack()
         }
     }
 
@@ -107,7 +121,7 @@ fun PinCodeConfigScreen(
                         step = currentStep,
                         errorText = errorText,
                         currentInput = currentInput,
-                        onInput = { if (currentInput.length < 4) currentInput += it },
+                        onInput = { if (currentInput.length < PIN_LENGTH) currentInput += it },
                         onDelete = {
                             if (currentInput.isNotEmpty()) currentInput = currentInput.dropLast(1)
                         })
@@ -155,7 +169,7 @@ fun MainPinContent(
 
         // Title
         Text(
-            text = if (step == 1) "Створіть PIN-код" else "Підтвердіть PIN-код",
+            text = if (step == 1) "Створіть 6-значний PIN-код" else "Підтвердіть 6-значний PIN-код",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
