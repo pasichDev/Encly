@@ -17,7 +17,7 @@ object BlockUtils {
         val result = when (block) {
             is TextualBlock -> {
                 val isEmpty = block.isEmpty()
-                AppLogger.d("BlockUtils", "TextualBlock (${block::class.simpleName}) isEmpty: $isEmpty, text: '${block.text.value}'")
+                AppLogger.d("BlockUtils", "TextualBlock (${block::class.simpleName}) isEmpty: $isEmpty")
                 isEmpty
             }
             is Block.LinkBlock -> {
