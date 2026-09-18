@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.screen
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -51,7 +49,6 @@ import androidx.navigation.NavHostController
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trash
 import com.pasich.encly.R
-import com.pasich.encly.presentation.components.MessageBanner
 import com.pasich.encly.presentation.components.tasks.TaskFilterChips
 import com.pasich.encly.presentation.components.tasks.TaskProgressCard
 import com.pasich.encly.presentation.components.tiles.TaskItem
@@ -59,12 +56,9 @@ import com.pasich.encly.presentation.dialogs.RequestCleanCompleteTaskDialog
 import com.pasich.encly.presentation.dialogs.tasks.AddTaskDialog
 import com.pasich.encly.presentation.viewmodel.TaskFilter
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
-import com.pasich.encly.utils.NotificationPermissionHandler
 
 data class TasksScreenUiState(
-    val showDialogCleanComplete: Boolean = false,
-    val permissionGranted: Boolean = false,
-    val requestPermissionTrigger: Int = 0
+    val showDialogCleanComplete: Boolean = false
 )
 
 
@@ -77,7 +71,6 @@ fun TasksScreen(
     val uiState by viewModel.uiState.collectAsState()
     val showAddTaskDialog by viewModel.showAddTaskDialog.collectAsState()
     val editingTask by viewModel.editingTask.collectAsState()
-    val context = LocalContext.current
 
     // Centralized UI state
     var screenUiState by remember { mutableStateOf(TasksScreenUiState()) }
@@ -102,16 +95,6 @@ fun TasksScreen(
 
 
     val isShowingCompletedTasks = uiState.selectedCompletedFilter != null
-
-
-    // Check notification permissions
-    NotificationPermissionHandler(
-        requestPermissionTrigger = screenUiState.requestPermissionTrigger,
-        onPermissionResult = { granted ->
-            screenUiState = screenUiState.copy(permissionGranted = granted)
-        }
-    )
-
 
     Scaffold(
         topBar = {
@@ -148,19 +131,6 @@ fun TasksScreen(
                 .padding(padding)
                 .padding(horizontal = 20.dp)
         ) {
-
-            if (!screenUiState.permissionGranted)
-                MessageBanner(
-                    modifier = Modifier.clickable {
-                        screenUiState = screenUiState.copy(
-                            requestPermissionTrigger = screenUiState.requestPermissionTrigger + 1
-                        )
-                    },
-                    title = "Дозвіл на надсилання сповіщень не надано ",
-                    message = "Натисніть щоб надати необхідний дозвіл",
-                    isLoading = false,
-                    lineColor = MaterialTheme.colorScheme.error
-                )
 
             // Progress panel
             if (uiState.totalTasksCount > 0) {
@@ -251,9 +221,6 @@ fun TasksScreen(
                             onTaskToggle = viewModel::toggleTaskCompletion,
                             onTaskClick = { selectedTask ->
                                 viewModel.showEditTaskDialog(selectedTask)
-                            },
-                            onAddToCalendar = { selectedTask ->
-                                viewModel.addTaskToCalendar(selectedTask, context)
                             }
                         )
                     }
@@ -273,8 +240,7 @@ fun TasksScreen(
                 onEditTask = { taskId, title, description, reminderDate, priority ->
                     viewModel.editTask(taskId, title, description, reminderDate, priority)
                 },
-                sheetState = sheetState,
-                isGrantedNotification = screenUiState.permissionGranted
+                sheetState = sheetState
             )
         }
         RequestCleanCompleteTaskDialog(
