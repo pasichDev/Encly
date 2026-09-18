@@ -8,12 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,8 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Calendar
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.CompletedIndicator
 import com.pasich.encly.presentation.components.tasks.PriorityIndicator
@@ -43,7 +38,6 @@ fun TaskItem(
     task: Task,
     onTaskToggle: (Long, Boolean) -> Unit,
     onTaskClick: ((Task) -> Unit)? = null,
-    onAddToCalendar: ((Task) -> Unit)? = null,
     enabled: Boolean = true
 ) {
     // State for the disappearance animation
@@ -164,39 +158,7 @@ fun TaskItem(
                     }
                 }
             }
-
-            if (!task.isCompleted && onAddToCalendar != null) {
-                IconButton(
-                    onClick = { onAddToCalendar(task) },
-                    modifier = Modifier.align(Alignment.Top)
-                ) {
-                    Icon(
-                        imageVector = Lucide.Calendar,
-                        contentDescription = "Додати до календаря",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
         }
 
     }
 }
-
-
-// Add-to-calendar button (only for active tasks)
-/*  if (!task.isCompleted && onAddToCalendar != null) {
-      IconButton(
-          onClick = { onAddToCalendar(task) },
-          modifier = Modifier.size(24.dp)
-      ) {
-          Icon(
-              Lucide.Calendar,
-              contentDescription = "Додати до календаря",
-              tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(16.dp)
-          )
-      }
-  }
-
- */
