@@ -58,7 +58,7 @@ enum class PinAnimationState {
 fun PinCodeConfigScreen(
     navController: NavHostController, securityViewModel: SecuritySettingsViewModel = hiltViewModel()
 ) {
-    var step by remember { mutableIntStateOf(1) }
+    var step by remember { mutableIntStateOf(0) }
     var firstPin by remember { mutableStateOf("") }
     var currentInput by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf<String?>(null) }
@@ -67,6 +67,19 @@ fun PinCodeConfigScreen(
     LaunchedEffect(currentInput) {
         if (currentInput.length == PIN_LENGTH && animationState == PinAnimationState.Entering) {
             when (step) {
+                0 -> {
+                    val currentPin = currentInput
+                    currentInput = ""
+                    securityViewModel.verifyCurrentPin(currentPin) { ok ->
+                        if (ok) {
+                            errorText = null
+                            step = 1
+                        } else {
+                            errorText = "Поточний PIN невірний"
+                        }
+                    }
+                }
+
                 1 -> {
                     firstPin = currentInput
                     currentInput = ""
@@ -169,7 +182,11 @@ fun MainPinContent(
 
         // Title
         Text(
-            text = if (step == 1) "Створіть 6-значний PIN-код" else "Підтвердіть 6-значний PIN-код",
+            text = when (step) {
+                0 -> "Введіть поточний PIN"
+                1 -> "Створіть 6-значний PIN-код"
+                else -> "Підтвердіть 6-значний PIN-код"
+            },
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -179,8 +196,11 @@ fun MainPinContent(
 
         // Subtitle
         Text(
-            text = if (step == 1) "Введіть новий PIN-код для захисту нотаток"
-            else "Повторно введіть PIN-код для підтвердження",
+            text = when (step) {
+                0 -> "Підтвердіть поточний PIN перед зміною ключа доступу"
+                1 -> "Введіть новий PIN-код для захисту нотаток"
+                else -> "Повторно введіть PIN-код для підтвердження"
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
