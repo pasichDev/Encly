@@ -1,112 +1,56 @@
 package com.pasich.encly.core.security
 
 import android.content.Context
-import android.os.Build
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.core.content.edit
 import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
 import cash.z.ecc.android.bip39.Mnemonics.WordCount
-import com.pasich.encly.core.security.SecurityConstants.ENCRYPTED_BLOCK_KEY
-import com.pasich.encly.core.security.SecurityConstants.ENCRYPTED_BLOCK_KEY_TWO
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
 import javax.crypto.Mac
-import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
-import javax.security.auth.DestroyFailedException
-import javax.security.auth.Destroyable
-
-enum class SaltData {
-    DATABASE, AUTH
-}
-
-object SecurityConstants {
-    /** The only trusted key material source: the encrypted hash of the real seed phrase. */
-    const val ENCRYPTED_BLOCK_KEY = "encrypted_seed_block"
-
-    // UNTRUSTED provisioning marker — NOT a security control. Holds a second encrypted hash
-    // that equals block-one only for user-managed setups, letting the app infer the
-    // provisioning mode (user-created vs auto-generated). It never feeds key derivation
-    // (see buildEncryptionKeyForData, which uses ENCRYPTED_BLOCK_KEY only). Treat any value
-    // read from it as attacker-controllable: it may only gate cosmetic/UX branches, never
-    // access to data.
-    const val ENCRYPTED_BLOCK_KEY_TWO = "encrypted_seed_block_two"
-}
 
 /**
- * Manages the BIP39 seed phrase that anchors all data encryption.
+ * Encly v2 vault bootstrap and recovery manager.
  *
- * The seed's SHA-256 hash is sealed with an AndroidKeyStore AES-GCM key and stored
- * in SharedPreferences. Per-type data keys are derived from that hash via HKDF-SHA256
- * using a per-install random salt. Losing the seed makes the data unrecoverable by
- * design (zero-knowledge model).
+ * The SQLCipher key is a random 256-bit DEK. A user-managed BIP39 seed never becomes the
+ * database key directly: it derives a recovery KEK that wraps the DEK with AES-256-GCM.
+ *
+ * No legacy seed hashes, local HKDF salts, HMAC mirrors, or device-only master key are kept.
  */
 @Singleton
 class SeedPhraseManager @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    private val hmacIntegrityManager: HmacIntegrityManager
+    @param:ApplicationContext private val context: Context
 ) {
     companion object {
-        const val PREF_NAME = "security_prefs"
-        const val KEYSTORE_PROVIDER = "AndroidKeyStore"
-        const val KEY_ALIAS = "seed_master_key"
+        private const val PREF_NAME = "encly_vault_v2"
+        private const val VERSION_KEY = "vault_version"
+        private const val RECOVERY_SLOT_KEY = "recovery_slot"
+        private const val RECOVERY_ENABLED_KEY = "recovery_enabled"
+        private const val VAULT_VERSION = 2
+        private const val GCM_TAG_LENGTH = 128
+        private const val IV_LENGTH = 12
+        private const val DEK_LENGTH = 32
 
-        const val GCM_TAG_LENGTH = 128
-        const val IV_LENGTH = 12
-
-        /** SharedPreferences key for the per-install random HKDF salt. */
-        const val KDF_SALT_KEY = "kdf_salt_v2"
+        private val RECOVERY_SALT = "encly/recovery/salt/v2".toByteArray(Charsets.UTF_8)
+        private val RECOVERY_INFO = "encly/recovery/kek/v2".toByteArray(Charsets.UTF_8)
+        private val RECOVERY_AAD = "encly/recovery/slot/v2".toByteArray(Charsets.UTF_8)
     }
-
 
     private val prefs by lazy {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
-    private val keyStore by lazy {
-        KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
-    }
+    @Volatile
+    private var bootstrapDek: ByteArray? = null
 
-    private fun generateKeyIfMissing() {
-        if (!keyStore.containsAlias(KEY_ALIAS)) {
-            val keyGenerator = KeyGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_AES, KEYSTORE_PROVIDER
-            )
-            val spec = KeyGenParameterSpec.Builder(
-                KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            ).apply {
-                setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                setKeySize(256)
-                // Make the seed-sealing key unusable while the device is locked,
-                // so the DB key cannot be derived at rest. Requires API 28+.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    setUnlockedDeviceRequired(true)
-                }
-            }.build()
-            keyGenerator.init(spec)
-            keyGenerator.generateKey()
-        }
-    }
-
-    private fun getSecretKey(): SecretKey {
-        generateKeyIfMissing()
-        return (keyStore.getEntry(KEY_ALIAS, null) as KeyStore.SecretKeyEntry).secretKey
-    }
-
-    /** Generates a new 12-word seed phrase. */
     fun generateMnemonic(): MnemonicCode = MnemonicCode(WordCount.COUNT_12)
 
-    /** Validates the phrase (throws an exception if invalid). */
     fun isValidMnemonic(phrase: CharArray): Boolean = try {
         MnemonicCode(phrase).validate()
         true
@@ -114,215 +58,174 @@ class SeedPhraseManager @Inject constructor(
         false
     }
 
-    /** Computes the SHA-256 hash of the phrase. */
-    fun hashMnemonic(phrase: CharArray): ByteArray {
-        val digest = MessageDigest.getInstance("SHA-256")
-        return digest.digest(String(phrase).toByteArray(Charsets.UTF_8))
-    }
+    /**
+     * Creates a brand-new vault. Existing v1/v2 metadata is intentionally replaced.
+     *
+     * [recoverySeed] == null means auto-managed mode: the DEK can only be persisted once the
+     * mandatory PIN slot is created. If setup is interrupted before then, onboarding restarts.
+     */
+    @Synchronized
+    fun initializeVault(recoverySeed: CharArray?): Boolean {
+        if (recoverySeed != null && !isValidMnemonic(recoverySeed)) return false
 
-    /** Encrypts the hash + IV together and stores them in SharedPreferences. */
-    fun storeSeedHash(phrase: CharArray, typeKey: String): Boolean {
-        val hash = hashMnemonic(phrase)
+        clearBootstrapKey()
+        prefs.edit { clear() }
 
-        try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, getSecretKey())
-            val iv = cipher.iv
-            val encrypted = cipher.doFinal(hash)
-
-            // Combine IV + encrypted hash
-            val combined = ByteArray(iv.size + encrypted.size).apply {
-                System.arraycopy(iv, 0, this, 0, iv.size)
-                System.arraycopy(encrypted, 0, this, iv.size, encrypted.size)
+        val dek = ByteArray(DEK_LENGTH).also { SecureRandom().nextBytes(it) }
+        return try {
+            val recoverySlot = recoverySeed?.let { seed ->
+                val kek = deriveRecoveryKek(seed)
+                try {
+                    wrapDek(dek, kek, RECOVERY_AAD)
+                } finally {
+                    SensitiveDataCleaner.clear(kek)
+                }
             }
-
-            val base64 = Base64.encodeToString(combined, Base64.NO_WRAP)
 
             prefs.edit {
-                putString(typeKey, base64)
+                putInt(VERSION_KEY, VAULT_VERSION)
+                putBoolean(RECOVERY_ENABLED_KEY, recoverySlot != null)
+                if (recoverySlot != null) {
+                    putString(RECOVERY_SLOT_KEY, Base64.encodeToString(recoverySlot, Base64.NO_WRAP))
+                } else {
+                    remove(RECOVERY_SLOT_KEY)
+                }
             }
-            if (typeKey == ENCRYPTED_BLOCK_KEY) {
-                // Store the HMAC for future verification
-                hmacIntegrityManager.storeHmac(hash)
-            }
-            return true
+
+            bootstrapDek = dek.copyOf()
+            true
         } catch (_: Exception) {
-            return false
-        } finally {
-            // Do NOT clear `phrase` — the caller may reuse it (saveKeysStore calls this twice).
-            SensitiveDataCleaner.clear(hash)
-        }
-    }
-
-    /** 🧠 Verifies the phrase by decrypting the block from SharedPreferences. */
-    fun verifyMnemonic(phrase: CharArray): Boolean {
-        val base64 = prefs.getString(ENCRYPTED_BLOCK_KEY, null) ?: return false
-        return try {
-            val combined = Base64.decode(base64, Base64.NO_WRAP)
-            if (combined.size < IV_LENGTH) return false
-
-            val iv = combined.copyOfRange(0, IV_LENGTH)
-            val encrypted = combined.copyOfRange(IV_LENGTH, combined.size)
-
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-            cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
-            val decryptedHash = cipher.doFinal(encrypted)
-
-            val inputHash = hashMnemonic(phrase)
-            // Constant-time compare to avoid a local timing side channel.
-            val matches = MessageDigest.isEqual(inputHash, decryptedHash)
-            SensitiveDataCleaner.clear(decryptedHash)
-            SensitiveDataCleaner.clear(inputHash)
-            matches
-        } catch (_: Exception) {
+            prefs.edit { clear() }
             false
         } finally {
-            SensitiveDataCleaner.clear(phrase)
+            SensitiveDataCleaner.clear(dek)
         }
     }
 
+    fun hasStoredSeed(): Boolean = prefs.getInt(VERSION_KEY, 0) == VAULT_VERSION
 
-    /**
-     * Returns an AES-256 key for the given data type, derived from the seed-phrase
-     * hash via HKDF-SHA256 (RFC 5869) with a per-install random salt.
-     *
-     * The IKM (seed hash) already carries high entropy (a 12-word BIP39 phrase ≈ 128
-     * bits), so HKDF is a better and faster fit here than PBKDF2/Argon2. Keys for
-     * different data types are separated by `info = saltType.name`.
-     *
-     * NOTE: changing this derivation makes data encrypted with the old scheme unreadable.
-     *
-     * @throws IllegalStateException if the seed hash is missing or cannot be decrypted
-     */
-    /**
-     * Runs [block] with the freshly derived data key for [saltType], then best-effort destroys it.
-     *
-     * Prefer this over holding a returned [SecretKey]: the key reference is confined to [block]
-     * (GC-eligible immediately after) and [Destroyable.destroy] is attempted where the platform
-     * supports it. The raw HKDF bytes are always zeroized during derivation; [SecretKeySpec] keeps
-     * an internal copy the JCA cannot wipe on most Android versions, so this confinement is
-     * defense-in-depth, not a hard guarantee.
-     */
-    fun <T> useEncryptionKeyForData(saltType: SaltData, block: (SecretKey) -> T): T {
-        val key = buildEncryptionKeyForData(saltType)
-        return try {
-            block(key)
-        } finally {
-            try {
-                (key as? Destroyable)?.takeUnless { it.isDestroyed }?.destroy()
-            } catch (_: DestroyFailedException) {
-                // SecretKeySpec.destroy() is unsupported on most Android versions — acceptable.
-            }
-        }
-    }
+    fun hasRecoverySeed(): Boolean =
+        hasStoredSeed() &&
+            prefs.getBoolean(RECOVERY_ENABLED_KEY, false) &&
+            !prefs.getString(RECOVERY_SLOT_KEY, null).isNullOrBlank()
 
-    private fun buildEncryptionKeyForData(saltType: SaltData): SecretKey {
-        val ikm = decryptSeedHash(ENCRYPTED_BLOCK_KEY)
-            ?: throw IllegalStateException("Cannot decrypt seed hash")
-        val salt = getOrCreateKdfSalt()
-        val info = saltType.name.toByteArray(Charsets.UTF_8)
-
-        val okm = hkdfSha256(ikm = ikm, salt = salt, info = info, length = 32)
-        SensitiveDataCleaner.clear(ikm)
-
-        val key = SecretKeySpec(okm, "AES")
-        SensitiveDataCleaner.clear(okm)
-        return key
-    }
-
-    /** Returns (creating on first use) the 16-byte per-install random HKDF salt. */
-    private fun getOrCreateKdfSalt(): ByteArray {
-        prefs.getString(KDF_SALT_KEY, null)?.let {
-            return Base64.decode(it, Base64.NO_WRAP)
-        }
-        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        prefs.edit { putString(KDF_SALT_KEY, Base64.encodeToString(salt, Base64.NO_WRAP)) }
-        return salt
-    }
-
-    /**
-     * HKDF-SHA256 (RFC 5869). A single expand round suffices for length ≤ 32,
-     * since an HMAC-SHA256 block is 32 bytes.
-     */
-    private fun hkdfSha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
-        require(length in 1..32) { "This HKDF impl supports 1..32 output bytes" }
-        val mac = Mac.getInstance("HmacSHA256")
-        // Extract: PRK = HMAC(salt, IKM)
-        mac.init(SecretKeySpec(salt, "HmacSHA256"))
-        val prk = mac.doFinal(ikm)
-        // Expand: T(1) = HMAC(PRK, info || 0x01)
-        mac.init(SecretKeySpec(prk, "HmacSHA256"))
-        mac.update(info)
-        mac.update(0x01.toByte())
-        val okm = mac.doFinal().copyOf(length)
-        SensitiveDataCleaner.clear(prk)
-        return okm
-    }
-
-
-    /** Whether the seed-phrase hash is stored. */
-    fun hasStoredSeed(): Boolean = prefs.contains(ENCRYPTED_BLOCK_KEY)
-
-
-    /**
-     * Verifies the stored key using HMAC.
-     * Used to protect against corruption/tampering of the app data.
-     */
     fun verificationKeyData(): Boolean {
-        val hash = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false
-        return !hmacIntegrityManager.isHashTampered(hash)
+        if (!hasStoredSeed()) return false
+        val recoveryEnabled = prefs.getBoolean(RECOVERY_ENABLED_KEY, false)
+        return !recoveryEnabled || hasRecoverySeed()
+    }
+
+    fun isUserManuallyCreatedKeyByDecryption(): Boolean = hasRecoverySeed()
+
+    @Synchronized
+    fun copyBootstrapKey(): ByteArray? = bootstrapDek?.copyOf()
+
+    @Synchronized
+    fun clearBootstrapKey() {
+        bootstrapDek?.let(SensitiveDataCleaner::clear)
+        bootstrapDek = null
     }
 
     /**
-     * Full wipe for unrecoverable-loss reset: clears all seed prefs (hashes, KDF salt),
-     * deletes the Keystore master key, and wipes the integrity HMAC. After this the app
-     * starts fresh from onboarding.
+     * Attempts to unwrap the v2 DEK using the BIP39 recovery seed.
+     * The returned key belongs to the caller and must be zeroized after use.
      */
-    fun wipe() {
-        prefs.edit { clear() }
-        try {
-            keyStore.deleteEntry(KEY_ALIAS)
+    fun unlockWithSeed(phrase: CharArray): ByteArray? {
+        if (!hasRecoverySeed() || !isValidMnemonic(phrase)) return null
+        val encoded = prefs.getString(RECOVERY_SLOT_KEY, null) ?: return null
+        val wrapped = try {
+            Base64.decode(encoded, Base64.NO_WRAP)
         } catch (_: Exception) {
+            return null
         }
-        hmacIntegrityManager.wipe()
-    }
 
-
-    /**
-     * Tells whether the seed phrase was created by the user (USER_MANAGED).
-     *
-     * Onboarding stores both blocks equal for user-managed (`saveKeysStore(target, target)`)
-     * and two different random phrases for auto-managed (`saveKeysStore()`).
-     * Hence: equal blocks ⇒ user-created (true), different ⇒ auto-generated (false).
-     *
-     * This is a provisioning-mode hint derived from the UNTRUSTED [ENCRYPTED_BLOCK_KEY_TWO]
-     * marker — use it only for UX branches (e.g. which settings copy to show), never as an
-     * authorization or data-access gate.
-     */
-    fun isUserManuallyCreatedKeyByDecryption(): Boolean {
-        val block = decryptSeedHash(ENCRYPTED_BLOCK_KEY) ?: return false
-        val blockTwo = decryptSeedHash(ENCRYPTED_BLOCK_KEY_TWO) ?: return false
-
-        return block.contentEquals(blockTwo)
-    }
-
-    private fun decryptSeedHash(key: String): ByteArray? {
-        val base64 = prefs.getString(key, null) ?: return null
-        val combined = Base64.decode(base64, Base64.NO_WRAP)
-        if (combined.size < IV_LENGTH) return null
-
-        val iv = combined.copyOfRange(0, IV_LENGTH)
-        val encrypted = combined.copyOfRange(IV_LENGTH, combined.size)
-
+        val kek = deriveRecoveryKek(phrase)
         return try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-            cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
-            cipher.doFinal(encrypted)
+            unwrapDek(wrapped, kek, RECOVERY_AAD)
         } catch (_: Exception) {
             null
+        } finally {
+            SensitiveDataCleaner.clear(kek)
+            SensitiveDataCleaner.clear(wrapped)
         }
     }
 
+    fun verifyMnemonic(phrase: CharArray): Boolean {
+        val dek = unlockWithSeed(phrase) ?: return false
+        SensitiveDataCleaner.clear(dek)
+        return true
+    }
+
+    private fun deriveRecoveryKek(seed: CharArray): ByteArray {
+        val normalized = String(seed).trim().lowercase()
+        val seedBytes = normalized.toByteArray(Charsets.UTF_8)
+        val seedHash = MessageDigest.getInstance("SHA-256").digest(seedBytes)
+        SensitiveDataCleaner.clear(seedBytes)
+        return try {
+            hkdfSha256(
+                ikm = seedHash,
+                salt = RECOVERY_SALT,
+                info = RECOVERY_INFO,
+                length = DEK_LENGTH
+            )
+        } finally {
+            SensitiveDataCleaner.clear(seedHash)
+        }
+    }
+
+    private fun wrapDek(dek: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
+        cipher.updateAAD(aad)
+        val encrypted = cipher.doFinal(dek)
+        val iv = cipher.iv
+        return ByteArray(iv.size + encrypted.size).also { combined ->
+            System.arraycopy(iv, 0, combined, 0, iv.size)
+            System.arraycopy(encrypted, 0, combined, iv.size, encrypted.size)
+        }
+    }
+
+    private fun unwrapDek(wrapped: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray? {
+        if (wrapped.size <= IV_LENGTH) return null
+        val iv = wrapped.copyOfRange(0, IV_LENGTH)
+        val ciphertext = wrapped.copyOfRange(IV_LENGTH, wrapped.size)
+        return try {
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                SecretKeySpec(kek, "AES"),
+                GCMParameterSpec(GCM_TAG_LENGTH, iv)
+            )
+            cipher.updateAAD(aad)
+            cipher.doFinal(ciphertext)
+        } finally {
+            SensitiveDataCleaner.clear(iv)
+            SensitiveDataCleaner.clear(ciphertext)
+        }
+    }
+
+    private fun hkdfSha256(
+        ikm: ByteArray,
+        salt: ByteArray,
+        info: ByteArray,
+        length: Int
+    ): ByteArray {
+        require(length in 1..32)
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(salt, "HmacSHA256"))
+        val prk = mac.doFinal(ikm)
+        return try {
+            mac.init(SecretKeySpec(prk, "HmacSHA256"))
+            mac.update(info)
+            mac.update(0x01.toByte())
+            mac.doFinal().copyOf(length)
+        } finally {
+            SensitiveDataCleaner.clear(prk)
+        }
+    }
+
+    fun wipe() {
+        clearBootstrapKey()
+        prefs.edit { clear() }
+    }
 }
