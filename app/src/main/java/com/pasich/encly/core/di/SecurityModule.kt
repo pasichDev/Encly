@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.pasich.encly.core.security.AuthenticationManager
-import com.pasich.encly.core.security.HmacIntegrityManager
+import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SeedPhraseManager
 import com.pasich.encly.data.database.SecureDatabaseManager
@@ -28,7 +28,7 @@ object SecurityModule {
 
         return EncryptedSharedPreferences.create(
             context,
-            "secure_prefs",
+            "secure_prefs_v2",
             masterKey,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
@@ -37,24 +37,21 @@ object SecurityModule {
 
     @Provides
     @Singleton
-    fun provideHmacIntegrityManager(@ApplicationContext context: Context): HmacIntegrityManager =
-        HmacIntegrityManager(context)
-
+    fun provideSeedPhraseManager(
+        @ApplicationContext context: Context
+    ): SeedPhraseManager = SeedPhraseManager(context)
 
     @Provides
     @Singleton
-    fun provideSeedPhraseManager(
-        @ApplicationContext context: Context,
-        hmacIntegrityManager: HmacIntegrityManager,
-    ): SeedPhraseManager = SeedPhraseManager(context, hmacIntegrityManager)
+    fun provideBiometricManager(
+        @ApplicationContext context: Context
+    ): BiometricManager = BiometricManager(context)
 
     @Provides
     @Singleton
     fun provideAuthenticationManager(
-        secureStoragePrefs: SharedPreferences,
-        seedPhraseManager: SeedPhraseManager,
-    ): AuthenticationManager = AuthenticationManager(secureStoragePrefs, seedPhraseManager)
-
+        secureStoragePrefs: SharedPreferences
+    ): AuthenticationManager = AuthenticationManager(secureStoragePrefs)
 
     @Provides
     @Singleton
@@ -63,8 +60,12 @@ object SecurityModule {
         seedPhraseManager: SeedPhraseManager,
         secureDatabaseManager: SecureDatabaseManager,
         authenticationManager: AuthenticationManager,
+        biometricManager: BiometricManager
     ): SecurityManager = SecurityManager(
-        secureStoragePrefs, seedPhraseManager, secureDatabaseManager, authenticationManager
+        secureStoragePrefs,
+        seedPhraseManager,
+        secureDatabaseManager,
+        authenticationManager,
+        biometricManager
     )
-
 }
