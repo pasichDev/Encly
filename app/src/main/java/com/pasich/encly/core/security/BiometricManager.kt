@@ -28,6 +28,7 @@ import javax.inject.Singleton
  * prompt. A plain "prompt succeeded" boolean never releases the database key.
  */
 @Singleton
+@Suppress("TooManyFunctions") // Centralizes the complete auth-bound biometric slot lifecycle.
 class BiometricManager @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
@@ -59,6 +60,8 @@ class BiometricManager @Inject constructor(
         private const val SLOT_KEY = "biometric_slot"
         private const val GCM_TAG_LENGTH = 128
         private const val IV_LENGTH = 12
+        private const val DEK_LENGTH = 32
+        private const val AUTH_PER_USE_SECONDS = 0
     }
 
     private val prefs by lazy {
@@ -86,7 +89,7 @@ class BiometricManager @Inject constructor(
         dek: ByteArray,
         onResult: (Boolean) -> Unit
     ) {
-        if (!isStrongBiometricAvailable() || dek.size != 32) {
+        if (!isStrongBiometricAvailable() || dek.size != DEK_LENGTH) {
             onResult(false)
             return
         }
@@ -319,7 +322,7 @@ class BiometricManager @Inject constructor(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             builder.setUserAuthenticationParameters(
-                0,
+                AUTH_PER_USE_SECONDS,
                 KeyProperties.AUTH_BIOMETRIC_STRONG
             )
         } else {
@@ -333,7 +336,7 @@ class BiometricManager @Inject constructor(
 
     private fun getAuthBoundKey(): SecretKey {
         val entry = keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry
-            ?: throw IllegalStateException("Biometric key is missing")
+            ?: error("Biometric key is missing")
         return entry.secretKey
     }
 
