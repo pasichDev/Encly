@@ -38,6 +38,16 @@ class SecuritySettingsViewModel @Inject constructor(
         }
     }
 
+    fun verifyCurrentPin(target: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.Default) { securityManager.verifyPin(target) }
+            if (!ok) {
+                _uiState.value = _uiState.value.copy(error = "Поточний PIN невірний")
+            }
+            onResult(ok)
+        }
+    }
+
     fun activationPinAuth(target: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             val ok = withContext(Dispatchers.Default) { securityManager.configurePin(target) }
