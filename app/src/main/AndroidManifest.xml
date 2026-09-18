@@ -7,11 +7,6 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" android:minSdkVersion="32" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <queries>
@@ -52,37 +47,6 @@
             </intent-filter>
 
         </activity>
-
-        <!-- FileProvider для шеринга фотографий -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-
-        <!-- Task notification receivers -->
-        <receiver
-            android:name=".receiver.TaskReminderReceiver"
-            android:enabled="true"
-            android:exported="false" />
-
-        <receiver
-            android:name=".receiver.TaskNotificationReceiver"
-            android:enabled="true"
-            android:exported="false" />
-
-        <receiver
-            android:name=".receiver.BootReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
 
     </application>
 
