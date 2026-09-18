@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.compose.ui.platform.LocalContext
+import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
@@ -57,7 +58,7 @@ fun AuthSetupScreen(
 
     // PIN entry handling
     LaunchedEffect(input, step) {
-        if (input.length == 4 && step != SetupStep.BIOMETRIC) {
+        if (input.length == PIN_LENGTH && step != SetupStep.BIOMETRIC) {
             when (step) {
                 SetupStep.CREATE_PIN -> {
                     firstPin = input
@@ -105,12 +106,12 @@ fun AuthSetupScreen(
     }
 
     val title = when (step) {
-        SetupStep.CREATE_PIN -> "Створіть PIN-код"
+        SetupStep.CREATE_PIN -> "Створіть 6-значний PIN-код"
         SetupStep.CONFIRM_PIN -> "Підтвердіть PIN-код"
         SetupStep.BIOMETRIC -> "Увімкніть біометрію"
     }
     val subtitle = when (step) {
-        SetupStep.CREATE_PIN -> "PIN-код обов'язковий для захисту нотаток"
+        SetupStep.CREATE_PIN -> "6-значний PIN безпосередньо захищає ключ бази даних"
         SetupStep.CONFIRM_PIN -> "Повторіть PIN-код для підтвердження"
         SetupStep.BIOMETRIC -> "Підтвердіть біометрію для швидкого входу"
     }
@@ -128,7 +129,7 @@ fun AuthSetupScreen(
         } else {
             PinCodeWidget(
                 pinInput = input,
-                onPinChange = { if (input.length < 4) input += it },
+                onPinChange = { if (input.length < PIN_LENGTH) input += it },
                 onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
             )
         }
