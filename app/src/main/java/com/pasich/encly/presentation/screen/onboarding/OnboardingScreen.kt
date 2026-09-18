@@ -41,36 +41,28 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
-import com.pasich.encly.core.utils.rememberSeedPhraseActions
-import com.pasich.encly.presentation.dialogs.InfoSnackbar
-import com.pasich.encly.presentation.dialogs.SnackType
 import com.pasich.encly.presentation.screen.onboarding.slides.CompletionSlide
 import com.pasich.encly.presentation.screen.onboarding.slides.SecurityChoiceSlide
 import com.pasich.encly.presentation.screen.onboarding.slides.SeedPhraseDisplaySlide
 import com.pasich.encly.presentation.screen.onboarding.slides.WelcomeSlide
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.SecurityType
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,10 +71,6 @@ fun OnboardingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
-    var snackType = SnackType.SUCCESS
 
     // If onboarding is already complete
     LaunchedEffect(uiState.isComplete) {
@@ -90,30 +78,6 @@ fun OnboardingScreen(
             onComplete()
         }
     }
-
-    val seedPhraseActions = rememberSeedPhraseActions(context = context, onFileSaveSuccess = {
-        coroutineScope.launch {
-            snackType = SnackType.SUCCESS
-            snackbarHostState.showSnackbar("Ключ успішно збережено у файл!")
-        }
-    }, onFileSaveError = { error ->
-        coroutineScope.launch {
-            snackType = SnackType.ERROR
-            snackbarHostState.showSnackbar("Помилка збереження файлу: ${error.message}")
-        }
-    }, onGoogleDriveSuccess = {
-        coroutineScope.launch {
-            snackType = SnackType.SUCCESS
-            snackbarHostState.showSnackbar("Ключ успішно збережено на Google Drive!")
-        }
-    }, onGoogleDriveError = { error ->
-        coroutineScope.launch {
-            snackType = SnackType.ERROR
-            snackbarHostState.showSnackbar("Помилка Google Drive: ${error.message}")
-        }
-    }, onCopySuccess = {
-        return@rememberSeedPhraseActions
-    })
 
     val infiniteTransition = rememberInfiniteTransition()
     val offset by infiniteTransition.animateFloat(
@@ -132,12 +96,7 @@ fun OnboardingScreen(
                         MaterialTheme.colorScheme.surface
                     ), start = Offset(offset, offset), end = Offset(offset + 500f, offset + 800f)
                 )
-            ), snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState, snackbar = { snackbarData ->
-                    InfoSnackbar(snackbarData, snackType)
-                })
-        }) { padding ->
+            )) { padding ->
 
         Column(
             modifier = Modifier
@@ -198,15 +157,6 @@ fun OnboardingScreen(
                         SeedPhraseDisplaySlide(
                             uiState = uiState,
                             onToggleVisibility = { viewModel.toggleKeyVisibility() },
-                            onCopyKey = {
-                                seedPhraseActions.copyToClipboard(uiState.phase)
-                            },
-                            onSaveToFile = {
-                                seedPhraseActions.saveToFile(uiState.phase)
-                            },
-                            onSaveToGoogleDrive = {
-                                seedPhraseActions.saveToGoogleDrive(uiState.phase)
-                            },
                             onStartVerification = { viewModel.startSeedPhraseVerification() },
                             onUpdateAnswer = { wordIndex, answer ->
                                 viewModel.updateUserAnswer(
