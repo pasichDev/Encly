@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
@@ -33,13 +32,6 @@ import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import kotlinx.coroutines.delay
 
-/**
- * App-unlock screen shown when a lock is configured. Depending on the strategy it verifies
- * either a PIN (with a progressive lockout) or a re-entered seed phrase, optionally preceded
- * by a biometric prompt, then unlocks the encrypted database and navigates home. Verification
- * and DB unlock run off the main thread. It never accesses note data before unlock, and the
- * system back button is blocked so the lock cannot be dismissed without authenticating.
- */
 @Composable
 fun LockScreen(
     navController: NavHostController,
@@ -49,14 +41,10 @@ fun LockScreen(
     val busy by viewModel.busy.collectAsState()
     var useRecovery by remember { mutableStateOf(false) }
 
-    // Block the back button: a lock screen must not be dismissible without authenticating.
     BackHandler(enabled = true) { }
 
     val biometricEnabled = remember {
-        (viewModel.strategy() == AuthStrategy.PIN_BIOMETRIC ||
-                viewModel.strategy() == AuthStrategy.SEED_PHRASE_BIOMETRIC) &&
-                viewModel.biometricEnabled() &&
-                viewModel.biometricAvailable()
+        viewModel.biometricEnabled() && viewModel.biometricAvailable()
     }
 
     fun goHome() {
@@ -73,7 +61,6 @@ fun LockScreen(
         }
     }
 
-    // Auto-prompt biometric on first entry (if enabled and not locked out).
     LaunchedEffect(Unit) {
         if (biometricEnabled) promptBiometric()
     }
@@ -101,7 +88,6 @@ fun LockScreen(
     }
 }
 
-/** PIN entry with progressive lockout. */
 @Composable
 private fun PinLockContent(
     viewModel: LockViewModel,
@@ -115,7 +101,6 @@ private fun PinLockContent(
     var error by remember { mutableStateOf<String?>(null) }
     var lockoutSeconds by remember { mutableLongStateOf(0L) }
 
-    // Live lockout countdown.
     LaunchedEffect(Unit) {
         while (true) {
             val remaining = viewModel.lockoutRemainingMillis()
@@ -125,13 +110,13 @@ private fun PinLockContent(
         }
     }
 
-    // Verify once all six digits are entered.
     LaunchedEffect(input) {
         if (input.length == PIN_LENGTH) {
             if (viewModel.lockoutRemainingMillis() > 0) {
                 input = ""
                 return@LaunchedEffect
             }
+
             val pin = input
             input = ""
             viewModel.authenticatePin(pin) { result ->
@@ -141,7 +126,6 @@ private fun PinLockContent(
                         error = "Невірний PIN-код"
                         lockoutSeconds = (viewModel.lockoutRemainingMillis() + 999) / 1000
                     }
-
                     PinUnlockResult.DB_ERROR -> error = "Не вдалося відкрити базу даних"
                 }
             }
@@ -150,20 +134,27 @@ private fun PinLockContent(
 
     PinEntryScaffold(
         title = "Розблокуйте нотатки",
-        subtitle = if (lockoutSeconds > 0) "Забагато спроб. Спробуйте через ${lockoutSeconds}с"
-        else "Введіть PIN-код для доступу",
+        subtitle = if (lockoutSeconds > 0) {
+            "Забагато спроб. Спробуйте через ${lockoutSeconds}с"
+        } else {
+            "Введіть 6-значний PIN для доступу"
+        },
         subtitleIsError = lockoutSeconds > 0,
         error = error
     ) {
         PinCodeWidget(
             pinInput = input,
-            onPinChange = { if (input.length < PIN_LENGTH && lockoutSeconds <= 0L) input += it },
+            onPinChange = {
+                if (input.length < PIN_LENGTH && lockoutSeconds <= 0L) input += it
+            },
             onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-        TextButton(onClick = onUsePin) {
-            Text("Повернутися до PIN")
+        if (biometricEnabled) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TextButton(onClick = onPromptBiometric) {
+                Text("Використати біометрію")
+            }
         }
 
         if (recoveryAvailable) {
@@ -174,7 +165,6 @@ private fun PinLockContent(
     }
 }
 
-/** Seed-phrase entry: re-enter the phrase to unlock (verified against the stored hash). */
 @Composable
 private fun SeedLockContent(
     viewModel: LockViewModel,
@@ -185,8 +175,8 @@ private fun SeedLockContent(
     var error by remember { mutableStateOf<String?>(null) }
 
     PinEntryScaffold(
-        title = "Розблокуйте нотатки",
-        subtitle = "Введіть вашу сід-фразу для доступу",
+        title = "Recovery",
+        subtitle = "Введіть 12-слівний recovery seed",
         subtitleIsError = false,
         error = error
     ) {
@@ -196,7 +186,7 @@ private fun SeedLockContent(
                 phrase = it
                 error = null
             },
-            label = { Text("Сід-фраза") },
+            label = { Text("Recovery seed") },
             minLines = 3,
             modifier = Modifier.fillMaxWidth()
         )
@@ -208,7 +198,7 @@ private fun SeedLockContent(
                 viewModel.authenticateSeed(phrase) { result ->
                     when (result) {
                         SeedUnlockResult.SUCCESS -> onUnlocked()
-                        SeedUnlockResult.WRONG_SEED -> error = "Невірна сід-фраза"
+                        SeedUnlockResult.WRONG_SEED -> error = "Невірний recovery seed"
                         SeedUnlockResult.DB_ERROR -> error = "Не вдалося відкрити базу даних"
                     }
                 }
@@ -216,14 +206,12 @@ private fun SeedLockContent(
             enabled = phrase.isNotBlank(),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Розблокувати")
+            Text("Відновити доступ")
         }
 
-        if (biometricEnabled) {
-            Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = onPromptBiometric) {
-                Text("Використати біометрію")
-            }
+        Spacer(modifier = Modifier.height(8.dp))
+        TextButton(onClick = onUsePin) {
+            Text("Повернутися до PIN")
         }
     }
 }
