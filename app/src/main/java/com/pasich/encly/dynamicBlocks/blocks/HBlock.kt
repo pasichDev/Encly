@@ -41,7 +41,7 @@ fun HBlock(
 ) {
     val text by block.text.collectAsState()
     val fontStyles = rememberFontStyles()
-    AppLogger.d("HBlock", "HBlock composed: index=$index, text='$text', blockType=${block.blockType}, isLocked=$isLocked")
+    AppLogger.d("HBlock", "HBlock composed: index=$index, blockType=${block.blockType}, isLocked=$isLocked")
 
     val textStyle: TextStyle =
         when (block.blockType) {
@@ -111,7 +111,7 @@ fun HBlock(
         onValueChange = { newValue ->
             textFieldValue = newValue
             val newText = newValue.text
-            AppLogger.d("HBlock", "onValueChange: oldText='$text', newText='$newText'")
+            AppLogger.d("HBlock", "Text changed: index=$index, blockType=${block.blockType}")
             if (text != newText) {
                 blockActions.onTextChanged(oldText.value, newText)
                 oldText.value = newText
@@ -123,7 +123,7 @@ fun HBlock(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         keyboardActions =
             KeyboardActions(onNext = {
-                AppLogger.d("HBlock", "onNext called, text='$text', isEmpty=${text.isEmpty()}")
+                AppLogger.d("HBlock", "onNext called: index=$index, isEmpty=${text.isEmpty()}")
 
                 if (text.isEmpty()) {
                     // If the HBlock is empty, replace it with a regular text block
@@ -149,7 +149,7 @@ fun HBlock(
                         blockActions.updateLastInteractionIndex(index)
                     }
                 }.onKeyEvent { event ->
-                    AppLogger.d("HBlock", "onKeyEvent called: key=${event.key}, text='$text'")
+                    AppLogger.d("HBlock", "onKeyEvent called: index=$index, key=${event.key}")
                     KeyboardUtils.handleKeyEvent(
                         event = event,
                         text = text,
