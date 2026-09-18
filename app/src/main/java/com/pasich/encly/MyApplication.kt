@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.utils.NotificationHelper
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -19,7 +18,6 @@ class MyApplication : Application() {
         super.onCreate()
         try {
             ProcessLifecycleOwner.get().lifecycle.addObserver(sessionLockManager)
-            NotificationHelper.createNotificationChannel(this)
             AppLogger.d("MyApplication", "Application initialized successfully")
         } catch (e: Exception) {
             AppLogger.e("MyApplication", "Failed to initialize application", e)
