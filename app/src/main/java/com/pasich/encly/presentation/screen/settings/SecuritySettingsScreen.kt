@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -50,6 +51,7 @@ fun SecuritySettingsScreen(
 ) {
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val activity = context as? FragmentActivity
 
     Scaffold(
         topBar = {
@@ -89,7 +91,7 @@ fun SecuritySettingsScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = if (!securityState.isUserCreatedSeedKey) "Ваші дані повністю зашифровані. Доступ можливий лише за допомогою вашої сід-фрази." else "Ваші дані захищені. Ключ створено автоматично й зберігається лише на вашому пристрої.",
+                                text = if (securityState.isUserCreatedSeedKey) "Ваш випадковий ключ бази даних має окремий recovery-slot, захищений вашою сід-фразою." else "Ваш випадковий ключ бази даних захищений PIN і, за бажанням, біометричним Keystore-slot.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -128,7 +130,9 @@ fun SecuritySettingsScreen(
                             Switch(
                                 checked = securityState.biometricEnable,
                                 enabled = securityState.isBiometricAvailable,
-                                onCheckedChange = { securityViewModel.toggleBiometric(it) })
+                                onCheckedChange = { enabled ->
+                                    if (activity != null) securityViewModel.toggleBiometric(activity, enabled)
+                                })
                         })
                 }
             }
@@ -154,7 +158,9 @@ fun SecuritySettingsScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "• Сід-фраза доступна тільки з біометричною автентифікацією\n" + "• Всі дані шифруються локально з використанням AES-256\n" + "• Без сід-фрази неможливо відновити дані",
+                            text = "• SQLCipher відкривається випадковим 256-бітним ключем\n" +
+    "• PIN і recovery seed мають окремі AES-GCM unlock-slots\n" +
+    "• Біометрія використовує auth-per-use Android Keystore ключ",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
