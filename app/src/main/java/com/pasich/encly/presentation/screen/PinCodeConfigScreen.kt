@@ -48,11 +48,14 @@ import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import kotlinx.coroutines.delay
 
 
+private const val PIN_SUCCESS_DELAY_MS = 600L
+
 enum class PinAnimationState {
     Entering, SuccessAnimation
 }
 
 
+@Suppress("LongMethod") // Three-step PIN re-auth/rewrap UI state machine is intentionally kept together.
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PinCodeConfigScreen(
@@ -113,7 +116,7 @@ fun PinCodeConfigScreen(
 
     LaunchedEffect(animationState) {
         if (animationState == PinAnimationState.SuccessAnimation) {
-            delay(600)
+            delay(PIN_SUCCESS_DELAY_MS)
             navController.popBackStack()
         }
     }
