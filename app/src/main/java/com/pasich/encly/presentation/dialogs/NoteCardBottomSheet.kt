@@ -57,7 +57,6 @@ import kotlinx.coroutines.launch
 
 sealed class NoteAction {
     object Edit : NoteAction()
-    object Share : NoteAction()
     object Duplicate : NoteAction()
     object Delete : NoteAction()
     data class ChangeTag(val tagId: Long) : NoteAction()
@@ -237,15 +236,6 @@ fun NoteCardBottomSheet(
                                 icon = painterResource(R.drawable.ic_edit_modal),
                                 roundPosition = RoundPosition.First,
                                 action = { onAction(NoteAction.Edit) })
-                        }
-
-
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.share),
-                                icon = painterResource(R.drawable.ic_share),
-                                roundPosition = RoundPosition.Medium,
-                                action = { onAction(NoteAction.Share) })
                         }
 
                         item {
