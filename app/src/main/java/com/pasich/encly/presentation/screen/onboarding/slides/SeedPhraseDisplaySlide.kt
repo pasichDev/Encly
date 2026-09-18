@@ -57,14 +57,18 @@ import com.pasich.encly.presentation.screen.onboarding.SlideLayout
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import kotlin.math.ceil
 
+data class SeedPhraseActions(
+    val onToggleVisibility: () -> Unit,
+    val onStartVerification: () -> Unit = {},
+    val onUpdateAnswer: (Int, String) -> Unit = { _, _ -> },
+    val onCompleteVerification: () -> Unit = {},
+    val onCancelVerification: () -> Unit = {}
+)
+
 @Composable
 fun SeedPhraseDisplaySlide(
     uiState: OnboardingViewModel.OnboardingUiState,
-    onToggleVisibility: () -> Unit,
-    onStartVerification: () -> Unit = {},
-    onUpdateAnswer: (Int, String) -> Unit = { _, _ -> },
-    onCompleteVerification: () -> Unit = {},
-    onCancelVerification: () -> Unit = {}
+    actions: SeedPhraseActions
 ) {
     SlideLayout {
         when {
@@ -78,15 +82,15 @@ fun SeedPhraseDisplaySlide(
                 if (uiState.isVerificationMode) {
                     SeedPhraseVerificationContent(
                         uiState = uiState,
-                        onUpdateAnswer = onUpdateAnswer,
-                        onCompleteVerification = onCompleteVerification,
-                        onCancel = onCancelVerification
+                        onUpdateAnswer = actions.onUpdateAnswer,
+                        onCompleteVerification = actions.onCompleteVerification,
+                        onCancel = actions.onCancelVerification
                     )
                 } else {
                     SeedPhraseDisplayContent(
                         uiState = uiState,
-                        onToggleVisibility = onToggleVisibility,
-                        onNext = onStartVerification
+                        onToggleVisibility = actions.onToggleVisibility,
+                        onNext = actions.onStartVerification
                     )
                 }
             }
@@ -157,76 +161,14 @@ private fun SeedPhraseDisplayContent(
         Spacer(modifier = Modifier.height(24.dp))
 
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp)),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
-            ),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(24.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = "ВАЖЛИВО!",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Обов'язково запишіть або збережіть цей ключ безпеки.\n" + "Без нього ви втратите доступ до всіх своїх нотаток назавжди.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    lineHeight = 20.sp
-                )
-            }
-        }
+        SeedRecoveryWarning()
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                if (uiState.isKeyVisible) {
-                    SeedPhraseGrid(seedPhrase = uiState.phase)
-                } else {
-                    HiddenSeedPhraseGrid()
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                AnimatedButton(
-                    onClick = onToggleVisibility,
-                    modifier = Modifier.fillMaxWidth(),
-                    text = if (uiState.isKeyVisible) "Приховати Seed" else "Показати Seed",
-                    isSecondary = true,
-                    smallStyle = true
-                )
-            }
-        }
+        SeedPhraseCard(
+            uiState = uiState,
+            onToggleVisibility = onToggleVisibility
+        )
 
         Spacer(modifier = Modifier.height(35.dp))
 
@@ -235,6 +177,71 @@ private fun SeedPhraseDisplayContent(
             onClick = onNext, modifier = Modifier.fillMaxWidth(), text = "Продовжити до перевірки"
         )
 
+    }
+}
+
+@Composable
+private fun SeedRecoveryWarning() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp)),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+        ),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "ВАЖЛИВО!",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Запишіть recovery seed офлайн. Без нього recovery-slot не відновить доступ.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                lineHeight = 20.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun SeedPhraseCard(
+    uiState: OnboardingViewModel.OnboardingUiState,
+    onToggleVisibility: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (uiState.isKeyVisible) {
+                SeedPhraseGrid(seedPhrase = uiState.phase)
+            } else {
+                HiddenSeedPhraseGrid()
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            AnimatedButton(
+                onClick = onToggleVisibility,
+                modifier = Modifier.fillMaxWidth(),
+                text = if (uiState.isKeyVisible) "Приховати Seed" else "Показати Seed",
+                isSecondary = true,
+                smallStyle = true
+            )
+        }
     }
 }
 
