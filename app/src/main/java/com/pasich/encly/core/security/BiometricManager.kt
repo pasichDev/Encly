@@ -75,8 +75,11 @@ class BiometricManager @Inject constructor(
             AndroidBiometricManager.BIOMETRIC_SUCCESS
     }
 
-    fun hasSlot(): Boolean =
+    fun hasSlot(): Boolean = try {
         keyStore.containsAlias(KEY_ALIAS) && !prefs.getString(SLOT_KEY, null).isNullOrBlank()
+    } catch (_: Exception) {
+        false
+    }
 
     fun enroll(
         activity: FragmentActivity,
@@ -90,6 +93,7 @@ class BiometricManager @Inject constructor(
 
         val dekCopy = dek.copyOf()
         try {
+            prefs.edit { remove(SLOT_KEY) }
             deleteKeyOnly()
             val key = generateAuthBoundKey()
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
