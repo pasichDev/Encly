@@ -1,14 +1,12 @@
 package com.pasich.encly.presentation.viewmodel
 
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.security.AuthType
-import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.SecurityManager
-import com.pasich.encly.domain.usecase.AuthUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,12 +14,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-
 @HiltViewModel
 class SecuritySettingsViewModel @Inject constructor(
-    private val biometricManager: BiometricManager,
-    private val securityManager: SecurityManager,
-    private val authUseCase: AuthUseCase
+    private val securityManager: SecurityManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SecuritySettingsUiState())
@@ -31,60 +26,58 @@ class SecuritySettingsViewModel @Inject constructor(
         loadSecurityState()
     }
 
-    // Reads auth settings off the main thread (getSettingsAuth does Keystore decrypts).
     private fun loadSecurityState() {
         viewModelScope.launch {
             val authSettings = withContext(Dispatchers.IO) { securityManager.getSettingsAuth() }
-            val biometricAvailable = biometricManager.isStrongBiometricAvailable()
             _uiState.value = _uiState.value.copy(
                 isUserCreatedSeedKey = authSettings.isUserCreatedSeedKey,
                 authType = authSettings.authType,
                 biometricEnable = authSettings.isBiometricEnabled,
-                isBiometricAvailable = biometricAvailable
+                isBiometricAvailable = securityManager.biometricAvailable()
             )
         }
     }
 
-
-    fun activationPinAuth(target: String) {
+    fun activationPinAuth(target: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
-            delay(1500)
-            // PBKDF2 PIN hashing runs off the main thread.
-            withContext(Dispatchers.Default) { authUseCase.saveAuthConfigPinCode(target) }.onSuccess {
-                _uiState.value = _uiState.value.copy(
-                    authType = AuthType.PIN
-                )
-            }.onFailure { error ->
-                _uiState.value = _uiState.value.copy(
-                    error = error.message ?: "Failed to set PIN"
-                )
+            val ok = withContext(Dispatchers.Default) { securityManager.configurePin(target) }
+            if (ok) {
+                _uiState.value = _uiState.value.copy(authType = AuthType.PIN)
+            } else {
+                _uiState.value = _uiState.value.copy(error = "Не вдалося оновити PIN")
             }
+            onResult(ok)
         }
     }
 
     /**
-     * Enables or disables biometric unlock and reflects the real persisted state in the UI.
-     * Enabling can fail if no PIN/seed auth is configured — in that case the switch stays off
-     * and an error is surfaced, so the toggle never lies about what was actually saved.
+     * Enabling biometrics performs the auth-bound CryptoObject enrollment itself.
+     * Disabling an existing biometric slot requires a fresh strong-biometric confirmation.
      */
-    fun toggleBiometric(enable: Boolean) {
-        viewModelScope.launch {
-            val applied = withContext(Dispatchers.IO) {
-                if (enable) {
-                    securityManager.enableBiometric()
-                } else {
-                    securityManager.disableBiometric()
-                    false
-                }
-            }
-            if (enable && !applied) {
+    fun toggleBiometric(
+        activity: FragmentActivity,
+        enable: Boolean
+    ) {
+        if (enable) {
+            securityManager.enrollBiometric(activity) { ok ->
                 _uiState.value = _uiState.value.copy(
-                    error = "Спочатку налаштуйте PIN або сід-фразу"
+                    biometricEnable = ok && securityManager.isBiometricEnabled(),
+                    error = if (ok) null else "Не вдалося створити біометричний ключ"
                 )
             }
-            _uiState.value = _uiState.value.copy(
-                biometricEnable = securityManager.isBiometricEnabled()
-            )
+            return
+        }
+
+        securityManager.confirmBiometric(activity) { confirmed ->
+            if (confirmed) {
+                securityManager.disableBiometric()
+                _uiState.value = _uiState.value.copy(biometricEnable = false)
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    biometricEnable = securityManager.isBiometricEnabled(),
+                    error = "Зміну біометричного захисту не підтверджено"
+                )
+            }
         }
     }
 
@@ -97,6 +90,6 @@ class SecuritySettingsViewModel @Inject constructor(
         val authType: AuthType = AuthType.NONE,
         val isUserCreatedSeedKey: Boolean = false,
         val biometricEnable: Boolean = false,
-        val isBiometricAvailable: Boolean = false,
+        val isBiometricAvailable: Boolean = false
     )
 }
