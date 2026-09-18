@@ -14,7 +14,7 @@ import javax.inject.Singleton
 
 /**
  * Owns the SQLCipher-encrypted Room database and its unlocked lifecycle.
- * The database is opened with a seed-derived passphrase; until unlocked, callers
+ * The database is opened with Encly's random 256-bit v2 DEK; until unlocked, callers
  * must not persist real data through it.
  */
 @Singleton
