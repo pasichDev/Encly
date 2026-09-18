@@ -130,6 +130,7 @@ class SeedPhraseManager @Inject constructor(
      * Attempts to unwrap the v2 DEK using the BIP39 recovery seed.
      * The returned key belongs to the caller and must be zeroized after use.
      */
+    @Suppress("ReturnCount") // Fail-closed early exits keep malformed recovery metadata out of crypto operations.
     fun unlockWithSeed(phrase: CharArray): ByteArray? {
         if (!hasRecoverySeed() || !isValidMnemonic(phrase)) return null
         val encoded = prefs.getString(RECOVERY_SLOT_KEY, null) ?: return null
