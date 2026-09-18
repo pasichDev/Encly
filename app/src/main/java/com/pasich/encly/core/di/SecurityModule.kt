@@ -4,11 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.pasich.encly.core.security.AuthenticationManager
-import com.pasich.encly.core.security.BiometricManager
-import com.pasich.encly.core.security.SecurityManager
-import com.pasich.encly.core.security.SeedPhraseManager
-import com.pasich.encly.data.database.SecureDatabaseManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,38 +29,4 @@ object SecurityModule {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
     }
-
-    @Provides
-    @Singleton
-    fun provideSeedPhraseManager(
-        @ApplicationContext context: Context
-    ): SeedPhraseManager = SeedPhraseManager(context)
-
-    @Provides
-    @Singleton
-    fun provideBiometricManager(
-        @ApplicationContext context: Context
-    ): BiometricManager = BiometricManager(context)
-
-    @Provides
-    @Singleton
-    fun provideAuthenticationManager(
-        secureStoragePrefs: SharedPreferences
-    ): AuthenticationManager = AuthenticationManager(secureStoragePrefs)
-
-    @Provides
-    @Singleton
-    fun provideSecurityManager(
-        secureStoragePrefs: SharedPreferences,
-        seedPhraseManager: SeedPhraseManager,
-        secureDatabaseManager: SecureDatabaseManager,
-        authenticationManager: AuthenticationManager,
-        biometricManager: BiometricManager
-    ): SecurityManager = SecurityManager(
-        secureStoragePrefs,
-        seedPhraseManager,
-        secureDatabaseManager,
-        authenticationManager,
-        biometricManager
-    )
 }
