@@ -20,8 +20,8 @@ enum class SecurityType {
     USER_MANAGED,
 
     /**
-     * An automatic fallback seed phrase is used.
-     * The system unlocks automatically without user involvement.
+     * No recovery seed is persisted. The random database key is still protected by the
+     * mandatory PIN and optional auth-bound biometric slot.
      */
     AUTO_MANAGED
 }
