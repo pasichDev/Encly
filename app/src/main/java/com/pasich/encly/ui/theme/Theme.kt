@@ -139,7 +139,7 @@ fun AppTheme(
 ) {
 
     val themeSettings = themeViewModel.themeSettingsFlow.collectAsState()
-    val (isDynamic, themeType, isScreenProtect) = themeSettings.value
+    val (isDynamic, themeType, _) = themeSettings.value
 
     val isDarkTheme = when (themeType) {
         ThemeType.SYSTEM -> isSystemInDarkTheme()
@@ -164,11 +164,9 @@ fun AppTheme(
     WindowCompat.getInsetsController(activity.window, activity.window.decorView).apply {
         isAppearanceLightStatusBars = !isDarkTheme
     }
-    if (isScreenProtect) {
-        activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-    } else {
-        activity.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-    }
+    // Defense in depth: MainActivity sets this before the first frame, and the theme
+    // reasserts it for the Compose window. This is intentionally not user-configurable.
+    activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     MaterialTheme(colorScheme = colorScheme, typography = AppTypography, content = content)
 
