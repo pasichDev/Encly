@@ -17,8 +17,8 @@ import javax.inject.Singleton
  * re-authentication strategy is configured and the session is currently unlocked, then flips
  * [locked] so the UI navigates back to the lock screen the next time the app is foregrounded.
  *
- * Re-locking only closes the database; the DB key is re-derived from the stored seed hash on the
- * next unlock, so the user just re-authenticates (PIN/biometric/seed) — no data is lost.
+ * Re-locking closes SQLCipher and zeroizes Encly's in-memory DEK copy. The next foreground
+ * unlock must unwrap the DEK again through the PIN, auth-bound biometric, or recovery slot.
  */
 @Singleton
 class SessionLockManager @Inject constructor(
