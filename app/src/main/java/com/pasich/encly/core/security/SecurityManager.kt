@@ -32,6 +32,7 @@ class SecurityManager @Inject constructor(
 ) {
     companion object {
         private const val ONBOARDING_SHOWN_KEY = "onboarding_shown_v2"
+        private const val DEK_LENGTH = 32
     }
 
     @Volatile
@@ -146,7 +147,7 @@ class SecurityManager @Inject constructor(
      * Caller retains ownership of [dek] and should wipe it after this call.
      */
     fun unlockWithRawKey(dek: ByteArray): Boolean {
-        if (dek.size != 32) return false
+        if (dek.size != DEK_LENGTH) return false
         val ok = secureDatabaseManager.unlockDatabase(SecretKeySpec(dek, "AES"))
         if (ok) {
             setSessionKey(dek)
@@ -159,16 +160,17 @@ class SecurityManager @Inject constructor(
      * Completes first-run setup only after a PIN slot exists and the bootstrap DEK opens SQLCipher.
      */
     fun finishInitialSetup(): Boolean {
-        if (!authenticationManager.hasPinSlot()) return false
-        val dek = seedPhraseManager.copyBootstrapKey() ?: return false
+        val dek = if (authenticationManager.hasPinSlot()) {
+            seedPhraseManager.copyBootstrapKey()
+        } else {
+            null
+        } ?: return false
+
         return try {
-            val ok = unlockWithRawKey(dek)
-            if (ok && setOnboardingShown()) {
-                seedPhraseManager.clearBootstrapKey()
-                true
-            } else {
-                false
-            }
+            val opened = unlockWithRawKey(dek)
+            val finalized = opened && setOnboardingShown()
+            if (finalized) seedPhraseManager.clearBootstrapKey()
+            finalized
         } finally {
             SensitiveDataCleaner.clear(dek)
         }
