@@ -157,18 +157,25 @@ class OnboardingViewModel @Inject constructor(
      * Completes verification and moves to the next step
      */
     fun completeVerification() {
-        if (_uiState.value.isVerificationComplete) {
-            val target = _uiState.value.phase.toCharArray()
-            // Write the key to the keystore for its subsequent storage
-            viewModelScope.launch {
-                onboardingUseCase.saveKeysStore(target, target)
-            }
+        if (!_uiState.value.isVerificationComplete) return
 
-            _uiState.value = _uiState.value.copy(
-                isVerificationMode = false
-            )
-            // Navigate to the CompletionSlide
-            nextPage()
+        val target = _uiState.value.phase.toCharArray()
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            onboardingUseCase.saveKeysStore(target, target)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isVerificationMode = false
+                    )
+                    nextPage()
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Не вдалося створити захищене сховище"
+                    )
+                }
         }
     }
 
