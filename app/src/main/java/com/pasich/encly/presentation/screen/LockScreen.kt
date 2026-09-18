@@ -79,8 +79,10 @@ fun LockScreen(
     } else {
         PinLockContent(
             viewModel = viewModel,
-            biometricEnabled = biometricEnabled && activity != null,
-            recoveryAvailable = viewModel.recoveryAvailable(),
+            capabilities = LockCapabilities(
+                biometricEnabled = biometricEnabled && activity != null,
+                recoveryAvailable = viewModel.recoveryAvailable()
+            ),
             onUnlocked = ::goHome,
             onPromptBiometric = ::promptBiometric,
             onUseRecovery = { useRecovery = true }
@@ -88,11 +90,15 @@ fun LockScreen(
     }
 }
 
+private data class LockCapabilities(
+    val biometricEnabled: Boolean,
+    val recoveryAvailable: Boolean
+)
+
 @Composable
 private fun PinLockContent(
     viewModel: LockViewModel,
-    biometricEnabled: Boolean,
-    recoveryAvailable: Boolean,
+    capabilities: LockCapabilities,
     onUnlocked: () -> Unit,
     onPromptBiometric: () -> Unit,
     onUseRecovery: () -> Unit
@@ -150,17 +156,30 @@ private fun PinLockContent(
             onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )
 
-        if (biometricEnabled) {
-            Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = onPromptBiometric) {
-                Text("Використати біометрію")
-            }
-        }
+        LockAlternativeActions(
+            capabilities = capabilities,
+            onPromptBiometric = onPromptBiometric,
+            onUseRecovery = onUseRecovery
+        )
+    }
+}
 
-        if (recoveryAvailable) {
-            TextButton(onClick = onUseRecovery) {
-                Text("Відновити доступ за recovery seed")
-            }
+@Composable
+private fun LockAlternativeActions(
+    capabilities: LockCapabilities,
+    onPromptBiometric: () -> Unit,
+    onUseRecovery: () -> Unit
+) {
+    if (capabilities.biometricEnabled) {
+        Spacer(modifier = Modifier.height(12.dp))
+        TextButton(onClick = onPromptBiometric) {
+            Text("Використати біометрію")
+        }
+    }
+
+    if (capabilities.recoveryAvailable) {
+        TextButton(onClick = onUseRecovery) {
+            Text("Відновити доступ за recovery seed")
         }
     }
 }
