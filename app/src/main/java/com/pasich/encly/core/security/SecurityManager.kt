@@ -2,7 +2,9 @@ package com.pasich.encly.core.security
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.data.database.SecureDatabaseManager
+import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -10,184 +12,220 @@ enum class InitialStatus {
     NO, MAIN, ONBOARDING, LOSS_DATABASE, LOSS_CRYPTO, AUTH, SETUP_AUTH
 }
 
+enum class VaultUnlockResult {
+    SUCCESS, INVALID_CREDENTIAL, DB_ERROR
+}
 
 /**
- * Startup security gate. On construction it determines the initial app state
- * ([InitialStatus]) — onboarding, crypto/database loss, auth required, or main —
- * used to route the first screen after launch.
+ * Security coordinator for the v2 vault.
+ *
+ * The database key is never re-derived from locally stored seed material. Each unlock factor
+ * must unwrap the same random DEK, after which the DEK opens SQLCipher.
  */
 @Singleton
 class SecurityManager @Inject constructor(
     private val secureStoragePrefs: SharedPreferences,
     private val seedPhraseManager: SeedPhraseManager,
     private val secureDatabaseManager: SecureDatabaseManager,
-    private val authenticationManager: AuthenticationManager
+    private val authenticationManager: AuthenticationManager,
+    private val biometricManager: BiometricManager
 ) {
-
     companion object {
-        private const val ONBOARDING_SHOWN_KEY = "onboarding_shown"
+        private const val ONBOARDING_SHOWN_KEY = "onboarding_shown_v2"
     }
+
+    @Volatile
+    private var sessionDek: ByteArray? = null
 
     var securityStatus = InitialStatus.NO
 
-    /**
-     * Resolves the startup state. Runs Keystore/crypto/prefs reads that must NOT be on
-     * the main thread — call it from a background dispatcher (see MainActivity).
-     */
     fun resolveInitialStatus(): InitialStatus {
         val status = initializeSecurity()
         securityStatus = status
         return status
     }
 
-    /**
-     * Computes the initial app state and, unless a lock is configured, unlocks the DB.
-     *
-     * If the user configured a PIN-based lock, the database is NOT unlocked here —
-     * [InitialStatus.AUTH] is returned so the UI shows the lock screen, and unlock
-     * happens only after successful authentication via [unlockAfterAuth].
-     */
     private fun initializeSecurity(): InitialStatus {
-        if (isOnboardingShow()) {
-            return InitialStatus.ONBOARDING
-        }
+        if (!isOnboardingShown()) return InitialStatus.ONBOARDING
+        if (!seedPhraseManager.verificationKeyData()) return InitialStatus.LOSS_CRYPTO
+        if (!authenticationManager.hasPinSlot()) return InitialStatus.SETUP_AUTH
+        return InitialStatus.AUTH
+    }
 
-        // Key integrity check
-        if (!seedPhraseManager.verificationKeyData()) {
-            return InitialStatus.LOSS_CRYPTO
-        }
+    fun authStrategy(): AuthStrategy = authenticationManager.isAuthStrategy()
 
-        // A lock is mandatory. Exhaustive over AuthStrategy so no state can silently fall
-        // through to an unauthenticated unlock: route every configured strategy (PIN or
-        // seed-phrase, with or without biometric) to the lock screen; otherwise force setup.
-        return when (authenticationManager.isAuthStrategy()) {
-            AuthStrategy.PIN,
-            AuthStrategy.PIN_BIOMETRIC,
-            AuthStrategy.SEED_PHRASE,
-            AuthStrategy.SEED_PHRASE_BIOMETRIC -> InitialStatus.AUTH
+    fun isBiometricEnabled(): Boolean =
+        authenticationManager.isBiometricEnabled() && biometricManager.hasSlot()
 
-            AuthStrategy.NONE,
-            AuthStrategy.RECOVERY_DATA -> InitialStatus.SETUP_AUTH
+    fun biometricAvailable(): Boolean = biometricManager.isStrongBiometricAvailable()
+
+    fun configurePin(pin: String): Boolean {
+        val dek = currentKeyCopy() ?: return false
+        return try {
+            authenticationManager.configurePin(pin, dek)
+        } finally {
+            SensitiveDataCleaner.clear(dek)
         }
     }
 
-    /** Derives the DB key from the seed and unlocks the encrypted database. */
-    private fun unlockDatabase(): Boolean =
-        seedPhraseManager.useEncryptionKeyForData(SaltData.DATABASE) { key ->
-            secureDatabaseManager.unlockDatabase(key)
+    fun unlockWithPin(pin: String): VaultUnlockResult {
+        val dek = authenticationManager.unlockWithPin(pin)
+            ?: return VaultUnlockResult.INVALID_CREDENTIAL
+        return try {
+            if (unlockWithRawKey(dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
+
+    fun unlockWithSeed(phrase: CharArray): VaultUnlockResult {
+        val dek = seedPhraseManager.unlockWithSeed(phrase)
+            ?: return VaultUnlockResult.INVALID_CREDENTIAL
+        return try {
+            if (unlockWithRawKey(dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
+
+    fun requestBiometricKey(
+        activity: FragmentActivity,
+        onResult: (ByteArray?) -> Unit
+    ) {
+        biometricManager.unlock(activity, onResult)
+    }
+
+    fun enrollBiometric(
+        activity: FragmentActivity,
+        onResult: (Boolean) -> Unit
+    ) {
+        val dek = currentKeyCopy()
+        if (dek == null) {
+            onResult(false)
+            return
         }
 
-    /** Auth strategy configured for unlocking the app (PIN / PIN+biometric / none / …). */
-    fun authStrategy(): AuthStrategy = authenticationManager.isAuthStrategy()
+        biometricManager.enroll(activity, dek) { ok ->
+            authenticationManager.markBiometricEnabled(ok)
+            onResult(ok)
+        }
+        SensitiveDataCleaner.clear(dek)
+    }
 
-    /** Whether biometric unlock is enabled in settings. */
-    fun isBiometricEnabled(): Boolean = authenticationManager.isBiometricEnabled()
+    fun disableBiometric() {
+        biometricManager.disable()
+        authenticationManager.markBiometricEnabled(false)
+    }
 
-    /** Enables biometric unlock; returns false if no PIN/seed auth is configured yet. */
-    fun enableBiometric(): Boolean = authenticationManager.activateBiometricAuth()
+    fun confirmBiometric(
+        activity: FragmentActivity,
+        onResult: (Boolean) -> Unit
+    ) {
+        biometricManager.authenticate(
+            activity,
+            BiometricManager.BiometricType.SETTINGS_TOGGLE,
+            object : BiometricManager.BiometricCallback {
+                override fun onSuccess() = onResult(true)
+                override fun onError(errorCode: Int, errorMessage: String) = onResult(false)
+                override fun onFailed() = Unit
+                override fun onCancelled() = onResult(false)
+            }
+        )
+    }
 
-    /** Disables biometric unlock. */
-    fun disableBiometric() = authenticationManager.deactivateBiometricAuth()
-
-    /** Remaining PIN lockout in milliseconds (0 = not locked out). */
     fun pinLockoutRemainingMillis(): Long = authenticationManager.remainingLockoutMillis()
 
-    /** Verifies the app PIN against the stored hash (raw digits, leading zeros preserved). */
     fun verifyPin(pin: String): Boolean = authenticationManager.verifyPinAuth(pin)
 
+    fun verifySeed(phrase: CharArray): Boolean = seedPhraseManager.verifyMnemonic(phrase)
+
     /**
-     * Unlocks the encrypted database after successful authentication. Call only from
-     * the lock screen once the user has passed PIN/biometric. Updates [securityStatus].
+     * Opens SQLCipher with an already unwrapped v2 DEK.
+     * Caller retains ownership of [dek] and should wipe it after this call.
      */
-    fun unlockAfterAuth(): Boolean {
-        val ok = unlockDatabase()
-        if (ok) securityStatus = InitialStatus.MAIN
+    fun unlockWithRawKey(dek: ByteArray): Boolean {
+        if (dek.size != 32) return false
+        val ok = secureDatabaseManager.unlockDatabase(SecretKeySpec(dek, "AES"))
+        if (ok) {
+            setSessionKey(dek)
+            securityStatus = InitialStatus.MAIN
+        }
         return ok
     }
 
     /**
-     * Re-locks the app: closes the encrypted database and marks the state as [InitialStatus.AUTH]
-     * so the next foreground entry must pass the lock screen again. Called when the app goes to
-     * the background (see the session auto-lock observer). Re-unlock re-derives the DB key from the
-     * stored seed hash — no seed/PIN re-entry is needed for the key, only re-authentication.
+     * Completes first-run setup only after a PIN slot exists and the bootstrap DEK opens SQLCipher.
      */
+    fun finishInitialSetup(): Boolean {
+        if (!authenticationManager.hasPinSlot()) return false
+        val dek = seedPhraseManager.copyBootstrapKey() ?: return false
+        return try {
+            val ok = unlockWithRawKey(dek)
+            if (ok && setOnboardingShown()) {
+                seedPhraseManager.clearBootstrapKey()
+                true
+            } else {
+                false
+            }
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
+
     fun lock() {
         secureDatabaseManager.reset()
+        clearSessionKey()
         securityStatus = InitialStatus.AUTH
     }
 
-    /** Whether a re-authentication strategy is configured (so the app can be re-locked). */
-    fun isLockable(): Boolean = when (authenticationManager.isAuthStrategy()) {
-        AuthStrategy.PIN,
-        AuthStrategy.PIN_BIOMETRIC,
-        AuthStrategy.SEED_PHRASE,
-        AuthStrategy.SEED_PHRASE_BIOMETRIC -> true
+    fun isLockable(): Boolean = authenticationManager.hasPinSlot()
 
-        AuthStrategy.NONE, AuthStrategy.RECOVERY_DATA -> false
-    }
-
-    /** Whether the encrypted database is currently unlocked. */
     fun isDatabaseUnlocked(): Boolean = secureDatabaseManager.isDatabaseUnlocked()
 
-    /** Verifies a re-entered seed phrase against the stored hash (constant-time). */
-    fun verifySeed(phrase: CharArray): Boolean = seedPhraseManager.verifyMnemonic(phrase)
+    fun isOnboardingShow(): Boolean = !isOnboardingShown()
 
+    private fun isOnboardingShown(): Boolean =
+        secureStoragePrefs.getBoolean(ONBOARDING_SHOWN_KEY, false)
 
-    /** Whether onboarding should be shown.
-     *  Conditions: no stored seed-phrase hash and onboarding not yet marked as shown.
-     */
-    fun isOnboardingShow(): Boolean {
-        return !isOnboardingShown() && !seedPhraseManager.hasStoredSeed()
-    }
-
-
-    /** Whether onboarding has already been shown. */
-    private fun isOnboardingShown(): Boolean {
-        return secureStoragePrefs.getBoolean(ONBOARDING_SHOWN_KEY, false)
-    }
-
-    /**
-     * Marks onboarding as completed. Only records it once the keys are valid
-     * (integrity verified) — otherwise there is nothing to protect yet.
-     */
     fun setOnboardingShown(): Boolean {
-        if (seedPhraseManager.verificationKeyData()) {
-            secureStoragePrefs.edit {
-                putBoolean(ONBOARDING_SHOWN_KEY, true)
-            }
-            return true
+        if (!seedPhraseManager.verificationKeyData() || !authenticationManager.hasPinSlot()) {
+            return false
         }
-        return false
+        secureStoragePrefs.edit { putBoolean(ONBOARDING_SHOWN_KEY, true) }
+        return true
     }
 
-    /** Generates a seed phrase to display to the user. **/
-    fun generateMnemonicCode(): CharArray {
-        return seedPhraseManager.generateMnemonic().chars
+    fun generateMnemonicCode(): CharArray = seedPhraseManager.generateMnemonic().chars
+
+    private fun currentKeyCopy(): ByteArray? =
+        sessionDek?.copyOf() ?: seedPhraseManager.copyBootstrapKey()
+
+    private fun setSessionKey(dek: ByteArray) {
+        clearSessionKey()
+        sessionDek = dek.copyOf()
     }
 
-    /**
-     * Wipes all encrypted data and security state (DB files, seed prefs, Keystore keys,
-     * integrity HMAC, auth prefs) for the unrecoverable-loss path, then resets to
-     * onboarding. Everything is lost by design (zero-knowledge model).
-     */
+    private fun clearSessionKey() {
+        sessionDek?.let(SensitiveDataCleaner::clear)
+        sessionDek = null
+    }
+
     fun wipeAndReset() {
         secureDatabaseManager.wipe()
+        clearSessionKey()
+        biometricManager.disable()
+        authenticationManager.wipe()
         seedPhraseManager.wipe()
         secureStoragePrefs.edit { clear() }
         securityStatus = InitialStatus.ONBOARDING
     }
 
-    fun getSettingsAuth(): AuthSettings {
-        return AuthSettings(
-            authType = authenticationManager.getAuthType(),
-            isBiometricEnabled = authenticationManager.isBiometricEnabled(),
-            isUserCreatedSeedKey = seedPhraseManager.isUserManuallyCreatedKeyByDecryption()
-        )
-    }
-
-
+    fun getSettingsAuth(): AuthSettings = AuthSettings(
+        authType = authenticationManager.getAuthType(),
+        isBiometricEnabled = isBiometricEnabled(),
+        isUserCreatedSeedKey = seedPhraseManager.hasRecoverySeed()
+    )
 }
-
 
 data class AuthSettings(
     val authType: AuthType,
