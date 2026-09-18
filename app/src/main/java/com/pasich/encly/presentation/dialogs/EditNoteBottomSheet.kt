@@ -54,7 +54,6 @@ fun EditNoteBottomSheet(
     viewModel: EditNoteViewModel = hiltViewModel<EditNoteViewModel>(),
     onAction: (EditNoteBottomSheetAction) -> Unit = {}
 ) {
-    val noteBlocks = viewModel.blocks
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val fontStyle by viewModel.fontStyle.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(
