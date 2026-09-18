@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
@@ -62,9 +61,6 @@ import kotlin.math.ceil
 fun SeedPhraseDisplaySlide(
     uiState: OnboardingViewModel.OnboardingUiState,
     onToggleVisibility: () -> Unit,
-    onCopyKey: () -> Unit,
-    onSaveToFile: () -> Unit,
-    onSaveToGoogleDrive: () -> Unit,
     onStartVerification: () -> Unit = {},
     onUpdateAnswer: (Int, String) -> Unit = { _, _ -> },
     onCompleteVerification: () -> Unit = {},
@@ -90,9 +86,6 @@ fun SeedPhraseDisplaySlide(
                     SeedPhraseDisplayContent(
                         uiState = uiState,
                         onToggleVisibility = onToggleVisibility,
-                        onCopyKey = onCopyKey,
-                        onSaveToFile = onSaveToFile,
-                        onSaveToGoogleDrive = onSaveToGoogleDrive,
                         onNext = onStartVerification
                     )
                 }
@@ -149,9 +142,6 @@ private fun LoadingContent() {
 private fun SeedPhraseDisplayContent(
     uiState: OnboardingViewModel.OnboardingUiState,
     onToggleVisibility: () -> Unit,
-    onCopyKey: () -> Unit,
-    onSaveToFile: () -> Unit,
-    onSaveToGoogleDrive: () -> Unit,
     onNext: () -> Unit,
 ) {
     Column(
@@ -228,47 +218,13 @@ private fun SeedPhraseDisplayContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row {
-                    AnimatedButton(
-                        onClick = onToggleVisibility,
-                        modifier = Modifier.weight(1f),
-                        text = if (uiState.isKeyVisible) "Приховати Seed" else "Показати Seed",
-                        isSecondary = true,
-                        smallStyle = true
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    AnimatedButton(
-                        onClick = onCopyKey,
-                        modifier = Modifier.weight(1f),
-                        text = "Копіювати",
-                        isSecondary = true,
-                        smallStyle = true
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row {
-                    AnimatedButton(
-                        onClick = onSaveToFile,
-                        modifier = Modifier.weight(1f),
-                        text = "Зберегти локально",
-                        isSecondary = true,
-                        smallStyle = true
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    AnimatedButton(
-                        onClick = onSaveToGoogleDrive,
-                        modifier = Modifier.weight(1f),
-                        text = "Зберегти на Drive",
-                        smallStyle = true
-                    )
-
-                }
+                AnimatedButton(
+                    onClick = onToggleVisibility,
+                    modifier = Modifier.fillMaxWidth(),
+                    text = if (uiState.isKeyVisible) "Приховати Seed" else "Показати Seed",
+                    isSecondary = true,
+                    smallStyle = true
+                )
             }
         }
 
@@ -288,20 +244,18 @@ private fun SeedPhraseGrid(seedPhrase: String) {
     val rowCount = ceil(words.size / 3.0).toInt()
     val gridHeight = (rowCount * 56 + (rowCount - 1) * 8).dp
 
-    SelectionContainer {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(gridHeight),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            itemsIndexed(words) { index, word ->
-                SeedWordCard(
-                    number = index + 1, word = word
-                )
-            }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(gridHeight),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        itemsIndexed(words) { index, word ->
+            SeedWordCard(
+                number = index + 1, word = word
+            )
         }
     }
 }
