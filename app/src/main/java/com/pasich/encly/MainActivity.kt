@@ -1,6 +1,7 @@
 package com.pasich.encly
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -44,6 +45,10 @@ class MainActivity : FragmentActivity() {
     lateinit var sessionLockManager: SessionLockManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Encly always renders protected content. Apply FLAG_SECURE before the splash/content
+        // lifecycle starts so screenshots, screen recording, casting and recents snapshots
+        // cannot capture an unprotected first frame.
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
