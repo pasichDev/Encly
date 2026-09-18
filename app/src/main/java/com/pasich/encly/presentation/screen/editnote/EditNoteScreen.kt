@@ -73,8 +73,6 @@ import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
 import com.pasich.encly.presentation.effects.NoteSkeleton
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.SaveStatusNote
-import com.pasich.encly.utils.NotesTextFormatter
-import com.pasich.encly.utils.shareText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -366,17 +364,6 @@ fun EditNoteScreen(
                             viewModel.saveNote(saveBackupVersion = true)
                             closeScreen()
                         }
-                    }
-
-                    EditNoteBottomSheetAction.SHARE -> {
-                        shareText(
-                            currentContext,
-                            "${noteState.note.title}\n\n${
-                                NotesTextFormatter.blocksToPlainText(
-                                    viewModel.blocks
-                                )
-                            }"
-                        )
                     }
 
                     EditNoteBottomSheetAction.DUPLICATE -> {
