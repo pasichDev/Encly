@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,8 +49,6 @@ import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.ChangeTag
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.NoteToTrash
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
-import com.pasich.encly.utils.NotesTextFormatter
-import com.pasich.encly.utils.shareText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -67,7 +64,6 @@ fun NotesList(
 ) {
     val state by noteListViewModel.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     var activeNote by remember { mutableStateOf<NoteWithTag?>(null) }
     var isBottomSheetVisible by remember { mutableStateOf(false) }
@@ -91,13 +87,6 @@ fun NotesList(
             onAction = {
                 when (it) {
                     NoteAction.Edit -> onItemClick(item.note)
-
-                    NoteAction.Share -> {
-                        shareText(
-                            context,
-                            "${item.note.title}\n\n${NotesTextFormatter.jsonToPlainText(item.note.value)}"
-                        )
-                    }
 
                     NoteAction.Duplicate -> {
                         onSecondActionClick(item.note)
