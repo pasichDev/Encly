@@ -199,6 +199,22 @@ class SecurityManager @Inject constructor(
 
     fun generateMnemonicCode(): CharArray = seedPhraseManager.generateMnemonic().chars
 
+    /**
+     * Starts a brand-new vault with no legacy state. First-run setup is intentionally
+     * destructive until onboarding has been finalized, because no user data is considered
+     * committed before a valid PIN slot exists.
+     */
+    fun initializeNewVault(recoverySeed: CharArray?): Boolean {
+        secureDatabaseManager.wipe()
+        clearSessionKey()
+        biometricManager.disable()
+        authenticationManager.wipe()
+        seedPhraseManager.wipe()
+        secureStoragePrefs.edit { remove(ONBOARDING_SHOWN_KEY) }
+        securityStatus = InitialStatus.ONBOARDING
+        return seedPhraseManager.initializeVault(recoverySeed)
+    }
+
     private fun currentKeyCopy(): ByteArray? =
         sessionDek?.copyOf() ?: seedPhraseManager.copyBootstrapKey()
 
