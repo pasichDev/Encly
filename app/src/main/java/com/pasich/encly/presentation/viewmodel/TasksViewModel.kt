@@ -14,8 +14,6 @@ import com.pasich.encly.domain.usecase.task.GetCompletedTasksUseCase
 import com.pasich.encly.domain.usecase.task.GetTasksCountUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskUseCase
-import com.pasich.encly.utils.ReminderStore
-import com.pasich.encly.utils.TaskReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,21 +74,7 @@ class TasksViewModel @Inject constructor(
 
 
     init {
-        applyPendingCompletions()
         observeTasks()
-    }
-
-    /**
-     * Applies task completions that were queued from notification "Done" actions while
-     * the database was locked. Runs here because the tasks screen is reached only after
-     * the app is unlocked.
-     */
-    private fun applyPendingCompletions() {
-        viewModelScope.launch {
-            ReminderStore.drainPendingComplete(context).forEach { id ->
-                updateTaskStatusUseCase(id, true)
-            }
-        }
     }
 
     private fun createDateFilters(tasks: List<Task>): List<TaskFilter> {
@@ -334,13 +318,6 @@ class TasksViewModel @Inject constructor(
             )
             val taskId = addTaskUseCase(task)
 
-            // Schedule a reminder if needed
-            if (reminderDate != null) {
-                val insertedTask = task.copy(id = taskId)
-                TaskReminderScheduler.scheduleReminder(context, insertedTask)
-            }
-
-
             hideAddTaskDialog()
         }
     }
@@ -368,13 +345,6 @@ class TasksViewModel @Inject constructor(
 
                 updateTaskUseCase(updatedTask)
 
-                // Update the reminder
-                TaskReminderScheduler.cancelReminder(context, taskId)
-                if (reminderDate != null) {
-                    TaskReminderScheduler.scheduleReminder(context, updatedTask)
-                }
-
-
                 hideAddTaskDialog()
             }
         }
@@ -383,11 +353,6 @@ class TasksViewModel @Inject constructor(
     fun toggleTaskCompletion(taskId: Long, isCompleted: Boolean) {
         viewModelScope.launch {
             updateTaskStatusUseCase(taskId, isCompleted)
-
-            // Cancel the reminder if the task is completed
-            if (isCompleted) {
-                TaskReminderScheduler.cancelReminder(context, taskId)
-            }
 
         }
     }
