@@ -30,8 +30,6 @@ import com.pasich.encly.presentation.components.custombox.ModalBoxItem
 import com.pasich.encly.presentation.components.custombox.RoundPosition
 import com.pasich.encly.presentation.components.drawer.NavigationDrawerStyleButton
 import com.pasich.encly.presentation.components.drawer.StyleButton
-import com.pasich.encly.presentation.dialogs.content.CopyDrawerContent
-import com.pasich.encly.presentation.dialogs.content.CopyNoteContent
 import com.pasich.encly.presentation.dialogs.content.DrawerContent
 import com.pasich.encly.presentation.dialogs.content.MainDrawerContent
 import com.pasich.encly.presentation.dialogs.content.TranslateContent
@@ -45,7 +43,7 @@ import com.pasich.encly.ui.theme.roboto
 import com.pasich.encly.ui.theme.sourceSans
 
 enum class EditNoteBottomSheetAction {
-    SHARE, CLOSE_NO_SAVE, DUPLICATE, TRASH
+    CLOSE_NO_SAVE, DUPLICATE, TRASH
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,25 +125,6 @@ fun EditNoteBottomSheet(
                         LazyColumn(
                             modifier = Modifier.padding(16.dp)
                         ) {
-                            item {
-                                ModalBoxItem(
-                                    title = "Копировать",
-                                    icon = painterResource(R.drawable.ic_copy),
-                                    roundPosition = RoundPosition.First,
-                                    action = { currentContent = CopyDrawerContent })
-                            }
-
-
-                            item {
-                                ModalBoxItem(
-                                    title = stringResource(id = R.string.share),
-                                    icon = painterResource(R.drawable.ic_share),
-                                    roundPosition = RoundPosition.Medium,
-                                    action = {
-                                        onAction(EditNoteBottomSheetAction.SHARE)
-                                    })
-
-                            }
 
                             item {
                                 ModalBoxItem(
@@ -182,16 +161,6 @@ fun EditNoteBottomSheet(
                             }
                         }
 
-                    }
-
-                    is CopyDrawerContent -> {
-                        CopyNoteContent(
-                            blocks = noteBlocks,
-                            onBackClick = { currentContent = MainDrawerContent },
-                            onCloseClick = {
-                                currentContent = MainDrawerContent
-                                onDismiss()
-                            })
                     }
 
                     is TranslateDrawerContent -> {
