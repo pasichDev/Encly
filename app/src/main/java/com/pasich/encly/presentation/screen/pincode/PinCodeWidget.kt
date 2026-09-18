@@ -26,12 +26,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
+import com.pasich.encly.core.security.PIN_LENGTH
 
 @Composable
 fun PinCodeWidget(
-    pinInput: String, onPinChange: (String) -> Unit, onDelete: () -> Unit
+    pinInput: String,
+    onPinChange: (String) -> Unit,
+    onDelete: () -> Unit,
+    maxPinLength: Int = PIN_LENGTH
 ) {
-    val maxPinLength = 4
     val animatedPin = remember(pinInput) { pinInput }
 
     Column(
