@@ -1,15 +1,13 @@
 package com.pasich.encly.domain.usecase
 
 import com.pasich.encly.core.security.SecurityManager
-import com.pasich.encly.core.security.SeedPhraseManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class OnboardingUseCase @Inject constructor(
-    private val securityManager: SecurityManager,
-    private val seedPhraseManager: SeedPhraseManager
+    private val securityManager: SecurityManager
 ) {
     fun getMnemonicCode(): Result<String> = try {
         val chars = securityManager.generateMnemonicCode()
@@ -35,7 +33,7 @@ class OnboardingUseCase @Inject constructor(
         val userManaged = target.contentEquals(fake)
         return try {
             val recoverySeed = if (userManaged) target else null
-            if (seedPhraseManager.initializeVault(recoverySeed)) {
+            if (securityManager.initializeNewVault(recoverySeed)) {
                 Result.success("Okay")
             } else {
                 Result.failure(IllegalStateException("Failed to initialize v2 vault"))
