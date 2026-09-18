@@ -46,12 +46,13 @@ class AuthenticationManager @Inject constructor(
         private const val PBKDF2_ITERATIONS = 600_000
         private const val GCM_TAG_LENGTH = 128
         private const val IV_LENGTH = 12
+        private const val DEK_LENGTH = 32
 
         private val PIN_AAD = "encly/pin/slot/v2".toByteArray(Charsets.UTF_8)
     }
 
     fun configurePin(code: String, dek: ByteArray): Boolean {
-        if (code.length != PIN_LENGTH || !code.all(Char::isDigit) || dek.size != 32) return false
+        if (code.length != PIN_LENGTH || !code.all(Char::isDigit) || dek.size != DEK_LENGTH) return false
 
         val pinChars = code.toCharArray()
         val salt = ByteArray(PIN_SALT_SIZE).also { SecureRandom().nextBytes(it) }
@@ -79,6 +80,7 @@ class AuthenticationManager @Inject constructor(
     /**
      * Returns the unwrapped DEK on success. The caller owns and must zeroize it.
      */
+    @Suppress("ReturnCount") // Early exits are fail-closed validation gates for corrupted/missing slot state.
     fun unlockWithPin(inputCode: String): ByteArray? {
         if (remainingLockoutMillis() > 0) return null
         if (inputCode.length != PIN_LENGTH || !inputCode.all(Char::isDigit)) {
