@@ -295,13 +295,14 @@ class BiometricManager @Inject constructor(
             )
         }
 
-        return BiometricPrompt.PromptInfo.Builder()
+        val builder = BiometricPrompt.PromptInfo.Builder()
             .setTitle(config.title)
             .setSubtitle(config.subtitle)
             .setNegativeButtonText(config.negativeButtonText)
             .setAllowedAuthenticators(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG)
-            .apply { config.description?.let(::setDescription) }
-            .build()
+
+        config.description?.let { builder.setDescription(it) }
+        return builder.build()
     }
 
     private fun generateAuthBoundKey(): SecretKey {
