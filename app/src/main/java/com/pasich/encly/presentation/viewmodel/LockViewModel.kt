@@ -39,6 +39,7 @@ class LockViewModel @Inject constructor(
 
     fun biometricEnabled(): Boolean = securityManager.isBiometricEnabled()
     fun biometricAvailable(): Boolean = securityManager.biometricAvailable()
+    fun recoveryAvailable(): Boolean = securityManager.hasRecoverySeed()
     fun lockoutRemainingMillis(): Long = securityManager.pinLockoutRemainingMillis()
 
     fun authenticatePin(pin: String, onResult: (PinUnlockResult) -> Unit) {
