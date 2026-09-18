@@ -15,7 +15,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -34,9 +33,6 @@ fun ActionLinkBottomSheet(
     onAction: (ActionBlockDialog) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val uriHandler = LocalUriHandler.current
-
-
     if (settings.isBottomSheetVisible) {
         ModalBottomSheet(
             onDismissRequest = { onDismiss() },
@@ -63,22 +59,6 @@ fun ActionLinkBottomSheet(
                                     onClick = { Unit },
                                     modifier = Modifier
                                 )
-                            }
-                            LazyColumn(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-
-                                item {
-                                    ModalBoxItem(
-                                        title = stringResource(R.string.open_browser),
-                                        icon = painterResource(R.drawable.link),
-                                        roundPosition = RoundPosition.Last,
-                                        enable = settings.blockMove != 1,
-                                        action = {
-                                            uriHandler.openUri(urlModel.url)
-                                            onDismiss()
-                                        })
-                                }
                             }
                         }
 
