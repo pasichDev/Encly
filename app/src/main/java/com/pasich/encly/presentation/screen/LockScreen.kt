@@ -47,7 +47,7 @@ fun LockScreen(
 ) {
     val activity = LocalContext.current as? FragmentActivity
     val busy by viewModel.busy.collectAsState()
-    val seedStrategy = remember { viewModel.isSeedStrategy() }
+    var useRecovery by remember { mutableStateOf(false) }
 
     // Block the back button: a lock screen must not be dismissible without authenticating.
     BackHandler(enabled = true) { }
@@ -83,19 +83,20 @@ fun LockScreen(
         return
     }
 
-    if (seedStrategy) {
+    if (useRecovery) {
         SeedLockContent(
             viewModel = viewModel,
-            biometricEnabled = biometricEnabled && activity != null,
             onUnlocked = ::goHome,
-            onPromptBiometric = ::promptBiometric
+            onUsePin = { useRecovery = false }
         )
     } else {
         PinLockContent(
             viewModel = viewModel,
             biometricEnabled = biometricEnabled && activity != null,
+            recoveryAvailable = viewModel.recoveryAvailable(),
             onUnlocked = ::goHome,
-            onPromptBiometric = ::promptBiometric
+            onPromptBiometric = ::promptBiometric,
+            onUseRecovery = { useRecovery = true }
         )
     }
 }
@@ -105,8 +106,10 @@ fun LockScreen(
 private fun PinLockContent(
     viewModel: LockViewModel,
     biometricEnabled: Boolean,
+    recoveryAvailable: Boolean,
     onUnlocked: () -> Unit,
-    onPromptBiometric: () -> Unit
+    onPromptBiometric: () -> Unit,
+    onUseRecovery: () -> Unit
 ) {
     var input by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -158,10 +161,14 @@ private fun PinLockContent(
             onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )
 
-        if (biometricEnabled) {
-            Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = onPromptBiometric) {
-                Text("Використати біометрію")
+        Spacer(modifier = Modifier.height(8.dp))
+        TextButton(onClick = onUsePin) {
+            Text("Повернутися до PIN")
+        }
+
+        if (recoveryAvailable) {
+            TextButton(onClick = onUseRecovery) {
+                Text("Відновити доступ за recovery seed")
             }
         }
     }
@@ -171,9 +178,8 @@ private fun PinLockContent(
 @Composable
 private fun SeedLockContent(
     viewModel: LockViewModel,
-    biometricEnabled: Boolean,
     onUnlocked: () -> Unit,
-    onPromptBiometric: () -> Unit
+    onUsePin: () -> Unit
 ) {
     var phrase by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
