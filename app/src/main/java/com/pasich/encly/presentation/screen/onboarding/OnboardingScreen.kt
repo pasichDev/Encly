@@ -59,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.presentation.screen.onboarding.slides.CompletionSlide
 import com.pasich.encly.presentation.screen.onboarding.slides.SecurityChoiceSlide
+import com.pasich.encly.presentation.screen.onboarding.slides.SeedPhraseActions
 import com.pasich.encly.presentation.screen.onboarding.slides.SeedPhraseDisplaySlide
 import com.pasich.encly.presentation.screen.onboarding.slides.WelcomeSlide
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
@@ -156,15 +157,14 @@ fun OnboardingScreen(
                     page == 2 && uiState.securityType == SecurityType.USER_MANAGED -> {
                         SeedPhraseDisplaySlide(
                             uiState = uiState,
-                            onToggleVisibility = { viewModel.toggleKeyVisibility() },
-                            onStartVerification = { viewModel.startSeedPhraseVerification() },
-                            onUpdateAnswer = { wordIndex, answer ->
-                                viewModel.updateUserAnswer(
-                                    wordIndex, answer
-                                )
-                            },
-                            onCompleteVerification = { viewModel.completeVerification() },
-                            onCancelVerification = { viewModel.cancelVerification() })
+                            actions = SeedPhraseActions(
+                                onToggleVisibility = viewModel::toggleKeyVisibility,
+                                onStartVerification = viewModel::startSeedPhraseVerification,
+                                onUpdateAnswer = viewModel::updateUserAnswer,
+                                onCompleteVerification = viewModel::completeVerification,
+                                onCancelVerification = viewModel::cancelVerification
+                            )
+                        )
                     }
 
                     // CompletionSlide for AUTO mode (page 2) or for USER_MANAGED (page 3)
