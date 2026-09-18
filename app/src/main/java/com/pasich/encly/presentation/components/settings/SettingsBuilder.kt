@@ -23,7 +23,7 @@ class SettingsBuilder @Inject constructor(
         simpleEdit: Boolean,
         onNavigateToAuth: () -> Unit
     ): List<SettingsCategory> {
-        val (isDynamic, themeType, isScreenProtect) = themeSettings
+        val (isDynamic, themeType, _) = themeSettings
 
         return buildList {
             // Appearance Category
@@ -55,8 +55,6 @@ class SettingsBuilder @Inject constructor(
                 SettingsCategory(
                     titleRes = R.string.settings_privacy,
                     items = buildPrivacySettings(
-                        viewModel = viewModel,
-                        isScreenProtect = isScreenProtect,
                         onNavigateToAuth = onNavigateToAuth
                     )
                 )
@@ -123,35 +121,16 @@ class SettingsBuilder @Inject constructor(
     }
 
     private fun buildPrivacySettings(
-        viewModel: SettingsViewModel,
-        isScreenProtect: Boolean,
         onNavigateToAuth: () -> Unit
     ): List<SettingsItem> {
-        return buildList {
-            // Screen protection (only for supported devices)
-            add(
-                SettingsItem.Switch(
-                    titleRes = R.string.screen_protection_title,
-                    subtitleRes = R.string.screen_protection_descrpt,
-                    checked = isScreenProtect,
-                    onCheckedChange = { newValue ->
-                        viewModel.onEvent(SettingsEvent.UpdateScreenProtect(newValue))
-                    },
-                    requiresValidation = true
-                )
+        return listOf(
+            SettingsItem.Navigation(
+                titleRes = R.string.security_title,
+                subtitleRes = R.string.security_subtitle,
+                action = onNavigateToAuth,
+                endIcon = Icons.AutoMirrored.Default.KeyboardArrowRight
             )
-
-
-            // Authentication settings
-            add(
-                SettingsItem.Navigation(
-                    titleRes = R.string.security_title,
-                    subtitleRes = R.string.security_subtitle,
-                    action = onNavigateToAuth,
-                    endIcon = Icons.AutoMirrored.Default.KeyboardArrowRight
-                )
-            )
-        }
+        )
     }
 
 }
