@@ -76,6 +76,7 @@ class AuthenticationManagerTest {
     }
 }
 
+@Suppress("TooManyFunctions") // Android's SharedPreferences requires this complete test-only interface implementation.
 private class InMemorySharedPreferences : SharedPreferences {
 
     private val values = mutableMapOf<String, Any?>()
