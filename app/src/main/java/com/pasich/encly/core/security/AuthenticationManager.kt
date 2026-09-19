@@ -231,6 +231,6 @@ class AuthenticationManager @Inject constructor(
     }
 
     fun wipe() {
-        secureStoragePrefs.edit { clear() }
+        secureStoragePrefs.edit().clear().commit()
     }
 }
