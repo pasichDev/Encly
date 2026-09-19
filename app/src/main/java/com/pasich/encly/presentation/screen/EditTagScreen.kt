@@ -338,7 +338,7 @@ fun NewTagItem(
                 value = text,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
-                    keyboardType = KeyboardType.PasswordVisible,
+                    keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
                 ),
                 keyboardActions = KeyboardActions(onDone = { handleSave() }),
@@ -519,7 +519,7 @@ fun TagEditItem(
                     value = text,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.None,
-                        keyboardType = KeyboardType.PasswordVisible,
+                        keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(onDone = { handleSave() }),
