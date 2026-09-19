@@ -209,8 +209,9 @@ class SecurityManager @Inject constructor(
         if (!seedPhraseManager.verificationKeyData() || !authenticationManager.hasPinSlot()) {
             return false
         }
-        secureStoragePrefs.edit { putBoolean(ONBOARDING_SHOWN_KEY, true) }
-        return true
+        return secureStoragePrefs.edit()
+            .putBoolean(ONBOARDING_SHOWN_KEY, true)
+            .commit()
     }
 
     fun generateMnemonicCode(): CharArray = seedPhraseManager.generateMnemonic().chars
