@@ -28,11 +28,7 @@ object BlockConverter {
      */
     fun blocksToJson(blocks: List<Block>): String {
         val type = object : TypeToken<List<Block>>() {}.type
-        return try {
-            gson.toJson(blocks, type)
-        } catch (_: Exception) {
-            "[]" // Return an empty array on error
-        }
+        return gson.toJson(blocks, type)
     }
 
     /**
@@ -42,11 +38,7 @@ object BlockConverter {
      */
     fun jsonToBlocks(json: String): List<Block> {
         if (json.isEmpty()) return emptyList()
-        
-        return try {
-            gson.fromJson(json, object : TypeToken<List<Block>>() {}.type)
-        } catch (_: Exception) {
-            emptyList()
-        }
+        val type = object : TypeToken<List<Block>>() {}.type
+        return gson.fromJson<List<Block>>(json, type).orEmpty()
     }
 }
