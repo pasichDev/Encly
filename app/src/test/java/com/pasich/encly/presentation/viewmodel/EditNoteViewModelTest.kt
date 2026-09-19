@@ -2,6 +2,8 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.data.datasource.local.FontStyleType
+import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.domain.usecase.settings.FontSizeUseCase
@@ -13,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -67,7 +70,39 @@ class EditNoteViewModelTest {
         assertEquals(SaveStatusNote.OLD, viewModel.status.value)
     }
 
-    private fun createViewModel(repository: TestNotesRepository): EditNoteViewModel {
+    @Test
+    fun titleOnlyEmptyBlockPayloadIsValidAndDoesNotTriggerCorruptionGuard() = runTest {
+        val note = Note(id = EXISTING_NOTE_ID, title = "title only", value = "[]")
+        val repository = TestNotesRepository().apply {
+            allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+        }
+        val viewModel = createViewModel(repository, noteId = EXISTING_NOTE_ID)
+
+        advanceUntilIdle()
+
+        assertFalse(viewModel.contentLoadFailed.value)
+        assertEquals(EXISTING_NOTE_ID, viewModel.state.value.note.id)
+        assertEquals("title only", viewModel.state.value.note.title)
+    }
+
+    @Test
+    fun malformedStoredBlockJsonTriggersCorruptionGuard() = runTest {
+        val note = Note(id = EXISTING_NOTE_ID, title = "broken", value = "{not-json")
+        val repository = TestNotesRepository().apply {
+            allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+        }
+        val viewModel = createViewModel(repository, noteId = EXISTING_NOTE_ID)
+
+        advanceUntilIdle()
+
+        assertTrue(viewModel.contentLoadFailed.value)
+        assertEquals(SaveStatusNote.OLD, viewModel.status.value)
+    }
+
+    private fun createViewModel(
+        repository: TestNotesRepository,
+        noteId: Long = -1L
+    ): EditNoteViewModel {
         val fontSizeUseCase = mock(FontSizeUseCase::class.java)
         val fontStyleUseCase = mock(FontStyleUseCase::class.java)
         val simpleEditUseCase = mock(SimpleEditUseCase::class.java)
@@ -77,7 +112,7 @@ class EditNoteViewModelTest {
 
         return EditNoteViewModel(
             notesRepository = repository,
-            savedStateHandle = SavedStateHandle(),
+            savedStateHandle = SavedStateHandle(mapOf("idNote" to noteId)),
             updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
             updateNoteTagUseCase = UpdateNoteTagUseCase(repository),
             fontSizeUseCase = fontSizeUseCase,
@@ -89,6 +124,7 @@ class EditNoteViewModelTest {
 
     private companion object {
         const val INSERTED_ID = 73L
+        const val EXISTING_NOTE_ID = 91L
         const val DEFAULT_FONT_SIZE = 16
     }
 }
