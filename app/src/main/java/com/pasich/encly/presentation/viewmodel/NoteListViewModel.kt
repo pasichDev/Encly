@@ -78,7 +78,7 @@ class NoteListViewModel @Inject constructor(
         when (uiState) {
             is UiState.Loading -> {
                 _state.update {
-                    it.copy(baseState = it.baseState.copy(isLoading = true, error = null))
+                    it.copy(baseState = it.baseState.copy(isLoading = true, error = ""))
                 }
             }
 
@@ -86,7 +86,7 @@ class NoteListViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         notes = uiState.data.orEmpty(),
-                        baseState = it.baseState.copy(isLoading = false, error = null)
+                        baseState = it.baseState.copy(isLoading = false, error = "")
                     )
                 }
             }
