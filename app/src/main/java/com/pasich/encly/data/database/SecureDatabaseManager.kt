@@ -34,6 +34,7 @@ class SecureDatabaseManager @Inject constructor(
         database?.takeIf { isUnlocked }
             ?: error("Database accessed before unlock — call unlockDatabase() first")
 
+    @Suppress("ReturnCount") // Fail-closed vault-state/key gates are clearer as early exits.
     @Synchronized
     fun unlockDatabase(
         secretKey: SecretKey,
