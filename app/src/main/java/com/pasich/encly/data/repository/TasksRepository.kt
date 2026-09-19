@@ -12,9 +12,9 @@ interface TasksRepository {
     suspend fun getTaskById(id: Long): Task?
     suspend fun getTasksWithReminder(currentTime: Long): List<Task>
     suspend fun insertTask(task: Task): Long
-    suspend fun updateTask(task: Task)
-    suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long? = null)
-    suspend fun deleteTask(task: Task)
-    suspend fun deleteAllCompletedTasks()
-    suspend fun deleteTaskById(id: Long)
+    suspend fun updateTask(task: Task): Boolean
+    suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long? = null): Boolean
+    suspend fun deleteTask(task: Task): Boolean
+    suspend fun deleteAllCompletedTasks(): Boolean
+    suspend fun deleteTaskById(id: Long): Boolean
 }
