@@ -37,18 +37,18 @@ interface TasksDao {
     suspend fun insertTask(task: Task): Long
     
     @Update
-    suspend fun updateTask(task: Task)
+    suspend fun updateTask(task: Task): Int
     
     @Query("UPDATE tasks SET isCompleted = :isCompleted, completedDate = :completedDate WHERE id = :id")
-    suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long?)
+    suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long?): Int
     
     @Delete
-    suspend fun deleteTask(task: Task)
+    suspend fun deleteTask(task: Task): Int
     
     @Query("DELETE FROM tasks WHERE isCompleted = 1")
-    suspend fun deleteAllCompletedTasks()
+    suspend fun deleteAllCompletedTasks(): Int
     
     @Query("DELETE FROM tasks WHERE id = :id")
-    suspend fun deleteTaskById(id: Long)
+    suspend fun deleteTaskById(id: Long): Int
     
 }
