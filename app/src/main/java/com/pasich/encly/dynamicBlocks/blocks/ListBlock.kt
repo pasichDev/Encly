@@ -111,7 +111,6 @@ fun ListBlock(
                             fontSize = fontStyles.sizes.list
                         ),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.PasswordVisible),
                     onValueChange = { updatedValue ->
                         block.items.value =
                             block.items.value.toMutableList().apply {
@@ -219,10 +218,10 @@ fun ListBlock(
                                 }
                             },
                         ),
-                    keyboardOptions =
-                        KeyboardOptions.Default.copy(
-                            imeAction = ImeAction.Done,
-                        ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                    ),
                     decorationBox = { innerTextField ->
                         Box(
                             modifier = Modifier.fillMaxWidth(),

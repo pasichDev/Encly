@@ -93,7 +93,7 @@ fun QuoteBlock(
             value = textFieldValue,
             enabled = !isLocked,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.PasswordVisible),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             onValueChange = { newValue ->
                 textFieldValue = newValue
                 val newText = newValue.text

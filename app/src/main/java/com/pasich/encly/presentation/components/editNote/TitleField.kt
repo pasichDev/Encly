@@ -77,7 +77,7 @@ fun TitleField(
                 },
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.PasswordVisible,
+            keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Done
         ),
         decorationBox = { innerTextField ->

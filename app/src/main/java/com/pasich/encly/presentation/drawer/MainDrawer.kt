@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -33,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +46,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -85,18 +81,9 @@ fun MainDrawer(
     val drawerWidth = getDrawerWidth()
 
     // State for search
-    var searchQuery by rememberSaveable { mutableStateOf("") }
-    var isSearchActive by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
 
-    // Storing recent search queries (can be moved into the ViewModel)
-    var recentSearches by rememberSaveable { mutableStateOf(listOf<String>()) }
-
-    // Add to recent searches when searching
-    fun addToRecentSearches(query: String) {
-        if (query.isNotBlank() && !recentSearches.contains(query)) {
-            recentSearches = listOf(query) + recentSearches.take(4) // Keep only the last 5
-        }
-    }
 
     // Get the notes for searching
     val state by noteListViewModel.state.collectAsStateWithLifecycle()
@@ -195,10 +182,7 @@ val items = listOfNotNull(
                 searchQuery = it
                 isSearchActive = it.isNotBlank()
             },
-            onSearch = {
-                addToRecentSearches(searchQuery)
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            onSearch = {},
             placeholder = {
                 Text(
                     text = stringResource(R.string.search_notes),

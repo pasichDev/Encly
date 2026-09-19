@@ -212,7 +212,7 @@ private fun TaskTextField(
         },
         modifier = modifier.padding(0.dp),
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.PasswordVisible),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         textStyle = if (bodyStyle) MaterialTheme.typography.bodyMedium
         else MaterialTheme.typography.bodyLarge,
         colors = TextFieldDefaults.colors(

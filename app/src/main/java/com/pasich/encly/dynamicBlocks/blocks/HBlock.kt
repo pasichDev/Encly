@@ -122,7 +122,7 @@ fun HBlock(
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         textStyle = textStyle,
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.PasswordVisible,
+            keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Next
         ),
         keyboardActions =

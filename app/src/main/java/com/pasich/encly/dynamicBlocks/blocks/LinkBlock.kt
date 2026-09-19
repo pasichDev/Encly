@@ -82,7 +82,7 @@ fun LinkBlock(
             ),
             singleLine = true,
             maxLines = 1,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.PasswordVisible),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.Add,

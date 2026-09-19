@@ -94,7 +94,7 @@ fun TextBlock(
             fontFamily = fontStyles.families.body
         ),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.PasswordVisible),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         modifier =
             modifier
                 .fillMaxWidth()
