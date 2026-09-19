@@ -274,55 +274,71 @@ class EditNoteViewModel
         }
     }
 
-    suspend fun saveNote(saveBackupVersion: Boolean = false): Boolean =
-        persistNote(saveBackupVersion)
+    suspend fun saveNote(): Boolean = persistNote()
 
     /**
      * Persists the current note and does not return until Room reports success/failure.
      * The mutex serializes autosave, explicit exit-save and the onCleared fallback.
      */
-    private suspend fun persistNote(saveBackupVersion: Boolean = false): Boolean =
-        saveMutex.withLock {
-            // Read-only/unreadable notes are safe to leave without writing. Keep the
-            // status non-successful so skipped persistence is never presented as a write.
-            if (isReadTrashOnly || _contentLoadFailed.value) {
+    private suspend fun persistNote(): Boolean = saveMutex.withLock {
+        if (isReadTrashOnly || _contentLoadFailed.value) {
+            _status.value = SaveStatusNote.OLD
+            return@withLock true
+        }
+
+        _status.value = SaveStatusNote.SAVING
+        val currentNote = _state.value.note
+
+        try {
+            val blocksJson = serializeNonBlankBlocks()
+            val isBlankDraft =
+                currentNote.id == -1L && currentNote.title.isBlank() && isNoteEmpty()
+            if (isBlankDraft) {
                 _status.value = SaveStatusNote.OLD
                 return@withLock true
             }
 
-            _status.value = SaveStatusNote.SAVING
-            val currentNote = if (saveBackupVersion) {
-                _state.value.backupNote
+            val saved = if (currentNote.id != -1L) {
+                updateExistingNote(currentNote, blocksJson)
             } else {
-                _state.value.note
+                insertNewNote(currentNote, blocksJson)
             }
 
-            try {
-                val blocksJson = if (saveBackupVersion) {
-                    currentNote.value
-                } else {
-                    serializeNonBlankBlocks()
-                }
-
-                if (!saveBackupVersion && isNoteEmpty()) {
-                    _status.value = SaveStatusNote.OLD
-                    return@withLock true
-                }
-
-                val saved = when {
-                    currentNote.id != -1L -> updateExistingNote(currentNote, blocksJson)
-                    !saveBackupVersion -> insertNewNote(currentNote, blocksJson)
-                    else -> true
-                }
-
-                _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.OLD
-                saved
-            } catch (e: Exception) {
-                AppLogger.e("EditNoteViewModel", "Note persistence failed", e)
-                _status.value = SaveStatusNote.OLD
-                false
-            }
+            _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.OLD
+            saved
+        } catch (e: Exception) {
+            AppLogger.e("EditNoteViewModel", "Note persistence failed", e)
+            _status.value = SaveStatusNote.OLD
+            false
         }
+    }
+
+    /**
+     * Restores the editor's entry snapshot. If a new/copy draft was already autosaved,
+     * discarding removes that inserted row instead of leaving a ghost note behind.
+     */
+    suspend fun discardChanges(): Boolean = saveMutex.withLock {
+        val currentNote = _state.value.note
+        val backupNote = _state.value.backupNote
+
+        val discarded = try {
+            when {
+                backupNote.id != -1L -> withContext(Dispatchers.IO) {
+                    notesRepository.updateNote(backupNote)
+                }
+                currentNote.id != -1L -> withContext(Dispatchers.IO) {
+                    notesRepository.deleteNoteById(currentNote.id)
+                }
+                else -> true
+            }
+        } catch (e: Exception) {
+            AppLogger.e("EditNoteViewModel", "Discard failed", e)
+            false
+        }
+
+        _status.value = SaveStatusNote.OLD
+        discarded
+    }
 
     /** Serializes the current blocks, dropping blank text-bearing blocks. */
     private fun serializeNonBlankBlocks(): String = BlockConverter.blocksToJson(
@@ -708,12 +724,12 @@ class EditNoteViewModel
     /**
      * Restores the note from the trash
      */
-    suspend fun noteRestore(): Boolean {
+    suspend fun noteRestore(): Boolean = saveMutex.withLock {
         val currentNote = _state.value.note
-        if (currentNote.id == -1L) return false
+        if (currentNote.id == -1L) return@withLock false
 
         val blocksJson = BlockConverter.blocksToJson(blocks)
-        return updateNoteTrashStatusUseCase.invoke(
+        updateNoteTrashStatusUseCase.invoke(
             currentNote.copy(value = blocksJson),
             false,
         )
@@ -723,21 +739,22 @@ class EditNoteViewModel
      * Moves the current note to the trash (soft delete). Returns true on success.
      * Suspends until the write completes so the caller can safely navigate away after.
      */
-    suspend fun noteMoveToTrash(): Boolean {
+    suspend fun noteMoveToTrash(): Boolean = saveMutex.withLock {
         val currentNote = _state.value.note
-        if (currentNote.id == -1L) return false
+        if (currentNote.id == -1L) return@withLock true
+
         val blocksJson = BlockConverter.blocksToJson(blocks)
-        return updateNoteTrashStatusUseCase.invoke(currentNote.copy(value = blocksJson), true)
+        updateNoteTrashStatusUseCase.invoke(currentNote.copy(value = blocksJson), true)
     }
 
     /**
      * Inserts a copy of the current note (title + " (Copy)") as a new record.
      * Returns the new note id, or -1 on failure.
      */
-    suspend fun noteDuplicate(): Long {
+    suspend fun noteDuplicate(): Long = saveMutex.withLock {
         val currentNote = _state.value.note
         val blocksJson = BlockConverter.blocksToJson(blocks)
-        return try {
+        try {
             notesRepository.insertNote(
                 Note.new(
                     title = currentNote.title + " (Copy)",
@@ -746,7 +763,7 @@ class EditNoteViewModel
                 )
             ).takeIf { it > 0L } ?: -1L
         } catch (e: Exception) {
-            AppLogger.e("EditNoteViewModel", "Error duplicating note: ${e.message}")
+            AppLogger.e("EditNoteViewModel", "Note duplication failed", e)
             -1L
         }
     }
@@ -754,11 +771,11 @@ class EditNoteViewModel
     /**
      * Deletes the note completely from the database
      */
-    suspend fun noteDelete(): Boolean {
+    suspend fun noteDelete(): Boolean = saveMutex.withLock {
         val currentNoteId = _state.value.note.id
-        if (currentNoteId == -1L) return false
+        if (currentNoteId == -1L) return@withLock true
 
-        return try {
+        try {
             notesRepository.deleteNoteById(currentNoteId)
         } catch (e: Exception) {
             AppLogger.e("EditNoteViewModel", "Note deletion failed", e)
