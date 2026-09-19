@@ -61,6 +61,7 @@ class BiometricManager @Inject constructor(
         private const val GCM_TAG_LENGTH = 128
         private const val IV_LENGTH = 12
         private const val DEK_LENGTH = 32
+        private const val AES_KEY_SIZE_BITS = 256
         private const val AUTH_PER_USE_SECONDS = 0
     }
 
@@ -316,7 +317,7 @@ class BiometricManager @Inject constructor(
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setKeySize(256)
+            .setKeySize(AES_KEY_SIZE_BITS)
             .setUserAuthenticationRequired(true)
             .setInvalidatedByBiometricEnrollment(true)
 
