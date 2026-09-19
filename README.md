@@ -75,6 +75,17 @@ keyAlias=…
 keyPassword=…
 ```
 
+## Beta status
+
+Encly is under security-focused beta hardening. Automated checks and manual device scenarios
+must pass before a public distribution. A published privacy-policy URL is still required before
+a public beta release.
+
+- [Security model](SECURITY.md)
+- [Architecture](docs/architecture.md)
+- [Device beta checklist](docs/beta-test-checklist.md)
+- [Release readiness](docs/release-readiness.md)
+
 ## Contributing
 
 Issues and PRs are welcome. Security-sensitive changes should keep the key hierarchy and

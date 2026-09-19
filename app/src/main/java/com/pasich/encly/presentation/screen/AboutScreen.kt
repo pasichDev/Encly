@@ -57,7 +57,6 @@ import com.composables.icons.lucide.SendHorizontal
 import com.composables.icons.lucide.ShieldEllipsis
 import com.pasich.encly.R
 import com.pasich.encly.core.LINK_FEEDBACK
-import com.pasich.encly.core.LINK_PRIVACY_POLICE
 import com.pasich.encly.core.MAIL_DEVELOPMENT
 import com.pasich.encly.presentation.components.HeroCard
 import com.pasich.encly.presentation.components.HeroIcon
@@ -170,11 +169,11 @@ private fun DeveloperActionsSection(context: Context) {
                     title = stringResource(R.string.about_privacy_policy),
                     description = stringResource(R.string.about_privacy_policy_desc),
                     onClick = {
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            LINK_PRIVACY_POLICE.toUri()
-                        )
-                        context.startActivity(intent)
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.about_privacy_policy_unavailable),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 )
 

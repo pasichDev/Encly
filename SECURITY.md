@@ -106,6 +106,11 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   entered. Encly minimizes avoidable copies but cannot guarantee JVM/Compose heap
   zeroization of every immutable string representation.
 
+## Supported versions
+
+Encly has no stable public release yet. Security fixes are maintained on the current beta
+development branch only; reports should include the exact build version and Android version.
+
 ## Reporting a vulnerability
 
 Please report security issues privately rather than publishing exploit details in a

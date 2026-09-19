@@ -55,6 +55,7 @@
     <!-- Privacy and feedback -->
     <string name="about_privacy_policy">Політика конфіденційності</string>
     <string name="about_privacy_policy_desc">Як ми зберігаємо та захищаємо ваші дані</string>
+    <string name="about_privacy_policy_unavailable">Політику конфіденційності ще не опубліковано. Це блокує публічний beta-реліз.</string>
     <string name="about_feedback">Зворотний зв\'язок</string>
     <string name="about_feedback_desc">Повідомити про помилку або запропонувати покращення</string>
     <string name="about_rate_app">Оцінити додаток</string>
