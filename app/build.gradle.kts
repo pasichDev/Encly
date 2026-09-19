@@ -200,8 +200,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
     // Cipher
-    implementation("net.zetetic:sqlcipher-android:4.6.1")
-    implementation("androidx.sqlite:sqlite-ktx:2.5.2")
+    implementation("net.zetetic:sqlcipher-android:4.19.0")
+    implementation("androidx.sqlite:sqlite-ktx:2.7.0")
     implementation("cash.z.ecc.android:kotlin-bip39:1.0.9")
 
 
