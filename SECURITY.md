@@ -71,7 +71,9 @@ The beta security boundary intentionally removes system-visible plaintext featur
 - no task export to the system calendar;
 - no FileProvider retained for those export flows.
 
-The app requests no `INTERNET` permission and performs no analytics or sync.
+All Compose text fields run inside a shared input boundary that requests
+`IME_FLAG_NO_PERSONALIZED_LEARNING` from the Android IME. The app requests no
+`INTERNET` permission and performs no analytics or sync.
 
 ## Platform storage
 
@@ -105,6 +107,8 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - User-visible seed words necessarily exist in UI memory while being displayed or
   entered. Encly minimizes avoidable copies but cannot guarantee JVM/Compose heap
   zeroization of every immutable string representation.
+- A third-party keyboard is part of the device trust boundary. Encly requests Android's
+  no-personalized-learning flag, but an IME may ignore that request.
 
 ## Supported versions
 

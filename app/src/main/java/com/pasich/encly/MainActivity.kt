@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.presentation.components.SecureTextInputBoundary
 import com.pasich.encly.presentation.navigation.AppNavHost
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.ui.theme.AppTheme
@@ -95,35 +96,33 @@ class MainActivity : FragmentActivity() {
             }
 
             App(
-                navController = navController, startDestination = destination.name
-            )
-        }
-    }
-}
-
-@Composable
+                navController = navControlle@Composable
 fun App(
-    navController: NavHostController, startDestination: String
+    navController: NavHostController,
+    startDestination: String
 ) {
     AppTheme {
-        // Edge-to-edge is forced on Android 15+/targetSdk 36. Paint the whole window
-        // (including behind the transparent status bar) with the same Compose
-        // background the screens use, then inset the content by the status bar so
-        // content sits below the bar with no colour seam. windowInsetsPadding also
-        // consumes the inset so Scaffold screens don't double-pad.
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
+        SecureTextInputBoundary {
+            // Edge-to-edge is forced on Android 15+/targetSdk 36. Paint the whole window
+            // (including behind the transparent status bar) with the same Compose
+            // background the screens use, then inset the content by the status bar so
+            // content sits below the bar with no colour seam. windowInsetsPadding also
+            // consumes the inset so Scaffold screens don't double-pad.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
-                AppNavHost(
-                    navController = navController, startDestination = startDestination
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                ) {
+                    AppNavHost(
+                        navController = navController,
+                        startDestination = startDestination
+                    )
+                }
             }
         }
     }
