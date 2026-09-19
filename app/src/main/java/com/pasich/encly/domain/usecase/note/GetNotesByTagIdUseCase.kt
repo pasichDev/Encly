@@ -4,6 +4,7 @@ import com.pasich.encly.core.common.UiState
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.repository.NotesRepository
 import com.pasich.encly.domain.enums.NoteSortOption
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -12,7 +13,8 @@ import kotlinx.coroutines.flow.map
 
 
 class GetNotesByTagUseCase(
-    private val repository: NotesRepository
+    private val repository: NotesRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     operator fun invoke(idTag: Long, sortOption: NoteSortOption): Flow<UiState<List<NoteWithTag>>> = flow {
         emit(UiState.Loading())
@@ -33,5 +35,5 @@ class GetNotesByTagUseCase(
         } catch (e: Exception) {
             emit(UiState.Error(message = e.message.toString()))
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(dispatcher)
 }

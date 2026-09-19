@@ -4,6 +4,7 @@ import com.pasich.encly.core.common.UiState
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.repository.NotesRepository
 import com.pasich.encly.domain.enums.NoteSortOption
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 
 class GetAllNotesUseCase @Inject constructor(
-    private val repository: NotesRepository
+    private val repository: NotesRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     operator fun invoke(sortOption: NoteSortOption): Flow<UiState<List<NoteWithTag>>> = flow {
         emit(UiState.Loading())
@@ -37,6 +39,6 @@ class GetAllNotesUseCase @Inject constructor(
         } catch (e: Exception) {
             emit(UiState.Error(message = e.message.toString()))
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(dispatcher)
 }
 

@@ -52,8 +52,8 @@ class NoteListViewModelTest {
 
         val tagSelection = TagSelectionRepository()
         val viewModel = NoteListViewModel(
-            getAllNotesUseCase = GetAllNotesUseCase(repository),
-            getNotesByTagUseCase = GetNotesByTagUseCase(repository),
+            getAllNotesUseCase = GetAllNotesUseCase(repository, dispatcher),
+            getNotesByTagUseCase = GetNotesByTagUseCase(repository, dispatcher),
             updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
             updateNoteTagUseCase = UpdateNoteTagUseCase(repository),
             tagSelectionRepository = tagSelection,
