@@ -73,7 +73,6 @@ import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
 import com.pasich.encly.presentation.effects.NoteSkeleton
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.SaveStatusNote
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(
@@ -122,17 +121,24 @@ fun EditNoteScreen(
     }
     var isEditMenuBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    // Function for correctly closing the screen
+    fun showWriteFailure(message: String = "Не вдалося зберегти зміни") {
+        Toast.makeText(currentContext, message, Toast.LENGTH_LONG).show()
+    }
+
+    fun finishNavigation() {
+        viewModel.markExitHandled()
+        keyboardController?.hide()
+        focusManager.clearFocus()
+        navController.popBackStack()
+    }
+
     val closeScreen = {
         scope.launch {
-            // Hide the keyboard
-            keyboardController?.hide()
-            // Clear focus
-            focusManager.clearFocus()
-            // Small delay to let animations finish
-            delay(100)
-            // Close the screen
-            navController.popBackStack()
+            if (viewModel.saveNote()) {
+                finishNavigation()
+            } else {
+                showWriteFailure()
+            }
         }
     }
     val imeVisible = WindowInsets.isImeVisible
@@ -148,9 +154,13 @@ fun EditNoteScreen(
         messageText = stringResource(R.string.dialog_message),
         onConfirm = {
             scope.launch {
-                viewModel.noteDelete()
+                val deleted = viewModel.noteDelete()
                 isDialogVisible = false
-                closeScreen()
+                if (deleted) {
+                    finishNavigation()
+                } else {
+                    showWriteFailure("Не вдалося видалити нотатку")
+                }
             }
         },
         onDismiss = {
@@ -255,25 +265,17 @@ fun EditNoteScreen(
                             onBackClick = { closeScreen() },
                             onRestoreClick = {
                                 scope.launch {
-                                    viewModel.noteRestore()
-                                    keyboardController?.hide()
-                                    focusManager.clearFocus()
-                                    delay(100)
-                                    navController.popBackStack()
+                                    if (viewModel.noteRestore()) {
+                                        finishNavigation()
+                                    } else {
+                                        showWriteFailure("Не вдалося відновити нотатку")
+                                    }
                                 }
                             },
                             onDeleteClick = { isDialogVisible = true },
                             onMenuClick = { isEditMenuBottomSheetVisible = true },
                             onLockToggle = { viewModel.toggleLockEditor() },
-                            onDoneClick = {
-                                scope.launch {
-                                    viewModel.saveNote(actionButton = true)
-                                    keyboardController?.hide()
-                                    focusManager.clearFocus()
-                                    delay(100)
-                                    navController.popBackStack()
-                                }
-                            },
+                            onDoneClick = closeScreen,
                         )
                     }
 
@@ -361,22 +363,33 @@ fun EditNoteScreen(
                 when (it) {
                     EditNoteBottomSheetAction.CLOSE_NO_SAVE -> {
                         scope.launch {
-                            viewModel.saveNote(saveBackupVersion = true)
-                            closeScreen()
+                            if (viewModel.discardChanges()) {
+                                finishNavigation()
+                            } else {
+                                showWriteFailure("Не вдалося скасувати зміни")
+                            }
                         }
                     }
 
                     EditNoteBottomSheetAction.DUPLICATE -> {
                         scope.launch {
-                            viewModel.noteDuplicate()
-                            closeScreen()
+                            val saved = viewModel.saveNote()
+                            val duplicateId = if (saved) viewModel.noteDuplicate() else -1L
+                            if (duplicateId > 0L) {
+                                finishNavigation()
+                            } else {
+                                showWriteFailure("Не вдалося створити копію")
+                            }
                         }
                     }
 
                     EditNoteBottomSheetAction.TRASH -> {
                         scope.launch {
-                            viewModel.noteMoveToTrash()
-                            closeScreen()
+                            if (viewModel.noteMoveToTrash()) {
+                                finishNavigation()
+                            } else {
+                                showWriteFailure("Не вдалося перемістити нотатку в кошик")
+                            }
                         }
                     }
                 }
