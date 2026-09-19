@@ -71,10 +71,14 @@ class DatabaseLocalDataSource @Inject constructor(
     suspend fun getTaskById(id: Long) = tasksDao().getTaskById(id)
     suspend fun getTasksWithReminder(currentTime: Long) = tasksDao().getTasksWithReminder(currentTime)
     suspend fun insertTask(task: com.pasich.encly.data.model.Task) = tasksDao().insertTask(task)
-    suspend fun updateTask(task: com.pasich.encly.data.model.Task) = tasksDao().updateTask(task)
-    suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long?) =
-        tasksDao().updateTaskStatus(id, isCompleted, completedDate)
-    suspend fun deleteTask(task: com.pasich.encly.data.model.Task) = tasksDao().deleteTask(task)
-    suspend fun deleteAllCompletedTasks() = tasksDao().deleteAllCompletedTasks()
-    suspend fun deleteTaskById(id: Long) = tasksDao().deleteTaskById(id)
+    suspend fun updateTask(task: com.pasich.encly.data.model.Task): Boolean =
+        tasksDao().updateTask(task) > 0
+    suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long?): Boolean =
+        tasksDao().updateTaskStatus(id, isCompleted, completedDate) > 0
+    suspend fun deleteTask(task: com.pasich.encly.data.model.Task): Boolean =
+        tasksDao().deleteTask(task) > 0
+    suspend fun deleteAllCompletedTasks(): Boolean =
+        tasksDao().deleteAllCompletedTasks() >= 0
+    suspend fun deleteTaskById(id: Long): Boolean =
+        tasksDao().deleteTaskById(id) > 0
 }
