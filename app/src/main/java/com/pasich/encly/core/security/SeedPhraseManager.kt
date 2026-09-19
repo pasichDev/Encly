@@ -70,7 +70,7 @@ class SeedPhraseManager @Inject constructor(
         if (recoverySeed != null && !isValidMnemonic(recoverySeed)) return false
 
         clearBootstrapKey()
-        prefs.edit { clear() }
+        prefs.edit().clear().commit()
 
         val dek = ByteArray(DEK_LENGTH).also { SecureRandom().nextBytes(it) }
         return try {
