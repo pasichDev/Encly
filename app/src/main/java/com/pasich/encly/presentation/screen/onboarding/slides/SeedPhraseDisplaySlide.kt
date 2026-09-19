@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName") // SeedPhraseActions and its screen intentionally share this UI file.
+
 package com.pasich.encly.presentation.screen.onboarding.slides
 
 import androidx.compose.animation.animateColorAsState
