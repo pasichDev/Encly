@@ -11,8 +11,11 @@ import com.pasich.encly.domain.usecase.task.GetTasksCountUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -30,6 +33,13 @@ data class TaskFilter(
     enum class Type {
         DATE, PRIORITY, COMPLETED
     }
+}
+
+enum class TaskOperationFailure {
+    CREATE,
+    UPDATE,
+    STATUS_UPDATE,
+    CLEAR_COMPLETED
 }
 
 data class TasksUiState(
@@ -62,6 +72,9 @@ class TasksViewModel
 
     private val _uiState = MutableStateFlow(TasksUiState())
     val uiState: StateFlow<TasksUiState> = _uiState.asStateFlow()
+
+    private val _operationFailures = MutableSharedFlow<TaskOperationFailure>(extraBufferCapacity = 1)
+    val operationFailures: SharedFlow<TaskOperationFailure> = _operationFailures.asSharedFlow()
 
     private val _showAddTaskDialog = MutableStateFlow(false)
     val showAddTaskDialog: StateFlow<Boolean> = _showAddTaskDialog.asStateFlow()
@@ -293,9 +306,10 @@ class TasksViewModel
                 priority = priority,
                 categoryId = categoryId
             )
-            val insertedId = addTaskUseCase(task)
-            if (insertedId > 0L) {
+            if (addTaskUseCase(task) > 0L) {
                 hideAddTaskDialog()
+            } else {
+                _operationFailures.emit(TaskOperationFailure.CREATE)
             }
         }
     }
@@ -312,34 +326,41 @@ class TasksViewModel
             val existingTask = uiState.value.activeTasks.find { it.id == taskId }
                 ?: uiState.value.completedTasks.find { it.id == taskId }
 
-            existingTask?.let { task ->
-                val updatedTask = task.copy(
-                    title = title,
-                    description = description,
-                    reminderDate = reminderDate,
-                    priority = priority,
-                    categoryId = categoryId
-                )
+            if (existingTask == null) {
+                _operationFailures.emit(TaskOperationFailure.UPDATE)
+                return@launch
+            }
 
-                if (updateTaskUseCase(updatedTask)) {
-                    hideAddTaskDialog()
-                }
+            val updatedTask = existingTask.copy(
+                title = title,
+                description = description,
+                reminderDate = reminderDate,
+                priority = priority,
+                categoryId = categoryId
+            )
+
+            if (updateTaskUseCase(updatedTask)) {
+                hideAddTaskDialog()
+            } else {
+                _operationFailures.emit(TaskOperationFailure.UPDATE)
             }
         }
     }
 
     fun toggleTaskCompletion(taskId: Long, isCompleted: Boolean) {
         viewModelScope.launch {
-            updateTaskStatusUseCase(taskId, isCompleted)
-
+            if (!updateTaskStatusUseCase(taskId, isCompleted)) {
+                _operationFailures.emit(TaskOperationFailure.STATUS_UPDATE)
+            }
         }
     }
 
 
     fun clearCompletedTasks() {
         viewModelScope.launch {
-            deleteCompletedTasksUseCase()
-
+            if (!deleteCompletedTasksUseCase()) {
+                _operationFailures.emit(TaskOperationFailure.CLEAR_COMPLETED)
+            }
         }
     }
 

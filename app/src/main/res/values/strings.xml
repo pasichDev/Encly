@@ -240,6 +240,11 @@
     <string name="reminder_action_done">Виконано</string>
     <string name="reminder_action_snooze">Через 10 хв</string>
 
+    <string name="task_create_failed">Не вдалося зберегти завдання. Спробуйте ще раз.</string>
+    <string name="task_update_failed">Не вдалося оновити завдання. Спробуйте ще раз.</string>
+    <string name="task_status_update_failed">Не вдалося змінити стан завдання. Спробуйте ще раз.</string>
+    <string name="task_clear_completed_failed">Не вдалося очистити виконані завдання. Спробуйте ще раз.</string>
+
     <string name="note_load_failed">Не вдалося прочитати вміст нотатки. Щоб не пошкодити дані, редагування вимкнено.</string>
 
 </resources>

@@ -1,5 +1,7 @@
 package com.pasich.encly.presentation.screen
 
+import android.widget.Toast
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
@@ -55,6 +58,7 @@ import com.pasich.encly.presentation.components.tiles.TaskItem
 import com.pasich.encly.presentation.dialogs.RequestCleanCompleteTaskDialog
 import com.pasich.encly.presentation.dialogs.tasks.AddTaskDialog
 import com.pasich.encly.presentation.viewmodel.TaskFilter
+import com.pasich.encly.presentation.viewmodel.TaskOperationFailure
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
 
 data class TasksScreenUiState(
@@ -71,6 +75,21 @@ fun TasksScreen(
     val uiState by viewModel.uiState.collectAsState()
     val showAddTaskDialog by viewModel.showAddTaskDialog.collectAsState()
     val editingTask by viewModel.editingTask.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel) {
+        viewModel.operationFailures.collect { failure ->
+            val message = when (failure) {
+                TaskOperationFailure.CREATE -> context.getString(R.string.task_create_failed)
+                TaskOperationFailure.UPDATE -> context.getString(R.string.task_update_failed)
+                TaskOperationFailure.STATUS_UPDATE ->
+                    context.getString(R.string.task_status_update_failed)
+                TaskOperationFailure.CLEAR_COMPLETED ->
+                    context.getString(R.string.task_clear_completed_failed)
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
 
     // Centralized UI state
     var screenUiState by remember { mutableStateOf(TasksScreenUiState()) }
@@ -250,12 +269,6 @@ fun TasksScreen(
             },
             onConfirm = {
                 viewModel.clearCompletedTasks()
-                // Switch the filter to "All tasks" after clearing
-                uiState.availableFilters.find {
-                    it.id == "all" && it.type == TaskFilter.Type.DATE
-                }?.let { filter ->
-                    viewModel.onFilterSelected(filter)
-                }
                 screenUiState = screenUiState.copy(showDialogCleanComplete = false)
             })
 
