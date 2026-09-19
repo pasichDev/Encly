@@ -33,10 +33,10 @@
     <string name="about_desc">Версія, Розробники, Ліцензія</string>
     
     <!-- About app screen -->
-    <string name="about_app_title">Мої Нотатки</string>
+    <string name="about_app_title">Encly</string>
     <string name="about_version">Версія</string>
     <string name="about_build_date">Дата збірки</string>
-    <string name="about_app_description">Сучасний блокнот для ваших нотаток, ідей та завдань з локальним шифруванням.</string>
+    <string name="about_app_description">Локальний зашифрований простір для нотаток, ідей та завдань без хмарної синхронізації.</string>
 
     <!-- Developer info -->
     <string name="about_developer">Розробник</string>
@@ -60,13 +60,13 @@
     <string name="about_rate_app">Оцінити додаток</string>
     <string name="about_rate_app_desc">Поставте оцінку в Google Play Store</string>
     <string name="about_support_title">Підтримка та зв\'язок</string>
-    <string name="about_encryption_note">Ваші дані шифруються локально на пристрої</string>
+    <string name="about_encryption_note">Дані vault зберігаються локально у зашифрованій SQLCipher-базі</string>
 
     <!-- Email subject -->
-    <string name="about_email_subject">My Notes - Зворотний зв\'язок</string>
+    <string name="about_email_subject">Encly - Зворотний зв\'язок</string>
 
     <string name="screen_protection_title">Захист вмісту</string>
-    <string name="screen_protection_descrpt">Приховувати застосунок нещодавніх, заборонити знімки екрану</string>
+    <string name="screen_protection_descrpt">Захист скріншотів, запису екрана та preview у нещодавніх увімкнений постійно</string>
 
     <string name="empty_notes">Немає нотаток</string>
     <string name="empty_notes_desc">Створіть свою першу нотатку, натиснувши кнопку Додати.</string>
@@ -157,7 +157,7 @@
     <string name="support_subtitle">Допоможіть розвитку додатку</string>
     <string name="support_description">Цей додаток розробляє один розробник у вільний час. Ваша підтримка дуже важлива для подальшого розвитку проекту!</string>
     <string name="support_why_title">Чому важлива ваша підтримка?</string>
-    <string name="support_why_desc">• Додавання нових функцій\n• Виправлення помилок\n• Покращення дизайну\n• Підтримка серверів\n• Мотивація розробника</string>
+    <string name="support_why_desc">• Додавання нових функцій\n• Виправлення помилок\n• Security review і тестування\n• Покращення дизайну\n• Розвиток проєкту</string>
     <string name="support_methods_title">Способи підтримки</string>
     <string name="support_coming_soon">Незабаром буде доступно:</string>
     <string name="support_google_play">Покупка в Google Play</string>
@@ -179,11 +179,11 @@
     <!-- FAQ Section -->
     <string name="about_faq_title">Часті запитання</string>
     <string name="faq_sync_title">Як працює синхронізація?</string>
-    <string name="faq_sync_answer">Синхронізація працює через Google Drive. Увійдіть у свій Google аккаунт у налаштуваннях для автоматичного збереження ваших даних.</string>
+    <string name="faq_sync_answer">Поточна beta Encly не має хмарної синхронізації. Дані vault залишаються локально на пристрої.</string>
     <string name="faq_encryption_title">Чи безпечні мої дані?</string>
-    <string name="faq_encryption_answer">Так, всі ваші дані шифруються локально на пристрої перед збереженням. Навіть при синхронізації дані залишаються зашифрованими.</string>
+    <string name="faq_encryption_answer">Так. Нотатки, мітки та завдання зберігаються у локальній SQLCipher-базі, яку відкриває випадковий ключ vault.</string>
     <string name="faq_backup_title">Як створити резервну копію?</string>
-    <string name="faq_backup_answer">Відкрийте меню → Резервні копії та відновлення → Створити резервну копію. Файл збережеться у вашому сховищі.</string>
+    <string name="faq_backup_answer">Поточна beta не експортує plaintext backup-файли. User-managed recovery seed відновлює доступ до ключа, але не замінює резервну копію втраченого файла бази.</string>
     <string name="faq_tags_title">Як використовувати теги?</string>
     <string name="faq_tags_answer">Створіть теги в меню → Теги. Потім в нотатці натисніть на іконку тегу і виберіть потрібний. Теги допомагають організувати нотатки.</string>
     <string name="faq_tasks_title">Як працюють завдання?</string>
