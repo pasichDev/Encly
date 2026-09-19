@@ -84,6 +84,11 @@ class MainActivity : FragmentActivity() {
             LaunchedEffect(locked) {
                 if (locked) {
                     navController.navigate(NavRoutes.LockRoute.name) {
+                        // Drop every screen/ViewModel backed by the now-closed Room instance.
+                        // Unlock starts a fresh Home graph with fresh DAO flows.
+                        popUpTo(navController.graph.id) {
+                            inclusive = false
+                        }
                         launchSingleTop = true
                     }
                 }
