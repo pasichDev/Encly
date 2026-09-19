@@ -82,15 +82,20 @@ class SeedPhraseManager @Inject constructor(
                 }
             }
 
-            prefs.edit {
-                putInt(VERSION_KEY, VAULT_VERSION)
-                putBoolean(RECOVERY_ENABLED_KEY, recoverySlot != null)
-                if (recoverySlot != null) {
-                    putString(RECOVERY_SLOT_KEY, Base64.encodeToString(recoverySlot, Base64.NO_WRAP))
-                } else {
-                    remove(RECOVERY_SLOT_KEY)
-                }
+            val editor = prefs.edit()
+                .putInt(VERSION_KEY, VAULT_VERSION)
+                .putBoolean(RECOVERY_ENABLED_KEY, recoverySlot != null)
+
+            if (recoverySlot != null) {
+                editor.putString(
+                    RECOVERY_SLOT_KEY,
+                    Base64.encodeToString(recoverySlot, Base64.NO_WRAP)
+                )
+            } else {
+                editor.remove(RECOVERY_SLOT_KEY)
             }
+
+            if (!editor.commit()) return false
 
             bootstrapDek = dek.copyOf()
             true
