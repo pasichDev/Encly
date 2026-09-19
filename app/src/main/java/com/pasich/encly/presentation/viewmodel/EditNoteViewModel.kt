@@ -182,19 +182,20 @@ class EditNoteViewModel
             _status.value = SaveStatusNote.LOADING
             try {
                 val note = notesRepository.getNoteById(noteId)
-                note?.let {
-                    // Load the blocks from the note's content
-                    loadBlocksFromNote(it)
+                if (note == null) {
+                    _contentLoadFailed.value = true
+                    _lockEditor.value = true
+                    AppLogger.e("EditNoteViewModel", "Requested note does not exist")
+                } else {
+                    // Load the blocks from the note's content.
+                    loadBlocksFromNote(note)
 
                     delay(500)
 
-                    // Update the note state depending on the mode
-                    updateNoteState(it, isCopy)
-
+                    // Update the note state depending on the mode.
+                    updateNoteState(note, isCopy)
                     _lockEditor.value = isReadTrashOnly
                 }
-
-                AppLogger.d("EditNoteViewModel", "Note loaded successfully with ID: $noteId")
             } catch (e: Exception) {
                 AppLogger.e("EditNoteViewModel", "Error loading note: ${e.message}")
             }
