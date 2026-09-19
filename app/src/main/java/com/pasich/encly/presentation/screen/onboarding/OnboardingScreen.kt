@@ -171,8 +171,8 @@ fun OnboardingScreen(
                     page == 2 && uiState.securityType == SecurityType.AUTO_MANAGED -> {
                         CompletionSlide(
                             onComplete = {
+                                // Navigation is single-sourced by the isComplete LaunchedEffect.
                                 viewModel.completeOnboarding()
-                                onComplete()
                             }, securityType = uiState.securityType
                         )
                     }
@@ -181,8 +181,8 @@ fun OnboardingScreen(
                     page == 3 && uiState.securityType == SecurityType.USER_MANAGED -> {
                         CompletionSlide(
                             onComplete = {
+                                // Navigation is single-sourced by the isComplete LaunchedEffect.
                                 viewModel.completeOnboarding()
-                                onComplete()
                             }, securityType = uiState.securityType
                         )
                     }
