@@ -198,7 +198,7 @@ val items = listOfNotNull(
             onSearch = {
                 addToRecentSearches(searchQuery)
             },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.PasswordVisible),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             placeholder = {
                 Text(
                     text = stringResource(R.string.search_notes),
