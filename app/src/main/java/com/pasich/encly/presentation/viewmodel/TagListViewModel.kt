@@ -63,61 +63,55 @@ class TagListViewModel @Inject constructor(
 
     fun onEvent(event: TagListEvent) {
         when (event) {
-            is TagListEvent.AddTag -> {
-                viewModelScope.launch {
-                    val newPosition = (_state.value.listTags.minOfOrNull { it.position } ?: 0) - 1
-                    val added = addTagUseCase(event.tag.copy(position = newPosition)) > 0L
-                    event.onResult(added)
-                    if (!added) {
-                        _operationFailures.emit(TagOperationFailure.CREATE)
-                    }
-                }
-            }
+            is TagListEvent.AddTag -> addTag(event)
+            is TagListEvent.DeleteTag -> deleteTag(event.tag)
+            is TagListEvent.UpdateTag -> updateTag(event.tag)
+            is TagListEvent.SelectTag -> selectTagUseCase(event.tag)
+            is TagListEvent.ReorderTags -> scheduleReorder(event.tags)
+            is TagListEvent.ReorderTagsLive -> reorderTags(event)
+            is TagListEvent.ToggleVisibleTag -> updateTag(
+                event.tag.copy(isVisible = !event.tag.isVisible)
+            )
+        }
+    }
 
-            is TagListEvent.DeleteTag -> {
-                viewModelScope.launch {
-                    if (deleteTagUseCase(event.tag)) {
-                        if (_state.value.selectedTagId == event.tag.id) {
-                            selectTagUseCase(Tag(id = 0, nameTag = "All"))
-                        }
-                    } else {
-                        _operationFailures.emit(TagOperationFailure.DELETE)
-                    }
-                }
-            }
-
-            is TagListEvent.UpdateTag -> {
-                viewModelScope.launch {
-                    if (!updateTagUseCase(event.tag)) {
-                        _operationFailures.emit(TagOperationFailure.UPDATE)
-                    }
-                }
-            }
-
-            is TagListEvent.SelectTag -> {
-                selectTagUseCase(event.tag)
-            }
-
-            is TagListEvent.ReorderTags -> {
-                scheduleReorder(event.tags)
-            }
-
-            is TagListEvent.ReorderTagsLive -> {
-                val reorderedTags = _state.value.listTags.toMutableList().apply {
-                    add(event.to, removeAt(event.from))
-                }
-                _state.update { it.copy(listTags = reorderedTags) }
-                scheduleReorder(reorderedTags)
-            }
-
-            is TagListEvent.ToggleVisibleTag -> {
-                viewModelScope.launch {
-                    if (!updateTagUseCase(event.tag.copy(isVisible = !event.tag.isVisible))) {
-                        _operationFailures.emit(TagOperationFailure.UPDATE)
-                    }
-                }
+    private fun addTag(event: TagListEvent.AddTag) {
+        viewModelScope.launch {
+            val newPosition = (_state.value.listTags.minOfOrNull { it.position } ?: 0) - 1
+            val added = addTagUseCase(event.tag.copy(position = newPosition)) > 0L
+            event.onResult(added)
+            if (!added) {
+                _operationFailures.emit(TagOperationFailure.CREATE)
             }
         }
+    }
+
+    private fun deleteTag(tag: Tag) {
+        viewModelScope.launch {
+            if (deleteTagUseCase(tag)) {
+                if (_state.value.selectedTagId == tag.id) {
+                    selectTagUseCase(Tag(id = 0, nameTag = "All"))
+                }
+            } else {
+                _operationFailures.emit(TagOperationFailure.DELETE)
+            }
+        }
+    }
+
+    private fun updateTag(tag: Tag) {
+        viewModelScope.launch {
+            if (!updateTagUseCase(tag)) {
+                _operationFailures.emit(TagOperationFailure.UPDATE)
+            }
+        }
+    }
+
+    private fun reorderTags(event: TagListEvent.ReorderTagsLive) {
+        val reorderedTags = _state.value.listTags.toMutableList().apply {
+            add(event.to, removeAt(event.from))
+        }
+        _state.update { it.copy(listTags = reorderedTags) }
+        scheduleReorder(reorderedTags)
     }
 
     private fun scheduleReorder(tags: List<Tag>) {

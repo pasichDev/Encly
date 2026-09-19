@@ -309,6 +309,7 @@ fun ListTagsEdit(
 }
 
 
+@Suppress("LongMethod") // Existing Material text-field layout; persistence result handling is local.
 @Composable
 fun NewTagItem(
     item: String,

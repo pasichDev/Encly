@@ -55,44 +55,43 @@ class DatabaseLocalDataSource @Inject constructor(
     // Tags
     fun getTags() = tagsDao().getTags()
 
-    suspend fun addTags(tags: List<Tag>): Boolean = try {
+    suspend fun addTags(tags: List<Tag>): Boolean = runTagWrite("addTags", false) {
         tagsDao().addTags(tags)
         true
-    } catch (exception: Exception) {
-        AppLogger.e(TAG, "addTags failed", exception)
-        false
     }
 
-    suspend fun addTag(tag: Tag): Long = try {
+    suspend fun addTag(tag: Tag): Long = runTagWrite("addTag", 0L) {
         tagsDao().addTag(tag)
-    } catch (exception: Exception) {
-        AppLogger.e(TAG, "addTag failed", exception)
-        0L
     }
 
-    suspend fun deleteTag(tag: Tag): Boolean = try {
+    suspend fun deleteTag(tag: Tag): Boolean = runTagWrite("deleteTag", false) {
         tagsDao().deleteTag(tag) > 0
-    } catch (exception: Exception) {
-        AppLogger.e(TAG, "deleteTag failed", exception)
-        false
     }
 
-    suspend fun updateTag(tag: Tag): Boolean = try {
+    suspend fun updateTag(tag: Tag): Boolean = runTagWrite("updateTag", false) {
         tagsDao().updateTag(tag) > 0
-    } catch (exception: Exception) {
-        AppLogger.e(TAG, "updateTag failed", exception)
-        false
     }
 
     suspend fun updateTags(tags: List<Tag>): Boolean {
         if (tags.isEmpty()) return true
 
-        return try {
+        return runTagWrite("updateTags", false) {
             tagsDao().updateTags(tags) == tags.size
-        } catch (exception: Exception) {
-            AppLogger.e(TAG, "updateTags failed", exception)
-            false
         }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun <T> runTagWrite(
+        operation: String,
+        failureValue: T,
+        block: suspend () -> T
+    ): T = try {
+        block()
+    } catch (exception: Exception) {
+        // Storage failures can originate in Room, SQLCipher, or a closed vault. They must
+        // become a safe operation failure instead of leaking a backend exception to the UI.
+        AppLogger.e(TAG, "$operation failed", exception)
+        failureValue
     }
 
     // Trash
