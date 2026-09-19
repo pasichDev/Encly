@@ -59,15 +59,15 @@ class AuthenticationManager @Inject constructor(
         val kek = derivePinKek(pinChars, salt)
         return try {
             val wrapped = wrapDek(dek, kek)
-            secureStoragePrefs.edit {
-                putString(PIN_SALT_KEY, Base64.encodeToString(salt, Base64.NO_WRAP))
-                putString(PIN_SLOT_KEY, Base64.encodeToString(wrapped, Base64.NO_WRAP))
-                putInt(AUTH_TYPE_KEY, AuthType.PIN.ordinal)
-                remove(PIN_ATTEMPTS_KEY)
-                remove(PIN_LOCKOUT_UNTIL_KEY)
-            }
+            val committed = secureStoragePrefs.edit()
+                .putString(PIN_SALT_KEY, Base64.encodeToString(salt, Base64.NO_WRAP))
+                .putString(PIN_SLOT_KEY, Base64.encodeToString(wrapped, Base64.NO_WRAP))
+                .putInt(AUTH_TYPE_KEY, AuthType.PIN.ordinal)
+                .remove(PIN_ATTEMPTS_KEY)
+                .remove(PIN_LOCKOUT_UNTIL_KEY)
+                .commit()
             SensitiveDataCleaner.clear(wrapped)
-            true
+            committed
         } catch (_: Exception) {
             false
         } finally {
