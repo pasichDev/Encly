@@ -36,6 +36,18 @@ import kotlinx.coroutines.delay
 private const val TASK_REMOVAL_ANIMATION_MS = 400
 private const val TASK_TRANSLATION_X = 100f
 
+private data class TaskCardState(
+    val enabled: Boolean,
+    val isRemoving: Boolean,
+    val animationProgress: Float
+)
+
+private data class TaskCardActions(
+    val onClick: () -> Unit,
+    val onComplete: () -> Unit,
+    val onUndo: () -> Unit
+)
+
 @Composable
 fun TaskItem(
     task: Task,
@@ -59,15 +71,17 @@ fun TaskItem(
         onTaskToggle = onTaskToggle
     )
 
-    TaskCard(
-        task = task,
+    val state = TaskCardState(
         enabled = enabled,
         isRemoving = isRemoving,
-        animationProgress = animationProgress,
+        animationProgress = animationProgress
+    )
+    val actions = TaskCardActions(
         onClick = { onTaskClick?.invoke(task) },
         onComplete = { shouldComplete = true },
         onUndo = { onTaskToggle(task.id, false) }
     )
+    TaskCard(task, state, actions)
 }
 
 @Composable
@@ -91,45 +105,36 @@ private fun CompleteTaskAfterAnimation(
 @Composable
 private fun TaskCard(
     task: Task,
-    enabled: Boolean,
-    isRemoving: Boolean,
-    animationProgress: Float,
-    onClick: () -> Unit,
-    onComplete: () -> Unit,
-    onUndo: () -> Unit
+    state: TaskCardState,
+    actions: TaskCardActions
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer {
-                alpha = animationProgress
-                scaleX = animationProgress
-                scaleY = animationProgress
-                translationX = (1f - animationProgress) * TASK_TRANSLATION_X
+                alpha = state.animationProgress
+                scaleX = state.animationProgress
+                scaleY = state.animationProgress
+                translationX = (1f - state.animationProgress) * TASK_TRANSLATION_X
             }
-            .clickable(enabled = enabled && !task.isCompleted && !isRemoving, onClick = onClick),
+            .clickable(
+                enabled = state.enabled && !task.isCompleted && !state.isRemoving,
+                onClick = actions.onClick
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        TaskCardContent(
-            task = task,
-            enabled = enabled,
-            isRemoving = isRemoving,
-            onComplete = onComplete,
-            onUndo = onUndo
-        )
+        TaskCardContent(task, state, actions)
     }
 }
 
 @Composable
 private fun TaskCardContent(
     task: Task,
-    enabled: Boolean,
-    isRemoving: Boolean,
-    onComplete: () -> Unit,
-    onUndo: () -> Unit
+    state: TaskCardState,
+    actions: TaskCardActions
 ) {
     Row(
         modifier = Modifier
@@ -144,9 +149,9 @@ private fun TaskCardContent(
         ) {
             TaskCheckbox(
                 task = task,
-                enabled = enabled && !isRemoving,
-                onComplete = onComplete,
-                onUndo = onUndo
+                enabled = state.enabled && !state.isRemoving,
+                onComplete = actions.onComplete,
+                onUndo = actions.onUndo
             )
             TaskTextContent(task)
         }
