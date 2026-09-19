@@ -64,6 +64,7 @@ class SeedPhraseManager @Inject constructor(
      * [recoverySeed] == null means auto-managed mode: the DEK can only be persisted once the
      * mandatory PIN slot is created. If setup is interrupted before then, onboarding restarts.
      */
+    @Suppress("ReturnCount") // Invalid seed and failed durable metadata commits abort setup immediately.
     @Synchronized
     fun initializeVault(recoverySeed: CharArray?): Boolean {
         if (recoverySeed != null && !isValidMnemonic(recoverySeed)) return false
