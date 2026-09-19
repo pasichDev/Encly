@@ -47,7 +47,9 @@ data class TasksUiState(
 )
 
 @HiltViewModel
-class TasksViewModel @Inject constructor(
+class TasksViewModel
+@Suppress("LongParameterList") // Hilt wiring: bundling independent task use cases would hide dependencies.
+@Inject constructor(
     private val getActiveTasksUseCase: GetActiveTasksUseCase,
     private val getCompletedTasksUseCase: GetCompletedTasksUseCase,
     private val getTasksCountUseCase: GetTasksCountUseCase,

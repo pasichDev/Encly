@@ -100,6 +100,13 @@ private data class LockCapabilities(
     val recoveryAvailable: Boolean
 )
 
+private data class PinAuthCallbacks(
+    val onInputConsumed: () -> Unit,
+    val onUnlocked: () -> Unit,
+    val onWrongPin: () -> Unit,
+    val onDatabaseError: () -> Unit
+)
+
 @Composable
 private fun PinLockContent(
     viewModel: LockViewModel,
@@ -116,13 +123,15 @@ private fun PinLockContent(
     PinAuthenticationEffect(
         viewModel = viewModel,
         input = input,
-        onInputConsumed = { input = "" },
-        onUnlocked = onUnlocked,
-        onWrongPin = {
-            error = "Невірний PIN-код"
-            lockoutSeconds = remainingSeconds(viewModel.lockoutRemainingMillis())
-        },
-        onDatabaseError = { error = "Не вдалося відкрити базу даних" }
+        callbacks = PinAuthCallbacks(
+            onInputConsumed = { input = "" },
+            onUnlocked = onUnlocked,
+            onWrongPin = {
+                error = "Невірний PIN-код"
+                lockoutSeconds = remainingSeconds(viewModel.lockoutRemainingMillis())
+            },
+            onDatabaseError = { error = "Не вдалося відкрити базу даних" }
+        )
     )
 
     PinEntryScaffold(
@@ -165,25 +174,22 @@ private fun PinLockoutTicker(
 private fun PinAuthenticationEffect(
     viewModel: LockViewModel,
     input: String,
-    onInputConsumed: () -> Unit,
-    onUnlocked: () -> Unit,
-    onWrongPin: () -> Unit,
-    onDatabaseError: () -> Unit
+    callbacks: PinAuthCallbacks
 ) {
     LaunchedEffect(input) {
         if (input.length != PIN_LENGTH) return@LaunchedEffect
         if (viewModel.lockoutRemainingMillis() > 0) {
-            onInputConsumed()
+            callbacks.onInputConsumed()
             return@LaunchedEffect
         }
 
         val pin = input
-        onInputConsumed()
+        callbacks.onInputConsumed()
         viewModel.authenticatePin(pin) { result ->
             when (result) {
-                PinUnlockResult.SUCCESS -> onUnlocked()
-                PinUnlockResult.WRONG_PIN -> onWrongPin()
-                PinUnlockResult.DB_ERROR -> onDatabaseError()
+                PinUnlockResult.SUCCESS -> callbacks.onUnlocked()
+                PinUnlockResult.WRONG_PIN -> callbacks.onWrongPin()
+                PinUnlockResult.DB_ERROR -> callbacks.onDatabaseError()
             }
         }
     }
