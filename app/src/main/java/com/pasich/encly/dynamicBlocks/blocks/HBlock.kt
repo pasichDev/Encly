@@ -23,6 +23,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockActions
@@ -120,7 +121,10 @@ fun HBlock(
         },
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         textStyle = textStyle,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.PasswordVisible,
+            imeAction = ImeAction.Next
+        ),
         keyboardActions =
             KeyboardActions(onNext = {
                 AppLogger.d("HBlock", "onNext called: index=$index, isEmpty=${text.isEmpty()}")
