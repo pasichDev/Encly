@@ -11,17 +11,17 @@ class TagsRepositoryImpl @Inject constructor(
     private val databaseLocalDataSource: DatabaseLocalDataSource
 ) : TagsRepository {
 
-    private val _selectedTagFlow = MutableStateFlow<Tag>(Tag())
+    private val _selectedTagFlow = MutableStateFlow(Tag())
     override val selectedTagFlow = _selectedTagFlow.asSharedFlow()
 
     override suspend fun selectTag(tag: Tag) {
         _selectedTagFlow.emit(tag)
     }
 
-    //Tags
     override fun getTags() = databaseLocalDataSource.getTags()
-    override fun addTags(tags: List<Tag>) = databaseLocalDataSource.addTags(tags)
-    override fun addTag(tag: Tag) = databaseLocalDataSource.addTag(tag)
-    override fun deleteTag(tag: Tag) = databaseLocalDataSource.deleteTag(tag)
-    override fun updateTag(tag: Tag) = databaseLocalDataSource.updateTag(tag)
+    override suspend fun addTags(tags: List<Tag>) = databaseLocalDataSource.addTags(tags)
+    override suspend fun addTag(tag: Tag) = databaseLocalDataSource.addTag(tag)
+    override suspend fun deleteTag(tag: Tag) = databaseLocalDataSource.deleteTag(tag)
+    override suspend fun updateTag(tag: Tag) = databaseLocalDataSource.updateTag(tag)
+    override suspend fun updateTags(tags: List<Tag>) = databaseLocalDataSource.updateTags(tags)
 }

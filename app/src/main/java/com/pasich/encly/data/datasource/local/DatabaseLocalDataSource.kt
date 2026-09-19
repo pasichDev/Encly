@@ -54,10 +54,46 @@ class DatabaseLocalDataSource @Inject constructor(
 
     // Tags
     fun getTags() = tagsDao().getTags()
-    fun addTags(tags: List<Tag>) = tagsDao().addTags(tags)
-    fun addTag(tag: Tag) = tagsDao().addTag(tag)
-    fun deleteTag(tag: Tag) = tagsDao().deleteTag(tag)
-    fun updateTag(tag: Tag) = tagsDao().updateTag(tag)
+
+    suspend fun addTags(tags: List<Tag>): Boolean = try {
+        tagsDao().addTags(tags)
+        true
+    } catch (exception: Exception) {
+        AppLogger.e(TAG, "addTags failed", exception)
+        false
+    }
+
+    suspend fun addTag(tag: Tag): Long = try {
+        tagsDao().addTag(tag)
+    } catch (exception: Exception) {
+        AppLogger.e(TAG, "addTag failed", exception)
+        0L
+    }
+
+    suspend fun deleteTag(tag: Tag): Boolean = try {
+        tagsDao().deleteTag(tag) > 0
+    } catch (exception: Exception) {
+        AppLogger.e(TAG, "deleteTag failed", exception)
+        false
+    }
+
+    suspend fun updateTag(tag: Tag): Boolean = try {
+        tagsDao().updateTag(tag) > 0
+    } catch (exception: Exception) {
+        AppLogger.e(TAG, "updateTag failed", exception)
+        false
+    }
+
+    suspend fun updateTags(tags: List<Tag>): Boolean {
+        if (tags.isEmpty()) return true
+
+        return try {
+            tagsDao().updateTags(tags) == tags.size
+        } catch (exception: Exception) {
+            AppLogger.e(TAG, "updateTags failed", exception)
+            false
+        }
+    }
 
     // Trash
     fun getTrashNotes() = notesDao().getTrashNotes()

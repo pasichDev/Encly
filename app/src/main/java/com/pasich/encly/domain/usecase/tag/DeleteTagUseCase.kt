@@ -5,8 +5,5 @@ import com.pasich.encly.data.repository.TagsRepository
 import javax.inject.Inject
 
 class DeleteTagUseCase @Inject constructor(private val tagsRepository: TagsRepository) {
-    suspend operator fun invoke(tag: Tag) {
-        tagsRepository.deleteTag(tag)
-    }
+    suspend operator fun invoke(tag: Tag): Boolean = tagsRepository.deleteTag(tag)
 }
-

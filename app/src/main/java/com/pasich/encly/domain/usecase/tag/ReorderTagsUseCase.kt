@@ -7,11 +7,8 @@ import javax.inject.Inject
 class ReorderTagsUseCase @Inject constructor(
     private val tagsRepository: TagsRepository
 ) {
-    suspend operator fun invoke(tags: List<Tag>) {
-        // Update the position for each tag
-        tags.forEachIndexed { index, tag ->
-            val updatedTag = tag.copy(position = index)
-            tagsRepository.updateTag(updatedTag)
-        }
-    }
+    suspend operator fun invoke(tags: List<Tag>): Boolean =
+        tagsRepository.updateTags(
+            tags.mapIndexed { index, tag -> tag.copy(position = index) }
+        )
 }

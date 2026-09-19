@@ -5,14 +5,13 @@ import kotlinx.coroutines.flow.Flow
 
 interface TagsRepository {
 
-    // Tags
     fun getTags(): Flow<List<Tag>>
-    fun addTags(tags: List<Tag>)
-    fun addTag(tag: Tag)
-    fun deleteTag(tag: Tag)
-    fun updateTag(tag: Tag)
+    suspend fun addTags(tags: List<Tag>): Boolean
+    suspend fun addTag(tag: Tag): Long
+    suspend fun deleteTag(tag: Tag): Boolean
+    suspend fun updateTag(tag: Tag): Boolean
+    suspend fun updateTags(tags: List<Tag>): Boolean
 
-    // Shared selected tag
     val selectedTagFlow: Flow<Tag>
     suspend fun selectTag(tag: Tag)
 }

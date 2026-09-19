@@ -13,13 +13,24 @@ import com.pasich.encly.domain.usecase.tag.ReorderTagsUseCase
 import com.pasich.encly.domain.usecase.tag.SelectTagUseCase
 import com.pasich.encly.domain.usecase.tag.UpdateTagUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+enum class TagOperationFailure {
+    CREATE,
+    UPDATE,
+    DELETE,
+    REORDER
+}
 
 @HiltViewModel
 class TagListViewModel @Inject constructor(
@@ -35,6 +46,12 @@ class TagListViewModel @Inject constructor(
     private val _state = MutableStateFlow(TagListState())
     val state: StateFlow<TagListState> = _state.asStateFlow()
 
+    private val _operationFailures = MutableSharedFlow<TagOperationFailure>(extraBufferCapacity = 1)
+    val operationFailures: SharedFlow<TagOperationFailure> = _operationFailures.asSharedFlow()
+
+    private var persistedTags: List<Tag> = emptyList()
+    private var reorderJob: Job? = null
+
     init {
         loadTags()
         viewModelScope.launch {
@@ -47,24 +64,33 @@ class TagListViewModel @Inject constructor(
     fun onEvent(event: TagListEvent) {
         when (event) {
             is TagListEvent.AddTag -> {
-                viewModelScope.launch(Dispatchers.IO) {
+                viewModelScope.launch {
                     val newPosition = (_state.value.listTags.minOfOrNull { it.position } ?: 0) - 1
-                    addTagUseCase.invoke(event.tag.copy(position = newPosition))
+                    val added = addTagUseCase(event.tag.copy(position = newPosition)) > 0L
+                    event.onResult(added)
+                    if (!added) {
+                        _operationFailures.emit(TagOperationFailure.CREATE)
+                    }
                 }
             }
 
             is TagListEvent.DeleteTag -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    if (_state.value.selectedTagId == event.tag.id) {
-                        selectTagUseCase(Tag(id = 0, nameTag = "All"))
+                viewModelScope.launch {
+                    if (deleteTagUseCase(event.tag)) {
+                        if (_state.value.selectedTagId == event.tag.id) {
+                            selectTagUseCase(Tag(id = 0, nameTag = "All"))
+                        }
+                    } else {
+                        _operationFailures.emit(TagOperationFailure.DELETE)
                     }
-                    deleteTagUseCase.invoke(event.tag)
                 }
             }
 
             is TagListEvent.UpdateTag -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    updateTagUseCase.invoke(event.tag)
+                viewModelScope.launch {
+                    if (!updateTagUseCase(event.tag)) {
+                        _operationFailures.emit(TagOperationFailure.UPDATE)
+                    }
                 }
             }
 
@@ -73,22 +99,34 @@ class TagListViewModel @Inject constructor(
             }
 
             is TagListEvent.ReorderTags -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    reorderTagsUseCase.invoke(event.tags)
-                }
+                scheduleReorder(event.tags)
             }
 
             is TagListEvent.ReorderTagsLive -> {
-                _state.value =
-                    _state.value.copy(listTags = _state.value.listTags.toMutableList().apply {
-                        add(event.to, removeAt(event.from))
-                    })
+                val reorderedTags = _state.value.listTags.toMutableList().apply {
+                    add(event.to, removeAt(event.from))
+                }
+                _state.update { it.copy(listTags = reorderedTags) }
+                scheduleReorder(reorderedTags)
             }
 
             is TagListEvent.ToggleVisibleTag -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    updateTagUseCase.invoke(event.tag.copy(isVisible = !event.tag.isVisible))
+                viewModelScope.launch {
+                    if (!updateTagUseCase(event.tag.copy(isVisible = !event.tag.isVisible))) {
+                        _operationFailures.emit(TagOperationFailure.UPDATE)
+                    }
                 }
+            }
+        }
+    }
+
+    private fun scheduleReorder(tags: List<Tag>) {
+        reorderJob?.cancel()
+        reorderJob = viewModelScope.launch {
+            delay(REORDER_SAVE_DEBOUNCE_MS)
+            if (!reorderTagsUseCase(tags)) {
+                _state.update { it.copy(listTags = persistedTags) }
+                _operationFailures.emit(TagOperationFailure.REORDER)
             }
         }
     }
@@ -102,9 +140,11 @@ class TagListViewModel @Inject constructor(
                     }
 
                     is UiState.Success -> {
+                        val tags = uiState.data.orEmpty()
+                        persistedTags = tags
                         _state.update {
                             it.copy(
-                                listTags = uiState.data ?: emptyList(),
+                                listTags = tags,
                                 baseState = it.baseState.copy(isLoading = false)
                             )
                         }
@@ -114,7 +154,8 @@ class TagListViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 baseState = it.baseState.copy(
-                                    isLoading = false, error = uiState.message.toString()
+                                    isLoading = false,
+                                    error = uiState.message.toString()
                                 )
                             )
                         }
@@ -123,11 +164,18 @@ class TagListViewModel @Inject constructor(
             }
         }
     }
+
+    private companion object {
+        const val REORDER_SAVE_DEBOUNCE_MS = 300L
+    }
 }
 
-
 sealed class TagListEvent {
-    data class AddTag(val tag: Tag) : TagListEvent()
+    data class AddTag(
+        val tag: Tag,
+        val onResult: (Boolean) -> Unit
+    ) : TagListEvent()
+
     data class DeleteTag(val tag: Tag) : TagListEvent()
     data class UpdateTag(val tag: Tag) : TagListEvent()
     data class SelectTag(val tag: Tag) : TagListEvent()
@@ -137,8 +185,7 @@ sealed class TagListEvent {
 }
 
 data class TagListState(
-    val listTags: List<Tag> = emptyList<Tag>(),
+    val listTags: List<Tag> = emptyList(),
     val selectedTagId: Long = 0,
     val baseState: BaseState = BaseState()
 )
-

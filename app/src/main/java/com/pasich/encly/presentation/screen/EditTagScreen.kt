@@ -1,5 +1,7 @@
 package com.pasich.encly.presentation.screen
 
+import android.widget.Toast
+
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -62,6 +64,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
@@ -81,6 +84,7 @@ import com.pasich.encly.R
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.presentation.dialogs.RequestDeleteTagsDialog
 import com.pasich.encly.presentation.viewmodel.TagListEvent
+import com.pasich.encly.presentation.viewmodel.TagOperationFailure
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -147,6 +151,7 @@ fun ListTagsEdit(
     keyboardController: SoftwareKeyboardController?
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     var tagDelete by remember { mutableStateOf(Tag()) }
     val listState = rememberLazyListState()
@@ -154,6 +159,18 @@ fun ListTagsEdit(
 
     // Track currently focused item to prevent multiple focuses
     var currentlyFocusedItemId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.operationFailures.collect { failure ->
+            val message = when (failure) {
+                TagOperationFailure.CREATE -> context.getString(R.string.tag_create_failed)
+                TagOperationFailure.UPDATE -> context.getString(R.string.tag_update_failed)
+                TagOperationFailure.DELETE -> context.getString(R.string.tag_delete_failed)
+                TagOperationFailure.REORDER -> context.getString(R.string.tag_reorder_failed)
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
 
     // Clear focus when dialog is shown
     LaunchedEffect(showDialog) {
@@ -207,9 +224,15 @@ fun ListTagsEdit(
         ) {
             NewTagItem(
                 item = "",
-                onSave = {
-                    viewModel.onEvent(TagListEvent.AddTag(it))
-                    currentlyFocusedItemId = null
+                onSave = { tag, onResult ->
+                    viewModel.onEvent(
+                        TagListEvent.AddTag(tag) { success ->
+                            if (success) {
+                                currentlyFocusedItemId = null
+                            }
+                            onResult(success)
+                        }
+                    )
                 },
                 globalFocusManager = globalFocusManager,
                 keyboardController = keyboardController,
@@ -289,7 +312,7 @@ fun ListTagsEdit(
 @Composable
 fun NewTagItem(
     item: String,
-    onSave: (Tag) -> Unit,
+    onSave: (Tag, (Boolean) -> Unit) -> Unit,
     globalFocusManager: FocusManager,
     keyboardController: SoftwareKeyboardController?,
     onFocusChange: (Boolean) -> Unit
@@ -304,13 +327,19 @@ fun NewTagItem(
     }
 
     fun handleSave() {
-        if (text.text.isNotBlank()) {
-            onSave(Tag(nameTag = text.text.trim()))
-            text = TextFieldValue("")
+        if (text.text.isBlank()) {
+            handleCancel()
+            return
         }
-        isTextFieldEnabled = false
-        globalFocusManager.clearFocus()
-        keyboardController?.hide()
+
+        onSave(Tag(nameTag = text.text.trim())) { success ->
+            if (success) {
+                text = TextFieldValue("")
+                isTextFieldEnabled = false
+                globalFocusManager.clearFocus()
+                keyboardController?.hide()
+            }
+        }
     }
 
     fun handleCancel() {
@@ -473,8 +502,10 @@ fun TagEditItem(
 
     fun handleSave() {
         if (text.text.isNotBlank()) {
-            item.nameTag = text.text.trim()
-            onAction(TagEditTypeAction.EDIT, item)
+            onAction(
+                TagEditTypeAction.EDIT,
+                item.copy(nameTag = text.text.trim())
+            )
         }
         isTextFieldEnabled = false
         globalFocusManager.clearFocus()

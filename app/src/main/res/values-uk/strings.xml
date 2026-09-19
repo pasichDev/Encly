@@ -11,4 +11,10 @@
     <string name="task_clear_completed_failed">
         Не вдалося очистити виконані завдання. Спробуйте ще раз.
     </string>
+    <string name="tag_create_failed">Не вдалося зберегти мітку. Спробуйте ще раз.</string>
+    <string name="tag_update_failed">Не вдалося оновити мітку. Спробуйте ще раз.</string>
+    <string name="tag_delete_failed">Не вдалося видалити мітку. Спробуйте ще раз.</string>
+    <string name="tag_reorder_failed">
+        Не вдалося зберегти порядок міток. Спробуйте ще раз.
+    </string>
 </resources>

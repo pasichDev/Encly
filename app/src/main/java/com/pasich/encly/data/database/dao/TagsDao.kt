@@ -12,18 +12,20 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TagsDao {
     @Query("SELECT * FROM tags")
-     fun getTags(): Flow<List<Tag>>
+    fun getTags(): Flow<List<Tag>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-     fun addTags(tags: List<Tag>)
+    suspend fun addTags(tags: List<Tag>): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-     fun addTag(tag: Tag)
+    suspend fun addTag(tag: Tag): Long
 
     @Update
-     fun updateTag(tag: Tag)
+    suspend fun updateTag(tag: Tag): Int
+
+    @Update
+    suspend fun updateTags(tags: List<Tag>): Int
 
     @Delete
-     fun deleteTag(tag: Tag)
-
+    suspend fun deleteTag(tag: Tag): Int
 }
