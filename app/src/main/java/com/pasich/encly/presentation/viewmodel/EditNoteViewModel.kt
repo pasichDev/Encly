@@ -219,12 +219,9 @@ class EditNoteViewModel
                     _blocks.clear()
                     _blocks.addAll(loadedBlocks)
                     updateUndoRedoState()
-                } else {
-                    // Non-empty stored content but nothing parsed back — treat as a
-                    // load failure and protect the original from being overwritten.
-                    _contentLoadFailed.value = true
-                    AppLogger.e("EditNoteViewModel", "Note content present but failed to parse")
                 }
+                // A valid [] payload represents a title-only note. Keep the editor's
+                // initial blank text block instead of treating that as corruption.
             } catch (e: Exception) {
                 _contentLoadFailed.value = true
                 AppLogger.e("EditNoteViewModel", "Error converting blocks from JSON: ${e.message}")
@@ -739,7 +736,7 @@ class EditNoteViewModel
         val currentNote = _state.value.note
         if (currentNote.id == -1L) return@withLock false
 
-        val blocksJson = BlockConverter.blocksToJson(blocks)
+        val blocksJson = serializeNonBlankBlocks()
         updateNoteTrashStatusUseCase.invoke(
             currentNote.copy(value = blocksJson),
             false,
@@ -754,7 +751,7 @@ class EditNoteViewModel
         val currentNote = _state.value.note
         if (currentNote.id == -1L) return@withLock true
 
-        val blocksJson = BlockConverter.blocksToJson(blocks)
+        val blocksJson = serializeNonBlankBlocks()
         updateNoteTrashStatusUseCase.invoke(currentNote.copy(value = blocksJson), true)
     }
 
@@ -764,7 +761,7 @@ class EditNoteViewModel
      */
     suspend fun noteDuplicate(): Long = saveMutex.withLock {
         val currentNote = _state.value.note
-        val blocksJson = BlockConverter.blocksToJson(blocks)
+        val blocksJson = serializeNonBlankBlocks()
         try {
             notesRepository.insertNote(
                 Note.new(
