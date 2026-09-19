@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,6 +33,9 @@ import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import kotlinx.coroutines.delay
+
+private const val MILLIS_PER_SECOND = 1_000L
+private const val LOCKOUT_ROUNDING_MILLIS = MILLIS_PER_SECOND - 1L
 
 @Composable
 fun LockScreen(
@@ -107,44 +112,22 @@ private fun PinLockContent(
     var error by remember { mutableStateOf<String?>(null) }
     var lockoutSeconds by remember { mutableLongStateOf(0L) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            val remaining = viewModel.lockoutRemainingMillis()
-            lockoutSeconds = (remaining + 999) / 1000
-            if (remaining <= 0) break
-            delay(1000)
-        }
-    }
-
-    LaunchedEffect(input) {
-        if (input.length == PIN_LENGTH) {
-            if (viewModel.lockoutRemainingMillis() > 0) {
-                input = ""
-                return@LaunchedEffect
-            }
-
-            val pin = input
-            input = ""
-            viewModel.authenticatePin(pin) { result ->
-                when (result) {
-                    PinUnlockResult.SUCCESS -> onUnlocked()
-                    PinUnlockResult.WRONG_PIN -> {
-                        error = "Невірний PIN-код"
-                        lockoutSeconds = (viewModel.lockoutRemainingMillis() + 999) / 1000
-                    }
-                    PinUnlockResult.DB_ERROR -> error = "Не вдалося відкрити базу даних"
-                }
-            }
-        }
-    }
+    PinLockoutTicker(viewModel) { lockoutSeconds = it }
+    PinAuthenticationEffect(
+        viewModel = viewModel,
+        input = input,
+        onInputConsumed = { input = "" },
+        onUnlocked = onUnlocked,
+        onWrongPin = {
+            error = "Невірний PIN-код"
+            lockoutSeconds = remainingSeconds(viewModel.lockoutRemainingMillis())
+        },
+        onDatabaseError = { error = "Не вдалося відкрити базу даних" }
+    )
 
     PinEntryScaffold(
         title = "Розблокуйте нотатки",
-        subtitle = if (lockoutSeconds > 0) {
-            "Забагато спроб. Спробуйте через ${lockoutSeconds}с"
-        } else {
-            "Введіть 6-значний PIN для доступу"
-        },
+        subtitle = lockSubtitle(lockoutSeconds),
         subtitleIsError = lockoutSeconds > 0,
         error = error
     ) {
@@ -155,7 +138,6 @@ private fun PinLockContent(
             },
             onDelete = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )
-
         LockAlternativeActions(
             capabilities = capabilities,
             onPromptBiometric = onPromptBiometric,
@@ -163,6 +145,59 @@ private fun PinLockContent(
         )
     }
 }
+
+@Composable
+private fun PinLockoutTicker(
+    viewModel: LockViewModel,
+    onSecondsChanged: (Long) -> Unit
+) {
+    LaunchedEffect(Unit) {
+        while (true) {
+            val remaining = viewModel.lockoutRemainingMillis()
+            onSecondsChanged(remainingSeconds(remaining))
+            if (remaining <= 0) break
+            delay(MILLIS_PER_SECOND)
+        }
+    }
+}
+
+@Composable
+private fun PinAuthenticationEffect(
+    viewModel: LockViewModel,
+    input: String,
+    onInputConsumed: () -> Unit,
+    onUnlocked: () -> Unit,
+    onWrongPin: () -> Unit,
+    onDatabaseError: () -> Unit
+) {
+    LaunchedEffect(input) {
+        if (input.length != PIN_LENGTH) return@LaunchedEffect
+        if (viewModel.lockoutRemainingMillis() > 0) {
+            onInputConsumed()
+            return@LaunchedEffect
+        }
+
+        val pin = input
+        onInputConsumed()
+        viewModel.authenticatePin(pin) { result ->
+            when (result) {
+                PinUnlockResult.SUCCESS -> onUnlocked()
+                PinUnlockResult.WRONG_PIN -> onWrongPin()
+                PinUnlockResult.DB_ERROR -> onDatabaseError()
+            }
+        }
+    }
+}
+
+private fun remainingSeconds(remainingMillis: Long): Long =
+    (remainingMillis + LOCKOUT_ROUNDING_MILLIS) / MILLIS_PER_SECOND
+
+private fun lockSubtitle(lockoutSeconds: Long): String =
+    if (lockoutSeconds > 0) {
+        "Забагато спроб. Спробуйте через ${lockoutSeconds}с"
+    } else {
+        "Введіть 6-значний PIN для доступу"
+    }
 
 @Composable
 private fun LockAlternativeActions(
@@ -207,7 +242,8 @@ private fun SeedLockContent(
             },
             label = { Text("Recovery seed") },
             minLines = 3,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
