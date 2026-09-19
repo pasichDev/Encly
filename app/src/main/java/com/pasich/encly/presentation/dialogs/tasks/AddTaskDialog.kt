@@ -37,6 +37,10 @@ import com.pasich.encly.presentation.components.tasks.PriorityIndicator
 import com.pasich.encly.presentation.components.tasks.PriorityIndicatorSize
 import kotlinx.coroutines.delay
 
+private const val TASK_TITLE_MAX_LENGTH = 100
+private const val TASK_DESCRIPTION_MAX_LENGTH = 150
+private const val INITIAL_FOCUS_DELAY_MS = 300L
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTaskDialog(
@@ -44,168 +48,214 @@ fun AddTaskDialog(
     sheetState: SheetState,
     onAddTask: (title: String, description: String?, reminderDate: Long?, priority: Int) -> Unit,
     editTask: Task? = null,
-    onEditTask: ((taskId: Long, title: String, description: String?, reminderDate: Long?, priority: Int) -> Unit)? = null
+    onEditTask: ((
+        taskId: Long,
+        title: String,
+        description: String?,
+        reminderDate: Long?,
+        priority: Int
+    ) -> Unit)? = null
 ) {
-    var title by remember { mutableStateOf(editTask?.title ?: "") }
-    var description by remember { mutableStateOf(editTask?.description ?: "") }
+    var title by remember { mutableStateOf(editTask?.title.orEmpty()) }
+    var description by remember { mutableStateOf(editTask?.description.orEmpty()) }
     var reminderDate by remember { mutableStateOf(editTask?.reminderDate) }
     var selectedPriority by remember { mutableIntStateOf(editTask?.priority ?: 0) }
-
-    val isEditMode = editTask != null
-
-
+    var showPriorityDialog by remember { mutableStateOf(false) }
     val titleFocusRequester = remember { FocusRequester() }
-    val descriptionFocusRequester = remember { FocusRequester() }
 
-    var triggerInitialTitleFocus by remember { mutableStateOf(true) }
-    var triggerDescriptionFocus by remember { mutableStateOf(false) }
-
-
-    var showDialogPriority by remember { mutableStateOf(false) }
-
-    if (showDialogPriority) {
+    if (showPriorityDialog) {
         PrioritySelectionDialog(
-            onDismissRequest = { showDialogPriority = false },
+            onDismissRequest = { showPriorityDialog = false },
             onPrioritySelected = {
                 selectedPriority = it
-                showDialogPriority = false
+                showPriorityDialog = false
             }
         )
     }
 
     ModalBottomSheet(
-        onDismissRequest = { onDismiss() },
+        onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-        ) {
-
-            Spacer(Modifier.height(15.dp))
-            TextField(
-                value = title,
-                onValueChange = {
-                    if (it.length <= 100) {
-                        title = it
-                    }
-                },
-                placeholder = { Text(if (isEditMode) "Редагувати завдання" else "Нове завдання") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(titleFocusRequester)
-                    .padding(0.dp),
-                singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.primary
+        TaskEditorContent(
+            title = title,
+            description = description,
+            reminderDate = reminderDate,
+            priority = selectedPriority,
+            isEditMode = editTask != null,
+            titleFocusRequester = titleFocusRequester,
+            onTitleChange = { title = it.take(TASK_TITLE_MAX_LENGTH) },
+            onDescriptionChange = { description = it.take(TASK_DESCRIPTION_MAX_LENGTH) },
+            onReminderDateChange = { reminderDate = it },
+            onPriorityClick = { showPriorityDialog = true },
+            onSubmit = {
+                submitTask(
+                    editTask = editTask,
+                    title = title,
+                    description = description,
+                    reminderDate = reminderDate,
+                    priority = selectedPriority,
+                    onAddTask = onAddTask,
+                    onEditTask = onEditTask
                 )
-            )
-
-            TextField(
-                value = description,
-                onValueChange = {
-                    if (it.length <= 150) {
-                        description = it
-                    }
-                },
-                placeholder = { Text("Опис", style = MaterialTheme.typography.bodyMedium) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp)
-                    .focusRequester(descriptionFocusRequester),
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                )
-            )
-
-
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-
-                    DateTimeSelector(
-                        selectedDateTime = reminderDate,
-                        onDateTimeSelected = { reminderDate = it },
-                        isEnabled = true
-                    )
-
-                    Spacer(Modifier.width(15.dp))
-
-                    PriorityIndicator(
-                        priority = selectedPriority,
-                        size = PriorityIndicatorSize.Large,
-                        modifier = Modifier.clickable {
-                            showDialogPriority = true
-                        }
-                    )
-
-
-                }
-                TextButton(
-                    onClick = {
-                        if (title.isNotBlank()) {
-                            if (isEditMode && onEditTask != null) {
-                                onEditTask(
-                                    editTask.id,
-                                    title,
-                                    description.ifBlank { null },
-                                    reminderDate,
-                                    selectedPriority
-                                )
-                            } else {
-                                onAddTask(
-                                    title,
-                                    description.ifBlank { null },
-                                    reminderDate,
-                                    selectedPriority
-                                )
-                            }
-                        }
-                    }) {
-                    Text(if (isEditMode) "Зберегти" else "Додати")
-                }
             }
-
-
-            Spacer(Modifier.height(20.dp))
-
-        }
-    }
-    LaunchedEffect(triggerInitialTitleFocus) {
-        if (triggerInitialTitleFocus) {
-            delay(300L)
-            titleFocusRequester.requestFocus()
-            triggerInitialTitleFocus = false
-        }
+        )
     }
 
-    LaunchedEffect(triggerDescriptionFocus) {
-        if (triggerDescriptionFocus) {
-            delay(200L)
-            descriptionFocusRequester.requestFocus()
-            triggerDescriptionFocus = false
+    LaunchedEffect(Unit) {
+        delay(INITIAL_FOCUS_DELAY_MS)
+        titleFocusRequester.requestFocus()
+    }
+}
+
+private fun submitTask(
+    editTask: Task?,
+    title: String,
+    description: String,
+    reminderDate: Long?,
+    priority: Int,
+    onAddTask: (String, String?, Long?, Int) -> Unit,
+    onEditTask: ((Long, String, String?, Long?, Int) -> Unit)?
+) {
+    if (title.isBlank()) return
+    val normalizedDescription = description.ifBlank { null }
+    if (editTask != null && onEditTask != null) {
+        onEditTask(editTask.id, title, normalizedDescription, reminderDate, priority)
+    } else {
+        onAddTask(title, normalizedDescription, reminderDate, priority)
+    }
+}
+
+@Composable
+private fun TaskEditorContent(
+    title: String,
+    description: String,
+    reminderDate: Long?,
+    priority: Int,
+    isEditMode: Boolean,
+    titleFocusRequester: FocusRequester,
+    onTitleChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onReminderDateChange: (Long?) -> Unit,
+    onPriorityClick: () -> Unit,
+    onSubmit: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+    ) {
+        Spacer(Modifier.height(15.dp))
+        TaskTextFields(
+            title = title,
+            description = description,
+            isEditMode = isEditMode,
+            titleFocusRequester = titleFocusRequester,
+            onTitleChange = onTitleChange,
+            onDescriptionChange = onDescriptionChange
+        )
+        TaskEditorFooter(
+            reminderDate = reminderDate,
+            priority = priority,
+            isEditMode = isEditMode,
+            onReminderDateChange = onReminderDateChange,
+            onPriorityClick = onPriorityClick,
+            onSubmit = onSubmit
+        )
+        Spacer(Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun TaskTextFields(
+    title: String,
+    description: String,
+    isEditMode: Boolean,
+    titleFocusRequester: FocusRequester,
+    onTitleChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit
+) {
+    TaskTextField(
+        value = title,
+        onValueChange = onTitleChange,
+        placeholder = if (isEditMode) "Редагувати завдання" else "Нове завдання",
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(titleFocusRequester)
+    )
+    TaskTextField(
+        value = description,
+        onValueChange = onDescriptionChange,
+        placeholder = "Опис",
+        modifier = Modifier.fillMaxWidth(),
+        bodyStyle = true
+    )
+}
+
+@Composable
+private fun TaskTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier,
+    bodyStyle: Boolean = false
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(
+                text = placeholder,
+                style = if (bodyStyle) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge
+            )
+        },
+        modifier = modifier.padding(0.dp),
+        singleLine = true,
+        textStyle = if (bodyStyle) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            cursorColor = MaterialTheme.colorScheme.primary
+        )
+    )
+}
+
+@Composable
+private fun TaskEditorFooter(
+    reminderDate: Long?,
+    priority: Int,
+    isEditMode: Boolean,
+    onReminderDateChange: (Long?) -> Unit,
+    onPriorityClick: () -> Unit,
+    onSubmit: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            DateTimeSelector(
+                selectedDateTime = reminderDate,
+                onDateTimeSelected = onReminderDateChange,
+                isEnabled = true
+            )
+            Spacer(Modifier.width(15.dp))
+            PriorityIndicator(
+                priority = priority,
+                size = PriorityIndicatorSize.Large,
+                modifier = Modifier.clickable(onClick = onPriorityClick)
+            )
+        }
+        TextButton(onClick = onSubmit) {
+            Text(if (isEditMode) "Зберегти" else "Додати")
         }
     }
 }
