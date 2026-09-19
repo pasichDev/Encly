@@ -34,8 +34,7 @@ class DatabaseLocalDataSource @Inject constructor(
 
     suspend fun updateNote(note: Note): Boolean {
         return try {
-            notesDao.updateNote(note)
-            true
+            notesDao.updateNote(note) > 0
         } catch (e: Exception) {
             AppLogger.e(TAG, "updateNote failed", e)
             false
