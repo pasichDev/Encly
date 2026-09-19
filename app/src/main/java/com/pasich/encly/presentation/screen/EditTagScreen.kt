@@ -328,7 +328,10 @@ fun NewTagItem(
 
     fun handleSave() {
         if (text.text.isBlank()) {
-            handleCancel()
+            text = TextFieldValue("")
+            isTextFieldEnabled = false
+            globalFocusManager.clearFocus()
+            keyboardController?.hide()
             return
         }
 
