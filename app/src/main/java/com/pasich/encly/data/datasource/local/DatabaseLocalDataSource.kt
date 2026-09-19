@@ -70,15 +70,50 @@ class DatabaseLocalDataSource @Inject constructor(
     fun getCompletedTasksCount() = tasksDao().getCompletedTasksCount()
     suspend fun getTaskById(id: Long) = tasksDao().getTaskById(id)
     suspend fun getTasksWithReminder(currentTime: Long) = tasksDao().getTasksWithReminder(currentTime)
-    suspend fun insertTask(task: com.pasich.encly.data.model.Task) = tasksDao().insertTask(task)
+    suspend fun insertTask(task: com.pasich.encly.data.model.Task): Long =
+        try {
+            tasksDao().insertTask(task)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "insertTask failed", e)
+            0L
+        }
     suspend fun updateTask(task: com.pasich.encly.data.model.Task): Boolean =
-        tasksDao().updateTask(task) > 0
-    suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long?): Boolean =
+        try {
+            tasksDao().updateTask(task) > 0
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "updateTask failed", e)
+            false
+        }
+    suspend fun updateTaskStatus(
+        id: Long,
+        isCompleted: Boolean,
+        completedDate: Long?
+    ): Boolean = try {
         tasksDao().updateTaskStatus(id, isCompleted, completedDate) > 0
+    } catch (e: Exception) {
+        AppLogger.e(TAG, "updateTaskStatus failed", e)
+        false
+    }
     suspend fun deleteTask(task: com.pasich.encly.data.model.Task): Boolean =
-        tasksDao().deleteTask(task) > 0
+        try {
+            tasksDao().deleteTask(task) > 0
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "deleteTask failed", e)
+            false
+        }
     suspend fun deleteAllCompletedTasks(): Boolean =
-        tasksDao().deleteAllCompletedTasks() >= 0
+        try {
+            tasksDao().deleteAllCompletedTasks()
+            true
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "deleteAllCompletedTasks failed", e)
+            false
+        }
     suspend fun deleteTaskById(id: Long): Boolean =
-        tasksDao().deleteTaskById(id) > 0
+        try {
+            tasksDao().deleteTaskById(id) > 0
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "deleteTaskById failed", e)
+            false
+        }
 }
