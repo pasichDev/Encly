@@ -293,9 +293,10 @@ class TasksViewModel
                 priority = priority,
                 categoryId = categoryId
             )
-            addTaskUseCase(task)
-
-            hideAddTaskDialog()
+            val insertedId = addTaskUseCase(task)
+            if (insertedId > 0L) {
+                hideAddTaskDialog()
+            }
         }
     }
 
@@ -320,9 +321,9 @@ class TasksViewModel
                     categoryId = categoryId
                 )
 
-                updateTaskUseCase(updatedTask)
-
-                hideAddTaskDialog()
+                if (updateTaskUseCase(updatedTask)) {
+                    hideAddTaskDialog()
+                }
             }
         }
     }
