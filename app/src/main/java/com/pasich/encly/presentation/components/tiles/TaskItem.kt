@@ -33,6 +33,9 @@ import com.pasich.encly.presentation.components.tasks.PriorityIndicator
 import com.pasich.encly.presentation.components.tasks.ReminderIndicator
 import kotlinx.coroutines.delay
 
+private const val TASK_REMOVAL_ANIMATION_MS = 400
+private const val TASK_TRANSLATION_X = 100f
+
 @Composable
 fun TaskItem(
     task: Task,
@@ -40,28 +43,61 @@ fun TaskItem(
     onTaskClick: ((Task) -> Unit)? = null,
     enabled: Boolean = true
 ) {
-    // State for the disappearance animation
     var isRemoving by remember(task.id) { mutableStateOf(false) }
     var shouldComplete by remember(task.id) { mutableStateOf(false) }
-
-    // Disappearance animation
     val animationProgress by animateFloatAsState(
         targetValue = if (isRemoving) 0f else 1f,
-        animationSpec = tween(durationMillis = 400),
+        animationSpec = tween(durationMillis = TASK_REMOVAL_ANIMATION_MS),
         label = "task_removal_animation"
     )
 
-    // Handling the animation completion
-    LaunchedEffect(shouldComplete) {
-        if (shouldComplete) {
-            isRemoving = true
-            delay(400) // Wait for the animation to finish
-            onTaskToggle(task.id, true)
-            shouldComplete = false
-            isRemoving = false
-        }
-    }
+    CompleteTaskAfterAnimation(
+        task = task,
+        shouldComplete = shouldComplete,
+        onRemovingChange = { isRemoving = it },
+        onCompleteChange = { shouldComplete = it },
+        onTaskToggle = onTaskToggle
+    )
 
+    TaskCard(
+        task = task,
+        enabled = enabled,
+        isRemoving = isRemoving,
+        animationProgress = animationProgress,
+        onClick = { onTaskClick?.invoke(task) },
+        onComplete = { shouldComplete = true },
+        onUndo = { onTaskToggle(task.id, false) }
+    )
+}
+
+@Composable
+private fun CompleteTaskAfterAnimation(
+    task: Task,
+    shouldComplete: Boolean,
+    onRemovingChange: (Boolean) -> Unit,
+    onCompleteChange: (Boolean) -> Unit,
+    onTaskToggle: (Long, Boolean) -> Unit
+) {
+    LaunchedEffect(shouldComplete) {
+        if (!shouldComplete) return@LaunchedEffect
+        onRemovingChange(true)
+        delay(TASK_REMOVAL_ANIMATION_MS.toLong())
+        onTaskToggle(task.id, true)
+        onCompleteChange(false)
+        onRemovingChange(false)
+    }
+}
+
+@Composable
+private fun TaskCard(
+    task: Task,
+    enabled: Boolean,
+    isRemoving: Boolean,
+    animationProgress: Float,
+    onClick: () -> Unit,
+    onComplete: () -> Unit,
+    onUndo: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -69,96 +105,132 @@ fun TaskItem(
                 alpha = animationProgress
                 scaleX = animationProgress
                 scaleY = animationProgress
-                translationX = (1f - animationProgress) * 100f
+                translationX = (1f - animationProgress) * TASK_TRANSLATION_X
             }
-            .clickable(enabled = enabled && !task.isCompleted && !isRemoving) {
-                onTaskClick?.invoke(task)
-            },
+            .clickable(enabled = enabled && !task.isCompleted && !isRemoving, onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 5.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.weight(1f)
-            ) {
-                Checkbox(
-                    checked = task.isCompleted,
-                    onCheckedChange = { isChecked ->
-                        if (isChecked && !task.isCompleted) {
-                            // Start the disappearance animation to complete the task
-                            shouldComplete = true
-                        } else if (!isChecked && task.isCompleted) {
-                            // To undo completion, call onTaskToggle immediately
-                            onTaskToggle(task.id, false)
-                        }
-                    },
-                    enabled = enabled && !isRemoving,
-                    modifier = Modifier
-                        .scale(0.8f)
-                        .padding(end = 8.dp)
-                        .align(Alignment.Top)
-                )
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = task.title,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                        ),
-                        color = if (task.isCompleted)
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    task.description?.let { description ->
-                        Text(
-                            text = description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (task.isCompleted)
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                        )
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (!task.isCompleted) {
-                            PriorityIndicator(priority = task.priority)
-                        }
-
-                        task.reminderDate?.let { reminderDate ->
-                            if (!task.isCompleted) {
-                                ReminderIndicator(reminderDate)
-                            }
-                        }
-
-                        if (task.isCompleted && task.completedDate != null) {
-                            CompletedIndicator(task.completedDate)
-                        }
-                    }
-                }
-            }
-        }
-
+        TaskCardContent(
+            task = task,
+            enabled = enabled,
+            isRemoving = isRemoving,
+            onComplete = onComplete,
+            onUndo = onUndo
+        )
     }
 }
+
+@Composable
+private fun TaskCardContent(
+    task: Task,
+    enabled: Boolean,
+    isRemoving: Boolean,
+    onComplete: () -> Unit,
+    onUndo: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 15.dp, horizontal = 5.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier.weight(1f)
+        ) {
+            TaskCheckbox(
+                task = task,
+                enabled = enabled && !isRemoving,
+                onComplete = onComplete,
+                onUndo = onUndo
+            )
+            TaskTextContent(task)
+        }
+    }
+}
+
+@Composable
+private fun TaskCheckbox(
+    task: Task,
+    enabled: Boolean,
+    onComplete: () -> Unit,
+    onUndo: () -> Unit
+) {
+    Checkbox(
+        checked = task.isCompleted,
+        onCheckedChange = { checked ->
+            when {
+                checked && !task.isCompleted -> onComplete()
+                !checked && task.isCompleted -> onUndo()
+            }
+        },
+        enabled = enabled,
+        modifier = Modifier
+            .scale(0.8f)
+            .padding(end = 8.dp)
+    )
+}
+
+@Composable
+private fun TaskTextContent(task: Task) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = task.title,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontWeight = FontWeight.Medium,
+                textDecoration = completedDecoration(task.isCompleted)
+            ),
+            color = completedTextColor(task.isCompleted),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        task.description?.let { description ->
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (task.isCompleted) {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = completedDecoration(task.isCompleted)
+            )
+        }
+
+        TaskIndicators(task)
+    }
+}
+
+@Composable
+private fun TaskIndicators(task: Task) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (!task.isCompleted) {
+            PriorityIndicator(priority = task.priority)
+            task.reminderDate?.let { ReminderIndicator(it) }
+        }
+        if (task.isCompleted) {
+            task.completedDate?.let { CompletedIndicator(it) }
+        }
+    }
+}
+
+@Composable
+private fun completedTextColor(isCompleted: Boolean) =
+    if (isCompleted) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+private fun completedDecoration(isCompleted: Boolean): TextDecoration =
+    if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
