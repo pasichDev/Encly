@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.domain.model.ItemListBlock
@@ -110,6 +111,7 @@ fun ListBlock(
                             fontSize = fontStyles.sizes.list
                         ),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.PasswordVisible),
                     onValueChange = { updatedValue ->
                         block.items.value =
                             block.items.value.toMutableList().apply {
