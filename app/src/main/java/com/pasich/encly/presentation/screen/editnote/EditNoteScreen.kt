@@ -275,7 +275,7 @@ fun EditNoteScreen(
                             onDeleteClick = { isDialogVisible = true },
                             onMenuClick = { isEditMenuBottomSheetVisible = true },
                             onLockToggle = { viewModel.toggleLockEditor() },
-                            onDoneClick = closeScreen,
+                            onDoneClick = ::closeScreen,
                         )
                     }
 
