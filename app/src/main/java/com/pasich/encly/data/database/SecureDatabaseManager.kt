@@ -6,6 +6,8 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
+import net.zetetic.database.Logger
+import net.zetetic.database.NoopTarget
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 import javax.crypto.SecretKey
@@ -139,6 +141,9 @@ class SecureDatabaseManager @Inject constructor(
 
         init {
             System.loadLibrary("sqlcipher")
+            // SQLCipher's Java client logs to Logcat by default. Encly's vault layer
+            // keeps third-party database diagnostics out of system-visible logs too.
+            Logger.setTarget(NoopTarget())
         }
     }
 }
