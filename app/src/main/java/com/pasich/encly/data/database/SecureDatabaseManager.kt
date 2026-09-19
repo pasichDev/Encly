@@ -14,131 +14,119 @@ import javax.inject.Singleton
 
 /**
  * Owns the SQLCipher-encrypted Room database and its unlocked lifecycle.
- * The database is opened with Encly's random 256-bit v2 DEK; until unlocked, callers
- * must not persist real data through it.
+ *
+ * A committed vault must already have an encrypted database file. Database creation is allowed
+ * only during the atomic first-run setup path.
  */
 @Singleton
 class SecureDatabaseManager @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
-
     private var database: AppDatabase? = null
     private var isUnlocked = false
 
-    /** Whether the database is currently unlocked (open). */
     fun isDatabaseUnlocked(): Boolean = isUnlocked
 
-    /**
-     * Returns the unlocked encrypted database. Fails loudly if accessed before
-     * unlock: silently handing back a throwaway in-memory database would route real
-     * writes into volatile, unencrypted storage and lose them. Callers must ensure
-     * the DB is unlocked (post-auth) before touching any DAO.
-     */
-    fun getDatabase(): AppDatabase {
-        return database?.takeIf { isUnlocked }
-            ?: throw IllegalStateException("Database accessed before unlock — call unlockDatabase() first")
-    }
+    fun hasEncryptedDatabase(): Boolean =
+        SQLCipherUtils.getDatabaseState(context, DB_NAME) == SQLCipherUtils.State.ENCRYPTED
 
+    fun getDatabase(): AppDatabase =
+        database?.takeIf { isUnlocked }
+            ?: error("Database accessed before unlock — call unlockDatabase() first")
 
     @Synchronized
-    fun unlockDatabase(secretKey: SecretKey): Boolean {
-        if (isUnlocked) {
-            AppLogger.d(TAG, "Database already unlocked")
-            return true
-        }
+    fun unlockDatabase(
+        secretKey: SecretKey,
+        allowCreate: Boolean = false
+    ): Boolean {
+        if (isUnlocked) return true
 
-
-        // Hoisted so they can be zeroized in `finally`. passphraseForRoom is a separate
-        // copy retained by the open-helper factory, so wiping these two is safe.
-        val rawPassphrase = secretKey.encoded
+        val rawPassphrase = secretKey.encoded ?: return false
         val passphraseForCheck = rawPassphrase.copyOf()
+        val passphraseForRoom = rawPassphrase.copyOf()
+
         return try {
-            val passphraseForRoom = rawPassphrase.copyOf()
-            AppLogger.d(TAG, "Key received. Length: ${rawPassphrase.size} bytes")
+            when (SQLCipherUtils.getDatabaseState(context, DB_NAME)) {
+                SQLCipherUtils.State.DOES_NOT_EXIST -> {
+                    if (!allowCreate) return false
+                }
 
-            val dbFile = context.getDatabasePath(DB_NAME)
-            AppLogger.d(TAG, "Database path: ${dbFile.absolutePath}")
-
-            val state = SQLCipherUtils.getDatabaseState(context, DB_NAME)
-            AppLogger.d(TAG, "Database state before unlock: $state")
-
-
-
-            if (state == SQLCipherUtils.State.ENCRYPTED) {
-                AppLogger.d(TAG, "Database exists and is encrypted. Verifying it opens")
-                if (!canOpenDatabase(passphraseForCheck)) {
-                    AppLogger.e(TAG, "Cannot open the encrypted database with this key")
+                SQLCipherUtils.State.UNENCRYPTED -> {
+                    // Never silently adopt/migrate a plaintext database into a committed vault.
                     return false
+                }
+
+                SQLCipherUtils.State.ENCRYPTED -> {
+                    if (!canOpenDatabase(passphraseForCheck)) return false
                 }
             }
 
-            if (state == SQLCipherUtils.State.DOES_NOT_EXIST) {
-                AppLogger.d(TAG, "Database does not exist. Creating a new encrypted database")
-            }
+            val openedDatabase = Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                DB_NAME
+            )
+                .openHelperFactory(SupportOpenHelperFactory(passphraseForRoom))
+                .fallbackToDestructiveMigration(false)
+                .build()
 
-            AppLogger.d(TAG, "Initializing Room with encryption")
-            database = Room.databaseBuilder(
-                context.applicationContext, AppDatabase::class.java, DB_NAME
-            ).openHelperFactory(SupportOpenHelperFactory(passphraseForRoom))
-                .fallbackToDestructiveMigration(false).build()
+            // Force SQLCipher/Room initialization before publishing the database as unlocked.
+            // This catches key/open/schema failures here instead of on the first repository call.
+            openedDatabase.openHelper.writableDatabase
 
+            database = openedDatabase
             isUnlocked = true
             true
         } catch (e: Exception) {
+            database?.close()
+            database = null
+            isUnlocked = false
             AppLogger.e(TAG, "Failed to unlock the database", e)
             false
         } finally {
-            // Wipe the local key copies; the factory keeps its own passphraseForRoom.
             SensitiveDataCleaner.clear(rawPassphrase)
             SensitiveDataCleaner.clear(passphraseForCheck)
+            SensitiveDataCleaner.clear(passphraseForRoom)
         }
     }
 
-    private fun canOpenDatabase(passphrase: ByteArray): Boolean {
-        return try {
-            AppLogger.d(TAG, "Checking database open via SupportOpenHelperFactory")
-
+    private fun canOpenDatabase(passphrase: ByteArray): Boolean =
+        try {
             val factory = SupportOpenHelperFactory(passphrase)
             val db = Room.databaseBuilder(
-                context.applicationContext, AppDatabase::class.java, DB_NAME
+                context.applicationContext,
+                AppDatabase::class.java,
+                DB_NAME
             ).openHelperFactory(factory).build()
 
-            // Trigger initialization
-            db.openHelper.readableDatabase
-            db.close()
-
-            AppLogger.d(TAG, "Database opened successfully")
-            true
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Error opening the database", e)
+            try {
+                db.openHelper.readableDatabase
+                true
+            } finally {
+                db.close()
+            }
+        } catch (_: Exception) {
             false
         }
-    }
 
     private fun deleteDatabaseFiles() {
         try {
-            AppLogger.d(TAG, "Deleting database files")
             val dbFile = context.getDatabasePath(DB_NAME)
-            val wal = File(dbFile.absolutePath + "-wal")
-            val shm = File(dbFile.absolutePath + "-shm")
-            dbFile.delete()
-            wal.delete()
-            shm.delete()
-            AppLogger.d(TAG, "Database files deleted successfully")
+            File(dbFile.absolutePath).delete()
+            File(dbFile.absolutePath + "-wal").delete()
+            File(dbFile.absolutePath + "-shm").delete()
         } catch (e: Exception) {
             AppLogger.e(TAG, "Failed to delete database files", e)
         }
     }
 
+    @Synchronized
     fun reset() {
-        AppLogger.d(TAG, "Resetting database")
         database?.close()
         database = null
         isUnlocked = false
-        AppLogger.d(TAG, "Database reset")
     }
 
-    /** Full wipe: closes the database and deletes its files from disk. */
     fun wipe() {
         reset()
         deleteDatabaseFiles()
@@ -149,8 +137,6 @@ class SecureDatabaseManager @Inject constructor(
         private const val DB_NAME = "database.db"
 
         init {
-            // sqlcipher-android does not auto-load its native library (unlike the old
-            // android-database-sqlcipher, which did it in SQLiteDatabase.loadLibs()).
             System.loadLibrary("sqlcipher")
         }
     }

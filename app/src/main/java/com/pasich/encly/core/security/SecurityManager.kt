@@ -49,7 +49,14 @@ class SecurityManager @Inject constructor(
     private fun initializeSecurity(): InitialStatus {
         if (!isOnboardingShown()) return InitialStatus.ONBOARDING
         if (!seedPhraseManager.verificationKeyData()) return InitialStatus.LOSS_CRYPTO
-        if (!authenticationManager.hasPinSlot()) return InitialStatus.SETUP_AUTH
+        if (!secureDatabaseManager.hasEncryptedDatabase()) return InitialStatus.LOSS_DATABASE
+
+        // A lost PIN slot is recoverable only when the user explicitly created a recovery slot.
+        // The lock screen can unwrap the DEK with that seed; once unlocked, Settings can create
+        // a fresh PIN around the live session DEK.
+        if (!authenticationManager.hasPinSlot() && !seedPhraseManager.hasRecoverySeed()) {
+            return InitialStatus.LOSS_CRYPTO
+        }
         return InitialStatus.AUTH
     }
 
@@ -146,9 +153,15 @@ class SecurityManager @Inject constructor(
      * Opens SQLCipher with an already unwrapped v2 DEK.
      * Caller retains ownership of [dek] and should wipe it after this call.
      */
-    fun unlockWithRawKey(dek: ByteArray): Boolean {
+    fun unlockWithRawKey(
+        dek: ByteArray,
+        allowCreate: Boolean = false
+    ): Boolean {
         if (dek.size != DEK_LENGTH) return false
-        val ok = secureDatabaseManager.unlockDatabase(SecretKeySpec(dek, "AES"))
+        val ok = secureDatabaseManager.unlockDatabase(
+            SecretKeySpec(dek, "AES"),
+            allowCreate = allowCreate
+        )
         if (ok) {
             setSessionKey(dek)
             securityStatus = InitialStatus.MAIN
@@ -167,7 +180,7 @@ class SecurityManager @Inject constructor(
         } ?: return false
 
         return try {
-            val opened = unlockWithRawKey(dek)
+            val opened = unlockWithRawKey(dek, allowCreate = true)
             val finalized = opened && setOnboardingShown()
             if (finalized) seedPhraseManager.clearBootstrapKey()
             finalized
@@ -182,7 +195,8 @@ class SecurityManager @Inject constructor(
         securityStatus = InitialStatus.AUTH
     }
 
-    fun isLockable(): Boolean = authenticationManager.hasPinSlot()
+    fun isLockable(): Boolean =
+        authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()
 
     fun isDatabaseUnlocked(): Boolean = secureDatabaseManager.isDatabaseUnlocked()
 
