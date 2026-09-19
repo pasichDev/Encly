@@ -227,7 +227,7 @@ class SecurityManager @Inject constructor(
         biometricManager.disable()
         authenticationManager.wipe()
         seedPhraseManager.wipe()
-        secureStoragePrefs.edit { remove(ONBOARDING_SHOWN_KEY) }
+        secureStoragePrefs.edit().remove(ONBOARDING_SHOWN_KEY).commit()
         securityStatus = InitialStatus.ONBOARDING
         return seedPhraseManager.initializeVault(recoverySeed)
     }
