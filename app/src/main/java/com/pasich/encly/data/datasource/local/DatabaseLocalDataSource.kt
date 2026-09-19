@@ -46,8 +46,7 @@ class DatabaseLocalDataSource @Inject constructor(
 
     suspend fun deleteNoteById(id: Long): Boolean =
         try {
-            notesDao().deleteNoteById(id)
-            true
+            notesDao().deleteNoteById(id) > 0
         } catch (e: Exception) {
             AppLogger.e(TAG, "deleteNoteById failed", e)
             false
