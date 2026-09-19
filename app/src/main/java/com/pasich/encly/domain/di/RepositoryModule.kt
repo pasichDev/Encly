@@ -14,7 +14,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
@@ -33,13 +32,12 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideTagSelectionRepository(): TagSelectionRepository {
-        return TagSelectionRepository()
-    }
+    fun provideTagSelectionRepository(): TagSelectionRepository =
+        TagSelectionRepository()
 
     @Provides
     @Singleton
     fun provideTasksRepository(
         databaseLocalDataSource: DatabaseLocalDataSource
-    ): TasksRepository = TasksRepositoryImpl(databaseLocalDataSource.getTasksDao())
+    ): TasksRepository = TasksRepositoryImpl(databaseLocalDataSource)
 }

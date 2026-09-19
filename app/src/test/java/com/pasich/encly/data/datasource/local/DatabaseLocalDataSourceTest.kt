@@ -1,8 +1,8 @@
 package com.pasich.encly.data.datasource.local
 
+import com.pasich.encly.data.database.AppDatabase
+import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.data.database.dao.NotesDao
-import com.pasich.encly.data.database.dao.TagsDao
-import com.pasich.encly.data.database.dao.TasksDao
 import com.pasich.encly.data.model.Note
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
@@ -15,11 +15,7 @@ class DatabaseLocalDataSourceTest {
     @Test
     fun updateNoteReturnsFalseWhenRoomUpdatesZeroRows() = runBlocking {
         val notesDao = mock(NotesDao::class.java)
-        val source = DatabaseLocalDataSource(
-            notesDao = notesDao,
-            tagsDao = mock(TagsDao::class.java),
-            tasksDao = mock(TasksDao::class.java)
-        )
+        val source = sourceFor(notesDao)
         val note = Note(id = NOTE_ID)
         `when`(notesDao.updateNote(note)).thenReturn(0)
 
@@ -29,15 +25,21 @@ class DatabaseLocalDataSourceTest {
     @Test
     fun updateNoteReturnsTrueWhenRoomUpdatesARow() = runBlocking {
         val notesDao = mock(NotesDao::class.java)
-        val source = DatabaseLocalDataSource(
-            notesDao = notesDao,
-            tagsDao = mock(TagsDao::class.java),
-            tasksDao = mock(TasksDao::class.java)
-        )
+        val source = sourceFor(notesDao)
         val note = Note(id = NOTE_ID)
         `when`(notesDao.updateNote(note)).thenReturn(1)
 
         assertTrue(source.updateNote(note))
+    }
+
+    private fun sourceFor(notesDao: NotesDao): DatabaseLocalDataSource {
+        val database = mock(AppDatabase::class.java)
+        `when`(database.notesDao()).thenReturn(notesDao)
+
+        val manager = mock(SecureDatabaseManager::class.java)
+        `when`(manager.getDatabase()).thenReturn(database)
+
+        return DatabaseLocalDataSource(manager)
     }
 
     private companion object {
