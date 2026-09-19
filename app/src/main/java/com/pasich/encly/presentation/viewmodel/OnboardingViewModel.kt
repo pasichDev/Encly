@@ -14,8 +14,8 @@ import javax.inject.Inject
 
 enum class SecurityType {
     /**
-     * The user created their own seed phrase and manages it themselves.
-     * Requires entering the seed phrase to unlock after a restart.
+     * The user created their own recovery seed and manages it themselves.
+     * Normal unlock still uses the mandatory PIN; the seed is an explicit recovery path.
      */
     USER_MANAGED,
 
@@ -166,7 +166,11 @@ class OnboardingViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        isVerificationMode = false
+                        isVerificationMode = false,
+                        phase = "",
+                        verificationWords = emptyList(),
+                        userAnswers = emptyMap(),
+                        isVerificationComplete = false
                     )
                     nextPage()
                 }
