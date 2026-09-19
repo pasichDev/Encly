@@ -835,10 +835,8 @@ class EditNoteViewModel
         val index = _focusManager.lastInteractionIndex.value
 
         if (index == 0) {
-            print("First block cannot be moved up")
             return 1
         } else if (index == _blocks.size - 1) {
-            print("Last block cannot be moved down")
             return 2
         }
         return -1
