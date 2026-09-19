@@ -23,7 +23,7 @@ import javax.inject.Singleton
 @Singleton
 class SecureDatabaseManager @Inject constructor(
     @param:ApplicationContext private val context: Context
-) {
+) : DatabaseProvider {
     private var database: AppDatabase? = null
     private var isUnlocked = false
 
@@ -32,7 +32,7 @@ class SecureDatabaseManager @Inject constructor(
     fun hasEncryptedDatabase(): Boolean =
         SQLCipherUtils.getDatabaseState(context, DB_NAME) == SQLCipherUtils.State.ENCRYPTED
 
-    fun getDatabase(): AppDatabase =
+    override fun getDatabase(): AppDatabase =
         database?.takeIf { isUnlocked }
             ?: error("Database accessed before unlock — call unlockDatabase() first")
 

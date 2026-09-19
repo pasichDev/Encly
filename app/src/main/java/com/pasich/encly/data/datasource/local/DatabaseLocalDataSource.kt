@@ -1,7 +1,7 @@
 package com.pasich.encly.data.datasource.local
 
 import com.pasich.encly.core.AppLogger
-import com.pasich.encly.data.database.SecureDatabaseManager
+import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
 import javax.inject.Inject
@@ -16,11 +16,11 @@ private const val TAG = "DatabaseLocalDataSource"
  * Room instance after the first re-lock/unlock cycle.
  */
 class DatabaseLocalDataSource @Inject constructor(
-    private val secureDatabaseManager: SecureDatabaseManager
+    private val databaseProvider: DatabaseProvider
 ) {
-    private fun notesDao() = secureDatabaseManager.getDatabase().notesDao()
-    private fun tagsDao() = secureDatabaseManager.getDatabase().tagsDao()
-    private fun tasksDao() = secureDatabaseManager.getDatabase().tasksDao()
+    private fun notesDao() = databaseProvider.getDatabase().notesDao()
+    private fun tagsDao() = databaseProvider.getDatabase().tagsDao()
+    private fun tasksDao() = databaseProvider.getDatabase().tasksDao()
 
     // Notes
     suspend fun getNotes() = notesDao().getAllNotes()

@@ -1,7 +1,7 @@
 package com.pasich.encly.data.datasource.local
 
 import com.pasich.encly.data.database.AppDatabase
-import com.pasich.encly.data.database.SecureDatabaseManager
+import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.database.dao.NotesDao
 import com.pasich.encly.data.model.Note
 import kotlinx.coroutines.runBlocking
@@ -36,10 +36,11 @@ class DatabaseLocalDataSourceTest {
         val database = mock(AppDatabase::class.java)
         `when`(database.notesDao()).thenReturn(notesDao)
 
-        val manager = mock(SecureDatabaseManager::class.java)
-        `when`(manager.getDatabase()).thenReturn(database)
+        val databaseProvider = object : DatabaseProvider {
+            override fun getDatabase(): AppDatabase = database
+        }
 
-        return DatabaseLocalDataSource(manager)
+        return DatabaseLocalDataSource(databaseProvider)
     }
 
     private companion object {
