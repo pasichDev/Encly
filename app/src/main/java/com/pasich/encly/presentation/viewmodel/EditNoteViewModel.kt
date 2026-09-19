@@ -142,6 +142,17 @@ class EditNoteViewModel
         exitHandled = true
     }
 
+    /**
+     * Flush the current editor state as soon as the Activity leaves the foreground.
+     * ProcessLifecycleOwner re-locks/closes SQLCipher later in the background transition,
+     * so this closes the autosave debounce window before the vault is closed.
+     */
+    fun saveForBackground() {
+        if (!exitHandled && !isReadTrashOnly) {
+            appScope.launch { persistNote() }
+        }
+    }
+
     init {
         initLoad()
         observeBlocksForLiveSave()
