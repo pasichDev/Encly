@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, prod-hardening, beta-hardening ]
+    branches: [ main, prod-hardening ]
   pull_request:
     branches: [ main, security-followups ]
 
