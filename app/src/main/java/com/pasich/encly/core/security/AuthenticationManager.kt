@@ -1,7 +1,7 @@
 package com.pasich.encly.core.security
 
 import android.content.SharedPreferences
-import android.util.Base64
+import java.util.Base64
 import androidx.core.content.edit
 import java.security.SecureRandom
 import javax.crypto.AEADBadTagException
@@ -60,8 +60,8 @@ class AuthenticationManager @Inject constructor(
         return try {
             val wrapped = wrapDek(dek, kek)
             val committed = secureStoragePrefs.edit()
-                .putString(PIN_SALT_KEY, Base64.encodeToString(salt, Base64.NO_WRAP))
-                .putString(PIN_SLOT_KEY, Base64.encodeToString(wrapped, Base64.NO_WRAP))
+                .putString(PIN_SALT_KEY, Base64.getEncoder().encodeToString(salt))
+                .putString(PIN_SLOT_KEY, Base64.getEncoder().encodeToString(wrapped))
                 .putInt(AUTH_TYPE_KEY, AuthType.PIN.ordinal)
                 .remove(PIN_ATTEMPTS_KEY)
                 .remove(PIN_LOCKOUT_UNTIL_KEY)
@@ -91,12 +91,12 @@ class AuthenticationManager @Inject constructor(
         val saltEncoded = secureStoragePrefs.getString(PIN_SALT_KEY, null) ?: return null
         val slotEncoded = secureStoragePrefs.getString(PIN_SLOT_KEY, null) ?: return null
         val salt = try {
-            Base64.decode(saltEncoded, Base64.NO_WRAP)
+            Base64.getDecoder().decode(saltEncoded)
         } catch (_: Exception) {
             return null
         }
         val wrapped = try {
-            Base64.decode(slotEncoded, Base64.NO_WRAP)
+            Base64.getDecoder().decode(slotEncoded)
         } catch (_: Exception) {
             SensitiveDataCleaner.clear(salt)
             return null
