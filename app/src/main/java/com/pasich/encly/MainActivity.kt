@@ -73,7 +73,6 @@ class MainActivity : FragmentActivity() {
                 InitialStatus.LOSS_DATABASE -> NavRoutes.LossDataRoute
                 InitialStatus.AUTH -> NavRoutes.LockRoute
                 InitialStatus.SETUP_AUTH -> NavRoutes.AuthSetupRoute
-                // integrity check failed -> recovery (wipe & restart)
                 InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute
                 InitialStatus.NO -> return@setContent
             }
@@ -96,7 +95,14 @@ class MainActivity : FragmentActivity() {
             }
 
             App(
-                navController = navControlle@Composable
+                navController = navController,
+                startDestination = destination.name
+            )
+        }
+    }
+}
+
+@Composable
 fun App(
     navController: NavHostController,
     startDestination: String
