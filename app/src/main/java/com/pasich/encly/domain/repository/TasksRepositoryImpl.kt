@@ -34,18 +34,21 @@ class TasksRepositoryImpl @Inject constructor(
     override suspend fun insertTask(task: Task): Long =
         databaseLocalDataSource.insertTask(task)
 
-    override suspend fun updateTask(task: Task) =
+    override suspend fun updateTask(task: Task): Boolean =
         databaseLocalDataSource.updateTask(task)
 
-    override suspend fun updateTaskStatus(id: Long, isCompleted: Boolean, completedDate: Long?) =
-        databaseLocalDataSource.updateTaskStatus(id, isCompleted, completedDate)
+    override suspend fun updateTaskStatus(
+        id: Long,
+        isCompleted: Boolean,
+        completedDate: Long?
+    ): Boolean = databaseLocalDataSource.updateTaskStatus(id, isCompleted, completedDate)
 
-    override suspend fun deleteTask(task: Task) =
+    override suspend fun deleteTask(task: Task): Boolean =
         databaseLocalDataSource.deleteTask(task)
 
-    override suspend fun deleteAllCompletedTasks() =
+    override suspend fun deleteAllCompletedTasks(): Boolean =
         databaseLocalDataSource.deleteAllCompletedTasks()
 
-    override suspend fun deleteTaskById(id: Long) =
+    override suspend fun deleteTaskById(id: Long): Boolean =
         databaseLocalDataSource.deleteTaskById(id)
 }
