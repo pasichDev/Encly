@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -73,6 +75,11 @@ class EditNoteViewModel
 
     private val _status = MutableStateFlow(SaveStatusNote.OLD)
     val status: StateFlow<SaveStatusNote> get() = _status
+
+    private val saveMutex = Mutex()
+
+    @Volatile
+    private var exitHandled = false
 
     private val _lockEditor = MutableStateFlow(false)
     val lockEditor: StateFlow<Boolean> get() = _lockEditor
@@ -120,15 +127,19 @@ class EditNoteViewModel
     val lastInteractionIndex: StateFlow<Int> = _focusManager.lastInteractionIndex
 
     override fun onCleared() {
-        // Persist any pending edits on the application scope: viewModelScope is already
-        // cancelled during clearing, so a save launched there would never run (silent
-        // data loss for title-only edits and edits inside the last debounce window).
-        appScope.launch { persistNote() }
-        // Tear down the focus manager: dispose() cancels in-flight focus coroutines,
-        // cleanup() clears its state.
+        // Keep one last-chance save for lifecycle teardown. Explicit exits mark themselves
+        // handled before navigation, so this fallback cannot duplicate inserts or undo a
+        // completed trash/delete/restore/discard action.
+        if (!exitHandled) {
+            appScope.launch { persistNote() }
+        }
         _focusManager.dispose()
         _focusManager.cleanup()
         super.onCleared()
+    }
+
+    fun markExitHandled() {
+        exitHandled = true
     }
 
     init {
@@ -263,49 +274,55 @@ class EditNoteViewModel
         }
     }
 
-    fun saveNote(actionButton: Boolean = false, saveBackupVersion: Boolean = false) {
-        viewModelScope.launch { persistNote(actionButton, saveBackupVersion) }
-    }
+    suspend fun saveNote(saveBackupVersion: Boolean = false): Boolean =
+        persistNote(saveBackupVersion)
 
     /**
-     * Persists the current note. Kept as a plain `suspend` function (not tied to
-     * [viewModelScope]) so it can be invoked from [onCleared] on [appScope] — the
-     * exit-save must survive ViewModel teardown, otherwise title-only edits and
-     * edits made in the final debounce window would be silently lost.
+     * Persists the current note and does not return until Room reports success/failure.
+     * The mutex serializes autosave, explicit exit-save and the onCleared fallback.
      */
-    private suspend fun persistNote(
-        actionButton: Boolean = false,
-        saveBackupVersion: Boolean = false,
-    ) {
-        // Skip read-only notes; never overwrite content that failed to load/decrypt.
-        if (isReadTrashOnly || _contentLoadFailed.value) {
-            if (_contentLoadFailed.value) _status.value = SaveStatusNote.OLD
-            return
-        }
-        _status.value = SaveStatusNote.SAVING
-
-        val currentNote = if (saveBackupVersion) _state.value.backupNote else _state.value.note
-        try {
-            val blocksJson = if (saveBackupVersion) currentNote.value else serializeNonBlankBlocks()
-            if (isNoteEmpty()) {
+    private suspend fun persistNote(saveBackupVersion: Boolean = false): Boolean =
+        saveMutex.withLock {
+            // Read-only/unreadable notes are safe to leave without writing. Keep the
+            // status non-successful so skipped persistence is never presented as a write.
+            if (isReadTrashOnly || _contentLoadFailed.value) {
                 _status.value = SaveStatusNote.OLD
-                return
+                return@withLock true
             }
 
-            // Choose the save strategy (update existing vs create new).
-            if (currentNote.id != -1L) {
-                updateExistingNote(currentNote, blocksJson)
-            } else if (!saveBackupVersion) {
-                insertNewNote(currentNote, blocksJson, actionButton)
+            _status.value = SaveStatusNote.SAVING
+            val currentNote = if (saveBackupVersion) {
+                _state.value.backupNote
+            } else {
+                _state.value.note
             }
 
-            _status.value = SaveStatusNote.SAVED
-            AppLogger.d("EditNoteViewModel", "Note saved successfully with ID: ${_state.value.note.id}")
-        } catch (e: Exception) {
-            AppLogger.e("EditNoteViewModel", "Error saving note: ${e.message}")
-            _status.value = SaveStatusNote.OLD
+            try {
+                val blocksJson = if (saveBackupVersion) {
+                    currentNote.value
+                } else {
+                    serializeNonBlankBlocks()
+                }
+
+                if (!saveBackupVersion && isNoteEmpty()) {
+                    _status.value = SaveStatusNote.OLD
+                    return@withLock true
+                }
+
+                val saved = when {
+                    currentNote.id != -1L -> updateExistingNote(currentNote, blocksJson)
+                    !saveBackupVersion -> insertNewNote(currentNote, blocksJson)
+                    else -> true
+                }
+
+                _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.OLD
+                saved
+            } catch (e: Exception) {
+                AppLogger.e("EditNoteViewModel", "Note persistence failed", e)
+                _status.value = SaveStatusNote.OLD
+                false
+            }
         }
-    }
 
     /** Serializes the current blocks, dropping blank text-bearing blocks. */
     private fun serializeNonBlankBlocks(): String = BlockConverter.blocksToJson(
@@ -321,12 +338,15 @@ class EditNoteViewModel
         },
     )
 
-    private suspend fun updateExistingNote(currentNote: Note, blocksJson: String) {
-        // Bump the timestamp only when content or title actually changed.
+    private suspend fun updateExistingNote(currentNote: Note, blocksJson: String): Boolean {
         val timestamp = if (
             _state.value.backupNote.hasContentChanged(blocksJson, _state.value.note.title)
-        ) System.currentTimeMillis() else currentNote.date
-        withContext(Dispatchers.IO) {
+        ) {
+            System.currentTimeMillis()
+        } else {
+            currentNote.date
+        }
+        return withContext(Dispatchers.IO) {
             notesRepository.updateNote(currentNote.copy(value = blocksJson, date = timestamp))
         }
     }
@@ -334,20 +354,22 @@ class EditNoteViewModel
     private suspend fun insertNewNote(
         currentNote: Note,
         blocksJson: String,
-        actionButton: Boolean,
-    ) {
-        withContext(Dispatchers.IO) {
-            val insertedId = notesRepository.insertNote(
+    ): Boolean {
+        val insertedId = withContext(Dispatchers.IO) {
+            notesRepository.insertNote(
                 Note.new(
                     title = currentNote.title,
                     value = blocksJson,
                     tagId = currentNote.tagId,
                 ),
             )
-            if (!actionButton) {
-                _state.value = _state.value.copy(note = currentNote.copy(id = insertedId))
-            }
         }
+        if (insertedId <= 0L) return false
+
+        _state.value = _state.value.copy(
+            note = currentNote.copy(id = insertedId, value = blocksJson),
+        )
+        return true
     }
 
     /**
@@ -686,33 +708,15 @@ class EditNoteViewModel
     /**
      * Restores the note from the trash
      */
-    fun noteRestore() {
+    suspend fun noteRestore(): Boolean {
         val currentNote = _state.value.note
-        val currentNoteId = currentNote.id
+        if (currentNote.id == -1L) return false
 
-        if (currentNoteId == -1L) {
-            AppLogger.e("EditNoteViewModel", "Cannot restore note: current note ID is -1")
-            return
-        }
-
-        // Get the current content of the note
         val blocksJson = BlockConverter.blocksToJson(blocks)
-
-        viewModelScope.launch {
-            // Update the note status through the use case
-            val result = updateNoteTrashStatusUseCase.invoke(
-                currentNote.copy(
-                    value = blocksJson,
-                ),
-                false, // false means "not in the trash", i.e. restore
-            )
-
-            if (result) {
-                AppLogger.d("EditNoteViewModel", "Note restored with ID: $currentNoteId")
-            } else {
-                AppLogger.e("EditNoteViewModel", "Failed to restore note with ID: $currentNoteId")
-            }
-        }
+        return updateNoteTrashStatusUseCase.invoke(
+            currentNote.copy(value = blocksJson),
+            false,
+        )
     }
 
     /**
@@ -740,7 +744,7 @@ class EditNoteViewModel
                     value = blocksJson,
                     tagId = currentNote.tagId
                 )
-            )
+            ).takeIf { it > 0L } ?: -1L
         } catch (e: Exception) {
             AppLogger.e("EditNoteViewModel", "Error duplicating note: ${e.message}")
             -1L
@@ -750,22 +754,15 @@ class EditNoteViewModel
     /**
      * Deletes the note completely from the database
      */
-    fun noteDelete() {
+    suspend fun noteDelete(): Boolean {
         val currentNoteId = _state.value.note.id
+        if (currentNoteId == -1L) return false
 
-        if (currentNoteId == -1L) {
-            AppLogger.e("EditNoteViewModel", "Cannot delete note: current note ID is -1")
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                // Delete the note from the database
-                notesRepository.deleteNoteById(currentNoteId)
-                AppLogger.d("EditNoteViewModel", "Note deleted with ID: $currentNoteId")
-            } catch (e: Exception) {
-                AppLogger.e("EditNoteViewModel", "Error deleting note: ${e.message}")
-            }
+        return try {
+            notesRepository.deleteNoteById(currentNoteId)
+        } catch (e: Exception) {
+            AppLogger.e("EditNoteViewModel", "Note deletion failed", e)
+            false
         }
     }
 
