@@ -16,7 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.util.Calendar
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 // Filters for tasks
@@ -74,25 +75,20 @@ class TasksViewModel
     }
 
     private fun createDateFilters(tasks: List<Task>): List<TaskFilter> {
-        val today = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
-        val tomorrow = today + 24 * 60 * 60 * 1000
+        val boundaries = currentDayBoundaries()
 
         val todayTasks = tasks.filter { task ->
-            task.reminderDate != null && task.reminderDate >= today && task.reminderDate < tomorrow
+            task.reminderDate != null &&
+                task.reminderDate >= boundaries.today &&
+                task.reminderDate < boundaries.tomorrow
         }
-
         val tomorrowTasks = tasks.filter { task ->
-            task.reminderDate != null && task.reminderDate >= tomorrow && task.reminderDate < tomorrow + 24 * 60 * 60 * 1000
+            task.reminderDate != null &&
+                task.reminderDate >= boundaries.tomorrow &&
+                task.reminderDate < boundaries.dayAfterTomorrow
         }
-
         val laterTasks = tasks.filter { task ->
-            task.reminderDate != null && task.reminderDate >= tomorrow + 24 * 60 * 60 * 1000
+            task.reminderDate != null && task.reminderDate >= boundaries.dayAfterTomorrow
         }
 
         return listOf(
@@ -125,66 +121,57 @@ class TasksViewModel
         priorityFilter: TaskFilter?
     ): List<Task> {
         var filtered = tasks
+        val boundaries = currentDayBoundaries()
 
-        // Filter by date
         dateFilter?.let { filter ->
-            when (filter.id) {
-                "today" -> {
-                    val today = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    val tomorrow = today + 24 * 60 * 60 * 1000
-
-                    filtered = filtered.filter { task ->
-                        task.reminderDate != null && task.reminderDate >= today && task.reminderDate < tomorrow
-                    }
+            filtered = when (filter.id) {
+                "today" -> filtered.filter { task ->
+                    task.reminderDate != null &&
+                        task.reminderDate >= boundaries.today &&
+                        task.reminderDate < boundaries.tomorrow
                 }
 
-                "tomorrow" -> {
-                    val today = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    val tomorrow = today + 24 * 60 * 60 * 1000
-                    val dayAfterTomorrow = tomorrow + 24 * 60 * 60 * 1000
-
-                    filtered = filtered.filter { task ->
-                        task.reminderDate != null && task.reminderDate >= tomorrow && task.reminderDate < dayAfterTomorrow
-                    }
+                "tomorrow" -> filtered.filter { task ->
+                    task.reminderDate != null &&
+                        task.reminderDate >= boundaries.tomorrow &&
+                        task.reminderDate < boundaries.dayAfterTomorrow
                 }
 
-                "later" -> {
-                    val today = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    val dayAfterTomorrow = today + 2 * 24 * 60 * 60 * 1000
-
-                    filtered = filtered.filter { task ->
-                        task.reminderDate != null && task.reminderDate >= dayAfterTomorrow
-                    }
+                "later" -> filtered.filter { task ->
+                    task.reminderDate != null &&
+                        task.reminderDate >= boundaries.dayAfterTomorrow
                 }
+
+                else -> filtered
             }
         }
 
-        // Filter by priority
         priorityFilter?.let { filter ->
-            when (filter.id) {
-                "priority_high" -> filtered = filtered.filter { it.priority == 2 }
-                "priority_medium" -> filtered = filtered.filter { it.priority == 1 }
-                "priority_low" -> filtered = filtered.filter { it.priority == 0 }
+            filtered = when (filter.id) {
+                "priority_high" -> filtered.filter { it.priority == 2 }
+                "priority_medium" -> filtered.filter { it.priority == 1 }
+                "priority_low" -> filtered.filter { it.priority == 0 }
+                else -> filtered
             }
         }
 
         return filtered.sortedByDescending { it.priority }
     }
+
+    private data class DayBoundaries(
+        val today: Long,
+        val tomorrow: Long,
+        val dayAfterTomorrow: Long
+    )
+
+    private fun currentDayBoundaries(
+        today: LocalDate = LocalDate.now(ZoneId.systemDefault()),
+        zoneId: ZoneId = ZoneId.systemDefault()
+    ): DayBoundaries = DayBoundaries(
+        today = today.atStartOfDay(zoneId).toInstant().toEpochMilli(),
+        tomorrow = today.plusDays(1).atStartOfDay(zoneId).toInstant().toEpochMilli(),
+        dayAfterTomorrow = today.plusDays(2).atStartOfDay(zoneId).toInstant().toEpochMilli()
+    )
 
     private fun observeTasks() {
         viewModelScope.launch {
@@ -201,17 +188,11 @@ class TasksViewModel
                     currentState.selectedDateFilter == null &&
                     currentState.selectedCompletedFilter == null
                 ) {
-                    // Check whether there are tasks for today
-                    val today = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    val tomorrow = today + 24 * 60 * 60 * 1000
-
+                    val boundaries = currentDayBoundaries()
                     val todayTasks = activeTasks.filter { task ->
-                        task.reminderDate != null && task.reminderDate >= today && task.reminderDate < tomorrow
+                        task.reminderDate != null &&
+                            task.reminderDate >= boundaries.today &&
+                            task.reminderDate < boundaries.tomorrow
                     }
 
                     if (todayTasks.isNotEmpty()) {
