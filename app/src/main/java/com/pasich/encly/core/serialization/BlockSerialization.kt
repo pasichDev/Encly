@@ -54,8 +54,12 @@ class BlockDeserializer : JsonDeserializer<Block> {
             "LIST", "LIST_CHECK", "LIST_NUMBER" -> Block.ListBlock(
                 items = MutableStateFlow(
                     jsonObject.getAsJsonArray("items")
-                        ?.map {
-                            ItemListBlock(it.asJsonObject.get("value")?.asString ?: "")
+                        ?.map { item ->
+                            val itemObject = item.asJsonObject
+                            ItemListBlock(
+                                value = itemObject.get("value")?.asString ?: "",
+                                isCheck = itemObject.get("isCheck")?.asBoolean ?: false,
+                            )
                         } ?: listOf(ItemListBlock(""))),
                 blockType = if (blockType == "LIST_NUMBER") BlockType.LIST_NUMBER else BlockType.LIST_CHECK)
 
