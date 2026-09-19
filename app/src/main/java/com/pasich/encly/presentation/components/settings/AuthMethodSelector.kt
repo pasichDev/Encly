@@ -37,60 +37,77 @@ fun AuthMethodSelector(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(12.dp))
-        Card(
+        PinAuthMethodCard(
+            selected = selected == AuthType.PIN,
+            onClick = { onSelected(AuthType.PIN) }
+        )
+    }
+}
+
+@Composable
+private fun PinAuthMethodCard(
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .clickable { onSelected(AuthType.PIN) },
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (selected == AuthType.PIN) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainer
-                }
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Lucide.Waypoints,
-                    contentDescription = null,
-                    tint = if (selected == AuthType.PIN) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(15.dp))
-                Column {
-                    Text(
-                        text = "6-значний PIN",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (selected == AuthType.PIN) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        }
-                    )
-                    Text(
-                        text = "Обов'язковий ключ доступу. Натисніть, щоб змінити PIN.",
-                        fontSize = 14.sp,
-                        color = if (selected == AuthType.PIN) {
-                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-            }
+            Icon(
+                imageVector = Lucide.Waypoints,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(15.dp))
+            PinAuthMethodText(selected = selected, contentColor = contentColor)
         }
+    }
+}
+
+@Composable
+private fun PinAuthMethodText(
+    selected: Boolean,
+    contentColor: androidx.compose.ui.graphics.Color
+) {
+    Column {
+        Text(
+            text = "6-значний PIN",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = contentColor
+        )
+        Text(
+            text = "Обов'язковий ключ доступу. Натисніть, щоб змінити PIN.",
+            fontSize = 14.sp,
+            color = if (selected) {
+                contentColor.copy(alpha = 0.8f)
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
     }
 }
