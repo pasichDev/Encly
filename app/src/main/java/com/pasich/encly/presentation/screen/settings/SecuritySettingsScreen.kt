@@ -91,7 +91,13 @@ fun SecuritySettingsScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = if (securityState.isUserCreatedSeedKey) "Ваш випадковий ключ бази даних має окремий recovery-slot, захищений вашою сід-фразою." else "Ваш випадковий ключ бази даних захищений PIN і, за бажанням, біометричним Keystore-slot.",
+                                text = if (securityState.isUserCreatedSeedKey) {
+                                    "Ваш випадковий ключ бази даних має окремий recovery-slot, " +
+                                        "захищений вашою сід-фразою."
+                                } else {
+                                    "Ваш випадковий ключ бази даних захищений PIN і, за бажанням, " +
+                                        "біометричним Keystore-slot."
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
