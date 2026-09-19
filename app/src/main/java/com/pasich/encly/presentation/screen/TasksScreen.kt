@@ -268,8 +268,12 @@ fun TasksScreen(
                 screenUiState = screenUiState.copy(showDialogCleanComplete = false)
             },
             onConfirm = {
-                viewModel.clearCompletedTasks()
-                screenUiState = screenUiState.copy(showDialogCleanComplete = false)
+                viewModel.clearCompletedTasks {
+                    uiState.availableFilters.find {
+                        it.id == "all" && it.type == TaskFilter.Type.DATE
+                    }?.let(viewModel::onFilterSelected)
+                    screenUiState = screenUiState.copy(showDialogCleanComplete = false)
+                }
             })
 
     }

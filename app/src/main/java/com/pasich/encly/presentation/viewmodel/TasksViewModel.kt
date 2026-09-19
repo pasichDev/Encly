@@ -356,9 +356,11 @@ class TasksViewModel
     }
 
 
-    fun clearCompletedTasks() {
+    fun clearCompletedTasks(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (!deleteCompletedTasksUseCase()) {
+            if (deleteCompletedTasksUseCase()) {
+                onSuccess()
+            } else {
                 _operationFailures.emit(TaskOperationFailure.CLEAR_COMPLETED)
             }
         }
