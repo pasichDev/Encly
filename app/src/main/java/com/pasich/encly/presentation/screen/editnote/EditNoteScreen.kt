@@ -132,7 +132,7 @@ fun EditNoteScreen(
         navController.popBackStack()
     }
 
-    val closeScreen = {
+    fun closeScreen() {
         scope.launch {
             if (viewModel.saveNote()) {
                 finishNavigation()
