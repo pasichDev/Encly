@@ -48,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -471,6 +472,7 @@ private fun VerificationWordInput(
                 }
             } else null,
             keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Password,
                 imeAction = imeAction
             ),
             keyboardActions = KeyboardActions(
