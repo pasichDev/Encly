@@ -4,6 +4,7 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.repository.NotesRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -13,62 +14,30 @@ import javax.inject.Inject
 class CleanTrashNotesUseCase @Inject constructor(
     private val repository: NotesRepository
 ) {
-
-    /**
-     * Deletes all notes from the trash, including cleanup of photos.
-     */
     suspend operator fun invoke(): Boolean = withContext(Dispatchers.IO) {
-        return@withContext try {
-            // Get all notes from the trash
-            repository.getTrashNotes().collect { trashNotes ->
-                if (trashNotes.isNotEmpty()) {
-                    AppLogger.d("CleanTrashNotesUseCase", "Deleting ${trashNotes.size} notes from trash")
-
-                    // Then delete all notes
-                    trashNotes.forEach { note ->
-                        repository.deleteNoteById(note.id.toLong())
-                    }
-
-                    AppLogger.d(
-                        "CleanTrashNotesUseCase",
-                        "Deleted ${trashNotes.size} notes from trash"
-                    )
-                }
-            }
-            true
+        try {
+            val trashNotes = repository.getTrashNotes().first()
+            trashNotes.allDeleted()
         } catch (e: Exception) {
-            AppLogger.e("CleanTrashNotesUseCase", "Error clearing trash: ${e.message}")
+            AppLogger.e("CleanTrashNotesUseCase", "Error clearing trash", e)
             false
         }
     }
 
-    /**
-     * Deletes the selected notes from the trash, including cleanup of photos.
-     */
     suspend fun cleanSelectedNotes(selectedNotes: List<Note>): Boolean =
         withContext(Dispatchers.IO) {
-            return@withContext try {
-                if (selectedNotes.isNotEmpty()) {
-                    AppLogger.d(
-                        "CleanTrashNotesUseCase",
-                        "Deleting ${selectedNotes.size} selected notes"
-                    )
-
-
-                    // Then delete the selected notes
-                    selectedNotes.forEach { note ->
-                        repository.deleteNoteById(note.id.toLong())
-                    }
-
-                    AppLogger.d(
-                        "CleanTrashNotesUseCase",
-                        "Deleted ${selectedNotes.size} selected notes"
-                    )
-                }
-                true
+            try {
+                selectedNotes.allDeleted()
             } catch (e: Exception) {
-                AppLogger.e("CleanTrashNotesUseCase", "Error deleting selected notes: ${e.message}")
+                AppLogger.e("CleanTrashNotesUseCase", "Error deleting selected notes", e)
                 false
             }
         }
+
+    private suspend fun List<Note>.allDeleted(): Boolean {
+        for (note in this) {
+            if (!repository.deleteNoteById(note.id)) return false
+        }
+        return true
+    }
 }
