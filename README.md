@@ -69,8 +69,14 @@ sha256sum -c --ignore-missing SHA256SUMS          # APK matches the published ch
 apksigner verify --print-certs Encly-2.0.0-fdroid.apk
 ```
 
-`apksigner` (Android SDK build-tools) must print the release signing certificate, whose SHA-256
-digest is published here with the first signed release.
+`apksigner` (Android SDK build-tools) must print this release signing certificate SHA-256
+digest:
+
+```text
+6884c693354964276231e6d0336b965f690bf3f15a0707bb59505c208e5e7554
+```
+
+Any other certificate means the APK is not an official Encly build.
 
 An APK whose name ends in `-unsigned.apk` was built without the release key and must not be
 installed over a signed Encly.
