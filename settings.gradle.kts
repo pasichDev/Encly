@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = "Encly"
 include(":app")
 
@@ -7,6 +15,5 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") }
     }
 }

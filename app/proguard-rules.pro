@@ -70,6 +70,12 @@
     public static int d(...);
     public static int e(...);
 }
+# AppLogger is a no-op, but its arguments (string templates, exception reads) would still be
+# evaluated; this removes the calls together with the argument building.
+-assumenosideeffects class com.pasich.encly.core.AppLogger {
+    public *** w(...);
+    public *** e(...);
+}
 -assumenosideeffects class java.io.PrintStream {
     public void println(%);
     public void println(**);

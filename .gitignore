@@ -4,19 +4,20 @@
 /local.properties
 /.idea
 .DS_Store
+._*
+Thumbs.db
+*.log
+/dist
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
-/app/schemas
 .kotlin
 
-# Local-only planning docs — keep on disk, never commit
-/ROADMAP.md
-/TEST_MATRIX.md
 
 # Release signing — never commit
 keystore.properties
 *.jks
 *.keystore
+*.p12
