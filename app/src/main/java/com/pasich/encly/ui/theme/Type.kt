@@ -4,34 +4,31 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-
 import com.pasich.encly.R
 
 val bodyFontFamily = FontFamily(
-    Font(R.font.lato_bold,FontWeight.Bold),
-    Font(R.font.lato_thin,FontWeight.Thin),
-    Font(R.font.lato_medium,FontWeight.Medium),
-    Font(R.font.lato_light,FontWeight.Light),
+    Font(R.font.lato_bold, FontWeight.Bold),
+    Font(R.font.lato_thin, FontWeight.Thin),
+    Font(R.font.lato_medium, FontWeight.Medium),
+    Font(R.font.lato_light, FontWeight.Light),
 )
 
 val displayFontFamily = FontFamily(
-    Font(R.font.poppins_bold,FontWeight.Bold),
-    Font(R.font.poppins_thin,FontWeight.Thin),
-    Font(R.font.poppins_light,FontWeight.Light),
-    Font(R.font.poppins_medium,FontWeight.Medium),
+    Font(R.font.poppins_bold, FontWeight.Bold),
+    Font(R.font.poppins_thin, FontWeight.Thin),
+    Font(R.font.poppins_light, FontWeight.Light),
+    Font(R.font.poppins_medium, FontWeight.Medium),
 )
 
 val baseline = Typography()
 
-
-var heyHomeBar =  baseline.titleMedium.copy(fontFamily = displayFontFamily, fontWeight = FontWeight.Bold)
+var heyHomeBar = baseline.titleMedium.copy(fontFamily = displayFontFamily, fontWeight = FontWeight.Bold)
 var titleNoteCard = baseline.titleMedium.copy(fontWeight = FontWeight.Bold)
 var bodyNote = baseline.bodyLarge
 var titleNote = baseline.headlineSmall.copy(
-    fontWeight = FontWeight.Bold
+    fontWeight = FontWeight.Bold,
 
 )
-
 
 val AppTypography = Typography(
     displayLarge = baseline.displayLarge.copy(fontFamily = displayFontFamily),
@@ -50,4 +47,3 @@ val AppTypography = Typography(
     labelMedium = baseline.labelMedium.copy(fontFamily = bodyFontFamily),
     labelSmall = baseline.labelSmall.copy(fontFamily = bodyFontFamily),
 )
-

@@ -7,4 +7,4 @@ var horizontalDefault = PaddingValues(horizontal = 20.dp)
 
 var horizontalVerticalDefault = PaddingValues(horizontal = 20.dp, vertical = 15.dp)
 
-var horizontalListEndless = PaddingValues( bottom = 10.dp)
+var horizontalListEndless = PaddingValues(bottom = 10.dp)

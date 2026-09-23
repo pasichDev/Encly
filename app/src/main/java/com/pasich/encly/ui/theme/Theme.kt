@@ -3,6 +3,7 @@ package com.pasich.encly.ui.theme
 import android.app.Activity
 import android.os.Build
 import android.view.WindowManager
+import androidx.annotation.FontRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -13,50 +14,52 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pasich.encly.data.datasource.local.ThemeType
-import com.pasich.encly.presentation.viewmodel.ThemeViewModel
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.ThemeType
+import com.pasich.encly.presentation.viewmodel.ThemeViewModel
 
-
-private val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs
-)
+// Editor fonts are bundled OFL files in res/font (licenses in /licenses/fonts). Encly must not
+// fetch fonts through the Google Play Services font provider: that is a network request to
+// Google, breaks the "fully offline" promise and leaves devices without GMS with no fonts.
+// Variable fonts cover several weights from one file via FontVariation settings (API 26+).
 
 // Headings
 val poppins = FontFamily(
-    Font(googleFont = GoogleFont("Poppins"), fontProvider = provider)
+    Font(R.font.poppins_regular, FontWeight.Normal),
+    Font(R.font.poppins_medium, FontWeight.Medium),
+    Font(R.font.poppins_bold, FontWeight.Bold),
 )
 
-val playfair = FontFamily(
-    Font(googleFont = GoogleFont("Playfair Display"), fontProvider = provider)
+val playfair = variableFontFamily(R.font.playfair_display_variable)
+
+val ibmPlex = variableFontFamily(R.font.ibm_plex_sans_variable)
+
+// Body text. Roboto is the Android system sans-serif, so no file needs to ship for it.
+val roboto = FontFamily.SansSerif
+
+val sourceSans = variableFontFamily(R.font.source_sans3_variable)
+
+val inter = variableFontFamily(R.font.inter_variable)
+
+@OptIn(ExperimentalTextApi::class)
+private fun variableFontFamily(@FontRes resId: Int): FontFamily = FontFamily(
+    listOf(FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold).map { weight ->
+        Font(
+            resId = resId,
+            weight = weight,
+            variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
+        )
+    },
 )
 
-val ibmPlex = FontFamily(
-    Font(googleFont = GoogleFont("IBM Plex Sans"), fontProvider = provider)
-)
-
-// Body text
-val roboto = FontFamily(
-    Font(googleFont = GoogleFont("Roboto"), fontProvider = provider)
-)
-
-val sourceSans = FontFamily(
-    Font(googleFont = GoogleFont("Source Sans 3"), fontProvider = provider)
-)
-
-val inter = FontFamily(
-    Font(googleFont = GoogleFont("Inter"), fontProvider = provider)
-)
-
-
-private val  greenLightScheme = lightColorScheme(
+private val greenLightScheme = lightColorScheme(
     primary = primaryLight,
     onPrimary = onPrimaryLight,
     primaryContainer = primaryContainerLight,
@@ -133,13 +136,10 @@ private val greenDarkScheme = darkColorScheme(
 )
 
 @Composable
-fun AppTheme(
-    themeViewModel: ThemeViewModel = hiltViewModel(),
-    content: @Composable () -> Unit
-) {
-
+fun AppTheme(themeViewModel: ThemeViewModel = hiltViewModel(), content: @Composable () -> Unit) {
     val themeSettings = themeViewModel.themeSettingsFlow.collectAsState()
-    val (isDynamic, themeType, _) = themeSettings.value
+    val isDynamic = themeSettings.value.dynamic
+    val themeType = themeSettings.value.type
 
     val isDarkTheme = when (themeType) {
         ThemeType.SYSTEM -> isSystemInDarkTheme()
@@ -150,15 +150,19 @@ fun AppTheme(
     val colorScheme = when {
         isDynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(
-                context
-            )
+            if (isDarkTheme) {
+                dynamicDarkColorScheme(context)
+            } else {
+                dynamicLightColorScheme(
+                    context,
+                )
+            }
         }
 
         isDarkTheme -> greenDarkScheme
+
         else -> greenLightScheme
     }
-
 
     val activity = LocalView.current.context as Activity
     WindowCompat.getInsetsController(activity.window, activity.window.decorView).apply {
@@ -169,9 +173,4 @@ fun AppTheme(
     activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     MaterialTheme(colorScheme = colorScheme, typography = AppTypography, content = content)
-
 }
-
-
-
-
