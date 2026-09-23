@@ -9,11 +9,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 enum class InitialStatus {
-    NO, MAIN, ONBOARDING, LOSS_DATABASE, LOSS_CRYPTO, AUTH, SETUP_AUTH
+    NO,
+    MAIN,
+    ONBOARDING,
+    LOSS_DATABASE,
+    LOSS_CRYPTO,
+    AUTH,
+    SETUP_AUTH,
 }
 
 enum class VaultUnlockResult {
-    SUCCESS, INVALID_CREDENTIAL, DB_ERROR
+    SUCCESS,
+    INVALID_CREDENTIAL,
+    DB_ERROR,
 }
 
 /**
@@ -28,7 +36,7 @@ class SecurityManager @Inject constructor(
     private val seedPhraseManager: SeedPhraseManager,
     private val secureDatabaseManager: SecureDatabaseManager,
     private val authenticationManager: AuthenticationManager,
-    private val biometricManager: BiometricManager
+    private val biometricManager: BiometricManager,
 ) {
     companion object {
         private const val ONBOARDING_SHOWN_KEY = "onboarding_shown_v2"
@@ -37,6 +45,12 @@ class SecurityManager @Inject constructor(
 
     @Volatile
     private var sessionDek: ByteArray? = null
+
+    // True while the open session was unlocked with the recovery phrase and no new PIN has
+    // been set since. The user proved the vault's strongest secret, so they may replace a
+    // forgotten PIN without typing it.
+    @Volatile
+    private var sessionUnlockedWithRecovery = false
 
     var securityStatus = InitialStatus.NO
 
@@ -47,7 +61,7 @@ class SecurityManager @Inject constructor(
     }
 
     private fun initializeSecurity(): InitialStatus {
-        if (!isOnboardingShown()) return InitialStatus.ONBOARDING
+        if (!isOnboardingShown()) return uncommittedVaultStatus()
         if (!seedPhraseManager.verificationKeyData()) return InitialStatus.LOSS_CRYPTO
         if (!secureDatabaseManager.hasEncryptedDatabase()) return InitialStatus.LOSS_DATABASE
 
@@ -60,10 +74,27 @@ class SecurityManager @Inject constructor(
         return InitialStatus.AUTH
     }
 
+    /**
+     * No committed vault. Onboarding creates a new vault and deletes database.db, so it is only
+     * safe when no user data can exist yet. An encrypted database with no vault metadata cannot
+     * be opened by anything, and is only deleted after the explicit confirmation on the loss
+     * screen. Pre-2.0 (v1) vaults are not migrated: there were no users to migrate.
+     */
+    private fun uncommittedVaultStatus(): InitialStatus = if (secureDatabaseManager.hasEncryptedDatabase() &&
+        !seedPhraseManager.hasStoredSeed()
+    ) {
+        InitialStatus.LOSS_CRYPTO
+    } else {
+        InitialStatus.ONBOARDING
+    }
+
+    /** True when first-run setup may (re)create the vault without destroying user data. */
+    private fun isSafeToCreateVault(): Boolean =
+        !isOnboardingShown() && uncommittedVaultStatus() == InitialStatus.ONBOARDING
+
     fun authStrategy(): AuthStrategy = authenticationManager.isAuthStrategy()
 
-    fun isBiometricEnabled(): Boolean =
-        authenticationManager.isBiometricEnabled() && biometricManager.hasSlot()
+    fun isBiometricEnabled(): Boolean = authenticationManager.isBiometricEnabled() && biometricManager.hasSlot()
 
     fun biometricAvailable(): Boolean = biometricManager.isStrongBiometricAvailable()
 
@@ -71,12 +102,20 @@ class SecurityManager @Inject constructor(
 
     fun configurePin(pin: String): Boolean {
         val dek = currentKeyCopy() ?: return false
-        return try {
+        val configured = try {
             authenticationManager.configurePin(pin, dek)
         } finally {
             SensitiveDataCleaner.clear(dek)
         }
+        if (configured) sessionUnlockedWithRecovery = false
+        return configured
     }
+
+    /**
+     * Whether a new PIN may be set without the current one: only in a session the recovery
+     * phrase unlocked (the PIN was forgotten), until a new PIN is set or the vault locks.
+     */
+    fun canResetPinWithoutCurrent(): Boolean = sessionUnlockedWithRecovery && sessionDek != null
 
     fun unlockWithPin(pin: String): VaultUnlockResult {
         val dek = authenticationManager.unlockWithPin(pin)
@@ -91,24 +130,20 @@ class SecurityManager @Inject constructor(
     fun unlockWithSeed(phrase: CharArray): VaultUnlockResult {
         val dek = seedPhraseManager.unlockWithSeed(phrase)
             ?: return VaultUnlockResult.INVALID_CREDENTIAL
-        return try {
-            if (unlockWithRawKey(dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+        val opened = try {
+            unlockWithRawKey(dek)
         } finally {
             SensitiveDataCleaner.clear(dek)
         }
+        sessionUnlockedWithRecovery = opened
+        return if (opened) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
     }
 
-    fun requestBiometricKey(
-        activity: FragmentActivity,
-        onResult: (ByteArray?) -> Unit
-    ) {
+    fun requestBiometricKey(activity: FragmentActivity, onResult: (ByteArray?) -> Unit) {
         biometricManager.unlock(activity, onResult)
     }
 
-    fun enrollBiometric(
-        activity: FragmentActivity,
-        onResult: (Boolean) -> Unit
-    ) {
+    fun enrollBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
         val dek = currentKeyCopy()
         if (dek == null) {
             onResult(false)
@@ -127,10 +162,7 @@ class SecurityManager @Inject constructor(
         authenticationManager.markBiometricEnabled(false)
     }
 
-    fun confirmBiometric(
-        activity: FragmentActivity,
-        onResult: (Boolean) -> Unit
-    ) {
+    fun confirmBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
         biometricManager.authenticate(
             activity,
             BiometricManager.BiometricType.SETTINGS_TOGGLE,
@@ -139,8 +171,51 @@ class SecurityManager @Inject constructor(
                 override fun onError(errorCode: Int, errorMessage: String) = onResult(false)
                 override fun onFailed() = Unit
                 override fun onCancelled() = onResult(false)
-            }
+            },
         )
+    }
+
+    // --- encrypted backups --------------------------------------------------------------
+
+    /** True when backups of this vault can be sealed to its recovery phrase without asking. */
+    fun hasBackupKey(): Boolean = seedPhraseManager.hasBackupKey()
+
+    fun isValidRecoveryPhrase(phrase: CharArray): Boolean = seedPhraseManager.isValidMnemonic(phrase)
+
+    /**
+     * The seed-derived backup root of the unlocked vault, or null when the session is locked
+     * or the vault has no backup-key slot. The caller must wipe the returned key.
+     */
+    fun copyBackupRootKey(): ByteArray? {
+        val dek = sessionDek?.copyOf() ?: return null
+        return try {
+            seedPhraseManager.unwrapBackupRoot(dek)
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
+
+    /**
+     * Adds a recovery seed (and backup key) to the unlocked vault, which then behaves like one
+     * created in user-managed mode. See [SeedPhraseManager.addRecoverySeed].
+     */
+    fun addRecoverySeed(phrase: CharArray): Boolean {
+        val dek = sessionDek?.copyOf() ?: return false
+        return try {
+            seedPhraseManager.addRecoverySeed(phrase, dek)
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
+
+    /** Adds the backup-key slot to an unlocked recovery-seed vault; [phrase] must be its seed. */
+    fun createBackupKey(phrase: CharArray): Boolean {
+        val dek = sessionDek?.copyOf() ?: return false
+        return try {
+            seedPhraseManager.createBackupKey(phrase, dek)
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
     }
 
     fun pinLockoutRemainingMillis(): Long = authenticationManager.remainingLockoutMillis()
@@ -153,14 +228,11 @@ class SecurityManager @Inject constructor(
      * Opens SQLCipher with an already unwrapped v2 DEK.
      * Caller retains ownership of [dek] and should wipe it after this call.
      */
-    fun unlockWithRawKey(
-        dek: ByteArray,
-        allowCreate: Boolean = false
-    ): Boolean {
+    fun unlockWithRawKey(dek: ByteArray, allowCreate: Boolean = false): Boolean {
         if (dek.size != DEK_LENGTH) return false
         val ok = secureDatabaseManager.unlockDatabase(
             SecretKeySpec(dek, "AES"),
-            allowCreate = allowCreate
+            allowCreate = allowCreate,
         )
         if (ok) {
             setSessionKey(dek)
@@ -172,7 +244,15 @@ class SecurityManager @Inject constructor(
     /**
      * Completes first-run setup only after a PIN slot exists and the bootstrap DEK opens SQLCipher.
      */
-    fun finishInitialSetup(): Boolean {
+    fun finishInitialSetup(): Boolean = openInitialVault() && commitInitialSetup()
+
+    /**
+     * First half of [finishInitialSetup]: opens (creating) the new vault with the bootstrap DEK
+     * once a PIN slot exists, without committing onboarding. Lets a staged restore be imported
+     * before the vault counts as set up; until [commitInitialSetup], a killed process simply
+     * starts onboarding over.
+     */
+    fun openInitialVault(): Boolean {
         val dek = if (authenticationManager.hasPinSlot()) {
             seedPhraseManager.copyBootstrapKey()
         } else {
@@ -180,13 +260,17 @@ class SecurityManager @Inject constructor(
         } ?: return false
 
         return try {
-            val opened = unlockWithRawKey(dek, allowCreate = true)
-            val finalized = opened && setOnboardingShown()
-            if (finalized) seedPhraseManager.clearBootstrapKey()
-            finalized
+            unlockWithRawKey(dek, allowCreate = true)
         } finally {
             SensitiveDataCleaner.clear(dek)
         }
+    }
+
+    /** Second half of [finishInitialSetup]: commits onboarding and drops the bootstrap DEK. */
+    fun commitInitialSetup(): Boolean {
+        val finalized = setOnboardingShown()
+        if (finalized) seedPhraseManager.clearBootstrapKey()
+        return finalized
     }
 
     fun lock() {
@@ -195,15 +279,20 @@ class SecurityManager @Inject constructor(
         securityStatus = InitialStatus.AUTH
     }
 
+    /**
+     * Whether backgrounding must close the open vault. Not before onboarding is committed: the
+     * only vault open then is the one first-run setup just created, possibly still importing a
+     * restore that a re-lock would abort. Setup closes it itself if it finishes in the
+     * background (SessionLockManager.onUnlocked) or fails.
+     */
     fun isLockable(): Boolean =
-        authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()
+        isOnboardingShown() && (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed())
 
     fun isDatabaseUnlocked(): Boolean = secureDatabaseManager.isDatabaseUnlocked()
 
     fun isOnboardingShow(): Boolean = !isOnboardingShown()
 
-    private fun isOnboardingShown(): Boolean =
-        secureStoragePrefs.getBoolean(ONBOARDING_SHOWN_KEY, false)
+    private fun isOnboardingShown(): Boolean = secureStoragePrefs.getBoolean(ONBOARDING_SHOWN_KEY, false)
 
     fun setOnboardingShown(): Boolean {
         if (!seedPhraseManager.verificationKeyData() || !authenticationManager.hasPinSlot()) {
@@ -222,6 +311,8 @@ class SecurityManager @Inject constructor(
      * committed before a valid PIN slot exists.
      */
     fun initializeNewVault(recoverySeed: CharArray?): Boolean {
+        // Refuse to overwrite a committed vault or a database nothing can open yet.
+        if (!isSafeToCreateVault()) return false
         secureDatabaseManager.wipe()
         clearSessionKey()
         biometricManager.disable()
@@ -232,8 +323,7 @@ class SecurityManager @Inject constructor(
         return seedPhraseManager.initializeVault(recoverySeed)
     }
 
-    private fun currentKeyCopy(): ByteArray? =
-        sessionDek?.copyOf() ?: seedPhraseManager.copyBootstrapKey()
+    private fun currentKeyCopy(): ByteArray? = sessionDek?.copyOf() ?: seedPhraseManager.copyBootstrapKey()
 
     private fun setSessionKey(dek: ByteArray) {
         clearSessionKey()
@@ -243,6 +333,7 @@ class SecurityManager @Inject constructor(
     private fun clearSessionKey() {
         sessionDek?.let(SensitiveDataCleaner::clear)
         sessionDek = null
+        sessionUnlockedWithRecovery = false
     }
 
     fun wipeAndReset() {
@@ -258,12 +349,8 @@ class SecurityManager @Inject constructor(
     fun getSettingsAuth(): AuthSettings = AuthSettings(
         authType = authenticationManager.getAuthType(),
         isBiometricEnabled = isBiometricEnabled(),
-        isUserCreatedSeedKey = seedPhraseManager.hasRecoverySeed()
+        isUserCreatedSeedKey = seedPhraseManager.hasRecoverySeed(),
     )
 }
 
-data class AuthSettings(
-    val authType: AuthType,
-    val isBiometricEnabled: Boolean,
-    val isUserCreatedSeedKey: Boolean
-)
+data class AuthSettings(val authType: AuthType, val isBiometricEnabled: Boolean, val isUserCreatedSeedKey: Boolean)

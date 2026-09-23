@@ -1,9 +1,9 @@
 package com.pasich.encly.core.security
 
 import android.content.SharedPreferences
-import java.util.Base64
 import androidx.core.content.edit
 import java.security.SecureRandom
+import java.util.Base64
 import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
@@ -16,11 +16,18 @@ import javax.inject.Singleton
 const val PIN_LENGTH = 6
 
 enum class AuthType {
-    NONE, PIN, SEED_PHRASE
+    NONE,
+    PIN,
+    SEED_PHRASE,
 }
 
 enum class AuthStrategy {
-    NONE, PIN, PIN_BIOMETRIC, SEED_PHRASE, SEED_PHRASE_BIOMETRIC, RECOVERY_DATA
+    NONE,
+    PIN,
+    PIN_BIOMETRIC,
+    SEED_PHRASE,
+    SEED_PHRASE_BIOMETRIC,
+    RECOVERY_DATA,
 }
 
 /**
@@ -30,9 +37,7 @@ enum class AuthStrategy {
  * must successfully authenticate/decrypt the random database DEK using AES-256-GCM.
  */
 @Singleton
-class AuthenticationManager @Inject constructor(
-    private val secureStoragePrefs: SharedPreferences
-) {
+class AuthenticationManager @Inject constructor(private val secureStoragePrefs: SharedPreferences) {
     companion object {
         private const val PIN_SLOT_KEY = "v2_pin_slot"
         private const val PIN_SALT_KEY = "v2_pin_salt"
@@ -132,9 +137,8 @@ class AuthenticationManager @Inject constructor(
         return true
     }
 
-    fun hasPinSlot(): Boolean =
-        !secureStoragePrefs.getString(PIN_SALT_KEY, null).isNullOrBlank() &&
-            !secureStoragePrefs.getString(PIN_SLOT_KEY, null).isNullOrBlank()
+    fun hasPinSlot(): Boolean = !secureStoragePrefs.getString(PIN_SALT_KEY, null).isNullOrBlank() &&
+        !secureStoragePrefs.getString(PIN_SLOT_KEY, null).isNullOrBlank()
 
     fun getAuthType(): AuthType {
         val ordinal = secureStoragePrefs.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
@@ -146,11 +150,13 @@ class AuthenticationManager @Inject constructor(
         val biometric = isBiometricEnabled()
         return when (authType) {
             AuthType.NONE -> AuthStrategy.NONE
+
             AuthType.PIN -> when {
                 !hasPinSlot() -> AuthStrategy.RECOVERY_DATA
                 biometric -> AuthStrategy.PIN_BIOMETRIC
                 else -> AuthStrategy.PIN
             }
+
             AuthType.SEED_PHRASE ->
                 if (biometric) AuthStrategy.SEED_PHRASE_BIOMETRIC else AuthStrategy.SEED_PHRASE
         }
@@ -160,8 +166,7 @@ class AuthenticationManager @Inject constructor(
         secureStoragePrefs.edit { putBoolean(BIOMETRIC_ENABLED_KEY, enabled) }
     }
 
-    fun isBiometricEnabled(): Boolean =
-        secureStoragePrefs.getBoolean(BIOMETRIC_ENABLED_KEY, false)
+    fun isBiometricEnabled(): Boolean = secureStoragePrefs.getBoolean(BIOMETRIC_ENABLED_KEY, false)
 
     fun deactivateBiometricAuth() = markBiometricEnabled(false)
 
@@ -201,7 +206,7 @@ class AuthenticationManager @Inject constructor(
             cipher.init(
                 Cipher.DECRYPT_MODE,
                 SecretKeySpec(kek, "AES"),
-                GCMParameterSpec(GCM_TAG_LENGTH, iv)
+                GCMParameterSpec(GCM_TAG_LENGTH, iv),
             )
             cipher.updateAAD(PIN_AAD)
             cipher.doFinal(ciphertext)

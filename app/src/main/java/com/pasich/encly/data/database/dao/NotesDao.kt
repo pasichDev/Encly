@@ -23,7 +23,7 @@ interface NotesDao {
     SELECT * FROM notes 
     WHERE (:tagId IS NULL AND tagId IS NULL OR tagId = :tagId)
     AND isTrash = 0 
-    """
+    """,
     )
     fun getNotesByTagId(tagId: Long?): Flow<List<NoteWithTag>>
 
@@ -32,7 +32,6 @@ interface NotesDao {
 
     @Query("SELECT * FROM notes WHERE isTrash = 1")
     fun getTrashNotes(): Flow<List<Note>>
-
 
     @Query("SELECT * FROM notes WHERE id = :noteId")
     suspend fun getNoteById(noteId: Long): Note?
