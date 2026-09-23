@@ -1,0 +1,33 @@
+#!/bin/sh
+# Encly commit-msg hook: the subject line must follow Conventional Commits
+# (https://www.conventionalcommits.org/), e.g. "fix(security): zeroize DEK after rekey".
+# Enable once per clone:  ./gradlew installGitHooks  (git config core.hooksPath .githooks)
+set -eu
+
+msg_file=$1
+# The subject is the first line that is neither empty nor a git comment.
+subject=$(grep -v -E '^[[:space:]]*(#|$)' "$msg_file" | head -n 1 || true)
+
+# Commits git or the tooling write themselves.
+case "$subject" in
+    "Merge "* | "Revert \""* | "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
+esac
+
+types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+pattern="^($types)(\([A-Za-z0-9._/-]+\))?!?: [^[:space:]].*$"
+max_length=100
+
+if ! printf '%s\n' "$subject" | grep -q -E "$pattern"; then
+    echo "commit-msg: the subject line is not a Conventional Commit:" >&2
+    echo "  $subject" >&2
+    echo >&2
+    echo "Use <type>[(scope)][!]: <description>, with type one of:" >&2
+    echo "  $types" | tr '|' ' ' >&2
+    echo "Examples: feat(editor): add checklist block    fix: keep the lock screen on resume" >&2
+    exit 1
+fi
+
+if [ "${#subject}" -gt "$max_length" ]; then
+    echo "commit-msg: the subject line is ${#subject} characters; keep it at $max_length or less." >&2
+    exit 1
+fi
