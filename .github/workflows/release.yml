@@ -1,0 +1,187 @@
+name: Release
+
+# Pushing a tag vX.Y.Z builds both distribution flavors, signs them when the signing secrets
+# are configured, and publishes a GitHub Release with the APKs, SHA256SUMS and R8 mappings.
+#
+# Repository secrets (all optional; without them the release ships UNSIGNED APKs):
+#   ENCLY_KEYSTORE_BASE64    base64 of the release keystore (base64 -w0 release.jks)
+#   ENCLY_KEYSTORE_PASSWORD  keystore password
+#   ENCLY_KEY_ALIAS          key alias
+#   ENCLY_KEY_PASSWORD       key password
+#   ENCLY_GPG_PRIVATE_KEY    ASCII-armored private key to sign SHA256SUMS (optional)
+#   ENCLY_GPG_PASSPHRASE     its passphrase (optional)
+# Repository variable (optional):
+#   ENCLY_CERT_SHA256        expected SHA-256 of the signing certificate (hex, no colons);
+#                            when set, a signed APK with any other certificate fails the run.
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Tag must match version.properties
+        id: version
+        run: |
+          set -euo pipefail
+          prop() { grep -E "^$1=" version.properties | cut -d= -f2 | tr -d ' \r'; }
+          name="$(prop VERSION_MAJOR).$(prop VERSION_MINOR).$(prop VERSION_PATCH)"
+          if [ "v$name" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version.properties (v$name)"
+            exit 1
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+
+      - name: Decode signing keystore
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ENCLY_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -n "${KEYSTORE_BASE64}" ]; then
+            echo "${KEYSTORE_BASE64}" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ENCLY_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No signing secrets configured: publishing UNSIGNED APKs."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test and build release APKs
+        env:
+          ENCLY_KEYSTORE_PASSWORD: ${{ secrets.ENCLY_KEYSTORE_PASSWORD }}
+          ENCLY_KEY_ALIAS: ${{ secrets.ENCLY_KEY_ALIAS }}
+          ENCLY_KEY_PASSWORD: ${{ secrets.ENCLY_KEY_PASSWORD }}
+        run: ./gradlew :app:testFdroidDebugUnitTest assembleRelease
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+
+      - name: Collect artifacts
+        env:
+          VERSION: ${{ steps.version.outputs.name }}
+          SIGNED: ${{ steps.signing.outputs.signed }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          suffix=""
+          [ "$SIGNED" = "true" ] || suffix="-unsigned"
+          for flavor in fdroid play; do
+            apk="$(find "app/build/outputs/apk/$flavor/release" -name '*.apk' | head -n1)"
+            [ -n "$apk" ] || { echo "::error::No $flavor release APK"; exit 1; }
+            cp "$apk" "dist/Encly-$VERSION-$flavor$suffix.apk"
+            cp "app/build/outputs/mapping/${flavor}Release/mapping.txt" \
+               "dist/Encly-$VERSION-$flavor-mapping.txt"
+          done
+          ls -l dist
+
+      - name: Verify APK signatures
+        if: steps.signing.outputs.signed == 'true'
+        env:
+          EXPECTED_CERT_SHA256: ${{ vars.ENCLY_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)/apksigner"
+          expected="$(echo "${EXPECTED_CERT_SHA256}" | tr -d ':' | tr 'A-F' 'a-f')"
+          for apk in dist/*.apk; do
+            out="$("$apksigner" verify --verbose --print-certs "$apk")"
+            echo "$out"
+            actual="$(echo "$out" | grep -m1 'certificate SHA-256 digest' | awk '{print $NF}')"
+            if [ -n "$expected" ] && [ "$actual" != "$expected" ]; then
+              echo "::error::$apk is signed with $actual, expected $expected"
+              exit 1
+            fi
+          done
+
+      - name: Checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum *.apk *.txt > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Sign SHA256SUMS (optional)
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.ENCLY_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.ENCLY_GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GPG_PRIVATE_KEY}" ]; then
+            echo "No GPG key configured; SHA256SUMS is published unsigned."
+            exit 0
+          fi
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          mkdir -m 700 -p "$GNUPGHOME"
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
+            --armor --detach-sign --output dist/SHA256SUMS.asc dist/SHA256SUMS
+          rm -rf "$GNUPGHOME"
+
+      - name: Release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.name }}
+          SIGNED: ${{ steps.signing.outputs.signed }}
+        run: |
+          set -euo pipefail
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > dist/NOTES.md
+          if [ ! -s dist/NOTES.md ]; then
+            echo "::error::CHANGELOG.md has no section for [$VERSION]"
+            exit 1
+          fi
+          {
+            echo
+            echo "### Verify"
+            echo
+            echo 'Download `SHA256SUMS` next to the APK and run `sha256sum -c --ignore-missing SHA256SUMS`.'
+            if [ "$SIGNED" = "true" ]; then
+              echo 'Check the signer with `apksigner verify --print-certs <apk>` against the certificate'
+              echo 'fingerprint published in the README.'
+            else
+              echo
+              echo '> **These APKs are unsigned** (no signing secrets were configured for this run).'
+              echo '> Sign them yourself before installing, or wait for a signed release.'
+            fi
+          } >> dist/NOTES.md
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Encly ${{ steps.version.outputs.name }}
+          body_path: dist/NOTES.md
+          fail_on_unmatched_files: false
+          files: |
+            dist/*.apk
+            dist/*-mapping.txt
+            dist/SHA256SUMS
+            dist/SHA256SUMS.asc

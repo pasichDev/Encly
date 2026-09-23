@@ -2,13 +2,105 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, prod-hardening ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, security-followups ]
+  workflow_dispatch:
+
+# Only the newest run per branch / PR matters; cancel superseded ones.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # Fast, so it runs first: formatting drift fails the build before the slow steps.
+      - name: Formatting (Spotless + ktlint)
+        run: ./gradlew spotlessCheck
+
+      - name: Unit tests + coverage gate (core/security)
+        run: ./gradlew :app:testFdroidDebugUnitTest :app:koverXmlReportFdroidDebug :app:koverVerifyFdroidDebug
+
+      - name: Static analysis (detekt + Compose rules)
+        run: ./gradlew :app:detekt
+
+      # The instrumented tests (Room migrations, schema, SQLCipher) run in the emulator job;
+      # compiling them here keeps them from rotting even when that job is not looked at.
+      - name: Compile instrumented tests
+        run: ./gradlew :app:compileFdroidDebugAndroidTestKotlin
+
+      # Release lint also covers the R8/shrinker-specific checks that debug lint skips.
+      - name: Lint (release, both distribution flavors)
+        run: ./gradlew :app:lintFdroidRelease :app:lintPlayRelease
+
+      - name: Assemble release (R8/ProGuard)
+        run: ./gradlew assembleRelease
+
+      - name: Check merged manifest has no INTERNET permission
+        run: |
+          set -euo pipefail
+          found=0
+          for m in $(find app/build/intermediates/merged_manifests -name AndroidManifest.xml -path '*elease*'); do
+            if grep -q 'android.permission.INTERNET' "$m"; then
+              echo "::error file=$m::INTERNET permission found in merged release manifest"
+              found=1
+            fi
+          done
+          exit $found
+
+      - name: Checksums
+        run: |
+          set -euo pipefail
+          cd app/build/outputs/apk
+          find . -name '*.apk' -print0 | sort -z | xargs -0 sha256sum | tee SHA256SUMS
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: |
+            app/build/outputs/apk/**/*.apk
+            app/build/outputs/apk/SHA256SUMS
+          if-no-files-found: error
+
+      - name: Upload test, lint, detekt and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: ignore
+
+  # Room migrations and the exported schemas can only be checked on a device (MigrationTestHelper,
+  # SQLCipher). A broken migration would make an upgraded vault look like a wrong key, so every
+  # change runs them on an emulator.
+  instrumented-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -24,21 +116,29 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Lint (debug)
-        run: ./gradlew lintDebug
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
-      - name: Static analysis (detekt)
-        run: ./gradlew :app:detekt
+      - name: Build app and instrumented tests
+        run: ./gradlew :app:assembleFdroidDebug :app:assembleFdroidDebugAndroidTest
 
-      - name: Unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Instrumented tests (Room migrations, schema, SQLCipher)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: ./gradlew :app:connectedFdroidDebugAndroidTest
 
-      - name: Assemble release (R8/ProGuard)
-        run: ./gradlew assembleRelease
-
-      - name: Upload APK
+      - name: Upload instrumented test reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
-          path: app/build/outputs/**/*.apk
+          name: instrumented-test-reports
+          path: app/build/reports/androidTests/
           if-no-files-found: ignore

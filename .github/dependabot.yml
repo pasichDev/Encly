@@ -1,0 +1,31 @@
+version: 2
+updates:
+  # Gradle: gradle/libs.versions.toml + build scripts.
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Kotlin, the Compose compiler plugin, serialization plugin and KSP must move together.
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "com.google.devtools.ksp*"
+      androidx:
+        patterns:
+          - "androidx.*"
+    ignore:
+      # io.nlopez.compose.rules:detekt 0.5+ is built against detekt 2.x; stay on 0.4.x until the
+      # detekt plugin itself moves to 2.x.
+      - dependency-name: "io.nlopez.compose.rules:detekt"
+        versions: [">= 0.5.0"]
+    commit-message:
+      prefix: "build(deps)"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci(deps)"
