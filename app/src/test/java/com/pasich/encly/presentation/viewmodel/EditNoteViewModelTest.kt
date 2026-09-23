@@ -1,14 +1,12 @@
 package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
-import com.pasich.encly.data.datasource.local.FontStyleType
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
-import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
+import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import com.pasich.encly.domain.usecase.settings.FontSizeUseCase
-import com.pasich.encly.domain.usecase.settings.FontStyleUseCase
-import com.pasich.encly.domain.usecase.settings.SimpleEditUseCase
+import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.testutil.TestNotesRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -99,26 +97,36 @@ class EditNoteViewModelTest {
         assertEquals(SaveStatusNote.OLD, viewModel.status.value)
     }
 
-    private fun createViewModel(
-        repository: TestNotesRepository,
-        noteId: Long = -1L
-    ): EditNoteViewModel {
-        val fontSizeUseCase = mock(FontSizeUseCase::class.java)
-        val fontStyleUseCase = mock(FontStyleUseCase::class.java)
-        val simpleEditUseCase = mock(SimpleEditUseCase::class.java)
-        `when`(fontSizeUseCase.fontSizeFlow).thenReturn(flowOf(DEFAULT_FONT_SIZE))
-        `when`(fontStyleUseCase.fontStyleFlow).thenReturn(flowOf(FontStyleType.MODERN_SIMPLE))
-        `when`(simpleEditUseCase.simpleEditFlow).thenReturn(flowOf(false))
+    @Test
+    fun titleEditIsAutosavedAfterTheDebounceOnTheInjectedDispatcher() = runTest {
+        val repository = TestNotesRepository().apply { insertResult = INSERTED_ID }
+        val viewModel = createViewModel(repository)
+        advanceUntilIdle() // the first debounced emission only arms the autosave
+
+        viewModel.updateTitle("draft")
+        advanceUntilIdle()
+
+        // The save ran to completion on the test scheduler: no real I/O thread is left
+        // running to resume onto Dispatchers.Main after tearDown resets it.
+        assertEquals(1, repository.insertCalls)
+        assertEquals(INSERTED_ID, viewModel.state.value.note.id)
+        assertEquals(SaveStatusNote.SAVED, viewModel.status.value)
+    }
+
+    private fun createViewModel(repository: TestNotesRepository, noteId: Long = -1L): EditNoteViewModel {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.fontSizeFlow).thenReturn(flowOf(DEFAULT_FONT_SIZE))
+        `when`(settingsRepository.fontStyleFlow).thenReturn(flowOf(FontStyleType.MODERN_SIMPLE))
+        `when`(settingsRepository.simpleEditFlow).thenReturn(flowOf(false))
 
         return EditNoteViewModel(
             notesRepository = repository,
             savedStateHandle = SavedStateHandle(mapOf("idNote" to noteId)),
             updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
-            updateNoteTagUseCase = UpdateNoteTagUseCase(repository),
-            fontSizeUseCase = fontSizeUseCase,
-            fontStyleUseCase = fontStyleUseCase,
-            simpleEditUseCase = simpleEditUseCase,
-            appScope = CoroutineScope(dispatcher)
+            settingsRepository = settingsRepository,
+            appScope = CoroutineScope(dispatcher),
+            ioDispatcher = dispatcher,
+            copyTitle = { "$it (Copy)" },
         )
     }
 

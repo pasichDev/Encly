@@ -1,4 +1,4 @@
-package com.pasich.encly.dynamicBlocks.blocks
+package com.pasich.encly.presentation.editor.blocks
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,26 +31,29 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockActions
-import com.pasich.encly.dynamicBlocks.BlockRemoveAction
 import com.pasich.encly.dynamicBlocks.BlockType
-import com.pasich.encly.dynamicBlocks.focus.KeyboardUtils
-import com.pasich.encly.ui.theme.bodyNote
+import com.pasich.encly.presentation.editor.BlockActions
+import com.pasich.encly.presentation.editor.focus.KeyboardUtils
+import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
+import com.pasich.encly.ui.theme.bodyNote
 
 @Composable
 fun ListBlock(
     block: Block.ListBlock,
     blockActions: BlockActions,
-    isLocked: Boolean = false,
     index: Int,
+    modifier: Modifier = Modifier,
+    isLocked: Boolean = false,
 ) {
     val itemsList by block.items.collectAsState()
     val fontStyles = rememberFontStyles()
@@ -59,71 +63,96 @@ fun ListBlock(
     // Track whether this is the first initialization of the list
     var isInitialized by remember { mutableStateOf(false) }
 
+    // Every change goes through the ViewModel, so it is autosaved and can be undone.
+    fun updateItems(mergeable: Boolean, change: MutableList<ItemListBlock>.() -> Unit) {
+        blockActions.onListItemsChanged(block.items.value.toMutableList().apply(change), mergeable)
+    }
+
     Column(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
+        modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(15.dp),
     ) {
         itemsList.forEachIndexed { itemIndex, item ->
-            Row(verticalAlignment = if (block.blockType == BlockType.LIST_NUMBER) Alignment.Top else Alignment.CenterVertically) {
-                when (block.blockType) {
-                    BlockType.LIST_NUMBER ->
-                        Text(
-                            "${itemIndex + 1}.",
-                            style = bodyNote.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = fontStyles.families.body,
-                                fontSize = fontStyles.sizes.list
-                            ),
-                        )
+            key(item.id) {
+                Row(
+                    verticalAlignment = if (block.blockType ==
+                        BlockType.LIST_NUMBER
+                    ) {
+                        Alignment.Top
+                    } else {
+                        Alignment.CenterVertically
+                    },
+                ) {
+                    when (block.blockType) {
+                        BlockType.LIST_NUMBER ->
+                            Text(
+                                "${itemIndex + 1}.",
+                                style = bodyNote.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = fontStyles.families.body,
+                                    fontSize = fontStyles.sizes.list,
+                                ),
+                            )
 
-                    BlockType.LIST_CHECK ->
-                        Checkbox(
-                            checked = item.isCheck,
-                            enabled = !isLocked,
-                            onCheckedChange = {
-                                block.items.value =
-                                    block.items.value.toMutableList().apply {
-                                        this[itemIndex] = item.copy(isCheck = it)
+                        BlockType.LIST_CHECK ->
+                            Checkbox(
+                                checked = item.isCheck,
+                                enabled = !isLocked,
+                                onCheckedChange = { checked ->
+                                    updateItems(mergeable = false) {
+                                        this[itemIndex] = item.copy(isCheck = checked)
                                     }
-                            },
-                            modifier =
+                                },
+                                modifier =
                                 Modifier
                                     .size(12.dp)
                                     .scale(0.7f),
-                        )
+                            )
 
-                    else -> Unit
-                }
+                        else -> Unit
+                    }
 
-                Spacer(modifier = Modifier.width(15.dp))
-                BasicTextField(
-                    value = item.value,
-                    enabled = !item.isCheck && !isLocked,
-                    textStyle =
+                    Spacer(modifier = Modifier.width(15.dp))
+                    BasicTextField(
+                        value = item.value,
+                        // Checked items stay editable; they are only struck through.
+                        enabled = !isLocked,
+                        textStyle =
                         bodyNote.copy(
-                            color = if (item.isCheck) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onBackground,
+                            color = if (item.isCheck) {
+                                MaterialTheme.colorScheme.outline
+                            } else {
+                                MaterialTheme.colorScheme.onBackground
+                            },
                             textDecoration = if (item.isCheck) TextDecoration.LineThrough else TextDecoration.None,
                             fontFamily = fontStyles.families.body,
-                            fontSize = fontStyles.sizes.list
+                            fontSize = fontStyles.sizes.list,
                         ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    onValueChange = { updatedValue ->
-                        block.items.value =
-                            block.items.value.toMutableList().apply {
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        onValueChange = { updatedValue ->
+                            updateItems(mergeable = true) {
                                 this[itemIndex] = item.copy(value = updatedValue)
                             }
-                    },
-                    modifier =
+                        },
+                        modifier =
                         Modifier
                             .fillMaxWidth()
-                            .focusRequester(if (focusedItemIndex == itemIndex) focusRequester else FocusRequester.Default)
+                            .focusRequester(
+                                if (focusedItemIndex ==
+                                    itemIndex
+                                ) {
+                                    focusRequester
+                                } else {
+                                    FocusRequester.Default
+                                },
+                            )
                             .onFocusChanged { focusState ->
                                 if (focusState.isFocused) {
-                                    blockActions.updateLastInteractionIndex(index)
+                                    blockActions.onInteraction()
                                     focusedItemIndex =
                                         itemIndex // Set focus only on actual interaction
                                 }
@@ -138,10 +167,7 @@ fun ListBlock(
                                             blockActions.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE_LIST)
                                         } else {
                                             // Remove the current item
-                                            block.items.value =
-                                                block.items.value.toMutableList().apply {
-                                                    removeAt(itemIndex)
-                                                }
+                                            updateItems(mergeable = false) { removeAt(itemIndex) }
                                             // Set focus on the previous item if possible
                                             if (itemIndex > 0) {
                                                 focusedItemIndex = itemIndex - 1
@@ -155,10 +181,7 @@ fun ListBlock(
                                         val navigated = blockActions.navigateToNext()
                                         if (!navigated) {
                                             // Add a new list item after the current one
-                                            block.items.value =
-                                                block.items.value.toMutableList().apply {
-                                                    add(itemIndex + 1, ItemListBlock(""))
-                                                }
+                                            updateItems(mergeable = false) { add(itemIndex + 1, ItemListBlock("")) }
                                             focusedItemIndex = itemIndex + 1
                                         }
                                         true
@@ -166,10 +189,7 @@ fun ListBlock(
                                     onEnterPressed = {
                                         if (item.value.isNotEmpty()) {
                                             // Add a new list item after the current one
-                                            block.items.value =
-                                                block.items.value.toMutableList().apply {
-                                                    add(itemIndex + 1, ItemListBlock(""))
-                                                }
+                                            updateItems(mergeable = false) { add(itemIndex + 1, ItemListBlock("")) }
                                             focusedItemIndex = itemIndex + 1
                                         } else {
                                             // On an empty item - exit the list and create a paragraph
@@ -177,10 +197,7 @@ fun ListBlock(
                                             if (itemsList.size == 1) {
                                                 blockActions.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE_LIST)
                                             } else {
-                                                block.items.value =
-                                                    block.items.value.toMutableList().apply {
-                                                        removeAt(itemIndex)
-                                                    }
+                                                updateItems(mergeable = false) { removeAt(itemIndex) }
                                             }
                                             blockActions.onAddParagraph()
                                         }
@@ -188,15 +205,12 @@ fun ListBlock(
                                     },
                                 )
                             },
-                    keyboardActions =
+                        keyboardActions =
                         KeyboardActions(
                             onDone = {
                                 if (item.value.isNotEmpty()) {
                                     // Add a new list item after the current one
-                                    block.items.value =
-                                        block.items.value.toMutableList().apply {
-                                            add(itemIndex + 1, ItemListBlock(""))
-                                        }
+                                    updateItems(mergeable = false) { add(itemIndex + 1, ItemListBlock("")) }
                                     // Set focus on the new item
                                     focusedItemIndex = itemIndex + 1
                                 } else {
@@ -204,43 +218,42 @@ fun ListBlock(
                                     focusedItemIndex = null // Clear local focus
 
                                     if (itemsList.size == 1) {
-                                        // If this is the only item in the list, replace the entire list with a text block
+                                        // If this is the only item in the list, replace the entire list
+                                        // with a text block
                                         blockActions.onReplaceBlock(Block.TextBlock())
                                     } else {
                                         // Remove the empty item
-                                        block.items.value =
-                                            block.items.value.toMutableList().apply {
-                                                removeAt(itemIndex)
-                                            }
+                                        updateItems(mergeable = false) { removeAt(itemIndex) }
                                         // Add a new text paragraph after the entire list
                                         blockActions.onAddParagraph()
                                     }
                                 }
                             },
                         ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done,
-                    ),
-                    decorationBox = { innerTextField ->
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            if (item.value.isEmpty()) {
-                                Text(
-                                    text = "List item",
-                                    style =
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                        ),
+                        decorationBox = { innerTextField ->
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                if (item.value.isEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.list_item_placeholder),
+                                        style =
                                         bodyNote.copy(
                                             color = MaterialTheme.colorScheme.outlineVariant,
                                             fontFamily = fontStyles.families.body,
-                                            fontSize = fontStyles.sizes.list
+                                            fontSize = fontStyles.sizes.list,
                                         ),
-                                )
+                                    )
+                                }
+                                innerTextField()
                             }
-                            innerTextField()
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }

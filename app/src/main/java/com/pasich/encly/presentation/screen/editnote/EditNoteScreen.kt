@@ -1,8 +1,8 @@
 package com.pasich.encly.presentation.screen.editnote
 
 import android.widget.Toast
-import com.pasich.encly.core.AppLogger
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -14,6 +14,7 @@ import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -60,8 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
-import com.pasich.encly.dynamicBlocks.BlockRemoveAction
-import com.pasich.encly.dynamicBlocks.DynamicBlocksEditor
+import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.components.appbar.AppBarIconButton
 import com.pasich.encly.presentation.components.appbar.AppBarTextButton
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
@@ -74,18 +74,22 @@ import com.pasich.encly.presentation.dialogs.blocks.ActionBlockDialog
 import com.pasich.encly.presentation.dialogs.blocks.ActionLinkBottomSheet
 import com.pasich.encly.presentation.dialogs.blocks.ActionOtherBottomSheet
 import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
+import com.pasich.encly.presentation.editor.DynamicBlocksEditor
+import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
+import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.effects.NoteSkeleton
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
-import com.pasich.encly.presentation.viewmodel.SaveStatusNote
 import kotlinx.coroutines.launch
 
 @OptIn(
-    ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class,
-    ExperimentalLayoutApi::class
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class,
+    ExperimentalLayoutApi::class,
 )
 @Composable
 fun EditNoteScreen(
     navController: NavHostController,
+    modifier: Modifier = Modifier,
     viewModel: EditNoteViewModel = hiltViewModel(),
 ) {
     val currentContext = LocalContext.current
@@ -103,7 +107,8 @@ fun EditNoteScreen(
     val lockEditor by viewModel.lockEditor.collectAsState()
     var isDialogVisible by remember { mutableStateOf(false) }
     val noteState by viewModel.state.collectAsState()
-    val lastInteractionIndex by viewModel.lastInteractionIndex.collectAsState()
+    // Re-read when the block the user works on changes; blocks are read below, so their changes count too.
+    val interactedBlockId by viewModel.interactedBlockId.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -137,9 +142,10 @@ fun EditNoteScreen(
         )
     }
     var isEditMenuBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var sheetBlockId by rememberSaveable { mutableStateOf<String?>(null) }
 
-    fun showWriteFailure(message: String = "Не вдалося зберегти зміни") {
-        Toast.makeText(currentContext, message, Toast.LENGTH_LONG).show()
+    fun showWriteFailure(@StringRes message: Int = R.string.note_save_failed) {
+        Toast.makeText(currentContext, currentContext.getString(message), Toast.LENGTH_LONG).show()
     }
 
     fun finishNavigation() {
@@ -176,7 +182,7 @@ fun EditNoteScreen(
                 if (deleted) {
                     finishNavigation()
                 } else {
-                    showWriteFailure("Не вдалося видалити нотатку")
+                    showWriteFailure(R.string.note_delete_failed)
                 }
             }
         },
@@ -185,69 +191,59 @@ fun EditNoteScreen(
         },
     )
 
-    ActionOtherBottomSheet(
-        settings =
-            SettingsBlockDialog(
-                block = viewModel.blocks[lastInteractionIndex],
-                isBottomSheetVisible = BottomSheetsOpenType.ACTION_OTHER == bottomSheetsType,
-                blockMove = viewModel.getMoveBlockState(),
+    // The sheet targets one block by identity. Resolved on every composition, so a sheet can
+    // never read a position that undo/redo/delete already removed.
+    val sheetBlock = sheetBlockId?.let { id -> viewModel.blocks.firstOrNull { it.id == id } }
+    val blockMove = remember(interactedBlockId, viewModel.blocks.toList()) { viewModel.getMoveBlockState() }
+
+    fun dismissSheet() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            bottomSheetsType = BottomSheetsOpenType.NONE
+            sheetBlockId = null
+        }
+    }
+
+    fun onBlockSheetAction(action: ActionBlockDialog) {
+        val link = (sheetBlock as? Block.LinkBlock)?.block?.value?.url.orEmpty()
+        when (action) {
+            ActionBlockDialog.Delete -> sheetBlock?.let { viewModel.removeBlock(it, BlockRemoveAction.REMOVE) }
+            is ActionBlockDialog.Move -> viewModel.moveBlock(action.move == 1)
+            ActionBlockDialog.OpenLink -> openNoteLink(currentContext, link)
+            ActionBlockDialog.CopyLink -> copyNoteLink(currentContext, link)
+            ActionBlockDialog.EditLink -> (sheetBlock as? Block.LinkBlock)?.let(viewModel::editLink)
+        }
+        if (action !is ActionBlockDialog.Move) dismissSheet()
+    }
+
+    val canEditBlocks = !lockEditor && !viewModel.isReadTrashOnly
+
+    if (sheetBlock != null && bottomSheetsType == BottomSheetsOpenType.ACTION_OTHER) {
+        ActionOtherBottomSheet(
+            settings = SettingsBlockDialog(
+                block = sheetBlock,
+                isBottomSheetVisible = true,
+                blockMove = blockMove,
+                canEdit = canEditBlocks,
             ),
-        sheetState = sheetState,
-        onDismiss = {
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                bottomSheetsType = BottomSheetsOpenType.NONE
-            }
-        },
-        onAction = { action ->
-            when (action) {
-                ActionBlockDialog.Delete -> {
-                    viewModel.blocks[lastInteractionIndex].let {
-                        viewModel.removeBlock(
-                            it,
-                            BlockRemoveAction.REMOVE,
-                        )
-                    }
-                }
+            sheetState = sheetState,
+            onDismiss = ::dismissSheet,
+            onAction = ::onBlockSheetAction,
+        )
+    }
 
-                is ActionBlockDialog.Move -> {
-                    viewModel.moveBlock(action.move == 1)
-                }
-
-            }
-        },
-    )
-
-    ActionLinkBottomSheet(
-        sheetState = sheetState,
-        settings =
-            SettingsBlockDialog(
-                block = viewModel.blocks[lastInteractionIndex],
-                isBottomSheetVisible = BottomSheetsOpenType.ACTION_LINK == bottomSheetsType,
+    if (sheetBlock != null && bottomSheetsType == BottomSheetsOpenType.ACTION_LINK) {
+        ActionLinkBottomSheet(
+            sheetState = sheetState,
+            settings = SettingsBlockDialog(
+                block = sheetBlock,
+                isBottomSheetVisible = true,
+                blockMove = blockMove,
+                canEdit = canEditBlocks,
             ),
-        onDismiss = {
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                bottomSheetsType = BottomSheetsOpenType.NONE
-            }
-        },
-        onAction = {
-            when (it) {
-                ActionBlockDialog.Delete -> {
-                    viewModel.blocks[lastInteractionIndex].let { it1 ->
-                        viewModel.removeBlock(
-                            it1,
-                            BlockRemoveAction.REMOVE,
-                        )
-                    }
-                }
-
-                is ActionBlockDialog.Move -> {
-                    viewModel.moveBlock(it.move == 1)
-                }
-            }
-        },
-    )
-
-
+            onDismiss = ::dismissSheet,
+            onAction = ::onBlockSheetAction,
+        )
+    }
 
     EditNoteSettingsProvider(
         baseFontSize = fontSize.sp,
@@ -255,11 +251,12 @@ fun EditNoteScreen(
         simpleEdit = simpleEdit,
     ) {
         Scaffold(
+            modifier = modifier,
             contentWindowInsets = WindowInsets.ime,
             bottomBar = {
                 if (imeVisible && !lockEditor && !viewModel.isReadTrashOnly) {
+                    // NoteBottomBar resolves the same back-stack-scoped EditNoteViewModel itself.
                     NoteBottomBar(
-                        viewModel = viewModel,
                         simpleEdit = LocalSimpleEdit.current,
                     )
                 }
@@ -270,10 +267,10 @@ fun EditNoteScreen(
             ) {
                 LazyColumn(
                     modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .statusBarsPadding(),
+                    Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .statusBarsPadding(),
                 ) {
                     item {
                         TopBarContent(
@@ -285,7 +282,7 @@ fun EditNoteScreen(
                                     if (viewModel.noteRestore()) {
                                         finishNavigation()
                                     } else {
-                                        showWriteFailure("Не вдалося відновити нотатку")
+                                        showWriteFailure(R.string.note_restore_failed)
                                     }
                                 }
                             },
@@ -300,7 +297,7 @@ fun EditNoteScreen(
                     if (!lockEditor && !viewModel.isReadTrashOnly) {
                         item {
                             NoteSubTitle(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                tagButtonPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                                 statusSaveNote = saveStatus,
                                 note = noteState.note,
                                 changeTag = { viewModel.updateTagNote(it) },
@@ -323,28 +320,28 @@ fun EditNoteScreen(
                             AnimatedVisibility(
                                 visible = saveStatus != SaveStatusNote.LOADING,
                                 enter =
-                                    fadeIn(
-                                        initialAlpha = 0f,
-                                        animationSpec =
-                                            tween(
-                                                durationMillis = 300,
-                                                delayMillis = 100,
-                                                easing = FastOutSlowInEasing,
-                                            ),
+                                fadeIn(
+                                    initialAlpha = 0f,
+                                    animationSpec =
+                                    tween(
+                                        durationMillis = 300,
+                                        delayMillis = 100,
+                                        easing = FastOutSlowInEasing,
                                     ),
+                                ),
                                 exit =
-                                    fadeOut(
-                                        animationSpec =
-                                            tween(
-                                                durationMillis = 150,
-                                                easing = LinearEasing,
-                                            ),
+                                fadeOut(
+                                    animationSpec =
+                                    tween(
+                                        durationMillis = 150,
+                                        easing = LinearEasing,
                                     ),
+                                ),
                             ) {
                                 Column {
                                     // TitleField
                                     TitleField(
-                                        enabled = lockEditor,
+                                        readOnly = lockEditor,
                                         title = noteState.note.title,
                                         onTitleChange = { newTitle ->
                                             viewModel.updateTitle(newTitle)
@@ -354,11 +351,8 @@ fun EditNoteScreen(
                                     // DynamicBlocksEditor
                                     DynamicBlocksEditor(
                                         bottomSheetsOpen = { type, block, index ->
-                                            AppLogger.d(
-                                                "EditNoteScreen",
-                                                "bottomSheetsOpen called with type: $type, index: $index"
-                                            )
                                             bottomSheetsType = type
+                                            sheetBlockId = block.id
                                             scope.launch { sheetState.show() }
                                         },
                                         isLocked = lockEditor,
@@ -383,7 +377,7 @@ fun EditNoteScreen(
                             if (viewModel.discardChanges()) {
                                 finishNavigation()
                             } else {
-                                showWriteFailure("Не вдалося скасувати зміни")
+                                showWriteFailure(R.string.note_discard_failed)
                             }
                         }
                     }
@@ -395,7 +389,7 @@ fun EditNoteScreen(
                             if (duplicateId > 0L) {
                                 finishNavigation()
                             } else {
-                                showWriteFailure("Не вдалося створити копію")
+                                showWriteFailure(R.string.note_duplicate_failed)
                             }
                         }
                     }
@@ -405,16 +399,15 @@ fun EditNoteScreen(
                             if (viewModel.noteMoveToTrash()) {
                                 finishNavigation()
                             } else {
-                                showWriteFailure("Не вдалося перемістити нотатку в кошик")
+                                showWriteFailure(R.string.note_trash_failed)
                             }
                         }
                     }
                 }
-            }
+            },
         )
     }
 }
-
 
 @Composable
 private fun TopBarContent(
@@ -429,16 +422,16 @@ private fun TopBarContent(
 ) {
     Row(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isReadTrashOnly) {
             IconButton(onClick = onBackClick) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.back),
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -446,12 +439,19 @@ private fun TopBarContent(
             Spacer(modifier = Modifier.width(10.dp))
             AppBarTextButton(text = R.string.delete_from_trash, onClick = onDeleteClick)
         } else {
-            AppBarIconButton(icon = R.drawable.more, onPressed = onMenuClick)
+            AppBarIconButton(
+                icon = R.drawable.more,
+                contentDescription = stringResource(R.string.more_options),
+                onPress = onMenuClick,
+            )
             Spacer(modifier = Modifier.weight(1f))
             AppBarIconButton(
                 icon = if (lockEditor) R.drawable.ic_lock else R.drawable.ic_unlock,
+                contentDescription = stringResource(
+                    if (lockEditor) R.string.editor_unlock else R.string.editor_lock,
+                ),
                 tint = if (lockEditor) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                onPressed = onLockToggle,
+                onPress = onLockToggle,
             )
 
             AnimatedVisibility(!lockEditor) {

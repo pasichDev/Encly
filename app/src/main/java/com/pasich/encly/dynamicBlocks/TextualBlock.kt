@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
  */
 interface TextualBlock {
     val text: MutableStateFlow<String>
-    
+
     /**
      * Checks whether the block's text is empty.
      */
     fun isEmpty(): Boolean = text.value.isEmpty()
-    
+
     /**
      * Appends text to the end.
      */

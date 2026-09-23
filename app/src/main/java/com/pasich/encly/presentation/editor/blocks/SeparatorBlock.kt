@@ -1,4 +1,4 @@
-package com.pasich.encly.dynamicBlocks.blocks
+package com.pasich.encly.presentation.editor.blocks
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
@@ -9,15 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SeparatorBlock(
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
+fun SeparatorBlock(onClick: () -> Unit, modifier: Modifier = Modifier, isLocked: Boolean = false) {
     HorizontalDivider(
         color = MaterialTheme.colorScheme.outlineVariant,
         modifier =
-            modifier
-                .padding(vertical = 20.dp)
-                .clickable { onClick() },
+        modifier
+            .padding(vertical = 20.dp)
+            // Its sheet only moves or deletes it: nothing to offer in a locked editor.
+            .clickable(enabled = !isLocked) { onClick() },
     )
 }

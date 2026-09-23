@@ -1,106 +1,63 @@
 package com.pasich.encly.presentation.viewmodel
 
-import com.pasich.encly.core.AppLogger
-import com.pasich.encly.core.di.ApplicationScope
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.R
-import com.pasich.encly.core.serialization.BlockConverter
-import com.pasich.encly.data.datasource.local.FontStyleType
-import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.repository.NotesRepository
-import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
+import com.pasich.encly.core.di.ApplicationScope
+import com.pasich.encly.core.di.IoDispatcher
+import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.ItemListBlock
+import com.pasich.encly.domain.model.LinkDataBlock
+import com.pasich.encly.domain.repository.NotesRepository
+import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import com.pasich.encly.domain.usecase.settings.FontSizeUseCase
-import com.pasich.encly.domain.usecase.settings.FontStyleUseCase
-import com.pasich.encly.domain.usecase.settings.SimpleEditUseCase
 import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockOperations
-import com.pasich.encly.dynamicBlocks.BlockRemoveAction
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.dynamicBlocks.TextualBlock
 import com.pasich.encly.dynamicBlocks.factory.BlockFactory
-import com.pasich.encly.dynamicBlocks.focus.CentralizedFocusManager
-import com.pasich.encly.dynamicBlocks.utils.BlockUtils
+import com.pasich.encly.presentation.editor.persistence.LoadNoteState
+import com.pasich.encly.presentation.editor.persistence.NoteCopyTitle
+import com.pasich.encly.presentation.editor.persistence.NotePersistence
+import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
+import com.pasich.encly.presentation.editor.state.BlockEditorState
+import com.pasich.encly.presentation.editor.state.BlockRemoveAction
+import com.pasich.encly.presentation.editor.state.FocusRequest
+import com.pasich.encly.presentation.editor.state.addBlockToEnd
+import com.pasich.encly.presentation.editor.state.canMoveInteracted
+import com.pasich.encly.presentation.editor.state.canRemoveInteracted
+import com.pasich.encly.presentation.editor.state.interactedBlockPosition
+import com.pasich.encly.presentation.editor.state.moveInteracted
+import com.pasich.encly.presentation.editor.state.removeInteracted
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-enum class SaveStatusNote {
-    OLD, SAVING, SAVED, LOADING,
-}
-
+/**
+ * The note editor. Wires the block content ([BlockEditorState]) to the stored note
+ * ([NotePersistence]) and decides whether the note may be edited at all (locked, or read-only
+ * from the trash). Focus is plain state here; the UI owns the FocusRequesters.
+ */
 @HiltViewModel
 class EditNoteViewModel
 @Suppress("LongParameterList") // Hilt-injected dependencies; grouping them would only obscure wiring.
-@Inject constructor(
-    private val notesRepository: NotesRepository,
+@Inject
+constructor(
+    notesRepository: NotesRepository,
     savedStateHandle: SavedStateHandle,
-    private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
-    private val updateNoteTagUseCase: UpdateNoteTagUseCase,
-    private val fontSizeUseCase: FontSizeUseCase,
-    private val fontStyleUseCase: FontStyleUseCase,
-    private val simpleEditUseCase: SimpleEditUseCase,
+    updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
+    private val settingsRepository: SettingsRepository,
     @ApplicationScope private val appScope: CoroutineScope,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    copyTitle: NoteCopyTitle,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(LoadNoteState())
-    val state: StateFlow<LoadNoteState> get() = _state
-
-    // Block editing mode - new state
-    private val _isBlockEditMode = MutableStateFlow(false)
-    val isBlockEditMode: StateFlow<Boolean> get() = _isBlockEditMode
-
-    // List of blocks to be displayed and edited
-    private val _blocks =
-        SnapshotStateList<Block>().apply { add(Block.TextBlock(placeholder = R.string.press_to_edit)) }
-    val blocks: List<Block> get() = _blocks
-
-    private val _status = MutableStateFlow(SaveStatusNote.OLD)
-    val status: StateFlow<SaveStatusNote> get() = _status
-
-    private val saveMutex = Mutex()
-
-    @Volatile
-    private var exitHandled = false
-
-    private val _lockEditor = MutableStateFlow(false)
-    val lockEditor: StateFlow<Boolean> get() = _lockEditor
-
-    // Font size flow
-    val fontSize: StateFlow<Int> = fontSizeUseCase.fontSizeFlow.stateIn(
-        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 16
-    )
-
-    // Font style flow
-    val fontStyle = fontStyleUseCase.fontStyleFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = FontStyleType.MODERN_SIMPLE
-    )
-
-    // Simple Edit flow
-    val simpleEdit = simpleEditUseCase.simpleEditFlow.stateIn(
-        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = false
-    )
-
     private val noteId: Long = savedStateHandle["idNote"]
         ?: -1 // Note identifier; when creating a new note it will be -1
     internal val copySource: Long =
@@ -109,38 +66,101 @@ class EditNoteViewModel
         savedStateHandle["isReadTrashOnly"] as? Boolean == true // Flag for reading a note only from the trash
     internal val addTag: Long = savedStateHandle["addTag"] ?: 0
 
-    private val blockOperations = BlockOperations(_blocks)
+    private val editor = BlockEditorState()
 
-    // Properties for managing undo/redo
-    private val _canUndo = MutableStateFlow(false)
-    val canUndo: StateFlow<Boolean> get() = _canUndo
+    private val persistence = NotePersistence(
+        notesRepository = notesRepository,
+        updateNoteTrashStatusUseCase = updateNoteTrashStatusUseCase,
+        ioDispatcher = ioDispatcher,
+        readOnly = isReadTrashOnly,
+        blocks = { editor.blocks },
+        copyTitle = copyTitle,
+        loading = noteId != -1L || copySource != -1L,
+    )
 
-    private val _canRedo = MutableStateFlow(false)
-    val canRedo: StateFlow<Boolean> get() = _canRedo
+    val state: StateFlow<LoadNoteState> get() = persistence.state
+    val status: StateFlow<SaveStatusNote> get() = persistence.status
 
-    // Centralized focus manager
-    private val _focusManager = CentralizedFocusManager()
-    val focusManager: CentralizedFocusManager get() = _focusManager
+    /**
+     * True when a note had stored content that could not be read: the editor warns instead of
+     * showing a silent blank screen, and nothing is saved over the original.
+     */
+    val contentLoadFailed: StateFlow<Boolean> get() = persistence.contentLoadFailed
 
-    // Current focus (for backward compatibility)
-    val currentFocusIndex: StateFlow<Int> = _focusManager.currentFocusIndex
-    val lastInteractionIndex: StateFlow<Int> = _focusManager.lastInteractionIndex
+    /** The blocks to display and edit. */
+    val blocks: List<Block> get() = editor.blocks
+
+    val canUndo: StateFlow<Boolean> get() = editor.canUndo
+    val canRedo: StateFlow<Boolean> get() = editor.canRedo
+
+    /** The block the user last worked on; the toolbar acts on it. */
+    val interactedBlockId: StateFlow<String?> get() = editor.selection.interactedBlockId
+
+    /** Position of the block the user last worked on, always inside [blocks]. */
+    val interactedIndex: Int get() = editor.selection.interactedIndex
+
+    /** Which block the editor UI should focus next. */
+    val focusRequests: Flow<FocusRequest> get() = editor.selection.requests
+
+    private val _lockEditor = MutableStateFlow(false)
+    val lockEditor: StateFlow<Boolean> get() = _lockEditor
+
+    // Link blocks whose saved address is open in URL entry. Editor UI state only: the block
+    // keeps its stored link until a new one is committed.
+    private val _editingLinkIds = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Ids of the link blocks the user is editing ([editLink]); they show URL entry. */
+    val editingLinkIds: StateFlow<Set<String>> get() = _editingLinkIds
+
+    val fontSize: StateFlow<Int> = settingsRepository.fontSizeFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 16,
+    )
+
+    val fontStyle = settingsRepository.fontStyleFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = FontStyleType.MODERN_SIMPLE,
+    )
+
+    val simpleEdit = settingsRepository.simpleEditFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false,
+    )
+
+    init {
+        when {
+            copySource != -1L -> loadNote(copySource, isCopy = true)
+
+            noteId != -1L -> loadNote(noteId, isCopy = false)
+
+            // A new note created from a tag's list starts in that tag.
+            addTag != 0L -> persistence.updateNote { it.copy(tagId = addTag) }
+        }
+        persistence.startAutosave(viewModelScope, editor.contentChanges)
+    }
+
+    private fun loadNote(id: Long, isCopy: Boolean) {
+        viewModelScope.launch {
+            val found = persistence.load(id, isCopy, editor::load)
+            // A note that could not be read stays read-only, so an empty editor is never
+            // saved as (or over) it.
+            _lockEditor.value = !found || isReadTrashOnly
+        }
+    }
 
     override fun onCleared() {
-        // Keep one last-chance save for lifecycle teardown. Explicit exits mark themselves
-        // handled before navigation, so this fallback cannot duplicate inserts or undo a
-        // completed trash/delete/restore/discard action.
-        if (!exitHandled) {
-            appScope.launch { persistNote() }
-        }
-        _focusManager.dispose()
-        _focusManager.cleanup()
+        // One last-chance save for lifecycle teardown. It does nothing once the editor was
+        // closed (explicit exit, trash, delete, restore, discard), so it cannot duplicate an
+        // insert or undo any of those.
+        appScope.launch { persistence.save() }
         super.onCleared()
     }
 
-    fun markExitHandled() {
-        exitHandled = true
-    }
+    /** The user leaves the editor: no queued or later autosave may write the note again. */
+    fun markExitHandled() = persistence.close()
 
     /**
      * Flush the current editor state as soon as the Activity leaves the foreground.
@@ -148,732 +168,149 @@ class EditNoteViewModel
      * so this closes the autosave debounce window before the vault is closed.
      */
     fun saveForBackground() {
-        if (!exitHandled && !isReadTrashOnly) {
-            appScope.launch { persistNote() }
-        }
+        appScope.launch { persistence.save() }
     }
 
-    init {
-        initLoad()
-        observeBlocksForLiveSave()
-    }
+    /** Persists the note; returns once the database reports success or failure. */
+    suspend fun saveNote(): Boolean = persistence.save()
 
-    private fun initLoad() {
-        when {
-            copySource != -1L -> loadNote(copySource, isCopy = true)
-            noteId != -1L -> loadNote(noteId)
-            addTag != 0L -> {
-                _state.value = LoadNoteState(
-                    note = _state.value.note.copy(tagId = addTag),
-                )
-            }
+    /** Puts the stored note back as it was when the editor opened it. */
+    suspend fun discardChanges(): Boolean = persistence.discard()
 
-            else -> {
-                // A comment can be left here if this is a normal case
-            }
-        }
-    }
+    /** Restores the note from the trash. */
+    suspend fun noteRestore(): Boolean = persistence.restoreFromTrash()
 
-    private fun loadNote(
-        noteId: Long,
-        isCopy: Boolean = false,
-    ) {
-        viewModelScope.launch {
-            _status.value = SaveStatusNote.LOADING
-            try {
-                val note = notesRepository.getNoteById(noteId)
-                if (note == null) {
-                    _contentLoadFailed.value = true
-                    _lockEditor.value = true
-                    AppLogger.e("EditNoteViewModel", "Requested note does not exist")
-                } else {
-                    // Load the blocks from the note's content.
-                    loadBlocksFromNote(note)
+    /** Moves the note to the trash; returns once the write completed. */
+    suspend fun noteMoveToTrash(): Boolean = persistence.moveToTrash()
 
-                    delay(500)
+    /** Inserts a copy of the note, titled by [NoteCopyTitle]; returns its id, or -1 on failure. */
+    suspend fun noteDuplicate(): Long = persistence.duplicate()
 
-                    // Update the note state depending on the mode.
-                    updateNoteState(note, isCopy)
-                    _lockEditor.value = isReadTrashOnly
-                }
-            } catch (e: Exception) {
-                AppLogger.e("EditNoteViewModel", "Error loading note: ${e.message}")
-            }
-            _status.value = SaveStatusNote.OLD
-        }
-    }
+    /** Deletes the note from the database for good. */
+    suspend fun noteDelete(): Boolean = persistence.delete()
 
-    // True when a note had stored content that could not be parsed/decrypted. Guards
-    // saveNote so a subsequent edit does not overwrite the unreadable original, and is
-    // exposed so the editor can warn the user instead of showing a silent blank screen.
-    private val _contentLoadFailed = MutableStateFlow(false)
-    val contentLoadFailed: StateFlow<Boolean> get() = _contentLoadFailed
-
-    /**
-     * Loads the note's blocks from its JSON content.
-     */
-    private fun loadBlocksFromNote(note: Note) {
-        if (note.value.isNotEmpty()) {
-            try {
-                val loadedBlocks = BlockConverter.jsonToBlocks(note.value)
-                if (loadedBlocks.isNotEmpty()) {
-                    _blocks.clear()
-                    _blocks.addAll(loadedBlocks)
-                    updateUndoRedoState()
-                }
-                // A valid [] payload represents a title-only note. Keep the editor's
-                // initial blank text block instead of treating that as corruption.
-            } catch (e: Exception) {
-                _contentLoadFailed.value = true
-                AppLogger.e("EditNoteViewModel", "Error converting blocks from JSON: ${e.message}")
-            }
-        }
-    }
-
-    /**
-     * Updates the note state depending on the mode (copy or original).
-     */
-    private fun updateNoteState(
-        note: Note,
-        isCopy: Boolean,
-    ) {
-        if (isCopy) {
-            // Copy: create a new note (id = -1) so it is saved as a fresh record.
-            val copy = note.copy(
-                id = -1,
-                title = note.title + " (Copy)",
-                date = System.currentTimeMillis(),
-                tagId = note.tagId ?: -1L,
-            )
-            _state.value = LoadNoteState(note = copy, backupNote = copy)
-        } else {
-            // Existing note: keep its id.
-            _state.value = LoadNoteState(note = note, backupNote = note)
-        }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    private fun observeBlocksForLiveSave() {
-        var isInitialized = false
-        viewModelScope.launch {
-            val blocksFlow = snapshotFlow { _blocks.toList() }.flatMapLatest { blocks ->
-                // Create flows for each block
-                combine(
-                    blocks.mapNotNull { block ->
-                        when (block) {
-                            is Block.TextBlock -> block.text
-                            is Block.HBlock -> block.text
-                            is Block.QuoteBlock -> block.text
-                            is Block.LinkBlock -> block.block.map { it.url }
-                            is Block.ListBlock -> block.items.map { it.toString() }
-                            else -> null
-                        }
-                    },
-                ) { it.toList() }
-            }
-            // Also observe the title so title-only edits trigger the debounced autosave.
-            val titleFlow = _state.map { it.note.title }
-            combine(blocksFlow, titleFlow) { _, _ -> Unit }.debounce(2000).collect {
-                if (isInitialized) {
-                    saveNote()
-                } else {
-                    isInitialized = true
-                }
-            }
-        }
-    }
-
-    suspend fun saveNote(): Boolean = persistNote()
-
-    /**
-     * Persists the current note and does not return until Room reports success/failure.
-     * The mutex serializes autosave, explicit exit-save and the onCleared fallback.
-     */
-    private suspend fun persistNote(): Boolean = saveMutex.withLock {
-        if (isReadTrashOnly || _contentLoadFailed.value) {
-            _status.value = SaveStatusNote.OLD
-            return@withLock true
-        }
-
-        _status.value = SaveStatusNote.SAVING
-        val currentNote = _state.value.note
-
-        try {
-            val blocksJson = serializeNonBlankBlocks()
-            val isBlankDraft =
-                currentNote.id == -1L && currentNote.title.isBlank() && isNoteEmpty()
-            if (isBlankDraft) {
-                _status.value = SaveStatusNote.OLD
-                return@withLock true
-            }
-
-            val saved = if (currentNote.id != -1L) {
-                updateExistingNote(currentNote, blocksJson)
-            } else {
-                insertNewNote(currentNote, blocksJson)
-            }
-
-            _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.OLD
-            saved
-        } catch (e: Exception) {
-            AppLogger.e("EditNoteViewModel", "Note persistence failed", e)
-            _status.value = SaveStatusNote.OLD
-            false
-        }
-    }
-
-    /**
-     * Restores the editor's entry snapshot. If a new/copy draft was already autosaved,
-     * discarding removes that inserted row instead of leaving a ghost note behind.
-     */
-    suspend fun discardChanges(): Boolean = saveMutex.withLock {
-        val currentNote = _state.value.note
-        val backupNote = _state.value.backupNote
-
-        val discarded = try {
-            when {
-                backupNote.id != -1L -> withContext(Dispatchers.IO) {
-                    notesRepository.updateNote(backupNote)
-                }
-                currentNote.id != -1L -> withContext(Dispatchers.IO) {
-                    notesRepository.deleteNoteById(currentNote.id)
-                }
-                else -> true
-            }
-        } catch (e: Exception) {
-            AppLogger.e("EditNoteViewModel", "Discard failed", e)
-            false
-        }
-
-        _status.value = SaveStatusNote.OLD
-        discarded
-    }
-
-    /** Serializes the current blocks, dropping blank text-bearing blocks. */
-    private fun serializeNonBlankBlocks(): String = BlockConverter.blocksToJson(
-        blocks.filter { block ->
-            when (block) {
-                is Block.TextBlock -> block.text.value.isNotBlank()
-                is Block.HBlock -> block.text.value.isNotBlank()
-                is Block.QuoteBlock -> block.text.value.isNotBlank()
-                is Block.ListBlock -> block.items.value.any { item -> item.value.isNotBlank() }
-                is Block.LinkBlock -> true
-                is Block.SeparatorBlock -> true
-            }
-        },
-    )
-
-    private suspend fun updateExistingNote(currentNote: Note, blocksJson: String): Boolean {
-        val timestamp = if (
-            _state.value.backupNote.hasContentChanged(blocksJson, _state.value.note.title)
-        ) {
-            System.currentTimeMillis()
-        } else {
-            currentNote.date
-        }
-        return withContext(Dispatchers.IO) {
-            notesRepository.updateNote(currentNote.copy(value = blocksJson, date = timestamp))
-        }
-    }
-
-    private suspend fun insertNewNote(
-        currentNote: Note,
-        blocksJson: String,
-    ): Boolean {
-        val insertedId = withContext(Dispatchers.IO) {
-            notesRepository.insertNote(
-                Note.new(
-                    title = currentNote.title,
-                    value = blocksJson,
-                    tagId = currentNote.tagId,
-                ),
-            )
-        }
-        if (insertedId <= 0L) return false
-
-        _state.value = _state.value.copy(
-            note = currentNote.copy(id = insertedId, value = blocksJson),
-        )
-        return true
-    }
-
-    /**
-     * Checks whether the note is empty (has no content to save)
-     */
-    private fun isNoteEmpty(): Boolean =
-        blocks.isEmpty() || (blocks.size == 1 && blocks[0] is Block.TextBlock && (blocks[0] as Block.TextBlock).text.value.isEmpty())
-
-
-    /**
-     * Sets focus on a block
-     */
-    fun setFocusedBlockIndex(
-        index: Int,
-        ignore: Boolean = false,
-    ) {
-        _focusManager.setFocus(index, ignore)
-    }
-
-    /**
-     * Sets the last interaction index
-     */
-    fun setLastInteractionIndex(index: Int) {
-        _focusManager.setLastInteraction(index)
-    }
-
-    /**
-     * Updates the current focus index without calling requestFocus (to avoid recursion)
-     */
-    fun updateCurrentFocusIndex(index: Int) {
-        _focusManager.updateCurrentFocusIndex(index)
-    }
-
-    fun addBlock(blockType: BlockType) {
-        if (isReadTrashOnly) return
-
-        // Determine the index for the new block - use the current focus or the last interaction
-        val currentFocusIndex = _focusManager.currentFocusIndex.value
-        val baseIndex =
-            if (currentFocusIndex >= 0) currentFocusIndex else _focusManager.lastInteractionIndex.value
-        var targetIndex = (baseIndex + 1).coerceAtMost(blocks.size)
-
-        // Check the first block and remove it if it is an empty text block
-        cleanEmptyFirstBlockIfNeeded()?.let { targetIndex = it }
-
-        // Handle the special case of a text block
-        if (blockType == BlockType.TEXT) {
-            if (appendTextToLastBlockIfPossible()) {
-                return
-            }
-        }
-
-        // If this is not a special case, or it was not handled, create a new block
-        val newBlock = createNewBlockByType(blockType) ?: return
-
-        // Add the block and update the state
-        blockOperations.addBlock(targetIndex, newBlock)
-        updateUndoRedoState()
-
-        // Set focus on the new block with a slight delay, only if it is not a ListBlock
-        setLastInteractionIndex(targetIndex)
-
-        // For a ListBlock, do not set focus automatically
-        if (blockType != BlockType.LIST_CHECK && blockType != BlockType.LIST_NUMBER) {
-            viewModelScope.launch {
-                delay(50) // Slight delay to let the UI updates finish
-                setFocusedBlockIndex(targetIndex)
-            }
-        }
-    }
-
-    /**
-     * Adds a new block after the specified index
-     */
-    fun addBlockAfter(
-        afterIndex: Int,
-        blockType: BlockType,
-    ) {
-        AppLogger.d(
-            "EditNoteViewModel",
-            "addBlockAfter called: afterIndex=$afterIndex, blockType=$blockType, isReadTrashOnly=$isReadTrashOnly",
-        )
-
-        if (isReadTrashOnly) return
-
-        val targetIndex = (afterIndex + 1).coerceAtMost(blocks.size)
-
-        // Create a new block
-        val newBlock = createNewBlockByType(blockType) ?: return
-        AppLogger.d(
-            "EditNoteViewModel",
-            "Created new block: ${newBlock::class.simpleName}, targetIndex=$targetIndex"
-        )
-
-        // Add the block and update the state
-        blockOperations.addBlock(targetIndex, newBlock)
-        updateUndoRedoState()
-
-        // Always set focus on the new block (even for a ListBlock)
-        // This is important for correct scrolling
-        setLastInteractionIndex(targetIndex)
-
-        // Use the retrying method for better reliability
-        _focusManager.setFocusWithRetry(targetIndex, maxRetries = 5, delayMs = 50L)
-        AppLogger.d("EditNoteViewModel", "Focus set to new block with retry: $targetIndex")
-    }
-
-    /**
-     * Clears the first block if it is an empty text block
-     * @return The index for the new block (0 if the first one was removed) or null
-     */
-    private fun cleanEmptyFirstBlockIfNeeded(): Int? {
-        val first = blocks.firstOrNull() ?: return null
-
-        if (first is Block.TextBlock && first.text.value.isEmpty()) {
-            blockOperations.removeBlock(0)
-            return 0
-        }
-        return null
-    }
-
-    /**
-     * Tries to append a line break to the last text block
-     * @return true if the text was appended to the last block
-     */
-    private fun appendTextToLastBlockIfPossible(): Boolean {
-        val lastBlock = _blocks.lastOrNull()
-        if (lastBlock is Block.TextBlock) {
-            lastBlock.text.value += "\n"
-            return true
-        }
-        return false
-    }
-
-    /**
-     * Creates a new block of the appropriate type using the factory
-     */
-    private fun createNewBlockByType(blockType: BlockType): Block? =
-        BlockFactory.createBlock(blockType)
-
-    /**
-     * Removes a block from the note using different strategies depending on the removal action type
-     */
-    fun removeBlock(
-        block: Block,
-        blockRemoveAction: BlockRemoveAction,
-        isReFocus: Boolean = true,
-    ) {
-        AppLogger.d(
-            "EditNoteViewModel",
-            "removeBlock called: action=$blockRemoveAction, blockType=${block::class.simpleName}"
-        )
-
-        val index = _blocks.indexOf(block)
-        if (index == -1) {
-            AppLogger.d("EditNoteViewModel", "Block not found in list")
-            return
-        }
-
-        // Check whether the block can be removed (at least one block must remain)
-        if (blocks.size <= 1 && blockRemoveAction != BlockRemoveAction.REMOVE_BACKSPACE) {
-            AppLogger.d("EditNoteViewModel", "Cannot remove: size check failed")
-            return
-        }
-
-        // Choose the removal strategy depending on the action
-        when (blockRemoveAction) {
-            BlockRemoveAction.REMOVE -> {
-                AppLogger.d("EditNoteViewModel", "Performing REMOVE")
-                performBlockRemoval(index, isReFocus)
-            }
-
-            BlockRemoveAction.REMOVE_BACKSPACE -> {
-                AppLogger.d("EditNoteViewModel", "Checking REMOVE_BACKSPACE")
-                if (canRemoveTextBlock(block)) {
-                    AppLogger.d("EditNoteViewModel", "Performing REMOVE_BACKSPACE")
-                    performBlockRemoval(index, isReFocus)
-                } else {
-                    AppLogger.d("EditNoteViewModel", "Cannot remove block with REMOVE_BACKSPACE")
-                }
-            }
-
-            BlockRemoveAction.REMOVE_BACKSPACE_LIST -> {
-                AppLogger.d("EditNoteViewModel", "Performing REMOVE_BACKSPACE_LIST")
-                performBlockRemoval(index, isReFocus)
-            }
-        }
-    }
-
-    /**
-     * Checks whether a text block can be removed (it must be empty)
-     */
-    private fun canRemoveTextBlock(block: Block): Boolean {
-        AppLogger.d(
-            "EditNoteViewModel",
-            "canRemoveTextBlock: blocks.size=${blocks.size}, isEmpty=${
-                BlockUtils.isBlockEmpty(
-                    block,
-                )
-            }, blockType=${block::class.simpleName}",
-        )
-
-        if (blocks.size <= 1) {
-            AppLogger.d("EditNoteViewModel", "Cannot remove: only one block left")
-            return false
-        }
-
-        val isEmpty = BlockUtils.isBlockEmpty(block)
-        AppLogger.d("EditNoteViewModel", "Block empty check result: $isEmpty")
-        return isEmpty
-    }
-
-    /**
-     * Performs the block removal and updates the focus
-     */
-    private fun performBlockRemoval(
-        index: Int,
-        isReFocus: Boolean,
-    ) {
-
-        blockOperations.removeBlock(index)
-        updateUndoRedoState()
-        // Update the focus if required
-        if (isReFocus) {
-            val newFocusIndex = _focusManager.findPreviousFocusableBlock(index, _blocks)
-            _focusManager.setFocus(newFocusIndex, moveCursorToEnd = true)
-            _focusManager.setLastInteraction(newFocusIndex)
-        }
-    }
-
-    fun replaceBlock(
-        targetBlockIndex: Int,
-        newBlock: Block,
-    ): Boolean {
-        AppLogger.d(
-            "EditNoteViewModel",
-            "replaceBlock called: targetBlockIndex=$targetBlockIndex, oldBlock=${
-                if (targetBlockIndex in _blocks.indices) {
-                    _blocks[targetBlockIndex]::class.simpleName
-                } else {
-                    "null"
-                }
-            }, newBlock=${newBlock::class.simpleName}",
-        )
-
-        return if (targetBlockIndex in _blocks.indices) {
-            blockOperations.replaceBlock(targetBlockIndex, newBlock)
-            updateUndoRedoState()
-
-            // Always set focus on the replaced block
-            setLastInteractionIndex(targetBlockIndex)
-
-            // Use the retrying method for better reliability
-            _focusManager.setFocusWithRetry(targetBlockIndex, maxRetries = 5, delayMs = 50L)
-            _focusManager.setLastInteraction(targetBlockIndex)
-            updateCurrentFocusIndex(targetBlockIndex)
-            AppLogger.d("EditNoteViewModel", "Focus set to replaced block with retry: $targetBlockIndex")
-
-            AppLogger.d("EditNoteViewModel", "Block replaced successfully")
-            true
-        } else {
-            AppLogger.e(
-                "EditNoteViewModel",
-                "Invalid index: $targetBlockIndex. Must be between 0 and ${_blocks.size - 1}.",
-            )
-            false
-        }
-    }
-
-    /**
-     * Registers a text change in a block to support undo/redo
-     */
-    fun registerTextChange(
-        index: Int,
-        oldText: String,
-        newText: String,
-    ) {
-        blockOperations.registerTextChange(index, oldText, newText)
-        updateUndoRedoState()
-    }
-
-    /**
-     * Registers a change in a block to support undo/redo
-     */
-    fun registerContentChange(
-        index: Int,
-        oldBlock: Block,
-        newBlock: Block,
-    ) {
-        blockOperations.registerContentChange(index, oldBlock, newBlock)
-        updateUndoRedoState()
-    }
-
-    /**
-     * Undoes the last action
-     */
-    fun undo() {
-        if (blockOperations.undo()) {
-            updateUndoRedoState()
-        }
-    }
-
-    /**
-     * Redoes the undone action
-     */
-    fun redo() {
-        if (blockOperations.redo()) {
-            updateUndoRedoState()
-        }
-    }
-
-    /**
-     * Updates the undo/redo availability state
-     */
-    private fun updateUndoRedoState() {
-        _canUndo.value = blockOperations.canUndo()
-        _canRedo.value = blockOperations.canRedo()
-    }
-
-    /**
-     * Updates the note title in the state
-     */
     fun updateTitle(newTitle: String) {
-        _state.value = _state.value.copy(note = state.value.note.copy(title = newTitle))
-    }
-
-    // Method for toggling the block editing mode
-    fun toggleBlockEditMode() {
-        _isBlockEditMode.value = !_isBlockEditMode.value
-    }
-
-    fun toggleLockEditor() {
-        _lockEditor.value = !_lockEditor.value
+        persistence.updateNote { it.copy(title = newTitle) }
     }
 
     /**
-     * Restores the note from the trash
+     * Moves the note to tag [tagId]. The editor shows it at once; it is stored like a title
+     * change, by the autosave or the save on leaving, together with the editor's content.
      */
-    suspend fun noteRestore(): Boolean = saveMutex.withLock {
-        val currentNote = _state.value.note
-        if (currentNote.id == -1L) return@withLock false
-
-        val blocksJson = serializeNonBlankBlocks()
-        updateNoteTrashStatusUseCase.invoke(
-            currentNote.copy(value = blocksJson),
-            false,
-        )
-    }
-
-    /**
-     * Moves the current note to the trash (soft delete). Returns true on success.
-     * Suspends until the write completes so the caller can safely navigate away after.
-     */
-    suspend fun noteMoveToTrash(): Boolean = saveMutex.withLock {
-        val currentNote = _state.value.note
-        if (currentNote.id == -1L) return@withLock true
-
-        val blocksJson = serializeNonBlankBlocks()
-        updateNoteTrashStatusUseCase.invoke(currentNote.copy(value = blocksJson), true)
-    }
-
-    /**
-     * Inserts a copy of the current note (title + " (Copy)") as a new record.
-     * Returns the new note id, or -1 on failure.
-     */
-    suspend fun noteDuplicate(): Long = saveMutex.withLock {
-        val currentNote = _state.value.note
-        val blocksJson = serializeNonBlankBlocks()
-        try {
-            notesRepository.insertNote(
-                Note.new(
-                    title = currentNote.title + " (Copy)",
-                    value = blocksJson,
-                    tagId = currentNote.tagId
-                )
-            ).takeIf { it > 0L } ?: -1L
-        } catch (e: Exception) {
-            AppLogger.e("EditNoteViewModel", "Note duplication failed", e)
-            -1L
-        }
-    }
-
-    /**
-     * Deletes the note completely from the database
-     */
-    suspend fun noteDelete(): Boolean = saveMutex.withLock {
-        val currentNoteId = _state.value.note.id
-        if (currentNoteId == -1L) return@withLock true
-
-        try {
-            notesRepository.deleteNoteById(currentNoteId)
-        } catch (e: Exception) {
-            AppLogger.e("EditNoteViewModel", "Note deletion failed", e)
-            false
-        }
-    }
-
     fun updateTagNote(tagId: Long) {
-        val currentNote = _state.value.note
-
-        // Update the UI state immediately for interface responsiveness
-        _state.value = _state.value.copy(
-            note = currentNote.copy(tagId = tagId),
-        )
-
-        // Apply the change in the database if the note is already saved
-        if (currentNote.id != -1L) {
-            viewModelScope.launch {
-                updateNoteTagUseCase.invoke(currentNote, tagId)
-            }
-        }
-        // If the note is new, the tag will be saved together with the note on the next save
+        persistence.updateNote { it.copy(tagId = tagId) }
     }
 
     fun updateFontSize(size: Int) {
-        fontSizeUseCase.setFontSize(size, viewModelScope)
+        // The app scope: closing the editor right after a change must not cancel the write.
+        appScope.launch { settingsRepository.setFontSize(size) }
     }
 
     fun updateFontStyle(style: FontStyleType) {
-        fontStyleUseCase.setFontStyle(style, viewModelScope)
+        appScope.launch { settingsRepository.setFontStyle(style) }
     }
 
-    fun moveBlock(up: Boolean) { // up = true - move up, false - move down
-        val fromIndex = _focusManager.lastInteractionIndex.value
-        val toIndex = if (up) fromIndex - 1 else fromIndex + 1
-
-        if (fromIndex !in _blocks.indices || toIndex !in _blocks.indices) return
-
-        blockOperations.moveBlock(fromIndex, toIndex)
-        updateUndoRedoState()
-
-        // Update the focus after moving the block
-        _focusManager.setFocus(toIndex)
-        _focusManager.setLastInteraction(toIndex)
+    /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */
+    fun toggleLockEditor() {
+        if (contentLoadFailed.value || isReadTrashOnly) return
+        _lockEditor.value = !_lockEditor.value
     }
 
-    fun getMoveBlockState(): Int {
-        val index = _focusManager.lastInteractionIndex.value
+    private fun canEdit(): Boolean = !isReadTrashOnly && !_lockEditor.value
 
-        if (index == 0) {
-            return 1
-        } else if (index == _blocks.size - 1) {
-            return 2
-        }
-        return -1
+    // --- blocks ----------------------------------------------------------------------------
+
+    /** Position of [block] in the editor, by identity; -1 when it is no longer there. */
+    fun indexOfBlock(block: Block): Int = editor.blocks.indexOfFirst { it.id == block.id }
+
+    /** The field of [block] took focus. */
+    fun onBlockFocused(block: Block) = editor.selection.onFocused(block.id)
+
+    /** The user works on [block] without its field taking focus (a list item, a block sheet). */
+    fun onBlockInteraction(block: Block) = editor.selection.onInteraction(block.id)
+
+    /**
+     * Adds a block of [blockType] after the focused block (or the last one the user touched).
+     * An empty first text block at that point is replaced instead.
+     */
+    fun addBlock(blockType: BlockType) {
+        if (canEdit()) editor.addBlock(BlockFactory.createBlock(blockType))
     }
 
+    /** Adds a block of [blockType] after position [afterIndex] and focuses it. */
+    fun addBlockAfter(afterIndex: Int, blockType: BlockType) {
+        if (canEdit()) editor.addBlockAfter(afterIndex, BlockFactory.createBlock(blockType))
+    }
+
+    /** Focuses a trailing text block (the tap area below the last block). */
     fun addBlockToEnd() {
-        if (isReadTrashOnly) return
-
-        // Check if the last block is an empty TextBlock
-        val lastBlock = _blocks.lastOrNull()
-        if (lastBlock is Block.TextBlock) {
-            setLastInteractionIndex(_blocks.size - 1)
-            viewModelScope.launch {
-                delay(50)
-                setFocusedBlockIndex(_blocks.size - 1)
-            }
-            return
-        }
-
-        // Create a new block
-        val newBlock = createNewBlockByType(BlockType.TEXT) ?: return
-
-        // Add the block to the end of the list
-        blockOperations.addBlock(_blocks.size, newBlock)
-        updateUndoRedoState()
-
-        // Set focus to the new block with a slight delay
-        setLastInteractionIndex(_blocks.size - 1)
-        viewModelScope.launch {
-            delay(50)
-            setFocusedBlockIndex(_blocks.size - 1)
-        }
+        if (canEdit()) editor.addBlockToEnd()
     }
+
+    /**
+     * Removes [block] if [blockRemoveAction] allows it; see [BlockEditorState.removeBlock].
+     * Does nothing in a locked or read-only editor.
+     */
+    fun removeBlock(block: Block, blockRemoveAction: BlockRemoveAction, isReFocus: Boolean = true) {
+        if (canEdit()) editor.removeBlock(block, blockRemoveAction, isReFocus)
+    }
+
+    fun replaceBlock(targetBlockIndex: Int, newBlock: Block): Boolean =
+        canEdit() && editor.replaceBlock(targetBlockIndex, newBlock)
+
+    /**
+     * Sets the text of a text-bearing [block] and records it for undo/redo. The previous
+     * text is read from the block itself, so undo always restores what was really there.
+     */
+    fun onBlockTextChanged(block: Block, newText: String) {
+        if (canEdit() && block is TextualBlock) editor.changeValue(block.id, block.text, newText, mergeable = true)
+    }
+
+    /** Sets the items of a list [block] (typing, checking, adding or removing items). */
+    fun onListItemsChanged(block: Block.ListBlock, newItems: List<ItemListBlock>, mergeable: Boolean) {
+        if (canEdit()) editor.changeValue(block.id, block.items, newItems, mergeable)
+    }
+
+    /** Sets the link of [block]; a link being edited ([editLink]) is committed with it. */
+    fun onLinkChanged(block: Block.LinkBlock, newLink: LinkDataBlock) {
+        if (!canEdit()) return
+        _editingLinkIds.update { it - block.id }
+        editor.changeValue(block.id, block.block, newLink, mergeable = false)
+    }
+
+    /**
+     * Puts a saved link back into URL entry, keeping its address to edit. The saved link stays
+     * in the block until the user commits a new one ([onLinkChanged]), so a save in the
+     * meantime (autosave, Back, the app going to the background) still stores it.
+     */
+    fun editLink(block: Block.LinkBlock) {
+        if (!canEdit()) return
+        _editingLinkIds.update { it + block.id }
+        editor.selection.onInteraction(block.id)
+    }
+
+    fun undo() {
+        if (canEdit()) editor.undo()
+    }
+
+    fun redo() {
+        if (canEdit()) editor.redo()
+    }
+
+    // --- toolbar: acts on the block the user last worked on --------------------------------
+
+    fun moveBlock(up: Boolean) {
+        if (canEdit()) editor.moveInteracted(up)
+    }
+
+    fun canMoveBlock(up: Boolean): Boolean = canEdit() && editor.canMoveInteracted(up)
+
+    fun canRemoveInteractedBlock(): Boolean = canEdit() && editor.canRemoveInteracted()
+
+    fun removeInteractedBlock() {
+        if (canEdit()) editor.removeInteracted()
+    }
+
+    /** Whether the block the user works on is the first, the last or in between. */
+    fun getMoveBlockState(): Int = editor.interactedBlockPosition()
 }
-
-data class LoadNoteState(
-    val note: Note = Note(id = -1),
-    val backupNote: Note = Note(id = -1),
-)
-
