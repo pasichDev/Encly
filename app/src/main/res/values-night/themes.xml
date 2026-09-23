@@ -1,5 +1,6 @@
 <resources>
-    <style name="Theme.Encly" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- AppCompat parent: MainActivity is an AppCompatActivity (per-app language support). -->
+    <style name="Theme.Encly" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/window_background</item>

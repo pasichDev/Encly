@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="about">À propos</string>
+    <string name="about_app_description">Un espace local et chiffré pour vos notes, idées et tâches, sans synchronisation cloud.</string>
+    <string name="about_data_protection">Protection des données</string>
+    <string name="about_encryption_note">Les données du coffre-fort sont stockées localement dans une base de données SQLCipher chiffrée</string>
+    <string name="about_faq_title">Questions fréquentes</string>
+    <string name="about_feedback">Commentaires</string>
+    <string name="about_feedback_desc">Signaler un bug ou proposer une amélioration sur GitHub</string>
+    <string name="about_no_browser">Aucun navigateur trouvé. Ouvrez le lien manuellement : %1$s</string>
+    <string name="about_no_mail_client">Aucune application de messagerie trouvée</string>
+    <string name="about_privacy_policy">Politique de confidentialité</string>
+    <string name="about_privacy_policy_desc">Comment nous stockons et protégeons vos données</string>
+    <string name="about_rate_app">Noter l\'application</string>
+    <string name="about_rate_app_desc">Laissez une note sur le Google Play Store</string>
+    <string name="about_support_title">Assistance et contact</string>
+    <string name="about_write_developer">Contacter le développeur</string>
+    <string name="about_write_developer_desc">Si vous avez des questions ou des suggestions, vous pouvez m\'écrire par e-mail.</string>
+
+    <string name="action_continue">Continuer</string>
+
+    <string name="add">Ajouter</string>
+
+    <string name="all">Toutes</string>
+
+    <string name="auth_method_pin_desc">Clé d\'accès obligatoire. Appuyez pour modifier votre code PIN.</string>
+    <string name="auth_method_pin_title">Code PIN à 6 chiffres</string>
+    <string name="auth_setup_biometric_subtitle">Confirmez votre biométrie pour déverrouiller rapidement</string>
+    <string name="auth_setup_biometric_title">Activer la biométrie</string>
+    <string name="auth_setup_confirm_subtitle">Saisissez à nouveau le code PIN pour confirmer</string>
+    <string name="auth_setup_confirm_title">Confirmez votre code PIN</string>
+    <string name="auth_setup_continue_pin_only">Continuer avec le code PIN uniquement</string>
+    <string name="auth_setup_create_subtitle">Votre code PIN à 6 chiffres protège directement la clé de la base de données</string>
+    <string name="auth_setup_retry_biometric">Réessayer la biométrie</string>
+    <string name="auth_title">Authentification</string>
+
+    <string name="back">Retour</string>
+
+    <string name="biometric_change_not_confirmed">La modification de la protection biométrique n\'a pas été confirmée</string>
+    <string name="biometric_enroll_failed">Impossible de créer la clé biométrique</string>
+    <string name="biometric_prompt_general_subtitle">Confirmez votre identité</string>
+    <string name="biometric_prompt_general_title">Authentification</string>
+    <string name="biometric_prompt_key_subtitle">Confirmez votre biométrie</string>
+    <string name="biometric_prompt_key_title">Accès à la clé</string>
+    <string name="biometric_prompt_settings_subtitle">Confirmez votre biométrie pour modifier la protection</string>
+    <string name="biometric_prompt_settings_title">Confirmation de sécurité</string>
+    <string name="biometric_prompt_unlock_subtitle">Confirmez votre biométrie pour accéder à la clé chiffrée</string>
+    <string name="biometric_prompt_unlock_title">Déverrouiller Encly</string>
+    <string name="biometric_prompt_use_pin">Utiliser le code PIN</string>
+    <string name="biometric_unavailable">L\'authentification biométrique n\'est pas disponible</string>
+
+    <string name="block_add">Ajouter un bloc</string>
+    <string name="block_checklist">Liste de contrôle</string>
+    <string name="block_heading">Titre</string>
+    <string name="block_heading_level">Titre %1$d</string>
+    <string name="block_link">Lien</string>
+    <string name="block_list">Liste</string>
+    <string name="block_move_down">Déplacer vers le bas</string>
+    <string name="block_move_up">Déplacer vers le haut</string>
+    <string name="block_numbered_list">Liste numérotée</string>
+    <string name="block_separator">Séparateur</string>
+
+    <string name="cancel">Annuler</string>
+
+    <string name="checked_count">Cochées : %d</string>
+
+    <string name="clean_permanent_message">Voulez-vous vraiment supprimer définitivement ces notes ? Cette action est irréversible.</string>
+    <string name="clean_trash_message">Voulez-vous vraiment vider définitivement la corbeille ? Cette action est irréversible.</string>
+    <string name="clean_trash_title">Vider la corbeille ?</string>
+
+    <string name="clear">Effacer</string>
+
+    <string name="close">Fermer</string>
+
+    <string name="collapse">Réduire</string>
+
+    <string name="create_new_tag">Créer un libellé</string>
+
+    <string name="date_today_at">Aujourd\'hui %1$s</string>
+    <string name="date_yesterday_at">Hier %1$s</string>
+
+    <string name="delete">Supprimer</string>
+    <string name="delete_block">Supprimer le bloc</string>
+    <string name="delete_from_trash">Supprimer</string>
+    <string name="delete_tag">Supprimer le libellé</string>
+    <string name="delete_tag_desrpt">Ce libellé sera retiré de toutes vos notes. Les notes elles-mêmes ne seront pas supprimées.</string>
+
+    <string name="dialog_confirm">Supprimer</string>
+    <string name="dialog_dismiss">Annuler</string>
+    <string name="dialog_message">Voulez-vous vraiment supprimer définitivement cette note ? Cette action est irréversible.</string>
+    <string name="dialog_title">Supprimer la note ?</string>
+
+    <string name="donation_description">Votre soutien nous aide à ajouter des fonctionnalités, corriger des bugs et améliorer l\'application. Chaque contribution compte !</string>
+    <string name="donation_subtitle">Aidez-nous à rendre l\'application encore meilleure</string>
+    <string name="donation_title">Soutenir le développement</string>
+
+    <string name="done">Terminé</string>
+
+    <string name="duplicate">Dupliquer</string>
+
+    <string name="dynamic_color">Couleurs dynamiques</string>
+
+    <string name="edit">Modifier</string>
+    <string name="edit_tags">Modifier les libellés</string>
+
+    <string name="editor_lock">Verrouiller la modification</string>
+    <string name="editor_unlock">Déverrouiller la modification</string>
+
+    <string name="empty_notes">Aucune note</string>
+    <string name="empty_notes_desc">Créez votre première note en appuyant sur le bouton Ajouter.</string>
+    <string name="empty_trash_desc">La corbeille est vide</string>
+
+    <string name="enter_url">Saisissez un lien</string>
+
+    <string name="error_database_open">Impossible d\'ouvrir la base de données</string>
+
+    <string name="expand">Développer</string>
+
+    <string name="falied_content">Impossible de charger le contenu</string>
+
+    <string name="faq_background_a">Encly enregistre vos modifications en cours, ferme la base de données chiffrée et efface la clé de session. Vous devez déverrouiller à nouveau à votre retour.</string>
+    <string name="faq_background_q">Que se passe-t-il quand je quitte l\'application ?</string>
+    <string name="faq_biometrics_a">Utilisez l\'interrupteur de biométrie dans Paramètres → Sécurité. La création ou la suppression de l\'emplacement biométrique nécessite une authentification biométrique forte.</string>
+    <string name="faq_biometrics_q">Comment activer ou désactiver la biométrie ?</string>
+    <string name="faq_change_pin_a">Ouvrez Paramètres → Sécurité, confirmez votre code PIN actuel, puis saisissez deux fois le nouveau.</string>
+    <string name="faq_change_pin_q">Comment modifier mon code PIN ?</string>
+    <string name="faq_db_key_a">Encly génère une clé de base de données aléatoire de 256 bits. Votre code PIN protège un emplacement de déverrouillage AES-GCM distinct, et la biométrie utilise une clé Android Keystore qui exige une authentification à chaque utilisation.</string>
+    <string name="faq_db_key_q">Comment la clé de la base de données est-elle protégée ?</string>
+    <string name="faq_forgot_pin_a">Si vous avez créé une phrase de récupération, vous pouvez l\'utiliser sur l\'écran de verrouillage pour récupérer l\'accès, puis définir un nouveau code PIN. Sans emplacement de récupération, perdre la seule clé disponible signifie perdre le coffre-fort.</string>
+    <string name="faq_forgot_pin_q">Et si j\'oublie mon code PIN ?</string>
+    <string name="faq_language_a">Ouvrez Paramètres → Langue et choisissez l\'une des langues disponibles, ou « Langue du système » pour suivre votre appareil. Le changement s\'applique immédiatement.</string>
+    <string name="faq_language_q">Comment changer la langue ?</string>
+    <string name="faq_new_note_a">Appuyez sur le bouton « + » de l\'écran d\'accueil. Dans l\'éditeur, vous pouvez utiliser du texte, des titres, des citations, des listes, des séparateurs et des liens.</string>
+    <string name="faq_new_note_q">Comment créer une nouvelle note ?</string>
+    <string name="faq_recovery_phrase_a">La phrase de récupération n\'est créée qu\'en mode géré par l\'utilisateur et constitue un moyen distinct de récupérer la clé du coffre-fort. Conservez-la hors ligne. Au quotidien, le déverrouillage se fait avec votre code PIN ou la biométrie.</string>
+    <string name="faq_recovery_phrase_q">À quoi sert la phrase de récupération ?</string>
+    <string name="faq_report_bug_a">Ouvrez « À propos » et utilisez l\'option de commentaires, ou écrivez au développeur. N\'incluez jamais votre phrase de récupération, votre code PIN ni le texte privé de vos notes dans un rapport de bug.</string>
+    <string name="faq_report_bug_q">Comment signaler un bug ?</string>
+    <string name="faq_saving_a">Encly enregistre vos modifications automatiquement et localement. Le bouton « Terminé » et la sortie de l\'éditeur terminent aussi l\'enregistrement avant le retour à la liste.</string>
+    <string name="faq_saving_q">Comment les modifications sont-elles enregistrées ?</string>
+    <string name="faq_screen_description">Notes, tâches, chiffrement local et récupération de l\'accès, sans synchronisation cloud.</string>
+    <string name="faq_screen_subtitle">Réponses aux questions les plus courantes</string>
+    <string name="faq_screenshots_a">Non. La protection de l\'écran est toujours active : Encly bloque les captures d\'écran, l\'enregistrement de l\'écran et les aperçus non protégés dans la liste des applications récentes.</string>
+    <string name="faq_screenshots_q">Puis-je faire des captures d\'écran d\'Encly ?</string>
+    <string name="faq_section_basics">Les bases</string>
+    <string name="faq_section_security">Sécurité et récupération</string>
+    <string name="faq_section_settings">Paramètres</string>
+    <string name="faq_section_troubleshooting">Dépannage</string>
+    <string name="faq_storage_a">Les notes, libellés et tâches sont stockés uniquement dans la base de données SQLCipher locale d\'Encly. Il n\'y a ni synchronisation cloud ni sauvegarde automatique : vous pouvez exporter vous-même une sauvegarde chiffrée dans Paramètres → Sauvegarde.</string>
+    <string name="faq_storage_q">Où sont stockées mes données ?</string>
+    <string name="faq_tags_a">Les libellés vous aident à regrouper vos notes. Vous pouvez les créer, les renommer, les masquer, les supprimer et les utiliser comme filtre sur l\'écran d\'accueil.</string>
+    <string name="faq_tags_q">Comment fonctionnent les libellés ?</string>
+    <string name="faq_tasks_a">Les tâches ont une description et une priorité. Vous pouvez les filtrer par priorité et les marquer comme terminées. Encly n\'affiche jamais le texte des tâches dans les notifications système.</string>
+    <string name="faq_tasks_q">Que permettent les tâches ?</string>
+    <string name="faq_theme_a">Dans Paramètres → Apparence, vous pouvez choisir le thème du système, clair ou sombre et, sur les appareils Android compatibles, les couleurs dynamiques.</string>
+    <string name="faq_theme_q">Comment changer de thème ?</string>
+    <string name="faq_vault_damaged_a">Encly ne crée volontairement jamais une base de données vide à la place d\'un coffre-fort perdu ou illisible. Ne confirmez pas l\'effacement complet si vous avez encore besoin de vos données locales.</string>
+    <string name="faq_vault_damaged_q">Encly indique que le coffre-fort est endommagé</string>
+
+    <string name="font_size_title">Taille du texte</string>
+    <string name="font_style_cozy">Chaleureux</string>
+    <string name="font_style_modern">Moderne</string>
+    <string name="font_style_tech">Techno</string>
+
+    <string name="home_greeting">Bonjour</string>
+    <string name="home_tasks_empty">Votre liste de tâches est vide</string>
+
+    <string name="language_dialog_title">Choisir la langue</string>
+    <string name="language_system_default">Langue du système</string>
+
+    <string name="link_add">Ajouter un lien</string>
+
+    <string name="list_item_placeholder">Élément de liste</string>
+
+    <string name="loading">Chargement…</string>
+
+    <string name="lock_back_to_pin">Retour au code PIN</string>
+    <string name="lock_recover_access">Récupérer l\'accès</string>
+    <string name="lock_recovery_subtitle">Saisissez votre phrase de récupération de 12 mots</string>
+    <string name="lock_recovery_title">Récupération</string>
+    <string name="lock_subtitle">Saisissez votre code PIN à 6 chiffres pour continuer</string>
+    <string name="lock_title">Déverrouillez vos notes</string>
+    <string name="lock_unlocking">Déverrouillage…</string>
+    <string name="lock_use_biometric">Utiliser la biométrie</string>
+    <string name="lock_use_recovery_phrase">Récupérer l\'accès avec votre phrase de récupération</string>
+    <string name="lock_wrong_pin">Code PIN incorrect</string>
+    <string name="lock_wrong_recovery_phrase">Phrase de récupération incorrecte</string>
+
+    <string name="loss_hold_to_wipe">Maintenez pour tout effacer</string>
+    <string name="loss_message">Les données chiffrées ou les clés de chiffrement semblent avoir été modifiées ou endommagées ; la récupération est donc impossible.\n\nPour continuer à utiliser l\'application, vous devez la réinitialiser et effacer les données endommagées. Toutes les notes et tous les paramètres enregistrés seront définitivement supprimés.</string>
+    <string name="loss_title">Désolé, vos données sont endommagées</string>
+
+    <string name="main_drawer_faq">FAQ</string>
+    <string name="main_drawer_settings">Paramètres</string>
+    <string name="main_drawer_support">Soutenir le développeur</string>
+    <string name="main_drawer_tags">Libellés</string>
+    <string name="main_drawer_tasks">Tâches</string>
+    <string name="main_drawer_trash">Corbeille</string>
+
+    <string name="more_options">Plus d\'options</string>
+
+    <string name="new_page">Nouvelle page</string>
+
+    <string name="no_tag">Sans libellé</string>
+
+    <string name="note_add">Nouvelle note</string>
+    <string name="note_delete_failed">Impossible de supprimer la note</string>
+    <string name="note_description_placeholder">Description…</string>
+    <string name="note_discard_all_changes">Annuler toutes les modifications</string>
+    <string name="note_discard_failed">Impossible d\'annuler les modifications</string>
+    <string name="note_duplicate_failed">Impossible de créer une copie</string>
+    <string name="note_load_failed">Impossible de lire le contenu de la note. La modification est désactivée pour ne pas endommager les données.</string>
+    <!-- Title of a duplicated note; %1$s is the original title. -->
+    <string name="note_copy_title">%1$s (copie)</string>
+    <string name="note_restore_failed">Impossible de restaurer la note</string>
+    <string name="note_save_failed">Impossible d\'enregistrer les modifications</string>
+    <string name="note_trash_failed">Impossible de déplacer la note dans la corbeille</string>
+
+    <string name="onboarding_done_auto_desc">Vos données sont protégées. Vous pouvez tout de suite commencer à écrire, créer et concrétiser vos idées !</string>
+    <string name="onboarding_done_auto_title">La sécurité est configurée !</string>
+    <string name="onboarding_done_card_footer">Prêt à créer ?</string>
+    <string name="onboarding_done_card_title">Place aux idées !</string>
+    <string name="onboarding_done_point_1">Notez vos idées brillantes</string>
+    <string name="onboarding_done_point_2">Créez des listes pour rester concentré</string>
+    <string name="onboarding_done_point_3">Planifiez vos journées et vos rêves</string>
+    <string name="onboarding_done_point_4">Gardez l\'essentiel bien protégé</string>
+    <string name="onboarding_done_point_5">Concrétisez vos idées</string>
+    <string name="onboarding_done_seed_desc">Vous pouvez désormais créer, modifier et stocker vos notes en toute sécurité. N\'oubliez pas de conserver votre phrase seed en lieu sûr !</string>
+    <string name="onboarding_done_seed_title">Votre clé de sécurité est prête !</string>
+    <string name="onboarding_done_start">C\'est parti !</string>
+    <string name="onboarding_error_initialization">Impossible d\'initialiser l\'application</string>
+    <string name="onboarding_error_seed_generation">Impossible de créer la phrase seed</string>
+    <string name="onboarding_error_vault_creation">Impossible de créer le coffre-fort chiffré</string>
+    <string name="onboarding_feature_editor_desc">Un éditeur de texte flexible avec mise en forme</string>
+    <string name="onboarding_feature_editor_title">Édition</string>
+    <string name="onboarding_feature_interface_desc">Élégant. Simple. Intuitif.</string>
+    <string name="onboarding_feature_interface_title">Interface</string>
+    <string name="onboarding_feature_privacy_desc">Vous seul avez accès à vos pensées</string>
+    <string name="onboarding_feature_privacy_title">Confidentialité</string>
+    <string name="onboarding_feature_tags_desc">Classez vos pensées par thème</string>
+    <string name="onboarding_feature_tags_title">Libellés</string>
+    <string name="onboarding_feature_tasks_desc">Suivez vos tâches à côté de vos notes</string>
+    <string name="onboarding_feature_tasks_title">Tâches</string>
+    <string name="onboarding_security_auto_point_1">Démarrage rapide sans configuration</string>
+    <string name="onboarding_security_auto_point_2">Le système gère la sécurité pour vous</string>
+    <string name="onboarding_security_auto_point_3">Aucune clé à retenir</string>
+    <string name="onboarding_security_auto_point_4">Les copies locales chiffrées ne sont pas autorisées</string>
+    <string name="onboarding_security_auto_title">Sécurité automatique</string>
+    <string name="onboarding_security_explanation">Une phrase seed est une suite de mots qui vous permet de récupérer l\'accès à vos données. Si vous choisissez la sécurité automatique, le système utilise à la place une clé intégrée. C\'est plus simple, mais cela réduit le niveau de protection et ne permet pas de copies locales chiffrées.</string>
+    <string name="onboarding_security_seed_point_1">Niveau de sécurité maximal</string>
+    <string name="onboarding_security_seed_point_2">Vous contrôlez votre propre clé</string>
+    <string name="onboarding_security_seed_point_3">Vous devez conserver votre phrase seed en lieu sûr</string>
+    <string name="onboarding_security_seed_point_4">Recommandé pour les données importantes</string>
+    <string name="onboarding_security_seed_title">Créer une clé de sécurité</string>
+    <string name="onboarding_security_subtitle">Choisissez le niveau de sécurité de vos données</string>
+    <string name="onboarding_security_title">Configuration de la sécurité</string>
+    <string name="onboarding_welcome_subtitle">Créez, modifiez et organisez vos pensées en toute simplicité</string>
+    <string name="onboarding_welcome_title">Mes notes</string>
+
+    <string name="open_menu">Ouvrir le menu</string>
+
+    <string name="percent_value">%1$d %%</string>
+
+    <string name="pin_change_confirm_subtitle">Saisissez à nouveau le code PIN pour confirmer</string>
+    <string name="pin_change_confirm_title">Confirmez votre code PIN à 6 chiffres</string>
+    <string name="pin_change_current_subtitle">Confirmez votre code PIN actuel avant de modifier votre clé d\'accès</string>
+    <string name="pin_change_current_title">Saisissez votre code PIN actuel</string>
+    <string name="pin_change_new_subtitle">Saisissez un nouveau code PIN pour protéger vos notes</string>
+    <string name="pin_changed">Code PIN modifié</string>
+    <string name="pin_create_title">Créez un code PIN à 6 chiffres</string>
+    <string name="pin_current_wrong">Le code PIN actuel est incorrect</string>
+    <string name="pin_delete_digit">Effacer le chiffre</string>
+    <string name="pin_mismatch">Les codes PIN ne correspondent pas</string>
+    <string name="pin_mismatch_retry">Les codes PIN ne correspondent pas. Veuillez réessayer.</string>
+    <string name="pin_save_failed">Impossible d\'enregistrer le code PIN</string>
+    <string name="pin_update_failed">Impossible de mettre à jour le code PIN. Veuillez réessayer.</string>
+
+    <string name="please_wait">Veuillez patienter…</string>
+
+    <string name="press_to_edit">Appuyez pour commencer à écrire…</string>
+
+    <string name="priority_high">Haute</string>
+    <string name="priority_low">Basse</string>
+    <string name="priority_medium">Moyenne</string>
+    <string name="priority_select_title">Choisissez une priorité</string>
+
+    <string name="quote">Citation</string>
+
+    <string name="recovery_phrase_label">Phrase de récupération</string>
+
+    <string name="redo">Rétablir</string>
+
+    <string name="restore">Restaurer</string>
+
+    <string name="save">Enregistrer</string>
+
+    <string name="saved">Enregistré</string>
+
+    <string name="saving">Enregistrement…</string>
+
+
+    <string name="search_clear">Effacer la recherche</string>
+    <string name="search_hint">Saisissez des mots-clés. La recherche porte sur les titres et le contenu des notes.</string>
+    <string name="search_no_results">Aucune note trouvée</string>
+    <string name="search_notes">Appuyez pour rechercher</string>
+    <string name="search_try_other_keywords">Essayez d\'autres mots-clés</string>
+
+    <string name="security_biometric_available">Empreinte digitale</string>
+    <string name="security_biometric_title">Déverrouillage biométrique</string>
+    <string name="security_biometric_unavailable">Non disponible sur cet appareil</string>
+    <string name="security_encryption_active">Le chiffrement est actif</string>
+    <string name="security_encryption_pin_desc">Votre clé de base de données aléatoire est protégée par votre code PIN et, si vous le souhaitez, par un emplacement biométrique du Keystore.</string>
+    <string name="security_encryption_seed_desc">Votre clé de base de données aléatoire dispose d\'un emplacement de récupération distinct, protégé par votre phrase seed.</string>
+    <string name="security_info_body">• SQLCipher est ouvert avec une clé aléatoire de 256 bits\n• Le code PIN et la phrase de récupération disposent d\'emplacements de déverrouillage AES-GCM distincts\n• La biométrie utilise une clé Android Keystore exigeant une authentification à chaque utilisation</string>
+    <string name="security_info_title">ℹ️ Informations de sécurité</string>
+    <string name="security_recovery_set">Configurée. Elle déverrouille le coffre si vous oubliez votre PIN et protège vos sauvegardes.</string>
+    <string name="security_recovery_missing">Non configurée. Sans elle, un PIN oublié signifie tout perdre. Touchez pour en créer une.</string>
+    <string name="security_erase_title">Effacer toutes les données</string>
+    <string name="security_erase_desc">Supprimer toutes les notes, tâches et étiquettes ainsi que les clés de chiffrement de cet appareil</string>
+    <string name="security_erase_confirm_title">Effacer toutes les données ?</string>
+    <string name="security_erase_confirm_body">Toutes les notes, tâches et étiquettes ainsi que les clés de chiffrement seront supprimées de cet appareil, et Encly repartira de zéro. Action irréversible : exportez d\'abord une sauvegarde si vous voulez conserver quelque chose.</string>
+    <string name="security_erase_confirm">Effacer</string>
+    <string name="security_subtitle">Chiffrement et protection des données</string>
+    <string name="security_title">Sécurité</string>
+
+    <string name="seed_continue_to_verify">Continuer vers la vérification</string>
+    <string name="seed_created_title">🎉 Clé de sécurité créée !</string>
+    <string name="seed_explain_control_desc">Vous seul avez accès à vos données</string>
+    <string name="seed_explain_control_title">Contrôle total</string>
+    <string name="seed_explain_create">Créer une phrase seed</string>
+    <string name="seed_explain_recovery_desc">Votre phrase seed vous permet de récupérer vos données sur n\'importe quel appareil</string>
+    <string name="seed_explain_recovery_title">Récupération facile</string>
+    <string name="seed_explain_security_desc">Vos données sont protégées par une cryptographie de niveau militaire</string>
+    <string name="seed_explain_security_title">Sécurité maximale</string>
+    <string name="seed_explain_subtitle">La phrase seed est votre clé principale pour toutes vos données. Elle se compose de 12 mots et offre une sécurité maximale.</string>
+    <string name="seed_explain_title">🔐 Qu\'est-ce qu\'une phrase seed ?</string>
+    <string name="seed_explain_warning">Important : perdre votre phrase seed signifie perdre toutes vos données !</string>
+    <string name="seed_generating">Génération de votre clé de sécurité…</string>
+    <string name="seed_generating_hint">Cela peut prendre quelques secondes</string>
+    <string name="seed_hide">Masquer la phrase de récupération</string>
+    <string name="seed_important">IMPORTANT !</string>
+    <string name="seed_show">Afficher la phrase de récupération</string>
+    <string name="seed_verify_back">Revenir</string>
+    <string name="seed_verify_confirm">Confirmer la création de la clé</string>
+    <string name="seed_verify_subtitle">Saisissez ces mots de votre clé de sécurité pour confirmer :</string>
+    <string name="seed_verify_title">🔍 Confirmez votre clé</string>
+    <string name="seed_word_correct">Correct</string>
+    <string name="seed_word_number">Mot n° %1$d :</string>
+    <string name="seed_word_placeholder">Saisissez le mot…</string>
+    <string name="seed_write_down_warning">Notez votre phrase de récupération et conservez-la hors ligne. Sans elle, l\'emplacement de récupération ne pourra pas restaurer l\'accès.</string>
+
+    <string name="settings_appearance">Apparence</string>
+    <string name="settings_general">Général</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_privacy">Confidentialité</string>
+    <string name="settings_show_tasks">Afficher les tâches</string>
+    <string name="settings_show_tasks_desc">Afficher la carte des tâches sur l\'écran d\'accueil</string>
+    <string name="settings_simple_edit">Édition simple</string>
+    <string name="settings_simple_edit_desc">Désactiver les blocs dynamiques et modifier les notes en texte brut</string>
+
+    <string name="sort">Trier</string>
+    <string name="sort_by">Trier par :</string>
+    <string name="sort_created_asc">Par date de création (plus anciennes d\'abord)</string>
+    <string name="sort_created_asc_short">Créée ↑</string>
+    <string name="sort_created_desc">Par date de création (plus récentes d\'abord)</string>
+    <string name="sort_created_desc_short">Créée ↓</string>
+    <string name="sort_updated_asc">Par dernière modification (plus anciennes d\'abord)</string>
+    <string name="sort_updated_asc_short">Modifiée ↑</string>
+    <string name="sort_updated_desc">Par dernière modification (plus récentes d\'abord)</string>
+    <string name="sort_updated_desc_short">Modifiée ↓</string>
+
+    <string name="support_external_services">Soutenez-nous via d\'autres services</string>
+    <string name="support_kofi_desc">Un soutien rapide et simple au développement.</string>
+    <string name="support_options_title">Comment nous soutenir</string>
+    <string name="support_title">Soutenir le développeur</string>
+    <string name="support_why_desc">• Nouvelles fonctionnalités\n• Corrections de bugs\n• Audit de sécurité et tests\n• Améliorations du design\n• Évolution du projet</string>
+    <string name="support_why_title">Pourquoi votre soutien compte-t-il ?</string>
+
+    <string name="tag_create_failed">Impossible d\'enregistrer le libellé. Veuillez réessayer.</string>
+    <string name="tag_delete_failed">Impossible de supprimer le libellé. Veuillez réessayer.</string>
+    <string name="tag_drag_to_reorder">Faites glisser pour réorganiser</string>
+    <string name="tag_edit">Modifier le libellé</string>
+    <string name="tag_hidden">Libellé masqué</string>
+    <string name="tag_hide">Masquer le libellé</string>
+    <string name="tag_reorder_failed">Impossible d\'enregistrer l\'ordre des libellés. Veuillez réessayer.</string>
+    <string name="tag_show">Afficher le libellé</string>
+    <string name="tag_update_failed">Impossible de mettre à jour le libellé. Veuillez réessayer.</string>
+
+    <string name="tap_again_to_delete">Appuyez à nouveau pour supprimer</string>
+
+    <string name="task_add">Ajouter une tâche</string>
+    <string name="task_clear_all_completed">Effacer toutes les tâches terminées</string>
+    <string name="task_clear_completed_failed">Impossible d\'effacer les tâches terminées. Veuillez réessayer.</string>
+    <string name="task_clear_completed_message">Voulez-vous vraiment supprimer toutes les tâches terminées ? Cette action est irréversible.</string>
+    <string name="task_clear_completed_title">Effacer les tâches terminées</string>
+    <string name="task_completed">Terminée</string>
+    <string name="task_completed_at">Terminée : %1$s</string>
+    <string name="task_create_failed">Impossible d\'enregistrer la tâche. Veuillez réessayer.</string>
+    <string name="task_description_placeholder">Description</string>
+    <string name="task_edit_placeholder">Modifier la tâche</string>
+    <string name="task_empty_active">Aucune tâche active.</string>
+    <string name="task_empty_completed">Aucune tâche terminée.</string>
+    <string name="task_empty_filtered">Aucune tâche ne correspond aux filtres sélectionnés.</string>
+    <string name="task_filter_all">Toutes les tâches</string>
+    <string name="task_filter_completed">Terminées</string>
+    <string name="task_new_placeholder">Nouvelle tâche</string>
+    <string name="task_progress_title">Progression</string>
+    <string name="task_status_update_failed">Impossible de modifier l\'état de la tâche. Veuillez réessayer.</string>
+    <string name="task_update_failed">Impossible de mettre à jour la tâche. Veuillez réessayer.</string>
+
+    <string name="text">Texte</string>
+
+    <string name="theme">Thème</string>
+    <string name="theme_dialog_title">Choisir le thème</string>
+    <string name="theme_type_dark">Sombre</string>
+    <string name="theme_type_light">Clair</string>
+    <string name="theme_type_system">Thème du système</string>
+
+
+    <string name="undo">Annuler</string>
+
+    <string name="untitled">Sans titre</string>
+
+    <string name="view_switch_to_grid">Passer à l\'affichage en grille</string>
+    <string name="view_switch_to_list">Passer à l\'affichage en liste</string>
+
+    <plurals name="delete_notes_confirm">
+        <item quantity="one">Supprimer %d note ?</item>
+        <item quantity="many">Supprimer %d notes ?</item>
+        <item quantity="other">Supprimer %d notes ?</item>
+    </plurals>
+    <plurals name="home_active_tasks">
+        <item quantity="one">Vous avez %d tâche active</item>
+        <item quantity="many">Vous avez %d tâches actives</item>
+        <item quantity="other">Vous avez %d tâches actives</item>
+    </plurals>
+    <plurals name="lock_lockout_seconds">
+        <item quantity="one">Trop de tentatives. Réessayez dans %d seconde</item>
+        <item quantity="many">Trop de tentatives. Réessayez dans %d secondes</item>
+        <item quantity="other">Trop de tentatives. Réessayez dans %d secondes</item>
+    </plurals>
+    <plurals name="task_progress_summary">
+        <item quantity="one">%1$d sur %2$d tâche terminée</item>
+        <item quantity="many">%1$d sur %2$d tâches terminées</item>
+        <item quantity="other">%1$d sur %2$d tâches terminées</item>
+    </plurals>
+    <string name="settings_backup">Sauvegarde</string>
+    <string name="backup_settings_subtitle">Export et import chiffrés</string>
+    <string name="backup_title">Sauvegarde</string>
+    <string name="backup_intro_title">Chiffrée avec votre phrase de récupération</string>
+    <string name="backup_intro_body">Une sauvegarde contient toutes vos notes, tâches et libellés, chiffrés avec votre phrase de récupération de 12 mots. Encly ne l\'envoie nulle part : vous choisissez où le fichier est enregistré. Sur un nouveau téléphone, les mêmes 12 mots la restaurent.</string>
+    <string name="backup_last_export">Dernier export : %1$s</string>
+    <string name="backup_never_exported">Aucune sauvegarde exportée pour l\'instant</string>
+    <string name="backup_export">Exporter une sauvegarde</string>
+    <string name="backup_import">Importer une sauvegarde</string>
+    <string name="backup_import_desc">Restaurer notes, tâches et libellés depuis un fichier de sauvegarde</string>
+    <string name="backup_export_done">Sauvegarde enregistrée</string>
+    <string name="backup_reauth_title">Confirmez que c\'est vous</string>
+    <string name="backup_reauth_subtitle">Saisissez votre PIN pour continuer</string>
+    <string name="backup_needs_phrase_title">Phrase de récupération</string>
+    <string name="backup_needs_phrase_body">Les sauvegardes sont chiffrées avec une phrase de récupération : seuls ses 12 mots peuvent les ouvrir. Ce coffre n\'en a pas encore. Créez-la maintenant : elle permet aussi de déverrouiller ce coffre-fort si vous oubliez votre PIN.</string>
+    <string name="backup_create_phrase">Créer une phrase de récupération</string>
+    <string name="backup_phrase_write_down">Notez ces 12 mots sur papier, dans l\'ordre, et gardez-les hors ligne. Quiconque les possède peut ouvrir vos sauvegardes.</string>
+    <string name="backup_phrase_word">%1$d. %2$s</string>
+    <string name="backup_phrase_written">Je les ai notés</string>
+    <string name="backup_phrase_check_title">Vérifiez votre phrase de récupération</string>
+    <string name="backup_phrase_check_word">Mot n° %1$d</string>
+    <string name="backup_phrase_check_wrong">Les mots ne correspondent pas. Vérifiez ce que vous avez noté.</string>
+    <string name="backup_phrase_added">Phrase de récupération enregistrée</string>
+    <string name="backup_confirm_phrase_title">Confirmez votre phrase de récupération</string>
+    <string name="backup_confirm_phrase_body">Saisissez une fois la phrase de récupération de 12 mots de ce coffre-fort pour qu\'Encly puisse chiffrer les sauvegardes avec elle.</string>
+    <string name="backup_enter_phrase_title">Saisir la phrase de récupération</string>
+    <string name="backup_enter_phrase_body">Saisissez les 12 mots de la phrase de récupération avec laquelle cette sauvegarde a été faite.</string>
+    <string name="backup_decrypt">Déchiffrer</string>
+    <string name="backup_import_choose">Importer une sauvegarde</string>
+    <string name="backup_import_contents">Cette sauvegarde contient notes : %1$d, tâches : %2$d, libellés : %3$d.</string>
+    <string name="backup_merge">Fusionner</string>
+    <string name="backup_merge_desc">Fusionner : vos données sont conservées et ce qui manque est ajouté. Ce qui est déjà dans ce coffre-fort est ignoré.</string>
+    <string name="backup_replace">Remplacer</string>
+    <string name="backup_replace_desc">Remplacer : supprime toutes les notes, tâches et libellés de ce coffre-fort, puis restaure la sauvegarde.</string>
+    <string name="backup_replace_confirm_title">Remplacer toutes les données ?</string>
+    <string name="backup_replace_confirm_body">Toutes les notes, tâches et libellés de ce coffre-fort seront supprimés et remplacés par la sauvegarde. Cette action est irréversible.</string>
+    <string name="backup_import_done">Importé : notes %1$d, tâches %2$d, libellés %3$d. Ignoré (déjà présent) : %4$d.</string>
+    <string name="backup_error_not_a_backup">Ce fichier n\'est pas une sauvegarde Encly</string>
+    <string name="backup_error_unsupported">Cette sauvegarde a été créée par une version plus récente d\'Encly. Mettez l\'app à jour et réessayez.</string>
+    <string name="backup_error_corrupted">Le fichier de sauvegarde est endommagé ou incomplet</string>
+    <string name="backup_error_too_large">Le fichier est trop volumineux pour être une sauvegarde Encly</string>
+    <string name="backup_error_export_too_large">Votre coffre-fort est trop volumineux pour un seul fichier de sauvegarde (64 Mo). Rien n\'a été enregistré.</string>
+    <string name="backup_error_target_exists">Ce fichier existe déjà. Choisissez un autre nom : une ancienne sauvegarde n\'est jamais écrasée.</string>
+    <string name="backup_error_no_picker">Aucune application de cet appareil ne peut ouvrir ou enregistrer des fichiers.</string>
+    <string name="backup_error_wrong_phrase">Ces mots n\'ouvrent pas cette sauvegarde, ou le fichier a été modifié</string>
+    <string name="backup_error_invalid_phrase">Saisissez une phrase de récupération valide de 12 mots</string>
+    <string name="backup_error_locked">Le coffre-fort a été verrouillé. Déverrouillez-le et réessayez.</string>
+    <string name="backup_error_io">Impossible de lire ou d\'écrire la sauvegarde. Rien n\'a été modifié.</string>
+    <string name="backup_error_phrase_mismatch">Ces mots ne sont pas la phrase de récupération de ce coffre-fort</string>
+    <string name="backup_error_phrase_setup">Impossible d\'enregistrer la phrase de récupération</string>
+    <string name="onboarding_restore_title">Restaurer une sauvegarde</string>
+    <string name="onboarding_restore_desc">Vous avez un fichier de sauvegarde Encly et ses 12 mots ? Restaurez tout sur ce téléphone.</string>
+    <string name="onboarding_restore_body">Choisissez votre fichier de sauvegarde Encly, puis saisissez la phrase de récupération de 12 mots avec laquelle il a été créé. Cette phrase devient aussi la phrase de récupération de ce coffre-fort.</string>
+    <string name="onboarding_restore_pick">Choisir le fichier de sauvegarde</string>
+    <string name="onboarding_restore_other_file">Choisir un autre fichier</string>
+    <string name="auth_setup_restore_failed">La sauvegarde n\'a pas pu être restaurée, la configuration n\'est donc pas terminée. Réessayez, ou continuez avec un coffre-fort vide et importez le fichier plus tard dans Paramètres → Sauvegarde.</string>
+    <string name="auth_setup_restore_failed_title">Sauvegarde non restaurée</string>
+    <string name="auth_setup_restore_retry">Réessayer</string>
+    <string name="auth_setup_restore_skip">Continuer sans</string>
+    <string name="note_preview_unreadable">Cette version d\'Encly ne peut pas lire cette note.</string>
+    <string name="link_open">Ouvrir le lien</string>
+    <string name="link_copy">Copier le lien</string>
+    <string name="link_edit">Modifier le lien</string>
+    <string name="link_copied">Lien copié</string>
+    <string name="link_open_failed">Aucune application de cet appareil ne peut ouvrir ce lien.</string>
+    <string name="notes_load_failed_title">Impossible de lire vos notes</string>
+    <string name="tags_load_failed_title">Impossible de lire vos libellés</string>
+    <string name="notes_load_failed_desc">Vos notes sont toujours stockées chiffrées sur cet appareil. Fermez Encly puis rouvrez-le pour réessayer.</string>
+    <string name="pin_reset_subtitle">Vous avez déverrouillé Encly avec votre phrase de récupération. Définissez un nouveau code PIN pour continuer.</string>
+    <string name="task_delete">Supprimer la tâche</string>
+    <string name="task_deleted">Tâche supprimée</string>
+    <string name="task_delete_failed">Impossible de supprimer la tâche. Veuillez réessayer.</string>
+</resources>
