@@ -1,0 +1,33 @@
+<p><b>Encly</b> conserve vos notes et vos tâches chiffrées sur votre téléphone, et nulle part ailleurs. Pas de compte, pas de synchronisation dans le cloud, pas de statistiques et aucun accès réseau : l'application ne demande même pas l'autorisation <i>INTERNET</i>.</p>
+
+<p><b>Sécurité</b></p>
+<ul>
+<li>Toutes les données sont stockées dans une base SQLCipher (AES-256) sous une clé aléatoire de 256 bits.</li>
+<li>Un code PIN obligatoire à 6 chiffres protège cette clé (PBKDF2-HMAC-SHA256, 600 000 itérations, AES-256-GCM). Le PIN lui-même n'est jamais stocké.</li>
+<li>Déverrouillage facultatif par empreinte ou visage via une clé Android Keystore liée à la biométrie (biométrie de classe 3 uniquement).</li>
+<li>Phrase de récupération facultative de 12 mots (BIP39), moyen distinct de récupérer la clé.</li>
+<li>Dès que l'application passe en arrière-plan, la base est fermée et la clé effacée de la mémoire.</li>
+<li>Captures d'écran, enregistrement de l'écran et aperçus des applications récentes sont bloqués. La sauvegarde cloud Android et le transfert entre appareils sont désactivés.</li>
+<li>Aucun partage, presse-papiers ni notification n'expose le contenu des notes.</li>
+</ul>
+
+<p><b>Sauvegarde et restauration chiffrées</b></p>
+<ul>
+<li>Exportez toutes vos notes, tâches et étiquettes dans un seul fichier chiffré (AES-256-GCM), quand vous le souhaitez.</li>
+<li>Vous choisissez l'emplacement du fichier via le sélecteur de fichiers d'Android : un dossier, une clé USB, un stockage cloud. Encly ne l'envoie nulle part.</li>
+<li>Le fichier est chiffré avec une clé dérivée de votre phrase de récupération de 12 mots : aucun mot de passe de sauvegarde supplémentaire à oublier. Sans ces mots, le fichier est illisible.</li>
+<li>Restaurez vos données sur un nouveau téléphone lors de la configuration, ou fusionnez une sauvegarde avec un coffre-fort existant.</li>
+</ul>
+
+<p><b>Fonctionnalités</b></p>
+<ul>
+<li>Éditeur par blocs : texte, titres, citations, listes de contrôle et listes numérotées, liens, séparateurs.</li>
+<li>Étiquettes et tâches avec priorités.</li>
+<li>Corbeille avec restauration.</li>
+<li>Thèmes clair, sombre et couleurs dynamiques, plusieurs polices d'éditeur, toutes incluses dans l'application.</li>
+<li>Fonctionne sans les services Google Play.</li>
+</ul>
+
+<p><b>Langues :</b> anglais, ukrainien, allemand, français, espagnol, italien, polonais, portugais et néerlandais. Encly suit la langue de l'appareil, ou vous pouvez en choisir une pour Encly seul dans Paramètres → Langue.</p>
+
+<p>Encly est open source (Apache-2.0) et ne demande aucun compte. Politique de confidentialité : https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>

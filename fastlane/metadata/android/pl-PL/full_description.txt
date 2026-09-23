@@ -1,0 +1,33 @@
+<p><b>Encly</b> przechowuje Twoje notatki i zadania zaszyfrowane na telefonie i nigdzie indziej. Bez konta, synchronizacji w chmurze, analityki i dostępu do sieci: aplikacja nie prosi nawet o uprawnienie <i>INTERNET</i>.</p>
+
+<p><b>Bezpieczeństwo</b></p>
+<ul>
+<li>Wszystko jest zapisane w bazie SQLCipher (AES-256) pod losowym kluczem 256-bitowym.</li>
+<li>Obowiązkowy 6-cyfrowy PIN chroni ten klucz (PBKDF2-HMAC-SHA256, 600 000 iteracji, AES-256-GCM). Sam PIN nigdy nie jest zapisywany.</li>
+<li>Opcjonalne odblokowanie odciskiem palca lub twarzą przez klucz Android Keystore powiązany z biometrią (tylko biometria klasy 3).</li>
+<li>Opcjonalna fraza odzyskiwania z 12 słów (BIP39) jako osobny sposób odzyskania klucza.</li>
+<li>Gdy aplikacja przechodzi w tło, baza jest zamykana, a klucz usuwany z pamięci.</li>
+<li>Zrzuty ekranu, nagrywanie ekranu i podglądy w ostatnich aplikacjach są zablokowane. Kopia zapasowa Androida w chmurze i przenoszenie na inne urządzenie są wyłączone.</li>
+<li>Żadne udostępnianie, schowek ani powiadomienie nie ujawnia treści notatek.</li>
+</ul>
+
+<p><b>Szyfrowana kopia zapasowa i przywracanie</b></p>
+<ul>
+<li>Eksportuj wszystkie notatki, zadania i tagi do jednego zaszyfrowanego pliku (AES-256-GCM), kiedy chcesz.</li>
+<li>To Ty wybierasz miejsce zapisu w systemowym selektorze plików: folder, pendrive, dysk w chmurze. Encly nigdzie go nie wysyła.</li>
+<li>Plik jest szyfrowany kluczem wyprowadzonym z Twojej 12-wyrazowej frazy odzyskiwania, więc nie ma dodatkowego hasła do zapomnienia. Bez tych słów pliku nie da się odczytać.</li>
+<li>Przywróć dane na nowym telefonie podczas konfiguracji albo scal kopię z istniejącym sejfem.</li>
+</ul>
+
+<p><b>Funkcje</b></p>
+<ul>
+<li>Edytor blokowy: tekst, nagłówki, cytaty, listy kontrolne i numerowane, linki, separatory.</li>
+<li>Tagi i zadania z priorytetami.</li>
+<li>Kosz z przywracaniem.</li>
+<li>Jasny, ciemny i dynamiczny motyw kolorów oraz kilka czcionek edytora wbudowanych w aplikację.</li>
+<li>Działa bez Usług Google Play.</li>
+</ul>
+
+<p><b>Języki:</b> angielski, ukraiński, niemiecki, francuski, hiszpański, włoski, polski, portugalski i niderlandzki. Encly używa języka urządzenia albo możesz wybrać osobny język tylko dla Encly w Ustawienia → Język.</p>
+
+<p>Encly ma otwarty kod źródłowy (Apache-2.0) i nie wymaga konta. Polityka prywatności: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>

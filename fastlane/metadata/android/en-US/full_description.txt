@@ -1,0 +1,33 @@
+<p><b>Encly</b> keeps your notes and tasks encrypted on your phone and nowhere else. There is no account, no cloud sync, no analytics and no network access: the app does not even request the <i>INTERNET</i> permission.</p>
+
+<p><b>Security</b></p>
+<ul>
+<li>Everything is stored in a SQLCipher (AES-256) database under a random 256-bit key.</li>
+<li>A mandatory 6-digit PIN protects that key (PBKDF2-HMAC-SHA256, 600,000 iterations, AES-256-GCM). The PIN itself is never stored.</li>
+<li>Optional fingerprint / face unlock through a biometric-bound Android Keystore key (Class 3 biometrics only).</li>
+<li>Optional 12-word recovery phrase (BIP39) as a separate way to recover the key.</li>
+<li>The database is closed and the key wiped from memory as soon as the app goes to the background.</li>
+<li>Screenshots, screen recording and recent-apps previews are blocked. Android cloud backup and device transfer are disabled.</li>
+<li>No share, clipboard or notification path exposes note content.</li>
+</ul>
+
+<p><b>Encrypted backup and restore</b></p>
+<ul>
+<li>Export all notes, tasks and tags to a single encrypted file (AES-256-GCM) whenever you want.</li>
+<li>You choose where the file goes through Android's file picker: a folder, a USB stick, a cloud drive. Encly never uploads it anywhere.</li>
+<li>The file is encrypted with a key derived from your 12-word recovery phrase, so there is no extra backup password to forget. Without the words the file cannot be read.</li>
+<li>Restore on a new phone during setup, or merge a backup into an existing vault.</li>
+</ul>
+
+<p><b>Features</b></p>
+<ul>
+<li>Block editor: text, headings, quotes, checklists and numbered lists, links, separators.</li>
+<li>Tags and tasks with priorities.</li>
+<li>Trash with restore.</li>
+<li>Light / dark / dynamic color themes and several editor fonts, all bundled in the app.</li>
+<li>Works without Google Play Services.</li>
+</ul>
+
+<p><b>Languages:</b> English, Ukrainian, German, French, Spanish, Italian, Polish, Portuguese and Dutch. Encly follows your device language, or you can pick one for Encly alone in Settings → Language.</p>
+
+<p>Encly is open source (Apache-2.0) and asks for no account. Privacy policy: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>

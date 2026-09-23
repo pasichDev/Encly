@@ -1,0 +1,33 @@
+<p><b>Encly</b> speichert deine Notizen und Aufgaben verschlüsselt auf deinem Handy und nirgendwo sonst. Es gibt kein Konto, keine Cloud-Synchronisierung, keine Analyse und keinen Netzwerkzugriff: Die App fordert nicht einmal die Berechtigung <i>INTERNET</i> an.</p>
+
+<p><b>Sicherheit</b></p>
+<ul>
+<li>Alle Daten liegen in einer SQLCipher-Datenbank (AES-256) unter einem zufälligen 256-Bit-Schlüssel.</li>
+<li>Eine verpflichtende 6-stellige PIN schützt diesen Schlüssel (PBKDF2-HMAC-SHA256, 600.000 Iterationen, AES-256-GCM). Die PIN selbst wird nie gespeichert.</li>
+<li>Optionales Entsperren per Fingerabdruck oder Gesicht über einen biometrisch gebundenen Android-Keystore-Schlüssel (nur Biometrie der Klasse 3).</li>
+<li>Optionale Wiederherstellungsphrase aus 12 Wörtern (BIP39) als separater Weg, den Schlüssel wiederherzustellen.</li>
+<li>Sobald die App in den Hintergrund geht, wird die Datenbank geschlossen und der Schlüssel aus dem Speicher gelöscht.</li>
+<li>Screenshots, Bildschirmaufnahmen und Vorschauen in den letzten Apps sind blockiert. Android-Cloud-Backup und Geräteübertragung sind deaktiviert.</li>
+<li>Kein Teilen, keine Zwischenablage und keine Benachrichtigung legt Notizinhalte offen.</li>
+</ul>
+
+<p><b>Verschlüsseltes Backup und Wiederherstellung</b></p>
+<ul>
+<li>Exportiere alle Notizen, Aufgaben und Tags jederzeit in eine einzige verschlüsselte Datei (AES-256-GCM).</li>
+<li>Du wählst über die Android-Dateiauswahl, wo die Datei landet: ein Ordner, ein USB-Stick, ein Cloud-Speicher. Encly lädt sie nirgendwohin hoch.</li>
+<li>Die Datei wird mit einem Schlüssel aus deiner 12-Wörter-Wiederherstellungsphrase verschlüsselt, es gibt also kein zusätzliches Backup-Passwort, das du vergessen könntest. Ohne die Wörter ist die Datei nicht lesbar.</li>
+<li>Stelle die Daten bei der Einrichtung auf einem neuen Handy wieder her oder führe ein Backup mit einem bestehenden Tresor zusammen.</li>
+</ul>
+
+<p><b>Funktionen</b></p>
+<ul>
+<li>Block-Editor: Text, Überschriften, Zitate, Checklisten und nummerierte Listen, Links, Trennlinien.</li>
+<li>Tags und Aufgaben mit Prioritäten.</li>
+<li>Papierkorb mit Wiederherstellung.</li>
+<li>Helles, dunkles und dynamisches Farbschema sowie mehrere Editor-Schriften, alle in der App enthalten.</li>
+<li>Funktioniert ohne Google Play-Dienste.</li>
+</ul>
+
+<p><b>Sprachen:</b> Englisch, Ukrainisch, Deutsch, Französisch, Spanisch, Italienisch, Polnisch, Portugiesisch und Niederländisch. Encly folgt der Gerätesprache, oder du wählst unter Einstellungen → Sprache eine eigene Sprache nur für Encly.</p>
+
+<p>Encly ist Open Source (Apache-2.0) und braucht kein Konto. Datenschutzerklärung: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>

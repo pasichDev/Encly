@@ -1,0 +1,73 @@
+name: Bug report
+description: Something in Encly does not work as expected.
+labels: [ "bug" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste your recovery seed words, your PIN, screenshots of the seed, or the
+        contents of your notes.** Nobody working on Encly will ever ask for them, and they
+        cannot help with a bug report. For security issues, use the private channel in
+        SECURITY.md instead of this form.
+  - type: input
+    id: app-version
+    attributes:
+      label: Encly version
+      description: About screen, e.g. 2.0.0. Add where you installed it from (GitHub Releases, F-Droid, IzzyOnDroid, Google Play, own build).
+      placeholder: 2.0.0 (GitHub Releases)
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      placeholder: Android 15
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device / ROM
+      placeholder: Pixel 8, stock / GrapheneOS / LineageOS ...
+    validations:
+      required: true
+  - type: dropdown
+    id: upgrade
+    attributes:
+      label: Did this start after updating from Encly 1.x?
+      options:
+        - "No / fresh install"
+        - "Yes, after upgrading from 1.x"
+        - "Not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include error text if any. Logs are welcome, but check they contain no note content.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Checks
+      options:
+        - label: This report contains no seed words, PIN, or note content.
+          required: true

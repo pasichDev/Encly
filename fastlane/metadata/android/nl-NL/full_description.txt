@@ -1,0 +1,33 @@
+<p><b>Encly</b> bewaart je notities en taken versleuteld op je telefoon en nergens anders. Geen account, geen cloudsynchronisatie, geen analyse en geen netwerktoegang: de app vraagt zelfs de machtiging <i>INTERNET</i> niet aan.</p>
+
+<p><b>Beveiliging</b></p>
+<ul>
+<li>Alles wordt opgeslagen in een SQLCipher-database (AES-256) onder een willekeurige 256-bits sleutel.</li>
+<li>Een verplichte 6-cijferige pincode beschermt die sleutel (PBKDF2-HMAC-SHA256, 600.000 iteraties, AES-256-GCM). De pincode zelf wordt nooit opgeslagen.</li>
+<li>Optioneel ontgrendelen met vingerafdruk of gezicht via een aan biometrie gebonden Android Keystore-sleutel (alleen biometrie van klasse 3).</li>
+<li>Optionele herstelzin van 12 woorden (BIP39) als aparte manier om de sleutel te herstellen.</li>
+<li>Zodra de app naar de achtergrond gaat, wordt de database gesloten en de sleutel uit het geheugen gewist.</li>
+<li>Schermafbeeldingen, schermopnames en voorbeelden in recente apps zijn geblokkeerd. Android-cloudback-up en overzetten naar een ander toestel zijn uitgeschakeld.</li>
+<li>Geen deel-, klembord- of meldingsroute legt de inhoud van notities bloot.</li>
+</ul>
+
+<p><b>Versleutelde back-up en herstel</b></p>
+<ul>
+<li>Exporteer alle notities, taken en labels wanneer je wilt naar één versleuteld bestand (AES-256-GCM).</li>
+<li>Jij kiest via de bestandskiezer van Android waar het bestand komt: een map, een usb-stick, een clouddrive. Encly uploadt het nergens naartoe.</li>
+<li>Het bestand wordt versleuteld met een sleutel die is afgeleid van je herstelzin van 12 woorden, dus er is geen extra back-upwachtwoord om te vergeten. Zonder de woorden is het bestand onleesbaar.</li>
+<li>Zet je gegevens terug op een nieuwe telefoon tijdens de installatie, of voeg een back-up samen met een bestaande kluis.</li>
+</ul>
+
+<p><b>Functies</b></p>
+<ul>
+<li>Blokeditor: tekst, koppen, citaten, checklists en genummerde lijsten, links, scheidingslijnen.</li>
+<li>Labels en taken met prioriteiten.</li>
+<li>Prullenbak met herstel.</li>
+<li>Licht, donker en dynamisch kleurthema en meerdere editorlettertypen, allemaal in de app meegeleverd.</li>
+<li>Werkt zonder Google Play-services.</li>
+</ul>
+
+<p><b>Talen:</b> Engels, Oekraïens, Duits, Frans, Spaans, Italiaans, Pools, Portugees en Nederlands. Encly volgt de taal van je toestel, of je kiest in Instellingen → Taal een aparte taal alleen voor Encly.</p>
+
+<p>Encly is open source (Apache-2.0) en vraagt geen account. Privacybeleid: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>

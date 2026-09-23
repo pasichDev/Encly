@@ -1,0 +1,33 @@
+<p><b>Encly</b> guarda tus notas y tareas cifradas en tu teléfono y en ningún otro sitio. Sin cuenta, sin sincronización en la nube, sin analíticas y sin acceso a la red: la aplicación ni siquiera solicita el permiso <i>INTERNET</i>.</p>
+
+<p><b>Seguridad</b></p>
+<ul>
+<li>Todo se guarda en una base de datos SQLCipher (AES-256) bajo una clave aleatoria de 256 bits.</li>
+<li>Un PIN obligatorio de 6 dígitos protege esa clave (PBKDF2-HMAC-SHA256, 600 000 iteraciones, AES-256-GCM). El PIN nunca se guarda.</li>
+<li>Desbloqueo opcional con huella o rostro mediante una clave de Android Keystore vinculada a la biometría (solo biometría de clase 3).</li>
+<li>Frase de recuperación opcional de 12 palabras (BIP39) como forma independiente de recuperar la clave.</li>
+<li>En cuanto la aplicación pasa a segundo plano, la base de datos se cierra y la clave se borra de la memoria.</li>
+<li>Se bloquean las capturas de pantalla, la grabación de pantalla y las vistas previas de aplicaciones recientes. La copia de seguridad en la nube de Android y la transferencia entre dispositivos están desactivadas.</li>
+<li>Ningún flujo de compartir, portapapeles o notificaciones expone el contenido de las notas.</li>
+</ul>
+
+<p><b>Copia de seguridad y restauración cifradas</b></p>
+<ul>
+<li>Exporta todas tus notas, tareas y etiquetas a un único archivo cifrado (AES-256-GCM) cuando quieras.</li>
+<li>Tú eliges dónde guardar el archivo con el selector de archivos de Android: una carpeta, una memoria USB, una nube. Encly nunca lo sube a ninguna parte.</li>
+<li>El archivo se cifra con una clave derivada de tu frase de recuperación de 12 palabras, así que no hay otra contraseña de copia que olvidar. Sin las palabras, el archivo no se puede leer.</li>
+<li>Restaura tus datos en un teléfono nuevo durante la configuración o combina una copia con una caja fuerte existente.</li>
+</ul>
+
+<p><b>Funciones</b></p>
+<ul>
+<li>Editor por bloques: texto, títulos, citas, listas de verificación y numeradas, enlaces, separadores.</li>
+<li>Etiquetas y tareas con prioridades.</li>
+<li>Papelera con restauración.</li>
+<li>Temas claro, oscuro y de color dinámico, y varias fuentes de editor incluidas en la aplicación.</li>
+<li>Funciona sin los servicios de Google Play.</li>
+</ul>
+
+<p><b>Idiomas:</b> inglés, ucraniano, alemán, francés, español, italiano, polaco, portugués y neerlandés. Encly sigue el idioma del dispositivo, o puedes elegir uno solo para Encly en Ajustes → Idioma.</p>
+
+<p>Encly es de código abierto (Apache-2.0) y no necesita cuenta. Política de privacidad: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>
