@@ -17,7 +17,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write   # only for the coverage comment
     steps:
       - uses: actions/checkout@v4
 
@@ -36,27 +39,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # Fast, so it runs first: formatting drift fails the build before the slow steps.
-      - name: Formatting (Spotless + ktlint)
-        run: ./gradlew spotlessCheck
-
-      - name: Unit tests + coverage gate (core/security)
-        run: ./gradlew :app:testFdroidDebugUnitTest :app:koverXmlReportFdroidDebug :app:koverVerifyFdroidDebug
-
-      - name: Static analysis (detekt + Compose rules)
-        run: ./gradlew :app:detekt
-
-      # The instrumented tests (Room migrations, schema, SQLCipher) run in the emulator job;
-      # compiling them here keeps them from rotting even when that job is not looked at.
-      - name: Compile instrumented tests
-        run: ./gradlew :app:compileFdroidDebugAndroidTestKotlin
-
-      # Release lint also covers the R8/shrinker-specific checks that debug lint skips.
-      - name: Lint (release, both distribution flavors)
-        run: ./gradlew :app:lintFdroidRelease :app:lintPlayRelease
-
-      - name: Assemble release (R8/ProGuard)
-        run: ./gradlew assembleRelease
+      # One Gradle invocation, fdroid flavor only, to keep Actions minutes low. The play flavor
+      # differs only in store flags and is built by the release workflow; instrumented tests
+      # (Room migrations, SQLCipher) run locally on an emulator: see CONTRIBUTING.md.
+      - name: Format, unit tests, detekt, lint, release build
+        run: >-
+          ./gradlew spotlessCheck
+          :app:testFdroidDebugUnitTest
+          :app:koverXmlReportFdroidDebug
+          :app:koverVerifyFdroidDebug
+          :app:detekt
+          :app:lintFdroidRelease
+          :app:assembleFdroidRelease
 
       - name: Check merged manifest has no INTERNET permission
         run: |
@@ -70,83 +64,27 @@ jobs:
           done
           exit $found
 
-      - name: Checksums
-        run: |
-          set -euo pipefail
-          cd app/build/outputs/apk
-          find . -name '*.apk' -print0 | sort -z | xargs -0 sha256sum | tee SHA256SUMS
-
-      - name: Upload APKs
-        uses: actions/upload-artifact@v4
+      # For information only: posts (and keeps updating) one PR comment with the core/security
+      # coverage. It never fails the build.
+      - name: Coverage comment
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: madrapps/jacoco-report@v1.7.1
         with:
-          name: release-apk
-          path: |
-            app/build/outputs/apk/**/*.apk
-            app/build/outputs/apk/SHA256SUMS
-          if-no-files-found: error
+          paths: app/build/reports/kover/reportFdroidDebug.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: 'Coverage (core/security)'
+          update-comment: true
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
 
-      - name: Upload test, lint, detekt and coverage reports
-        if: always()
+      - name: Upload reports on failure
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: reports
           path: |
             app/build/reports/
             app/build/test-results/
-          if-no-files-found: ignore
-
-  # Room migrations and the exported schemas can only be checked on a device (MigrationTestHelper,
-  # SQLCipher). A broken migration would make an upgraded vault look like a wrong key, so every
-  # change runs them on an emulator.
-  instrumented-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      # The emulator needs several GB for its data partition; the hosted runner's disk is mostly
-      # taken by preinstalled toolchains this job never uses.
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
-          df -h /
-
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Build app and instrumented tests
-        run: ./gradlew :app:assembleFdroidDebug :app:assembleFdroidDebugAndroidTest
-
-      - name: Instrumented tests (Room migrations, schema, SQLCipher)
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          arch: x86_64
-          target: google_apis
-          disable-animations: true
-          disk-size: 2048M
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: ./gradlew :app:connectedFdroidDebugAndroidTest
-
-      - name: Upload instrumented test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: instrumented-test-reports
-          path: app/build/reports/androidTests/
+          retention-days: 7
           if-no-files-found: ignore

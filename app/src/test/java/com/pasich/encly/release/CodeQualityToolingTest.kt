@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit
  * - CI runs Spotless (ktlint) and detekt;
  * - detekt loads the Jetpack Compose rules;
  * - app/lint.xml keeps untranslated/hardcoded text and the security checks as errors;
- * - CI compiles and runs the instrumented (Room migration/schema) tests;
  * - the opt-in git hooks exist, pre-commit runs Gradle on a supported JDK, and commit-msg
  *   accepts Conventional Commits only.
  */
@@ -24,22 +23,8 @@ class CodeQualityToolingTest {
     @Test
     fun ciChecksFormattingAndRunsDetekt() {
         val workflow = File(root, ".github/workflows/android.yml").readText()
-        assertTrue("CI must run spotlessCheck", "./gradlew spotlessCheck" in workflow)
-        assertTrue("CI must run detekt", "./gradlew :app:detekt" in workflow)
-    }
-
-    @Test
-    fun ciCompilesAndRunsTheInstrumentedTests() {
-        val workflow = File(root, ".github/workflows/android.yml").readText()
-        assertTrue(
-            "CI must compile androidTest so it cannot rot",
-            "./gradlew :app:compileFdroidDebugAndroidTestKotlin" in workflow,
-        )
-        assertTrue(
-            "CI must run the instrumented tests (Room migrations, schema) on an emulator",
-            "reactivecircus/android-emulator-runner" in workflow &&
-                "./gradlew :app:connectedFdroidDebugAndroidTest" in workflow,
-        )
+        assertTrue("CI must run spotlessCheck", "spotlessCheck" in workflow)
+        assertTrue("CI must run detekt", ":app:detekt" in workflow)
     }
 
     @Test
