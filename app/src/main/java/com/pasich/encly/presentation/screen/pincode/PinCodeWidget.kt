@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
@@ -33,18 +34,19 @@ fun PinCodeWidget(
     pinInput: String,
     onPinChange: (String) -> Unit,
     onDelete: () -> Unit,
-    maxPinLength: Int = PIN_LENGTH
+    modifier: Modifier = Modifier,
+    maxPinLength: Int = PIN_LENGTH,
 ) {
     val animatedPin = remember(pinInput) { pinInput }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-
         // PIN indicators
         Row(
-            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
         ) {
             repeat(maxPinLength) { index ->
                 Box(
@@ -53,9 +55,12 @@ fun PinCodeWidget(
                         .size(16.dp)
                         .clip(CircleShape)
                         .background(
-                            if (index < animatedPin.length) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.surfaceVariant
-                        )
+                            if (index < animatedPin.length) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                        ),
                 )
             }
         }
@@ -66,14 +71,15 @@ fun PinCodeWidget(
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(15.dp)
+            verticalArrangement = Arrangement.spacedBy(15.dp),
         ) {
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9").chunked(3).forEach { row ->
                 NumpadRow(numbers = row, onClick = onPinChange)
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 Spacer(Modifier.size(64.dp))
 
@@ -82,8 +88,8 @@ fun PinCodeWidget(
                 IconButton(onClick = onDelete, modifier = Modifier.size(64.dp)) {
                     Icon(
                         painter = painterResource(R.drawable.ic_backspace),
-                        contentDescription = "Стерти",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        contentDescription = stringResource(R.string.pin_delete_digit),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -92,11 +98,11 @@ fun PinCodeWidget(
 }
 
 @Composable
-fun NumpadRow(numbers: List<String>, onClick: (String) -> Unit) {
+private fun NumpadRow(numbers: List<String>, onClick: (String) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         numbers.forEach { number ->
             NumpadButton(text = number, onClick = { onClick(number) })
@@ -105,23 +111,20 @@ fun NumpadRow(numbers: List<String>, onClick: (String) -> Unit) {
 }
 
 @Composable
-fun NumpadButton(
-    text: String, onClick: () -> Unit
-) {
+private fun NumpadButton(text: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(80.dp)
             .clip(RoundedCornerShape(25.dp))
             .clickable(onClick = onClick)
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
-

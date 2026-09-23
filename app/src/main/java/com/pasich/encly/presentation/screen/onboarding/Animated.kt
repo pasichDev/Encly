@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
-
 @Composable
 fun AnimatedText(
     text: String,
@@ -39,7 +38,7 @@ fun AnimatedText(
     modifier: Modifier = Modifier,
     textAlign: TextAlign? = null,
     color: Color = Color.Unspecified,
-    delay: Int = 0
+    delay: Int = 0,
 ) {
     var visible by remember { mutableStateOf(false) }
 
@@ -49,25 +48,31 @@ fun AnimatedText(
     }
 
     AnimatedVisibility(
-        visible = visible, enter = fadeIn(animationSpec = tween(600)) + slideInVertically(
-            initialOffsetY = { it / 3 }, animationSpec = tween(600, easing = FastOutSlowInEasing)
-        )
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(600)) + slideInVertically(
+            initialOffsetY = { it / 3 },
+            animationSpec = tween(600, easing = FastOutSlowInEasing),
+        ),
     ) {
         Text(
-            text = text, style = style, modifier = modifier, textAlign = textAlign, color = color
+            text = text,
+            style = style,
+            modifier = modifier,
+            textAlign = textAlign,
+            color = color,
         )
     }
 }
 
 @Composable
 fun AnimatedButton(
-    modifier: Modifier = Modifier,
     text: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     delay: Int = 0,
     isSecondary: Boolean = false,
     icon: ImageVector? = null,
-    smallStyle: Boolean = false
+    smallStyle: Boolean = false,
 ) {
     var visible by remember { mutableStateOf(false) }
 
@@ -79,37 +84,48 @@ fun AnimatedButton(
     val shape = if (smallStyle) RoundedCornerShape(8.dp) else RoundedCornerShape(12.dp)
     val sizeHeight = if (smallStyle) 33.dp else 46.dp
     val styleText =
-        if (smallStyle) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium.copy(
-            fontWeight = FontWeight.Bold
-        )
+        if (smallStyle) {
+            MaterialTheme.typography.titleSmall
+        } else {
+            MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+            )
+        }
 
     AnimatedVisibility(
-        visible = visible, enter = scaleIn(
-            animationSpec = tween(400, easing = FastOutSlowInEasing), initialScale = 0.8f
-        ) + fadeIn()
+        visible = visible,
+        enter = scaleIn(
+            animationSpec = tween(400, easing = FastOutSlowInEasing),
+            initialScale = 0.8f,
+        ) + fadeIn(),
     ) {
         if (isSecondary) {
             OutlinedButton(
-                onClick = onClick, modifier = modifier.height(sizeHeight), shape = shape
+                onClick = onClick,
+                modifier = modifier.height(sizeHeight),
+                shape = shape,
             ) {
                 Text(text, style = styleText)
             }
         } else {
             Button(
-                onClick = onClick, modifier = modifier.height(sizeHeight), shape = shape
+                onClick = onClick,
+                modifier = modifier.height(sizeHeight),
+                shape = shape,
             ) {
                 Text(
-                    text, style = styleText
+                    text,
+                    style = styleText,
                 )
                 icon?.let {
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
-                        imageVector = it, contentDescription = null, modifier = Modifier.size(18.dp)
+                        imageVector = it,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
         }
     }
 }
-
-

@@ -1,22 +1,22 @@
 package com.pasich.encly.presentation.viewmodel
 
+import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
-import com.pasich.encly.data.repository.SettingsRepository
 import com.pasich.encly.domain.enums.NoteSortOption
-import com.pasich.encly.domain.repository.TagSelectionRepository
-import com.pasich.encly.domain.usecase.note.GetAllNotesUseCase
-import com.pasich.encly.domain.usecase.note.GetNotesByTagUseCase
+import com.pasich.encly.domain.repository.NotesRepository
+import com.pasich.encly.domain.repository.SettingsRepository
+import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import com.pasich.encly.domain.usecase.settings.GetNoteSortOptionUseCase
-import com.pasich.encly.domain.usecase.settings.ToggleNoteSortTagUseCase
 import com.pasich.encly.testutil.TestNotesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -24,10 +24,12 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NoteListViewModelTest {
@@ -50,16 +52,14 @@ class NoteListViewModelTest {
         val sortFlow = MutableStateFlow(NoteSortOption.UPDATED_DESC)
         `when`(settings.getSortNotes).thenReturn(sortFlow)
 
-        val tagSelection = TagSelectionRepository()
+        val tagSelection = SelectedTagHolder()
         val viewModel = NoteListViewModel(
-            getAllNotesUseCase = GetAllNotesUseCase(repository, dispatcher),
-            getNotesByTagUseCase = GetNotesByTagUseCase(repository, dispatcher),
+            observeNotesUseCase = ObserveNotesUseCase(repository, dispatcher),
             updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
             updateNoteTagUseCase = UpdateNoteTagUseCase(repository),
-            tagSelectionRepository = tagSelection,
-            toggleNoteSortTagUseCase = ToggleNoteSortTagUseCase(settings),
-            getNoteSortOptionUseCase = GetNoteSortOptionUseCase(settings),
-            updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository)
+            selectedTagHolder = tagSelection,
+            settingsRepository = settings,
+            updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
         )
 
         repository.allNotesWithTags.value = listOf(noteWithTitle(ALL_NOTE_ID, "all"))
@@ -82,17 +82,60 @@ class NoteListViewModelTest {
         assertEquals("tagged", viewModel.state.value.notes.single().note.title)
     }
 
-    private fun noteWithTitle(id: Long, title: String, tag: Tag? = null): NoteWithTag =
-        NoteWithTag(
-            note = Note(
-                id = id,
-                title = title,
-                date = id,
-                dateCreate = id,
-                tagId = tag?.id
-            ),
-            tag = tag
+    @Test
+    fun anEmptyVaultIsReadyAndEmptyNotFailed() = runTest {
+        val repository = TestNotesRepository()
+        val settings = mock(SettingsRepository::class.java)
+        `when`(settings.getSortNotes).thenReturn(MutableStateFlow(NoteSortOption.UPDATED_DESC))
+        val viewModel = NoteListViewModel(
+            observeNotesUseCase = ObserveNotesUseCase(repository, dispatcher),
+            updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+            updateNoteTagUseCase = UpdateNoteTagUseCase(repository),
+            selectedTagHolder = SelectedTagHolder(),
+            settingsRepository = settings,
+            updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
         )
+        assertEquals(LoadState.Loading, viewModel.state.value.notesLoad)
+
+        advanceUntilIdle()
+
+        assertEquals(LoadState.Ready(emptyList<Any>()), viewModel.state.value.notesLoad)
+    }
+
+    @Test
+    fun aFailedReadIsShownAsAnErrorNotAsAnEmptyVault() = runTest {
+        val failing = object : NotesRepository by TestNotesRepository() {
+            override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = flow { throw IOException("vault closed") }
+        }
+        val settings = mock(SettingsRepository::class.java)
+        `when`(settings.getSortNotes).thenReturn(MutableStateFlow(NoteSortOption.UPDATED_DESC))
+        val viewModel = NoteListViewModel(
+            observeNotesUseCase = ObserveNotesUseCase(failing, dispatcher),
+            updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(failing),
+            updateNoteTagUseCase = UpdateNoteTagUseCase(failing),
+            selectedTagHolder = SelectedTagHolder(),
+            settingsRepository = settings,
+            updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(failing),
+        )
+
+        advanceUntilIdle()
+
+        val load = viewModel.state.value.notesLoad
+        assertTrue(load is LoadState.Failed)
+        assertEquals(ListLoadErrors.NOTES, (load as LoadState.Failed).error)
+        assertTrue(viewModel.state.value.notes.isEmpty())
+    }
+
+    private fun noteWithTitle(id: Long, title: String, tag: Tag? = null): NoteWithTag = NoteWithTag(
+        note = Note(
+            id = id,
+            title = title,
+            date = id,
+            dateCreate = id,
+            tagId = tag?.id,
+        ),
+        tag = tag,
+    )
 
     private companion object {
         const val WORK_TAG_ID = 7L

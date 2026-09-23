@@ -4,6 +4,6 @@ data class LinkDataBlock(
     var title: String = "",
     var imageUrl: String = "",
     var url: String = "",
-    var isError: Boolean = false
+    var isError: Boolean = false,
 
 )

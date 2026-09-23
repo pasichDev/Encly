@@ -30,33 +30,38 @@ fun EmptyStateWidget(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp), contentAlignment = Alignment.Center
+            .padding(16.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Image(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
                 modifier = Modifier.size(120.dp),
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondaryContainer)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondaryContainer),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (title != null) Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center
-            )
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
+                )
+            }
 
-            if (description != null) Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            if (description != null) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
         }
     }
 }

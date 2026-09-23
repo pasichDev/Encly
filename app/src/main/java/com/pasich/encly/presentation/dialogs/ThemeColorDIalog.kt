@@ -22,19 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
-import com.pasich.encly.data.datasource.local.ThemeType
+import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.presentation.components.tiles.RadioItem
 import com.pasich.encly.presentation.components.tiles.getThemeTypeList
-import com.pasich.encly.presentation.viewmodel.SettingsEvent
-import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 
 @Composable
-fun ThemeColorDialog(model: SettingsViewModel, themeType: ThemeType) {
+fun ThemeColorDialog(themeType: ThemeType, onConfirm: (ThemeType) -> Unit, onDismiss: () -> Unit) {
     var previewTheme by remember { mutableStateOf(themeType) }
     val themeList = getThemeTypeList()
 
     AlertDialog(
-        onDismissRequest = { model.setDialogVisibility(false) },
+        onDismissRequest = onDismiss,
         title = { Text(text = stringResource(R.string.theme_dialog_title)) },
         text = {
             Column {
@@ -45,54 +43,45 @@ fun ThemeColorDialog(model: SettingsViewModel, themeType: ThemeType) {
                             isSelected = item.value == previewTheme,
                             onSelect = {
                                 previewTheme = item.value
-                            }
+                            },
                         )
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                model.onEvent(SettingsEvent.UpdateThemeType(previewTheme))
-                model.setDialogVisibility(false)
-            }) {
+            TextButton(onClick = { onConfirm(previewTheme) }) {
                 Text(stringResource(R.string.done))
             }
         },
         dismissButton = {
-            TextButton(onClick = { model.setDialogVisibility(false) }) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
-        }
+        },
     )
 }
 
-
 @Composable
-private fun ThemeOptionItem(
-    themeItem: RadioItem,
-    isSelected: Boolean,
-    onSelect: () -> Unit
-) {
+private fun ThemeOptionItem(themeItem: RadioItem, isSelected: Boolean, onSelect: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .selectable(
                 selected = isSelected,
-                onClick = onSelect
+                onClick = onSelect,
             )
             .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(
             selected = isSelected,
-            onClick = onSelect
+            onClick = onSelect,
         )
         Text(
             text = themeItem.title,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(start = 8.dp)
+            modifier = Modifier.padding(start = 8.dp),
         )
     }
 }
-

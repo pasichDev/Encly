@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
+import com.pasich.encly.core.common.LoadState
+import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.presentation.components.EmptyStateWidget
 import com.pasich.encly.presentation.components.tiles.NoteItem
@@ -35,7 +37,9 @@ import com.pasich.encly.presentation.viewmodel.TrashViewModel
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TrashNotesList(
-    onItemClick: (Int, Note) -> Unit, trashViewModel: TrashViewModel = hiltViewModel()
+    onItemClick: (Int, Note) -> Unit,
+    modifier: Modifier = Modifier,
+    trashViewModel: TrashViewModel = hiltViewModel(),
 ) {
     val listScrollState = rememberLazyListState()
     val trashListState by trashViewModel.state.collectAsStateWithLifecycle()
@@ -47,36 +51,39 @@ fun TrashNotesList(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         Column {
+            val failure = (trashListState.notesLoad as? LoadState.Failed)?.error
             AnimatedVisibility(
-                visible = trashListState.notes.isEmpty() && !trashListState.baseState.isLoading,
+                visible = failure != null || trashListState.notesLoad.valueOrNull()?.isEmpty() == true,
                 enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                exit = fadeOut(animationSpec = tween(durationMillis = 300)),
             ) {
+                // A failed read is never shown as an empty trash.
                 EmptyStateWidget(
                     iconRes = R.drawable.ic_trash_empty,
-                    description = stringResource(R.string.empty_trash_desc)
+                    title = failure?.title?.asString(),
+                    description = failure?.message?.asString() ?: stringResource(R.string.empty_trash_desc),
                 )
             }
 
             AnimatedVisibility(
                 visible = trashListState.notes.isNotEmpty(),
                 enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                exit = fadeOut(animationSpec = tween(durationMillis = 300)),
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     state = listScrollState,
                     contentPadding = PaddingValues(
                         top = 8.dp,
-                        bottom = 80.dp // Space for FAB
+                        bottom = 80.dp, // Space for FAB
                     ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(
                         items = stableNotes,
-                        key = { it.id }
+                        key = { it.id },
                     ) { stableItem ->
                         NoteItem(
                             itemNote = stableItem.note,
@@ -96,7 +103,7 @@ fun TrashNotesList(
                                     return@NoteItem
                                 }
                                 trashViewModel.onEvent(TrashListEvent.ToggleCheckItem(stableItem.index))
-                            }
+                            },
                         )
                     }
                 }
@@ -106,8 +113,4 @@ fun TrashNotesList(
 }
 
 @Stable
-private data class StableTrashNoteItem(
-    val note: Note,
-    val index: Int,
-    val id: Long = note.id
-)
+private data class StableTrashNoteItem(val note: Note, val index: Int, val id: Long = note.id)

@@ -2,16 +2,12 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.core.common.BaseState
-import com.pasich.encly.core.common.UiState
+import com.pasich.encly.core.common.LoadState
+import com.pasich.encly.core.common.asLoadState
+import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.data.model.Tag
-import com.pasich.encly.domain.repository.TagSelectionRepository
-import com.pasich.encly.domain.usecase.tag.AddTagUseCase
-import com.pasich.encly.domain.usecase.tag.DeleteTagUseCase
-import com.pasich.encly.domain.usecase.tag.GetTagsUseCase
+import com.pasich.encly.domain.repository.TagsRepository
 import com.pasich.encly.domain.usecase.tag.ReorderTagsUseCase
-import com.pasich.encly.domain.usecase.tag.SelectTagUseCase
-import com.pasich.encly.domain.usecase.tag.UpdateTagUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,18 +25,14 @@ enum class TagOperationFailure {
     CREATE,
     UPDATE,
     DELETE,
-    REORDER
+    REORDER,
 }
 
 @HiltViewModel
 class TagListViewModel @Inject constructor(
-    private val getTagsUseCase: GetTagsUseCase,
-    private val addTagUseCase: AddTagUseCase,
-    private val deleteTagUseCase: DeleteTagUseCase,
-    private val updateTagUseCase: UpdateTagUseCase,
+    private val tagsRepository: TagsRepository,
     private val reorderTagsUseCase: ReorderTagsUseCase,
-    private val selectTagUseCase: SelectTagUseCase,
-    private val tagSelectionRepository: TagSelectionRepository
+    private val selectedTagHolder: SelectedTagHolder,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TagListState())
@@ -55,7 +47,7 @@ class TagListViewModel @Inject constructor(
     init {
         loadTags()
         viewModelScope.launch {
-            tagSelectionRepository.selectedTagFlow.collect { selectedTag ->
+            selectedTagHolder.selectedTagFlow.collect { selectedTag ->
                 _state.update { it.copy(selectedTagId = selectedTag.id) }
             }
         }
@@ -64,13 +56,19 @@ class TagListViewModel @Inject constructor(
     fun onEvent(event: TagListEvent) {
         when (event) {
             is TagListEvent.AddTag -> addTag(event)
+
             is TagListEvent.DeleteTag -> deleteTag(event.tag)
+
             is TagListEvent.UpdateTag -> updateTag(event.tag)
-            is TagListEvent.SelectTag -> selectTagUseCase(event.tag)
+
+            is TagListEvent.SelectTag -> selectedTagHolder.selectTag(event.tag)
+
             is TagListEvent.ReorderTags -> scheduleReorder(event.tags)
+
             is TagListEvent.ReorderTagsLive -> reorderTags(event)
+
             is TagListEvent.ToggleVisibleTag -> updateTag(
-                event.tag.copy(isVisible = !event.tag.isVisible)
+                event.tag.copy(isVisible = !event.tag.isVisible),
             )
         }
     }
@@ -78,7 +76,7 @@ class TagListViewModel @Inject constructor(
     private fun addTag(event: TagListEvent.AddTag) {
         viewModelScope.launch {
             val newPosition = (_state.value.listTags.minOfOrNull { it.position } ?: 0) - 1
-            val added = addTagUseCase(event.tag.copy(position = newPosition)) > 0L
+            val added = tagsRepository.addTag(event.tag.copy(position = newPosition)).isSuccess
             event.onResult(added)
             if (!added) {
                 _operationFailures.emit(TagOperationFailure.CREATE)
@@ -88,9 +86,9 @@ class TagListViewModel @Inject constructor(
 
     private fun deleteTag(tag: Tag) {
         viewModelScope.launch {
-            if (deleteTagUseCase(tag)) {
+            if (tagsRepository.deleteTag(tag).isSuccess) {
                 if (_state.value.selectedTagId == tag.id) {
-                    selectTagUseCase(Tag(id = 0, nameTag = "All"))
+                    selectedTagHolder.selectTag(Tag(id = 0, nameTag = "All"))
                 }
             } else {
                 _operationFailures.emit(TagOperationFailure.DELETE)
@@ -100,17 +98,18 @@ class TagListViewModel @Inject constructor(
 
     private fun updateTag(tag: Tag) {
         viewModelScope.launch {
-            if (!updateTagUseCase(tag)) {
+            if (tagsRepository.updateTag(tag).isFailure) {
                 _operationFailures.emit(TagOperationFailure.UPDATE)
             }
         }
     }
 
     private fun reorderTags(event: TagListEvent.ReorderTagsLive) {
-        val reorderedTags = _state.value.listTags.toMutableList().apply {
+        val currentTags = _state.value.tagsLoad.valueOrNull() ?: return
+        val reorderedTags = currentTags.toMutableList().apply {
             add(event.to, removeAt(event.from))
         }
-        _state.update { it.copy(listTags = reorderedTags) }
+        _state.update { it.copy(tagsLoad = LoadState.Ready(reorderedTags)) }
         scheduleReorder(reorderedTags)
     }
 
@@ -118,8 +117,8 @@ class TagListViewModel @Inject constructor(
         reorderJob?.cancel()
         reorderJob = viewModelScope.launch {
             delay(REORDER_SAVE_DEBOUNCE_MS)
-            if (!reorderTagsUseCase(tags)) {
-                _state.update { it.copy(listTags = persistedTags) }
+            if (reorderTagsUseCase(tags).isFailure) {
+                _state.update { it.copy(tagsLoad = LoadState.Ready(persistedTags)) }
                 _operationFailures.emit(TagOperationFailure.REORDER)
             }
         }
@@ -127,34 +126,9 @@ class TagListViewModel @Inject constructor(
 
     private fun loadTags() {
         viewModelScope.launch {
-            getTagsUseCase().collect { uiState ->
-                when (uiState) {
-                    is UiState.Loading -> {
-                        _state.update { it.copy(baseState = it.baseState.copy(isLoading = true)) }
-                    }
-
-                    is UiState.Success -> {
-                        val tags = uiState.data.orEmpty()
-                        persistedTags = tags
-                        _state.update {
-                            it.copy(
-                                listTags = tags,
-                                baseState = it.baseState.copy(isLoading = false)
-                            )
-                        }
-                    }
-
-                    is UiState.Error -> {
-                        _state.update {
-                            it.copy(
-                                baseState = it.baseState.copy(
-                                    isLoading = false,
-                                    error = uiState.message.toString()
-                                )
-                            )
-                        }
-                    }
-                }
+            tagsRepository.getTags().asLoadState(ListLoadErrors.TAGS).collect { load ->
+                load.valueOrNull()?.let { persistedTags = it }
+                _state.update { it.copy(tagsLoad = load) }
             }
         }
     }
@@ -165,10 +139,7 @@ class TagListViewModel @Inject constructor(
 }
 
 sealed class TagListEvent {
-    data class AddTag(
-        val tag: Tag,
-        val onResult: (Boolean) -> Unit
-    ) : TagListEvent()
+    data class AddTag(val tag: Tag, val onResult: (Boolean) -> Unit) : TagListEvent()
 
     data class DeleteTag(val tag: Tag) : TagListEvent()
     data class UpdateTag(val tag: Tag) : TagListEvent()
@@ -178,8 +149,6 @@ sealed class TagListEvent {
     data class ToggleVisibleTag(val tag: Tag) : TagListEvent()
 }
 
-data class TagListState(
-    val listTags: List<Tag> = emptyList(),
-    val selectedTagId: Long = 0,
-    val baseState: BaseState = BaseState()
-)
+data class TagListState(val tagsLoad: LoadState<List<Tag>> = LoadState.Loading, val selectedTagId: Long = 0) {
+    val listTags: List<Tag> get() = tagsLoad.valueOrNull().orEmpty()
+}

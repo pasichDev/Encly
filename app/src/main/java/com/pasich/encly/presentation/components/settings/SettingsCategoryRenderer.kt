@@ -14,16 +14,14 @@ import com.pasich.encly.presentation.components.custombox.RoundPosition
 import com.pasich.encly.presentation.components.custombox.SettingBox
 
 @Composable
-fun SettingsCategoryRenderer(
-    category: SettingsCategory, modifier: Modifier = Modifier
-) {
+fun SettingsCategoryRenderer(category: SettingsCategory, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         // Category title
         Text(
             text = stringResource(id = category.titleRes),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 8.dp),
         )
 
         // Category items
@@ -36,16 +34,15 @@ fun SettingsCategoryRenderer(
             }
 
             SettingsItemRenderer(
-                item = item, roundPosition = roundPosition
+                item = item,
+                roundPosition = roundPosition,
             )
         }
     }
 }
 
 @Composable
-private fun SettingsItemRenderer(
-    item: SettingsItem, roundPosition: RoundPosition
-) {
+private fun SettingsItemRenderer(item: SettingsItem, roundPosition: RoundPosition) {
     when (item) {
         is SettingsItem.Switch -> {
             SettingBox(
@@ -56,9 +53,10 @@ private fun SettingsItemRenderer(
                     Switch(
                         checked = item.checked,
                         onCheckedChange = item.onCheckedChange,
-                        enabled = item.isEnabled
+                        enabled = item.isEnabled,
                     )
-                })
+                },
+            )
         }
 
         is SettingsItem.Navigation -> {
@@ -70,10 +68,12 @@ private fun SettingsItemRenderer(
                 endWidget = item.endIcon?.let { icon ->
                     {
                         Icon(
-                            imageVector = icon, contentDescription = "Navigate"
+                            imageVector = icon,
+                            contentDescription = null,
                         )
                     }
-                })
+                },
+            )
         }
 
         is SettingsItem.Selection -> {
@@ -85,10 +85,12 @@ private fun SettingsItemRenderer(
                 endWidget = item.endIcon?.let { icon ->
                     {
                         Icon(
-                            imageVector = icon, contentDescription = "Select"
+                            imageVector = icon,
+                            contentDescription = null,
                         )
                     }
-                })
+                },
+            )
         }
     }
 }

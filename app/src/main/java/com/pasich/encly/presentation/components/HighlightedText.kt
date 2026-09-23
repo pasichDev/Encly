@@ -3,12 +3,12 @@ package com.pasich.encly.presentation.components
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-
 
 @Composable
 fun HighlightedText(
@@ -16,15 +16,17 @@ fun HighlightedText(
     searchQuery: String,
     style: androidx.compose.ui.text.TextStyle,
     color: androidx.compose.ui.graphics.Color,
-    maxLines: Int = Int.MAX_VALUE
+    modifier: Modifier = Modifier,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     if (searchQuery.isBlank()) {
         Text(
             text = text,
+            modifier = modifier,
             style = style,
             color = color,
             maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
         return
     }
@@ -34,7 +36,7 @@ fun HighlightedText(
         val highlightStyle = SpanStyle(
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
-            background = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            background = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
         )
 
         var startIndex = 0
@@ -70,6 +72,6 @@ fun HighlightedText(
         text = annotatedString,
         style = style,
         maxLines = maxLines,
-        overflow = TextOverflow.Ellipsis
+        overflow = TextOverflow.Ellipsis,
     )
 }

@@ -49,12 +49,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pasich.encly.R
 import com.pasich.encly.presentation.screen.onboarding.AnimatedButton
 import com.pasich.encly.presentation.screen.onboarding.SlideLayout
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
@@ -65,14 +67,11 @@ data class SeedPhraseActions(
     val onStartVerification: () -> Unit = {},
     val onUpdateAnswer: (Int, String) -> Unit = { _, _ -> },
     val onCompleteVerification: () -> Unit = {},
-    val onCancelVerification: () -> Unit = {}
+    val onCancelVerification: () -> Unit = {},
 )
 
 @Composable
-fun SeedPhraseDisplaySlide(
-    uiState: OnboardingViewModel.OnboardingUiState,
-    actions: SeedPhraseActions
-) {
+fun SeedPhraseDisplaySlide(uiState: OnboardingViewModel.OnboardingUiState, actions: SeedPhraseActions) {
     SlideLayout {
         when {
             // Show a loading indicator while the key is being created
@@ -87,13 +86,13 @@ fun SeedPhraseDisplaySlide(
                         uiState = uiState,
                         onUpdateAnswer = actions.onUpdateAnswer,
                         onCompleteVerification = actions.onCompleteVerification,
-                        onCancel = actions.onCancelVerification
+                        onCancel = actions.onCancelVerification,
                     )
                 } else {
                     SeedPhraseDisplayContent(
                         uiState = uiState,
                         onToggleVisibility = actions.onToggleVisibility,
-                        onNext = actions.onStartVerification
+                        onNext = actions.onStartVerification,
                     )
                 }
             }
@@ -106,41 +105,46 @@ fun SeedPhraseDisplaySlide(
 @Composable
 private fun LoadingContent() {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val infiniteTransition = rememberInfiniteTransition(label = "generation")
         val rotation by infiniteTransition.animateFloat(
-            initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(
-                animation = tween(2000, easing = LinearEasing)
-            ), label = "rotation"
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2000, easing = LinearEasing),
+            ),
+            label = "rotation",
         )
 
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .rotate(rotation), contentAlignment = Alignment.Center
+                .rotate(rotation),
+            contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator(
-                modifier = Modifier.size(60.dp), strokeWidth = 6.dp
+                modifier = Modifier.size(60.dp),
+                strokeWidth = 6.dp,
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Генеруємо ваш ключ безпеки...",
+            text = stringResource(R.string.seed_generating),
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Це може зайняти кілька секунд",
+            text = stringResource(R.string.seed_generating_hint),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -152,17 +156,16 @@ private fun SeedPhraseDisplayContent(
     onNext: () -> Unit,
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "🎉 Ключ безпеки створено!",
+            text = stringResource(R.string.seed_created_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-
 
         SeedRecoveryWarning()
 
@@ -170,16 +173,16 @@ private fun SeedPhraseDisplayContent(
 
         SeedPhraseCard(
             uiState = uiState,
-            onToggleVisibility = onToggleVisibility
+            onToggleVisibility = onToggleVisibility,
         )
 
         Spacer(modifier = Modifier.height(35.dp))
 
-
         AnimatedButton(
-            onClick = onNext, modifier = Modifier.fillMaxWidth(), text = "Продовжити до перевірки"
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(R.string.seed_continue_to_verify),
         )
-
     }
 }
 
@@ -190,9 +193,9 @@ private fun SeedRecoveryWarning() {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp)),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
         ),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(4.dp),
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -200,35 +203,32 @@ private fun SeedRecoveryWarning() {
                     imageVector = Icons.Default.Warning,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "ВАЖЛИВО!",
+                    text = stringResource(R.string.seed_important),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Запишіть recovery seed офлайн. Без нього recovery-slot не відновить доступ.",
+                text = stringResource(R.string.seed_write_down_warning),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer,
-                lineHeight = 20.sp
+                lineHeight = 20.sp,
             )
         }
     }
 }
 
 @Composable
-private fun SeedPhraseCard(
-    uiState: OnboardingViewModel.OnboardingUiState,
-    onToggleVisibility: () -> Unit
-) {
+private fun SeedPhraseCard(uiState: OnboardingViewModel.OnboardingUiState, onToggleVisibility: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             if (uiState.isKeyVisible) {
@@ -240,9 +240,11 @@ private fun SeedPhraseCard(
             AnimatedButton(
                 onClick = onToggleVisibility,
                 modifier = Modifier.fillMaxWidth(),
-                text = if (uiState.isKeyVisible) "Приховати Seed" else "Показати Seed",
+                text = stringResource(
+                    if (uiState.isKeyVisible) R.string.seed_hide else R.string.seed_show,
+                ),
                 isSecondary = true,
-                smallStyle = true
+                smallStyle = true,
             )
         }
     }
@@ -260,11 +262,12 @@ private fun SeedPhraseGrid(seedPhrase: String) {
             .fillMaxWidth()
             .height(gridHeight),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         itemsIndexed(words) { index, word ->
             SeedWordCard(
-                number = index + 1, word = word
+                number = index + 1,
+                word = word,
             )
         }
     }
@@ -281,20 +284,20 @@ private fun HiddenSeedPhraseGrid() {
             .fillMaxWidth()
             .height(gridHeight),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(12) { index ->
             SeedWordCard(
-                number = index + 1, word = "••••••", isHidden = true
+                number = index + 1,
+                word = "••••••",
+                isHidden = true,
             )
         }
     }
 }
 
 @Composable
-private fun SeedWordCard(
-    number: Int, word: String, isHidden: Boolean = false
-) {
+private fun SeedWordCard(number: Int, word: String, isHidden: Boolean = false) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -302,27 +305,28 @@ private fun SeedWordCard(
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(8.dp)
-            ), colors = CardDefaults.cardColors(
+                shape = RoundedCornerShape(8.dp),
+            ),
+        colors = CardDefaults.cardColors(
             containerColor = if (isHidden) {
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
             } else {
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            }
-        )
+            },
+        ),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = "$number",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Text(
@@ -335,7 +339,7 @@ private fun SeedWordCard(
                     MaterialTheme.colorScheme.onSurface
                 },
                 textAlign = TextAlign.Center,
-                maxLines = 1
+                maxLines = 1,
             )
         }
     }
@@ -346,7 +350,7 @@ private fun SeedPhraseVerificationContent(
     uiState: OnboardingViewModel.OnboardingUiState,
     onUpdateAnswer: (Int, String) -> Unit,
     onCompleteVerification: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     // If all words are entered correctly, hide the keyboard
@@ -356,22 +360,22 @@ private fun SeedPhraseVerificationContent(
         }
     }
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "🔍 Підтвердіть ваш ключ",
+            text = stringResource(R.string.seed_verify_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Введіть слова з вашого ключа безпеки для підтвердження:",
+            text = stringResource(R.string.seed_verify_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -392,7 +396,8 @@ private fun SeedPhraseVerificationContent(
                     if (index == lastIndex) {
                         onCompleteVerification()
                     }
-                })
+                },
+            )
 
             if (index < lastIndex) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -405,18 +410,19 @@ private fun SeedPhraseVerificationContent(
         Button(
             onClick = onCompleteVerification,
             modifier = Modifier.fillMaxWidth(),
-            enabled = uiState.isVerificationComplete
+            enabled = uiState.isVerificationComplete,
         ) {
-            Text("Підтвердити створення ключа")
+            Text(stringResource(R.string.seed_verify_confirm))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Back button
         OutlinedButton(
-            onClick = onCancel, modifier = Modifier.fillMaxWidth()
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Повернутися назад")
+            Text(stringResource(R.string.seed_verify_back))
         }
     }
 }
@@ -428,7 +434,7 @@ private fun VerificationWordInput(
     correctWord: String,
     onAnswerChange: (String) -> Unit,
     imeAction: androidx.compose.ui.text.input.ImeAction = androidx.compose.ui.text.input.ImeAction.Next,
-    onImeAction: () -> Unit = {}
+    onImeAction: () -> Unit = {},
 ) {
     // Check whether the answer is correct
     val isCorrect =
@@ -440,16 +446,19 @@ private fun VerificationWordInput(
             MaterialTheme.colorScheme.primary
         } else {
             MaterialTheme.colorScheme.outline
-        }, animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium
-        ), label = "border_color"
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "border_color",
     )
 
     Column {
         Text(
-            text = "Слово #$wordNumber:",
+            text = stringResource(R.string.seed_word_number, wordNumber),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -458,27 +467,28 @@ private fun VerificationWordInput(
             value = userAnswer,
             onValueChange = onAnswerChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Введіть слово...") },
+            placeholder = { Text(stringResource(R.string.seed_word_placeholder)) },
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = borderColor,
-                unfocusedBorderColor = if (isCorrect) borderColor else MaterialTheme.colorScheme.outline
+                unfocusedBorderColor = if (isCorrect) borderColor else MaterialTheme.colorScheme.outline,
             ),
             trailingIcon = if (isCorrect) {
                 {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Правильно",
-                        tint = MaterialTheme.colorScheme.primary
+                        contentDescription = stringResource(R.string.seed_word_correct),
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                 }
-            } else null,
+            } else {
+                null
+            },
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Password,
-                imeAction = imeAction
+                imeAction = imeAction,
             ),
-            keyboardActions = KeyboardActions(
-                onAny = { onImeAction() })
+            keyboardActions = KeyboardActions(onAny = { onImeAction() }),
         )
     }
 }

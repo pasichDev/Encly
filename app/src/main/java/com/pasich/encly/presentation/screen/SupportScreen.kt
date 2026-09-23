@@ -2,7 +2,6 @@ package com.pasich.encly.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -51,41 +49,39 @@ import com.pasich.encly.presentation.components.TitleCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SupportScreen(
-    navController: NavHostController
-) {
-
+fun SupportScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.support_title),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            contentDescription = stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             // Hero Section
             // Hero Section
@@ -93,7 +89,7 @@ fun SupportScreen(
                 icon = HeroIcon.Vector(Lucide.Heart),
                 title = stringResource(R.string.donation_title),
                 subtitle = stringResource(R.string.donation_subtitle),
-                description = stringResource(R.string.donation_description)
+                description = stringResource(R.string.donation_description),
             )
 
             // Support options — external services only (no in-app purchases).
@@ -102,21 +98,18 @@ fun SupportScreen(
             // Why Support Section
             WhySupportSection()
 
-
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
-
-
 }
 
 @Composable
 private fun SupportOptionsSection() {
     Column(
         modifier = Modifier.padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TitleCard("Варіанти підтримки")
+        TitleCard(stringResource(R.string.support_options_title))
         ExternalServicesDonationContent()
     }
 }
@@ -129,30 +122,30 @@ private fun WhySupportSection() {
             .padding(horizontal = 20.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(20.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 16.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.support_why_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -160,7 +153,7 @@ private fun WhySupportSection() {
                 text = stringResource(R.string.support_why_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 22.sp
+                lineHeight = 22.sp,
             )
         }
     }
@@ -171,75 +164,70 @@ private fun ExternalServicesDonationContent() {
     val uriHandler = LocalUriHandler.current
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = "Підтримайте нас через інші сервіси",
+            text = stringResource(R.string.support_external_services),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         // Ko-fi
         ExternalServiceCard(
             serviceName = "Ko-fi",
-            description = "Швидка та проста підтримка розробки.",
+            description = stringResource(R.string.support_kofi_desc),
             icon = Icons.Default.Person,
             onClick = {
                 uriHandler.openUri("https://ko-fi.com/pasichdev")
-            }
+            },
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExternalServiceCard(
-    serviceName: String,
-    description: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
+private fun ExternalServiceCard(serviceName: String, description: String, icon: ImageVector, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
                 elevation = 4.dp,
                 shape = RoundedCornerShape(16.dp),
-                ambientColor = Color.Gray.copy(alpha = 0.1f)
+                ambientColor = Color.Gray.copy(alpha = 0.1f),
             )
             .clip(RoundedCornerShape(16.dp)),
-        onClick = onClick
+        onClick = onClick,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
                 Text(
                     text = serviceName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    lineHeight = 20.sp
+                    lineHeight = 20.sp,
                 )
             }
         }

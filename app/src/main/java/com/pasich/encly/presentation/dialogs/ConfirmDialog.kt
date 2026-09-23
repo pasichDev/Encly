@@ -29,6 +29,7 @@ fun ConfirmDialog(
                 TextButton(onClick = onDismiss) {
                     Text(text = stringResource(R.string.dialog_dismiss))
                 }
-            })
+            },
+        )
     }
 }

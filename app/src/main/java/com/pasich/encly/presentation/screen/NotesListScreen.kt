@@ -9,11 +9,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import com.pasich.encly.presentation.effects.NoteSkeleton
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,12 +38,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
+import com.pasich.encly.core.common.LoadState
+import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.presentation.components.EmptyStateWidget
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.dialogs.NoteAction
 import com.pasich.encly.presentation.dialogs.NoteCardBottomSheet
+import com.pasich.encly.presentation.effects.NoteSkeleton
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.ChangeTag
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.NoteToTrash
@@ -59,13 +61,14 @@ fun NotesList(
     listScrollState: LazyListState,
     gridScrollState: LazyStaggeredGridState,
     onItemClick: (Note) -> Unit,
+    modifier: Modifier = Modifier,
     onSecondActionClick: (Note) -> Unit = {},
-    noteListViewModel: NoteListViewModel = hiltViewModel()
+    noteListViewModel: NoteListViewModel = hiltViewModel(),
 ) {
     val state by noteListViewModel.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
-    var activeNote by remember { mutableStateOf<NoteWithTag?>(null) }
+    var activeNote by remember { mutableStateOf<NoteListItem?>(null) }
     var isBottomSheetVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.notes, activeNote?.note?.id) {
@@ -82,7 +85,7 @@ fun NotesList(
     activeNote?.let { item ->
         NoteCardBottomSheet(
             isVisible = isBottomSheetVisible,
-            item = item,
+            item = item.noteWithTag,
             sheetState = bottomSheetState,
             onAction = {
                 when (it) {
@@ -105,8 +108,8 @@ fun NotesList(
                         noteListViewModel.onEvent(
                             NoteListEvent.ChangeDescription(
                                 note = item.note,
-                                description = it.description
-                            )
+                                description = it.description,
+                            ),
                         )
                         return@NoteCardBottomSheet
                     }
@@ -124,9 +127,9 @@ fun NotesList(
                     bottomSheetState.hide()
                     delay(200)
                     activeNote = null
-
                 }
-            })
+            },
+        )
     }
 
     // Stable keys for better performance
@@ -134,13 +137,13 @@ fun NotesList(
         state.notes.map { StableNoteItem(it) }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         Column {
             // Skeleton placeholder while the (encrypted) notes are loading for the first time.
             AnimatedVisibility(
-                visible = state.baseState.isLoading && state.notes.isEmpty(),
+                visible = state.notesLoad is LoadState.Loading,
                 enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                exit = fadeOut(animationSpec = tween(durationMillis = 300)),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     repeat(4) {
@@ -150,27 +153,15 @@ fun NotesList(
                 }
             }
 
-            AnimatedVisibility(
-                visible = state.notes.isEmpty() && !state.baseState.isLoading,
-                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 300))
-            ) {
-                EmptyStateWidget(
-                    iconRes = R.drawable.ic_notes_empty,
-                    title = stringResource(R.string.empty_notes),
-                    description = stringResource(R.string.empty_notes_desc)
-                )
-
-            }
+            NotesEmptyOrFailed(state.notesLoad)
 
             AnimatedVisibility(
                 visible = state.notes.isNotEmpty(),
                 enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                exit = fadeOut(animationSpec = tween(durationMillis = 300)),
             ) {
                 Crossfade(targetState = isGrid) { targetIsGrid ->
                     if (targetIsGrid) {
-
                         LazyVerticalStaggeredGrid(
                             columns = StaggeredGridCells.Fixed(2),
                             modifier = Modifier
@@ -179,14 +170,14 @@ fun NotesList(
                             state = gridScrollState,
                             contentPadding = PaddingValues(
                                 top = 8.dp,
-                                bottom = 80.dp // Space for FAB
+                                bottom = 80.dp, // Space for FAB
                             ),
                             verticalItemSpacing = 8.dp,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             items(
                                 items = stableNotes,
-                                key = { it.id }
+                                key = { it.id },
                             ) { stableItem ->
                                 NoteItem(
                                     item = stableItem.item,
@@ -198,7 +189,7 @@ fun NotesList(
                                     onItemLongClick = {
                                         activeNote = stableItem.item
                                         isBottomSheetVisible = true
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -208,13 +199,13 @@ fun NotesList(
                             state = listScrollState,
                             contentPadding = PaddingValues(
                                 top = 8.dp,
-                                bottom = 80.dp
+                                bottom = 80.dp,
                             ),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             items(
                                 items = stableNotes,
-                                key = { it.id }
+                                key = { it.id },
                             ) { stableItem ->
                                 NoteItem(
                                     item = stableItem.item,
@@ -226,7 +217,7 @@ fun NotesList(
                                     onItemLongClick = {
                                         activeNote = stableItem.item
                                         isBottomSheetVisible = true
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -238,7 +229,24 @@ fun NotesList(
 }
 
 @Stable
-private data class StableNoteItem(
-    val item: NoteWithTag,
-    val id: Long = item.note.id
-)
+private data class StableNoteItem(val item: NoteListItem, val id: Long = item.note.id)
+
+/**
+ * "No notes" once loading finished with nothing, or the read error when loading failed. A failed
+ * read is never shown as "No notes": the vault must not look emptied.
+ */
+@Composable
+private fun NotesEmptyOrFailed(notesLoad: LoadState<List<NoteListItem>>) {
+    val failure = (notesLoad as? LoadState.Failed)?.error
+    AnimatedVisibility(
+        visible = failure != null || notesLoad.valueOrNull()?.isEmpty() == true,
+        enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 300)),
+    ) {
+        EmptyStateWidget(
+            iconRes = R.drawable.ic_notes_empty,
+            title = failure?.title?.asString() ?: stringResource(R.string.empty_notes),
+            description = failure?.message?.asString() ?: stringResource(R.string.empty_notes_desc),
+        )
+    }
+}

@@ -17,13 +17,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-enum class PinUnlockResult { SUCCESS, WRONG_PIN, DB_ERROR }
-enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR }
+/**
+ * BACKGROUNDED: the credential was right, but the app left the foreground before the vault
+ * finished opening, so SessionLockManager closed it again. The lock screen stays; no error.
+ */
+enum class PinUnlockResult { SUCCESS, WRONG_PIN, DB_ERROR, BACKGROUNDED }
+enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED }
 
 @HiltViewModel
 class LockViewModel @Inject constructor(
     private val securityManager: SecurityManager,
-    private val sessionLockManager: SessionLockManager
+    private val sessionLockManager: SessionLockManager,
 ) : ViewModel() {
 
     private val _busy = MutableStateFlow(false)
@@ -52,9 +56,13 @@ class LockViewModel @Inject constructor(
                     VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
                 }
             }
-            if (result == PinUnlockResult.SUCCESS) sessionLockManager.onUnlocked()
+            val published = if (result == PinUnlockResult.SUCCESS && !sessionLockManager.onUnlocked()) {
+                PinUnlockResult.BACKGROUNDED
+            } else {
+                result
+            }
             _busy.value = false
-            onResult(result)
+            onResult(published)
         }
     }
 
@@ -73,9 +81,13 @@ class LockViewModel @Inject constructor(
                     SensitiveDataCleaner.clear(chars)
                 }
             }
-            if (result == SeedUnlockResult.SUCCESS) sessionLockManager.onUnlocked()
+            val published = if (result == SeedUnlockResult.SUCCESS && !sessionLockManager.onUnlocked()) {
+                SeedUnlockResult.BACKGROUNDED
+            } else {
+                result
+            }
             _busy.value = false
-            onResult(result)
+            onResult(published)
         }
     }
 
@@ -97,9 +109,9 @@ class LockViewModel @Inject constructor(
                         SensitiveDataCleaner.clear(dek)
                     }
                 }
-                if (ok) sessionLockManager.onUnlocked()
+                val published = ok && sessionLockManager.onUnlocked()
                 _busy.value = false
-                onResult(ok)
+                onResult(published)
             }
         }
     }

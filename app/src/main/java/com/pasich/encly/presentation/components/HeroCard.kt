@@ -28,19 +28,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-
 sealed class HeroIcon {
     data class Vector(val icon: ImageVector) : HeroIcon()
     data class Painter(val painter: androidx.compose.ui.graphics.painter.Painter) : HeroIcon()
 }
+
 @Composable
-fun HeroCard(
-    icon: HeroIcon,
-    title: String,
-    subtitle: String,
-    description: String,
-    modifier: Modifier = Modifier
-) {
+fun HeroCard(icon: HeroIcon, title: String, subtitle: String, description: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -48,12 +42,12 @@ fun HeroCard(
             .shadow(
                 elevation = 0.dp,
                 shape = RoundedCornerShape(24.dp),
-                ambientColor = Color.Transparent
+                ambientColor = Color.Transparent,
             ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        )
+            containerColor = Color.Transparent,
+        ),
     ) {
         Box(
             modifier = Modifier
@@ -62,16 +56,16 @@ fun HeroCard(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                        )
-                    )
-                )
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                        ),
+                    ),
+                ),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(
                     modifier = Modifier
@@ -79,31 +73,32 @@ fun HeroCard(
                         .shadow(
                             elevation = 16.dp,
                             shape = CircleShape,
-                            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         )
                         .clip(CircleShape)
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
                                     MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                                )
-                            )
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                ),
+                            ),
                         ),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     when (icon) {
                         is HeroIcon.Vector -> Icon(
                             imageVector = icon.icon,
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            tint = MaterialTheme.colorScheme.onPrimary,
                         )
+
                         is HeroIcon.Painter -> Icon(
                             painter = icon.painter,
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            tint = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                 }
@@ -116,7 +111,7 @@ fun HeroCard(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 26.sp,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 Text(
@@ -124,7 +119,7 @@ fun HeroCard(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -134,7 +129,7 @@ fun HeroCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center,
-                    lineHeight = 22.sp
+                    lineHeight = 22.sp,
                 )
             }
         }

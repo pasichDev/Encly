@@ -12,9 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.data.model.PriorityValues
-
 
 @Composable
 fun PriorityIndicator(
@@ -30,22 +29,22 @@ fun PriorityIndicator(
         modifier = modifier
             .clip(style.shape)
             .background(priorityData.backgroundColor)
-            .padding(style.padding)
+            .padding(style.padding),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
                 imageVector = priorityData.icon,
-                contentDescription = priorityData.label,
+                contentDescription = null,
                 tint = priorityData.contentColor,
-                modifier = Modifier.size(style.iconSize)
+                modifier = Modifier.size(style.iconSize),
             )
             Text(
-                text = priorityData.label,
+                text = stringResource(priorityData.label),
                 style = style.textStyle,
-                color = priorityData.contentColor
+                color = priorityData.contentColor,
             )
         }
     }

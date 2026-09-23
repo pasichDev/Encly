@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,10 +55,8 @@ import com.pasich.encly.presentation.screen.onboarding.SlideLayout
 import kotlinx.coroutines.delay
 
 @Composable
-fun WelcomeSlide(
-    onNext: () -> Unit
-) {
-    SlideLayout {
+fun WelcomeSlide(onNext: () -> Unit, modifier: Modifier = Modifier) {
+    SlideLayout(modifier = modifier) {
         var iconVisible by remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
             delay(300)
@@ -65,9 +64,11 @@ fun WelcomeSlide(
         }
 
         AnimatedVisibility(
-            visible = iconVisible, enter = scaleIn(
-                animationSpec = tween(600), initialScale = 0.3f
-            ) + fadeIn()
+            visible = iconVisible,
+            enter = scaleIn(
+                animationSpec = tween(600),
+                initialScale = 0.3f,
+            ) + fadeIn(),
         ) {
             Box(
                 modifier = Modifier
@@ -77,16 +78,17 @@ fun WelcomeSlide(
                         Brush.radialGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                            )
-                        )
-                    ), contentAlignment = Alignment.Center
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                            ),
+                        ),
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_splashscreen),
                     contentDescription = null,
                     modifier = Modifier.size(90.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -95,35 +97,61 @@ fun WelcomeSlide(
 
         // Animated title
         AnimatedText(
-            text = "My Notes", style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.Bold, fontSize = 32.sp
-            ), delay = 600
+            text = stringResource(R.string.onboarding_welcome_title),
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 32.sp,
+            ),
+            delay = 600,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         AnimatedText(
-            text = "Створюйте, редагуйте та організовуйте свої думки з максимальним комфортом",
+            text = stringResource(R.string.onboarding_welcome_subtitle),
             style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            delay = 800
+            delay = 800,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // Features - compact list
         val features = listOf(
-            Triple(Icons.Default.Edit, "Зміни", "Гнучкий текстовий редактор з розміткою"),
-            Triple(Lucide.Tag, "Теги", "Наводь лад у думках за допомогою тем"),
-            Triple(Lucide.LayoutDashboard, "Інтерфейс", "Стильно. Просто. Інтуїтивно."),
-            Triple(Lucide.Check, "Завдання", "Відстежуй справи разом із нотатками"),
-            Triple(Lucide.Lock, "Захист", "Тільки ти маєш доступ до своїх думок"),
+            Triple(
+                Icons.Default.Edit,
+                stringResource(R.string.onboarding_feature_editor_title),
+                stringResource(R.string.onboarding_feature_editor_desc),
+            ),
+            Triple(
+                Lucide.Tag,
+                stringResource(R.string.onboarding_feature_tags_title),
+                stringResource(R.string.onboarding_feature_tags_desc),
+            ),
+            Triple(
+                Lucide.LayoutDashboard,
+                stringResource(R.string.onboarding_feature_interface_title),
+                stringResource(R.string.onboarding_feature_interface_desc),
+            ),
+            Triple(
+                Lucide.Check,
+                stringResource(R.string.onboarding_feature_tasks_title),
+                stringResource(R.string.onboarding_feature_tasks_desc),
+            ),
+            Triple(
+                Lucide.Lock,
+                stringResource(R.string.onboarding_feature_privacy_title),
+                stringResource(R.string.onboarding_feature_privacy_desc),
+            ),
         )
 
         features.forEachIndexed { index, (icon, title, description) ->
             AnimatedCompactFeatureCard(
-                icon = icon, title = title, description = description, delay = 1000 + index * 100
+                icon = icon,
+                title = title,
+                description = description,
+                delay = 1000 + index * 100,
             )
             if (index < features.size - 1) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -133,7 +161,7 @@ fun WelcomeSlide(
         Spacer(modifier = Modifier.weight(1f))
 
         AnimatedButton(
-            text = "Продовжити",
+            text = stringResource(R.string.action_continue),
             onClick = onNext,
             delay = 1800,
             modifier = Modifier.fillMaxWidth(),
@@ -142,11 +170,8 @@ fun WelcomeSlide(
     }
 }
 
-
 @Composable
-fun AnimatedCompactFeatureCard(
-    icon: ImageVector, title: String, description: String, delay: Int
-) {
+private fun AnimatedCompactFeatureCard(icon: ImageVector, title: String, description: String, delay: Int) {
     var visible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -155,30 +180,34 @@ fun AnimatedCompactFeatureCard(
     }
 
     AnimatedVisibility(
-        visible = visible, enter = slideInHorizontally(
-            initialOffsetX = { -it / 2 }, animationSpec = tween(300, easing = FastOutSlowInEasing)
-        ) + fadeIn(animationSpec = tween(300))
+        visible = visible,
+        enter = slideInHorizontally(
+            initialOffsetX = { -it / 2 },
+            animationSpec = tween(300, easing = FastOutSlowInEasing),
+        ) + fadeIn(animationSpec = tween(300)),
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            ),
         ) {
             Row(
-                modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                 }
 
@@ -189,13 +218,13 @@ fun AnimatedCompactFeatureCard(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1
+                        maxLines = 1,
                     )
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1
+                        maxLines = 1,
                     )
                 }
             }

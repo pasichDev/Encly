@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.effects
 
-
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -13,21 +12,14 @@ private const val DEFAULT_FADE_DURATION = 300
 private const val DEFAULT_SCALE_DURATION = 400
 private const val DEFAULT_INITIAL_SCALE = 0.9f
 
+fun defaultScreenEnterAnimation(): EnterTransition = fadeIn(animationSpec = tween(DEFAULT_FADE_DURATION)) +
+    scaleIn(
+        initialScale = DEFAULT_INITIAL_SCALE,
+        animationSpec = tween(DEFAULT_SCALE_DURATION),
+    )
 
-fun defaultScreenEnterAnimation(): EnterTransition {
-    return fadeIn(animationSpec = tween(DEFAULT_FADE_DURATION)) +
-            scaleIn(
-                initialScale = DEFAULT_INITIAL_SCALE,
-                animationSpec = tween(DEFAULT_SCALE_DURATION)
-            )
-}
-
-fun defaultScreenExitAnimation(): ExitTransition {
-    return fadeOut(animationSpec = tween(DEFAULT_FADE_DURATION)) +
-            scaleOut(
-                targetScale = DEFAULT_INITIAL_SCALE,
-                animationSpec = tween(DEFAULT_SCALE_DURATION)
-            )
-}
-
-
+fun defaultScreenExitAnimation(): ExitTransition = fadeOut(animationSpec = tween(DEFAULT_FADE_DURATION)) +
+    scaleOut(
+        targetScale = DEFAULT_INITIAL_SCALE,
+        animationSpec = tween(DEFAULT_SCALE_DURATION),
+    )

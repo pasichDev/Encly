@@ -12,43 +12,44 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.R
+import com.pasich.encly.utils.rememberDateTimeFormat
 import java.util.Date
 
 @Composable
 fun CompletedIndicator(
     completedDate: Long,
     modifier: Modifier = Modifier,
-    size: PriorityIndicatorSize = PriorityIndicatorSize.Small
+    size: PriorityIndicatorSize = PriorityIndicatorSize.Small,
 ) {
     val style = getIndicatorStyle(size)
-    val dateFormat =
-        remember { java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault()) }
+    val dateFormat = rememberDateTimeFormat()
 
     Box(
         modifier = modifier
             .clip(style.shape)
             .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-            .padding(style.padding)
+            .padding(style.padding),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Завершено",
+                contentDescription = stringResource(R.string.task_completed),
                 tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(style.iconSize)
+                modifier = Modifier.size(style.iconSize),
             )
             Text(
-                text = "Виконано: ${dateFormat.format(Date(completedDate))}",
+                text = stringResource(R.string.task_completed_at, dateFormat.format(Date(completedDate))),
                 style = style.textStyle,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.outline,
             )
         }
     }

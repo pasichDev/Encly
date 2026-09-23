@@ -20,19 +20,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.data.model.PriorityValues
+import com.pasich.encly.R
+import com.pasich.encly.presentation.components.tasks.PriorityValues
 
 @Composable
-fun PrioritySelectionDialog(
-    onDismissRequest: () -> Unit,
-    onPrioritySelected: (Int) -> Unit
-) {
-
+fun PrioritySelectionDialog(onDismissRequest: () -> Unit, onPrioritySelect: (Int) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = {
-            Text(text = "Виберіть пріоритет")
+            Text(text = stringResource(R.string.priority_select_title))
         },
         text = {
             Column {
@@ -43,23 +41,23 @@ fun PrioritySelectionDialog(
                             .clip(RoundedCornerShape(8.dp))
                             .background(priorityData.backgroundColor)
                             .clickable {
-                                onPrioritySelected(priorityData.id)
+                                onPrioritySelect(priorityData.id)
                                 onDismissRequest()
                             }
                             .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
                             imageVector = priorityData.icon,
-                            contentDescription = priorityData.label,
+                            contentDescription = null,
                             tint = priorityData.contentColor,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = priorityData.label,
+                            text = stringResource(priorityData.label),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = priorityData.contentColor
+                            color = priorityData.contentColor,
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -68,8 +66,8 @@ fun PrioritySelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismissRequest) {
-                Text("Закрити")
+                Text(stringResource(R.string.close))
             }
-        }
+        },
     )
 }

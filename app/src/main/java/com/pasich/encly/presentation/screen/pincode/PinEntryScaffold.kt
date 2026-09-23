@@ -31,8 +31,8 @@ import com.pasich.encly.R
  * (PBKDF2 PIN hashing, opening the encrypted database).
  */
 @Composable
-fun AuthLoading(message: String) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+fun AuthLoading(message: String, modifier: Modifier = Modifier) {
+    Surface(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -41,7 +41,7 @@ fun AuthLoading(message: String) {
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -57,30 +57,31 @@ fun AuthLoading(message: String) {
 fun PinEntryScaffold(
     title: String,
     subtitle: String,
+    modifier: Modifier = Modifier,
     subtitleIsError: Boolean = false,
     error: String? = null,
-    body: @Composable ColumnScope.() -> Unit
+    body: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_lock),
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                 }
 
@@ -90,7 +91,7 @@ fun PinEntryScaffold(
                     text = title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -98,9 +99,12 @@ fun PinEntryScaffold(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (subtitleIsError) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    color = if (subtitleIsError) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    textAlign = TextAlign.Center,
                 )
 
                 error?.let {
@@ -108,7 +112,7 @@ fun PinEntryScaffold(
                     Text(
                         text = it,
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
 

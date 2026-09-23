@@ -25,13 +25,13 @@ fun SecureTextInputBoundary(content: @Composable () -> Unit) {
                     outAttributes.imeOptions =
                         outAttributes.imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
                     request.createInputConnection(outAttributes)
-                }
+                },
             )
         }
     }
 
     InterceptPlatformTextInput(
         interceptor = interceptor,
-        content = content
+        content = content,
     )
 }

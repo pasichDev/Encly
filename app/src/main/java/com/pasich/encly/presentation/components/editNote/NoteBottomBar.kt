@@ -13,30 +13,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
-import com.pasich.encly.dynamicBlocks.DynamicButtons
 import com.pasich.encly.presentation.components.VerticalDivider
 import com.pasich.encly.presentation.components.appbar.AppBarIconButton
+import com.pasich.encly.presentation.editor.DynamicButtons
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 
 enum class NoteBottomBarFragment {
-    BLOCKS, MAIN
+    BLOCKS,
+    MAIN,
 }
-
-
 
 @Composable
 fun NoteBottomBar(
+    modifier: Modifier = Modifier,
     viewModel: EditNoteViewModel = hiltViewModel(),
-    simpleEdit: Boolean = false
+    simpleEdit: Boolean = false,
 ) {
-
     var noteBottomBarFragment by rememberSaveable {
         mutableStateOf(
             NoteBottomBarFragment.MAIN,
@@ -44,97 +45,94 @@ fun NoteBottomBar(
     }
     val canUndo by viewModel.canUndo.collectAsState()
     val canRedo by viewModel.canRedo.collectAsState()
+    // Re-evaluated when the block the user works on or the blocks (their order) change.
+    val interactedBlockId by viewModel.interactedBlockId.collectAsState()
+    val blocks = viewModel.blocks.toList()
+    val canMoveUp = remember(interactedBlockId, blocks) { viewModel.canMoveBlock(up = true) }
+    val canMoveDown = remember(interactedBlockId, blocks) { viewModel.canMoveBlock(up = false) }
+    val canDelete = remember(interactedBlockId, blocks) { viewModel.canRemoveInteractedBlock() }
 
     val toMain = {
         noteBottomBarFragment = NoteBottomBarFragment.MAIN
     }
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .imePadding()
             .fillMaxWidth()
             .padding(vertical = 12.dp, horizontal = 0.dp)
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-
             AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.MAIN) {
-
                 AppBarIconButton(
                     icon = R.drawable.ic_undo,
-                    onPressed = { viewModel.undo() },
-                    tint =
-                        if (canUndo) {
-                            MaterialTheme.colorScheme.onSurface
-                        } else {
-                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                        },
-                    enabled = canUndo,
+                    contentDescription = stringResource(R.string.undo),
+                    onPress = if (canUndo) viewModel::undo else null,
                 )
-
             }
             AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.MAIN) {
                 AppBarIconButton(
                     icon = R.drawable.ic_redo,
-                    onPressed = { viewModel.redo() },
-                    tint =
-                        if (canRedo) {
-                            MaterialTheme.colorScheme.onSurface
-                        } else {
-                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                        },
-                    enabled = canRedo,
+                    contentDescription = stringResource(R.string.redo),
+                    onPress = if (canRedo) viewModel::redo else null,
                 )
             }
-
-
 
             AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.BLOCKS) {
                 AppBarIconButton(
                     icon = R.drawable.ic_close,
-                    onPressed = toMain,
+                    contentDescription = stringResource(R.string.close),
+                    onPress = toMain,
                 )
             }
 
-            if (!simpleEdit)
+            if (!simpleEdit) {
                 VerticalDivider(
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     thickness = 1.dp,
-                    height = 20.dp
+                    height = 20.dp,
                 )
-
+            }
 
             AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.MAIN && !simpleEdit) {
                 Row {
-
                     AppBarIconButton(
                         icon = R.drawable.ic_add,
-                        onPressed = { noteBottomBarFragment = NoteBottomBarFragment.BLOCKS },
+                        contentDescription = stringResource(R.string.block_add),
+                        onPress = { noteBottomBarFragment = NoteBottomBarFragment.BLOCKS },
                     )
                     AppBarIconButton(
                         icon = R.drawable.ic_up,
-                        onPressed = { },
-                        margin = 2.dp
+                        contentDescription = stringResource(R.string.block_move_up),
+                        onPress = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
+                        margin = 2.dp,
                     )
                     AppBarIconButton(
                         icon = R.drawable.ic_down,
-                        onPressed = { },
-                        margin = 2.dp
+                        contentDescription = stringResource(R.string.block_move_down),
+                        onPress = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
+                        margin = 2.dp,
                     )
                     AppBarIconButton(
                         icon = R.drawable.ic_trash_all_clean,
-                        onPressed = { },
-                        margin = 2.dp
+                        contentDescription = stringResource(R.string.delete_block),
+                        onPress = if (canDelete) viewModel::removeInteractedBlock else null,
+                        margin = 2.dp,
                     )
                 }
             }
 
             AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.BLOCKS && !simpleEdit) {
-                DynamicButtons(viewModel, toMain)
+                DynamicButtons(
+                    onAddBlock = { type ->
+                        viewModel.addBlock(type)
+                        toMain()
+                    },
+                )
             }
         }
     }
 }
-

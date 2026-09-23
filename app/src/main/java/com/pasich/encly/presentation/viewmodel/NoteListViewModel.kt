@@ -2,20 +2,19 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.core.common.BaseState
-import com.pasich.encly.core.common.UiState
+import com.pasich.encly.core.common.LoadState
+import com.pasich.encly.core.common.asLoadState
+import com.pasich.encly.core.common.reloadWith
+import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
-import com.pasich.encly.domain.repository.TagSelectionRepository
-import com.pasich.encly.domain.usecase.note.GetAllNotesUseCase
-import com.pasich.encly.domain.usecase.note.GetNotesByTagUseCase
+import com.pasich.encly.domain.model.NoteListItem
+import com.pasich.encly.domain.repository.SettingsRepository
+import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import com.pasich.encly.domain.usecase.settings.GetNoteSortOptionUseCase
-import com.pasich.encly.domain.usecase.settings.ToggleNoteSortTagUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,14 +29,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NoteListViewModel @Inject constructor(
-    private val getAllNotesUseCase: GetAllNotesUseCase,
-    private val getNotesByTagUseCase: GetNotesByTagUseCase,
+    private val observeNotesUseCase: ObserveNotesUseCase,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val updateNoteTagUseCase: UpdateNoteTagUseCase,
-    private val tagSelectionRepository: TagSelectionRepository,
-    private val toggleNoteSortTagUseCase: ToggleNoteSortTagUseCase,
-    private val getNoteSortOptionUseCase: GetNoteSortOptionUseCase,
-    private val updateNoteDescriptionUseCase: UpdateNoteDescriptionUseCase
+    private val selectedTagHolder: SelectedTagHolder,
+    private val settingsRepository: SettingsRepository,
+    private val updateNoteDescriptionUseCase: UpdateNoteDescriptionUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NoteListState())
@@ -51,8 +48,8 @@ class NoteListViewModel @Inject constructor(
     private fun observeNotes() {
         viewModelScope.launch {
             combine(
-                tagSelectionRepository.selectedTagFlow.onStart { emit(Tag()) },
-                getNoteSortOptionUseCase()
+                selectedTagHolder.selectedTagFlow.onStart { emit(Tag()) },
+                settingsRepository.getSortNotes,
             ) { tag, sortOption ->
                 NotesQuery(tagId = tag.id, sortOption = sortOption)
             }
@@ -61,53 +58,24 @@ class NoteListViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             selectedTag = query.tagId,
-                            noteSortOption = query.sortOption
+                            noteSortOption = query.sortOption,
                         )
                     }
-                    if (query.tagId == ALL_NOTES_TAG_ID) {
-                        getAllNotesUseCase(query.sortOption)
-                    } else {
-                        getNotesByTagUseCase(query.tagId, query.sortOption)
-                    }
+                    observeNotesUseCase(
+                        tagId = query.tagId.takeUnless { it == ALL_NOTES_TAG_ID },
+                        sortOption = query.sortOption,
+                    ).asLoadState(ListLoadErrors.NOTES)
                 }
-                .collect(::handleUiState)
-        }
-    }
-
-    private fun handleUiState(uiState: UiState<List<NoteWithTag>>) {
-        when (uiState) {
-            is UiState.Loading -> {
-                _state.update {
-                    it.copy(baseState = it.baseState.copy(isLoading = true, error = ""))
+                .collect { load ->
+                    _state.update { it.copy(notesLoad = it.notesLoad.reloadWith(load)) }
                 }
-            }
-
-            is UiState.Success -> {
-                _state.update {
-                    it.copy(
-                        notes = uiState.data.orEmpty(),
-                        baseState = it.baseState.copy(isLoading = false, error = "")
-                    )
-                }
-            }
-
-            is UiState.Error -> {
-                _state.update {
-                    it.copy(
-                        baseState = it.baseState.copy(
-                            isLoading = false,
-                            error = uiState.message.toString()
-                        )
-                    )
-                }
-            }
         }
     }
 
     fun onEvent(event: NoteListEvent) {
         when (event) {
             is NoteListEvent.SelectTag -> {
-                tagSelectionRepository.selectTag(event.tag)
+                selectedTagHolder.selectTag(event.tag)
             }
 
             is NoteListEvent.NoteToTrash -> {
@@ -124,7 +92,7 @@ class NoteListViewModel @Inject constructor(
 
             is NoteListEvent.ToggleNoteSort -> {
                 viewModelScope.launch {
-                    toggleNoteSortTagUseCase.invoke(event.option, viewModelScope)
+                    settingsRepository.setSortNotes(event.option)
                 }
             }
 
@@ -136,10 +104,7 @@ class NoteListViewModel @Inject constructor(
         }
     }
 
-    private data class NotesQuery(
-        val tagId: Long,
-        val sortOption: NoteSortOption
-    )
+    private data class NotesQuery(val tagId: Long, val sortOption: NoteSortOption)
 
     private companion object {
         const val ALL_NOTES_TAG_ID = 0L
@@ -157,6 +122,7 @@ sealed class NoteListEvent {
 data class NoteListState(
     val selectedTag: Long = 0,
     val noteSortOption: NoteSortOption = NoteSortOption.UPDATED_DESC,
-    val notes: List<NoteWithTag> = emptyList(),
-    val baseState: BaseState = BaseState()
-)
+    val notesLoad: LoadState<List<NoteListItem>> = LoadState.Loading,
+) {
+    val notes: List<NoteListItem> get() = notesLoad.valueOrNull().orEmpty()
+}

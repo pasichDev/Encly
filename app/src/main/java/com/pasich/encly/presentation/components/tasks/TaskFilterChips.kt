@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.ChevronUp
@@ -24,80 +26,76 @@ import com.composables.icons.lucide.Lucide
 import com.pasich.encly.presentation.components.BadgeCount
 import com.pasich.encly.presentation.viewmodel.TaskFilter
 
+/** [selectedFilterIds]: ids of the selected chips; filter ids are unique across filter types. */
 @Composable
 fun TaskFilterChips(
     availableFilters: List<TaskFilter>,
-    selectedDateFilter: TaskFilter?,
-    selectedPriorityFilter: TaskFilter?,
-    selectedCompletedFilter: TaskFilter?,
-    onFilterSelected: (TaskFilter) -> Unit,
-    modifier: Modifier = Modifier
+    selectedFilterIds: Set<String>,
+    onFilterSelect: (TaskFilter) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         items(availableFilters) { filter ->
-            val isSelected = when (filter.type) {
-                TaskFilter.Type.DATE -> selectedDateFilter?.id == filter.id
-                TaskFilter.Type.PRIORITY -> selectedPriorityFilter?.id == filter.id
-                TaskFilter.Type.COMPLETED -> selectedCompletedFilter?.id == filter.id
-            }
+            val isSelected = filter.id in selectedFilterIds
 
             FilterChip(
-                onClick = { onFilterSelected(filter) },
-                label = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = filter.label,
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        if (filter.count > 0) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            BadgeCount(
-                                count = filter.count,
-                                backgroundColor = if (isSelected)
-                                    MaterialTheme.colorScheme.onPrimary
-                                else MaterialTheme.colorScheme.primary,
-                                textColor = if (isSelected)
-                                    MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    }
-                },
+                onClick = { onFilterSelect(filter) },
+                label = { FilterChipLabel(filter, isSelected) },
                 selected = isSelected,
                 leadingIcon = filterLeadingIcon(filter),
-
-
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = when (filter.type) {
-                        TaskFilter.Type.PRIORITY -> when (filter.id) {
-                            "priority_high" -> MaterialTheme.colorScheme.errorContainer
-                            "priority_medium" -> MaterialTheme.colorScheme.tertiaryContainer
-                            "priority_low" -> MaterialTheme.colorScheme.surfaceVariant
-                            else -> MaterialTheme.colorScheme.primaryContainer
-                        }
-
-                        else -> MaterialTheme.colorScheme.primaryContainer
-                    },
-                    selectedLabelColor = when (filter.type) {
-                        TaskFilter.Type.PRIORITY -> when (filter.id) {
-                            "priority_high" -> MaterialTheme.colorScheme.onErrorContainer
-                            "priority_medium" -> MaterialTheme.colorScheme.onTertiaryContainer
-                            "priority_low" -> MaterialTheme.colorScheme.onSurfaceVariant
-                            else -> MaterialTheme.colorScheme.onPrimaryContainer
-                        }
-
-                        else -> MaterialTheme.colorScheme.onPrimaryContainer
-                    }
-                )
+                    selectedContainerColor = selectedContainerColor(filter),
+                    selectedLabelColor = selectedLabelColor(filter),
+                ),
             )
         }
     }
+}
+
+@Composable
+private fun FilterChipLabel(filter: TaskFilter, isSelected: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = stringResource(filter.label),
+            style = MaterialTheme.typography.labelMedium,
+        )
+        if (filter.count > 0) {
+            Spacer(modifier = Modifier.width(4.dp))
+            BadgeCount(
+                count = filter.count,
+                backgroundColor = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
+                textColor = if (isSelected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onPrimary
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun selectedContainerColor(filter: TaskFilter): Color = when (filter.id) {
+    "priority_high" -> MaterialTheme.colorScheme.errorContainer
+    "priority_medium" -> MaterialTheme.colorScheme.tertiaryContainer
+    "priority_low" -> MaterialTheme.colorScheme.surfaceVariant
+    else -> MaterialTheme.colorScheme.primaryContainer
+}
+
+@Composable
+private fun selectedLabelColor(filter: TaskFilter): Color = when (filter.id) {
+    "priority_high" -> MaterialTheme.colorScheme.onErrorContainer
+    "priority_medium" -> MaterialTheme.colorScheme.onTertiaryContainer
+    "priority_low" -> MaterialTheme.colorScheme.onSurfaceVariant
+    else -> MaterialTheme.colorScheme.onPrimaryContainer
 }
 
 @Composable
@@ -123,9 +121,7 @@ fun filterLeadingIcon(filter: TaskFilter): (@Composable () -> Unit)? {
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            tint = tint
+            tint = tint,
         )
     }
 }
-
-

@@ -1,54 +1,61 @@
 package com.pasich.encly.domain.usecase
 
+import com.pasich.encly.core.backup.BackupError
+import com.pasich.encly.core.backup.BackupException
+import com.pasich.encly.core.common.suspendRunCatching
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.data.backup.BackupManager
+import com.pasich.encly.data.backup.PendingRestore
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class OnboardingUseCase @Inject constructor(
-    private val securityManager: SecurityManager
+    private val securityManager: SecurityManager,
+    private val backupManager: BackupManager,
+    private val pendingRestore: PendingRestore,
 ) {
-    fun getMnemonicCode(): Result<String> = try {
-        val chars = securityManager.generateMnemonicCode()
-        try {
-            Result.success(String(chars))
-        } finally {
-            SensitiveDataCleaner.clear(chars)
+    /** A new 12-word recovery seed. The caller owns the array and must wipe it. */
+    fun generateRecoverySeed(): Result<CharArray> = suspendRunCatching { securityManager.generateMnemonicCode() }
+
+    /**
+     * Creates a fresh vault. With a [recoverySeed] the user manages recovery themselves and the
+     * vault gets a recovery slot for it; with null it is auto-managed and has none.
+     * [recoverySeed] is wiped in every case.
+     */
+    fun createVault(recoverySeed: CharArray?): Result<Unit> = try {
+        suspendRunCatching {
+            check(securityManager.initializeNewVault(recoverySeed)) { "Failed to initialize the vault" }
         }
-    } catch (e: Exception) {
-        Result.failure(e)
+    } finally {
+        recoverySeed?.let(SensitiveDataCleaner::clear)
     }
 
     /**
-     * Creates a fresh v2 vault.
+     * First-run "Restore from backup". Decrypts and validates [file] with the typed recovery
+     * phrase first, so a wrong phrase or a damaged file changes nothing. Only then is the new
+     * vault created, with that same phrase as its recovery seed (future backups open with the
+     * same 12 words), and the payload staged in memory: it is written once the mandatory PIN
+     * setup has opened the vault (see [PendingRestore.apply]).
      *
-     * Existing call sites pass equal arrays for USER_MANAGED and two unrelated generated arrays
-     * for AUTO_MANAGED. Equality is used only to choose whether a recovery slot is created.
+     * Fails with a [BackupException]; [phraseInput] is wiped in every case.
      */
-    fun saveKeysStore(
-        target: CharArray = securityManager.generateMnemonicCode(),
-        fake: CharArray = securityManager.generateMnemonicCode()
-    ): Result<String> {
-        val userManaged = target.contentEquals(fake)
+    fun restoreFromBackup(file: ByteArray, phraseInput: CharArray): Result<Unit> {
+        val phrase = backupManager.normalizeRecoveryPhrase(phraseInput)
+        SensitiveDataCleaner.clear(phraseInput)
         return try {
-            val recoverySeed = if (userManaged) target else null
-            if (securityManager.initializeNewVault(recoverySeed)) {
-                Result.success("Okay")
-            } else {
-                Result.failure(IllegalStateException("Failed to initialize v2 vault"))
+            val payload = backupManager.decrypt(file, phrase)
+            pendingRestore.clear()
+            if (!securityManager.initializeNewVault(phrase)) {
+                throw BackupException(BackupError.IO)
             }
-        } catch (e: Exception) {
+            pendingRestore.stage(payload)
+            Result.success(Unit)
+        } catch (e: BackupException) {
             Result.failure(e)
         } finally {
-            SensitiveDataCleaner.clear(target)
-            if (fake !== target) SensitiveDataCleaner.clear(fake)
+            SensitiveDataCleaner.clear(phrase)
         }
     }
-
-    /**
-     * Deliberately does not persist completion. First-run setup becomes durable only after the
-     * mandatory PIN slot exists and SQLCipher opens successfully in finishInitialSetup().
-     */
-    fun completeOnboarding() = Unit
 }

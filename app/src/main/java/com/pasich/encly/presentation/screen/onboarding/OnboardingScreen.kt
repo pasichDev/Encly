@@ -45,7 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -53,68 +53,89 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.presentation.screen.onboarding.slides.CompletionSlide
+import com.pasich.encly.presentation.screen.onboarding.slides.RestoreBackupSlide
 import com.pasich.encly.presentation.screen.onboarding.slides.SecurityChoiceSlide
 import com.pasich.encly.presentation.screen.onboarding.slides.SeedPhraseActions
 import com.pasich.encly.presentation.screen.onboarding.slides.SeedPhraseDisplaySlide
 import com.pasich.encly.presentation.screen.onboarding.slides.WelcomeSlide
+import com.pasich.encly.presentation.screen.onboarding.slides.rememberBackupFilePicker
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.SecurityType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
-    onComplete: () -> Unit, viewModel: OnboardingViewModel = hiltViewModel()
+    onComplete: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
+    val pickBackupFile = rememberBackupFilePicker(viewModel::onRestoreFilePicked, viewModel::onRestorePickerUnavailable)
 
     // If onboarding is already complete
+    val currentOnComplete by rememberUpdatedState(onComplete)
     LaunchedEffect(uiState.isComplete) {
         if (uiState.isComplete) {
-            onComplete()
+            currentOnComplete()
         }
     }
 
     val infiniteTransition = rememberInfiniteTransition()
     val offset by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 1000f, animationSpec = infiniteRepeatable(
-            animation = tween(10000, easing = LinearEasing), repeatMode = RepeatMode.Reverse
-        )
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(10000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
     )
     Scaffold(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(
                 Brush.linearGradient(
                     colors = listOf(
                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
                         MaterialTheme.colorScheme.background.copy(alpha = 0.3f),
-                        MaterialTheme.colorScheme.surface
-                    ), start = Offset(offset, offset), end = Offset(offset + 500f, offset + 800f)
-                )
-            )) { padding ->
+                        MaterialTheme.colorScheme.surface,
+                    ),
+                    start = Offset(offset, offset),
+                    end = Offset(offset + 500f, offset + 800f),
+                ),
+            ),
+    ) { padding ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
         ) {
             // Animated progress bar
             val totalPages = when {
                 uiState.isComplete -> 1
-                uiState.securityType == SecurityType.USER_MANAGED -> 4 // welcome + security + seed phrase + completion
-                uiState.securityType != null -> 3 // welcome + security + completion (for AUTO)
+
+                uiState.isRestoring -> 3
+
+                // welcome + security + restore
+                uiState.securityType == SecurityType.USER_MANAGED -> 4
+
+                // welcome + security + seed phrase + completion
+                uiState.securityType != null -> 3
+
+                // welcome + security + completion (for AUTO)
                 else -> 2 // welcome + security choice (not chosen yet)
             }
             AnimatedProgressBar(
                 currentPage = currentPage,
                 totalPages = totalPages,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
             )
 
             // Slide content
@@ -126,13 +147,13 @@ fun OnboardingScreen(
                 transitionSpec = {
                     slideInHorizontally(
                         initialOffsetX = { if (targetState > initialState) it else -it },
-                        animationSpec = tween(500, easing = FastOutSlowInEasing)
+                        animationSpec = tween(500, easing = FastOutSlowInEasing),
                     ) + fadeIn(animationSpec = tween(300, 200)) togetherWith slideOutHorizontally(
                         targetOffsetX = { if (targetState > initialState) -it else it },
-                        animationSpec = tween(500, easing = FastOutSlowInEasing)
+                        animationSpec = tween(500, easing = FastOutSlowInEasing),
                     ) + fadeOut(animationSpec = tween(300))
                 },
-                label = "onboarding_pages"
+                label = "onboarding_pages",
             ) { page ->
                 when {
                     // If the process is already complete, show nothing
@@ -140,8 +161,7 @@ fun OnboardingScreen(
 
                     // First page - Welcome slide
                     page == 0 -> {
-                        WelcomeSlide(
-                            onNext = { viewModel.nextPage() })
+                        WelcomeSlide(onNext = { viewModel.nextPage() })
                     }
 
                     // Second page - security option choice
@@ -150,6 +170,17 @@ fun OnboardingScreen(
                             onCreateSeedPhrase = { viewModel.navigateToSeedPhraseCreation() },
                             // skipSecuritySetup advances the page itself once setup completes.
                             onSkipSecurity = { viewModel.skipSecuritySetup() },
+                            onRestoreBackup = { viewModel.startRestore() },
+                        )
+                    }
+
+                    // Third page - restore an encrypted backup instead of starting empty
+                    page == 2 && uiState.isRestoring -> {
+                        RestoreBackupSlide(
+                            uiState = uiState,
+                            onPickFile = pickBackupFile,
+                            onRestore = viewModel::restoreBackup,
+                            onCancel = viewModel::cancelRestore,
                         )
                     }
 
@@ -162,8 +193,8 @@ fun OnboardingScreen(
                                 onStartVerification = viewModel::startSeedPhraseVerification,
                                 onUpdateAnswer = viewModel::updateUserAnswer,
                                 onCompleteVerification = viewModel::completeVerification,
-                                onCancelVerification = viewModel::cancelVerification
-                            )
+                                onCancelVerification = viewModel::cancelVerification,
+                            ),
                         )
                     }
 
@@ -173,7 +204,8 @@ fun OnboardingScreen(
                             onComplete = {
                                 // Navigation is single-sourced by the isComplete LaunchedEffect.
                                 viewModel.completeOnboarding()
-                            }, securityType = uiState.securityType
+                            },
+                            securityType = uiState.securityType,
                         )
                     }
 
@@ -183,7 +215,8 @@ fun OnboardingScreen(
                             onComplete = {
                                 // Navigation is single-sourced by the isComplete LaunchedEffect.
                                 viewModel.completeOnboarding()
-                            }, securityType = uiState.securityType
+                            },
+                            securityType = uiState.securityType,
                         )
                     }
                 }
@@ -191,37 +224,38 @@ fun OnboardingScreen(
 
             // Error display
             AnimatedVisibility(
-                visible = uiState.error != null, enter = slideInVertically(
-                    initialOffsetY = { it }, animationSpec = tween(300)
-                ) + fadeIn(), exit = slideOutVertically(
-                    targetOffsetY = { it }, animationSpec = tween(300)
-                ) + fadeOut(), modifier = Modifier.padding(16.dp)
+                visible = uiState.error != null,
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(300),
+                ) + fadeIn(),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(300),
+                ) + fadeOut(),
+                modifier = Modifier.padding(16.dp),
             ) {
-                ErrorCard(
-                    error = uiState.error ?: "", onDismiss = { viewModel.clearError() })
+                ErrorCard(error = uiState.error?.asString().orEmpty(), onDismiss = { viewModel.clearError() })
             }
         }
 
         // Decorative elements
         DecorativeElements()
     }
-
 }
 
-
 @Composable
-private fun AnimatedProgressBar(
-    currentPage: Int, totalPages: Int, modifier: Modifier = Modifier
-) {
+private fun AnimatedProgressBar(currentPage: Int, totalPages: Int, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         repeat(totalPages) { index ->
             val isActive = index <= currentPage
             val animatedWidth by animateFloatAsState(
                 targetValue = if (isActive) 1f else 0.3f,
                 animationSpec = tween(400, easing = FastOutSlowInEasing),
-                label = "progress_width"
+                label = "progress_width",
             )
 
             Box(
@@ -230,43 +264,46 @@ private fun AnimatedProgressBar(
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(
-                        if (isActive) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    )
+                        if (isActive) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        },
+                    ),
             )
         }
     }
 }
 
 @Composable
-private fun ErrorCard(
-    error: String, onDismiss: () -> Unit
-) {
+private fun ErrorCard(error: String, onDismiss: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+        ),
     ) {
         Row(
-            modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(R.drawable.fingerprint_dialog_error),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer
+                tint = MaterialTheme.colorScheme.onErrorContainer,
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = error,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             IconButton(onClick = onDismiss) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Закрити",
-                    tint = MaterialTheme.colorScheme.onErrorContainer
+                    contentDescription = stringResource(R.string.close),
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
         }
@@ -281,29 +318,35 @@ private fun DecorativeElements() {
     // Floating circles
     repeat(3) { index ->
         val offsetY by infiniteTransition.animateFloat(
-            initialValue = 0f, targetValue = 30f, animationSpec = infiniteRepeatable(
+            initialValue = 0f,
+            targetValue = 30f,
+            animationSpec = infiniteRepeatable(
                 animation = tween((3000 + index * 500), easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            ), label = "float_$index"
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "float_$index",
         )
 
         val alpha by infiniteTransition.animateFloat(
-            initialValue = 0.1f, targetValue = 0.3f, animationSpec = infiniteRepeatable(
+            initialValue = 0.1f,
+            targetValue = 0.3f,
+            animationSpec = infiniteRepeatable(
                 animation = tween((2000 + index * 300), easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            ), label = "alpha_$index"
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "alpha_$index",
         )
 
         Box(
             modifier = Modifier
                 .offset(
-                    x = (50 + index * 120).dp, y = (100 + index * 150 + offsetY).dp
+                    x = (50 + index * 120).dp,
+                    y = (100 + index * 150 + offsetY).dp,
                 )
                 .size((40 + index * 20).dp)
                 .alpha(alpha)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
         )
     }
 }
-

@@ -42,66 +42,65 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.BadgeAlert
 import com.composables.icons.lucide.Key
 import com.composables.icons.lucide.Lucide
+import com.pasich.encly.R
 import com.pasich.encly.presentation.screen.onboarding.AnimatedButton
 import com.pasich.encly.presentation.screen.onboarding.AnimatedText
 import com.pasich.encly.presentation.screen.onboarding.SlideLayout
 import kotlinx.coroutines.delay
 
 @Composable
-fun SeedPhraseExplanationSlide(
-    onNext: () -> Unit,
-    onBack: () -> Unit
-) {
-    SlideLayout {
+fun SeedPhraseExplanationSlide(onNext: () -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    SlideLayout(modifier = modifier) {
         // Animated title
         AnimatedText(
-            text = "🔐 Що таке сід-фраза?",
+            text = stringResource(R.string.seed_explain_title),
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
             textAlign = TextAlign.Center,
-            delay = 0
+            delay = 0,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         AnimatedText(
-            text = "Сід-фраза — це ваш головний ключ до всіх даних. Вона складається з 12 слів і забезпечує максимальну безпеку.",
+            text = stringResource(R.string.seed_explain_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            delay = 200
+            delay = 200,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // Animated explanation cards
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             AnimatedFeatureCard(
                 icon = Lucide.Key,
-                title = "Максимальна безпека",
-                description = "Ваші дані захищені криптографією військового рівня",
-                delay = 400
+                title = stringResource(R.string.seed_explain_security_title),
+                description = stringResource(R.string.seed_explain_security_desc),
+                delay = 400,
             )
 
             AnimatedFeatureCard(
                 icon = Lucide.Key,
-                title = "Повний контроль",
-                description = "Тільки ви маєте доступ до своїх даних",
-                delay = 600
+                title = stringResource(R.string.seed_explain_control_title),
+                description = stringResource(R.string.seed_explain_control_desc),
+                delay = 600,
             )
 
             AnimatedFeatureCard(
                 icon = Lucide.Key,
-                title = "Легке відновлення",
-                description = "За допомогою сід-фрази можна відновити дані на будь-якому пристрої",
-                delay = 800
+                title = stringResource(R.string.seed_explain_recovery_title),
+                description = stringResource(R.string.seed_explain_recovery_desc),
+                delay = 800,
             )
         }
 
@@ -115,33 +114,28 @@ fun SeedPhraseExplanationSlide(
         // Navigation buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             AnimatedButton(
-                text = "Назад",
+                text = stringResource(R.string.back),
                 onClick = onBack,
                 delay = 1400,
-                isSecondary = true
+                isSecondary = true,
             )
 
             AnimatedButton(
-                text = "Створити сід-фразу",
+                text = stringResource(R.string.seed_explain_create),
                 onClick = onNext,
                 delay = 1500,
                 modifier = Modifier.fillMaxWidth(),
-                icon = Lucide.Key
+                icon = Lucide.Key,
             )
         }
     }
 }
 
 @Composable
-private fun AnimatedFeatureCard(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    delay: Long
-) {
+private fun AnimatedFeatureCard(icon: ImageVector, title: String, description: String, delay: Long) {
     var visible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -153,22 +147,22 @@ private fun AnimatedFeatureCard(
         visible = visible,
         enter = slideInHorizontally(
             initialOffsetX = { it / 2 },
-            animationSpec = tween(500, easing = FastOutSlowInEasing)
-        ) + fadeIn(animationSpec = tween(500))
+            animationSpec = tween(500, easing = FastOutSlowInEasing),
+        ) + fadeIn(animationSpec = tween(500)),
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             ),
             shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Icon with a glow effect
                 val infiniteTransition = rememberInfiniteTransition(label = "glow")
@@ -177,14 +171,14 @@ private fun AnimatedFeatureCard(
                     targetValue = 0.6f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(1500, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
+                        repeatMode = RepeatMode.Reverse,
                     ),
-                    label = "glow_alpha"
+                    label = "glow_alpha",
                 )
 
                 Box(
                     modifier = Modifier.size(48.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     // Glow effect
                     Box(
@@ -196,10 +190,10 @@ private fun AnimatedFeatureCard(
                                 Brush.radialGradient(
                                     colors = listOf(
                                         MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
+                                        Color.Transparent,
+                                    ),
+                                ),
+                            ),
                     )
 
                     // Icon
@@ -207,7 +201,7 @@ private fun AnimatedFeatureCard(
                         imageVector = icon,
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                 }
 
@@ -218,7 +212,7 @@ private fun AnimatedFeatureCard(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -226,7 +220,7 @@ private fun AnimatedFeatureCard(
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -247,33 +241,33 @@ private fun AnimatedWarningCard() {
         visible = visible,
         enter = slideInVertically(
             initialOffsetY = { it / 2 },
-            animationSpec = tween(600)
-        ) + fadeIn(animationSpec = tween(600))
+            animationSpec = tween(600),
+        ) + fadeIn(animationSpec = tween(600)),
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f),
             ),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = Lucide.BadgeAlert,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = "Важливо: втрата сід-фрази означає втрату всіх даних!",
+                    text = stringResource(R.string.seed_explain_warning),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
         }

@@ -33,7 +33,7 @@ fun BadgeCount(
             .defaultMinSize(minWidth = 16.dp, minHeight = 16.dp)
             .background(backgroundColor, shape = CircleShape)
             .padding(horizontal = 6.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = displayText,
@@ -41,7 +41,7 @@ fun BadgeCount(
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            maxLines = 1
+            maxLines = 1,
         )
     }
 }

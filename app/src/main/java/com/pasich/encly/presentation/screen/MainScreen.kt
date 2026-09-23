@@ -33,10 +33,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
+import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.presentation.components.HomeTaskWidget
 import com.pasich.encly.presentation.components.appbar.HomeBar
@@ -49,13 +51,12 @@ import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun MainRootScreen(
-    navController: NavHostController
-) {
+fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     DismissibleNavigationDrawer(
+        modifier = modifier,
         drawerState = drawerState,
         gesturesEnabled = true,
         drawerContent = {
@@ -75,12 +76,13 @@ fun MainRootScreen(
                         .setLaunchSingleTop(true)
                         .build()
                     navController.navigate("${NavRoutes.EditNoteRoute.name}/$noteId", navOptions)
-                }
+                },
             )
-        }
+        },
     ) {
         MainScreen(
-            drawerState = drawerState, navController = navController,
+            drawerState = drawerState,
+            navController = navController,
             modifier = Modifier.clickable(
                 enabled = drawerState.isOpen,
                 onClick = {
@@ -89,8 +91,8 @@ fun MainRootScreen(
                             drawerState.close()
                         }
                     }
-                }
-            )
+                },
+            ),
         )
     }
 }
@@ -99,19 +101,18 @@ fun MainRootScreen(
 @Composable
 fun MainScreen(
     navController: NavHostController,
+    drawerState: DrawerState,
+    modifier: Modifier = Modifier,
     mainListStateViewModel: MainListStateViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
-    drawerState: DrawerState, modifier: Modifier
+    noteListViewModel: NoteListViewModel = hiltViewModel(),
 ) {
-
     val isGrid by mainListStateViewModel.isGridNoteList.collectAsState()
     val showTasks by settingsViewModel.showTasksFlow.collectAsState()
 
     // State restoration for scroll states
     val listScrollState = rememberLazyListState()
     val gridScrollState = rememberLazyStaggeredGridState()
-
-    val noteListViewModel: NoteListViewModel = hiltViewModel()
 
     val sheetState =
         rememberModalBottomSheetState(
@@ -132,7 +133,7 @@ fun MainScreen(
             .build()
         navController.navigate(
             "${NavRoutes.EditNoteRoute.name}/$noteId$additionalParams",
-            navOptions
+            navOptions,
         )
     }
 
@@ -159,31 +160,33 @@ fun MainScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    val addTagParam = if (noteListViewModel.state.value.selectedTag != 0L)
+                    val addTagParam = if (noteListViewModel.state.value.selectedTag != 0L) {
                         "?addTag=${noteListViewModel.state.value.selectedTag}"
-                    else ""
+                    } else {
+                        ""
+                    }
                     navigateToEditNote(-1, addTagParam)
                 },
                 contentColor = Color.White,
                 containerColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .padding(16.dp)
-                    .size(56.dp)
+                    .size(56.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add",
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    contentDescription = stringResource(R.string.note_add),
+                    tint = MaterialTheme.colorScheme.onPrimary,
                 )
             }
-        }) { padding ->
+        },
+    ) { padding ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
         ) {
-
             HomeBar(drawerState, isGrid = isGrid, onToggleView = {
                 mainListStateViewModel.updateGridNoteList()
             }, showSortDialog = {
@@ -195,10 +198,10 @@ fun MainScreen(
                 derivedStateOf {
                     if (isGrid) {
                         gridScrollState.firstVisibleItemIndex == 0 &&
-                                gridScrollState.firstVisibleItemScrollOffset == 0
+                            gridScrollState.firstVisibleItemScrollOffset == 0
                     } else {
                         listScrollState.firstVisibleItemIndex == 0 &&
-                                listScrollState.firstVisibleItemScrollOffset == 0
+                            listScrollState.firstVisibleItemScrollOffset == 0
                     }
                 }
             }
@@ -206,7 +209,7 @@ fun MainScreen(
             Spacer(Modifier.height(10.dp))
             AnimatedVisibility(visible = isVisible.value && showTasks) {
                 HomeTaskWidget(
-                    onTasksClick = { navigateToTasks() }
+                    onTasksClick = { navigateToTasks() },
                 )
             }
             AnimatedVisibility(visible = isVisible.value && showTasks) {
@@ -215,14 +218,15 @@ fun MainScreen(
             TagsList()
 
             NotesList(
-                isGrid, listScrollState, gridScrollState,
+                isGrid,
+                listScrollState,
+                gridScrollState,
                 onItemClick = { note ->
                     navigateToEditNote(note.id, "")
                 },
                 onSecondActionClick = { note ->
                     navigateToEditNote(-1, "?copySource=${note.id}")
                 },
-                noteListViewModel = noteListViewModel
             )
         }
     }

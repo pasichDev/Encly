@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -13,13 +14,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -36,8 +37,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+/**
+ * AppCompatActivity (a FragmentActivity, as BiometricPrompt needs) so the in-app language set
+ * through AppCompatDelegate.setApplicationLocales is applied on every API level, not only on
+ * Android 13+ where the framework does it.
+ */
 @AndroidEntryPoint
-class MainActivity : FragmentActivity() {
+class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var securityManager: SecurityManager
@@ -53,7 +59,7 @@ class MainActivity : FragmentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        actionBar?.hide()
+        supportActionBar?.hide()
 
         // Resolve the startup state off the main thread (Keystore/crypto/prefs reads);
         // keep the splash visible until it's ready.
@@ -77,10 +83,16 @@ class MainActivity : FragmentActivity() {
                 InitialStatus.NO -> return@setContent
             }
 
-            // Auto re-lock: when the app was backgrounded and re-locked, route back to the
-            // lock screen. collectAsStateWithLifecycle defers the emission until the app is
-            // foregrounded again, so navigation happens on return, not while in the background.
-            val locked by sessionLockManager.locked.collectAsStateWithLifecycle()
+            // Auto re-lock. Collected without a lifecycle gate so the value is already true in
+            // the first frame after returning from the background. That frame still composes
+            // the pre-lock destination (e.g. an open note), so the shield below covers the
+            // NavHost until the lock screen is the only visible entry. Navigation itself runs
+            // after the frame, from this effect.
+            val locked by sessionLockManager.locked.collectAsState()
+            val visibleEntries by navController.visibleEntries.collectAsState()
+            val shielded = locked && visibleEntries.any {
+                it.destination.route != NavRoutes.LockRoute.name
+            }
             LaunchedEffect(locked) {
                 if (locked) {
                     navController.navigate(NavRoutes.LockRoute.name) {
@@ -96,7 +108,8 @@ class MainActivity : FragmentActivity() {
 
             App(
                 navController = navController,
-                startDestination = destination.name
+                startDestination = destination.name,
+                shielded = shielded,
             )
         }
     }
@@ -105,7 +118,9 @@ class MainActivity : FragmentActivity() {
 @Composable
 fun App(
     navController: NavHostController,
-    startDestination: String
+    startDestination: String,
+    modifier: Modifier = Modifier,
+    shielded: Boolean = false,
 ) {
     AppTheme {
         SecureTextInputBoundary {
@@ -115,21 +130,42 @@ fun App(
             // content sits below the bar with no colour seam. windowInsetsPadding also
             // consumes the inset so Scaffold screens don't double-pad.
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.background),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .windowInsetsPadding(WindowInsets.statusBars),
                 ) {
                     AppNavHost(
                         navController = navController,
-                        startDestination = startDestination
+                        startDestination = startDestination,
                     )
                 }
+                if (shielded) LockShield()
             }
         }
     }
+}
+
+/**
+ * Opaque, input-swallowing cover drawn above the NavHost while a re-locked session is still
+ * composing protected screens. Plaintext from before the lock is never drawn or tappable.
+ */
+@Composable
+private fun LockShield() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent().changes.forEach { it.consume() }
+                    }
+                }
+            },
+    )
 }

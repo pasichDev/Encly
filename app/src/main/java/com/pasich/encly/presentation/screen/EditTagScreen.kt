@@ -1,8 +1,7 @@
 package com.pasich.encly.presentation.screen
 
-import android.widget.Toast
-
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -48,12 +47,13 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,8 +63,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
@@ -79,18 +79,25 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Tag
+import com.pasich.encly.presentation.components.EmptyStateWidget
 import com.pasich.encly.presentation.dialogs.RequestDeleteTagsDialog
 import com.pasich.encly.presentation.viewmodel.TagListEvent
-import com.pasich.encly.presentation.viewmodel.TagOperationFailure
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.presentation.viewmodel.TagOperationFailure
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 enum class TagEditTypeAction {
-    EDIT, VISIBLE, DELETE
+    EDIT,
+    VISIBLE,
+    DELETE,
 }
 
 // Focus management state
@@ -99,16 +106,16 @@ private fun rememberFocusManager() = LocalFocusManager.current
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditTagScreen(navController: NavHostController) {
+fun EditTagScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val focusManager = rememberFocusManager()
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
+                indication = null,
             ) {
                 // Clear focus when clicking outside
                 focusManager.clearFocus()
@@ -123,39 +130,40 @@ fun EditTagScreen(navController: NavHostController) {
                         keyboardController?.hide()
                         navController.popBackStack()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
             )
         },
     ) { padding ->
         ListTagsEdit(
             modifier = Modifier.padding(padding),
             globalFocusManager = focusManager,
-            keyboardController = keyboardController
+            keyboardController = keyboardController,
         )
     }
 }
 
-
 @OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun ListTagsEdit(
-    modifier: Modifier,
-    viewModel: TagListViewModel = hiltViewModel(),
+private fun ListTagsEdit(
     globalFocusManager: FocusManager,
-    keyboardController: SoftwareKeyboardController?
+    keyboardController: SoftwareKeyboardController?,
+    modifier: Modifier = Modifier,
+    viewModel: TagListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     var tagDelete by remember { mutableStateOf(Tag()) }
     val listState = rememberLazyListState()
-    rememberCoroutineScope()
 
     // Track currently focused item to prevent multiple focuses
     var currentlyFocusedItemId by remember { mutableStateOf<Long?>(null) }
@@ -180,47 +188,59 @@ fun ListTagsEdit(
         }
     }
 
+    val failure = (state.tagsLoad as? LoadState.Failed)?.error
+    AnimatedVisibility(visible = failure != null, enter = fadeIn(), exit = fadeOut()) {
+        // A failed read is shown as an error, never as "no tags" with an editor over it.
+        EmptyStateWidget(
+            iconRes = R.drawable.ic_tags,
+            modifier = modifier,
+            title = failure?.title?.asString(),
+            description = failure?.message?.asString(),
+        )
+    }
+
     AnimatedVisibility(
-        visible = state.baseState.isLoading,
+        visible = state.tagsLoad is LoadState.Loading,
         enter = fadeIn(initialAlpha = 0.3f),
-        exit = fadeOut(targetAlpha = 0f)
+        exit = fadeOut(targetAlpha = 0f),
     ) {
         Box(
-            modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator()
         }
     }
 
     AnimatedVisibility(
-        visible = !state.baseState.isLoading,
+        visible = state.tagsLoad is LoadState.Ready,
         enter = fadeIn(
             initialAlpha = 0f,
             animationSpec = tween(
                 durationMillis = 300,
                 delayMillis = 100,
-                easing = FastOutSlowInEasing
-            )
+                easing = FastOutSlowInEasing,
+            ),
         ),
         exit = fadeOut(
             animationSpec = tween(
                 durationMillis = 150,
-                easing = LinearEasing
-            )
-        )
+                easing = LinearEasing,
+            ),
+        ),
     ) {
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = null
+                    indication = null,
                 ) {
                     // Clear focus when clicking empty space
                     globalFocusManager.clearFocus()
                     keyboardController?.hide()
                     currentlyFocusedItemId = null
-                }
+                },
         ) {
             NewTagItem(
                 item = "",
@@ -231,7 +251,7 @@ fun ListTagsEdit(
                                 currentlyFocusedItemId = null
                             }
                             onResult(success)
-                        }
+                        },
                     )
                 },
                 globalFocusManager = globalFocusManager,
@@ -240,7 +260,7 @@ fun ListTagsEdit(
                     if (isFocused) {
                         currentlyFocusedItemId = -1 // Special ID for new tag item
                     }
-                }
+                },
             )
 
             val hapticFeedback = LocalHapticFeedback.current
@@ -256,7 +276,7 @@ fun ListTagsEdit(
 
             LazyColumn(
                 state = listState,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
                 itemsIndexed(state.listTags, key = { _, item -> item.id }) { index, item ->
                     ReorderableItem(reorderableLazyListState, key = item.id) { isDragging ->
@@ -290,7 +310,7 @@ fun ListTagsEdit(
                                     currentlyFocusedItemId = item.id
                                 }
                             },
-                            shouldPreventFocus = currentlyFocusedItemId != null && currentlyFocusedItemId != item.id
+                            shouldPreventFocus = currentlyFocusedItemId != null && currentlyFocusedItemId != item.id,
                         )
                     }
                 }
@@ -304,27 +324,28 @@ fun ListTagsEdit(
                 viewModel.onEvent(TagListEvent.DeleteTag(tagDelete))
                 tagDelete = Tag()
                 showDialog = false
-            })
+            },
+        )
     }
 }
 
-
 @Suppress("LongMethod") // Existing Material text-field layout; persistence result handling is local.
 @Composable
-fun NewTagItem(
+private fun NewTagItem(
     item: String,
     onSave: (Tag, (Boolean) -> Unit) -> Unit,
     globalFocusManager: FocusManager,
     keyboardController: SoftwareKeyboardController?,
-    onFocusChange: (Boolean) -> Unit
+    onFocusChange: (Boolean) -> Unit,
 ) {
     var text by remember { mutableStateOf(TextFieldValue(item)) }
     val focusRequester = remember { FocusRequester() }
     var isTextFieldEnabled by remember { mutableStateOf(false) }
+    val currentOnFocusChange by rememberUpdatedState(onFocusChange)
 
     // Handle focus changes
     LaunchedEffect(isTextFieldEnabled) {
-        onFocusChange(isTextFieldEnabled)
+        currentOnFocusChange(isTextFieldEnabled)
     }
 
     fun handleSave() {
@@ -353,26 +374,33 @@ fun NewTagItem(
         keyboardController?.hide()
     }
 
+    // A typed but unsaved tag name is persisted before the background re-lock drops this
+    // screen.
+    SaveOnPause { if (text.text.isNotBlank()) handleSave() }
+
     Column {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(
-                    if (isTextFieldEnabled) MaterialTheme.colorScheme.outlineVariant
-                    else Color.Transparent
-                )
+                    if (isTextFieldEnabled) {
+                        MaterialTheme.colorScheme.outlineVariant
+                    } else {
+                        Color.Transparent
+                    },
+                ),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             TextField(
                 value = text,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.Done,
                 ),
                 keyboardActions = KeyboardActions(onDone = { handleSave() }),
                 visualTransformation = VisualTransformation.None,
@@ -393,7 +421,7 @@ fun NewTagItem(
                             if (isTextFieldEnabled) {
                                 Icon(
                                     Icons.Outlined.Close,
-                                    contentDescription = "Cancel New",
+                                    contentDescription = stringResource(R.string.cancel),
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier
                                         .size(24.dp)
@@ -402,7 +430,7 @@ fun NewTagItem(
                             } else {
                                 Icon(
                                     Icons.Outlined.Add,
-                                    contentDescription = "Add Tag",
+                                    contentDescription = stringResource(R.string.create_new_tag),
                                     modifier = Modifier
                                         .size(24.dp)
                                         .padding(0.dp),
@@ -431,7 +459,7 @@ fun NewTagItem(
                 maxLines = 1,
                 singleLine = true,
                 textStyle = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 ),
                 label = { Text(stringResource(R.string.create_new_tag)) },
                 trailingIcon = {
@@ -439,14 +467,15 @@ fun NewTagItem(
                         IconButton(onClick = { handleSave() }) {
                             Icon(
                                 Icons.Filled.Check,
-                                contentDescription = "Save",
-                                tint = MaterialTheme.colorScheme.primary
+                                contentDescription = stringResource(R.string.save),
+                                tint = MaterialTheme.colorScheme.primary,
                             )
                         }
                     } else {
                         Spacer(modifier = Modifier.width(48.dp))
                     }
-                })
+                },
+            )
             Spacer(modifier = Modifier.width(20.dp))
         }
 
@@ -462,28 +491,30 @@ fun NewTagItem(
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(
-                    if (isTextFieldEnabled) MaterialTheme.colorScheme.outlineVariant
-                    else Color.Transparent
-                )
+                    if (isTextFieldEnabled) {
+                        MaterialTheme.colorScheme.outlineVariant
+                    } else {
+                        Color.Transparent
+                    },
+                ),
         )
     }
 }
 
-
 @Composable
-fun TagEditItem(
+private fun TagEditItem(
     item: Tag,
     onAction: (TagEditTypeAction, Tag) -> Unit,
-    isDragging: Boolean = false,
     globalFocusManager: FocusManager,
     keyboardController: SoftwareKeyboardController?,
     onFocusChange: (Boolean) -> Unit,
-    shouldPreventFocus: Boolean
+    shouldPreventFocus: Boolean,
+    isDragging: Boolean = false,
 ) {
     var text by remember { mutableStateOf(TextFieldValue(item.nameTag)) }
     val focusRequester = remember { FocusRequester() }
     var isTextFieldEnabled by remember { mutableStateOf(false) }
-    rememberCoroutineScope()
+    val currentOnFocusChange by rememberUpdatedState(onFocusChange)
 
     // Sync text with item changes
     LaunchedEffect(item.nameTag) {
@@ -492,7 +523,7 @@ fun TagEditItem(
 
     // Handle focus changes
     LaunchedEffect(isTextFieldEnabled) {
-        onFocusChange(isTextFieldEnabled)
+        currentOnFocusChange(isTextFieldEnabled)
     }
 
     // Prevent focus if another item is focused
@@ -508,12 +539,18 @@ fun TagEditItem(
         if (text.text.isNotBlank()) {
             onAction(
                 TagEditTypeAction.EDIT,
-                item.copy(nameTag = text.text.trim())
+                item.copy(nameTag = text.text.trim()),
             )
         }
         isTextFieldEnabled = false
         globalFocusManager.clearFocus()
         keyboardController?.hide()
+    }
+
+    SaveOnPause {
+        if (isTextFieldEnabled && text.text.isNotBlank() && text.text.trim() != item.nameTag) {
+            handleSave()
+        }
     }
 
     fun handleDelete() {
@@ -535,19 +572,25 @@ fun TagEditItem(
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(
-                    if (isTextFieldEnabled) MaterialTheme.colorScheme.outlineVariant
-                    else Color.Transparent
-                )
+                    if (isTextFieldEnabled) {
+                        MaterialTheme.colorScheme.outlineVariant
+                    } else {
+                        Color.Transparent
+                    },
+                ),
         )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    if (isDragging) MaterialTheme.colorScheme.surfaceVariant
-                    else Color.Transparent
+                    if (isDragging) {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    } else {
+                        Color.Transparent
+                    },
                 ),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (isTextFieldEnabled) {
                 TextField(
@@ -555,7 +598,7 @@ fun TagEditItem(
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.None,
                         keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
+                        imeAction = ImeAction.Done,
                     ),
                     keyboardActions = KeyboardActions(onDone = { handleSave() }),
                     visualTransformation = VisualTransformation.None,
@@ -567,7 +610,7 @@ fun TagEditItem(
                         IconButton(onClick = { handleDelete() }) {
                             Icon(
                                 Icons.Outlined.Delete,
-                                contentDescription = "Delete Tag",
+                                contentDescription = stringResource(R.string.delete_tag),
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier
                                     .size(24.dp)
@@ -592,38 +635,38 @@ fun TagEditItem(
                         disabledIndicatorColor = Color.Transparent,
                         disabledTrailingIconColor = MaterialTheme.colorScheme.onBackground,
                         disabledLeadingIconColor = MaterialTheme.colorScheme.onBackground,
-                        disabledTextColor = MaterialTheme.colorScheme.onBackground
+                        disabledTextColor = MaterialTheme.colorScheme.onBackground,
                     ),
                     maxLines = 1,
                     singleLine = true,
                     textStyle = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     ),
                     trailingIcon = {
                         IconButton(onClick = { handleSave() }) {
                             Icon(
                                 Icons.Filled.Check,
-                                contentDescription = "Save",
+                                contentDescription = stringResource(R.string.save),
                                 modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MaterialTheme.colorScheme.primary,
                             )
                         }
-                    })
+                    },
+                )
             } else {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 8.dp),
                 ) {
-
                     // Icon with a drag handle
                     IconButton(
                         onClick = {},
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(24.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_drag),
-                            contentDescription = "Drag to reorder",
+                            contentDescription = stringResource(R.string.tag_drag_to_reorder),
                             modifier = Modifier.size(24.dp),
                         )
                     }
@@ -633,18 +676,24 @@ fun TagEditItem(
                         modifier = Modifier
                             .weight(1f)
                             .padding(vertical = 8.dp),
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
                     )
                     IconButton(
                         onClick = { onAction(TagEditTypeAction.VISIBLE, item) },
                         modifier = Modifier.size(24.dp),
                     ) {
                         Icon(
-                            painter = if (item.isVisible) painterResource(R.drawable.ic_visible) else painterResource(
-                                R.drawable.ic_unvisible
-                            ),
+                            painter = if (item.isVisible) {
+                                painterResource(R.drawable.ic_visible)
+                            } else {
+                                painterResource(
+                                    R.drawable.ic_unvisible,
+                                )
+                            },
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                            contentDescription = "Visible Tag"
+                            contentDescription = stringResource(
+                                if (item.isVisible) R.string.tag_hide else R.string.tag_show,
+                            ),
                         )
                     }
                     Spacer(Modifier.width(20.dp))
@@ -653,7 +702,8 @@ fun TagEditItem(
                         modifier = Modifier.size(24.dp),
                     ) {
                         Icon(
-                            Icons.Filled.Edit, contentDescription = "Edit Tag"
+                            Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.tag_edit),
                         )
                     }
                 }
@@ -672,9 +722,29 @@ fun TagEditItem(
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(
-                    if (isTextFieldEnabled) MaterialTheme.colorScheme.outlineVariant
-                    else Color.Transparent
-                )
+                    if (isTextFieldEnabled) {
+                        MaterialTheme.colorScheme.outlineVariant
+                    } else {
+                        Color.Transparent
+                    },
+                ),
         )
+    }
+}
+
+/**
+ * Runs [onPause] when the screen's lifecycle pauses. Leaving the app re-locks the vault and
+ * pops every screen, so inline edits that are not saved here are lost.
+ */
+@Composable
+private fun SaveOnPause(onPause: () -> Unit) {
+    val currentOnPause by rememberUpdatedState(onPause)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) currentOnPause()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 }

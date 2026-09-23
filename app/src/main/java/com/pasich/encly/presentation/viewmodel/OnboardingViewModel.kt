@@ -1,16 +1,26 @@
 package com.pasich.encly.presentation.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pasich.encly.R
+import com.pasich.encly.core.backup.BackupCipher
+import com.pasich.encly.core.backup.BackupError
+import com.pasich.encly.core.backup.BackupException
+import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.domain.usecase.OnboardingUseCase
+import com.pasich.encly.presentation.screen.backup.backupErrorMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
-
 
 enum class SecurityType {
     /**
@@ -23,12 +33,13 @@ enum class SecurityType {
      * No recovery seed is persisted. The random database key is still protected by the
      * mandatory PIN and optional auth-bound biometric slot.
      */
-    AUTO_MANAGED
+    AUTO_MANAGED,
 }
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val onboardingUseCase: OnboardingUseCase
+    private val onboardingUseCase: OnboardingUseCase,
+    private val backupDocuments: BackupDocuments,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
@@ -37,12 +48,92 @@ class OnboardingViewModel @Inject constructor(
     private val _currentPage = MutableStateFlow(0)
     val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
 
+    /** The encrypted backup picked for "Restore from backup". Ciphertext only. */
+    private var restoreFile: ByteArray? = null
+
+    /**
+     * The user-managed recovery seed until its vault exists. The vault is created from this
+     * array, never from the displayed words; it is wiped once used and when the ViewModel goes.
+     */
+    private var recoverySeed: CharArray? = null
+
+    /** Opens the "Restore from backup" page instead of creating an empty vault. */
+    fun startRestore() {
+        _uiState.value = _uiState.value.copy(isRestoring = true, error = null)
+        _currentPage.value = RESTORE_PAGE
+    }
+
+    fun cancelRestore() {
+        restoreFile = null
+        _uiState.value = _uiState.value.copy(
+            isRestoring = false,
+            restoreFileReady = false,
+            error = null,
+        )
+        _currentPage.value = SECURITY_CHOICE_PAGE
+    }
+
+    /** No app on this device can open documents: say so instead of crashing. */
+    fun onRestorePickerUnavailable() {
+        _uiState.value = _uiState.value.copy(error = UiText.of(R.string.backup_error_no_picker))
+    }
+
+    /** Reads the picked file and checks its header; the phrase is asked for only if it fits. */
+    fun onRestoreFilePicked(uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            val error = withContext(Dispatchers.IO) {
+                try {
+                    val file = backupDocuments.read(uri)
+                    BackupCipher.inspect(file)
+                    restoreFile = file
+                    null
+                } catch (e: BackupException) {
+                    restoreFile = null
+                    e.error
+                }
+            }
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                restoreFileReady = error == null,
+                error = error?.let { UiText.of(backupErrorMessage(it)) },
+            )
+        }
+    }
+
+    /**
+     * Decrypts the picked backup with [phrase] and creates the vault around that phrase. The
+     * backup itself is written after the mandatory PIN setup (AuthSetupScreen).
+     */
+    fun restoreBackup(phrase: String) {
+        val file = restoreFile ?: return
+        val chars = phrase.toCharArray()
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            val result = withContext(Dispatchers.Default) {
+                onboardingUseCase.restoreFromBackup(file, chars)
+            }
+            result.onSuccess {
+                restoreFile = null
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                completeOnboarding()
+            }.onFailure { e ->
+                val error = (e as? BackupException)?.error ?: BackupError.IO
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = UiText.of(backupErrorMessage(error)),
+                )
+            }
+        }
+    }
+
     /*
-    * Navigates to the seed phrase creation slide (does not create a key)
-    */
+     * Navigates to the seed phrase creation slide (does not create a key)
+     */
     fun navigateToSeedPhraseCreation() {
         _uiState.value = _uiState.value.copy(
-            securityType = SecurityType.USER_MANAGED
+            securityType = SecurityType.USER_MANAGED,
         )
         // Navigate to the seed phrase display slide (third page)
         _currentPage.value = 2
@@ -57,13 +148,19 @@ class OnboardingViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             delay(1300L) // Intentional delay for smoothness
 
-            onboardingUseCase.getMnemonicCode().onSuccess { seedPhrase ->
+            onboardingUseCase.generateRecoverySeed().onSuccess { seed ->
+                wipeRecoverySeed()
+                recoverySeed = seed
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false, phase = seedPhrase, securityType = SecurityType.USER_MANAGED
+                    // The words must be shown to be written down, so the UI gets them as text.
+                    isLoading = false,
+                    phase = String(seed),
+                    securityType = SecurityType.USER_MANAGED,
                 )
-            }.onFailure { error ->
+            }.onFailure {
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false, error = error.message ?: "Помилка створення сід-фрази"
+                    isLoading = false,
+                    error = UiText.of(R.string.onboarding_error_seed_generation),
                 )
             }
         }
@@ -76,16 +173,19 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-            onboardingUseCase.saveKeysStore().onSuccess {
+            onboardingUseCase.createVault(recoverySeed = null).onSuccess {
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false, securityType = SecurityType.AUTO_MANAGED, isComplete = false
+                    isLoading = false,
+                    securityType = SecurityType.AUTO_MANAGED,
+                    isComplete = false,
                 )
                 // Advance only after keys are stored and the DB is unlocked (avoids a race
                 // where the completion slide renders before setup finishes).
                 nextPage()
-            }.onFailure { error ->
+            }.onFailure {
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false, error = error.message ?: "Помилка ініціалізації системи"
+                    isLoading = false,
+                    error = UiText.of(R.string.onboarding_error_initialization),
                 )
             }
         }
@@ -106,11 +206,12 @@ class OnboardingViewModel @Inject constructor(
     }
 
     /**
-     * Completes the entire onboarding process and records that it was shown
+     * Finishes the onboarding slides. Completion is deliberately not persisted here: first-run
+     * setup becomes durable only after the mandatory PIN slot exists and SQLCipher opens
+     * successfully (SecurityManager.finishInitialSetup).
      */
     fun completeOnboarding() {
         _uiState.value = _uiState.value.copy(isComplete = true)
-        viewModelScope.launch { onboardingUseCase.completeOnboarding() }
     }
 
     /**
@@ -130,7 +231,7 @@ class OnboardingViewModel @Inject constructor(
             isVerificationMode = true,
             verificationWords = verificationWords,
             userAnswers = emptyMap(),
-            isVerificationComplete = false
+            isVerificationComplete = false,
         )
     }
 
@@ -149,7 +250,7 @@ class OnboardingViewModel @Inject constructor(
 
         _uiState.value = _uiState.value.copy(
             userAnswers = currentAnswers,
-            isVerificationComplete = isComplete && currentAnswers.size == verificationWords.size
+            isVerificationComplete = isComplete && currentAnswers.size == verificationWords.size,
         )
     }
 
@@ -159,25 +260,27 @@ class OnboardingViewModel @Inject constructor(
     fun completeVerification() {
         if (!_uiState.value.isVerificationComplete) return
 
-        val target = _uiState.value.phase.toCharArray()
+        val seed = recoverySeed ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            onboardingUseCase.saveKeysStore(target, target)
+            // A copy: the use case wipes what it gets, and a failed attempt must stay retryable.
+            onboardingUseCase.createVault(seed.copyOf())
                 .onSuccess {
+                    wipeRecoverySeed()
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isVerificationMode = false,
                         phase = "",
                         verificationWords = emptyList(),
                         userAnswers = emptyMap(),
-                        isVerificationComplete = false
+                        isVerificationComplete = false,
                     )
                     nextPage()
                 }
-                .onFailure { error ->
+                .onFailure {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = error.message ?: "Не вдалося створити захищене сховище"
+                        error = UiText.of(R.string.onboarding_error_vault_creation),
                     )
                 }
         }
@@ -191,13 +294,23 @@ class OnboardingViewModel @Inject constructor(
             isVerificationMode = false,
             verificationWords = emptyList(),
             userAnswers = emptyMap(),
-            isVerificationComplete = false
+            isVerificationComplete = false,
         )
+    }
+
+    private fun wipeRecoverySeed() {
+        recoverySeed?.let(SensitiveDataCleaner::clear)
+        recoverySeed = null
+    }
+
+    override fun onCleared() {
+        wipeRecoverySeed()
+        super.onCleared()
     }
 
     data class OnboardingUiState(
         val isLoading: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val phase: String = "",
         val isKeyVisible: Boolean = false,
         val isComplete: Boolean = false,
@@ -205,6 +318,13 @@ class OnboardingViewModel @Inject constructor(
         val isVerificationMode: Boolean = false,
         val verificationWords: List<Pair<Int, String>> = emptyList(), // word index + the word itself
         val userAnswers: Map<Int, String> = emptyMap(), // index -> user's answer
-        val isVerificationComplete: Boolean = false
+        val isVerificationComplete: Boolean = false,
+        val isRestoring: Boolean = false,
+        val restoreFileReady: Boolean = false,
     )
+
+    private companion object {
+        const val SECURITY_CHOICE_PAGE = 1
+        const val RESTORE_PAGE = 2
+    }
 }

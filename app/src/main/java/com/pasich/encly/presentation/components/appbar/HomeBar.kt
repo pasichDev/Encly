@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.ui.theme.defaultButtonSize
@@ -26,33 +27,32 @@ import com.pasich.encly.ui.theme.heyHomeBar
 import com.pasich.encly.ui.theme.horizontalDefault
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun HomeBar(
-    drawerState: DrawerState, isGrid: Boolean, onToggleView: () -> Unit, showSortDialog: () -> Unit
+    drawerState: DrawerState,
+    isGrid: Boolean,
+    onToggleView: () -> Unit,
+    showSortDialog: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    val userName = ""
-
-
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontalDefault),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
                 onClick = {
                     scope.launch {
                         drawerState.open()
-
                     }
-                }
+                },
             )
             {
                 Icon(
@@ -60,59 +60,57 @@ fun HomeBar(
                     painter = painterResource(R.drawable.ic_home_drawer),
                     modifier = Modifier
                         .size(defaultButtonSize),
-                    contentDescription = "Switch to Grid"
+                    contentDescription = stringResource(R.string.open_menu),
                 )
             }
 
             Spacer(modifier = Modifier.width(5.dp))
             Text(
-                text = "Привіт${userName.take(6)}",
-                style = heyHomeBar
+                text = stringResource(R.string.home_greeting),
+                style = heyHomeBar,
             )
         }
 
-
         Row(
             horizontalArrangement = Arrangement.spacedBy(0.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(
-                onClick = showSortDialog, colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
+                onClick = showSortDialog,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_sort),
                     modifier = Modifier
-                        .size(defaultButtonSize), contentDescription = "Switch to List"
+                        .size(defaultButtonSize),
+                    contentDescription = null,
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = "Сортувати",
-                    style = MaterialTheme.typography.labelMedium
+                    text = stringResource(R.string.sort),
+                    style = MaterialTheme.typography.labelMedium,
                 )
             }
-
 
             IconButton(onClick = onToggleView) {
                 if (isGrid) {
                     Icon(
                         painter = painterResource(R.drawable.ic_grid),
                         modifier = Modifier
-                            .size(defaultButtonSize), contentDescription = "Switch to List"
+                            .size(defaultButtonSize),
+                        contentDescription = stringResource(R.string.view_switch_to_list),
                     )
-
                 } else {
                     Icon(
                         painter = painterResource(R.drawable.ic_list),
                         modifier = Modifier
                             .size(defaultButtonSize),
-                        contentDescription = "Switch to Grid"
+                        contentDescription = stringResource(R.string.view_switch_to_grid),
                     )
                 }
             }
-
-
         }
     }
 }

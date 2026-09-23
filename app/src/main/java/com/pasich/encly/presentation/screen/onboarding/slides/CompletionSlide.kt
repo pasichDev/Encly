@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,18 +43,16 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ArrowRight
 import com.composables.icons.lucide.Lamp
 import com.composables.icons.lucide.Lucide
+import com.pasich.encly.R
 import com.pasich.encly.presentation.screen.onboarding.AnimatedButton
 import com.pasich.encly.presentation.screen.onboarding.AnimatedText
 import com.pasich.encly.presentation.screen.onboarding.SlideLayout
 import com.pasich.encly.presentation.viewmodel.SecurityType
 import kotlinx.coroutines.delay
 
-
 @Composable
-fun CompletionSlide(
-    onComplete: () -> Unit, securityType: SecurityType? = null
-) {
-    SlideLayout {
+fun CompletionSlide(onComplete: () -> Unit, modifier: Modifier = Modifier, securityType: SecurityType? = null) {
+    SlideLayout(modifier = modifier) {
         // Success animation
         var showSuccess by remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
@@ -62,9 +61,11 @@ fun CompletionSlide(
         }
 
         AnimatedVisibility(
-            visible = showSuccess, enter = scaleIn(
-                animationSpec = tween(800), initialScale = 0.3f
-            ) + fadeIn()
+            visible = showSuccess,
+            enter = scaleIn(
+                animationSpec = tween(800),
+                initialScale = 0.3f,
+            ) + fadeIn(),
         ) {
             Box(
                 modifier = Modifier
@@ -74,16 +75,17 @@ fun CompletionSlide(
                         Brush.radialGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                            )
-                        )
-                    ), contentAlignment = Alignment.Center
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                            ),
+                        ),
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
                     modifier = Modifier.size(60.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -92,24 +94,27 @@ fun CompletionSlide(
 
         AnimatedText(
             text = when (securityType) {
-                SecurityType.USER_MANAGED -> "Ваш ключ безпеки готовий!"
-                else -> "Безпека налаштована!"
-            }, style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.Bold, fontSize = 28.sp
-            ), delay = 600
+                SecurityType.USER_MANAGED -> stringResource(R.string.onboarding_done_seed_title)
+                else -> stringResource(R.string.onboarding_done_auto_title)
+            },
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+            ),
+            delay = 600,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         AnimatedText(
             text = when (securityType) {
-                SecurityType.USER_MANAGED -> "Тепер ви можете безпечно створювати, редагувати та зберігати свої нотатки. " + "Не забудьте зберегти вашу сід-фразу в надійному місці!"
-                else -> "Ваші дані захищені. Можете відразу почати писати, творити та реалізовувати свої ідеї!"
+                SecurityType.USER_MANAGED -> stringResource(R.string.onboarding_done_seed_desc)
+                else -> stringResource(R.string.onboarding_done_auto_desc)
             },
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            delay = 800
+            delay = 800,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -120,15 +125,14 @@ fun CompletionSlide(
         Spacer(modifier = Modifier.weight(1f))
 
         AnimatedButton(
-            text = "Почати творити!",
+            text = stringResource(R.string.onboarding_done_start),
             onClick = onComplete,
             delay = 1400,
             icon = Lucide.ArrowRight,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
-
 
 @Composable
 private fun AnimatedMotivationCard() {
@@ -140,9 +144,11 @@ private fun AnimatedMotivationCard() {
     }
 
     AnimatedVisibility(
-        visible = visible, enter = slideInVertically(
-            initialOffsetY = { it / 2 }, animationSpec = tween(600, easing = FastOutSlowInEasing)
-        ) + fadeIn()
+        visible = visible,
+        enter = slideInVertically(
+            initialOffsetY = { it / 2 },
+            animationSpec = tween(600, easing = FastOutSlowInEasing),
+        ) + fadeIn(),
     ) {
         Card(
             modifier = Modifier
@@ -150,54 +156,55 @@ private fun AnimatedMotivationCard() {
                 .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f)
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(
                     imageVector = Lucide.Lamp, // or your own SVG icon
                     contentDescription = null,
                     modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Час реалізовувати ідеї!",
+                    text = stringResource(R.string.onboarding_done_card_title),
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val inspirationPoints = listOf(
-                    "Записуйте блискучі думки",
-                    "Створюйте списки для фокусу",
-                    "Плануйте дні та мрії",
-                    "Зберігайте важливе під надійним захистом",
-                    "Втілюйте свої ідеї в реальність"
+                    stringResource(R.string.onboarding_done_point_1),
+                    stringResource(R.string.onboarding_done_point_2),
+                    stringResource(R.string.onboarding_done_point_3),
+                    stringResource(R.string.onboarding_done_point_4),
+                    stringResource(R.string.onboarding_done_point_5),
                 )
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     inspirationPoints.forEach { point ->
                         Row(
-                            verticalAlignment = Alignment.Top
+                            verticalAlignment = Alignment.Top,
                         ) {
                             Text(
-                                text = "✨", modifier = Modifier.padding(end = 8.dp)
+                                text = "✨",
+                                modifier = Modifier.padding(end = 8.dp),
                             )
                             Text(
                                 text = point,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f),
                             )
                         }
                     }
@@ -206,9 +213,11 @@ private fun AnimatedMotivationCard() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Готові творити?", style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary
-                    )
+                    text = stringResource(R.string.onboarding_done_card_footer),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                    ),
                 )
             }
         }

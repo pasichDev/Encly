@@ -22,55 +22,51 @@ data class StyleButton(
     var fontBody: FontFamily,
 )
 
-
 @Composable
-fun NavigationDrawerStyleButton(
-    styleButton: StyleButton,
-    onClick: () -> Unit = {}
-) {
+fun NavigationDrawerStyleButton(styleButton: StyleButton, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     if (styleButton.isSelected) {
         Button(
             onClick = onClick,
-            modifier = Modifier.padding(horizontal = 10.dp),
+            modifier = modifier.padding(horizontal = 10.dp),
             shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     "Aa",
-                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = styleButton.fontTitle)
+                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = styleButton.fontTitle),
                 )
                 Text(
                     styleButton.name,
-                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = styleButton.fontBody)
+                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = styleButton.fontBody),
                 )
             }
         }
     } else {
         OutlinedButton(
             onClick = onClick,
-            modifier = Modifier.padding(horizontal = 10.dp),
-            shape = RoundedCornerShape(10.dp)
+            modifier = modifier.padding(horizontal = 10.dp),
+            shape = RoundedCornerShape(10.dp),
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     "Aa",
-                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = styleButton.fontTitle)
+                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = styleButton.fontTitle),
                 )
                 Text(
                     styleButton.name,
-                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = styleButton.fontBody)
+                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = styleButton.fontBody),
                 )
             }
         }

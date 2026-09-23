@@ -27,10 +27,10 @@ import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesSortBottomSheet(
-    isBottomSheetVisible: Boolean = false,
     sheetState: SheetState,
     onDismiss: () -> Unit,
-    noteListViewModel: NoteListViewModel = hiltViewModel()
+    isBottomSheetVisible: Boolean = false,
+    noteListViewModel: NoteListViewModel = hiltViewModel(),
 ) {
     val state by noteListViewModel.state.collectAsState()
 
@@ -40,12 +40,12 @@ fun NotesSortBottomSheet(
             sheetState = sheetState,
             shape = RectangleShape,
             containerColor = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.wrapContentHeight()
+            modifier = Modifier.wrapContentHeight(),
         ) {
             Text(
-                text = "Сортувати:",
+                text = stringResource(R.string.sort_by),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(vertical = 8.dp, horizontal = 20.dp)
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 20.dp),
             )
 
             LazyColumn(modifier = Modifier.padding(16.dp)) {
@@ -54,17 +54,21 @@ fun NotesSortBottomSheet(
                     ModalBoxItem(
                         title = stringResource(item.labelRes),
                         icon = painterResource(R.drawable.ic_sort),
-                        roundPosition = if (index == 0) RoundPosition.First else if (index == NoteSortOption.entries.size - 1) RoundPosition.Last else RoundPosition.Medium,
+                        roundPosition = if (index == 0) {
+                            RoundPosition.First
+                        } else if (index == NoteSortOption.entries.size - 1) {
+                            RoundPosition.Last
+                        } else {
+                            RoundPosition.Medium
+                        },
                         checked = state.noteSortOption == item,
                         action = {
                             noteListViewModel.onEvent(NoteListEvent.ToggleNoteSort(item))
                             onDismiss()
-                        }
+                        },
                     )
                 }
             }
         }
-
     }
-
 }

@@ -2,17 +2,16 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.data.datasource.local.ThemeType
-import com.pasich.encly.data.repository.SettingsRepository
+import com.pasich.encly.core.locale.AppLanguage
+import com.pasich.encly.core.locale.AppLocales
+import com.pasich.encly.domain.model.ThemeSettings
+import com.pasich.encly.domain.model.ThemeType
+import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.utils.DeviceCapabilities
-import com.pasich.encly.utils.SettingsValidator
-import com.pasich.encly.utils.ValidationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,102 +20,61 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val deviceCapabilities: DeviceCapabilities,
-    private val settingsValidator: SettingsValidator
 ) : ViewModel() {
 
     val dialogVisibly = MutableStateFlow(false)
 
-    private val _validationMessage = MutableStateFlow<String?>(null)
-    val validationMessage: StateFlow<String?> = _validationMessage.asStateFlow()
+    val languageDialogVisible = MutableStateFlow(false)
 
     // Sane defaults as the initial value; the real stored values arrive asynchronously.
     // Never block the main thread on the DataStore read (this VM feeds the settings UI).
-    val themeSettingsFlow: StateFlow<Triple<Boolean, ThemeType, Boolean>> =
-        settingsRepository.combinedThemeSettingsFlow.stateIn(
+    val themeSettingsFlow: StateFlow<ThemeSettings> =
+        settingsRepository.themeSettingsFlow.stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = Triple(false, ThemeType.SYSTEM, false)
+            initialValue = ThemeSettings(),
         )
 
     val showTasksFlow: StateFlow<Boolean> = settingsRepository.showTasksFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = true
+        initialValue = true,
     )
 
     val simpleEditFlow: StateFlow<Boolean> = settingsRepository.simpleEditFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = false
+        initialValue = false,
     )
 
     // Device capabilities
     fun supportsDynamicColors() = deviceCapabilities.supportsDynamicColors()
 
+    /** Read live, not cached: this ViewModel outlives the activity a language change recreates. */
+    fun currentLanguage(): AppLanguage = AppLocales.current()
+
+    fun setLanguageDialogVisibility(value: Boolean) {
+        languageDialogVisible.value = value
+    }
+
+    fun selectLanguage(language: AppLanguage) {
+        languageDialogVisible.value = false
+        if (language != AppLocales.current()) AppLocales.apply(language)
+    }
+
     fun setDialogVisibility(value: Boolean) {
         dialogVisibly.value = value
     }
 
-    fun clearValidationMessage() {
-        _validationMessage.value = null
-    }
-
-    private fun validateAndExecute(
-        validation: () -> ValidationResult, action: () -> Unit
-    ) {
-        when (val result = validation()) {
-            is ValidationResult.Success -> {
-                action()
-                _validationMessage.value = null
-            }
-
-            is ValidationResult.Warning -> {
-                _validationMessage.value = result.message
-                action() // Execute anyway for warnings
-            }
-
-            is ValidationResult.Error -> {
-                _validationMessage.value = result.message
-                // Don't execute action for errors
-            }
-        }
-    }
-
+    /** DataStore writes are main-safe; no dispatcher switch is needed. */
     fun onEvent(event: SettingsEvent) {
-        when (event) {
-            is SettingsEvent.UpdateIsDynamicTheme -> {
-                settingsRepository.setDynamicTheme(event.value, viewModelScope)
+        viewModelScope.launch {
+            when (event) {
+                is SettingsEvent.UpdateIsDynamicTheme -> settingsRepository.setDynamicTheme(event.value)
+                is SettingsEvent.UpdateThemeType -> settingsRepository.setThemeType(event.themeType)
+                is SettingsEvent.UpdateShowTasks -> settingsRepository.setShowTasks(event.value)
+                is SettingsEvent.UpdateSimpleEdit -> settingsRepository.setSimpleEdit(event.value)
             }
-
-            is SettingsEvent.UpdateThemeType -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    settingsRepository.setThemeType(event.themeType, viewModelScope)
-                }
-            }
-
-            is SettingsEvent.UpdateScreenProtect -> {
-                validateAndExecute(
-                    validation = { settingsValidator.validateScreenProtection(event.value) },
-                    action = {
-                        viewModelScope.launch(Dispatchers.IO) {
-                            settingsRepository.setScreenProtection(event.value, viewModelScope)
-                        }
-                    })
-            }
-
-            is SettingsEvent.UpdateShowTasks -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    settingsRepository.setShowTasks(event.value, viewModelScope)
-                }
-            }
-
-            is SettingsEvent.UpdateSimpleEdit -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    settingsRepository.setSimpleEdit(event.value, viewModelScope)
-                }
-            }
-
-
         }
     }
 }
@@ -124,8 +82,6 @@ class SettingsViewModel @Inject constructor(
 sealed class SettingsEvent {
     data class UpdateIsDynamicTheme(val value: Boolean) : SettingsEvent()
     data class UpdateThemeType(val themeType: ThemeType) : SettingsEvent()
-    data class UpdateScreenProtect(val value: Boolean) : SettingsEvent()
     data class UpdateShowTasks(val value: Boolean) : SettingsEvent()
     data class UpdateSimpleEdit(val value: Boolean) : SettingsEvent()
-
 }

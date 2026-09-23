@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.screen
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,47 +55,46 @@ import com.pasich.encly.presentation.components.TitleCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FaqScreen(
-    navController: NavHostController
-) {
+fun FaqScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.about_faq_title),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            contentDescription = stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Hero Section
             HeroCard(
                 icon = HeroIcon.Vector(Lucide.BadgeHelp),
                 title = stringResource(R.string.about_faq_title),
-                subtitle = "Відповіді на найпоширеніші запитання",
-                description = "Нотатки, завдання, локальне шифрування та відновлення доступу без хмарної синхронізації."
+                subtitle = stringResource(R.string.faq_screen_subtitle),
+                description = stringResource(R.string.faq_screen_description),
             )
 
             // FAQ Content
@@ -104,125 +104,63 @@ fun FaqScreen(
     }
 }
 
-
 @Composable
 private fun FaqContentSection() {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TitleCard("Основні функції", modifier = Modifier.padding(horizontal = 20.dp))
+        FaqSection(R.string.faq_section_basics)
+        FaqItem(R.string.faq_new_note_q, R.string.faq_new_note_a)
+        FaqItem(R.string.faq_saving_q, R.string.faq_saving_a)
+        FaqItem(R.string.faq_tags_q, R.string.faq_tags_a)
+        FaqItem(R.string.faq_tasks_q, R.string.faq_tasks_a)
 
-        FaqItem(
-            question = "Як створити нову нотатку?",
-            answer = "Натисніть кнопку '+' на головному екрані. У редакторі " +
-                "можна використовувати текст, заголовки, цитати, списки, " +
-                "розділювачі та посилання."
-        )
-        FaqItem(
-            question = "Як зберігаються зміни?",
-            answer = "Encly автоматично зберігає зміни локально. Кнопка «Готово» " +
-                "та вихід з редактора також завершують запис перед " +
-                "поверненням до списку."
-        )
-        FaqItem(
-            question = "Як працюють мітки?",
-            answer = "Мітки допомагають групувати нотатки. Їх можна створювати, " +
-                "перейменовувати, приховувати, видаляти та використовувати " +
-                "як фільтр на головному екрані."
-        )
-        FaqItem(
-            question = "Що вміють завдання?",
-            answer = "Завдання мають опис, пріоритет і локальну дату. Їх можна " +
-                "фільтрувати та відмічати виконаними. Encly не надсилає " +
-                "текст завдань у системні сповіщення."
-        )
+        FaqSection(R.string.faq_section_security)
+        FaqItem(R.string.faq_storage_q, R.string.faq_storage_a)
+        FaqItem(R.string.faq_db_key_q, R.string.faq_db_key_a)
+        FaqItem(R.string.faq_recovery_phrase_q, R.string.faq_recovery_phrase_a)
+        FaqItem(R.string.faq_forgot_pin_q, R.string.faq_forgot_pin_a)
+        FaqItem(R.string.faq_screenshots_q, R.string.faq_screenshots_a)
+        FaqItem(R.string.faq_background_q, R.string.faq_background_a)
 
-        TitleCard("Безпека та відновлення", modifier = Modifier.padding(horizontal = 20.dp))
+        FaqSection(R.string.faq_section_settings)
+        FaqItem(R.string.faq_change_pin_q, R.string.faq_change_pin_a)
+        FaqItem(R.string.faq_biometrics_q, R.string.faq_biometrics_a)
+        FaqItem(R.string.faq_theme_q, R.string.faq_theme_a)
+        FaqItem(R.string.faq_language_q, R.string.faq_language_a)
 
-        FaqItem(
-            question = "Де зберігаються мої дані?",
-            answer = "Нотатки, мітки та завдання зберігаються тільки в локальній " +
-                "SQLCipher-базі Encly. Поточна beta не має хмарної " +
-                "синхронізації або автоматичного резервного копіювання."
-        )
-        FaqItem(
-            question = "Як захищений ключ бази даних?",
-            answer = "Encly створює випадковий 256-бітний ключ бази. PIN захищає " +
-                "окремий AES-GCM unlock-slot, а біометрія використовує " +
-                "auth-per-use ключ Android Keystore."
-        )
-        FaqItem(
-            question = "Для чого recovery seed?",
-            answer = "Recovery seed створюється лише в user-managed режимі та є " +
-                "окремим способом відновити ключ vault. Зберігайте його " +
-                "офлайн. У звичайному режимі розблокування використовується " +
-                "PIN або біометрія."
-        )
-        FaqItem(
-            question = "Що буде, якщо я забуду PIN?",
-            answer = "Якщо ви створили recovery seed, на екрані блокування можна " +
-                "відновити доступ через нього, а після розблокування " +
-                "встановити новий PIN. Без recovery-slot втрата єдиного " +
-                "доступного ключа означає втрату vault."
-        )
-        FaqItem(
-            question = "Чи можна робити скріншоти Encly?",
-            answer = "Ні. Захист екрана увімкнений постійно: Encly блокує " +
-                "скріншоти, запис екрана та незахищений preview у списку " +
-                "нещодавніх застосунків."
-        )
-        FaqItem(
-            question = "Що відбувається після згортання застосунку?",
-            answer = "Encly зберігає поточні зміни, закриває зашифровану базу та " +
-                "очищає сесійний ключ. Після повернення потрібне повторне " +
-                "розблокування."
-        )
+        FaqSection(R.string.faq_section_troubleshooting)
+        FaqItem(R.string.faq_vault_damaged_q, R.string.faq_vault_damaged_a)
+        FaqItem(R.string.faq_report_bug_q, R.string.faq_report_bug_a)
+    }
+}
 
-        TitleCard("Налаштування", modifier = Modifier.padding(horizontal = 20.dp))
+@Composable
+private fun FaqSection(@StringRes title: Int) {
+    TitleCard(stringResource(title), modifier = Modifier.padding(horizontal = 20.dp))
+}
 
-        FaqItem(
-            question = "Як змінити PIN?",
-            answer = "Відкрийте Налаштування → Безпека, підтвердьте поточний " +
-                "PIN, а потім двічі введіть новий."
-        )
-        FaqItem(
-            question = "Як увімкнути або вимкнути біометрію?",
-            answer = "У Налаштування → Безпека використайте перемикач біометрії. " +
-                "Створення або видалення biometric-slot потребує сильної " +
-                "біометричної автентифікації."
-        )
-        FaqItem(
-            question = "Як змінити тему?",
-            answer = "У Налаштування → Зовнішній вигляд можна вибрати системну, " +
-                "світлу або темну тему та, на підтримуваних " +
-                "Android-пристроях, динамічні кольори."
-        )
-
-        TitleCard("Вирішення проблем", modifier = Modifier.padding(horizontal = 20.dp))
-
-        FaqItem(
-            question = "Encly повідомляє про пошкодження vault",
-            answer = "Encly навмисно не створює порожню базу поверх втраченого " +
-                "або нечитабельного vault. Не підтверджуйте повне очищення, " +
-                "якщо вам ще потрібні локальні дані."
-        )
-        FaqItem(
-            question = "Як повідомити про помилку?",
-            answer = "Відкрийте «Про додаток» і скористайтеся зворотним зв'язком " +
-                "або напишіть розробнику. Не додавайте recovery seed, PIN " +
-                "або приватний текст нотаток до bug report."
+@Composable
+private fun FaqIcon() {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Lucide.HandHelping,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.primary,
         )
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FaqItem(
-    question: String,
-    answer: String,
-    modifier: Modifier = Modifier
-) {
+private fun FaqItem(@StringRes question: Int, @StringRes answer: Int, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
 
     Card(
@@ -231,59 +169,48 @@ private fun FaqItem(
             .padding(horizontal = 15.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
-        onClick = { expanded = !expanded }
+        onClick = { expanded = !expanded },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
-                .padding(horizontal = 15.dp)
+                .padding(horizontal = 15.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Lucide.HandHelping,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                FaqIcon()
 
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = question,
+                    text = stringResource(question),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
 
                 Icon(
                     imageVector = if (expanded) Lucide.ChevronUp else Lucide.ChevronDown,
-                    contentDescription = if (expanded) "Згорнути" else "Розгорнути",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    contentDescription = stringResource(
+                        if (expanded) R.string.collapse else R.string.expand,
+                    ),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             }
 
             if (expanded) {
                 Text(
-                    text = answer,
+                    text = stringResource(answer),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     lineHeight = 20.sp,
-                    modifier = Modifier.padding(top = 12.dp, start = 44.dp)
+                    modifier = Modifier.padding(top = 12.dp, start = 44.dp),
                 )
             }
         }

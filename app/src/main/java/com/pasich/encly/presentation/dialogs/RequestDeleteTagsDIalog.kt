@@ -9,7 +9,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.pasich.encly.R
 
-
 @Composable
 fun RequestDeleteTagsDialog(showDialog: Boolean, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     if (showDialog) {
@@ -25,7 +24,7 @@ fun RequestDeleteTagsDialog(showDialog: Boolean, onDismiss: () -> Unit, onConfir
                     Text(
                         text = stringResource(R.string.delete),
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
             },
@@ -33,10 +32,10 @@ fun RequestDeleteTagsDialog(showDialog: Boolean, onDismiss: () -> Unit, onConfir
                 TextButton(onClick = onDismiss) {
                     Text(
                         text = stringResource(R.string.cancel),
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
-            }
+            },
         )
     }
 }

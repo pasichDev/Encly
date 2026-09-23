@@ -1,15 +1,11 @@
 package com.pasich.encly.presentation.viewmodel
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.data.model.Task
-import com.pasich.encly.domain.usecase.task.AddTaskUseCase
-import com.pasich.encly.domain.usecase.task.DeleteCompletedTasksUseCase
-import com.pasich.encly.domain.usecase.task.GetActiveTasksUseCase
-import com.pasich.encly.domain.usecase.task.GetCompletedTasksUseCase
-import com.pasich.encly.domain.usecase.task.GetTasksCountUseCase
+import com.pasich.encly.domain.repository.TasksRepository
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
-import com.pasich.encly.domain.usecase.task.UpdateTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,19 +15,22 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.ZoneId
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 // Filters for tasks
 data class TaskFilter(
     val id: String,
-    val label: String,
+    /** Resolved in the UI so the chip follows the in-app language. */
+    @param:StringRes val label: Int,
     val count: Int = 0,
-    val type: Type
+    val type: Type,
 ) {
     enum class Type {
-        DATE, PRIORITY, COMPLETED
+        ACTIVE,
+        PRIORITY,
+        COMPLETED,
     }
 }
 
@@ -39,8 +38,12 @@ enum class TaskOperationFailure {
     CREATE,
     UPDATE,
     STATUS_UPDATE,
-    CLEAR_COMPLETED
+    CLEAR_COMPLETED,
+    DELETE,
 }
+
+/** Unsaved content of the task editor sheet. */
+data class TaskDraft(val title: String, val description: String, val priority: Int)
 
 data class TasksUiState(
     val activeTasks: List<Task> = emptyList(),
@@ -50,24 +53,17 @@ data class TasksUiState(
     val totalTasksCount: Int = 0,
     val completionPercentage: Int = 0,
     val availableFilters: List<TaskFilter> = emptyList(),
-    val selectedDateFilter: TaskFilter? = null,
+    val selectedActiveFilter: TaskFilter? = null,
     val selectedPriorityFilter: TaskFilter? = null,
     val selectedCompletedFilter: TaskFilter? = null,
     val filteredActiveTasks: List<Task> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
 )
 
 @HiltViewModel
-class TasksViewModel
-@Suppress("LongParameterList") // Hilt wiring: bundling independent task use cases would hide dependencies.
-@Inject constructor(
-    private val getActiveTasksUseCase: GetActiveTasksUseCase,
-    private val getCompletedTasksUseCase: GetCompletedTasksUseCase,
-    private val getTasksCountUseCase: GetTasksCountUseCase,
-    private val addTaskUseCase: AddTaskUseCase,
+class TasksViewModel @Inject constructor(
+    private val tasksRepository: TasksRepository,
     private val updateTaskStatusUseCase: UpdateTaskStatusUseCase,
-    private val updateTaskUseCase: UpdateTaskUseCase,
-    private val deleteCompletedTasksUseCase: DeleteCompletedTasksUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TasksUiState())
@@ -76,199 +72,32 @@ class TasksViewModel
     private val _operationFailures = MutableSharedFlow<TaskOperationFailure>(extraBufferCapacity = 1)
     val operationFailures: SharedFlow<TaskOperationFailure> = _operationFailures.asSharedFlow()
 
+    /** A task that was just deleted, so the screen can offer to undo it. */
+    private val _deletedTasks = MutableSharedFlow<Task>(extraBufferCapacity = 1)
+    val deletedTasks: SharedFlow<Task> = _deletedTasks.asSharedFlow()
+
     private val _showAddTaskDialog = MutableStateFlow(false)
     val showAddTaskDialog: StateFlow<Boolean> = _showAddTaskDialog.asStateFlow()
 
     private val _editingTask = MutableStateFlow<Task?>(null)
     val editingTask: StateFlow<Task?> = _editingTask.asStateFlow()
 
+    /** Serializes background draft saves so two quick pauses cannot insert twice. */
+    private val draftMutex = Mutex()
 
     init {
         observeTasks()
     }
 
-    private fun createDateFilters(tasks: List<Task>): List<TaskFilter> {
-        val boundaries = currentDayBoundaries()
-
-        val todayTasks = tasks.filter { task ->
-            task.reminderDate != null &&
-                task.reminderDate >= boundaries.today &&
-                task.reminderDate < boundaries.tomorrow
-        }
-        val tomorrowTasks = tasks.filter { task ->
-            task.reminderDate != null &&
-                task.reminderDate >= boundaries.tomorrow &&
-                task.reminderDate < boundaries.dayAfterTomorrow
-        }
-        val laterTasks = tasks.filter { task ->
-            task.reminderDate != null && task.reminderDate >= boundaries.dayAfterTomorrow
-        }
-
-        return listOf(
-            TaskFilter("all", "Всі завдання", tasks.size, TaskFilter.Type.DATE),
-            TaskFilter("today", "Сьогодні", todayTasks.size, TaskFilter.Type.DATE),
-            TaskFilter("tomorrow", "Завтра", tomorrowTasks.size, TaskFilter.Type.DATE),
-            TaskFilter("later", "Пізніше", laterTasks.size, TaskFilter.Type.DATE)
-        ).filter { it.count > 0 || it.id == "all" }
-    }
-
-    private fun createPriorityFilters(tasks: List<Task>): List<TaskFilter> {
-        val highTasks = tasks.filter { it.priority == 2 }
-        val mediumTasks = tasks.filter { it.priority == 1 }
-        val lowTasks = tasks.filter { it.priority == 0 }
-
-        return listOf(
-            TaskFilter("priority_high", "Високий", highTasks.size, TaskFilter.Type.PRIORITY),
-            TaskFilter("priority_medium", "Середній", mediumTasks.size, TaskFilter.Type.PRIORITY),
-            TaskFilter("priority_low", "Низький", lowTasks.size, TaskFilter.Type.PRIORITY)
-        ).filter { it.count > 0 }
-    }
-
-    private fun createCompletedFilter(completedTasks: List<Task>): TaskFilter {
-        return TaskFilter("completed", "Виконані", completedTasks.size, TaskFilter.Type.COMPLETED)
-    }
-
-    private fun filterTasks(
-        tasks: List<Task>,
-        dateFilter: TaskFilter?,
-        priorityFilter: TaskFilter?
-    ): List<Task> {
-        var filtered = tasks
-        val boundaries = currentDayBoundaries()
-
-        dateFilter?.let { filter ->
-            filtered = when (filter.id) {
-                "today" -> filtered.filter { task ->
-                    task.reminderDate != null &&
-                        task.reminderDate >= boundaries.today &&
-                        task.reminderDate < boundaries.tomorrow
-                }
-
-                "tomorrow" -> filtered.filter { task ->
-                    task.reminderDate != null &&
-                        task.reminderDate >= boundaries.tomorrow &&
-                        task.reminderDate < boundaries.dayAfterTomorrow
-                }
-
-                "later" -> filtered.filter { task ->
-                    task.reminderDate != null &&
-                        task.reminderDate >= boundaries.dayAfterTomorrow
-                }
-
-                else -> filtered
-            }
-        }
-
-        priorityFilter?.let { filter ->
-            filtered = when (filter.id) {
-                "priority_high" -> filtered.filter { it.priority == 2 }
-                "priority_medium" -> filtered.filter { it.priority == 1 }
-                "priority_low" -> filtered.filter { it.priority == 0 }
-                else -> filtered
-            }
-        }
-
-        return filtered.sortedByDescending { it.priority }
-    }
-
-    private data class DayBoundaries(
-        val today: Long,
-        val tomorrow: Long,
-        val dayAfterTomorrow: Long
-    )
-
-    private fun currentDayBoundaries(
-        today: LocalDate = LocalDate.now(ZoneId.systemDefault()),
-        zoneId: ZoneId = ZoneId.systemDefault()
-    ): DayBoundaries = DayBoundaries(
-        today = today.atStartOfDay(zoneId).toInstant().toEpochMilli(),
-        tomorrow = today.plusDays(1).atStartOfDay(zoneId).toInstant().toEpochMilli(),
-        dayAfterTomorrow = today.plusDays(2).atStartOfDay(zoneId).toInstant().toEpochMilli()
-    )
-
     private fun observeTasks() {
         viewModelScope.launch {
             combine(
-                getActiveTasksUseCase(),
-                getCompletedTasksUseCase(),
-                getTasksCountUseCase.getActiveCount(),
-                getTasksCountUseCase.getCompletedCount()
+                tasksRepository.getAllActiveTasks(),
+                tasksRepository.getAllCompletedTasks(),
+                tasksRepository.getActiveTasksCount(),
+                tasksRepository.getCompletedTasksCount(),
             ) { activeTasks, completedTasks, activeCount, completedCount ->
-                val currentState = _uiState.value
-
-                // Automatically set the initial filter if none is selected
-                val (selectedDateFilter, selectedCompletedFilter) = if (
-                    currentState.selectedDateFilter == null &&
-                    currentState.selectedCompletedFilter == null
-                ) {
-                    val boundaries = currentDayBoundaries()
-                    val todayTasks = activeTasks.filter { task ->
-                        task.reminderDate != null &&
-                            task.reminderDate >= boundaries.today &&
-                            task.reminderDate < boundaries.tomorrow
-                    }
-
-                    if (todayTasks.isNotEmpty()) {
-                        // There are tasks for today - select "Today"
-                        TaskFilter(
-                            "today",
-                            "Сьогодні",
-                            todayTasks.size,
-                            TaskFilter.Type.DATE
-                        ) to null
-                    } else {
-                        // No tasks for today - select "All tasks"
-                        TaskFilter(
-                            "all",
-                            "Всі завдання",
-                            activeTasks.size,
-                            TaskFilter.Type.DATE
-                        ) to null
-                    }
-                } else {
-                    currentState.selectedDateFilter to currentState.selectedCompletedFilter
-                }
-
-                val filteredTasks = if (selectedCompletedFilter != null) {
-                    completedTasks.sortedByDescending { it.priority }
-                } else {
-                    filterTasks(
-                        activeTasks,
-                        selectedDateFilter,
-                        currentState.selectedPriorityFilter
-                    )
-                }
-
-                val dateFilters = createDateFilters(activeTasks)
-                val priorityFilters = createPriorityFilters(activeTasks)
-                val completedFilter = createCompletedFilter(completedTasks)
-
-                // If the completed filter is selected, do not show the priority filters
-                val availableFilters = if (selectedCompletedFilter != null) {
-                    listOf(completedFilter)
-                } else {
-                    dateFilters + priorityFilters + listOf(completedFilter)
-                }
-
-                val totalTasks = activeCount + completedCount
-                val completionPercentage = if (totalTasks > 0) {
-                    (completedCount * 100) / totalTasks
-                } else 0
-
-                TasksUiState(
-                    activeTasks = activeTasks.sortedByDescending { it.priority },
-                    completedTasks = completedTasks.sortedByDescending { it.priority },
-                    filteredActiveTasks = filteredTasks,
-                    activeTasksCount = activeCount,
-                    completedTasksCount = completedCount,
-                    totalTasksCount = totalTasks,
-                    completionPercentage = completionPercentage,
-                    availableFilters = availableFilters,
-                    selectedDateFilter = selectedDateFilter,
-                    selectedPriorityFilter = currentState.selectedPriorityFilter,
-                    selectedCompletedFilter = selectedCompletedFilter,
-                    isLoading = false
-                )
+                TaskFilterEngine.reduce(_uiState.value, activeTasks, completedTasks, activeCount, completedCount)
             }.collect { newState ->
                 _uiState.value = newState
             }
@@ -290,23 +119,15 @@ class TasksViewModel
         _editingTask.value = null
     }
 
-
-    fun addTask(
-        title: String,
-        description: String?,
-        reminderDate: Long?,
-        priority: Int,
-        categoryId: Long? = null
-    ) {
+    fun addTask(title: String, description: String?, priority: Int, categoryId: Long? = null) {
         viewModelScope.launch {
             val task = Task.new(
                 title = title,
                 description = description,
-                reminderDate = reminderDate,
                 priority = priority,
-                categoryId = categoryId
+                categoryId = categoryId,
             )
-            if (addTaskUseCase(task) > 0L) {
+            if (tasksRepository.insertTask(task).isSuccess) {
                 hideAddTaskDialog()
             } else {
                 _operationFailures.emit(TaskOperationFailure.CREATE)
@@ -314,14 +135,7 @@ class TasksViewModel
         }
     }
 
-    fun editTask(
-        taskId: Long,
-        title: String,
-        description: String?,
-        reminderDate: Long?,
-        priority: Int,
-        categoryId: Long? = null
-    ) {
+    fun editTask(taskId: Long, title: String, description: String?, priority: Int, categoryId: Long? = null) {
         viewModelScope.launch {
             val existingTask = uiState.value.activeTasks.find { it.id == taskId }
                 ?: uiState.value.completedTasks.find { it.id == taskId }
@@ -334,13 +148,55 @@ class TasksViewModel
             val updatedTask = existingTask.copy(
                 title = title,
                 description = description,
-                reminderDate = reminderDate,
                 priority = priority,
-                categoryId = categoryId
+                // The editor does not show the category: keep the stored one.
+                categoryId = categoryId ?: existingTask.categoryId,
             )
 
-            if (updateTaskUseCase(updatedTask)) {
+            if (tasksRepository.updateTask(updatedTask).isSuccess) {
                 hideAddTaskDialog()
+            } else {
+                _operationFailures.emit(TaskOperationFailure.UPDATE)
+            }
+        }
+    }
+
+    /**
+     * Persists the open editor when the app leaves the foreground.
+     *
+     * Backgrounding re-locks the vault and the re-lock drops every screen, so unsaved sheet
+     * input would be lost. The draft is written through the encrypted database before the
+     * vault closes. A new task becomes the edited task, so the sheet (if the user returns
+     * before the re-lock) keeps editing that row instead of inserting a duplicate.
+     */
+    fun saveDraftForBackground(draft: TaskDraft) {
+        if (draft.title.isBlank() || !_showAddTaskDialog.value) return
+        viewModelScope.launch {
+            draftMutex.withLock { persistDraft(draft) }
+        }
+    }
+
+    private suspend fun persistDraft(draft: TaskDraft) {
+        val description = draft.description.ifBlank { null }
+        val editing = _editingTask.value
+        if (editing == null) {
+            val task = Task.new(
+                title = draft.title,
+                description = description,
+                priority = draft.priority,
+            )
+            tasksRepository.insertTask(task)
+                .onSuccess { id -> _editingTask.value = task.copy(id = id) }
+                .onFailure { _operationFailures.emit(TaskOperationFailure.CREATE) }
+        } else {
+            val updated = editing.copy(
+                title = draft.title,
+                description = description,
+                priority = draft.priority,
+            )
+            if (updated == editing) return
+            if (tasksRepository.updateTask(updated).isSuccess) {
+                _editingTask.value = updated
             } else {
                 _operationFailures.emit(TaskOperationFailure.UPDATE)
             }
@@ -349,16 +205,35 @@ class TasksViewModel
 
     fun toggleTaskCompletion(taskId: Long, isCompleted: Boolean) {
         viewModelScope.launch {
-            if (!updateTaskStatusUseCase(taskId, isCompleted)) {
+            if (updateTaskStatusUseCase(taskId, isCompleted).isFailure) {
                 _operationFailures.emit(TaskOperationFailure.STATUS_UPDATE)
             }
         }
     }
 
+    fun deleteTask(task: Task) {
+        viewModelScope.launch {
+            if (tasksRepository.deleteTaskById(task.id).isSuccess) {
+                hideAddTaskDialog()
+                _deletedTasks.emit(task)
+            } else {
+                _operationFailures.emit(TaskOperationFailure.DELETE)
+            }
+        }
+    }
+
+    /** Undo for [deleteTask]: puts the same task (id, uid, dates) back. */
+    fun restoreTask(task: Task) {
+        viewModelScope.launch {
+            if (tasksRepository.insertTask(task).isFailure) {
+                _operationFailures.emit(TaskOperationFailure.CREATE)
+            }
+        }
+    }
 
     fun clearCompletedTasks(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (deleteCompletedTasksUseCase()) {
+            if (tasksRepository.deleteAllCompletedTasks().isSuccess) {
                 onSuccess()
             } else {
                 _operationFailures.emit(TaskOperationFailure.CLEAR_COMPLETED)
@@ -367,83 +242,6 @@ class TasksViewModel
     }
 
     fun onFilterSelected(filter: TaskFilter) {
-        val currentState = _uiState.value
-
-        when (filter.type) {
-            TaskFilter.Type.DATE -> {
-                // Do not allow resetting the date filter if it is already selected
-                val newDateFilter = if (currentState.selectedDateFilter?.id == filter.id) {
-                    currentState.selectedDateFilter // Keep it selected
-                } else {
-                    filter
-                }
-                val filteredTasks = filterTasks(
-                    currentState.activeTasks,
-                    newDateFilter,
-                    currentState.selectedPriorityFilter
-                )
-
-                _uiState.value = currentState.copy(
-                    selectedDateFilter = newDateFilter,
-                    selectedCompletedFilter = null, // Reset the completed filter
-                    filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                )
-            }
-
-            TaskFilter.Type.PRIORITY -> {
-                val newPriorityFilter =
-                    if (currentState.selectedPriorityFilter?.id == filter.id) null else filter
-                val filteredTasks = filterTasks(
-                    currentState.activeTasks,
-                    currentState.selectedDateFilter,
-                    newPriorityFilter
-                )
-
-                _uiState.value = currentState.copy(
-                    selectedPriorityFilter = newPriorityFilter,
-                    selectedCompletedFilter = null, // Reset the completed filter
-                    filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                )
-            }
-
-            TaskFilter.Type.COMPLETED -> {
-                // Do not allow resetting the COMPLETED filter if it is already selected
-                val newCompletedFilter =
-                    if (currentState.selectedCompletedFilter?.id == filter.id) {
-                        currentState.selectedCompletedFilter // Keep it selected
-                    } else {
-                        filter
-                    }
-
-                val filteredTasks = if (newCompletedFilter != null) {
-                    currentState.completedTasks
-                } else {
-                    // If resetting COMPLETED, select "All tasks" by default
-                    TaskFilter(
-                        "all",
-                        "Всі завдання",
-                        currentState.activeTasks.size,
-                        TaskFilter.Type.DATE
-                    )
-                    currentState.activeTasks
-                }
-
-                _uiState.value = currentState.copy(
-                    selectedDateFilter = if (newCompletedFilter != null) null else
-                        TaskFilter(
-                            "all",
-                            "Всі завдання",
-                            currentState.activeTasks.size,
-                            TaskFilter.Type.DATE
-                        ),
-                    selectedPriorityFilter = null,
-                    selectedCompletedFilter = newCompletedFilter,
-                    filteredActiveTasks = filteredTasks.sortedByDescending { it.priority },
-                )
-            }
-        }
+        _uiState.value = TaskFilterEngine.select(_uiState.value, filter)
     }
-
-
 }
-

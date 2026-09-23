@@ -35,96 +35,118 @@ import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
 
 enum class DialogTrashAction {
-    DELETE_PERMANENTLY, CLEAN_ALL, DISABLE
+    DELETE_PERMANENTLY,
+    CLEAN_ALL,
+    DISABLE,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashScreen(
-    navController: NavHostController, trashViewModel: TrashViewModel = hiltViewModel()
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    trashViewModel: TrashViewModel = hiltViewModel(),
 ) {
-
     val state by trashViewModel.state.collectAsStateWithLifecycle()
     var isDialogVisible by remember { mutableStateOf<DialogTrashAction>(DialogTrashAction.DISABLE) }
 
     ConfirmDialog(
         isVisible = isDialogVisible != DialogTrashAction.DISABLE,
-        titleText = if (isDialogVisible == DialogTrashAction.CLEAN_ALL) stringResource(R.string.clean_trash_title) else pluralStringResource(
-            R.plurals.delete_notes_confirm, state.checkedCount, state.checkedCount
-        ),
-        messageText = if (isDialogVisible == DialogTrashAction.CLEAN_ALL) stringResource(R.string.clean_trash_message) else stringResource(
-            R.string.clean_permanent_message
-        ),
+        titleText = if (isDialogVisible == DialogTrashAction.CLEAN_ALL) {
+            stringResource(R.string.clean_trash_title)
+        } else {
+            pluralStringResource(
+                R.plurals.delete_notes_confirm,
+                state.checkedCount,
+                state.checkedCount,
+            )
+        },
+        messageText = if (isDialogVisible == DialogTrashAction.CLEAN_ALL) {
+            stringResource(R.string.clean_trash_message)
+        } else {
+            stringResource(
+                R.string.clean_permanent_message,
+            )
+        },
         onConfirm = {
             when (isDialogVisible) {
                 DialogTrashAction.CLEAN_ALL -> trashViewModel.onEvent(TrashListEvent.CleanAll())
+
                 DialogTrashAction.DELETE_PERMANENTLY -> trashViewModel.onEvent(
-                    TrashListEvent.CleanNotes()
+                    TrashListEvent.CleanNotes(),
                 )
 
                 DialogTrashAction.DISABLE -> {}
             }
             isDialogVisible = DialogTrashAction.DISABLE
-
         },
         onDismiss = {
             isDialogVisible = DialogTrashAction.DISABLE
-        })
+        },
+    )
 
-
-    Scaffold(
-        topBar = {
-            TopAppBar(title = {
-                if (state.canCheck) Text(
+    Scaffold(modifier = modifier, topBar = {
+        TopAppBar(title = {
+            if (state.canCheck) {
+                Text(
                     stringResource(
-                        id = R.string.checked_count, state.checkedCount
-                    )
+                        id = R.string.checked_count,
+                        state.checkedCount,
+                    ),
                 )
-                else Text(stringResource(R.string.main_drawer_trash))
-            }, navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            } else {
+                Text(stringResource(R.string.main_drawer_trash))
+            }
+        }, navigationIcon = {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.back),
+                )
+            }
+        }, actions = {
+            AnimatedVisibility(state.canCheck) {
+                IconButton(onClick = { trashViewModel.onEvent(TrashListEvent.RestoreNotes()) }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_trash_restore),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
-            }, actions = {
+            }
 
-
-                AnimatedVisibility(state.canCheck) {
-                    IconButton(onClick = { trashViewModel.onEvent(TrashListEvent.RestoreNotes()) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_trash_restore),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                if (state.notes.isEmpty()) IconButton(onClick = {}, enabled = false) {
+            if (state.notes.isEmpty()) {
+                IconButton(onClick = {}, enabled = false) {
                     Icon(
                         painter = painterResource(R.drawable.ic_trash_empty),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
-                } else IconButton(onClick = {
+                }
+            } else {
+                IconButton(onClick = {
                     isDialogVisible =
                         if (state.canCheck) DialogTrashAction.DELETE_PERMANENTLY else DialogTrashAction.CLEAN_ALL
                 }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_trash_all_clean),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-            })
-        }) { padding ->
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+        })
+    }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
         ) {
-            TrashNotesList(onItemClick = { index, note ->
+            // TrashNotesList resolves the same back-stack-scoped TrashViewModel itself.
+            TrashNotesList(onItemClick = { _, note ->
                 navController.navigate("${NavRoutes.EditNoteRoute.name}/${note.id}?isReadTrashOnly=true")
-            }, trashViewModel)
+            })
         }
     }
 }

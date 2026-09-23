@@ -9,9 +9,7 @@ import javax.inject.Inject
  * Full-reset path for unrecoverable local vault corruption/loss.
  */
 @HiltViewModel
-class LossRecoveryViewModel @Inject constructor(
-    private val securityManager: SecurityManager
-) : ViewModel() {
+class LossRecoveryViewModel @Inject constructor(private val securityManager: SecurityManager) : ViewModel() {
 
     fun wipeAllData() {
         securityManager.wipeAndReset()

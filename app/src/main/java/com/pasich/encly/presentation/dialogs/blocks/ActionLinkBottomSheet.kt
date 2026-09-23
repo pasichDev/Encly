@@ -2,7 +2,9 @@ package com.pasich.encly.presentation.dialogs.blocks
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,10 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.blocks.LinkBlock
 import com.pasich.encly.presentation.components.custombox.ModalBoxItem
 import com.pasich.encly.presentation.components.custombox.RoundPosition
-
+import com.pasich.encly.presentation.editor.blocks.LinkBlock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,17 +40,13 @@ fun ActionLinkBottomSheet(
             sheetState = sheetState,
             shape = RectangleShape,
             containerColor = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.wrapContentHeight()
+            modifier = Modifier.wrapContentHeight(),
         ) {
-
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
-
-
                 when (settings.block) {
                     is Block.LinkBlock -> {
-
                         val urlModel by settings.block.block.collectAsState()
                         if (!urlModel.isError) {
                             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -57,38 +54,62 @@ fun ActionLinkBottomSheet(
                                     settings.block,
                                     blockActions = null,
                                     onClick = { Unit },
-                                    modifier = Modifier
                                 )
                             }
                         }
-
                     }
 
                     else -> Unit
-
-
                 }
 
                 LazyColumn(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
                 ) {
-
-
                     item {
                         ModalBoxItem(
-                            title = "Перемістити вгору",
-                            icon = painterResource(R.drawable.ic_up),
+                            title = stringResource(R.string.link_open),
+                            icon = painterResource(R.drawable.link),
                             roundPosition = RoundPosition.First,
-                            enable = settings.blockMove != 1,
-                            action = { onAction(ActionBlockDialog.Move(1)) })
+                            action = { onAction(ActionBlockDialog.OpenLink) },
+                        )
                     }
                     item {
                         ModalBoxItem(
-                            title = "Перемістити вниз",
+                            title = stringResource(R.string.link_copy),
+                            icon = painterResource(R.drawable.ic_copy),
+                            roundPosition = if (settings.canEdit) RoundPosition.Medium else RoundPosition.Last,
+                            action = { onAction(ActionBlockDialog.CopyLink) },
+                        )
+                    }
+                    if (!settings.canEdit) return@LazyColumn
+                    item {
+                        ModalBoxItem(
+                            title = stringResource(R.string.link_edit),
+                            icon = painterResource(R.drawable.ic_edit_modal),
+                            roundPosition = RoundPosition.Last,
+                            action = { onAction(ActionBlockDialog.EditLink) },
+                        )
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    item {
+                        ModalBoxItem(
+                            title = stringResource(R.string.block_move_up),
+                            icon = painterResource(R.drawable.ic_up),
+                            roundPosition = RoundPosition.First,
+                            enable = settings.blockMove != 1,
+                            action = { onAction(ActionBlockDialog.Move(1)) },
+                        )
+                    }
+                    item {
+                        ModalBoxItem(
+                            title = stringResource(R.string.block_move_down),
                             icon = painterResource(R.drawable.ic_down),
                             roundPosition = RoundPosition.Medium,
                             enable = settings.blockMove != 2,
-                            action = { onAction(ActionBlockDialog.Move(2)) })
+                            action = { onAction(ActionBlockDialog.Move(2)) },
+                        )
                     }
                     item {
                         ModalBoxItem(
@@ -96,17 +117,11 @@ fun ActionLinkBottomSheet(
                             icon = painterResource(R.drawable.ic_to_trash),
                             roundPosition = RoundPosition.Last,
                             confirmationRequest = MaterialTheme.colorScheme.error,
-                            action = { onAction(ActionBlockDialog.Delete) })
+                            action = { onAction(ActionBlockDialog.Delete) },
+                        )
                     }
-
                 }
-
-
             }
-
         }
-
     }
-
 }
-

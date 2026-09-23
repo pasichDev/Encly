@@ -11,36 +11,34 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.R
 
 @Composable
-fun FontSizeSlider(
-    currentSize: Int,
-    onSizeChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun FontSizeSlider(currentSize: Int, onSizeChange: (Int) -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Розмір тексту",
+                text = stringResource(R.string.font_size_title),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = "${currentSize}sp",
+                text = stringResource(R.string.font_size_value, currentSize),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
         }
-        
+
         Slider(
             value = currentSize.toFloat(),
             onValueChange = { onSizeChange(it.toInt()) },
@@ -48,7 +46,7 @@ fun FontSizeSlider(
             steps = 21, // 22 steps from 10 to 32
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 8.dp),
         )
     }
 }

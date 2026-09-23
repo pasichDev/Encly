@@ -55,52 +55,51 @@ import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.SendHorizontal
 import com.composables.icons.lucide.ShieldEllipsis
+import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
 import com.pasich.encly.core.LINK_FEEDBACK
+import com.pasich.encly.core.LINK_PRIVACY_POLICY
 import com.pasich.encly.core.MAIL_DEVELOPMENT
 import com.pasich.encly.presentation.components.HeroCard
 import com.pasich.encly.presentation.components.HeroIcon
 import com.pasich.encly.presentation.components.TitleCard
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(
-    navController: NavHostController,
-
-    ) {
+fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.about),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            contentDescription = stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             // Hero Section
             HeroSection()
@@ -124,7 +123,7 @@ private fun HeroSection() {
             val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 context.packageManager.getPackageInfo(
                     context.packageName,
-                    PackageManager.PackageInfoFlags.of(0)
+                    PackageManager.PackageInfoFlags.of(0),
                 )
             } else {
                 @Suppress("DEPRECATION")
@@ -140,16 +139,15 @@ private fun HeroSection() {
         icon = HeroIcon.Painter(painterResource(R.drawable.ic_splashscreen)),
         title = stringResource(R.string.about_app_title),
         subtitle = "v$versionName",
-        description = stringResource(R.string.about_app_description)
+        description = stringResource(R.string.about_app_description),
     )
-
 }
 
 @Composable
 private fun DeveloperActionsSection(context: Context) {
     Column(
         modifier = Modifier.padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Support & Contact Card
         Card(
@@ -157,8 +155,8 @@ private fun DeveloperActionsSection(context: Context) {
                 .fillMaxWidth(),
 
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
         ) {
             Column {
                 TitleCard(stringResource(R.string.about_support_title))
@@ -168,62 +166,49 @@ private fun DeveloperActionsSection(context: Context) {
                     icon = Lucide.ShieldEllipsis,
                     title = stringResource(R.string.about_privacy_policy),
                     description = stringResource(R.string.about_privacy_policy_desc),
-                    onClick = {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.about_privacy_policy_unavailable),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+                    onClick = { openLink(context, LINK_PRIVACY_POLICY) },
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Rate App
-                SupportActionItem(
-                    icon = Icons.Default.Star,
-                    title = stringResource(R.string.about_rate_app),
-                    description = stringResource(R.string.about_rate_app_desc),
-                    onClick = {
-                        val appPackageName = context.packageName
-                        val marketIntent = Intent(
-                            Intent.ACTION_VIEW,
-                            "market://details?id=$appPackageName".toUri()
-                        )
-
-                        try {
-                            context.startActivity(marketIntent)
-                        } catch (_: ActivityNotFoundException) {
-                            val webIntent = Intent(
+                // Rate App: store builds only. The fdroid flavor carries no Google Play link.
+                if (BuildConfig.STORE_RATING_ENABLED) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    SupportActionItem(
+                        icon = Icons.Default.Star,
+                        title = stringResource(R.string.about_rate_app),
+                        description = stringResource(R.string.about_rate_app_desc),
+                        onClick = {
+                            val appPackageName = context.packageName
+                            val marketIntent = Intent(
                                 Intent.ACTION_VIEW,
-                                "https://play.google.com/store/apps/details?id=$appPackageName".toUri()
+                                "market://details?id=$appPackageName".toUri(),
                             )
-                            context.startActivity(webIntent)
-                        }
 
-                    }
-                )
+                            try {
+                                context.startActivity(marketIntent)
+                            } catch (_: ActivityNotFoundException) {
+                                openLink(
+                                    context,
+                                    "https://play.google.com/store/apps/details?id=$appPackageName",
+                                )
+                            }
+                        },
+                    )
+                }
                 Spacer(modifier = Modifier.height(12.dp))
-                // Feedback
+                // Feedback: public GitHub issue tracker, no third-party form service.
                 SupportActionItem(
                     icon = Lucide.SendHorizontal,
                     title = stringResource(R.string.about_feedback),
                     description = stringResource(R.string.about_feedback_desc),
-                    onClick = {
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            LINK_FEEDBACK.toUri()
-                        )
-                        context.startActivity(intent)
-                    }
+                    onClick = { openLink(context, LINK_FEEDBACK) },
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 SupportActionItem(
                     icon = Icons.Default.Email,
-                    title = "Написати розробнику",
-                    description = "Якщо у вас є питання або пропозиції, ви можете написати мені на пошту.",
+                    title = stringResource(R.string.about_write_developer),
+                    description = stringResource(R.string.about_write_developer_desc),
                     onClick = {
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                             data = "mailto:$MAIL_DEVELOPMENT".toUri()
@@ -233,73 +218,80 @@ private fun DeveloperActionsSection(context: Context) {
                         } catch (_: ActivityNotFoundException) {
                             Toast.makeText(
                                 context,
-                                "Поштовий клієнт не знайдено",
-                                Toast.LENGTH_SHORT
+                                context.getString(R.string.about_no_mail_client),
+                                Toast.LENGTH_SHORT,
                             ).show()
                         }
-                    }
+                    },
                 )
             }
         }
     }
 }
 
+/** Opens [url] in the user's browser; Encly itself never performs the request. */
+private fun openLink(context: Context, url: String) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(
+            context,
+            context.getString(R.string.about_no_browser, url),
+            Toast.LENGTH_LONG,
+        ).show()
+    }
+}
+
 @Composable
-private fun SupportActionItem(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    onClick: () -> Unit
-) {
+private fun SupportActionItem(icon: ImageVector, title: String, description: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         ),
-        onClick = onClick
+        onClick = onClick,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    lineHeight = 20.sp
+                    lineHeight = 20.sp,
                 )
             }
-
         }
     }
 }
@@ -312,46 +304,46 @@ private fun SecuritySection() {
             .padding(horizontal = 20.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        ),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Lucide.Lock,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
                 Text(
-                    text = "Захист даних",
+                    text = stringResource(R.string.about_data_protection),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = stringResource(R.string.about_encryption_note),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    lineHeight = 20.sp
+                    lineHeight = 20.sp,
                 )
             }
         }

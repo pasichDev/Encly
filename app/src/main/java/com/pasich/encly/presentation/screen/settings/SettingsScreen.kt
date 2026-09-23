@@ -13,12 +13,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,8 +31,11 @@ import com.pasich.encly.MainActivity
 import com.pasich.encly.R
 import com.pasich.encly.presentation.components.settings.SettingsBuilder
 import com.pasich.encly.presentation.components.settings.SettingsCategoryRenderer
+import com.pasich.encly.presentation.components.settings.SettingsNavigation
+import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.dialogs.ThemeColorDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.utils.DeviceCapabilities
 
@@ -43,26 +43,18 @@ import com.pasich.encly.utils.DeviceCapabilities
 @Composable
 fun SettingsScreen(
     navController: NavHostController?,
+    modifier: Modifier = Modifier,
     settingViewState: SettingsViewModel = hiltViewModel(),
-    securityDisable: Boolean = false
+    securityDisable: Boolean = false,
 ) {
     val dialogVisibly by settingViewState.dialogVisibly.collectAsState()
     val themeSettings = settingViewState.themeSettingsFlow.collectAsState()
     val showTasks by settingViewState.showTasksFlow.collectAsState()
     val simpleEdit by settingViewState.simpleEditFlow.collectAsState()
-    val validationMessage by settingViewState.validationMessage.collectAsState()
-    val (_, themeType, _) = themeSettings.value
+    val themeType = themeSettings.value.type
 
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
-
-    // Show validation messages
-    LaunchedEffect(validationMessage) {
-        validationMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            settingViewState.clearValidationMessage()
-        }
-    }
+    val languageDialogVisible by settingViewState.languageDialogVisible.collectAsState()
 
     // Build settings categories using the new builder
     val deviceCapabilities = remember { DeviceCapabilities(context) }
@@ -72,11 +64,13 @@ fun SettingsScreen(
         themeSettings = themeSettings.value,
         showTasks = showTasks,
         simpleEdit = simpleEdit,
-        onNavigateToAuth = {
-            navController?.navigate(NavRoutes.SecuritySettingsRoute.name)
-        })
+        navigation = SettingsNavigation(
+            onSecurity = { navController?.navigate(NavRoutes.SecuritySettingsRoute.name) },
+            onBackup = { navController?.navigate(NavRoutes.BackupRoute.name) },
+        ),
+    )
 
-    Scaffold(topBar = {
+    Scaffold(modifier = modifier, topBar = {
         TopAppBar(
             title = { Text(stringResource(R.string.main_drawer_settings)) },
             navigationIcon = {
@@ -88,32 +82,49 @@ fun SettingsScreen(
                         context.startActivity(intent)
                         (context as? Activity)?.finish()
                     }
-
                 }) {
                     Icon(
                         if (navController != null) Icons.AutoMirrored.Filled.ArrowBack else Lucide.Menu,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(R.string.back),
                     )
                 }
-            })
-    }, snackbarHost = {
-        SnackbarHost(hostState = snackbarHostState)
+            },
+        )
     }) { padding ->
-        if (dialogVisibly) ThemeColorDialog(settingViewState, themeType)
+        if (dialogVisibly) {
+            ThemeColorDialog(
+                themeType = themeType,
+                onConfirm = {
+                    settingViewState.onEvent(SettingsEvent.UpdateThemeType(it))
+                    settingViewState.setDialogVisibility(false)
+                },
+                onDismiss = { settingViewState.setDialogVisibility(false) },
+            )
+        }
+        if (languageDialogVisible) {
+            LanguageDialog(
+                current = settingViewState.currentLanguage(),
+                onDismiss = { settingViewState.setLanguageDialogVisibility(false) },
+                onConfirm = settingViewState::selectLanguage,
+            )
+        }
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             items(settingsCategories) { category ->
-                if (category.titleRes == R.string.settings_privacy && securityDisable) {
+                val securityCategory = category.titleRes == R.string.settings_privacy ||
+                    category.titleRes == R.string.settings_backup
+                if (securityCategory && securityDisable) {
                     return@items
                 }
                 SettingsCategoryRenderer(
-                    category = category, modifier = Modifier
+                    category = category,
+                    modifier = Modifier,
                 )
             }
         }

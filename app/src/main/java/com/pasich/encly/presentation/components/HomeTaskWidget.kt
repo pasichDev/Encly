@@ -19,55 +19,61 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
 import com.pasich.encly.ui.theme.titleNoteCard
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTaskWidget(
+    modifier: Modifier = Modifier,
     onTasksClick: () -> Unit = {},
-    viewModel: TasksViewModel = hiltViewModel()
+    viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val quotes = stringArrayResource(id = R.array.quotes_array)
-    val randomQuote = remember { quotes.random() }
-
+    // Remember the index, not the text, so the quote stays put but follows the language.
+    val quoteIndex = remember { quotes.indices.random() }
+    val randomQuote = quotes[quoteIndex]
 
     Card(
         onClick = onTasksClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp),
         shape = RoundedCornerShape(20.dp),
     ) {
         Row(modifier = Modifier.padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
-
             Image(
                 painter = painterResource(id = R.drawable.checklist),
-                contentDescription = "Tasks",
+                contentDescription = null,
                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
                 modifier = Modifier
                     .size(48.dp)
-                    .padding(end = 16.dp)
+                    .padding(end = 16.dp),
             )
 
             Column {
                 Text(
                     text = if (uiState.activeTasksCount > 0) {
-                        "У вас ${uiState.activeTasksCount} активних завдань"
+                        pluralStringResource(
+                            R.plurals.home_active_tasks,
+                            uiState.activeTasksCount,
+                            uiState.activeTasksCount,
+                        )
                     } else {
-                        "Ваш список завдань порожній"
+                        stringResource(R.string.home_tasks_empty)
                     },
-                    style = titleNoteCard
+                    style = titleNoteCard,
                 )
                 Text(
                     text = randomQuote,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }

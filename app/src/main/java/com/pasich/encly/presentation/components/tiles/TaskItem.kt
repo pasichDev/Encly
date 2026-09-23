@@ -18,6 +18,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,37 +31,28 @@ import androidx.compose.ui.unit.dp
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.CompletedIndicator
 import com.pasich.encly.presentation.components.tasks.PriorityIndicator
-import com.pasich.encly.presentation.components.tasks.ReminderIndicator
 import kotlinx.coroutines.delay
 
 private const val TASK_REMOVAL_ANIMATION_MS = 400
 private const val TASK_TRANSLATION_X = 100f
 
-private data class TaskCardState(
-    val enabled: Boolean,
-    val isRemoving: Boolean,
-    val animationProgress: Float
-)
+private data class TaskCardState(val enabled: Boolean, val isRemoving: Boolean, val animationProgress: Float)
 
-private data class TaskCardActions(
-    val onClick: () -> Unit,
-    val onComplete: () -> Unit,
-    val onUndo: () -> Unit
-)
+private data class TaskCardActions(val onClick: () -> Unit, val onComplete: () -> Unit, val onUndo: () -> Unit)
 
 @Composable
 fun TaskItem(
     task: Task,
     onTaskToggle: (Long, Boolean) -> Unit,
     onTaskClick: ((Task) -> Unit)? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ) {
     var isRemoving by remember(task.id) { mutableStateOf(false) }
     var shouldComplete by remember(task.id) { mutableStateOf(false) }
     val animationProgress by animateFloatAsState(
         targetValue = if (isRemoving) 0f else 1f,
         animationSpec = tween(durationMillis = TASK_REMOVAL_ANIMATION_MS),
-        label = "task_removal_animation"
+        label = "task_removal_animation",
     )
 
     CompleteTaskAfterAnimation(
@@ -68,18 +60,18 @@ fun TaskItem(
         shouldComplete = shouldComplete,
         onRemovingChange = { isRemoving = it },
         onCompleteChange = { shouldComplete = it },
-        onTaskToggle = onTaskToggle
+        onTaskToggle = onTaskToggle,
     )
 
     val state = TaskCardState(
         enabled = enabled,
         isRemoving = isRemoving,
-        animationProgress = animationProgress
+        animationProgress = animationProgress,
     )
     val actions = TaskCardActions(
         onClick = { onTaskClick?.invoke(task) },
         onComplete = { shouldComplete = true },
-        onUndo = { onTaskToggle(task.id, false) }
+        onUndo = { onTaskToggle(task.id, false) },
     )
     TaskCard(task, state, actions)
 }
@@ -90,24 +82,25 @@ private fun CompleteTaskAfterAnimation(
     shouldComplete: Boolean,
     onRemovingChange: (Boolean) -> Unit,
     onCompleteChange: (Boolean) -> Unit,
-    onTaskToggle: (Long, Boolean) -> Unit
+    onTaskToggle: (Long, Boolean) -> Unit,
 ) {
+    // The effect outlives recompositions (it restarts only on shouldComplete); always call the
+    // latest callbacks.
+    val currentOnRemovingChange by rememberUpdatedState(onRemovingChange)
+    val currentOnCompleteChange by rememberUpdatedState(onCompleteChange)
+    val currentOnTaskToggle by rememberUpdatedState(onTaskToggle)
     LaunchedEffect(shouldComplete) {
         if (!shouldComplete) return@LaunchedEffect
-        onRemovingChange(true)
+        currentOnRemovingChange(true)
         delay(TASK_REMOVAL_ANIMATION_MS.toLong())
-        onTaskToggle(task.id, true)
-        onCompleteChange(false)
-        onRemovingChange(false)
+        currentOnTaskToggle(task.id, true)
+        currentOnCompleteChange(false)
+        currentOnRemovingChange(false)
     }
 }
 
 @Composable
-private fun TaskCard(
-    task: Task,
-    state: TaskCardState,
-    actions: TaskCardActions
-) {
+private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,39 +112,35 @@ private fun TaskCard(
             }
             .clickable(
                 enabled = state.enabled && !task.isCompleted && !state.isRemoving,
-                onClick = actions.onClick
+                onClick = actions.onClick,
             ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         TaskCardContent(task, state, actions)
     }
 }
 
 @Composable
-private fun TaskCardContent(
-    task: Task,
-    state: TaskCardState,
-    actions: TaskCardActions
-) {
+private fun TaskCardContent(task: Task, state: TaskCardState, actions: TaskCardActions) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 15.dp, horizontal = 5.dp),
         verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(
             verticalAlignment = Alignment.Top,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             TaskCheckbox(
                 task = task,
                 enabled = state.enabled && !state.isRemoving,
                 onComplete = actions.onComplete,
-                onUndo = actions.onUndo
+                onUndo = actions.onUndo,
             )
             TaskTextContent(task)
         }
@@ -159,12 +148,7 @@ private fun TaskCardContent(
 }
 
 @Composable
-private fun TaskCheckbox(
-    task: Task,
-    enabled: Boolean,
-    onComplete: () -> Unit,
-    onUndo: () -> Unit
-) {
+private fun TaskCheckbox(task: Task, enabled: Boolean, onComplete: () -> Unit, onUndo: () -> Unit) {
     Checkbox(
         checked = task.isCompleted,
         onCheckedChange = { checked ->
@@ -176,7 +160,7 @@ private fun TaskCheckbox(
         enabled = enabled,
         modifier = Modifier
             .scale(0.8f)
-            .padding(end = 8.dp)
+            .padding(end = 8.dp),
     )
 }
 
@@ -187,11 +171,11 @@ private fun TaskTextContent(task: Task) {
             text = task.title,
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontWeight = FontWeight.Medium,
-                textDecoration = completedDecoration(task.isCompleted)
+                textDecoration = completedDecoration(task.isCompleted),
             ),
             color = completedTextColor(task.isCompleted),
             maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
 
         task.description?.let { description ->
@@ -205,7 +189,7 @@ private fun TaskTextContent(task: Task) {
                 },
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                textDecoration = completedDecoration(task.isCompleted)
+                textDecoration = completedDecoration(task.isCompleted),
             )
         }
 
@@ -217,11 +201,10 @@ private fun TaskTextContent(task: Task) {
 private fun TaskIndicators(task: Task) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!task.isCompleted) {
             PriorityIndicator(priority = task.priority)
-            task.reminderDate?.let { ReminderIndicator(it) }
         }
         if (task.isCompleted) {
             task.completedDate?.let { CompletedIndicator(it) }
@@ -230,12 +213,11 @@ private fun TaskIndicators(task: Task) {
 }
 
 @Composable
-private fun completedTextColor(isCompleted: Boolean) =
-    if (isCompleted) {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+private fun completedTextColor(isCompleted: Boolean) = if (isCompleted) {
+    MaterialTheme.colorScheme.onSurfaceVariant
+} else {
+    MaterialTheme.colorScheme.onSurface
+}
 
 private fun completedDecoration(isCompleted: Boolean): TextDecoration =
     if (isCompleted) TextDecoration.LineThrough else TextDecoration.None

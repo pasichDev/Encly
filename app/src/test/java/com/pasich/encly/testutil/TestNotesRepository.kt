@@ -2,15 +2,16 @@ package com.pasich.encly.testutil
 
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
-import com.pasich.encly.data.repository.NotesRepository
+import com.pasich.encly.domain.repository.NotesRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 
 internal class TestNotesRepository : NotesRepository {
     val allNotesWithTags = MutableStateFlow<List<NoteWithTag>>(emptyList())
 
+    /** The id an insert returns; zero or less makes the insert fail. */
     var insertResult: Long = DEFAULT_INSERT_ID
     var updateResult: Boolean = true
     var insertCalls: Int = 0
@@ -20,32 +21,49 @@ internal class TestNotesRepository : NotesRepository {
 
     private val notesByTag = mutableMapOf<Long, MutableStateFlow<List<NoteWithTag>>>()
 
-    fun tagFlow(tagId: Long): MutableStateFlow<List<NoteWithTag>> =
-        notesByTag.getOrPut(tagId) { MutableStateFlow(emptyList()) }
+    fun tagFlow(tagId: Long): MutableStateFlow<List<NoteWithTag>> = notesByTag.getOrPut(tagId) {
+        MutableStateFlow(emptyList())
+    }
 
-    override suspend fun getAllNotes(): Flow<List<Note>> =
-        allNotesWithTags.map { notes -> notes.map { it.note } }
+    override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = allNotesWithTags
 
-    override suspend fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = allNotesWithTags
+    override fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> = tagFlow(tagId)
 
-    override suspend fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> = tagFlow(tagId)
+    override suspend fun getNoteById(noteId: Long): Note? = allNotesWithTags.value.firstOrNull {
+        it.note.id == noteId
+    }?.note
 
-    override suspend fun getNoteById(noteId: Long): Note? =
-        allNotesWithTags.value.firstOrNull { it.note.id == noteId }?.note
+    /** Every note passed to [insertNote], in call order. */
+    val insertedNotes = mutableListOf<Note>()
 
-    override suspend fun insertNote(note: Note): Long {
+    /** When set, [insertNote] waits for it: a test can act while an insert is in flight. */
+    var insertGate: CompletableDeferred<Unit>? = null
+
+    override suspend fun insertNote(note: Note): Result<Long> {
         insertCalls += 1
-        return insertResult
+        insertedNotes += note
+        insertGate?.await()
+        return if (insertResult > 0L) Result.success(insertResult) else Result.failure(IllegalStateException())
     }
 
-    override suspend fun updateNote(note: Note): Boolean {
+    /** Every note passed to [updateNote], in call order. */
+    val updatedNotes = mutableListOf<Note>()
+
+    override suspend fun updateNote(note: Note): Result<Unit> {
         updateCalls += 1
-        return updateResult
+        updatedNotes += note
+        return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
     }
 
-    override suspend fun getTrashNotes(): Flow<List<Note>> = flowOf(emptyList())
+    override fun getTrashNotes(): Flow<List<Note>> = flowOf(emptyList())
 
-    override suspend fun deleteNoteById(id: Long): Boolean = true
+    /** Every id passed to [deleteNoteById], in call order. */
+    val deletedIds = mutableListOf<Long>()
+
+    override suspend fun deleteNoteById(id: Long): Result<Unit> {
+        deletedIds += id
+        return Result.success(Unit)
+    }
 
     private companion object {
         const val DEFAULT_INSERT_ID = 42L

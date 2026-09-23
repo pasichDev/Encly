@@ -18,10 +18,8 @@ class MyApplication : Application() {
         super.onCreate()
         try {
             ProcessLifecycleOwner.get().lifecycle.addObserver(sessionLockManager)
-            AppLogger.d("MyApplication", "Application initialized successfully")
         } catch (e: Exception) {
             AppLogger.e("MyApplication", "Failed to initialize application", e)
         }
     }
-
 }

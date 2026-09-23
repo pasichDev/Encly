@@ -23,20 +23,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.R
 
 @Composable
 fun TaskProgressCard(
     completionPercentage: Int,
-    modifier: Modifier = Modifier,
     completedTasksCount: Int,
     totalTasksCount: Int,
+    modifier: Modifier = Modifier,
 ) {
     val progress = completionPercentage / 100f
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
         animationSpec = tween(durationMillis = 1000),
-        label = "progress"
+        label = "progress",
     )
     val shape = RoundedCornerShape(16.dp)
     Card(
@@ -47,31 +50,31 @@ fun TaskProgressCard(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                    )
-                )
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                    ),
+                ),
             )
             .padding(bottom = 10.dp),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        )
+            containerColor = Color.Transparent,
+        ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Прогрес виконання",
+                    text = stringResource(R.string.task_progress_title),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Text(
-                    text = "$completionPercentage%",
+                    text = stringResource(R.string.percent_value, completionPercentage),
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
 
@@ -83,15 +86,20 @@ fun TaskProgressCard(
                     .fillMaxWidth()
                     .height(8.dp),
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "$completedTasksCount з $totalTasksCount завдань виконано",
+                text = pluralStringResource(
+                    R.plurals.task_progress_summary,
+                    totalTasksCount,
+                    completedTasksCount,
+                    totalTasksCount,
+                ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
     }

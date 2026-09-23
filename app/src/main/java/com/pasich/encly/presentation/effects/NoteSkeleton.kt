@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun NoteSkeleton(modifier: Modifier = Modifier) {
     Column(modifier = modifier.padding(horizontal = 20.dp)) {
-
         Spacer(modifier = Modifier.height(10.dp))
         Box(
             modifier = Modifier
@@ -27,7 +26,7 @@ fun NoteSkeleton(modifier: Modifier = Modifier) {
                 .height(30.dp)
                 .padding(vertical = 5.dp)
                 .clip(RoundedCornerShape(4.dp))
-                .shimmerEffect()
+                .shimmerEffect(),
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -36,7 +35,7 @@ fun NoteSkeleton(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.9f)
                 .height(18.dp)
                 .clip(RoundedCornerShape(4.dp))
-                .shimmerEffect()
+                .shimmerEffect(),
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -47,7 +46,7 @@ fun NoteSkeleton(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .height(18.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .shimmerEffect()
+                    .shimmerEffect(),
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -60,6 +59,6 @@ fun NoteSkeleton(modifier: Modifier = Modifier) {
 @Composable
 fun Modifier.shimmerEffect() = this.then(
     Modifier.background(
-        ShimmerBrush()
-    )
+        shimmerBrush(),
+    ),
 )

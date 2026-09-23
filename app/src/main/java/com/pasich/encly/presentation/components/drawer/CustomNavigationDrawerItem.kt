@@ -14,17 +14,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.presentation.navigation.DrawerNavItem
 
-
 @Composable
-fun CustomNavigationDrawerItem(
-    item: DrawerNavItem,
-    onItemClick: () -> Unit,
-) {
+fun CustomNavigationDrawerItem(item: DrawerNavItem, onItemClick: () -> Unit, modifier: Modifier = Modifier) {
     NavigationDrawerItem(
         label = {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium)
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
             )
         },
         selected = false,
@@ -33,12 +29,12 @@ fun CustomNavigationDrawerItem(
             Icon(
                 painter = painterResource(item.iconRes),
                 contentDescription = item.title,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
         },
         badge = {
             item.badgeCount?.let { Text(text = it.toString()) }
         },
-        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        modifier = modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
     )
 }

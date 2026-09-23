@@ -9,27 +9,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.pasich.encly.R
 
-
 @Composable
-fun RequestCleanCompleteTaskDialog(
-    showDialog: Boolean,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
+fun RequestCleanCompleteTaskDialog(showDialog: Boolean, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Очистити виконані завдання") },
-            text = { Text("Ви дійсно хочете видалити всі виконані завдання? Цю дію неможливо буде скасувати.") },
+            title = { Text(stringResource(R.string.task_clear_completed_title)) },
+            text = { Text(stringResource(R.string.task_clear_completed_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     onConfirm()
                     onDismiss()
                 }) {
                     Text(
-                        text = "Очистити",
+                        text = stringResource(R.string.clear),
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
             },
@@ -37,10 +32,10 @@ fun RequestCleanCompleteTaskDialog(
                 TextButton(onClick = onDismiss) {
                     Text(
                         text = stringResource(R.string.cancel),
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
-            }
+            },
         )
     }
 }

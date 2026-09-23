@@ -21,6 +21,6 @@ fun TitleCard(title: String, modifier: Modifier = Modifier) {
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
-            .padding(top = 20.dp, bottom = 8.dp)
+            .padding(top = 20.dp, bottom = 8.dp),
     )
 }

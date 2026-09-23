@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
@@ -51,11 +51,10 @@ import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.presentation.components.custombox.ModalBoxItem
 import com.pasich.encly.presentation.components.custombox.RoundPosition
 import com.pasich.encly.presentation.components.editNote.NoteSubTitle
-import com.pasich.encly.presentation.viewmodel.SaveStatusNote
+import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.ui.theme.bodyNote
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
 
 sealed class NoteAction {
     object Edit : NoteAction()
@@ -66,47 +65,44 @@ sealed class NoteAction {
 }
 
 @Composable
-fun NoteActionHeader(
-    item: NoteWithTag,
-    changeTag: (Long) -> Unit,
-) {
+private fun NoteActionHeader(item: NoteWithTag, changeTag: (Long) -> Unit) {
     var isVisibleTitle by remember { mutableStateOf(true) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .padding(bottom = 10.dp)
+            .padding(bottom = 10.dp),
     ) {
-
         Row {
             AnimatedVisibility(visible = isVisibleTitle) {
                 Icon(
                     painter = painterResource(R.drawable.ic_copy),
-                    contentDescription = "Note Icon",
+                    contentDescription = null,
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(8.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
             AnimatedVisibility(visible = isVisibleTitle) {
                 Spacer(modifier = Modifier.width(10.dp))
             }
             Column(
-                verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.Start
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start,
             ) {
                 AnimatedVisibility(visible = isVisibleTitle) {
                     Text(
                         text = item.note.title.ifEmpty {
                             stringResource(
-                                R.string.untitled
+                                R.string.untitled,
                             )
                         },
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -120,14 +116,12 @@ fun NoteActionHeader(
                     tagsViewListen = { isVisibleTitle = !it },
                     statusSaveNote = SaveStatusNote.OLD,
                     note = item.note,
-                    changeTag = changeTag
+                    changeTag = changeTag,
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
-
-
     }
 }
 
@@ -136,8 +130,8 @@ fun NoteActionHeader(
 fun NoteCardBottomSheet(
     isVisible: Boolean,
     item: NoteWithTag,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     onAction: (NoteAction) -> Unit,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     onDismiss: () -> Unit,
 ) {
     var noteDescription by remember { mutableStateOf(item.note.description) }
@@ -149,7 +143,7 @@ fun NoteCardBottomSheet(
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column {
                 NoteActionHeader(item, changeTag = { onAction(NoteAction.ChangeTag(it)) })
@@ -158,14 +152,14 @@ fun NoteCardBottomSheet(
                     enabled = isTextFieldEnabled,
                     onValueChange = { newValue -> noteDescription = newValue },
                     textStyle = bodyNote.copy(
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = MaterialTheme.colorScheme.onBackground,
                     ),
                     placeholder = {
                         Text(
-                            text = "Опис...",
+                            text = stringResource(R.string.note_description_placeholder),
                             style = bodyNote.copy(
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                            ),
                         )
                     },
                     maxLines = 5,
@@ -189,21 +183,21 @@ fun NoteCardBottomSheet(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         disabledContainerColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
+                        disabledIndicatorColor = Color.Transparent,
                     ),
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.ic_thought),
-                            contentDescription = "Description",
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                     }, trailingIcon = {
-                        if (!isTextFieldEnabled)
+                        if (!isTextFieldEnabled) {
                             Icon(
                                 Icons.Default.Edit,
                                 tint = MaterialTheme.colorScheme.primary,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.edit),
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable {
@@ -212,9 +206,9 @@ fun NoteCardBottomSheet(
                                             delay(300)
                                             descriptionFR.requestFocus()
                                         }
-                                    }
+                                    },
                             )
-                        else
+                        } else {
                             Icon(
                                 Icons.Default.Check,
                                 tint = MaterialTheme.colorScheme.primary,
@@ -224,21 +218,23 @@ fun NoteCardBottomSheet(
                                     .clickable {
                                         onAction(NoteAction.ChangeDescription(noteDescription))
                                         isTextFieldEnabled = false
-                                    }
+                                    },
                             )
-                    }
+                        }
+                    },
                 )
 
                 AnimatedVisibility(!isTextFieldEnabled) {
                     LazyColumn(
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     ) {
                         item {
                             ModalBoxItem(
                                 title = stringResource(id = R.string.edit),
                                 icon = painterResource(R.drawable.ic_edit_modal),
                                 roundPosition = RoundPosition.First,
-                                action = { onAction(NoteAction.Edit) })
+                                action = { onAction(NoteAction.Edit) },
+                            )
                         }
 
                         item {
@@ -246,9 +242,9 @@ fun NoteCardBottomSheet(
                                 title = stringResource(id = R.string.duplicate),
                                 icon = painterResource(R.drawable.ic_duplicate),
                                 roundPosition = RoundPosition.Medium,
-                                action = { onAction(NoteAction.Duplicate) })
+                                action = { onAction(NoteAction.Duplicate) },
+                            )
                         }
-
 
                         item {
                             ModalBoxItem(
@@ -256,13 +252,13 @@ fun NoteCardBottomSheet(
                                 icon = painterResource(R.drawable.ic_delete),
                                 roundPosition = RoundPosition.Last,
                                 confirmationRequest = MaterialTheme.colorScheme.error,
-                                action = { onAction(NoteAction.Delete) })
+                                action = { onAction(NoteAction.Delete) },
+                            )
                         }
                     }
                 }
 
                 Spacer(Modifier.height(20.dp))
-
             }
         }
     }

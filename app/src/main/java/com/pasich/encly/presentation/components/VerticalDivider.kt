@@ -15,14 +15,14 @@ fun VerticalDivider(
     modifier: Modifier = Modifier,
     color: Color = Color.Gray,
     thickness: Dp = 1.dp,
-    height: Dp = Dp.Unspecified
+    height: Dp = Dp.Unspecified,
 ) {
     Box(
         modifier = modifier
             .width(thickness)
             .then(
-                if (height != Dp.Unspecified) Modifier.height(height) else Modifier
+                if (height != Dp.Unspecified) Modifier.height(height) else Modifier,
             )
-            .background(color)
+            .background(color),
     )
 }
