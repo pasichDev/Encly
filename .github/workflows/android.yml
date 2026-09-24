@@ -42,15 +42,19 @@ jobs:
       # One Gradle invocation, fdroid flavor only, to keep Actions minutes low. The play flavor
       # differs only in store flags and is built by the release workflow; instrumented tests
       # (Room migrations, SQLCipher) run locally on an emulator: see CONTRIBUTING.md.
-      - name: Format, unit tests, detekt, lint, release build
+      - name: Format, unit tests, detekt, release build
         run: >-
           ./gradlew spotlessCheck
           :app:testFdroidDebugUnitTest
           :app:koverXmlReportFdroidDebug
           :app:koverVerifyFdroidDebug
           :app:detekt
-          :app:lintFdroidRelease
           :app:assembleFdroidRelease
+
+      # Separate invocation: lint running alongside Hilt code generation for another variant has
+      # raced on generated sources; after the build it reads finished outputs.
+      - name: Lint (release)
+        run: ./gradlew :app:lintFdroidRelease
 
       - name: Check merged manifest has no INTERNET permission
         run: |
