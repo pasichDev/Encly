@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -63,7 +62,6 @@ fun EnclyBottomSheet(
     showHandle: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shadow = EnclyTheme.colors.shadow
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
@@ -76,7 +74,9 @@ fun EnclyBottomSheet(
         } else {
             null
         },
-        modifier = modifier.shadow(ShadowElevation, SheetShape, ambientColor = shadow, spotColor = shadow),
+        // No Modifier.shadow here: its clipping graphics layer sits outside the sheet's offset
+        // animation and cut the whole content away, leaving an empty sheet.
+        modifier = modifier,
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
