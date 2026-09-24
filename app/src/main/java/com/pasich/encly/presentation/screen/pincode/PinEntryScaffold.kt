@@ -1,5 +1,10 @@
 package com.pasich.encly.presentation.screen.pincode
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,8 +22,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -61,7 +68,8 @@ fun AuthLoading(message: String, modifier: Modifier = Modifier) {
  * then the caller's [body] (dots and keypad, or the phrase field). It scrolls on short screens.
  * [footer] (the recovery screen's buttons) stays pinned under the scrolling part, above the
  * keyboard, so a primary action is never hidden behind the IME. [compact] trades the 96 dp top
- * for 24 dp, under a top bar or for a form that needs the room.
+ * for 24 dp, under a top bar or for a form that needs the room. While [busy] (a credential being
+ * checked) the logo breathes in place of a loading screen.
  */
 @Composable
 fun PinEntryScaffold(
@@ -71,6 +79,7 @@ fun PinEntryScaffold(
     subtitleIsError: Boolean = false,
     icon: ImageVector? = null,
     compact: Boolean = false,
+    busy: Boolean = false,
     footer: (@Composable ColumnScope.() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
@@ -91,7 +100,13 @@ fun PinEntryScaffold(
                     .verticalScroll(rememberScrollState())
                     .padding(top = if (compact) spacing.l else spacing.lockTop, bottom = spacing.l),
             ) {
-                PinEntryHeader(title = title, subtitle = subtitle, subtitleIsError = subtitleIsError, icon = icon)
+                PinEntryHeader(
+                    title = title,
+                    subtitle = subtitle,
+                    subtitleIsError = subtitleIsError,
+                    icon = icon,
+                    busy = busy,
+                )
                 body()
             }
             if (footer != null) {
@@ -108,7 +123,13 @@ fun PinEntryScaffold(
 }
 
 @Composable
-private fun PinEntryHeader(title: String, subtitle: String, subtitleIsError: Boolean, icon: ImageVector?) {
+private fun PinEntryHeader(
+    title: String,
+    subtitle: String,
+    subtitleIsError: Boolean,
+    icon: ImageVector?,
+    busy: Boolean,
+) {
     val spacing = EnclyTheme.spacing
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -119,7 +140,11 @@ private fun PinEntryHeader(title: String, subtitle: String, subtitleIsError: Boo
     ) {
         if (icon == null) {
             val reveal = LocalUnlockReveal.current
-            EnclyLogoMark(modifier = Modifier.onGloballyPositioned { reveal.logoBounds = it.boundsInRoot() })
+            EnclyLogoMark(
+                modifier = Modifier
+                    .onGloballyPositioned { reveal?.logoBounds = it.boundsInRoot() }
+                    .then(if (busy) Modifier.breathing() else Modifier),
+            )
         } else {
             EnclyIconTile(icon = icon)
         }
@@ -176,5 +201,23 @@ fun PinEntry(
             enabled = enabled,
             onBiometric = actions.onBiometric,
         )
+    }
+}
+
+private const val BREATH_MS = 700
+private const val BREATH_SCALE = 1.06f
+
+/** A slow scale pulse, the lock screen's "checking" state. */
+@Composable
+private fun Modifier.breathing(): Modifier {
+    val scale by rememberInfiniteTransition(label = "breathing").animateFloat(
+        initialValue = 1f,
+        targetValue = BREATH_SCALE,
+        animationSpec = infiniteRepeatable(tween(BREATH_MS), RepeatMode.Reverse),
+        label = "scale",
+    )
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
     }
 }

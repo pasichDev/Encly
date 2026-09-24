@@ -26,6 +26,7 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
+import com.pasich.encly.presentation.effects.revealThen
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
@@ -60,13 +61,16 @@ fun LockScreen(
     val unlockReveal = LocalUnlockReveal.current
 
     fun goHome() {
-        unlockReveal.start()
         // The note that was open when the app re-locked (see MainActivity) is opened again.
         val returnRoute = navController.currentBackStackEntry?.savedStateHandle?.get<String>(RelockReturn.RETURN_ROUTE)
-        navController.navigate(NavRoutes.HomeRoute.name) {
-            popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
+        val leave = {
+            navController.navigate(NavRoutes.HomeRoute.name) {
+                popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
+            }
+            if (returnRoute != null) navController.navigate(returnRoute)
         }
-        if (returnRoute != null) navController.navigate(returnRoute)
+        // Leaves once the reveal covers the window, so Home composes out of sight.
+        unlockReveal.revealThen(leave)
     }
 
     // A recovery-phrase unlock means the PIN was forgotten: set a new one before going on.
@@ -96,6 +100,9 @@ fun LockScreen(
                 authenticateSeed = viewModel::authenticateSeed,
                 onUnlock = ::goToPinReset,
             )
+            // Drawn over the phrase form rather than instead of it, so it keeps its state. The PIN
+            // form shows the check in place (full dots, breathing logo) and hands over to the reveal.
+            if (busy) AuthLoading(stringResource(R.string.lock_unlocking))
         } else {
             PinLockContent(
                 form = form,
@@ -104,6 +111,7 @@ fun LockScreen(
                     recoveryAvailable = viewModel.recoveryAvailable(),
                 ),
                 pinAuth = PinAuth(
+                    busy = busy,
                     lockoutRemainingMillis = viewModel::lockoutRemainingMillis,
                     authenticate = viewModel::authenticatePin,
                 ),
@@ -111,15 +119,14 @@ fun LockScreen(
                 onPromptBiometric = ::promptBiometric,
             )
         }
-        // Drawn over the forms rather than instead of them, so they keep their state.
-        if (busy) AuthLoading(stringResource(R.string.lock_unlocking))
     }
 }
 
 private data class LockCapabilities(val biometricEnabled: Boolean, val recoveryAvailable: Boolean)
 
-/** The LockViewModel operations the PIN form needs, so the ViewModel itself stays in [LockScreen]. */
+/** The LockViewModel state and operations the PIN form needs, so the ViewModel itself stays in [LockScreen]. */
 private class PinAuth(
+    val busy: Boolean,
     val lockoutRemainingMillis: () -> Long,
     val authenticate: (pin: String, onResult: (PinUnlockResult) -> Unit) -> Unit,
 )
@@ -132,6 +139,7 @@ private fun PinLockContent(
     onUnlock: () -> Unit,
     onPromptBiometric: () -> Unit,
 ) {
+    val busy = pinAuth.busy
     PinLockoutTicker(form.lockedOut, pinAuth.lockoutRemainingMillis) { form.lockoutSeconds = it }
     PinAuthenticationEffect(form = form, pinAuth = pinAuth, onUnlock = onUnlock)
 
@@ -145,12 +153,14 @@ private fun PinLockContent(
             else -> stringResource(R.string.lock_subtitle)
         },
         subtitleIsError = form.lockedOut || shownError != null,
+        busy = busy,
     ) {
         PinEntry(
-            entered = form.pin.length,
+            // The PIN is taken out of the form for the check; keep the dots full meanwhile.
+            entered = if (busy) PIN_LENGTH else form.pin.length,
             error = shownError != null && form.pin.isEmpty(),
             shakeKey = form.shakeKey,
-            enabled = !form.lockedOut,
+            enabled = !form.lockedOut && !busy,
             actions = PinEntryActions(
                 onDigit = form::typeDigit,
                 onBackspace = form::deleteDigit,

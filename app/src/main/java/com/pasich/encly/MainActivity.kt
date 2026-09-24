@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
@@ -180,15 +181,24 @@ fun App(
             ) {
                 val unlockReveal = remember { UnlockRevealState() }
                 CompositionLocalProvider(LocalUnlockReveal provides unlockReveal) {
+                    // The whole app layer moves with the unlock reveal: it slides in from the
+                    // right and pushes the logo colour out (see UnlockRevealOverlay).
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .windowInsetsPadding(WindowInsets.statusBars),
+                            .graphicsLayer { translationX = unlockReveal.contentOffset * size.width }
+                            .background(MaterialTheme.colorScheme.background),
                     ) {
-                        AppNavHost(
-                            navController = navController,
-                            startDestination = startDestination,
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .windowInsetsPadding(WindowInsets.statusBars),
+                        ) {
+                            AppNavHost(
+                                navController = navController,
+                                startDestination = startDestination,
+                            )
+                        }
                     }
                 }
                 UnlockRevealOverlay(unlockReveal)

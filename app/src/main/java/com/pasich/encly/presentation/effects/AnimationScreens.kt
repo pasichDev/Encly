@@ -23,18 +23,17 @@ fun NavGraphBuilder.animationScreens(
     arguments = arguments,
     deepLinks = deepLinks,
     // Re-lock swaps straight to the lock screen: no cross-fade that would keep the previous,
-    // decrypted screen on display (MainActivity's shield covers it until then).
+    // decrypted screen on display (MainActivity's shield covers it until then). Unlock swaps
+    // straight away too: it happens under the reveal overlay (see UnlockRevealOverlay).
     enterTransition = {
-        if (targetState.destination.route == LOCK_ROUTE) {
+        if (targetState.destination.route == LOCK_ROUTE || initialState.destination.route == LOCK_ROUTE) {
             EnterTransition.None
-        } else if (initialState.destination.route == LOCK_ROUTE) {
-            unlockScreenEnterAnimation()
         } else {
             defaultScreenEnterAnimation()
         }
     },
     exitTransition = {
-        if (targetState.destination.route == LOCK_ROUTE) {
+        if (targetState.destination.route == LOCK_ROUTE || initialState.destination.route == LOCK_ROUTE) {
             ExitTransition.None
         } else {
             defaultScreenExitAnimation()
