@@ -64,7 +64,84 @@ class NotePersistenceTest {
         assertFalse(persistence.save())
 
         assertEquals(-1L, persistence.state.value.note.id)
-        assertEquals(SaveStatusNote.OLD, persistence.status.value)
+        // The editor keeps saying so until a save succeeds.
+        assertEquals(SaveStatusNote.FAILED, persistence.status.value)
+        repository.insertResult = INSERTED_ID
+        assertTrue(persistence.save())
+        assertEquals(SaveStatusNote.SAVED, persistence.status.value)
+    }
+
+    @Test
+    fun aSavedEditMovesTheShownDateAndDropsAnImportedSummary() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTag(
+                note = Note(
+                    id = NOTE_ID,
+                    title = "title",
+                    value = BlockConverter.blocksToJson(listOf(text("body"))),
+                    description = "imported summary",
+                    date = OLD_DATE,
+                ),
+                tag = null,
+            ),
+        )
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("body, edited"))
+
+        assertTrue(persistence.save())
+
+        val stored = repository.updatedNotes.single()
+        assertTrue(stored.date > OLD_DATE)
+        assertEquals("", stored.description)
+        assertEquals(stored.date, persistence.state.value.note.date)
+    }
+
+    @Test
+    fun anUnchangedNoteKeepsItsDateAndSummary() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTag(
+                note = Note(
+                    id = NOTE_ID,
+                    title = "title",
+                    value = BlockConverter.blocksToJson(listOf(text("body"))),
+                    description = "imported summary",
+                    date = OLD_DATE,
+                ),
+                tag = null,
+            ),
+        )
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+
+        assertTrue(persistence.save())
+
+        assertEquals(OLD_DATE, repository.updatedNotes.single().date)
+        assertEquals("imported summary", repository.updatedNotes.single().description)
+    }
+
+    @Test
+    fun changesAreWhatDiscardWouldUndo() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertFalse(persistence.hasChanges())
+
+        blocks = listOf(text("body, edited"))
+        assertTrue(persistence.hasChanges())
+
+        blocks = listOf(text("body"))
+        persistence.updateNote { it.copy(tagId = TAG_ID) }
+        assertTrue(persistence.hasChanges())
+    }
+
+    @Test
+    fun aNewNoteWithoutTitleOrContentIsABlankDraft() = runTest(dispatcher) {
+        val persistence = persistence()
+        assertTrue(persistence.isBlankDraft)
+
+        blocks = listOf(text("x"))
+        assertFalse(persistence.isBlankDraft)
     }
 
     @Test
@@ -354,5 +431,6 @@ class NotePersistenceTest {
         const val NOTE_ID = 91L
         const val INSERTED_ID = 73L
         const val TAG_ID = 5L
+        const val OLD_DATE = 1_000L
     }
 }

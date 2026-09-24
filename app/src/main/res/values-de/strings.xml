@@ -56,7 +56,6 @@
 
     <string name="cancel">Abbrechen</string>
 
-    <string name="checked_count">Markiert: %d</string>
 
     <string name="clean_permanent_message">Möchtest du diese Notizen wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.</string>
     <string name="clean_trash_message">Möchtest du den Papierkorb wirklich endgültig leeren? Das kann nicht rückgängig gemacht werden.</string>
@@ -85,7 +84,6 @@
     <string name="dialog_title">Notiz löschen?</string>
 
     <string name="donation_description">Deine Unterstützung hilft uns, neue Funktionen hinzuzufügen, Fehler zu beheben und die App zu verbessern. Jeder Betrag ist willkommen!</string>
-    <string name="donation_subtitle">Hilf mit, die App noch besser zu machen</string>
     <string name="donation_title">Entwicklung unterstützen</string>
 
     <string name="done">Fertig</string>
@@ -95,14 +93,12 @@
     <string name="dynamic_color">Dynamische Farben</string>
 
     <string name="edit">Bearbeiten</string>
-    <string name="edit_tags">Labels bearbeiten</string>
 
     <string name="editor_lock">Bearbeitung sperren</string>
-    <string name="editor_unlock">Bearbeitung entsperren</string>
 
-    <string name="empty_notes">Keine Notizen</string>
-    <string name="empty_notes_desc">Erstelle deine erste Notiz, indem du auf „Hinzufügen“ tippst.</string>
-    <string name="empty_trash_desc">Der Papierkorb ist leer</string>
+    <string name="empty_notes">Noch keine Notizen</string>
+    <string name="empty_notes_desc">Tippe auf „Neue Notiz“, um die erste zu schreiben.</string>
+    <string name="empty_trash_desc">Gelöschte Notizen bleiben hier, bis du sie wiederherstellst oder endgültig löschst.</string>
 
     <string name="enter_url">Link eingeben</string>
 
@@ -120,17 +116,17 @@
     <string name="faq_change_pin_q">Wie ändere ich meine PIN?</string>
     <string name="faq_db_key_a">Encly erzeugt einen zufälligen 256-Bit-Datenbankschlüssel. Deine PIN schützt einen separaten AES-GCM-Entsperrslot, und die Biometrie nutzt einen Android-Keystore-Schlüssel, der bei jeder Verwendung eine Authentifizierung erfordert.</string>
     <string name="faq_db_key_q">Wie ist der Datenbankschlüssel geschützt?</string>
-    <string name="faq_forgot_pin_a">Wenn du eine Wiederherstellungsphrase erstellt hast, kannst du damit auf dem Sperrbildschirm den Zugang wiederherstellen und danach eine neue PIN festlegen. Ohne Wiederherstellungsslot bedeutet der Verlust des einzigen verfügbaren Schlüssels den Verlust des Tresors.</string>
+    <string name="faq_forgot_pin_a">Tippe auf dem Sperrbildschirm auf „Zugang wiederherstellen“, gib deine 12 Wörter ein und lege eine neue PIN fest. Ohne Wiederherstellungsphrase gibt es keinen anderen Weg hinein: Niemand, auch nicht der Entwickler, kann sie zurücksetzen.</string>
     <string name="faq_forgot_pin_q">Was passiert, wenn ich meine PIN vergesse?</string>
     <string name="faq_language_a">Öffne Einstellungen → Sprache und wähle eine der verfügbaren Sprachen oder „Systemstandard“, um der Sprache deines Geräts zu folgen. Die Änderung gilt sofort.</string>
     <string name="faq_language_q">Wie ändere ich die Sprache?</string>
-    <string name="faq_new_note_a">Tippe auf dem Startbildschirm auf die Schaltfläche „+“. Im Editor kannst du Text, Überschriften, Zitate, Listen, Trennlinien und Links verwenden.</string>
+    <string name="faq_new_note_a">Tippe auf dem Startbildschirm auf „Neue Notiz“. Die Leiste über der Tastatur fügt Überschriften, Checklisten, Aufzählungen, nummerierte Listen, Zitate, Links und Trennlinien ein.</string>
     <string name="faq_new_note_q">Wie erstelle ich eine neue Notiz?</string>
-    <string name="faq_recovery_phrase_a">Eine Wiederherstellungsphrase wird nur im selbstverwalteten Modus erstellt und ist ein separater Weg, den Tresorschlüssel wiederherzustellen. Bewahre sie offline auf. Im Alltag entsperrst du mit PIN oder Biometrie.</string>
+    <string name="faq_recovery_phrase_a">Sie ist ein Ersatzschlüssel aus 12 Wörtern. Sie entsperrt den Tresor, wenn du deine PIN vergisst, und ist der einzige Schlüssel zu deinen Backup-Dateien. Du erstellst sie bei der Einrichtung oder später unter Einstellungen → Sicherheit, falls du sie übersprungen hast. Bewahre sie auf Papier auf, offline.</string>
     <string name="faq_recovery_phrase_q">Wofür ist die Wiederherstellungsphrase?</string>
     <string name="faq_report_bug_a">Öffne „Über die App“ und nutze die Feedback-Option oder schreibe dem Entwickler. Füge einem Fehlerbericht niemals deine Wiederherstellungsphrase, deine PIN oder private Notiztexte hinzu.</string>
     <string name="faq_report_bug_q">Wie melde ich einen Fehler?</string>
-    <string name="faq_saving_a">Encly speichert deine Änderungen automatisch und lokal. Auch die Schaltfläche „Fertig“ und das Verlassen des Editors schließen das Speichern ab, bevor du zur Liste zurückkehrst.</string>
+    <string name="faq_saving_a">Automatisch während du schreibst, und beim Verlassen des Editors wird die letzte Speicherung abgeschlossen. Schlägt eine Speicherung einmal fehl, zeigt der Editor „Nicht gespeichert“ in Rot.</string>
     <string name="faq_saving_q">Wie werden Änderungen gespeichert?</string>
     <string name="faq_screen_description">Notizen, Aufgaben, lokale Verschlüsselung und Zugangswiederherstellung – ohne Cloud-Synchronisierung.</string>
     <string name="faq_screen_subtitle">Antworten auf die häufigsten Fragen</string>
@@ -142,11 +138,11 @@
     <string name="faq_section_troubleshooting">Fehlerbehebung</string>
     <string name="faq_storage_a">Notizen, Labels und Aufgaben werden ausschließlich in der lokalen SQLCipher-Datenbank von Encly gespeichert. Es gibt keine Cloud-Synchronisierung und keine automatischen Backups: Ein verschlüsseltes Backup kannst du selbst unter Einstellungen → Backup exportieren.</string>
     <string name="faq_storage_q">Wo werden meine Daten gespeichert?</string>
-    <string name="faq_tags_a">Labels helfen dir, Notizen zu gruppieren. Du kannst sie erstellen, umbenennen, ausblenden und löschen und auf dem Startbildschirm als Filter verwenden.</string>
+    <string name="faq_tags_a">Labels gruppieren deine Notizen. Du kannst sie erstellen, umbenennen, ausblenden und löschen, per Ziehen neu ordnen und den Startbildschirm danach filtern.</string>
     <string name="faq_tags_q">Wie funktionieren Labels?</string>
     <string name="faq_tasks_a">Aufgaben haben eine Beschreibung und eine Priorität. Du kannst sie nach Priorität filtern und als erledigt markieren. Encly zeigt Aufgabentexte nie in Systembenachrichtigungen an.</string>
     <string name="faq_tasks_q">Was können Aufgaben?</string>
-    <string name="faq_theme_a">Unter Einstellungen → Darstellung wählst du eines von fünf Designs, den Modus (System, hell oder dunkel) und die Schrift, ab Android 12 auch dynamische Farben.</string>
+    <string name="faq_theme_a">Unter Einstellungen → Darstellung wählst du eines von fünf Designs, hellen, dunklen oder System-Modus, einen von drei Schriftstilen und die Textgröße. Ab Android 12 kann die Akzentfarbe auch vom Hintergrundbild kommen.</string>
     <string name="faq_theme_q">Wie ändere ich das Design?</string>
     <string name="faq_vault_damaged_a">Encly legt absichtlich nie eine leere Datenbank über einen verlorenen oder unlesbaren Tresor an. Bestätige das vollständige Löschen nicht, wenn du deine lokalen Daten noch brauchst.</string>
     <string name="faq_vault_damaged_q">Encly meldet einen beschädigten Tresor</string>
@@ -164,7 +160,6 @@
 
     <string name="list_item_placeholder">Listeneintrag</string>
 
-    <string name="loading">Wird geladen…</string>
 
     <string name="lock_back_to_pin">Zurück zur PIN</string>
     <string name="lock_recover_access">Zugang wiederherstellen</string>
@@ -193,7 +188,6 @@
 
     <string name="more_options">Weitere Optionen</string>
 
-    <string name="new_page">Neue Seite</string>
 
     <string name="no_tag">Kein Label</string>
 
@@ -240,18 +234,13 @@
     <string name="priority_select_title">Priorität wählen</string>
 
     <string name="quote">Zitat</string>
-
-    <string name="recovery_phrase_label">Wiederherstellungsphrase</string>
-
     <string name="redo">Wiederholen</string>
 
     <string name="restore">Wiederherstellen</string>
 
     <string name="save">Speichern</string>
 
-    <string name="saved">Gespeichert</string>
 
-    <string name="saving">Wird gespeichert…</string>
 
 
     <string name="search_clear">Suche löschen</string>
@@ -261,11 +250,8 @@
     <string name="security_biometric_unavailable">Auf diesem Gerät nicht verfügbar</string>
     <string name="security_biometric_not_enrolled">Kein Fingerabdruck eingerichtet. Füge einen in den Systemeinstellungen hinzu.</string>
     <string name="security_encryption_active">Verschlüsselung ist aktiv</string>
-    <string name="security_encryption_pin_desc">Dein zufälliger Datenbankschlüssel ist durch deine PIN und optional durch einen biometrischen Keystore-Slot geschützt.</string>
-    <string name="security_encryption_seed_desc">Dein zufälliger Datenbankschlüssel hat einen separaten Wiederherstellungsslot, der durch deine Wiederherstellungsphrase geschützt ist.</string>
     <string name="security_info_body">• SQLCipher wird mit einem zufälligen 256-Bit-Schlüssel geöffnet\n• PIN und Wiederherstellungsphrase haben separate AES-GCM-Entsperrslots\n• Die Biometrie nutzt einen Android-Keystore-Schlüssel mit Authentifizierung bei jeder Verwendung</string>
     <string name="security_info_title">ℹ️ Sicherheitsinformationen</string>
-    <string name="security_recovery_set">Eingerichtet. Sie entsperrt den Tresor, wenn du deine PIN vergisst, und schützt deine Backups.</string>
     <string name="security_recovery_missing">Nicht eingerichtet. Ohne sie bedeutet eine vergessene PIN, dass alles verloren ist. Tippe, um eine zu erstellen.</string>
     <string name="security_erase_title">Alle Daten löschen</string>
     <string name="security_erase_desc">Alle Notizen, Aufgaben und Labels sowie die Schlüssel auf diesem Gerät löschen</string>
@@ -294,28 +280,19 @@
     <string name="sort_updated_asc_short">Bearbeitet ↑</string>
     <string name="sort_updated_desc">Nach letzter Bearbeitung (neueste zuerst)</string>
     <string name="sort_updated_desc_short">Bearbeitet ↓</string>
-
-    <string name="support_external_services">Unterstütze uns über andere Dienste</string>
-    <string name="support_kofi_desc">Schnelle und einfache Unterstützung der Entwicklung.</string>
-    <string name="support_options_title">Möglichkeiten zur Unterstützung</string>
     <string name="support_title">Entwickler unterstützen</string>
-    <string name="support_why_desc">• Neue Funktionen\n• Fehlerbehebungen\n• Sicherheitsprüfung und Tests\n• Designverbesserungen\n• Weiterentwicklung des Projekts</string>
-    <string name="support_why_title">Warum ist deine Unterstützung wichtig?</string>
 
     <string name="tag_create_failed">Das Label konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
     <string name="tag_delete_failed">Das Label konnte nicht gelöscht werden. Bitte versuche es erneut.</string>
     <string name="tag_edit">Label bearbeiten</string>
     <string name="tag_hidden">Ausgeblendetes Label</string>
     <string name="tag_name_taken">Ein Label mit diesem Namen gibt es bereits</string>
-    <string name="tag_hide">Label ausblenden</string>
     <string name="tag_reorder_failed">Die Reihenfolge der Labels konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
-    <string name="tag_show">Label einblenden</string>
     <string name="tag_update_failed">Das Label konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
 
     <string name="tap_again_to_delete">Zum Löschen erneut tippen</string>
 
-    <string name="task_add">Aufgabe hinzufügen</string>
-    <string name="task_clear_all_completed">Alle erledigten Aufgaben löschen</string>
+    <string name="task_add">Neue Aufgabe</string>
     <string name="task_clear_completed_failed">Erledigte Aufgaben konnten nicht gelöscht werden. Bitte versuche es erneut.</string>
     <string name="task_clear_completed_message">Möchtest du wirklich alle erledigten Aufgaben löschen? Das kann nicht rückgängig gemacht werden.</string>
     <string name="task_clear_completed_title">Erledigte Aufgaben löschen</string>
@@ -324,7 +301,6 @@
     <string name="task_description_placeholder">Beschreibung</string>
     <string name="task_edit_placeholder">Aufgabe bearbeiten</string>
     <string name="task_empty_active">Keine offenen Aufgaben.</string>
-    <string name="task_empty_completed">Keine erledigten Aufgaben.</string>
     <string name="task_empty_filtered">Keine Aufgaben passen zu den gewählten Filtern.</string>
     <string name="task_filter_all">Alle Aufgaben</string>
     <string name="task_filter_completed">Erledigt</string>
@@ -378,8 +354,6 @@
     <string name="backup_create_phrase">Wiederherstellungsphrase erstellen</string>
     <string name="backup_phrase_write_down">Schreib diese 12 Wörter der Reihe nach auf Papier und bewahre sie offline auf. Wer sie hat, kann deine Backups öffnen.</string>
     <string name="backup_phrase_written">Ich habe sie notiert</string>
-    <string name="backup_phrase_check_title">Wiederherstellungsphrase prüfen</string>
-    <string name="backup_phrase_check_word">Wort Nr. %1$d</string>
     <string name="backup_phrase_check_wrong">Die Wörter stimmen nicht. Prüfe deine Notiz.</string>
     <string name="backup_phrase_added">Wiederherstellungsphrase gespeichert</string>
     <string name="backup_confirm_phrase_title">Wiederherstellungsphrase bestätigen</string>
@@ -388,11 +362,8 @@
     <string name="backup_enter_phrase_body">Gib die 12 Wörter der Wiederherstellungsphrase ein, mit der dieses Backup erstellt wurde.</string>
     <string name="backup_decrypt">Entschlüsseln</string>
     <string name="backup_import_choose">Backup importieren</string>
-    <string name="backup_import_contents">Dieses Backup enthält Notizen: %1$d, Aufgaben: %2$d, Labels: %3$d.</string>
     <string name="backup_merge">Zusammenführen</string>
-    <string name="backup_merge_desc">Zusammenführen: Deine Daten bleiben, Fehlendes wird ergänzt. Was schon in diesem Tresor ist, wird übersprungen.</string>
     <string name="backup_replace">Ersetzen</string>
-    <string name="backup_replace_desc">Ersetzen: Alle Notizen, Aufgaben und Labels in diesem Tresor löschen und dann das Backup wiederherstellen.</string>
     <string name="backup_replace_confirm_title">Alle Daten ersetzen?</string>
     <string name="backup_replace_confirm_body">Alle Notizen, Aufgaben und Labels in diesem Tresor werden gelöscht und durch das Backup ersetzt. Das kann nicht rückgängig gemacht werden.</string>
     <string name="backup_import_done">Importiert: Notizen %1$d, Aufgaben %2$d, Labels %3$d. Übersprungen (schon vorhanden): %4$d.</string>
@@ -511,7 +482,6 @@
     <string name="onboarding_restore_file_section">1 · Backup-Datei</string>
     <string name="onboarding_restore_tap_other">Tippen, um eine andere Datei zu wählen</string>
     <string name="onboarding_restore_phrase_section">2 · Wiederherstellungsphrase</string>
-    <string name="onboarding_restore_phrase_label">12 Wörter, durch Leerzeichen getrennt</string>
     <string name="onboarding_restore_phrase_helper">Diese Wörter werden auch die Wiederherstellungsphrase dieses Handys.</string>
     <string name="notes_title">Notizen</string>
     <string name="lock_now">Jetzt sperren</string>
@@ -524,4 +494,62 @@
         <item quantity="one">Aufgaben · %d offen</item>
         <item quantity="other">Aufgaben · %d offen</item>
     </plurals>
+    <string name="home_tasks_none_open">Aufgaben · keine offen</string>
+    <string name="task_empty_title">Noch keine Aufgaben</string>
+    <string name="task_empty_desc">Tippe auf „Neue Aufgabe“, um die erste anzulegen.</string>
+    <string name="task_all_done_title">Alles erledigt</string>
+    <string name="task_done_section">Erledigt · %1$d</string>
+    <string name="empty_notes_tagged">Keine Notizen mit dem Tag „%1$s“</string>
+    <string name="empty_notes_tagged_desc">Notizen mit diesem Tag erscheinen hier.</string>
+    <string name="show_all_notes">Alle Notizen zeigen</string>
+    <string name="empty_trash_title">Der Papierkorb ist leer</string>
+    <string name="trash_hint">Tippe auf eine Notiz, um sie zu lesen. Lange drücken zum Auswählen.</string>
+    <string name="delete_forever">Endgültig löschen</string>
+    <string name="empty_trash_action">Papierkorb leeren</string>
+    <string name="search_notes">Notizen durchsuchen</string>
+    <string name="settings_notes_and_tasks">Notizen und Aufgaben</string>
+    <string name="settings_about_desc">Version, Datenschutz und Kontakt</string>
+    <string name="settings_faq_desc">Antworten auf häufige Fragen</string>
+    <string name="licenses_title">Open-Source-Lizenzen</string>
+    <string name="licenses_row_desc">Bibliotheken und Schriften, die Encly nutzt</string>
+    <string name="licenses_heading">Auf Open Source gebaut</string>
+    <string name="licenses_intro">Encly nutzt diese Bibliotheken und Schriften. Tippe darauf, um die Lizenz zu lesen.</string>
+    <string name="licenses_libraries">Bibliotheken</string>
+    <string name="licenses_fonts">Schriften</string>
+    <string name="tags_empty_title">Noch keine Tags</string>
+    <string name="tags_empty_desc">Tags ordnen deine Notizen. Lege oben einen an und wähle ihn dann per langem Druck auf eine Notiz aus.</string>
+    <string name="tags_hint">Tippe auf einen Tag, um ihn umzubenennen, auszublenden oder zu löschen. Zum Sortieren am Griff ziehen.</string>
+    <string name="tag_add">Tag hinzufügen</string>
+    <string name="tag_name_label">Name</string>
+    <string name="tag_show_in_list">In der Notizliste zeigen</string>
+    <string name="tag_show_in_list_desc">Ein ausgeblendeter Tag behält seine Notizen, aber keinen Filter-Chip</string>
+    <string name="tag_drag_handle">Ziehen zum Sortieren</string>
+    <string name="tag_move_up">Nach oben</string>
+    <string name="tag_move_down">Nach unten</string>
+    <plurals name="trash_selected">
+        <item quantity="one">%d ausgewählt</item>
+        <item quantity="other">%d ausgewählt</item>
+    </plurals>
+    <string name="edit_tags">Labels bearbeiten</string>
+    <string name="note_title_placeholder">Titel</string>
+    <string name="note_not_saved">Nicht gespeichert</string>
+    <string name="tags_manage">Labels verwalten</string>
+    <string name="note_discard_confirm_title">Änderungen verwerfen?</string>
+    <string name="note_discard_confirm_message">Alles, was du seit dem Öffnen dieser Notiz geändert hast, geht verloren. Das kann nicht rückgängig gemacht werden.</string>
+    <string name="support_fact_free_title">Alles gehört schon dir</string>
+    <string name="support_fact_free_desc">Jede Funktion steht allen zur Verfügung. Nichts ist hinter einer Zahlung versteckt.</string>
+    <string name="support_fact_private_title">Keine Werbung, kein Tracking</string>
+    <string name="support_fact_private_desc">Encly sieht deine Notizen nie und verdient nichts an Daten. Unterstützung ist die einzige Finanzierung.</string>
+    <string name="support_fact_uses_title">Wofür sie verwendet wird</string>
+    <string name="support_fact_uses_desc">Neue Funktionen, Sicherheitsprüfung und Tests, Design und Fehlerbehebungen.</string>
+    <string name="support_kofi_button">Auf Ko-fi unterstützen</string>
+    <string name="support_kofi_note">Öffnet ko-fi.com im Browser. Jeder Betrag hilft.</string>
+    <string name="faq_note_actions_q">Was bewirkt langes Drücken auf eine Notiz?</string>
+    <string name="faq_note_actions_a">Es öffnet die Aktionen der Notiz: Label ändern, eine kurze Beschreibung für die Karte hinzufügen, die Notiz duplizieren oder in den Papierkorb verschieben.</string>
+    <string name="faq_trash_q">Wie bekomme ich eine gelöschte Notiz zurück?</string>
+    <string name="faq_trash_a">Gelöschte Notizen landen im Papierkorb im Menü. Dort kannst du eine Notiz wiederherstellen oder endgültig löschen. Encly leert den Papierkorb nie von selbst.</string>
+    <string name="faq_lock_note_q">Was macht „Bearbeitung sperren“?</string>
+    <string name="faq_lock_note_a">Die Notiz wird schreibgeschützt, damit sie nicht versehentlich geändert wird. Text lässt sich weiterhin markieren und kopieren. Ein- und ausschalten kannst du es im Menü des Editors.</string>
+    <string name="faq_backup_q">Wie funktionieren Backups?</string>
+    <string name="faq_backup_a">Unter Einstellungen → Backup exportierst du eine verschlüsselte Datei, die nur deine Wiederherstellungsphrase öffnen kann. Zum Wiederherstellen wählst du die Datei, tippst oder fügst die 12 Wörter ein und führst sie dann mit diesem Tresor zusammen oder ersetzt alles.</string>
 </resources>

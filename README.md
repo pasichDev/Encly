@@ -17,8 +17,9 @@ a mandatory app PIN and, optionally, strong biometrics.
 - 🗑️ **Trash** — soft-delete with restore.
 - 🔑 **Optional BIP39 recovery seed** — a separate recovery slot for the database key.
 - 📴 **Fully offline** — no `INTERNET` permission, cloud sync, analytics or downloadable fonts
-  (editor fonts are bundled). The only links out (privacy policy, issue tracker, email and, in
-  the Play build, the store page) open in another app and only when you tap them.
+  (editor fonts are bundled). The only links out (privacy policy, issue tracker, email, a note's
+  link block and, in the Play build, the store page or, in the F-Droid build, the Ko-fi page)
+  open in another app and only when you tap them.
 - 🔐 **Mandatory lock** — 6-digit PIN plus optional Class 3 biometric unlock.
 - 🛡️ **Protected UI** — `FLAG_SECURE` is enforced from the first Activity frame.
 - 🌍 **9 languages** — pick one in Settings → Language, independently of the system language.
@@ -38,8 +39,15 @@ Found a wrong or clumsy translation, or want to add a language? See
 
 ## Screenshots
 
-Screenshots will be published with the first public release (they live in
-[`fastlane/metadata/android/en-US/images/phoneScreenshots`](fastlane/metadata/android/en-US/images/phoneScreenshots)).
+<p>
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="24%" alt="Notes list" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="24%" alt="Lock screen" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="24%" alt="Editor" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" width="24%" alt="Appearance" />
+</p>
+
+All eight, with captions in every store language, are in
+[`fastlane/metadata/android`](fastlane/metadata/android) (`<locale>/images/phoneScreenshots`).
 
 ## Install
 

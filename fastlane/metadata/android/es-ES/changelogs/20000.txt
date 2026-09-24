@@ -1,1 +1,7 @@
-2.0.0: primera versión pública. Caja fuerte cifrada sin conexión con PIN obligatorio de 6 dígitos, desbloqueo biométrico vinculado a una clave y frase de recuperación de 12 palabras opcionales. La clave se borra cuando la aplicación pasa a segundo plano. Exportación y restauración de copias cifradas con la frase de recuperación. Fuentes incluidas, sin necesidad de servicios de Google Play. Interfaz en 9 idiomas con selector de idioma en la aplicación.
+Primera versión en Google Play.
+• Notas y tareas cifradas, guardadas solo en tu móvil.
+• Bloqueo con PIN de 6 dígitos y, si quieres, huella o cara.
+• Frase de recuperación de 12 palabras opcional.
+• Copia de seguridad cifrada en un archivo que guardas donde quieras.
+• Cinco temas, tres fuentes, nueve idiomas.
+• Sin cuenta, sin anuncios, sin permiso de internet.

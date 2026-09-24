@@ -4,19 +4,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.editor.BlockActions
@@ -25,56 +24,52 @@ import com.pasich.encly.ui.theme.EnclyTheme
 
 @Composable
 fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier = Modifier, isLocked: Boolean = false) {
-    val text by block.text.collectAsState()
     val textStyle = headingTextStyle(block.blockType)
+    val state = rememberBlockTextFieldState(block.text, blockActions)
+    val actions by rememberUpdatedState(blockActions)
 
-    var textFieldValue by rememberBlockTextFieldValue(text, blockActions)
+    // "Next" (and Enter): an empty heading turns back into a paragraph; otherwise the cursor
+    // moves to the next block, or a new paragraph when this is the last one.
+    val next = remember(state) {
+        {
+            if (state.text.isEmpty()) {
+                actions.onReplaceBlock(Block.TextBlock())
+            } else if (!actions.navigateToNext()) {
+                actions.onAddParagraph()
+            }
+            true
+        }
+    }
 
     BasicTextField(
-        value = textFieldValue,
-        enabled = !isLocked,
-        onValueChange = { newValue ->
-            textFieldValue = newValue
-            val newText = newValue.text
-            blockActions.onTextChanged(newText)
-        },
+        state = state,
+        readOnly = isLocked,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         textStyle = textStyle,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Next,
-        ),
-        keyboardActions =
-        KeyboardActions(onNext = {
-            if (text.isEmpty()) {
-                // An empty heading turns into a regular text block
-                blockActions.onReplaceBlock(Block.TextBlock())
-            } else if (!blockActions.navigateToNext()) {
-                // The last block: add a paragraph after it
-                blockActions.onAddParagraph()
-            }
-        }),
-        modifier =
-        modifier
+        keyboardOptions = WritingKeyboard.copy(imeAction = ImeAction.Next),
+        onKeyboardAction = { next() },
+        modifier = modifier
             .fillMaxWidth()
             .padding(top = EnclyTheme.spacing.labelGap)
-            // Enter is handled by KeyboardActions.onNext.
-            .textBlockKeys(text, blockActions, enterAddsParagraph = false),
-        decorationBox = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                if (text.isEmpty()) {
+            .textBlockKeys(state, blockActions, onEnter = next),
+        decorator = { innerTextField ->
+            Box(modifier = Modifier.fillMaxWidth()) {
+                if (state.text.isEmpty()) {
                     Text(
-                        text = block.blockType.toString(),
+                        text = stringResource(R.string.block_heading_level, block.blockType.headingLevel()),
                         style = textStyle.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     )
                 }
-                it()
+                innerTextField()
             }
         },
     )
 }
+
+private val HeadingTypes = listOf(BlockType.H1, BlockType.H2, BlockType.H3, BlockType.H4)
+
+/** 1 for H1 up to 4 for H4. */
+private fun BlockType.headingLevel(): Int = HeadingTypes.indexOf(this) + 1
 
 /** The text style of a heading of [blockType] (H1-H4). */
 @Composable

@@ -33,17 +33,21 @@ transfer are disabled for it, so it is not copied to Google Drive or another pho
 
 ## Links that leave the app
 
-A few items on the About screen open a page outside Encly, **only when you tap them**:
-this privacy policy, the GitHub issue tracker, an email to the developer, and, in builds
-distributed through Google Play only, the Play Store listing. These are handled by your browser,
-email or store app under their own privacy policies. Encly sends them nothing beyond the fact
-that the link was opened.
+A few items open a page outside Encly, **only when you tap them**: on the About screen, this
+privacy policy, the GitHub issue tracker, an email to the developer, and, in builds distributed
+through Google Play only, the Play Store listing; in builds distributed through F-Droid only, the
+developer's Ko-fi donation page (Support screen); and a link block you added to a note, which
+opens in your browser. These are handled by your browser, email or store app under their own
+privacy policies. Encly sends them nothing beyond the fact that the link was opened (for a link
+block, the address you wrote).
 
 ## Sharing
 
-Encly does not share, sell or transfer any data to anyone. It has no share or clipboard-copy
-flow for note content. The only way data leaves the app is an encrypted backup file that you
-export yourself (below).
+Encly does not share, sell or transfer any data to anyone. It has no share flow for note
+content, and the only thing it copies to the clipboard is a link from a note's link block, when
+you choose to copy it (marked as sensitive on Android 13 and later, so it is hidden from the
+clipboard preview). Apart from that, the only way data leaves the app is an encrypted backup file
+that you export yourself (below).
 
 ## Encrypted backup file
 

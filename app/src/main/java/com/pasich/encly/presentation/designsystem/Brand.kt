@@ -18,13 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Globe
-import com.composables.icons.lucide.Lock
-import com.composables.icons.lucide.Lucide
+import com.pasich.encly.R
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /** Size of the wordmark tile. */
@@ -34,7 +35,7 @@ private val WordmarkTile = 34.dp
 private val TileShape = RoundedCornerShape(20.dp)
 
 /**
- * The Encly wordmark: a 34 dp `primary` tile with the lock, then the name in the wordmark style
+ * The Encly wordmark: the 34 dp logo mark, then the name in the wordmark style
  * (always Playfair Display). [style] lets the About header set it larger.
  */
 @Composable
@@ -44,16 +45,7 @@ fun EnclyWordmark(appName: String, modifier: Modifier = Modifier, style: TextSty
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = modifier,
     ) {
-        Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primary) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(WordmarkTile)) {
-                Icon(
-                    Lucide.Lock,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(EnclyTheme.spacing.iconXSmall),
-                )
-            }
-        }
+        EnclyLogoMark(size = WordmarkTile, shape = RoundedCornerShape(10.dp))
         Text(text = appName, style = style, color = MaterialTheme.colorScheme.onSurface)
     }
 }
@@ -96,7 +88,7 @@ fun LanguagePill(label: String, description: String, onClick: () -> Unit, modifi
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s, vertical = EnclyTheme.spacing.xs),
         ) {
             Icon(
-                Lucide.Globe,
+                EnclyIcons.Globe,
                 contentDescription = description,
                 modifier = Modifier.size(EnclyTheme.spacing.iconXSmall),
             )
@@ -125,6 +117,22 @@ fun LabelHeader(label: String, onBack: () -> Unit, modifier: Modifier = Modifier
     }
 }
 
+/**
+ * The logo: the launcher icon's E on a `primary` tile. It draws the launcher foreground itself, so
+ * the in-app mark and the home-screen icon can never drift apart.
+ */
+@Composable
+fun EnclyLogoMark(modifier: Modifier = Modifier, size: Dp = EnclyTheme.spacing.tile, shape: Shape = TileShape) {
+    Surface(shape = shape, color = MaterialTheme.colorScheme.primary, modifier = modifier) {
+        Icon(
+            painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.size(size),
+        )
+    }
+}
+
 /** A 64 dp tile with radius 20 in `primaryContainer` holding [icon] (the lock screen, empty states). */
 @Composable
 fun EnclyIconTile(icon: ImageVector, modifier: Modifier = Modifier) {
@@ -142,7 +150,8 @@ fun EnclyIconTile(icon: ImageVector, modifier: Modifier = Modifier) {
 
 /**
  * An empty (or failed) list: the tile, a titleLarge line and a muted bodyMedium line, centred in
- * the 24 dp gutter. [error] tints the title `error` for a failed read.
+ * the 24 dp gutter. [error] tints the title `error` for a failed read. [actionLabel] adds a text
+ * action below ("Show all", "New task") that runs [onAction].
  */
 @Composable
 fun EnclyEmptyState(
@@ -151,6 +160,8 @@ fun EnclyEmptyState(
     title: String? = null,
     body: String? = null,
     error: Boolean = false,
+    actionLabel: String? = null,
+    onAction: () -> Unit = {},
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -176,5 +187,6 @@ fun EnclyEmptyState(
                 textAlign = TextAlign.Center,
             )
         }
+        if (actionLabel != null) EnclyTextButton(text = actionLabel, onClick = onAction)
     }
 }

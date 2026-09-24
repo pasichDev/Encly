@@ -24,17 +24,21 @@ import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
  * The tasks card on the notes screen (design spec §4.3): "TASKS · N OPEN", a link to all tasks
- * and the two most urgent open tasks, which can be ticked off here. Nothing when none is open.
+ * and the two most urgent open tasks, which can be ticked off here. With none open it shrinks to
+ * "TASKS · NONE OPEN" and a "New task" link ([onNewTask]), so the first task is one tap away.
  */
 @Composable
 fun HomeTaskWidget(
     modifier: Modifier = Modifier,
     onTasksClick: () -> Unit = {},
+    onNewTask: () -> Unit = onTasksClick,
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val preview = remember(uiState.activeTasks) { widgetTasks(uiState.activeTasks) }
-    if (uiState.activeTasksCount == 0 || preview.isEmpty()) return
+    // Nothing until the first read, so the card does not flash "none open" over real tasks.
+    if (uiState.isLoading) return
+    val noneOpen = uiState.activeTasksCount == 0 || preview.isEmpty()
 
     EnclyCard(
         modifier = modifier,
@@ -43,30 +47,36 @@ fun HomeTaskWidget(
             start = EnclyTheme.spacing.m,
             end = EnclyTheme.spacing.m,
             top = EnclyTheme.spacing.rowGap,
-            bottom = EnclyTheme.spacing.labelGap,
+            bottom = if (noneOpen) EnclyTheme.spacing.rowGap else EnclyTheme.spacing.labelGap,
         ),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             SectionOverline(
-                text = pluralStringResource(
-                    R.plurals.home_tasks_open,
-                    uiState.activeTasksCount,
-                    uiState.activeTasksCount,
-                ),
+                text = if (noneOpen) {
+                    stringResource(R.string.home_tasks_none_open)
+                } else {
+                    pluralStringResource(R.plurals.home_tasks_open, uiState.activeTasksCount, uiState.activeTasksCount)
+                },
                 modifier = Modifier.weight(1f),
             )
-            EnclyInlineLink(text = stringResource(R.string.task_filter_all), onClick = onTasksClick)
+            if (noneOpen) {
+                EnclyInlineLink(text = stringResource(R.string.task_add), onClick = onNewTask)
+            } else {
+                EnclyInlineLink(text = stringResource(R.string.task_filter_all), onClick = onTasksClick)
+            }
         }
-        preview.forEach { task ->
-            val priority = PriorityValues.getById(task.priority)
-            EnclyTaskRow(
-                title = task.title,
-                checked = false,
-                onCheckedChange = { checked -> if (checked) viewModel.toggleTaskCompletion(task.id, true) },
-                priority = stringResource(priority.label),
-                priorityEmphasis = priority.emphasis,
-                onClick = onTasksClick,
-            )
+        if (!noneOpen) {
+            preview.forEach { task ->
+                val priority = PriorityValues.getById(task.priority)
+                EnclyTaskRow(
+                    title = task.title,
+                    checked = false,
+                    onCheckedChange = { checked -> if (checked) viewModel.toggleTaskCompletion(task.id, true) },
+                    priority = stringResource(priority.label),
+                    priorityEmphasis = priority.emphasis,
+                    onClick = onTasksClick,
+                )
+            }
         }
     }
 }

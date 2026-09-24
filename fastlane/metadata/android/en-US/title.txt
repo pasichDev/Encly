@@ -1,1 +1,1 @@
-Encly: Encrypted Notes
+Encly: Encrypted Offline Notes

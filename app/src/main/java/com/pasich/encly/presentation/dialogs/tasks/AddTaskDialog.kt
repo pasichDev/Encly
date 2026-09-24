@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -147,6 +149,7 @@ private fun TaskEditorContent(
     titleFocusRequester: FocusRequester,
     actions: TaskEditorActions,
 ) {
+    val descriptionFocus = remember { FocusRequester() }
     Column(
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap),
         modifier = Modifier
@@ -159,7 +162,8 @@ private fun TaskEditorContent(
             label = stringResource(
                 if (state.isEditMode) R.string.task_edit_placeholder else R.string.task_new_placeholder,
             ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { descriptionFocus.requestFocus() }),
             fieldModifier = Modifier.focusRequester(titleFocusRequester),
         )
         EnclyTextField(
@@ -167,7 +171,9 @@ private fun TaskEditorContent(
             onValueChange = actions.onDescriptionChange,
             label = stringResource(R.string.task_description_placeholder),
             textStyle = MaterialTheme.typography.bodyMedium,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { actions.onSubmit() }),
+            fieldModifier = Modifier.focusRequester(descriptionFocus),
         )
         PriorityChips(selected = state.priority, onSelect = actions.onPrioritySelect)
         TaskEditorFooter(state, actions)

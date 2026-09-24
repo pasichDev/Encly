@@ -101,16 +101,19 @@ android {
 
     // Two distribution channels built from the same source and the same applicationId, so an
     // existing install keeps its data whichever channel upgrades it. `fdroid` carries no
-    // store-specific UI (no "Rate app" link to Google Play).
+    // store-specific UI (no "Rate app" link to Google Play); `play` carries no donation link,
+    // which Google Play's Payments policy does not allow outside Play Billing.
     flavorDimensions += "distribution"
     productFlavors {
         create("fdroid") {
             dimension = "distribution"
             buildConfigField("boolean", "STORE_RATING_ENABLED", "false")
+            buildConfigField("boolean", "DONATIONS_ENABLED", "true")
         }
         create("play") {
             dimension = "distribution"
             buildConfigField("boolean", "STORE_RATING_ENABLED", "true")
+            buildConfigField("boolean", "DONATIONS_ENABLED", "false")
         }
     }
 
@@ -162,6 +165,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 
     buildFeatures {
@@ -263,7 +270,6 @@ dependencies {
     // Per-app language (AppCompatDelegate.setApplicationLocales) on every supported API level.
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material3.window.size)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -274,7 +280,6 @@ dependencies {
     implementation(libs.reorderable)
 
     // Room
-    implementation(libs.androidx.compose.runtime.livedata)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.core.ktx)
     ksp(libs.androidx.room.compiler)
@@ -291,9 +296,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     // Other dependencies
-    implementation(libs.coil.compose)
     implementation(libs.gson)
-    implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.datastore.preferences)
 
     // Serialization
@@ -317,6 +320,10 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.mockito.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Compose UI tests run on the JVM under Robolectric (src/test/**/ui), no emulator needed.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Instrumented tests: native SQLCipher open/lock under WAL and the exported Room schema.
     androidTestImplementation(libs.androidx.test.core)

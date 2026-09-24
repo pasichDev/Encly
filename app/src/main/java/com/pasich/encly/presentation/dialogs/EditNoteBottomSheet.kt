@@ -7,14 +7,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.composables.icons.lucide.CopyPlus
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Trash2
-import com.composables.icons.lucide.Undo2
 import com.pasich.encly.R
 import com.pasich.encly.presentation.components.FontSizeSlider
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 
@@ -48,7 +45,7 @@ fun EditNoteBottomSheet(
             EnclyGroupDivider()
             EnclySheetRow(
                 title = stringResource(id = R.string.duplicate),
-                icon = Lucide.CopyPlus,
+                icon = EnclyIcons.Duplicate,
                 onClick = {
                     onAction(EditNoteBottomSheetAction.DUPLICATE)
                     onDismiss()
@@ -56,7 +53,7 @@ fun EditNoteBottomSheet(
             )
             EnclySheetRow(
                 title = stringResource(R.string.note_discard_all_changes),
-                icon = Lucide.Undo2,
+                icon = EnclyIcons.Undo,
                 onClick = {
                     onAction(EditNoteBottomSheetAction.CLOSE_NO_SAVE)
                     onDismiss()
@@ -64,7 +61,7 @@ fun EditNoteBottomSheet(
             )
             EnclySheetRow(
                 title = stringResource(id = R.string.delete),
-                icon = Lucide.Trash2,
+                icon = EnclyIcons.Trash,
                 destructive = true,
                 confirmFirst = true,
                 onClick = {

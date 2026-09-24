@@ -51,6 +51,21 @@ enum class OnboardingPath { CREATE, RESTORE }
 /** How a verification field looks: nothing typed, still typing, right, or wrong. */
 enum class AnswerState { EMPTY, TYPING, CORRECT, WRONG }
 
+/**
+ * How a typed-back word compares with [expected]. It is flagged wrong only once it is as long as
+ * the word, so the user is not told "wrong" while still typing. Shared with the backup check.
+ */
+fun phraseAnswerState(expected: String?, answer: String): AnswerState {
+    val word = expected?.lowercase()
+    val typed = answer.trim().lowercase()
+    return when {
+        typed.isEmpty() -> AnswerState.EMPTY
+        typed == word -> AnswerState.CORRECT
+        word != null && typed.length >= word.length -> AnswerState.WRONG
+        else -> AnswerState.TYPING
+    }
+}
+
 /** "STEP [step] OF [total]" in the progress header. */
 data class StepProgress(val step: Int, val total: Int)
 
@@ -387,10 +402,12 @@ class OnboardingViewModel @Inject constructor(
      * Decrypts the picked backup with [phrase] and creates the vault around that phrase. The
      * backup itself is written once the PIN is set and onboarding is committed.
      */
-    fun restoreBackup(phrase: String) {
-        val file = restoreFile ?: return
-        if (_uiState.value.isLoading) return
-        val chars = phrase.toCharArray()
+    fun restoreBackup(chars: CharArray) {
+        val file = restoreFile
+        if (file == null || _uiState.value.isLoading) {
+            SensitiveDataCleaner.clear(chars)
+            return
+        }
         _uiState.update { it.copy(isLoading = true, restoreFileError = null, restorePhraseError = null) }
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) { onboardingUseCase.restoreFromBackup(file, chars) }
@@ -409,6 +426,11 @@ class OnboardingViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /** The words were edited: a wrong-phrase error under them goes away. */
+    fun onRestorePhraseEdited() {
+        if (_uiState.value.restorePhraseError != null) _uiState.update { it.copy(restorePhraseError = null) }
     }
 
     private fun leaveRestore() {
@@ -499,16 +521,8 @@ class OnboardingViewModel @Inject constructor(
          * A verification field is flagged wrong only once the answer is as long as the word,
          * so the user is not told "wrong" while still typing.
          */
-        fun answerState(index: Int): AnswerState {
-            val expected = verificationWords.firstOrNull { it.first == index }?.second?.lowercase()
-            val answer = userAnswers[index].orEmpty()
-            return when {
-                answer.isEmpty() -> AnswerState.EMPTY
-                answer == expected -> AnswerState.CORRECT
-                expected != null && answer.length >= expected.length -> AnswerState.WRONG
-                else -> AnswerState.TYPING
-            }
-        }
+        fun answerState(index: Int): AnswerState =
+            phraseAnswerState(verificationWords.firstOrNull { it.first == index }?.second, userAnswers[index].orEmpty())
     }
 
     private companion object {

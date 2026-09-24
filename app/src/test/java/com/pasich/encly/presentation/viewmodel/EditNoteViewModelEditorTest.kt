@@ -392,6 +392,57 @@ class EditNoteViewModelEditorTest {
         assertEquals("", (viewModel.blocks[0] as Block.TextBlock).text.value)
     }
 
+    @Test
+    fun aCopyRemembersItsIdOnceStoredSoARestoredScreenOpensIt() = runTest {
+        val repository = repositoryWith(storedNote(text("body")))
+        val handle = SavedStateHandle(mapOf("idNote" to -1L, "copySource" to NOTE_ID))
+        val viewModel = createViewModel(repository, handle = handle)
+        advanceUntilIdle()
+
+        viewModel.updateTitle("draft")
+        assertTrue(viewModel.saveNote())
+        advanceUntilIdle()
+
+        assertEquals(INSERTED_ID, handle.get<Long>("idNote"))
+        assertEquals(-1L, handle.get<Long>("copySource"))
+    }
+
+    @Test
+    fun choosingNoTagStoresNoTag() = runTest {
+        val repository = repositoryWith(storedNote(text("body")))
+        val viewModel = createViewModel(repository, noteId = NOTE_ID)
+        advanceUntilIdle()
+
+        viewModel.updateTagNote(TAG_ID)
+        assertEquals(TAG_ID, viewModel.state.value.note.tagId)
+        viewModel.updateTagNote(0L)
+
+        assertNull(viewModel.state.value.note.tagId)
+    }
+
+    @Test
+    fun onlyABrandNewNoteIsNew() = runTest {
+        assertTrue(createViewModel(TestNotesRepository()).isNewNote)
+        assertFalse(createViewModel(repositoryWith(storedNote(text("b"))), noteId = NOTE_ID).isNewNote)
+        assertFalse(createViewModel(repositoryWith(storedNote(text("b"))), copySource = NOTE_ID).isNewNote)
+    }
+
+    @Test
+    fun aToolAppliesToTheFocusedBlockButNotInALockedEditor() = runTest {
+        val repository = repositoryWith(storedNote(text("a")))
+        val viewModel = createViewModel(repository, noteId = NOTE_ID)
+        advanceUntilIdle()
+        viewModel.onBlockFocused(viewModel.blocks[0])
+
+        viewModel.toggleLockEditor()
+        viewModel.applyTool(BlockType.QUOTE)
+        assertTrue(viewModel.blocks.single() is Block.TextBlock)
+
+        viewModel.toggleLockEditor()
+        viewModel.applyTool(BlockType.QUOTE)
+        assertEquals("a", (viewModel.blocks.single() as Block.QuoteBlock).text.value)
+    }
+
     // --- toolbar -------------------------------------------------------------------------------
 
     @Test
@@ -449,6 +500,9 @@ class EditNoteViewModelEditorTest {
         noteId: Long = -1L,
         copySource: Long = -1L,
         isReadTrashOnly: Boolean = false,
+        handle: SavedStateHandle = SavedStateHandle(
+            mapOf("idNote" to noteId, "copySource" to copySource, "isReadTrashOnly" to isReadTrashOnly),
+        ),
     ): EditNoteViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.fontSizeFlow).thenReturn(flowOf(DEFAULT_FONT_SIZE))
@@ -457,9 +511,7 @@ class EditNoteViewModelEditorTest {
 
         return EditNoteViewModel(
             notesRepository = repository,
-            savedStateHandle = SavedStateHandle(
-                mapOf("idNote" to noteId, "copySource" to copySource, "isReadTrashOnly" to isReadTrashOnly),
-            ),
+            savedStateHandle = handle,
             updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
             settingsRepository = settingsRepository,
             appScope = CoroutineScope(dispatcher),
@@ -473,5 +525,6 @@ class EditNoteViewModelEditorTest {
         const val INSERTED_ID = 73L
         const val DEFAULT_FONT_SIZE = 16
         const val SAVED_URL = "https://example.com/saved"
+        const val TAG_ID = 5L
     }
 }

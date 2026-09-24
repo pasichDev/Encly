@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,10 +38,14 @@ private val BlockOutlineShape = RoundedCornerShape(12.dp)
 
 /**
  * The editor's formatting toolbar, pinned above the keyboard: `surfaceContainerHigh`, a 1 dp
- * `outlineVariant` hairline on top, padding 8/10.
+ * `outlineVariant` hairline on top, padding 8/10 with 16 below (plus the navigation bar).
  */
 @Composable
-fun EnclyEditorToolbar(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+fun EnclyEditorToolbar(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp),
+    content: @Composable RowScope.() -> Unit,
+) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = modifier.fillMaxWidth()) {
         Column {
             HorizontalDivider(thickness = EnclyTheme.spacing.hairline, color = MaterialTheme.colorScheme.outlineVariant)
@@ -49,7 +54,7 @@ fun EnclyEditorToolbar(modifier: Modifier = Modifier, content: @Composable RowSc
                 horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(horizontal = 10.dp, vertical = EnclyTheme.spacing.xs),
+                    .padding(contentPadding),
                 content = content,
             )
         }

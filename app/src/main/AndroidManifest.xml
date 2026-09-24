@@ -7,15 +7,15 @@
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="*" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
         </intent>
         <intent>
             <action android:name="android.intent.action.SENDTO" />
-            <data android:scheme="*" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.DIAL" />
-            <data android:scheme="*" />
+            <data android:scheme="mailto" />
         </intent>
     </queries>
 

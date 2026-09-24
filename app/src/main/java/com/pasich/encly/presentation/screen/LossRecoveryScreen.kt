@@ -17,10 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.TriangleAlert
+import com.pasich.encly.R
+import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyHoldToConfirmButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -45,7 +46,7 @@ fun LossRecoveryScreen(
                 .navigationBarsPadding()
                 .padding(start = spacing.gutter, end = spacing.gutter, top = spacing.lockTop, bottom = spacing.l),
         ) {
-            EnclyIconTile(icon = Lucide.TriangleAlert)
+            EnclyIconTile(icon = EnclyIcons.Alert)
             Text(
                 text = stringResource(reason.title),
                 style = MaterialTheme.typography.headlineMedium,
@@ -59,10 +60,16 @@ fun LossRecoveryScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            // The one way back after the wipe: a backup file and its 12 words.
+            EnclyCallout(
+                text = stringResource(R.string.vault_reset_restore_hint),
+                icon = EnclyIcons.Restore,
+                modifier = Modifier.padding(top = spacing.s),
+            )
             EnclyHoldToConfirmButton(
                 text = stringResource(reason.action),
                 onConfirm = { currentOnRecoveryConfirm() },
-                modifier = Modifier.padding(top = spacing.xxl),
+                modifier = Modifier.padding(top = spacing.xl),
             )
         }
     }

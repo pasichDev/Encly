@@ -17,7 +17,7 @@ object KeyboardUtils {
      */
     fun handleKeyEvent(
         event: KeyEvent,
-        text: String = "",
+        text: CharSequence = "",
         cursorPosition: Int = 0,
         onBackspaceEmpty: () -> Unit = {},
         onNavigateUp: () -> Boolean = { false },
@@ -43,7 +43,7 @@ object KeyboardUtils {
     internal fun handleKey(
         key: Key,
         type: KeyEventType,
-        text: String,
+        text: CharSequence,
         cursorPosition: Int,
         handlers: KeyHandlers,
     ): Boolean {

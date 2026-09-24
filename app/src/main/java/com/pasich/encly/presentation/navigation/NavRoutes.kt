@@ -18,4 +18,8 @@ enum class NavRoutes {
     LockRoute,
     BackupRoute,
     AppearanceRoute,
+    LicensesRoute,
 }
+
+/** Query argument of [NavRoutes.TasksRoute]: open the new-task sheet on arrival. */
+const val TASKS_ADD_ARG = "add"

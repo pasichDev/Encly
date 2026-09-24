@@ -30,8 +30,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.ui.theme.EnclyTheme
 
 private const val CONTROL_ANIMATION_MS = 150
@@ -84,7 +82,7 @@ fun EnclyCheckbox(
         ) {
             if (checked) {
                 Icon(
-                    Lucide.Check,
+                    EnclyIcons.Check,
                     contentDescription = null,
                     tint = colors.onPrimary,
                     modifier = Modifier.size(16.dp),

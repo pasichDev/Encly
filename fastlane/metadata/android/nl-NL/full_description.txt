@@ -1,33 +1,33 @@
-<p><b>Encly</b> bewaart je notities en taken versleuteld op je telefoon en nergens anders. Geen account, geen cloudsynchronisatie, geen analyse en geen netwerktoegang: de app vraagt zelfs de machtiging <i>INTERNET</i> niet aan.</p>
+Encly is een veilig notitieblok: je privé notities en taken blijven versleuteld op je telefoon en nergens anders. Versleutelde notities, offline, met pincode, zonder account, zonder cloud, zonder advertenties en zonder internettoestemming.
 
-<p><b>Beveiliging</b></p>
-<ul>
-<li>Alles wordt opgeslagen in een SQLCipher-database (AES-256) onder een willekeurige 256-bits sleutel.</li>
-<li>Een verplichte 6-cijferige pincode beschermt die sleutel (PBKDF2-HMAC-SHA256, 600.000 iteraties, AES-256-GCM). De pincode zelf wordt nooit opgeslagen.</li>
-<li>Optioneel ontgrendelen met vingerafdruk of gezicht via een aan biometrie gebonden Android Keystore-sleutel (alleen biometrie van klasse 3).</li>
-<li>Optionele herstelzin van 12 woorden (BIP39) als aparte manier om de sleutel te herstellen.</li>
-<li>Zodra de app naar de achtergrond gaat, wordt de database gesloten en de sleutel uit het geheugen gewist.</li>
-<li>Schermafbeeldingen, schermopnames en voorbeelden in recente apps zijn geblokkeerd. Android-cloudback-up en overzetten naar een ander toestel zijn uitgeschakeld.</li>
-<li>Geen deel-, klembord- of meldingsroute legt de inhoud van notities bloot.</li>
-</ul>
+De meeste notitie-apps willen een account en een server. Encly heeft geen van beide. Je versleutelde notities staan op één plek: je telefoon.
 
-<p><b>Versleutelde back-up en herstel</b></p>
-<ul>
-<li>Exporteer alle notities, taken en labels wanneer je wilt naar één versleuteld bestand (AES-256-GCM).</li>
-<li>Jij kiest via de bestandskiezer van Android waar het bestand komt: een map, een usb-stick, een clouddrive. Encly uploadt het nergens naartoe.</li>
-<li>Het bestand wordt versleuteld met een sleutel die is afgeleid van je herstelzin van 12 woorden, dus er is geen extra back-upwachtwoord om te vergeten. Zonder de woorden is het bestand onleesbaar.</li>
-<li>Zet je gegevens terug op een nieuwe telefoon tijdens de installatie, of voeg een back-up samen met een bestaande kluis.</li>
-</ul>
+PRIVÉ VANAF HET BEGIN
+• Geen account, geen registratie, geen analyse, geen advertenties, geen in-app-aankopen.
+• Echt offline: Encly vraagt de toestemming INTERNET niet aan en kan je notities dus nergens heen sturen.
+• Versleutelde notities: een SQLCipher-database (AES-256) met een willekeurige 256-bits sleutel.
+• Notities met wachtwoord: een 6-cijferige pincode bij elke keer openen, optioneel vingerafdruk of gezicht (alleen sterke biometrie).
+• Vergrendelt zichzelf: zodra Encly naar de achtergrond gaat, wordt de database gesloten en de sleutel uit het geheugen gewist.
+• Screenshots, schermopnames en het voorbeeld bij recente apps zijn geblokkeerd. De cloudback-up van Android staat uit.
 
-<p><b>Functies</b></p>
-<ul>
-<li>Blokeditor: tekst, koppen, citaten, checklists en genummerde lijsten, links, scheidingslijnen.</li>
-<li>Labels en taken met prioriteiten.</li>
-<li>Prullenbak met herstel.</li>
-<li>Licht, donker en dynamisch kleurthema en meerdere editorlettertypen, allemaal in de app meegeleverd.</li>
-<li>Werkt zonder Google Play-services.</li>
-</ul>
+HERSTELZIN EN VERSLEUTELDE BACK-UPS
+• Optionele herstelzin van 12 woorden: pincode vergeten? De zin opent je kluis en je kiest een nieuwe.
+• Exporteer alle notities, taken en labels naar één versleuteld bestand (AES-256-GCM) en bewaar het waar je wilt: een map, een usb-stick, je eigen cloud. Encly uploadt het nooit.
+• Zet het terug op een nieuwe telefoon met dezelfde 12 woorden, of voeg een back-up samen met een bestaande kluis.
+• Niemand kan je notities voor je terughalen, ook de ontwikkelaar niet. Bewaar de woorden op papier.
 
-<p><b>Talen:</b> Engels, Oekraïens, Duits, Frans, Spaans, Italiaans, Pools, Portugees en Nederlands. Encly volgt de taal van je toestel, of je kiest in Instellingen → Taal een aparte taal alleen voor Encly.</p>
+EEN VEILIG NOTITIEBLOK DAT PRETTIG SCHRIJFT
+• Blokeditor: tekst, koppen, citaten, checklists, opsommingen en genummerde lijsten, links en scheidingslijnen.
+• Labels, zoeken, lijst- of rasterweergave, meerdere sorteringen.
+• Taken met prioriteit, naast je notities.
+• Prullenbak met herstel.
+• Vijf thema's (Papier, Bos, Oceaan, Grafiet, Middernacht), lichte, donkere of systeemmodus, dynamische kleuren op Android 12+ en drie lettertypesets, ingebouwd in de app.
 
-<p>Encly is open source (Apache-2.0) en vraagt geen account. Privacybeleid: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>
+OPEN SOURCE
+• Encly is open source (Apache-2.0): iedereen kan nagaan wat de app doet.
+• Werkt zonder Google Play-services. Android 8.0 of nieuwer.
+• 9 talen: Nederlands, Engels, Oekraïens, Duits, Frans, Spaans, Italiaans, Pools en Portugees. Kies een taal alleen voor Encly in Instellingen → Taal.
+
+Encly: versleutelde notities die van jou blijven.
+
+Privacybeleid: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md

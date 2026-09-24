@@ -1,1 +1,1 @@
-Encly: notas cifradas
+Encly: notas privadas cifradas

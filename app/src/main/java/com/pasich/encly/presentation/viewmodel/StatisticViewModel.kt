@@ -23,8 +23,8 @@ class StatisticViewModel @Inject constructor(tagsRepository: TagsRepository, tas
             initialValue = 0,
         )
 
-    val totalTasksCreated: StateFlow<Int> = tasksRepository.getAllTasks()
-        .map { tasks -> tasks.size }
+    /** Open (not completed) tasks: the drawer's Tasks badge. */
+    val openTasksCount: StateFlow<Int> = tasksRepository.getActiveTasksCount()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

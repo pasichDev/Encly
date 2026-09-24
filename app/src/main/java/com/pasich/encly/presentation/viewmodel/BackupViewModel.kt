@@ -56,7 +56,11 @@ class BackupViewModel @Inject constructor(
             action == BackupAction.ERASE -> state.go(BackupStep.ConfirmErase)
 
             action == BackupAction.CREATE_PHRASE ->
-                if (phraseSetup.hasRecoveryPhrase()) state.go(BackupStep.Idle) else phraseFlow.create()
+                if (phraseSetup.hasRecoveryPhrase()) {
+                    state.finish(BackupMessage.Text(R.string.backup_phrase_exists))
+                } else {
+                    phraseFlow.create()
+                }
 
             !phraseSetup.hasRecoveryPhrase() -> state.go(BackupStep.NeedsPhrase)
 

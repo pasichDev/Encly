@@ -3,8 +3,6 @@ package com.pasich.encly.presentation.screen
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,19 +15,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
-import com.composables.icons.lucide.Lock
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Mail
-import com.composables.icons.lucide.SendHorizontal
-import com.composables.icons.lucide.ShieldEllipsis
-import com.composables.icons.lucide.Star
 import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
 import com.pasich.encly.core.LINK_FEEDBACK
@@ -38,10 +29,12 @@ import com.pasich.encly.core.MAIL_DEVELOPMENT
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.EnclyWordmark
 import com.pasich.encly.presentation.designsystem.SectionOverline
+import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.ui.theme.EnclyTheme
 
 @Composable
@@ -64,32 +57,25 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
             EnclyCallout(
                 title = stringResource(R.string.about_data_protection),
                 text = stringResource(R.string.about_encryption_note),
-                icon = Lucide.Lock,
+                icon = EnclyIcons.Lock,
             )
             DeveloperActionsSection(context)
+            EnclyGroup {
+                EnclyNavigationRow(
+                    title = stringResource(R.string.licenses_title),
+                    supporting = stringResource(R.string.licenses_row_desc),
+                    icon = EnclyIcons.File,
+                    onClick = { navController.navigate(NavRoutes.LicensesRoute.name) },
+                    modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun HeroSection() {
-    val context = LocalContext.current
-    val versionName = remember {
-        try {
-            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.packageManager.getPackageInfo(
-                    context.packageName,
-                    PackageManager.PackageInfoFlags.of(0),
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getPackageInfo(context.packageName, 0)
-            }
-            packageInfo.versionName ?: "1.0.0"
-        } catch (_: PackageManager.NameNotFoundException) {
-            "1.0.0"
-        }
-    }
+    val versionName = BuildConfig.VERSION_NAME
 
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -117,8 +103,8 @@ private fun DeveloperActionsSection(context: Context) {
             EnclyNavigationRow(
                 title = stringResource(R.string.about_privacy_policy),
                 supporting = stringResource(R.string.about_privacy_policy_desc),
-                icon = Lucide.ShieldEllipsis,
-                onClick = { openLink(context, LINK_PRIVACY_POLICY) },
+                icon = EnclyIcons.Privacy,
+                onClick = { openExternalLink(context, LINK_PRIVACY_POLICY) },
                 modifier = rowModifier,
             )
             // Rate App: store builds only. The fdroid flavor carries no Google Play link.
@@ -127,7 +113,7 @@ private fun DeveloperActionsSection(context: Context) {
                 EnclyNavigationRow(
                     title = stringResource(R.string.about_rate_app),
                     supporting = stringResource(R.string.about_rate_app_desc),
-                    icon = Lucide.Star,
+                    icon = EnclyIcons.Star,
                     onClick = { openStorePage(context) },
                     modifier = rowModifier,
                 )
@@ -137,15 +123,15 @@ private fun DeveloperActionsSection(context: Context) {
             EnclyNavigationRow(
                 title = stringResource(R.string.about_feedback),
                 supporting = stringResource(R.string.about_feedback_desc),
-                icon = Lucide.SendHorizontal,
-                onClick = { openLink(context, LINK_FEEDBACK) },
+                icon = EnclyIcons.Send,
+                onClick = { openExternalLink(context, LINK_FEEDBACK) },
                 modifier = rowModifier,
             )
             EnclyGroupDivider()
             EnclyNavigationRow(
                 title = stringResource(R.string.about_write_developer),
                 supporting = stringResource(R.string.about_write_developer_desc),
-                icon = Lucide.Mail,
+                icon = EnclyIcons.Mail,
                 onClick = { writeToDeveloper(context) },
                 modifier = rowModifier,
             )
@@ -159,7 +145,7 @@ private fun openStorePage(context: Context) {
     try {
         context.startActivity(marketIntent)
     } catch (_: ActivityNotFoundException) {
-        openLink(context, "https://play.google.com/store/apps/details?id=$appPackageName")
+        openExternalLink(context, "https://play.google.com/store/apps/details?id=$appPackageName")
     }
 }
 
@@ -175,7 +161,7 @@ private fun writeToDeveloper(context: Context) {
 }
 
 /** Opens [url] in the user's browser; Encly itself never performs the request. */
-private fun openLink(context: Context, url: String) {
+internal fun openExternalLink(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     } catch (_: ActivityNotFoundException) {

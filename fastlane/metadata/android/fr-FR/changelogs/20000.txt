@@ -1,1 +1,7 @@
-2.0.0 : première version publique. Coffre-fort chiffré hors ligne avec code PIN obligatoire à 6 chiffres, déverrouillage biométrique lié à une clé et phrase de récupération de 12 mots, tous deux facultatifs. La clé est effacée dès que l'application passe en arrière-plan. Export et restauration de sauvegardes chiffrées avec la phrase de récupération. Polices incluses, services Google Play inutiles. Interface en 9 langues avec choix de la langue dans l'application.
+Première version sur Google Play.
+• Notes et tâches chiffrées, stockées uniquement sur votre téléphone.
+• Verrouillage par code PIN à 6 chiffres, empreinte ou visage en option.
+• Phrase de récupération de 12 mots en option.
+• Sauvegarde chiffrée dans un fichier que vous rangez où vous voulez.
+• Cinq thèmes, trois polices, neuf langues.
+• Sans compte, sans pub, sans permission Internet.

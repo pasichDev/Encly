@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,18 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.FileKey
-import com.composables.icons.lucide.Info
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /** Size of the circle behind a fact or done icon. */
@@ -106,7 +96,7 @@ fun DoneRow(title: String, description: String, modifier: Modifier = Modifier, d
         Surface(shape = CircleShape, color = if (done) colors.primary else colors.surfaceContainerHigh) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(DoneCircle)) {
                 Icon(
-                    if (done) Lucide.Check else Lucide.Info,
+                    if (done) EnclyIcons.CheckBold else EnclyIcons.Info,
                     contentDescription = null,
                     tint = if (done) colors.onPrimary else colors.onSurface,
                     modifier = Modifier.size(EnclyTheme.spacing.m),
@@ -155,7 +145,7 @@ fun FilePickerButton(
                 .padding(horizontal = EnclyTheme.spacing.m, vertical = EnclyTheme.spacing.s),
         ) {
             Icon(
-                Lucide.FileKey,
+                EnclyIcons.File,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(26.dp),
@@ -176,61 +166,13 @@ fun FilePickerButton(
                 }
             }
             Icon(
-                Lucide.ChevronRight,
+                EnclyIcons.Chevron,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
             )
         }
     }
-}
-
-/**
- * The multiline recovery phrase entry: three lines, radius 12, 1 dp `outline` (2 dp `error` with
- * [error]). A password keyboard keeps the words out of IME suggestions and learning.
- */
-@Composable
-fun PhraseInput(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    enabled: Boolean,
-    error: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val style = EnclyTheme.typography.phraseInput
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        enabled = enabled,
-        minLines = 3,
-        maxLines = 3,
-        textStyle = style.copy(color = colors.onSurface),
-        cursorBrush = SolidColor(colors.primary),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            autoCorrectEnabled = false,
-            capitalization = KeyboardCapitalization.None,
-        ),
-        modifier = modifier.fillMaxWidth(),
-        decorationBox = { inner ->
-            Box(
-                modifier = Modifier
-                    .border(
-                        if (error) 2.dp else 1.dp,
-                        if (error) colors.error else colors.outline,
-                        MaterialTheme.shapes.small,
-                    )
-                    .padding(horizontal = EnclyTheme.spacing.m, vertical = 14.dp),
-            ) {
-                if (value.isEmpty()) {
-                    Text(text = placeholder, style = style, color = colors.onSurfaceVariant)
-                }
-                inner()
-            }
-        },
-    )
 }
 
 /** A form section: the numbered overline, then its content. */

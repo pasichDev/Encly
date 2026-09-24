@@ -104,6 +104,7 @@ class ListLoadStateViewModelTest {
         tagsRepository = repository,
         reorderTagsUseCase = ReorderTagsUseCase(repository),
         selectedTagHolder = SelectedTagHolder(),
+        notesRepository = TestNotesRepository(),
     )
 
     private class FakeTagsRepository(private val fail: Boolean = false, tags: List<Tag> = emptyList()) :

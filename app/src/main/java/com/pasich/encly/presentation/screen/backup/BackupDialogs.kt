@@ -1,24 +1,33 @@
 package com.pasich.encly.presentation.screen.backup
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.FragmentActivity
@@ -26,10 +35,21 @@ import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
+import com.pasich.encly.presentation.designsystem.EnclyGroup
+import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyPillButton
+import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
-import com.pasich.encly.presentation.designsystem.EnclyTextField
-import com.pasich.encly.presentation.designsystem.PhraseInput
+import com.pasich.encly.presentation.designsystem.LabelHeader
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
+import com.pasich.encly.presentation.designsystem.StepHeading
 import com.pasich.encly.presentation.designsystem.WordGrid
+import com.pasich.encly.presentation.screen.onboarding.FooterSpec
+import com.pasich.encly.presentation.screen.onboarding.OnboardingFooter
+import com.pasich.encly.presentation.screen.onboarding.PhraseCheckFields
+import com.pasich.encly.presentation.screen.onboarding.allChecksCorrect
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
@@ -38,9 +58,13 @@ import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.ui.theme.EnclyTheme
 
-/** The dialog for the current [step] of a backup or vault flow, if it has one. */
+/**
+ * The dialog or full-screen step for the current [step] of a backup or vault flow, if it has
+ * one. Phrase steps and the import choice cover the whole screen like the onboarding steps, so
+ * callers draw this last, over their content (in a Box). [busy] shows progress on the primary.
+ */
 @Composable
-fun BackupDialogs(actions: BackupDialogActions, step: BackupStep) {
+fun BackupDialogs(actions: BackupDialogActions, step: BackupStep, busy: Boolean = false) {
     when (step) {
         is BackupStep.Reauth -> ReauthDialog(actions, step)
 
@@ -52,29 +76,36 @@ fun BackupDialogs(actions: BackupDialogActions, step: BackupStep) {
             onDismiss = actions.cancel,
         )
 
-        is BackupStep.ShowNewPhrase -> NewPhraseDialog(step.words, actions)
+        is BackupStep.ShowNewPhrase -> NewPhraseStep(step.words, actions)
 
-        is BackupStep.CheckNewPhrase -> PhraseCheckDialog(step, actions)
+        is BackupStep.CheckNewPhrase -> PhraseCheckStep(step, actions, busy)
 
-        is BackupStep.ConfirmExistingPhrase -> PhraseEntryDialog(
-            texts = PhraseEntryTexts(R.string.backup_confirm_phrase_title, R.string.backup_confirm_phrase_body),
+        is BackupStep.ConfirmExistingPhrase -> PhraseEntryStep(
+            texts = PhraseEntryTexts(
+                R.string.backup_needs_phrase_title,
+                R.string.backup_confirm_phrase_title,
+                R.string.backup_confirm_phrase_body,
+            ),
             error = step.error,
+            busy = busy,
+            actions = actions,
             onSubmit = actions.phrase::submitExisting,
-            onDismiss = actions.cancel,
         )
 
-        is BackupStep.EnterImportPhrase -> PhraseEntryDialog(
+        is BackupStep.EnterImportPhrase -> PhraseEntryStep(
             texts = PhraseEntryTexts(
+                R.string.backup_import_choose,
                 R.string.backup_enter_phrase_title,
                 R.string.backup_enter_phrase_body,
                 R.string.backup_decrypt,
             ),
             error = step.error,
+            busy = busy,
+            actions = actions,
             onSubmit = actions.importing::submitPhrase,
-            onDismiss = actions.cancel,
         )
 
-        is BackupStep.ChooseImportMode -> ImportModeDialog(step, actions)
+        is BackupStep.ChooseImportMode -> ImportModeStep(step, actions, busy)
 
         BackupStep.ConfirmReplace -> MessageDialog(
             title = R.string.backup_replace_confirm_title,
@@ -82,7 +113,8 @@ fun BackupDialogs(actions: BackupDialogActions, step: BackupStep) {
             confirm = R.string.backup_replace,
             onConfirm = actions.importing::confirmReplace,
             destructive = true,
-            onDismiss = actions.cancel,
+            // Cancel goes back to the choice: the backup was decrypted with 12 typed words.
+            onDismiss = actions.importing::backToChoice,
         )
 
         BackupStep.ConfirmErase -> MessageDialog(
@@ -126,6 +158,7 @@ private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) 
     PinLockoutTicker(step to (lockoutSeconds > 0L), actions.reauth::pinLockoutRemainingMillis) {
         lockoutSeconds = it
     }
+    val lockedOut = lockoutSeconds > 0L
     val error = step.error?.let { stringResource(it) }
     Dialog(
         onDismissRequest = actions.cancel,
@@ -134,19 +167,21 @@ private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) 
         PinEntryScaffold(
             title = stringResource(R.string.backup_reauth_title),
             subtitle = when {
-                lockoutSeconds > 0L -> pinLockoutText(lockoutSeconds)
+                lockedOut -> pinLockoutText(lockoutSeconds)
                 error != null -> error
                 else -> stringResource(R.string.backup_reauth_subtitle)
             },
-            subtitleIsError = lockoutSeconds > 0L || error != null,
+            subtitleIsError = lockedOut || error != null,
             modifier = Modifier.fillMaxSize(),
         ) {
             PinEntry(
                 entered = input.length,
                 error = error != null && input.isEmpty(),
+                shakeKey = step.failures,
+                enabled = !lockedOut,
                 actions = PinEntryActions(
                     onDigit = { digit ->
-                        if (input.length < PIN_LENGTH && lockoutSeconds <= 0L) input += digit
+                        if (input.length < PIN_LENGTH && !lockedOut) input += digit
                         if (input.length == PIN_LENGTH) {
                             actions.reauth.submitPin(input)
                             input = ""
@@ -169,98 +204,193 @@ private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) 
     }
 }
 
+/**
+ * A backup step laid out like an onboarding step, over the whole screen: a back header with
+ * [label], the scrolling [content] in the gutter, and [footer] pinned above the keyboard.
+ * System back runs [onBack] too.
+ */
 @Composable
-private fun NewPhraseDialog(words: List<String>, actions: BackupDialogActions) {
-    EnclyDialog(
-        title = stringResource(R.string.backup_needs_phrase_title),
-        text = stringResource(R.string.backup_phrase_write_down),
-        onDismissRequest = {},
-        confirm = DialogAction(stringResource(R.string.backup_phrase_written), actions.phrase::writtenDown),
-        dismiss = DialogAction(stringResource(R.string.cancel), actions.cancel),
+private fun FullScreenStep(
+    label: String,
+    onBack: () -> Unit,
+    footer: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    BackHandler(onBack = onBack)
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .imePadding(),
+        ) {
+            LabelHeader(label = label, onBack = onBack)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.l),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = EnclyTheme.spacing.gutter)
+                    .padding(top = EnclyTheme.spacing.m, bottom = EnclyTheme.spacing.l),
+                content = content,
+            )
+            footer()
+        }
+    }
+}
+
+/** The new recovery phrase to write down, with a Hide/Show pill, as in onboarding. */
+@Composable
+private fun NewPhraseStep(words: List<String>, actions: BackupDialogActions) {
+    var hidden by remember { mutableStateOf(false) }
+    FullScreenStep(
+        label = stringResource(R.string.backup_needs_phrase_title),
+        onBack = actions.cancel,
+        footer = { OnboardingFooter(FooterSpec(R.string.backup_phrase_written, actions.phrase::writtenDown)) },
     ) {
-        WordGrid(
-            words = words,
-            hidden = false,
-            modifier = Modifier.verticalScroll(rememberScrollState()),
+        StepHeading(
+            title = stringResource(R.string.onboarding_phrase_title),
+            body = stringResource(R.string.backup_phrase_write_down),
+        )
+        WordGrid(words = words, hidden = hidden)
+        EnclyPillButton(
+            text = stringResource(if (hidden) R.string.onboarding_phrase_show else R.string.onboarding_phrase_hide),
+            leadingIcon = if (hidden) EnclyIcons.Eye else EnclyIcons.EyeOff,
+            onClick = { hidden = !hidden },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
         )
     }
 }
 
+/** Three of the new words typed back, each checked as it is typed; Confirm once all are right. */
 @Composable
-private fun PhraseCheckDialog(step: BackupStep.CheckNewPhrase, actions: BackupDialogActions) {
-    val answers = remember(step.positions) { List(step.positions.size) { "" }.toMutableStateList() }
-    EnclyDialog(
-        title = stringResource(R.string.backup_phrase_check_title),
-        onDismissRequest = {},
-        confirm = DialogAction(stringResource(R.string.action_continue), {
-            actions.phrase.submitCheck(answers.toList())
-        }),
-        dismiss = DialogAction(stringResource(R.string.cancel), actions.cancel),
-    ) {
-        step.positions.forEachIndexed { i, position ->
-            EnclyTextField(
-                value = answers[i],
-                onValueChange = { answers[i] = it },
-                label = stringResource(R.string.backup_phrase_check_word, position + 1),
-                textStyle = EnclyTheme.typography.dataLarge,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    autoCorrectEnabled = false,
-                    capitalization = KeyboardCapitalization.None,
+private fun PhraseCheckStep(step: BackupStep.CheckNewPhrase, actions: BackupDialogActions, busy: Boolean) {
+    val checks = remember(step.positions, step.expected) { step.positions.zip(step.expected) }
+    val answers = remember(step.positions) { mutableStateMapOf<Int, String>() }
+    FullScreenStep(
+        label = stringResource(R.string.backup_needs_phrase_title),
+        onBack = actions.phrase::showAgain,
+        footer = {
+            OnboardingFooter(
+                FooterSpec(
+                    primary = R.string.onboarding_verify_confirm,
+                    onPrimary = { actions.phrase.submitCheck(step.positions.map { answers[it].orEmpty() }) },
+                    enabled = allChecksCorrect(checks, answers),
+                    loading = busy,
+                    secondary = R.string.onboarding_verify_show_again,
+                    onSecondary = actions.phrase::showAgain,
                 ),
             )
-        }
-        step.error?.let { DialogError(stringResource(it)) }
+        },
+    ) {
+        StepHeading(
+            title = stringResource(R.string.onboarding_verify_title),
+            body = stringResource(R.string.onboarding_verify_body),
+        )
+        PhraseCheckFields(
+            checks = checks,
+            answers = answers,
+            onAnswer = { index, answer ->
+                answers[index] = answer.trim().lowercase()
+                actions.clearError()
+            },
+            enabled = !busy,
+        )
     }
 }
 
-private data class PhraseEntryTexts(val title: Int, val body: Int, val confirm: Int = R.string.action_continue)
+private data class PhraseEntryTexts(
+    val label: Int,
+    val title: Int,
+    val body: Int,
+    val confirm: Int = R.string.action_continue,
+)
 
+/** The 12 words, one numbered cell each; the primary waits for a valid phrase. */
 @Composable
-private fun PhraseEntryDialog(
+private fun PhraseEntryStep(
     texts: PhraseEntryTexts,
     error: Int?,
-    onSubmit: (String) -> Unit,
-    onDismiss: () -> Unit,
+    busy: Boolean,
+    actions: BackupDialogActions,
+    onSubmit: (CharArray) -> Unit,
 ) {
-    var phrase by remember { mutableStateOf("") }
-    EnclyDialog(
-        title = stringResource(texts.title),
-        text = stringResource(texts.body),
-        onDismissRequest = onDismiss,
-        confirm = DialogAction(stringResource(texts.confirm), { onSubmit(phrase) }, enabled = phrase.isNotBlank()),
-        dismiss = DialogAction(stringResource(R.string.cancel), onDismiss),
+    // Never saved state: the words live only while this step does.
+    val phrase = remember { RecoveryPhraseState() }
+    val submit = { if (phrase.canSubmit && !busy) onSubmit(phrase.toCharArray()) }
+    FullScreenStep(
+        label = stringResource(texts.label),
+        onBack = actions.cancel,
+        footer = {
+            OnboardingFooter(FooterSpec(texts.confirm, submit, enabled = phrase.canSubmit, loading = busy))
+        },
     ) {
-        PhraseInput(
-            value = phrase,
-            onValueChange = { phrase = it },
-            placeholder = stringResource(R.string.recovery_phrase_label),
-            enabled = true,
-            error = error != null,
-        )
-        error?.let { DialogError(stringResource(it)) }
+        StepHeading(title = stringResource(texts.title), body = stringResource(texts.body))
+        Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
+            Text(
+                text = stringResource(R.string.recovery_phrase_entry_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            RecoveryPhraseInput(
+                state = phrase,
+                enabled = !busy,
+                error = error?.let { stringResource(it) },
+                onEdit = actions.clearError,
+                onDone = submit,
+            )
+        }
     }
 }
 
+/**
+ * What the decrypted backup holds, and the choice: merge, or replace everything (confirmed
+ * again). Only Cancel, back and the header drop the decrypted backup.
+ */
 @Composable
-private fun ImportModeDialog(step: BackupStep.ChooseImportMode, actions: BackupDialogActions) {
-    EnclyDialog(
-        title = stringResource(R.string.backup_import_choose),
-        text = stringResource(R.string.backup_import_contents, step.notes, step.tasks, step.tags),
-        onDismissRequest = actions.cancel,
-        confirm = DialogAction(stringResource(R.string.backup_merge), actions.importing::merge),
-        dismiss = DialogAction(
-            stringResource(R.string.backup_replace),
-            actions.importing::askReplace,
-            destructive = true,
-        ),
+private fun ImportModeStep(step: BackupStep.ChooseImportMode, actions: BackupDialogActions, busy: Boolean) {
+    val summary = stringResource(
+        R.string.backup_import_summary,
+        pluralStringResource(R.plurals.backup_count_notes, step.notes, step.notes),
+        pluralStringResource(R.plurals.backup_count_tasks, step.tasks, step.tasks),
+        pluralStringResource(R.plurals.backup_count_tags, step.tags, step.tags),
+    )
+    FullScreenStep(
+        label = stringResource(R.string.backup_import_choose),
+        onBack = actions.cancel,
+        footer = {
+            EnclyTextButton(
+                text = stringResource(R.string.cancel),
+                onClick = actions.cancel,
+                enabled = !busy,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = EnclyTheme.spacing.gutter)
+                    .padding(top = EnclyTheme.spacing.s, bottom = EnclyTheme.spacing.stepGap),
+            )
+        },
     ) {
-        Text(stringResource(R.string.backup_merge_desc), style = MaterialTheme.typography.bodySmall)
-        Text(stringResource(R.string.backup_replace_desc), style = MaterialTheme.typography.bodySmall)
+        StepHeading(title = stringResource(R.string.backup_import_mode_title), body = summary)
+        EnclyGroup {
+            EnclySheetRow(
+                title = stringResource(R.string.backup_merge),
+                supporting = stringResource(R.string.backup_merge_row_desc),
+                icon = EnclyIcons.Plus,
+                enabled = !busy,
+                onClick = actions.importing::merge,
+                modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+            )
+            EnclyGroupDivider()
+            EnclySheetRow(
+                title = stringResource(R.string.backup_replace_all),
+                supporting = stringResource(R.string.backup_replace_row_desc),
+                icon = EnclyIcons.Restore,
+                destructive = true,
+                enabled = !busy,
+                onClick = actions.importing::askReplace,
+                modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+            )
+        }
     }
-}
-
-@Composable
-private fun DialogError(text: String) {
-    Text(text = text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
 }

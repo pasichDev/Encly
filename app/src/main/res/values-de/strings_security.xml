@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Gib deine 12 Wörter ein oder füge sie ein</string>
+    <string name="recovery_word_cell">Wort %1$d von %2$d</string>
+    <string name="recovery_word_unknown">Wort %1$d ist kein Wort einer Wiederherstellungsphrase. Prüfe die Schreibweise.</string>
+    <string name="recovery_phrase_checksum">Diese 12 Wörter ergeben keine gültige Wiederherstellungsphrase. Prüfe jedes Wort und die Reihenfolge.</string>
+    <string name="backup_phrase_exists">Dieser Tresor hat bereits eine Wiederherstellungsphrase</string>
+    <string name="backup_import_mode_title">Zu deinen Notizen hinzufügen oder sie ersetzen?</string>
+    <string name="backup_import_summary">Dieses Backup enthält %1$s, %2$s und %3$s.</string>
+    <string name="backup_merge_row_desc">Alles hier bleibt, Fehlendes kommt dazu. Was schon da ist, wird übersprungen.</string>
+    <string name="backup_replace_all">Alles ersetzen</string>
+    <string name="backup_replace_row_desc">Alle Notizen, Aufgaben und Tags auf diesem Handy löschen, dann das Backup wiederherstellen.</string>
+    <string name="backup_intro_short">Sichere alle Notizen, Aufgaben und Tags in einer verschlüsselten Datei und stelle sie auf jedem Handy wieder her.</string>
+    <string name="backup_section_export">Exportieren</string>
+    <string name="backup_section_import">Importieren</string>
+    <string name="security_encryption_pin_plain">Deine Notizen sind verschlüsselt. Deine PIN (und dein Fingerabdruck, falls aktiviert) entsperrt sie.</string>
+    <string name="security_encryption_seed_plain">Deine Notizen sind verschlüsselt. Deine PIN (und dein Fingerabdruck, falls aktiviert) entsperrt sie, und wenn du die PIN vergisst, deine Wiederherstellungsphrase.</string>
+    <string name="security_recovery_set_desc">Entsperrt deine Notizen, wenn du die PIN vergisst, und öffnet deine Backups.</string>
+    <string name="security_recovery_status_set">Eingerichtet</string>
+    <string name="vault_reset_restore_hint">Nach dem Zurücksetzen kannst du eine Backup-Datei mit ihren 12 Wörtern wiederherstellen.</string>
+    <string name="pin_change_bar_title">PIN ändern</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d Notiz</item>
+        <item quantity="other">%d Notizen</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d Aufgabe</item>
+        <item quantity="other">%d Aufgaben</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d Tag</item>
+        <item quantity="other">%d Tags</item>
+    </plurals>
+</resources>

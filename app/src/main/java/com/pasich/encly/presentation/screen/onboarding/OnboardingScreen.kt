@@ -48,6 +48,7 @@ import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyProgressHeader
 import com.pasich.encly.presentation.designsystem.LabelHeader
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.WelcomeHeader
 import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.viewmodel.AuthSetupViewModel
@@ -84,17 +85,24 @@ fun OnboardingScreen(
     val pickBackupFile = rememberBackupFilePicker(viewModel::onRestoreFilePicked, viewModel::onRestorePickerUnavailable)
 
     // The phrase is never put in saved state; it lives only while the screen does.
-    var restorePhrase by remember { mutableStateOf("") }
+    val restorePhrase = remember { RecoveryPhraseState() }
     var languageDialog by rememberSaveable { mutableStateOf(false) }
 
     val onFinished: (AuthSetupViewModel.FinishResult) -> Unit = { result ->
         // Backgrounded: set up but re-locked; MainActivity routes to the lock screen.
         if (result.ok) currentOnComplete()
     }
+    val onRestore = {
+        if (state.restoreFileReady && restorePhrase.canSubmit) viewModel.restoreBackup(restorePhrase.toCharArray())
+    }
     val actions = onboardingActions(
         viewModel = viewModel,
-        restore = RestoreActions(onPickFile = pickBackupFile, onPhraseChange = { restorePhrase = it }),
-        onRestore = { viewModel.restoreBackup(restorePhrase) },
+        restore = RestoreActions(
+            onPickFile = pickBackupFile,
+            onPhraseEdited = viewModel::onRestorePhraseEdited,
+            onSubmit = onRestore,
+        ),
+        onRestore = onRestore,
         onLanguage = { languageDialog = true },
         onOpenNotebook = { setupViewModel.finishSetup(onFinished) },
     )
@@ -105,6 +113,10 @@ fun OnboardingScreen(
         }
     }
     BackHandler(enabled = state.step != OnboardingStep.WELCOME) { viewModel.back() }
+    // Off the restore path (and once it reached Ready) the typed words are dropped.
+    LaunchedEffect(state.step) {
+        if (state.step != OnboardingStep.RESTORE && state.step != OnboardingStep.PIN) restorePhrase.clear()
+    }
 
     if (languageDialog) OnboardingLanguageDialog(onDismiss = { languageDialog = false })
     // Only over the restore path's Ready step, the one place a staged backup can have failed.
@@ -129,7 +141,7 @@ fun OnboardingScreen(
 private fun OnboardingScaffold(
     state: OnboardingUiState,
     actions: OnboardingActions,
-    restorePhrase: String,
+    restorePhrase: RecoveryPhraseState,
     finishing: Boolean,
     error: String?,
     modifier: Modifier = Modifier,
@@ -207,7 +219,7 @@ private fun shownLanguage(): AppLanguage {
 private fun StepContent(
     state: OnboardingUiState,
     actions: OnboardingActions,
-    restorePhrase: String,
+    restorePhrase: RecoveryPhraseState,
     modifier: Modifier = Modifier,
 ) {
     AnimatedContent(

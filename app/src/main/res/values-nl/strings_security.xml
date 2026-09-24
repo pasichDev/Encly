@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Typ of plak je 12 woorden</string>
+    <string name="recovery_word_cell">Woord %1$d van %2$d</string>
+    <string name="recovery_word_unknown">Woord %1$d is geen woord uit een herstelzin. Controleer de spelling.</string>
+    <string name="recovery_phrase_checksum">Deze 12 woorden vormen geen geldige herstelzin. Controleer elk woord en de volgorde.</string>
+    <string name="backup_phrase_exists">Deze kluis heeft al een herstelzin</string>
+    <string name="backup_import_mode_title">Toevoegen aan je notities of ze vervangen?</string>
+    <string name="backup_import_summary">Deze back-up bevat %1$s, %2$s en %3$s.</string>
+    <string name="backup_merge_row_desc">Alles hier blijft en wat ontbreekt wordt toegevoegd. Wat er al is, wordt overgeslagen.</string>
+    <string name="backup_replace_all">Alles vervangen</string>
+    <string name="backup_replace_row_desc">Verwijder alle notities, taken en tags op deze telefoon en zet daarna de back-up terug.</string>
+    <string name="backup_intro_short">Bewaar al je notities, taken en tags in één versleuteld bestand en zet ze terug op elke telefoon.</string>
+    <string name="backup_section_export">Exporteren</string>
+    <string name="backup_section_import">Importeren</string>
+    <string name="security_encryption_pin_plain">Je notities zijn versleuteld. Je pincode (en je vingerafdruk, als die aan staat) ontgrendelt ze.</string>
+    <string name="security_encryption_seed_plain">Je notities zijn versleuteld. Je pincode (en je vingerafdruk, als die aan staat) ontgrendelt ze, en je herstelzin als je de pincode vergeet.</string>
+    <string name="security_recovery_set_desc">Ontgrendelt je notities als je de pincode vergeet, en opent je back-ups.</string>
+    <string name="security_recovery_status_set">Ingesteld</string>
+    <string name="vault_reset_restore_hint">Na de reset kun je een back-upbestand terugzetten met de 12 woorden ervan.</string>
+    <string name="pin_change_bar_title">Pincode wijzigen</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d notitie</item>
+        <item quantity="other">%d notities</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d taak</item>
+        <item quantity="other">%d taken</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d tag</item>
+        <item quantity="other">%d tags</item>
+    </plurals>
+</resources>

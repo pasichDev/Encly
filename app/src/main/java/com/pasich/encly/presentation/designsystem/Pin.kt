@@ -29,9 +29,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Delete
-import com.composables.icons.lucide.Fingerprint
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -143,7 +140,7 @@ fun PinKeypad(
                     modifier = Modifier.weight(1f),
                 ) {
                     Icon(
-                        imageVector = Lucide.Fingerprint,
+                        imageVector = EnclyIcons.Fingerprint,
                         contentDescription = stringResource(R.string.pin_unlock_with_fingerprint),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(28.dp),
@@ -161,7 +158,7 @@ fun PinKeypad(
                 modifier = Modifier.weight(1f),
             ) {
                 Icon(
-                    imageVector = Lucide.Delete,
+                    imageVector = EnclyIcons.Backspace,
                     contentDescription = stringResource(R.string.pin_delete_digit),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(26.dp),

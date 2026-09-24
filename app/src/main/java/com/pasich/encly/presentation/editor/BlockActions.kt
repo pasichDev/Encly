@@ -26,8 +26,12 @@ interface BlockActions {
      */
     fun registerCursorToEnd(callback: () -> Unit): () -> Unit
 
-    /** The user works on this block without its own field taking focus (a list item did). */
-    fun onInteraction()
+    /**
+     * Registers how to focus a block with several fields (a list): its last field with the
+     * cursor at the end when asked for the end, else its first.
+     * @return a function that removes the registration
+     */
+    fun registerFieldsFocusTarget(requestFocus: (atEnd: Boolean) -> Unit): () -> Unit
 
     /** Focuses the next block; false when this is the last one. */
     fun navigateToNext(): Boolean

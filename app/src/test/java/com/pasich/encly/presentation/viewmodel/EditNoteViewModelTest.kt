@@ -65,7 +65,7 @@ class EditNoteViewModelTest {
 
         assertFalse(viewModel.saveNote())
         assertEquals(-1L, viewModel.state.value.note.id)
-        assertEquals(SaveStatusNote.OLD, viewModel.status.value)
+        assertEquals(SaveStatusNote.FAILED, viewModel.status.value)
     }
 
     @Test

@@ -112,5 +112,7 @@ Compose:
     # (the editor's per-block callbacks) that is built from the ViewModel on purpose.
     allowedForwarding:
       - BlockActionsImpl
+      - EditorBlocksHost
+      - EditorExits
   ViewModelInjection:
     active: true

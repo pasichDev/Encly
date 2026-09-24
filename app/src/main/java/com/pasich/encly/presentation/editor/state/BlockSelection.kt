@@ -44,6 +44,9 @@ class BlockSelection(private val blocks: List<Block>) {
             return if (index >= 0) index else interactedIndexHint.coerceIn(0, blocks.lastIndex.coerceAtLeast(0))
         }
 
+    /** The focused block, else the one the user last worked on: where toolbar actions apply. */
+    val workingIndex: Int get() = focusedIndex.takeIf { it >= 0 } ?: interactedIndex
+
     /** The field of [blockId] took focus. */
     fun onFocused(blockId: String) {
         focusedBlockId.value = blockId

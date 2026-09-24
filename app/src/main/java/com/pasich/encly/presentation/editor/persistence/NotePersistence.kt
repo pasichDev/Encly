@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -29,6 +30,9 @@ enum class SaveStatusNote {
     SAVING,
     SAVED,
     LOADING,
+
+    /** The last save failed: the editor still holds changes the database does not. */
+    FAILED,
 }
 
 data class LoadNoteState(val note: Note = Note(id = -1), val backupNote: Note = Note(id = -1))
@@ -47,6 +51,7 @@ private const val TAG = "NotePersistence"
  * delete or discard, or an explicit exit), no queued or later save writes the note again, so it
  * cannot bring a trashed note back or write edits over a discard.
  */
+@Suppress("TooManyFunctions") // Every write of the note, so all of them share one mutex.
 class NotePersistence(
     private val notesRepository: NotesRepository,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
@@ -80,12 +85,21 @@ class NotePersistence(
 
     // The title, tag and content last written to (or read from) the database. The autosave
     // only writes when the editor differs from it.
-    private var persistedSnapshot: String = currentSnapshot
+    private var persistedSnapshot: String = _state.value.note.let { snapshotOf(it.title, it.tagId, "[]") }
+
+    // The note as the editor opened it, for [hasChanges].
+    private var openedSnapshot: String = persistedSnapshot
 
     private var autosaveJob: Job? = null
 
-    private val currentSnapshot: String
-        get() = _state.value.note.let { snapshotOf(it.title, it.tagId, BlockConverter.blocksToJson(blocks())) }
+    /**
+     * The editor's content as stored JSON. The blocks' values are copied where this is called
+     * (cheap), and serialized on [ioDispatcher], so a long note never serializes on the main thread.
+     */
+    private suspend fun contentJson(): String {
+        val content = blocks().frozen()
+        return withContext(ioDispatcher) { BlockConverter.blocksToJson(content) }
+    }
 
     /** False when nothing may be saved: closed, still loading, read-only or unreadable. */
     private val canPersist: Boolean
@@ -122,7 +136,8 @@ class NotePersistence(
         parsed?.takeIf { it.isNotEmpty() }?.let(showBlocks)
         val shown = if (isCopy) note.asCopy(copyTitle(note.title)) else note
         _state.value = LoadNoteState(note = shown, backupNote = shown)
-        persistedSnapshot = currentSnapshot
+        persistedSnapshot = snapshotOf(shown.title, shown.tagId, contentJson())
+        openedSnapshot = persistedSnapshot
         loaded = true
         _status.value = SaveStatusNote.OLD
         // Unreadable content: the note (its title) is shown, but the editor stays read-only.
@@ -138,9 +153,9 @@ class NotePersistence(
     fun startAutosave(scope: CoroutineScope, contentChanges: Flow<Unit>) {
         autosaveJob?.cancel()
         autosaveJob = scope.launch {
-            combine(contentChanges, _state.map { it.note.title to it.note.tagId }) { _, _ -> }
+            combine(contentChanges, _state.map { it.note.title to it.note.tagId }.distinctUntilChanged()) { _, _ -> }
                 .debounce(AUTOSAVE_DEBOUNCE_MS)
-                .collect { if (currentSnapshot != persistedSnapshot) save() }
+                .collect { save(onlyIfChanged = true) }
         }
     }
 
@@ -151,37 +166,47 @@ class NotePersistence(
 
     /**
      * Stores the note and returns once the database reports the result. A blank new note is
-     * not stored; a save that is not allowed (see [canPersist]) is a successful no-op.
+     * not stored; a save that is not allowed (see [canPersist]) is a successful no-op. With
+     * [onlyIfChanged] (the autosave), nothing is written when the editor matches what is stored.
      */
-    suspend fun save(): Boolean = saveMutex.withLock {
+    suspend fun save(onlyIfChanged: Boolean = false): Boolean = saveMutex.withLock {
         if (!canPersist) {
-            if (_status.value != SaveStatusNote.LOADING) _status.value = SaveStatusNote.OLD
+            if (_status.value != SaveStatusNote.LOADING && _status.value != SaveStatusNote.FAILED) {
+                _status.value = SaveStatusNote.OLD
+            }
             return@withLock true
         }
         val currentNote = _state.value.note
-        val content = blocks()
-        if (currentNote.id == -1L && currentNote.title.isBlank() && content.none { it.hasContent() }) {
-            _status.value = SaveStatusNote.OLD
+        if (currentNote.id == -1L && currentNote.title.isBlank() && blocks().none { it.hasContent() }) {
             return@withLock true
         }
 
+        val blocksJson = contentJson()
+        val snapshot = snapshotOf(currentNote.title, currentNote.tagId, blocksJson)
+        if (onlyIfChanged && snapshot == persistedSnapshot) return@withLock true
+
         _status.value = SaveStatusNote.SAVING
-        val blocksJson = BlockConverter.blocksToJson(content)
         val saved = suspendRunCatching {
             if (currentNote.id != -1L) {
-                val backup = _state.value.backupNote
-                withContext(ioDispatcher) { notesRepository.updateStored(currentNote, backup, blocksJson) }
+                val stored = withContext(ioDispatcher) {
+                    notesRepository.updateStored(currentNote, _state.value.backupNote, blocksJson)
+                }
+                // The editor shows when the note was last edited.
+                stored?.let { note -> updateNote { it.copy(date = note.date, description = note.description) } }
+                stored != null
             } else {
                 val insertedId = withContext(ioDispatcher) { notesRepository.insertDraft(currentNote, blocksJson) }
                 // Merged into the latest state: a title or tag changed while the insert ran is
                 // kept, and the next autosave stores it.
-                insertedId?.let { id -> updateNote { it.copy(id = id, value = blocksJson) } }
+                insertedId?.let { id ->
+                    updateNote { it.copy(id = id, value = blocksJson, date = System.currentTimeMillis()) }
+                }
                 insertedId != null
             }
         }.onFailure { AppLogger.e(TAG, "Note persistence failed", it) }.getOrDefault(false)
 
-        if (saved) persistedSnapshot = snapshotOf(currentNote.title, currentNote.tagId, blocksJson)
-        _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.OLD
+        if (saved) persistedSnapshot = snapshot
+        _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.FAILED
         saved
     }
 
@@ -210,7 +235,7 @@ class NotePersistence(
         val currentNote = _state.value.note
         if (!loaded || currentNote.id == -1L) return@withLock false
 
-        val restored = currentNote.copy(value = BlockConverter.blocksToJson(blocks()), isTrash = false)
+        val restored = currentNote.copy(value = contentJson(), isTrash = false)
         val ok = updateNoteTrashStatusUseCase.invoke(restored, false).isSuccess
         if (ok) {
             _state.value = _state.value.copy(note = restored)
@@ -228,7 +253,7 @@ class NotePersistence(
             return@withLock true
         }
 
-        val trashed = currentNote.copy(value = BlockConverter.blocksToJson(blocks()), isTrash = true)
+        val trashed = currentNote.copy(value = contentJson(), isTrash = true)
         val ok = updateNoteTrashStatusUseCase.invoke(trashed, true).isSuccess
         if (ok) {
             // Keep the in-memory note in sync with the row: nothing may write isTrash=false back.
@@ -238,16 +263,30 @@ class NotePersistence(
         ok
     }
 
+    /** Whether the editor holds nothing to keep: a new note without a title or content. */
+    val isBlankDraft: Boolean
+        get() = _state.value.note.let { it.id == -1L && it.title.isBlank() } && blocks().none { it.hasContent() }
+
+    /**
+     * Whether the note differs from how the editor opened it (its title, tag or content), or a
+     * new note was already stored: what "discard" would undo.
+     */
+    suspend fun hasChanges(): Boolean {
+        val (note, backup) = _state.value.let { it.note to it.backupNote }
+        if (note.id != backup.id) return true
+        return note.title != backup.title || note.tagId != backup.tagId ||
+            snapshotOf(note.title, note.tagId, contentJson()) != openedSnapshot
+    }
+
     /** Stores a copy of the note, titled by [copyTitle]. Returns its id, or -1 on failure. */
     suspend fun duplicate(): Long = saveMutex.withLock {
         val currentNote = _state.value.note
-        notesRepository.insertNote(
-            Note.new(
-                title = copyTitle(currentNote.title),
-                value = BlockConverter.blocksToJson(blocks()),
-                tagId = currentNote.tagId,
-            ),
-        ).getOrNull()?.takeIf { it > 0L } ?: -1L
+        val content = contentJson()
+        withContext(ioDispatcher) {
+            notesRepository.insertNote(
+                Note.new(title = copyTitle(currentNote.title), value = content, tagId = currentNote.tagId),
+            )
+        }.getOrNull()?.takeIf { it > 0L } ?: -1L
     }
 
     /** Deletes the note from the database for good. */
@@ -272,12 +311,30 @@ class NotePersistence(
 private fun snapshotOf(title: String, tagId: Long?, blocksJson: String): String = "$title\u0000$tagId\u0000$blocksJson"
 
 /**
- * Stores [note] with [blocksJson] as its content. Its date moves forward only when the title or
- * content differ from [backup], the note as the editor opened it.
+ * Stores [note] with [blocksJson] as its content; returns the stored note, or null. Its date
+ * moves forward only when the title or content differ from [backup], the note as the editor
+ * opened it, and then an imported summary ([Note.description]) no longer describes it.
  */
-private suspend fun NotesRepository.updateStored(note: Note, backup: Note, blocksJson: String): Boolean {
-    val date = if (backup.hasContentChanged(blocksJson, note.title)) System.currentTimeMillis() else note.date
-    return updateNote(note.copy(value = blocksJson, date = date)).isSuccess
+private suspend fun NotesRepository.updateStored(note: Note, backup: Note, blocksJson: String): Note? {
+    val changed = backup.hasContentChanged(blocksJson, note.title)
+    val stored = if (changed) {
+        note.copy(value = blocksJson, date = System.currentTimeMillis(), description = "")
+    } else {
+        note.copy(value = blocksJson)
+    }
+    return stored.takeIf { updateNote(it).isSuccess }
+}
+
+/** A copy of the blocks holding their current values, to serialize away from the editor. */
+private fun List<Block>.frozen(): List<Block> = map { block ->
+    when (block) {
+        is Block.TextBlock -> block.copy(text = MutableStateFlow(block.text.value))
+        is Block.HBlock -> block.copy(text = MutableStateFlow(block.text.value))
+        is Block.QuoteBlock -> block.copy(text = MutableStateFlow(block.text.value))
+        is Block.LinkBlock -> block.copy(block = MutableStateFlow(block.block.value))
+        is Block.ListBlock -> block.copy(items = MutableStateFlow(block.items.value))
+        is Block.SeparatorBlock -> block
+    }
 }
 
 /** Inserts [note] as a new row with [blocksJson] as its content; returns its id, or null. */

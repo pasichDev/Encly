@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
@@ -37,8 +38,8 @@ internal class LockFormState {
 
     var lockoutSeconds by mutableLongStateOf(0L)
 
-    var phrase by mutableStateOf("")
-        private set
+    /** The recovery words typed so far. */
+    val phrase = RecoveryPhraseState()
 
     @get:StringRes
     var phraseError by mutableStateOf<Int?>(null)
@@ -74,8 +75,20 @@ internal class LockFormState {
         }
     }
 
-    fun editPhrase(value: String) {
-        phrase = value
+    /** Any edit of the words clears the last error. */
+    fun onPhraseEdited() {
+        phraseError = null
+    }
+
+    /** System back: from the recovery form to the PIN pad; the PIN pad itself stays. */
+    fun back() {
+        if (useRecovery) leaveRecovery()
+    }
+
+    /** Back to the PIN pad; the typed words are dropped. */
+    fun leaveRecovery() {
+        useRecovery = false
+        phrase.clear()
         phraseError = null
     }
 

@@ -47,8 +47,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.ChevronDown
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.presentation.effects.shimmerEffect
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -81,6 +79,19 @@ fun NoteSkeleton(modifier: Modifier = Modifier) {
         SkeletonLine(SKELETON_TITLE_FRACTION)
         SkeletonLine(1f)
         SkeletonLine(SKELETON_LINE_FRACTION)
+    }
+}
+
+/** Loading placeholder of a list row (a task, a tag): one shimmering line at the row height. */
+@Composable
+fun RowSkeleton(modifier: Modifier = Modifier, fraction: Float = SKELETON_TITLE_FRACTION) {
+    Box(
+        contentAlignment = Alignment.CenterStart,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = EnclyTheme.spacing.textButtonHeight),
+    ) {
+        SkeletonLine(fraction)
     }
 }
 
@@ -167,7 +178,7 @@ fun EnclyExpandableRow(question: String, answer: String, modifier: Modifier = Mo
                 modifier = Modifier.weight(1f),
             )
             Icon(
-                Lucide.ChevronDown,
+                EnclyIcons.ChevronDown,
                 contentDescription = stringResource(if (expanded) R.string.collapse else R.string.expand),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier

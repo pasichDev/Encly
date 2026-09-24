@@ -35,8 +35,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /** Switch colours of the design system: `primary` track when on, `surfaceContainerHigh` when off. */
@@ -138,7 +136,7 @@ fun EnclyNavigationRow(
         modifier = modifier.clickable(role = Role.Button, onClick = onClick),
     ) {
         Icon(
-            imageVector = Lucide.ChevronRight,
+            imageVector = EnclyIcons.Chevron,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
@@ -165,7 +163,14 @@ fun EnclyListRow(
         supporting = supporting,
         icon = icon,
         enabled = true,
-        modifier = if (onClick != null) modifier.clickable(role = Role.Button, onClick = onClick) else modifier,
+        // The click goes first so its ripple fills the whole row, including any inset the caller adds.
+        modifier = if (onClick !=
+            null
+        ) {
+            Modifier.clickable(role = Role.Button, onClick = onClick).then(modifier)
+        } else {
+            modifier
+        },
         trailing = trailing,
     )
 }

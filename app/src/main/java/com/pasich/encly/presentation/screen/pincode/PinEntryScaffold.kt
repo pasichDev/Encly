@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,9 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
-import com.composables.icons.lucide.Lock
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
+import com.pasich.encly.presentation.designsystem.EnclyLogoMark
 import com.pasich.encly.presentation.designsystem.KeypadSize
 import com.pasich.encly.presentation.designsystem.PinDots
 import com.pasich.encly.presentation.designsystem.PinKeypad
@@ -54,10 +54,11 @@ fun AuthLoading(message: String, modifier: Modifier = Modifier) {
 
 /**
  * The layout of every PIN and recovery screen (design spec §4.2): a centred column 96 dp from the
- * top with the lock tile, the headline and a sub-heading ([subtitleIsError] turns it `error`),
+ * top with the logo (or [icon]'s tile), the headline and a sub-heading ([subtitleIsError] turns it `error`),
  * then the caller's [body] (dots and keypad, or the phrase field). It scrolls on short screens.
  * [footer] (the recovery screen's buttons) stays pinned under the scrolling part, above the
- * keyboard, so a primary action is never hidden behind the IME.
+ * keyboard, so a primary action is never hidden behind the IME. [compact] trades the 96 dp top
+ * for 24 dp, under a top bar or for a form that needs the room.
  */
 @Composable
 fun PinEntryScaffold(
@@ -65,7 +66,8 @@ fun PinEntryScaffold(
     subtitle: String,
     modifier: Modifier = Modifier,
     subtitleIsError: Boolean = false,
-    icon: ImageVector = Lucide.Lock,
+    icon: ImageVector? = null,
+    compact: Boolean = false,
     footer: (@Composable ColumnScope.() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
@@ -74,6 +76,7 @@ fun PinEntryScaffold(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .then(if (compact) Modifier.statusBarsPadding() else Modifier)
                 .imePadding()
                 .navigationBarsPadding(),
         ) {
@@ -83,7 +86,7 @@ fun PinEntryScaffold(
                     .fillMaxWidth()
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(top = spacing.lockTop, bottom = spacing.l),
+                    .padding(top = if (compact) spacing.l else spacing.lockTop, bottom = spacing.l),
             ) {
                 PinEntryHeader(title = title, subtitle = subtitle, subtitleIsError = subtitleIsError, icon = icon)
                 body()
@@ -102,7 +105,7 @@ fun PinEntryScaffold(
 }
 
 @Composable
-private fun PinEntryHeader(title: String, subtitle: String, subtitleIsError: Boolean, icon: ImageVector) {
+private fun PinEntryHeader(title: String, subtitle: String, subtitleIsError: Boolean, icon: ImageVector?) {
     val spacing = EnclyTheme.spacing
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -111,7 +114,7 @@ private fun PinEntryHeader(title: String, subtitle: String, subtitleIsError: Boo
             .fillMaxWidth()
             .padding(horizontal = spacing.gutter),
     ) {
-        EnclyIconTile(icon = icon)
+        if (icon == null) EnclyLogoMark() else EnclyIconTile(icon = icon)
         Text(
             text = title,
             style = MaterialTheme.typography.headlineMedium,

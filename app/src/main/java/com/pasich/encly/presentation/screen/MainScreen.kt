@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.screen
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,13 +8,13 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -37,21 +36,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
-import com.composables.icons.lucide.Lock
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Menu
-import com.composables.icons.lucide.Plus
-import com.composables.icons.lucide.Settings2
-import com.composables.icons.lucide.SlidersHorizontal
-import com.composables.icons.lucide.X
 import com.pasich.encly.R
 import com.pasich.encly.presentation.components.HomeTaskWidget
 import com.pasich.encly.presentation.designsystem.EnclyFab
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySearchField
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.dialogs.NotesSortBottomSheet
 import com.pasich.encly.presentation.drawer.MainDrawer
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.TASKS_ADD_ARG
 import com.pasich.encly.presentation.viewmodel.LockNowViewModel
 import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
@@ -60,15 +54,19 @@ import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
+/** The scrim over the notes while the drawer is open. */
+private const val DRAWER_SCRIM_ALPHA = 0.32f
+
 @Composable
 fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    DismissibleNavigationDrawer(
+    ModalNavigationDrawer(
         modifier = modifier,
         drawerState = drawerState,
         gesturesEnabled = true,
+        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = DRAWER_SCRIM_ALPHA),
         drawerContent = {
             MainDrawer(
                 drawerState = drawerState,
@@ -84,20 +82,7 @@ fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifi
             )
         },
     ) {
-        MainScreen(
-            drawerState = drawerState,
-            navController = navController,
-            modifier = Modifier.clickable(
-                enabled = drawerState.isOpen,
-                onClick = {
-                    if (drawerState.isOpen) {
-                        scope.launch {
-                            drawerState.close()
-                        }
-                    }
-                },
-            ),
-        )
+        MainScreen(drawerState = drawerState, navController = navController)
     }
 }
 
@@ -167,8 +152,10 @@ fun MainScreen(
                             searchViewModel.onQueryChange(it)
                         },
                         onViewOptions = { viewOptionsVisible = true },
-                        showTasks = showTasks && query.isBlank(),
-                        onTasksClick = { navigation.open(NavRoutes.TasksRoute.name) },
+                        tasks = HomeTasks(
+                            onOpen = { navigation.open(NavRoutes.TasksRoute.name) },
+                            onNewTask = { navigation.open("${NavRoutes.TasksRoute.name}?$TASKS_ADD_ARG=true") },
+                        ).takeIf { showTasks && query.isBlank() },
                     )
                 },
             )
@@ -208,7 +195,12 @@ private fun ScrollToTopOnRequest(
 /** "New note", collapsed to its icon once the list scrolls. */
 @Composable
 private fun NewNoteFab(expanded: Boolean, onClick: () -> Unit) {
-    EnclyFab(text = stringResource(R.string.note_add), icon = Lucide.Plus, expanded = expanded, onClick = onClick)
+    EnclyFab(
+        text = stringResource(R.string.note_add),
+        icon = EnclyIcons.PlusBold,
+        expanded = expanded,
+        onClick = onClick,
+    )
 }
 
 /** The view options sheet (sort order, list or grid); [onClose] runs once it has slid away. */
@@ -249,29 +241,26 @@ private fun NotesTopBar(onMenu: () -> Unit, onLockNow: () -> Unit, onSettings: (
         title = stringResource(R.string.notes_title),
         navigation = {
             IconButton(onClick = onMenu) {
-                Icon(Lucide.Menu, contentDescription = stringResource(R.string.open_menu))
+                Icon(EnclyIcons.Menu, contentDescription = stringResource(R.string.open_menu))
             }
         },
         actions = {
             IconButton(onClick = onLockNow) {
-                Icon(Lucide.Lock, contentDescription = stringResource(R.string.lock_now))
+                Icon(EnclyIcons.Lock, contentDescription = stringResource(R.string.lock_now))
             }
             IconButton(onClick = onSettings) {
-                Icon(Lucide.SlidersHorizontal, contentDescription = stringResource(R.string.main_drawer_settings))
+                Icon(EnclyIcons.Sliders, contentDescription = stringResource(R.string.main_drawer_settings))
             }
         },
     )
 }
 
+/** Where the home tasks card leads: all tasks, or straight to a new one. Null hides the card. */
+private class HomeTasks(val onOpen: () -> Unit, val onNewTask: () -> Unit)
+
 /** Above the notes: the search field with its view options, the tag chips and the tasks card. */
 @Composable
-private fun NotesHeader(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onViewOptions: () -> Unit,
-    showTasks: Boolean,
-    onTasksClick: () -> Unit,
-) {
+private fun NotesHeader(query: String, onQueryChange: (String) -> Unit, onViewOptions: () -> Unit, tasks: HomeTasks?) {
     val gutter = EnclyTheme.spacing.listGutter
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.rowGap)) {
         EnclySearchField(
@@ -282,18 +271,22 @@ private fun NotesHeader(
             trailing = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { onQueryChange("") }) {
-                        Icon(Lucide.X, contentDescription = stringResource(R.string.search_clear))
+                        Icon(EnclyIcons.Close, contentDescription = stringResource(R.string.search_clear))
                     }
                 } else {
                     IconButton(onClick = onViewOptions) {
-                        Icon(Lucide.Settings2, contentDescription = stringResource(R.string.view_options))
+                        Icon(EnclyIcons.Sliders, contentDescription = stringResource(R.string.view_options))
                     }
                 }
             },
         )
         if (query.isBlank()) TagsList()
-        if (showTasks) {
-            HomeTaskWidget(onTasksClick = onTasksClick, modifier = Modifier.padding(horizontal = gutter))
+        if (tasks != null) {
+            HomeTaskWidget(
+                onTasksClick = tasks.onOpen,
+                onNewTask = tasks.onNewTask,
+                modifier = Modifier.padding(horizontal = gutter),
+            )
         }
     }
 }

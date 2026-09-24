@@ -31,17 +31,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.composables.icons.lucide.CopyPlus
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessageSquareText
-import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.Trash2
 import com.pasich.encly.R
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
@@ -72,7 +68,8 @@ fun NoteCardBottomSheet(
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    var isEditingDescription by remember { mutableStateOf(false) }
+    // Per note and per opening: a dismissed sheet never reopens mid-edit.
+    var isEditingDescription by remember(item.note.id, isVisible) { mutableStateOf(false) }
 
     if (isVisible) {
         EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, modifier = modifier) {
@@ -89,17 +86,17 @@ fun NoteCardBottomSheet(
                 Column {
                     EnclySheetRow(
                         title = stringResource(id = R.string.edit),
-                        icon = Lucide.Pencil,
+                        icon = EnclyIcons.Edit,
                         onClick = { onAction(NoteAction.Edit) },
                     )
                     EnclySheetRow(
                         title = stringResource(id = R.string.duplicate),
-                        icon = Lucide.CopyPlus,
+                        icon = EnclyIcons.Duplicate,
                         onClick = { onAction(NoteAction.Duplicate) },
                     )
                     EnclySheetRow(
                         title = stringResource(id = R.string.delete),
-                        icon = Lucide.Trash2,
+                        icon = EnclyIcons.Trash,
                         destructive = true,
                         confirmFirst = true,
                         onClick = { onAction(NoteAction.Delete) },
@@ -173,7 +170,7 @@ private fun DescriptionEditor(
         EnclySheetRow(
             title = initial.ifBlank { stringResource(R.string.note_description_placeholder) },
             muted = initial.isBlank(),
-            icon = Lucide.MessageSquareText,
+            icon = EnclyIcons.Comment,
             onClick = { onEditingChange(true) },
         )
         return

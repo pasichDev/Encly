@@ -1,7 +1,7 @@
 package com.pasich.encly.presentation.screen.trash
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -19,11 +19,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.composables.icons.lucide.ArchiveRestore
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Trash2
 import com.pasich.encly.R
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyOverflowMenu
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.OverflowAction
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.TrashListEvent
@@ -42,7 +42,10 @@ fun TrashScreen(
     trashViewModel: TrashViewModel = hiltViewModel(),
 ) {
     val state by trashViewModel.state.collectAsStateWithLifecycle()
-    var isDialogVisible by remember { mutableStateOf<DialogTrashAction>(DialogTrashAction.DISABLE) }
+    var isDialogVisible by remember { mutableStateOf(DialogTrashAction.DISABLE) }
+
+    // Back (gesture or bar) first leaves the selection, then the screen.
+    BackHandler(enabled = state.canCheck) { trashViewModel.onEvent(TrashListEvent.ClearSelection) }
 
     TrashConfirmDialog(
         action = isDialogVisible,
@@ -63,59 +66,72 @@ fun TrashScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TrashTopBar(
-                canCheck = state.canCheck,
-                checkedCount = state.checkedCount,
+                checkedCount = state.checkedCount.takeIf { state.canCheck },
                 hasNotes = state.notes.isNotEmpty(),
                 actions = TrashBarActions(
                     onBack = { navController.popBackStack() },
+                    onClearSelection = { trashViewModel.onEvent(TrashListEvent.ClearSelection) },
                     onRestore = { trashViewModel.onEvent(TrashListEvent.RestoreNotes()) },
-                    onDelete = {
-                        isDialogVisible = if (state.canCheck) {
-                            DialogTrashAction.DELETE_PERMANENTLY
-                        } else {
-                            DialogTrashAction.CLEAN_ALL
-                        }
-                    },
+                    onDeleteSelected = { isDialogVisible = DialogTrashAction.DELETE_PERMANENTLY },
+                    onEmptyTrash = { isDialogVisible = DialogTrashAction.CLEAN_ALL },
                 ),
             )
         },
     ) { padding ->
-        Column(
+        // TrashNotesList resolves the same back-stack-scoped TrashViewModel itself.
+        TrashNotesList(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-        ) {
-            // TrashNotesList resolves the same back-stack-scoped TrashViewModel itself.
-            TrashNotesList(onItemClick = { _, note ->
+            onItemClick = { _, note ->
                 navController.navigate("${NavRoutes.EditNoteRoute.name}/${note.id}?isReadTrashOnly=true")
-            })
-        }
+            },
+        )
     }
 }
 
-private class TrashBarActions(val onBack: () -> Unit, val onRestore: () -> Unit, val onDelete: () -> Unit)
+private class TrashBarActions(
+    val onBack: () -> Unit,
+    val onClearSelection: () -> Unit,
+    val onRestore: () -> Unit,
+    val onDeleteSelected: () -> Unit,
+    val onEmptyTrash: () -> Unit,
+)
 
-/** "Trash", or the number of selected notes; restore (with a selection) and delete or empty. */
+/**
+ * "Trash" with an overflow "Empty trash"; while notes are selected ([checkedCount] set), "N
+ * selected" with close, restore and delete forever.
+ */
 @Composable
-private fun TrashTopBar(canCheck: Boolean, checkedCount: Int, hasNotes: Boolean, actions: TrashBarActions) {
+private fun TrashTopBar(checkedCount: Int?, hasNotes: Boolean, actions: TrashBarActions) {
+    val selecting = checkedCount != null
     EnclyTopBar(
-        title = if (canCheck) {
-            stringResource(id = R.string.checked_count, checkedCount)
+        title = if (checkedCount != null) {
+            pluralStringResource(R.plurals.trash_selected, checkedCount, checkedCount)
         } else {
             stringResource(R.string.main_drawer_trash)
         },
-        onBack = actions.onBack,
+        onBack = actions.onBack.takeUnless { selecting },
+        onClose = actions.onClearSelection.takeIf { selecting },
         actions = {
-            AnimatedVisibility(canCheck) {
+            AnimatedVisibility(selecting) {
                 IconButton(onClick = actions.onRestore) {
-                    Icon(Lucide.ArchiveRestore, contentDescription = stringResource(R.string.restore))
+                    Icon(EnclyIcons.Restore, contentDescription = stringResource(R.string.restore))
                 }
             }
-            IconButton(enabled = hasNotes, onClick = actions.onDelete) {
-                Icon(
-                    Lucide.Trash2,
-                    contentDescription = stringResource(
-                        if (canCheck) R.string.delete_from_trash else R.string.clean_trash_title,
+            AnimatedVisibility(selecting) {
+                IconButton(onClick = actions.onDeleteSelected) {
+                    Icon(EnclyIcons.Trash, contentDescription = stringResource(R.string.delete_forever))
+                }
+            }
+            if (!selecting && hasNotes) {
+                EnclyOverflowMenu(
+                    items = listOf(
+                        OverflowAction(
+                            text = stringResource(R.string.empty_trash_action),
+                            onClick = actions.onEmptyTrash,
+                            destructive = true,
+                        ),
                     ),
                 )
             }

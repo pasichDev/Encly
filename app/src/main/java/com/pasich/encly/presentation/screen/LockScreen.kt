@@ -1,14 +1,10 @@
 package com.pasich.encly.presentation.screen
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,13 +19,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.composables.icons.lucide.KeyRound
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.EnclyButton
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
-import com.pasich.encly.presentation.designsystem.PhraseInput
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
@@ -54,7 +49,8 @@ fun LockScreen(
     // Above the loading view below: the forms' input and errors survive the credential check.
     val form = remember { LockFormState() }
 
-    BackHandler(enabled = true) { }
+    // Back never leaves the lock screen; from the recovery form it returns to the PIN pad.
+    BackHandler(enabled = true) { if (!busy) form.back() }
 
     val biometricEnabled = remember {
         viewModel.biometricEnabled() && viewModel.biometricAvailable()
@@ -183,7 +179,7 @@ private fun PinAuthenticationEffect(form: LockFormState, pinAuth: PinAuth, onUnl
 private fun SeedLockContent(
     form: LockFormState,
     busy: Boolean,
-    authenticateSeed: (phrase: String, onResult: (SeedUnlockResult) -> Unit) -> Unit,
+    authenticateSeed: (phrase: CharArray, onResult: (SeedUnlockResult) -> Unit) -> Unit,
     onUnlock: () -> Unit,
 ) {
     // The loading view covers this form but not the keyboard: while the phrase is checked, the
@@ -196,50 +192,44 @@ private fun SeedLockContent(
             keyboard?.hide()
         }
     }
+    val submit = {
+        if (form.phrase.canSubmit && !busy) {
+            authenticateSeed(form.phrase.toCharArray()) { result ->
+                if (result == SeedUnlockResult.SUCCESS) onUnlock() else form.onSeedResult(result)
+            }
+        }
+    }
     PinEntryScaffold(
         title = stringResource(R.string.lock_recovery_title),
         subtitle = stringResource(R.string.lock_recovery_subtitle),
-        icon = Lucide.KeyRound,
+        icon = EnclyIcons.Key,
+        // The 12 cells need the room: no 96 dp top, so they stay above the keyboard.
+        compact = true,
         // Pinned above the keyboard: typing the phrase must never hide the button.
         footer = {
             EnclyButton(
                 text = stringResource(R.string.lock_recover_access),
-                onClick = {
-                    authenticateSeed(form.phrase) { result ->
-                        if (result == SeedUnlockResult.SUCCESS) onUnlock() else form.onSeedResult(result)
-                    }
-                },
-                enabled = form.phrase.isNotBlank() && !busy,
+                onClick = submit,
+                enabled = form.phrase.canSubmit && !busy,
             )
             EnclyTextButton(
                 text = stringResource(R.string.lock_back_to_pin),
-                onClick = { form.useRecovery = false },
+                onClick = form::leaveRecovery,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !busy,
             )
         },
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+        RecoveryPhraseInput(
+            state = form.phrase,
+            enabled = !busy,
+            error = form.phraseError?.let { stringResource(it) },
+            onEdit = form::onPhraseEdited,
+            onDone = submit,
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(horizontal = EnclyTheme.spacing.gutter)
-                .padding(top = EnclyTheme.spacing.stepGap),
-        ) {
-            Text(
-                text = stringResource(R.string.recovery_phrase_label),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            PhraseInput(
-                value = form.phrase,
-                onValueChange = form::editPhrase,
-                placeholder = stringResource(R.string.onboarding_restore_phrase_placeholder),
-                enabled = !busy,
-                error = form.phraseError != null,
-            )
-            form.phraseError?.let { ErrorLine(stringResource(it)) }
-        }
+                .padding(top = EnclyTheme.spacing.l),
+        )
     }
 }
 
@@ -255,9 +245,4 @@ private fun RecoveryLink(onUseRecovery: () -> Unit) {
             end = EnclyTheme.spacing.gutter,
         ),
     )
-}
-
-@Composable
-private fun ErrorLine(text: String) {
-    Text(text = text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
 }

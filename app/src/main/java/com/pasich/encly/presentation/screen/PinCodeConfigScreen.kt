@@ -12,10 +12,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,17 +31,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
@@ -45,9 +51,10 @@ import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 
-private const val PIN_SUCCESS_DELAY_MS = 600L
+private const val PIN_SUCCESS_DELAY_MS = 1_000L
 private const val SUCCESS_SCALE_MS = 500
 
 enum class PinAnimationState {
@@ -66,6 +73,12 @@ private class PinChangeState(val isReset: Boolean) {
     var errorText by mutableStateOf<Int?>(null)
     var animationState by mutableStateOf(PinAnimationState.Entering)
     var lockoutSeconds by mutableLongStateOf(0L)
+
+    /** Changes on every wrong entry, so the dots shake again. */
+    var shakeKey by mutableIntStateOf(0)
+
+    /** Digits are refused while the current PIN is locked out. */
+    val keysEnabled: Boolean get() = !(step == 0 && lockoutSeconds > 0L)
 
     fun onPinComplete(viewModel: SecuritySettingsViewModel) {
         val pin = currentInput
@@ -100,14 +113,21 @@ private class PinChangeState(val isReset: Boolean) {
             ok -> step = 1
 
             // A locked-out PIN is refused even when right: say so, not "wrong PIN".
-            lockout > 0L -> lockoutSeconds = lockout
+            lockout > 0L -> {
+                lockoutSeconds = lockout
+                shakeKey++
+            }
 
-            else -> errorText = R.string.pin_current_wrong
+            else -> {
+                errorText = R.string.pin_current_wrong
+                shakeKey++
+            }
         }
     }
 
     private fun restartNewPin(@StringRes error: Int) {
         errorText = error
+        shakeKey++
         firstPin = ""
         step = 1
     }
@@ -143,30 +163,43 @@ fun PinCodeConfigScreen(
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (pinState.animationState == PinAnimationState.Entering) {
-                AnimatedContent(
-                    targetState = pinState.step,
-                    transitionSpec = {
-                        (
-                            slideInHorizontally { width ->
-                                width
-                            } + fadeIn()
-                            ).togetherWith(slideOutHorizontally { width -> -width } + fadeOut())
-                    },
-                    label = "StepAnimation",
-                ) { currentStep ->
-                    MainPinContent(
-                        text = pinStepText(currentStep, pinState),
-                        currentInput = pinState.currentInput,
-                        onInput = {
-                            if (pinState.currentInput.length < PIN_LENGTH) pinState.currentInput += it
+        Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+            // From Settings there is a way back; a forgotten-PIN reset must end with a new PIN.
+            if (!pinState.isReset) {
+                EnclyTopBar(
+                    title = stringResource(R.string.pin_change_bar_title),
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                if (pinState.animationState == PinAnimationState.Entering) {
+                    AnimatedContent(
+                        targetState = pinState.step,
+                        transitionSpec = {
+                            (slideInHorizontally { width -> width } + fadeIn())
+                                .togetherWith(slideOutHorizontally { width -> -width } + fadeOut())
                         },
-                        onDelete = { pinState.currentInput = pinState.currentInput.dropLast(1) },
-                    )
+                        label = "StepAnimation",
+                    ) { currentStep ->
+                        MainPinContent(
+                            text = pinStepText(currentStep, pinState),
+                            currentInput = pinState.currentInput,
+                            entry = PinEntryState(
+                                enabled = pinState.keysEnabled,
+                                shakeKey = pinState.shakeKey,
+                                compact = !pinState.isReset,
+                            ),
+                            onInput = {
+                                if (pinState.currentInput.length < PIN_LENGTH && pinState.keysEnabled) {
+                                    pinState.currentInput += it
+                                }
+                            },
+                            onDelete = { pinState.currentInput = pinState.currentInput.dropLast(1) },
+                        )
+                    }
+                } else {
+                    SuccessAnimation()
                 }
-            } else {
-                SuccessAnimation()
             }
         }
     }
@@ -210,18 +243,30 @@ private fun pinStepSubtitle(step: Int): Int = when (step) {
 /** What a PIN step shows: its title and subtitle, and an error or lockout message. */
 data class PinStepText(@param:StringRes val title: Int, @param:StringRes val subtitle: Int, val message: String?)
 
+/** How the keypad of a PIN step behaves: off during a lockout, the shake, a compact top. */
+private class PinEntryState(val enabled: Boolean, val shakeKey: Int, val compact: Boolean)
+
 @Composable
-private fun MainPinContent(text: PinStepText, currentInput: String, onInput: (String) -> Unit, onDelete: () -> Unit) {
+private fun MainPinContent(
+    text: PinStepText,
+    currentInput: String,
+    entry: PinEntryState,
+    onInput: (String) -> Unit,
+    onDelete: () -> Unit,
+) {
     val message = text.message
     PinEntryScaffold(
         title = stringResource(text.title),
         // An error or the lockout countdown takes the sub-heading slot, as on the lock screen.
         subtitle = message ?: stringResource(text.subtitle),
         subtitleIsError = message != null,
+        compact = entry.compact,
     ) {
         PinEntry(
             entered = currentInput.length,
             error = message != null && currentInput.isEmpty(),
+            shakeKey = entry.shakeKey,
+            enabled = entry.enabled,
             actions = PinEntryActions(
                 onDigit = { onInput(it.toString()) },
                 onBackspace = onDelete,
@@ -242,12 +287,19 @@ private fun SuccessAnimation() {
         )
     }
 
-    Box(
-        contentAlignment = Alignment.Center,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m, Alignment.CenterVertically),
         modifier = Modifier
             .fillMaxSize()
-            .semantics { contentDescription = description },
+            .semantics(mergeDescendants = true) { contentDescription = description },
     ) {
-        EnclyIconTile(icon = Lucide.Check, modifier = Modifier.scale(scale.value))
+        EnclyIconTile(icon = EnclyIcons.Check, modifier = Modifier.scale(scale.value))
+        Text(
+            text = description,
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.alpha(scale.value.coerceIn(0f, 1f)),
+        )
     }
 }

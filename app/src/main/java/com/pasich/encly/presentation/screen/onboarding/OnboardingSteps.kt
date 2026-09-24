@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +19,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
@@ -29,42 +26,26 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
-import com.composables.icons.lucide.CloudOff
-import com.composables.icons.lucide.Download
-import com.composables.icons.lucide.Eye
-import com.composables.icons.lucide.EyeOff
-import com.composables.icons.lucide.FileText
-import com.composables.icons.lucide.Fingerprint
-import com.composables.icons.lucide.KeyRound
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Shield
-import com.composables.icons.lucide.Smartphone
-import com.composables.icons.lucide.UserX
 import com.pasich.encly.R
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DoneRow
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyCard
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyPillButton
 import com.pasich.encly.presentation.designsystem.EnclySwitchRow
-import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.FactRow
-import com.pasich.encly.presentation.designsystem.FieldState
 import com.pasich.encly.presentation.designsystem.FilePickerButton
 import com.pasich.encly.presentation.designsystem.FormSection
 import com.pasich.encly.presentation.designsystem.KeypadSize
-import com.pasich.encly.presentation.designsystem.PhraseInput
 import com.pasich.encly.presentation.designsystem.PinDots
 import com.pasich.encly.presentation.designsystem.PinKeypad
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.StepHeading
 import com.pasich.encly.presentation.designsystem.UseRow
 import com.pasich.encly.presentation.designsystem.WordGrid
-import com.pasich.encly.presentation.viewmodel.AnswerState
 import com.pasich.encly.presentation.viewmodel.OnboardingPath
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import com.pasich.encly.presentation.viewmodel.SecurityType
@@ -93,17 +74,17 @@ internal fun WelcomeStep(modifier: Modifier = Modifier) {
         }
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.factGap)) {
             FactRow(
-                Lucide.UserX,
+                EnclyIcons.UserOff,
                 stringResource(R.string.onboarding_fact_account_title),
                 stringResource(R.string.onboarding_fact_account_desc),
             )
             FactRow(
-                Lucide.CloudOff,
+                EnclyIcons.CloudOff,
                 stringResource(R.string.onboarding_fact_offline_title),
                 stringResource(R.string.onboarding_fact_offline_desc),
             )
             FactRow(
-                Lucide.Shield,
+                EnclyIcons.Shield,
                 stringResource(R.string.onboarding_fact_encrypted_title),
                 stringResource(R.string.onboarding_fact_encrypted_desc),
             )
@@ -215,7 +196,7 @@ private fun BiometricCallout(checked: Boolean, onCheckedChange: (Boolean) -> Uni
         EnclySwitchRow(
             title = stringResource(R.string.pin_unlock_with_fingerprint),
             supporting = stringResource(R.string.onboarding_biometric_desc),
-            icon = Lucide.Fingerprint,
+            icon = EnclyIcons.Fingerprint,
             checked = checked,
             onCheckedChange = onCheckedChange,
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
@@ -238,17 +219,17 @@ internal fun RecoveryInfoStep(modifier: Modifier = Modifier) {
         )
         Column {
             UseRow(
-                Lucide.KeyRound,
+                EnclyIcons.Key,
                 stringResource(R.string.onboarding_recovery_pin_title),
                 stringResource(R.string.onboarding_recovery_pin_desc),
             )
             UseRow(
-                Lucide.FileText,
+                EnclyIcons.File,
                 stringResource(R.string.onboarding_recovery_backups_title),
                 stringResource(R.string.onboarding_recovery_backups_desc),
             )
             UseRow(
-                Lucide.Smartphone,
+                EnclyIcons.Phone,
                 stringResource(R.string.onboarding_recovery_phone_title),
                 stringResource(R.string.onboarding_recovery_phone_desc),
             )
@@ -280,7 +261,7 @@ internal fun PhraseStep(state: OnboardingUiState, onToggleWords: () -> Unit, mod
                 text = stringResource(
                     if (state.wordsHidden) R.string.onboarding_phrase_show else R.string.onboarding_phrase_hide,
                 ),
-                leadingIcon = if (state.wordsHidden) Lucide.Eye else Lucide.EyeOff,
+                leadingIcon = if (state.wordsHidden) EnclyIcons.Eye else EnclyIcons.EyeOff,
                 onClick = onToggleWords,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
@@ -291,7 +272,6 @@ internal fun PhraseStep(state: OnboardingUiState, onToggleWords: () -> Unit, mod
 /** Step 3b: type three of the words back. */
 @Composable
 internal fun VerifyStep(state: OnboardingUiState, onAnswer: (Int, String) -> Unit, modifier: Modifier = Modifier) {
-    val focusManager = LocalFocusManager.current
     Column(
         modifier = modifier
             .padding(StepPadding)
@@ -302,36 +282,12 @@ internal fun VerifyStep(state: OnboardingUiState, onAnswer: (Int, String) -> Uni
             title = stringResource(R.string.onboarding_verify_title),
             body = stringResource(R.string.onboarding_verify_body),
         )
-        Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap)) {
-            state.verificationWords.forEachIndexed { position, (index, _) ->
-                val number = index + 1
-                val last = position == state.verificationWords.lastIndex
-                val fieldState = when (state.answerState(index)) {
-                    AnswerState.CORRECT -> FieldState.Valid
-                    AnswerState.WRONG -> FieldState.Error(stringResource(R.string.onboarding_verify_wrong, number))
-                    AnswerState.EMPTY, AnswerState.TYPING -> FieldState.Default
-                }
-                EnclyTextField(
-                    value = state.userAnswers[index].orEmpty(),
-                    onValueChange = { onAnswer(index, it) },
-                    label = stringResource(R.string.onboarding_verify_label, number),
-                    placeholder = stringResource(R.string.onboarding_verify_placeholder),
-                    state = fieldState,
-                    enabled = !state.isLoading,
-                    textStyle = EnclyTheme.typography.dataLarge,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        autoCorrectEnabled = false,
-                        capitalization = KeyboardCapitalization.None,
-                        imeAction = if (last) ImeAction.Done else ImeAction.Next,
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = { focusManager.moveFocus(FocusDirection.Down) },
-                        onDone = { focusManager.clearFocus() },
-                    ),
-                )
-            }
-        }
+        PhraseCheckFields(
+            checks = state.verificationWords,
+            answers = state.userAnswers,
+            onAnswer = onAnswer,
+            enabled = !state.isLoading,
+        )
     }
 }
 
@@ -383,7 +339,7 @@ internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) 
         if (state.securityType != SecurityType.AUTO_MANAGED) {
             Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.rowGap)) {
                 Icon(
-                    Lucide.Download,
+                    EnclyIcons.Download,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(EnclyTheme.spacing.iconMedium),
@@ -399,13 +355,13 @@ internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) 
 }
 
 /** What the Restore step reports back. */
-internal class RestoreActions(val onPickFile: () -> Unit, val onPhraseChange: (String) -> Unit)
+internal class RestoreActions(val onPickFile: () -> Unit, val onPhraseEdited: () -> Unit, val onSubmit: () -> Unit)
 
-/** Alt: restore from a backup file and the 12 words it was made with. */
+/** Alt: restore from a backup file and the 12 words it was made with, one numbered cell each. */
 @Composable
 internal fun RestoreStep(
     state: OnboardingUiState,
-    phrase: String,
+    phrase: RecoveryPhraseState,
     actions: RestoreActions,
     modifier: Modifier = Modifier,
 ) {
@@ -431,27 +387,23 @@ internal fun RestoreStep(
         }
         FormSection(title = stringResource(R.string.onboarding_restore_phrase_section)) {
             Text(
-                text = stringResource(R.string.onboarding_restore_phrase_label),
+                text = stringResource(R.string.recovery_phrase_entry_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = EnclyTheme.spacing.xxs),
             )
-            PhraseInput(
-                value = phrase,
-                onValueChange = actions.onPhraseChange,
-                placeholder = stringResource(R.string.onboarding_restore_phrase_placeholder),
+            RecoveryPhraseInput(
+                state = phrase,
                 enabled = !state.isLoading,
-                error = state.restorePhraseError != null,
+                error = state.restorePhraseError?.asString(),
+                onEdit = actions.onPhraseEdited,
+                onDone = actions.onSubmit,
             )
-            val phraseError = state.restorePhraseError
-            if (phraseError != null) {
-                ErrorText(phraseError.asString())
-            } else {
-                Text(
-                    text = stringResource(R.string.onboarding_restore_phrase_helper),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = stringResource(R.string.onboarding_restore_phrase_helper),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

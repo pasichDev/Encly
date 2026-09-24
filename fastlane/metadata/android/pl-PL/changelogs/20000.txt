@@ -1,1 +1,7 @@
-2.0.0: pierwsze publiczne wydanie. Szyfrowany sejf offline z obowiązkowym 6-cyfrowym PIN-em, opcjonalnym odblokowaniem biometrycznym powiązanym z kluczem i opcjonalną frazą odzyskiwania z 12 słów. Klucz jest usuwany, gdy aplikacja przechodzi w tło. Eksport i przywracanie szyfrowanych kopii za pomocą frazy odzyskiwania. Czcionki wbudowane, Usługi Google Play niepotrzebne. Interfejs w 9 językach z wyborem języka w aplikacji.
+Pierwsze wydanie w Google Play.
+• Szyfrowane notatki i zadania, zapisane tylko w telefonie.
+• Blokada 6-cyfrowym PIN-em, opcjonalnie odcisk palca lub twarz.
+• Opcjonalna fraza odzyskiwania z 12 słów.
+• Szyfrowana kopia zapasowa w pliku, który zapisujesz, gdzie chcesz.
+• Pięć motywów, trzy czcionki, dziewięć języków.
+• Bez konta, reklam i uprawnienia do internetu.

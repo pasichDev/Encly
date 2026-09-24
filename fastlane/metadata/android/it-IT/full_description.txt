@@ -1,33 +1,33 @@
-<p><b>Encly</b> conserva note e attività cifrate sul tuo telefono e da nessun'altra parte. Nessun account, nessuna sincronizzazione cloud, nessuna analisi e nessun accesso alla rete: l'app non richiede nemmeno il permesso <i>INTERNET</i>.</p>
+Encly è un blocco note sicuro: le tue note private e le tue attività restano criptate sul telefono e da nessun'altra parte. Note criptate offline con PIN, senza account, senza cloud, senza pubblicità e senza alcun permesso internet.
 
-<p><b>Sicurezza</b></p>
-<ul>
-<li>Tutti i dati sono salvati in un database SQLCipher (AES-256) con una chiave casuale a 256 bit.</li>
-<li>Un PIN obbligatorio di 6 cifre protegge questa chiave (PBKDF2-HMAC-SHA256, 600.000 iterazioni, AES-256-GCM). Il PIN non viene mai salvato.</li>
-<li>Sblocco facoltativo con impronta o volto tramite una chiave Android Keystore legata alla biometria (solo biometria di classe 3).</li>
-<li>Frase di recupero facoltativa di 12 parole (BIP39) come modo separato per recuperare la chiave.</li>
-<li>Appena l'app passa in background, il database viene chiuso e la chiave cancellata dalla memoria.</li>
-<li>Screenshot, registrazione dello schermo e anteprime delle app recenti sono bloccati. Il backup cloud di Android e il trasferimento tra dispositivi sono disattivati.</li>
-<li>Nessuna condivisione, appunti o notifica espone il contenuto delle note.</li>
-</ul>
+Quasi tutte le app di note vogliono un account e un server. Encly non ha né l'uno né l'altro. Le tue note criptate stanno in un solo posto: il tuo telefono.
 
-<p><b>Backup e ripristino cifrati</b></p>
-<ul>
-<li>Esporta tutte le note, le attività e i tag in un unico file cifrato (AES-256-GCM) quando vuoi.</li>
-<li>Scegli tu dove salvare il file con il selettore di file di Android: una cartella, una chiavetta USB, un cloud. Encly non lo carica da nessuna parte.</li>
-<li>Il file è cifrato con una chiave derivata dalla tua frase di recupero di 12 parole: nessuna password di backup in più da dimenticare. Senza le parole il file non è leggibile.</li>
-<li>Ripristina i dati su un nuovo telefono durante la configurazione o unisci un backup a una cassaforte esistente.</li>
-</ul>
+PRIVATA PER PROGETTO
+• Nessun account, nessuna registrazione, nessuna analisi, nessuna pubblicità, nessun acquisto in-app.
+• Davvero offline: Encly non chiede il permesso INTERNET, quindi non può inviare le tue note da nessuna parte.
+• Note criptate: database SQLCipher (AES-256) con una chiave casuale a 256 bit.
+• Note con password: un PIN a 6 cifre a ogni apertura e, se vuoi, impronta o volto (solo biometria forte).
+• Si blocca da sola: quando Encly va in background, il database viene chiuso e la chiave cancellata dalla memoria.
+• Screenshot, registrazione dello schermo e anteprima nelle app recenti sono bloccati. Il backup cloud di Android è disattivato.
 
-<p><b>Funzionalità</b></p>
-<ul>
-<li>Editor a blocchi: testo, titoli, citazioni, checklist ed elenchi numerati, link, separatori.</li>
-<li>Tag e attività con priorità.</li>
-<li>Cestino con ripristino.</li>
-<li>Temi chiaro, scuro e a colori dinamici e diversi caratteri per l'editor, tutti inclusi nell'app.</li>
-<li>Funziona senza Google Play Services.</li>
-</ul>
+FRASE DI RECUPERO E BACKUP CRIPTATI
+• Frase di recupero di 12 parole facoltativa: hai dimenticato il PIN? La frase apre la cassaforte e ne imposti uno nuovo.
+• Esporta tutte le note, le attività e le etichette in un unico file criptato (AES-256-GCM) e salvalo dove vuoi: una cartella, una chiavetta USB, il tuo cloud. Encly non lo carica mai da nessuna parte.
+• Ripristinalo su un nuovo telefono con le stesse 12 parole, oppure uniscilo a una cassaforte esistente.
+• Nessuno può recuperare le tue note al posto tuo, nemmeno lo sviluppatore. Conserva le parole su carta.
 
-<p><b>Lingue:</b> inglese, ucraino, tedesco, francese, spagnolo, italiano, polacco, portoghese e olandese. Encly segue la lingua del dispositivo, oppure puoi sceglierne una solo per Encly in Impostazioni → Lingua.</p>
+UN BLOCCO NOTE SICURO E PIACEVOLE
+• Editor a blocchi: testo, titoli, citazioni, checklist, elenchi puntati e numerati, link e separatori.
+• Etichette, ricerca, vista a elenco o a griglia, più ordinamenti.
+• Attività con priorità, accanto alle note.
+• Cestino con ripristino.
+• Cinque temi (Carta, Foresta, Oceano, Grafite, Mezzanotte), modalità chiara, scura o di sistema, colori dinamici su Android 12+ e tre set di font inclusi nell'app.
 
-<p>Encly è open source (Apache-2.0) e non richiede un account. Informativa sulla privacy: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>
+OPEN SOURCE
+• Encly è open source (Apache-2.0): chiunque può verificare cosa fa.
+• Funziona senza Google Play Services. Android 8.0 o successivo.
+• 9 lingue: italiano, inglese, ucraino, tedesco, francese, spagnolo, polacco, portoghese e olandese. Scegli una lingua solo per Encly in Impostazioni → Lingua.
+
+Encly: note criptate che restano tue.
+
+Informativa sulla privacy: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md

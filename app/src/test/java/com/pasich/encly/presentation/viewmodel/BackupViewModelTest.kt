@@ -96,6 +96,46 @@ class BackupViewModelTest {
     }
 
     @Test
+    fun eachWrongPinCountsAFailureSoTheDotsShakeAgain() {
+        `when`(security.verifyPin(anyString())).thenReturn(false)
+
+        viewModel.reauthFlow.submitPin("000000")
+        waitForStep { (it as? BackupStep.Reauth)?.failures == 1 }
+        viewModel.reauthFlow.submitPin("000000")
+
+        waitForStep { (it as? BackupStep.Reauth)?.failures == 2 }
+    }
+
+    @Test
+    fun creatingARecoveryPhraseWhenOneExistsSaysSo() {
+        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.hasRecoverySeed()).thenReturn(true)
+        viewModel.start(BackupAction.CREATE_PHRASE)
+
+        viewModel.reauthFlow.submitPin("123456")
+
+        waitForStep { it == BackupStep.Idle }
+        assertEquals(BackupMessage.Text(R.string.backup_phrase_exists), viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun theCheckKnowsItsWordsAndCanGoBackToThem() {
+        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.hasRecoverySeed()).thenReturn(false)
+        `when`(security.generateMnemonicCode()).thenReturn(WORDS.toCharArray())
+        viewModel.start(BackupAction.CREATE_PHRASE)
+        viewModel.reauthFlow.submitPin("123456")
+        waitForStep { it is BackupStep.ShowNewPhrase }
+
+        viewModel.phraseFlow.writtenDown()
+        val check = viewModel.uiState.value.step as BackupStep.CheckNewPhrase
+        assertEquals(check.positions.map(WORDS.split(' ')::get), check.expected)
+
+        viewModel.phraseFlow.showAgain()
+        assertEquals(WORDS.split(' '), (viewModel.uiState.value.step as BackupStep.ShowNewPhrase).words)
+    }
+
+    @Test
     fun eraseNeedsThePinAndAnExplicitConfirmation() {
         `when`(security.verifyPin(anyString())).thenReturn(true)
         viewModel.start(BackupAction.ERASE)

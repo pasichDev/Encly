@@ -115,6 +115,7 @@ class TrashViewModel @Inject constructor(
             is TrashListEvent.RestoreNotes -> restoreNotes()
             is TrashListEvent.CleanAll -> cleanAll()
             is TrashListEvent.CleanNotes -> cleanNotes()
+            is TrashListEvent.ClearSelection -> toggleAllCheck(false)
         }
     }
 }
@@ -124,6 +125,9 @@ sealed class TrashListEvent {
     class RestoreNotes : TrashListEvent()
     class CleanAll : TrashListEvent()
     class CleanNotes : TrashListEvent()
+
+    /** Leaves selection mode (back, or the close button) without touching the notes. */
+    data object ClearSelection : TrashListEvent()
 }
 
 data class TrashListState(

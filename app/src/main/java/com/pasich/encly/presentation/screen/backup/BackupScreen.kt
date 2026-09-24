@@ -6,9 +6,11 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,22 +31,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.composables.icons.lucide.ArchiveRestore
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ShieldCheck
 import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupFormat
 import com.pasich.encly.presentation.designsystem.EnclyCallout
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyPillButton
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclyTonalButton
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupStep
+import com.pasich.encly.presentation.viewmodel.BackupUiState
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,49 +74,75 @@ fun BackupScreen(
         onPickerLaunch = viewModel::onSystemPickerLaunched,
         onPickerUnavailable = viewModel::onSystemPickerUnavailable,
     )
-    BackupDialogs(rememberBackupDialogActions(viewModel), state.step)
+    val dialogActions = rememberBackupDialogActions(viewModel)
 
+    // Shown from a screen-wide scope: clearing the message restarts this effect, which must not
+    // cancel the snackbar it just opened.
+    val snackbarScope = rememberCoroutineScope()
     LaunchedEffect(state.message) {
         val message = state.message ?: return@LaunchedEffect
         viewModel.clearMessage()
-        snackbarHostState.showSnackbar(message.resolve(context))
+        snackbarScope.launch { snackbarHostState.showSnackbar(message.resolve(context)) }
     }
 
-    Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
-        topBar = {
-            EnclyTopBar(title = stringResource(R.string.backup_title), onBack = { navController.popBackStack() })
-        },
-        snackbarHost = { EnclySnackbarHost(snackbarHostState) },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
-            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
-        ) {
-            if (state.busy) {
-                LinearProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.surface,
+            topBar = {
+                EnclyTopBar(title = stringResource(R.string.backup_title), onBack = { navController.popBackStack() })
+            },
+            snackbarHost = { EnclySnackbarHost(snackbarHostState) },
+        ) { padding ->
+            Column(modifier = Modifier.padding(padding)) {
+                // A fixed slot: the page does not jump when the progress bar comes and goes.
+                Box(modifier = Modifier.fillMaxWidth().height(EnclyTheme.spacing.xxs)) {
+                    if (state.busy) {
+                        LinearProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.outlineVariant,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+                BackupContent(state = state, onStart = viewModel::start)
             }
-            EnclyCallout(
-                title = stringResource(R.string.backup_intro_title),
-                text = stringResource(R.string.backup_intro_body),
-                icon = Lucide.ShieldCheck,
-            )
+        }
+        // Drawn last: the phrase steps cover the whole screen.
+        BackupDialogs(dialogActions, state.step, state.busy)
+    }
+}
+
+@Composable
+private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
+    ) {
+        Text(
+            text = stringResource(R.string.backup_intro_short),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
+            SectionOverline(text = stringResource(R.string.backup_section_export))
             ExportAction(
                 lastExportAt = state.lastExportAt,
                 enabled = !state.busy,
-                onExport = { viewModel.start(BackupAction.EXPORT) },
+                onExport = { onStart(BackupAction.EXPORT) },
             )
-            ImportAction(enabled = !state.busy, onImport = { viewModel.start(BackupAction.IMPORT) })
         }
+        Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
+            SectionOverline(text = stringResource(R.string.backup_section_import))
+            ImportAction(enabled = !state.busy, onImport = { onStart(BackupAction.IMPORT) })
+        }
+        EnclyCallout(
+            title = stringResource(R.string.backup_intro_title),
+            text = stringResource(R.string.backup_intro_body),
+            icon = EnclyIcons.Shield,
+        )
     }
 }
 
@@ -134,7 +164,7 @@ private fun ImportAction(enabled: Boolean, onImport: () -> Unit) {
             text = stringResource(R.string.backup_import),
             onClick = onImport,
             enabled = enabled,
-            leadingIcon = Lucide.ArchiveRestore,
+            leadingIcon = EnclyIcons.Restore,
         )
         Text(
             text = stringResource(R.string.backup_import_desc),

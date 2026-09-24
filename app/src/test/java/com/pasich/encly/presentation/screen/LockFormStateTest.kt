@@ -4,6 +4,7 @@ import com.pasich.encly.R
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -45,14 +46,27 @@ class LockFormStateTest {
     }
 
     @Test
-    fun aWrongPhraseKeepsThePhraseAndShowsTheError() {
-        form.editPhrase("orbit cactus velvet")
+    fun aWrongPhraseKeepsTheWordsAndShowsTheError() {
+        form.phrase.onValueChange(0, "orbit cactus velvet")
 
         form.onSeedResult(SeedUnlockResult.WRONG_SEED)
 
-        assertEquals("orbit cactus velvet", form.phrase)
+        assertEquals(listOf("orbit", "cactus", "velvet"), form.phrase.words.take(3))
         assertEquals(R.string.lock_wrong_recovery_phrase, form.phraseError)
-        form.editPhrase("orbit cactus velvets")
+        form.onPhraseEdited()
+        assertNull(form.phraseError)
+    }
+
+    @Test
+    fun backToThePinPadDropsTheWords() {
+        form.useRecovery = true
+        form.phrase.onValueChange(0, "orbit cactus")
+        form.onSeedResult(SeedUnlockResult.WRONG_SEED)
+
+        form.leaveRecovery()
+
+        assertFalse(form.useRecovery)
+        assertTrue(form.phrase.words.all(String::isEmpty))
         assertNull(form.phraseError)
     }
 

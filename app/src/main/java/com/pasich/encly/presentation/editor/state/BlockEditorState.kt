@@ -55,20 +55,19 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
     }
 
     /**
-     * Adds [block] after the focused block (or the one the user last worked on). An empty
-     * first text block at that point is replaced instead, in one undo step, so undo can never
-     * leave the note without blocks. A list focuses its first item itself.
+     * Adds [block] after the focused block (or the one the user last worked on) and focuses it.
+     * An empty first text block at that point is replaced instead, in one undo step, so undo can
+     * never leave the note without blocks.
      */
     fun addBlock(block: Block) {
-        val focused = selection.focusedIndex
-        val anchor = (if (focused >= 0) focused else selection.interactedIndex).coerceIn(-1, _blocks.lastIndex)
+        val anchor = selection.workingIndex.coerceIn(-1, _blocks.lastIndex)
         val replacesEmptyFirst = block !is Block.TextBlock && _blocks.isEmptyFirstTextBlock(anchor)
 
         val target = if (replacesEmptyFirst) anchor else anchor + 1
         if (replacesEmptyFirst) history.replaceBlock(anchor, block) else history.addBlock(target, block)
         afterChange()
 
-        if (block is Block.ListBlock) selection.onInteraction(block.id) else selection.focusAt(target)
+        selection.focusAt(target)
     }
 
     /** Adds [block] after position [afterIndex] and focuses it. */

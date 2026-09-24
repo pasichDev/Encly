@@ -56,7 +56,6 @@
 
     <string name="cancel">Annuleren</string>
 
-    <string name="checked_count">Aangevinkt: %d</string>
 
     <string name="clean_permanent_message">Weet je zeker dat je deze notities definitief wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="clean_trash_message">Weet je zeker dat je de prullenbak definitief wilt legen? Dit kan niet ongedaan worden gemaakt.</string>
@@ -85,7 +84,6 @@
     <string name="dialog_title">Notitie verwijderen?</string>
 
     <string name="donation_description">Met je steun kunnen we nieuwe functies toevoegen, bugs oplossen en de app verbeteren. Elk bedrag wordt enorm gewaardeerd!</string>
-    <string name="donation_subtitle">Help de app nog beter te maken</string>
     <string name="donation_title">Steun de ontwikkeling</string>
 
     <string name="done">Klaar</string>
@@ -95,14 +93,12 @@
     <string name="dynamic_color">Dynamische kleuren</string>
 
     <string name="edit">Bewerken</string>
-    <string name="edit_tags">Labels bewerken</string>
 
     <string name="editor_lock">Bewerken vergrendelen</string>
-    <string name="editor_unlock">Bewerken ontgrendelen</string>
 
-    <string name="empty_notes">Geen notities</string>
-    <string name="empty_notes_desc">Maak je eerste notitie door op de knop Toevoegen te tikken.</string>
-    <string name="empty_trash_desc">De prullenbak is leeg</string>
+    <string name="empty_notes">Nog geen notities</string>
+    <string name="empty_notes_desc">Tik op Nieuwe notitie om je eerste te schrijven.</string>
+    <string name="empty_trash_desc">Verwijderde notities blijven hier tot je ze herstelt of definitief verwijdert.</string>
 
     <string name="enter_url">Voer een link in</string>
 
@@ -120,17 +116,17 @@
     <string name="faq_change_pin_q">Hoe wijzig ik mijn pincode?</string>
     <string name="faq_db_key_a">Encly maakt een willekeurige databasesleutel van 256 bits. Je pincode beschermt een afzonderlijk AES-GCM-ontgrendelslot en biometrie gebruikt een Android Keystore-sleutel die bij elk gebruik verificatie vereist.</string>
     <string name="faq_db_key_q">Hoe is de databasesleutel beveiligd?</string>
-    <string name="faq_forgot_pin_a">Als je een herstelzin hebt gemaakt, kun je die op het vergrendelscherm gebruiken om weer toegang te krijgen en daarna een nieuwe pincode instellen. Zonder herstelslot betekent het verlies van de enige beschikbare sleutel dat je de kluis kwijt bent.</string>
+    <string name="faq_forgot_pin_a">Tik op het vergrendelscherm op ‘Toegang herstellen’, voer je 12 woorden in en stel een nieuwe pincode in. Zonder herstelzin is er geen andere weg naar binnen: niemand, ook de ontwikkelaar niet, kan hem resetten.</string>
     <string name="faq_forgot_pin_q">Wat als ik mijn pincode vergeet?</string>
     <string name="faq_language_a">Open Instellingen → Taal en kies een van de beschikbare talen, of \'Systeemstandaard\' om de taal van je apparaat te volgen. De wijziging gaat meteen in.</string>
     <string name="faq_language_q">Hoe wijzig ik de taal?</string>
-    <string name="faq_new_note_a">Tik op de knop \'+\' op het startscherm. In de editor kun je tekst, koppen, citaten, lijsten, scheidingslijnen en links gebruiken.</string>
+    <string name="faq_new_note_a">Tik op het startscherm op ‘Nieuwe notitie’. De balk boven het toetsenbord voegt koppen, checklists, opsommingen, genummerde lijsten, citaten, links en scheidingslijnen toe.</string>
     <string name="faq_new_note_q">Hoe maak ik een nieuwe notitie?</string>
-    <string name="faq_recovery_phrase_a">Een herstelzin wordt alleen gemaakt in de modus die je zelf beheert en is een aparte manier om de kluissleutel te herstellen. Bewaar hem offline. Dagelijks ontgrendel je met je pincode of biometrie.</string>
+    <string name="faq_recovery_phrase_a">Het is een reservesleutel van 12 woorden. Hij ontgrendelt de kluis als je je pincode vergeet en is de enige sleutel tot je back-upbestanden. Je maakt hem tijdens het instellen, of later via Instellingen → Beveiliging als je hem hebt overgeslagen. Bewaar hem op papier, offline.</string>
     <string name="faq_recovery_phrase_q">Waarvoor is de herstelzin?</string>
     <string name="faq_report_bug_a">Open \'Over de app\' en gebruik de feedbackoptie, of schrijf de ontwikkelaar. Voeg nooit je herstelzin, pincode of privétekst uit notities toe aan een bugmelding.</string>
     <string name="faq_report_bug_q">Hoe meld ik een bug?</string>
-    <string name="faq_saving_a">Encly slaat je wijzigingen automatisch en lokaal op. Ook de knop \'Klaar\' en het verlaten van de editor ronden het opslaan af voordat je terugkeert naar de lijst.</string>
+    <string name="faq_saving_a">Automatisch terwijl je typt, en als je de editor verlaat wordt de laatste opslag afgerond. Mislukt het opslaan ooit, dan toont de editor ‘Niet opgeslagen’ in rood.</string>
     <string name="faq_saving_q">Hoe worden wijzigingen opgeslagen?</string>
     <string name="faq_screen_description">Notities, taken, lokale versleuteling en toegangsherstel, zonder cloudsynchronisatie.</string>
     <string name="faq_screen_subtitle">Antwoorden op de meest gestelde vragen</string>
@@ -142,11 +138,11 @@
     <string name="faq_section_troubleshooting">Problemen oplossen</string>
     <string name="faq_storage_a">Notities, labels en taken worden alleen opgeslagen in de lokale SQLCipher-database van Encly. Er is geen cloudsynchronisatie en geen automatische back-up: je kunt zelf een versleutelde back-up exporteren via Instellingen → Back-up.</string>
     <string name="faq_storage_q">Waar worden mijn gegevens opgeslagen?</string>
-    <string name="faq_tags_a">Met labels groepeer je notities. Je kunt ze maken, hernoemen, verbergen en verwijderen, en gebruiken als filter op het startscherm.</string>
+    <string name="faq_tags_a">Labels groeperen je notities. Je kunt ze maken, hernoemen, verbergen en verwijderen, in elke volgorde slepen en het startscherm op label filteren.</string>
     <string name="faq_tags_q">Hoe werken labels?</string>
     <string name="faq_tasks_a">Taken hebben een beschrijving en een prioriteit. Je kunt ze op prioriteit filteren en als voltooid markeren. Encly zet nooit de tekst van taken in systeemmeldingen.</string>
     <string name="faq_tasks_q">Wat kun je met taken?</string>
-    <string name="faq_theme_a">In Instellingen → Weergave kies je een van de vijf thema\'s, de modus (systeem, licht of donker) en het lettertype, en vanaf Android 12 ook dynamische kleuren.</string>
+    <string name="faq_theme_a">Via Instellingen → Weergave kies je een van vijf thema’s, lichte, donkere of systeemmodus, een van drie letterstijlen en de tekstgrootte. Vanaf Android 12 kan de accentkleur ook van je achtergrond komen.</string>
     <string name="faq_theme_q">Hoe wijzig ik het thema?</string>
     <string name="faq_vault_damaged_a">Encly maakt bewust nooit een lege database aan in plaats van een verloren of onleesbare kluis. Bevestig het volledig wissen niet als je je lokale gegevens nog nodig hebt.</string>
     <string name="faq_vault_damaged_q">Encly meldt dat de kluis beschadigd is</string>
@@ -164,7 +160,6 @@
 
     <string name="list_item_placeholder">Lijstitem</string>
 
-    <string name="loading">Laden…</string>
 
     <string name="lock_back_to_pin">Terug naar pincode</string>
     <string name="lock_recover_access">Toegang herstellen</string>
@@ -193,7 +188,6 @@
 
     <string name="more_options">Meer opties</string>
 
-    <string name="new_page">Nieuwe pagina</string>
 
     <string name="no_tag">Geen label</string>
 
@@ -240,18 +234,13 @@
     <string name="priority_select_title">Kies een prioriteit</string>
 
     <string name="quote">Citaat</string>
-
-    <string name="recovery_phrase_label">Herstelzin</string>
-
     <string name="redo">Opnieuw</string>
 
     <string name="restore">Terugzetten</string>
 
     <string name="save">Opslaan</string>
 
-    <string name="saved">Opgeslagen</string>
 
-    <string name="saving">Opslaan…</string>
 
 
     <string name="search_clear">Zoekopdracht wissen</string>
@@ -261,11 +250,8 @@
     <string name="security_biometric_unavailable">Niet beschikbaar op dit apparaat</string>
     <string name="security_biometric_not_enrolled">Geen vingerafdruk ingesteld. Voeg er een toe in de systeeminstellingen.</string>
     <string name="security_encryption_active">Versleuteling staat aan</string>
-    <string name="security_encryption_pin_desc">Je willekeurige databasesleutel wordt beschermd door je pincode en, optioneel, door een biometrisch Keystore-slot.</string>
-    <string name="security_encryption_seed_desc">Je willekeurige databasesleutel heeft een apart herstelslot dat wordt beschermd door je herstelzin.</string>
     <string name="security_info_body">• SQLCipher wordt geopend met een willekeurige sleutel van 256 bits\n• De pincode en de herstelzin hebben afzonderlijke AES-GCM-ontgrendelslots\n• Biometrie gebruikt een Android Keystore-sleutel die bij elk gebruik verificatie vereist</string>
     <string name="security_info_title">ℹ️ Beveiligingsinformatie</string>
-    <string name="security_recovery_set">Ingesteld. Ze ontgrendelt de kluis als je je pincode vergeet en beschermt je back-ups.</string>
     <string name="security_recovery_missing">Niet ingesteld. Zonder deze zin betekent een vergeten pincode dat je alles kwijt bent. Tik om er een te maken.</string>
     <string name="security_erase_title">Alle gegevens wissen</string>
     <string name="security_erase_desc">Alle notities, taken, labels en de versleutelingssleutels op dit apparaat verwijderen</string>
@@ -294,28 +280,19 @@
     <string name="sort_updated_asc_short">Bewerkt ↑</string>
     <string name="sort_updated_desc">Op laatst bewerkt (nieuwste eerst)</string>
     <string name="sort_updated_desc_short">Bewerkt ↓</string>
-
-    <string name="support_external_services">Steun ons via andere diensten</string>
-    <string name="support_kofi_desc">Snel en eenvoudig de ontwikkeling steunen.</string>
-    <string name="support_options_title">Manieren om te steunen</string>
     <string name="support_title">Steun de ontwikkelaar</string>
-    <string name="support_why_desc">• Nieuwe functies\n• Bugfixes\n• Beveiligingsreview en tests\n• Ontwerpverbeteringen\n• Groei van het project</string>
-    <string name="support_why_title">Waarom is je steun belangrijk?</string>
 
     <string name="tag_create_failed">Kan het label niet opslaan. Probeer het opnieuw.</string>
     <string name="tag_delete_failed">Kan het label niet verwijderen. Probeer het opnieuw.</string>
     <string name="tag_edit">Label bewerken</string>
     <string name="tag_hidden">Verborgen label</string>
     <string name="tag_name_taken">Er bestaat al een label met deze naam</string>
-    <string name="tag_hide">Label verbergen</string>
     <string name="tag_reorder_failed">Kan de volgorde van de labels niet opslaan. Probeer het opnieuw.</string>
-    <string name="tag_show">Label tonen</string>
     <string name="tag_update_failed">Kan het label niet bijwerken. Probeer het opnieuw.</string>
 
     <string name="tap_again_to_delete">Tik nogmaals om te verwijderen</string>
 
-    <string name="task_add">Taak toevoegen</string>
-    <string name="task_clear_all_completed">Alle voltooide taken wissen</string>
+    <string name="task_add">Nieuwe taak</string>
     <string name="task_clear_completed_failed">Kan de voltooide taken niet wissen. Probeer het opnieuw.</string>
     <string name="task_clear_completed_message">Weet je zeker dat je alle voltooide taken wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="task_clear_completed_title">Voltooide taken wissen</string>
@@ -324,7 +301,6 @@
     <string name="task_description_placeholder">Beschrijving</string>
     <string name="task_edit_placeholder">Taak bewerken</string>
     <string name="task_empty_active">Geen actieve taken.</string>
-    <string name="task_empty_completed">Geen voltooide taken.</string>
     <string name="task_empty_filtered">Geen taken die aan de gekozen filters voldoen.</string>
     <string name="task_filter_all">Alle taken</string>
     <string name="task_filter_completed">Voltooid</string>
@@ -378,8 +354,6 @@
     <string name="backup_create_phrase">Herstelzin maken</string>
     <string name="backup_phrase_write_down">Schrijf deze 12 woorden op papier, in volgorde, en bewaar ze offline. Iedereen die ze heeft, kan je back-ups openen.</string>
     <string name="backup_phrase_written">Ik heb ze opgeschreven</string>
-    <string name="backup_phrase_check_title">Controleer je herstelzin</string>
-    <string name="backup_phrase_check_word">Woord %1$d</string>
     <string name="backup_phrase_check_wrong">De woorden kloppen niet. Controleer wat je hebt opgeschreven.</string>
     <string name="backup_phrase_added">Herstelzin opgeslagen</string>
     <string name="backup_confirm_phrase_title">Bevestig je herstelzin</string>
@@ -388,11 +362,8 @@
     <string name="backup_enter_phrase_body">Voer de 12 woorden in van de herstelzin waarmee deze back-up is gemaakt.</string>
     <string name="backup_decrypt">Ontsleutelen</string>
     <string name="backup_import_choose">Back-up importeren</string>
-    <string name="backup_import_contents">Deze back-up bevat notities: %1$d, taken: %2$d, labels: %3$d.</string>
     <string name="backup_merge">Samenvoegen</string>
-    <string name="backup_merge_desc">Samenvoegen: je gegevens blijven en wat ontbreekt wordt toegevoegd. Wat al in deze kluis staat, wordt overgeslagen.</string>
     <string name="backup_replace">Vervangen</string>
-    <string name="backup_replace_desc">Vervangen: verwijder alle notities, taken en labels in deze kluis en zet daarna de back-up terug.</string>
     <string name="backup_replace_confirm_title">Alle gegevens vervangen?</string>
     <string name="backup_replace_confirm_body">Alle notities, taken en labels in deze kluis worden verwijderd en vervangen door de back-up. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="backup_import_done">Geïmporteerd: notities %1$d, taken %2$d, labels %3$d. Overgeslagen (al aanwezig): %4$d.</string>
@@ -511,7 +482,6 @@
     <string name="onboarding_restore_file_section">1 · Back-upbestand</string>
     <string name="onboarding_restore_tap_other">Tik om een ander bestand te kiezen</string>
     <string name="onboarding_restore_phrase_section">2 · Herstelzin</string>
-    <string name="onboarding_restore_phrase_label">12 woorden, gescheiden door spaties</string>
     <string name="onboarding_restore_phrase_helper">Deze woorden worden ook de herstelzin van deze telefoon.</string>
     <string name="notes_title">Notities</string>
     <string name="lock_now">Nu vergrendelen</string>
@@ -524,4 +494,62 @@
         <item quantity="one">Taken · %d open</item>
         <item quantity="other">Taken · %d open</item>
     </plurals>
+    <string name="home_tasks_none_open">Taken · geen open</string>
+    <string name="task_empty_title">Nog geen taken</string>
+    <string name="task_empty_desc">Tik op Nieuwe taak om je eerste toe te voegen.</string>
+    <string name="task_all_done_title">Alles klaar</string>
+    <string name="task_done_section">Klaar · %1$d</string>
+    <string name="empty_notes_tagged">Geen notities met de tag ‘%1$s’</string>
+    <string name="empty_notes_tagged_desc">Notities met deze tag verschijnen hier.</string>
+    <string name="show_all_notes">Alle notities tonen</string>
+    <string name="empty_trash_title">De prullenbak is leeg</string>
+    <string name="trash_hint">Tik op een notitie om te lezen. Houd ingedrukt om te selecteren.</string>
+    <string name="delete_forever">Definitief verwijderen</string>
+    <string name="empty_trash_action">Prullenbak legen</string>
+    <string name="search_notes">Notities zoeken</string>
+    <string name="settings_notes_and_tasks">Notities en taken</string>
+    <string name="settings_about_desc">Versie, privacybeleid en contact</string>
+    <string name="settings_faq_desc">Antwoorden op veelgestelde vragen</string>
+    <string name="licenses_title">Opensourcelicenties</string>
+    <string name="licenses_row_desc">De bibliotheken en lettertypen die Encly gebruikt</string>
+    <string name="licenses_heading">Gebouwd op open source</string>
+    <string name="licenses_intro">Encly is gemaakt met deze bibliotheken en lettertypen. Tik erop om de licentie te lezen.</string>
+    <string name="licenses_libraries">Bibliotheken</string>
+    <string name="licenses_fonts">Lettertypen</string>
+    <string name="tags_empty_title">Nog geen tags</string>
+    <string name="tags_empty_desc">Tags groeperen je notities. Maak er hierboven een aan en kies hem voor een notitie via lang indrukken.</string>
+    <string name="tags_hint">Tik op een tag om hem te hernoemen, verbergen of verwijderen. Sleep de greep om te ordenen.</string>
+    <string name="tag_add">Tag toevoegen</string>
+    <string name="tag_name_label">Naam</string>
+    <string name="tag_show_in_list">Tonen in de notitielijst</string>
+    <string name="tag_show_in_list_desc">Een verborgen tag houdt zijn notities maar krijgt geen filter</string>
+    <string name="tag_drag_handle">Sleep om te ordenen</string>
+    <string name="tag_move_up">Omhoog</string>
+    <string name="tag_move_down">Omlaag</string>
+    <plurals name="trash_selected">
+        <item quantity="one">%d geselecteerd</item>
+        <item quantity="other">%d geselecteerd</item>
+    </plurals>
+    <string name="edit_tags">Labels bewerken</string>
+    <string name="note_title_placeholder">Titel</string>
+    <string name="note_not_saved">Niet opgeslagen</string>
+    <string name="tags_manage">Labels beheren</string>
+    <string name="note_discard_confirm_title">Wijzigingen negeren?</string>
+    <string name="note_discard_confirm_message">Alles wat je hebt gewijzigd sinds je deze notitie opende, gaat verloren. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="support_fact_free_title">Alles is al van jou</string>
+    <string name="support_fact_free_desc">Elke functie is er voor iedereen. Niets zit achter een betaling.</string>
+    <string name="support_fact_private_title">Geen advertenties, geen tracking</string>
+    <string name="support_fact_private_desc">Encly ziet je notities nooit en verdient niets aan data. Steun is de enige manier waarop het zich bedruipt.</string>
+    <string name="support_fact_uses_title">Waar het naartoe gaat</string>
+    <string name="support_fact_uses_desc">Nieuwe functies, beveiligingsaudit en tests, ontwerp en fixes.</string>
+    <string name="support_kofi_button">Steunen op Ko-fi</string>
+    <string name="support_kofi_note">Opent ko-fi.com in je browser. Elk bedrag helpt.</string>
+    <string name="faq_note_actions_q">Wat doet lang drukken op een notitie?</string>
+    <string name="faq_note_actions_a">Het opent de acties van de notitie: het label wijzigen, een korte beschrijving op de kaart toevoegen, de notitie dupliceren of naar de prullenbak verplaatsen.</string>
+    <string name="faq_trash_q">Hoe krijg ik een verwijderde notitie terug?</string>
+    <string name="faq_trash_a">Verwijderde notities gaan naar de Prullenbak in het menu. Daar kun je een notitie herstellen of definitief verwijderen. Encly leegt de prullenbak nooit vanzelf.</string>
+    <string name="faq_lock_note_q">Wat doet ‘Bewerken vergrendelen’?</string>
+    <string name="faq_lock_note_a">De notitie wordt alleen-lezen, zodat je hem niet per ongeluk wijzigt. Je kunt de tekst nog steeds selecteren en kopiëren. Zet het aan of uit via het menu van de editor.</string>
+    <string name="faq_backup_q">Hoe werken back-ups?</string>
+    <string name="faq_backup_a">Via Instellingen → Back-up exporteer je één versleuteld bestand dat alleen je herstelzin kan openen. Om te herstellen kies je het bestand, typ of plak je de 12 woorden en voeg je het samen met deze kluis of vervang je alles.</string>
 </resources>

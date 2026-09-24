@@ -36,6 +36,7 @@ class SecuritySettingsViewModel @Inject constructor(private val securityManager:
                 authType = authSettings.authType,
                 biometricEnable = authSettings.isBiometricEnabled,
                 biometricStatus = securityManager.biometricStatus(),
+                loaded = true,
             )
         }
     }
@@ -108,6 +109,8 @@ class SecuritySettingsViewModel @Inject constructor(private val securityManager:
         val isUserCreatedSeedKey: Boolean = false,
         val biometricEnable: Boolean = false,
         val biometricStatus: BiometricStatus = BiometricStatus.UNAVAILABLE,
+        /** The first [refresh] finished; until then the page shows nothing rather than guesses. */
+        val loaded: Boolean = false,
     ) {
         val isBiometricAvailable: Boolean get() = biometricStatus == BiometricStatus.AVAILABLE
     }

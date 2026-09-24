@@ -49,9 +49,8 @@ internal class BlockActionsImpl(
     override fun registerCursorToEnd(callback: () -> Unit): () -> Unit =
         focusRegistry.registerCursorToEnd(block.id, callback)
 
-    override fun onInteraction() {
-        viewModel.onBlockInteraction(block)
-    }
+    override fun registerFieldsFocusTarget(requestFocus: (atEnd: Boolean) -> Unit): () -> Unit =
+        focusRegistry.registerFieldsFocusTarget(block.id, requestFocus)
 
     override fun navigateToNext(): Boolean =
         viewModel.moveFocusTo(focusRegistry.nextBlock(block.id), focusRegistry, cursorToEnd = false)

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Escribe o pega tus 12 palabras</string>
+    <string name="recovery_word_cell">Palabra %1$d de %2$d</string>
+    <string name="recovery_word_unknown">La palabra %1$d no es de una frase de recuperación. Revisa cómo está escrita.</string>
+    <string name="recovery_phrase_checksum">Estas 12 palabras no forman una frase de recuperación válida. Revisa cada palabra y su orden.</string>
+    <string name="backup_phrase_exists">Esta caja fuerte ya tiene una frase de recuperación</string>
+    <string name="backup_import_mode_title">¿Añadir a tus notas o reemplazarlas?</string>
+    <string name="backup_import_summary">Esta copia contiene %1$s, %2$s y %3$s.</string>
+    <string name="backup_merge_row_desc">Todo lo de aquí se queda y se añade lo que falta. Lo que ya está se omite.</string>
+    <string name="backup_replace_all">Reemplazar todo</string>
+    <string name="backup_replace_row_desc">Borra todas las notas, tareas y etiquetas de este teléfono y luego restaura la copia.</string>
+    <string name="backup_intro_short">Guarda todas tus notas, tareas y etiquetas en un archivo cifrado y restáuralas en cualquier teléfono.</string>
+    <string name="backup_section_export">Exportar</string>
+    <string name="backup_section_import">Importar</string>
+    <string name="security_encryption_pin_plain">Tus notas están cifradas. Tu PIN (y tu huella, si está activada) las desbloquea.</string>
+    <string name="security_encryption_seed_plain">Tus notas están cifradas. Tu PIN (y tu huella, si está activada) las desbloquea, y tu frase de recuperación si olvidas el PIN.</string>
+    <string name="security_recovery_set_desc">Desbloquea tus notas si olvidas el PIN y abre tus copias de seguridad.</string>
+    <string name="security_recovery_status_set">Configurada</string>
+    <string name="vault_reset_restore_hint">Después del restablecimiento puedes restaurar un archivo de copia con sus 12 palabras.</string>
+    <string name="pin_change_bar_title">Cambiar PIN</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d nota</item>
+        <item quantity="many">%d de notas</item>
+        <item quantity="other">%d notas</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d tarea</item>
+        <item quantity="many">%d de tareas</item>
+        <item quantity="other">%d tareas</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d etiqueta</item>
+        <item quantity="many">%d de etiquetas</item>
+        <item quantity="other">%d etiquetas</item>
+    </plurals>
+</resources>

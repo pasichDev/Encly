@@ -1,13 +1,20 @@
 package com.pasich.encly.presentation.components.editNote
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,31 +24,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.composables.icons.lucide.ArrowDown
-import com.composables.icons.lucide.ArrowUp
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Plus
-import com.composables.icons.lucide.Redo2
-import com.composables.icons.lucide.Trash2
-import com.composables.icons.lucide.Undo2
-import com.composables.icons.lucide.X
 import com.pasich.encly.R
+import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyToolButton
 import com.pasich.encly.presentation.designsystem.EnclyToolbarRule
 import com.pasich.encly.presentation.designsystem.ToolStyle
-import com.pasich.encly.presentation.editor.DynamicButtons
+import com.pasich.encly.presentation.editor.BlockToolButton
+import com.pasich.encly.presentation.editor.mainBlockTools
+import com.pasich.encly.presentation.editor.moreBlockTools
+import com.pasich.encly.presentation.editor.state.toolType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
-enum class NoteBottomBarFragment {
-    BLOCKS,
-    MAIN,
-}
-
 /**
- * The editor's formatting toolbar above the keyboard (design spec §3.3): undo and redo, then the
- * filled "Add block" and the block tools (move, delete); "Add block" swaps in the block types.
+ * The editor's formatting toolbar, pinned to the bottom above the keyboard (design spec §3.3):
+ * the filled "Add block", then the block tools, the one of the block the user works on marked
+ * active. "Add block" swaps in a paragraph and every heading level, undo and redo, and moving
+ * or deleting the block. In simple editing only undo and redo are offered.
  */
 @Composable
 fun NoteBottomBar(
@@ -49,86 +50,156 @@ fun NoteBottomBar(
     viewModel: EditNoteViewModel = hiltViewModel(),
     simpleEdit: Boolean = false,
 ) {
-    var noteBottomBarFragment by rememberSaveable {
-        mutableStateOf(
-            NoteBottomBarFragment.MAIN,
-        )
-    }
+    var showMore by rememberSaveable { mutableStateOf(false) }
     val canUndo by viewModel.canUndo.collectAsState()
     val canRedo by viewModel.canRedo.collectAsState()
     // Re-evaluated when the block the user works on or the blocks (their order) change.
     val interactedBlockId by viewModel.interactedBlockId.collectAsState()
-    val blocks = viewModel.blocks.toList()
-    val canMoveUp = remember(interactedBlockId, blocks) { viewModel.canMoveBlock(up = true) }
-    val canMoveDown = remember(interactedBlockId, blocks) { viewModel.canMoveBlock(up = false) }
-    val canDelete = remember(interactedBlockId, blocks) { viewModel.canRemoveInteractedBlock() }
-
-    val toMain = {
-        noteBottomBarFragment = NoteBottomBarFragment.MAIN
+    val activeTool by remember(viewModel) {
+        derivedStateOf { viewModel.blocks.firstOrNull { it.id == interactedBlockId }?.toolType() }
     }
-    val main = noteBottomBarFragment == NoteBottomBarFragment.MAIN
+    val canMoveUp by remember(viewModel) {
+        derivedStateOf { interactedBlockId.let { viewModel.canMoveBlock(up = true) } }
+    }
+    val canMoveDown by remember(viewModel) {
+        derivedStateOf { interactedBlockId.let { viewModel.canMoveBlock(up = false) } }
+    }
+    val canDelete by remember(viewModel) {
+        derivedStateOf { interactedBlockId.let { viewModel.canRemoveInteractedBlock() } }
+    }
+    val history = HistoryTools(
+        onUndo = if (canUndo) viewModel::undo else null,
+        onRedo = if (canRedo) viewModel::redo else null,
+    )
 
     EnclyEditorToolbar(modifier = modifier.imePadding()) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-        ) {
-            AnimatedVisibility(visible = main) {
-                Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
-                    EnclyToolButton(
-                        icon = Lucide.Undo2,
-                        contentDescription = stringResource(R.string.undo),
-                        onClick = if (canUndo) viewModel::undo else null,
+        when {
+            simpleEdit -> ToolRow(spread = false) { HistoryButtons(history) }
+
+            else -> AnimatedContent(
+                targetState = showMore,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                modifier = Modifier.weight(1f),
+                label = "toolbar",
+            ) { more ->
+                if (more) {
+                    MoreTools(
+                        history = history,
+                        blockTools = BlockMoveTools(
+                            onMoveUp = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
+                            onMoveDown = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
+                            onDelete = if (canDelete) viewModel::removeInteractedBlock else null,
+                        ),
+                        onApply = { viewModel.applyTool(it, exact = true) },
+                        onClose = { showMore = false },
                     )
-                    EnclyToolButton(
-                        icon = Lucide.Redo2,
-                        contentDescription = stringResource(R.string.redo),
-                        onClick = if (canRedo) viewModel::redo else null,
+                } else {
+                    MainTools(
+                        activeTool = activeTool,
+                        onApply = { viewModel.applyTool(it) },
+                        onMore = { showMore = true },
                     )
                 }
-            }
-
-            AnimatedVisibility(visible = !main) {
-                EnclyToolButton(icon = Lucide.X, contentDescription = stringResource(R.string.close), onClick = toMain)
-            }
-
-            if (!simpleEdit) EnclyToolbarRule()
-
-            AnimatedVisibility(visible = main && !simpleEdit) {
-                Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
-                    EnclyToolButton(
-                        icon = Lucide.Plus,
-                        contentDescription = stringResource(R.string.block_add),
-                        onClick = { noteBottomBarFragment = NoteBottomBarFragment.BLOCKS },
-                        style = ToolStyle.FILLED,
-                    )
-                    EnclyToolButton(
-                        icon = Lucide.ArrowUp,
-                        contentDescription = stringResource(R.string.block_move_up),
-                        onClick = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
-                    )
-                    EnclyToolButton(
-                        icon = Lucide.ArrowDown,
-                        contentDescription = stringResource(R.string.block_move_down),
-                        onClick = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
-                    )
-                    EnclyToolButton(
-                        icon = Lucide.Trash2,
-                        contentDescription = stringResource(R.string.delete_block),
-                        onClick = if (canDelete) viewModel::removeInteractedBlock else null,
-                    )
-                }
-            }
-
-            AnimatedVisibility(visible = !main && !simpleEdit) {
-                DynamicButtons(
-                    onAddBlock = { type ->
-                        viewModel.addBlock(type)
-                        toMain()
-                    },
-                )
             }
         }
+    }
+}
+
+/** Undo and redo; a null action shows its button disabled. */
+private class HistoryTools(val onUndo: (() -> Unit)?, val onRedo: (() -> Unit)?)
+
+/** Moving and deleting the block the user works on; a null action shows its button disabled. */
+private class BlockMoveTools(val onMoveUp: (() -> Unit)?, val onMoveDown: (() -> Unit)?, val onDelete: (() -> Unit)?)
+
+/** "Add block", then the block tools, the one of the block the user works on marked active. */
+@Composable
+private fun MainTools(activeTool: BlockType?, onApply: (BlockType) -> Unit, onMore: () -> Unit) {
+    ToolRow(spread = true) {
+        EnclyToolButton(
+            icon = EnclyIcons.PlusBold,
+            contentDescription = stringResource(R.string.block_add),
+            onClick = onMore,
+            style = ToolStyle.FILLED,
+        )
+        mainBlockTools.forEach { tool ->
+            BlockToolButton(tool = tool, active = tool.type == activeTool, onClick = { onApply(tool.type) })
+        }
+    }
+}
+
+/**
+ * One row of tools across the toolbar's width: [spread] evenly (`SpaceBetween`) when they fit,
+ * scrolling sideways on a screen too narrow for them.
+ */
+@Composable
+private fun ToolRow(spread: Boolean, content: @Composable RowScope.() -> Unit) {
+    BoxWithConstraints {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = if (spread) {
+                Arrangement.SpaceBetween
+            } else {
+                Arrangement.spacedBy(EnclyTheme.spacing.xxs)
+            },
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .widthIn(min = maxWidth),
+            content = content,
+        )
+    }
+}
+
+@Composable
+private fun HistoryButtons(history: HistoryTools) {
+    EnclyToolButton(
+        icon = EnclyIcons.Undo,
+        contentDescription = stringResource(R.string.undo),
+        onClick = history.onUndo,
+    )
+    EnclyToolButton(
+        icon = EnclyIcons.Redo,
+        contentDescription = stringResource(R.string.redo),
+        onClick = history.onRedo,
+    )
+}
+
+/** Behind "Add block": close, paragraph and heading levels, undo and redo, move and delete. */
+@Composable
+private fun MoreTools(
+    history: HistoryTools,
+    blockTools: BlockMoveTools,
+    onApply: (BlockType) -> Unit,
+    onClose: () -> Unit,
+) {
+    ToolRow(spread = false) {
+        EnclyToolButton(icon = EnclyIcons.Close, contentDescription = stringResource(R.string.close), onClick = onClose)
+        moreBlockTools.forEach { tool ->
+            BlockToolButton(
+                tool = tool,
+                active = false,
+                onClick = {
+                    onApply(tool.type)
+                    onClose()
+                },
+            )
+        }
+        EnclyToolbarRule()
+        HistoryButtons(history)
+        EnclyToolbarRule()
+        EnclyToolButton(
+            icon = EnclyIcons.ArrowUp,
+            contentDescription = stringResource(R.string.block_move_up),
+            onClick = blockTools.onMoveUp,
+        )
+        EnclyToolButton(
+            icon = EnclyIcons.ArrowDown,
+            contentDescription = stringResource(R.string.block_move_down),
+            onClick = blockTools.onMoveDown,
+        )
+        EnclyToolButton(
+            icon = EnclyIcons.Trash,
+            contentDescription = stringResource(R.string.delete_block),
+            onClick = blockTools.onDelete,
+        )
     }
 }

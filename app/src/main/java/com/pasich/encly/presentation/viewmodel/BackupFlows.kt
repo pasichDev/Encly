@@ -34,17 +34,31 @@ enum class BackupAction { EXPORT, IMPORT, CREATE_PHRASE, ERASE }
 sealed interface BackupStep {
     data object Idle : BackupStep
 
-    /** Re-authentication (PIN, or biometric when enabled) before any export or import. */
-    data class Reauth(val action: BackupAction, val biometric: Boolean, @param:StringRes val error: Int? = null) :
-        BackupStep
+    /**
+     * Re-authentication (PIN, or biometric when enabled) before any export or import. [failures]
+     * counts wrong PINs, so each one shakes the dots, even with the same error.
+     */
+    data class Reauth(
+        val action: BackupAction,
+        val biometric: Boolean,
+        @param:StringRes val error: Int? = null,
+        val failures: Int = 0,
+    ) : BackupStep
 
     /** Export needs a recovery phrase and this vault has none: explain and offer to create it. */
     data object NeedsPhrase : BackupStep
 
     data class ShowNewPhrase(val words: List<String>) : BackupStep
 
-    /** 0-based positions of the words the user must type back. */
-    data class CheckNewPhrase(val positions: List<Int>, @param:StringRes val error: Int? = null) : BackupStep
+    /**
+     * 0-based positions of the words the user must type back, and those words, so each field
+     * can say at once whether it is right (the words were just shown anyway).
+     */
+    data class CheckNewPhrase(
+        val positions: List<Int>,
+        val expected: List<String>,
+        @param:StringRes val error: Int? = null,
+    ) : BackupStep
 
     /** A recovery-seed vault without a backup key must type its words once. */
     data class ConfirmExistingPhrase(@param:StringRes val error: Int? = null) : BackupStep
@@ -114,10 +128,16 @@ class BackupFlowState(private val scope: CoroutineScope, lastExportAt: Long?, pr
  * Runs [block] with the typed words normalized (lower case, single spaces) in a CharArray that
  * is wiped afterwards. The Compose text field's own String cannot be wiped (see SECURITY.md).
  */
-internal fun <T> withNormalizedPhrase(backupManager: BackupManager, input: String, block: (CharArray) -> T): T {
-    val raw = input.toCharArray()
-    val phrase = backupManager.normalizeRecoveryPhrase(raw)
-    SensitiveDataCleaner.clear(raw)
+internal fun <T> withNormalizedPhrase(backupManager: BackupManager, input: String, block: (CharArray) -> T): T =
+    withNormalizedPhrase(backupManager, input.toCharArray(), block)
+
+/** As above, for words already in a CharArray; [input] is wiped too. */
+internal fun <T> withNormalizedPhrase(backupManager: BackupManager, input: CharArray, block: (CharArray) -> T): T {
+    val phrase = try {
+        backupManager.normalizeRecoveryPhrase(input)
+    } finally {
+        SensitiveDataCleaner.clear(input)
+    }
     return try {
         block(phrase)
     } finally {
@@ -148,7 +168,11 @@ class ReauthFlow(
         }
         state.launchBusy {
             val ok = withContext(Dispatchers.Default) { securityManager.verifyPin(pin) }
-            if (ok) onAuthenticated(step.action) else state.go(step.copy(error = R.string.lock_wrong_pin))
+            if (ok) {
+                onAuthenticated(step.action)
+            } else {
+                state.go(step.copy(error = R.string.lock_wrong_pin, failures = step.failures + 1))
+            }
         }
     }
 
@@ -226,7 +250,14 @@ class RecoveryPhraseFlow(
 
     fun writtenDown() {
         val words = (state.step as? BackupStep.ShowNewPhrase)?.words ?: return
-        state.go(BackupStep.CheckNewPhrase(words.indices.shuffled().take(CHECKED_WORDS).sorted()))
+        val positions = words.indices.shuffled().take(CHECKED_WORDS).sorted()
+        state.go(BackupStep.CheckNewPhrase(positions, positions.map(words::get)))
+    }
+
+    /** "Show the words again" (and back) from the check. */
+    fun showAgain() {
+        val phrase = newPhrase ?: return
+        if (state.step is BackupStep.CheckNewPhrase) state.go(BackupStep.ShowNewPhrase(String(phrase).split(' ')))
     }
 
     fun submitCheck(answers: List<String>) {
@@ -255,13 +286,26 @@ class RecoveryPhraseFlow(
         }
     }
 
-    fun submitExisting(input: String) {
-        if (state.step !is BackupStep.ConfirmExistingPhrase) return
+    /** The typed words; [input] is wiped. */
+    fun submitExisting(input: CharArray) {
+        if (state.step !is BackupStep.ConfirmExistingPhrase) {
+            SensitiveDataCleaner.clear(input)
+            return
+        }
         state.launchBusy {
             val ok = withContext(Dispatchers.Default) {
                 withNormalizedPhrase(backupManager, input) { phraseSetup.confirm(it) }
             }
             if (ok) onReady() else state.go(BackupStep.ConfirmExistingPhrase(R.string.backup_error_phrase_mismatch))
+        }
+    }
+
+    /** The user edited the words: an error under them goes away. */
+    fun clearError() {
+        when (val step = state.step) {
+            is BackupStep.ConfirmExistingPhrase -> if (step.error != null) state.go(step.copy(error = null))
+            is BackupStep.CheckNewPhrase -> if (step.error != null) state.go(step.copy(error = null))
+            else -> Unit
         }
     }
 
@@ -293,6 +337,9 @@ class ImportFlow(
     private var file: ByteArray? = null
     private var decrypted: BackupPayload? = null
 
+    /** The merge/replace choice, to return to when "Replace all data?" is cancelled. */
+    private var choice: BackupStep.ChooseImportMode? = null
+
     fun onFile(uri: Uri?) {
         if (uri == null) return
         state.launchBusy {
@@ -305,8 +352,13 @@ class ImportFlow(
         }
     }
 
-    fun submitPhrase(input: String) {
-        val encrypted = file ?: return
+    /** The typed words; [input] is wiped. */
+    fun submitPhrase(input: CharArray) {
+        val encrypted = file
+        if (encrypted == null) {
+            SensitiveDataCleaner.clear(input)
+            return
+        }
         state.launchBusy {
             try {
                 val payload = withContext(Dispatchers.Default) {
@@ -314,7 +366,9 @@ class ImportFlow(
                 }
                 decrypted = payload
                 file = null
-                state.go(BackupStep.ChooseImportMode(payload.notes.size, payload.tasks.size, payload.tags.size))
+                val step = BackupStep.ChooseImportMode(payload.notes.size, payload.tasks.size, payload.tags.size)
+                choice = step
+                state.go(step)
             } catch (e: BackupException) {
                 if (e.error == BackupError.WRONG_SECRET || e.error == BackupError.INVALID_PHRASE) {
                     state.go(BackupStep.EnterImportPhrase(backupErrorMessage(e.error)))
@@ -337,9 +391,22 @@ class ImportFlow(
         if (state.step is BackupStep.ConfirmReplace) run(ImportMode.REPLACE)
     }
 
+    /** The user edited the words: a wrong-phrase error under them goes away. */
+    fun clearError() {
+        val step = state.step as? BackupStep.EnterImportPhrase ?: return
+        if (step.error != null) state.go(step.copy(error = null))
+    }
+
+    /** "Cancel" on "Replace all data?": back to the choice, the decrypted backup kept. */
+    fun backToChoice() {
+        val step = choice ?: return
+        if (state.step is BackupStep.ConfirmReplace && decrypted != null) state.go(step)
+    }
+
     fun drop() {
         file = null
         decrypted = null
+        choice = null
     }
 
     private fun run(mode: ImportMode) {

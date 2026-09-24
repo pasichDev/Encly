@@ -6,14 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
-import com.composables.icons.lucide.Copy
-import com.composables.icons.lucide.ExternalLink
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.editor.blocks.LinkBlock
 
@@ -36,18 +33,18 @@ fun ActionLinkBottomSheet(
             }
             EnclySheetRow(
                 title = stringResource(R.string.link_open),
-                icon = Lucide.ExternalLink,
+                icon = EnclyIcons.External,
                 onClick = { onAction(ActionBlockDialog.OpenLink) },
             )
             EnclySheetRow(
                 title = stringResource(R.string.link_copy),
-                icon = Lucide.Copy,
+                icon = EnclyIcons.Copy,
                 onClick = { onAction(ActionBlockDialog.CopyLink) },
             )
             if (settings.canEdit) {
                 EnclySheetRow(
                     title = stringResource(R.string.link_edit),
-                    icon = Lucide.Pencil,
+                    icon = EnclyIcons.Edit,
                     onClick = { onAction(ActionBlockDialog.EditLink) },
                 )
                 EnclyGroupDivider()

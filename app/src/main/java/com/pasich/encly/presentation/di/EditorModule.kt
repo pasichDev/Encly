@@ -13,6 +13,7 @@ import dagger.hilt.components.SingletonComponent
 object EditorModule {
 
     @Provides
-    fun provideNoteCopyTitle(strings: AppStrings): NoteCopyTitle =
-        NoteCopyTitle { title -> strings.get(R.string.note_copy_title, title) }
+    fun provideNoteCopyTitle(strings: AppStrings): NoteCopyTitle = NoteCopyTitle { title ->
+        strings.get(R.string.note_copy_title, title.ifBlank { strings.get(R.string.untitled) })
+    }
 }

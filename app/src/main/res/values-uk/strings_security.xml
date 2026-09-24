@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Введіть або вставте свої 12 слів</string>
+    <string name="recovery_word_cell">Слово %1$d з %2$d</string>
+    <string name="recovery_word_unknown">Слово %1$d не зі списку слів фрази відновлення. Перевірте написання.</string>
+    <string name="recovery_phrase_checksum">Ці 12 слів не утворюють правильної фрази відновлення. Перевірте кожне слово та їхній порядок.</string>
+    <string name="backup_phrase_exists">У цього сховища вже є фраза відновлення</string>
+    <string name="backup_import_mode_title">Додати до нотаток чи замінити їх?</string>
+    <string name="backup_import_summary">У цій копії: %1$s, %2$s і %3$s.</string>
+    <string name="backup_merge_row_desc">Усе, що тут є, залишиться, а відсутнє додасться. Те, що вже є, буде пропущено.</string>
+    <string name="backup_replace_all">Замінити все</string>
+    <string name="backup_replace_row_desc">Видалити всі нотатки, завдання й теги на цьому телефоні, а потім відновити копію.</string>
+    <string name="backup_intro_short">Збережіть усі нотатки, завдання й теги в одному зашифрованому файлі та відновіть їх на будь-якому телефоні.</string>
+    <string name="backup_section_export">Експорт</string>
+    <string name="backup_section_import">Імпорт</string>
+    <string name="security_encryption_pin_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено).</string>
+    <string name="security_encryption_seed_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено), а якщо ви забудете PIN, то фраза відновлення.</string>
+    <string name="security_recovery_set_desc">Відкриває нотатки, якщо ви забудете PIN, і розшифровує ваші резервні копії.</string>
+    <string name="security_recovery_status_set">Налаштовано</string>
+    <string name="vault_reset_restore_hint">Після скидання можна відновити резервну копію з файлу за її 12 словами.</string>
+    <string name="pin_change_bar_title">Змінити PIN</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d нотатка</item>
+        <item quantity="few">%d нотатки</item>
+        <item quantity="many">%d нотаток</item>
+        <item quantity="other">%d нотатки</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d завдання</item>
+        <item quantity="few">%d завдання</item>
+        <item quantity="many">%d завдань</item>
+        <item quantity="other">%d завдання</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d тег</item>
+        <item quantity="few">%d теги</item>
+        <item quantity="many">%d тегів</item>
+        <item quantity="other">%d тега</item>
+    </plurals>
+</resources>

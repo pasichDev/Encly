@@ -25,7 +25,7 @@ private const val TAG = "BlockFocusRegistry"
  * were inserted, removed, moved or replaced. [blocks] is the editor's live block list.
  */
 class BlockFocusRegistry(private val blocks: () -> List<Block>) {
-    private val focusTargets = mutableMapOf<String, () -> Unit>()
+    private val focusTargets = mutableMapOf<String, (Boolean) -> Unit>()
     private val cursorToEndCallbacks = mutableMapOf<String, () -> Unit>()
 
     /**
@@ -33,6 +33,16 @@ class BlockFocusRegistry(private val blocks: () -> List<Block>) {
      * @return a function that removes this registration (not a newer one for the same block)
      */
     fun registerFocusTarget(blockId: String, requestFocus: () -> Unit): () -> Unit =
+        focusTargets.register(blockId) { atEnd ->
+            requestFocus()
+            if (atEnd) cursorToEndCallbacks[blockId]?.invoke()
+        }
+
+    /**
+     * Registers a block with several fields (a list): [requestFocus] focuses its last field with
+     * the cursor at the end when asked for the end, else its first field.
+     */
+    fun registerFieldsFocusTarget(blockId: String, requestFocus: (atEnd: Boolean) -> Unit): () -> Unit =
         focusTargets.register(blockId, requestFocus)
 
     /**
@@ -49,17 +59,21 @@ class BlockFocusRegistry(private val blocks: () -> List<Block>) {
     fun focus(blockId: String, cursorToEnd: Boolean = false): Boolean {
         val target = focusTargets[blockId] ?: return false
         try {
-            target()
+            target(cursorToEnd)
         } catch (e: IllegalStateException) {
-            // The FocusRequester is not attached to a focusable node (a list, a saved link).
-            AppLogger.e(TAG, "Focus request failed", e)
+            // The FocusRequester is not attached to a focusable node (a saved link).
+            AppLogger.w(TAG, "Focus request failed: ${e.javaClass.simpleName}")
         }
-        if (cursorToEnd) cursorToEndCallbacks[blockId]?.invoke()
         return true
     }
 
-    /** Carries out [request] as soon as the block's field is composed; gives up after a few frames. */
-    suspend fun focusWhenComposed(request: FocusRequest) {
+    /**
+     * Carries out [request] as soon as the block's field is composed; gives up after a few frames.
+     * A block of a lazy list is only composed on screen: [bringIntoView] scrolls to it first.
+     */
+    suspend fun focusWhenComposed(request: FocusRequest, bringIntoView: suspend (String) -> Unit = {}) {
+        if (focus(request.blockId, request.cursorToEnd)) return
+        bringIntoView(request.blockId)
         repeat(FOCUS_RETRIES) {
             if (focus(request.blockId, request.cursorToEnd)) return
             delay(FOCUS_RETRY_DELAY_MS)
@@ -83,7 +97,7 @@ class BlockFocusRegistry(private val blocks: () -> List<Block>) {
     }
 }
 
-private fun MutableMap<String, () -> Unit>.register(blockId: String, action: () -> Unit): () -> Unit {
+private fun <T : Any> MutableMap<String, T>.register(blockId: String, action: T): () -> Unit {
     this[blockId] = action
     return { if (this[blockId] === action) remove(blockId) }
 }

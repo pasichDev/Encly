@@ -1,33 +1,33 @@
-<p><b>Encly</b> speichert deine Notizen und Aufgaben verschlüsselt auf deinem Handy und nirgendwo sonst. Es gibt kein Konto, keine Cloud-Synchronisierung, keine Analyse und keinen Netzwerkzugriff: Die App fordert nicht einmal die Berechtigung <i>INTERNET</i> an.</p>
+Encly ist eine App für verschlüsselte Notizen: private Notizen und Aufgaben, die dein Handy nie verlassen. Offline-Notizen mit PIN-Sperre, ohne Konto, ohne Cloud, ohne Werbung und ganz ohne Internetberechtigung.
 
-<p><b>Sicherheit</b></p>
-<ul>
-<li>Alle Daten liegen in einer SQLCipher-Datenbank (AES-256) unter einem zufälligen 256-Bit-Schlüssel.</li>
-<li>Eine verpflichtende 6-stellige PIN schützt diesen Schlüssel (PBKDF2-HMAC-SHA256, 600.000 Iterationen, AES-256-GCM). Die PIN selbst wird nie gespeichert.</li>
-<li>Optionales Entsperren per Fingerabdruck oder Gesicht über einen biometrisch gebundenen Android-Keystore-Schlüssel (nur Biometrie der Klasse 3).</li>
-<li>Optionale Wiederherstellungsphrase aus 12 Wörtern (BIP39) als separater Weg, den Schlüssel wiederherzustellen.</li>
-<li>Sobald die App in den Hintergrund geht, wird die Datenbank geschlossen und der Schlüssel aus dem Speicher gelöscht.</li>
-<li>Screenshots, Bildschirmaufnahmen und Vorschauen in den letzten Apps sind blockiert. Android-Cloud-Backup und Geräteübertragung sind deaktiviert.</li>
-<li>Kein Teilen, keine Zwischenablage und keine Benachrichtigung legt Notizinhalte offen.</li>
-</ul>
+Die meisten Notiz-Apps wollen ein Konto und einen Server. Encly hat beides nicht. Deine verschlüsselten Notizen liegen an genau einem Ort: auf deinem Handy.
 
-<p><b>Verschlüsseltes Backup und Wiederherstellung</b></p>
-<ul>
-<li>Exportiere alle Notizen, Aufgaben und Tags jederzeit in eine einzige verschlüsselte Datei (AES-256-GCM).</li>
-<li>Du wählst über die Android-Dateiauswahl, wo die Datei landet: ein Ordner, ein USB-Stick, ein Cloud-Speicher. Encly lädt sie nirgendwohin hoch.</li>
-<li>Die Datei wird mit einem Schlüssel aus deiner 12-Wörter-Wiederherstellungsphrase verschlüsselt, es gibt also kein zusätzliches Backup-Passwort, das du vergessen könntest. Ohne die Wörter ist die Datei nicht lesbar.</li>
-<li>Stelle die Daten bei der Einrichtung auf einem neuen Handy wieder her oder führe ein Backup mit einem bestehenden Tresor zusammen.</li>
-</ul>
+PRIVAT VON ANFANG AN
+• Kein Konto, keine Registrierung, keine Analyse, keine Werbung, keine In-App-Käufe.
+• Wirklich offline: Encly fordert die Berechtigung INTERNET gar nicht an und kann deine Notizen daher nirgendwohin senden.
+• Verschlüsselte Notizen: SQLCipher-Datenbank (AES-256) unter einem zufälligen 256-Bit-Schlüssel.
+• Notizen mit Passwortschutz: eine 6-stellige PIN bei jedem Öffnen, optional Fingerabdruck oder Gesicht (nur starke Biometrie).
+• Sperrt sich selbst: Sobald Encly in den Hintergrund geht, wird die Datenbank geschlossen und der Schlüssel aus dem Speicher gelöscht.
+• Screenshots, Bildschirmaufnahmen und die Vorschau in „Letzte Apps“ sind blockiert. Die Android-Cloudsicherung ist aus.
 
-<p><b>Funktionen</b></p>
-<ul>
-<li>Block-Editor: Text, Überschriften, Zitate, Checklisten und nummerierte Listen, Links, Trennlinien.</li>
-<li>Tags und Aufgaben mit Prioritäten.</li>
-<li>Papierkorb mit Wiederherstellung.</li>
-<li>Helles, dunkles und dynamisches Farbschema sowie mehrere Editor-Schriften, alle in der App enthalten.</li>
-<li>Funktioniert ohne Google Play-Dienste.</li>
-</ul>
+WIEDERHERSTELLUNGSPHRASE UND VERSCHLÜSSELTE BACKUPS
+• Optionale Wiederherstellungsphrase aus 12 Wörtern: PIN vergessen? Die Phrase öffnet deinen Tresor und du legst eine neue PIN fest.
+• Exportiere alle Notizen, Aufgaben und Tags in eine verschlüsselte Datei (AES-256-GCM) und speichere sie, wo du willst: in einem Ordner, auf einem USB-Stick, in deiner eigenen Cloud. Encly lädt sie nie hoch.
+• Auf einem neuen Handy mit denselben 12 Wörtern wiederherstellen oder ein Backup mit einem bestehenden Tresor zusammenführen.
+• Niemand kann deine Notizen für dich wiederherstellen, auch nicht der Entwickler. Bewahre die Wörter auf Papier auf.
 
-<p><b>Sprachen:</b> Englisch, Ukrainisch, Deutsch, Französisch, Spanisch, Italienisch, Polnisch, Portugiesisch und Niederländisch. Encly folgt der Gerätesprache, oder du wählst unter Einstellungen → Sprache eine eigene Sprache nur für Encly.</p>
+EIN SICHERER NOTIZBLOCK, IN DEM MAN GERN SCHREIBT
+• Block-Editor: Text, Überschriften, Zitate, Checklisten, Aufzählungen und nummerierte Listen, Links und Trennlinien.
+• Tags, Suche, Listen- oder Rasteransicht, mehrere Sortierungen.
+• Aufgaben mit Prioritäten, direkt neben deinen Notizen.
+• Papierkorb mit Wiederherstellung.
+• Fünf Designs (Papier, Wald, Ozean, Graphit, Mitternacht), heller, dunkler oder System-Modus, dynamische Farben ab Android 12 und drei Schriftsets, alle in der App enthalten.
 
-<p>Encly ist Open Source (Apache-2.0) und braucht kein Konto. Datenschutzerklärung: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>
+OPEN SOURCE
+• Encly ist Open Source (Apache-2.0): Jeder kann prüfen, was die App tut.
+• Läuft ohne Google Play-Dienste. Android 8.0 oder neuer.
+• 9 Sprachen: Deutsch, Englisch, Ukrainisch, Französisch, Spanisch, Italienisch, Polnisch, Portugiesisch und Niederländisch. Unter Einstellungen → Sprache wählst du eine Sprache nur für Encly.
+
+Encly: verschlüsselte Notizen, die dir gehören.
+
+Datenschutzerklärung: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md

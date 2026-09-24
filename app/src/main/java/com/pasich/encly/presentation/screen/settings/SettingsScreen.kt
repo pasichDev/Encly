@@ -54,6 +54,8 @@ fun SettingsScreen(
             onAppearance = { navController?.navigate(NavRoutes.AppearanceRoute.name) },
             onSecurity = { navController?.navigate(NavRoutes.SecuritySettingsRoute.name) },
             onBackup = { navController?.navigate(NavRoutes.BackupRoute.name) },
+            onAbout = { navController?.navigate(NavRoutes.AboutRoute.name) },
+            onFaq = { navController?.navigate(NavRoutes.FaqRoute.name) },
         ),
     )
 

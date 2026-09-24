@@ -119,14 +119,98 @@ class BlockEditorStateTest {
     }
 
     @Test
-    fun anAddedListIsNotFocusedByTheEditorItFocusesItsOwnItem() {
+    fun anAddedListIsFocusedLikeAnyBlock() = runTest {
         editor.load(listOf(text("a")))
         val list = Block.ListBlock(blockType = BlockType.LIST_NUMBER)
 
         editor.addBlock(list)
 
         assertEquals(list.id, editor.selection.interactedBlockId.value)
-        assertEquals(-1, editor.selection.focusedIndex)
+        assertEquals(FocusRequest(list.id), editor.selection.requests.first())
+    }
+
+    // --- toolbar tools -------------------------------------------------------------------------
+
+    @Test
+    fun aToolTurnsTheParagraphIntoItsTypeKeepingTheText() {
+        editor.load(listOf(text("Before the visit")))
+        editor.selection.onFocused(editor.blocks[0].id)
+
+        editor.applyTool(HEADING_TOOL)
+
+        val heading = editor.blocks.single() as Block.HBlock
+        assertEquals(BlockType.H2, heading.blockType)
+        assertEquals("Before the visit", heading.text.value)
+    }
+
+    @Test
+    fun theActiveToolTurnsTheBlockBackIntoAParagraphAndUndoRestoresIt() {
+        val quote = Block.QuoteBlock(MutableStateFlow("sleep on it"))
+        editor.load(listOf(quote))
+        editor.selection.onFocused(quote.id)
+        assertEquals(BlockType.QUOTE, quote.toolType())
+
+        editor.applyTool(BlockType.QUOTE)
+        assertEquals("sleep on it", (editor.blocks.single() as Block.TextBlock).text.value)
+
+        editor.undo()
+        assertSame(quote, editor.blocks.single())
+    }
+
+    @Test
+    fun aListToolMakesOneItemPerLineAndAParagraphJoinsThemAgain() {
+        editor.load(listOf(text("milk\nbread")))
+        editor.selection.onFocused(editor.blocks[0].id)
+
+        editor.applyTool(BlockType.LIST_CHECK)
+        val list = editor.blocks.single() as Block.ListBlock
+        assertEquals(listOf("milk", "bread"), list.items.value.map { it.value })
+
+        editor.applyTool(BlockType.LIST_CHECK)
+        assertEquals("milk\nbread", (editor.blocks.single() as Block.TextBlock).text.value)
+    }
+
+    @Test
+    fun anExactHeadingLevelChangesTheLevelInsteadOfTurningItBack() {
+        val heading = Block.HBlock(MutableStateFlow("h"), blockType = BlockType.H1)
+        editor.load(listOf(heading))
+        editor.selection.onFocused(heading.id)
+
+        editor.applyTool(BlockType.H3, exact = true)
+
+        assertEquals(BlockType.H3, (editor.blocks.single() as Block.HBlock).blockType)
+    }
+
+    @Test
+    fun aLinkNeverReplacesText() {
+        editor.load(listOf(text("keep me")))
+        editor.selection.onFocused(editor.blocks[0].id)
+
+        editor.applyTool(BlockType.LINK)
+
+        assertEquals("keep me", (editor.blocks[0] as Block.TextBlock).text.value)
+        assertTrue(editor.blocks[1] is Block.LinkBlock)
+    }
+
+    @Test
+    fun aSeparatorIsFollowedByAParagraphToGoOnWriting() = runTest {
+        editor.load(listOf(text("a")))
+        editor.selection.onFocused(editor.blocks[0].id)
+
+        editor.applyTool(BlockType.SEPARATOR)
+
+        assertTrue(editor.blocks[1] is Block.SeparatorBlock)
+        assertTrue(editor.blocks[2] is Block.TextBlock)
+        assertEquals(FocusRequest(editor.blocks[2].id), editor.selection.requests.first())
+    }
+
+    @Test
+    fun theTitlesNextFocusesTheFirstBlockWithAField() = runTest {
+        editor.load(listOf(Block.SeparatorBlock(), text("b")))
+
+        editor.focusFirstBlock()
+
+        assertEquals(FocusRequest(editor.blocks[1].id), editor.selection.requests.first())
     }
 
     @Test

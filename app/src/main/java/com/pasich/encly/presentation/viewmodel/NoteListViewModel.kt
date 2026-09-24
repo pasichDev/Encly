@@ -65,13 +65,14 @@ class NoteListViewModel @Inject constructor(
                 selectedTagHolder.selectedTagFlow.onStart { emit(Tag()) },
                 settingsRepository.getSortNotes,
             ) { tag, sortOption ->
-                NotesQuery(tagId = tag.id, sortOption = sortOption)
+                NotesQuery(tagId = tag.id, tagName = tag.nameTag, sortOption = sortOption)
             }
                 .distinctUntilChanged()
                 .flatMapLatest { query ->
                     _state.update {
                         it.copy(
                             selectedTag = query.tagId,
+                            selectedTagName = query.tagName,
                             noteSortOption = query.sortOption,
                         )
                     }
@@ -129,7 +130,7 @@ class NoteListViewModel @Inject constructor(
         }
     }
 
-    private data class NotesQuery(val tagId: Long, val sortOption: NoteSortOption)
+    private data class NotesQuery(val tagId: Long, val tagName: String, val sortOption: NoteSortOption)
 
     private companion object {
         const val ALL_NOTES_TAG_ID = 0L
@@ -146,8 +147,27 @@ sealed class NoteListEvent {
 
 data class NoteListState(
     val selectedTag: Long = 0,
+    val selectedTagName: String = "",
     val noteSortOption: NoteSortOption = NoteSortOption.UPDATED_DESC,
     val notesLoad: LoadState<List<NoteListItem>> = LoadState.Loading,
 ) {
     val notes: List<NoteListItem> get() = notesLoad.valueOrNull().orEmpty()
+
+    /**
+     * Which empty state the list shows once it loaded with nothing: none while loading, failed
+     * or with notes; "no notes tagged …" while a tag chip filters an otherwise non-empty vault.
+     */
+    val emptyState: NotesEmptyState?
+        get() = when {
+            notesLoad !is LoadState.Ready || notes.isNotEmpty() -> null
+            selectedTag != 0L -> NotesEmptyState.NoneTagged(selectedTagName)
+            else -> NotesEmptyState.NoNotes
+        }
+}
+
+/** The empty notes list: no notes at all, or none with the selected tag. */
+sealed interface NotesEmptyState {
+    data object NoNotes : NotesEmptyState
+
+    data class NoneTagged(val tagName: String) : NotesEmptyState
 }

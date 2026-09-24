@@ -24,9 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Info
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.TriangleAlert
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /** Card styles (design spec §3.3). Hierarchy comes from tonal surfaces, never from shadows. */
@@ -85,7 +82,7 @@ fun EnclyCallout(
     text: String,
     modifier: Modifier = Modifier,
     tone: CalloutTone = CalloutTone.INFO,
-    icon: ImageVector = if (tone == CalloutTone.INFO) Lucide.Info else Lucide.TriangleAlert,
+    icon: ImageVector = if (tone == CalloutTone.INFO) EnclyIcons.Info else EnclyIcons.Alert,
     title: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -140,14 +137,16 @@ fun EnclyChip(
         color = if (selected) colors.primaryContainer else Color.Transparent,
         contentColor = content,
         border = BorderStroke(1.dp, if (selected) colors.primaryContainer else colors.outlineVariant),
-        modifier = modifier
-            .heightIn(min = 36.dp)
-            .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() }),
+        modifier = modifier,
     ) {
+        // The toggle sits inside the Surface so its ripple is clipped to the pill, not a square.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = EnclyTheme.spacing.xs),
+            modifier = Modifier
+                .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
+                .heightIn(min = 36.dp)
+                .padding(horizontal = 14.dp, vertical = EnclyTheme.spacing.xs),
         ) {
             Text(text = label, style = EnclyTheme.typography.chip)
             if (count != null) {

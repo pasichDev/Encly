@@ -337,7 +337,7 @@ class OnboardingViewModelTest {
         assertTrue(vm.state.restoreFileReady)
         assertEquals("encly.enclybak", vm.state.restoreFileName)
 
-        vm.restoreBackup(String(words))
+        vm.restoreBackup(words.copyOf())
         vm.settled()
         assertEquals(OnboardingStep.PIN, vm.state.step)
         assertEquals(StepProgress(1, 2), vm.state.progress)
@@ -360,13 +360,39 @@ class OnboardingViewModelTest {
         vm.startRestore()
         vm.pickBackup()
 
-        vm.restoreBackup(String(MnemonicCode(WordCount.COUNT_12).chars))
+        vm.restoreBackup(MnemonicCode(WordCount.COUNT_12).chars.copyOf())
         vm.settled()
 
         assertEquals(OnboardingStep.RESTORE, vm.state.step)
         assertEquals(UiText.of(R.string.backup_error_wrong_phrase), vm.state.restorePhraseError)
         assertNull(vm.state.restoreFileError)
         verify(security, never()).initializeNewVault(anyChars())
+    }
+
+    @Test
+    fun editingTheWordsClearsTheWrongPhraseError() = runTest {
+        val vm = viewModel()
+        vm.startRestore()
+        vm.pickBackup()
+        vm.restoreBackup(MnemonicCode(WordCount.COUNT_12).chars.copyOf())
+        vm.settled()
+
+        vm.onRestorePhraseEdited()
+
+        assertNull(vm.state.restorePhraseError)
+    }
+
+    @Test
+    fun theWordsAreWipedAfterARestore() = runTest {
+        val vm = viewModel()
+        vm.startRestore()
+        vm.pickBackup()
+        val typed = words.copyOf()
+
+        vm.restoreBackup(typed)
+        vm.settled()
+
+        assertTrue(typed.all { it == 0.toChar() })
     }
 
     @Test
@@ -388,7 +414,7 @@ class OnboardingViewModelTest {
         val vm = viewModel()
         vm.startRestore()
         vm.pickBackup()
-        vm.restoreBackup(String(words))
+        vm.restoreBackup(words.copyOf())
         vm.settled()
 
         vm.back()

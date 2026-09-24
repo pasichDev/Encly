@@ -31,6 +31,7 @@ private data class TaskCardActions(val onClick: () -> Unit, val onComplete: () -
 fun TaskItem(
     task: Task,
     onTaskToggle: (Long, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
     onTaskClick: ((Task) -> Unit)? = null,
     enabled: Boolean = true,
 ) {
@@ -60,7 +61,7 @@ fun TaskItem(
         onComplete = { shouldComplete = true },
         onUndo = { onTaskToggle(task.id, false) },
     )
-    TaskCard(task, state, actions)
+    TaskCard(task, state, actions, modifier)
 }
 
 @Composable
@@ -87,7 +88,7 @@ private fun CompleteTaskAfterAnimation(
 }
 
 @Composable
-private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions) {
+private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions, modifier: Modifier = Modifier) {
     val dateFormat = rememberDateTimeFormat()
     val priority = PriorityValues.getById(task.priority)
     EnclyTaskRow(
@@ -109,7 +110,7 @@ private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions)
         enabled = state.enabled && !state.isRemoving,
         // Completed tasks open too, to read or edit them.
         onClick = actions.onClick,
-        modifier = Modifier.graphicsLayer {
+        modifier = modifier.graphicsLayer {
             alpha = state.animationProgress
             scaleX = state.animationProgress
             scaleY = state.animationProgress

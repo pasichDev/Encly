@@ -1,14 +1,14 @@
 package com.pasich.encly.presentation.editor.blocks
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,24 +22,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.net.toUri
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Plus
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.presentation.designsystem.EnclyCard
-import com.pasich.encly.presentation.designsystem.EnclyCardStyle
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyTextField
+import com.pasich.encly.presentation.designsystem.EnclyToolButton
+import com.pasich.encly.presentation.designsystem.ToolStyle
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
+import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
  * Offline-first link block: stores only the user-entered URL and its host as the title.
@@ -62,17 +65,23 @@ internal fun normalizeLinkUrl(rawUrl: String): String {
     return if (url.isEmpty() || URL_SCHEME.containsMatchIn(url)) url else "https://$url"
 }
 
+/**
+ * A link: its address entry until one is saved (or while [isEditing] it), then the link as
+ * underlined `primary` text; [onClick] opens the link's sheet. The editor focuses a new link's
+ * entry through [modifier]; the entry focuses itself only when "Edit link" reopened it.
+ */
 @Composable
 fun LinkBlock(
     block: Block.LinkBlock,
     blockActions: BlockActions?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
     isLocked: Boolean = false,
     isEditing: Boolean = false,
 ) {
     val urlModel by block.block.collectAsState()
-    // Outlives the saved card, so "Edit link" reopens the entry with the current address.
+    // Outlives the saved link, so "Edit link" reopens the entry with the current address.
     var inputText by remember { mutableStateOf(urlModel.url) }
     LaunchedEffect(urlModel.url, isEditing) {
         if (urlModel.url.isNotBlank()) inputText = urlModel.url
@@ -80,22 +89,23 @@ fun LinkBlock(
 
     // [isEditing]: the saved link stays in the block while its address is edited here, so it
     // is still stored if the user leaves without committing a new one.
-    if (urlModel.url.isBlank() || isEditing) {
+    if ((urlModel.url.isBlank() || isEditing) && !isLocked) {
         LinkUrlField(
             inputText = inputText,
             onInputChange = { inputText = it },
             onCommit = {
-                if (inputText.isNotBlank() && !isLocked) {
+                if (inputText.isNotBlank()) {
                     val link = buildLinkData(inputText)
                     if (blockActions != null) blockActions.onLinkChanged(link) else block.block.value = link
                 }
             },
             onRemoveBlock = { blockActions?.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE) },
             modifier = modifier,
-            isLocked = isLocked,
+            fieldModifier = fieldModifier,
+            autoFocus = isEditing,
         )
-    } else {
-        LinkCard(urlModel = urlModel, onClick = onClick, modifier = modifier)
+    } else if (urlModel.url.isNotBlank()) {
+        LinkText(urlModel = urlModel, onClick = onClick, modifier = modifier)
     }
 }
 
@@ -106,127 +116,72 @@ private fun LinkUrlField(
     onCommit: () -> Unit,
     onRemoveBlock: () -> Unit,
     modifier: Modifier = Modifier,
-    isLocked: Boolean = false,
+    fieldModifier: Modifier = Modifier,
+    autoFocus: Boolean = false,
 ) {
-    val fq = remember { FocusRequester() }
+    val focusRequester = remember { FocusRequester() }
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        EnclyTextField(
+            value = inputText,
+            onValueChange = onInputChange,
+            label = stringResource(R.string.enter_url),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onCommit() }),
+            modifier = Modifier.weight(1f),
+            fieldModifier = fieldModifier
+                .focusRequester(focusRequester)
+                .onKeyEvent {
+                    // Backspace in an empty field removes the block; otherwise it edits the URL.
+                    if (it.key == Key.Backspace && it.type == KeyEventType.KeyDown && inputText.isEmpty()) {
+                        onRemoveBlock()
+                        true
+                    } else {
+                        false
+                    }
+                },
+        )
+        EnclyToolButton(
+            icon = EnclyIcons.Plus,
+            contentDescription = stringResource(R.string.link_add),
+            onClick = if (inputText.isNotBlank()) onCommit else null,
+            style = ToolStyle.FILLED,
+        )
+    }
+    if (autoFocus) {
+        LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
+    }
+}
+
+/** A saved link: its address in `primary`, underlined (design spec §4.4), or why it is broken. */
+@Composable
+private fun LinkText(urlModel: LinkDataBlock, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val fontStyles = rememberFontStyles()
-    OutlinedTextField(
-        value = inputText,
-        enabled = !isLocked,
-        onValueChange = onInputChange,
-        label = {
-            Text(
-                stringResource(R.string.enter_url),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontFamily = fontStyles.families.body,
-                    fontSize = fontStyles.sizes.textBlock,
-                ),
-            )
-        },
-        textStyle = MaterialTheme.typography.bodyMedium.copy(
-            fontFamily = fontStyles.families.body,
-            fontSize = fontStyles.sizes.textBlock,
-        ),
-        singleLine = true,
-        maxLines = 1,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-        ),
-        keyboardActions = KeyboardActions(onDone = { onCommit() }),
-        trailingIcon = {
-            IconButton(onClick = onCommit, enabled = !isLocked) {
-                Icon(imageVector = Lucide.Plus, contentDescription = stringResource(R.string.link_add))
-            }
-        },
-        shape = MaterialTheme.shapes.small,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-            cursorColor = MaterialTheme.colorScheme.primary,
-            focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
-            unfocusedTrailingIconColor = MaterialTheme.colorScheme.primary,
-        ),
+    val style = MaterialTheme.typography.bodyLarge.copy(
+        fontFamily = fontStyles.families.body,
+        fontSize = fontStyles.sizes.textBlock,
+    )
+    Column(
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.textGap, Alignment.CenterVertically),
         modifier = modifier
             .fillMaxWidth()
-            .focusRequester(fq)
-            .onKeyEvent {
-                // Backspace in an empty field removes the block; otherwise it edits the URL.
-                if (it.key == Key.Backspace && inputText.isEmpty()) {
-                    onRemoveBlock()
-                    true
-                } else {
-                    false
-                }
-            },
-    )
-    LaunchedEffect(Unit) {
-        fq.requestFocus()
-    }
-}
-
-/** A saved link: its title (or host) and address; [onClick] opens the link's sheet. */
-@Composable
-private fun LinkCard(urlModel: LinkDataBlock, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    EnclyCard(modifier = modifier, style = EnclyCardStyle.OUTLINED, onClick = onClick) {
-        if (urlModel.isError) LinkErrorContent(urlModel) else LinkContent(urlModel)
-    }
-}
-
-@Composable
-private fun LinkErrorContent(urlModel: LinkDataBlock) {
-    val fontStyles = rememberFontStyles()
-    Column(modifier = Modifier.fillMaxWidth()) {
+            .heightIn(min = EnclyTheme.spacing.textButtonHeight)
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.more_options), onClick = onClick),
+    ) {
         Text(
             text = urlModel.url,
-            style = MaterialTheme.typography.titleSmall.copy(
-                fontFamily = fontStyles.families.body,
-                fontSize = fontStyles.sizes.textBlock,
-            ),
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = stringResource(R.string.falied_content),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontFamily = fontStyles.families.body,
-                fontSize = fontStyles.sizes.textBlock,
-            ),
-            color = MaterialTheme.colorScheme.error,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun LinkContent(urlModel: LinkDataBlock) {
-    val fontStyles = rememberFontStyles()
-    Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
-        val domain = urlModel.url.toUri().host ?: urlModel.url
-
-        Text(
-            text = urlModel.title.takeIf { it.isNotBlank() } ?: domain,
-            style = MaterialTheme.typography.titleSmall.copy(
-                fontFamily = fontStyles.families.heading,
-                fontSize = fontStyles.sizes.textBlock,
-            ),
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-
-        Text(
-            text = urlModel.url,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontFamily = fontStyles.families.body,
-                textDecoration = TextDecoration.Underline,
-            ),
+            style = style.copy(textDecoration = TextDecoration.Underline),
             color = MaterialTheme.colorScheme.primary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
+        if (urlModel.isError) {
+            Text(
+                text = stringResource(R.string.falied_content),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
     }
 }

@@ -33,15 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.NotebookText
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
-import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.dialogs.NoteAction
@@ -49,8 +48,10 @@ import com.pasich.encly.presentation.dialogs.NoteCardBottomSheet
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.ChangeTag
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.NoteToTrash
+import com.pasich.encly.presentation.viewmodel.NoteListState
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
+import com.pasich.encly.presentation.viewmodel.NotesEmptyState
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -97,7 +98,14 @@ fun NotesList(
         onItemClick = onItemClick,
         onItemLongClick = sheet::open,
     )
-    val status: @Composable () -> Unit = { NotesStatus(state.notesLoad, searching, search) }
+    val status: @Composable () -> Unit = {
+        NotesStatus(
+            state = state,
+            searching = searching,
+            search = search,
+            onShowAll = { noteListViewModel.onEvent(NoteListEvent.SelectTag(Tag(id = 0, nameTag = "All"))) },
+        )
+    }
 
     if (isGrid && !searching) {
         NotesGrid(content, gridScrollState, NotesTop(header, status), modifier)
@@ -262,8 +270,9 @@ private fun NotesGrid(
 
 /** The skeleton while notes load, the empty or failed state, or "nothing matches" for a search. */
 @Composable
-private fun NotesStatus(notesLoad: LoadState<List<NoteListItem>>, searching: Boolean, search: NotesSearch) {
+private fun NotesStatus(state: NoteListState, searching: Boolean, search: NotesSearch, onShowAll: () -> Unit) {
     val spacing = EnclyTheme.spacing
+    val notesLoad = state.notesLoad
     when {
         searching -> {
             val resultsAreCurrent = search.results.query == search.query.trim()
@@ -284,7 +293,7 @@ private fun NotesStatus(notesLoad: LoadState<List<NoteListItem>>, searching: Boo
             repeat(SKELETON_CARDS) { NoteSkeleton() }
         }
 
-        else -> NotesEmptyOrFailed(notesLoad)
+        else -> NotesEmptyOrFailed(state, onShowAll)
     }
 }
 
@@ -292,22 +301,40 @@ private fun NotesStatus(notesLoad: LoadState<List<NoteListItem>>, searching: Boo
 private data class StableNoteItem(val item: NoteListItem, val id: Long = item.note.id)
 
 /**
- * "No notes" once loading finished with nothing, or the read error when loading failed. A failed
- * read is never shown as "No notes": the vault must not look emptied.
+ * "No notes yet" once loading finished with nothing, "No notes tagged …" (with Show all) while a
+ * tag chip filters, or the read error when loading failed. A failed read is never shown as
+ * "No notes": the vault must not look emptied.
  */
 @Composable
-private fun NotesEmptyOrFailed(notesLoad: LoadState<List<NoteListItem>>) {
-    val failure = (notesLoad as? LoadState.Failed)?.error
+private fun NotesEmptyOrFailed(state: NoteListState, onShowAll: () -> Unit) {
+    val failure = (state.notesLoad as? LoadState.Failed)?.error
+    val empty = state.emptyState
     AnimatedVisibility(
-        visible = failure != null || notesLoad.valueOrNull()?.isEmpty() == true,
+        visible = failure != null || empty != null,
         enter = fadeIn(animationSpec = tween(durationMillis = FADE_MS)),
         exit = fadeOut(animationSpec = tween(durationMillis = FADE_MS)),
     ) {
-        EnclyEmptyState(
-            icon = Lucide.NotebookText,
-            title = failure?.title?.asString() ?: stringResource(R.string.empty_notes),
-            body = failure?.message?.asString() ?: stringResource(R.string.empty_notes_desc),
-            error = failure != null,
-        )
+        when {
+            failure != null -> EnclyEmptyState(
+                icon = EnclyIcons.Paper,
+                title = failure.title.asString(),
+                body = failure.message.asString(),
+                error = true,
+            )
+
+            empty is NotesEmptyState.NoneTagged -> EnclyEmptyState(
+                icon = EnclyIcons.Tag,
+                title = stringResource(R.string.empty_notes_tagged, empty.tagName),
+                body = stringResource(R.string.empty_notes_tagged_desc),
+                actionLabel = stringResource(R.string.show_all_notes),
+                onAction = onShowAll,
+            )
+
+            else -> EnclyEmptyState(
+                icon = EnclyIcons.Paper,
+                title = stringResource(R.string.empty_notes),
+                body = stringResource(R.string.empty_notes_desc),
+            )
+        }
     }
 }

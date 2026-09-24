@@ -66,10 +66,10 @@ class LockViewModel @Inject constructor(
         }
     }
 
-    fun authenticateSeed(phrase: String, onResult: (SeedUnlockResult) -> Unit) {
+    /** Unlocks with the recovery words (lower case, single spaces); [chars] is wiped afterwards. */
+    fun authenticateSeed(chars: CharArray, onResult: (SeedUnlockResult) -> Unit) {
         viewModelScope.launch {
             _busy.value = true
-            val chars = phrase.trim().toCharArray()
             val result = withContext(Dispatchers.Default) {
                 try {
                     when (securityManager.unlockWithSeed(chars)) {

@@ -24,10 +24,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.ListChecks
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Tag
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -89,7 +85,7 @@ fun EnclyNoteCard(
                     )
                     if (selected) {
                         Icon(
-                            Lucide.CircleCheck,
+                            EnclyIcons.CheckCircle,
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
@@ -122,12 +118,12 @@ private fun NoteMetaLine(meta: NoteCardMeta) {
             .fillMaxWidth()
             .padding(top = EnclyTheme.spacing.xxs),
     ) {
-        meta.tag?.let { MetaItem(icon = Lucide.Tag, text = it, color = muted) }
+        meta.tag?.let { MetaItem(icon = EnclyIcons.Tag, text = it, color = muted) }
         meta.date?.let { Text(text = it, style = style, color = muted, maxLines = 1) }
         Spacer(modifier = Modifier.weight(1f))
         meta.progress?.let {
             MetaItem(
-                icon = Lucide.ListChecks,
+                icon = EnclyIcons.Checklist,
                 text = it,
                 color = MaterialTheme.colorScheme.primary,
                 weight = FontWeight.SemiBold,

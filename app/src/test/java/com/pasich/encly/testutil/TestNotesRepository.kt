@@ -6,7 +6,6 @@ import com.pasich.encly.domain.repository.NotesRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 
 internal class TestNotesRepository : NotesRepository {
     val allNotesWithTags = MutableStateFlow<List<NoteWithTag>>(emptyList())
@@ -55,7 +54,9 @@ internal class TestNotesRepository : NotesRepository {
         return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
     }
 
-    override fun getTrashNotes(): Flow<List<Note>> = flowOf(emptyList())
+    val trashNotes = MutableStateFlow<List<Note>>(emptyList())
+
+    override fun getTrashNotes(): Flow<List<Note>> = trashNotes
 
     /** Every id passed to [deleteNoteById], in call order. */
     val deletedIds = mutableListOf<Long>()

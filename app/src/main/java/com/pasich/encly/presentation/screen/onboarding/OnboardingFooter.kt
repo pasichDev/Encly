@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.screen.onboarding
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,27 +13,15 @@ import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import com.pasich.encly.ui.theme.EnclyTheme
 
-private const val RECOVERY_WORD_COUNT = 12
-
-/** The footer of one step: the primary action and an optional text action under it. */
-internal class FooterSpec(
-    @param:StringRes val primary: Int,
-    val onPrimary: () -> Unit,
-    val enabled: Boolean = true,
-    val loading: Boolean = false,
-    @param:StringRes val secondary: Int? = null,
-    val onSecondary: () -> Unit = {},
-    val secondaryMuted: Boolean = false,
-)
-
 internal fun footerSpec(
     state: OnboardingUiState,
     actions: OnboardingActions,
-    restorePhrase: String,
+    restorePhrase: RecoveryPhraseState,
     finishing: Boolean,
 ): FooterSpec {
     val busy = state.isLoading
@@ -76,7 +63,7 @@ internal fun footerSpec(
         OnboardingStep.RESTORE -> FooterSpec(
             R.string.restore,
             actions.onRestore,
-            state.restoreFileReady && wordCount(restorePhrase) == RECOVERY_WORD_COUNT,
+            state.restoreFileReady && restorePhrase.canSubmit,
             busy,
         )
     }
@@ -119,5 +106,3 @@ internal fun OnboardingFooter(spec: FooterSpec, modifier: Modifier = Modifier) {
         }
     }
 }
-
-private fun wordCount(phrase: String): Int = phrase.split(' ', '\n', '\t').count { it.isNotBlank() }

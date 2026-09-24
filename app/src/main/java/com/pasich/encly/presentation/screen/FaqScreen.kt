@@ -31,6 +31,9 @@ private val faqSections = listOf(
         listOf(
             R.string.faq_new_note_q to R.string.faq_new_note_a,
             R.string.faq_saving_q to R.string.faq_saving_a,
+            R.string.faq_note_actions_q to R.string.faq_note_actions_a,
+            R.string.faq_lock_note_q to R.string.faq_lock_note_a,
+            R.string.faq_trash_q to R.string.faq_trash_a,
             R.string.faq_tags_q to R.string.faq_tags_a,
             R.string.faq_tasks_q to R.string.faq_tasks_a,
         ),
@@ -39,6 +42,7 @@ private val faqSections = listOf(
         R.string.faq_section_security,
         listOf(
             R.string.faq_storage_q to R.string.faq_storage_a,
+            R.string.faq_backup_q to R.string.faq_backup_a,
             R.string.faq_db_key_q to R.string.faq_db_key_a,
             R.string.faq_recovery_phrase_q to R.string.faq_recovery_phrase_a,
             R.string.faq_forgot_pin_q to R.string.faq_forgot_pin_a,

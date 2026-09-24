@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Saisissez ou collez vos 12 mots</string>
+    <string name="recovery_word_cell">Mot %1$d sur %2$d</string>
+    <string name="recovery_word_unknown">Le mot %1$d ne fait pas partie des mots de récupération. Vérifiez l\'orthographe.</string>
+    <string name="recovery_phrase_checksum">Ces 12 mots ne forment pas une phrase de récupération valide. Vérifiez chaque mot et leur ordre.</string>
+    <string name="backup_phrase_exists">Ce coffre-fort a déjà une phrase de récupération</string>
+    <string name="backup_import_mode_title">Ajouter à vos notes ou les remplacer ?</string>
+    <string name="backup_import_summary">Cette sauvegarde contient %1$s, %2$s et %3$s.</string>
+    <string name="backup_merge_row_desc">Tout ce qui est ici est conservé et ce qui manque est ajouté. Les éléments déjà présents sont ignorés.</string>
+    <string name="backup_replace_all">Tout remplacer</string>
+    <string name="backup_replace_row_desc">Supprimer toutes les notes, tâches et étiquettes de ce téléphone, puis restaurer la sauvegarde.</string>
+    <string name="backup_intro_short">Conservez toutes vos notes, tâches et étiquettes dans un fichier chiffré et restaurez-les sur n\'importe quel téléphone.</string>
+    <string name="backup_section_export">Exporter</string>
+    <string name="backup_section_import">Importer</string>
+    <string name="security_encryption_pin_plain">Vos notes sont chiffrées. Votre code PIN (et votre empreinte, si elle est activée) les déverrouille.</string>
+    <string name="security_encryption_seed_plain">Vos notes sont chiffrées. Votre code PIN (et votre empreinte, si elle est activée) les déverrouille, et votre phrase de récupération si vous oubliez le PIN.</string>
+    <string name="security_recovery_set_desc">Déverrouille vos notes si vous oubliez le PIN et ouvre vos sauvegardes.</string>
+    <string name="security_recovery_status_set">Configurée</string>
+    <string name="vault_reset_restore_hint">Après la réinitialisation, vous pourrez restaurer un fichier de sauvegarde avec ses 12 mots.</string>
+    <string name="pin_change_bar_title">Changer le code PIN</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d note</item>
+        <item quantity="many">%d de notes</item>
+        <item quantity="other">%d notes</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d tâche</item>
+        <item quantity="many">%d de tâches</item>
+        <item quantity="other">%d tâches</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d étiquette</item>
+        <item quantity="many">%d d\'étiquettes</item>
+        <item quantity="other">%d étiquettes</item>
+    </plurals>
+</resources>

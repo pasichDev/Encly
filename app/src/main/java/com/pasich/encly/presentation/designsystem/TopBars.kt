@@ -13,20 +13,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.ArrowLeft
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -37,17 +40,79 @@ private const val PROGRESS_ANIMATION_MS = 250
 fun EnclyBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(
-            Lucide.ArrowLeft,
+            EnclyIcons.Back,
             contentDescription = stringResource(R.string.back),
             tint = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
+/** A close (×) icon button: leaves a mode (a selection) rather than the screen. */
+@Composable
+fun EnclyCloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onClick, modifier = modifier) {
+        Icon(
+            EnclyIcons.Close,
+            contentDescription = stringResource(R.string.close),
+            tint = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+/** One entry of an [EnclyOverflowMenu]; [destructive] shows it in `error`. */
+class OverflowAction(val text: String, val onClick: () -> Unit, val destructive: Boolean = false)
+
+/**
+ * The "More options" button of a bar and its menu (`surfaceContainerHigh`, radius 12, labelLarge
+ * items). Nothing is drawn without [items].
+ */
+@Composable
+fun EnclyOverflowMenu(items: List<OverflowAction>, modifier: Modifier = Modifier) {
+    if (items.isEmpty()) return
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                EnclyIcons.More,
+                contentDescription = stringResource(R.string.more_options),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = MaterialTheme.shapes.small,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 0.dp,
+        ) {
+            items.forEach { item ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = item.text,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (item.destructive) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        item.onClick()
+                    },
+                )
+            }
+        }
+    }
+}
+
 /**
  * The top bar (design spec §3.3), 64 dp. With [onBack] it is a sub-screen bar (back, title at
  * 26 sp); without it, a root bar where [navigation] (e.g. the menu button) leads and the title is
- * headlineSmall. [actions] sit at the end.
+ * headlineSmall. [actions] sit at the end. [onClose] replaces back with a close button, for a
+ * mode such as a selection, and keeps the sub-screen title.
  */
 @Composable
 fun EnclyTopBar(
@@ -55,6 +120,7 @@ fun EnclyTopBar(
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     navigation: @Composable (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val headline = MaterialTheme.typography.headlineSmall
@@ -67,12 +133,13 @@ fun EnclyTopBar(
             .padding(horizontal = EnclyTheme.spacing.xs),
     ) {
         when {
+            onClose != null -> EnclyCloseButton(onClick = onClose)
             onBack != null -> EnclyBackButton(onClick = onBack)
             navigation != null -> navigation()
         }
         Text(
             text = title,
-            style = if (onBack != null) headline.copy(fontSize = 26.sp) else headline,
+            style = if (onBack != null || onClose != null) headline.copy(fontSize = 26.sp) else headline,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

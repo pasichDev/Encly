@@ -10,10 +10,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
+import com.pasich.encly.BuildConfig
 import com.pasich.encly.presentation.effects.animationScreens
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
+import com.pasich.encly.presentation.screen.LicensesScreen
 import com.pasich.encly.presentation.screen.LockScreen
 import com.pasich.encly.presentation.screen.LossReason
 import com.pasich.encly.presentation.screen.LossRecoveryScreen
@@ -56,22 +58,33 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
             )
         }
 
-        animationScreens(NavRoutes.SupportRoute.name) {
-            SupportScreen(
-                navController,
-            )
+        // Donations are an F-Droid build feature; the Play build has no route to them.
+        if (BuildConfig.DONATIONS_ENABLED) {
+            animationScreens(NavRoutes.SupportRoute.name) {
+                SupportScreen(navController)
+            }
         }
 
-        animationScreens(NavRoutes.TasksRoute.name) {
-            TasksScreen(
-                navController,
-            )
+        animationScreens(
+            route = "${NavRoutes.TasksRoute.name}?$TASKS_ADD_ARG={$TASKS_ADD_ARG}",
+            arguments = listOf(
+                navArgument(TASKS_ADD_ARG) {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) { entry ->
+            TasksScreen(navController, openNewTask = entry.arguments?.getBoolean(TASKS_ADD_ARG) == true)
         }
 
         animationScreens(NavRoutes.AboutRoute.name) {
             AboutScreen(
                 navController,
             )
+        }
+
+        animationScreens(NavRoutes.LicensesRoute.name) {
+            LicensesScreen(navController)
         }
 
         animationScreens(NavRoutes.FaqRoute.name) {

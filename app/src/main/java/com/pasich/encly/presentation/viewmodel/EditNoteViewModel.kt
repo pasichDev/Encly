@@ -23,8 +23,10 @@ import com.pasich.encly.presentation.editor.state.BlockEditorState
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.editor.state.FocusRequest
 import com.pasich.encly.presentation.editor.state.addBlockToEnd
+import com.pasich.encly.presentation.editor.state.applyTool
 import com.pasich.encly.presentation.editor.state.canMoveInteracted
 import com.pasich.encly.presentation.editor.state.canRemoveInteracted
+import com.pasich.encly.presentation.editor.state.focusFirstBlock
 import com.pasich.encly.presentation.editor.state.interactedBlockPosition
 import com.pasich.encly.presentation.editor.state.moveInteracted
 import com.pasich.encly.presentation.editor.state.removeInteracted
@@ -35,6 +37,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -51,7 +55,7 @@ class EditNoteViewModel
 @Inject
 constructor(
     notesRepository: NotesRepository,
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val settingsRepository: SettingsRepository,
     @ApplicationScope private val appScope: CoroutineScope,
@@ -65,6 +69,9 @@ constructor(
     val isReadTrashOnly: Boolean =
         savedStateHandle["isReadTrashOnly"] as? Boolean == true // Flag for reading a note only from the trash
     internal val addTag: Long = savedStateHandle["addTag"] ?: 0
+
+    /** A note being written from scratch (not opened, not a copy): the editor focuses its title. */
+    val isNewNote: Boolean get() = noteId == -1L && copySource == -1L
 
     private val editor = BlockEditorState()
 
@@ -140,6 +147,20 @@ constructor(
             addTag != 0L -> persistence.updateNote { it.copy(tagId = addTag) }
         }
         persistence.startAutosave(viewModelScope, editor.contentChanges)
+        rememberStoredId()
+    }
+
+    // A new note (or copy) gets its id on its first save. Kept as the screen's argument, so a
+    // screen restored after process death opens that note instead of a blank one.
+    private fun rememberStoredId() {
+        viewModelScope.launch {
+            persistence.state.map { it.note.id }.distinctUntilChanged().collect { id ->
+                if (id > 0L && id != noteId) {
+                    savedStateHandle["idNote"] = id
+                    savedStateHandle["copySource"] = -1L
+                }
+            }
+        }
     }
 
     private fun loadNote(id: Long, isCopy: Boolean) {
@@ -186,6 +207,12 @@ constructor(
     /** Inserts a copy of the note, titled by [NoteCopyTitle]; returns its id, or -1 on failure. */
     suspend fun noteDuplicate(): Long = persistence.duplicate()
 
+    /** Whether the note is a new one with nothing in it yet: nothing to copy, save or discard. */
+    val isBlankDraft: Boolean get() = persistence.isBlankDraft
+
+    /** Whether discarding would undo anything (see [NotePersistence.hasChanges]). */
+    suspend fun hasChanges(): Boolean = persistence.hasChanges()
+
     /** Deletes the note from the database for good. */
     suspend fun noteDelete(): Boolean = persistence.delete()
 
@@ -198,7 +225,8 @@ constructor(
      * change, by the autosave or the save on leaving, together with the editor's content.
      */
     fun updateTagNote(tagId: Long) {
-        persistence.updateNote { it.copy(tagId = tagId) }
+        // "No tag" (0) is stored as null, its only representation.
+        persistence.updateNote { it.copy(tagId = tagId.takeIf { id -> id > 0L }) }
     }
 
     fun updateFontSize(size: Int) {
@@ -286,6 +314,19 @@ constructor(
         if (!canEdit()) return
         _editingLinkIds.update { it + block.id }
         editor.selection.onInteraction(block.id)
+    }
+
+    /**
+     * Applies toolbar [tool] to the block the user works on (see applyTool); [exact] for a
+     * specific heading level.
+     */
+    fun applyTool(tool: BlockType, exact: Boolean = false) {
+        if (canEdit()) editor.applyTool(tool, exact)
+    }
+
+    /** The title's "Next": the first block takes focus. */
+    fun focusFirstBlock() {
+        if (canEdit()) editor.focusFirstBlock()
     }
 
     fun undo() {

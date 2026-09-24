@@ -72,7 +72,6 @@
 
     <string name="cancel">Cancel</string>
 
-    <string name="checked_count">Checked: %d</string>
 
     <string name="clean_permanent_message">Do you really want to delete these notes permanently? This can\'t be undone.</string>
     <string name="clean_trash_message">Do you really want to empty the trash permanently? This can\'t be undone.</string>
@@ -101,7 +100,6 @@
     <string name="dialog_title">Delete note?</string>
 
     <string name="donation_description">Your support helps us add new features, fix bugs and improve the app. Any amount is greatly appreciated!</string>
-    <string name="donation_subtitle">Help make the app even better</string>
     <string name="donation_title">Support development</string>
 
     <string name="done">Done</string>
@@ -111,14 +109,12 @@
     <string name="dynamic_color">Dynamic color</string>
 
     <string name="edit">Edit</string>
-    <string name="edit_tags">Edit tags</string>
 
     <string name="editor_lock">Lock editing</string>
-    <string name="editor_unlock">Unlock editing</string>
 
-    <string name="empty_notes">No notes</string>
-    <string name="empty_notes_desc">Create your first note by tapping the Add button.</string>
-    <string name="empty_trash_desc">The trash is empty</string>
+    <string name="empty_notes">No notes yet</string>
+    <string name="empty_notes_desc">Tap New note to write your first one.</string>
+    <string name="empty_trash_desc">Deleted notes wait here until you restore them or delete them for good.</string>
 
     <string name="enter_url">Enter a link</string>
 
@@ -136,17 +132,17 @@
     <string name="faq_change_pin_q">How do I change my PIN?</string>
     <string name="faq_db_key_a">Encly creates a random 256-bit database key. Your PIN protects a separate AES-GCM unlock slot, and biometrics use an auth-per-use Android Keystore key.</string>
     <string name="faq_db_key_q">How is the database key protected?</string>
-    <string name="faq_forgot_pin_a">If you created a recovery phrase, you can use it on the lock screen to recover access and then set a new PIN. Without a recovery slot, losing the only available key means losing the vault.</string>
+    <string name="faq_forgot_pin_a">On the lock screen, tap \"Recover access\", enter your 12 words and set a new PIN. Without a recovery phrase there is no other way in: nobody, not even the developer, can reset it.</string>
     <string name="faq_forgot_pin_q">What if I forget my PIN?</string>
     <string name="faq_language_a">Open Settings → Language and pick one of the available languages, or \"System default\" to follow your device. The change applies right away.</string>
     <string name="faq_language_q">How do I change the language?</string>
-    <string name="faq_new_note_a">Tap the \"+\" button on the home screen. In the editor you can use text, headings, quotes, lists, separators and links.</string>
+    <string name="faq_new_note_a">Tap \"New note\" on the home screen. The toolbar above the keyboard adds headings, checklists, bulleted and numbered lists, quotes, links and separators.</string>
     <string name="faq_new_note_q">How do I create a new note?</string>
-    <string name="faq_recovery_phrase_a">A recovery phrase is only created in user-managed mode and is a separate way to recover the vault key. Keep it offline. Everyday unlocking uses your PIN or biometrics.</string>
+    <string name="faq_recovery_phrase_a">It is a spare key of 12 words. It unlocks the vault if you forget your PIN, and it is the only key to your backup files. You create it during setup, or later in Settings → Security if you skipped it. Keep it on paper, offline.</string>
     <string name="faq_recovery_phrase_q">What is the recovery phrase for?</string>
     <string name="faq_report_bug_a">Open \"About\" and use the feedback option, or write to the developer. Never include your recovery phrase, PIN or private note text in a bug report.</string>
     <string name="faq_report_bug_q">How do I report a bug?</string>
-    <string name="faq_saving_a">Encly saves your changes locally and automatically. The \"Done\" button and leaving the editor also finish writing before you return to the list.</string>
+    <string name="faq_saving_a">Automatically, as you type, and leaving the editor finishes the last save. If a save ever fails, the editor shows \"Not saved\" in red.</string>
     <string name="faq_saving_q">How are changes saved?</string>
     <string name="faq_screen_description">Notes, tasks, local encryption and access recovery, with no cloud sync.</string>
     <string name="faq_screen_subtitle">Answers to the most common questions</string>
@@ -158,11 +154,11 @@
     <string name="faq_section_troubleshooting">Troubleshooting</string>
     <string name="faq_storage_a">Notes, tags and tasks are stored only in Encly\'s local SQLCipher database. There is no cloud sync and no automatic backup: you can export an encrypted backup yourself in Settings → Backup.</string>
     <string name="faq_storage_q">Where is my data stored?</string>
-    <string name="faq_tags_a">Tags help you group notes. You can create, rename, hide and delete them, and use them as a filter on the home screen.</string>
+    <string name="faq_tags_a">Tags group your notes. You can create, rename, hide and delete them, drag them into any order, and filter the home screen by tag.</string>
     <string name="faq_tags_q">How do tags work?</string>
     <string name="faq_tasks_a">Tasks have a description and a priority. You can filter them by priority and mark them as done. Encly never puts task text into system notifications.</string>
     <string name="faq_tasks_q">What can tasks do?</string>
-    <string name="faq_theme_a">In Settings → Appearance you can choose one of five themes, the mode (system, light or dark) and the font, and on Android 12 and later, dynamic color.</string>
+    <string name="faq_theme_a">In Settings → Appearance choose one of five themes, light, dark or system mode, one of three font styles and the text size. On Android 12 and later you can also take the accent color from your wallpaper.</string>
     <string name="faq_theme_q">How do I change the theme?</string>
     <string name="faq_vault_damaged_a">Encly deliberately never creates an empty database over a lost or unreadable vault. Don\'t confirm the full wipe if you still need your local data.</string>
     <string name="faq_vault_damaged_q">Encly says the vault is damaged</string>
@@ -180,7 +176,6 @@
 
     <string name="list_item_placeholder">List item</string>
 
-    <string name="loading">Loading…</string>
 
     <string name="lock_back_to_pin">Back to PIN</string>
     <string name="lock_recover_access">Recover access</string>
@@ -209,7 +204,6 @@
 
     <string name="more_options">More options</string>
 
-    <string name="new_page">New page</string>
 
     <string name="no_tag">No tag</string>
 
@@ -256,18 +250,13 @@
     <string name="priority_select_title">Choose a priority</string>
 
     <string name="quote">Quote</string>
-
-    <string name="recovery_phrase_label">Recovery phrase</string>
-
     <string name="redo">Redo</string>
 
     <string name="restore">Restore</string>
 
     <string name="save">Save</string>
 
-    <string name="saved">Saved</string>
 
-    <string name="saving">Saving…</string>
 
 
     <string name="search_clear">Clear search</string>
@@ -277,11 +266,8 @@
     <string name="security_biometric_unavailable">Not available on this device</string>
     <string name="security_biometric_not_enrolled">No fingerprint enrolled. Add one in system settings.</string>
     <string name="security_encryption_active">Encryption is on</string>
-    <string name="security_encryption_pin_desc">Your random database key is protected by your PIN and, optionally, by a biometric Keystore slot.</string>
-    <string name="security_encryption_seed_desc">Your random database key has a separate recovery slot protected by your recovery phrase.</string>
     <string name="security_info_body">• SQLCipher is opened with a random 256-bit key\n• The PIN and the recovery phrase have separate AES-GCM unlock slots\n• Biometrics use an auth-per-use Android Keystore key</string>
     <string name="security_info_title">ℹ️ Security information</string>
-    <string name="security_recovery_set">Set up. It unlocks the vault if you forget your PIN and protects your backups.</string>
     <string name="security_recovery_missing">Not set up. Without it, a forgotten PIN means losing everything. Tap to create one.</string>
     <string name="security_erase_title">Erase all data</string>
     <string name="security_erase_desc">Delete every note, task and tag and the encryption keys on this device</string>
@@ -310,28 +296,19 @@
     <string name="sort_updated_asc_short">Edited ↑</string>
     <string name="sort_updated_desc">By last edited (newest first)</string>
     <string name="sort_updated_desc_short">Edited ↓</string>
-
-    <string name="support_external_services">Support us through other services</string>
-    <string name="support_kofi_desc">Quick and easy support for development.</string>
-    <string name="support_options_title">Ways to support</string>
     <string name="support_title">Support the developer</string>
-    <string name="support_why_desc">• New features\n• Bug fixes\n• Security review and testing\n• Design improvements\n• Growing the project</string>
-    <string name="support_why_title">Why does your support matter?</string>
 
     <string name="tag_create_failed">Couldn\'t save the tag. Please try again.</string>
     <string name="tag_delete_failed">Couldn\'t delete the tag. Please try again.</string>
     <string name="tag_edit">Edit tag</string>
     <string name="tag_hidden">Hidden tag</string>
     <string name="tag_name_taken">A tag with this name already exists</string>
-    <string name="tag_hide">Hide tag</string>
     <string name="tag_reorder_failed">Couldn\'t save the tag order. Please try again.</string>
-    <string name="tag_show">Show tag</string>
     <string name="tag_update_failed">Couldn\'t update the tag. Please try again.</string>
 
     <string name="tap_again_to_delete">Tap again to delete</string>
 
-    <string name="task_add">Add task</string>
-    <string name="task_clear_all_completed">Clear all completed tasks</string>
+    <string name="task_add">New task</string>
     <string name="task_clear_completed_failed">Couldn\'t clear completed tasks. Please try again.</string>
     <string name="task_clear_completed_message">Do you really want to delete all completed tasks? This can\'t be undone.</string>
     <string name="task_clear_completed_title">Clear completed tasks</string>
@@ -340,7 +317,6 @@
     <string name="task_description_placeholder">Description</string>
     <string name="task_edit_placeholder">Edit task</string>
     <string name="task_empty_active">No active tasks.</string>
-    <string name="task_empty_completed">No completed tasks.</string>
     <string name="task_empty_filtered">No tasks match the selected filters.</string>
     <string name="task_filter_all">All tasks</string>
     <string name="task_filter_completed">Completed</string>
@@ -394,8 +370,6 @@
     <string name="backup_create_phrase">Create recovery phrase</string>
     <string name="backup_phrase_write_down">Write these 12 words down on paper, in order, and keep them offline. Anyone who has them can open your backups.</string>
     <string name="backup_phrase_written">I wrote them down</string>
-    <string name="backup_phrase_check_title">Check your recovery phrase</string>
-    <string name="backup_phrase_check_word">Word #%1$d</string>
     <string name="backup_phrase_check_wrong">These words don\'t match. Check what you wrote down.</string>
     <string name="backup_phrase_added">Recovery phrase saved</string>
     <string name="backup_confirm_phrase_title">Confirm your recovery phrase</string>
@@ -404,11 +378,8 @@
     <string name="backup_enter_phrase_body">Enter the 12 words of the recovery phrase this backup was made with.</string>
     <string name="backup_decrypt">Decrypt</string>
     <string name="backup_import_choose">Import backup</string>
-    <string name="backup_import_contents">This backup contains notes: %1$d, tasks: %2$d, tags: %3$d.</string>
     <string name="backup_merge">Merge</string>
-    <string name="backup_merge_desc">Merge: keep your data and add what is missing. Items already in this vault are skipped.</string>
     <string name="backup_replace">Replace</string>
-    <string name="backup_replace_desc">Replace: delete all notes, tasks and tags in this vault, then restore the backup.</string>
     <string name="backup_replace_confirm_title">Replace all data?</string>
     <string name="backup_replace_confirm_body">Every note, task and tag in this vault will be deleted and replaced with the backup. This can\'t be undone.</string>
     <string name="backup_import_done">Imported: notes %1$d, tasks %2$d, tags %3$d. Skipped (already here): %4$d.</string>
@@ -528,9 +499,7 @@
     <string name="onboarding_restore_file_section">1 · Backup file</string>
     <string name="onboarding_restore_tap_other">Tap to choose another file</string>
     <string name="onboarding_restore_phrase_section">2 · Recovery phrase</string>
-    <string name="onboarding_restore_phrase_label">12 words, separated by spaces</string>
     <string name="onboarding_restore_phrase_helper">These words also become this phone\'s recovery phrase.</string>
-    <string name="onboarding_restore_phrase_placeholder" translatable="false">orbit cactus velvet …</string>
     <string name="notes_title">Notes</string>
     <string name="lock_now">Lock now</string>
     <string name="search_placeholder">Search titles and text</string>
@@ -542,4 +511,62 @@
         <item quantity="one">Tasks · %d open</item>
         <item quantity="other">Tasks · %d open</item>
     </plurals>
+    <string name="home_tasks_none_open">Tasks · none open</string>
+    <string name="task_empty_title">No tasks yet</string>
+    <string name="task_empty_desc">Tap New task to add your first one.</string>
+    <string name="task_all_done_title">All done</string>
+    <string name="task_done_section">Done · %1$d</string>
+    <string name="empty_notes_tagged">No notes tagged “%1$s”</string>
+    <string name="empty_notes_tagged_desc">Notes you give this tag show up here.</string>
+    <string name="show_all_notes">Show all notes</string>
+    <string name="empty_trash_title">Trash is empty</string>
+    <string name="trash_hint">Tap a note to read it. Long-press to select.</string>
+    <string name="delete_forever">Delete forever</string>
+    <string name="empty_trash_action">Empty trash</string>
+    <string name="search_notes">Search notes</string>
+    <string name="settings_notes_and_tasks">Notes and tasks</string>
+    <string name="settings_about_desc">Version, privacy policy and contact</string>
+    <string name="settings_faq_desc">Answers to common questions</string>
+    <string name="licenses_title">Open-source licenses</string>
+    <string name="licenses_row_desc">The libraries and fonts Encly uses</string>
+    <string name="licenses_heading">Built on open source</string>
+    <string name="licenses_intro">Encly is made with these libraries and fonts. Tap one to read its license.</string>
+    <string name="licenses_libraries">Libraries</string>
+    <string name="licenses_fonts">Fonts</string>
+    <string name="tags_empty_title">No tags yet</string>
+    <string name="tags_empty_desc">Tags group your notes. Create one above, then pick it for a note from its long-press menu.</string>
+    <string name="tags_hint">Tap a tag to rename, hide or delete it. Drag the handle to reorder.</string>
+    <string name="tag_add">Add tag</string>
+    <string name="tag_name_label">Name</string>
+    <string name="tag_show_in_list">Show in the notes list</string>
+    <string name="tag_show_in_list_desc">A hidden tag keeps its notes but gets no filter chip</string>
+    <string name="tag_drag_handle">Drag to reorder</string>
+    <string name="tag_move_up">Move up</string>
+    <string name="tag_move_down">Move down</string>
+    <plurals name="trash_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="edit_tags">Edit tags</string>
+    <string name="note_title_placeholder">Title</string>
+    <string name="note_not_saved">Not saved</string>
+    <string name="tags_manage">Manage tags</string>
+    <string name="note_discard_confirm_title">Discard changes?</string>
+    <string name="note_discard_confirm_message">Everything you changed since you opened this note will be lost. This can\'t be undone.</string>
+    <string name="support_fact_free_title">Everything is already yours</string>
+    <string name="support_fact_free_desc">Every feature is in the app for everyone. Nothing is locked behind a payment.</string>
+    <string name="support_fact_private_title">No ads, no tracking</string>
+    <string name="support_fact_private_desc">Encly never sees your notes and earns nothing from data. Support is how it pays for itself.</string>
+    <string name="support_fact_uses_title">Where it goes</string>
+    <string name="support_fact_uses_desc">New features, security review and testing, design and fixes.</string>
+    <string name="support_kofi_button">Support on Ko-fi</string>
+    <string name="support_kofi_note">Opens ko-fi.com in your browser. Any amount helps.</string>
+    <string name="faq_note_actions_q">What does a long press on a note do?</string>
+    <string name="faq_note_actions_a">It opens the note\'s actions: change its tag, add a short description shown on the card, duplicate the note or move it to the trash.</string>
+    <string name="faq_trash_q">How do I get a deleted note back?</string>
+    <string name="faq_trash_a">Deleted notes go to Trash in the menu. There you can restore a note or delete it forever. Encly never empties the trash on its own.</string>
+    <string name="faq_lock_note_q">What does \"Lock editing\" do?</string>
+    <string name="faq_lock_note_a">It makes a note read-only so it can\'t be changed by accident. You can still select and copy the text. Turn it on or off from the editor\'s menu.</string>
+    <string name="faq_backup_q">How do backups work?</string>
+    <string name="faq_backup_a">In Settings → Backup you export one encrypted file that only your recovery phrase can open. To restore, pick the file, type or paste the 12 words, then merge it into this vault or replace everything.</string>
 </resources>

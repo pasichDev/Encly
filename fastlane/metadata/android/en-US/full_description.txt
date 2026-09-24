@@ -1,33 +1,33 @@
-<p><b>Encly</b> keeps your notes and tasks encrypted on your phone and nowhere else. There is no account, no cloud sync, no analytics and no network access: the app does not even request the <i>INTERNET</i> permission.</p>
+Encly is an encrypted notes app for private notes and tasks that never leave your phone. Offline notes with a PIN lock: no account, no cloud, no ads, and no internet permission at all.
 
-<p><b>Security</b></p>
-<ul>
-<li>Everything is stored in a SQLCipher (AES-256) database under a random 256-bit key.</li>
-<li>A mandatory 6-digit PIN protects that key (PBKDF2-HMAC-SHA256, 600,000 iterations, AES-256-GCM). The PIN itself is never stored.</li>
-<li>Optional fingerprint / face unlock through a biometric-bound Android Keystore key (Class 3 biometrics only).</li>
-<li>Optional 12-word recovery phrase (BIP39) as a separate way to recover the key.</li>
-<li>The database is closed and the key wiped from memory as soon as the app goes to the background.</li>
-<li>Screenshots, screen recording and recent-apps previews are blocked. Android cloud backup and device transfer are disabled.</li>
-<li>No share, clipboard or notification path exposes note content.</li>
-</ul>
+Most note apps want an account and a server. Encly has neither. Your encrypted notes live in one place: your phone.
 
-<p><b>Encrypted backup and restore</b></p>
-<ul>
-<li>Export all notes, tasks and tags to a single encrypted file (AES-256-GCM) whenever you want.</li>
-<li>You choose where the file goes through Android's file picker: a folder, a USB stick, a cloud drive. Encly never uploads it anywhere.</li>
-<li>The file is encrypted with a key derived from your 12-word recovery phrase, so there is no extra backup password to forget. Without the words the file cannot be read.</li>
-<li>Restore on a new phone during setup, or merge a backup into an existing vault.</li>
-</ul>
+PRIVATE BY DESIGN
+• No account, no sign-up, no analytics, no ads, no in-app purchases.
+• Truly offline: Encly does not request the INTERNET permission, so it cannot send your notes anywhere.
+• Encrypted notes at rest: a SQLCipher (AES-256) database under a random 256-bit key.
+• PIN lock every time you open it: a 6-digit PIN, plus optional fingerprint or face unlock (strong biometrics only).
+• Locks itself: when Encly goes to the background, the database is closed and the key is wiped from memory.
+• Screenshots, screen recording and recent-apps previews are blocked. Android cloud backup is off.
 
-<p><b>Features</b></p>
-<ul>
-<li>Block editor: text, headings, quotes, checklists and numbered lists, links, separators.</li>
-<li>Tags and tasks with priorities.</li>
-<li>Trash with restore.</li>
-<li>Light / dark / dynamic color themes and several editor fonts, all bundled in the app.</li>
-<li>Works without Google Play Services.</li>
-</ul>
+RECOVERY PHRASE AND ENCRYPTED BACKUPS
+• Optional 12-word recovery phrase: forgot your PIN? The phrase unlocks your vault and lets you set a new one.
+• Export all notes, tasks and tags to one encrypted file (AES-256-GCM) and save it wherever you choose: a folder, a USB stick, your own cloud drive. Encly never uploads it.
+• Restore on a new phone with the same 12 words, or merge a backup into an existing vault.
+• Nobody can recover your notes for you, not even the developer. Keep the words on paper.
 
-<p><b>Languages:</b> English, Ukrainian, German, French, Spanish, Italian, Polish, Portuguese and Dutch. Encly follows your device language, or you can pick one for Encly alone in Settings → Language.</p>
+A SECURE NOTEPAD THAT IS PLEASANT TO WRITE IN
+• Block editor: text, headings, quotes, checklists, bulleted and numbered lists, links and separators.
+• Tags, search, list or grid view, several sort orders.
+• Tasks with priorities, right next to your notes.
+• Trash with restore.
+• Five themes (Paper, Forest, Ocean, Graphite, Midnight), light, dark or system mode, dynamic color on Android 12+, and three font sets bundled in the app.
 
-<p>Encly is open source (Apache-2.0) and asks for no account. Privacy policy: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md</p>
+OPEN SOURCE
+• Encly is open source (Apache-2.0): anyone can check what it does.
+• Works without Google Play Services. Android 8.0 or newer.
+• 9 languages: English, Ukrainian, German, French, Spanish, Italian, Polish, Portuguese and Dutch. Pick one for Encly alone in Settings → Language.
+
+Encly: encrypted notes that stay yours.
+
+Privacy policy: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md

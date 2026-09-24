@@ -26,12 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Search
 import com.pasich.encly.R
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -124,7 +125,7 @@ fun EnclyTextField(
 private fun ValidMark() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(
-            Lucide.Check,
+            EnclyIcons.CheckBold,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(18.dp),
@@ -147,6 +148,8 @@ fun EnclySearchField(
     trailing: @Composable (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
+    val keyboard = LocalSoftwareKeyboardController.current
+    val searchDescription = stringResource(R.string.search_notes)
     Surface(
         shape = CircleShape,
         color = colors.surfaceContainer,
@@ -169,7 +172,7 @@ fun EnclySearchField(
             ),
         ) {
             Icon(
-                Lucide.Search,
+                EnclyIcons.Search,
                 contentDescription = null,
                 tint = colors.onSurfaceVariant,
                 modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
@@ -180,7 +183,12 @@ fun EnclySearchField(
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
                 cursorBrush = SolidColor(colors.primary),
-                modifier = Modifier.weight(1f),
+                // Results filter as the user types; Search only puts the keyboard away.
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { contentDescription = searchDescription },
                 decorationBox = { inner ->
                     Box {
                         if (value.isEmpty()) {

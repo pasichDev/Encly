@@ -35,8 +35,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.SheetShape
@@ -119,7 +117,8 @@ private fun SheetHandle() {
  * A sheet action row: leading icon in `primary` (`error` when [destructive]), the title in
  * labelLarge, and a check at the end when [selected]. With [confirmFirst] the first tap only
  * arms the action ("Tap again to delete"); a second tap within five seconds runs it. A [muted]
- * title reads as a placeholder; titles stop at three lines.
+ * title reads as a placeholder; titles stop at three lines. [leading] (e.g. a radio) takes the
+ * icon's place when there is no [icon].
  */
 @Composable
 fun EnclySheetRow(
@@ -133,6 +132,7 @@ fun EnclySheetRow(
     selected: Boolean = false,
     confirmFirst: Boolean = false,
     muted: Boolean = false,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     var armed by remember { mutableStateOf(false) }
@@ -159,7 +159,11 @@ fun EnclySheetRow(
             }
             .padding(horizontal = EnclyTheme.spacing.xxs, vertical = EnclyTheme.spacing.xs),
     ) {
-        SheetRowLeading(armed = armed, icon = icon, tint = accent)
+        if (icon == null && leading != null && !armed) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(EnclyTheme.spacing.icon)) { leading() }
+        } else {
+            SheetRowLeading(armed = armed, icon = icon, tint = accent)
+        }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.textGap)) {
             Text(
                 text = if (armed) stringResource(R.string.tap_again_to_delete) else title,
@@ -174,7 +178,7 @@ fun EnclySheetRow(
         }
         if (selected) {
             Icon(
-                Lucide.Check,
+                EnclyIcons.Check,
                 contentDescription = null,
                 tint = colors.primary,
                 modifier = Modifier.size(EnclyTheme.spacing.iconSmall),

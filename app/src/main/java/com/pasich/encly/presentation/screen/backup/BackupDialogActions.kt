@@ -17,6 +17,7 @@ class BackupDialogActions(
     val importing: ImportFlow,
     val cancel: () -> Unit,
     val eraseAllData: () -> Unit,
+    val clearError: () -> Unit,
 )
 
 @Composable
@@ -27,5 +28,9 @@ fun rememberBackupDialogActions(viewModel: BackupViewModel): BackupDialogActions
         importing = viewModel.importFlow,
         cancel = viewModel::cancel,
         eraseAllData = viewModel::eraseAllData,
+        clearError = {
+            viewModel.phraseFlow.clearError()
+            viewModel.importFlow.clearError()
+        },
     )
 }

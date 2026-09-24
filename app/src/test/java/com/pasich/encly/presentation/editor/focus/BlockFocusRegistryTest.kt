@@ -36,6 +36,31 @@ class BlockFocusRegistryTest {
     }
 
     @Test
+    fun aListIsFocusedAtItsStartOrItsEnd() {
+        val asked = mutableListOf<Boolean>()
+        registry.registerFieldsFocusTarget(blocks[0].id) { atEnd -> asked += atEnd }
+
+        registry.focus(blocks[0].id)
+        registry.focus(blocks[0].id, cursorToEnd = true)
+
+        assertEquals(listOf(false, true), asked)
+    }
+
+    @Test
+    fun aBlockOffScreenIsScrolledToBeforeItIsFocused() = runTest {
+        var requests = 0
+        val scrolledTo = mutableListOf<String>()
+
+        registry.focusWhenComposed(FocusRequest(blocks[2].id)) { id ->
+            scrolledTo += id
+            registry.registerFocusTarget(id) { requests++ } // composed once on screen
+        }
+
+        assertEquals(listOf(blocks[2].id), scrolledTo)
+        assertEquals(1, requests)
+    }
+
+    @Test
     fun aBlockWithoutAComposedFieldIsNotFocused() {
         assertFalse(registry.focus(blocks[2].id))
     }

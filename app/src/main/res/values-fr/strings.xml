@@ -56,7 +56,6 @@
 
     <string name="cancel">Annuler</string>
 
-    <string name="checked_count">Cochées : %d</string>
 
     <string name="clean_permanent_message">Voulez-vous vraiment supprimer définitivement ces notes ? Cette action est irréversible.</string>
     <string name="clean_trash_message">Voulez-vous vraiment vider définitivement la corbeille ? Cette action est irréversible.</string>
@@ -85,7 +84,6 @@
     <string name="dialog_title">Supprimer la note ?</string>
 
     <string name="donation_description">Votre soutien nous aide à ajouter des fonctionnalités, corriger des bugs et améliorer l\'application. Chaque contribution compte !</string>
-    <string name="donation_subtitle">Aidez-nous à rendre l\'application encore meilleure</string>
     <string name="donation_title">Soutenir le développement</string>
 
     <string name="done">Terminé</string>
@@ -95,14 +93,12 @@
     <string name="dynamic_color">Couleurs dynamiques</string>
 
     <string name="edit">Modifier</string>
-    <string name="edit_tags">Modifier les libellés</string>
 
     <string name="editor_lock">Verrouiller la modification</string>
-    <string name="editor_unlock">Déverrouiller la modification</string>
 
-    <string name="empty_notes">Aucune note</string>
-    <string name="empty_notes_desc">Créez votre première note en appuyant sur le bouton Ajouter.</string>
-    <string name="empty_trash_desc">La corbeille est vide</string>
+    <string name="empty_notes">Pas encore de notes</string>
+    <string name="empty_notes_desc">Touchez Nouvelle note pour écrire la première.</string>
+    <string name="empty_trash_desc">Les notes supprimées restent ici jusqu’à ce que vous les restauriez ou les supprimiez définitivement.</string>
 
     <string name="enter_url">Saisissez un lien</string>
 
@@ -120,17 +116,17 @@
     <string name="faq_change_pin_q">Comment modifier mon code PIN ?</string>
     <string name="faq_db_key_a">Encly génère une clé de base de données aléatoire de 256 bits. Votre code PIN protège un emplacement de déverrouillage AES-GCM distinct, et la biométrie utilise une clé Android Keystore qui exige une authentification à chaque utilisation.</string>
     <string name="faq_db_key_q">Comment la clé de la base de données est-elle protégée ?</string>
-    <string name="faq_forgot_pin_a">Si vous avez créé une phrase de récupération, vous pouvez l\'utiliser sur l\'écran de verrouillage pour récupérer l\'accès, puis définir un nouveau code PIN. Sans emplacement de récupération, perdre la seule clé disponible signifie perdre le coffre-fort.</string>
+    <string name="faq_forgot_pin_a">Sur l’écran de verrouillage, touchez « Récupérer l’accès », saisissez vos 12 mots et définissez un nouveau code PIN. Sans phrase de récupération, il n’y a pas d’autre moyen d’entrer : personne, pas même le développeur, ne peut le réinitialiser.</string>
     <string name="faq_forgot_pin_q">Et si j\'oublie mon code PIN ?</string>
     <string name="faq_language_a">Ouvrez Paramètres → Langue et choisissez l\'une des langues disponibles, ou « Langue du système » pour suivre votre appareil. Le changement s\'applique immédiatement.</string>
     <string name="faq_language_q">Comment changer la langue ?</string>
-    <string name="faq_new_note_a">Appuyez sur le bouton « + » de l\'écran d\'accueil. Dans l\'éditeur, vous pouvez utiliser du texte, des titres, des citations, des listes, des séparateurs et des liens.</string>
+    <string name="faq_new_note_a">Touchez « Nouvelle note » sur l’écran d’accueil. La barre au-dessus du clavier ajoute des titres, des listes de contrôle, des listes à puces et numérotées, des citations, des liens et des séparateurs.</string>
     <string name="faq_new_note_q">Comment créer une nouvelle note ?</string>
-    <string name="faq_recovery_phrase_a">La phrase de récupération n\'est créée qu\'en mode géré par l\'utilisateur et constitue un moyen distinct de récupérer la clé du coffre-fort. Conservez-la hors ligne. Au quotidien, le déverrouillage se fait avec votre code PIN ou la biométrie.</string>
+    <string name="faq_recovery_phrase_a">C’est une clé de secours de 12 mots. Elle déverrouille le coffre si vous oubliez votre code PIN et c’est la seule clé de vos fichiers de sauvegarde. Vous la créez lors de la configuration, ou plus tard dans Paramètres → Sécurité si vous l’avez ignorée. Gardez-la sur papier, hors ligne.</string>
     <string name="faq_recovery_phrase_q">À quoi sert la phrase de récupération ?</string>
     <string name="faq_report_bug_a">Ouvrez « À propos » et utilisez l\'option de commentaires, ou écrivez au développeur. N\'incluez jamais votre phrase de récupération, votre code PIN ni le texte privé de vos notes dans un rapport de bug.</string>
     <string name="faq_report_bug_q">Comment signaler un bug ?</string>
-    <string name="faq_saving_a">Encly enregistre vos modifications automatiquement et localement. Le bouton « Terminé » et la sortie de l\'éditeur terminent aussi l\'enregistrement avant le retour à la liste.</string>
+    <string name="faq_saving_a">Automatiquement pendant la saisie, et quitter l’éditeur termine le dernier enregistrement. Si un enregistrement échoue, l’éditeur affiche « Non enregistré » en rouge.</string>
     <string name="faq_saving_q">Comment les modifications sont-elles enregistrées ?</string>
     <string name="faq_screen_description">Notes, tâches, chiffrement local et récupération de l\'accès, sans synchronisation cloud.</string>
     <string name="faq_screen_subtitle">Réponses aux questions les plus courantes</string>
@@ -142,11 +138,11 @@
     <string name="faq_section_troubleshooting">Dépannage</string>
     <string name="faq_storage_a">Les notes, libellés et tâches sont stockés uniquement dans la base de données SQLCipher locale d\'Encly. Il n\'y a ni synchronisation cloud ni sauvegarde automatique : vous pouvez exporter vous-même une sauvegarde chiffrée dans Paramètres → Sauvegarde.</string>
     <string name="faq_storage_q">Où sont stockées mes données ?</string>
-    <string name="faq_tags_a">Les libellés vous aident à regrouper vos notes. Vous pouvez les créer, les renommer, les masquer, les supprimer et les utiliser comme filtre sur l\'écran d\'accueil.</string>
+    <string name="faq_tags_a">Les libellés regroupent vos notes. Vous pouvez les créer, les renommer, les masquer et les supprimer, les réordonner par glisser-déposer et filtrer l’écran d’accueil par libellé.</string>
     <string name="faq_tags_q">Comment fonctionnent les libellés ?</string>
     <string name="faq_tasks_a">Les tâches ont une description et une priorité. Vous pouvez les filtrer par priorité et les marquer comme terminées. Encly n\'affiche jamais le texte des tâches dans les notifications système.</string>
     <string name="faq_tasks_q">Que permettent les tâches ?</string>
-    <string name="faq_theme_a">Dans Paramètres → Apparence, vous choisissez l\'un des cinq thèmes, le mode (système, clair ou sombre) et la police ; à partir d\'Android 12, aussi les couleurs dynamiques.</string>
+    <string name="faq_theme_a">Dans Paramètres → Apparence, choisissez l’un des cinq thèmes, le mode clair, sombre ou système, l’un des trois styles de police et la taille du texte. Sur Android 12 et plus, la couleur d’accent peut aussi venir du fond d’écran.</string>
     <string name="faq_theme_q">Comment changer de thème ?</string>
     <string name="faq_vault_damaged_a">Encly ne crée volontairement jamais une base de données vide à la place d\'un coffre-fort perdu ou illisible. Ne confirmez pas l\'effacement complet si vous avez encore besoin de vos données locales.</string>
     <string name="faq_vault_damaged_q">Encly indique que le coffre-fort est endommagé</string>
@@ -164,7 +160,6 @@
 
     <string name="list_item_placeholder">Élément de liste</string>
 
-    <string name="loading">Chargement…</string>
 
     <string name="lock_back_to_pin">Retour au code PIN</string>
     <string name="lock_recover_access">Récupérer l\'accès</string>
@@ -193,7 +188,6 @@
 
     <string name="more_options">Plus d\'options</string>
 
-    <string name="new_page">Nouvelle page</string>
 
     <string name="no_tag">Sans libellé</string>
 
@@ -240,18 +234,13 @@
     <string name="priority_select_title">Choisissez une priorité</string>
 
     <string name="quote">Citation</string>
-
-    <string name="recovery_phrase_label">Phrase de récupération</string>
-
     <string name="redo">Rétablir</string>
 
     <string name="restore">Restaurer</string>
 
     <string name="save">Enregistrer</string>
 
-    <string name="saved">Enregistré</string>
 
-    <string name="saving">Enregistrement…</string>
 
 
     <string name="search_clear">Effacer la recherche</string>
@@ -261,11 +250,8 @@
     <string name="security_biometric_unavailable">Non disponible sur cet appareil</string>
     <string name="security_biometric_not_enrolled">Aucune empreinte enregistrée. Ajoutez-en une dans les paramètres du système.</string>
     <string name="security_encryption_active">Le chiffrement est actif</string>
-    <string name="security_encryption_pin_desc">Votre clé de base de données aléatoire est protégée par votre code PIN et, si vous le souhaitez, par un emplacement biométrique du Keystore.</string>
-    <string name="security_encryption_seed_desc">Votre clé de base de données aléatoire dispose d\'un emplacement de récupération distinct, protégé par votre phrase de récupération.</string>
     <string name="security_info_body">• SQLCipher est ouvert avec une clé aléatoire de 256 bits\n• Le code PIN et la phrase de récupération disposent d\'emplacements de déverrouillage AES-GCM distincts\n• La biométrie utilise une clé Android Keystore exigeant une authentification à chaque utilisation</string>
     <string name="security_info_title">ℹ️ Informations de sécurité</string>
-    <string name="security_recovery_set">Configurée. Elle déverrouille le coffre si vous oubliez votre PIN et protège vos sauvegardes.</string>
     <string name="security_recovery_missing">Non configurée. Sans elle, un PIN oublié signifie tout perdre. Touchez pour en créer une.</string>
     <string name="security_erase_title">Effacer toutes les données</string>
     <string name="security_erase_desc">Supprimer toutes les notes, tâches et libellés ainsi que les clés de chiffrement de cet appareil</string>
@@ -294,28 +280,19 @@
     <string name="sort_updated_asc_short">Modifiée ↑</string>
     <string name="sort_updated_desc">Par dernière modification (plus récentes d\'abord)</string>
     <string name="sort_updated_desc_short">Modifiée ↓</string>
-
-    <string name="support_external_services">Soutenez-nous via d\'autres services</string>
-    <string name="support_kofi_desc">Un soutien rapide et simple au développement.</string>
-    <string name="support_options_title">Comment nous soutenir</string>
     <string name="support_title">Soutenir le développeur</string>
-    <string name="support_why_desc">• Nouvelles fonctionnalités\n• Corrections de bugs\n• Audit de sécurité et tests\n• Améliorations du design\n• Évolution du projet</string>
-    <string name="support_why_title">Pourquoi votre soutien compte-t-il ?</string>
 
     <string name="tag_create_failed">Impossible d\'enregistrer le libellé. Veuillez réessayer.</string>
     <string name="tag_delete_failed">Impossible de supprimer le libellé. Veuillez réessayer.</string>
     <string name="tag_edit">Modifier le libellé</string>
     <string name="tag_hidden">Libellé masqué</string>
     <string name="tag_name_taken">Un libellé portant ce nom existe déjà</string>
-    <string name="tag_hide">Masquer le libellé</string>
     <string name="tag_reorder_failed">Impossible d\'enregistrer l\'ordre des libellés. Veuillez réessayer.</string>
-    <string name="tag_show">Afficher le libellé</string>
     <string name="tag_update_failed">Impossible de mettre à jour le libellé. Veuillez réessayer.</string>
 
     <string name="tap_again_to_delete">Appuyez à nouveau pour supprimer</string>
 
-    <string name="task_add">Ajouter une tâche</string>
-    <string name="task_clear_all_completed">Effacer toutes les tâches terminées</string>
+    <string name="task_add">Nouvelle tâche</string>
     <string name="task_clear_completed_failed">Impossible d\'effacer les tâches terminées. Veuillez réessayer.</string>
     <string name="task_clear_completed_message">Voulez-vous vraiment supprimer toutes les tâches terminées ? Cette action est irréversible.</string>
     <string name="task_clear_completed_title">Effacer les tâches terminées</string>
@@ -324,7 +301,6 @@
     <string name="task_description_placeholder">Description</string>
     <string name="task_edit_placeholder">Modifier la tâche</string>
     <string name="task_empty_active">Aucune tâche active.</string>
-    <string name="task_empty_completed">Aucune tâche terminée.</string>
     <string name="task_empty_filtered">Aucune tâche ne correspond aux filtres sélectionnés.</string>
     <string name="task_filter_all">Toutes les tâches</string>
     <string name="task_filter_completed">Terminées</string>
@@ -381,8 +357,6 @@
     <string name="backup_create_phrase">Créer une phrase de récupération</string>
     <string name="backup_phrase_write_down">Notez ces 12 mots sur papier, dans l\'ordre, et gardez-les hors ligne. Quiconque les possède peut ouvrir vos sauvegardes.</string>
     <string name="backup_phrase_written">Je les ai notés</string>
-    <string name="backup_phrase_check_title">Vérifiez votre phrase de récupération</string>
-    <string name="backup_phrase_check_word">Mot n° %1$d</string>
     <string name="backup_phrase_check_wrong">Les mots ne correspondent pas. Vérifiez ce que vous avez noté.</string>
     <string name="backup_phrase_added">Phrase de récupération enregistrée</string>
     <string name="backup_confirm_phrase_title">Confirmez votre phrase de récupération</string>
@@ -391,11 +365,8 @@
     <string name="backup_enter_phrase_body">Saisissez les 12 mots de la phrase de récupération avec laquelle cette sauvegarde a été faite.</string>
     <string name="backup_decrypt">Déchiffrer</string>
     <string name="backup_import_choose">Importer une sauvegarde</string>
-    <string name="backup_import_contents">Cette sauvegarde contient notes : %1$d, tâches : %2$d, libellés : %3$d.</string>
     <string name="backup_merge">Fusionner</string>
-    <string name="backup_merge_desc">Fusionner : vos données sont conservées et ce qui manque est ajouté. Ce qui est déjà dans ce coffre-fort est ignoré.</string>
     <string name="backup_replace">Remplacer</string>
-    <string name="backup_replace_desc">Remplacer : supprime toutes les notes, tâches et libellés de ce coffre-fort, puis restaure la sauvegarde.</string>
     <string name="backup_replace_confirm_title">Remplacer toutes les données ?</string>
     <string name="backup_replace_confirm_body">Toutes les notes, tâches et libellés de ce coffre-fort seront supprimés et remplacés par la sauvegarde. Cette action est irréversible.</string>
     <string name="backup_import_done">Importé : notes %1$d, tâches %2$d, libellés %3$d. Ignoré (déjà présent) : %4$d.</string>
@@ -514,7 +485,6 @@
     <string name="onboarding_restore_file_section">1 · Fichier de sauvegarde</string>
     <string name="onboarding_restore_tap_other">Touchez pour choisir un autre fichier</string>
     <string name="onboarding_restore_phrase_section">2 · Phrase de récupération</string>
-    <string name="onboarding_restore_phrase_label">12 mots, séparés par des espaces</string>
     <string name="onboarding_restore_phrase_helper">Ces mots deviennent aussi la phrase de récupération de ce téléphone.</string>
     <string name="notes_title">Notes</string>
     <string name="lock_now">Verrouiller maintenant</string>
@@ -528,4 +498,63 @@
         <item quantity="many">Tâches · %d en cours</item>
         <item quantity="other">Tâches · %d en cours</item>
     </plurals>
+    <string name="home_tasks_none_open">Tâches · aucune en cours</string>
+    <string name="task_empty_title">Pas encore de tâches</string>
+    <string name="task_empty_desc">Touchez Nouvelle tâche pour ajouter la première.</string>
+    <string name="task_all_done_title">Tout est fait</string>
+    <string name="task_done_section">Terminées · %1$d</string>
+    <string name="empty_notes_tagged">Aucune note avec l’étiquette « %1$s »</string>
+    <string name="empty_notes_tagged_desc">Les notes portant cette étiquette apparaîtront ici.</string>
+    <string name="show_all_notes">Afficher toutes les notes</string>
+    <string name="empty_trash_title">La corbeille est vide</string>
+    <string name="trash_hint">Touchez une note pour la lire. Appui long pour sélectionner.</string>
+    <string name="delete_forever">Supprimer définitivement</string>
+    <string name="empty_trash_action">Vider la corbeille</string>
+    <string name="search_notes">Rechercher des notes</string>
+    <string name="settings_notes_and_tasks">Notes et tâches</string>
+    <string name="settings_about_desc">Version, confidentialité et contact</string>
+    <string name="settings_faq_desc">Réponses aux questions fréquentes</string>
+    <string name="licenses_title">Licences open source</string>
+    <string name="licenses_row_desc">Les bibliothèques et polices utilisées par Encly</string>
+    <string name="licenses_heading">Construit sur l’open source</string>
+    <string name="licenses_intro">Encly repose sur ces bibliothèques et polices. Touchez-en une pour lire sa licence.</string>
+    <string name="licenses_libraries">Bibliothèques</string>
+    <string name="licenses_fonts">Polices</string>
+    <string name="tags_empty_title">Pas encore d’étiquettes</string>
+    <string name="tags_empty_desc">Les étiquettes regroupent vos notes. Créez-en une ci-dessus, puis choisissez-la pour une note par un appui long.</string>
+    <string name="tags_hint">Touchez une étiquette pour la renommer, la masquer ou la supprimer. Faites glisser la poignée pour réordonner.</string>
+    <string name="tag_add">Ajouter l’étiquette</string>
+    <string name="tag_name_label">Nom</string>
+    <string name="tag_show_in_list">Afficher dans la liste des notes</string>
+    <string name="tag_show_in_list_desc">Une étiquette masquée garde ses notes mais n’a pas de filtre</string>
+    <string name="tag_drag_handle">Faire glisser pour réordonner</string>
+    <string name="tag_move_up">Monter</string>
+    <string name="tag_move_down">Descendre</string>
+    <plurals name="trash_selected">
+        <item quantity="one">%d sélectionnée</item>
+        <item quantity="many">%d sélectionnées</item>
+        <item quantity="other">%d sélectionnées</item>
+    </plurals>
+    <string name="edit_tags">Modifier les libellés</string>
+    <string name="note_title_placeholder">Titre</string>
+    <string name="note_not_saved">Non enregistré</string>
+    <string name="tags_manage">Gérer les libellés</string>
+    <string name="note_discard_confirm_title">Annuler les modifications ?</string>
+    <string name="note_discard_confirm_message">Tout ce que vous avez modifié depuis l\'ouverture de cette note sera perdu. Cette action est irréversible.</string>
+    <string name="support_fact_free_title">Tout est déjà à vous</string>
+    <string name="support_fact_free_desc">Chaque fonctionnalité est accessible à tous. Rien n’est bloqué derrière un paiement.</string>
+    <string name="support_fact_private_title">Sans pub ni pistage</string>
+    <string name="support_fact_private_desc">Encly ne voit jamais vos notes et ne gagne rien sur les données. Votre soutien est son seul financement.</string>
+    <string name="support_fact_uses_title">À quoi il sert</string>
+    <string name="support_fact_uses_desc">Nouvelles fonctionnalités, audit de sécurité et tests, design et corrections.</string>
+    <string name="support_kofi_button">Soutenir sur Ko-fi</string>
+    <string name="support_kofi_note">Ouvre ko-fi.com dans le navigateur. Chaque montant compte.</string>
+    <string name="faq_note_actions_q">Que fait un appui long sur une note ?</string>
+    <string name="faq_note_actions_a">Il ouvre les actions de la note : changer son libellé, ajouter une courte description affichée sur la carte, dupliquer la note ou la mettre à la corbeille.</string>
+    <string name="faq_trash_q">Comment récupérer une note supprimée ?</string>
+    <string name="faq_trash_a">Les notes supprimées vont dans la Corbeille du menu. Vous pouvez y restaurer une note ou la supprimer définitivement. Encly ne vide jamais la corbeille de lui-même.</string>
+    <string name="faq_lock_note_q">Que fait « Verrouiller la modification » ?</string>
+    <string name="faq_lock_note_a">La note passe en lecture seule pour éviter toute modification accidentelle. Vous pouvez toujours sélectionner et copier le texte. Activez-le ou désactivez-le depuis le menu de l’éditeur.</string>
+    <string name="faq_backup_q">Comment fonctionnent les sauvegardes ?</string>
+    <string name="faq_backup_a">Dans Paramètres → Sauvegarde, vous exportez un fichier chiffré que seule votre phrase de récupération peut ouvrir. Pour restaurer, choisissez le fichier, saisissez ou collez les 12 mots, puis fusionnez-le avec ce coffre ou remplacez tout.</string>
 </resources>

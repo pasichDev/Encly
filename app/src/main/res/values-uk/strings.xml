@@ -56,7 +56,6 @@
 
     <string name="cancel">Скасувати</string>
 
-    <string name="checked_count">Відмічено: %d</string>
 
     <string name="clean_permanent_message">Ви дійсно хочете видалити ці нотатки назавжди? Цю дію не можна буде скасувати.</string>
     <string name="clean_trash_message">Ви дійсно хочете назавжди очистити кошик? Цю дію не можна буде скасувати.</string>
@@ -85,7 +84,6 @@
     <string name="dialog_title">Видалити нотатку?</string>
 
     <string name="donation_description">Ваша підтримка допомагає нам додавати нові функції, виправляти помилки й покращувати застосунок. Будь-яка сума буде дуже вдячна!</string>
-    <string name="donation_subtitle">Допоможіть зробити застосунок ще кращим</string>
     <string name="donation_title">Підтримати розробку</string>
 
     <string name="done">Готово</string>
@@ -95,14 +93,12 @@
     <string name="dynamic_color">Динамічний колір</string>
 
     <string name="edit">Редагувати</string>
-    <string name="edit_tags">Редагувати мітки</string>
 
     <string name="editor_lock">Заблокувати редагування</string>
-    <string name="editor_unlock">Розблокувати редагування</string>
 
-    <string name="empty_notes">Немає нотаток</string>
-    <string name="empty_notes_desc">Створіть свою першу нотатку, натиснувши кнопку Додати.</string>
-    <string name="empty_trash_desc">У кошику немає нотаток</string>
+    <string name="empty_notes">Нотаток ще немає</string>
+    <string name="empty_notes_desc">Натисніть «Нова нотатка», щоб написати першу.</string>
+    <string name="empty_trash_desc">Видалені нотатки чекають тут, доки ви їх не відновите або не видалите назавжди.</string>
 
     <string name="enter_url">Введіть посилання</string>
 
@@ -120,17 +116,17 @@
     <string name="faq_change_pin_q">Як змінити PIN?</string>
     <string name="faq_db_key_a">Encly створює випадковий 256-бітний ключ бази даних. PIN захищає окрему зашифровану (AES-GCM) копію цього ключа, а біометрія використовує ключ Android Keystore, який щоразу потребує підтвердження біометрією.</string>
     <string name="faq_db_key_q">Як захищений ключ бази даних?</string>
-    <string name="faq_forgot_pin_a">Якщо ви створили фразу відновлення, на екрані блокування можна відновити доступ за нею, а після розблокування встановити новий PIN. Без фрази відновлення втрата єдиного доступного ключа означає втрату сховища.</string>
+    <string name="faq_forgot_pin_a">На екрані блокування натисніть «Відновити доступ», введіть 12 слів і задайте новий PIN. Без фрази відновлення іншого способу увійти немає: скинути його не може ніхто, навіть розробник.</string>
     <string name="faq_forgot_pin_q">Що буде, якщо я забуду PIN?</string>
     <string name="faq_language_a">Відкрийте Налаштування → Мова та виберіть одну з доступних мов або «Як у системі», щоб використовувати мову пристрою. Зміна застосовується одразу.</string>
     <string name="faq_language_q">Як змінити мову?</string>
-    <string name="faq_new_note_a">Натисніть кнопку «+» на головному екрані. У редакторі можна використовувати текст, заголовки, цитати, списки, розділювачі та посилання.</string>
+    <string name="faq_new_note_a">Натисніть «Нова нотатка» на головному екрані. Панель над клавіатурою додає заголовки, чеклісти, марковані й нумеровані списки, цитати, посилання та роздільники.</string>
     <string name="faq_new_note_q">Як створити нову нотатку?</string>
-    <string name="faq_recovery_phrase_a">Фраза відновлення створюється, лише якщо ви обрали керувати ключем самостійно, і є окремим способом відновити ключ сховища. Зберігайте її офлайн. Для щоденного розблокування використовуються PIN або біометрія.</string>
+    <string name="faq_recovery_phrase_a">Це запасний ключ із 12 слів. Він відкриває сховище, якщо ви забули PIN, і це єдиний ключ до ваших резервних копій. Фразу створюють під час налаштування або пізніше в Налаштування → Безпека, якщо ви її пропустили. Зберігайте її на папері, офлайн.</string>
     <string name="faq_recovery_phrase_q">Для чого потрібна фраза відновлення?</string>
     <string name="faq_report_bug_a">Відкрийте «Про застосунок» і скористайтеся зворотним зв\'язком або напишіть розробнику. Ніколи не додавайте до повідомлення про помилку фразу відновлення, PIN або приватний текст нотаток.</string>
     <string name="faq_report_bug_q">Як повідомити про помилку?</string>
-    <string name="faq_saving_a">Encly автоматично зберігає зміни локально. Кнопка «Готово» та вихід з редактора також завершують запис перед поверненням до списку.</string>
+    <string name="faq_saving_a">Автоматично, поки ви пишете, а вихід із редактора завершує останнє збереження. Якщо збереження колись не вдасться, редактор покаже червоне «Не збережено».</string>
     <string name="faq_saving_q">Як зберігаються зміни?</string>
     <string name="faq_screen_description">Нотатки, завдання, локальне шифрування та відновлення доступу без хмарної синхронізації.</string>
     <string name="faq_screen_subtitle">Відповіді на найпоширеніші запитання</string>
@@ -142,11 +138,11 @@
     <string name="faq_section_troubleshooting">Вирішення проблем</string>
     <string name="faq_storage_a">Нотатки, мітки та завдання зберігаються тільки в локальній SQLCipher-базі Encly. Хмарної синхронізації та автоматичного резервного копіювання немає: зашифровану копію можна експортувати самостійно в Налаштування → Резервна копія.</string>
     <string name="faq_storage_q">Де зберігаються мої дані?</string>
-    <string name="faq_tags_a">Мітки допомагають групувати нотатки. Їх можна створювати, перейменовувати, приховувати, видаляти та використовувати як фільтр на головному екрані.</string>
+    <string name="faq_tags_a">Мітки групують нотатки. Їх можна створювати, перейменовувати, приховувати й видаляти, перетягувати в будь-якому порядку та фільтрувати за ними головний екран.</string>
     <string name="faq_tags_q">Як працюють мітки?</string>
     <string name="faq_tasks_a">Завдання мають опис і пріоритет. Їх можна фільтрувати за пріоритетом і відмічати виконаними. Encly не надсилає текст завдань у системні сповіщення.</string>
     <string name="faq_tasks_q">Що вміють завдання?</string>
-    <string name="faq_theme_a">У Налаштування → Зовнішній вигляд можна вибрати одну з п\'яти тем, режим (як у системі, світлий або темний) і шрифт, а на Android 12 і новіших — динамічний колір.</string>
+    <string name="faq_theme_a">У Налаштування → Зовнішній вигляд виберіть одну з п’яти тем, світлий, темний чи системний режим, один із трьох стилів шрифту та розмір тексту. На Android 12 і новіших можна також брати акцентний колір зі шпалер.</string>
     <string name="faq_theme_q">Як змінити тему?</string>
     <string name="faq_vault_damaged_a">Encly навмисно ніколи не створює порожню базу даних поверх втраченого або нечитабельного сховища. Не підтверджуйте повне очищення, якщо вам ще потрібні локальні дані.</string>
     <string name="faq_vault_damaged_q">Encly повідомляє про пошкодження сховища</string>
@@ -164,7 +160,6 @@
 
     <string name="list_item_placeholder">Елемент списку</string>
 
-    <string name="loading">Завантаження…</string>
 
     <string name="lock_back_to_pin">Повернутися до PIN</string>
     <string name="lock_recover_access">Відновити доступ</string>
@@ -193,7 +188,6 @@
 
     <string name="more_options">Інші дії</string>
 
-    <string name="new_page">Нова сторінка</string>
 
     <string name="no_tag">Без мітки</string>
 
@@ -240,18 +234,13 @@
     <string name="priority_select_title">Виберіть пріоритет</string>
 
     <string name="quote">Цитата</string>
-
-    <string name="recovery_phrase_label">Фраза відновлення</string>
-
     <string name="redo">Повторити дію</string>
 
     <string name="restore">Відновити</string>
 
     <string name="save">Зберегти</string>
 
-    <string name="saved">Збережено</string>
 
-    <string name="saving">Збереження…</string>
 
 
     <string name="search_clear">Очистити пошук</string>
@@ -261,11 +250,8 @@
     <string name="security_biometric_unavailable">Недоступно на цьому пристрої</string>
     <string name="security_biometric_not_enrolled">Відбиток пальця не додано. Додайте його в налаштуваннях системи.</string>
     <string name="security_encryption_active">Шифрування активне</string>
-    <string name="security_encryption_pin_desc">Ваш випадковий ключ бази даних захищений PIN-кодом і, за бажанням, біометричним ключем в Android Keystore.</string>
-    <string name="security_encryption_seed_desc">Ваш випадковий ключ бази даних має окрему копію для відновлення, захищену фразою відновлення.</string>
     <string name="security_info_body">• SQLCipher відкривається випадковим 256-бітним ключем\n• PIN і фраза відновлення захищають окремі зашифровані (AES-GCM) копії цього ключа\n• Біометрія використовує ключ Android Keystore, який щоразу потребує підтвердження</string>
     <string name="security_info_title">ℹ️ Інформація про безпеку</string>
-    <string name="security_recovery_set">Налаштовано. Вона відкриває сховище, якщо ви забудете PIN, і захищає резервні копії.</string>
     <string name="security_recovery_missing">Не налаштовано. Без неї забутий PIN означає втрату всього. Торкніться, щоб створити.</string>
     <string name="security_erase_title">Стерти всі дані</string>
     <string name="security_erase_desc">Видалити всі нотатки, завдання, мітки та ключі шифрування на цьому пристрої</string>
@@ -294,28 +280,19 @@
     <string name="sort_updated_asc_short">Ред ↑</string>
     <string name="sort_updated_desc">За датою редагування (спадання)</string>
     <string name="sort_updated_desc_short">Ред ↓</string>
-
-    <string name="support_external_services">Підтримайте нас через інші сервіси</string>
-    <string name="support_kofi_desc">Швидка та проста підтримка розробки.</string>
-    <string name="support_options_title">Варіанти підтримки</string>
     <string name="support_title">Підтримка розробника</string>
-    <string name="support_why_desc">• Додавання нових функцій\n• Виправлення помилок\n• Аудит безпеки й тестування\n• Покращення дизайну\n• Розвиток проєкту</string>
-    <string name="support_why_title">Чому важлива ваша підтримка?</string>
 
     <string name="tag_create_failed">Не вдалося зберегти мітку. Спробуйте ще раз.</string>
     <string name="tag_delete_failed">Не вдалося видалити мітку. Спробуйте ще раз.</string>
     <string name="tag_edit">Редагувати мітку</string>
     <string name="tag_hidden">Прихована мітка</string>
     <string name="tag_name_taken">Мітка з такою назвою вже існує</string>
-    <string name="tag_hide">Приховати мітку</string>
     <string name="tag_reorder_failed">Не вдалося зберегти порядок міток. Спробуйте ще раз.</string>
-    <string name="tag_show">Показати мітку</string>
     <string name="tag_update_failed">Не вдалося оновити мітку. Спробуйте ще раз.</string>
 
     <string name="tap_again_to_delete">Натисніть ще раз для видалення</string>
 
-    <string name="task_add">Додати завдання</string>
-    <string name="task_clear_all_completed">Очистити всі виконані</string>
+    <string name="task_add">Нове завдання</string>
     <string name="task_clear_completed_failed">Не вдалося очистити виконані завдання. Спробуйте ще раз.</string>
     <string name="task_clear_completed_message">Ви дійсно хочете видалити всі виконані завдання? Цю дію неможливо буде скасувати.</string>
     <string name="task_clear_completed_title">Очистити виконані завдання</string>
@@ -324,7 +301,6 @@
     <string name="task_description_placeholder">Опис</string>
     <string name="task_edit_placeholder">Редагувати завдання</string>
     <string name="task_empty_active">Немає активних завдань.</string>
-    <string name="task_empty_completed">Немає виконаних завдань.</string>
     <string name="task_empty_filtered">Немає завдань за вибраними фільтрами.</string>
     <string name="task_filter_all">Всі завдання</string>
     <string name="task_filter_completed">Виконані</string>
@@ -384,8 +360,6 @@
     <string name="backup_create_phrase">Створити фразу відновлення</string>
     <string name="backup_phrase_write_down">Запишіть ці 12 слів на папері, по порядку, і зберігайте офлайн. Будь-хто, хто їх має, може відкрити ваші копії.</string>
     <string name="backup_phrase_written">Я їх записав(-ла)</string>
-    <string name="backup_phrase_check_title">Перевірте фразу відновлення</string>
-    <string name="backup_phrase_check_word">Слово №%1$d</string>
     <string name="backup_phrase_check_wrong">Слова не збігаються. Перевірте, що ви записали.</string>
     <string name="backup_phrase_added">Фразу відновлення збережено</string>
     <string name="backup_confirm_phrase_title">Підтвердьте фразу відновлення</string>
@@ -394,11 +368,8 @@
     <string name="backup_enter_phrase_body">Введіть 12 слів фрази відновлення, з якою створено цю копію.</string>
     <string name="backup_decrypt">Розшифрувати</string>
     <string name="backup_import_choose">Імпорт копії</string>
-    <string name="backup_import_contents">Ця копія містить нотатки: %1$d, завдання: %2$d, мітки: %3$d.</string>
     <string name="backup_merge">Об\'єднати</string>
-    <string name="backup_merge_desc">Об\'єднати: ваші дані лишаються, додається те, чого бракує. Те, що вже є в сховищі, пропускається.</string>
     <string name="backup_replace">Замінити</string>
-    <string name="backup_replace_desc">Замінити: видалити всі нотатки, завдання та мітки в цьому сховищі, а потім відновити копію.</string>
     <string name="backup_replace_confirm_title">Замінити всі дані?</string>
     <string name="backup_replace_confirm_body">Усі нотатки, завдання та мітки в цьому сховищі буде видалено й замінено копією. Цю дію неможливо скасувати.</string>
     <string name="backup_import_done">Імпортовано нотатки: %1$d, завдання: %2$d, мітки: %3$d. Пропущено (вже є): %4$d.</string>
@@ -517,7 +488,6 @@
     <string name="onboarding_restore_file_section">1 · Файл копії</string>
     <string name="onboarding_restore_tap_other">Торкніться, щоб обрати інший файл</string>
     <string name="onboarding_restore_phrase_section">2 · Фраза відновлення</string>
-    <string name="onboarding_restore_phrase_label">12 слів через пробіл</string>
     <string name="onboarding_restore_phrase_helper">Ці слова також стануть фразою відновлення на цьому телефоні.</string>
     <string name="notes_title">Нотатки</string>
     <string name="lock_now">Заблокувати зараз</string>
@@ -532,4 +502,64 @@
         <item quantity="many">Завдання · %d відкритих</item>
         <item quantity="other">Завдання · %d відкритих</item>
     </plurals>
+    <string name="home_tasks_none_open">Завдання · немає відкритих</string>
+    <string name="task_empty_title">Завдань ще немає</string>
+    <string name="task_empty_desc">Натисніть «Нове завдання», щоб додати перше.</string>
+    <string name="task_all_done_title">Усе виконано</string>
+    <string name="task_done_section">Виконано · %1$d</string>
+    <string name="empty_notes_tagged">Немає нотаток з тегом «%1$s»</string>
+    <string name="empty_notes_tagged_desc">Тут з’являться нотатки з цим тегом.</string>
+    <string name="show_all_notes">Показати всі нотатки</string>
+    <string name="empty_trash_title">Кошик порожній</string>
+    <string name="trash_hint">Натисніть нотатку, щоб прочитати. Утримуйте, щоб вибрати.</string>
+    <string name="delete_forever">Видалити назавжди</string>
+    <string name="empty_trash_action">Очистити кошик</string>
+    <string name="search_notes">Пошук нотаток</string>
+    <string name="settings_notes_and_tasks">Нотатки й завдання</string>
+    <string name="settings_about_desc">Версія, політика конфіденційності й контакти</string>
+    <string name="settings_faq_desc">Відповіді на часті запитання</string>
+    <string name="licenses_title">Ліцензії відкритого коду</string>
+    <string name="licenses_row_desc">Бібліотеки та шрифти, які використовує Encly</string>
+    <string name="licenses_heading">Побудовано на відкритому коді</string>
+    <string name="licenses_intro">Encly створено з цими бібліотеками та шрифтами. Натисніть, щоб прочитати ліцензію.</string>
+    <string name="licenses_libraries">Бібліотеки</string>
+    <string name="licenses_fonts">Шрифти</string>
+    <string name="tags_empty_title">Тегів ще немає</string>
+    <string name="tags_empty_desc">Теги групують нотатки. Створіть тег вище, а потім виберіть його для нотатки в меню довгого натискання.</string>
+    <string name="tags_hint">Натисніть тег, щоб перейменувати, приховати чи видалити. Тягніть за ручку, щоб змінити порядок.</string>
+    <string name="tag_add">Додати тег</string>
+    <string name="tag_name_label">Назва</string>
+    <string name="tag_show_in_list">Показувати в списку нотаток</string>
+    <string name="tag_show_in_list_desc">Прихований тег зберігає нотатки, але не має фільтра</string>
+    <string name="tag_drag_handle">Перетягніть, щоб змінити порядок</string>
+    <string name="tag_move_up">Перемістити вгору</string>
+    <string name="tag_move_down">Перемістити вниз</string>
+    <plurals name="trash_selected">
+        <item quantity="one">Вибрано %d</item>
+        <item quantity="few">Вибрано %d</item>
+        <item quantity="many">Вибрано %d</item>
+        <item quantity="other">Вибрано %d</item>
+    </plurals>
+    <string name="edit_tags">Редагувати мітки</string>
+    <string name="note_title_placeholder">Заголовок</string>
+    <string name="note_not_saved">Не збережено</string>
+    <string name="tags_manage">Керувати мітками</string>
+    <string name="note_discard_confirm_title">Скасувати зміни?</string>
+    <string name="note_discard_confirm_message">Усе, що ви змінили відтоді, як відкрили цю нотатку, буде втрачено. Цю дію не можна буде скасувати.</string>
+    <string name="support_fact_free_title">Усе вже ваше</string>
+    <string name="support_fact_free_desc">Кожна функція доступна всім. Нічого не заблоковано за оплатою.</string>
+    <string name="support_fact_private_title">Без реклами й стеження</string>
+    <string name="support_fact_private_desc">Encly не бачить ваших нотаток і не заробляє на даних. Підтримка — єдине, що його утримує.</string>
+    <string name="support_fact_uses_title">На що йде підтримка</string>
+    <string name="support_fact_uses_desc">Нові функції, аудит безпеки й тестування, дизайн і виправлення.</string>
+    <string name="support_kofi_button">Підтримати на Ko-fi</string>
+    <string name="support_kofi_note">Відкриє ko-fi.com у браузері. Будь-яка сума допомагає.</string>
+    <string name="faq_note_actions_q">Що робить довге натискання на нотатку?</string>
+    <string name="faq_note_actions_a">Відкриває дії з нотаткою: змінити мітку, додати короткий опис на картці, дублювати нотатку або перемістити її в кошик.</string>
+    <string name="faq_trash_q">Як повернути видалену нотатку?</string>
+    <string name="faq_trash_a">Видалені нотатки потрапляють у Кошик у меню. Там нотатку можна відновити або видалити назавжди. Encly ніколи не очищає кошик сам.</string>
+    <string name="faq_lock_note_q">Що робить «Заблокувати редагування»?</string>
+    <string name="faq_lock_note_a">Робить нотатку лише для читання, щоб її не змінити випадково. Текст однаково можна виділити й скопіювати. Вмикається й вимикається в меню редактора.</string>
+    <string name="faq_backup_q">Як працюють резервні копії?</string>
+    <string name="faq_backup_a">У Налаштування → Резервна копія ви експортуєте один зашифрований файл, який відкриває лише ваша фраза відновлення. Щоб відновити, виберіть файл, введіть або вставте 12 слів, а тоді об’єднайте копію з цим сховищем або замініть усе.</string>
 </resources>

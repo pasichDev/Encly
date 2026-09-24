@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Type or paste your 12 words</string>
+    <string name="recovery_word_cell">Word %1$d of %2$d</string>
+    <string name="recovery_word_unknown">Word %1$d is not a recovery phrase word. Check the spelling.</string>
+    <string name="recovery_phrase_checksum">These 12 words don\'t form a valid recovery phrase. Check each word and their order.</string>
+    <string name="backup_phrase_exists">This vault already has a recovery phrase</string>
+    <string name="backup_import_mode_title">Add to your notes or replace them?</string>
+    <string name="backup_import_summary">This backup holds %1$s, %2$s and %3$s.</string>
+    <string name="backup_merge_row_desc">Keep everything here and add what is missing. Items already here are skipped.</string>
+    <string name="backup_replace_all">Replace everything</string>
+    <string name="backup_replace_row_desc">Delete every note, task and tag on this phone, then restore the backup.</string>
+    <string name="backup_intro_short">Keep all your notes, tasks and tags in one encrypted file, and restore them on any phone.</string>
+    <string name="backup_section_export">Export</string>
+    <string name="backup_section_import">Import</string>
+    <string name="security_encryption_pin_plain">Your notes are encrypted. Your PIN (and your fingerprint, if it is on) unlocks them.</string>
+    <string name="security_encryption_seed_plain">Your notes are encrypted. Your PIN (and your fingerprint, if it is on) unlocks them, and your recovery phrase does if you forget the PIN.</string>
+    <string name="security_recovery_set_desc">Unlocks your notes if you forget the PIN, and opens your backups.</string>
+    <string name="security_recovery_status_set">Set up</string>
+    <string name="vault_reset_restore_hint">After the reset you can restore a backup file with its 12 words.</string>
+    <string name="pin_change_bar_title">Change PIN</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d note</item>
+        <item quantity="other">%d notes</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d task</item>
+        <item quantity="other">%d tasks</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d tag</item>
+        <item quantity="other">%d tags</item>
+    </plurals>
+</resources>
