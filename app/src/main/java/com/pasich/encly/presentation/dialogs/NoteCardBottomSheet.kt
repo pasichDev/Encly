@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.dialogs
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyRow
@@ -24,9 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.composables.icons.lucide.CopyPlus
 import com.composables.icons.lucide.Lucide
@@ -75,6 +78,7 @@ fun NoteCardBottomSheet(
         EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, modifier = modifier) {
             NoteActionHeader(item)
             TagChips(selectedTagId = item.note.tagId ?: 0L, onSelect = { onAction(NoteAction.ChangeTag(it)) })
+            EnclyGroupDivider()
             DescriptionEditor(
                 initial = item.note.description,
                 editing = isEditingDescription,
@@ -83,7 +87,6 @@ fun NoteCardBottomSheet(
             )
             AnimatedVisibility(!isEditingDescription) {
                 Column {
-                    EnclyGroupDivider()
                     EnclySheetRow(
                         title = stringResource(id = R.string.edit),
                         icon = Lucide.Pencil,
@@ -137,9 +140,13 @@ private fun TagChips(
     tagListViewModel: TagListViewModel = hiltViewModel(),
 ) {
     val state by tagListViewModel.state.collectAsState()
+    val gutter = EnclyTheme.spacing.gutter
+    // The row bleeds into the sheet's gutters so chips scroll off the edge instead of being cut at
+    // the gutter; the content padding puts the first chip back on the shared left edge.
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
-        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = gutter),
+        modifier = Modifier.bleedHorizontally(gutter),
     ) {
         item {
             EnclyChip(
@@ -165,6 +172,7 @@ private fun DescriptionEditor(
     if (!editing) {
         EnclySheetRow(
             title = initial.ifBlank { stringResource(R.string.note_description_placeholder) },
+            muted = initial.isBlank(),
             icon = Lucide.MessageSquareText,
             onClick = { onEditingChange(true) },
         )
@@ -197,4 +205,17 @@ private fun DescriptionEditor(
             )
         }
     }
+}
+
+/** Widens the element by [bleed] on both sides, past its parent's padding. */
+private fun Modifier.bleedHorizontally(bleed: Dp) = layout { measurable, constraints ->
+    val extra = bleed.roundToPx() * 2
+    val placeable = measurable.measure(
+        constraints.copy(
+            maxWidth = constraints.maxWidth + extra,
+            minWidth =
+            constraints.maxWidth + extra,
+        ),
+    )
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
 }

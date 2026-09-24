@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
@@ -43,6 +44,7 @@ import kotlinx.coroutines.delay
 
 /** How long a destructive row waits for the confirming second tap. */
 private const val CONFIRM_WINDOW_MS = 5_000L
+private const val TITLE_MAX_LINES = 3
 
 /** Elevation of the FAB and sheet shadow (design spec §1.4). */
 internal val ShadowElevation = 10.dp
@@ -116,7 +118,8 @@ private fun SheetHandle() {
 /**
  * A sheet action row: leading icon in `primary` (`error` when [destructive]), the title in
  * labelLarge, and a check at the end when [selected]. With [confirmFirst] the first tap only
- * arms the action ("Tap again to delete"); a second tap within five seconds runs it.
+ * arms the action ("Tap again to delete"); a second tap within five seconds runs it. A [muted]
+ * title reads as a placeholder; titles stop at three lines.
  */
 @Composable
 fun EnclySheetRow(
@@ -129,6 +132,7 @@ fun EnclySheetRow(
     enabled: Boolean = true,
     selected: Boolean = false,
     confirmFirst: Boolean = false,
+    muted: Boolean = false,
 ) {
     val colors = MaterialTheme.colorScheme
     var armed by remember { mutableStateOf(false) }
@@ -160,7 +164,9 @@ fun EnclySheetRow(
             Text(
                 text = if (armed) stringResource(R.string.tap_again_to_delete) else title,
                 style = MaterialTheme.typography.labelLarge,
-                color = titleColor,
+                color = if (muted) colors.onSurfaceVariant else titleColor,
+                maxLines = TITLE_MAX_LINES,
+                overflow = TextOverflow.Ellipsis,
             )
             if (supporting != null) {
                 Text(text = supporting, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
