@@ -1,67 +1,29 @@
-# ProGuard / R8 rules for Encly (offline encrypted notes).
+# R8 rules for Encly (offline encrypted notes).
+#
+# Deliberately almost empty: everything the app needs kept at runtime is already covered by the
+# consumer rules the libraries ship, and the app has no reflective code paths of its own.
+#   - SQLCipher (JNI classes and native methods): sqlcipher-android's proguard.txt.
+#   - Room: the KSP-generated *_Impl classes, instantiated reflectively by class name, are
+#     kept by room-runtime's rules.
+#   - Hilt / Dagger, Lifecycle ViewModels, Navigation, Compose, DataStore, security-crypto
+#     (Tink): their own consumer rules.
+#   - Gson: gson.jar ships the TypeToken/Signature rules. Note blocks are written and read
+#     field by field in BlockSerializer/BlockDeserializer, never by reflection, so no model
+#     class needs its field names kept (BlockConverterTest pins the stored key names).
+#   - kotlinx.serialization: backup classes use the plugin-generated serializers, called
+#     explicitly (BackupPayload.serializer()); the key names are string constants in that
+#     generated code, and the library ships its own rules (BackupPayloadCodecTest pins them).
+#   - kotlin-bip39: the wordlist is compiled Kotlin code, not a resource loaded by name.
+# Add a rule here only for a concrete reflective, JNI or by-name lookup, next to a comment
+# saying which one.
 
-# --- Debuggable, mapping-friendly stack traces ---
+# --- Readable stack traces through the mapping file (mapping.txt of each release build) ---
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# Needed for Gson generics and (de)serialization annotations.
--keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod
--keepattributes RuntimeVisibleAnnotations,AnnotationDefault
-
-# --- Kotlin ---
--keep class kotlin.Metadata { *; }
--keep class kotlin.reflect.** { *; }
-
-# --- Jetpack Compose ---
--keep class androidx.compose.** { *; }
--dontwarn androidx.compose.**
-
-# --- Lifecycle ---
--keep class androidx.lifecycle.ViewModel { *; }
--keep class androidx.lifecycle.LiveData { *; }
--dontwarn androidx.lifecycle.**
-
-# --- SQLCipher (net.zetetic:sqlcipher-android) ---
-# Keep the classes intact: their names are referenced by the native JNI layer.
--keep,includedescriptorclasses class net.zetetic.database.** { *; }
--keep,includedescriptorclasses interface net.zetetic.database.** { *; }
--dontwarn net.zetetic.database.**
-
-# --- Room ---
--keep class * extends androidx.room.RoomDatabase { <init>(); }
--dontwarn androidx.room.paging.**
-
-# --- Gson ---
-# Models are (de)serialized (some by reflection via context.serialize), so keep their
-# fields/names intact. Custom Block adapters read fields by name, so names must survive.
--keep class com.pasich.encly.data.model.** { *; }
--keep class com.pasich.encly.domain.model.** { *; }
--keep class com.pasich.encly.dynamicBlocks.Block { *; }
--keep class com.pasich.encly.dynamicBlocks.Block$* { *; }
--keepclassmembers class * {
-    @com.google.gson.annotations.SerializedName <fields>;
-}
-# Gson generic type tokens.
--keep class com.google.gson.reflect.TypeToken { *; }
--keep class * extends com.google.gson.reflect.TypeToken
--keepclassmembers,allowobfuscation class * {
-    @com.google.gson.annotations.SerializedName <fields>;
-}
--dontwarn sun.misc.**
-
-# --- kotlinx.serialization ---
--keepclassmembers class **$$serializer { *; }
--keepclasseswithmembers class ** {
-    kotlinx.serialization.KSerializer serializer(...);
-}
--keep,includedescriptorclasses class com.pasich.encly.**$$serializer { *; }
--keepclassmembers class com.pasich.encly.** {
-    *** Companion;
-}
--if @kotlinx.serialization.Serializable class **
--keep class <1> { *; }
-
 # --- Strip logging in release ---
+# The app itself never logs to logcat; this also silences library logging, which could carry
+# database or file metadata.
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);
     public static int v(...);
@@ -75,10 +37,6 @@
 -assumenosideeffects class com.pasich.encly.core.AppLogger {
     public *** w(...);
     public *** e(...);
-}
--assumenosideeffects class java.io.PrintStream {
-    public void println(%);
-    public void println(**);
 }
 
 # --- Obfuscation dictionaries (reduce readability of the release) ---
