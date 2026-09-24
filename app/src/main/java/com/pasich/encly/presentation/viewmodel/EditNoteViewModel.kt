@@ -27,6 +27,7 @@ import com.pasich.encly.presentation.editor.state.applyTool
 import com.pasich.encly.presentation.editor.state.canMoveInteracted
 import com.pasich.encly.presentation.editor.state.canRemoveInteracted
 import com.pasich.encly.presentation.editor.state.focusFirstBlock
+import com.pasich.encly.presentation.editor.state.focusWorkingBlock
 import com.pasich.encly.presentation.editor.state.interactedBlockPosition
 import com.pasich.encly.presentation.editor.state.moveInteracted
 import com.pasich.encly.presentation.editor.state.removeInteracted
@@ -327,6 +328,11 @@ constructor(
     /** The title's "Next": the first block takes focus. */
     fun focusFirstBlock() {
         if (canEdit()) editor.focusFirstBlock()
+    }
+
+    /** The toolbar's "Show keyboard": back into the block the user was writing in. */
+    fun focusWorkingBlock() {
+        if (canEdit()) editor.focusWorkingBlock()
     }
 
     fun undo() {

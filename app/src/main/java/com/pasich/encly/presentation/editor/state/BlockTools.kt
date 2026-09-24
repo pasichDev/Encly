@@ -15,6 +15,22 @@ fun BlockEditorState.focusFirstBlock() {
     if (first >= 0) selection.focusAt(first) else addBlockToEnd()
 }
 
+/**
+ * Brings the keyboard back to where the user was writing: the block they worked on (or the
+ * nearest one above that has a field), cursor at its end; the first block if none.
+ */
+fun BlockEditorState.focusWorkingBlock() {
+    val index = selection.workingIndex
+    val target = if (blocks.getOrNull(index)?.canTakeFocus() == true) index else blocks.previousFocusableIndex(index)
+    if (blocks.getOrNull(target)?.canTakeFocus() ==
+        true
+    ) {
+        selection.focusAt(target, cursorToEnd = true)
+    } else {
+        focusFirstBlock()
+    }
+}
+
 /** The Heading tool: headings of every level show it active, and it makes an H2. */
 val HEADING_TOOL = BlockType.H2
 

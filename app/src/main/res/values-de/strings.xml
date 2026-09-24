@@ -552,4 +552,6 @@
     <string name="faq_lock_note_a">Die Notiz wird schreibgeschützt, damit sie nicht versehentlich geändert wird. Text lässt sich weiterhin markieren und kopieren. Ein- und ausschalten kannst du es im Menü des Editors.</string>
     <string name="faq_backup_q">Wie funktionieren Backups?</string>
     <string name="faq_backup_a">Unter Einstellungen → Backup exportierst du eine verschlüsselte Datei, die nur deine Wiederherstellungsphrase öffnen kann. Zum Wiederherstellen wählst du die Datei, tippst oder fügst die 12 Wörter ein und führst sie dann mit diesem Tresor zusammen oder ersetzt alles.</string>
+    <string name="keyboard_show">Tastatur einblenden</string>
+    <string name="keyboard_hide">Tastatur ausblenden</string>
 </resources>

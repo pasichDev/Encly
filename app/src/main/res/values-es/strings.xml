@@ -557,4 +557,6 @@
     <string name="faq_lock_note_a">Deja la nota en solo lectura para que no se cambie por accidente. Aún puedes seleccionar y copiar el texto. Actívalo o desactívalo desde el menú del editor.</string>
     <string name="faq_backup_q">¿Cómo funcionan las copias de seguridad?</string>
     <string name="faq_backup_a">En Ajustes → Copia de seguridad exportas un archivo cifrado que solo tu frase de recuperación puede abrir. Para restaurar, elige el archivo, escribe o pega las 12 palabras y luego combínalo con esta bóveda o reemplázalo todo.</string>
+    <string name="keyboard_show">Mostrar teclado</string>
+    <string name="keyboard_hide">Ocultar teclado</string>
 </resources>

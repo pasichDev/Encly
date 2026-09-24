@@ -2,13 +2,17 @@ package com.pasich.encly.presentation.editor.blocks
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.net.toUri
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.LinkDataBlock
@@ -41,7 +45,6 @@ import com.pasich.encly.presentation.designsystem.EnclyToolButton
 import com.pasich.encly.presentation.designsystem.ToolStyle
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
-import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -156,32 +159,74 @@ private fun LinkUrlField(
     }
 }
 
-/** A saved link: its address in `primary`, underlined (design spec §4.4), or why it is broken. */
+/**
+ * A saved link as a card: a globe tile, the site's host as its title and the rest of the address
+ * under it (the app is offline, so there is no fetched preview). A tap opens the link's sheet.
+ * A link that failed to parse says so in `error`.
+ */
 @Composable
 private fun LinkText(urlModel: LinkDataBlock, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val fontStyles = rememberFontStyles()
-    val style = MaterialTheme.typography.bodyLarge.copy(
-        fontFamily = fontStyles.families.body,
-        fontSize = fontStyles.sizes.textBlock,
-    )
-    Column(
-        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.textGap, Alignment.CenterVertically),
+    val uri = remember(urlModel.url) { runCatching { urlModel.url.toUri() }.getOrNull() }
+    val host = uri?.host?.removePrefix("www.")?.takeIf { it.isNotBlank() }
+    val rest = remember(urlModel.url) { linkDetail(urlModel.url, uri?.host) }
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = EnclyTheme.spacing.textButtonHeight)
-            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.more_options), onClick = onClick),
+            .padding(vertical = EnclyTheme.spacing.xxs)
+            .fillMaxWidth(),
     ) {
-        Text(
-            text = urlModel.url,
-            style = style.copy(textDecoration = TextDecoration.Underline),
-            color = MaterialTheme.colorScheme.primary,
-        )
-        if (urlModel.isError) {
-            Text(
-                text = stringResource(R.string.falied_content),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
+        // Clickable inside the Surface, so the ripple keeps to the card's corners.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
+            modifier = Modifier
+                .clickable(role = Role.Button, onClickLabel = stringResource(R.string.more_options), onClick = onClick)
+                .padding(EnclyTheme.spacing.s),
+        ) {
+            Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.primaryContainer) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(EnclyTheme.spacing.tileSmall)) {
+                    Icon(
+                        EnclyIcons.Globe,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+                    )
+                }
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.textGap),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = host ?: urlModel.url,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (urlModel.isError) {
+                    Text(
+                        text = stringResource(R.string.falied_content),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                } else if (rest.isNotEmpty()) {
+                    Text(
+                        text = rest,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.MiddleEllipsis,
+                    )
+                }
+            }
         }
     }
+}
+
+/** What the card shows under the host: the rest of the address; empty when there is no host. */
+internal fun linkDetail(url: String, host: String?): String {
+    if (host.isNullOrBlank()) return ""
+    return url.substringAfter("://").substringAfter(host, "").trimEnd('/')
 }

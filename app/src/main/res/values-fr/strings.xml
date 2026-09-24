@@ -557,4 +557,6 @@
     <string name="faq_lock_note_a">La note passe en lecture seule pour éviter toute modification accidentelle. Vous pouvez toujours sélectionner et copier le texte. Activez-le ou désactivez-le depuis le menu de l’éditeur.</string>
     <string name="faq_backup_q">Comment fonctionnent les sauvegardes ?</string>
     <string name="faq_backup_a">Dans Paramètres → Sauvegarde, vous exportez un fichier chiffré que seule votre phrase de récupération peut ouvrir. Pour restaurer, choisissez le fichier, saisissez ou collez les 12 mots, puis fusionnez-le avec ce coffre ou remplacez tout.</string>
+    <string name="keyboard_show">Afficher le clavier</string>
+    <string name="keyboard_hide">Masquer le clavier</string>
 </resources>

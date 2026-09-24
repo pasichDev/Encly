@@ -248,6 +248,31 @@ object EnclyIcons {
         )
     }
 
+    val Keyboard: ImageVector by lazy {
+        enclyIcon(
+            "Keyboard",
+            "M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z",
+            "M8 14h8",
+            dots = "M6.1 10a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z" +
+                "M9.1 10a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z" +
+                "M13.1 10a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z" +
+                "M16.1 10a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z",
+        )
+    }
+
+    val KeyboardHide: ImageVector by lazy {
+        enclyIcon(
+            "KeyboardHide",
+            "M5 3h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
+            "M8 11h8",
+            "M9 18l3 3 3-3",
+            dots = "M6.1 7a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z" +
+                "M9.1 7a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z" +
+                "M13.1 7a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z" +
+                "M16.1 7a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0z",
+        )
+    }
+
     val Quote: ImageVector by lazy {
         enclyIcon(
             "Quote",

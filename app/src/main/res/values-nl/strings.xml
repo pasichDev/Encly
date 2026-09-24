@@ -552,4 +552,6 @@
     <string name="faq_lock_note_a">De notitie wordt alleen-lezen, zodat je hem niet per ongeluk wijzigt. Je kunt de tekst nog steeds selecteren en kopiëren. Zet het aan of uit via het menu van de editor.</string>
     <string name="faq_backup_q">Hoe werken back-ups?</string>
     <string name="faq_backup_a">Via Instellingen → Back-up exporteer je één versleuteld bestand dat alleen je herstelzin kan openen. Om te herstellen kies je het bestand, typ of plak je de 12 woorden en voeg je het samen met deze kluis of vervang je alles.</string>
+    <string name="keyboard_show">Toetsenbord tonen</string>
+    <string name="keyboard_hide">Toetsenbord verbergen</string>
 </resources>

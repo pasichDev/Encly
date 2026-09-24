@@ -562,4 +562,6 @@
     <string name="faq_lock_note_a">Ustawia notatkę tylko do odczytu, żeby nie zmienić jej przypadkiem. Tekst nadal można zaznaczyć i skopiować. Włączysz i wyłączysz to w menu edytora.</string>
     <string name="faq_backup_q">Jak działają kopie zapasowe?</string>
     <string name="faq_backup_a">W Ustawienia → Kopia zapasowa eksportujesz jeden zaszyfrowany plik, który otworzy tylko twoja fraza odzyskiwania. Aby przywrócić, wybierz plik, wpisz lub wklej 12 słów, a następnie scal go z tym sejfem albo zastąp wszystko.</string>
+    <string name="keyboard_show">Pokaż klawiaturę</string>
+    <string name="keyboard_hide">Ukryj klawiaturę</string>
 </resources>

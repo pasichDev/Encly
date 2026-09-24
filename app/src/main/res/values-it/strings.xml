@@ -557,4 +557,6 @@
     <string name="faq_lock_note_a">Rende la nota di sola lettura, così non la modifichi per sbaglio. Puoi comunque selezionare e copiare il testo. Si attiva e disattiva dal menu dell’editor.</string>
     <string name="faq_backup_q">Come funzionano i backup?</string>
     <string name="faq_backup_a">In Impostazioni → Backup esporti un file crittografato che solo la tua frase di recupero può aprire. Per ripristinare, scegli il file, digita o incolla le 12 parole, poi uniscilo a questa cassaforte o sostituisci tutto.</string>
+    <string name="keyboard_show">Mostra tastiera</string>
+    <string name="keyboard_hide">Nascondi tastiera</string>
 </resources>

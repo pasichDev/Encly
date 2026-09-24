@@ -67,6 +67,8 @@ data class EnclySpacing(
     val iconXSmall: Dp = 18.dp,
     /** An empty-state or lock tile. */
     val tile: Dp = 64.dp,
+    /** The globe tile on an editor link card. */
+    val tileSmall: Dp = 40.dp,
     /** Width of the navigation drawer on tablets. */
     val drawerWidth: Dp = 320.dp,
     /** The empty area under the last editor block; a tap there adds a block. */

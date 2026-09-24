@@ -12,7 +12,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
@@ -24,6 +26,9 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
+
+/** The closing quote mark is the opening one turned around. */
+private const val HALF_TURN = 180f
 
 /** [focusRequester] targets the quote's text field, not the card that draws the quote. */
 @Composable
@@ -41,7 +46,8 @@ fun QuoteBlock(
         fontSize = fontStyles.sizes.quote,
     )
 
-    // A tonal card with the quote mark in `primary`, 8 dp below the block above (design spec §4.4).
+    // A tonal card between an opening and a closing quote mark in `primary`, 8 dp below the block
+    // above (design spec §4.4).
     Column(
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.labelGap),
         modifier = modifier
@@ -69,6 +75,16 @@ fun QuoteBlock(
             decorator = { innerTextField ->
                 QuoteDecoration(state.text.isEmpty(), quoteStyle, innerTextField)
             },
+        )
+        // The closing mark: the opening one turned around, at the end of the quote.
+        Icon(
+            EnclyIcons.Quote,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .align(Alignment.End)
+                .size(EnclyTheme.spacing.iconMedium)
+                .rotate(HALF_TURN),
         )
     }
 }

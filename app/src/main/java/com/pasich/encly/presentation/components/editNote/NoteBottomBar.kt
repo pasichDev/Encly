@@ -1,5 +1,9 @@
 package com.pasich.encly.presentation.components.editNote
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.view.Window
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -7,9 +11,13 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
@@ -22,7 +30,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.BlockType
@@ -74,7 +86,11 @@ fun NoteBottomBar(
 
     EnclyEditorToolbar(modifier = modifier.imePadding()) {
         when {
-            simpleEdit -> ToolRow(spread = false) { HistoryButtons(history) }
+            simpleEdit -> ToolRow(spread = false) {
+                HistoryButtons(history)
+                Spacer(Modifier.weight(1f))
+                KeyboardToggle(onShow = viewModel::focusWorkingBlock)
+            }
 
             else -> AnimatedContent(
                 targetState = showMore,
@@ -98,6 +114,7 @@ fun NoteBottomBar(
                         activeTool = activeTool,
                         onApply = { viewModel.applyTool(it) },
                         onMore = { showMore = true },
+                        onShowKeyboard = viewModel::focusWorkingBlock,
                     )
                 }
             }
@@ -113,7 +130,12 @@ private class BlockMoveTools(val onMoveUp: (() -> Unit)?, val onMoveDown: (() ->
 
 /** "Add block", then the block tools, the one of the block the user works on marked active. */
 @Composable
-private fun MainTools(activeTool: BlockType?, onApply: (BlockType) -> Unit, onMore: () -> Unit) {
+private fun MainTools(
+    activeTool: BlockType?,
+    onApply: (BlockType) -> Unit,
+    onMore: () -> Unit,
+    onShowKeyboard: () -> Unit,
+) {
     ToolRow(spread = true) {
         EnclyToolButton(
             icon = EnclyIcons.PlusBold,
@@ -124,7 +146,43 @@ private fun MainTools(activeTool: BlockType?, onApply: (BlockType) -> Unit, onMo
         mainBlockTools.forEach { tool ->
             BlockToolButton(tool = tool, active = tool.type == activeTool, onClick = { onApply(tool.type) })
         }
+        EnclyToolbarRule()
+        KeyboardToggle(onShow = onShowKeyboard)
     }
+}
+
+/**
+ * Hides the keyboard while it is up, and brings it back into the block the user was writing in
+ * ([onShow] focuses it) while it is down. Both go through the window's insets controller as well
+ * as Compose's keyboard controller: some OEM keyboards and skins ignore one of the two.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun KeyboardToggle(onShow: () -> Unit) {
+    val imeVisible = WindowInsets.isImeVisible
+    val keyboard = LocalSoftwareKeyboardController.current
+    val view = LocalView.current
+    val insets = remember(view) { view.context.findWindow()?.let { WindowCompat.getInsetsController(it, view) } }
+    EnclyToolButton(
+        icon = if (imeVisible) EnclyIcons.KeyboardHide else EnclyIcons.Keyboard,
+        contentDescription = stringResource(if (imeVisible) R.string.keyboard_hide else R.string.keyboard_show),
+        onClick = {
+            if (imeVisible) {
+                keyboard?.hide()
+                insets?.hide(WindowInsetsCompat.Type.ime())
+            } else {
+                onShow()
+                keyboard?.show()
+                insets?.show(WindowInsetsCompat.Type.ime())
+            }
+        },
+    )
+}
+
+private tailrec fun Context.findWindow(): Window? = when (this) {
+    is Activity -> window
+    is ContextWrapper -> baseContext.findWindow()
+    else -> null
 }
 
 /**

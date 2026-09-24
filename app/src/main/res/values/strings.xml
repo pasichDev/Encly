@@ -569,4 +569,6 @@
     <string name="faq_lock_note_a">It makes a note read-only so it can\'t be changed by accident. You can still select and copy the text. Turn it on or off from the editor\'s menu.</string>
     <string name="faq_backup_q">How do backups work?</string>
     <string name="faq_backup_a">In Settings → Backup you export one encrypted file that only your recovery phrase can open. To restore, pick the file, type or paste the 12 words, then merge it into this vault or replace everything.</string>
+    <string name="keyboard_show">Show keyboard</string>
+    <string name="keyboard_hide">Hide keyboard</string>
 </resources>
