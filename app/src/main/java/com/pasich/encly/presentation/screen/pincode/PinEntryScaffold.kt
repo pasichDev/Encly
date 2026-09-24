@@ -20,12 +20,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyLogoMark
 import com.pasich.encly.presentation.designsystem.KeypadSize
 import com.pasich.encly.presentation.designsystem.PinDots
 import com.pasich.encly.presentation.designsystem.PinKeypad
+import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -114,7 +117,12 @@ private fun PinEntryHeader(title: String, subtitle: String, subtitleIsError: Boo
             .fillMaxWidth()
             .padding(horizontal = spacing.gutter),
     ) {
-        if (icon == null) EnclyLogoMark() else EnclyIconTile(icon = icon)
+        if (icon == null) {
+            val reveal = LocalUnlockReveal.current
+            EnclyLogoMark(modifier = Modifier.onGloballyPositioned { reveal.logoBounds = it.boundsInRoot() })
+        } else {
+            EnclyIconTile(icon = icon)
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.headlineMedium,

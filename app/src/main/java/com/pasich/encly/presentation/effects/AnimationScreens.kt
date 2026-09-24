@@ -27,6 +27,8 @@ fun NavGraphBuilder.animationScreens(
     enterTransition = {
         if (targetState.destination.route == LOCK_ROUTE) {
             EnterTransition.None
+        } else if (initialState.destination.route == LOCK_ROUTE) {
+            unlockScreenEnterAnimation()
         } else {
             defaultScreenEnterAnimation()
         }

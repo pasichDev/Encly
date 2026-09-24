@@ -50,6 +50,8 @@ Compose:
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors
       - LocalEnclyTypography
+      # The unlock reveal, provided once by App (presentation/effects/UnlockReveal.kt).
+      - LocalUnlockReveal
       - LocalSpacing
   CompositionLocalNaming:
     active: true

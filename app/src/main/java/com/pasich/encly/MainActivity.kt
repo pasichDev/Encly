@@ -13,10 +13,12 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -29,6 +31,9 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.presentation.components.SecureTextInputBoundary
+import com.pasich.encly.presentation.effects.LocalUnlockReveal
+import com.pasich.encly.presentation.effects.UnlockRevealOverlay
+import com.pasich.encly.presentation.effects.UnlockRevealState
 import com.pasich.encly.presentation.navigation.AppNavHost
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
@@ -173,16 +178,20 @@ fun App(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.statusBars),
-                ) {
-                    AppNavHost(
-                        navController = navController,
-                        startDestination = startDestination,
-                    )
+                val unlockReveal = remember { UnlockRevealState() }
+                CompositionLocalProvider(LocalUnlockReveal provides unlockReveal) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.statusBars),
+                    ) {
+                        AppNavHost(
+                            navController = navController,
+                            startDestination = startDestination,
+                        )
+                    }
                 }
+                UnlockRevealOverlay(unlockReveal)
                 if (shielded) LockShield()
             }
         }

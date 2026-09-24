@@ -25,6 +25,7 @@ import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
+import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
@@ -56,7 +57,10 @@ fun LockScreen(
         viewModel.biometricEnabled() && viewModel.biometricAvailable()
     }
 
+    val unlockReveal = LocalUnlockReveal.current
+
     fun goHome() {
+        unlockReveal.start()
         // The note that was open when the app re-locked (see MainActivity) is opened again.
         val returnRoute = navController.currentBackStackEntry?.savedStateHandle?.get<String>(RelockReturn.RETURN_ROUTE)
         navController.navigate(NavRoutes.HomeRoute.name) {
