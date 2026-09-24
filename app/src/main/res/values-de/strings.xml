@@ -25,13 +25,6 @@
 
     <string name="auth_method_pin_desc">Erforderlicher Zugangsschlüssel. Tippe, um deine PIN zu ändern.</string>
     <string name="auth_method_pin_title">6-stellige PIN</string>
-    <string name="auth_setup_biometric_subtitle">Bestätige deine Biometrie für schnelles Entsperren</string>
-    <string name="auth_setup_biometric_title">Biometrie aktivieren</string>
-    <string name="auth_setup_confirm_subtitle">Gib die PIN zur Bestätigung erneut ein</string>
-    <string name="auth_setup_confirm_title">PIN bestätigen</string>
-    <string name="auth_setup_continue_pin_only">Nur mit PIN fortfahren</string>
-    <string name="auth_setup_create_subtitle">Deine 6-stellige PIN schützt direkt den Datenbankschlüssel</string>
-    <string name="auth_setup_retry_biometric">Biometrie erneut versuchen</string>
     <string name="auth_title">Anmeldung</string>
 
     <string name="back">Zurück</string>
@@ -50,6 +43,7 @@
     <string name="biometric_unavailable">Biometrische Authentifizierung ist nicht verfügbar</string>
 
     <string name="block_add">Block hinzufügen</string>
+    <string name="block_bulleted_list">Aufzählung</string>
     <string name="block_checklist">Checkliste</string>
     <string name="block_heading">Überschrift</string>
     <string name="block_heading_level">Überschrift %1$d</string>
@@ -152,18 +146,16 @@
     <string name="faq_tags_q">Wie funktionieren Labels?</string>
     <string name="faq_tasks_a">Aufgaben haben eine Beschreibung und eine Priorität. Du kannst sie nach Priorität filtern und als erledigt markieren. Encly zeigt Aufgabentexte nie in Systembenachrichtigungen an.</string>
     <string name="faq_tasks_q">Was können Aufgaben?</string>
-    <string name="faq_theme_a">Unter Einstellungen → Darstellung kannst du das System-, helle oder dunkle Design wählen und auf unterstützten Android-Geräten dynamische Farben aktivieren.</string>
+    <string name="faq_theme_a">Unter Einstellungen → Darstellung wählst du eines von fünf Designs, den Modus (System, hell oder dunkel) und die Schrift, ab Android 12 auch dynamische Farben.</string>
     <string name="faq_theme_q">Wie ändere ich das Design?</string>
     <string name="faq_vault_damaged_a">Encly legt absichtlich nie eine leere Datenbank über einen verlorenen oder unlesbaren Tresor an. Bestätige das vollständige Löschen nicht, wenn du deine lokalen Daten noch brauchst.</string>
     <string name="faq_vault_damaged_q">Encly meldet einen beschädigten Tresor</string>
 
     <string name="font_size_title">Textgröße</string>
-    <string name="font_style_cozy">Gemütlich</string>
+    <string name="font_style_cozy">Redaktionell</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technisch</string>
 
-    <string name="home_greeting">Hallo</string>
-    <string name="home_tasks_empty">Deine Aufgabenliste ist leer</string>
 
     <string name="language_dialog_title">Sprache wählen</string>
     <string name="language_system_default">Systemstandard</string>
@@ -181,7 +173,6 @@
     <string name="lock_subtitle">Gib deine 6-stellige PIN ein, um fortzufahren</string>
     <string name="lock_title">Notizen entsperren</string>
     <string name="lock_unlocking">Wird entsperrt…</string>
-    <string name="lock_use_biometric">Biometrie verwenden</string>
     <string name="lock_use_recovery_phrase">Zugang mit der Wiederherstellungsphrase wiederherstellen</string>
     <string name="lock_wrong_pin">Falsche PIN</string>
     <string name="lock_wrong_recovery_phrase">Falsche Wiederherstellungsphrase</string>
@@ -189,6 +180,9 @@
     <string name="loss_hold_to_wipe">Gedrückt halten, um alles zu löschen</string>
     <string name="loss_message">Die verschlüsselten Daten oder die Verschlüsselungsschlüssel wurden offenbar verändert oder beschädigt, daher ist keine Wiederherstellung möglich.\n\nUm die App weiter zu nutzen, musst du sie zurücksetzen und die beschädigten Daten löschen. Dadurch werden alle gespeicherten Notizen und Einstellungen endgültig gelöscht.</string>
     <string name="loss_title">Deine Daten sind leider beschädigt</string>
+    <string name="legacy_vault_title">Diese Daten stammen aus einer älteren Version</string>
+    <string name="legacy_vault_message">Encly hat Notizen gefunden, die mit einer Version vor 2.0 gespeichert wurden. Encly 2.0 nutzt ein neues verschlüsseltes Format und kann sie nicht öffnen; eine Umwandlung ist nicht möglich.\n\nUm die App zu nutzen, fang neu an. Dabei werden die alten Notizen und Einstellungen auf diesem Handy endgültig gelöscht.</string>
+    <string name="legacy_vault_hold_to_start">Gedrückt halten, um neu anzufangen</string>
 
     <string name="main_drawer_faq">FAQ</string>
     <string name="main_drawer_settings">Einstellungen</string>
@@ -216,46 +210,9 @@
     <string name="note_save_failed">Die Änderungen konnten nicht gespeichert werden</string>
     <string name="note_trash_failed">Die Notiz konnte nicht in den Papierkorb verschoben werden</string>
 
-    <string name="onboarding_done_auto_desc">Deine Daten sind geschützt. Du kannst sofort loslegen und deine Ideen aufschreiben und umsetzen!</string>
-    <string name="onboarding_done_auto_title">Sicherheit ist eingerichtet!</string>
-    <string name="onboarding_done_card_footer">Bereit loszulegen?</string>
-    <string name="onboarding_done_card_title">Zeit, Ideen umzusetzen!</string>
-    <string name="onboarding_done_point_1">Halte brillante Gedanken fest</string>
-    <string name="onboarding_done_point_2">Erstelle Listen, um fokussiert zu bleiben</string>
-    <string name="onboarding_done_point_3">Plane deine Tage und Träume</string>
-    <string name="onboarding_done_point_4">Bewahre Wichtiges sicher geschützt auf</string>
-    <string name="onboarding_done_point_5">Mach deine Ideen wahr</string>
-    <string name="onboarding_done_seed_desc">Du kannst deine Notizen jetzt sicher erstellen, bearbeiten und speichern. Vergiss nicht, deine Seed-Phrase an einem sicheren Ort aufzubewahren!</string>
-    <string name="onboarding_done_seed_title">Dein Sicherheitsschlüssel ist bereit!</string>
-    <string name="onboarding_done_start">Los geht’s!</string>
     <string name="onboarding_error_initialization">Die App konnte nicht initialisiert werden</string>
-    <string name="onboarding_error_seed_generation">Die Seed-Phrase konnte nicht erstellt werden</string>
+    <string name="onboarding_error_seed_generation">Die Wiederherstellungsphrase konnte nicht erstellt werden</string>
     <string name="onboarding_error_vault_creation">Der verschlüsselte Tresor konnte nicht erstellt werden</string>
-    <string name="onboarding_feature_editor_desc">Ein flexibler Texteditor mit Formatierung</string>
-    <string name="onboarding_feature_editor_title">Bearbeiten</string>
-    <string name="onboarding_feature_interface_desc">Stilvoll. Einfach. Intuitiv.</string>
-    <string name="onboarding_feature_interface_title">Oberfläche</string>
-    <string name="onboarding_feature_privacy_desc">Nur du hast Zugriff auf deine Gedanken</string>
-    <string name="onboarding_feature_privacy_title">Privatsphäre</string>
-    <string name="onboarding_feature_tags_desc">Ordne deine Gedanken nach Themen</string>
-    <string name="onboarding_feature_tags_title">Labels</string>
-    <string name="onboarding_feature_tasks_desc">Behalte Aufgaben neben deinen Notizen im Blick</string>
-    <string name="onboarding_feature_tasks_title">Aufgaben</string>
-    <string name="onboarding_security_auto_point_1">Schneller Start ohne Einrichtung</string>
-    <string name="onboarding_security_auto_point_2">Das System verwaltet die Sicherheit für dich</string>
-    <string name="onboarding_security_auto_point_3">Keine Schlüssel zum Merken</string>
-    <string name="onboarding_security_auto_point_4">Verschlüsselte lokale Kopien sind nicht möglich</string>
-    <string name="onboarding_security_auto_title">Automatische Sicherheit</string>
-    <string name="onboarding_security_explanation">Eine Seed-Phrase ist eine Wortfolge, mit der du den Zugang zu deinen Daten wiederherstellen kannst. Wenn du die automatische Sicherheit wählst, verwendet das System stattdessen einen integrierten Schlüssel. Das ist einfacher, senkt aber das Schutzniveau und erlaubt keine verschlüsselten lokalen Kopien.</string>
-    <string name="onboarding_security_seed_point_1">Höchstes Sicherheitsniveau</string>
-    <string name="onboarding_security_seed_point_2">Du kontrollierst deinen eigenen Schlüssel</string>
-    <string name="onboarding_security_seed_point_3">Du musst deine Seed-Phrase sicher aufbewahren</string>
-    <string name="onboarding_security_seed_point_4">Empfohlen für wichtige Daten</string>
-    <string name="onboarding_security_seed_title">Sicherheitsschlüssel erstellen</string>
-    <string name="onboarding_security_subtitle">Wähle das Sicherheitsniveau für deine Daten</string>
-    <string name="onboarding_security_title">Sicherheit einrichten</string>
-    <string name="onboarding_welcome_subtitle">Erstelle, bearbeite und ordne deine Gedanken ganz bequem</string>
-    <string name="onboarding_welcome_title">Meine Notizen</string>
 
     <string name="open_menu">Menü öffnen</string>
 
@@ -270,12 +227,10 @@
     <string name="pin_create_title">6-stellige PIN erstellen</string>
     <string name="pin_current_wrong">Die aktuelle PIN ist falsch</string>
     <string name="pin_delete_digit">Ziffer löschen</string>
-    <string name="pin_mismatch">Die PINs stimmen nicht überein</string>
     <string name="pin_mismatch_retry">Die PINs stimmen nicht überein. Bitte versuche es erneut.</string>
     <string name="pin_save_failed">Die PIN konnte nicht gespeichert werden</string>
     <string name="pin_update_failed">Die PIN konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
 
-    <string name="please_wait">Bitte warten…</string>
 
     <string name="press_to_edit">Tippe, um mit dem Bearbeiten zu beginnen…</string>
 
@@ -300,54 +255,26 @@
 
 
     <string name="search_clear">Suche löschen</string>
-    <string name="search_hint">Gib Suchbegriffe ein. Durchsucht werden Titel und Inhalte der Notizen.</string>
-    <string name="search_no_results">Keine Notizen gefunden</string>
-    <string name="search_notes">Zum Suchen tippen</string>
-    <string name="search_try_other_keywords">Versuche es mit anderen Suchbegriffen</string>
 
     <string name="security_biometric_available">Fingerabdruck</string>
     <string name="security_biometric_title">Biometrisches Entsperren</string>
     <string name="security_biometric_unavailable">Auf diesem Gerät nicht verfügbar</string>
+    <string name="security_biometric_not_enrolled">Kein Fingerabdruck eingerichtet. Füge einen in den Systemeinstellungen hinzu.</string>
     <string name="security_encryption_active">Verschlüsselung ist aktiv</string>
     <string name="security_encryption_pin_desc">Dein zufälliger Datenbankschlüssel ist durch deine PIN und optional durch einen biometrischen Keystore-Slot geschützt.</string>
-    <string name="security_encryption_seed_desc">Dein zufälliger Datenbankschlüssel hat einen separaten Wiederherstellungsslot, der durch deine Seed-Phrase geschützt ist.</string>
+    <string name="security_encryption_seed_desc">Dein zufälliger Datenbankschlüssel hat einen separaten Wiederherstellungsslot, der durch deine Wiederherstellungsphrase geschützt ist.</string>
     <string name="security_info_body">• SQLCipher wird mit einem zufälligen 256-Bit-Schlüssel geöffnet\n• PIN und Wiederherstellungsphrase haben separate AES-GCM-Entsperrslots\n• Die Biometrie nutzt einen Android-Keystore-Schlüssel mit Authentifizierung bei jeder Verwendung</string>
     <string name="security_info_title">ℹ️ Sicherheitsinformationen</string>
-    <string name="security_recovery_set">Eingerichtet. Sie entsperrt den Tresor, wenn du deine PIN vergisst, und schützt deine Sicherungen.</string>
+    <string name="security_recovery_set">Eingerichtet. Sie entsperrt den Tresor, wenn du deine PIN vergisst, und schützt deine Backups.</string>
     <string name="security_recovery_missing">Nicht eingerichtet. Ohne sie bedeutet eine vergessene PIN, dass alles verloren ist. Tippe, um eine zu erstellen.</string>
     <string name="security_erase_title">Alle Daten löschen</string>
-    <string name="security_erase_desc">Alle Notizen, Aufgaben und Tags sowie die Schlüssel auf diesem Gerät löschen</string>
+    <string name="security_erase_desc">Alle Notizen, Aufgaben und Labels sowie die Schlüssel auf diesem Gerät löschen</string>
     <string name="security_erase_confirm_title">Alle Daten löschen?</string>
-    <string name="security_erase_confirm_body">Alle Notizen, Aufgaben und Tags sowie die Schlüssel werden von diesem Gerät gelöscht und Encly beginnt von vorn. Das lässt sich nicht rückgängig machen: Exportiere zuerst eine Sicherung, wenn du etwas behalten möchtest.</string>
+    <string name="security_erase_confirm_body">Alle Notizen, Aufgaben und Labels sowie die Schlüssel werden von diesem Gerät gelöscht und Encly beginnt von vorn. Das lässt sich nicht rückgängig machen: Exportiere zuerst ein Backup, wenn du etwas behalten möchtest.</string>
     <string name="security_erase_confirm">Löschen</string>
     <string name="security_subtitle">Verschlüsselung und Datenschutz</string>
     <string name="security_title">Sicherheit</string>
 
-    <string name="seed_continue_to_verify">Weiter zur Überprüfung</string>
-    <string name="seed_created_title">🎉 Sicherheitsschlüssel erstellt!</string>
-    <string name="seed_explain_control_desc">Nur du hast Zugriff auf deine Daten</string>
-    <string name="seed_explain_control_title">Volle Kontrolle</string>
-    <string name="seed_explain_create">Seed-Phrase erstellen</string>
-    <string name="seed_explain_recovery_desc">Mit deiner Seed-Phrase kannst du deine Daten auf jedem Gerät wiederherstellen</string>
-    <string name="seed_explain_recovery_title">Einfache Wiederherstellung</string>
-    <string name="seed_explain_security_desc">Deine Daten sind durch Kryptografie auf militärischem Niveau geschützt</string>
-    <string name="seed_explain_security_title">Maximale Sicherheit</string>
-    <string name="seed_explain_subtitle">Eine Seed-Phrase ist dein Hauptschlüssel zu all deinen Daten. Sie besteht aus 12 Wörtern und bietet maximale Sicherheit.</string>
-    <string name="seed_explain_title">🔐 Was ist eine Seed-Phrase?</string>
-    <string name="seed_explain_warning">Wichtig: Wenn du deine Seed-Phrase verlierst, verlierst du alle deine Daten!</string>
-    <string name="seed_generating">Dein Sicherheitsschlüssel wird erzeugt…</string>
-    <string name="seed_generating_hint">Das kann einige Sekunden dauern</string>
-    <string name="seed_hide">Wiederherstellungsphrase verbergen</string>
-    <string name="seed_important">WICHTIG!</string>
-    <string name="seed_show">Wiederherstellungsphrase anzeigen</string>
-    <string name="seed_verify_back">Zurück</string>
-    <string name="seed_verify_confirm">Schlüsselerstellung bestätigen</string>
-    <string name="seed_verify_subtitle">Gib zur Bestätigung diese Wörter aus deinem Sicherheitsschlüssel ein:</string>
-    <string name="seed_verify_title">🔍 Schlüssel bestätigen</string>
-    <string name="seed_word_correct">Richtig</string>
-    <string name="seed_word_number">Wort Nr. %1$d:</string>
-    <string name="seed_word_placeholder">Wort eingeben…</string>
-    <string name="seed_write_down_warning">Schreibe deine Wiederherstellungsphrase auf und bewahre sie offline auf. Ohne sie kann der Wiederherstellungsslot den Zugang nicht wiederherstellen.</string>
 
     <string name="settings_appearance">Darstellung</string>
     <string name="settings_general">Allgemein</string>
@@ -358,7 +285,6 @@
     <string name="settings_simple_edit">Einfaches Bearbeiten</string>
     <string name="settings_simple_edit_desc">Dynamische Blöcke deaktivieren und Notizen als reinen Text bearbeiten</string>
 
-    <string name="sort">Sortieren</string>
     <string name="sort_by">Sortieren nach:</string>
     <string name="sort_created_asc">Nach Erstellungsdatum (älteste zuerst)</string>
     <string name="sort_created_asc_short">Erstellt ↑</string>
@@ -378,9 +304,9 @@
 
     <string name="tag_create_failed">Das Label konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
     <string name="tag_delete_failed">Das Label konnte nicht gelöscht werden. Bitte versuche es erneut.</string>
-    <string name="tag_drag_to_reorder">Ziehen zum Neuordnen</string>
     <string name="tag_edit">Label bearbeiten</string>
     <string name="tag_hidden">Ausgeblendetes Label</string>
+    <string name="tag_name_taken">Ein Label mit diesem Namen gibt es bereits</string>
     <string name="tag_hide">Label ausblenden</string>
     <string name="tag_reorder_failed">Die Reihenfolge der Labels konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
     <string name="tag_show">Label einblenden</string>
@@ -393,7 +319,6 @@
     <string name="task_clear_completed_failed">Erledigte Aufgaben konnten nicht gelöscht werden. Bitte versuche es erneut.</string>
     <string name="task_clear_completed_message">Möchtest du wirklich alle erledigten Aufgaben löschen? Das kann nicht rückgängig gemacht werden.</string>
     <string name="task_clear_completed_title">Erledigte Aufgaben löschen</string>
-    <string name="task_completed">Erledigt</string>
     <string name="task_completed_at">Erledigt: %1$s</string>
     <string name="task_create_failed">Die Aufgabe konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
     <string name="task_description_placeholder">Beschreibung</string>
@@ -411,10 +336,9 @@
     <string name="text">Text</string>
 
     <string name="theme">Design</string>
-    <string name="theme_dialog_title">Design wählen</string>
     <string name="theme_type_dark">Dunkel</string>
     <string name="theme_type_light">Hell</string>
-    <string name="theme_type_system">Systemstandard</string>
+    <string name="theme_type_system">System</string>
 
 
     <string name="undo">Rückgängig</string>
@@ -427,10 +351,6 @@
     <plurals name="delete_notes_confirm">
         <item quantity="one">%d Notiz löschen?</item>
         <item quantity="other">%d Notizen löschen?</item>
-    </plurals>
-    <plurals name="home_active_tasks">
-        <item quantity="one">Du hast %d offene Aufgabe</item>
-        <item quantity="other">Du hast %d offene Aufgaben</item>
     </plurals>
     <plurals name="lock_lockout_seconds">
         <item quantity="one">Zu viele Versuche. Versuche es in %d Sekunde erneut</item>
@@ -457,7 +377,6 @@
     <string name="backup_needs_phrase_body">Backups werden mit einer Wiederherstellungsphrase verschlüsselt, nur ihre 12 Wörter können sie öffnen. Dieser Tresor hat noch keine. Erstelle jetzt eine: Mit ihr kannst du den Tresor auch entsperren, wenn du deine PIN vergisst.</string>
     <string name="backup_create_phrase">Wiederherstellungsphrase erstellen</string>
     <string name="backup_phrase_write_down">Schreib diese 12 Wörter der Reihe nach auf Papier und bewahre sie offline auf. Wer sie hat, kann deine Backups öffnen.</string>
-    <string name="backup_phrase_word">%1$d. %2$s</string>
     <string name="backup_phrase_written">Ich habe sie notiert</string>
     <string name="backup_phrase_check_title">Wiederherstellungsphrase prüfen</string>
     <string name="backup_phrase_check_word">Wort Nr. %1$d</string>
@@ -490,11 +409,8 @@
     <string name="backup_error_io">Das Backup konnte nicht gelesen oder geschrieben werden. Es wurde nichts geändert.</string>
     <string name="backup_error_phrase_mismatch">Diese Wörter sind nicht die Wiederherstellungsphrase dieses Tresors</string>
     <string name="backup_error_phrase_setup">Die Wiederherstellungsphrase konnte nicht gespeichert werden</string>
-    <string name="onboarding_restore_title">Aus Backup wiederherstellen</string>
-    <string name="onboarding_restore_desc">Du hast eine Encly-Backup-Datei und ihre 12 Wörter? Stelle alles auf diesem Handy wieder her.</string>
-    <string name="onboarding_restore_body">Wähle deine Encly-Backup-Datei und gib dann die 12-Wörter-Wiederherstellungsphrase ein, mit der sie erstellt wurde. Die Phrase wird auch die Wiederherstellungsphrase dieses Tresors.</string>
+    <string name="onboarding_restore_title">Aus einem Backup wiederherstellen</string>
     <string name="onboarding_restore_pick">Backup-Datei wählen</string>
-    <string name="onboarding_restore_other_file">Andere Datei wählen</string>
     <string name="auth_setup_restore_failed">Das Backup konnte nicht wiederhergestellt werden, daher ist die Einrichtung noch nicht abgeschlossen. Versuche es erneut oder fahre mit einem leeren Tresor fort und importiere die Datei später unter Einstellungen → Backup.</string>
     <string name="auth_setup_restore_failed_title">Backup nicht wiederhergestellt</string>
     <string name="auth_setup_restore_retry">Erneut versuchen</string>
@@ -512,4 +428,100 @@
     <string name="task_delete">Aufgabe löschen</string>
     <string name="task_deleted">Aufgabe gelöscht</string>
     <string name="task_delete_failed">Die Aufgabe konnte nicht gelöscht werden. Bitte versuche es erneut.</string>
+    <string name="appearance_mode">Modus</string>
+    <string name="appearance_font">Schrift</string>
+    <string name="palette_paper">Papier</string>
+    <string name="palette_forest">Wald</string>
+    <string name="palette_ocean">Ozean</string>
+    <string name="palette_graphite">Graphit</string>
+    <string name="palette_midnight">Mitternacht</string>
+    <string name="appearance_mode_note_system_light">Folgt der Systemeinstellung. Gerade hell.</string>
+    <string name="appearance_mode_note_system_dark">Folgt der Systemeinstellung. Gerade dunkel.</string>
+    <string name="appearance_mode_note_light">Immer hell.</string>
+    <string name="appearance_mode_note_dark">Immer dunkel.</string>
+    <string name="appearance_mode_note_midnight">Mitternacht ist immer dunkel.</string>
+    <string name="dynamic_color_desc">Akzentfarbe aus deinem Hintergrundbild. Ab Android 12.</string>
+    <string name="appearance_dynamic_on_note">Dynamische Farben sind an: Die Akzentfarbe kommt aus deinem Hintergrundbild.</string>
+    <string name="font_style_cozy_desc">Playfair Display und Source Sans 3</string>
+    <string name="font_style_modern_desc">Poppins und Source Sans 3</string>
+    <string name="font_style_tech_desc">Durchgehend IBM Plex Sans</string>
+    <string name="appearance_preview_title">Checkliste Wohnungsbesichtigung</string>
+    <string name="appearance_preview_body">Vor dem Termin: Wasserdruck prüfen, fragen, was die Heizung letzten Winter gekostet hat.</string>
+    <string name="appearance_preview_tag">Privat</string>
+    <string name="appearance_preview_label">Vorschau</string>
+    <string name="appearance_settings_subtitle">Design, Modus und Schrift</string>
+    <string name="field_correct">Richtig</string>
+    <string name="pin_digits_entered">Eingegebene Ziffern: %1$d von %2$d</string>
+    <string name="pin_unlock_with_fingerprint">Mit Fingerabdruck entsperren</string>
+    <string name="onboarding_step_of">Schritt %1$d von %2$d</string>
+    <string name="onboarding_welcome_headline">Ein Notizbuch, das nur du öffnen kannst.</string>
+    <string name="onboarding_welcome_sub">Notizen und Aufgaben, verschlüsselt auf diesem Handy. Die Einrichtung dauert etwa eine Minute.</string>
+    <string name="onboarding_fact_account_title">Kein Konto</string>
+    <string name="onboarding_fact_account_desc">Keine Anmeldung, keine E-Mail, kein Passwort-Reset.</string>
+    <string name="onboarding_fact_offline_title">Funktioniert offline</string>
+    <string name="onboarding_fact_offline_desc">Encly verbindet sich nie mit dem Internet.</string>
+    <string name="onboarding_fact_encrypted_title">Auf dem Gerät verschlüsselt</string>
+    <string name="onboarding_fact_encrypted_desc">Dein Tresor ist mit einem Schlüssel verschlossen, den nur du hast.</string>
+    <string name="onboarding_get_started">Los geht\'s</string>
+    <string name="onboarding_have_backup">Ich habe ein Backup</string>
+    <string name="onboarding_pin_title">Wähle eine 6-stellige PIN</string>
+    <string name="onboarding_pin_body">Sie entsperrt Encly und schützt den Schlüssel zu deinem Tresor. Es gibt keine E-Mail, um sie zurückzusetzen.</string>
+    <string name="onboarding_pin_again_title">Gib die PIN noch einmal ein</string>
+    <string name="onboarding_pin_again_body">Damit wir wissen, dass es die richtige ist.</string>
+    <string name="onboarding_biometric_desc">Die PIN funktioniert weiterhin als Ersatz</string>
+    <string name="onboarding_recovery_title">Zwölf Wörter bringen alles zurück</string>
+    <string name="onboarding_recovery_body">Encly gibt dir eine Wiederherstellungsphrase. Schreib sie auf Papier; sie ist der einzige Ersatzschlüssel.</string>
+    <string name="onboarding_recovery_pin_title">PIN vergessen?</string>
+    <string name="onboarding_recovery_pin_desc">Die Phrase entsperrt deinen Tresor und lässt dich eine neue PIN festlegen.</string>
+    <string name="onboarding_recovery_backups_title">Öffnet deine Backups</string>
+    <string name="onboarding_recovery_backups_desc">Verschlüsselte Backup-Dateien lassen sich nur mit diesen Wörtern lesen.</string>
+    <string name="onboarding_recovery_phone_title">Neues Handy</string>
+    <string name="onboarding_recovery_phone_desc">Backup-Datei plus Phrase stellt jede Notiz, Aufgabe und jedes Label wieder her.</string>
+    <string name="onboarding_recovery_warning">Niemand kann sie für dich wiederherstellen, auch wir nicht. Verlierst du PIN und Phrase, sind die Notizen weg.</string>
+    <string name="onboarding_recovery_create">Meine Phrase erstellen</string>
+    <string name="onboarding_recovery_skip">Überspringen: nur PIN, keine Backups</string>
+    <string name="onboarding_phrase_title">Schreib diese Wörter auf</string>
+    <string name="onboarding_phrase_body">Auf Papier, in dieser Reihenfolge. Nicht als Screenshot, nicht in der Cloud.</string>
+    <string name="onboarding_phrase_hide">Wörter verbergen</string>
+    <string name="onboarding_phrase_show">Wörter zeigen</string>
+    <string name="onboarding_phrase_done">Ich habe sie aufgeschrieben</string>
+    <string name="onboarding_verify_title">Drei Wörter prüfen</string>
+    <string name="onboarding_verify_body">Tippe sie von deiner Papierkopie ab, nicht aus dem Gedächtnis.</string>
+    <string name="onboarding_verify_label">Wort Nr. %1$d</string>
+    <string name="onboarding_verify_placeholder">Wort eingeben</string>
+    <string name="onboarding_verify_wrong">Das ist nicht Wort Nr. %1$d</string>
+    <string name="onboarding_verify_confirm">Bestätigen</string>
+    <string name="onboarding_verify_show_again">Wörter noch einmal zeigen</string>
+    <string name="onboarding_ready_title">Dein Tresor ist bereit</string>
+    <string name="onboarding_ready_body">Alles, was du ab jetzt schreibst, wird vor dem Speichern verschlüsselt.</string>
+    <string name="onboarding_ready_pin_title">PIN festgelegt</string>
+    <string name="onboarding_ready_pin_desc">Wird bei jedem Öffnen von Encly abgefragt</string>
+    <string name="onboarding_ready_biometric_title">Entsperren per Fingerabdruck an</string>
+    <string name="onboarding_ready_biometric_desc">Änderbar unter Einstellungen, Sicherheit</string>
+    <string name="onboarding_ready_phrase_title">Wiederherstellungsphrase geprüft</string>
+    <string name="onboarding_ready_phrase_desc">Bewahre das Papier sicher auf</string>
+    <string name="onboarding_ready_no_phrase_title">Keine Wiederherstellungsphrase</string>
+    <string name="onboarding_ready_no_phrase_desc">Backups sind aus. Du kannst später unter Einstellungen, Sicherheit eine Phrase erstellen.</string>
+    <string name="onboarding_ready_restored_title">Backup wiederhergestellt</string>
+    <string name="onboarding_ready_restored_desc">Deine Notizen, Aufgaben und Labels sind zurück</string>
+    <string name="onboarding_ready_tip">Tipp: Exportiere ab und zu ein verschlüsseltes Backup unter Einstellungen, Backup. Deine Phrase öffnet es.</string>
+    <string name="onboarding_ready_open">Mein Notizbuch öffnen</string>
+    <string name="onboarding_restore_label">Wiederherstellen, dann PIN festlegen</string>
+    <string name="onboarding_restore_intro">Wähle deine Encly-Backup-Datei und gib dann die 12 Wörter ein, mit denen sie erstellt wurde.</string>
+    <string name="onboarding_restore_file_section">1 · Backup-Datei</string>
+    <string name="onboarding_restore_tap_other">Tippen, um eine andere Datei zu wählen</string>
+    <string name="onboarding_restore_phrase_section">2 · Wiederherstellungsphrase</string>
+    <string name="onboarding_restore_phrase_label">12 Wörter, durch Leerzeichen getrennt</string>
+    <string name="onboarding_restore_phrase_helper">Diese Wörter werden auch die Wiederherstellungsphrase dieses Handys.</string>
+    <string name="notes_title">Notizen</string>
+    <string name="lock_now">Jetzt sperren</string>
+    <string name="search_placeholder">Titel und Text durchsuchen</string>
+    <string name="view_options">Ansichtsoptionen</string>
+    <string name="search_nothing_matches">Keine Treffer für „%1$s“</string>
+    <string name="date_today">Heute</string>
+    <string name="date_yesterday">Gestern</string>
+    <plurals name="home_tasks_open">
+        <item quantity="one">Aufgaben · %d offen</item>
+        <item quantity="other">Aufgaben · %d offen</item>
+    </plurals>
 </resources>

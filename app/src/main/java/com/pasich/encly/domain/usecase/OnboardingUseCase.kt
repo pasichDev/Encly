@@ -1,5 +1,6 @@
 package com.pasich.encly.domain.usecase
 
+import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.suspendRunCatching
@@ -26,6 +27,8 @@ class OnboardingUseCase @Inject constructor(
      */
     fun createVault(recoverySeed: CharArray?): Result<Unit> = try {
         suspendRunCatching {
+            // A fresh vault never carries a backup staged by an abandoned "Restore from backup".
+            pendingRestore.clear()
             check(securityManager.initializeNewVault(recoverySeed)) { "Failed to initialize the vault" }
         }
     } finally {
@@ -58,4 +61,23 @@ class OnboardingUseCase @Inject constructor(
             SensitiveDataCleaner.clear(phrase)
         }
     }
+
+    /** Drops a backup staged by "Restore from backup" when the user leaves that path. */
+    fun discardRestore() = pendingRestore.clear()
+
+    /**
+     * Sets the PIN slot of the vault just created (not committed yet). [pin] is wiped in every
+     * case; the String the PIN hasher needs lives only for this call.
+     */
+    fun configurePin(pin: CharArray): Boolean = try {
+        securityManager.configurePin(String(pin))
+    } finally {
+        SensitiveDataCleaner.clear(pin)
+    }
+
+    fun biometricAvailable(): Boolean = securityManager.biometricAvailable()
+
+    /** Adds the biometric slot to the vault just created; shows the system prompt. */
+    fun enrollBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) =
+        securityManager.enrollBiometric(activity, onResult)
 }

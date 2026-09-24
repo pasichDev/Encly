@@ -125,4 +125,35 @@ class AuthSetupViewModelTest {
         verify(security, never()).commitInitialSetup()
         assertTrue(store.notes.isEmpty())
     }
+
+    @Test
+    fun theFailureFlagsLiveInTheViewModelAndClearOnRetry() = runTest {
+        store.failOnInsert = 1
+        assertTrue(finish().restoreFailed)
+        assertTrue(viewModel.restoreFailed.value)
+        assertFalse(viewModel.finishFailed.value)
+
+        store.failOnInsert = null
+        val retried = CompletableDeferred<AuthSetupViewModel.FinishResult>()
+        viewModel.retryRestore { retried.complete(it) }
+
+        assertTrue(retried.await().ok)
+        assertFalse(viewModel.restoreFailed.value)
+        assertEquals(listOf("n-plan"), store.notes.map { it.uid })
+    }
+
+    @Test
+    fun retryingARestoreThatIsNoLongerStagedCommitsNothing() = runTest {
+        // e.g. the process died: the in-memory staged backup is gone.
+        pending.clear()
+
+        val result = CompletableDeferred<AuthSetupViewModel.FinishResult>()
+        viewModel.retryRestore { result.complete(it) }
+
+        assertFalse(result.await().ok)
+        assertTrue(viewModel.finishFailed.value)
+        assertFalse(viewModel.restoreFailed.value)
+        verify(security, never()).openInitialVault()
+        verify(security, never()).commitInitialSetup()
+    }
 }

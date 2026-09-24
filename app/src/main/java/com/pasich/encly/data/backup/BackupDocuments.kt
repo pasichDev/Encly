@@ -3,6 +3,7 @@ package com.pasich.encly.data.backup
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupFormat
@@ -23,6 +24,13 @@ class BackupDocuments @Inject constructor(@param:ApplicationContext private val 
     fun read(uri: Uri): ByteArray = io {
         context.contentResolver.openInputStream(uri).orFail().use { readCapped(it) }
     }
+
+    /** The document's display name, for showing which file was picked; null when unknown. */
+    fun displayName(uri: Uri): String? = runCatching {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        }
+    }.getOrNull()
 
     /**
      * Writes [file] to a document the picker just created, then reads it back to check it.

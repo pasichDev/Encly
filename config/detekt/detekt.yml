@@ -47,6 +47,10 @@ Compose:
       - LocalFontStyle
       - LocalSimpleEdit
       - LocalFontStyles
+      # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
+      - LocalEnclyColors
+      - LocalEnclyTypography
+      - LocalSpacing
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

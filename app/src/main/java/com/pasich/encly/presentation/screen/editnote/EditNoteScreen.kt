@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalOverscrollFactory
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -20,14 +21,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,7 +50,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -59,14 +57,19 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.composables.icons.lucide.EllipsisVertical
+import com.composables.icons.lucide.Lock
+import com.composables.icons.lucide.LockOpen
+import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.presentation.components.appbar.AppBarIconButton
-import com.pasich.encly.presentation.components.appbar.AppBarTextButton
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
 import com.pasich.encly.presentation.components.editNote.NoteSubTitle
 import com.pasich.encly.presentation.components.editNote.TitleField
+import com.pasich.encly.presentation.designsystem.EnclyBackButton
+import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheet
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheetAction
@@ -77,8 +80,8 @@ import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
 import com.pasich.encly.presentation.editor.DynamicBlocksEditor
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
-import com.pasich.encly.presentation.effects.NoteSkeleton
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
 @OptIn(
@@ -189,6 +192,7 @@ fun EditNoteScreen(
         onDismiss = {
             isDialogVisible = false
         },
+        destructive = true,
     )
 
     // The sheet targets one block by identity. Resolved on every composition, so a sheet can
@@ -252,6 +256,7 @@ fun EditNoteScreen(
     ) {
         Scaffold(
             modifier = modifier,
+            containerColor = MaterialTheme.colorScheme.surface,
             contentWindowInsets = WindowInsets.ime,
             bottomBar = {
                 if (imeVisible && !lockEditor && !viewModel.isReadTrashOnly) {
@@ -276,20 +281,21 @@ fun EditNoteScreen(
                         TopBarContent(
                             isReadTrashOnly = viewModel.isReadTrashOnly,
                             lockEditor = lockEditor,
-                            onBackClick = { closeScreen() },
-                            onRestoreClick = {
-                                scope.launch {
-                                    if (viewModel.noteRestore()) {
-                                        finishNavigation()
-                                    } else {
-                                        showWriteFailure(R.string.note_restore_failed)
+                            actions = EditorBarActions(
+                                onBack = { closeScreen() },
+                                onRestore = {
+                                    scope.launch {
+                                        if (viewModel.noteRestore()) {
+                                            finishNavigation()
+                                        } else {
+                                            showWriteFailure(R.string.note_restore_failed)
+                                        }
                                     }
-                                }
-                            },
-                            onDeleteClick = { isDialogVisible = true },
-                            onMenuClick = { isEditMenuBottomSheetVisible = true },
-                            onLockToggle = { viewModel.toggleLockEditor() },
-                            onDoneClick = ::closeScreen,
+                                },
+                                onDelete = { isDialogVisible = true },
+                                onMenu = { isEditMenuBottomSheetVisible = true },
+                                onLockToggle = { viewModel.toggleLockEditor() },
+                            ),
                         )
                     }
 
@@ -297,7 +303,10 @@ fun EditNoteScreen(
                     if (!lockEditor && !viewModel.isReadTrashOnly) {
                         item {
                             NoteSubTitle(
-                                tagButtonPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                                tagButtonPadding = PaddingValues(
+                                    horizontal = EnclyTheme.spacing.gutter,
+                                    vertical = EnclyTheme.spacing.xs,
+                                ),
                                 statusSaveNote = saveStatus,
                                 note = noteState.note,
                                 changeTag = { viewModel.updateTagNote(it) },
@@ -314,7 +323,7 @@ fun EditNoteScreen(
                                 enter = fadeIn(initialAlpha = 0.3f),
                                 exit = fadeOut(targetAlpha = 0f),
                             ) {
-                                NoteSkeleton()
+                                NoteSkeleton(modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter))
                             }
 
                             AnimatedVisibility(
@@ -409,56 +418,54 @@ fun EditNoteScreen(
     }
 }
 
+/**
+ * The editor bar: back (saves and closes), then Lock editing and More actions. In the trash:
+ * back, Restore and Delete.
+ */
+private class EditorBarActions(
+    val onBack: () -> Unit,
+    val onRestore: () -> Unit,
+    val onDelete: () -> Unit,
+    val onMenu: () -> Unit,
+    val onLockToggle: () -> Unit,
+)
+
 @Composable
-private fun TopBarContent(
-    isReadTrashOnly: Boolean,
-    lockEditor: Boolean,
-    onBackClick: () -> Unit,
-    onRestoreClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    onMenuClick: () -> Unit,
-    onLockToggle: () -> Unit,
-    onDoneClick: () -> Unit,
-) {
+private fun TopBarContent(isReadTrashOnly: Boolean, lockEditor: Boolean, actions: EditorBarActions) {
     Row(
-        modifier =
-        Modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .height(EnclyTheme.spacing.topBarHeight)
+            .padding(horizontal = EnclyTheme.spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
     ) {
+        EnclyBackButton(onClick = actions.onBack)
+        Spacer(modifier = Modifier.weight(1f))
         if (isReadTrashOnly) {
-            IconButton(onClick = onBackClick) {
+            EnclyTextButton(text = stringResource(R.string.restore), onClick = actions.onRestore)
+            EnclyTextButton(
+                text = stringResource(R.string.delete_from_trash),
+                onClick = actions.onDelete,
+                destructive = true,
+            )
+        } else {
+            IconButton(onClick = actions.onLockToggle) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
+                    if (lockEditor) Lucide.Lock else Lucide.LockOpen,
+                    contentDescription = stringResource(
+                        if (lockEditor) R.string.editor_unlock else R.string.editor_lock,
+                    ),
+                    tint = if (lockEditor) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 )
             }
-            Spacer(modifier = Modifier.weight(1f))
-            AppBarTextButton(text = R.string.restore, onClick = onRestoreClick)
-            Spacer(modifier = Modifier.width(10.dp))
-            AppBarTextButton(text = R.string.delete_from_trash, onClick = onDeleteClick)
-        } else {
-            AppBarIconButton(
-                icon = R.drawable.more,
-                contentDescription = stringResource(R.string.more_options),
-                onPress = onMenuClick,
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            AppBarIconButton(
-                icon = if (lockEditor) R.drawable.ic_lock else R.drawable.ic_unlock,
-                contentDescription = stringResource(
-                    if (lockEditor) R.string.editor_unlock else R.string.editor_lock,
-                ),
-                tint = if (lockEditor) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                onPress = onLockToggle,
-            )
-
-            AnimatedVisibility(!lockEditor) {
-                AppBarTextButton(text = R.string.done, onClick = onDoneClick)
+            IconButton(onClick = actions.onMenu) {
+                Icon(
+                    Lucide.EllipsisVertical,
+                    contentDescription = stringResource(R.string.more_options),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
-
-        Spacer(modifier = Modifier.width(10.dp))
     }
 }

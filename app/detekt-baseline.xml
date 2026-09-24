@@ -3,20 +3,15 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:ListBlock.kt$firstItem != null &amp;&amp; firstItem.value.isEmpty() &amp;&amp; itemsList.size == 1 &amp;&amp; focusedItemIndex == null</ID>
-    <ID>CyclomaticComplexMethod:AuthSetupScreen.kt$@Composable fun AuthSetupScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: AuthSetupViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:BlockSerialization.kt$BlockDeserializer$override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Block</ID>
     <ID>CyclomaticComplexMethod:EditNoteScreen.kt$@OptIn( ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ) @Composable fun EditNoteScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: EditNoteViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:EditTagScreen.kt$@Composable private fun TagEditItem( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:ListBlock.kt$@Composable fun ListBlock( block: Block.ListBlock, blockActions: BlockActions, index: Int, modifier: Modifier = Modifier, isLocked: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:NoteSubTitle.kt$@Composable fun NoteSubTitle( statusSaveNote: SaveStatusNote, note: Note, modifier: Modifier = Modifier, tagButtonPadding: PaddingValues = PaddingValues(0.dp), editTagListViewModel: TagListViewModel = hiltViewModel(), tagsViewListen: ((Boolean) -&gt; Unit)? = null, changeTag: ((Long) -&gt; Unit)? = null, isDuplicate: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:NotesTextFormatter.kt$NotesTextFormatter$fun blocksToPlainText(blocks: List&lt;Block&gt;): String</ID>
-    <ID>CyclomaticComplexMethod:OnboardingScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun OnboardingScreen( onComplete: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: OnboardingViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:TasksScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TasksScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: TasksViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:AboutScreen.kt$@Composable private fun DeveloperActionsSection(context: Context)</ID>
     <ID>LongMethod:ActionLinkBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ActionLinkBottomSheet( settings: SettingsBlockDialog, sheetState: SheetState, onAction: (ActionBlockDialog) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
-    <ID>LongMethod:AuthSetupScreen.kt$@Composable fun AuthSetupScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: AuthSetupViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:CompletionSlide.kt$@Composable fun CompletionSlide(onComplete: () -&gt; Unit, modifier: Modifier = Modifier, securityType: SecurityType? = null)</ID>
-    <ID>LongMethod:CompletionSlide.kt$@Composable private fun AnimatedMotivationCard()</ID>
     <ID>LongMethod:EditNoteBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun EditNoteBottomSheet( isVisible: Boolean, onDismiss: () -&gt; Unit, viewModel: EditNoteViewModel = hiltViewModel&lt;EditNoteViewModel&gt;(), onAction: (EditNoteBottomSheetAction) -&gt; Unit = {}, )</ID>
     <ID>LongMethod:EditNoteScreen.kt$@OptIn( ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ) @Composable fun EditNoteScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: EditNoteViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:EditTagScreen.kt$@Composable private fun TagEditItem( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
@@ -32,23 +27,14 @@
     <ID>LongMethod:NoteCardBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun NoteCardBottomSheet( isVisible: Boolean, item: NoteWithTag, onAction: (NoteAction) -&gt; Unit, sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), onDismiss: () -&gt; Unit, )</ID>
     <ID>LongMethod:NoteSubTitle.kt$@Composable fun NoteSubTitle( statusSaveNote: SaveStatusNote, note: Note, modifier: Modifier = Modifier, tagButtonPadding: PaddingValues = PaddingValues(0.dp), editTagListViewModel: TagListViewModel = hiltViewModel(), tagsViewListen: ((Boolean) -&gt; Unit)? = null, changeTag: ((Long) -&gt; Unit)? = null, isDuplicate: Boolean = false, )</ID>
     <ID>LongMethod:NotesListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun NotesList( isGrid: Boolean, listScrollState: LazyListState, gridScrollState: LazyStaggeredGridState, onItemClick: (Note) -&gt; Unit, modifier: Modifier = Modifier, onSecondActionClick: (Note) -&gt; Unit = {}, noteListViewModel: NoteListViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:OnboardingScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun OnboardingScreen( onComplete: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: OnboardingViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:SecurityChoiceSlide.kt$@Composable private fun SecurityOptionCard( title: String, descriptionLines: List&lt;String&gt;, icon: ImageVector, iconTint: Color, onClick: () -&gt; Unit, delay: Int, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:SecuritySettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SecuritySettingsScreen( navController: NavHostController, modifier: Modifier = Modifier, securityViewModel: SecuritySettingsViewModel = hiltViewModel(), vaultViewModel: BackupViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:SeedPhraseDisplaySlide.kt$@Composable private fun SeedPhraseVerificationContent( uiState: OnboardingViewModel.OnboardingUiState, onUpdateAnswer: (Int, String) -&gt; Unit, onCompleteVerification: () -&gt; Unit, onCancel: () -&gt; Unit, )</ID>
-    <ID>LongMethod:SeedPhraseExplanationSlide.kt$@Composable fun SeedPhraseExplanationSlide(onNext: () -&gt; Unit, onBack: () -&gt; Unit, modifier: Modifier = Modifier)</ID>
-    <ID>LongMethod:SeedPhraseExplanationSlide.kt$@Composable private fun AnimatedFeatureCard(icon: ImageVector, title: String, description: String, delay: Long)</ID>
     <ID>LongMethod:SettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SettingsScreen( navController: NavHostController?, modifier: Modifier = Modifier, settingViewState: SettingsViewModel = hiltViewModel(), securityDisable: Boolean = false, )</ID>
     <ID>LongMethod:TaskProgressCard.kt$@Composable fun TaskProgressCard( completionPercentage: Int, completedTasksCount: Int, totalTasksCount: Int, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:TasksScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TasksScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: TasksViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:TrashNotesList.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun TrashNotesList( onItemClick: (Int, Note) -&gt; Unit, modifier: Modifier = Modifier, trashViewModel: TrashViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:TrashScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TrashScreen( navController: NavHostController, modifier: Modifier = Modifier, trashViewModel: TrashViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:WelcomeSlide.kt$@Composable fun WelcomeSlide(onNext: () -&gt; Unit, modifier: Modifier = Modifier)</ID>
     <ID>LongParameterList:EditNoteScreen.kt$( isReadTrashOnly: Boolean, lockEditor: Boolean, onBackClick: () -&gt; Unit, onRestoreClick: () -&gt; Unit, onDeleteClick: () -&gt; Unit, onMenuClick: () -&gt; Unit, onLockToggle: () -&gt; Unit, onDoneClick: () -&gt; Unit, )</ID>
     <ID>LongParameterList:EditTagScreen.kt$( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
-    <ID>LongParameterList:SecurityChoiceSlide.kt$( title: String, descriptionLines: List&lt;String&gt;, icon: ImageVector, iconTint: Color, onClick: () -&gt; Unit, delay: Int, modifier: Modifier = Modifier, )</ID>
-    <ID>MagicNumber:Animated.kt$400</ID>
-    <ID>MagicNumber:Animated.kt$600</ID>
     <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$15</ID>
     <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$256</ID>
     <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$30_000L</ID>
@@ -100,10 +86,6 @@
     <ID>MagicNumber:Color.kt$0xFFFFB4AB</ID>
     <ID>MagicNumber:Color.kt$0xFFFFDAD6</ID>
     <ID>MagicNumber:Color.kt$0xFFFFFFFF</ID>
-    <ID>MagicNumber:CompletionSlide.kt$1400</ID>
-    <ID>MagicNumber:CompletionSlide.kt$300</ID>
-    <ID>MagicNumber:CompletionSlide.kt$600</ID>
-    <ID>MagicNumber:CompletionSlide.kt$800</ID>
     <ID>MagicNumber:EditNoteViewModel.kt$EditNoteViewModel$5000</ID>
     <ID>MagicNumber:EditTagScreen.kt$20</ID>
     <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$10</ID>
@@ -124,35 +106,7 @@
     <ID>MagicNumber:NoteSubTitle.kt$200</ID>
     <ID>MagicNumber:NotesListScreen.kt$200</ID>
     <ID>MagicNumber:NotesListScreen.kt$4</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$10000</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$20</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$200</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$2000</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$3</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$300</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$3000</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$4</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$40</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$400</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$500</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$500f</ID>
-    <ID>MagicNumber:OnboardingScreen.kt$800f</ID>
-    <ID>MagicNumber:OnboardingViewModel.kt$OnboardingViewModel$1300L</ID>
-    <ID>MagicNumber:OnboardingViewModel.kt$OnboardingViewModel$3</ID>
     <ID>MagicNumber:PinCodeWidget.kt$3</ID>
-    <ID>MagicNumber:SecurityChoiceSlide.kt$0.03f</ID>
-    <ID>MagicNumber:SecurityChoiceSlide.kt$300</ID>
-    <ID>MagicNumber:SeedPhraseDisplaySlide.kt$12</ID>
-    <ID>MagicNumber:SeedPhraseDisplaySlide.kt$2000</ID>
-    <ID>MagicNumber:SeedPhraseDisplaySlide.kt$3</ID>
-    <ID>MagicNumber:SeedPhraseDisplaySlide.kt$3.0</ID>
-    <ID>MagicNumber:SeedPhraseDisplaySlide.kt$4</ID>
-    <ID>MagicNumber:SeedPhraseDisplaySlide.kt$56</ID>
-    <ID>MagicNumber:SeedPhraseDisplaySlide.kt$8</ID>
-    <ID>MagicNumber:SeedPhraseExplanationSlide.kt$1000</ID>
-    <ID>MagicNumber:SeedPhraseExplanationSlide.kt$1500</ID>
-    <ID>MagicNumber:SeedPhraseExplanationSlide.kt$500</ID>
-    <ID>MagicNumber:SeedPhraseExplanationSlide.kt$600</ID>
     <ID>MagicNumber:SettingBox.kt$0.5f</ID>
     <ID>MagicNumber:SettingBox.kt$0.8f</ID>
     <ID>MagicNumber:SettingBox.kt$20</ID>
@@ -164,8 +118,6 @@
     <ID>MagicNumber:TaskItem.kt$0.8f</ID>
     <ID>MagicNumber:TaskProgressCard.kt$100f</ID>
     <ID>MagicNumber:ThemeViewModel.kt$ThemeViewModel$5_000</ID>
-    <ID>MagicNumber:WelcomeSlide.kt$300</ID>
-    <ID>MagicNumber:WelcomeSlide.kt$600</ID>
     <ID>MatchingDeclarationName:EditNoteBottomSheet.kt$EditNoteBottomSheetAction</ID>
     <ID>MatchingDeclarationName:EditTagScreen.kt$TagEditTypeAction</ID>
     <ID>MatchingDeclarationName:HeroCard.kt$HeroIcon</ID>

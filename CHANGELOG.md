@@ -52,8 +52,10 @@ versionCode 20000.
 
 ### Changed
 
-- Editor fonts (Poppins, Playfair Display, IBM Plex Sans, Source Sans 3, Inter) are bundled in
-  the APK instead of being downloaded through Google Play Services. Roboto uses the system font.
+- Fonts (Playfair Display, Source Sans 3, IBM Plex Sans, Poppins) are bundled in the APK instead
+  of being downloaded through Google Play Services.
+- Settings → Appearance: five colour themes (Paper, Forest, Ocean, Graphite, Midnight), a
+  System / Light / Dark mode and an app-wide font choice (Editorial, Modern, Technical).
 - Feedback goes to the GitHub issue tracker instead of a third-party form service.
 - `FLAG_SECURE` is always on and applied before the first frame.
 - All text fields ask the keyboard not to learn from input (`IME_FLAG_NO_PERSONALIZED_LEARNING`).

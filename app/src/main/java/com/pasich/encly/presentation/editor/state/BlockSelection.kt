@@ -50,7 +50,15 @@ class BlockSelection(private val blocks: List<Block>) {
         onInteraction(blockId)
     }
 
-    /** The user works on [blockId] without its field taking focus (a list item, a block sheet). */
+    /**
+     * The field of [blockId] lost focus. It no longer decides where a new block goes; the block
+     * the user last worked on ([interactedIndex]) does, until another field takes focus.
+     */
+    fun onFocusLost(blockId: String) {
+        if (focusedBlockId.value == blockId) focusedBlockId.value = null
+    }
+
+    /** The user works on [blockId] without its field taking focus (a block sheet). */
     fun onInteraction(blockId: String) {
         val index = blocks.indexOfFirst { it.id == blockId }
         if (index < 0) return

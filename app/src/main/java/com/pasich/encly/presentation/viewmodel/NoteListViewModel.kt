@@ -19,9 +19,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -39,6 +41,18 @@ class NoteListViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(NoteListState())
     val state: StateFlow<NoteListState> get() = _state
+
+    private val scrollToTop = NotesScrollToTop()
+    private var lastScrollToTopRequest = 0
+    private val _scrollToTopRequest = MutableStateFlow<Int?>(null)
+
+    /**
+     * A scroll back to the top the notes list still owes ([NotesScrollToTop]), or null when there
+     * is none. It lives as long as this ViewModel, so a list that comes back from the editor still
+     * gets it, and a list restored after process death starts with none. The screen clears it
+     * with [onScrolledToTop] once it has scrolled.
+     */
+    val scrollToTopRequest: StateFlow<Int?> = _scrollToTopRequest.asStateFlow()
 
     init {
         observeNotes()
@@ -64,12 +78,23 @@ class NoteListViewModel @Inject constructor(
                     observeNotesUseCase(
                         tagId = query.tagId.takeUnless { it == ALL_NOTES_TAG_ID },
                         sortOption = query.sortOption,
-                    ).asLoadState(ListLoadErrors.NOTES)
+                    ).asLoadState(ListLoadErrors.NOTES).map { load -> query.sortOption to load }
                 }
-                .collect { load ->
+                .collect { (sortOption, load) ->
+                    // The sort order travels with the notes it produced: the list scrolls to its
+                    // top once the re-sorted notes are there, not while the old order is shown.
+                    val scroll = load.valueOrNull()?.let { notes ->
+                        scrollToTop.onNotesLoaded(sortOption, notes.map { it.note.id })
+                    } == true
                     _state.update { it.copy(notesLoad = it.notesLoad.reloadWith(load)) }
+                    if (scroll) _scrollToTopRequest.value = ++lastScrollToTopRequest
                 }
         }
+    }
+
+    /** The list has scrolled to its top for [request]; a newer request stays pending. */
+    fun onScrolledToTop(request: Int) {
+        _scrollToTopRequest.compareAndSet(request, null)
     }
 
     fun onEvent(event: NoteListEvent) {

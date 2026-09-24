@@ -45,10 +45,12 @@ class SecurityManagerTest {
     }
 
     @Test
-    fun encryptedDatabaseWithoutAnyVaultMetadataNeedsExplicitWipe() {
+    fun encryptedDatabaseWithoutAnyVaultMetadataIsAnOlderVersionVaultNeedingExplicitWipe() {
+        // Encly 1.x left an encrypted database and no v2 vault metadata. 2.0 cannot open it:
+        // the start screen says it is from an older version, not that it is damaged.
         `when`(database.hasEncryptedDatabase()).thenReturn(true)
 
-        assertEquals(InitialStatus.LOSS_CRYPTO, manager.resolveInitialStatus())
+        assertEquals(InitialStatus.LEGACY_VAULT, manager.resolveInitialStatus())
     }
 
     @Test

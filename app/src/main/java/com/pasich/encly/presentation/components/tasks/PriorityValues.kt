@@ -1,46 +1,18 @@
 package com.pasich.encly.presentation.components.tasks
 
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import com.composables.icons.lucide.ChevronDown
-import com.composables.icons.lucide.ChevronUp
-import com.composables.icons.lucide.ChevronsUp
-import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 
-data class PriorityData(
-    val id: Int,
-    val backgroundColor: Color,
-    val contentColor: Color,
-    val icon: ImageVector,
-    @param:StringRes val label: Int,
-)
+/** A task priority: its stored [id] and label. [emphasis] marks the one shown in `error` (High). */
+data class PriorityData(val id: Int, @param:StringRes val label: Int, val emphasis: Boolean = false)
 
 object PriorityValues {
 
+    /** Highest first, the order the widget and the editor sheet list them in. */
     val priorities = listOf(
-        PriorityData(
-            id = 2,
-            backgroundColor = Color.Red.copy(alpha = 0.1f),
-            contentColor = Color.Red,
-            icon = Lucide.ChevronsUp,
-            label = R.string.priority_high,
-        ),
-        PriorityData(
-            id = 1,
-            backgroundColor = Color.Yellow.copy(alpha = 0.1f),
-            contentColor = Color.Yellow,
-            icon = Lucide.ChevronUp,
-            label = R.string.priority_medium,
-        ),
-        PriorityData(
-            id = 0,
-            backgroundColor = Color.LightGray.copy(alpha = 0.1f),
-            contentColor = Color.LightGray,
-            icon = Lucide.ChevronDown,
-            label = R.string.priority_low,
-        ),
+        PriorityData(id = 2, label = R.string.priority_high, emphasis = true),
+        PriorityData(id = 1, label = R.string.priority_medium),
+        PriorityData(id = 0, label = R.string.priority_low),
     )
 
     fun getById(id: Int): PriorityData = priorities.firstOrNull { it.id == id } ?: priorities.last()

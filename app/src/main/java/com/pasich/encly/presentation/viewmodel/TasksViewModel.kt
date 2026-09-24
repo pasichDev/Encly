@@ -42,6 +42,16 @@ enum class TaskOperationFailure {
     DELETE,
 }
 
+/** How many open tasks the notes screen previews. */
+const val HOME_WIDGET_TASKS = 2
+
+/**
+ * The open tasks the notes screen previews: highest priority first (the stored order within one
+ * priority), at most [limit].
+ */
+fun widgetTasks(tasks: List<Task>, limit: Int = HOME_WIDGET_TASKS): List<Task> =
+    tasks.filterNot { it.isCompleted }.sortedByDescending { it.priority }.take(limit)
+
 /** Unsaved content of the task editor sheet. */
 data class TaskDraft(val title: String, val description: String, val priority: Int)
 

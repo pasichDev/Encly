@@ -1,96 +1,60 @@
 package com.pasich.encly.presentation.components.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import com.pasich.encly.presentation.components.custombox.RoundPosition
-import com.pasich.encly.presentation.components.custombox.SettingBox
+import com.pasich.encly.presentation.designsystem.EnclyGroup
+import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
+import com.pasich.encly.presentation.designsystem.EnclySwitchRow
+import com.pasich.encly.presentation.designsystem.SectionOverline
+import com.pasich.encly.ui.theme.EnclyTheme
 
+/** A settings section: its overline, then its rows as one grouped list with hairlines between. */
 @Composable
 fun SettingsCategoryRenderer(category: SettingsCategory, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        // Category title
-        Text(
-            text = stringResource(id = category.titleRes),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(vertical = 8.dp),
-        )
-
-        // Category items
-        category.items.forEachIndexed { index, item ->
-            val roundPosition = when {
-                category.items.size == 1 -> RoundPosition.Full
-                index == 0 -> RoundPosition.First
-                index == category.items.lastIndex -> RoundPosition.Last
-                else -> RoundPosition.Medium
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
+        SectionOverline(stringResource(id = category.titleRes))
+        EnclyGroup {
+            category.items.forEachIndexed { index, item ->
+                if (index > 0) EnclyGroupDivider()
+                SettingsItemRenderer(item = item)
             }
-
-            SettingsItemRenderer(
-                item = item,
-                roundPosition = roundPosition,
-            )
         }
     }
 }
 
 @Composable
-private fun SettingsItemRenderer(item: SettingsItem, roundPosition: RoundPosition) {
+private fun SettingsItemRenderer(item: SettingsItem) {
+    val rowModifier = Modifier.padding(horizontal = EnclyTheme.spacing.s)
     when (item) {
-        is SettingsItem.Switch -> {
-            SettingBox(
-                title = stringResource(id = item.titleRes),
-                subTitle = item.subtitleRes?.let { stringResource(id = it) } ?: "",
-                roundPosition = roundPosition,
-                endWidget = {
-                    Switch(
-                        checked = item.checked,
-                        onCheckedChange = item.onCheckedChange,
-                        enabled = item.isEnabled,
-                    )
-                },
-            )
-        }
+        is SettingsItem.Switch -> EnclySwitchRow(
+            title = stringResource(id = item.titleRes),
+            supporting = item.subtitleRes?.let { stringResource(id = it) },
+            icon = item.icon,
+            checked = item.checked,
+            onCheckedChange = item.onCheckedChange,
+            enabled = item.isEnabled,
+            modifier = rowModifier,
+        )
 
-        is SettingsItem.Navigation -> {
-            SettingBox(
-                title = stringResource(id = item.titleRes),
-                subTitle = item.subtitleRes?.let { stringResource(id = it) } ?: "",
-                roundPosition = roundPosition,
-                action = item.action,
-                endWidget = item.endIcon?.let { icon ->
-                    {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                        )
-                    }
-                },
-            )
-        }
+        is SettingsItem.Navigation -> EnclyNavigationRow(
+            title = stringResource(id = item.titleRes),
+            supporting = item.subtitleRes?.let { stringResource(id = it) },
+            icon = item.icon,
+            onClick = item.action,
+            modifier = rowModifier,
+        )
 
-        is SettingsItem.Selection -> {
-            SettingBox(
-                title = stringResource(id = item.titleRes),
-                subTitle = item.currentValue,
-                roundPosition = roundPosition,
-                action = item.action,
-                endWidget = item.endIcon?.let { icon ->
-                    {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                        )
-                    }
-                },
-            )
-        }
+        is SettingsItem.Selection -> EnclyNavigationRow(
+            title = stringResource(id = item.titleRes),
+            supporting = item.currentValue,
+            icon = item.icon,
+            onClick = item.action,
+            modifier = rowModifier,
+        )
     }
 }

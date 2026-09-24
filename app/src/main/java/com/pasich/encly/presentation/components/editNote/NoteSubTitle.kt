@@ -1,27 +1,16 @@
 package com.pasich.encly.presentation.components.editNote
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.keyframes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,29 +22,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.composables.icons.lucide.CalendarDays
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.CopyPlus
+import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Tag
+import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
 import java.util.Date
-
-val sizeIcon = 18.dp
-val sizeWidthSpacesItems = 15.dp
-val sizeWidthSpacesRow = 5.dp
+import com.composables.icons.lucide.Tag as TagIcon
 
 @Composable
 fun NoteSubTitle(
     statusSaveNote: SaveStatusNote,
     note: Note,
     modifier: Modifier = Modifier,
-    tagButtonPadding: PaddingValues = PaddingValues(0.dp),
+    tagButtonPadding: PaddingValues = PaddingValues(),
     editTagListViewModel: TagListViewModel = hiltViewModel(),
     tagsViewListen: ((Boolean) -> Unit)? = null,
     changeTag: ((Long) -> Unit)? = null,
@@ -65,220 +55,112 @@ fun NoteSubTitle(
     var isTagListVisible by remember { mutableStateOf(false) }
     val targetTag = state.listTags.find { it.id == note.tagId }
 
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    fun showTags(visible: Boolean) {
+        isTagListVisible = visible
+        tagsViewListen?.invoke(visible)
+    }
+
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         AnimatedContent(targetState = !isTagListVisible) { visible ->
             if (visible) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
+                ) {
                     if (statusSaveNote != SaveStatusNote.LOADING) {
-                        Row(
-                            modifier = Modifier.padding(tagButtonPadding).clickable {
-                                if (state.listTags.isEmpty()) return@clickable
-                                isTagListVisible = true
-                                tagsViewListen?.let { it(true) }
-                            },
-                        ) {
-                            Box(
-                                Modifier.animateContentSize(keyframes { durationMillis = 200 }),
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_tag),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(sizeIcon),
-                                    tint = MaterialTheme.colorScheme.outlineVariant,
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(sizeWidthSpacesRow))
-                            Text(
-                                text = targetTag?.nameTag ?: stringResource(R.string.no_tag),
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                ),
-                            )
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.width(16.dp))
+                        MetaLabel(
+                            icon = Lucide.TagIcon,
+                            text = targetTag?.nameTag ?: stringResource(R.string.no_tag),
+                            modifier = Modifier
+                                .padding(tagButtonPadding)
+                                .clickable { if (state.listTags.isNotEmpty()) showTags(true) },
+                        )
                     }
-                    Spacer(modifier = Modifier.width(sizeWidthSpacesItems))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        when (statusSaveNote) {
-                            SaveStatusNote.OLD -> Row {
-                                Icon(
-                                    Icons.Default.DateRange,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(sizeIcon),
-                                    tint = MaterialTheme.colorScheme.outlineVariant,
-                                )
-                                Spacer(modifier = Modifier.width(sizeWidthSpacesRow))
-                                Text(
-                                    text = formatNoteDate(
-                                        if (note.date == 0L) {
-                                            Date()
-                                        } else {
-                                            Date(
-                                                note.date,
-                                            )
-                                        },
-                                    ),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                    ),
-                                )
-                            }
-
-                            SaveStatusNote.SAVING -> Row {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(sizeIcon),
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                    strokeWidth = 2.dp,
-                                )
-                                Spacer(modifier = Modifier.width(sizeWidthSpacesRow))
-                                Text(
-                                    text = stringResource(R.string.saving),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                    ),
-                                )
-                            }
-
-                            SaveStatusNote.SAVED -> Row {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(sizeIcon),
-                                    tint = MaterialTheme.colorScheme.outlineVariant,
-                                )
-                                Spacer(modifier = Modifier.width(sizeWidthSpacesRow))
-                                Text(
-                                    text = stringResource(R.string.saved),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                    ),
-                                )
-                            }
-
-                            SaveStatusNote.LOADING -> Row {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(sizeIcon),
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                    strokeWidth = 2.dp,
-                                )
-                                Spacer(modifier = Modifier.width(sizeWidthSpacesRow))
-                                Text(
-                                    text = stringResource(R.string.loading),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                    ),
-                                )
-                            }
-                        }
-                    }
-
-                    if (isDuplicate) {
-                        Row {
-                            Spacer(modifier = Modifier.width(sizeWidthSpacesItems))
-                            Icon(
-                                painter = painterResource(R.drawable.ic_duplicate),
-                                contentDescription = null,
-                                modifier = Modifier.size(sizeIcon),
-                                tint = MaterialTheme.colorScheme.outlineVariant,
-                            )
-                            Spacer(modifier = Modifier.width(sizeWidthSpacesRow))
-                            Text(
-                                text = stringResource(R.string.duplicate),
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                ),
-                            )
-                        }
-                    }
+                    SaveStatusLabel(statusSaveNote, note)
+                    if (isDuplicate) MetaLabel(icon = Lucide.CopyPlus, text = stringResource(R.string.duplicate))
                 }
             } else {
-                val reorderedTags = remember(state.listTags, targetTag) {
-                    if (targetTag == null) {
-                        state.listTags
-                    } else {
-                        buildList {
-                            state.listTags.find { it.id == targetTag.id }?.let { add(it) }
-                            addAll(state.listTags.filter { it.id != targetTag.id })
-                        }
-                    }
-                }
-
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    item {
-                        TagAssistChip(
-                            text = stringResource(R.string.no_tag),
-                            isSelected = targetTag == null,
-                            onClick = {
-                                changeTag?.invoke(0)
-                                isTagListVisible = false
-                                tagsViewListen?.let { it(false) }
-                            },
-                            modifier = Modifier.padding(
-                                start = 16.dp,
-                                end = 16.dp,
-                            ),
-                        )
-                    }
-                    items(reorderedTags) {
-                        TagAssistChip(
-                            text = it.nameTag,
-                            isSelected = (targetTag?.id ?: 0) == it.id,
-                            onClick = {
-                                changeTag?.invoke(it.id)
-                                isTagListVisible = false
-                                tagsViewListen?.let { it(false) }
-                            },
-                            modifier = Modifier.padding(
-                                start = 0.dp,
-                                end = 16.dp,
-                            ),
-                        )
-                    }
-                }
+                TagChooser(
+                    tags = state.listTags,
+                    selected = targetTag,
+                    onSelect = { tagId ->
+                        changeTag?.invoke(tagId)
+                        showTags(false)
+                    },
+                )
             }
+        }
+    }
+}
+
+/** When the note was saved, or that it is saving or loading. */
+@Composable
+private fun SaveStatusLabel(status: SaveStatusNote, note: Note) {
+    when (status) {
+        SaveStatusNote.OLD -> MetaLabel(
+            icon = Lucide.CalendarDays,
+            text = formatNoteDate(if (note.date == 0L) Date() else Date(note.date)),
+        )
+
+        SaveStatusNote.SAVING -> MetaLabel(icon = null, text = stringResource(R.string.saving), busy = true)
+
+        SaveStatusNote.SAVED -> MetaLabel(icon = Lucide.Check, text = stringResource(R.string.saved))
+
+        SaveStatusNote.LOADING -> MetaLabel(icon = null, text = stringResource(R.string.loading), busy = true)
+    }
+}
+
+/** An icon (or a small spinner when [busy]) and a meta-style label, both `onSurfaceVariant`. */
+@Composable
+private fun MetaLabel(icon: ImageVector?, text: String, modifier: Modifier = Modifier, busy: Boolean = false) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+        modifier = modifier,
+    ) {
+        if (busy) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(EnclyTheme.spacing.iconXSmall),
+                color = muted,
+                strokeWidth = EnclyTheme.spacing.stroke,
+            )
+        } else if (icon != null) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(EnclyTheme.spacing.iconXSmall), tint = muted)
+        }
+        Text(text = text, style = EnclyTheme.typography.meta, color = muted)
+    }
+}
+
+/** "No tag" and every tag as chips, the note's own tag first. */
+@Composable
+private fun TagChooser(tags: List<Tag>, selected: Tag?, onSelect: (Long) -> Unit) {
+    val reorderedTags = remember(tags, selected) {
+        if (selected == null) tags else listOf(selected) + tags.filter { it.id != selected.id }
+    }
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.m),
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+    ) {
+        item {
+            TagAssistChip(
+                text = stringResource(R.string.no_tag),
+                isSelected = selected == null,
+                onClick = { onSelect(0) },
+            )
+        }
+        items(reorderedTags) { tag ->
+            TagAssistChip(
+                text = tag.nameTag,
+                isSelected = (selected?.id ?: 0) == tag.id,
+                onClick = { onSelect(tag.id) },
+            )
         }
     }
 }
 
 @Composable
 fun TagAssistChip(text: String, isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    FilterChip(
-        selected = isSelected,
-        onClick = onClick,
-        label = {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                },
-            )
-        },
-        leadingIcon = {
-            if (isSelected) {
-                Icon(
-                    Icons.Default.Check,
-                    modifier = Modifier.size(18.dp),
-                    contentDescription = null,
-                )
-            }
-        },
-        modifier = modifier,
-        colors = FilterChipDefaults.filterChipColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ),
-        border = BorderStroke(0.dp, Color.Transparent),
-        shape = MaterialTheme.shapes.medium.copy(CornerSize(12.dp)),
-    )
+    EnclyChip(label = text, selected = isSelected, onClick = onClick, modifier = modifier)
 }

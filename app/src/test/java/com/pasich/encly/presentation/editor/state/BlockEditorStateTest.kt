@@ -226,6 +226,43 @@ class BlockEditorStateTest {
     }
 
     @Test
+    fun aNewBlockGoesAfterTheFocusedListNotAfterTheTextBlockFocusedBeforeIt() {
+        val list = Block.ListBlock(blockType = BlockType.LIST_CHECK)
+        editor.load(listOf(text("a"), list, text("c")))
+        editor.selection.onFocused(editor.blocks[0].id)
+        // Focus moves into an item of the list: the text block loses it, the list takes it.
+        editor.selection.onFocusLost(editor.blocks[0].id)
+        editor.selection.onFocused(list.id)
+
+        val quote = Block.QuoteBlock()
+        editor.addBlock(quote)
+
+        assertEquals(2, editor.blocks.indexOf(quote))
+    }
+
+    @Test
+    fun aBlockThatLostFocusNoLongerDecidesWhereTheNextBlockGoes() {
+        editor.load(listOf(text("a"), text("b"), text("c")))
+        editor.selection.onFocused(editor.blocks[0].id)
+        editor.selection.onFocusLost(editor.blocks[0].id)
+        editor.selection.onInteraction(editor.blocks[2].id)
+
+        val quote = Block.QuoteBlock()
+        editor.addBlock(quote)
+
+        assertEquals(3, editor.blocks.indexOf(quote))
+    }
+
+    @Test
+    fun losingFocusOfAnotherBlockKeepsTheFocusedOne() {
+        editor.load(listOf(text("a"), text("b")))
+        editor.selection.onFocused(editor.blocks[1].id)
+        editor.selection.onFocusLost(editor.blocks[0].id)
+
+        assertEquals(1, editor.selection.focusedIndex)
+    }
+
+    @Test
     fun toolbarMovesAndRemovesTheInteractedBlock() {
         editor.load(listOf(text("a"), text("b"), text("c")))
         editor.selection.onInteraction(editor.blocks[1].id)

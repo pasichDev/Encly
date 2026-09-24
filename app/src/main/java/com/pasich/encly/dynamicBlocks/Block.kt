@@ -11,6 +11,7 @@ enum class BlockType {
     TEXT,
     LIST_NUMBER,
     LIST_CHECK,
+    LIST_BULLET,
     QUOTE,
     SEPARATOR,
     LINK,

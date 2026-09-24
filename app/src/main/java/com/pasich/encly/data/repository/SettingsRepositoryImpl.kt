@@ -3,10 +3,12 @@ package com.pasich.encly.data.repository
 import com.pasich.encly.data.datasource.local.SettingsLocalDataSource
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,9 +24,19 @@ class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSo
     override val fontSizeFlow: Flow<Int> = settingsLocalDataSource.fontSizeFlow
     override val fontStyleFlow: Flow<FontStyleType> = settingsLocalDataSource.fontStyleFlow
 
+    override val latestThemeSettings: ThemeSettings?
+        get() = settingsLocalDataSource.latestThemeSettings
+
+    override suspend fun loadThemeSettings(existingInstall: Boolean): ThemeSettings {
+        settingsLocalDataSource.migrateAppearance(existingInstall)
+        return settingsLocalDataSource.themeSettingsFlow.first()
+    }
+
     override suspend fun setDynamicTheme(value: Boolean) = settingsLocalDataSource.setDynamicTheme(value)
 
     override suspend fun setThemeType(value: ThemeType) = settingsLocalDataSource.setThemeType(value)
+
+    override suspend fun setThemePalette(value: ThemePalette) = settingsLocalDataSource.setThemePalette(value)
 
     override suspend fun setGridNoteList(value: Boolean) = settingsLocalDataSource.setGridNoteList(value)
 

@@ -15,6 +15,7 @@ object BlockFactory {
         BlockType.TEXT -> Block.TextBlock()
         BlockType.LIST_CHECK -> Block.ListBlock(blockType = BlockType.LIST_CHECK)
         BlockType.LIST_NUMBER -> Block.ListBlock(blockType = BlockType.LIST_NUMBER)
+        BlockType.LIST_BULLET -> Block.ListBlock(blockType = BlockType.LIST_BULLET)
         BlockType.LINK -> Block.LinkBlock()
         BlockType.H1 -> Block.HBlock(blockType = BlockType.H1)
         BlockType.H2 -> Block.HBlock(blockType = BlockType.H2)

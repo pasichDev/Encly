@@ -2,7 +2,6 @@ package com.pasich.encly.presentation.editor.blocks
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -15,11 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
-import com.pasich.encly.ui.theme.bodyNote
 
 @Composable
 fun TextBlock(
@@ -39,8 +36,8 @@ fun TextBlock(
             textFieldValue = newValue
             blockActions.onTextChanged(newValue.text)
         },
-        textStyle = bodyNote.copy(
-            color = MaterialTheme.colorScheme.onBackground,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = fontStyles.sizes.textBlock,
             fontFamily = fontStyles.families.body,
         ),
@@ -49,7 +46,6 @@ fun TextBlock(
         modifier =
         modifier
             .fillMaxWidth()
-            .padding(top = 10.dp)
             .textBlockKeys(text, blockActions, enterAddsParagraph = true),
         decorationBox = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -57,8 +53,8 @@ fun TextBlock(
                     Text(
                         text = stringResource(block.placeholder),
                         style =
-                        bodyNote.copy(
-                            color = MaterialTheme.colorScheme.outlineVariant,
+                        MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = fontStyles.sizes.textBlock,
                             fontFamily = fontStyles.families.body,
                         ),

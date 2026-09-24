@@ -16,3 +16,10 @@ fun relativeDay(date: Date, now: Date = Date()): RelativeDay {
 
 private fun Calendar.isSameDay(other: Calendar): Boolean = get(Calendar.YEAR) == other.get(Calendar.YEAR) &&
     get(Calendar.DAY_OF_YEAR) == other.get(Calendar.DAY_OF_YEAR)
+
+/** Whether [date] falls in the same calendar year as [now]; a card date then leaves the year out. */
+fun isSameYear(date: Date, now: Date = Date()): Boolean {
+    val target = Calendar.getInstance().apply { time = date }
+    val current = Calendar.getInstance().apply { time = now }
+    return target.get(Calendar.YEAR) == current.get(Calendar.YEAR)
+}

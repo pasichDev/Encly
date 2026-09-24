@@ -1,3 +1,12 @@
 package com.pasich.encly.presentation.navigation
 
-data class DrawerNavItem(val title: String, val iconRes: Int, val route: String, val badgeCount: Int? = null)
+import androidx.compose.ui.graphics.vector.ImageVector
+
+/** A drawer destination. [groupEnd] draws a hairline after it. */
+data class DrawerNavItem(
+    val title: String,
+    val icon: ImageVector,
+    val route: String,
+    val badgeCount: Int? = null,
+    val groupEnd: Boolean = false,
+)

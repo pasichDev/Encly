@@ -17,11 +17,11 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
+import com.pasich.encly.ui.theme.EnclyTheme
 
 @Composable
 fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier = Modifier, isLocked: Boolean = false) {
@@ -57,7 +57,7 @@ fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier =
         modifier =
         modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(top = EnclyTheme.spacing.labelGap)
             // Enter is handled by KeyboardActions.onNext.
             .textBlockKeys(text, blockActions, enterAddsParagraph = false),
         decorationBox = {
@@ -67,7 +67,7 @@ fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier =
                 if (text.isEmpty()) {
                     Text(
                         text = block.blockType.toString(),
-                        style = textStyle.copy(color = MaterialTheme.colorScheme.outlineVariant),
+                        style = textStyle.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     )
                 }
                 it()
@@ -88,7 +88,7 @@ private fun headingTextStyle(blockType: BlockType): TextStyle {
         else -> return MaterialTheme.typography.titleMedium
     }
     return base.copy(
-        color = MaterialTheme.colorScheme.onBackground,
+        color = MaterialTheme.colorScheme.onSurface,
         fontSize = size,
         fontFamily = fontStyles.families.heading,
     )

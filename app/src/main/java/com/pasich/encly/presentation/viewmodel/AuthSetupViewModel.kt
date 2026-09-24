@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.viewmodel
 
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.security.SecurityManager
@@ -15,6 +14,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+/**
+ * The last step of first-run setup: onboarding has created the vault and set its PIN (and
+ * biometric) slots; this opens it, imports a backup staged by "Restore from backup" and commits.
+ */
 @HiltViewModel
 class AuthSetupViewModel @Inject constructor(
     private val securityManager: SecurityManager,
@@ -25,20 +28,17 @@ class AuthSetupViewModel @Inject constructor(
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
-    fun biometricAvailable(): Boolean = securityManager.biometricAvailable()
+    // Kept here, not in saved state: both die with the process, like the staged backup they
+    // refer to. A "Retry" restored after a process death would otherwise commit an empty vault.
+    private val _restoreFailed = MutableStateFlow(false)
 
-    fun setPin(pin: String, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            _busy.value = true
-            val ok = withContext(Dispatchers.Default) { securityManager.configurePin(pin) }
-            _busy.value = false
-            onResult(ok)
-        }
-    }
+    /** The staged backup did not import; the screen asks to retry or to skip it. */
+    val restoreFailed: StateFlow<Boolean> = _restoreFailed.asStateFlow()
 
-    fun enableBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
-        securityManager.enrollBiometric(activity, onResult)
-    }
+    private val _finishFailed = MutableStateFlow(false)
+
+    /** Setup did not complete (the vault did not open or the commit failed). */
+    val finishFailed: StateFlow<Boolean> = _finishFailed.asStateFlow()
 
     /**
      * [FinishResult.ok] is `true` only when the vault is open and the app is still in the
@@ -52,19 +52,35 @@ class AuthSetupViewModel @Inject constructor(
      * restarts onboarding instead of opening an empty vault.
      */
     fun finishSetup(onResult: (FinishResult) -> Unit) {
+        _restoreFailed.value = false
+        _finishFailed.value = false
         viewModelScope.launch {
             _busy.value = true
             val outcome = withContext(Dispatchers.IO) { openRestoreAndCommit() }
             val committed = outcome == SetupOutcome.COMMITTED
             val published = committed && sessionLockManager.onUnlocked()
             _busy.value = false
-            onResult(
+            report(
                 FinishResult(
                     ok = published,
                     backgrounded = committed && !published,
                     restoreFailed = outcome == SetupOutcome.RESTORE_FAILED,
                 ),
+                onResult,
             )
+        }
+    }
+
+    /**
+     * "Retry" after a failed restore. Refuses, committing nothing, when no backup is staged any
+     * more: finishing then would silently open an empty vault instead of the user's notes.
+     */
+    fun retryRestore(onResult: (FinishResult) -> Unit) {
+        if (pendingRestore.isStaged) {
+            finishSetup(onResult)
+        } else {
+            _restoreFailed.value = false
+            report(FinishResult(ok = false, backgrounded = false, restoreFailed = false), onResult)
         }
     }
 
@@ -72,6 +88,12 @@ class AuthSetupViewModel @Inject constructor(
     fun skipRestore(onResult: (FinishResult) -> Unit) {
         pendingRestore.clear()
         finishSetup(onResult)
+    }
+
+    private fun report(result: FinishResult, onResult: (FinishResult) -> Unit) {
+        _restoreFailed.value = result.restoreFailed
+        _finishFailed.value = !result.ok && !result.backgrounded && !result.restoreFailed
+        onResult(result)
     }
 
     private suspend fun openRestoreAndCommit(): SetupOutcome {

@@ -4,40 +4,25 @@ import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.composables.icons.lucide.FileKey
+import com.composables.icons.lucide.Fingerprint
 import com.composables.icons.lucide.KeyRound
 import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
@@ -45,9 +30,17 @@ import com.composables.icons.lucide.Trash2
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthType
-import com.pasich.encly.presentation.components.custombox.RoundPosition
-import com.pasich.encly.presentation.components.custombox.SettingBox
-import com.pasich.encly.presentation.components.settings.AuthMethodSelector
+import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.presentation.designsystem.CalloutTone
+import com.pasich.encly.presentation.designsystem.EnclyCallout
+import com.pasich.encly.presentation.designsystem.EnclyGroup
+import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyListRow
+import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
+import com.pasich.encly.presentation.designsystem.EnclySwitchRow
+import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.backup.BackupDialogs
 import com.pasich.encly.presentation.screen.backup.rememberBackupDialogActions
@@ -55,8 +48,8 @@ import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecuritySettingsScreen(
     navController: NavHostController,
@@ -86,63 +79,86 @@ fun SecuritySettingsScreen(
     }
     SecurityScreenEffects(vaultState.message, vaultState.erased, securityState.error, effectActions)
 
-    Scaffold(modifier = modifier, topBar = {
-        TopAppBar(title = { Text(stringResource(R.string.security_title)) }, navigationIcon = {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = stringResource(R.string.back))
-            }
-        })
-    }) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-        ) {
-            item { EncryptionStatusCard(hasRecoveryPhrase = securityState.isUserCreatedSeedKey) }
+    Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            EnclyTopBar(title = stringResource(R.string.security_title), onBack = { navController.popBackStack() })
+        },
+    ) { paddingValues ->
+        SecurityContent(
+            securityState = securityState,
+            vaultBusy = vaultState.busy,
+            actions = SecurityActions(
+                onChangePin = { navController.navigate(NavRoutes.PinCodeConfig.name) },
+                onBiometric = { enabled -> if (activity != null) securityViewModel.toggleBiometric(activity, enabled) },
+                onVaultAction = vaultViewModel::start,
+            ),
+            modifier = Modifier.padding(paddingValues),
+        )
+    }
+}
 
-            item { Spacer(Modifier.height(20.dp)) }
+/** What the security page can start. */
+private class SecurityActions(
+    val onChangePin: () -> Unit,
+    val onBiometric: (Boolean) -> Unit,
+    val onVaultAction: (BackupAction) -> Unit,
+)
 
-            // Authorization
-            item {
-                Text(
-                    text = stringResource(R.string.auth_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
-            }
-            item {
-                AuthMethodSelector(
-                    selected = securityState.authType,
-                    onSelect = {
-                        navController.navigate(NavRoutes.PinCodeConfig.name)
-                    },
-                )
-            }
-            item { Spacer(Modifier.height(15.dp)) }
+@Composable
+private fun SecurityContent(
+    securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
+    vaultBusy: Boolean,
+    actions: SecurityActions,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
+    ) {
+        EnclyCallout(
+            title = stringResource(R.string.security_encryption_active),
+            text = stringResource(
+                if (securityState.isUserCreatedSeedKey) {
+                    R.string.security_encryption_seed_desc
+                } else {
+                    R.string.security_encryption_pin_desc
+                },
+            ),
+            icon = Lucide.Lock,
+        )
+        SectionOverline(
+            text = stringResource(R.string.auth_title),
+            modifier = Modifier.padding(top = EnclyTheme.spacing.s),
+        )
+        EnclyGroup {
+            EnclyNavigationRow(
+                title = stringResource(R.string.auth_method_pin_title),
+                supporting = stringResource(R.string.auth_method_pin_desc),
+                icon = Lucide.KeyRound,
+                onClick = actions.onChangePin,
+                modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+            )
             if (securityState.authType != AuthType.NONE) {
-                item {
-                    BiometricSetting(securityState) { enabled ->
-                        if (activity != null) securityViewModel.toggleBiometric(activity, enabled)
-                    }
-                }
+                EnclyGroupDivider()
+                BiometricSetting(securityState, actions.onBiometric)
             }
-
-            item { Spacer(Modifier.height(15.dp)) }
-            item {
-                VaultActions(
-                    hasRecoveryPhrase = securityState.isUserCreatedSeedKey,
-                    busy = vaultState.busy,
-                    onStart = vaultViewModel::start,
-                )
-            }
-
-            item { Spacer(Modifier.height(20.dp)) }
-
-            // Security information
-            item { SecurityInfoCard() }
+            EnclyGroupDivider()
+            RecoveryPhraseRow(
+                hasRecoveryPhrase = securityState.isUserCreatedSeedKey,
+                busy = vaultBusy,
+                onStart = actions.onVaultAction,
+            )
         }
+        EraseSection(busy = vaultBusy, onStart = actions.onVaultAction)
+        EnclyCallout(
+            title = stringResource(R.string.security_info_title),
+            text = stringResource(R.string.security_info_body),
+        )
     }
 }
 
@@ -181,117 +197,64 @@ private fun SecurityScreenEffects(
 }
 
 @Composable
-private fun EncryptionStatusCard(hasRecoveryPhrase: Boolean) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(15.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Lucide.Lock,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Column {
-                Text(
-                    text = stringResource(R.string.security_encryption_active),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = if (hasRecoveryPhrase) {
-                        stringResource(R.string.security_encryption_seed_desc)
-                    } else {
-                        stringResource(R.string.security_encryption_pin_desc)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun BiometricSetting(
     securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
     onToggle: (Boolean) -> Unit,
 ) {
-    SettingBox(
+    EnclySwitchRow(
         title = stringResource(R.string.security_biometric_title),
-        subTitle = if (securityState.isBiometricAvailable) {
-            stringResource(R.string.security_biometric_available)
-        } else {
-            stringResource(R.string.security_biometric_unavailable)
-        },
-        roundPosition = RoundPosition.Full,
-        endWidget = {
-            Switch(
-                checked = securityState.biometricEnable,
-                enabled = securityState.isBiometricAvailable,
-                onCheckedChange = onToggle,
-            )
-        },
+        supporting = stringResource(
+            when (securityState.biometricStatus) {
+                BiometricStatus.AVAILABLE -> R.string.security_biometric_available
+
+                // The sensor is there: say what is missing, not that the device cannot do it.
+                BiometricStatus.NOT_ENROLLED -> R.string.security_biometric_not_enrolled
+
+                BiometricStatus.UNAVAILABLE -> R.string.security_biometric_unavailable
+            },
+        ),
+        icon = Lucide.Fingerprint,
+        checked = securityState.biometricEnable,
+        enabled = securityState.isBiometricAvailable,
+        onCheckedChange = onToggle,
+        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
     )
 }
 
 /**
- * Create a recovery phrase later (a vault set up without one can otherwise only be wiped when
- * the PIN is forgotten) and erase all data. Both start with re-authentication.
+ * Create a recovery phrase later: a vault set up without one can otherwise only be wiped when
+ * the PIN is forgotten. It starts with re-authentication.
  */
 @Composable
-private fun VaultActions(hasRecoveryPhrase: Boolean, busy: Boolean, onStart: (BackupAction) -> Unit) {
-    Column {
-        SettingBox(
-            title = stringResource(R.string.backup_needs_phrase_title),
-            subTitle = if (hasRecoveryPhrase) {
-                stringResource(R.string.security_recovery_set)
-            } else {
-                stringResource(R.string.security_recovery_missing)
-            },
-            roundPosition = RoundPosition.First,
-            icon = rememberVectorPainter(Lucide.KeyRound),
-            action = { if (!hasRecoveryPhrase && !busy) onStart(BackupAction.CREATE_PHRASE) },
-        )
-        SettingBox(
-            title = stringResource(R.string.security_erase_title),
-            subTitle = stringResource(R.string.security_erase_desc),
-            roundPosition = RoundPosition.Last,
-            icon = rememberVectorPainter(Lucide.Trash2),
-            action = { if (!busy) onStart(BackupAction.ERASE) },
-        )
-    }
+private fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStart: (BackupAction) -> Unit) {
+    EnclyListRow(
+        title = stringResource(R.string.backup_needs_phrase_title),
+        supporting = stringResource(
+            if (hasRecoveryPhrase) R.string.security_recovery_set else R.string.security_recovery_missing,
+        ),
+        icon = Lucide.FileKey,
+        onClick = { if (!hasRecoveryPhrase && !busy) onStart(BackupAction.CREATE_PHRASE) },
+        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+    )
 }
 
+/** Erasing all data: a warning callout and an `error` text button, confirmed in a dialog. */
 @Composable
-private fun SecurityInfoCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        ),
+private fun EraseSection(busy: Boolean, onStart: (BackupAction) -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+        modifier = Modifier.padding(top = EnclyTheme.spacing.s),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.security_info_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = stringResource(R.string.security_info_body),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-        }
+        EnclyCallout(
+            title = stringResource(R.string.security_erase_title),
+            text = stringResource(R.string.security_erase_desc),
+            tone = CalloutTone.WARNING,
+        )
+        EnclyTextButton(
+            text = stringResource(R.string.security_erase_title),
+            onClick = { if (!busy) onStart(BackupAction.ERASE) },
+            destructive = true,
+            icon = Lucide.Trash2,
+        )
     }
 }

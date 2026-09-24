@@ -1,24 +1,15 @@
 package com.pasich.encly.presentation.dialogs.tasks
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -32,18 +23,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pasich.encly.R
 import com.pasich.encly.data.model.Task
-import com.pasich.encly.presentation.components.tasks.PriorityIndicator
-import com.pasich.encly.presentation.components.tasks.PriorityIndicatorSize
+import com.pasich.encly.presentation.components.tasks.PriorityValues
+import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
+import com.pasich.encly.presentation.designsystem.EnclyButton
+import com.pasich.encly.presentation.designsystem.EnclyChip
+import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.EnclyTextField
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.TaskDraft
+import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 
 private const val TASK_TITLE_MAX_LENGTH = 100
@@ -62,7 +57,7 @@ private data class TaskEditorState(
 private data class TaskEditorActions(
     val onTitleChange: (String) -> Unit,
     val onDescriptionChange: (String) -> Unit,
-    val onPriorityClick: () -> Unit,
+    val onPrioritySelect: (Int) -> Unit,
     val onSubmit: () -> Unit,
     /** Null when there is nothing to delete (a new task). */
     val onDelete: (() -> Unit)? = null,
@@ -90,17 +85,7 @@ fun AddTaskDialog(
     var title by remember { mutableStateOf(editTask?.title.orEmpty()) }
     var description by remember { mutableStateOf(editTask?.description.orEmpty()) }
     var selectedPriority by remember { mutableIntStateOf(editTask?.priority ?: 0) }
-    var showPriorityDialog by remember { mutableStateOf(false) }
     val titleFocusRequester = remember { FocusRequester() }
-
-    TaskPriorityDialog(
-        visible = showPriorityDialog,
-        onDismiss = { showPriorityDialog = false },
-        onSelect = {
-            selectedPriority = it
-            showPriorityDialog = false
-        },
-    )
 
     val state = TaskEditorState(
         title = title,
@@ -111,7 +96,7 @@ fun AddTaskDialog(
     val actions = TaskEditorActions(
         onTitleChange = { title = it.take(TASK_TITLE_MAX_LENGTH) },
         onDescriptionChange = { description = it.take(TASK_DESCRIPTION_MAX_LENGTH) },
-        onPriorityClick = { showPriorityDialog = true },
+        onPrioritySelect = { selectedPriority = it },
         onSubmit = { submitTask(state, onAddTask, onEditTask) },
         onDelete = editTask?.let { task -> onDeleteTask?.let { delete -> { delete(task) } } },
     )
@@ -131,12 +116,7 @@ fun AddTaskDialog(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        dragHandle = null,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
+    EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         TaskEditorContent(state, titleFocusRequester, actions)
     }
 
@@ -144,15 +124,6 @@ fun AddTaskDialog(
         delay(INITIAL_FOCUS_DELAY_MS)
         titleFocusRequester.requestFocus()
     }
-}
-
-@Composable
-private fun TaskPriorityDialog(visible: Boolean, onDismiss: () -> Unit, onSelect: (Int) -> Unit) {
-    if (!visible) return
-    PrioritySelectionDialog(
-        onDismissRequest = onDismiss,
-        onPrioritySelect = onSelect,
-    )
 }
 
 private fun submitTask(
@@ -177,103 +148,64 @@ private fun TaskEditorContent(
     actions: TaskEditorActions,
 ) {
     Column(
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap),
         modifier = Modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
+            .verticalScroll(rememberScrollState()),
     ) {
-        Spacer(Modifier.height(15.dp))
-        TaskTextFields(state, titleFocusRequester, actions)
-        TaskEditorFooter(state, actions)
-        Spacer(Modifier.height(20.dp))
-    }
-}
-
-@Composable
-private fun TaskTextFields(state: TaskEditorState, titleFocusRequester: FocusRequester, actions: TaskEditorActions) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        TaskTextField(
+        EnclyTextField(
             value = state.title,
             onValueChange = actions.onTitleChange,
-            placeholder = stringResource(
+            label = stringResource(
                 if (state.isEditMode) R.string.task_edit_placeholder else R.string.task_new_placeholder,
             ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(titleFocusRequester),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            fieldModifier = Modifier.focusRequester(titleFocusRequester),
         )
-        TaskTextField(
+        EnclyTextField(
             value = state.description,
             onValueChange = actions.onDescriptionChange,
-            placeholder = stringResource(R.string.task_description_placeholder),
-            modifier = Modifier.fillMaxWidth(),
-            bodyStyle = true,
+            label = stringResource(R.string.task_description_placeholder),
+            textStyle = MaterialTheme.typography.bodyMedium,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
+        PriorityChips(selected = state.priority, onSelect = actions.onPrioritySelect)
+        TaskEditorFooter(state, actions)
     }
 }
 
+/** The priority as three chips, highest first. */
 @Composable
-private fun TaskTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    bodyStyle: Boolean = false,
-) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        placeholder = {
-            Text(
-                text = placeholder,
-                style = if (bodyStyle) {
-                    MaterialTheme.typography.bodyMedium
-                } else {
-                    MaterialTheme.typography.bodyLarge
-                },
-            )
-        },
-        modifier = modifier.padding(0.dp),
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        textStyle = if (bodyStyle) {
-            MaterialTheme.typography.bodyMedium
-        } else {
-            MaterialTheme.typography.bodyLarge
-        },
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            cursorColor = MaterialTheme.colorScheme.primary,
-        ),
-    )
+private fun PriorityChips(selected: Int, onSelect: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
+        SectionOverline(stringResource(R.string.priority_select_title))
+        Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
+            PriorityValues.priorities.forEach { priority ->
+                EnclyChip(
+                    label = stringResource(priority.label),
+                    selected = priority.id == selected,
+                    onClick = { onSelect(priority.id) },
+                )
+            }
+        }
+    }
 }
 
 @Composable
 private fun TaskEditorFooter(state: TaskEditorState, actions: TaskEditorActions) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PriorityIndicator(
-            priority = state.priority,
-            size = PriorityIndicatorSize.Large,
-            modifier = Modifier.clickable(onClick = actions.onPriorityClick),
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            actions.onDelete?.let { onDelete ->
-                TextButton(onClick = onDelete) {
-                    Text(stringResource(R.string.task_delete), color = MaterialTheme.colorScheme.error)
-                }
-            }
-            TextButton(onClick = actions.onSubmit) {
-                Text(stringResource(if (state.isEditMode) R.string.save else R.string.add))
-            }
+        actions.onDelete?.let { onDelete ->
+            EnclyTextButton(text = stringResource(R.string.task_delete), onClick = onDelete, destructive = true)
         }
+        EnclyButton(
+            text = stringResource(if (state.isEditMode) R.string.save else R.string.add),
+            onClick = actions.onSubmit,
+            enabled = state.title.isNotBlank(),
+            modifier = Modifier.weight(1f),
+        )
     }
 }

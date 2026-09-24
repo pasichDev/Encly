@@ -76,6 +76,22 @@ class TasksViewModelDraftTest {
     }
 
     @Test
+    fun aCompletedTaskCanBeOpenedAndEditedAndStaysCompleted() = runTest(dispatcher) {
+        val id = repository.insertTask(Task.new(title = "Done", priority = 0).copy(isCompleted = true)).getOrThrow()
+        advanceUntilIdle()
+        val completed = viewModel.uiState.value.completedTasks.single()
+
+        viewModel.showEditTaskDialog(completed)
+        viewModel.editTask(id, "Done, renamed", "note", 2)
+        advanceUntilIdle()
+
+        val saved = repository.tasks.value.single()
+        assertEquals("Done, renamed", saved.title)
+        assertEquals(2, saved.priority)
+        assertTrue(saved.isCompleted)
+    }
+
+    @Test
     fun filtersAreAllPrioritiesAndCompletedWithAllSelectedFirst() = runTest(dispatcher) {
         repository.insertTask(Task.new(title = "High", priority = 2))
         repository.insertTask(Task.new(title = "Low", priority = 0))

@@ -24,6 +24,9 @@ class PendingRestore @Inject constructor(private val backupManager: BackupManage
         payload = null
     }
 
+    /** Whether a backup is staged. False after a process death: the payload lives only in memory. */
+    val isStaged: Boolean get() = payload != null
+
     /**
      * Imports the staged backup into the vault setup just opened. Returns false only when a
      * staged restore failed; the payload then stays staged for a retry, and is dropped once

@@ -122,6 +122,15 @@ class SessionLockManager @Inject constructor(private val securityManager: Securi
         return true
     }
 
+    /**
+     * "Lock now" on the notes screen: closes the open vault exactly as backgrounding does, so the
+     * lock screen follows. Nothing happens before onboarding is committed or with no vault open.
+     */
+    @MainThread
+    fun lockNow() {
+        if (isOpenAndLockable()) relock()
+    }
+
     private fun isOpenAndLockable(): Boolean = securityManager.isLockable() && securityManager.isDatabaseUnlocked()
 
     private fun relock() {

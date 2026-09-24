@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthType
+import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.SecurityManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,7 @@ class SecuritySettingsViewModel @Inject constructor(private val securityManager:
                 isUserCreatedSeedKey = authSettings.isUserCreatedSeedKey,
                 authType = authSettings.authType,
                 biometricEnable = authSettings.isBiometricEnabled,
-                isBiometricAvailable = securityManager.biometricAvailable(),
+                biometricStatus = securityManager.biometricStatus(),
             )
         }
     }
@@ -106,6 +107,8 @@ class SecuritySettingsViewModel @Inject constructor(private val securityManager:
         val authType: AuthType = AuthType.NONE,
         val isUserCreatedSeedKey: Boolean = false,
         val biometricEnable: Boolean = false,
-        val isBiometricAvailable: Boolean = false,
-    )
+        val biometricStatus: BiometricStatus = BiometricStatus.UNAVAILABLE,
+    ) {
+        val isBiometricAvailable: Boolean get() = biometricStatus == BiometricStatus.AVAILABLE
+    }
 }

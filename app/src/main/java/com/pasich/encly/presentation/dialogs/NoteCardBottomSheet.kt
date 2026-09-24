@@ -1,27 +1,13 @@
 package com.pasich.encly.presentation.dialogs
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -33,28 +19,31 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.CopyPlus
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquareText
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Trash2
 import com.pasich.encly.R
 import com.pasich.encly.data.model.NoteWithTag
-import com.pasich.encly.presentation.components.custombox.ModalBoxItem
-import com.pasich.encly.presentation.components.custombox.RoundPosition
 import com.pasich.encly.presentation.components.editNote.NoteSubTitle
+import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
+import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
-import com.pasich.encly.ui.theme.bodyNote
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private const val DESCRIPTION_FOCUS_DELAY_MS = 300L
+private const val DESCRIPTION_MAX_LINES = 5
 
 sealed class NoteAction {
     object Edit : NoteAction()
@@ -68,60 +57,22 @@ sealed class NoteAction {
 private fun NoteActionHeader(item: NoteWithTag, changeTag: (Long) -> Unit) {
     var isVisibleTitle by remember { mutableStateOf(true) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 10.dp),
-    ) {
-        Row {
-            AnimatedVisibility(visible = isVisibleTitle) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_copy),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(8.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-            AnimatedVisibility(visible = isVisibleTitle) {
-                Spacer(modifier = Modifier.width(10.dp))
-            }
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.Start,
-            ) {
-                AnimatedVisibility(visible = isVisibleTitle) {
-                    Text(
-                        text = item.note.title.ifEmpty {
-                            stringResource(
-                                R.string.untitled,
-                            )
-                        },
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                AnimatedVisibility(visible = isVisibleTitle) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
-                NoteSubTitle(
-                    tagsViewListen = { isVisibleTitle = !it },
-                    statusSaveNote = SaveStatusNote.OLD,
-                    note = item.note,
-                    changeTag = changeTag,
-                )
-            }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        AnimatedVisibility(visible = isVisibleTitle) {
+            Text(
+                text = item.note.title.ifEmpty { stringResource(R.string.untitled) },
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
+        NoteSubTitle(
+            tagsViewListen = { isVisibleTitle = !it },
+            statusSaveNote = SaveStatusNote.OLD,
+            note = item.note,
+            changeTag = changeTag,
+        )
     }
 }
 
@@ -131,135 +82,132 @@ fun NoteCardBottomSheet(
     isVisible: Boolean,
     item: NoteWithTag,
     onAction: (NoteAction) -> Unit,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    var noteDescription by remember { mutableStateOf(item.note.description) }
-    val descriptionFR = remember { FocusRequester() }
-    var isTextFieldEnabled by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+    var isEditingDescription by remember { mutableStateOf(false) }
 
     if (isVisible) {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) {
-            Column {
-                NoteActionHeader(item, changeTag = { onAction(NoteAction.ChangeTag(it)) })
-                TextField(
-                    value = noteDescription,
-                    enabled = isTextFieldEnabled,
-                    onValueChange = { newValue -> noteDescription = newValue },
-                    textStyle = bodyNote.copy(
-                        color = MaterialTheme.colorScheme.onBackground,
-                    ),
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.note_description_placeholder),
-                            style = bodyNote.copy(
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                            ),
-                        )
-                    },
-                    maxLines = 5,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp)
-                        .padding(horizontal = 16.dp)
-                        .focusRequester(descriptionFR)
-                        .onFocusChanged { focusState ->
-                            if (isTextFieldEnabled != focusState.isFocused) {
-                                isTextFieldEnabled = focusState.isFocused
-                            }
-                        },
-                    colors = TextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                    ),
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_thought),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }, trailingIcon = {
-                        if (!isTextFieldEnabled) {
-                            Icon(
-                                Icons.Default.Edit,
-                                tint = MaterialTheme.colorScheme.primary,
-                                contentDescription = stringResource(R.string.edit),
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            isTextFieldEnabled = true
-                                            delay(300)
-                                            descriptionFR.requestFocus()
-                                        }
-                                    },
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Check,
-                                tint = MaterialTheme.colorScheme.primary,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable {
-                                        onAction(NoteAction.ChangeDescription(noteDescription))
-                                        isTextFieldEnabled = false
-                                    },
-                            )
-                        }
-                    },
-                )
-
-                AnimatedVisibility(!isTextFieldEnabled) {
-                    LazyColumn(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    ) {
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.edit),
-                                icon = painterResource(R.drawable.ic_edit_modal),
-                                roundPosition = RoundPosition.First,
-                                action = { onAction(NoteAction.Edit) },
-                            )
-                        }
-
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.duplicate),
-                                icon = painterResource(R.drawable.ic_duplicate),
-                                roundPosition = RoundPosition.Medium,
-                                action = { onAction(NoteAction.Duplicate) },
-                            )
-                        }
-
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.delete),
-                                icon = painterResource(R.drawable.ic_delete),
-                                roundPosition = RoundPosition.Last,
-                                confirmationRequest = MaterialTheme.colorScheme.error,
-                                action = { onAction(NoteAction.Delete) },
-                            )
-                        }
-                    }
+        EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, modifier = modifier) {
+            NoteActionHeader(item, changeTag = { onAction(NoteAction.ChangeTag(it)) })
+            DescriptionField(
+                initial = item.note.description,
+                editing = isEditingDescription,
+                onEditingChange = { isEditingDescription = it },
+                onSave = { onAction(NoteAction.ChangeDescription(it)) },
+            )
+            AnimatedVisibility(!isEditingDescription) {
+                Column {
+                    EnclySheetRow(
+                        title = stringResource(id = R.string.edit),
+                        icon = Lucide.Pencil,
+                        onClick = { onAction(NoteAction.Edit) },
+                    )
+                    EnclySheetRow(
+                        title = stringResource(id = R.string.duplicate),
+                        icon = Lucide.CopyPlus,
+                        onClick = { onAction(NoteAction.Duplicate) },
+                    )
+                    EnclySheetRow(
+                        title = stringResource(id = R.string.delete),
+                        icon = Lucide.Trash2,
+                        destructive = true,
+                        confirmFirst = true,
+                        onClick = { onAction(NoteAction.Delete) },
+                    )
                 }
-
-                Spacer(Modifier.height(20.dp))
             }
         }
     }
 }
+
+/**
+ * The note's description: read-only until the pencil is tapped, then saved with the check. [editing]
+ * follows the field's focus.
+ */
+@Composable
+private fun DescriptionField(
+    initial: String,
+    editing: Boolean,
+    onEditingChange: (Boolean) -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var noteDescription by remember { mutableStateOf(initial) }
+    val descriptionFR = remember { FocusRequester() }
+    val coroutineScope = rememberCoroutineScope()
+    TextField(
+        value = noteDescription,
+        enabled = editing,
+        onValueChange = { newValue -> noteDescription = newValue },
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+        placeholder = {
+            Text(
+                text = stringResource(R.string.note_description_placeholder),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        maxLines = DESCRIPTION_MAX_LINES,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(descriptionFR)
+            .onFocusChanged { focusState ->
+                if (editing !=
+                    focusState.isFocused
+                ) {
+                    onEditingChange(focusState.isFocused)
+                }
+            },
+        shape = MaterialTheme.shapes.small,
+        colors = descriptionFieldColors(),
+        leadingIcon = { Icon(Lucide.MessageSquareText, contentDescription = null) },
+        trailingIcon = {
+            DescriptionAction(
+                editing = editing,
+                onEdit = {
+                    coroutineScope.launch {
+                        onEditingChange(true)
+                        delay(DESCRIPTION_FOCUS_DELAY_MS)
+                        descriptionFR.requestFocus()
+                    }
+                },
+                onSave = {
+                    onSave(noteDescription)
+                    onEditingChange(false)
+                },
+            )
+        },
+    )
+}
+
+/** The pencil that starts editing the description, or the check that saves it. */
+@Composable
+private fun DescriptionAction(editing: Boolean, onEdit: () -> Unit, onSave: () -> Unit) {
+    IconButton(onClick = if (editing) onSave else onEdit) {
+        Icon(
+            if (editing) Lucide.Check else Lucide.Pencil,
+            tint = MaterialTheme.colorScheme.primary,
+            contentDescription = stringResource(if (editing) R.string.save else R.string.edit),
+        )
+    }
+}
+
+/** A tonal field without an indicator line, its icon in `primary`. */
+@Composable
+private fun descriptionFieldColors() = TextFieldDefaults.colors(
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+    focusedIndicatorColor = Color.Transparent,
+    unfocusedIndicatorColor = Color.Transparent,
+    disabledIndicatorColor = Color.Transparent,
+    disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+    focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+    unfocusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+)

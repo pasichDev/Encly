@@ -25,13 +25,6 @@
 
     <string name="auth_method_pin_desc">Verplichte toegangssleutel. Tik om je pincode te wijzigen.</string>
     <string name="auth_method_pin_title">Pincode van 6 cijfers</string>
-    <string name="auth_setup_biometric_subtitle">Bevestig je biometrie om snel te ontgrendelen</string>
-    <string name="auth_setup_biometric_title">Biometrie aanzetten</string>
-    <string name="auth_setup_confirm_subtitle">Voer de pincode nogmaals in om te bevestigen</string>
-    <string name="auth_setup_confirm_title">Bevestig je pincode</string>
-    <string name="auth_setup_continue_pin_only">Doorgaan met alleen een pincode</string>
-    <string name="auth_setup_create_subtitle">Je pincode van 6 cijfers beschermt rechtstreeks de databasesleutel</string>
-    <string name="auth_setup_retry_biometric">Biometrie opnieuw proberen</string>
     <string name="auth_title">Verificatie</string>
 
     <string name="back">Terug</string>
@@ -50,6 +43,7 @@
     <string name="biometric_unavailable">Biometrische verificatie is niet beschikbaar</string>
 
     <string name="block_add">Blok toevoegen</string>
+    <string name="block_bulleted_list">Lijst met opsommingstekens</string>
     <string name="block_checklist">Checklist</string>
     <string name="block_heading">Kop</string>
     <string name="block_heading_level">Kop %1$d</string>
@@ -152,18 +146,16 @@
     <string name="faq_tags_q">Hoe werken labels?</string>
     <string name="faq_tasks_a">Taken hebben een beschrijving en een prioriteit. Je kunt ze op prioriteit filteren en als voltooid markeren. Encly zet nooit de tekst van taken in systeemmeldingen.</string>
     <string name="faq_tasks_q">Wat kun je met taken?</string>
-    <string name="faq_theme_a">In Instellingen → Weergave kies je het systeem-, lichte of donkere thema en, op ondersteunde Android-apparaten, dynamische kleuren.</string>
+    <string name="faq_theme_a">In Instellingen → Weergave kies je een van de vijf thema\'s, de modus (systeem, licht of donker) en het lettertype, en vanaf Android 12 ook dynamische kleuren.</string>
     <string name="faq_theme_q">Hoe wijzig ik het thema?</string>
     <string name="faq_vault_damaged_a">Encly maakt bewust nooit een lege database aan in plaats van een verloren of onleesbare kluis. Bevestig het volledig wissen niet als je je lokale gegevens nog nodig hebt.</string>
     <string name="faq_vault_damaged_q">Encly meldt dat de kluis beschadigd is</string>
 
     <string name="font_size_title">Tekstgrootte</string>
-    <string name="font_style_cozy">Gezellig</string>
+    <string name="font_style_cozy">Redactioneel</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technisch</string>
 
-    <string name="home_greeting">Hallo</string>
-    <string name="home_tasks_empty">Je takenlijst is leeg</string>
 
     <string name="language_dialog_title">Taal kiezen</string>
     <string name="language_system_default">Systeemstandaard</string>
@@ -181,7 +173,6 @@
     <string name="lock_subtitle">Voer je pincode van 6 cijfers in om door te gaan</string>
     <string name="lock_title">Ontgrendel je notities</string>
     <string name="lock_unlocking">Ontgrendelen…</string>
-    <string name="lock_use_biometric">Biometrie gebruiken</string>
     <string name="lock_use_recovery_phrase">Toegang herstellen met je herstelzin</string>
     <string name="lock_wrong_pin">Onjuiste pincode</string>
     <string name="lock_wrong_recovery_phrase">Onjuiste herstelzin</string>
@@ -189,6 +180,9 @@
     <string name="loss_hold_to_wipe">Houd ingedrukt om alles te wissen</string>
     <string name="loss_message">Het lijkt erop dat de versleutelde gegevens of de versleutelingssleutels zijn gewijzigd of beschadigd, waardoor herstel niet mogelijk is.\n\nOm de app te blijven gebruiken, moet je hem resetten en de beschadigde gegevens wissen. Hierdoor worden alle opgeslagen notities en instellingen definitief verwijderd.</string>
     <string name="loss_title">Helaas zijn je gegevens beschadigd</string>
+    <string name="legacy_vault_title">Deze gegevens komen uit een oudere versie</string>
+    <string name="legacy_vault_message">Encly heeft notities gevonden die zijn opgeslagen door een versie van vóór 2.0. Encly 2.0 gebruikt een nieuwe versleutelde indeling en kan ze niet openen, en omzetten is niet mogelijk.\n\nBegin opnieuw om de app te gebruiken. De oude notities en instellingen op deze telefoon worden dan definitief verwijderd.</string>
+    <string name="legacy_vault_hold_to_start">Houd ingedrukt om opnieuw te beginnen</string>
 
     <string name="main_drawer_faq">Veelgestelde vragen</string>
     <string name="main_drawer_settings">Instellingen</string>
@@ -216,46 +210,9 @@
     <string name="note_save_failed">Kan de wijzigingen niet opslaan</string>
     <string name="note_trash_failed">Kan de notitie niet naar de prullenbak verplaatsen</string>
 
-    <string name="onboarding_done_auto_desc">Je gegevens zijn beschermd. Je kunt meteen beginnen met schrijven, creëren en je ideeën waarmaken!</string>
-    <string name="onboarding_done_auto_title">Beveiliging is ingesteld!</string>
-    <string name="onboarding_done_card_footer">Klaar om te creëren?</string>
-    <string name="onboarding_done_card_title">Tijd om ideeën waar te maken!</string>
-    <string name="onboarding_done_point_1">Leg briljante gedachten vast</string>
-    <string name="onboarding_done_point_2">Maak lijsten om gefocust te blijven</string>
-    <string name="onboarding_done_point_3">Plan je dagen en dromen</string>
-    <string name="onboarding_done_point_4">Bewaar wat belangrijk is goed beveiligd</string>
-    <string name="onboarding_done_point_5">Maak je ideeën werkelijkheid</string>
-    <string name="onboarding_done_seed_desc">Je kunt je notities nu veilig maken, bewerken en opslaan. Vergeet niet je seedzin op een veilige plek te bewaren!</string>
-    <string name="onboarding_done_seed_title">Je beveiligingssleutel is klaar!</string>
-    <string name="onboarding_done_start">Aan de slag!</string>
     <string name="onboarding_error_initialization">Kan de app niet initialiseren</string>
-    <string name="onboarding_error_seed_generation">Kan de seedzin niet maken</string>
+    <string name="onboarding_error_seed_generation">Kan de herstelzin niet maken</string>
     <string name="onboarding_error_vault_creation">Kan de versleutelde kluis niet maken</string>
-    <string name="onboarding_feature_editor_desc">Een flexibele teksteditor met opmaak</string>
-    <string name="onboarding_feature_editor_title">Bewerken</string>
-    <string name="onboarding_feature_interface_desc">Stijlvol. Eenvoudig. Intuïtief.</string>
-    <string name="onboarding_feature_interface_title">Interface</string>
-    <string name="onboarding_feature_privacy_desc">Alleen jij hebt toegang tot je gedachten</string>
-    <string name="onboarding_feature_privacy_title">Privacy</string>
-    <string name="onboarding_feature_tags_desc">Orden je gedachten per onderwerp</string>
-    <string name="onboarding_feature_tags_title">Labels</string>
-    <string name="onboarding_feature_tasks_desc">Houd je to-do\'s bij naast je notities</string>
-    <string name="onboarding_feature_tasks_title">Taken</string>
-    <string name="onboarding_security_auto_point_1">Snel starten zonder instellingen</string>
-    <string name="onboarding_security_auto_point_2">Het systeem regelt de beveiliging voor je</string>
-    <string name="onboarding_security_auto_point_3">Geen sleutels om te onthouden</string>
-    <string name="onboarding_security_auto_point_4">Versleutelde lokale kopieën zijn niet toegestaan</string>
-    <string name="onboarding_security_auto_title">Automatische beveiliging</string>
-    <string name="onboarding_security_explanation">Een seedzin is een reeks woorden waarmee je de toegang tot je gegevens kunt herstellen. Als je automatische beveiliging kiest, gebruikt het systeem in plaats daarvan een ingebouwde sleutel. Dat is eenvoudiger, maar verlaagt het beveiligingsniveau en staat geen versleutelde lokale kopieën toe.</string>
-    <string name="onboarding_security_seed_point_1">Hoogste beveiligingsniveau</string>
-    <string name="onboarding_security_seed_point_2">Je beheert je eigen sleutel</string>
-    <string name="onboarding_security_seed_point_3">Je moet je seedzin veilig bewaren</string>
-    <string name="onboarding_security_seed_point_4">Aanbevolen voor belangrijke gegevens</string>
-    <string name="onboarding_security_seed_title">Beveiligingssleutel maken</string>
-    <string name="onboarding_security_subtitle">Kies het beveiligingsniveau voor je gegevens</string>
-    <string name="onboarding_security_title">Beveiliging instellen</string>
-    <string name="onboarding_welcome_subtitle">Maak, bewerk en orden je gedachten met gemak</string>
-    <string name="onboarding_welcome_title">Mijn notities</string>
 
     <string name="open_menu">Menu openen</string>
 
@@ -270,12 +227,10 @@
     <string name="pin_create_title">Maak een pincode van 6 cijfers</string>
     <string name="pin_current_wrong">De huidige pincode is onjuist</string>
     <string name="pin_delete_digit">Cijfer wissen</string>
-    <string name="pin_mismatch">De pincodes komen niet overeen</string>
     <string name="pin_mismatch_retry">De pincodes komen niet overeen. Probeer het opnieuw.</string>
     <string name="pin_save_failed">Kan de pincode niet opslaan</string>
     <string name="pin_update_failed">Kan de pincode niet bijwerken. Probeer het opnieuw.</string>
 
-    <string name="please_wait">Even geduld…</string>
 
     <string name="press_to_edit">Tik om te beginnen met bewerken…</string>
 
@@ -300,17 +255,14 @@
 
 
     <string name="search_clear">Zoekopdracht wissen</string>
-    <string name="search_hint">Typ zoekwoorden. Er wordt gezocht in de titels en inhoud van notities.</string>
-    <string name="search_no_results">Geen notities gevonden</string>
-    <string name="search_notes">Tik om te zoeken</string>
-    <string name="search_try_other_keywords">Probeer andere zoekwoorden</string>
 
     <string name="security_biometric_available">Vingerafdruk</string>
     <string name="security_biometric_title">Biometrisch ontgrendelen</string>
     <string name="security_biometric_unavailable">Niet beschikbaar op dit apparaat</string>
+    <string name="security_biometric_not_enrolled">Geen vingerafdruk ingesteld. Voeg er een toe in de systeeminstellingen.</string>
     <string name="security_encryption_active">Versleuteling staat aan</string>
     <string name="security_encryption_pin_desc">Je willekeurige databasesleutel wordt beschermd door je pincode en, optioneel, door een biometrisch Keystore-slot.</string>
-    <string name="security_encryption_seed_desc">Je willekeurige databasesleutel heeft een apart herstelslot dat wordt beschermd door je seedzin.</string>
+    <string name="security_encryption_seed_desc">Je willekeurige databasesleutel heeft een apart herstelslot dat wordt beschermd door je herstelzin.</string>
     <string name="security_info_body">• SQLCipher wordt geopend met een willekeurige sleutel van 256 bits\n• De pincode en de herstelzin hebben afzonderlijke AES-GCM-ontgrendelslots\n• Biometrie gebruikt een Android Keystore-sleutel die bij elk gebruik verificatie vereist</string>
     <string name="security_info_title">ℹ️ Beveiligingsinformatie</string>
     <string name="security_recovery_set">Ingesteld. Ze ontgrendelt de kluis als je je pincode vergeet en beschermt je back-ups.</string>
@@ -323,31 +275,6 @@
     <string name="security_subtitle">Versleuteling en gegevensbescherming</string>
     <string name="security_title">Beveiliging</string>
 
-    <string name="seed_continue_to_verify">Doorgaan naar verificatie</string>
-    <string name="seed_created_title">🎉 Beveiligingssleutel gemaakt!</string>
-    <string name="seed_explain_control_desc">Alleen jij hebt toegang tot je gegevens</string>
-    <string name="seed_explain_control_title">Volledige controle</string>
-    <string name="seed_explain_create">Seedzin maken</string>
-    <string name="seed_explain_recovery_desc">Met je seedzin kun je je gegevens op elk apparaat herstellen</string>
-    <string name="seed_explain_recovery_title">Eenvoudig herstel</string>
-    <string name="seed_explain_security_desc">Je gegevens worden beschermd met cryptografie van militair niveau</string>
-    <string name="seed_explain_security_title">Maximale beveiliging</string>
-    <string name="seed_explain_subtitle">Een seedzin is je hoofdsleutel tot al je gegevens. Hij bestaat uit 12 woorden en biedt maximale beveiliging.</string>
-    <string name="seed_explain_title">🔐 Wat is een seedzin?</string>
-    <string name="seed_explain_warning">Belangrijk: als je je seedzin kwijtraakt, raak je al je gegevens kwijt!</string>
-    <string name="seed_generating">Je beveiligingssleutel wordt gemaakt…</string>
-    <string name="seed_generating_hint">Dit kan een paar seconden duren</string>
-    <string name="seed_hide">Herstelzin verbergen</string>
-    <string name="seed_important">BELANGRIJK!</string>
-    <string name="seed_show">Herstelzin tonen</string>
-    <string name="seed_verify_back">Teruggaan</string>
-    <string name="seed_verify_confirm">Maken van sleutel bevestigen</string>
-    <string name="seed_verify_subtitle">Voer deze woorden uit je beveiligingssleutel in om te bevestigen:</string>
-    <string name="seed_verify_title">🔍 Bevestig je sleutel</string>
-    <string name="seed_word_correct">Juist</string>
-    <string name="seed_word_number">Woord %1$d:</string>
-    <string name="seed_word_placeholder">Voer het woord in…</string>
-    <string name="seed_write_down_warning">Schrijf je herstelzin op en bewaar hem offline. Zonder herstelzin kan het herstelslot de toegang niet herstellen.</string>
 
     <string name="settings_appearance">Weergave</string>
     <string name="settings_general">Algemeen</string>
@@ -358,7 +285,6 @@
     <string name="settings_simple_edit">Eenvoudig bewerken</string>
     <string name="settings_simple_edit_desc">Dynamische blokken uitzetten en notities als platte tekst bewerken</string>
 
-    <string name="sort">Sorteren</string>
     <string name="sort_by">Sorteren op:</string>
     <string name="sort_created_asc">Op aanmaakdatum (oudste eerst)</string>
     <string name="sort_created_asc_short">Gemaakt ↑</string>
@@ -378,9 +304,9 @@
 
     <string name="tag_create_failed">Kan het label niet opslaan. Probeer het opnieuw.</string>
     <string name="tag_delete_failed">Kan het label niet verwijderen. Probeer het opnieuw.</string>
-    <string name="tag_drag_to_reorder">Sleep om de volgorde te wijzigen</string>
     <string name="tag_edit">Label bewerken</string>
     <string name="tag_hidden">Verborgen label</string>
+    <string name="tag_name_taken">Er bestaat al een label met deze naam</string>
     <string name="tag_hide">Label verbergen</string>
     <string name="tag_reorder_failed">Kan de volgorde van de labels niet opslaan. Probeer het opnieuw.</string>
     <string name="tag_show">Label tonen</string>
@@ -393,7 +319,6 @@
     <string name="task_clear_completed_failed">Kan de voltooide taken niet wissen. Probeer het opnieuw.</string>
     <string name="task_clear_completed_message">Weet je zeker dat je alle voltooide taken wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="task_clear_completed_title">Voltooide taken wissen</string>
-    <string name="task_completed">Voltooid</string>
     <string name="task_completed_at">Voltooid: %1$s</string>
     <string name="task_create_failed">Kan de taak niet opslaan. Probeer het opnieuw.</string>
     <string name="task_description_placeholder">Beschrijving</string>
@@ -411,10 +336,9 @@
     <string name="text">Tekst</string>
 
     <string name="theme">Thema</string>
-    <string name="theme_dialog_title">Thema kiezen</string>
     <string name="theme_type_dark">Donker</string>
     <string name="theme_type_light">Licht</string>
-    <string name="theme_type_system">Systeemstandaard</string>
+    <string name="theme_type_system">Systeem</string>
 
 
     <string name="undo">Ongedaan maken</string>
@@ -427,10 +351,6 @@
     <plurals name="delete_notes_confirm">
         <item quantity="one">%d notitie verwijderen?</item>
         <item quantity="other">%d notities verwijderen?</item>
-    </plurals>
-    <plurals name="home_active_tasks">
-        <item quantity="one">Je hebt %d actieve taak</item>
-        <item quantity="other">Je hebt %d actieve taken</item>
     </plurals>
     <plurals name="lock_lockout_seconds">
         <item quantity="one">Te veel pogingen. Probeer het over %d seconde opnieuw</item>
@@ -457,7 +377,6 @@
     <string name="backup_needs_phrase_body">Back-ups worden versleuteld met een herstelzin, dus alleen de 12 woorden daarvan kunnen ze openen. Deze kluis heeft er nog geen. Maak er nu een: je kunt de kluis er ook mee ontgrendelen als je je pincode vergeet.</string>
     <string name="backup_create_phrase">Herstelzin maken</string>
     <string name="backup_phrase_write_down">Schrijf deze 12 woorden op papier, in volgorde, en bewaar ze offline. Iedereen die ze heeft, kan je back-ups openen.</string>
-    <string name="backup_phrase_word">%1$d. %2$s</string>
     <string name="backup_phrase_written">Ik heb ze opgeschreven</string>
     <string name="backup_phrase_check_title">Controleer je herstelzin</string>
     <string name="backup_phrase_check_word">Woord %1$d</string>
@@ -490,11 +409,8 @@
     <string name="backup_error_io">Kan de back-up niet lezen of schrijven. Er is niets gewijzigd.</string>
     <string name="backup_error_phrase_mismatch">Deze woorden zijn niet de herstelzin van deze kluis</string>
     <string name="backup_error_phrase_setup">Kan de herstelzin niet opslaan</string>
-    <string name="onboarding_restore_title">Terugzetten uit back-up</string>
-    <string name="onboarding_restore_desc">Heb je een Encly-back-upbestand en de 12 woorden ervan? Zet alles terug op deze telefoon.</string>
-    <string name="onboarding_restore_body">Kies je Encly-back-upbestand en voer daarna de herstelzin van 12 woorden in waarmee het is gemaakt. Die zin wordt ook de herstelzin van deze kluis.</string>
-    <string name="onboarding_restore_pick">Back-upbestand kiezen</string>
-    <string name="onboarding_restore_other_file">Ander bestand kiezen</string>
+    <string name="onboarding_restore_title">Terugzetten uit een back-up</string>
+    <string name="onboarding_restore_pick">Een back-upbestand kiezen</string>
     <string name="auth_setup_restore_failed">De back-up kon niet worden teruggezet, dus de instelling is nog niet voltooid. Probeer het opnieuw, of ga verder met een lege kluis en importeer het bestand later via Instellingen → Back-up.</string>
     <string name="auth_setup_restore_failed_title">Back-up niet teruggezet</string>
     <string name="auth_setup_restore_retry">Opnieuw proberen</string>
@@ -512,4 +428,100 @@
     <string name="task_delete">Taak verwijderen</string>
     <string name="task_deleted">Taak verwijderd</string>
     <string name="task_delete_failed">Kan de taak niet verwijderen. Probeer het opnieuw.</string>
+    <string name="appearance_mode">Modus</string>
+    <string name="appearance_font">Lettertype</string>
+    <string name="palette_paper">Papier</string>
+    <string name="palette_forest">Bos</string>
+    <string name="palette_ocean">Oceaan</string>
+    <string name="palette_graphite">Grafiet</string>
+    <string name="palette_midnight">Middernacht</string>
+    <string name="appearance_mode_note_system_light">Volgt de systeeminstelling. Nu licht.</string>
+    <string name="appearance_mode_note_system_dark">Volgt de systeeminstelling. Nu donker.</string>
+    <string name="appearance_mode_note_light">Altijd licht.</string>
+    <string name="appearance_mode_note_dark">Altijd donker.</string>
+    <string name="appearance_mode_note_midnight">Middernacht is altijd donker.</string>
+    <string name="dynamic_color_desc">Neemt de accentkleur van je achtergrond. Android 12 en hoger.</string>
+    <string name="appearance_dynamic_on_note">Dynamische kleuren staan aan: het accent komt van je achtergrond.</string>
+    <string name="font_style_cozy_desc">Playfair Display en Source Sans 3</string>
+    <string name="font_style_modern_desc">Poppins en Source Sans 3</string>
+    <string name="font_style_tech_desc">Overal IBM Plex Sans</string>
+    <string name="appearance_preview_title">Checklist bezichtiging</string>
+    <string name="appearance_preview_body">Voor de bezichtiging: waterdruk controleren, vragen wat de verwarming vorige winter kostte.</string>
+    <string name="appearance_preview_tag">Persoonlijk</string>
+    <string name="appearance_preview_label">Voorbeeld</string>
+    <string name="appearance_settings_subtitle">Thema, modus en lettertype</string>
+    <string name="field_correct">Juist</string>
+    <string name="pin_digits_entered">Ingevoerde cijfers: %1$d van %2$d</string>
+    <string name="pin_unlock_with_fingerprint">Ontgrendelen met vingerafdruk</string>
+    <string name="onboarding_step_of">Stap %1$d van %2$d</string>
+    <string name="onboarding_welcome_headline">Een notitieboek dat alleen jij kunt openen.</string>
+    <string name="onboarding_welcome_sub">Notities en taken, versleuteld op deze telefoon. Instellen duurt ongeveer een minuut.</string>
+    <string name="onboarding_fact_account_title">Geen account</string>
+    <string name="onboarding_fact_account_desc">Geen aanmelding, geen e-mail, geen wachtwoordherstel.</string>
+    <string name="onboarding_fact_offline_title">Werkt offline</string>
+    <string name="onboarding_fact_offline_desc">Encly maakt nooit verbinding met internet.</string>
+    <string name="onboarding_fact_encrypted_title">Versleuteld op het apparaat</string>
+    <string name="onboarding_fact_encrypted_desc">Je kluis is vergrendeld met een sleutel die alleen jij hebt.</string>
+    <string name="onboarding_get_started">Aan de slag</string>
+    <string name="onboarding_have_backup">Ik heb een back-up</string>
+    <string name="onboarding_pin_title">Kies een pincode van 6 cijfers</string>
+    <string name="onboarding_pin_body">Die ontgrendelt Encly en beschermt de sleutel van je kluis. Er is geen e-mail om hem te herstellen.</string>
+    <string name="onboarding_pin_again_title">Voer de pincode opnieuw in</string>
+    <string name="onboarding_pin_again_body">Zo weten we zeker dat het de bedoelde is.</string>
+    <string name="onboarding_biometric_desc">De pincode blijft werken als reserve</string>
+    <string name="onboarding_recovery_title">Twaalf woorden brengen alles terug</string>
+    <string name="onboarding_recovery_body">Encly geeft je een herstelzin. Schrijf die op papier; het is de enige reservesleutel.</string>
+    <string name="onboarding_recovery_pin_title">Pincode vergeten?</string>
+    <string name="onboarding_recovery_pin_desc">De zin ontgrendelt je kluis en laat je een nieuwe pincode instellen.</string>
+    <string name="onboarding_recovery_backups_title">Opent je back-ups</string>
+    <string name="onboarding_recovery_backups_desc">Versleutelde back-upbestanden zijn alleen met deze woorden te lezen.</string>
+    <string name="onboarding_recovery_phone_title">Nieuwe telefoon</string>
+    <string name="onboarding_recovery_phone_desc">Back-upbestand plus zin zet elke notitie, taak en elk label terug.</string>
+    <string name="onboarding_recovery_warning">Niemand kan hem voor je herstellen, ook wij niet. Verlies je zowel de pincode als de zin, dan zijn de notities weg.</string>
+    <string name="onboarding_recovery_create">Mijn zin maken</string>
+    <string name="onboarding_recovery_skip">Overslaan: alleen pincode, geen back-ups</string>
+    <string name="onboarding_phrase_title">Schrijf deze woorden op</string>
+    <string name="onboarding_phrase_body">Op papier, in deze volgorde. Niet in een screenshot, niet in de cloud.</string>
+    <string name="onboarding_phrase_hide">Woorden verbergen</string>
+    <string name="onboarding_phrase_show">Woorden tonen</string>
+    <string name="onboarding_phrase_done">Ik heb ze opgeschreven</string>
+    <string name="onboarding_verify_title">Controleer drie woorden</string>
+    <string name="onboarding_verify_body">Typ ze over van je papieren kopie, niet uit je hoofd.</string>
+    <string name="onboarding_verify_label">Woord %1$d</string>
+    <string name="onboarding_verify_placeholder">Voer het woord in</string>
+    <string name="onboarding_verify_wrong">Dat is niet woord %1$d</string>
+    <string name="onboarding_verify_confirm">Bevestigen</string>
+    <string name="onboarding_verify_show_again">Woorden opnieuw tonen</string>
+    <string name="onboarding_ready_title">Je kluis is klaar</string>
+    <string name="onboarding_ready_body">Alles wat je vanaf nu schrijft, wordt versleuteld voordat het wordt opgeslagen.</string>
+    <string name="onboarding_ready_pin_title">Pincode ingesteld</string>
+    <string name="onboarding_ready_pin_desc">Gevraagd telkens als Encly opent</string>
+    <string name="onboarding_ready_biometric_title">Ontgrendelen met vingerafdruk aan</string>
+    <string name="onboarding_ready_biometric_desc">Wijzig dit in Instellingen, Beveiliging</string>
+    <string name="onboarding_ready_phrase_title">Herstelzin gecontroleerd</string>
+    <string name="onboarding_ready_phrase_desc">Bewaar het papier op een veilige plek</string>
+    <string name="onboarding_ready_no_phrase_title">Geen herstelzin</string>
+    <string name="onboarding_ready_no_phrase_desc">Back-ups staan uit. Je kunt later een zin maken in Instellingen, Beveiliging.</string>
+    <string name="onboarding_ready_restored_title">Back-up teruggezet</string>
+    <string name="onboarding_ready_restored_desc">Je notities, taken en labels zijn terug</string>
+    <string name="onboarding_ready_tip">Tip: exporteer af en toe een versleutelde back-up via Instellingen, Back-up. Je zin is wat hem opent.</string>
+    <string name="onboarding_ready_open">Mijn notitieboek openen</string>
+    <string name="onboarding_restore_label">Terugzetten, dan pincode instellen</string>
+    <string name="onboarding_restore_intro">Kies je Encly-back-upbestand en voer dan de 12 woorden in waarmee het is gemaakt.</string>
+    <string name="onboarding_restore_file_section">1 · Back-upbestand</string>
+    <string name="onboarding_restore_tap_other">Tik om een ander bestand te kiezen</string>
+    <string name="onboarding_restore_phrase_section">2 · Herstelzin</string>
+    <string name="onboarding_restore_phrase_label">12 woorden, gescheiden door spaties</string>
+    <string name="onboarding_restore_phrase_helper">Deze woorden worden ook de herstelzin van deze telefoon.</string>
+    <string name="notes_title">Notities</string>
+    <string name="lock_now">Nu vergrendelen</string>
+    <string name="search_placeholder">Zoeken in titels en tekst</string>
+    <string name="view_options">Weergaveopties</string>
+    <string name="search_nothing_matches">Niets gevonden voor ‘%1$s’</string>
+    <string name="date_today">Vandaag</string>
+    <string name="date_yesterday">Gisteren</string>
+    <plurals name="home_tasks_open">
+        <item quantity="one">Taken · %d open</item>
+        <item quantity="other">Taken · %d open</item>
+    </plurals>
 </resources>

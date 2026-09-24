@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.editor
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,20 +12,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.presentation.designsystem.editorBlockFrame
 import com.pasich.encly.presentation.editor.blocks.HBlock
 import com.pasich.encly.presentation.editor.blocks.LinkBlock
 import com.pasich.encly.presentation.editor.blocks.ListBlock
@@ -35,6 +39,7 @@ import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.editor.focus.RegisterFocusRequester
 import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -56,7 +61,9 @@ fun DynamicBlocksEditor(
     }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 20.dp).let { base ->
+        // Blocks carry an 8 dp frame of their own: the column sits that much inside the gutter.
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+        modifier = modifier.fillMaxSize().padding(horizontal = EnclyTheme.spacing.m).let { base ->
             if (enableScroll) base.verticalScroll(scrollState) else base
         },
     ) {
@@ -71,6 +78,7 @@ fun DynamicBlocksEditor(
                 val callbacks = remember(block, viewModel, bottomSheetsOpen) {
                     EditorBlockCallbacks(
                         onFocus = { viewModel.onBlockFocused(block) },
+                        onFocusLost = { viewModel.onBlockFocusLost(block) },
                         onOpenSheet = { type ->
                             viewModel.onBlockInteraction(block)
                             bottomSheetsOpen(type, block, viewModel.indexOfBlock(block))
@@ -91,7 +99,7 @@ fun DynamicBlocksEditor(
 
         Spacer(
             Modifier
-                .height(200.dp)
+                .height(EnclyTheme.spacing.editorTapArea)
                 .fillMaxWidth()
                 .clickable(
                     enabled = !isLocked,
@@ -104,8 +112,12 @@ fun DynamicBlocksEditor(
     }
 }
 
-/** What a block reports back to the editor: it got focus, or asked for one of its sheets. */
-private class EditorBlockCallbacks(val onFocus: () -> Unit, val onOpenSheet: (BottomSheetsOpenType) -> Unit)
+/** What a block reports back to the editor: it got or lost focus, or asked for one of its sheets. */
+private class EditorBlockCallbacks(
+    val onFocus: () -> Unit,
+    val onFocusLost: () -> Unit,
+    val onOpenSheet: (BottomSheetsOpenType) -> Unit,
+)
 
 @Composable
 private fun EditorBlock(
@@ -119,14 +131,24 @@ private fun EditorBlock(
 ) {
     val focusRequester = remember { FocusRequester() }
     RegisterFocusRequester(block.id, focusRegistry, focusRequester)
+    // Only for the outline of the block being edited; the focus callback below is unchanged.
+    var hasFocus by remember { mutableStateOf(false) }
 
     fun openSheet(type: BottomSheetsOpenType) = callbacks.onOpenSheet(type)
 
     Box(
-        modifier = Modifier.onFocusChanged { focusState ->
-            // A list reports its items itself (see ListBlock).
-            if (focusState.isFocused && block !is Block.ListBlock) callbacks.onFocus()
-        },
+        modifier = Modifier
+            .onFocusChanged { focusState ->
+                hasFocus = focusState.hasFocus
+                // A list has one field per item: any of them focused counts as the list focused,
+                // so a new block goes after the list and not after the block focused before it.
+                val focused = if (block is Block.ListBlock) focusState.hasFocus else focusState.isFocused
+                when {
+                    focused -> callbacks.onFocus()
+                    !focusState.hasFocus -> callbacks.onFocusLost()
+                }
+            }
+            .editorBlockFrame(active = hasFocus && !isLocked, color = MaterialTheme.colorScheme.primary),
     ) {
         val fieldModifier = Modifier.focusRequester(focusRequester)
         when (block) {

@@ -121,7 +121,7 @@ constructor(
     val fontStyle = settingsRepository.fontStyleFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = FontStyleType.MODERN_SIMPLE,
+        initialValue = FontStyleType.DEFAULT,
     )
 
     val simpleEdit = settingsRepository.simpleEditFlow.stateIn(
@@ -206,10 +206,6 @@ constructor(
         appScope.launch { settingsRepository.setFontSize(size) }
     }
 
-    fun updateFontStyle(style: FontStyleType) {
-        appScope.launch { settingsRepository.setFontStyle(style) }
-    }
-
     /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */
     fun toggleLockEditor() {
         if (contentLoadFailed.value || isReadTrashOnly) return
@@ -223,8 +219,11 @@ constructor(
     /** Position of [block] in the editor, by identity; -1 when it is no longer there. */
     fun indexOfBlock(block: Block): Int = editor.blocks.indexOfFirst { it.id == block.id }
 
-    /** The field of [block] took focus. */
+    /** The field of [block] (for a list: one of its items) took focus. */
     fun onBlockFocused(block: Block) = editor.selection.onFocused(block.id)
+
+    /** The field of [block] (for a list: all of its items) lost focus. */
+    fun onBlockFocusLost(block: Block) = editor.selection.onFocusLost(block.id)
 
     /** The user works on [block] without its field taking focus (a list item, a block sheet). */
     fun onBlockInteraction(block: Block) = editor.selection.onInteraction(block.id)

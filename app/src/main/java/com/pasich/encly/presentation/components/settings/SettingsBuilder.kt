@@ -1,114 +1,67 @@
 package com.pasich.encly.presentation.components.settings
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import com.composables.icons.lucide.Download
+import com.composables.icons.lucide.Globe
+import com.composables.icons.lucide.ListChecks
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Palette
+import com.composables.icons.lucide.Shield
+import com.composables.icons.lucide.Type
 import com.pasich.encly.R
-import com.pasich.encly.domain.model.ThemeSettings
-import com.pasich.encly.domain.model.ThemeType
-import com.pasich.encly.presentation.components.tiles.getThemeTypeLabel
 import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
-import com.pasich.encly.utils.DeviceCapabilities
-import javax.inject.Inject
 
 /** Destinations the settings list links to. */
-data class SettingsNavigation(val onSecurity: () -> Unit, val onBackup: () -> Unit)
+data class SettingsNavigation(val onAppearance: () -> Unit, val onSecurity: () -> Unit, val onBackup: () -> Unit)
 
-class SettingsBuilder @Inject constructor(private val deviceCapabilities: DeviceCapabilities) {
+class SettingsBuilder {
 
     @Composable
     fun buildSettingsCategories(
         viewModel: SettingsViewModel,
-        themeSettings: ThemeSettings,
         showTasks: Boolean,
         simpleEdit: Boolean,
         navigation: SettingsNavigation,
-    ): List<SettingsCategory> {
-        val isDynamic = themeSettings.dynamic
-        val themeType = themeSettings.type
-
-        return buildList {
-            // Appearance Category
-            add(
-                SettingsCategory(
-                    titleRes = R.string.settings_appearance,
-                    items = buildAppearanceSettings(
-                        viewModel = viewModel,
-                        isDynamic = isDynamic,
-                        themeType = themeType,
-                    ),
-                ),
-            )
-
-            // General Category
-            add(
-                SettingsCategory(
-                    titleRes = R.string.settings_general,
-                    items = buildGeneralSettings(
-                        viewModel = viewModel,
-                        showTasks = showTasks,
-                        simpleEdit = simpleEdit,
-                    ),
-                ),
-            )
-
-            // Privacy Category
-            add(
-                SettingsCategory(
-                    titleRes = R.string.settings_privacy,
-                    items = buildPrivacySettings(
-                        onNavigateToAuth = navigation.onSecurity,
-                    ),
-                ),
-            )
-
-            // Backup Category
-            add(
-                SettingsCategory(
-                    titleRes = R.string.settings_backup,
-                    items = listOf(
-                        SettingsItem.Navigation(
-                            titleRes = R.string.backup_title,
-                            subtitleRes = R.string.backup_settings_subtitle,
-                            action = navigation.onBackup,
-                            endIcon = Icons.AutoMirrored.Default.KeyboardArrowRight,
-                        ),
-                    ),
-                ),
-            )
-        }
-    }
-
-    @Composable
-    private fun buildAppearanceSettings(
-        viewModel: SettingsViewModel,
-        isDynamic: Boolean,
-        themeType: ThemeType,
-    ): List<SettingsItem> = buildList {
-        // Theme selection
+    ): List<SettingsCategory> = buildList {
+        // General Category
         add(
-            SettingsItem.Selection(
-                titleRes = R.string.theme,
-                currentValue = getThemeTypeLabel(themeType),
-                action = { viewModel.setDialogVisibility(true) },
-                endIcon = Icons.AutoMirrored.Default.KeyboardArrowRight,
+            SettingsCategory(
+                titleRes = R.string.settings_general,
+                items = buildGeneralSettings(
+                    viewModel = viewModel,
+                    showTasks = showTasks,
+                    simpleEdit = simpleEdit,
+                    onAppearance = navigation.onAppearance,
+                ),
             ),
         )
 
-        // Dynamic colors (only for supported devices)
-        if (viewModel.supportsDynamicColors()) {
-            add(
-                SettingsItem.Switch(
-                    titleRes = R.string.dynamic_color,
-                    checked = isDynamic,
-                    onCheckedChange = { newValue ->
-                        viewModel.onEvent(SettingsEvent.UpdateIsDynamicTheme(newValue))
-                    },
+        // Privacy Category
+        add(
+            SettingsCategory(
+                titleRes = R.string.settings_privacy,
+                items = buildPrivacySettings(
+                    onNavigateToAuth = navigation.onSecurity,
                 ),
-            )
-        }
+            ),
+        )
+
+        // Backup Category
+        add(
+            SettingsCategory(
+                titleRes = R.string.settings_backup,
+                items = listOf(
+                    SettingsItem.Navigation(
+                        titleRes = R.string.backup_title,
+                        subtitleRes = R.string.backup_settings_subtitle,
+                        action = navigation.onBackup,
+                        icon = Lucide.Download,
+                    ),
+                ),
+            ),
+        )
     }
 
     @Composable
@@ -116,17 +69,25 @@ class SettingsBuilder @Inject constructor(private val deviceCapabilities: Device
         viewModel: SettingsViewModel,
         showTasks: Boolean,
         simpleEdit: Boolean,
+        onAppearance: () -> Unit,
     ): List<SettingsItem> = listOf(
+        SettingsItem.Navigation(
+            titleRes = R.string.settings_appearance,
+            subtitleRes = R.string.appearance_settings_subtitle,
+            action = onAppearance,
+            icon = Lucide.Palette,
+        ),
         SettingsItem.Selection(
             titleRes = R.string.settings_language,
             currentValue = stringResource(viewModel.currentLanguage().nativeName),
             action = { viewModel.setLanguageDialogVisibility(true) },
-            endIcon = Icons.AutoMirrored.Default.KeyboardArrowRight,
+            icon = Lucide.Globe,
         ),
         SettingsItem.Switch(
             titleRes = R.string.settings_show_tasks,
             subtitleRes = R.string.settings_show_tasks_desc,
             checked = showTasks,
+            icon = Lucide.ListChecks,
             onCheckedChange = { newValue ->
                 viewModel.onEvent(SettingsEvent.UpdateShowTasks(newValue))
             },
@@ -135,6 +96,7 @@ class SettingsBuilder @Inject constructor(private val deviceCapabilities: Device
             titleRes = R.string.settings_simple_edit,
             subtitleRes = R.string.settings_simple_edit_desc,
             checked = simpleEdit,
+            icon = Lucide.Type,
             onCheckedChange = { newValue ->
                 viewModel.onEvent(SettingsEvent.UpdateSimpleEdit(newValue))
             },
@@ -146,7 +108,7 @@ class SettingsBuilder @Inject constructor(private val deviceCapabilities: Device
             titleRes = R.string.security_title,
             subtitleRes = R.string.security_subtitle,
             action = onNavigateToAuth,
-            endIcon = Icons.AutoMirrored.Default.KeyboardArrowRight,
+            icon = Lucide.Shield,
         ),
     )
 }

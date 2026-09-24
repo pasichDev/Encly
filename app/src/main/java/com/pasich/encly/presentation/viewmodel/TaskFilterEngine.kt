@@ -29,9 +29,11 @@ internal object TaskFilterEngine {
         activeCount: Int,
         completedCount: Int,
     ): TasksUiState {
-        // Start on "All tasks" until the user picks a filter
+        // Start on "All tasks" until the user picks a filter. "Completed" falls back to it once
+        // its last task was unchecked or cleared, instead of trapping the user on an empty list.
+        val completedGone = current.selectedCompletedFilter != null && completedTasks.isEmpty()
         val (selectedActiveFilter, selectedCompletedFilter) = if (
-            current.selectedActiveFilter == null && current.selectedCompletedFilter == null
+            (current.selectedActiveFilter == null && current.selectedCompletedFilter == null) || completedGone
         ) {
             allFilter(activeTasks) to null
         } else {
@@ -52,9 +54,10 @@ internal object TaskFilterEngine {
             filterTasks(activeTasks, selectedPriorityFilter)
         }
 
-        // If the completed filter is selected, do not show the priority filters
+        // If the completed filter is selected, do not show the priority filters; "All tasks"
+        // stays, so there is always a way back.
         val availableFilters = if (selectedCompletedFilter != null) {
-            listOf(completedFilter)
+            listOf(allFilter(activeTasks), completedFilter)
         } else {
             listOf(allFilter(activeTasks)) + priorityFilters + listOf(completedFilter)
         }
@@ -78,11 +81,15 @@ internal object TaskFilterEngine {
 
     /** The state after the user taps [filter]. */
     fun select(current: TasksUiState, filter: TaskFilter): TasksUiState = when (filter.type) {
-        TaskFilter.Type.ACTIVE -> current.copy(
-            selectedActiveFilter = filter,
-            selectedCompletedFilter = null, // Reset the completed filter
-            filteredActiveTasks = filterTasks(current.activeTasks, current.selectedPriorityFilter),
-        )
+        // Leaving "Completed" also brings the priority chips back.
+        TaskFilter.Type.ACTIVE -> if (current.selectedCompletedFilter != null) {
+            showAll(current)
+        } else {
+            current.copy(
+                selectedActiveFilter = filter,
+                filteredActiveTasks = filterTasks(current.activeTasks, current.selectedPriorityFilter),
+            )
+        }
 
         TaskFilter.Type.PRIORITY -> {
             val newPriorityFilter = if (current.selectedPriorityFilter?.id == filter.id) null else filter
@@ -93,11 +100,29 @@ internal object TaskFilterEngine {
             )
         }
 
-        TaskFilter.Type.COMPLETED -> current.copy(
-            selectedActiveFilter = null,
+        // Tapping "Completed" again goes back to all tasks, like a priority chip.
+        TaskFilter.Type.COMPLETED -> if (current.selectedCompletedFilter?.id == filter.id) {
+            showAll(current)
+        } else {
+            current.copy(
+                selectedActiveFilter = null,
+                selectedPriorityFilter = null,
+                selectedCompletedFilter = filter,
+                filteredActiveTasks = current.completedTasks.sortedByDescending { it.priority },
+            )
+        }
+    }
+
+    /** "All tasks" selected: every active task, no priority or completed filter. */
+    private fun showAll(current: TasksUiState): TasksUiState {
+        val all = allFilter(current.activeTasks)
+        return current.copy(
+            selectedActiveFilter = all,
             selectedPriorityFilter = null,
-            selectedCompletedFilter = filter,
-            filteredActiveTasks = current.completedTasks.sortedByDescending { it.priority },
+            selectedCompletedFilter = null,
+            filteredActiveTasks = filterTasks(current.activeTasks, null),
+            availableFilters = listOf(all) + priorityFilters(current.activeTasks) +
+                current.availableFilters.filter { it.type == TaskFilter.Type.COMPLETED },
         )
     }
 

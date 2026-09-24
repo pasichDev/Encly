@@ -7,53 +7,42 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.composables.icons.lucide.ArchiveRestore
-import com.composables.icons.lucide.DatabaseBackup
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ShieldCheck
 import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupFormat
-import com.pasich.encly.presentation.components.custombox.RoundPosition
-import com.pasich.encly.presentation.components.custombox.SettingBox
+import com.pasich.encly.presentation.designsystem.EnclyCallout
+import com.pasich.encly.presentation.designsystem.EnclyPillButton
+import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
+import com.pasich.encly.presentation.designsystem.EnclyTonalButton
+import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -64,7 +53,6 @@ import java.util.Locale
  * Framework only, so Encly needs no storage permission and never learns more than the one
  * document the user picked.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupScreen(
     navController: NavHostController,
@@ -92,85 +80,68 @@ fun BackupScreen(
 
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.backup_title)) }, navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = stringResource(R.string.back))
-                }
-            })
+            EnclyTopBar(title = stringResource(R.string.backup_title), onBack = { navController.popBackStack() })
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { EnclySnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 10.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
+            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
         ) {
-            if (state.busy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            BackupIntroCard()
-            BackupActions(
+            if (state.busy) {
+                LinearProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            EnclyCallout(
+                title = stringResource(R.string.backup_intro_title),
+                text = stringResource(R.string.backup_intro_body),
+                icon = Lucide.ShieldCheck,
+            )
+            ExportAction(
                 lastExportAt = state.lastExportAt,
                 enabled = !state.busy,
                 onExport = { viewModel.start(BackupAction.EXPORT) },
-                onImport = { viewModel.start(BackupAction.IMPORT) },
             )
+            ImportAction(enabled = !state.busy, onImport = { viewModel.start(BackupAction.IMPORT) })
         }
     }
 }
 
 @Composable
-private fun BackupIntroCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(15.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Lucide.ShieldCheck, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Column {
-                Text(
-                    text = stringResource(R.string.backup_intro_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = stringResource(R.string.backup_intro_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BackupActions(lastExportAt: Long?, enabled: Boolean, onExport: () -> Unit, onImport: () -> Unit) {
+private fun ExportAction(lastExportAt: Long?, enabled: Boolean, onExport: () -> Unit) {
     val lastExport = lastExportAt?.let {
         stringResource(R.string.backup_last_export, formatNoteDate(Date(it)))
     } ?: stringResource(R.string.backup_never_exported)
-    SettingBox(
-        title = stringResource(R.string.backup_export),
-        subTitle = lastExport,
-        roundPosition = RoundPosition.First,
-        icon = rememberVectorPainter(Lucide.DatabaseBackup),
-        action = { if (enabled) onExport() },
-    )
-    SettingBox(
-        title = stringResource(R.string.backup_import),
-        subTitle = stringResource(R.string.backup_import_desc),
-        roundPosition = RoundPosition.Last,
-        icon = rememberVectorPainter(Lucide.ArchiveRestore),
-        action = { if (enabled) onImport() },
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
+        EnclyTonalButton(text = stringResource(R.string.backup_export), onClick = onExport, enabled = enabled)
+        Text(text = lastExport, style = EnclyTheme.typography.meta, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun ImportAction(enabled: Boolean, onImport: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
+        EnclyPillButton(
+            text = stringResource(R.string.backup_import),
+            onClick = onImport,
+            enabled = enabled,
+            leadingIcon = Lucide.ArchiveRestore,
+        )
+        Text(
+            text = stringResource(R.string.backup_import_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 /** Opens the system "create document" / "open document" picker when a flow asks for it. */

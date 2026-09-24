@@ -9,12 +9,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.dynamicBlocks.BlockType
-import com.pasich.encly.ui.theme.ibmPlex
-import com.pasich.encly.ui.theme.inter
-import com.pasich.encly.ui.theme.playfair
-import com.pasich.encly.ui.theme.poppins
-import com.pasich.encly.ui.theme.roboto
-import com.pasich.encly.ui.theme.sourceSans
+import com.pasich.encly.ui.theme.fontSet
 import com.pasich.encly.utils.FontSizeUtils
 
 /**
@@ -22,13 +17,10 @@ import com.pasich.encly.utils.FontSizeUtils
  */
 private object EditNoteDefaults {
     val DEFAULT_FONT_SIZE = 16.sp
-    val DEFAULT_FONT_STYLE = FontStyleType.MODERN_SIMPLE
+    val DEFAULT_FONT_STYLE = FontStyleType.DEFAULT
     const val DEFAULT_SIMPLE_EDIT = false
 
-    val DEFAULT_FONT_FAMILIES = FontFamilies(
-        heading = poppins,
-        body = roboto,
-    )
+    val DEFAULT_FONT_FAMILIES = DEFAULT_FONT_STYLE.fontFamilies()
 }
 
 /**
@@ -136,24 +128,14 @@ private fun computeFontSizes(baseFontSize: TextUnit): FontSizes = try {
  * Safe font families computation without Compose context
  */
 private fun computeFontFamilies(fontStyle: FontStyleType): FontFamilies = try {
-    when (fontStyle) {
-        FontStyleType.MODERN_SIMPLE -> FontFamilies(
-            heading = poppins,
-            body = roboto,
-        )
-
-        FontStyleType.COZY_EDITOR -> FontFamilies(
-            heading = playfair,
-            body = sourceSans,
-        )
-
-        FontStyleType.TECH_MINIMAL -> FontFamilies(
-            heading = ibmPlex,
-            body = inter,
-        )
-    }
+    fontStyle.fontFamilies()
 } catch (_: Exception) {
     EditNoteDefaults.DEFAULT_FONT_FAMILIES
+}
+
+/** The editor uses the app-wide font set (Settings → Appearance → Font). */
+private fun FontStyleType.fontFamilies(): FontFamilies = fontSet().let {
+    FontFamilies(heading = it.display, body = it.body)
 }
 
 /**

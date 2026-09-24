@@ -14,6 +14,12 @@ enum class InitialStatus {
     ONBOARDING,
     LOSS_DATABASE,
     LOSS_CRYPTO,
+
+    /**
+     * An encrypted database without any v2 vault metadata: data written by Encly 1.x, which
+     * 2.0 cannot open (there is no migration). Wiped only after an explicit confirmation.
+     */
+    LEGACY_VAULT,
     AUTH,
     SETUP_AUTH,
 }
@@ -76,14 +82,14 @@ class SecurityManager @Inject constructor(
 
     /**
      * No committed vault. Onboarding creates a new vault and deletes database.db, so it is only
-     * safe when no user data can exist yet. An encrypted database with no vault metadata cannot
-     * be opened by anything, and is only deleted after the explicit confirmation on the loss
-     * screen. Pre-2.0 (v1) vaults are not migrated: there were no users to migrate.
+     * safe when no user data can exist yet. An encrypted database with no vault metadata is a
+     * pre-2.0 (v1) vault: 2.0 cannot open it and does not migrate it, so it is only deleted
+     * after the explicit confirmation on the older-version screen.
      */
     private fun uncommittedVaultStatus(): InitialStatus = if (secureDatabaseManager.hasEncryptedDatabase() &&
         !seedPhraseManager.hasStoredSeed()
     ) {
-        InitialStatus.LOSS_CRYPTO
+        InitialStatus.LEGACY_VAULT
     } else {
         InitialStatus.ONBOARDING
     }
@@ -97,6 +103,8 @@ class SecurityManager @Inject constructor(
     fun isBiometricEnabled(): Boolean = authenticationManager.isBiometricEnabled() && biometricManager.hasSlot()
 
     fun biometricAvailable(): Boolean = biometricManager.isStrongBiometricAvailable()
+
+    fun biometricStatus(): BiometricStatus = biometricManager.strongBiometricStatus()
 
     fun hasRecoverySeed(): Boolean = seedPhraseManager.hasRecoverySeed()
 

@@ -54,6 +54,27 @@ class SessionLockManagerTest {
     }
 
     @Test
+    fun lockNowClosesAnOpenVault() {
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.lockNow()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun lockNowBeforeOnboardingIsCommittedDoesNothing() {
+        `when`(security.isLockable()).thenReturn(false)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.lockNow()
+
+        verify(security, never()).lock()
+        assertFalse(manager.locked.value)
+    }
+
+    @Test
     fun unlockInTheForegroundIsPublished() {
         `when`(security.isDatabaseUnlocked()).thenReturn(true)
         manager.onStop(owner)

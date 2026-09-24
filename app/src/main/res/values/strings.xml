@@ -5,7 +5,6 @@
     <!-- Not translated: brand names, pure formats and each language's own name (the language picker shows them as-is). -->
     <string name="app_name" translatable="false">Encly</string>
     <string name="about_app_title" translatable="false">Encly</string>
-    <string name="bullet_item" translatable="false">• %1$s</string>
     <string name="font_size_value" translatable="false">%1$d sp</string>
     <string name="language_name_en" translatable="false">English</string>
     <string name="language_name_uk" translatable="false">Українська</string>
@@ -42,13 +41,6 @@
 
     <string name="auth_method_pin_desc">Required access key. Tap to change your PIN.</string>
     <string name="auth_method_pin_title">6-digit PIN</string>
-    <string name="auth_setup_biometric_subtitle">Confirm your biometrics for quick unlocking</string>
-    <string name="auth_setup_biometric_title">Turn on biometrics</string>
-    <string name="auth_setup_confirm_subtitle">Enter the PIN again to confirm</string>
-    <string name="auth_setup_confirm_title">Confirm your PIN</string>
-    <string name="auth_setup_continue_pin_only">Continue with PIN only</string>
-    <string name="auth_setup_create_subtitle">Your 6-digit PIN directly protects the database key</string>
-    <string name="auth_setup_retry_biometric">Try biometrics again</string>
     <string name="auth_title">Authorization</string>
 
     <string name="back">Back</string>
@@ -67,6 +59,7 @@
     <string name="biometric_unavailable">Biometric authentication is unavailable</string>
 
     <string name="block_add">Add block</string>
+    <string name="block_bulleted_list">Bulleted list</string>
     <string name="block_checklist">Checklist</string>
     <string name="block_heading">Heading</string>
     <string name="block_heading_level">Heading %1$d</string>
@@ -169,18 +162,16 @@
     <string name="faq_tags_q">How do tags work?</string>
     <string name="faq_tasks_a">Tasks have a description and a priority. You can filter them by priority and mark them as done. Encly never puts task text into system notifications.</string>
     <string name="faq_tasks_q">What can tasks do?</string>
-    <string name="faq_theme_a">In Settings → Appearance you can choose the system, light or dark theme and, on supported Android devices, dynamic colors.</string>
+    <string name="faq_theme_a">In Settings → Appearance you can choose one of five themes, the mode (system, light or dark) and the font, and on Android 12 and later, dynamic color.</string>
     <string name="faq_theme_q">How do I change the theme?</string>
     <string name="faq_vault_damaged_a">Encly deliberately never creates an empty database over a lost or unreadable vault. Don\'t confirm the full wipe if you still need your local data.</string>
     <string name="faq_vault_damaged_q">Encly says the vault is damaged</string>
 
     <string name="font_size_title">Text size</string>
-    <string name="font_style_cozy">Cozy</string>
+    <string name="font_style_cozy">Editorial</string>
     <string name="font_style_modern">Modern</string>
-    <string name="font_style_tech">Tech</string>
+    <string name="font_style_tech">Technical</string>
 
-    <string name="home_greeting">Hi</string>
-    <string name="home_tasks_empty">Your task list is empty</string>
 
     <string name="language_dialog_title">Choose language</string>
     <string name="language_system_default">System default</string>
@@ -198,7 +189,6 @@
     <string name="lock_subtitle">Enter your 6-digit PIN to continue</string>
     <string name="lock_title">Unlock your notes</string>
     <string name="lock_unlocking">Unlocking…</string>
-    <string name="lock_use_biometric">Use biometrics</string>
     <string name="lock_use_recovery_phrase">Recover access with your recovery phrase</string>
     <string name="lock_wrong_pin">Wrong PIN</string>
     <string name="lock_wrong_recovery_phrase">Wrong recovery phrase</string>
@@ -206,6 +196,9 @@
     <string name="loss_hold_to_wipe">Hold to wipe everything</string>
     <string name="loss_message">It looks like the encrypted data or the encryption keys were changed or damaged, so recovery is not possible.\n\nTo keep using the app, you need to reset it and wipe the damaged data. This permanently deletes all saved notes and settings.</string>
     <string name="loss_title">Sorry, your data is damaged</string>
+    <string name="legacy_vault_title">This data is from an older version</string>
+    <string name="legacy_vault_message">Encly found notes saved by a version before 2.0. Encly 2.0 uses a new encrypted format and cannot open them, and there is no way to convert them.\n\nTo use the app, start fresh. This permanently deletes the old notes and settings on this phone.</string>
+    <string name="legacy_vault_hold_to_start">Hold to start fresh</string>
 
     <string name="main_drawer_faq">FAQ</string>
     <string name="main_drawer_settings">Settings</string>
@@ -233,46 +226,9 @@
     <string name="note_save_failed">Couldn\'t save changes</string>
     <string name="note_trash_failed">Couldn\'t move the note to the trash</string>
 
-    <string name="onboarding_done_auto_desc">Your data is protected. You can start writing, creating and bringing your ideas to life right away!</string>
-    <string name="onboarding_done_auto_title">Security is set up!</string>
-    <string name="onboarding_done_card_footer">Ready to create?</string>
-    <string name="onboarding_done_card_title">Time to bring ideas to life!</string>
-    <string name="onboarding_done_point_1">Capture brilliant thoughts</string>
-    <string name="onboarding_done_point_2">Make lists to stay focused</string>
-    <string name="onboarding_done_point_3">Plan your days and dreams</string>
-    <string name="onboarding_done_point_4">Keep what matters under strong protection</string>
-    <string name="onboarding_done_point_5">Turn your ideas into reality</string>
-    <string name="onboarding_done_seed_desc">You can now safely create, edit and store your notes. Don\'t forget to keep your seed phrase in a safe place!</string>
-    <string name="onboarding_done_seed_title">Your security key is ready!</string>
-    <string name="onboarding_done_start">Start creating!</string>
     <string name="onboarding_error_initialization">Couldn\'t initialize the app</string>
-    <string name="onboarding_error_seed_generation">Couldn\'t create the seed phrase</string>
+    <string name="onboarding_error_seed_generation">Couldn\'t create the recovery phrase</string>
     <string name="onboarding_error_vault_creation">Couldn\'t create the encrypted vault</string>
-    <string name="onboarding_feature_editor_desc">A flexible text editor with formatting</string>
-    <string name="onboarding_feature_editor_title">Editing</string>
-    <string name="onboarding_feature_interface_desc">Stylish. Simple. Intuitive.</string>
-    <string name="onboarding_feature_interface_title">Interface</string>
-    <string name="onboarding_feature_privacy_desc">Only you can access your thoughts</string>
-    <string name="onboarding_feature_privacy_title">Privacy</string>
-    <string name="onboarding_feature_tags_desc">Bring order to your thoughts by topic</string>
-    <string name="onboarding_feature_tags_title">Tags</string>
-    <string name="onboarding_feature_tasks_desc">Keep track of to-dos alongside your notes</string>
-    <string name="onboarding_feature_tasks_title">Tasks</string>
-    <string name="onboarding_security_auto_point_1">Quick start with no setup</string>
-    <string name="onboarding_security_auto_point_2">The system manages security for you</string>
-    <string name="onboarding_security_auto_point_3">No keys to remember</string>
-    <string name="onboarding_security_auto_point_4">Encrypted local copies are not allowed</string>
-    <string name="onboarding_security_auto_title">Automatic security</string>
-    <string name="onboarding_security_explanation">A seed phrase is a set of words that lets you recover access to your data. If you choose automatic security, the system uses a built-in key instead. That is simpler to use, but it lowers the level of protection and does not allow encrypted local copies.</string>
-    <string name="onboarding_security_seed_point_1">Maximum level of security</string>
-    <string name="onboarding_security_seed_point_2">You control your own key</string>
-    <string name="onboarding_security_seed_point_3">You need to keep your seed phrase safe</string>
-    <string name="onboarding_security_seed_point_4">Recommended for important data</string>
-    <string name="onboarding_security_seed_title">Create a security key</string>
-    <string name="onboarding_security_subtitle">Choose the security level for your data</string>
-    <string name="onboarding_security_title">Security setup</string>
-    <string name="onboarding_welcome_subtitle">Create, edit and organize your thoughts in comfort</string>
-    <string name="onboarding_welcome_title">My Notes</string>
 
     <string name="open_menu">Open menu</string>
 
@@ -287,12 +243,10 @@
     <string name="pin_create_title">Create a 6-digit PIN</string>
     <string name="pin_current_wrong">Current PIN is incorrect</string>
     <string name="pin_delete_digit">Delete digit</string>
-    <string name="pin_mismatch">PINs don\'t match</string>
     <string name="pin_mismatch_retry">PINs don\'t match. Please try again.</string>
     <string name="pin_save_failed">Couldn\'t save the PIN</string>
     <string name="pin_update_failed">Couldn\'t update the PIN. Please try again.</string>
 
-    <string name="please_wait">Please wait…</string>
 
     <string name="press_to_edit">Tap to start editing…</string>
 
@@ -317,17 +271,14 @@
 
 
     <string name="search_clear">Clear search</string>
-    <string name="search_hint">Type keywords to search. The search covers note titles and content.</string>
-    <string name="search_no_results">No notes found</string>
-    <string name="search_notes">Tap to search</string>
-    <string name="search_try_other_keywords">Try different keywords</string>
 
     <string name="security_biometric_available">Fingerprint</string>
     <string name="security_biometric_title">Biometric unlock</string>
     <string name="security_biometric_unavailable">Not available on this device</string>
+    <string name="security_biometric_not_enrolled">No fingerprint enrolled. Add one in system settings.</string>
     <string name="security_encryption_active">Encryption is on</string>
     <string name="security_encryption_pin_desc">Your random database key is protected by your PIN and, optionally, by a biometric Keystore slot.</string>
-    <string name="security_encryption_seed_desc">Your random database key has a separate recovery slot protected by your seed phrase.</string>
+    <string name="security_encryption_seed_desc">Your random database key has a separate recovery slot protected by your recovery phrase.</string>
     <string name="security_info_body">• SQLCipher is opened with a random 256-bit key\n• The PIN and the recovery phrase have separate AES-GCM unlock slots\n• Biometrics use an auth-per-use Android Keystore key</string>
     <string name="security_info_title">ℹ️ Security information</string>
     <string name="security_recovery_set">Set up. It unlocks the vault if you forget your PIN and protects your backups.</string>
@@ -340,31 +291,6 @@
     <string name="security_subtitle">Encryption and data protection</string>
     <string name="security_title">Security</string>
 
-    <string name="seed_continue_to_verify">Continue to verification</string>
-    <string name="seed_created_title">🎉 Security key created!</string>
-    <string name="seed_explain_control_desc">Only you have access to your data</string>
-    <string name="seed_explain_control_title">Full control</string>
-    <string name="seed_explain_create">Create a seed phrase</string>
-    <string name="seed_explain_recovery_desc">Your seed phrase lets you recover your data on any device</string>
-    <string name="seed_explain_recovery_title">Easy recovery</string>
-    <string name="seed_explain_security_desc">Your data is protected by military-grade cryptography</string>
-    <string name="seed_explain_security_title">Maximum security</string>
-    <string name="seed_explain_subtitle">A seed phrase is your master key to all your data. It consists of 12 words and provides maximum security.</string>
-    <string name="seed_explain_title">🔐 What is a seed phrase?</string>
-    <string name="seed_explain_warning">Important: losing your seed phrase means losing all your data!</string>
-    <string name="seed_generating">Generating your security key…</string>
-    <string name="seed_generating_hint">This may take a few seconds</string>
-    <string name="seed_hide">Hide recovery phrase</string>
-    <string name="seed_important">IMPORTANT!</string>
-    <string name="seed_show">Show recovery phrase</string>
-    <string name="seed_verify_back">Go back</string>
-    <string name="seed_verify_confirm">Confirm key creation</string>
-    <string name="seed_verify_subtitle">Enter these words from your security key to confirm:</string>
-    <string name="seed_verify_title">🔍 Confirm your key</string>
-    <string name="seed_word_correct">Correct</string>
-    <string name="seed_word_number">Word #%1$d:</string>
-    <string name="seed_word_placeholder">Enter the word…</string>
-    <string name="seed_write_down_warning">Write down your recovery phrase and keep it offline. Without it, the recovery slot cannot restore access.</string>
 
     <string name="settings_appearance">Appearance</string>
     <string name="settings_general">General</string>
@@ -375,7 +301,6 @@
     <string name="settings_simple_edit">Simple editing</string>
     <string name="settings_simple_edit_desc">Turn off dynamic blocks and edit notes as plain text</string>
 
-    <string name="sort">Sort</string>
     <string name="sort_by">Sort by:</string>
     <string name="sort_created_asc">By creation date (oldest first)</string>
     <string name="sort_created_asc_short">Created ↑</string>
@@ -395,9 +320,9 @@
 
     <string name="tag_create_failed">Couldn\'t save the tag. Please try again.</string>
     <string name="tag_delete_failed">Couldn\'t delete the tag. Please try again.</string>
-    <string name="tag_drag_to_reorder">Drag to reorder</string>
     <string name="tag_edit">Edit tag</string>
     <string name="tag_hidden">Hidden tag</string>
+    <string name="tag_name_taken">A tag with this name already exists</string>
     <string name="tag_hide">Hide tag</string>
     <string name="tag_reorder_failed">Couldn\'t save the tag order. Please try again.</string>
     <string name="tag_show">Show tag</string>
@@ -410,7 +335,6 @@
     <string name="task_clear_completed_failed">Couldn\'t clear completed tasks. Please try again.</string>
     <string name="task_clear_completed_message">Do you really want to delete all completed tasks? This can\'t be undone.</string>
     <string name="task_clear_completed_title">Clear completed tasks</string>
-    <string name="task_completed">Completed</string>
     <string name="task_completed_at">Completed: %1$s</string>
     <string name="task_create_failed">Couldn\'t save the task. Please try again.</string>
     <string name="task_description_placeholder">Description</string>
@@ -428,10 +352,9 @@
     <string name="text">Text</string>
 
     <string name="theme">Theme</string>
-    <string name="theme_dialog_title">Choose theme</string>
     <string name="theme_type_dark">Dark</string>
     <string name="theme_type_light">Light</string>
-    <string name="theme_type_system">System default</string>
+    <string name="theme_type_system">System</string>
 
 
     <string name="undo">Undo</string>
@@ -444,10 +367,6 @@
     <plurals name="delete_notes_confirm">
         <item quantity="one">Delete %d note?</item>
         <item quantity="other">Delete %d notes?</item>
-    </plurals>
-    <plurals name="home_active_tasks">
-        <item quantity="one">You have %d active task</item>
-        <item quantity="other">You have %d active tasks</item>
     </plurals>
     <plurals name="lock_lockout_seconds">
         <item quantity="one">Too many attempts. Try again in %d second</item>
@@ -474,7 +393,6 @@
     <string name="backup_needs_phrase_body">Backups are encrypted with a recovery phrase, so only its 12 words can open them. This vault has none yet. Create one now: it also lets you unlock this vault if you forget your PIN.</string>
     <string name="backup_create_phrase">Create recovery phrase</string>
     <string name="backup_phrase_write_down">Write these 12 words down on paper, in order, and keep them offline. Anyone who has them can open your backups.</string>
-    <string name="backup_phrase_word">%1$d. %2$s</string>
     <string name="backup_phrase_written">I wrote them down</string>
     <string name="backup_phrase_check_title">Check your recovery phrase</string>
     <string name="backup_phrase_check_word">Word #%1$d</string>
@@ -507,11 +425,8 @@
     <string name="backup_error_io">Couldn\'t read or write the backup. Nothing was changed.</string>
     <string name="backup_error_phrase_mismatch">These words are not this vault\'s recovery phrase</string>
     <string name="backup_error_phrase_setup">Couldn\'t save the recovery phrase</string>
-    <string name="onboarding_restore_title">Restore from backup</string>
-    <string name="onboarding_restore_desc">Have an Encly backup file and its 12 words? Restore everything on this phone.</string>
-    <string name="onboarding_restore_body">Choose your Encly backup file, then enter the 12-word recovery phrase it was made with. The phrase also becomes this vault\'s recovery phrase.</string>
-    <string name="onboarding_restore_pick">Choose backup file</string>
-    <string name="onboarding_restore_other_file">Choose another file</string>
+    <string name="onboarding_restore_title">Restore from a backup</string>
+    <string name="onboarding_restore_pick">Choose a backup file</string>
     <string name="auth_setup_restore_failed">The backup couldn\'t be restored, so setup isn\'t finished yet. Try again, or continue with an empty vault and import the file later in Settings → Backup.</string>
     <string name="auth_setup_restore_failed_title">Backup not restored</string>
     <string name="auth_setup_restore_retry">Try again</string>
@@ -529,4 +444,102 @@
     <string name="task_delete">Delete task</string>
     <string name="task_deleted">Task deleted</string>
     <string name="task_delete_failed">Couldn\'t delete the task. Please try again.</string>
+    <string name="appearance_mode">Mode</string>
+    <string name="appearance_font">Font</string>
+    <string name="palette_paper">Paper</string>
+    <string name="palette_forest">Forest</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_graphite">Graphite</string>
+    <string name="palette_midnight">Midnight</string>
+    <string name="appearance_mode_note_system_light">Follows the system setting. Showing light.</string>
+    <string name="appearance_mode_note_system_dark">Follows the system setting. Showing dark.</string>
+    <string name="appearance_mode_note_light">Always light.</string>
+    <string name="appearance_mode_note_dark">Always dark.</string>
+    <string name="appearance_mode_note_midnight">Midnight is always dark.</string>
+    <string name="dynamic_color_desc">Take the accent from your wallpaper. Android 12 and later.</string>
+    <string name="appearance_dynamic_on_note">Dynamic color is on: the accent comes from your wallpaper.</string>
+    <string name="font_style_cozy_desc">Playfair Display and Source Sans 3</string>
+    <string name="font_style_modern_desc">Poppins and Source Sans 3</string>
+    <string name="font_style_tech_desc">IBM Plex Sans throughout</string>
+    <string name="appearance_preview_title">Flat viewing checklist</string>
+    <string name="appearance_preview_body">Before the visit: check the water pressure, ask what heating cost last winter.</string>
+    <string name="appearance_preview_tag">Personal</string>
+    <string name="appearance_preview_label">Preview</string>
+    <string name="appearance_settings_subtitle">Theme, mode and font</string>
+    <string name="field_correct">Correct</string>
+    <string name="pin_digits_entered">Digits entered: %1$d of %2$d</string>
+    <string name="pin_unlock_with_fingerprint">Unlock with fingerprint</string>
+    <string name="onboarding_step_of">Step %1$d of %2$d</string>
+    <string name="font_sample" translatable="false">Aa</string>
+    <string name="onboarding_welcome_headline">A notebook only you can open.</string>
+    <string name="onboarding_welcome_sub">Notes and tasks, encrypted on this phone. Setup takes about a minute.</string>
+    <string name="onboarding_fact_account_title">No account</string>
+    <string name="onboarding_fact_account_desc">No sign-up, no email, no password reset.</string>
+    <string name="onboarding_fact_offline_title">Works offline</string>
+    <string name="onboarding_fact_offline_desc">Encly never connects to the internet.</string>
+    <string name="onboarding_fact_encrypted_title">Encrypted on the device</string>
+    <string name="onboarding_fact_encrypted_desc">Your vault is locked with a key only you hold.</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_have_backup">I have a backup</string>
+    <string name="onboarding_pin_title">Choose a 6-digit PIN</string>
+    <string name="onboarding_pin_body">It unlocks Encly and protects the key to your vault. There is no email to reset it.</string>
+    <string name="onboarding_pin_again_title">Enter the PIN again</string>
+    <string name="onboarding_pin_again_body">So we know it\'s the one you meant.</string>
+    <string name="onboarding_biometric_desc">The PIN still works as a fallback</string>
+    <string name="onboarding_recovery_title">Twelve words bring everything back</string>
+    <string name="onboarding_recovery_body">Encly will give you a recovery phrase. Write it on paper; it is the only spare key.</string>
+    <string name="onboarding_recovery_pin_title">Forgot your PIN?</string>
+    <string name="onboarding_recovery_pin_desc">The phrase unlocks your vault and lets you set a new PIN.</string>
+    <string name="onboarding_recovery_backups_title">Opens your backups</string>
+    <string name="onboarding_recovery_backups_desc">Encrypted backup files can only be read with these words.</string>
+    <string name="onboarding_recovery_phone_title">New phone</string>
+    <string name="onboarding_recovery_phone_desc">Backup file plus phrase restores every note, task and tag.</string>
+    <string name="onboarding_recovery_warning">Nobody can recover it for you, not even us. Lose both the PIN and the phrase and the notes are gone.</string>
+    <string name="onboarding_recovery_create">Create my phrase</string>
+    <string name="onboarding_recovery_skip">Skip: PIN only, no backups</string>
+    <string name="onboarding_phrase_title">Write these words down</string>
+    <string name="onboarding_phrase_body">On paper, in this order. Not in a screenshot, not in the cloud.</string>
+    <string name="onboarding_phrase_hide">Hide words</string>
+    <string name="onboarding_phrase_show">Show words</string>
+    <string name="onboarding_phrase_done">I wrote them down</string>
+    <string name="onboarding_verify_title">Check three words</string>
+    <string name="onboarding_verify_body">Type them from your paper copy, not from memory.</string>
+    <string name="onboarding_verify_label">Word #%1$d</string>
+    <string name="onboarding_verify_placeholder">Enter the word</string>
+    <string name="onboarding_verify_wrong">That is not word #%1$d</string>
+    <string name="onboarding_verify_confirm">Confirm</string>
+    <string name="onboarding_verify_show_again">Show the words again</string>
+    <string name="onboarding_ready_title">Your vault is ready</string>
+    <string name="onboarding_ready_body">Everything you write from now on is encrypted before it is saved.</string>
+    <string name="onboarding_ready_pin_title">PIN set</string>
+    <string name="onboarding_ready_pin_desc">Asked every time Encly opens</string>
+    <string name="onboarding_ready_biometric_title">Fingerprint unlock on</string>
+    <string name="onboarding_ready_biometric_desc">Change it in Settings, Security</string>
+    <string name="onboarding_ready_phrase_title">Recovery phrase checked</string>
+    <string name="onboarding_ready_phrase_desc">Keep the paper somewhere safe</string>
+    <string name="onboarding_ready_no_phrase_title">No recovery phrase</string>
+    <string name="onboarding_ready_no_phrase_desc">Backups are off. You can create a phrase later in Settings, Security.</string>
+    <string name="onboarding_ready_restored_title">Backup restored</string>
+    <string name="onboarding_ready_restored_desc">Your notes, tasks and tags are back</string>
+    <string name="onboarding_ready_tip">Tip: export an encrypted backup now and then from Settings, Backup. Your phrase is what opens it.</string>
+    <string name="onboarding_ready_open">Open my notebook</string>
+    <string name="onboarding_restore_label">Restore, then set a PIN</string>
+    <string name="onboarding_restore_intro">Choose your Encly backup file, then enter the 12 words it was made with.</string>
+    <string name="onboarding_restore_file_section">1 · Backup file</string>
+    <string name="onboarding_restore_tap_other">Tap to choose another file</string>
+    <string name="onboarding_restore_phrase_section">2 · Recovery phrase</string>
+    <string name="onboarding_restore_phrase_label">12 words, separated by spaces</string>
+    <string name="onboarding_restore_phrase_helper">These words also become this phone\'s recovery phrase.</string>
+    <string name="onboarding_restore_phrase_placeholder" translatable="false">orbit cactus velvet …</string>
+    <string name="notes_title">Notes</string>
+    <string name="lock_now">Lock now</string>
+    <string name="search_placeholder">Search titles and text</string>
+    <string name="view_options">View options</string>
+    <string name="search_nothing_matches">Nothing matches “%1$s”</string>
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+    <plurals name="home_tasks_open">
+        <item quantity="one">Tasks · %d open</item>
+        <item quantity="other">Tasks · %d open</item>
+    </plurals>
 </resources>

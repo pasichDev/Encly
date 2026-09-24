@@ -1,34 +1,31 @@
 package com.pasich.encly.presentation.components
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
+import com.pasich.encly.presentation.components.tasks.PriorityValues
+import com.pasich.encly.presentation.designsystem.EnclyCard
+import com.pasich.encly.presentation.designsystem.EnclyCardStyle
+import com.pasich.encly.presentation.designsystem.EnclyInlineLink
+import com.pasich.encly.presentation.designsystem.EnclyTaskRow
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
-import com.pasich.encly.ui.theme.titleNoteCard
+import com.pasich.encly.presentation.viewmodel.widgetTasks
+import com.pasich.encly.ui.theme.EnclyTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * The tasks card on the notes screen (design spec §4.3): "TASKS · N OPEN", a link to all tasks
+ * and the two most urgent open tasks, which can be ticked off here. Nothing when none is open.
+ */
 @Composable
 fun HomeTaskWidget(
     modifier: Modifier = Modifier,
@@ -36,46 +33,40 @@ fun HomeTaskWidget(
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val quotes = stringArrayResource(id = R.array.quotes_array)
-    // Remember the index, not the text, so the quote stays put but follows the language.
-    val quoteIndex = remember { quotes.indices.random() }
-    val randomQuote = quotes[quoteIndex]
+    val preview = remember(uiState.activeTasks) { widgetTasks(uiState.activeTasks) }
+    if (uiState.activeTasksCount == 0 || preview.isEmpty()) return
 
-    Card(
-        onClick = onTasksClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp),
-        shape = RoundedCornerShape(20.dp),
+    EnclyCard(
+        modifier = modifier,
+        style = EnclyCardStyle.OUTLINED,
+        contentPadding = PaddingValues(
+            start = EnclyTheme.spacing.m,
+            end = EnclyTheme.spacing.m,
+            top = EnclyTheme.spacing.rowGap,
+            bottom = EnclyTheme.spacing.labelGap,
+        ),
     ) {
-        Row(modifier = Modifier.padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.checklist),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(end = 16.dp),
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SectionOverline(
+                text = pluralStringResource(
+                    R.plurals.home_tasks_open,
+                    uiState.activeTasksCount,
+                    uiState.activeTasksCount,
+                ),
+                modifier = Modifier.weight(1f),
             )
-
-            Column {
-                Text(
-                    text = if (uiState.activeTasksCount > 0) {
-                        pluralStringResource(
-                            R.plurals.home_active_tasks,
-                            uiState.activeTasksCount,
-                            uiState.activeTasksCount,
-                        )
-                    } else {
-                        stringResource(R.string.home_tasks_empty)
-                    },
-                    style = titleNoteCard,
-                )
-                Text(
-                    text = randomQuote,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
+            EnclyInlineLink(text = stringResource(R.string.task_filter_all), onClick = onTasksClick)
+        }
+        preview.forEach { task ->
+            val priority = PriorityValues.getById(task.priority)
+            EnclyTaskRow(
+                title = task.title,
+                checked = false,
+                onCheckedChange = { checked -> if (checked) viewModel.toggleTaskCompletion(task.id, true) },
+                priority = stringResource(priority.label),
+                priorityEmphasis = priority.emphasis,
+                onClick = onTasksClick,
+            )
         }
     }
 }

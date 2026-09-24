@@ -4,11 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,19 +16,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.composables.icons.lucide.ArrowDown
+import com.composables.icons.lucide.ArrowUp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.Redo2
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Undo2
+import com.composables.icons.lucide.X
 import com.pasich.encly.R
-import com.pasich.encly.presentation.components.VerticalDivider
-import com.pasich.encly.presentation.components.appbar.AppBarIconButton
+import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
+import com.pasich.encly.presentation.designsystem.EnclyToolButton
+import com.pasich.encly.presentation.designsystem.EnclyToolbarRule
+import com.pasich.encly.presentation.designsystem.ToolStyle
 import com.pasich.encly.presentation.editor.DynamicButtons
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 
 enum class NoteBottomBarFragment {
     BLOCKS,
     MAIN,
 }
 
+/**
+ * The editor's formatting toolbar above the keyboard (design spec §3.3): undo and redo, then the
+ * filled "Add block" and the block tools (move, delete); "Add block" swaps in the block types.
+ */
 @Composable
 fun NoteBottomBar(
     modifier: Modifier = Modifier,
@@ -55,77 +66,62 @@ fun NoteBottomBar(
     val toMain = {
         noteBottomBarFragment = NoteBottomBarFragment.MAIN
     }
+    val main = noteBottomBarFragment == NoteBottomBarFragment.MAIN
 
-    Row(
-        modifier = modifier
-            .imePadding()
-            .fillMaxWidth()
-            .padding(vertical = 12.dp, horizontal = 0.dp)
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.MAIN) {
-                AppBarIconButton(
-                    icon = R.drawable.ic_undo,
-                    contentDescription = stringResource(R.string.undo),
-                    onPress = if (canUndo) viewModel::undo else null,
-                )
-            }
-            AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.MAIN) {
-                AppBarIconButton(
-                    icon = R.drawable.ic_redo,
-                    contentDescription = stringResource(R.string.redo),
-                    onPress = if (canRedo) viewModel::redo else null,
-                )
-            }
-
-            AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.BLOCKS) {
-                AppBarIconButton(
-                    icon = R.drawable.ic_close,
-                    contentDescription = stringResource(R.string.close),
-                    onPress = toMain,
-                )
-            }
-
-            if (!simpleEdit) {
-                VerticalDivider(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    thickness = 1.dp,
-                    height = 20.dp,
-                )
-            }
-
-            AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.MAIN && !simpleEdit) {
-                Row {
-                    AppBarIconButton(
-                        icon = R.drawable.ic_add,
-                        contentDescription = stringResource(R.string.block_add),
-                        onPress = { noteBottomBarFragment = NoteBottomBarFragment.BLOCKS },
+    EnclyEditorToolbar(modifier = modifier.imePadding()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        ) {
+            AnimatedVisibility(visible = main) {
+                Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
+                    EnclyToolButton(
+                        icon = Lucide.Undo2,
+                        contentDescription = stringResource(R.string.undo),
+                        onClick = if (canUndo) viewModel::undo else null,
                     )
-                    AppBarIconButton(
-                        icon = R.drawable.ic_up,
-                        contentDescription = stringResource(R.string.block_move_up),
-                        onPress = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
-                        margin = 2.dp,
-                    )
-                    AppBarIconButton(
-                        icon = R.drawable.ic_down,
-                        contentDescription = stringResource(R.string.block_move_down),
-                        onPress = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
-                        margin = 2.dp,
-                    )
-                    AppBarIconButton(
-                        icon = R.drawable.ic_trash_all_clean,
-                        contentDescription = stringResource(R.string.delete_block),
-                        onPress = if (canDelete) viewModel::removeInteractedBlock else null,
-                        margin = 2.dp,
+                    EnclyToolButton(
+                        icon = Lucide.Redo2,
+                        contentDescription = stringResource(R.string.redo),
+                        onClick = if (canRedo) viewModel::redo else null,
                     )
                 }
             }
 
-            AnimatedVisibility(visible = noteBottomBarFragment == NoteBottomBarFragment.BLOCKS && !simpleEdit) {
+            AnimatedVisibility(visible = !main) {
+                EnclyToolButton(icon = Lucide.X, contentDescription = stringResource(R.string.close), onClick = toMain)
+            }
+
+            if (!simpleEdit) EnclyToolbarRule()
+
+            AnimatedVisibility(visible = main && !simpleEdit) {
+                Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
+                    EnclyToolButton(
+                        icon = Lucide.Plus,
+                        contentDescription = stringResource(R.string.block_add),
+                        onClick = { noteBottomBarFragment = NoteBottomBarFragment.BLOCKS },
+                        style = ToolStyle.FILLED,
+                    )
+                    EnclyToolButton(
+                        icon = Lucide.ArrowUp,
+                        contentDescription = stringResource(R.string.block_move_up),
+                        onClick = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
+                    )
+                    EnclyToolButton(
+                        icon = Lucide.ArrowDown,
+                        contentDescription = stringResource(R.string.block_move_down),
+                        onClick = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
+                    )
+                    EnclyToolButton(
+                        icon = Lucide.Trash2,
+                        contentDescription = stringResource(R.string.delete_block),
+                        onClick = if (canDelete) viewModel::removeInteractedBlock else null,
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = !main && !simpleEdit) {
                 DynamicButtons(
                     onAddBlock = { type ->
                         viewModel.addBlock(type)

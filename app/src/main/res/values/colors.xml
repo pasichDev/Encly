@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Matches the app's light Compose background so the transparent status bar
-         area blends with the app instead of showing a black strip. -->
-    <color name="window_background">#FFF9FAEF</color>
+    <!-- The default palette's (Paper) light surface: what shows before Compose draws. Once it
+         does, AppTheme repaints the window in the chosen palette and the app's own mode. -->
+    <color name="window_background">#FFF7F3EA</color>
 </resources>

@@ -1,6 +1,8 @@
 package com.pasich.encly.core.serialization
 
+import com.google.gson.JsonParser
 import com.pasich.encly.domain.model.ItemListBlock
+import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,21 @@ class BlockConverterTest {
             listOf("Completed item" to true, "Open item" to false),
             checklist.items.value.map { it.value to it.isCheck },
         )
+    }
+
+    @Test
+    fun aBulletedListKeepsItsKind() {
+        val source = listOf(
+            Block.ListBlock(
+                MutableStateFlow(listOf(ItemListBlock("milk"), ItemListBlock("bread"))),
+                BlockType.LIST_BULLET,
+            ),
+        )
+
+        val restored = BlockConverter.jsonToBlocks(BlockConverter.blocksToJson(source)).single() as Block.ListBlock
+
+        assertEquals(BlockType.LIST_BULLET, restored.blockType)
+        assertEquals(listOf("milk", "bread"), restored.items.value.map { it.value })
     }
 
     @Test
@@ -102,5 +119,39 @@ class BlockConverterTest {
         )
 
         assertFalse(json, json.contains("\"id\""))
+    }
+
+    /**
+     * Pins the stored note format key by key. Notes written by older versions must stay
+     * readable, and the release build must write the same keys as the debug build: none of
+     * them may come from a (renamable) field name.
+     */
+    @Test
+    fun storedFormatUsesFixedKeyNames() {
+        val json = BlockConverter.blocksToJson(
+            listOf(
+                Block.TextBlock(MutableStateFlow("t")),
+                Block.HBlock(MutableStateFlow("h"), BlockType.H2),
+                Block.QuoteBlock(MutableStateFlow("q")),
+                Block.LinkBlock(MutableStateFlow(LinkDataBlock(url = "u", title = "ti", imageUrl = "i"))),
+                Block.SeparatorBlock(),
+                Block.ListBlock(
+                    MutableStateFlow(listOf(ItemListBlock("a", isCheck = true), ItemListBlock(" "))),
+                    BlockType.LIST_NUMBER,
+                ),
+            ),
+        )
+
+        val expected = """
+            [
+              {"blockType":"TEXT","text":"t"},
+              {"blockType":"H2","text":"h"},
+              {"blockType":"QUOTE","text":"q"},
+              {"blockType":"LINK","block":{"url":"u","title":"ti","imageUrl":"i"}},
+              {"blockType":"SEPARATOR"},
+              {"blockType":"LIST_NUMBER","items":[{"value":"a","isCheck":true}]}
+            ]
+        """
+        assertEquals(JsonParser.parseString(expected), JsonParser.parseString(json))
     }
 }

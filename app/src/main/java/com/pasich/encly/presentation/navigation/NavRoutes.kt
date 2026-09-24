@@ -13,8 +13,9 @@ enum class NavRoutes {
     SecuritySettingsRoute,
     OnboardingRoute,
     LossDataRoute,
+    LegacyVaultRoute,
     PinCodeConfig,
     LockRoute,
-    AuthSetupRoute,
     BackupRoute,
+    AppearanceRoute,
 }

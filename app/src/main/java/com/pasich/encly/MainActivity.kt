@@ -27,14 +27,17 @@ import androidx.navigation.compose.rememberNavController
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.presentation.components.SecureTextInputBoundary
 import com.pasich.encly.presentation.navigation.AppNavHost
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -51,6 +54,9 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var sessionLockManager: SessionLockManager
 
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Encly always renders protected content. Apply FLAG_SECURE before the splash/content
         // lifecycle starts so screenshots, screen recording, casting and recents snapshots
@@ -61,13 +67,22 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         supportActionBar?.hide()
 
-        // Resolve the startup state off the main thread (Keystore/crypto/prefs reads);
-        // keep the splash visible until it's ready.
+        // Resolve the startup state and read the theme off the main thread (Keystore/crypto/
+        // prefs reads); keep the splash visible until both are ready, so the first frame is
+        // drawn in the stored palette, mode and fonts rather than the defaults.
         var initialStatus by mutableStateOf<InitialStatus?>(null)
         splashScreen.setKeepOnScreenCondition { initialStatus == null }
 
         lifecycleScope.launch {
-            initialStatus = withContext(Dispatchers.IO) { securityManager.resolveInitialStatus() }
+            initialStatus = withContext(Dispatchers.IO) {
+                val status = securityManager.resolveInitialStatus()
+                try {
+                    settingsRepository.loadThemeSettings(existingInstall = !securityManager.isOnboardingShow())
+                } catch (_: IOException) {
+                    // An unreadable settings file: the theme starts from its defaults.
+                }
+                status
+            }
         }
 
         setContent {
@@ -75,11 +90,18 @@ class MainActivity : AppCompatActivity() {
             val navController = rememberNavController()
             val destination = when (status) {
                 InitialStatus.MAIN -> NavRoutes.HomeRoute
-                InitialStatus.ONBOARDING -> NavRoutes.OnboardingRoute
+
+                // PIN setup is part of onboarding, which restarts until the vault is committed.
+                InitialStatus.ONBOARDING, InitialStatus.SETUP_AUTH -> NavRoutes.OnboardingRoute
+
                 InitialStatus.LOSS_DATABASE -> NavRoutes.LossDataRoute
+
                 InitialStatus.AUTH -> NavRoutes.LockRoute
-                InitialStatus.SETUP_AUTH -> NavRoutes.AuthSetupRoute
+
                 InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute
+
+                InitialStatus.LEGACY_VAULT -> NavRoutes.LegacyVaultRoute
+
                 InitialStatus.NO -> return@setContent
             }
 
@@ -94,16 +116,7 @@ class MainActivity : AppCompatActivity() {
                 it.destination.route != NavRoutes.LockRoute.name
             }
             LaunchedEffect(locked) {
-                if (locked) {
-                    navController.navigate(NavRoutes.LockRoute.name) {
-                        // Drop every screen/ViewModel backed by the now-closed Room instance.
-                        // Unlock starts a fresh Home graph with fresh DAO flows.
-                        popUpTo(navController.graph.id) {
-                            inclusive = false
-                        }
-                        launchSingleTop = true
-                    }
-                }
+                if (locked) navController.showLockScreen()
             }
 
             App(
@@ -113,6 +126,32 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
+}
+
+/** The editor's "opened from the trash, read-only" navigation argument (see AppNavHost). */
+private const val EDIT_NOTE_READ_ONLY_ARG = "isReadTrashOnly"
+
+/**
+ * Replaces every screen with the lock screen after a background re-lock, remembering the note
+ * that was open (see [RelockReturn]) so the unlock can return to it.
+ */
+private fun NavHostController.showLockScreen() {
+    val returnRoute = currentBackStackEntry?.let { entry ->
+        RelockReturn.routeFor(
+            destinationRoute = entry.destination.route,
+            openNoteId = entry.savedStateHandle.get<Long>(RelockReturn.OPEN_NOTE_ID),
+            readOnly = entry.arguments?.getBoolean(EDIT_NOTE_READ_ONLY_ARG) == true,
+        )
+    }
+    navigate(NavRoutes.LockRoute.name) {
+        // Drop every screen/ViewModel backed by the now-closed Room instance.
+        // Unlock starts a fresh Home graph with fresh DAO flows.
+        popUpTo(graph.id) {
+            inclusive = false
+        }
+        launchSingleTop = true
+    }
+    if (returnRoute != null) currentBackStackEntry?.savedStateHandle?.set(RelockReturn.RETURN_ROUTE, returnRoute)
 }
 
 @Composable

@@ -13,13 +13,13 @@ import javax.inject.Inject
 @HiltViewModel
 class ThemeViewModel @Inject constructor(settingsRepository: SettingsRepository) : ViewModel() {
 
-    // Default (dynamic=off, follow system theme). The real
-    // stored values are emitted asynchronously — never block the main thread on the
-    // DataStore read, since this ViewModel is created on the first frame (AppTheme).
+    // MainActivity holds the splash until the theme was read once, so the first frame starts
+    // from the stored theme instead of flashing the defaults. The main thread never blocks on
+    // the DataStore: the defaults are only a fallback if that read has not happened.
     val themeSettingsFlow: StateFlow<ThemeSettings> =
         settingsRepository.themeSettingsFlow.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ThemeSettings(),
+            initialValue = settingsRepository.latestThemeSettings ?: ThemeSettings(),
         )
 }

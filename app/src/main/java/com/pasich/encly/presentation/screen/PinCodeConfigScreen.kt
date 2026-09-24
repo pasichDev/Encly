@@ -12,20 +12,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,19 +26,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
 import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.navigation.NavRoutes
-import com.pasich.encly.presentation.screen.pincode.PinCodeWidget
+import com.pasich.encly.presentation.screen.pincode.PinEntry
+import com.pasich.encly.presentation.screen.pincode.PinEntryActions
+import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
@@ -56,6 +48,7 @@ import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import kotlinx.coroutines.delay
 
 private const val PIN_SUCCESS_DELAY_MS = 600L
+private const val SUCCESS_SCALE_MS = 500
 
 enum class PinAnimationState {
     Entering,
@@ -149,14 +142,12 @@ fun PinCodeConfigScreen(
         }
     }
 
-    Surface(modifier = modifier.fillMaxSize()) {
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (pinState.animationState == PinAnimationState.Entering) {
-                // 🔒 Main UI
                 AnimatedContent(
                     targetState = pinState.step,
                     transitionSpec = {
-                        // You can change the animation as you like
                         (
                             slideInHorizontally { width ->
                                 width
@@ -175,7 +166,6 @@ fun PinCodeConfigScreen(
                     )
                 }
             } else {
-                // ✅ Success animation
                 SuccessAnimation()
             }
         }
@@ -222,64 +212,20 @@ data class PinStepText(@param:StringRes val title: Int, @param:StringRes val sub
 
 @Composable
 private fun MainPinContent(text: PinStepText, currentInput: String, onInput: (String) -> Unit, onDelete: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    val message = text.message
+    PinEntryScaffold(
+        title = stringResource(text.title),
+        // An error or the lockout countdown takes the sub-heading slot, as on the lock screen.
+        subtitle = message ?: stringResource(text.subtitle),
+        subtitleIsError = message != null,
     ) {
-        // 🔒 Icon
-        Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_lock),
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Title
-        Text(
-            text = stringResource(text.title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Subtitle
-        Text(
-            text = stringResource(text.subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        text.message?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-        PinCodeWidget(
-            pinInput = currentInput,
-            onPinChange = onInput,
-            onDelete = onDelete,
+        PinEntry(
+            entered = currentInput.length,
+            error = message != null && currentInput.isEmpty(),
+            actions = PinEntryActions(
+                onDigit = { onInput(it.toString()) },
+                onBackspace = onDelete,
+            ),
         )
     }
 }
@@ -287,25 +233,21 @@ private fun MainPinContent(text: PinStepText, currentInput: String, onInput: (St
 @Composable
 private fun SuccessAnimation() {
     val scale = remember { Animatable(0f) }
+    val description = stringResource(R.string.pin_changed)
 
     LaunchedEffect(Unit) {
         scale.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+            animationSpec = tween(durationMillis = SUCCESS_SCALE_MS, easing = FastOutSlowInEasing),
         )
     }
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics { contentDescription = description },
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_check), // add your own checkmark
-            contentDescription = stringResource(R.string.pin_changed),
-            modifier = Modifier
-                .size(120.dp)
-                .scale(scale.value),
-            tint = MaterialTheme.colorScheme.primary,
-        )
+        EnclyIconTile(icon = Lucide.Check, modifier = Modifier.scale(scale.value))
     }
 }

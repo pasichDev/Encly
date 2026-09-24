@@ -73,11 +73,12 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
         KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
     }
 
-    fun isStrongBiometricAvailable(): Boolean {
-        val manager = AndroidBiometricManager.from(context)
-        return manager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG) ==
-            AndroidBiometricManager.BIOMETRIC_SUCCESS
-    }
+    fun isStrongBiometricAvailable(): Boolean = strongBiometricStatus() == BiometricStatus.AVAILABLE
+
+    /** Whether strong biometrics can be used, or why not. */
+    fun strongBiometricStatus(): BiometricStatus = BiometricStatus.fromCanAuthenticate(
+        AndroidBiometricManager.from(context).canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG),
+    )
 
     fun hasSlot(): Boolean = try {
         keyStore.containsAlias(KEY_ALIAS) && !prefs.getString(SLOT_KEY, null).isNullOrBlank()
@@ -354,5 +355,26 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
     fun disable() {
         prefs.edit { clear() }
         deleteKeyOnly()
+    }
+}
+
+/** Whether strong (class 3) biometrics can unlock the vault on this device. */
+enum class BiometricStatus {
+    AVAILABLE,
+
+    /** The hardware is there, but no fingerprint (or other strong biometric) is enrolled yet. */
+    NOT_ENROLLED,
+
+    /** No suitable hardware, or it cannot be used right now. */
+    UNAVAILABLE,
+    ;
+
+    companion object {
+        /** Maps a `BiometricManager.canAuthenticate` result. */
+        fun fromCanAuthenticate(result: Int): BiometricStatus = when (result) {
+            AndroidBiometricManager.BIOMETRIC_SUCCESS -> AVAILABLE
+            AndroidBiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> NOT_ENROLLED
+            else -> UNAVAILABLE
+        }
     }
 }

@@ -1,135 +1,69 @@
 package com.pasich.encly.presentation.screen
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import com.pasich.encly.R
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
+import com.pasich.encly.presentation.designsystem.EnclyHoldToConfirmButton
+import com.pasich.encly.presentation.designsystem.EnclyIconTile
+import com.pasich.encly.ui.theme.EnclyTheme
 
+/**
+ * The vault can no longer be opened: explains why ([reason]), and wipes everything only after
+ * the button is held for four seconds.
+ */
 @Composable
-fun LossRecoveryScreen(onRecoveryConfirm: () -> Unit, modifier: Modifier = Modifier) {
+fun LossRecoveryScreen(
+    onRecoveryConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+    reason: LossReason = LossReason.DAMAGED,
+) {
     val currentOnRecoveryConfirm by rememberUpdatedState(onRecoveryConfirm)
-    var holdProgress by remember { mutableFloatStateOf(0f) }
-    var isHolding by remember { mutableStateOf(false) }
-
-    val animatedProgress by animateFloatAsState(
-        targetValue = if (isHolding) 1f else 0f,
-        animationSpec = tween(durationMillis = 4000),
-        label = "HoldProgress",
-    )
-
-    LaunchedEffect(animatedProgress) {
-        holdProgress = animatedProgress
-        if (animatedProgress >= 1f) {
-            currentOnRecoveryConfirm()
-        }
-    }
-
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    val spacing = EnclyTheme.spacing
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(spacing.rowGap),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(start = spacing.gutter, end = spacing.gutter, top = spacing.lockTop, bottom = spacing.l),
         ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .size(96.dp)
-                    .padding(bottom = 24.dp),
-            )
-
+            EnclyIconTile(icon = Lucide.TriangleAlert)
             Text(
-                text = stringResource(R.string.loss_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                text = stringResource(reason.title),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = spacing.xs),
+            )
+            Text(
+                text = stringResource(reason.message),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.loss_message),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground,
+            EnclyHoldToConfirmButton(
+                text = stringResource(reason.action),
+                onConfirm = { currentOnRecoveryConfirm() },
+                modifier = Modifier.padding(top = spacing.xxl),
             )
-
-            Spacer(modifier = Modifier.height(60.dp))
-
-            // Hold-to-Activate button
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onPress = {
-                                isHolding = true
-                                tryAwaitRelease()
-                                isHolding = false
-                            },
-                        )
-                    },
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(fraction = holdProgress)
-                        .background(MaterialTheme.colorScheme.primary),
-                )
-
-                Text(
-                    text = stringResource(R.string.loss_hold_to_wipe),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (holdProgress > 0.5f) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-                    modifier = Modifier.align(Alignment.Center),
-                )
-            }
         }
     }
 }

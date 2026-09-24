@@ -26,6 +26,18 @@ enum class TagOperationFailure {
     UPDATE,
     DELETE,
     REORDER,
+
+    /** Another tag already has the name (compared trimmed, ignoring case). */
+    NAME_TAKEN,
+}
+
+/**
+ * Whether a tag other than [exceptId] is already called [name]. Names are compared trimmed and
+ * ignoring case, so "Work", "work" and " Work " are one tag.
+ */
+internal fun List<Tag>.hasTagNamed(name: String, exceptId: Long? = null): Boolean {
+    val wanted = name.trim()
+    return any { it.id != exceptId && it.nameTag.trim().equals(wanted, ignoreCase = true) }
 }
 
 @HiltViewModel
@@ -59,7 +71,7 @@ class TagListViewModel @Inject constructor(
 
             is TagListEvent.DeleteTag -> deleteTag(event.tag)
 
-            is TagListEvent.UpdateTag -> updateTag(event.tag)
+            is TagListEvent.UpdateTag -> updateTag(event.tag, event.onResult)
 
             is TagListEvent.SelectTag -> selectedTagHolder.selectTag(event.tag)
 
@@ -75,6 +87,11 @@ class TagListViewModel @Inject constructor(
 
     private fun addTag(event: TagListEvent.AddTag) {
         viewModelScope.launch {
+            if (_state.value.listTags.hasTagNamed(event.tag.nameTag)) {
+                event.onResult(false)
+                _operationFailures.emit(TagOperationFailure.NAME_TAKEN)
+                return@launch
+            }
             val newPosition = (_state.value.listTags.minOfOrNull { it.position } ?: 0) - 1
             val added = tagsRepository.addTag(event.tag.copy(position = newPosition)).isSuccess
             event.onResult(added)
@@ -96,9 +113,16 @@ class TagListViewModel @Inject constructor(
         }
     }
 
-    private fun updateTag(tag: Tag) {
+    private fun updateTag(tag: Tag, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
-            if (tagsRepository.updateTag(tag).isFailure) {
+            if (_state.value.listTags.hasTagNamed(tag.nameTag, exceptId = tag.id)) {
+                onResult(false)
+                _operationFailures.emit(TagOperationFailure.NAME_TAKEN)
+                return@launch
+            }
+            val updated = tagsRepository.updateTag(tag).isSuccess
+            onResult(updated)
+            if (!updated) {
                 _operationFailures.emit(TagOperationFailure.UPDATE)
             }
         }
@@ -142,7 +166,7 @@ sealed class TagListEvent {
     data class AddTag(val tag: Tag, val onResult: (Boolean) -> Unit) : TagListEvent()
 
     data class DeleteTag(val tag: Tag) : TagListEvent()
-    data class UpdateTag(val tag: Tag) : TagListEvent()
+    data class UpdateTag(val tag: Tag, val onResult: (Boolean) -> Unit = {}) : TagListEvent()
     data class SelectTag(val tag: Tag) : TagListEvent()
     data class ReorderTags(val tags: List<Tag>) : TagListEvent()
     data class ReorderTagsLive(val to: Int, val from: Int) : TagListEvent()

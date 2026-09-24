@@ -1,5 +1,6 @@
 package com.pasich.encly.core.serialization
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
@@ -49,7 +50,7 @@ class BlockDeserializer : JsonDeserializer<Block> {
             "SEPARATOR" -> Block.SeparatorBlock()
 
             // "LIST" kept as a legacy alias for checklists.
-            "LIST", "LIST_CHECK", "LIST_NUMBER" -> Block.ListBlock(
+            "LIST", "LIST_CHECK", "LIST_NUMBER", "LIST_BULLET" -> Block.ListBlock(
                 items = MutableStateFlow(
                     jsonObject.getAsJsonArray("items")
                         ?.map { item ->
@@ -60,7 +61,11 @@ class BlockDeserializer : JsonDeserializer<Block> {
                             )
                         } ?: listOf(ItemListBlock("")),
                 ),
-                blockType = if (blockType == "LIST_NUMBER") BlockType.LIST_NUMBER else BlockType.LIST_CHECK,
+                blockType = when (blockType) {
+                    "LIST_NUMBER" -> BlockType.LIST_NUMBER
+                    "LIST_BULLET" -> BlockType.LIST_BULLET
+                    else -> BlockType.LIST_CHECK
+                },
             )
 
             else -> throw JsonParseException("Unknown block type: $blockType")
@@ -108,9 +113,19 @@ class BlockSerializer : JsonSerializer<Block> {
                 // Drop empty list items
                 val nonEmptyItems = src.items.value.filter { it.value.isNotBlank() }
 
-                // Preserve the list kind (numbered vs checklist).
+                // Preserve the list kind (numbered, bulleted or checklist).
                 jsonObject.addProperty("blockType", src.blockType.name)
-                val itemsArray = context?.serialize(nonEmptyItems)
+                // Written field by field, not through Gson reflection, so the stored key names
+                // do not depend on R8 keeping ItemListBlock's field names.
+                val itemsArray = JsonArray()
+                nonEmptyItems.forEach { item ->
+                    itemsArray.add(
+                        JsonObject().apply {
+                            addProperty("value", item.value)
+                            addProperty("isCheck", item.isCheck)
+                        },
+                    )
+                }
                 jsonObject.add("items", itemsArray)
             }
         }

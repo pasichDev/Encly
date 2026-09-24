@@ -11,12 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
 import com.pasich.encly.R
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
-import com.pasich.encly.ui.theme.titleNote
+import com.pasich.encly.ui.theme.EnclyTheme
+
+/** The title placeholder follows the title's size and family. */
+private class PlaceholderStyle(val size: TextUnit, val family: FontFamily)
 
 @Composable
 fun TitleField(
@@ -33,15 +37,13 @@ fun TitleField(
         enabled = !readOnly,
         onValueChange = { onTitleChange(it) },
         textStyle =
-        titleNote.copy(
+        MaterialTheme.typography.headlineLarge.copy(
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = fontStyles.sizes.noteTitle,
             fontFamily = fontStyles.families.heading,
         ),
         modifier =
-        modifier
-            .fillMaxWidth()
-            .padding(vertical = 0.dp),
+        modifier.fillMaxWidth(),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
@@ -51,6 +53,7 @@ fun TitleField(
             TitleDecoration(
                 showPlaceholder = title.isEmpty(),
                 placeholderText = placeholderText,
+                placeholderStyle = PlaceholderStyle(fontStyles.sizes.noteTitle, fontStyles.families.heading),
                 innerTextField = innerTextField,
             )
         },
@@ -61,20 +64,25 @@ fun TitleField(
 private fun TitleDecoration(
     showPlaceholder: Boolean,
     placeholderText: String,
+    placeholderStyle: PlaceholderStyle,
     innerTextField: @Composable () -> Unit,
 ) {
+    val fontSize = placeholderStyle.size
+    val fontFamily = placeholderStyle.family
     Box(
         modifier =
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 5.dp),
+            .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.xxs),
     ) {
         if (showPlaceholder) {
             Text(
                 text = placeholderText,
                 style =
-                titleNote.copy(
-                    color = MaterialTheme.colorScheme.outlineVariant,
+                MaterialTheme.typography.headlineLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = fontSize,
+                    fontFamily = fontFamily,
                 ),
             )
         }

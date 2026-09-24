@@ -25,13 +25,6 @@
 
     <string name="auth_method_pin_desc">Wymagany klucz dostępu. Stuknij, aby zmienić PIN.</string>
     <string name="auth_method_pin_title">6-cyfrowy PIN</string>
-    <string name="auth_setup_biometric_subtitle">Potwierdź biometrię, aby szybko odblokowywać aplikację</string>
-    <string name="auth_setup_biometric_title">Włącz biometrię</string>
-    <string name="auth_setup_confirm_subtitle">Wpisz PIN ponownie, aby go potwierdzić</string>
-    <string name="auth_setup_confirm_title">Potwierdź PIN</string>
-    <string name="auth_setup_continue_pin_only">Kontynuuj tylko z PIN-em</string>
-    <string name="auth_setup_create_subtitle">Twój 6-cyfrowy PIN bezpośrednio chroni klucz bazy danych</string>
-    <string name="auth_setup_retry_biometric">Spróbuj ponownie biometrii</string>
     <string name="auth_title">Uwierzytelnianie</string>
 
     <string name="back">Wstecz</string>
@@ -50,6 +43,7 @@
     <string name="biometric_unavailable">Uwierzytelnianie biometryczne jest niedostępne</string>
 
     <string name="block_add">Dodaj blok</string>
+    <string name="block_bulleted_list">Lista punktowana</string>
     <string name="block_checklist">Lista kontrolna</string>
     <string name="block_heading">Nagłówek</string>
     <string name="block_heading_level">Nagłówek %1$d</string>
@@ -152,18 +146,16 @@
     <string name="faq_tags_q">Jak działają etykiety?</string>
     <string name="faq_tasks_a">Zadania mają opis i priorytet. Możesz je filtrować według priorytetu i oznaczać jako wykonane. Encly nigdy nie umieszcza treści zadań w powiadomieniach systemowych.</string>
     <string name="faq_tasks_q">Co potrafią zadania?</string>
-    <string name="faq_theme_a">W Ustawienia → Wygląd możesz wybrać motyw systemowy, jasny lub ciemny, a na obsługiwanych urządzeniach z Androidem także dynamiczne kolory.</string>
+    <string name="faq_theme_a">W Ustawienia → Wygląd wybierzesz jeden z pięciu motywów, tryb (systemowy, jasny lub ciemny) i czcionkę, a od Androida 12 także dynamiczne kolory.</string>
     <string name="faq_theme_q">Jak zmienić motyw?</string>
     <string name="faq_vault_damaged_a">Encly celowo nigdy nie tworzy pustej bazy danych w miejscu utraconego lub nieczytelnego sejfu. Nie potwierdzaj pełnego wyczyszczenia, jeśli nadal potrzebujesz danych lokalnych.</string>
     <string name="faq_vault_damaged_q">Encly zgłasza uszkodzenie sejfu</string>
 
     <string name="font_size_title">Rozmiar tekstu</string>
-    <string name="font_style_cozy">Przytulny</string>
+    <string name="font_style_cozy">Redakcyjny</string>
     <string name="font_style_modern">Nowoczesny</string>
     <string name="font_style_tech">Techniczny</string>
 
-    <string name="home_greeting">Cześć</string>
-    <string name="home_tasks_empty">Twoja lista zadań jest pusta</string>
 
     <string name="language_dialog_title">Wybierz język</string>
     <string name="language_system_default">Domyślny systemu</string>
@@ -181,7 +173,6 @@
     <string name="lock_subtitle">Wpisz 6-cyfrowy PIN, aby kontynuować</string>
     <string name="lock_title">Odblokuj notatki</string>
     <string name="lock_unlocking">Odblokowywanie…</string>
-    <string name="lock_use_biometric">Użyj biometrii</string>
     <string name="lock_use_recovery_phrase">Odzyskaj dostęp za pomocą frazy odzyskiwania</string>
     <string name="lock_wrong_pin">Nieprawidłowy PIN</string>
     <string name="lock_wrong_recovery_phrase">Nieprawidłowa fraza odzyskiwania</string>
@@ -189,6 +180,9 @@
     <string name="loss_hold_to_wipe">Przytrzymaj, aby wyczyścić wszystko</string>
     <string name="loss_message">Wygląda na to, że zaszyfrowane dane lub klucze szyfrowania zostały zmienione albo uszkodzone, więc odzyskanie danych jest niemożliwe.\n\nAby dalej korzystać z aplikacji, musisz ją zresetować i wyczyścić uszkodzone dane. Spowoduje to trwałe usunięcie wszystkich zapisanych notatek i ustawień.</string>
     <string name="loss_title">Niestety Twoje dane są uszkodzone</string>
+    <string name="legacy_vault_title">Te dane pochodzą ze starszej wersji</string>
+    <string name="legacy_vault_message">Encly znalazła notatki zapisane przez wersję sprzed 2.0. Encly 2.0 używa nowego zaszyfrowanego formatu i nie może ich otworzyć, a ich konwersja nie jest możliwa.\n\nAby korzystać z aplikacji, zacznij od nowa. Stare notatki i ustawienia na tym telefonie zostaną trwale usunięte.</string>
+    <string name="legacy_vault_hold_to_start">Przytrzymaj, aby zacząć od nowa</string>
 
     <string name="main_drawer_faq">FAQ</string>
     <string name="main_drawer_settings">Ustawienia</string>
@@ -216,46 +210,9 @@
     <string name="note_save_failed">Nie udało się zapisać zmian</string>
     <string name="note_trash_failed">Nie udało się przenieść notatki do kosza</string>
 
-    <string name="onboarding_done_auto_desc">Twoje dane są chronione. Możesz od razu zacząć pisać, tworzyć i realizować swoje pomysły!</string>
-    <string name="onboarding_done_auto_title">Bezpieczeństwo skonfigurowane!</string>
-    <string name="onboarding_done_card_footer">Gotowy do tworzenia?</string>
-    <string name="onboarding_done_card_title">Czas realizować pomysły!</string>
-    <string name="onboarding_done_point_1">Zapisuj błyskotliwe myśli</string>
-    <string name="onboarding_done_point_2">Twórz listy, by zachować skupienie</string>
-    <string name="onboarding_done_point_3">Planuj dni i marzenia</string>
-    <string name="onboarding_done_point_4">Przechowuj to, co ważne, pod solidną ochroną</string>
-    <string name="onboarding_done_point_5">Zamieniaj pomysły w rzeczywistość</string>
-    <string name="onboarding_done_seed_desc">Teraz możesz bezpiecznie tworzyć, edytować i przechowywać notatki. Nie zapomnij przechowywać frazy seed w bezpiecznym miejscu!</string>
-    <string name="onboarding_done_seed_title">Twój klucz bezpieczeństwa jest gotowy!</string>
-    <string name="onboarding_done_start">Zaczynamy!</string>
     <string name="onboarding_error_initialization">Nie udało się zainicjować aplikacji</string>
-    <string name="onboarding_error_seed_generation">Nie udało się utworzyć frazy seed</string>
+    <string name="onboarding_error_seed_generation">Nie udało się utworzyć frazy odzyskiwania</string>
     <string name="onboarding_error_vault_creation">Nie udało się utworzyć zaszyfrowanego sejfu</string>
-    <string name="onboarding_feature_editor_desc">Elastyczny edytor tekstu z formatowaniem</string>
-    <string name="onboarding_feature_editor_title">Edycja</string>
-    <string name="onboarding_feature_interface_desc">Stylowo. Prosto. Intuicyjnie.</string>
-    <string name="onboarding_feature_interface_title">Interfejs</string>
-    <string name="onboarding_feature_privacy_desc">Tylko Ty masz dostęp do swoich myśli</string>
-    <string name="onboarding_feature_privacy_title">Prywatność</string>
-    <string name="onboarding_feature_tags_desc">Porządkuj myśli według tematów</string>
-    <string name="onboarding_feature_tags_title">Etykiety</string>
-    <string name="onboarding_feature_tasks_desc">Śledź zadania obok notatek</string>
-    <string name="onboarding_feature_tasks_title">Zadania</string>
-    <string name="onboarding_security_auto_point_1">Szybki start bez konfiguracji</string>
-    <string name="onboarding_security_auto_point_2">System sam zarządza bezpieczeństwem</string>
-    <string name="onboarding_security_auto_point_3">Nie trzeba pamiętać żadnych kluczy</string>
-    <string name="onboarding_security_auto_point_4">Zaszyfrowane kopie lokalne są niedozwolone</string>
-    <string name="onboarding_security_auto_title">Automatyczne bezpieczeństwo</string>
-    <string name="onboarding_security_explanation">Fraza seed to zestaw słów, który pozwala odzyskać dostęp do Twoich danych. Jeśli wybierzesz automatyczne bezpieczeństwo, system użyje zamiast niej wbudowanego klucza. To prostsze, ale obniża poziom ochrony i nie pozwala tworzyć zaszyfrowanych kopii lokalnych.</string>
-    <string name="onboarding_security_seed_point_1">Najwyższy poziom bezpieczeństwa</string>
-    <string name="onboarding_security_seed_point_2">To Ty kontrolujesz swój klucz</string>
-    <string name="onboarding_security_seed_point_3">Musisz bezpiecznie przechowywać frazę seed</string>
-    <string name="onboarding_security_seed_point_4">Zalecane dla ważnych danych</string>
-    <string name="onboarding_security_seed_title">Utwórz klucz bezpieczeństwa</string>
-    <string name="onboarding_security_subtitle">Wybierz poziom bezpieczeństwa swoich danych</string>
-    <string name="onboarding_security_title">Konfiguracja bezpieczeństwa</string>
-    <string name="onboarding_welcome_subtitle">Twórz, edytuj i porządkuj swoje myśli w wygodny sposób</string>
-    <string name="onboarding_welcome_title">Moje notatki</string>
 
     <string name="open_menu">Otwórz menu</string>
 
@@ -270,12 +227,10 @@
     <string name="pin_create_title">Utwórz 6-cyfrowy PIN</string>
     <string name="pin_current_wrong">Obecny PIN jest nieprawidłowy</string>
     <string name="pin_delete_digit">Usuń cyfrę</string>
-    <string name="pin_mismatch">PIN-y nie są zgodne</string>
     <string name="pin_mismatch_retry">PIN-y nie są zgodne. Spróbuj ponownie.</string>
     <string name="pin_save_failed">Nie udało się zapisać PIN-u</string>
     <string name="pin_update_failed">Nie udało się zaktualizować PIN-u. Spróbuj ponownie.</string>
 
-    <string name="please_wait">Proszę czekać…</string>
 
     <string name="press_to_edit">Stuknij, aby zacząć edycję…</string>
 
@@ -300,17 +255,14 @@
 
 
     <string name="search_clear">Wyczyść wyszukiwanie</string>
-    <string name="search_hint">Wpisz słowa kluczowe. Wyszukiwanie obejmuje tytuły i treść notatek.</string>
-    <string name="search_no_results">Nie znaleziono notatek</string>
-    <string name="search_notes">Stuknij, aby wyszukać</string>
-    <string name="search_try_other_keywords">Spróbuj innych słów kluczowych</string>
 
     <string name="security_biometric_available">Odcisk palca</string>
     <string name="security_biometric_title">Odblokowanie biometryczne</string>
     <string name="security_biometric_unavailable">Niedostępne na tym urządzeniu</string>
+    <string name="security_biometric_not_enrolled">Nie dodano odcisku palca. Dodaj go w ustawieniach systemu.</string>
     <string name="security_encryption_active">Szyfrowanie jest aktywne</string>
     <string name="security_encryption_pin_desc">Twój losowy klucz bazy danych jest chroniony PIN-em oraz opcjonalnie biometrycznym slotem w Keystore.</string>
-    <string name="security_encryption_seed_desc">Twój losowy klucz bazy danych ma osobny slot odzyskiwania chroniony frazą seed.</string>
+    <string name="security_encryption_seed_desc">Twój losowy klucz bazy danych ma osobny slot odzyskiwania chroniony frazą odzyskiwania.</string>
     <string name="security_info_body">• SQLCipher jest otwierany losowym kluczem 256-bitowym\n• PIN i fraza odzyskiwania mają osobne sloty odblokowania AES-GCM\n• Biometria korzysta z klucza Android Keystore, który wymaga uwierzytelnienia przy każdym użyciu</string>
     <string name="security_info_title">ℹ️ Informacje o bezpieczeństwie</string>
     <string name="security_recovery_set">Skonfigurowana. Odblokowuje sejf, gdy zapomnisz PIN-u, i chroni kopie zapasowe.</string>
@@ -323,31 +275,6 @@
     <string name="security_subtitle">Szyfrowanie i ochrona danych</string>
     <string name="security_title">Bezpieczeństwo</string>
 
-    <string name="seed_continue_to_verify">Przejdź do weryfikacji</string>
-    <string name="seed_created_title">🎉 Klucz bezpieczeństwa utworzony!</string>
-    <string name="seed_explain_control_desc">Tylko Ty masz dostęp do swoich danych</string>
-    <string name="seed_explain_control_title">Pełna kontrola</string>
-    <string name="seed_explain_create">Utwórz frazę seed</string>
-    <string name="seed_explain_recovery_desc">Fraza seed pozwala odzyskać dane na dowolnym urządzeniu</string>
-    <string name="seed_explain_recovery_title">Łatwe odzyskiwanie</string>
-    <string name="seed_explain_security_desc">Twoje dane chroni kryptografia klasy wojskowej</string>
-    <string name="seed_explain_security_title">Maksymalne bezpieczeństwo</string>
-    <string name="seed_explain_subtitle">Fraza seed to Twój główny klucz do wszystkich danych. Składa się z 12 słów i zapewnia maksymalne bezpieczeństwo.</string>
-    <string name="seed_explain_title">🔐 Czym jest fraza seed?</string>
-    <string name="seed_explain_warning">Ważne: utrata frazy seed oznacza utratę wszystkich danych!</string>
-    <string name="seed_generating">Generowanie klucza bezpieczeństwa…</string>
-    <string name="seed_generating_hint">To może potrwać kilka sekund</string>
-    <string name="seed_hide">Ukryj frazę odzyskiwania</string>
-    <string name="seed_important">WAŻNE!</string>
-    <string name="seed_show">Pokaż frazę odzyskiwania</string>
-    <string name="seed_verify_back">Wróć</string>
-    <string name="seed_verify_confirm">Potwierdź utworzenie klucza</string>
-    <string name="seed_verify_subtitle">Aby potwierdzić, wpisz te słowa z Twojego klucza bezpieczeństwa:</string>
-    <string name="seed_verify_title">🔍 Potwierdź swój klucz</string>
-    <string name="seed_word_correct">Poprawnie</string>
-    <string name="seed_word_number">Słowo nr %1$d:</string>
-    <string name="seed_word_placeholder">Wpisz słowo…</string>
-    <string name="seed_write_down_warning">Zapisz frazę odzyskiwania i przechowuj ją offline. Bez niej slot odzyskiwania nie przywróci dostępu.</string>
 
     <string name="settings_appearance">Wygląd</string>
     <string name="settings_general">Ogólne</string>
@@ -358,7 +285,6 @@
     <string name="settings_simple_edit">Prosta edycja</string>
     <string name="settings_simple_edit_desc">Wyłącz bloki dynamiczne i edytuj notatki jako zwykły tekst</string>
 
-    <string name="sort">Sortuj</string>
     <string name="sort_by">Sortuj według:</string>
     <string name="sort_created_asc">Według daty utworzenia (od najstarszych)</string>
     <string name="sort_created_asc_short">Utworzono ↑</string>
@@ -378,9 +304,9 @@
 
     <string name="tag_create_failed">Nie udało się zapisać etykiety. Spróbuj ponownie.</string>
     <string name="tag_delete_failed">Nie udało się usunąć etykiety. Spróbuj ponownie.</string>
-    <string name="tag_drag_to_reorder">Przeciągnij, aby zmienić kolejność</string>
     <string name="tag_edit">Edytuj etykietę</string>
     <string name="tag_hidden">Ukryta etykieta</string>
+    <string name="tag_name_taken">Etykieta o tej nazwie już istnieje</string>
     <string name="tag_hide">Ukryj etykietę</string>
     <string name="tag_reorder_failed">Nie udało się zapisać kolejności etykiet. Spróbuj ponownie.</string>
     <string name="tag_show">Pokaż etykietę</string>
@@ -393,7 +319,6 @@
     <string name="task_clear_completed_failed">Nie udało się wyczyścić wykonanych zadań. Spróbuj ponownie.</string>
     <string name="task_clear_completed_message">Czy na pewno chcesz usunąć wszystkie wykonane zadania? Tej operacji nie można cofnąć.</string>
     <string name="task_clear_completed_title">Wyczyść wykonane zadania</string>
-    <string name="task_completed">Wykonane</string>
     <string name="task_completed_at">Wykonano: %1$s</string>
     <string name="task_create_failed">Nie udało się zapisać zadania. Spróbuj ponownie.</string>
     <string name="task_description_placeholder">Opis</string>
@@ -411,10 +336,9 @@
     <string name="text">Tekst</string>
 
     <string name="theme">Motyw</string>
-    <string name="theme_dialog_title">Wybierz motyw</string>
     <string name="theme_type_dark">Ciemny</string>
     <string name="theme_type_light">Jasny</string>
-    <string name="theme_type_system">Domyślny systemu</string>
+    <string name="theme_type_system">Systemowy</string>
 
 
     <string name="undo">Cofnij</string>
@@ -429,12 +353,6 @@
         <item quantity="few">Usunąć %d notatki?</item>
         <item quantity="many">Usunąć %d notatek?</item>
         <item quantity="other">Usunąć %d notatki?</item>
-    </plurals>
-    <plurals name="home_active_tasks">
-        <item quantity="one">Masz %d aktywne zadanie</item>
-        <item quantity="few">Masz %d aktywne zadania</item>
-        <item quantity="many">Masz %d aktywnych zadań</item>
-        <item quantity="other">Masz %d aktywnego zadania</item>
     </plurals>
     <plurals name="lock_lockout_seconds">
         <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %d sekundę</item>
@@ -465,7 +383,6 @@
     <string name="backup_needs_phrase_body">Kopie są szyfrowane frazą odzyskiwania, więc otworzyć je może tylko jej 12 słów. Ten sejf jeszcze jej nie ma. Utwórz ją teraz: pozwoli też odblokować sejf, jeśli zapomnisz PIN.</string>
     <string name="backup_create_phrase">Utwórz frazę odzyskiwania</string>
     <string name="backup_phrase_write_down">Zapisz te 12 słów na papierze, po kolei, i przechowuj je offline. Każdy, kto je ma, może otworzyć Twoje kopie.</string>
-    <string name="backup_phrase_word">%1$d. %2$s</string>
     <string name="backup_phrase_written">Zapisałem(-am) je</string>
     <string name="backup_phrase_check_title">Sprawdź frazę odzyskiwania</string>
     <string name="backup_phrase_check_word">Słowo nr %1$d</string>
@@ -499,10 +416,7 @@
     <string name="backup_error_phrase_mismatch">Te słowa nie są frazą odzyskiwania tego sejfu</string>
     <string name="backup_error_phrase_setup">Nie udało się zapisać frazy odzyskiwania</string>
     <string name="onboarding_restore_title">Przywróć z kopii</string>
-    <string name="onboarding_restore_desc">Masz plik kopii Encly i jego 12 słów? Przywróć wszystko na tym telefonie.</string>
-    <string name="onboarding_restore_body">Wybierz plik kopii zapasowej Encly, a potem wpisz 12-wyrazową frazę odzyskiwania, którą go utworzono. Ta fraza stanie się też frazą odzyskiwania tego sejfu.</string>
     <string name="onboarding_restore_pick">Wybierz plik kopii</string>
-    <string name="onboarding_restore_other_file">Wybierz inny plik</string>
     <string name="auth_setup_restore_failed">Nie udało się przywrócić kopii, więc konfiguracja nie jest jeszcze zakończona. Spróbuj ponownie albo kontynuuj z pustym sejfem i zaimportuj plik później w Ustawienia → Kopia zapasowa.</string>
     <string name="auth_setup_restore_failed_title">Kopia nie została przywrócona</string>
     <string name="auth_setup_restore_retry">Spróbuj ponownie</string>
@@ -520,4 +434,102 @@
     <string name="task_delete">Usuń zadanie</string>
     <string name="task_deleted">Zadanie usunięte</string>
     <string name="task_delete_failed">Nie udało się usunąć zadania. Spróbuj ponownie.</string>
+    <string name="appearance_mode">Tryb</string>
+    <string name="appearance_font">Czcionka</string>
+    <string name="palette_paper">Papier</string>
+    <string name="palette_forest">Las</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_graphite">Grafit</string>
+    <string name="palette_midnight">Północ</string>
+    <string name="appearance_mode_note_system_light">Zgodnie z ustawieniem systemu. Teraz jasny.</string>
+    <string name="appearance_mode_note_system_dark">Zgodnie z ustawieniem systemu. Teraz ciemny.</string>
+    <string name="appearance_mode_note_light">Zawsze jasny.</string>
+    <string name="appearance_mode_note_dark">Zawsze ciemny.</string>
+    <string name="appearance_mode_note_midnight">Motyw Północ jest zawsze ciemny.</string>
+    <string name="dynamic_color_desc">Kolor akcentu z tapety. Android 12 i nowszy.</string>
+    <string name="appearance_dynamic_on_note">Dynamiczne kolory są włączone: akcent pochodzi z tapety.</string>
+    <string name="font_style_cozy_desc">Playfair Display i Source Sans 3</string>
+    <string name="font_style_modern_desc">Poppins i Source Sans 3</string>
+    <string name="font_style_tech_desc">Wszędzie IBM Plex Sans</string>
+    <string name="appearance_preview_title">Lista na oglądanie mieszkania</string>
+    <string name="appearance_preview_body">Przed wizytą: sprawdzić ciśnienie wody, zapytać, ile kosztowało ogrzewanie zeszłej zimy.</string>
+    <string name="appearance_preview_tag">Osobiste</string>
+    <string name="appearance_preview_label">Podgląd</string>
+    <string name="appearance_settings_subtitle">Motyw, tryb i czcionka</string>
+    <string name="field_correct">Poprawnie</string>
+    <string name="pin_digits_entered">Wpisane cyfry: %1$d z %2$d</string>
+    <string name="pin_unlock_with_fingerprint">Odblokuj odciskiem palca</string>
+    <string name="onboarding_step_of">Krok %1$d z %2$d</string>
+    <string name="onboarding_welcome_headline">Notatnik, który otworzysz tylko ty.</string>
+    <string name="onboarding_welcome_sub">Notatki i zadania zaszyfrowane na tym telefonie. Konfiguracja zajmie około minuty.</string>
+    <string name="onboarding_fact_account_title">Bez konta</string>
+    <string name="onboarding_fact_account_desc">Bez rejestracji, bez e-maila, bez resetowania hasła.</string>
+    <string name="onboarding_fact_offline_title">Działa offline</string>
+    <string name="onboarding_fact_offline_desc">Encly nigdy nie łączy się z internetem.</string>
+    <string name="onboarding_fact_encrypted_title">Szyfrowane na urządzeniu</string>
+    <string name="onboarding_fact_encrypted_desc">Twój sejf jest zamknięty kluczem, który masz tylko ty.</string>
+    <string name="onboarding_get_started">Zaczynamy</string>
+    <string name="onboarding_have_backup">Mam kopię zapasową</string>
+    <string name="onboarding_pin_title">Wybierz 6-cyfrowy PIN</string>
+    <string name="onboarding_pin_body">Odblokowuje Encly i chroni klucz do twojego sejfu. Nie da się go zresetować przez e-mail.</string>
+    <string name="onboarding_pin_again_title">Wpisz PIN jeszcze raz</string>
+    <string name="onboarding_pin_again_body">Żebyśmy mieli pewność, że to ten właściwy.</string>
+    <string name="onboarding_biometric_desc">PIN nadal działa jako zapasowy sposób</string>
+    <string name="onboarding_recovery_title">Dwanaście słów przywraca wszystko</string>
+    <string name="onboarding_recovery_body">Encly da ci frazę odzyskiwania. Zapisz ją na papierze: to jedyny zapasowy klucz.</string>
+    <string name="onboarding_recovery_pin_title">Nie pamiętasz PIN-u?</string>
+    <string name="onboarding_recovery_pin_desc">Fraza odblokowuje sejf i pozwala ustawić nowy PIN.</string>
+    <string name="onboarding_recovery_backups_title">Otwiera twoje kopie</string>
+    <string name="onboarding_recovery_backups_desc">Zaszyfrowane pliki kopii da się odczytać tylko z tymi słowami.</string>
+    <string name="onboarding_recovery_phone_title">Nowy telefon</string>
+    <string name="onboarding_recovery_phone_desc">Plik kopii i fraza przywracają każdą notatkę, zadanie i etykietę.</string>
+    <string name="onboarding_recovery_warning">Nikt nie odzyska jej za ciebie, nawet my. Jeśli stracisz i PIN, i frazę, notatki przepadną.</string>
+    <string name="onboarding_recovery_create">Utwórz moją frazę</string>
+    <string name="onboarding_recovery_skip">Pomiń: tylko PIN, bez kopii</string>
+    <string name="onboarding_phrase_title">Zapisz te słowa</string>
+    <string name="onboarding_phrase_body">Na papierze, w tej kolejności. Nie na zrzucie ekranu, nie w chmurze.</string>
+    <string name="onboarding_phrase_hide">Ukryj słowa</string>
+    <string name="onboarding_phrase_show">Pokaż słowa</string>
+    <string name="onboarding_phrase_done">Słowa zapisane</string>
+    <string name="onboarding_verify_title">Sprawdź trzy słowa</string>
+    <string name="onboarding_verify_body">Przepisz je z kartki, nie z pamięci.</string>
+    <string name="onboarding_verify_label">Słowo nr %1$d</string>
+    <string name="onboarding_verify_placeholder">Wpisz słowo</string>
+    <string name="onboarding_verify_wrong">To nie jest słowo nr %1$d</string>
+    <string name="onboarding_verify_confirm">Potwierdź</string>
+    <string name="onboarding_verify_show_again">Pokaż słowa jeszcze raz</string>
+    <string name="onboarding_ready_title">Twój sejf jest gotowy</string>
+    <string name="onboarding_ready_body">Wszystko, co od teraz napiszesz, jest szyfrowane przed zapisaniem.</string>
+    <string name="onboarding_ready_pin_title">PIN ustawiony</string>
+    <string name="onboarding_ready_pin_desc">Pytamy o niego przy każdym otwarciu Encly</string>
+    <string name="onboarding_ready_biometric_title">Odblokowanie odciskiem palca włączone</string>
+    <string name="onboarding_ready_biometric_desc">Zmienisz to w Ustawieniach, Bezpieczeństwo</string>
+    <string name="onboarding_ready_phrase_title">Fraza odzyskiwania sprawdzona</string>
+    <string name="onboarding_ready_phrase_desc">Przechowuj kartkę w bezpiecznym miejscu</string>
+    <string name="onboarding_ready_no_phrase_title">Brak frazy odzyskiwania</string>
+    <string name="onboarding_ready_no_phrase_desc">Kopie zapasowe są wyłączone. Frazę możesz utworzyć później w Ustawieniach, Bezpieczeństwo.</string>
+    <string name="onboarding_ready_restored_title">Kopia przywrócona</string>
+    <string name="onboarding_ready_restored_desc">Twoje notatki, zadania i etykiety wróciły</string>
+    <string name="onboarding_ready_tip">Wskazówka: co jakiś czas eksportuj zaszyfrowaną kopię w Ustawieniach, Kopia zapasowa. Otwiera ją twoja fraza.</string>
+    <string name="onboarding_ready_open">Otwórz mój notatnik</string>
+    <string name="onboarding_restore_label">Przywróć, potem ustaw PIN</string>
+    <string name="onboarding_restore_intro">Wybierz plik kopii Encly, a potem wpisz 12 słów, z którymi go utworzono.</string>
+    <string name="onboarding_restore_file_section">1 · Plik kopii</string>
+    <string name="onboarding_restore_tap_other">Dotknij, aby wybrać inny plik</string>
+    <string name="onboarding_restore_phrase_section">2 · Fraza odzyskiwania</string>
+    <string name="onboarding_restore_phrase_label">12 słów oddzielonych spacjami</string>
+    <string name="onboarding_restore_phrase_helper">Te słowa staną się też frazą odzyskiwania tego telefonu.</string>
+    <string name="notes_title">Notatki</string>
+    <string name="lock_now">Zablokuj teraz</string>
+    <string name="search_placeholder">Szukaj w tytułach i treści</string>
+    <string name="view_options">Opcje widoku</string>
+    <string name="search_nothing_matches">Brak wyników dla „%1$s”</string>
+    <string name="date_today">Dzisiaj</string>
+    <string name="date_yesterday">Wczoraj</string>
+    <plurals name="home_tasks_open">
+        <item quantity="one">Zadania · %d otwarte</item>
+        <item quantity="few">Zadania · %d otwarte</item>
+        <item quantity="many">Zadania · %d otwartych</item>
+        <item quantity="other">Zadania · %d otwartego</item>
+    </plurals>
 </resources>

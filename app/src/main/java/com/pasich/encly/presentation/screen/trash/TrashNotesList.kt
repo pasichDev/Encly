@@ -22,17 +22,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Trash2
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.presentation.components.EmptyStateWidget
 import com.pasich.encly.presentation.components.tiles.NoteItem
+import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -60,10 +62,11 @@ fun TrashNotesList(
                 exit = fadeOut(animationSpec = tween(durationMillis = 300)),
             ) {
                 // A failed read is never shown as an empty trash.
-                EmptyStateWidget(
-                    iconRes = R.drawable.ic_trash_empty,
+                EnclyEmptyState(
+                    icon = Lucide.Trash2,
                     title = failure?.title?.asString(),
-                    description = failure?.message?.asString() ?: stringResource(R.string.empty_trash_desc),
+                    body = failure?.message?.asString() ?: stringResource(R.string.empty_trash_desc),
+                    error = failure != null,
                 )
             }
 
@@ -75,11 +78,8 @@ fun TrashNotesList(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     state = listScrollState,
-                    contentPadding = PaddingValues(
-                        top = 8.dp,
-                        bottom = 80.dp, // Space for FAB
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(top = EnclyTheme.spacing.xs, bottom = EnclyTheme.spacing.l),
+                    verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.cardGap),
                 ) {
                     items(
                         items = stableNotes,
@@ -87,9 +87,10 @@ fun TrashNotesList(
                     ) { stableItem ->
                         NoteItem(
                             itemNote = stableItem.note,
+                            dimmed = true,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp)
+                                .padding(horizontal = EnclyTheme.spacing.listGutter)
                                 .animateItem(),
                             onItemClick = {
                                 if (trashListState.canCheck) {

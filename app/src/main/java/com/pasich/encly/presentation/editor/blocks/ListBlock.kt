@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,27 +22,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.presentation.designsystem.EnclyCheckbox
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.focus.KeyboardUtils
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
-import com.pasich.encly.ui.theme.bodyNote
+import com.pasich.encly.ui.theme.EnclyTheme
 
 @Composable
 fun ListBlock(
@@ -70,18 +65,15 @@ fun ListBlock(
 
     Column(
         modifier =
-        modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(15.dp),
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
     ) {
         itemsList.forEachIndexed { itemIndex, item ->
             key(item.id) {
                 Row(
-                    verticalAlignment = if (block.blockType ==
-                        BlockType.LIST_NUMBER
-                    ) {
+                    // A number or bullet sits by the first line; a checkbox by the item's middle.
+                    verticalAlignment = if (block.blockType != BlockType.LIST_CHECK) {
                         Alignment.Top
                     } else {
                         Alignment.CenterVertically
@@ -91,15 +83,19 @@ fun ListBlock(
                         BlockType.LIST_NUMBER ->
                             Text(
                                 "${itemIndex + 1}.",
-                                style = bodyNote.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = fontStyles.families.body,
-                                    fontSize = fontStyles.sizes.list,
-                                ),
+                                style = EnclyTheme.typography.dataSmall.copy(fontSize = fontStyles.sizes.list),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+
+                        BlockType.LIST_BULLET ->
+                            Text(
+                                "•",
+                                style = EnclyTheme.typography.dataSmall.copy(fontSize = fontStyles.sizes.list),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
 
                         BlockType.LIST_CHECK ->
-                            Checkbox(
+                            EnclyCheckbox(
                                 checked = item.isCheck,
                                 enabled = !isLocked,
                                 onCheckedChange = { checked ->
@@ -107,26 +103,22 @@ fun ListBlock(
                                         this[itemIndex] = item.copy(isCheck = checked)
                                     }
                                 },
-                                modifier =
-                                Modifier
-                                    .size(12.dp)
-                                    .scale(0.7f),
                             )
 
                         else -> Unit
                     }
 
-                    Spacer(modifier = Modifier.width(15.dp))
+                    Spacer(modifier = Modifier.width(EnclyTheme.spacing.rowGap))
                     BasicTextField(
                         value = item.value,
                         // Checked items stay editable; they are only struck through.
                         enabled = !isLocked,
                         textStyle =
-                        bodyNote.copy(
+                        MaterialTheme.typography.bodyLarge.copy(
                             color = if (item.isCheck) {
-                                MaterialTheme.colorScheme.outline
+                                MaterialTheme.colorScheme.onSurfaceVariant
                             } else {
-                                MaterialTheme.colorScheme.onBackground
+                                MaterialTheme.colorScheme.onSurface
                             },
                             textDecoration = if (item.isCheck) TextDecoration.LineThrough else TextDecoration.None,
                             fontFamily = fontStyles.families.body,
@@ -157,7 +149,7 @@ fun ListBlock(
                                         itemIndex // Set focus only on actual interaction
                                 }
                             }
-                            .onKeyEvent { event ->
+                            .onPreviewKeyEvent { event ->
                                 KeyboardUtils.handleKeyEvent(
                                     event = event,
                                     text = item.value,
@@ -242,8 +234,8 @@ fun ListBlock(
                                     Text(
                                         text = stringResource(R.string.list_item_placeholder),
                                         style =
-                                        bodyNote.copy(
-                                            color = MaterialTheme.colorScheme.outlineVariant,
+                                        MaterialTheme.typography.bodyLarge.copy(
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontFamily = fontStyles.families.body,
                                             fontSize = fontStyles.sizes.list,
                                         ),

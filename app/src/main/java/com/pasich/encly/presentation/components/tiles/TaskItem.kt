@@ -2,17 +2,6 @@ package com.pasich.encly.presentation.components.tiles
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,18 +9,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.pasich.encly.R
 import com.pasich.encly.data.model.Task
-import com.pasich.encly.presentation.components.tasks.CompletedIndicator
-import com.pasich.encly.presentation.components.tasks.PriorityIndicator
+import com.pasich.encly.presentation.components.tasks.PriorityValues
+import com.pasich.encly.presentation.designsystem.EnclyTaskRow
+import com.pasich.encly.utils.rememberDateTimeFormat
 import kotlinx.coroutines.delay
+import java.util.Date
 
 private const val TASK_REMOVAL_ANIMATION_MS = 400
 private const val TASK_TRANSLATION_X = 100f
@@ -101,123 +88,32 @@ private fun CompleteTaskAfterAnimation(
 
 @Composable
 private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer {
-                alpha = state.animationProgress
-                scaleX = state.animationProgress
-                scaleY = state.animationProgress
-                translationX = (1f - state.animationProgress) * TASK_TRANSLATION_X
-            }
-            .clickable(
-                enabled = state.enabled && !task.isCompleted && !state.isRemoving,
-                onClick = actions.onClick,
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-    ) {
-        TaskCardContent(task, state, actions)
-    }
-}
-
-@Composable
-private fun TaskCardContent(task: Task, state: TaskCardState, actions: TaskCardActions) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 15.dp, horizontal = 5.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Row(
-            verticalAlignment = Alignment.Top,
-            modifier = Modifier.weight(1f),
-        ) {
-            TaskCheckbox(
-                task = task,
-                enabled = state.enabled && !state.isRemoving,
-                onComplete = actions.onComplete,
-                onUndo = actions.onUndo,
-            )
-            TaskTextContent(task)
-        }
-    }
-}
-
-@Composable
-private fun TaskCheckbox(task: Task, enabled: Boolean, onComplete: () -> Unit, onUndo: () -> Unit) {
-    Checkbox(
+    val dateFormat = rememberDateTimeFormat()
+    val priority = PriorityValues.getById(task.priority)
+    EnclyTaskRow(
+        title = task.title,
         checked = task.isCompleted,
         onCheckedChange = { checked ->
             when {
-                checked && !task.isCompleted -> onComplete()
-                !checked && task.isCompleted -> onUndo()
+                checked && !task.isCompleted -> actions.onComplete()
+                !checked && task.isCompleted -> actions.onUndo()
             }
         },
-        enabled = enabled,
-        modifier = Modifier
-            .scale(0.8f)
-            .padding(end = 8.dp),
+        description = task.description,
+        meta = task.completedDate?.takeIf { task.isCompleted }?.let {
+            stringResource(R.string.task_completed_at, dateFormat.format(Date(it)))
+        },
+        priority = stringResource(priority.label).takeIf { !task.isCompleted },
+        priorityEmphasis = priority.emphasis,
+        large = true,
+        enabled = state.enabled && !state.isRemoving,
+        // Completed tasks open too, to read or edit them.
+        onClick = actions.onClick,
+        modifier = Modifier.graphicsLayer {
+            alpha = state.animationProgress
+            scaleX = state.animationProgress
+            scaleY = state.animationProgress
+            translationX = (1f - state.animationProgress) * TASK_TRANSLATION_X
+        },
     )
 }
-
-@Composable
-private fun TaskTextContent(task: Task) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = task.title,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.Medium,
-                textDecoration = completedDecoration(task.isCompleted),
-            ),
-            color = completedTextColor(task.isCompleted),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-
-        task.description?.let { description ->
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (task.isCompleted) {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textDecoration = completedDecoration(task.isCompleted),
-            )
-        }
-
-        TaskIndicators(task)
-    }
-}
-
-@Composable
-private fun TaskIndicators(task: Task) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (!task.isCompleted) {
-            PriorityIndicator(priority = task.priority)
-        }
-        if (task.isCompleted) {
-            task.completedDate?.let { CompletedIndicator(it) }
-        }
-    }
-}
-
-@Composable
-private fun completedTextColor(isCompleted: Boolean) = if (isCompleted) {
-    MaterialTheme.colorScheme.onSurfaceVariant
-} else {
-    MaterialTheme.colorScheme.onSurface
-}
-
-private fun completedDecoration(isCompleted: Boolean): TextDecoration =
-    if (isCompleted) TextDecoration.LineThrough else TextDecoration.None

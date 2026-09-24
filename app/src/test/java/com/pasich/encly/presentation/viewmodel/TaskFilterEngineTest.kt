@@ -59,7 +59,45 @@ class TaskFilterEngineTest {
         val reloaded = TaskFilterEngine.reduce(selected, listOf(high), listOf(done), 1, 1)
 
         assertEquals(listOf(done), reloaded.filteredActiveTasks)
-        assertEquals(listOf("completed"), reloaded.availableFilters.map { it.id })
+        assertEquals(listOf("all", "completed"), reloaded.availableFilters.map { it.id })
+    }
+
+    @Test
+    fun uncheckingTheLastCompletedTaskLeavesTheCompletedFilter() {
+        val loaded = TaskFilterEngine.reduce(TasksUiState(), listOf(high), listOf(done), 1, 1)
+        val completedChip = loaded.availableFilters.first { it.type == TaskFilter.Type.COMPLETED }
+        val selected = TaskFilterEngine.select(loaded, completedChip)
+
+        val undone = done.copy(isCompleted = false)
+        val afterUncheck = TaskFilterEngine.reduce(selected, listOf(high, undone), emptyList(), 2, 0)
+
+        assertNull(afterUncheck.selectedCompletedFilter)
+        assertEquals(TaskFilterEngine.ALL_FILTER_ID, afterUncheck.selectedActiveFilter?.id)
+        assertEquals(listOf(high, undone), afterUncheck.filteredActiveTasks)
+        assertEquals(
+            listOf("all", "priority_high", "priority_medium", "completed"),
+            afterUncheck.availableFilters.map { it.id },
+        )
+    }
+
+    @Test
+    fun tappingCompletedAgainOrAllTasksGoesBackToTheActiveTasks() {
+        val loaded = TaskFilterEngine.reduce(TasksUiState(), listOf(high, low), listOf(done), 2, 1)
+        val completedChip = loaded.availableFilters.first { it.type == TaskFilter.Type.COMPLETED }
+        val selected = TaskFilterEngine.select(loaded, completedChip)
+
+        listOf(completedChip, selected.availableFilters.first { it.id == TaskFilterEngine.ALL_FILTER_ID })
+            .forEach { chip ->
+                val back = TaskFilterEngine.select(selected, chip)
+
+                assertNull(back.selectedCompletedFilter)
+                assertEquals(TaskFilterEngine.ALL_FILTER_ID, back.selectedActiveFilter?.id)
+                assertEquals(listOf(high, low), back.filteredActiveTasks)
+                assertEquals(
+                    listOf("all", "priority_high", "priority_low", "completed"),
+                    back.availableFilters.map { it.id },
+                )
+            }
     }
 
     @Test

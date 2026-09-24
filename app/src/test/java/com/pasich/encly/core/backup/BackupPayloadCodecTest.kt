@@ -84,6 +84,22 @@ class BackupPayloadCodecTest {
         assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(json.toByteArray(Charsets.UTF_8)) }
     }
 
+    /**
+     * The key names of a backup file are its format: backups written by the release build must
+     * be readable by any other build, so none of them may follow a (renamable) property name.
+     */
+    @Test
+    fun encodedKeyNamesArePinned() {
+        val expected = """{"schema":2,"exportedAt":1700000000000,""" +
+            """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
+            """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
+            """"dateCreate":1,"tagUid":"t1","isTrash":true}],""" +
+            """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
+            """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5}]}"""
+
+        assertEquals(expected, String(BackupPayloadCodec.encode(payload), Charsets.UTF_8))
+    }
+
     /** [payload] as the schema-1 app wrote it: every task carried a `reminderDate`. */
     private fun schema1Json(): String = """{"schema":1,"exportedAt":1700000000000,""" +
         """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +

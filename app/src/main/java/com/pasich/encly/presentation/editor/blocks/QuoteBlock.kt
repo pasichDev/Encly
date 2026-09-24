@@ -1,17 +1,15 @@
 package com.pasich.encly.presentation.editor.blocks
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,15 +21,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Quote
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
-import com.pasich.encly.ui.theme.bodyNote
+import com.pasich.encly.ui.theme.EnclyTheme
 
 /** [focusRequester] targets the quote's text field, not the row that draws the quote bar. */
 @Composable
@@ -45,20 +43,26 @@ fun QuoteBlock(
     val text by block.text.collectAsState()
     val fontStyles = rememberFontStyles()
 
-    Row(
+    var textFieldValue by rememberBlockTextFieldValue(text, blockActions)
+    val quoteStyle = EnclyTheme.typography.quote.copy(
+        color = MaterialTheme.colorScheme.onSurface,
+        fontSize = fontStyles.sizes.quote,
+    )
+
+    // A tonal card with the quote mark in `primary` (design spec §4.4).
+    Column(
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.labelGap),
         modifier = modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .padding(vertical = 10.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium)
+            .padding(horizontal = EnclyTheme.spacing.fieldGap, vertical = EnclyTheme.spacing.m),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(4.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)),
+        Icon(
+            Lucide.Quote,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(EnclyTheme.spacing.iconMedium),
         )
-        var textFieldValue by rememberBlockTextFieldValue(text, blockActions)
-
         BasicTextField(
             value = textFieldValue,
             enabled = !isLocked,
@@ -69,42 +73,25 @@ fun QuoteBlock(
                 // Records the edit for autosave and undo/redo
                 blockActions.onTextChanged(newValue.text)
             },
-            textStyle = bodyNote.copy(
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontStyle = FontStyle.Italic,
-                fontSize = fontStyles.sizes.quote,
-                fontFamily = fontStyles.families.body,
-            ),
+            textStyle = quoteStyle,
             modifier = Modifier
                 .focusRequester(focusRequester)
-                .weight(1f)
-                .textBlockKeys(text, blockActions, enterAddsParagraph = false)
-                .background(
-                    MaterialTheme.colorScheme.surfaceVariant,
-                    RoundedCornerShape(bottomEnd = 10.dp, topEnd = 10.dp),
-                )
-                .padding(8.dp),
+                .fillMaxWidth()
+                .textBlockKeys(text, blockActions, enterAddsParagraph = false),
             decorationBox = { innerTextField ->
-                QuoteDecoration(text.isEmpty(), innerTextField)
+                QuoteDecoration(text.isEmpty(), quoteStyle, innerTextField)
             },
         )
     }
 }
 
 @Composable
-private fun QuoteDecoration(showPlaceholder: Boolean, innerTextField: @Composable () -> Unit) {
-    val fontStyles = rememberFontStyles()
+private fun QuoteDecoration(showPlaceholder: Boolean, style: TextStyle, innerTextField: @Composable () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth()) {
         if (showPlaceholder) {
             Text(
                 text = stringResource(R.string.quote),
-                style = bodyNote.copy(
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6F),
-                    fontStyle = FontStyle.Italic,
-                    fontSize = fontStyles.sizes.quote,
-                    fontFamily = fontStyles.families.body,
-                ),
+                style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
             )
         }
         innerTextField()

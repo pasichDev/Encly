@@ -1,7 +1,7 @@
 package com.pasich.encly.presentation.editor.blocks
 
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.focus.KeyboardUtils
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
@@ -12,7 +12,7 @@ import com.pasich.encly.presentation.editor.state.BlockRemoveAction
  * Enter adds a paragraph when [enterAddsParagraph].
  */
 internal fun Modifier.textBlockKeys(text: String, blockActions: BlockActions, enterAddsParagraph: Boolean): Modifier =
-    onKeyEvent { event ->
+    onPreviewKeyEvent { event ->
         KeyboardUtils.handleKeyEvent(
             event = event,
             text = text,
