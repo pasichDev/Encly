@@ -6,7 +6,9 @@ import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyCallback
 import com.pasich.encly.testutil.eqValue
@@ -46,7 +48,7 @@ class SecuritySettingsViewModelTest {
             AuthSettings(authType = AuthType.PIN, isBiometricEnabled = true, isUserCreatedSeedKey = false),
         )
         `when`(security.biometricStatus()).thenReturn(BiometricStatus.AVAILABLE)
-        viewModel = SecuritySettingsViewModel(security)
+        viewModel = SecuritySettingsViewModel(security, KeyboardPrivacy(InMemorySharedPreferences()))
         // The first load reads the mock on an IO thread; stubbing it meanwhile would race.
         runBlocking { viewModel.uiState.first { it.loaded } }
     }
@@ -85,8 +87,8 @@ class SecuritySettingsViewModelTest {
     @Test
     fun aWrongCurrentPinIsReportedAndARightOneIsNot() = runTest {
         viewModel.uiState.first { it.loaded }
-        `when`(security.verifyPin("111111")).thenReturn(false)
-        `when`(security.verifyPin("222222")).thenReturn(true)
+        `when`(security.verifyPin("111111".toCharArray())).thenReturn(false)
+        `when`(security.verifyPin("222222".toCharArray())).thenReturn(true)
 
         assertFalse(checkCurrent("111111"))
         assertEquals(UiText.of(R.string.pin_current_wrong), viewModel.uiState.value.error)
@@ -99,8 +101,8 @@ class SecuritySettingsViewModelTest {
     @Test
     fun aNewPinIsStoredOrItsFailureShown() = runTest {
         viewModel.uiState.first { it.loaded }
-        `when`(security.configurePin("333333")).thenReturn(true)
-        `when`(security.configurePin("444444")).thenReturn(false)
+        `when`(security.configurePin("333333".toCharArray())).thenReturn(true)
+        `when`(security.configurePin("444444".toCharArray())).thenReturn(false)
 
         assertTrue(activate("333333"))
         assertEquals(AuthType.PIN, viewModel.uiState.value.authType)

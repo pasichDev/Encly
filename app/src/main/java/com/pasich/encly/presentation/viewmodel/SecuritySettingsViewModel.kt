@@ -7,6 +7,7 @@ import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -18,10 +19,18 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class SecuritySettingsViewModel @Inject constructor(private val securityManager: SecurityManager) : ViewModel() {
+class SecuritySettingsViewModel @Inject constructor(
+    private val securityManager: SecurityManager,
+    private val keyboardPrivacy: KeyboardPrivacy,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SecuritySettingsUiState())
     val uiState: StateFlow<SecuritySettingsUiState> = _uiState.asStateFlow()
+
+    /** "Strict keyboard privacy" (see KeyboardPrivacy). */
+    val strictKeyboard: StateFlow<Boolean> = keyboardPrivacy.strict
+
+    fun setStrictKeyboard(enabled: Boolean) = keyboardPrivacy.setStrict(enabled)
 
     init {
         refresh()
@@ -51,7 +60,7 @@ class SecuritySettingsViewModel @Inject constructor(private val securityManager:
 
     fun verifyCurrentPin(target: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val ok = withContext(Dispatchers.Default) { securityManager.verifyPin(target) }
+            val ok = withContext(Dispatchers.Default) { securityManager.verifyPin(target.toCharArray()) }
             if (!ok) {
                 _uiState.value = _uiState.value.copy(error = UiText.of(R.string.pin_current_wrong))
             }
@@ -61,7 +70,7 @@ class SecuritySettingsViewModel @Inject constructor(private val securityManager:
 
     fun activationPinAuth(target: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
-            val ok = withContext(Dispatchers.Default) { securityManager.configurePin(target) }
+            val ok = withContext(Dispatchers.Default) { securityManager.configurePin(target.toCharArray()) }
             if (ok) {
                 _uiState.value = _uiState.value.copy(authType = AuthType.PIN)
             } else {

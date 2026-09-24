@@ -12,7 +12,7 @@ import com.pasich.encly.presentation.screen.PinCodeConfigScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.verify
@@ -118,7 +118,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
     @Test
     fun aWrongCurrentPinIsRefused() {
-        `when`(app.security.verifyPin(anyString())).thenReturn(false)
+        `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
         showPinChange()
 
         typePin("000000")
@@ -138,7 +138,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         typePin("654321")
 
         waitFor { rule.onAllNodesWithContentDescription(str(R.string.pin_changed)).fetchSemanticsNodes().isNotEmpty() }
-        verify(app.security).configurePin("654321")
+        verify(app.security).configurePin("654321".toCharArray())
         waitFor { currentRoute() == NavRoutes.SecuritySettingsRoute.name }
     }
 

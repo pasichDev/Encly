@@ -1,4 +1,4 @@
-Pierwsze wydanie w Google Play.
+Encly 2.0: aplikacja zbudowana od nowa wokół nowego szyfrowanego sejfu.
 • Szyfrowane notatki i zadania, zapisane tylko w telefonie.
 • Blokada 6-cyfrowym PIN-em, opcjonalnie odcisk palca lub twarz.
 • Opcjonalna fraza odzyskiwania z 12 słów.

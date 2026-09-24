@@ -30,4 +30,4 @@ Encly — це захищені нотатки й завдання, зашифр
 
 Encly: зашифровані нотатки, які залишаються вашими.
 
-Політика конфіденційності: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md
+Політика конфіденційності: https://pasichdev.xyz/apps/encly/privacy-policy/

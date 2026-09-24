@@ -48,6 +48,8 @@ private val bundledLibraries = listOf(
     OpenSourceWork("SQLCipher for Android", "BSD 3-Clause", "https://github.com/sqlcipher/sqlcipher-android"),
     OpenSourceWork("kotlin-bip39", "MIT License", "https://github.com/Electric-Coin-Company/kotlin-bip39"),
     OpenSourceWork("Gson", APACHE_2, "https://github.com/google/gson"),
+    OpenSourceWork("Okio", APACHE_2, "https://github.com/square/okio"),
+    OpenSourceWork("Guava ListenableFuture", APACHE_2, "https://github.com/google/guava"),
     OpenSourceWork("Reorderable", APACHE_2, "https://github.com/Calvin-LL/Reorderable"),
     OpenSourceWork("Lucide", "ISC License", "https://github.com/lucide-icons/lucide"),
 )

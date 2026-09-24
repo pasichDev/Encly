@@ -35,38 +35,17 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.core.net.toUri
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.EnclyToolButton
+import com.pasich.encly.presentation.designsystem.FieldState
 import com.pasich.encly.presentation.designsystem.ToolStyle
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.ui.theme.EnclyTheme
-
-/**
- * Offline-first link block: stores only the user-entered URL and its host as the title.
- * No network requests (no og:image preview) — the app is fully offline.
- */
-private fun buildLinkData(rawUrl: String): LinkDataBlock {
-    val url = normalizeLinkUrl(rawUrl)
-    val title = url.toUri().host ?: url
-    return LinkDataBlock(title = title, imageUrl = "", url = url, isError = false)
-}
-
-private val URL_SCHEME = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:")
-
-/**
- * Trims [rawUrl] and gives a bare address ("example.com") an https scheme, so the saved link
- * can be opened. A URL that already names a scheme (https:, mailto:, ...) is kept as typed.
- */
-internal fun normalizeLinkUrl(rawUrl: String): String {
-    val url = rawUrl.trim()
-    return if (url.isEmpty() || URL_SCHEME.containsMatchIn(url)) url else "https://$url"
-}
 
 /**
  * A link: its address entry until one is saved (or while [isEditing] it), then the link as
@@ -86,6 +65,8 @@ fun LinkBlock(
     val urlModel by block.block.collectAsState()
     // Outlives the saved link, so "Edit link" reopens the entry with the current address.
     var inputText by remember { mutableStateOf(urlModel.url) }
+    // Set when the entered address may not be saved (not a web or mail link).
+    var rejected by remember { mutableStateOf(false) }
     LaunchedEffect(urlModel.url, isEditing) {
         if (urlModel.url.isNotBlank()) inputText = urlModel.url
     }
@@ -95,11 +76,18 @@ fun LinkBlock(
     if ((urlModel.url.isBlank() || isEditing) && !isLocked) {
         LinkUrlField(
             inputText = inputText,
-            onInputChange = { inputText = it },
+            rejected = rejected,
+            onInputChange = {
+                inputText = it
+                rejected = false
+            },
             onCommit = {
                 if (inputText.isNotBlank()) {
                     val link = buildLinkData(inputText)
-                    if (blockActions != null) blockActions.onLinkChanged(link) else block.block.value = link
+                    rejected = link == null
+                    if (link != null) {
+                        if (blockActions != null) blockActions.onLinkChanged(link) else block.block.value = link
+                    }
                 }
             },
             onRemoveBlock = { blockActions?.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE) },
@@ -115,6 +103,7 @@ fun LinkBlock(
 @Composable
 private fun LinkUrlField(
     inputText: String,
+    rejected: Boolean,
     onInputChange: (String) -> Unit,
     onCommit: () -> Unit,
     onRemoveBlock: () -> Unit,
@@ -132,6 +121,7 @@ private fun LinkUrlField(
             value = inputText,
             onValueChange = onInputChange,
             label = stringResource(R.string.enter_url),
+            state = if (rejected) FieldState.Error(stringResource(R.string.link_blocked)) else FieldState.Default,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onCommit() }),
             modifier = Modifier.weight(1f),
@@ -162,13 +152,17 @@ private fun LinkUrlField(
 /**
  * A saved link as a card: a globe tile, the site's host as its title and the rest of the address
  * under it (the app is offline, so there is no fetched preview). A tap opens the link's sheet.
- * A link that failed to parse says so in `error`.
+ * A link Encly will not open ([NoteLink.Blocked]) shows its whole address and says so in `error`.
  */
 @Composable
 private fun LinkText(urlModel: LinkDataBlock, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val uri = remember(urlModel.url) { runCatching { urlModel.url.toUri() }.getOrNull() }
-    val host = uri?.host?.removePrefix("www.")?.takeIf { it.isNotBlank() }
-    val rest = remember(urlModel.url) { linkDetail(urlModel.url, uri?.host) }
+    val link = remember(urlModel.url) { parseNoteLink(urlModel.url) }
+    val (title, detail) = remember(link) { link.cardLines() }
+    val error = when {
+        link is NoteLink.Blocked -> stringResource(R.string.link_blocked)
+        urlModel.isError -> stringResource(R.string.falied_content)
+        else -> null
+    }
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -184,36 +178,27 @@ private fun LinkText(urlModel: LinkDataBlock, onClick: () -> Unit, modifier: Mod
                 .clickable(role = Role.Button, onClickLabel = stringResource(R.string.more_options), onClick = onClick)
                 .padding(EnclyTheme.spacing.s),
         ) {
-            Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.primaryContainer) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(EnclyTheme.spacing.tileSmall)) {
-                    Icon(
-                        EnclyIcons.Globe,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
-                    )
-                }
-            }
+            LinkTile()
             Column(
                 verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.textGap),
                 modifier = Modifier.weight(1f),
             ) {
                 Text(
-                    text = host ?: urlModel.url,
+                    text = title,
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    overflow = if (link is NoteLink.Blocked) TextOverflow.MiddleEllipsis else TextOverflow.Ellipsis,
                 )
-                if (urlModel.isError) {
+                if (error != null) {
                     Text(
-                        text = stringResource(R.string.falied_content),
+                        text = error,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
-                } else if (rest.isNotEmpty()) {
+                } else if (detail.isNotEmpty()) {
                     Text(
-                        text = rest,
+                        text = detail,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -225,8 +210,21 @@ private fun LinkText(urlModel: LinkDataBlock, onClick: () -> Unit, modifier: Mod
     }
 }
 
-/** What the card shows under the host: the rest of the address; empty when there is no host. */
-internal fun linkDetail(url: String, host: String?): String {
-    if (host.isNullOrBlank()) return ""
-    return url.substringAfter("://").substringAfter(host, "").trimEnd('/')
+/** The globe tile at the start of a link card. */
+@Composable
+private fun LinkTile(modifier: Modifier = Modifier) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier = modifier,
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(EnclyTheme.spacing.tileSmall)) {
+            Icon(
+                EnclyIcons.Globe,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+            )
+        }
+    }
 }

@@ -19,9 +19,15 @@ class BackupPhraseSetup @Inject constructor(private val securityManager: Securit
     /** [phrase] must be this vault's recovery phrase, normalized; the caller wipes it. */
     fun confirm(phrase: CharArray): Boolean = securityManager.createBackupKey(phrase)
 
-    /** New 12 words for a vault without a recovery phrase. The caller must wipe them. */
+    /** New 12 words, for a first recovery phrase or a replacement. The caller must wipe them. */
     fun generate(): CharArray = securityManager.generateMnemonicCode()
 
     /** Adds [phrase] as the vault's recovery phrase and backup key; the caller wipes it. */
     fun add(phrase: CharArray): Boolean = securityManager.addRecoverySeed(phrase)
+
+    /**
+     * Replaces the vault's recovery phrase (and backup key) with [phrase]; the caller wipes it.
+     * Backups made before keep needing the old words.
+     */
+    fun replace(phrase: CharArray): Boolean = securityManager.replaceRecoverySeed(phrase)
 }

@@ -31,4 +31,25 @@
         <item quantity="one">%d tag</item>
         <item quantity="other">%d tags</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Your PIN can no longer unlock Encly on this phone: its hardware key was reset. Use your recovery phrase (or fingerprint), then set a new PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Too many attempts. Try again in %d minute</item>
+        <item quantity="other">Too many attempts. Try again in %d minutes</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Too many attempts. Try again in %d hour</item>
+        <item quantity="other">Too many attempts. Try again in %d hours</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Replace recovery phrase</string>
+    <string name="security_recovery_replace_desc">Get 12 new words. Backups made before keep needing the old ones.</string>
+    <string name="security_recovery_replace_confirm_title">Replace the recovery phrase?</string>
+    <string name="security_recovery_replace_confirm_body">You will get 12 new words. The old phrase stops unlocking your notes on this phone. Backups you already made still open only with the old phrase, so keep it as long as you keep them, or make a new backup afterwards.</string>
+    <string name="security_recovery_replace_confirm">Get new words</string>
+    <string name="security_recovery_replace_warning_title">Your old phrase stops working here</string>
+    <string name="security_recovery_replace_warning_body">Once you confirm, only these words unlock your notes if you forget the PIN. Backups made before still need the old words.</string>
+    <string name="security_recovery_replaced">Recovery phrase replaced. Make a new backup to use it for backups too.</string>
+    <string name="security_privacy_section">Privacy</string>
+    <string name="security_keyboard_strict_title">Strict keyboard privacy</string>
+    <string name="security_keyboard_strict_desc">Asks the keyboard for no suggestions, no cloud prediction and no reading around the cursor. Turns off autocorrect, and some keyboards hide emoji or voice input.</string>
 </resources>

@@ -37,4 +37,29 @@
         <item quantity="many">%d tagów</item>
         <item quantity="other">%d tagu</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Twój PIN nie może już odblokować Encly na tym telefonie: jego klucz sprzętowy został zresetowany. Użyj frazy odzyskiwania (lub odcisku palca), a potem ustaw nowy PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %d minutę</item>
+        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %d minuty</item>
+        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %d minut</item>
+        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %d minuty</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %d godzinę</item>
+        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %d godziny</item>
+        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %d godzin</item>
+        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %d godziny</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Zmień frazę odzyskiwania</string>
+    <string name="security_recovery_replace_desc">Otrzymaj 12 nowych słów. Kopie zapasowe zrobione wcześniej nadal wymagają starych.</string>
+    <string name="security_recovery_replace_confirm_title">Zmienić frazę odzyskiwania?</string>
+    <string name="security_recovery_replace_confirm_body">Otrzymasz 12 nowych słów. Stara fraza przestanie odblokowywać Twoje notatki na tym telefonie. Kopie zapasowe, które już masz, otworzą się tylko starą frazą, więc zachowaj ją, dopóki przechowujesz te kopie, albo zrób potem nową kopię.</string>
+    <string name="security_recovery_replace_confirm">Otrzymaj nowe słowa</string>
+    <string name="security_recovery_replace_warning_title">Stara fraza przestaje tu działać</string>
+    <string name="security_recovery_replace_warning_body">Po potwierdzeniu tylko te słowa odblokują Twoje notatki, gdy zapomnisz PIN. Kopie zapasowe zrobione wcześniej nadal wymagają starych słów.</string>
+    <string name="security_recovery_replaced">Fraza odzyskiwania zmieniona. Zrób nową kopię zapasową, aby używać jej także do kopii.</string>
+    <string name="security_privacy_section">Prywatność</string>
+    <string name="security_keyboard_strict_title">Ścisła prywatność klawiatury</string>
+    <string name="security_keyboard_strict_desc">Prosi klawiaturę o brak podpowiedzi, brak przewidywania w chmurze i nieodczytywanie tekstu wokół kursora. Wyłącza autokorektę, a niektóre klawiatury ukrywają emoji lub wprowadzanie głosowe.</string>
 </resources>

@@ -18,7 +18,7 @@ import com.pasich.encly.R
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.LockScreen
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -67,7 +67,7 @@ class LockScreenTest : ComposeScreenTest() {
 
     @Test
     fun aWrongPinSaysSoAndStays() {
-        `when`(app.security.unlockWithPin(anyString())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+        `when`(app.security.unlockWithPin(anyCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
         show()
 
         typePin("000000")
@@ -79,7 +79,7 @@ class LockScreenTest : ComposeScreenTest() {
 
     @Test
     fun theRightPinOpensTheNotes() {
-        `when`(app.security.unlockWithPin(anyString())).thenReturn(VaultUnlockResult.SUCCESS)
+        `when`(app.security.unlockWithPin(anyCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
         show()
 
         typePin("123456")

@@ -21,7 +21,7 @@ import com.pasich.encly.presentation.screen.backup.backupErrorMessage
 import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.anyByteArray
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -65,7 +65,7 @@ class BackupFlowsTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         security = mock(SecurityManager::class.java)
-        `when`(security.verifyPin(anyString())).thenAnswer { it.arguments[0] == PIN }
+        `when`(security.verifyPin(anyCharArray())).thenAnswer { String(it.getArgument<CharArray>(0)) == PIN }
         `when`(security.hasRecoverySeed()).thenReturn(true)
         `when`(security.hasBackupKey()).thenReturn(true)
         // A fresh copy per call: createBackup wipes the key it was handed.

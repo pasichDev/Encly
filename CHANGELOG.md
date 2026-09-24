@@ -11,7 +11,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
-## [2.0.0] - Unreleased (beta)
+## [2.0.0] - 2026-09-24
 
 versionCode 20000.
 
@@ -33,7 +33,8 @@ versionCode 20000.
   12 words. A vault without a recovery seed can add one before its first export.
 - Mandatory 6-digit PIN; optional Class 3 biometric unlock bound to a `BiometricPrompt.CryptoObject`.
 - The database is closed and the in-memory key zeroized when the app goes to the background.
-- Privacy policy ([PRIVACY.md](PRIVACY.md)), linked from the About screen.
+- Privacy policy, published at <https://pasichdev.xyz/apps/encly/privacy-policy/> (mirrored in
+  [PRIVACY.md](PRIVACY.md)) and linked from the About screen and both store listings.
 - `fdroid` and `play` distribution flavors (same application ID). The `fdroid` flavor has no
   Google Play "Rate app" link and no baseline profile, for reproducible builds.
 - Signed release workflow: tag `vX.Y.Z` builds, signs (when secrets exist), and publishes APKs
@@ -49,6 +50,22 @@ versionCode 20000.
   complete.
 - Settings → Security: create a recovery phrase later (after the PIN, with the same three-word
   check as onboarding), and "Erase all data" behind the PIN and an explicit confirmation.
+- New brand: an "E" lettermark launcher icon with a themed (monochrome) layer, used in the app in
+  place of the old lock tile, and one icon set drawn in the app's stroke.
+- Unlock animation: after a PIN or fingerprint unlock the logo tile grows to fill the window and
+  the notes list slides in under it, without the lock screen flashing.
+- Recovery phrase entry as 12 numbered word cells, shared by onboarding, recovery from the lock
+  screen, backup import and phrase confirmation, with paste, a per-word BIP39 check and the
+  checksum check.
+- Editor toolbar: a button that hides the keyboard and brings it back to the block you were
+  writing in (also on OEM keyboards that ignore one of the two Android APIs).
+- Link blocks show as offline cards: the host as the title and the rest of the address under it.
+  Nothing is fetched to build them.
+- Onboarding rebuilt as one flow with progress: welcome, PIN with optional fingerprint, why the
+  recovery phrase matters, write it down, check three words. "I have a backup" leads to restore;
+  "PIN only, no backups" skips the phrase.
+- A rebuilt Support page and an updated FAQ; donations (Ko-fi) appear only in the F-Droid build.
+- Tag drag-to-reorder, designed empty states, and a discard confirmation in the editor.
 
 ### Changed
 
@@ -65,11 +82,21 @@ versionCode 20000.
   Note text is parsed once per change, off the main thread; an unreadable note no longer breaks
   the list or search.
 - The editor toolbar's move up, move down and delete buttons act on the current block.
+- New design system: Playfair Display, Source Sans 3 and IBM Plex Sans on one type scale, shared
+  spacing, shapes and components; every screen restyled (lock, notes, editor, tasks, trash,
+  tags, settings, backup, dialogs). Tasks are always in the drawer.
+- Editor: fields own their text, so fast typing no longer resets; new blocks go after the block
+  being edited; hardware Enter adds no stray line break; quotes end with a closing mark.
+- Unlocking returns to the note that was open.
+- Result messages on the backup and security screens stay visible until read.
+- Store listings: texts, feature graphics and screenshots for all 9 languages.
 
 ### Removed
 
-- Plaintext note sharing, clipboard copy of notes/links, seed export and calendar export.
+- Plaintext note sharing, clipboard copy of notes, seed export and calendar export. (A link
+  block's address can still be copied, on request and marked sensitive.)
 - The `ui-text-google-fonts` dependency and its Google Play Services font provider.
+- Unused libraries.
 - The hidden screen-protection preference (screen protection cannot be turned off) and other
   unused code; debug logging calls (release builds strip the remaining failure logs).
 

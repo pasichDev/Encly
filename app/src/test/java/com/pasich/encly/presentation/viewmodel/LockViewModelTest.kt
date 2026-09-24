@@ -2,6 +2,10 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
@@ -9,6 +13,7 @@ import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyByteArray
 import com.pasich.encly.testutil.anyCallback
+import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.testutil.eqValue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -27,9 +32,13 @@ import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
+import org.mockito.Mockito.timeout
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 /** The lock screen: PIN, recovery words and biometric unlock, and an unlock that lands in the background. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -55,7 +64,7 @@ class LockViewModelTest {
 
     @Test
     fun theRightPinUnlocks() = runTest {
-        `when`(security.unlockWithPin(PIN)).thenReturn(VaultUnlockResult.SUCCESS)
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
 
         assertEquals(PinUnlockResult.SUCCESS, pin())
         assertFalse(viewModel.busy.value)
@@ -64,10 +73,10 @@ class LockViewModelTest {
 
     @Test
     fun aWrongPinAndABrokenVaultAreToldApart() = runTest {
-        `when`(security.unlockWithPin(PIN)).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
         assertEquals(PinUnlockResult.WRONG_PIN, pin())
 
-        `when`(security.unlockWithPin(PIN)).thenReturn(VaultUnlockResult.DB_ERROR)
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.DB_ERROR)
         assertEquals(PinUnlockResult.DB_ERROR, pin())
 
         verify(security, never()).lock()
@@ -75,12 +84,53 @@ class LockViewModelTest {
 
     @Test
     fun aPinUnlockThatFinishesInTheBackgroundClosesTheVaultAgain() = runTest {
-        `when`(security.unlockWithPin(PIN)).thenReturn(VaultUnlockResult.SUCCESS)
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
         sessionLock.onStop(mock(LifecycleOwner::class.java))
 
         assertEquals(PinUnlockResult.BACKGROUNDED, pin())
         verify(security).lock()
         assertTrue(sessionLock.locked.value)
+    }
+
+    @Test
+    fun anUnlockThatFinishesAfterTheScreenIsGoneClosesTheVaultAgain() {
+        // The PIN check (KDF) is running when the lock screen's ViewModel is cleared.
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        `when`(security.unlockWithPin(anyCharArray())).thenAnswer {
+            entered.countDown()
+            release.await(5, TimeUnit.SECONDS)
+            VaultUnlockResult.SUCCESS
+        }
+        `when`(security.isLockable()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        val store = ViewModelStore()
+        val owned = ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel as T
+            },
+        )[LockViewModel::class]
+        var published: PinUnlockResult? = null
+
+        owned.authenticatePin(PIN.toCharArray()) { published = it }
+        assertTrue(entered.await(5, TimeUnit.SECONDS))
+        store.clear()
+        release.countDown()
+
+        verify(security, timeout(5_000)).lock()
+        assertTrue(sessionLock.locked.value)
+        assertEquals("nothing navigates into the vault", null, published)
+    }
+
+    @Test
+    fun aLostPinKeyAndALockoutAreReported() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.PIN_KEY_LOST)
+        assertEquals(PinUnlockResult.KEY_LOST, pin())
+
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.LOCKED_OUT)
+        assertEquals(PinUnlockResult.LOCKED_OUT, pin())
     }
 
     @Test
@@ -173,7 +223,7 @@ class LockViewModelTest {
 
     private suspend fun pin(): PinUnlockResult {
         val result = CompletableDeferred<PinUnlockResult>()
-        viewModel.authenticatePin(PIN) { result.complete(it) }
+        viewModel.authenticatePin(PIN.toCharArray()) { result.complete(it) }
         return result.await()
     }
 

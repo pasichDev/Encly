@@ -116,6 +116,16 @@ class TranslationCompletenessTest {
         assertEquals(shipped, offered)
     }
 
+    @Test
+    fun buildLocaleFiltersKeepExactlyTheShippedLocales() {
+        val buildFile = File(resDir, "../../../build.gradle.kts")
+        val filters = LOCALE_FILTERS.find(buildFile.readText())
+            ?.groupValues?.get(1)
+            ?.let { list -> Regex("\"([^\"]+)\"").findAll(list).map { it.groupValues[1] }.toSet() }
+        val shipped = localeDirs.keys.map { it.substringBefore('-') }.toSet() + DEFAULT_LOCALE
+        assertEquals("androidResources.localeFilters in $buildFile", shipped, filters)
+    }
+
     private class Resources(
         val strings: Map<String, String>,
         val plurals: Map<String, Map<String, String>>,
@@ -158,6 +168,7 @@ class TranslationCompletenessTest {
         const val DEFAULT_LOCALE = "en"
         const val MIN_EXPECTED_KEYS = 100
         val LOCALE_DIR = Regex("""values-[a-z]{2,3}(-r[A-Z]{2})?""")
+        val LOCALE_FILTERS = Regex("""localeFilters\s*\+=\s*listOf\(([^)]*)\)""")
         val FORMAT_ARG = Regex("""%(\d+\$)?[-#+ 0,(]*\d*(\.\d+)?[a-zA-Z%]""")
 
         /** A ' or " not preceded by a backslash: aapt drops it or fails the build. */

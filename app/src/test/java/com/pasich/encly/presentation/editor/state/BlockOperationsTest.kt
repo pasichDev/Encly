@@ -74,4 +74,54 @@ class BlockOperationsTest {
         assertEquals("", block.text.value)
         assertEquals("other", other.text.value)
     }
+
+    @Test
+    fun eachWordTypedIsItsOwnUndoStep() {
+        var text = ""
+        "one two".forEach { char ->
+            text += char
+            operations.changeValue(block.id, block.text, text, mergeable = true)
+            now += 50
+        }
+
+        operations.undo()
+        assertEquals("one ", block.text.value)
+        operations.undo()
+        assertEquals("", block.text.value)
+    }
+
+    @Test
+    fun deletingAfterTypingIsItsOwnStep() {
+        operations.changeValue(block.id, block.text, "abc", mergeable = true)
+        now += 50
+        operations.changeValue(block.id, block.text, "ab", mergeable = true)
+
+        operations.undo()
+
+        assertEquals("abc", block.text.value)
+    }
+
+    @Test
+    fun aBatchIsUndoneAndRedoneAsOneStep() {
+        val added = Block.TextBlock(MutableStateFlow("world"))
+        operations.changeValue(block.id, block.text, "hello world", mergeable = false)
+
+        operations.batch {
+            setValue(block.id, block.text, "hello")
+            addBlock(1, added)
+        }
+        assertEquals(listOf("hello", "world"), blocks.map { (it as Block.TextBlock).text.value })
+
+        operations.undo()
+        assertEquals(listOf("hello world"), blocks.map { (it as Block.TextBlock).text.value })
+        operations.redo()
+        assertEquals(listOf("hello", "world"), blocks.map { (it as Block.TextBlock).text.value })
+    }
+
+    @Test
+    fun anEmptyBatchRecordsNothing() {
+        operations.batch { setValue(block.id, block.text, block.text.value) }
+
+        assertFalse(operations.canUndo())
+    }
 }

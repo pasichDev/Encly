@@ -1,10 +1,9 @@
 package com.pasich.encly.core.security
 
 import android.content.SharedPreferences
-import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.database.SecureDatabaseManager
-import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +26,15 @@ enum class InitialStatus {
 enum class VaultUnlockResult {
     SUCCESS,
     INVALID_CREDENTIAL,
+
+    /** A PIN lockout is running; the PIN was not checked. */
+    LOCKED_OUT,
+
+    /**
+     * The device-bound half of the PIN key is gone (Keystore reset, key invalidated): the PIN
+     * can no longer unlock on this device. The recovery phrase (or fingerprint) still can.
+     */
+    PIN_KEY_LOST,
     DB_ERROR,
 }
 
@@ -38,14 +46,16 @@ enum class VaultUnlockResult {
  */
 @Singleton
 class SecurityManager @Inject constructor(
-    private val secureStoragePrefs: SharedPreferences,
+    private val appFlags: SharedPreferences,
+    private val vaultStore: VaultStore,
     private val seedPhraseManager: SeedPhraseManager,
     private val secureDatabaseManager: SecureDatabaseManager,
     private val authenticationManager: AuthenticationManager,
     private val biometricManager: BiometricManager,
 ) {
     companion object {
-        private const val ONBOARDING_SHOWN_KEY = "onboarding_shown_v2"
+        private const val TAG = "SecurityManager"
+        private const val ONBOARDING_SHOWN_KEY = "onboarding_shown_v3"
         private const val DEK_LENGTH = 32
     }
 
@@ -60,13 +70,24 @@ class SecurityManager @Inject constructor(
 
     var securityStatus = InitialStatus.NO
 
+    /**
+     * Never throws: vault storage that cannot be read (a damaged state file, a storage or
+     * Keystore failure) routes to the damaged-vault screen instead of crash-looping the app.
+     */
+    @Suppress("TooGenericExceptionCaught") // Any startup failure must route, never crash-loop.
     fun resolveInitialStatus(): InitialStatus {
-        val status = initializeSecurity()
+        val status = try {
+            initializeSecurity()
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Vault state could not be read", e)
+            InitialStatus.LOSS_CRYPTO
+        }
         securityStatus = status
         return status
     }
 
     private fun initializeSecurity(): InitialStatus {
+        if (vaultStore.isCorrupt()) return InitialStatus.LOSS_CRYPTO
         if (!isOnboardingShown()) return uncommittedVaultStatus()
         if (!seedPhraseManager.verificationKeyData()) return InitialStatus.LOSS_CRYPTO
         if (!secureDatabaseManager.hasEncryptedDatabase()) return InitialStatus.LOSS_DATABASE
@@ -108,12 +129,14 @@ class SecurityManager @Inject constructor(
 
     fun hasRecoverySeed(): Boolean = seedPhraseManager.hasRecoverySeed()
 
-    fun configurePin(pin: String): Boolean {
-        val dek = currentKeyCopy() ?: return false
+    /** Sets a new PIN slot around the live DEK. [pin] is wiped. */
+    fun configurePin(pin: CharArray): Boolean {
+        val dek = currentKeyCopy()
         val configured = try {
-            authenticationManager.configurePin(pin, dek)
+            dek != null && authenticationManager.configurePin(pin, dek)
         } finally {
-            SensitiveDataCleaner.clear(dek)
+            dek?.let(SensitiveDataCleaner::clear)
+            SensitiveDataCleaner.clear(pin)
         }
         if (configured) sessionUnlockedWithRecovery = false
         return configured
@@ -125,13 +148,27 @@ class SecurityManager @Inject constructor(
      */
     fun canResetPinWithoutCurrent(): Boolean = sessionUnlockedWithRecovery && sessionDek != null
 
-    fun unlockWithPin(pin: String): VaultUnlockResult {
-        val dek = authenticationManager.unlockWithPin(pin)
-            ?: return VaultUnlockResult.INVALID_CREDENTIAL
-        return try {
-            if (unlockWithRawKey(dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+    /** One PIN attempt; [pin] is wiped. */
+    fun unlockWithPin(pin: CharArray): VaultUnlockResult {
+        val attempt = try {
+            authenticationManager.unlockWithPin(pin)
         } finally {
-            SensitiveDataCleaner.clear(dek)
+            SensitiveDataCleaner.clear(pin)
+        }
+        return when (attempt) {
+            is PinUnlock.Success -> try {
+                if (unlockWithRawKey(attempt.dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+            } finally {
+                SensitiveDataCleaner.clear(attempt.dek)
+            }
+
+            PinUnlock.WrongPin -> VaultUnlockResult.INVALID_CREDENTIAL
+
+            PinUnlock.LockedOut -> VaultUnlockResult.LOCKED_OUT
+
+            PinUnlock.KeyLost -> VaultUnlockResult.PIN_KEY_LOST
+
+            PinUnlock.Failed -> VaultUnlockResult.DB_ERROR
         }
     }
 
@@ -216,6 +253,20 @@ class SecurityManager @Inject constructor(
         }
     }
 
+    /**
+     * Replaces the recovery phrase of the unlocked vault with [phrase] (see
+     * [SeedPhraseManager.replaceRecoverySeed]). The old words stop opening this vault; backups
+     * sealed to them still need them. The caller wipes [phrase].
+     */
+    fun replaceRecoverySeed(phrase: CharArray): Boolean {
+        val dek = sessionDek?.copyOf() ?: return false
+        return try {
+            seedPhraseManager.replaceRecoverySeed(phrase, dek)
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
+
     /** Adds the backup-key slot to an unlocked recovery-seed vault; [phrase] must be its seed. */
     fun createBackupKey(phrase: CharArray): Boolean {
         val dek = sessionDek?.copyOf() ?: return false
@@ -228,7 +279,12 @@ class SecurityManager @Inject constructor(
 
     fun pinLockoutRemainingMillis(): Long = authenticationManager.remainingLockoutMillis()
 
-    fun verifyPin(pin: String): Boolean = authenticationManager.verifyPinAuth(pin)
+    /** Re-authentication with the PIN; counts like an unlock attempt. [pin] is wiped. */
+    fun verifyPin(pin: CharArray): Boolean = try {
+        authenticationManager.verifyPinAuth(pin)
+    } finally {
+        SensitiveDataCleaner.clear(pin)
+    }
 
     fun verifySeed(phrase: CharArray): Boolean = seedPhraseManager.verifyMnemonic(phrase)
 
@@ -238,10 +294,7 @@ class SecurityManager @Inject constructor(
      */
     fun unlockWithRawKey(dek: ByteArray, allowCreate: Boolean = false): Boolean {
         if (dek.size != DEK_LENGTH) return false
-        val ok = secureDatabaseManager.unlockDatabase(
-            SecretKeySpec(dek, "AES"),
-            allowCreate = allowCreate,
-        )
+        val ok = secureDatabaseManager.unlockDatabase(dek, allowCreate = allowCreate)
         if (ok) {
             setSessionKey(dek)
             securityStatus = InitialStatus.MAIN
@@ -300,13 +353,13 @@ class SecurityManager @Inject constructor(
 
     fun isOnboardingShow(): Boolean = !isOnboardingShown()
 
-    private fun isOnboardingShown(): Boolean = secureStoragePrefs.getBoolean(ONBOARDING_SHOWN_KEY, false)
+    private fun isOnboardingShown(): Boolean = appFlags.getBoolean(ONBOARDING_SHOWN_KEY, false)
 
     fun setOnboardingShown(): Boolean {
         if (!seedPhraseManager.verificationKeyData() || !authenticationManager.hasPinSlot()) {
             return false
         }
-        return secureStoragePrefs.edit()
+        return appFlags.edit()
             .putBoolean(ONBOARDING_SHOWN_KEY, true)
             .commit()
     }
@@ -326,7 +379,9 @@ class SecurityManager @Inject constructor(
         biometricManager.disable()
         authenticationManager.wipe()
         seedPhraseManager.wipe()
-        secureStoragePrefs.edit().remove(ONBOARDING_SHOWN_KEY).commit()
+        appFlags.edit().remove(ONBOARDING_SHOWN_KEY).commit()
+        // A damaged state file cannot be edited slot by slot; a new vault starts from none.
+        if (vaultStore.isCorrupt()) vaultStore.clear()
         securityStatus = InitialStatus.ONBOARDING
         return seedPhraseManager.initializeVault(recoverySeed)
     }
@@ -350,7 +405,9 @@ class SecurityManager @Inject constructor(
         biometricManager.disable()
         authenticationManager.wipe()
         seedPhraseManager.wipe()
-        secureStoragePrefs.edit { clear() }
+        // Also the way out of a damaged state file, which the per-slot wipes above cannot edit.
+        vaultStore.clear()
+        appFlags.edit().clear().commit()
         securityStatus = InitialStatus.ONBOARDING
     }
 

@@ -34,4 +34,27 @@
         <item quantity="many">%d di tag</item>
         <item quantity="other">%d tag</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Il tuo PIN non può più sbloccare Encly su questo telefono: la sua chiave hardware è stata reimpostata. Usa la frase di recupero (o l\'impronta), poi imposta un nuovo PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Troppi tentativi. Riprova tra %d minuto</item>
+        <item quantity="many">Troppi tentativi. Riprova tra %d minuti</item>
+        <item quantity="other">Troppi tentativi. Riprova tra %d minuti</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Troppi tentativi. Riprova tra %d ora</item>
+        <item quantity="many">Troppi tentativi. Riprova tra %d ore</item>
+        <item quantity="other">Troppi tentativi. Riprova tra %d ore</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Sostituisci la frase di recupero</string>
+    <string name="security_recovery_replace_desc">Ricevi 12 nuove parole. I backup fatti prima richiedono ancora quelle vecchie.</string>
+    <string name="security_recovery_replace_confirm_title">Sostituire la frase di recupero?</string>
+    <string name="security_recovery_replace_confirm_body">Riceverai 12 nuove parole. La vecchia frase non sblocca più le tue note su questo telefono. I backup già fatti si aprono solo con la vecchia frase: conservala finché conservi quei backup, oppure fai un nuovo backup dopo.</string>
+    <string name="security_recovery_replace_confirm">Ricevi nuove parole</string>
+    <string name="security_recovery_replace_warning_title">La vecchia frase qui non funziona più</string>
+    <string name="security_recovery_replace_warning_body">Una volta confermato, solo queste parole sbloccano le tue note se dimentichi il PIN. I backup fatti prima richiedono ancora le vecchie parole.</string>
+    <string name="security_recovery_replaced">Frase di recupero sostituita. Fai un nuovo backup per usarla anche per i backup.</string>
+    <string name="security_privacy_section">Privacy</string>
+    <string name="security_keyboard_strict_title">Privacy rigorosa della tastiera</string>
+    <string name="security_keyboard_strict_desc">Chiede alla tastiera nessun suggerimento, nessuna previsione nel cloud e nessuna lettura intorno al cursore. Disattiva la correzione automatica e alcune tastiere nascondono emoji o input vocale.</string>
 </resources>

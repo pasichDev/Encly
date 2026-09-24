@@ -30,4 +30,4 @@ OPEN SOURCE
 
 Encly: versleutelde notities die van jou blijven.
 
-Privacybeleid: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md
+Privacybeleid: https://pasichdev.xyz/apps/encly/privacy-policy/

@@ -4,6 +4,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.dynamicBlocks.TextualBlock
 import com.pasich.encly.dynamicBlocks.utils.BlockUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -47,10 +48,14 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         if (contentFlows.isEmpty()) flowOf(Unit) else combine(contentFlows) { }
     }
 
-    /** Shows a stored note's [loaded] blocks in place of the current ones. */
+    /**
+     * Shows a stored note's [loaded] blocks in place of the current ones. The history starts
+     * over: undo never reaches back into what was shown before (nor keeps it in memory).
+     */
     fun load(loaded: List<Block>) {
         _blocks.clear()
         _blocks.addAll(loaded)
+        history.clear()
         afterChange()
     }
 
@@ -67,14 +72,6 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         if (replacesEmptyFirst) history.replaceBlock(anchor, block) else history.addBlock(target, block)
         afterChange()
 
-        selection.focusAt(target)
-    }
-
-    /** Adds [block] after position [afterIndex] and focuses it. */
-    fun addBlockAfter(afterIndex: Int, block: Block) {
-        val target = (afterIndex + 1).coerceIn(0, _blocks.size)
-        history.addBlock(target, block)
-        afterChange()
         selection.focusAt(target)
     }
 
@@ -95,12 +92,16 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         if (refocus) selection.focusAt(_blocks.previousFocusableIndex(index), cursorToEnd = true)
     }
 
-    /** Replaces the block at [index] with [newBlock] and focuses the new field. */
+    /**
+     * Replaces the block at [index] with [newBlock] and focuses the new field. A paragraph turned
+     * into a heading or quote keeps its text, so its cursor stays where it was.
+     */
     fun replaceBlock(index: Int, newBlock: Block): Boolean {
         if (index !in _blocks.indices) return false
+        val caret = selection.caretOf(_blocks[index].id)?.takeIf { newBlock is TextualBlock }
         history.replaceBlock(index, newBlock)
         afterChange()
-        selection.focusAt(index)
+        selection.focusAt(index, caret = caret)
         return true
     }
 
@@ -116,8 +117,20 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
      * Sets [state], a field of block [blockId], to [newValue] as one undoable edit. [mergeable]
      * edits (typing) in quick succession collapse into one undo step.
      */
-    fun <T> changeValue(blockId: String, state: MutableStateFlow<T>, newValue: T, mergeable: Boolean) {
-        history.changeValue(blockId, state, newValue, mergeable)
+    fun <T> changeValue(
+        blockId: String,
+        state: MutableStateFlow<T>,
+        newValue: T,
+        mergeable: Boolean,
+        step: TypingStep? = null,
+    ) {
+        history.changeValue(blockId, state, newValue, mergeable, step)
+        afterChange()
+    }
+
+    /** Makes the operations of [build] as one undo step (see [BlockOperations.batch]). */
+    fun batch(build: BlockOperations.Batch.() -> Unit) {
+        history.batch(build)
         afterChange()
     }
 

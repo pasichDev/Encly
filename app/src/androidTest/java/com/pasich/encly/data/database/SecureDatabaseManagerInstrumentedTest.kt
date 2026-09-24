@@ -16,7 +16,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * Exercises the native SQLCipher lifecycle that JVM tests cannot load.
@@ -43,7 +42,7 @@ class SecureDatabaseManagerInstrumentedTest {
 
     @Test
     fun concurrentReadsAfterUnlockOpenExtraConnectionsWithTheRealKey() = runBlocking {
-        assertTrue(manager.unlockDatabase(SecretKeySpec(KEY_A, "AES"), allowCreate = true))
+        assertTrue(manager.unlockDatabase(KEY_A, allowCreate = true))
         insertNotes(NOTE_COUNT)
 
         // Parallel readers make the WAL pool open secondary connections, each keyed from the
@@ -58,22 +57,22 @@ class SecureDatabaseManagerInstrumentedTest {
 
     @Test
     fun lockThenUnlockAgainReopensTheSameData() = runBlocking {
-        assertTrue(manager.unlockDatabase(SecretKeySpec(KEY_A, "AES"), allowCreate = true))
+        assertTrue(manager.unlockDatabase(KEY_A, allowCreate = true))
         insertNotes(NOTE_COUNT)
 
         manager.reset()
         assertFalse(manager.isDatabaseUnlocked())
-        assertTrue(manager.unlockDatabase(SecretKeySpec(KEY_A, "AES")))
+        assertTrue(manager.unlockDatabase(KEY_A))
 
         assertEquals(NOTE_COUNT, manager.getDatabase().notesDao().getAllNotes().first().size)
     }
 
     @Test
     fun wrongKeyDoesNotOpenACommittedDatabase() = runBlocking {
-        assertTrue(manager.unlockDatabase(SecretKeySpec(KEY_A, "AES"), allowCreate = true))
+        assertTrue(manager.unlockDatabase(KEY_A, allowCreate = true))
         manager.reset()
 
-        assertFalse(manager.unlockDatabase(SecretKeySpec(KEY_B, "AES")))
+        assertFalse(manager.unlockDatabase(KEY_B))
         assertTrue(manager.hasEncryptedDatabase())
     }
 

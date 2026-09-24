@@ -398,6 +398,7 @@
     <string name="link_edit">Edytuj link</string>
     <string name="link_copied">Link skopiowany</string>
     <string name="link_open_failed">Żadna aplikacja na tym urządzeniu nie może otworzyć tego linku.</string>
+    <string name="link_blocked">Zapisywać i otwierać można tylko linki internetowe (http, https) i e-mailowe.</string>
     <string name="notes_load_failed_title">Nie udało się odczytać notatek</string>
     <string name="tags_load_failed_title">Nie udało się odczytać etykiet</string>
     <string name="notes_load_failed_desc">Notatki nadal są zapisane w postaci zaszyfrowanej na tym urządzeniu. Zamknij Encly i otwórz ponownie, aby spróbować jeszcze raz.</string>

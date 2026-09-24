@@ -3,8 +3,8 @@ package com.pasich.encly.core.security
 import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.anyByteArray
-import com.pasich.encly.testutil.anySecretKey
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
+import com.pasich.encly.testutil.tempVaultFile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,6 +17,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import java.io.File
 
 class SecurityManagerTest {
 
@@ -25,6 +26,8 @@ class SecurityManagerTest {
     private lateinit var database: SecureDatabaseManager
     private lateinit var auth: AuthenticationManager
     private lateinit var biometric: BiometricManager
+    private lateinit var file: File
+    private lateinit var store: VaultStore
     private lateinit var manager: SecurityManager
 
     @Before
@@ -34,7 +37,9 @@ class SecurityManagerTest {
         database = mock(SecureDatabaseManager::class.java)
         auth = mock(AuthenticationManager::class.java)
         biometric = mock(BiometricManager::class.java)
-        manager = SecurityManager(prefs, seed, database, auth, biometric)
+        file = tempVaultFile()
+        store = VaultStore(file)
+        manager = SecurityManager(prefs, store, seed, database, auth, biometric)
     }
 
     // --- startup routing -------------------------------------------------------------------
@@ -140,14 +145,14 @@ class SecurityManagerTest {
 
         assertFalse(manager.finishInitialSetup())
 
-        verify(database, never()).unlockDatabase(anySecretKey(), anyBoolean())
+        verify(database, never()).unlockDatabase(anyByteArray(), anyBoolean())
         assertFalse(prefs.getBoolean(ONBOARDING_KEY, false))
     }
 
     @Test
     fun initialSetupIsNotCommittedWhenTheDatabaseDoesNotOpen() {
         readyForSetup()
-        `when`(database.unlockDatabase(anySecretKey(), eq(true))).thenReturn(false)
+        `when`(database.unlockDatabase(anyByteArray(), eq(true))).thenReturn(false)
 
         assertFalse(manager.finishInitialSetup())
 
@@ -158,13 +163,13 @@ class SecurityManagerTest {
     @Test
     fun initialSetupOpensTheDatabaseThenCommitsThenDropsTheBootstrapKey() {
         readyForSetup()
-        `when`(database.unlockDatabase(anySecretKey(), eq(true))).thenReturn(true)
+        `when`(database.unlockDatabase(anyByteArray(), eq(true))).thenReturn(true)
 
         assertTrue(manager.finishInitialSetup())
 
         assertTrue(prefs.getBoolean(ONBOARDING_KEY, false))
         val order = inOrder(database, seed)
-        order.verify(database).unlockDatabase(anySecretKey(), eq(true))
+        order.verify(database).unlockDatabase(anyByteArray(), eq(true))
         order.verify(seed).clearBootstrapKey()
         assertEquals(InitialStatus.MAIN, manager.securityStatus)
     }
@@ -172,7 +177,7 @@ class SecurityManagerTest {
     @Test
     fun openingTheInitialVaultDoesNotCommitOnboarding() {
         readyForSetup()
-        `when`(database.unlockDatabase(anySecretKey(), eq(true))).thenReturn(true)
+        `when`(database.unlockDatabase(anyByteArray(), eq(true))).thenReturn(true)
 
         assertTrue(manager.openInitialVault())
 
@@ -188,7 +193,7 @@ class SecurityManagerTest {
     @Test
     fun anUncommittedSetupVaultIsNotRelockedByBackgrounding() {
         readyForSetup()
-        `when`(database.unlockDatabase(anySecretKey(), eq(true))).thenReturn(true)
+        `when`(database.unlockDatabase(anyByteArray(), eq(true))).thenReturn(true)
         assertTrue(manager.openInitialVault())
 
         assertFalse(manager.isLockable())
@@ -201,17 +206,17 @@ class SecurityManagerTest {
 
     @Test
     fun lockClosesTheDatabaseAndDropsTheSessionKey() {
-        `when`(database.unlockDatabase(anySecretKey(), anyBoolean())).thenReturn(true)
-        `when`(auth.configurePin(anyString(), anyByteArray())).thenReturn(true)
+        `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        `when`(auth.configurePin(anyCharArray(), anyByteArray())).thenReturn(true)
         assertTrue(manager.unlockWithRawKey(ByteArray(32) { 7 }))
-        assertTrue(manager.configurePin("123456")) // the live session DEK is available
+        assertTrue(manager.configurePin("123456".toCharArray())) // the live session DEK is available
 
         manager.lock()
 
         verify(database).reset()
         assertEquals(InitialStatus.AUTH, manager.securityStatus)
         // No session DEK (and no bootstrap key) remains to re-wrap.
-        assertFalse(manager.configurePin("123456"))
+        assertFalse(manager.configurePin("123456".toCharArray()))
     }
 
     // --- forgotten PIN --------------------------------------------------------------------
@@ -220,14 +225,14 @@ class SecurityManagerTest {
     fun recoveryPhraseUnlockAllowsSettingANewPinWithoutTheOldOne() {
         val phrase = "words".toCharArray()
         `when`(seed.unlockWithSeed(phrase)).thenReturn(ByteArray(32) { 5 })
-        `when`(database.unlockDatabase(anySecretKey(), anyBoolean())).thenReturn(true)
-        `when`(auth.configurePin(anyString(), anyByteArray())).thenReturn(true)
+        `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        `when`(auth.configurePin(anyCharArray(), anyByteArray())).thenReturn(true)
 
         assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithSeed(phrase))
         assertTrue(manager.canResetPinWithoutCurrent())
 
         // Once the new PIN is set the exemption ends.
-        assertTrue(manager.configurePin("654321"))
+        assertTrue(manager.configurePin("654321".toCharArray()))
         assertFalse(manager.canResetPinWithoutCurrent())
     }
 
@@ -235,15 +240,15 @@ class SecurityManagerTest {
     fun pinUnlockOrLockEndsThePinResetExemption() {
         val phrase = "words".toCharArray()
         `when`(seed.unlockWithSeed(phrase)).thenReturn(ByteArray(32) { 5 })
-        `when`(database.unlockDatabase(anySecretKey(), anyBoolean())).thenReturn(true)
-        `when`(auth.unlockWithPin("123456")).thenReturn(ByteArray(32) { 5 })
+        `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        `when`(auth.unlockWithPin("123456".toCharArray())).thenReturn(PinUnlock.Success(ByteArray(32) { 5 }))
 
         manager.unlockWithSeed(phrase)
         manager.lock()
         assertFalse(manager.canResetPinWithoutCurrent())
 
         manager.unlockWithSeed(phrase)
-        assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithPin("123456"))
+        assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithPin("123456".toCharArray()))
         assertFalse(manager.canResetPinWithoutCurrent())
     }
 
@@ -252,6 +257,76 @@ class SecurityManagerTest {
         assertEquals(VaultUnlockResult.INVALID_CREDENTIAL, manager.unlockWithSeed("bad".toCharArray()))
         assertFalse(manager.canResetPinWithoutCurrent())
     }
+
+    // --- damaged storage and a lost PIN key -----------------------------------------------
+
+    @Test
+    fun aDamagedStateFileRoutesToTheDamagedVaultScreen() {
+        commitVault()
+        `when`(auth.hasPinSlot()).thenReturn(true)
+        file.writeBytes(ByteArray(64) { 3 })
+        val onDamagedFile = SecurityManager(prefs, VaultStore(file), seed, database, auth, biometric)
+
+        assertEquals(InitialStatus.LOSS_CRYPTO, onDamagedFile.resolveInitialStatus())
+    }
+
+    @Test
+    fun aStorageFailureAtStartupRoutesToTheDamagedVaultScreenInsteadOfCrashing() {
+        commitVault()
+        `when`(auth.hasPinSlot()).thenThrow(IllegalStateException("keystore"))
+
+        assertEquals(InitialStatus.LOSS_CRYPTO, manager.resolveInitialStatus())
+    }
+
+    @Test
+    fun wipingADamagedVaultStartsOverWithAClearStore() {
+        file.writeBytes(ByteArray(64) { 3 })
+        val onDamagedFile = SecurityManager(prefs, VaultStore(file), seed, database, auth, biometric)
+        prefs.edit().putBoolean(ONBOARDING_KEY, true).commit()
+
+        onDamagedFile.wipeAndReset()
+
+        assertFalse(file.exists())
+        assertFalse(prefs.getBoolean(ONBOARDING_KEY, false))
+        assertEquals(InitialStatus.ONBOARDING, onDamagedFile.resolveInitialStatus())
+    }
+
+    @Test
+    fun aLostPinKeyIsReportedAndThePinIsWiped() {
+        val typed = "123456".toCharArray()
+        `when`(auth.unlockWithPin(typed)).thenReturn(PinUnlock.KeyLost)
+
+        assertEquals(VaultUnlockResult.PIN_KEY_LOST, manager.unlockWithPin(typed))
+        assertTrue(typed.all { it == '\u0000' })
+        verify(database, never()).unlockDatabase(anyByteArray(), anyBoolean())
+    }
+
+    @Test
+    fun aRunningLockoutIsReportedAsSuch() {
+        `when`(auth.unlockWithPin(anyCharArray())).thenReturn(PinUnlock.LockedOut)
+
+        assertEquals(VaultUnlockResult.LOCKED_OUT, manager.unlockWithPin("123456".toCharArray()))
+    }
+
+    // --- replacing the recovery phrase ----------------------------------------------------
+
+    @Test
+    fun replacingThePhraseNeedsAnOpenSession() {
+        `when`(seed.replaceRecoverySeed(anyCharArray(), anyByteArray())).thenReturn(true)
+        assertFalse(manager.replaceRecoverySeed("words".toCharArray()))
+
+        `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        assertTrue(manager.unlockWithRawKey(ByteArray(32) { 7 }))
+        assertTrue(manager.replaceRecoverySeed("words".toCharArray()))
+        // The session DEK copy is wiped right after the call, so only the words can be matched.
+        verify(seed).replaceRecoverySeed(eqChars("words"), anyByteArray())
+
+        manager.lock()
+        assertFalse(manager.replaceRecoverySeed("words".toCharArray()))
+    }
+
+    private fun eqChars(value: String): CharArray =
+        org.mockito.AdditionalMatchers.aryEq(value.toCharArray()) ?: CharArray(0)
 
     private fun commitVault() {
         prefs.edit().putBoolean(ONBOARDING_KEY, true).commit()
@@ -267,6 +342,6 @@ class SecurityManagerTest {
     }
 
     private companion object {
-        const val ONBOARDING_KEY = "onboarding_shown_v2"
+        const val ONBOARDING_KEY = "onboarding_shown_v3"
     }
 }

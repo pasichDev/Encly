@@ -12,6 +12,11 @@ Nothing. Encly has no account, no server, no analytics, no crash reporting, no a
 and no tracking. The app does not request the Android `INTERNET` permission, so it cannot send
 data over the network itself.
 
+Encly asks every keyboard not to learn from what you type, and the optional "Strict keyboard
+privacy" setting (Settings → Security) also asks it for no suggestions, no cloud prediction and no
+access to the text around the cursor; a keyboard app still receives each key you type and may
+ignore these requests, so use one you trust.
+
 ## What Encly stores on your device
 
 - **Notes, tasks and tags** you create, stored in a database encrypted with SQLCipher
@@ -30,6 +35,7 @@ transfer are disabled for it, so it is not copied to Google Drive or another pho
 | Permission | Why |
 |---|---|
 | `USE_BIOMETRIC` | Optional fingerprint / face unlock of your vault. Biometric data never leaves the Android system; Encly only receives "authenticated" or "not authenticated". |
+| `HIDE_OVERLAY_WINDOWS` | Lets Encly stop other apps from drawing over its screens (Android 12 and later), so an overlay cannot cover or imitate the PIN pad. It gives Encly no access to any data. |
 
 ## Links that leave the app
 
@@ -84,8 +90,9 @@ Encly collects no data from anyone, including children.
 
 ## Changes
 
-Changes to this policy are published in this file in the
-[Encly repository](https://github.com/pasichDev/Encly/blob/main/PRIVACY.md) and noted in
+Changes to this policy are published at
+<https://pasichdev.xyz/apps/encly/privacy-policy/>, mirrored in `PRIVACY.md` in the
+[Encly repository](https://github.com/pasichDev/Encly), and noted in
 [CHANGELOG.md](CHANGELOG.md).
 
 ## Contact

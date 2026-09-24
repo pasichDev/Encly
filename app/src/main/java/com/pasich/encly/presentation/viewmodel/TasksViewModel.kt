@@ -3,10 +3,13 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pasich.encly.core.security.NeverLocked
+import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -74,6 +77,7 @@ data class TasksUiState(
 class TasksViewModel @Inject constructor(
     private val tasksRepository: TasksRepository,
     private val updateTaskStatusUseCase: UpdateTaskStatusUseCase,
+    lockEvents: VaultLockEvents = NeverLocked,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TasksUiState())
@@ -95,12 +99,20 @@ class TasksViewModel @Inject constructor(
     /** Serializes background draft saves so two quick pauses cannot insert twice. */
     private val draftMutex = Mutex()
 
+    private var tasksJob: Job? = null
+
     init {
         observeTasks()
+        clearOnLock(lockEvents) {
+            tasksJob?.cancel()
+            _uiState.value = TasksUiState()
+            _editingTask.value = null
+            _showAddTaskDialog.value = false
+        }
     }
 
     private fun observeTasks() {
-        viewModelScope.launch {
+        tasksJob = viewModelScope.launch {
             combine(
                 tasksRepository.getAllActiveTasks(),
                 tasksRepository.getAllCompletedTasks(),

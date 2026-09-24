@@ -398,6 +398,7 @@
     <string name="link_edit">Змінити посилання</string>
     <string name="link_copied">Посилання скопійовано</string>
     <string name="link_open_failed">На цьому пристрої немає застосунку, який може відкрити це посилання.</string>
+    <string name="link_blocked">Зберігати й відкривати можна лише вебпосилання (http, https) та адреси пошти.</string>
     <string name="notes_load_failed_title">Не вдалося прочитати нотатки</string>
     <string name="tags_load_failed_title">Не вдалося прочитати мітки</string>
     <string name="notes_load_failed_desc">Нотатки й далі зберігаються на пристрої в зашифрованому вигляді. Закрийте Encly і відкрийте знову, щоб повторити спробу.</string>

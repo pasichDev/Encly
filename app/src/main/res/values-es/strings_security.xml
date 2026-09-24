@@ -34,4 +34,27 @@
         <item quantity="many">%d de etiquetas</item>
         <item quantity="other">%d etiquetas</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Tu PIN ya no puede desbloquear Encly en este teléfono: su clave de hardware se ha restablecido. Usa tu frase de recuperación (o tu huella) y luego establece un PIN nuevo.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Demasiados intentos. Vuelve a intentarlo en %d minuto</item>
+        <item quantity="many">Demasiados intentos. Vuelve a intentarlo en %d minutos</item>
+        <item quantity="other">Demasiados intentos. Vuelve a intentarlo en %d minutos</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Demasiados intentos. Vuelve a intentarlo en %d hora</item>
+        <item quantity="many">Demasiados intentos. Vuelve a intentarlo en %d horas</item>
+        <item quantity="other">Demasiados intentos. Vuelve a intentarlo en %d horas</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Reemplazar la frase de recuperación</string>
+    <string name="security_recovery_replace_desc">Obtén 12 palabras nuevas. Las copias hechas antes siguen necesitando las antiguas.</string>
+    <string name="security_recovery_replace_confirm_title">¿Reemplazar la frase de recuperación?</string>
+    <string name="security_recovery_replace_confirm_body">Obtendrás 12 palabras nuevas. La frase antigua deja de desbloquear tus notas en este teléfono. Las copias de seguridad que ya hiciste solo se abren con la frase antigua, así que guárdala mientras conserves esas copias, o haz una copia nueva después.</string>
+    <string name="security_recovery_replace_confirm">Obtener palabras nuevas</string>
+    <string name="security_recovery_replace_warning_title">Tu frase antigua deja de funcionar aquí</string>
+    <string name="security_recovery_replace_warning_body">Cuando confirmes, solo estas palabras desbloquearán tus notas si olvidas el PIN. Las copias hechas antes siguen necesitando las palabras antiguas.</string>
+    <string name="security_recovery_replaced">Frase de recuperación reemplazada. Haz una copia de seguridad nueva para usarla también en las copias.</string>
+    <string name="security_privacy_section">Privacidad</string>
+    <string name="security_keyboard_strict_title">Privacidad estricta del teclado</string>
+    <string name="security_keyboard_strict_desc">Pide al teclado que no muestre sugerencias, no use predicción en la nube y no lea el texto junto al cursor. Desactiva la autocorrección, y algunos teclados ocultan los emojis o la entrada por voz.</string>
 </resources>

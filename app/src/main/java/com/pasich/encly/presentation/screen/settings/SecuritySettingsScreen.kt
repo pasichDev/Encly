@@ -62,6 +62,7 @@ fun SecuritySettingsScreen(
     vaultViewModel: BackupViewModel = hiltViewModel(),
 ) {
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
+    val strictKeyboard by securityViewModel.strictKeyboard.collectAsStateWithLifecycle()
     val vaultState by vaultViewModel.uiState.collectAsStateWithLifecycle()
     val activity = LocalActivity.current as? FragmentActivity
 
@@ -95,6 +96,7 @@ fun SecuritySettingsScreen(
             if (securityState.loaded) {
                 SecurityContent(
                     securityState = securityState,
+                    strictKeyboard = strictKeyboard,
                     vaultBusy = vaultState.busy,
                     actions = SecurityActions(
                         onChangePin = { navController.navigate(NavRoutes.PinCodeConfig.name) },
@@ -102,6 +104,7 @@ fun SecuritySettingsScreen(
                             if (activity != null) securityViewModel.toggleBiometric(activity, enabled)
                         },
                         onVaultAction = vaultViewModel::start,
+                        onStrictKeyboard = securityViewModel::setStrictKeyboard,
                     ),
                     modifier = Modifier.padding(paddingValues),
                 )
@@ -118,11 +121,13 @@ private class SecurityActions(
     val onChangePin: () -> Unit,
     val onBiometric: (Boolean) -> Unit,
     val onVaultAction: (BackupAction) -> Unit,
+    val onStrictKeyboard: (Boolean) -> Unit,
 )
 
 @Composable
 private fun SecurityContent(
     securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
+    strictKeyboard: Boolean,
     vaultBusy: Boolean,
     actions: SecurityActions,
     modifier: Modifier = Modifier,
@@ -167,7 +172,12 @@ private fun SecurityContent(
                 busy = vaultBusy,
                 onStart = actions.onVaultAction,
             )
+            if (securityState.isUserCreatedSeedKey) {
+                EnclyGroupDivider()
+                ReplacePhraseRow(busy = vaultBusy, onStart = actions.onVaultAction)
+            }
         }
+        PrivacySection(strictKeyboard = strictKeyboard, onStrictKeyboard = actions.onStrictKeyboard)
         EraseSection(busy = vaultBusy, onStart = actions.onVaultAction)
         EnclyCallout(
             title = stringResource(R.string.security_info_title),
@@ -238,7 +248,8 @@ private fun BiometricSetting(
 }
 
 /**
- * The recovery phrase: once set up it is only a status (it cannot be shown or replaced here).
+ * The recovery phrase: once set up it is a status (it is never shown again; a separate row
+ * replaces it with new words).
  * Without one the row creates it, after re-authentication: a vault set up without one can
  * otherwise only be wiped when the PIN is forgotten.
  */
@@ -277,6 +288,40 @@ private fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStart
             icon = EnclyIcons.File,
             onClick = { if (!busy) onStart(BackupAction.CREATE_PHRASE) },
             modifier = modifier,
+        )
+    }
+}
+
+/**
+ * "Replace recovery phrase": re-authentication, a warning that backups made before keep needing
+ * the old words, then new words shown and checked like the first ones.
+ */
+@Composable
+private fun ReplacePhraseRow(busy: Boolean, onStart: (BackupAction) -> Unit) {
+    EnclyNavigationRow(
+        title = stringResource(R.string.security_recovery_replace_title),
+        supporting = stringResource(R.string.security_recovery_replace_desc),
+        icon = EnclyIcons.Restore,
+        onClick = { if (!busy) onStart(BackupAction.REPLACE_PHRASE) },
+        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+    )
+}
+
+/** Privacy options that are not about unlocking: strict keyboard privacy (off by default). */
+@Composable
+private fun PrivacySection(strictKeyboard: Boolean, onStrictKeyboard: (Boolean) -> Unit) {
+    SectionOverline(
+        text = stringResource(R.string.security_privacy_section),
+        modifier = Modifier.padding(top = EnclyTheme.spacing.s),
+    )
+    EnclyGroup {
+        EnclySwitchRow(
+            title = stringResource(R.string.security_keyboard_strict_title),
+            supporting = stringResource(R.string.security_keyboard_strict_desc),
+            icon = EnclyIcons.Keyboard,
+            checked = strictKeyboard,
+            onCheckedChange = onStrictKeyboard,
+            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
         )
     }
 }

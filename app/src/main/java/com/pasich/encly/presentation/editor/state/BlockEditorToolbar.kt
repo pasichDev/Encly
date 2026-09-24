@@ -18,6 +18,23 @@ fun BlockEditorState.moveInteracted(up: Boolean) {
     moveBlock(from, if (up) from - 1 else from + 1)
 }
 
+/** Position of block [blockId]; -1 when it is not in the note (any more). */
+fun BlockEditorState.indexOf(blockId: String): Int = blocks.indexOfFirst { it.id == blockId }
+
+/** Adds [block] after position [afterIndex] and focuses it. */
+fun BlockEditorState.addBlockAfter(afterIndex: Int, block: Block) {
+    val target = (afterIndex + 1).coerceIn(0, blocks.size)
+    batch { addBlock(target, block) }
+    selection.focusAt(target)
+}
+
+/** Moves block [blockId] one place [up] (or down), if there is a place to go. */
+fun BlockEditorState.moveBlockOf(blockId: String, up: Boolean) {
+    val from = indexOf(blockId)
+    val to = if (up) from - 1 else from + 1
+    if (from in blocks.indices && to in blocks.indices) moveBlock(from, to)
+}
+
 /** Whether the block the user works on can be removed: one block always remains. */
 fun BlockEditorState.canRemoveInteracted(): Boolean = blocks.size > 1 && selection.interactedIndex in blocks.indices
 

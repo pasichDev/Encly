@@ -408,6 +408,7 @@
     <string name="link_edit">Edit link</string>
     <string name="link_copied">Link copied</string>
     <string name="link_open_failed">No app on this device can open this link.</string>
+    <string name="link_blocked">Only web (http, https) and email links can be saved or opened.</string>
     <string name="notes_load_failed_title">Couldn\'t read your notes</string>
     <string name="tags_load_failed_title">Couldn\'t read your tags</string>
     <string name="notes_load_failed_desc">Your notes are still stored encrypted on this device. Close Encly and open it again to retry.</string>

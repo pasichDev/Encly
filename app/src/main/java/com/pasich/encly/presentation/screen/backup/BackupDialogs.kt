@@ -33,7 +33,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DialogAction
+import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -76,7 +78,9 @@ fun BackupDialogs(actions: BackupDialogActions, step: BackupStep, busy: Boolean 
             onDismiss = actions.cancel,
         )
 
-        is BackupStep.ShowNewPhrase -> NewPhraseStep(step.words, actions)
+        is BackupStep.ShowNewPhrase -> NewPhraseStep(step.words, step.replacing, actions)
+
+        BackupStep.ConfirmReplacePhrase -> ReplacePhraseDialog(actions)
 
         is BackupStep.CheckNewPhrase -> PhraseCheckStep(step, actions, busy)
 
@@ -129,6 +133,16 @@ fun BackupDialogs(actions: BackupDialogActions, step: BackupStep, busy: Boolean 
         else -> Unit
     }
 }
+
+/** Before new recovery words: the old ones stop working here, old backups keep needing them. */
+@Composable
+private fun ReplacePhraseDialog(actions: BackupDialogActions) = MessageDialog(
+    title = R.string.security_recovery_replace_confirm_title,
+    body = R.string.security_recovery_replace_confirm_body,
+    confirm = R.string.security_recovery_replace_confirm,
+    onConfirm = actions.phrase::replace,
+    onDismiss = actions.cancel,
+)
 
 @Composable
 private fun MessageDialog(
@@ -240,12 +254,17 @@ private fun FullScreenStep(
     }
 }
 
-/** The new recovery phrase to write down, with a Hide/Show pill, as in onboarding. */
+/**
+ * The new recovery phrase to write down, with a Hide/Show pill, as in onboarding. A
+ * [replacing] phrase also says what happens to the old words and the backups made with them.
+ */
 @Composable
-private fun NewPhraseStep(words: List<String>, actions: BackupDialogActions) {
+private fun NewPhraseStep(words: List<String>, replacing: Boolean, actions: BackupDialogActions) {
     var hidden by remember { mutableStateOf(false) }
     FullScreenStep(
-        label = stringResource(R.string.backup_needs_phrase_title),
+        label = stringResource(
+            if (replacing) R.string.security_recovery_replace_title else R.string.backup_needs_phrase_title,
+        ),
         onBack = actions.cancel,
         footer = { OnboardingFooter(FooterSpec(R.string.backup_phrase_written, actions.phrase::writtenDown)) },
     ) {
@@ -253,6 +272,13 @@ private fun NewPhraseStep(words: List<String>, actions: BackupDialogActions) {
             title = stringResource(R.string.onboarding_phrase_title),
             body = stringResource(R.string.backup_phrase_write_down),
         )
+        if (replacing) {
+            EnclyCallout(
+                title = stringResource(R.string.security_recovery_replace_warning_title),
+                text = stringResource(R.string.security_recovery_replace_warning_body),
+                tone = CalloutTone.WARNING,
+            )
+        }
         WordGrid(words = words, hidden = hidden)
         EnclyPillButton(
             text = stringResource(if (hidden) R.string.onboarding_phrase_show else R.string.onboarding_phrase_hide),

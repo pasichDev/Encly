@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.di.IoDispatcher
+import com.pasich.encly.core.security.NeverLocked
+import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
@@ -22,14 +24,26 @@ import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.editor.state.BlockEditorState
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.editor.state.FocusRequest
+import com.pasich.encly.presentation.editor.state.LineBreak
+import com.pasich.encly.presentation.editor.state.Shortcut
+import com.pasich.encly.presentation.editor.state.addBlockAfter
 import com.pasich.encly.presentation.editor.state.addBlockToEnd
+import com.pasich.encly.presentation.editor.state.applyShortcut
 import com.pasich.encly.presentation.editor.state.applyTool
+import com.pasich.encly.presentation.editor.state.backspaceAtStart
+import com.pasich.encly.presentation.editor.state.breakLine
 import com.pasich.encly.presentation.editor.state.canMoveInteracted
 import com.pasich.encly.presentation.editor.state.canRemoveInteracted
 import com.pasich.encly.presentation.editor.state.focusFirstBlock
 import com.pasich.encly.presentation.editor.state.focusWorkingBlock
+import com.pasich.encly.presentation.editor.state.indexOf
 import com.pasich.encly.presentation.editor.state.interactedBlockPosition
+import com.pasich.encly.presentation.editor.state.listBackspaceAtStart
+import com.pasich.encly.presentation.editor.state.listLineBreak
+import com.pasich.encly.presentation.editor.state.listTypingStep
+import com.pasich.encly.presentation.editor.state.moveBlockOf
 import com.pasich.encly.presentation.editor.state.moveInteracted
+import com.pasich.encly.presentation.editor.state.pasteLink
 import com.pasich.encly.presentation.editor.state.removeInteracted
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -62,6 +76,7 @@ constructor(
     @ApplicationScope private val appScope: CoroutineScope,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
     copyTitle: NoteCopyTitle,
+    lockEvents: VaultLockEvents = NeverLocked,
 ) : ViewModel() {
     private val noteId: Long = savedStateHandle["idNote"]
         ?: -1 // Note identifier; when creating a new note it will be -1
@@ -107,6 +122,9 @@ constructor(
     /** Position of the block the user last worked on, always inside [blocks]. */
     val interactedIndex: Int get() = editor.selection.interactedIndex
 
+    /** The block whose field has focus; null while none has. */
+    val focusedBlockId: StateFlow<String?> get() = editor.selection.focusedBlockId
+
     /** Which block the editor UI should focus next. */
     val focusRequests: Flow<FocusRequest> get() = editor.selection.requests
 
@@ -149,6 +167,13 @@ constructor(
         }
         persistence.startAutosave(viewModelScope, editor.contentChanges)
         rememberStoredId()
+        // Session lock hook (security): a re-lock drops the note's plaintext at once, even
+        // while the app is in the background and this screen is not composed.
+        clearOnLock(lockEvents) {
+            persistence.close()
+            editor.load(emptyList())
+            persistence.updateNote { it.copy(title = "") }
+        }
     }
 
     // A new note (or copy) gets its id on its first save. Kept as the screen's argument, so a
@@ -291,13 +316,48 @@ constructor(
      * text is read from the block itself, so undo always restores what was really there.
      */
     fun onBlockTextChanged(block: Block, newText: String) {
-        if (canEdit() && block is TextualBlock) editor.changeValue(block.id, block.text, newText, mergeable = true)
+        if (canEdit(block) && block is TextualBlock) editor.changeValue(block.id, block.text, newText, mergeable = true)
     }
 
     /** Sets the items of a list [block] (typing, checking, adding or removing items). */
     fun onListItemsChanged(block: Block.ListBlock, newItems: List<ItemListBlock>, mergeable: Boolean) {
-        if (canEdit()) editor.changeValue(block.id, block.items, newItems, mergeable)
+        if (!canEdit(block)) return
+        val step = if (mergeable) listTypingStep(block.items.value, newItems) else null
+        editor.changeValue(block.id, block.items, newItems, mergeable, step)
     }
+
+    // A block that left the note (converted, merged, undone) may still report a late edit from
+    // its field; it must not reach the history.
+    private fun canEdit(block: Block): Boolean = canEdit() && editor.indexOf(block.id) >= 0
+
+    /**
+     * A line break typed or pasted into the field of [block] (see breakLine). Returns the text the
+     * field keeps, or null to keep the break as text: in simple editing, or a locked editor.
+     */
+    fun onLineBreak(block: Block, lineBreak: LineBreak): String? =
+        if (canEdit(block) && !simpleEdit.value) editor.breakLine(block.id, lineBreak) else null
+
+    /** Backspace at the start of [block]'s field; false when it does nothing there. */
+    fun onBackspaceAtStart(block: Block): Boolean = canEdit(block) && editor.backspaceAtStart(block.id)
+
+    /** A mark typed at the start of paragraph [block] ("# ", "- ", ...): it becomes that block. */
+    fun onShortcut(block: Block, typed: String, shortcut: Shortcut): Boolean =
+        canEdit(block) && !simpleEdit.value && editor.applyShortcut(block.id, typed, shortcut)
+
+    /** A lone web address pasted into the empty paragraph [block]: it becomes a link card. */
+    fun onLinkPasted(block: Block, pasted: String, link: LinkDataBlock): Boolean =
+        canEdit(block) && !simpleEdit.value && editor.pasteLink(block.id, pasted, link)
+
+    /** A line break in item [itemId] of list [block] (see listLineBreak). */
+    fun onListLineBreak(block: Block.ListBlock, itemId: String, lineBreak: LineBreak): String? =
+        if (canEdit(block)) editor.listLineBreak(block.id, itemId, lineBreak) else null
+
+    /** Backspace at the start of item [itemId] of list [block]. */
+    fun onListBackspaceAtStart(block: Block.ListBlock, itemId: String): Boolean =
+        canEdit(block) && editor.listBackspaceAtStart(block.id, itemId)
+
+    /** The cursor in [block]'s field moved to [offset]. */
+    fun onCaretMoved(block: Block, offset: Int) = editor.selection.onCaret(block.id, offset)
 
     /** Sets the link of [block]; a link being edited ([editLink]) is committed with it. */
     fun onLinkChanged(block: Block.LinkBlock, newLink: LinkDataBlock) {
@@ -350,6 +410,11 @@ constructor(
     }
 
     fun canMoveBlock(up: Boolean): Boolean = canEdit() && editor.canMoveInteracted(up)
+
+    /** Moves [block] one place [up] (or down): TalkBack's actions on a block. */
+    fun moveBlockOf(block: Block, up: Boolean) {
+        if (canEdit(block)) editor.moveBlockOf(block.id, up)
+    }
 
     fun canRemoveInteractedBlock(): Boolean = canEdit() && editor.canRemoveInteracted()
 

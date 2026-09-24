@@ -7,7 +7,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
@@ -43,18 +45,20 @@ fun TextBlock(
         fontSize = fontStyles.sizes.textBlock,
         fontFamily = fontStyles.families.body,
     )
-    val onEnter = remember(blockActions) { blockActions.addParagraphOnEnter() }
+    val actions by rememberUpdatedState(blockActions)
+    val input = remember { BlockInput(BlockField.Paragraph) { actions } }
 
     BasicTextField(
         state = state,
         // Read-only, not disabled: a locked note's text can still be selected and copied.
         readOnly = isLocked,
+        inputTransformation = input,
         textStyle = style,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = WritingKeyboard,
         modifier = modifier
             .fillMaxWidth()
-            .textBlockKeys(state, blockActions, onEnter),
+            .textBlockKeys(state, blockActions),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
                 if (showPlaceholder && state.text.isEmpty()) {

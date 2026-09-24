@@ -34,4 +34,27 @@
         <item quantity="many">%d de etiquetas</item>
         <item quantity="other">%d etiquetas</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Seu PIN não pode mais desbloquear o Encly neste telefone: a chave de hardware dele foi redefinida. Use sua frase de recuperação (ou impressão digital) e depois defina um novo PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Muitas tentativas. Tente novamente em %d minuto</item>
+        <item quantity="many">Muitas tentativas. Tente novamente em %d minutos</item>
+        <item quantity="other">Muitas tentativas. Tente novamente em %d minutos</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Muitas tentativas. Tente novamente em %d hora</item>
+        <item quantity="many">Muitas tentativas. Tente novamente em %d horas</item>
+        <item quantity="other">Muitas tentativas. Tente novamente em %d horas</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Substituir a frase de recuperação</string>
+    <string name="security_recovery_replace_desc">Receba 12 palavras novas. Os backups feitos antes continuam precisando das antigas.</string>
+    <string name="security_recovery_replace_confirm_title">Substituir a frase de recuperação?</string>
+    <string name="security_recovery_replace_confirm_body">Você vai receber 12 palavras novas. A frase antiga deixa de desbloquear suas notas neste telefone. Os backups que você já fez só abrem com a frase antiga, então guarde-a enquanto guardar esses backups, ou faça um novo backup depois.</string>
+    <string name="security_recovery_replace_confirm">Receber palavras novas</string>
+    <string name="security_recovery_replace_warning_title">Sua frase antiga deixa de funcionar aqui</string>
+    <string name="security_recovery_replace_warning_body">Depois de confirmar, só estas palavras desbloqueiam suas notas se você esquecer o PIN. Os backups feitos antes continuam precisando das palavras antigas.</string>
+    <string name="security_recovery_replaced">Frase de recuperação substituída. Faça um novo backup para usá-la também nos backups.</string>
+    <string name="security_privacy_section">Privacidade</string>
+    <string name="security_keyboard_strict_title">Privacidade rigorosa do teclado</string>
+    <string name="security_keyboard_strict_desc">Pede ao teclado que não mostre sugestões, não use previsão na nuvem e não leia o texto ao redor do cursor. Desativa a correção automática, e alguns teclados ocultam emojis ou a entrada por voz.</string>
 </resources>

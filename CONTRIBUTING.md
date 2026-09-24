@@ -151,17 +151,18 @@ upload this key instead of letting Google generate one).
 
 - Create the release keystore (keep it outside the repository) and add the repository secrets
   `ENCLY_KEYSTORE_BASE64`, `ENCLY_KEYSTORE_PASSWORD`, `ENCLY_KEY_ALIAS`, `ENCLY_KEY_PASSWORD`;
-  optionally `ENCLY_GPG_PRIVATE_KEY` and `ENCLY_GPG_PASSPHRASE` to sign `SHA256SUMS`. Without
-  them the release is published with unsigned APKs.
+  optionally `ENCLY_GPG_PRIVATE_KEY` and `ENCLY_GPG_PASSPHRASE` to sign `SHA256SUMS`. A tag
+  pushed without the four signing secrets fails; it never publishes unsigned APKs.
 - Publish the signing certificate's SHA-256 fingerprint in
   [README → Verify a release](README.md#verify-a-release) and set it as the repository variable
-  `ENCLY_CERT_SHA256`, so the workflow pins the certificate.
-- Add phone screenshots (no real user data) as
-  `fastlane/metadata/android/en-US/images/phoneScreenshots/1.png`, `2.png`, … and a 1024×500
-  `fastlane/metadata/android/en-US/images/featureGraphic.png`, then show them in the README.
-  Other locales fall back to the `en-US` images; add `<locale>/images/` only for localized ones.
-- Make the repository public (the privacy policy URL in the app and in both stores points at
-  `PRIVACY.md` on GitHub), then enable **Settings → Code security → Private vulnerability
+  `ENCLY_CERT_SHA256` (required: the release and Play workflows fail without it), so the
+  workflows pin the certificate.
+- Store screenshots and feature graphics are in place for every locale, in
+  `fastlane/metadata/android/<locale>/images/` (8 phone screenshots, 1080×1920, demo data only,
+  plus a 1024×500 `featureGraphic.png`). Keep all 9 locales in step when you replace them.
+- The privacy policy the app and both store listings link to is published at
+  <https://pasichdev.xyz/apps/encly/privacy-policy/>; keep it in step with `PRIVACY.md`.
+- Make the repository public, then enable **Settings → Code security → Private vulnerability
   reporting** (SECURITY.md links to it).
 - Google Play: create the app and fill in *App content*. The first bundle is uploaded by hand.
 - F-Droid: open an inclusion merge request against
@@ -181,8 +182,9 @@ upload this key instead of letting Google generate one).
 4. Test the release APK on a device.
 5. Merge to `main`, then tag the merge commit `vX.Y.Z` and push the tag. The
    [release workflow](.github/workflows/release.yml) refuses a tag that does not match
-   `version.properties`, builds both flavors, signs them when the `ENCLY_*` secrets are set,
-   verifies the signature, and publishes the APKs with `SHA256SUMS` and R8 mapping files.
+   `version.properties`, fails when a signing secret or `ENCLY_CERT_SHA256` is missing, builds
+   both flavors unsigned, signs them with `apksigner` in a separate step (Gradle never sees
+   the keystore), checks the certificate against `ENCLY_CERT_SHA256`, and publishes the APKs with `SHA256SUMS` and R8 mapping files.
 6. Google Play: either upload `app-play-release.aab` by hand
    (`./gradlew :app:bundlePlayRelease` with the `ENCLY_*` variables set), or, once enabled, run
    the [Publish to Google Play](.github/workflows/publish-play.yml) workflow with the tag; it

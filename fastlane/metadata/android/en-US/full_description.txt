@@ -30,4 +30,4 @@ OPEN SOURCE
 
 Encly: encrypted notes that stay yours.
 
-Privacy policy: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md
+Privacy policy: https://pasichdev.xyz/apps/encly/privacy-policy/

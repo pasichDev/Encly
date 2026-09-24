@@ -21,3 +21,5 @@ internal fun anyString(): String = ArgumentMatchers.anyString() ?: ""
 internal fun captureBytes(captor: org.mockito.ArgumentCaptor<ByteArray>): ByteArray = captor.capture() ?: ByteArray(0)
 
 internal fun <T : Any> eqValue(value: T): T = ArgumentMatchers.eq(value) ?: value
+
+internal fun anyCharArray(): CharArray = ArgumentMatchers.any(CharArray::class.java) ?: CharArray(0)

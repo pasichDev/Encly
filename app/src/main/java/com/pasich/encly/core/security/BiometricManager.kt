@@ -5,10 +5,8 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
-import android.util.Base64
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.R
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -30,7 +28,10 @@ import androidx.biometric.BiometricManager as AndroidBiometricManager
  */
 @Singleton
 @Suppress("TooManyFunctions") // Centralizes the complete auth-bound biometric slot lifecycle.
-class BiometricManager @Inject constructor(@param:ApplicationContext private val context: Context) {
+class BiometricManager @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val store: VaultStore,
+) {
     enum class BiometricType {
         APP_UNLOCK,
         MASTER_KEY_ACCESS,
@@ -56,17 +57,13 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
     companion object {
         private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
         private const val KEY_ALIAS = "encly_biometric_wrap_v2"
-        private const val PREF_NAME = "encly_biometric_v2"
-        private const val SLOT_KEY = "biometric_slot"
+        private const val SLOT_PREFIX = "bio."
+        private const val SLOT_KEY = "bio.slot"
         private const val GCM_TAG_LENGTH = 128
         private const val IV_LENGTH = 12
         private const val DEK_LENGTH = 32
         private const val AES_KEY_SIZE_BITS = 256
         private const val AUTH_PER_USE_SECONDS = 0
-    }
-
-    private val prefs by lazy {
-        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
     private val keyStore by lazy {
@@ -81,7 +78,7 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
     )
 
     fun hasSlot(): Boolean = try {
-        keyStore.containsAlias(KEY_ALIAS) && !prefs.getString(SLOT_KEY, null).isNullOrBlank()
+        keyStore.containsAlias(KEY_ALIAS) && store.contains(SLOT_KEY)
     } catch (_: Exception) {
         false
     }
@@ -94,7 +91,7 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
 
         val dekCopy = dek.copyOf()
         try {
-            prefs.edit { remove(SLOT_KEY) }
+            store.edit { remove(SLOT_KEY) }
             deleteKeyOnly()
             val key = generateAuthBoundKey()
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -112,12 +109,11 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
                             System.arraycopy(iv, 0, out, 0, iv.size)
                             System.arraycopy(encrypted, 0, out, iv.size, encrypted.size)
                         }
-                        prefs.edit {
-                            putString(SLOT_KEY, Base64.encodeToString(combined, Base64.NO_WRAP))
-                        }
+                        val stored = store.edit { putBytes(SLOT_KEY, combined) }
                         SensitiveDataCleaner.clear(encrypted)
                         SensitiveDataCleaner.clear(combined)
-                        onResult(true)
+                        if (!stored) disable()
+                        onResult(stored)
                     } catch (_: Exception) {
                         disable()
                         onResult(false)
@@ -143,14 +139,14 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
      * The caller owns the returned bytes and must zeroize them.
      */
     fun unlock(activity: FragmentActivity, onResult: (ByteArray?) -> Unit) {
-        val encoded = prefs.getString(SLOT_KEY, null)
-        if (!isStrongBiometricAvailable() || encoded.isNullOrBlank()) {
+        val combined = store.getBytes(SLOT_KEY)
+        if (!isStrongBiometricAvailable() || combined == null) {
+            combined?.let(SensitiveDataCleaner::clear)
             onResult(null)
             return
         }
 
         try {
-            val combined = Base64.decode(encoded, Base64.NO_WRAP)
             if (combined.size <= IV_LENGTH) {
                 SensitiveDataCleaner.clear(combined)
                 onResult(null)
@@ -353,7 +349,7 @@ class BiometricManager @Inject constructor(@param:ApplicationContext private val
     }
 
     fun disable() {
-        prefs.edit { clear() }
+        store.edit { removePrefix(SLOT_PREFIX) }
         deleteKeyOnly()
     }
 }

@@ -102,7 +102,8 @@ fun MainScreen(
     val showTasks by settingsViewModel.showTasksFlow.collectAsState()
     // The field reads local state (a flow round trip can drop fast keystrokes); the ViewModel
     // gets every change.
-    var query by rememberSaveable { mutableStateOf("") }
+    // Plain remember: a search query is note content and must not land in saved state.
+    var query by remember { mutableStateOf("") }
     val searchResults by searchViewModel.results.collectAsStateWithLifecycle()
 
     // State restoration for scroll states

@@ -1,9 +1,7 @@
 package com.pasich.encly.core.security
 
-import android.content.SharedPreferences
-import androidx.core.content.edit
+import java.security.GeneralSecurityException
 import java.security.SecureRandom
-import java.util.Base64
 import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
@@ -30,125 +28,151 @@ enum class AuthStrategy {
     RECOVERY_DATA,
 }
 
+/** The outcome of one PIN attempt. */
+sealed interface PinUnlock {
+    /** The PIN opened the slot. [dek] belongs to the caller, who must wipe it. */
+    class Success(val dek: ByteArray) : PinUnlock
+
+    /** A wrong (or malformed) PIN; the attempt was counted. */
+    data object WrongPin : PinUnlock
+
+    /** A lockout is running; nothing was checked or counted. */
+    data object LockedOut : PinUnlock
+
+    /**
+     * The device-bound PIN key is gone for good (see [PinHardwareFactor]): this PIN slot can
+     * never open again on this device. The recovery phrase (or fingerprint) still unlocks.
+     */
+    data object KeyLost : PinUnlock
+
+    /** The attempt could not be made (Keystore or storage failure); nothing was counted. */
+    data object Failed : PinUnlock
+}
+
 /**
- * Encly v2 PIN unlock slot.
+ * Encly v3 PIN unlock slot.
  *
- * There is no stored PIN hash. The PIN derives a KEK with PBKDF2-HMAC-SHA256 and that KEK
- * must successfully authenticate/decrypt the random database DEK using AES-256-GCM.
+ * There is no stored PIN hash. The PIN derives a KEK that must authenticate and decrypt the
+ * random database DEK with AES-256-GCM:
+ *
+ *     hw  = HMAC-SHA256_keystore(salt ‖ pin)             (device-bound, see PinHardwareFactor)
+ *     sw  = PBKDF2-HMAC-SHA256(pin, salt, 600 000)
+ *     kek = HKDF-SHA256(ikm = sw ‖ hw, salt = salt, info = "encly/pin/kek/v3")
+ *
+ * `hw` means a copied slot is useless off the device: every guess needs this phone's secure
+ * hardware, which also enforces "device unlocked" on API 28+. PBKDF2 is kept at full cost as
+ * defence in depth for the case where the Keystore key itself were ever extracted.
+ *
+ * Failed attempts are counted durably *before* the KDF runs, under one lock, so killing the
+ * app mid-check or racing two checks never gets a free guess. The lockout runs on
+ * [LockoutClock.elapsedRealtime], not the wall clock, and escalates up to [MAX_LOCKOUT_MS].
  */
 @Singleton
-class AuthenticationManager @Inject constructor(private val secureStoragePrefs: SharedPreferences) {
-    companion object {
-        private const val PIN_SLOT_KEY = "v2_pin_slot"
-        private const val PIN_SALT_KEY = "v2_pin_salt"
-        private const val AUTH_TYPE_KEY = "auth_type_v2"
-        private const val BIOMETRIC_ENABLED_KEY = "biometric_enabled_v2"
+@Suppress("TooManyFunctions") // The complete PIN slot and lockout lifecycle in one place.
+class AuthenticationManager @Inject constructor(
+    private val store: VaultStore,
+    private val factor: PinHardwareFactor,
+    private val clock: LockoutClock,
+) {
+    private val attemptLock = Any()
 
-        private const val PIN_ATTEMPTS_KEY = "pin_attempts_v2"
-        private const val PIN_LOCKOUT_UNTIL_KEY = "pin_lockout_until_v2"
-        private const val MAX_ATTEMPTS = 5
-        private const val PIN_SALT_SIZE = 16
-        private const val PBKDF2_ITERATIONS = 600_000
-        private const val GCM_TAG_LENGTH = 128
-        private const val IV_LENGTH = 12
-        private const val DEK_LENGTH = 32
-
-        private val PIN_AAD = "encly/pin/slot/v2".toByteArray(Charsets.UTF_8)
-    }
-
-    fun configurePin(code: String, dek: ByteArray): Boolean {
-        if (code.length != PIN_LENGTH || !code.all(Char::isDigit) || dek.size != DEK_LENGTH) return false
-
-        val pinChars = code.toCharArray()
+    /** Creates (or replaces) the PIN slot around [dek]. [pin] stays the caller's to wipe. */
+    @Suppress("ReturnCount") // Validation gates fail closed before any key is touched.
+    fun configurePin(pin: CharArray, dek: ByteArray): Boolean {
+        if (!isWellFormed(pin) || dek.size != DEK_LENGTH) return false
         val salt = ByteArray(PIN_SALT_SIZE).also { SecureRandom().nextBytes(it) }
-        val kek = derivePinKek(pinChars, salt)
+        val kek = try {
+            factor.ensureKey()
+            try {
+                derivePinKek(pin, salt)
+            } catch (e: PinFactorException) {
+                // A key the system invalidated can be replaced: the PIN it served is lost anyway.
+                if (!e.lost) throw e
+                factor.reset()
+                derivePinKek(pin, salt)
+            }
+        } catch (_: PinFactorException) {
+            SensitiveDataCleaner.clear(salt)
+            return false
+        }
         return try {
-            val wrapped = wrapDek(dek, kek)
-            val committed = secureStoragePrefs.edit()
-                .putString(PIN_SALT_KEY, Base64.getEncoder().encodeToString(salt))
-                .putString(PIN_SLOT_KEY, Base64.getEncoder().encodeToString(wrapped))
-                .putInt(AUTH_TYPE_KEY, AuthType.PIN.ordinal)
-                .remove(PIN_ATTEMPTS_KEY)
-                .remove(PIN_LOCKOUT_UNTIL_KEY)
-                .commit()
-            SensitiveDataCleaner.clear(wrapped)
-            committed
-        } catch (_: Exception) {
+            val slot = sealSlot(dek, kek, salt)
+            try {
+                store.edit {
+                    putBytes(PIN_SLOT_KEY, slot)
+                    putInt(AUTH_TYPE_KEY, AuthType.PIN.ordinal)
+                    removePrefix(LOCKOUT_PREFIX)
+                }
+            } finally {
+                SensitiveDataCleaner.clear(slot)
+            }
+        } catch (_: GeneralSecurityException) {
             false
         } finally {
-            SensitiveDataCleaner.clear(pinChars)
             SensitiveDataCleaner.clear(salt)
             SensitiveDataCleaner.clear(kek)
         }
     }
 
     /**
-     * Returns the unwrapped DEK on success. The caller owns and must zeroize it.
+     * One PIN attempt. [pin] stays the caller's to wipe. On [PinUnlock.Success] the caller
+     * owns the DEK and must wipe it.
      */
-    @Suppress("ReturnCount") // Early exits are fail-closed validation gates for corrupted/missing slot state.
-    fun unlockWithPin(inputCode: String): ByteArray? {
-        if (remainingLockoutMillis() > 0) return null
-        if (inputCode.length != PIN_LENGTH || !inputCode.all(Char::isDigit)) {
-            recordFailedAttempt()
-            return null
-        }
+    @Suppress("ReturnCount") // Fail-closed gates: lockout, missing slot, unrecorded attempt.
+    fun unlockWithPin(pin: CharArray): PinUnlock = synchronized(attemptLock) {
+        if (remainingLockoutMillis() > 0) return PinUnlock.LockedOut
+        val slot = store.getBytes(PIN_SLOT_KEY) ?: return PinUnlock.WrongPin
+        try {
+            val previousFailures = store.getInt(FAILURES_KEY, 0)
+            // Counted before the KDF: an attempt the app is killed during still counts.
+            if (!chargeAttempt(previousFailures + 1)) return PinUnlock.Failed
+            if (!isWellFormed(pin)) return PinUnlock.WrongPin
 
-        val saltEncoded = secureStoragePrefs.getString(PIN_SALT_KEY, null) ?: return null
-        val slotEncoded = secureStoragePrefs.getString(PIN_SLOT_KEY, null) ?: return null
-        val salt = try {
-            Base64.getDecoder().decode(saltEncoded)
-        } catch (_: Exception) {
-            return null
-        }
-        val wrapped = try {
-            Base64.getDecoder().decode(slotEncoded)
-        } catch (_: Exception) {
-            SensitiveDataCleaner.clear(salt)
-            return null
-        }
-
-        val pinChars = inputCode.toCharArray()
-        val kek = derivePinKek(pinChars, salt)
-        return try {
-            val dek = unwrapDek(wrapped, kek)
-            if (dek != null) {
-                resetAttempts()
-            } else {
-                recordFailedAttempt()
+            val parsed = parseSlot(slot) ?: return PinUnlock.WrongPin
+            try {
+                val kek = try {
+                    derivePinKek(pin, parsed.salt)
+                } catch (e: PinFactorException) {
+                    // Not a guess: the hardware never answered. Give the attempt back.
+                    refundAttempt(previousFailures)
+                    return if (e.lost) PinUnlock.KeyLost else PinUnlock.Failed
+                }
+                try {
+                    val dek = openSlot(parsed, kek)
+                    store.edit { removePrefix(LOCKOUT_PREFIX) }
+                    PinUnlock.Success(dek)
+                } catch (_: AEADBadTagException) {
+                    PinUnlock.WrongPin
+                } catch (_: GeneralSecurityException) {
+                    PinUnlock.WrongPin
+                } finally {
+                    SensitiveDataCleaner.clear(kek)
+                }
+            } finally {
+                parsed.wipe()
             }
-            dek
-        } catch (_: AEADBadTagException) {
-            recordFailedAttempt()
-            null
-        } catch (_: Exception) {
-            recordFailedAttempt()
-            null
         } finally {
-            SensitiveDataCleaner.clear(pinChars)
-            SensitiveDataCleaner.clear(salt)
-            SensitiveDataCleaner.clear(wrapped)
-            SensitiveDataCleaner.clear(kek)
+            SensitiveDataCleaner.clear(slot)
         }
     }
 
-    fun verifyPinAuth(inputCode: String): Boolean {
-        val dek = unlockWithPin(inputCode) ?: return false
-        SensitiveDataCleaner.clear(dek)
-        return true
+    /** Whether [pin] opens the slot; counts like an unlock attempt. [pin] stays the caller's. */
+    fun verifyPinAuth(pin: CharArray): Boolean {
+        val result = unlockWithPin(pin)
+        if (result is PinUnlock.Success) SensitiveDataCleaner.clear(result.dek)
+        return result is PinUnlock.Success
     }
 
-    fun hasPinSlot(): Boolean = !secureStoragePrefs.getString(PIN_SALT_KEY, null).isNullOrBlank() &&
-        !secureStoragePrefs.getString(PIN_SLOT_KEY, null).isNullOrBlank()
+    fun hasPinSlot(): Boolean = store.contains(PIN_SLOT_KEY)
 
     fun getAuthType(): AuthType {
-        val ordinal = secureStoragePrefs.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
+        val ordinal = store.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
         return AuthType.entries.getOrNull(ordinal) ?: AuthType.NONE
     }
 
     fun isAuthStrategy(): AuthStrategy {
-        val authType = getAuthType()
         val biometric = isBiometricEnabled()
-        return when (authType) {
+        return when (getAuthType()) {
             AuthType.NONE -> AuthStrategy.NONE
 
             AuthType.PIN -> when {
@@ -163,21 +187,92 @@ class AuthenticationManager @Inject constructor(private val secureStoragePrefs: 
     }
 
     fun markBiometricEnabled(enabled: Boolean) {
-        secureStoragePrefs.edit { putBoolean(BIOMETRIC_ENABLED_KEY, enabled) }
+        store.edit { putBoolean(BIOMETRIC_ENABLED_KEY, enabled) }
     }
 
-    fun isBiometricEnabled(): Boolean = secureStoragePrefs.getBoolean(BIOMETRIC_ENABLED_KEY, false)
+    fun isBiometricEnabled(): Boolean = store.getBoolean(BIOMETRIC_ENABLED_KEY, false)
 
     fun deactivateBiometricAuth() = markBiometricEnabled(false)
 
+    /**
+     * What is left of the running lockout. The store keeps the penalty that was left at an
+     * `elapsedRealtime` anchor in a given boot. After a reboot (another boot count, or the
+     * clock behind the anchor) the time since the anchor is unknown, so the whole remaining
+     * penalty starts again from now: a reboot never shortens a lockout.
+     */
+    @Suppress("ReturnCount")
     fun remainingLockoutMillis(): Long {
-        val until = secureStoragePrefs.getLong(PIN_LOCKOUT_UNTIL_KEY, 0L)
-        val now = System.currentTimeMillis()
-        return if (until > now) until - now else 0L
+        // Not under [attemptLock]: the UI polls this every second, also while an attempt runs.
+        val penalty = store.getLong(PENALTY_KEY, 0L)
+        if (penalty <= 0L) return 0L
+        val anchor = store.getLong(ANCHOR_KEY, 0L)
+        val now = clock.elapsedRealtime()
+        val boot = clock.bootCount()
+        if (store.getInt(BOOT_KEY, boot) != boot || now < anchor) {
+            store.edit {
+                putLong(ANCHOR_KEY, now)
+                putInt(BOOT_KEY, boot)
+            }
+            return penalty
+        }
+        return (penalty - (now - anchor)).coerceAtLeast(0L)
     }
 
+    /** Deletes the PIN slot, the lockout and the device-bound PIN key. */
+    fun wipe() {
+        store.edit {
+            removePrefix(PIN_PREFIX)
+            removePrefix(LOCKOUT_PREFIX)
+            removePrefix(AUTH_PREFIX)
+        }
+        factor.delete()
+    }
+
+    private fun chargeAttempt(failures: Int): Boolean = store.edit {
+        putInt(FAILURES_KEY, failures)
+        val penalty = penaltyFor(failures)
+        if (penalty > 0L) {
+            putLong(PENALTY_KEY, penalty)
+            putLong(ANCHOR_KEY, clock.elapsedRealtime())
+            putInt(BOOT_KEY, clock.bootCount())
+        } else {
+            remove(PENALTY_KEY)
+        }
+    }
+
+    private fun refundAttempt(previousFailures: Int) {
+        store.edit {
+            putInt(FAILURES_KEY, previousFailures)
+            remove(PENALTY_KEY)
+        }
+    }
+
+    private fun isWellFormed(pin: CharArray): Boolean = pin.size == PIN_LENGTH && pin.all { it in '0'..'9' }
+
+    /** [PinFactorException] leaves nothing behind; the result is the caller's to wipe. */
     private fun derivePinKek(pin: CharArray, salt: ByteArray): ByteArray {
-        val spec = PBEKeySpec(pin, salt, PBKDF2_ITERATIONS, 256)
+        val macInput = ByteArray(salt.size + pin.size)
+        System.arraycopy(salt, 0, macInput, 0, salt.size)
+        pin.forEachIndexed { index, c -> macInput[salt.size + index] = c.code.toByte() }
+        // The hardware half first: it is cheap, and a lost key fails before the PBKDF2 cost.
+        val hardware = try {
+            factor.mac(macInput)
+        } finally {
+            SensitiveDataCleaner.clear(macInput)
+        }
+        val stretched = pbkdf2(pin, salt)
+        val ikm = stretched + hardware
+        return try {
+            Hkdf.sha256(ikm = ikm, salt = salt, info = KEK_INFO, length = DEK_LENGTH)
+        } finally {
+            SensitiveDataCleaner.clear(hardware)
+            SensitiveDataCleaner.clear(stretched)
+            SensitiveDataCleaner.clear(ikm)
+        }
+    }
+
+    private fun pbkdf2(pin: CharArray, salt: ByteArray): ByteArray {
+        val spec = PBEKeySpec(pin, salt, PBKDF2_ITERATIONS, DEK_LENGTH * Byte.SIZE_BITS)
         return try {
             SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
         } finally {
@@ -185,57 +280,85 @@ class AuthenticationManager @Inject constructor(private val secureStoragePrefs: 
         }
     }
 
-    private fun wrapDek(dek: ByteArray, kek: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    /** `version ‖ salt ‖ iv ‖ AES-GCM(dek)`, with the version and salt authenticated as AAD. */
+    private fun sealSlot(dek: ByteArray, kek: ByteArray, salt: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance(AES_GCM)
         cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
-        cipher.updateAAD(PIN_AAD)
+        cipher.updateAAD(aad(salt))
         val encrypted = cipher.doFinal(dek)
         val iv = cipher.iv
-        return ByteArray(iv.size + encrypted.size).also { combined ->
-            System.arraycopy(iv, 0, combined, 0, iv.size)
-            System.arraycopy(encrypted, 0, combined, iv.size, encrypted.size)
+        return try {
+            byteArrayOf(SLOT_VERSION) + salt + iv + encrypted
+        } finally {
+            SensitiveDataCleaner.clear(encrypted)
         }
     }
 
-    private fun unwrapDek(wrapped: ByteArray, kek: ByteArray): ByteArray? {
-        if (wrapped.size <= IV_LENGTH) return null
-        val iv = wrapped.copyOfRange(0, IV_LENGTH)
-        val ciphertext = wrapped.copyOfRange(IV_LENGTH, wrapped.size)
-        return try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(
-                Cipher.DECRYPT_MODE,
-                SecretKeySpec(kek, "AES"),
-                GCMParameterSpec(GCM_TAG_LENGTH, iv),
-            )
-            cipher.updateAAD(PIN_AAD)
-            cipher.doFinal(ciphertext)
-        } finally {
+    private fun parseSlot(slot: ByteArray): ParsedSlot? {
+        if (slot.size != SLOT_LENGTH || slot[0] != SLOT_VERSION) return null
+        var offset = 1
+        val salt = slot.copyOfRange(offset, offset + PIN_SALT_SIZE)
+        offset += PIN_SALT_SIZE
+        val iv = slot.copyOfRange(offset, offset + IV_LENGTH)
+        offset += IV_LENGTH
+        return ParsedSlot(salt, iv, slot.copyOfRange(offset, slot.size))
+    }
+
+    private fun openSlot(slot: ParsedSlot, kek: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance(AES_GCM)
+        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(kek, "AES"), GCMParameterSpec(GCM_TAG_LENGTH, slot.iv))
+        cipher.updateAAD(aad(slot.salt))
+        return cipher.doFinal(slot.ciphertext)
+    }
+
+    private fun aad(salt: ByteArray): ByteArray = PIN_AAD + byteArrayOf(SLOT_VERSION) + salt
+
+    private class ParsedSlot(val salt: ByteArray, val iv: ByteArray, val ciphertext: ByteArray) {
+        fun wipe() {
+            SensitiveDataCleaner.clear(salt)
             SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(ciphertext)
         }
     }
 
-    private fun recordFailedAttempt() {
-        val attempts = secureStoragePrefs.getInt(PIN_ATTEMPTS_KEY, 0) + 1
-        secureStoragePrefs.edit {
-            putInt(PIN_ATTEMPTS_KEY, attempts)
-            if (attempts >= MAX_ATTEMPTS) {
-                val over = (attempts - MAX_ATTEMPTS).coerceIn(0, 5)
-                val lockMs = (30_000L shl over).coerceAtMost(15 * 60_000L)
-                putLong(PIN_LOCKOUT_UNTIL_KEY, System.currentTimeMillis() + lockMs)
-            }
-        }
-    }
+    companion object {
+        private const val PIN_PREFIX = "pin."
+        private const val PIN_SLOT_KEY = "pin.slot"
+        private const val AUTH_PREFIX = "auth."
+        private const val AUTH_TYPE_KEY = "auth.type"
+        private const val BIOMETRIC_ENABLED_KEY = "auth.biometric_enabled"
+        private const val LOCKOUT_PREFIX = "lockout."
+        private const val FAILURES_KEY = "lockout.failures"
+        private const val PENALTY_KEY = "lockout.penalty_ms"
+        private const val ANCHOR_KEY = "lockout.anchor_elapsed"
+        private const val BOOT_KEY = "lockout.boot"
 
-    private fun resetAttempts() {
-        secureStoragePrefs.edit {
-            remove(PIN_ATTEMPTS_KEY)
-            remove(PIN_LOCKOUT_UNTIL_KEY)
-        }
-    }
+        const val MAX_ATTEMPTS = 5
+        const val FIRST_LOCKOUT_MS = 30_000L
+        const val MAX_LOCKOUT_MS = 24 * 60 * 60_000L
+        private const val MAX_DOUBLINGS = 12
 
-    fun wipe() {
-        secureStoragePrefs.edit().clear().commit()
+        private const val PIN_SALT_SIZE = 16
+        private const val PBKDF2_ITERATIONS = 600_000
+        private const val GCM_TAG_LENGTH = 128
+        private const val GCM_TAG_BYTES = GCM_TAG_LENGTH / 8
+        private const val IV_LENGTH = 12
+        private const val DEK_LENGTH = 32
+        private const val SLOT_VERSION: Byte = 3
+        private const val SLOT_LENGTH = 1 + PIN_SALT_SIZE + IV_LENGTH + DEK_LENGTH + GCM_TAG_BYTES
+        private const val AES_GCM = "AES/GCM/NoPadding"
+
+        private val PIN_AAD = "encly/pin/slot/v3".toByteArray(Charsets.UTF_8)
+        private val KEK_INFO = "encly/pin/kek/v3".toByteArray(Charsets.UTF_8)
+
+        /**
+         * The lockout after [failures] consecutive misses: none before [MAX_ATTEMPTS], then
+         * 30 s, doubling each miss (1 min, 2, 4, 8, 16, 32 min, ~1 h, ~2 h ...) up to 24 h.
+         */
+        fun penaltyFor(failures: Int): Long {
+            if (failures < MAX_ATTEMPTS) return 0L
+            val doublings = (failures - MAX_ATTEMPTS).coerceAtMost(MAX_DOUBLINGS)
+            return (FIRST_LOCKOUT_MS shl doublings).coerceAtMost(MAX_LOCKOUT_MS)
+        }
     }
 }

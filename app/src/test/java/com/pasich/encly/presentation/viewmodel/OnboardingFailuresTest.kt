@@ -14,7 +14,7 @@ import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyCallback
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.testutil.eqValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,7 +48,7 @@ class OnboardingFailuresTest {
         security = mock(SecurityManager::class.java)
         `when`(security.generateMnemonicCode()).thenAnswer { words.copyOf() }
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
-        `when`(security.configurePin(anyString())).thenReturn(true)
+        `when`(security.configurePin(anyCharArray())).thenReturn(true)
     }
 
     @After
@@ -66,7 +66,7 @@ class OnboardingFailuresTest {
 
         assertEquals(OnboardingStep.RECOVERY_INFO, state.step)
         assertEquals(UiText.of(R.string.onboarding_error_initialization), state.error)
-        verify(security, never()).configurePin(anyString())
+        verify(security, never()).configurePin(anyCharArray())
     }
 
     @Test

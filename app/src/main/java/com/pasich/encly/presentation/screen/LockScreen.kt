@@ -1,18 +1,19 @@
 package com.pasich.encly.presentation.screen
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -21,11 +22,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
+import com.pasich.encly.presentation.effects.UnlockRevealState
 import com.pasich.encly.presentation.effects.revealThen
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
@@ -46,7 +49,7 @@ fun LockScreen(
     modifier: Modifier = Modifier,
     viewModel: LockViewModel = hiltViewModel(),
 ) {
-    val activity = LocalContext.current as? FragmentActivity
+    val activity = LocalActivity.current as? FragmentActivity
     val busy by viewModel.busy.collectAsState()
     // Above the loading view below: the forms' input and errors survive the credential check.
     val form = remember { LockFormState() }
@@ -60,18 +63,7 @@ fun LockScreen(
 
     val unlockReveal = LocalUnlockReveal.current
 
-    fun goHome() {
-        // The note that was open when the app re-locked (see MainActivity) is opened again.
-        val returnRoute = navController.currentBackStackEntry?.savedStateHandle?.get<String>(RelockReturn.RETURN_ROUTE)
-        val leave = {
-            navController.navigate(NavRoutes.HomeRoute.name) {
-                popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
-            }
-            if (returnRoute != null) navController.navigate(returnRoute)
-        }
-        // Leaves once the reveal covers the window, so Home composes out of sight.
-        unlockReveal.revealThen(leave)
-    }
+    fun goHome() = navController.leaveLockScreen(unlockReveal, viewModel::isSessionLocked)
 
     // A recovery-phrase unlock means the PIN was forgotten: set a new one before going on.
     fun goToPinReset() {
@@ -79,6 +71,8 @@ fun LockScreen(
             popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
         }
     }
+
+    fun onPinKeyLoss() = navController.onPinKeyLoss(form, viewModel.recoveryAvailable(), biometricEnabled)
 
     fun promptBiometric() {
         if (activity != null && viewModel.lockoutRemainingMillis() <= 0) {
@@ -114,6 +108,7 @@ fun LockScreen(
                     busy = busy,
                     lockoutRemainingMillis = viewModel::lockoutRemainingMillis,
                     authenticate = viewModel::authenticatePin,
+                    onKeyLoss = ::onPinKeyLoss,
                 ),
                 onUnlock = ::goHome,
                 onPromptBiometric = ::promptBiometric,
@@ -128,8 +123,43 @@ private data class LockCapabilities(val biometricEnabled: Boolean, val recoveryA
 private class PinAuth(
     val busy: Boolean,
     val lockoutRemainingMillis: () -> Long,
-    val authenticate: (pin: String, onResult: (PinUnlockResult) -> Unit) -> Unit,
+    val authenticate: (pin: CharArray, onResult: (PinUnlockResult) -> Unit) -> Unit,
+    /** The PIN key is gone for good (see [PinUnlockResult.KEY_LOST]). */
+    val onKeyLoss: () -> Unit,
 )
+
+/**
+ * Leaves the lock screen for Home, and the note that was open when the app re-locked (see
+ * MainActivity), once the reveal covers the window so Home composes out of sight. If the
+ * session closed again while the reveal played (e.g. the app went to the background), it stays
+ * on the lock screen rather than open Home over a locked vault.
+ */
+private fun NavHostController.leaveLockScreen(reveal: UnlockRevealState?, isSessionLocked: () -> Boolean) {
+    val returnRoute = currentBackStackEntry?.savedStateHandle?.get<String>(RelockReturn.RETURN_ROUTE)
+    reveal.revealThen {
+        if (!isSessionLocked()) {
+            navigate(NavRoutes.HomeRoute.name) {
+                popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
+            }
+            if (returnRoute != null) navigate(returnRoute)
+        }
+    }
+}
+
+/**
+ * The PIN can no longer unlock on this device. With a recovery phrase the lock screen switches
+ * to it (the form shows why); with only a fingerprint the PIN pad keeps the message; with
+ * neither, nothing can open the vault here any more and the damaged-vault screen explains it.
+ */
+private fun NavHostController.onPinKeyLoss(form: LockFormState, recoveryAvailable: Boolean, biometric: Boolean) {
+    if (recoveryAvailable) {
+        form.useRecovery = true
+    } else if (!biometric) {
+        navigate(NavRoutes.LossDataRoute.name) {
+            popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
+        }
+    }
+}
 
 @Composable
 private fun PinLockContent(
@@ -157,8 +187,8 @@ private fun PinLockContent(
     ) {
         PinEntry(
             // The PIN is taken out of the form for the check; keep the dots full meanwhile.
-            entered = if (busy) PIN_LENGTH else form.pin.length,
-            error = shownError != null && form.pin.isEmpty(),
+            entered = if (busy) PIN_LENGTH else form.pinLength,
+            error = shownError != null && form.pinLength == 0,
             shakeKey = form.shakeKey,
             enabled = !form.lockedOut && !busy,
             actions = PinEntryActions(
@@ -174,19 +204,31 @@ private fun PinLockContent(
 @Composable
 private fun PinAuthenticationEffect(form: LockFormState, pinAuth: PinAuth, onUnlock: () -> Unit) {
     val currentOnUnlock by rememberUpdatedState(onUnlock)
-    LaunchedEffect(form.pin) {
-        if (form.pin.length != PIN_LENGTH) return@LaunchedEffect
+    val currentOnKeyLoss by rememberUpdatedState(pinAuth.onKeyLoss)
+    LaunchedEffect(form.pinLength) {
+        if (form.pinLength != PIN_LENGTH) return@LaunchedEffect
         val pin = form.takePin()
-        if (pinAuth.lockoutRemainingMillis() > 0) return@LaunchedEffect
+        if (pinAuth.lockoutRemainingMillis() > 0) {
+            SensitiveDataCleaner.clear(pin)
+            return@LaunchedEffect
+        }
 
+        // The ViewModel wipes [pin] once it is checked.
         pinAuth.authenticate(pin) { result ->
-            if (result == PinUnlockResult.SUCCESS) {
-                currentOnUnlock()
-            } else {
-                form.onPinResult(result, pinAuth.lockoutRemainingMillis())
+            when (result) {
+                PinUnlockResult.SUCCESS -> currentOnUnlock()
+
+                PinUnlockResult.KEY_LOST -> {
+                    form.onPinResult(result, pinAuth.lockoutRemainingMillis())
+                    currentOnKeyLoss()
+                }
+
+                else -> form.onPinResult(result, pinAuth.lockoutRemainingMillis())
             }
         }
     }
+    // Digits typed but never submitted do not outlive the lock screen.
+    DisposableEffect(form) { onDispose { form.clearPin() } }
 }
 
 @Composable

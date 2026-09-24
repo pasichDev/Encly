@@ -13,12 +13,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
- * Settings → Backup, plus the vault actions of Settings → Security (create a recovery phrase,
- * erase all data). Every flow starts with re-authentication. Plaintext exists only in memory
+ * Settings → Backup, plus the vault actions of Settings → Security (create or replace the
+ * recovery phrase, erase all data). Every flow starts with re-authentication. Plaintext exists only in memory
  * (the decrypted payload waiting for the merge/replace choice) and is dropped on cancel, on
  * completion and when the ViewModel is cleared, e.g. by a re-lock.
  */
@@ -36,11 +37,27 @@ class BackupViewModel @Inject constructor(
 
     val exportFlow = ExportFlow(state, backupManager, documents)
     val phraseFlow = RecoveryPhraseFlow(state, backupManager, phraseSetup, onReady = ::onPhraseReady)
-    val importFlow = ImportFlow(state, backupManager, documents)
+    val importFlow = ImportFlow(state, backupManager, documents, onPickerReturned = sessionLockManager::endSystemPicker)
     val reauthFlow = ReauthFlow(state, securityManager, onAuthenticated = ::proceed)
 
     /** The flow in progress, so a ready recovery phrase continues the right one. */
     private var action: BackupAction? = null
+
+    init {
+        // A re-lock drops every plaintext buffer (a decrypted backup, new recovery words) at
+        // once, even while the app is in the background and this screen is not composed. An
+        // export's sealed file is ciphertext and may still be written to the chosen document.
+        viewModelScope.launch {
+            sessionLockManager.locked.collect { locked ->
+                if (locked) {
+                    phraseFlow.drop()
+                    importFlow.drop()
+                    action = null
+                    state.ui.update { it.copy(step = BackupStep.Idle, busy = false) }
+                }
+            }
+        }
+    }
 
     fun start(action: BackupAction) {
         dropPending()
@@ -61,6 +78,10 @@ class BackupViewModel @Inject constructor(
                 } else {
                     phraseFlow.create()
                 }
+
+            // Replacing needs an existing phrase; a vault without one simply gets its first.
+            action == BackupAction.REPLACE_PHRASE ->
+                if (phraseSetup.hasRecoveryPhrase()) state.go(BackupStep.ConfirmReplacePhrase) else phraseFlow.create()
 
             !phraseSetup.hasRecoveryPhrase() -> state.go(BackupStep.NeedsPhrase)
 
@@ -87,14 +108,20 @@ class BackupViewModel @Inject constructor(
         }
     }
 
-    /** The system picker is another app: keep the vault open while it is in front. */
+    /**
+     * The system picker is another app. Only the import picker keeps the vault open while it is
+     * in front (briefly, see SessionLockManager.allowSystemPicker): the vault is needed again
+     * when the file comes back. An export's file is already sealed, so its picker needs no
+     * open vault and backgrounding locks as usual.
+     */
     fun onSystemPickerLaunched() {
-        sessionLockManager.allowSystemPicker()
+        if (state.step == BackupStep.PickImportFile) sessionLockManager.allowSystemPicker()
         state.go(BackupStep.Idle)
     }
 
     /** No app on this device handles the Storage Access Framework picker. */
     fun onSystemPickerUnavailable() {
+        sessionLockManager.endSystemPicker()
         state.finish(BackupMessage.Text(R.string.backup_error_no_picker))
     }
 

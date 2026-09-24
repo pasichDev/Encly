@@ -17,15 +17,17 @@ fun BlockEditorState.focusFirstBlock() {
 
 /**
  * Brings the keyboard back to where the user was writing: the block they worked on (or the
- * nearest one above that has a field), cursor at its end; the first block if none.
+ * nearest one above that has a field), the cursor where they left it (else at the end); the
+ * first block if none.
  */
 fun BlockEditorState.focusWorkingBlock() {
     val index = selection.workingIndex
     val target = if (blocks.getOrNull(index)?.canTakeFocus() == true) index else blocks.previousFocusableIndex(index)
-    if (blocks.getOrNull(target)?.canTakeFocus() ==
-        true
-    ) {
-        selection.focusAt(target, cursorToEnd = true)
+    val block = blocks.getOrNull(target)
+    if (block?.canTakeFocus() == true) {
+        // A list's items keep their own cursors; its field target puts it at the end.
+        val caret = selection.caretOf(block.id).takeIf { block !is Block.ListBlock }
+        selection.focusAt(target, cursorToEnd = true, caret = caret)
     } else {
         focusFirstBlock()
     }

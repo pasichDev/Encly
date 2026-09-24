@@ -46,4 +46,38 @@ class KeyboardUtilsTest {
         assertFalse(press(Key.Backspace, KeyEventType.KeyDown, text = "milk"))
         assertEquals(0, backspaces)
     }
+
+    @Test
+    fun backspaceAtTheStartOfTextJoinsFirstAndAnEmptyFieldIsRemovedOnlyIfNothingJoined() {
+        var joins = 0
+        var joined = false
+        val joining = KeyboardUtils.KeyHandlers(
+            onBackspaceEmpty = { backspaces++ },
+            onBackspaceAtStart = {
+                joins++
+                joined
+            },
+        )
+        fun backspace(text: String, cursor: Int) =
+            KeyboardUtils.handleKey(Key.Backspace, KeyEventType.KeyDown, text, cursor, joining)
+
+        assertFalse(backspace("milk", cursor = 2))
+        assertEquals(0, joins)
+
+        joined = true
+        assertTrue(backspace("milk", cursor = 0))
+        assertTrue(backspace("", cursor = 0))
+        assertEquals(0, backspaces)
+
+        joined = false
+        assertFalse(backspace("milk", cursor = 0))
+        assertTrue(backspace("", cursor = 0))
+        assertEquals(1, backspaces)
+        assertEquals(4, joins)
+    }
+
+    @Test
+    fun backspaceWithASelectionIsLeftToTheField() {
+        assertFalse(KeyboardUtils.handleKey(Key.Backspace, KeyEventType.KeyDown, "milk", -1, handlers))
+    }
 }

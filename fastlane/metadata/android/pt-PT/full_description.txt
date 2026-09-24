@@ -30,4 +30,4 @@ CÓDIGO ABERTO
 
 Encly: notas encriptadas que continuam a ser suas.
 
-Política de privacidade: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md
+Política de privacidade: https://pasichdev.xyz/apps/encly/privacy-policy/

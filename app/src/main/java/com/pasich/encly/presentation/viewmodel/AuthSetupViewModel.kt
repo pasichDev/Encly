@@ -7,9 +7,11 @@ import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.PendingRestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -55,10 +57,26 @@ class AuthSetupViewModel @Inject constructor(
         _restoreFailed.value = false
         _finishFailed.value = false
         viewModelScope.launch {
+            val owner = coroutineContext.job
             _busy.value = true
-            val outcome = withContext(Dispatchers.IO) { openRestoreAndCommit() }
+            // Runs to its end even if this ViewModel is cleared meanwhile: a vault opened for
+            // a screen that no longer exists is closed again instead of staying open.
+            val (outcome, published) = withContext(NonCancellable) {
+                val outcome = withContext(Dispatchers.IO) { openRestoreAndCommit() }
+                val committed = outcome == SetupOutcome.COMMITTED
+                val published = when {
+                    !committed -> false
+
+                    !owner.isActive -> {
+                        sessionLockManager.onUnlockAbandoned()
+                        false
+                    }
+
+                    else -> sessionLockManager.onUnlocked()
+                }
+                outcome to published
+            }
             val committed = outcome == SetupOutcome.COMMITTED
-            val published = committed && sessionLockManager.onUnlocked()
             _busy.value = false
             report(
                 FinishResult(

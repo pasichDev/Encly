@@ -2,76 +2,138 @@
 <issues format="6" by="lint 8.11.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.11.1)" variant="all" version="8.11.1">
 
     <issue
-        id="ContextCastToActivity"
-        message="LocalContext should not be cast to Activity, use LocalActivity instead"
-        errorLine1="    val activity = LocalContext.current as? FragmentActivity"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        secureStoragePrefs.edit().clear().commit()"
+        errorLine2="                                          ~~~~~~~~">
         <location
-            file="src/main/java/com/pasich/encly/presentation/screen/LockScreen.kt"
-            line="41"
-            column="20"/>
+            file="src/main/java/com/pasich/encly/core/security/AuthenticationManager.kt"
+            line="239"
+            column="43"/>
     </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        secureStoragePrefs.edit().remove(ONBOARDING_SHOWN_KEY).commit()"
+        errorLine2="                                                               ~~~~~~~~">
+        <location
+            file="src/main/java/com/pasich/encly/core/security/SecurityManager.kt"
+            line="329"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        prefs.edit().clear().commit()"
+        errorLine2="                             ~~~~~~~~">
+        <location
+            file="src/main/java/com/pasich/encly/core/security/SeedPhraseManager.kt"
+            line="80"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="                .commit()"
+        errorLine2="                 ~~~~~~~~">
+        <location
+            file="src/main/java/com/pasich/encly/core/security/SeedPhraseManager.kt"
+            line="215"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="                .commit()"
+        errorLine2="                 ~~~~~~~~">
+        <location
+            file="src/main/java/com/pasich/encly/core/security/SeedPhraseManager.kt"
+            line="253"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;seit dem&quot; is a common misspelling; did you mean &quot;seitdem&quot;?"
+        errorLine1="    &lt;string name=&quot;note_discard_confirm_message&quot;>Alles, was du seit dem Öffnen dieser Notiz geändert hast, geht verloren. Das kann nicht rückgängig gemacht werden.&lt;/string>"
+        errorLine2="                                                              ^">
+        <location
+            file="src/main/res/values-de/strings.xml"
+            line="538"
+            column="63"/>
+    </issue>
+
     <issue
         id="ObsoleteSdkInt"
         message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
         <location
             file="src/main/res/mipmap-anydpi-v26"/>
     </issue>
+
     <issue
         id="ObsoleteSdkInt"
         message="This folder configuration (`v25`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `xml`.">
         <location
             file="src/main/res/xml-v25"/>
     </issue>
+
     <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        secureStoragePrefs.edit().clear().commit()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/mipmap-ldpi/ic_launcher.png"/>
+            file="src/main/java/com/pasich/encly/core/security/AuthenticationManager.kt"
+            line="239"
+            column="9"/>
     </issue>
+
     <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        return secureStoragePrefs.edit()"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
+            file="src/main/java/com/pasich/encly/core/security/SecurityManager.kt"
+            line="309"
+            column="16"/>
     </issue>
+
     <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        secureStoragePrefs.edit().remove(ONBOARDING_SHOWN_KEY).commit()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
+            file="src/main/java/com/pasich/encly/core/security/SecurityManager.kt"
+            line="329"
+            column="9"/>
     </issue>
+
     <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs.edit()"
+        errorLine2="            ~~~~~~~~~~~~">
         <location
-            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
+            file="src/main/java/com/pasich/encly/core/security/SeedPhraseManager.kt"
+            line="213"
+            column="13"/>
     </issue>
+
     <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs.edit()"
+        errorLine2="            ~~~~~~~~~~~~">
         <location
-            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
-    </issue>
-    <issue
-        id="MonochromeLauncherIcon"
-        message="The application adaptive icon is missing a monochrome tag"
-        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
-            line="2"
-            column="1"/>
-    </issue>
-    <issue
-        id="MonochromeLauncherIcon"
-        message="The application adaptive roundIcon is missing a monochrome tag"
-        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
-            line="2"
-            column="1"/>
+            file="src/main/java/com/pasich/encly/core/security/SeedPhraseManager.kt"
+            line="249"
+            column="13"/>
     </issue>
 
 </issues>

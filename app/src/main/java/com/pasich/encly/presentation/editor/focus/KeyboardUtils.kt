@@ -23,20 +23,26 @@ object KeyboardUtils {
         onNavigateUp: () -> Boolean = { false },
         onNavigateDown: () -> Boolean = { false },
         onEnterPressed: () -> Boolean = { false },
+        onBackspaceAtStart: () -> Boolean = { false },
     ): Boolean = handleKey(
         key = event.key,
         type = event.type,
         text = text,
         cursorPosition = cursorPosition,
-        handlers = KeyHandlers(onBackspaceEmpty, onNavigateUp, onNavigateDown, onEnterPressed),
+        handlers = KeyHandlers(onBackspaceEmpty, onNavigateUp, onNavigateDown, onEnterPressed, onBackspaceAtStart),
     )
 
-    /** What [handleKey] runs for each key it handles. */
+    /**
+     * What [handleKey] runs for each key it handles. Backspace with the cursor at the start runs
+     * [onBackspaceAtStart] first (join with the block above); if that does nothing and the field
+     * is empty, [onBackspaceEmpty].
+     */
     internal class KeyHandlers(
         val onBackspaceEmpty: () -> Unit = {},
         val onNavigateUp: () -> Boolean = { false },
         val onNavigateDown: () -> Boolean = { false },
         val onEnterPressed: () -> Boolean = { false },
+        val onBackspaceAtStart: () -> Boolean = { false },
     )
 
     /** Acts once per key press, on key-down; key-ups are left to the field, which ignores them. */
@@ -59,16 +65,23 @@ object KeyboardUtils {
 
             key == Key.Enter -> handlers.onEnterPressed()
 
-            key.keyCode == Key.Backspace.keyCode -> {
-                if (text.isEmpty()) {
-                    handlers.onBackspaceEmpty()
-                    true
-                } else {
-                    false
-                }
-            }
+            key.keyCode == Key.Backspace.keyCode -> handleBackspace(text, cursorPosition, handlers)
 
             else -> false
         }
+    }
+
+    private fun handleBackspace(text: CharSequence, cursorPosition: Int, handlers: KeyHandlers): Boolean = when {
+        // Inside the text, or a selection to delete: the field's own Backspace.
+        text.isNotEmpty() && cursorPosition != 0 -> false
+
+        handlers.onBackspaceAtStart() -> true
+
+        text.isEmpty() -> {
+            handlers.onBackspaceEmpty()
+            true
+        }
+
+        else -> false
     }
 }

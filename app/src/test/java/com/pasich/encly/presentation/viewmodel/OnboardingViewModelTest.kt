@@ -17,7 +17,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.usecase.OnboardingUseCase
 import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.InMemoryVaultDataStore
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -63,7 +63,7 @@ class OnboardingViewModelTest {
             vaultSeed = it.getArgument<CharArray?>(0)?.let(::String)
             true
         }
-        `when`(security.configurePin(anyString())).thenReturn(true)
+        `when`(security.configurePin(anyCharArray())).thenReturn(true)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {
             runCatching { MnemonicCode(it.getArgument<CharArray>(0).copyOf()).validate() }.isSuccess
         }
@@ -137,7 +137,7 @@ class OnboardingViewModelTest {
 
         // Nothing is written until the check passes.
         verify(security, never()).initializeNewVault(anyChars())
-        verify(security, never()).configurePin(anyString())
+        verify(security, never()).configurePin(anyCharArray())
 
         vm.answerAll()
         assertTrue(vm.state.isVerificationComplete)
@@ -152,7 +152,7 @@ class OnboardingViewModelTest {
         assertTrue("the words are dropped once the vault exists", vm.state.words.isEmpty())
         val order = inOrder(security)
         order.verify(security).initializeNewVault(anyChars())
-        order.verify(security).configurePin("123456")
+        order.verify(security).configurePin("123456".toCharArray())
     }
 
     @Test
@@ -234,7 +234,7 @@ class OnboardingViewModelTest {
         assertEquals(OnboardingStep.READY, vm.state.step)
         assertEquals(SecurityType.AUTO_MANAGED, vm.state.securityType)
         assertNull("no recovery seed", vaultSeed)
-        verify(security).configurePin("123456")
+        verify(security).configurePin("123456".toCharArray())
     }
 
     @Test
@@ -264,7 +264,7 @@ class OnboardingViewModelTest {
 
     @Test
     fun aPinSlotThatFailsKeepsTheStepSoTheSameButtonRetries() = runTest {
-        `when`(security.configurePin(anyString())).thenReturn(false)
+        `when`(security.configurePin(anyCharArray())).thenReturn(false)
         val vm = viewModel()
         vm.getStarted()
         vm.choosePin()
@@ -277,11 +277,11 @@ class OnboardingViewModelTest {
         assertEquals(OnboardingStep.VERIFY, vm.state.step)
         assertEquals(UiText.of(R.string.pin_save_failed), vm.state.error)
 
-        `when`(security.configurePin(anyString())).thenReturn(true)
+        `when`(security.configurePin(anyCharArray())).thenReturn(true)
         vm.completeVerification()
         vm.settled()
         assertEquals(OnboardingStep.READY, vm.state.step)
-        verify(security, times(2)).configurePin("123456")
+        verify(security, times(2)).configurePin("123456".toCharArray())
     }
 
     @Test
@@ -342,13 +342,13 @@ class OnboardingViewModelTest {
         assertEquals(OnboardingStep.PIN, vm.state.step)
         assertEquals(StepProgress(1, 2), vm.state.progress)
         assertEquals(String(words), vaultSeed)
-        verify(security, never()).configurePin(anyString())
+        verify(security, never()).configurePin(anyCharArray())
 
         vm.choosePin()
         vm.settled()
         assertEquals(OnboardingStep.READY, vm.state.step)
         assertEquals(StepProgress(2, 2), vm.state.progress)
-        verify(security).configurePin("123456")
+        verify(security).configurePin("123456".toCharArray())
         assertTrue("the backup is imported when setup is committed", store.notes.isEmpty())
         assertTrue(pending.apply())
         assertEquals(listOf("n-plan"), store.notes.map { it.uid })

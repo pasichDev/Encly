@@ -86,8 +86,7 @@ digest:
 
 Any other certificate means the APK is not an official Encly build.
 
-An APK whose name ends in `-unsigned.apk` was built without the release key and must not be
-installed over a signed Encly.
+The release workflow refuses to publish an APK that is not signed with this certificate.
 
 ## Coming from 1.x
 
@@ -115,13 +114,14 @@ The auto-managed onboarding option deliberately has **no recovery seed**. Losing
 and local unlock material in that mode makes the encrypted database unrecoverable.
 
 The app also disables Android backup/device transfer for protected data and has no
-system notifications, clipboard export, plaintext note sharing, calendar export, or seed
-export. The one way data leaves the phone is an **encrypted backup**
+system notifications, plaintext note sharing, calendar export, or seed export; the only
+thing it copies to the clipboard is a link block's address, on request and marked sensitive. The one way data leaves the phone is an **encrypted backup**
 you export yourself (Settings → Backup): it is sealed with your 12-word recovery phrase, and
 the same words restore it on a new phone ("Restore from backup" in onboarding).
 
-See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and
-[PRIVACY.md](PRIVACY.md) for the privacy policy.
+See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and the
+[privacy policy](https://pasichdev.xyz/apps/encly/privacy-policy/) (also in
+[PRIVACY.md](PRIVACY.md)).
 
 ## Tech stack
 
@@ -172,10 +172,10 @@ links, no baseline profile) and `play`.
 Outputs: `app/build/outputs/apk/<flavor>/<buildType>/`, and the bundle in
 `app/build/outputs/bundle/playRelease/`. Releasing: [CONTRIBUTING.md → Releasing](CONTRIBUTING.md#releasing).
 
-### Release signing (optional)
+### Release signing for local builds (optional)
 
-Release builds are unsigned unless all four signing values are provided, either as environment
-variables (used by CI):
+Local release builds are unsigned unless all four signing values are provided, either as
+environment variables:
 
 ```bash
 export ENCLY_KEYSTORE_PATH=/path/to/release.jks
@@ -195,20 +195,21 @@ keyPassword=…
 
 Keystores and `keystore.properties` are git-ignored; never commit them.
 
+CI does not use these: the release workflows build unsigned and sign the APKs and the bundle
+with `apksigner` / `jarsigner` in a separate step, so Gradle never sees the keystore.
+
 ### Versioning and releases
 
 `version.properties` is the single source of the version: `versionName = MAJOR.MINOR.PATCH`,
 `versionCode = MAJOR*10000 + MINOR*100 + PATCH`. Pushing a tag `vMAJOR.MINOR.PATCH` that matches
-it runs [`release.yml`](.github/workflows/release.yml), which builds, signs (when the repository
-secrets are set), and publishes the APKs, `SHA256SUMS` and R8 mapping files as a GitHub Release.
+it runs [`release.yml`](.github/workflows/release.yml), which builds, signs, checks the signing
+certificate, and publishes the APKs, `SHA256SUMS` and R8 mapping files as a GitHub Release. The
+run fails, rather than publishing unsigned APKs, when the signing secrets are missing.
 See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 
-## Beta status
+## Documentation
 
-Encly is under security-focused beta hardening. Automated checks and manual device scenarios
-must pass before a public distribution.
-
-- [Privacy policy](PRIVACY.md)
+- [Privacy policy](https://pasichdev.xyz/apps/encly/privacy-policy/) ([PRIVACY.md](PRIVACY.md))
 - [Security model](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)

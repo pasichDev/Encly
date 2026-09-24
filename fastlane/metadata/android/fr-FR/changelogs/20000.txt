@@ -1,4 +1,4 @@
-Première version sur Google Play.
+Encly 2.0 : entièrement reconstruite autour d'un nouveau coffre-fort chiffré.
 • Notes et tâches chiffrées, stockées uniquement sur votre téléphone.
 • Verrouillage par code PIN à 6 chiffres, empreinte ou visage en option.
 • Phrase de récupération de 12 mots en option.

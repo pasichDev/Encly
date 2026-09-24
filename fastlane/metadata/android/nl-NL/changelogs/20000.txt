@@ -1,4 +1,4 @@
-Eerste versie in Google Play.
+Encly 2.0: helemaal opnieuw gebouwd rond een nieuwe versleutelde kluis.
 • Versleutelde notities en taken, alleen op je telefoon.
 • Vergrendeling met 6-cijferige pincode, optioneel vingerafdruk of gezicht.
 • Optionele herstelzin van 12 woorden.

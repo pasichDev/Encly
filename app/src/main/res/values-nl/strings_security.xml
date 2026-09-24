@@ -31,4 +31,25 @@
         <item quantity="one">%d tag</item>
         <item quantity="other">%d tags</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Je pincode kan Encly op deze telefoon niet meer ontgrendelen: de hardwaresleutel is gereset. Gebruik je herstelzin (of vingerafdruk) en stel daarna een nieuwe pincode in.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Te veel pogingen. Probeer het over %d minuut opnieuw</item>
+        <item quantity="other">Te veel pogingen. Probeer het over %d minuten opnieuw</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Te veel pogingen. Probeer het over %d uur opnieuw</item>
+        <item quantity="other">Te veel pogingen. Probeer het over %d uur opnieuw</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Herstelzin vervangen</string>
+    <string name="security_recovery_replace_desc">Krijg 12 nieuwe woorden. Eerder gemaakte back-ups hebben nog steeds de oude nodig.</string>
+    <string name="security_recovery_replace_confirm_title">Herstelzin vervangen?</string>
+    <string name="security_recovery_replace_confirm_body">Je krijgt 12 nieuwe woorden. De oude zin ontgrendelt je notities op deze telefoon niet meer. Back-ups die je al hebt gemaakt, openen alleen met de oude zin, dus bewaar die zolang je die back-ups bewaart, of maak daarna een nieuwe back-up.</string>
+    <string name="security_recovery_replace_confirm">Nieuwe woorden krijgen</string>
+    <string name="security_recovery_replace_warning_title">Je oude zin werkt hier niet meer</string>
+    <string name="security_recovery_replace_warning_body">Zodra je bevestigt, ontgrendelen alleen deze woorden je notities als je de pincode vergeet. Eerder gemaakte back-ups hebben nog steeds de oude woorden nodig.</string>
+    <string name="security_recovery_replaced">Herstelzin vervangen. Maak een nieuwe back-up om hem ook voor back-ups te gebruiken.</string>
+    <string name="security_privacy_section">Privacy</string>
+    <string name="security_keyboard_strict_title">Strikte toetsenbordprivacy</string>
+    <string name="security_keyboard_strict_desc">Vraagt het toetsenbord om geen suggesties, geen voorspelling in de cloud en geen meelezen rond de cursor. Zet autocorrectie uit, en sommige toetsenborden verbergen emoji of spraakinvoer.</string>
 </resources>

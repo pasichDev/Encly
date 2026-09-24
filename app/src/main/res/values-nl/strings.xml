@@ -392,6 +392,7 @@
     <string name="link_edit">Link bewerken</string>
     <string name="link_copied">Link gekopieerd</string>
     <string name="link_open_failed">Geen app op dit apparaat kan deze link openen.</string>
+    <string name="link_blocked">Alleen weblinks (http, https) en e-maillinks kunnen worden opgeslagen of geopend.</string>
     <string name="notes_load_failed_title">Kan je notities niet lezen</string>
     <string name="tags_load_failed_title">Kan je labels niet lezen</string>
     <string name="notes_load_failed_desc">Je notities staan nog steeds versleuteld op dit apparaat. Sluit Encly en open het opnieuw om het nog eens te proberen.</string>

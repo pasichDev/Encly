@@ -1,4 +1,4 @@
-Primera versión en Google Play.
+Encly 2.0: rehecha desde cero en torno a una nueva caja fuerte cifrada.
 • Notas y tareas cifradas, guardadas solo en tu móvil.
 • Bloqueo con PIN de 6 dígitos y, si quieres, huella o cara.
 • Frase de recuperación de 12 palabras opcional.

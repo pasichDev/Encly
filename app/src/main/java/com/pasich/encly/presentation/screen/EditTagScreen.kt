@@ -356,7 +356,8 @@ private fun ReorderableCollectionItemScope.TagRow(tag: Tag, count: Int, onOpen: 
 /** "Create a new tag": a labelled field, and "Add tag" once something is typed. */
 @Composable
 private fun NewTagField(taken: (String) -> Boolean, onCreate: (String, (Boolean) -> Unit) -> Unit) {
-    var text by rememberSaveable { mutableStateOf("") }
+    // Plain remember: a tag name draft must not land in saved state.
+    var text by remember { mutableStateOf("") }
     val name = normalizeTagName(text)
     val isTaken = name.isNotEmpty() && taken(name)
     val focusManager = LocalFocusManager.current
@@ -408,7 +409,7 @@ private class TagSheetActions(
 private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActions) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    var text by rememberSaveable(tag.id) { mutableStateOf(tag.nameTag) }
+    var text by remember(tag.id) { mutableStateOf(tag.nameTag) }
     val name = normalizeTagName(text)
     val isTaken = name.isNotEmpty() && taken(name)
     val canSave = name.isNotEmpty() && !isTaken && name != tag.nameTag

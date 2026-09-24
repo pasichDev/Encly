@@ -30,4 +30,4 @@ OTWARTE ŹRÓDŁO
 
 Encly: szyfrowane notatki, które zostają twoje.
 
-Polityka prywatności: https://github.com/pasichDev/Encly/blob/main/PRIVACY.md
+Polityka prywatności: https://pasichdev.xyz/apps/encly/privacy-policy/

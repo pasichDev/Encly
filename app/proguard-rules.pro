@@ -5,8 +5,8 @@
 #   - SQLCipher (JNI classes and native methods): sqlcipher-android's proguard.txt.
 #   - Room: the KSP-generated *_Impl classes, instantiated reflectively by class name, are
 #     kept by room-runtime's rules.
-#   - Hilt / Dagger, Lifecycle ViewModels, Navigation, Compose, DataStore, security-crypto
-#     (Tink): their own consumer rules.
+#   - Hilt / Dagger, Lifecycle ViewModels, Navigation, Compose, DataStore: their own
+#     consumer rules.
 #   - Gson: gson.jar ships the TypeToken/Signature rules. Note blocks are written and read
 #     field by field in BlockSerializer/BlockDeserializer, never by reflection, so no model
 #     class needs its field names kept (BlockConverterTest pins the stored key names).
@@ -31,6 +31,8 @@
     public static int w(...);
     public static int d(...);
     public static int e(...);
+    public static int wtf(...);
+    public static int println(int, java.lang.String, java.lang.String);
 }
 # AppLogger is a no-op, but its arguments (string templates, exception reads) would still be
 # evaluated; this removes the calls together with the argument building.

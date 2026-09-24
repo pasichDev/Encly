@@ -6,6 +6,8 @@ import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asLoadState
 import com.pasich.encly.core.common.reloadWith
 import com.pasich.encly.core.common.valueOrNull
+import com.pasich.encly.core.security.NeverLocked
+import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
@@ -17,6 +19,7 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +40,7 @@ class NoteListViewModel @Inject constructor(
     private val selectedTagHolder: SelectedTagHolder,
     private val settingsRepository: SettingsRepository,
     private val updateNoteDescriptionUseCase: UpdateNoteDescriptionUseCase,
+    lockEvents: VaultLockEvents = NeverLocked,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NoteListState())
@@ -54,13 +58,19 @@ class NoteListViewModel @Inject constructor(
      */
     val scrollToTopRequest: StateFlow<Int?> = _scrollToTopRequest.asStateFlow()
 
+    private var notesJob: Job? = null
+
     init {
         observeNotes()
+        clearOnLock(lockEvents) {
+            notesJob?.cancel()
+            _state.value = NoteListState()
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeNotes() {
-        viewModelScope.launch {
+        notesJob = viewModelScope.launch {
             combine(
                 selectedTagHolder.selectedTagFlow.onStart { emit(Tag()) },
                 settingsRepository.getSortNotes,

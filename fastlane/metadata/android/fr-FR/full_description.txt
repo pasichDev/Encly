@@ -30,4 +30,4 @@ OPEN SOURCE
 
 Encly : des notes chiffrées qui restent à vous.
 
-Politique de confidentialité : https://github.com/pasichDev/Encly/blob/main/PRIVACY.md
+Politique de confidentialité : https://pasichdev.xyz/apps/encly/privacy-policy/

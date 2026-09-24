@@ -17,13 +17,13 @@ class LockFormStateTest {
     @Test
     fun aWrongPinBeforeTheLockoutShowsTheErrorAndShakes() {
         typePin("123456")
-        assertEquals("123456", form.takePin())
+        assertEquals("123456", String(form.takePin()))
 
         form.onPinResult(PinUnlockResult.WRONG_PIN, lockoutRemainingMillis = 0L)
 
         assertEquals(R.string.lock_wrong_pin, form.pinError)
         assertEquals(1, form.shakeKey)
-        assertEquals("", form.pin)
+        assertEquals(0, form.pinLength)
         assertEquals(0L, form.lockoutSeconds)
     }
 
@@ -42,7 +42,7 @@ class LockFormStateTest {
 
         assertEquals(30L, form.lockoutSeconds)
         form.typeDigit(1)
-        assertEquals("", form.pin)
+        assertEquals(0, form.pinLength)
     }
 
     @Test
@@ -77,6 +77,32 @@ class LockFormStateTest {
 
         assertNull(form.pinError)
         assertNull(form.phraseError)
-        assertTrue(form.pin.isEmpty())
+        assertEquals(0, form.pinLength)
+    }
+
+    @Test
+    fun theTypedDigitsAreWipedWhenTakenOrCleared() {
+        typePin("12")
+        form.deleteDigit()
+        typePin("3456")
+        assertEquals(5, form.pinLength)
+        form.typeDigit(7)
+
+        val taken = form.takePin()
+
+        assertEquals("134567", String(taken))
+        assertEquals(0, form.pinLength)
+        typePin("99")
+        form.clearPin()
+        assertEquals(0, form.pinLength)
+        assertEquals("a new PIN starts from nothing", "1", String(form.also { it.typeDigit(1) }.takePin()))
+    }
+
+    @Test
+    fun aLostPinKeyExplainsItOnBothForms() {
+        form.onPinResult(PinUnlockResult.KEY_LOST, lockoutRemainingMillis = 0L)
+
+        assertEquals(R.string.lock_pin_key_lost, form.pinError)
+        assertEquals(R.string.lock_pin_key_lost, form.phraseError)
     }
 }

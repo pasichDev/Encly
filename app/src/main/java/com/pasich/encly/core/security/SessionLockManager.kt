@@ -12,6 +12,21 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * Whether the open session was closed. ViewModels that hold decrypted content observe it and
+ * drop that content at once: after a background re-lock the UI (and its navigation away from
+ * protected screens) only runs again once the app is back in front.
+ */
+interface VaultLockEvents {
+    /** True from the moment the vault is closed until the next unlock is published. */
+    val locked: StateFlow<Boolean>
+}
+
+/** For code that runs without a session manager (tests, previews): never locks. */
+object NeverLocked : VaultLockEvents {
+    override val locked: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+}
+
+/**
  * Auto-locks the app when it goes to the background.
  *
  * Registered against [androidx.lifecycle.ProcessLifecycleOwner] in [com.pasich.encly.MyApplication].
@@ -21,14 +36,25 @@ import javax.inject.Singleton
  *
  * Re-locking closes SQLCipher and zeroizes Encly's in-memory DEK copy. The next foreground
  * unlock must unwrap the DEK again through the PIN, auth-bound biometric, or recovery slot.
+ *
+ * The one exception is the system file picker of a backup import (another app, so the process
+ * goes to the background): see [allowSystemPicker]. Its grace is short, measured on
+ * `elapsedRealtime` (deep sleep counts), ends when the screen turns off, and is re-checked
+ * the moment the app comes back.
  */
 @Singleton
-class SessionLockManager @Inject constructor(private val securityManager: SecurityManager) : DefaultLifecycleObserver {
+@Suppress("TooManyFunctions") // The whole session lifecycle: lifecycle hooks, picker grace, unlock publishing.
+class SessionLockManager @Inject constructor(
+    private val securityManager: SecurityManager,
+    private val deviceLock: DeviceLockWatcher = DeviceLockWatcher.None,
+    systemClock: LockoutClock = JvmMonotonicClock,
+) : DefaultLifecycleObserver,
+    VaultLockEvents {
 
     private val _locked = MutableStateFlow(false)
 
     /** Emits true when the app was re-locked in the background and must show the lock screen. */
-    val locked: StateFlow<Boolean> = _locked.asStateFlow()
+    override val locked: StateFlow<Boolean> = _locked.asStateFlow()
 
     /**
      * Whether the process is in the foreground (between ProcessLifecycleOwner ON_START and
@@ -37,14 +63,18 @@ class SessionLockManager @Inject constructor(private val securityManager: Securi
     @Volatile
     private var foreground = false
 
-    /** Monotonic milliseconds; replaceable in tests. */
-    internal var clock: () -> Long = { System.nanoTime() / NANOS_PER_MILLI }
+    /** Milliseconds since boot, deep sleep included (`elapsedRealtime`); replaceable in tests. */
+    internal var clock: () -> Long = systemClock::elapsedRealtime
 
     @Volatile
     private var systemPickerRequestedAt = NONE
 
     @Volatile
     private var suspendedAt = NONE
+
+    /** Set when the screen went off (or the keyguard came up) during a picker grace. */
+    @Volatile
+    private var lockedWhileAway = false
 
     /** Schedules [action] on the main thread after a delay; returns a cancel function. */
     internal var timer: (delayMs: Long, action: () -> Unit) -> () -> Unit = { delayMs, action ->
@@ -56,28 +86,46 @@ class SessionLockManager @Inject constructor(private val securityManager: Securi
     }
 
     private var cancelPickerTimeout: (() -> Unit)? = null
+    private var stopScreenOffWatch: (() -> Unit)? = null
 
     /**
      * Announces that the app is about to open the system file picker (Storage Access Framework)
-     * for a backup export/import. The picker is another app, so the process goes to the
+     * to choose a backup to import. The picker is another app, so the process goes to the
      * background; the next ON_STOP within [PICKER_LAUNCH_WINDOW_MS] therefore keeps the vault
-     * open instead of re-locking it. If the user stays away longer than [PICKER_MAX_AWAY_MS],
-     * the vault is re-locked as soon as the app comes back.
+     * open instead of re-locking it, for at most [PICKER_MAX_AWAY_MS]. Turning the screen off
+     * or locking the device ends the grace at once.
+     *
+     * Export does not need this: its file is sealed before the picker opens.
      */
     @MainThread
     fun allowSystemPicker() {
         systemPickerRequestedAt = clock()
     }
 
+    /** The picker returned (or never opened): no later ON_STOP gets the grace. */
+    @MainThread
+    fun endSystemPicker() {
+        systemPickerRequestedAt = NONE
+        endSuspension()
+    }
+
+    /**
+     * Startup found a committed vault that is not open. Starts [locked], so any screen that a
+     * restored back stack (process death) or an intent would open is replaced by the lock
+     * screen before it can show anything.
+     */
+    @MainThread
+    fun requireUnlock() {
+        _locked.value = true
+    }
+
     override fun onStart(owner: LifecycleOwner) {
         foreground = true
-        cancelPickerTimeout?.invoke()
-        cancelPickerTimeout = null
         val stoppedAt = suspendedAt
-        suspendedAt = NONE
-        if (stoppedAt != NONE && clock() - stoppedAt > PICKER_MAX_AWAY_MS && isOpenAndLockable()) {
-            relock()
-        }
+        val lockedAway = lockedWhileAway
+        endSuspension()
+        if (stoppedAt == NONE) return
+        if (graceBroken(stoppedAt, lockedAway) && isOpenAndLockable()) relock()
     }
 
     override fun onStop(owner: LifecycleOwner) {
@@ -85,21 +133,38 @@ class SessionLockManager @Inject constructor(private val securityManager: Securi
         val requestedAt = systemPickerRequestedAt
         systemPickerRequestedAt = NONE
         val now = clock()
-        if (requestedAt != NONE && now - requestedAt <= PICKER_LAUNCH_WINDOW_MS) {
+        if (requestedAt != NONE && now - requestedAt in 0..PICKER_LAUNCH_WINDOW_MS) {
             suspendedAt = now
-            // Also close the vault if the user leaves the picker for another app and never
-            // comes back.
-            cancelPickerTimeout = timer(PICKER_MAX_AWAY_MS) {
-                if (!foreground && suspendedAt != NONE) {
-                    suspendedAt = NONE
-                    if (isOpenAndLockable()) relock()
-                }
-            }
+            lockedWhileAway = false
+            // The screen going off during the picker closes the vault right away, even if the
+            // app never comes back; the timeout covers leaving the picker for another app.
+            stopScreenOffWatch = deviceLock.watchScreenOff { onAwayTimeout(screenOff = true) }
+            cancelPickerTimeout = timer(PICKER_MAX_AWAY_MS) { onAwayTimeout(screenOff = false) }
             return
         }
         if (isOpenAndLockable()) {
             relock()
         }
+    }
+
+    /** The picker grace no longer holds: too long away, the screen went off, or the keyguard is up. */
+    private fun graceBroken(stoppedAt: Long, lockedAway: Boolean): Boolean =
+        clock() - stoppedAt > PICKER_MAX_AWAY_MS || lockedAway || deviceLock.isDeviceLocked()
+
+    private fun onAwayTimeout(screenOff: Boolean) {
+        if (foreground || suspendedAt == NONE) return
+        if (screenOff) lockedWhileAway = true
+        endSuspension()
+        if (isOpenAndLockable()) relock()
+    }
+
+    private fun endSuspension() {
+        suspendedAt = NONE
+        lockedWhileAway = false
+        cancelPickerTimeout?.invoke()
+        cancelPickerTimeout = null
+        stopScreenOffWatch?.invoke()
+        stopScreenOffWatch = null
     }
 
     /**
@@ -123,6 +188,15 @@ class SessionLockManager @Inject constructor(private val securityManager: Securi
     }
 
     /**
+     * An unlock finished for a screen that no longer exists (its ViewModel was cleared while
+     * the key was being checked). Nobody will navigate into the vault, so it is closed again.
+     */
+    @MainThread
+    fun onUnlockAbandoned() {
+        if (isOpenAndLockable()) relock()
+    }
+
+    /**
      * "Lock now" on the notes screen: closes the open vault exactly as backgrounding does, so the
      * lock screen follows. Nothing happens before onboarding is committed or with no vault open.
      */
@@ -139,10 +213,8 @@ class SessionLockManager @Inject constructor(private val securityManager: Securi
     }
 
     private companion object {
-        const val TAG = "SessionLockManager"
         const val NONE = Long.MIN_VALUE
-        const val NANOS_PER_MILLI = 1_000_000L
         const val PICKER_LAUNCH_WINDOW_MS = 5_000L
-        const val PICKER_MAX_AWAY_MS = 5 * 60_000L
+        const val PICKER_MAX_AWAY_MS = 60_000L
     }
 }

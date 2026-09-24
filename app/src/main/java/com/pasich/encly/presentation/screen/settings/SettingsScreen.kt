@@ -1,8 +1,5 @@
 package com.pasich.encly.presentation.screen.settings
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,11 +13,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.pasich.encly.MainActivity
 import com.pasich.encly.R
 import com.pasich.encly.presentation.components.settings.SettingsBuilder
 import com.pasich.encly.presentation.components.settings.SettingsCategory
@@ -42,7 +37,6 @@ fun SettingsScreen(
     val showTasks by settingViewState.showTasksFlow.collectAsState()
     val simpleEdit by settingViewState.simpleEditFlow.collectAsState()
 
-    val context = LocalContext.current
     val languageDialogVisible by settingViewState.languageDialogVisible.collectAsState()
 
     val settingsBuilder = remember { SettingsBuilder() }
@@ -65,7 +59,7 @@ fun SettingsScreen(
         topBar = {
             EnclyTopBar(
                 title = stringResource(R.string.main_drawer_settings),
-                onBack = { leaveSettings(navController, context) },
+                onBack = { navController?.popBackStack() },
             )
         },
     ) { padding ->
@@ -82,16 +76,6 @@ fun SettingsScreen(
             securityDisable = securityDisable,
             modifier = Modifier.padding(padding),
         )
-    }
-}
-
-/** Back from Settings: pop, or (opened on its own) restart the main activity. */
-private fun leaveSettings(navController: NavHostController?, context: Context) {
-    if (navController != null) {
-        navController.popBackStack()
-    } else {
-        context.startActivity(Intent(context, MainActivity::class.java))
-        (context as? Activity)?.finish()
     }
 }
 

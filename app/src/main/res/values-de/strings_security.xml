@@ -31,4 +31,25 @@
         <item quantity="one">%d Tag</item>
         <item quantity="other">%d Tags</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Deine PIN kann Encly auf diesem Telefon nicht mehr entsperren: Ihr Hardware-Schlüssel wurde zurückgesetzt. Nutze deine Wiederherstellungsphrase (oder deinen Fingerabdruck) und lege dann eine neue PIN fest.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Zu viele Versuche. Versuche es in %d Minute erneut</item>
+        <item quantity="other">Zu viele Versuche. Versuche es in %d Minuten erneut</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Zu viele Versuche. Versuche es in %d Stunde erneut</item>
+        <item quantity="other">Zu viele Versuche. Versuche es in %d Stunden erneut</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Wiederherstellungsphrase ersetzen</string>
+    <string name="security_recovery_replace_desc">Erhalte 12 neue Wörter. Frühere Backups brauchen weiterhin die alten.</string>
+    <string name="security_recovery_replace_confirm_title">Wiederherstellungsphrase ersetzen?</string>
+    <string name="security_recovery_replace_confirm_body">Du erhältst 12 neue Wörter. Die alte Phrase entsperrt deine Notizen auf diesem Telefon nicht mehr. Bereits erstellte Backups öffnen sich weiterhin nur mit der alten Phrase – bewahre sie also auf, solange du diese Backups behältst, oder erstelle danach ein neues Backup.</string>
+    <string name="security_recovery_replace_confirm">Neue Wörter erhalten</string>
+    <string name="security_recovery_replace_warning_title">Deine alte Phrase funktioniert hier nicht mehr</string>
+    <string name="security_recovery_replace_warning_body">Sobald du bestätigst, entsperren nur noch diese Wörter deine Notizen, wenn du die PIN vergisst. Frühere Backups brauchen weiterhin die alten Wörter.</string>
+    <string name="security_recovery_replaced">Wiederherstellungsphrase ersetzt. Erstelle ein neues Backup, um sie auch für Backups zu nutzen.</string>
+    <string name="security_privacy_section">Datenschutz</string>
+    <string name="security_keyboard_strict_title">Strenger Tastatur-Datenschutz</string>
+    <string name="security_keyboard_strict_desc">Bittet die Tastatur um keine Vorschläge, keine Cloud-Vorhersage und kein Mitlesen rund um den Cursor. Schaltet die Autokorrektur aus, und manche Tastaturen blenden Emojis oder Spracheingabe aus.</string>
 </resources>

@@ -37,4 +37,29 @@
         <item quantity="many">%d тегів</item>
         <item quantity="other">%d тега</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Ваш PIN більше не може розблокувати Encly на цьому телефоні: його апаратний ключ скинуто. Скористайтеся фразою відновлення (або відбитком пальця), а потім задайте новий PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Забагато спроб. Спробуйте через %d хвилину</item>
+        <item quantity="few">Забагато спроб. Спробуйте через %d хвилини</item>
+        <item quantity="many">Забагато спроб. Спробуйте через %d хвилин</item>
+        <item quantity="other">Забагато спроб. Спробуйте через %d хвилини</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Забагато спроб. Спробуйте через %d годину</item>
+        <item quantity="few">Забагато спроб. Спробуйте через %d години</item>
+        <item quantity="many">Забагато спроб. Спробуйте через %d годин</item>
+        <item quantity="other">Забагато спроб. Спробуйте через %d години</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Замінити фразу відновлення</string>
+    <string name="security_recovery_replace_desc">Отримайте 12 нових слів. Для резервних копій, зроблених раніше, і далі потрібні старі.</string>
+    <string name="security_recovery_replace_confirm_title">Замінити фразу відновлення?</string>
+    <string name="security_recovery_replace_confirm_body">Ви отримаєте 12 нових слів. Стара фраза більше не розблоковуватиме ваші нотатки на цьому телефоні. Уже зроблені резервні копії відкриваються лише старою фразою, тож зберігайте її, доки зберігаєте ці копії, або згодом зробіть нову копію.</string>
+    <string name="security_recovery_replace_confirm">Отримати нові слова</string>
+    <string name="security_recovery_replace_warning_title">Стара фраза тут більше не працює</string>
+    <string name="security_recovery_replace_warning_body">Після підтвердження лише ці слова розблоковуватимуть ваші нотатки, якщо ви забудете PIN. Для резервних копій, зроблених раніше, і далі потрібні старі слова.</string>
+    <string name="security_recovery_replaced">Фразу відновлення замінено. Зробіть нову резервну копію, щоб використовувати її і для копій.</string>
+    <string name="security_privacy_section">Приватність</string>
+    <string name="security_keyboard_strict_title">Сувора приватність клавіатури</string>
+    <string name="security_keyboard_strict_desc">Просить клавіатуру не показувати підказки, не використовувати хмарне передбачення й не читати текст біля курсора. Вимикає автовиправлення, а деякі клавіатури ховають емодзі чи голосовий ввід.</string>
 </resources>

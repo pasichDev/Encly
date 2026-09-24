@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * their old value is read from the model at the moment of the edit, so an edit can never
  * be applied to a different block or restore a stale value.
  *
- * Consecutive typing in one field within [MERGE_WINDOW_MS] becomes one step, and both
- * stacks keep at most [MAX_HISTORY] steps.
+ * Consecutive typing in one field within [MERGE_WINDOW_MS] becomes one step per word (see
+ * [TypingStep]), and both stacks keep at most [MAX_HISTORY] steps. An edit made of several
+ * operations (Enter splitting a block, a paste becoming blocks) is recorded with [batch] and
+ * undone as one step.
  */
 class BlockOperations(
     private val blocks: SnapshotStateList<Block>,
@@ -69,27 +71,87 @@ class BlockOperations(
     /**
      * Sets [state] (a field of the block [blockId]) to [newValue] and records the edit.
      * [mergeable] edits (typing) that follow each other in the same field within
-     * [MERGE_WINDOW_MS] collapse into one undo step.
+     * [MERGE_WINDOW_MS] collapse into one undo step while [step] continues the one before
+     * (by default worked out for text; see [TypingStep]).
      */
-    fun <T> changeValue(blockId: String, state: MutableStateFlow<T>, newValue: T, mergeable: Boolean) {
+    fun <T> changeValue(
+        blockId: String,
+        state: MutableStateFlow<T>,
+        newValue: T,
+        mergeable: Boolean,
+        step: TypingStep? = null,
+    ) {
         val oldValue = state.value
         if (oldValue == newValue) return
         state.value = newValue
 
         val now = clock()
+        val typing = step ?: if (oldValue is String && newValue is String) typingStep("", oldValue, newValue) else null
         val apply = { state.value = newValue }
         val mergeTarget = undoStack.lastOrNull()
             ?.takeIf { mergeable && !breakMerge }
             as? ValueChangeOperation
-        if (mergeTarget != null && mergeTarget.canMerge(blockId, state, now)) {
+        if (mergeTarget != null && mergeTarget.canMerge(blockId, state, now, typing)) {
             // Same undo (back to the value before the first keystroke), newer redo.
-            undoStack[undoStack.lastIndex] = mergeTarget.copy(applyChange = apply, timestamp = now)
+            undoStack[undoStack.lastIndex] = mergeTarget.copy(applyChange = apply, timestamp = now, step = typing)
         } else {
             val revert = { state.value = oldValue }
-            pushUndo(ValueChangeOperation(blockId, state, apply, revert, mergeable, now))
+            pushUndo(ValueChangeOperation(blockId, state, apply, revert, mergeable, now, typing))
         }
         redoStack.clear()
         breakMerge = false
+    }
+
+    /**
+     * Records the operations [build] makes as one undo step: undo takes them back in reverse
+     * order, redo makes them again. Each runs at once, so a later one sees the list as the
+     * earlier ones left it. Nothing is recorded when [build] changes nothing.
+     */
+    fun batch(build: Batch.() -> Unit) {
+        val batch = Batch().apply(build)
+        val operations = batch.operations
+        if (operations.isEmpty()) return
+        pushUndo(operations.singleOrNull() ?: CompositeOperation(operations))
+        redoStack.clear()
+        breakMerge = false
+    }
+
+    /** The operations of one [batch] step. */
+    inner class Batch internal constructor() {
+        internal val operations = mutableListOf<Operation>()
+
+        fun addBlock(index: Int, block: Block) {
+            if (index in 0..blocks.size) run(AddOperation(index, block))
+        }
+
+        fun removeBlock(index: Int) {
+            if (index in blocks.indices) run(RemoveOperation(index, blocks[index]))
+        }
+
+        fun replaceBlock(index: Int, newBlock: Block) {
+            if (index in blocks.indices) run(ReplaceOperation(index, blocks[index], newBlock))
+        }
+
+        /** Sets [state], a field of block [blockId], to [newValue]. */
+        fun <T> setValue(blockId: String, state: MutableStateFlow<T>, newValue: T) {
+            val oldValue = state.value
+            if (oldValue == newValue) return
+            run(
+                ValueChangeOperation(
+                    blockId = blockId,
+                    state = state,
+                    applyChange = { state.value = newValue },
+                    revertChange = { state.value = oldValue },
+                    mergeable = false,
+                    timestamp = clock(),
+                ),
+            )
+        }
+
+        private fun run(operation: Operation) {
+            execute(operation)
+            operations += operation
+        }
     }
 
     /**
@@ -115,6 +177,13 @@ class BlockOperations(
         pushUndo(operation)
         breakMerge = true
         return true
+    }
+
+    /** Forgets every step: nothing can be undone or redone. */
+    fun clear() {
+        undoStack.clear()
+        redoStack.clear()
+        breakMerge = false
     }
 
     /**
@@ -160,6 +229,8 @@ class BlockOperations(
             is ReplaceOperation -> blocks[operation.index] = operation.newBlock
 
             is ValueChangeOperation -> operation.applyChange()
+
+            is CompositeOperation -> operation.operations.forEach(::execute)
         }
     }
 
@@ -168,7 +239,7 @@ class BlockOperations(
     /**
      * Base interface for all operations.
      */
-    private sealed interface Operation {
+    internal sealed interface Operation {
         fun createInverse(): Operation
     }
 
@@ -202,7 +273,7 @@ class BlockOperations(
 
     /**
      * A content edit of one block field ([state]): [applyChange] sets the new value,
-     * [revertChange] the old one.
+     * [revertChange] the old one. [step] is the typing it records, if any.
      */
     private data class ValueChangeOperation(
         val blockId: String,
@@ -211,13 +282,21 @@ class BlockOperations(
         val revertChange: () -> Unit,
         val mergeable: Boolean,
         val timestamp: Long,
+        val step: TypingStep? = null,
     ) : Operation {
         override fun createInverse(): Operation =
             ValueChangeOperation(blockId, state, revertChange, applyChange, mergeable = false, timestamp)
 
-        fun canMerge(otherBlockId: String, otherState: MutableStateFlow<*>, now: Long): Boolean =
-            mergeable && blockId == otherBlockId && state === otherState &&
-                now - timestamp <= MERGE_WINDOW_MS
+        fun canMerge(otherBlockId: String, otherState: MutableStateFlow<*>, now: Long, next: TypingStep?): Boolean {
+            val sameField = mergeable && blockId == otherBlockId && state === otherState
+            val sameTyping = step == null || next == null || next.continues(step)
+            return sameField && sameTyping && now - timestamp <= MERGE_WINDOW_MS
+        }
+    }
+
+    /** Several operations recorded as one step ([batch]). */
+    private class CompositeOperation(val operations: List<Operation>) : Operation {
+        override fun createInverse(): Operation = CompositeOperation(operations.asReversed().map { it.createInverse() })
     }
 
     companion object {

@@ -1,49 +1,26 @@
 package com.pasich.encly.core.security
 
-import android.content.Context
-import android.util.Base64
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupKeys
 import com.pasich.encly.core.backup.BackupSecret
-import com.pasich.encly.testutil.InMemorySharedPreferences
-import com.pasich.encly.testutil.anyByteArray
-import org.junit.After
+import com.pasich.encly.testutil.tempVaultFile
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers.anyInt
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.MockedStatic
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.mockStatic
-import org.mockito.Mockito.`when`
+import java.io.File
 
 class SeedPhraseManagerTest {
 
-    private lateinit var base64: MockedStatic<Base64>
+    private lateinit var file: File
     private lateinit var manager: SeedPhraseManager
 
     @Before
     fun setUp() {
-        // android.util.Base64 is a stub on the JVM; route it to java.util.Base64.
-        base64 = mockStatic(Base64::class.java)
-        base64.`when`<String> { Base64.encodeToString(anyByteArray(), anyInt()) }
-            .thenAnswer { java.util.Base64.getEncoder().encodeToString(it.getArgument(0)) }
-        base64.`when`<ByteArray> { Base64.decode(anyString(), anyInt()) }
-            .thenAnswer { java.util.Base64.getDecoder().decode(it.getArgument<String>(0)) }
-
-        val context = mock(Context::class.java)
-        val prefs = InMemorySharedPreferences()
-        `when`(context.getSharedPreferences(anyString(), anyInt())).thenReturn(prefs)
-        manager = SeedPhraseManager(context)
-    }
-
-    @After
-    fun tearDown() {
-        base64.close()
+        file = tempVaultFile()
+        manager = SeedPhraseManager(VaultStore(file))
     }
 
     @Test
@@ -133,5 +110,66 @@ class SeedPhraseManagerTest {
 
         assertFalse(manager.createBackupKey(manager.generateMnemonic().chars, dek))
         assertTrue(manager.createBackupKey(phrase.copyOf(), dek))
+    }
+
+    // --- replacing the recovery phrase ----------------------------------------------------
+
+    @Test
+    fun replacingThePhraseMovesTheVaultToTheNewWordsOnly() {
+        val old = manager.generateMnemonic().chars
+        assertTrue(manager.initializeVault(old.copyOf()))
+        val dek = manager.copyBootstrapKey()!!
+        val oldRoot = manager.unwrapBackupRoot(dek)!!
+        val new = manager.generateMnemonic().chars
+
+        assertTrue(manager.replaceRecoverySeed(new.copyOf(), dek))
+
+        assertArrayEquals(dek, manager.unlockWithSeed(new.copyOf()))
+        assertNull("the old words open nothing any more", manager.unlockWithSeed(old.copyOf()))
+        val newRoot = manager.unwrapBackupRoot(dek)!!
+        assertArrayEquals(BackupKeys.rootFromMnemonic(new.copyOf()), newRoot)
+        assertFalse(oldRoot.contentEquals(newRoot))
+        // And it is what a fresh process reads back.
+        val reloaded = SeedPhraseManager(VaultStore(file))
+        assertArrayEquals(dek, reloaded.unlockWithSeed(new.copyOf()))
+        assertNull(reloaded.unlockWithSeed(old.copyOf()))
+    }
+
+    @Test
+    fun backupsMadeBeforeAReplacementStillOpenOnlyWithTheOldWords() {
+        val old = manager.generateMnemonic().chars
+        assertTrue(manager.initializeVault(old.copyOf()))
+        val dek = manager.copyBootstrapKey()!!
+        val before = BackupCipher.seal("old".toByteArray(), BackupSecret.RecoveryRoot(manager.unwrapBackupRoot(dek)!!))
+        val new = manager.generateMnemonic().chars
+
+        assertTrue(manager.replaceRecoverySeed(new.copyOf(), dek))
+        val after = BackupCipher.seal("new".toByteArray(), BackupSecret.RecoveryRoot(manager.unwrapBackupRoot(dek)!!))
+
+        assertArrayEquals("old".toByteArray(), BackupCipher.open(before, BackupSecret.RecoveryPhrase(old.copyOf())))
+        assertArrayEquals("new".toByteArray(), BackupCipher.open(after, BackupSecret.RecoveryPhrase(new.copyOf())))
+        assertTrue(runCatching { BackupCipher.open(before, BackupSecret.RecoveryPhrase(new.copyOf())) }.isFailure)
+    }
+
+    @Test
+    fun replacingNeedsAnExistingPhraseAndAValidNewOne() {
+        assertTrue(manager.initializeVault(null))
+        val dek = manager.copyBootstrapKey()!!
+        assertFalse(manager.replaceRecoverySeed(manager.generateMnemonic().chars, dek))
+
+        assertTrue(manager.addRecoverySeed(manager.generateMnemonic().chars, dek))
+        assertFalse(manager.replaceRecoverySeed("not a valid phrase".toCharArray(), dek))
+        assertFalse(manager.replaceRecoverySeed(manager.generateMnemonic().chars, ByteArray(16)))
+    }
+
+    @Test
+    fun theRecoveryKeyAndTheBackupRootNormaliseThePhraseTheSameWay() {
+        val phrase = manager.generateMnemonic().chars
+        assertTrue(manager.initializeVault(phrase.copyOf()))
+        val dek = manager.copyBootstrapKey()!!
+        val messy = ("  " + String(phrase).uppercase().replace(" ", " \t ") + "\n").toCharArray()
+
+        assertArrayEquals(dek, manager.unlockWithSeed(messy.copyOf()))
+        assertArrayEquals(BackupKeys.rootFromMnemonic(messy.copyOf()), manager.unwrapBackupRoot(dek))
     }
 }

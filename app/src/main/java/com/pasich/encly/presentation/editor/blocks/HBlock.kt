@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
@@ -27,31 +26,20 @@ fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier =
     val textStyle = headingTextStyle(block.blockType)
     val state = rememberBlockTextFieldState(block.text, blockActions)
     val actions by rememberUpdatedState(blockActions)
-
-    // "Next" (and Enter): an empty heading turns back into a paragraph; otherwise the cursor
-    // moves to the next block, or a new paragraph when this is the last one.
-    val next = remember(state) {
-        {
-            if (state.text.isEmpty()) {
-                actions.onReplaceBlock(Block.TextBlock())
-            } else if (!actions.navigateToNext()) {
-                actions.onAddParagraph()
-            }
-            true
-        }
-    }
+    // Enter splits the heading; the text after the cursor goes on as a paragraph (BlockInput).
+    val input = remember { BlockInput(BlockField.Styled) { actions } }
 
     BasicTextField(
         state = state,
         readOnly = isLocked,
+        inputTransformation = input,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         textStyle = textStyle,
-        keyboardOptions = WritingKeyboard.copy(imeAction = ImeAction.Next),
-        onKeyboardAction = { next() },
+        keyboardOptions = WritingKeyboard,
         modifier = modifier
             .fillMaxWidth()
             .padding(top = EnclyTheme.spacing.labelGap)
-            .textBlockKeys(state, blockActions, onEnter = next),
+            .textBlockKeys(state, blockActions),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
                 if (state.text.isEmpty()) {

@@ -10,6 +10,7 @@ import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
@@ -50,7 +51,7 @@ import com.pasich.encly.presentation.viewmodel.TrashViewModel
 import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.TestNotesRepository
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.utils.DeviceCapabilities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,8 +99,8 @@ internal class TestApp(context: Context) {
     fun withWorkingVault(phrase: String) = apply {
         `when`(security.generateMnemonicCode()).thenAnswer { phrase.toCharArray() }
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
-        `when`(security.configurePin(anyString())).thenReturn(true)
-        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.configurePin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {
             runCatching { MnemonicCode(it.getArgument<CharArray>(0).copyOf()).validate() }.isSuccess
         }
@@ -165,7 +166,7 @@ internal class TestApp(context: Context) {
 
     fun lock() = LockViewModel(security, sessionLock)
 
-    fun securitySettings() = SecuritySettingsViewModel(security)
+    fun securitySettings() = SecuritySettingsViewModel(security, KeyboardPrivacy(InMemorySharedPreferences()))
 
     fun backup() = BackupViewModel(
         backupManager = backupManager,

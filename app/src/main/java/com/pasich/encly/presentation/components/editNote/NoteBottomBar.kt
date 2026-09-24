@@ -21,15 +21,19 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -49,6 +53,7 @@ import com.pasich.encly.presentation.editor.moreBlockTools
 import com.pasich.encly.presentation.editor.state.toolType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import kotlinx.coroutines.launch
 
 /**
  * The editor's formatting toolbar, pinned to the bottom above the keyboard (design spec §3.3):
@@ -79,6 +84,7 @@ fun NoteBottomBar(
     val canDelete by remember(viewModel) {
         derivedStateOf { interactedBlockId.let { viewModel.canRemoveInteractedBlock() } }
     }
+    val blockFocused = viewModel.focusedBlockId.collectAsState().value != null
     val history = HistoryTools(
         onUndo = if (canUndo) viewModel::undo else null,
         onRedo = if (canRedo) viewModel::redo else null,
@@ -89,7 +95,7 @@ fun NoteBottomBar(
             simpleEdit -> ToolRow(spread = false) {
                 HistoryButtons(history)
                 Spacer(Modifier.weight(1f))
-                KeyboardToggle(onShow = viewModel::focusWorkingBlock)
+                KeyboardToggle(blockFocused = blockFocused, onShow = viewModel::focusWorkingBlock)
             }
 
             else -> AnimatedContent(
@@ -114,7 +120,7 @@ fun NoteBottomBar(
                         activeTool = activeTool,
                         onApply = { viewModel.applyTool(it) },
                         onMore = { showMore = true },
-                        onShowKeyboard = viewModel::focusWorkingBlock,
+                        keyboard = KeyboardToggleState(blockFocused, viewModel::focusWorkingBlock),
                     )
                 }
             }
@@ -134,7 +140,7 @@ private fun MainTools(
     activeTool: BlockType?,
     onApply: (BlockType) -> Unit,
     onMore: () -> Unit,
-    onShowKeyboard: () -> Unit,
+    keyboard: KeyboardToggleState,
 ) {
     ToolRow(spread = true) {
         EnclyToolButton(
@@ -147,37 +153,76 @@ private fun MainTools(
             BlockToolButton(tool = tool, active = tool.type == activeTool, onClick = { onApply(tool.type) })
         }
         EnclyToolbarRule()
-        KeyboardToggle(onShow = onShowKeyboard)
+        KeyboardToggle(blockFocused = keyboard.blockFocused, onShow = keyboard.onShow)
     }
 }
 
+/** What the keyboard toggle needs: whether a block's field has focus, and how to focus one. */
+private class KeyboardToggleState(val blockFocused: Boolean, val onShow: () -> Unit)
+
 /**
  * Hides the keyboard while it is up, and brings it back into the block the user was writing in
- * ([onShow] focuses it) while it is down. Both go through the window's insets controller as well
- * as Compose's keyboard controller: some OEM keyboards and skins ignore one of the two.
+ * ([onShow] focuses it, the cursor where it was) while it is down.
+ *
+ * Built to work on every keyboard and skin:
+ * - Whether the keyboard is up comes from the window insets, but a floating or split keyboard
+ *   (Gboard floating, Samsung's) reports none. So a focused block ([blockFocused]) counts as the
+ *   keyboard being up too, unless the insets just showed it being put away with the block still
+ *   focused (Back on a docked keyboard).
+ * - Hiding clears focus as well as asking the keyboard to hide: an editor without a focused field
+ *   has no input connection, which closes any keyboard, however it handles hide requests.
+ * - Showing focuses the working block first (a keyboard cannot open for nothing), then asks
+ *   both Compose's controller and the window's insets controller, since some OEM keyboards and
+ *   skins ignore one of the two.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun KeyboardToggle(onShow: () -> Unit) {
+private fun KeyboardToggle(blockFocused: Boolean, onShow: () -> Unit) {
     val imeVisible = WindowInsets.isImeVisible
     val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
     val view = LocalView.current
     val insets = remember(view) { view.context.findWindow()?.let { WindowCompat.getInsetsController(it, view) } }
+    // True once the insets saw the keyboard go away while a block kept focus: it is down now,
+    // even though the block is focused. A new focus or a show starts over.
+    var dismissedWhileFocused by remember { mutableStateOf(false) }
+    var wasImeVisible by remember { mutableStateOf(imeVisible) }
+    LaunchedEffect(imeVisible, blockFocused) {
+        when {
+            !blockFocused || imeVisible -> dismissedWhileFocused = false
+            wasImeVisible -> dismissedWhileFocused = true
+        }
+        wasImeVisible = imeVisible
+    }
+    val shown = imeVisible || (blockFocused && !dismissedWhileFocused)
     EnclyToolButton(
-        icon = if (imeVisible) EnclyIcons.KeyboardHide else EnclyIcons.Keyboard,
-        contentDescription = stringResource(if (imeVisible) R.string.keyboard_hide else R.string.keyboard_show),
+        icon = if (shown) EnclyIcons.KeyboardHide else EnclyIcons.Keyboard,
+        contentDescription = stringResource(if (shown) R.string.keyboard_hide else R.string.keyboard_show),
         onClick = {
-            if (imeVisible) {
+            if (shown) {
                 keyboard?.hide()
                 insets?.hide(WindowInsetsCompat.Type.ime())
+                focusManager.clearFocus()
             } else {
+                dismissedWhileFocused = false
+                // A field that still has focus reopens its input connection when focused again.
+                if (blockFocused) focusManager.clearFocus()
                 onShow()
-                keyboard?.show()
-                insets?.show(WindowInsetsCompat.Type.ime())
+                scope.launch {
+                    // Once the field has taken focus (the next frames), in case the keyboard did
+                    // not come up on its own.
+                    repeat(SHOW_AFTER_FRAMES) { withFrameNanos { } }
+                    keyboard?.show()
+                    insets?.show(WindowInsetsCompat.Type.ime())
+                }
             }
         },
     )
 }
+
+/** Frames to wait for the focused field before asking the keyboard to show. */
+private const val SHOW_AFTER_FRAMES = 2
 
 private tailrec fun Context.findWindow(): Window? = when (this) {
     is Activity -> window

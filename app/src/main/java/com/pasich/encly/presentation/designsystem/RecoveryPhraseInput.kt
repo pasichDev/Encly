@@ -34,6 +34,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.core.security.RecoveryWords
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.presentation.components.SensitiveClip
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 
@@ -288,6 +290,7 @@ private fun PhraseField(
 ) {
     val colors = MaterialTheme.colorScheme
     val focusManager = LocalFocusManager.current
+    val clipboard = LocalClipboard.current
     val focused by interactionSource.collectIsFocusedAsState()
     val word = state.words[index]
     val description = stringResource(R.string.recovery_word_cell, index + 1, state.count)
@@ -298,6 +301,8 @@ private fun PhraseField(
     BasicTextField(
         value = if (field.text == word) field else TextFieldValue(word, TextRange(word.length)),
         onValueChange = { value ->
+            // A pasted phrase does not stay on the clipboard once it is in the cells.
+            if (value.text.trim().contains(WHITESPACE)) SensitiveClip.clear(clipboard.nativeClipboard)
             val target = state.onValueChange(index, value.text)
             val cleaned = state.words[index]
             field = if (cleaned == value.text) value else TextFieldValue(cleaned, TextRange(cleaned.length))

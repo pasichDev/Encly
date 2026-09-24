@@ -15,12 +15,28 @@ private const val LOCKOUT_ROUNDING_MILLIS = MILLIS_PER_SECOND - 1L
 fun lockoutSecondsLeft(remainingMillis: Long): Long =
     (remainingMillis.coerceAtLeast(0L) + LOCKOUT_ROUNDING_MILLIS) / MILLIS_PER_SECOND
 
-/** "Too many attempts. Try again in N s", shared by every PIN entry. */
+/**
+ * "Too many attempts. Try again in N seconds / minutes / hours", shared by every PIN entry.
+ * Rounded up, so a running lockout never reads as zero.
+ */
 @Composable
 fun pinLockoutText(seconds: Long): String {
-    val count = seconds.toInt()
-    return pluralStringResource(R.plurals.lock_lockout_seconds, count, count)
+    val (plural, count) = lockoutUnit(seconds)
+    return pluralStringResource(plural, count, count)
 }
+
+/** The plural and count [pinLockoutText] shows for [seconds]. */
+internal fun lockoutUnit(seconds: Long): Pair<Int, Int> = when {
+    seconds < 2 * SECONDS_PER_MINUTE -> R.plurals.lock_lockout_seconds to seconds.toInt()
+
+    seconds < 2 * SECONDS_PER_HOUR ->
+        R.plurals.lock_lockout_minutes to ((seconds + SECONDS_PER_MINUTE - 1) / SECONDS_PER_MINUTE).toInt()
+
+    else -> R.plurals.lock_lockout_hours to ((seconds + SECONDS_PER_HOUR - 1) / SECONDS_PER_HOUR).toInt()
+}
+
+private const val SECONDS_PER_MINUTE = 60L
+private const val SECONDS_PER_HOUR = 3_600L
 
 /**
  * Reports the remaining PIN lockout every second until it ends. Restarts whenever [key]

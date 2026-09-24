@@ -395,6 +395,7 @@
     <string name="link_edit">Modifier le lien</string>
     <string name="link_copied">Lien copié</string>
     <string name="link_open_failed">Aucune application de cet appareil ne peut ouvrir ce lien.</string>
+    <string name="link_blocked">Seuls les liens web (http, https) et e-mail peuvent être enregistrés ou ouverts.</string>
     <string name="notes_load_failed_title">Impossible de lire vos notes</string>
     <string name="tags_load_failed_title">Impossible de lire vos libellés</string>
     <string name="notes_load_failed_desc">Vos notes sont toujours stockées chiffrées sur cet appareil. Fermez Encly puis rouvrez-le pour réessayer.</string>

@@ -14,6 +14,9 @@ import kotlinx.coroutines.delay
 private const val FOCUS_RETRIES = 5
 private const val FOCUS_RETRY_DELAY_MS = 50L
 
+/** Retries before scrolling: a new block on screen needs no scroll, only its first frames. */
+private const val COMPOSE_WAITS = 1
+
 private const val TAG = "BlockFocusRegistry"
 
 /**
@@ -25,41 +28,45 @@ private const val TAG = "BlockFocusRegistry"
  * were inserted, removed, moved or replaced. [blocks] is the editor's live block list.
  */
 class BlockFocusRegistry(private val blocks: () -> List<Block>) {
-    private val focusTargets = mutableMapOf<String, (Boolean) -> Unit>()
-    private val cursorToEndCallbacks = mutableMapOf<String, () -> Unit>()
+    private val focusTargets = mutableMapOf<String, (FocusRequest) -> Unit>()
+    private val caretCallbacks = mutableMapOf<String, (Int) -> Unit>()
 
     /**
      * Registers how to focus the field of block [blockId].
      * @return a function that removes this registration (not a newer one for the same block)
      */
     fun registerFocusTarget(blockId: String, requestFocus: () -> Unit): () -> Unit =
-        focusTargets.register(blockId) { atEnd ->
+        focusTargets.register(blockId) { request ->
             requestFocus()
-            if (atEnd) cursorToEndCallbacks[blockId]?.invoke()
+            request.caretOffset?.let { caretCallbacks[blockId]?.invoke(it) }
         }
 
     /**
-     * Registers a block with several fields (a list): [requestFocus] focuses its last field with
-     * the cursor at the end when asked for the end, else its first field.
+     * Registers a block with several fields (a list): [requestFocus] focuses the item the
+     * request names, else its last field with the cursor at the end when asked for the end,
+     * else its first field.
      */
-    fun registerFieldsFocusTarget(blockId: String, requestFocus: (atEnd: Boolean) -> Unit): () -> Unit =
+    fun registerFieldsFocusTarget(blockId: String, requestFocus: (FocusRequest) -> Unit): () -> Unit =
         focusTargets.register(blockId, requestFocus)
 
     /**
-     * Registers how to put the cursor at the end of block [blockId]'s text.
+     * Registers how to put the cursor of block [blockId]'s field at an offset ([Int.MAX_VALUE]:
+     * the end; the field clamps it to its text).
      * @return a function that removes this registration (not a newer one for the same block)
      */
-    fun registerCursorToEnd(blockId: String, callback: () -> Unit): () -> Unit =
-        cursorToEndCallbacks.register(blockId, callback)
+    fun registerCaret(blockId: String, callback: (Int) -> Unit): () -> Unit = caretCallbacks.register(blockId, callback)
+
+    /** Focuses the field of [blockId] now, the cursor at its end with [cursorToEnd]; see [focus]. */
+    fun focus(blockId: String, cursorToEnd: Boolean = false): Boolean = focus(FocusRequest(blockId, cursorToEnd))
 
     /**
-     * Focuses the field of [blockId] now; always issues the request, even for the field that
-     * has focus already. Returns false when the field is not composed (yet).
+     * Carries out [request] now; always issues it, even for the field that has focus already.
+     * Returns false when the field is not composed (yet).
      */
-    fun focus(blockId: String, cursorToEnd: Boolean = false): Boolean {
-        val target = focusTargets[blockId] ?: return false
+    fun focus(request: FocusRequest): Boolean {
+        val target = focusTargets[request.blockId] ?: return false
         try {
-            target(cursorToEnd)
+            target(request)
         } catch (e: IllegalStateException) {
             // The FocusRequester is not attached to a focusable node (a saved link).
             AppLogger.w(TAG, "Focus request failed: ${e.javaClass.simpleName}")
@@ -69,16 +76,22 @@ class BlockFocusRegistry(private val blocks: () -> List<Block>) {
 
     /**
      * Carries out [request] as soon as the block's field is composed; gives up after a few frames.
-     * A block of a lazy list is only composed on screen: [bringIntoView] scrolls to it first.
+     * A block just added is composed within a frame or two where it is on screen; a block of a
+     * lazy list off screen is not composed at all, so [bringIntoView] then scrolls to it.
      */
     suspend fun focusWhenComposed(request: FocusRequest, bringIntoView: suspend (String) -> Unit = {}) {
-        if (focus(request.blockId, request.cursorToEnd)) return
+        if (focusWithin(request, attempts = 1 + COMPOSE_WAITS)) return
         bringIntoView(request.blockId)
-        repeat(FOCUS_RETRIES) {
-            if (focus(request.blockId, request.cursorToEnd)) return
-            delay(FOCUS_RETRY_DELAY_MS)
+        if (!focusWithin(request, attempts = FOCUS_RETRIES)) AppLogger.w(TAG, "Focus target never appeared")
+    }
+
+    /** Tries [request] up to [attempts] times, a short wait apart; whether it was carried out. */
+    private suspend fun focusWithin(request: FocusRequest, attempts: Int): Boolean {
+        repeat(attempts) { attempt ->
+            if (attempt > 0) delay(FOCUS_RETRY_DELAY_MS)
+            if (focus(request)) return true
         }
-        AppLogger.w(TAG, "Focus target never appeared")
+        return false
     }
 
     /** The block after [blockId]; null when it is the last one. */

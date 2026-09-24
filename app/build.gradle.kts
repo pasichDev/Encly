@@ -117,6 +117,13 @@ android {
         }
     }
 
+    // Keep only the app's own 9 languages in the APK and bundle, so the store listing does not
+    // advertise the ~85 languages AndroidX libraries ship strings for. Keep in sync with the
+    // values-* folders, res/xml/locales_config.xml and AppLanguage (TranslationCompletenessTest).
+    androidResources {
+        localeFilters += listOf("en", "uk", "de", "fr", "es", "it", "pl", "pt", "nl")
+    }
+
     // Google Play serves the `play` bundle (bundlePlayRelease). Language splits stay off: Play
     // would otherwise install only the device language's resources, and the in-app language
     // picker (Settings -> Language) could not switch to any other of the bundled languages.
@@ -308,7 +315,6 @@ dependencies {
     implementation(libs.kotlin.bip39)
 
     // Security Crypto (see the note in gradle/libs.versions.toml before replacing it)
-    implementation(libs.androidx.security.crypto)
 
     implementation(libs.icons.lucide)
 

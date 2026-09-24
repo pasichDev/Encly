@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,6 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.designsystem.editorBlockFrame
@@ -30,6 +35,7 @@ import com.pasich.encly.presentation.editor.blocks.SeparatorBlock
 import com.pasich.encly.presentation.editor.blocks.TextBlock
 import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.editor.focus.RegisterFocusRequester
+import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -53,7 +59,11 @@ fun LazyListScope.editorBlocks(
     isLocked: Boolean,
     editingLinkIds: Set<String>,
 ) {
-    items(blocks, key = { it.id }, contentType = { it::class.simpleName }) { block ->
+    itemsIndexed(
+        items = blocks,
+        key = { _, block -> block.id },
+        contentType = { _, block -> block::class.simpleName },
+    ) { index, block ->
         val blockActions = remember(block, host) { BlockActionsImpl(block, host.viewModel, host.focusRegistry) }
         val callbacks = remember(block, host) {
             EditorBlockCallbacks(
@@ -63,6 +73,8 @@ fun LazyListScope.editorBlocks(
                     host.viewModel.onBlockInteraction(block)
                     host.onOpenSheet(type, block)
                 },
+                onMove = { up -> host.viewModel.moveBlockOf(block, up) },
+                onDelete = { host.viewModel.removeBlock(block, BlockRemoveAction.REMOVE) },
             )
         }
         EditorBlock(
@@ -73,6 +85,7 @@ fun LazyListScope.editorBlocks(
             isLocked = isLocked,
             isEditingLink = block.id in editingLinkIds,
             isOnlyBlock = blocks.size == 1,
+            position = BlockPosition(first = index == 0, last = index == blocks.lastIndex),
         )
     }
 
@@ -99,7 +112,12 @@ private class EditorBlockCallbacks(
     val onFocus: () -> Unit,
     val onFocusLost: () -> Unit,
     val onOpenSheet: (BottomSheetsOpenType) -> Unit,
+    val onMove: (up: Boolean) -> Unit,
+    val onDelete: () -> Unit,
 )
+
+/** Where a block is in the note: TalkBack offers to move it only where it can go. */
+private data class BlockPosition(val first: Boolean, val last: Boolean)
 
 @Composable
 private fun EditorBlock(
@@ -110,6 +128,7 @@ private fun EditorBlock(
     isLocked: Boolean = false,
     isEditingLink: Boolean = false,
     isOnlyBlock: Boolean = false,
+    position: BlockPosition = BlockPosition(first = true, last = true),
 ) {
     val focusRequester = remember { FocusRequester() }
     // A list registers its own target: it focuses its first or last item.
@@ -143,8 +162,30 @@ private fun EditorBlock(
                 showPlaceholder = !isLocked && (hasFocus || isOnlyBlock),
             ),
             onOpenSheet = callbacks.onOpenSheet,
+            modifier = if (isLocked) Modifier else blockAccessibilityActions(callbacks, position, isOnlyBlock),
         )
     }
+}
+
+/**
+ * TalkBack's actions on a block's field: move it up or down, delete it. Without them a TalkBack
+ * user could only reach these through the toolbar's "Add block" row.
+ */
+@Composable
+private fun blockAccessibilityActions(
+    callbacks: EditorBlockCallbacks,
+    position: BlockPosition,
+    isOnlyBlock: Boolean,
+): Modifier {
+    val moveUp = stringResource(R.string.block_move_up)
+    val moveDown = stringResource(R.string.block_move_down)
+    val delete = stringResource(R.string.delete_block)
+    val actions = buildList {
+        if (!position.first) add(CustomAccessibilityAction(moveUp) { true.also { callbacks.onMove(true) } })
+        if (!position.last) add(CustomAccessibilityAction(moveDown) { true.also { callbacks.onMove(false) } })
+        if (!isOnlyBlock) add(CustomAccessibilityAction(delete) { true.also { callbacks.onDelete() } })
+    }
+    return Modifier.semantics { customActions = actions }
 }
 
 /** How a block shows: read-only, its link being edited, its placeholder. */
@@ -157,8 +198,10 @@ private fun BlockContent(
     focusRequester: FocusRequester,
     state: BlockContentState,
     onOpenSheet: (BottomSheetsOpenType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val fieldModifier = Modifier.focusRequester(focusRequester)
+    // [modifier] reaches the block's field (its TalkBack actions); the focus target joins it.
+    val fieldModifier = modifier.focusRequester(focusRequester)
     val isLocked = state.isLocked
     when (block) {
         is Block.TextBlock -> TextBlock(
@@ -169,11 +212,17 @@ private fun BlockContent(
             showPlaceholder = state.showPlaceholder,
         )
 
-        is Block.QuoteBlock -> QuoteBlock(block, blockActions, focusRequester, isLocked = isLocked)
+        is Block.QuoteBlock -> QuoteBlock(
+            block,
+            blockActions,
+            focusRequester,
+            fieldModifier = modifier,
+            isLocked = isLocked,
+        )
 
         is Block.HBlock -> HBlock(block, blockActions, modifier = fieldModifier, isLocked = isLocked)
 
-        is Block.ListBlock -> ListBlock(block, blockActions, isLocked = isLocked)
+        is Block.ListBlock -> ListBlock(block, blockActions, fieldModifier = modifier, isLocked = isLocked)
 
         is Block.LinkBlock -> LinkBlock(
             block,

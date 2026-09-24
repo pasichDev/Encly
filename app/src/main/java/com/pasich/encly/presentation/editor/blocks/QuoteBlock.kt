@@ -12,6 +12,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -30,17 +33,24 @@ import com.pasich.encly.ui.theme.EnclyTheme
 /** The closing quote mark is the opening one turned around. */
 private const val HALF_TURN = 180f
 
-/** [focusRequester] targets the quote's text field, not the card that draws the quote. */
+/**
+ * [focusRequester] and [fieldModifier] reach the quote's text field, [modifier] the card that
+ * draws the quote.
+ */
 @Composable
 fun QuoteBlock(
     block: Block.QuoteBlock,
     blockActions: BlockActions,
     focusRequester: FocusRequester,
     modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
     isLocked: Boolean = false,
 ) {
     val fontStyles = rememberFontStyles()
     val state = rememberBlockTextFieldState(block.text, blockActions)
+    val actions by rememberUpdatedState(blockActions)
+    // Enter ends the quote: the text after the cursor goes on as a paragraph (BlockInput).
+    val input = remember { BlockInput(BlockField.Styled) { actions } }
     val quoteStyle = EnclyTheme.typography.quote.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = fontStyles.sizes.quote,
@@ -65,10 +75,11 @@ fun QuoteBlock(
         BasicTextField(
             state = state,
             readOnly = isLocked,
+            inputTransformation = input,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = WritingKeyboard,
             textStyle = quoteStyle,
-            modifier = Modifier
+            modifier = fieldModifier
                 .focusRequester(focusRequester)
                 .fillMaxWidth()
                 .textBlockKeys(state, blockActions),

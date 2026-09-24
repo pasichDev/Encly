@@ -34,4 +34,27 @@
         <item quantity="many">%d d\'étiquettes</item>
         <item quantity="other">%d étiquettes</item>
     </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Votre PIN ne peut plus déverrouiller Encly sur ce téléphone : sa clé matérielle a été réinitialisée. Utilisez votre phrase de récupération (ou votre empreinte), puis définissez un nouveau PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Trop de tentatives. Réessayez dans %d minute</item>
+        <item quantity="many">Trop de tentatives. Réessayez dans %d minutes</item>
+        <item quantity="other">Trop de tentatives. Réessayez dans %d minutes</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Trop de tentatives. Réessayez dans %d heure</item>
+        <item quantity="many">Trop de tentatives. Réessayez dans %d heures</item>
+        <item quantity="other">Trop de tentatives. Réessayez dans %d heures</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Remplacer la phrase de récupération</string>
+    <string name="security_recovery_replace_desc">Obtenez 12 nouveaux mots. Les sauvegardes faites avant nécessitent toujours les anciens.</string>
+    <string name="security_recovery_replace_confirm_title">Remplacer la phrase de récupération ?</string>
+    <string name="security_recovery_replace_confirm_body">Vous obtiendrez 12 nouveaux mots. L\'ancienne phrase ne déverrouille plus vos notes sur ce téléphone. Les sauvegardes déjà faites ne s\'ouvrent qu\'avec l\'ancienne phrase : gardez-la tant que vous conservez ces sauvegardes, ou faites une nouvelle sauvegarde ensuite.</string>
+    <string name="security_recovery_replace_confirm">Obtenir de nouveaux mots</string>
+    <string name="security_recovery_replace_warning_title">Votre ancienne phrase ne fonctionne plus ici</string>
+    <string name="security_recovery_replace_warning_body">Une fois confirmé, seuls ces mots déverrouillent vos notes si vous oubliez le PIN. Les sauvegardes faites avant nécessitent toujours les anciens mots.</string>
+    <string name="security_recovery_replaced">Phrase de récupération remplacée. Faites une nouvelle sauvegarde pour l\'utiliser aussi pour les sauvegardes.</string>
+    <string name="security_privacy_section">Confidentialité</string>
+    <string name="security_keyboard_strict_title">Confidentialité stricte du clavier</string>
+    <string name="security_keyboard_strict_desc">Demande au clavier de ne pas faire de suggestions, pas de prédiction dans le cloud et pas de lecture autour du curseur. Désactive la correction automatique, et certains claviers masquent les emoji ou la saisie vocale.</string>
 </resources>

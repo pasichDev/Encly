@@ -93,6 +93,16 @@ class UnlockRevealState {
         onCovered = null
     }
 
+    /**
+     * Stops a reveal that is playing (the session re-locked meanwhile): the pending navigation
+     * is dropped and the screens are back in place, so nothing is left covering the lock screen.
+     */
+    fun cancel() {
+        onCovered = null
+        running = false
+        contentOffset = 0f
+    }
+
     internal fun push(progress: Float) {
         contentOffset = 1f - progress
     }

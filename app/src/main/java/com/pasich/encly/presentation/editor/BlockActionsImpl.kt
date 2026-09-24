@@ -6,6 +6,9 @@ import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
+import com.pasich.encly.presentation.editor.state.FocusRequest
+import com.pasich.encly.presentation.editor.state.LineBreak
+import com.pasich.encly.presentation.editor.state.Shortcut
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 
 /**
@@ -13,6 +16,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
  * action never targets whatever block happens to sit at a stale index. Focus moves go through
  * [focusRegistry], which owns the fields' FocusRequesters.
  */
+@Suppress("TooManyFunctions") // Implements BlockActions, one editor call each.
 internal class BlockActionsImpl(
     private val block: Block,
     private val viewModel: EditNoteViewModel,
@@ -46,10 +50,26 @@ internal class BlockActionsImpl(
         if (block is Block.LinkBlock) viewModel.onLinkChanged(block, newLink)
     }
 
-    override fun registerCursorToEnd(callback: () -> Unit): () -> Unit =
-        focusRegistry.registerCursorToEnd(block.id, callback)
+    override fun onLineBreak(lineBreak: LineBreak): String? = viewModel.onLineBreak(block, lineBreak)
 
-    override fun registerFieldsFocusTarget(requestFocus: (atEnd: Boolean) -> Unit): () -> Unit =
+    override fun onBackspaceAtStart(): Boolean = viewModel.onBackspaceAtStart(block)
+
+    override fun onShortcut(typed: String, shortcut: Shortcut): Boolean = viewModel.onShortcut(block, typed, shortcut)
+
+    override fun onLinkPasted(pasted: String, link: LinkDataBlock): Boolean =
+        viewModel.onLinkPasted(block, pasted, link)
+
+    override fun onListLineBreak(itemId: String, lineBreak: LineBreak): String? =
+        (block as? Block.ListBlock)?.let { viewModel.onListLineBreak(it, itemId, lineBreak) }
+
+    override fun onListBackspaceAtStart(itemId: String): Boolean =
+        (block as? Block.ListBlock)?.let { viewModel.onListBackspaceAtStart(it, itemId) } == true
+
+    override fun onCaretMoved(offset: Int) = viewModel.onCaretMoved(block, offset)
+
+    override fun registerCaret(callback: (Int) -> Unit): () -> Unit = focusRegistry.registerCaret(block.id, callback)
+
+    override fun registerFieldsFocusTarget(requestFocus: (FocusRequest) -> Unit): () -> Unit =
         focusRegistry.registerFieldsFocusTarget(block.id, requestFocus)
 
     override fun navigateToNext(): Boolean =

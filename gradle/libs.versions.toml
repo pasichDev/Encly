@@ -34,9 +34,6 @@ serializationJson = "1.9.0"
 sqlcipher = "4.17.0"
 sqliteKtx = "2.7.0"
 bip39 = "1.0.9"
-# Deprecated upstream, but it holds the vault's PIN-slot metadata. Replacing it changes the
-# on-disk format and needs a migration first.
-securityCrypto = "1.1.0-beta01"
 iconsLucide = "1.1.0"
 
 junit = "4.13.2"
@@ -66,7 +63,6 @@ androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 androidx-sqlite-ktx = { module = "androidx.sqlite:sqlite-ktx", version.ref = "sqliteKtx" }
-androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }

@@ -1,6 +1,6 @@
 # Security
 
-Encly is a local encrypted notes application. This document describes the current v2
+Encly is a local encrypted notes application. This document describes the current v3
 security model, its trust boundaries, and known limitations.
 
 ## Key hierarchy
@@ -8,17 +8,45 @@ security model, its trust boundaries, and known limitations.
 Encly does **not** derive the SQLCipher passphrase directly from a PIN or seed.
 
 - A fresh vault generates a random 256-bit **DEK**.
-- SQLCipher uses that DEK as its database key.
+- SQLCipher uses that DEK as a **raw key** (`x'<64 hex>'`): the DEK is already uniformly
+  random, so SQLCipher's own PBKDF2 over a passphrase is skipped. `cipher_memory_security` is
+  switched on (best effort) so SQLCipher wipes the memory it frees.
 - Unlock factors each protect their own AES-GCM envelope containing the same DEK.
+
+```
+DEK (random 256 bit) ── SQLCipher raw key
+├─ PIN slot       AES-GCM(kek_pin)       kek_pin = HKDF(PBKDF2(pin, salt, 600k) ‖ HMAC_keystore(salt ‖ pin))
+├─ biometric slot AES-GCM(keystore key)  auth-per-use, BIOMETRIC_STRONG CryptoObject
+├─ recovery slot  AES-GCM(kek_rec)       kek_rec = HKDF(SHA-256(normalized 12 words), "encly/recovery/kek/v3")
+└─ backup-key slot AES-GCM(HKDF(DEK))    holds backupRoot = HKDF(SHA-256(words), "encly/backup/root/v1")
+```
 
 ### PIN slot
 
 - The app requires a 6-digit PIN.
-- A random 16-byte salt and **PBKDF2-HMAC-SHA256 (600,000 iterations)** derive a
-  256-bit KEK from the PIN.
-- That KEK wraps the DEK with **AES-256-GCM** and authenticated associated data.
+- The PIN KEK has two halves, mixed with HKDF-SHA256 (`info = "encly/pin/kek/v3"`, the slot's
+  random 16-byte salt as HKDF salt):
+  - **software:** PBKDF2-HMAC-SHA256 (600,000 iterations) of the PIN and the salt;
+  - **device-bound:** HMAC-SHA256 of `salt ‖ PIN` under a non-exportable **AndroidKeyStore**
+    key, generated in **StrongBox** where the device has one (falling back to the TEE), and
+    usable only while the device is unlocked (`setUnlockedDeviceRequired`, API 28+).
+- That KEK wraps the DEK with **AES-256-GCM**. The slot is `version ‖ salt ‖ IV ‖ ciphertext`;
+  the version and salt are authenticated as associated data (`"encly/pin/slot/v3"`).
 - No separate PIN hash is stored.
-- Wrong PINs fail GCM authentication and trigger a progressive software lockout.
+- Because of the device-bound half, a copied slot cannot be attacked off the device: every PIN
+  guess needs this phone's secure hardware. PBKDF2 stays at full cost as defence in depth, for
+  the case where the Keystore key itself were ever extracted.
+- If the Keystore key is lost (a Keystore reset, a key the system invalidated), the PIN can no
+  longer unlock. The lock screen says so and switches to the recovery phrase (or keeps
+  fingerprint unlock); the vault without either routes to the damaged-vault screen. A new PIN
+  set after a recovery unlock gets a new Keystore key.
+- Wrong PINs fail GCM authentication. **Lockout:** every attempt is recorded durably (atomic
+  file write) *before* the key derivation runs, under one lock, so killing the app mid-check or
+  racing attempts never yields a free guess. From the 5th consecutive miss the lockout is 30 s
+  and doubles with each further miss (1, 2, 4 … 32 min, ~1 h …) up to 24 h. It runs on
+  `SystemClock.elapsedRealtime`, so changing the wall clock does not end it; across a reboot
+  the remaining penalty is kept and restarts from boot (a reboot never shortens a lockout). A
+  failure of the Keystore itself is not counted as a guess. There is no auto-wipe.
 
 ### Biometric slot
 
@@ -40,7 +68,8 @@ database. The authenticated cryptographic operation must release the DEK.
 User-managed onboarding creates an optional BIP39 recovery slot.
 
 - Encly generates a 12-word BIP39 seed.
-- The normalized seed is hashed and processed through HKDF-SHA256 with domain-separated
+- The seed is normalized (lower case, single spaces; the one normalization shared with the
+  backup key), hashed with SHA-256 and processed through HKDF-SHA256 with domain-separated
   recovery context.
 - The resulting recovery KEK wraps the same random DEK with AES-256-GCM.
 - Entering the correct recovery seed can therefore recover local database access even
@@ -49,6 +78,13 @@ User-managed onboarding creates an optional BIP39 recovery slot.
 Auto-managed mode intentionally creates no recovery slot. One can be added later from an
 unlocked session (Settings → Backup, after re-entering the PIN): the live DEK is wrapped under a
 newly generated seed that the user writes down and confirms.
+
+**Replacing the phrase.** Settings → Security → "Replace recovery phrase" (unlocked session,
+after PIN or biometric re-authentication, and a confirmation) generates 12 new words, shows
+them and checks three of them. Only then are the recovery slot and the backup-key slot rewritten
+for the new words, in one atomic write that drops the old recovery slot. The old words then
+open nothing on this device. Backups exported before still open **only with the old words**
+(their key derives from them); the UI says so before and during the replacement.
 
 ## Encrypted backups
 
@@ -80,7 +116,7 @@ backupRoot = HKDF-SHA256(ikm = seedHash, salt = "encly/backup/salt/v1", info = "
 fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, info = "encly/backup/file/v1")
 ```
 
-- The info strings are distinct from the recovery KEK's (`encly/recovery/kek/v2`), so a backup
+- The info strings are distinct from the recovery KEK's (`encly/recovery/kek/v3`), so a backup
   key can never unwrap the vault and a recovery KEK can never open a backup.
 - Each file has its own random salt, so each file has its own key; the 12-byte GCM nonce is
   random per file as well.
@@ -128,8 +164,13 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   uncommitted setup vault is not re-locked by backgrounding (setup closes it itself if it
   finishes in the background).
 - The system file picker is another app, so the process briefly goes to the background.
+  **Export** needs no open vault while it is shown (the file is already sealed), so backgrounding
+  locks as usual and the sealed file is still written to the chosen document. For **import**,
   `SessionLockManager` keeps the vault open only when Encly itself opened the picker within the
-  last 5 seconds; the vault is closed anyway if the user stays away for more than 5 minutes.
+  last 5 seconds, for at most 60 seconds measured on `elapsedRealtime` (deep sleep counts). The
+  screen turning off ends the grace at once and closes the vault; returning after the grace
+  expired, or with the keyguard up, closes it the moment the app is back; the picker's result
+  ends the grace.
 - No temp files, no plaintext on disk, no logging of payloads, words, keys or SQLite error
   messages (which can quote row content). Derived keys and the plaintext payload buffer are
   zeroized after use.
@@ -139,9 +180,20 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
 - The database is not considered committed until mandatory PIN setup succeeds.
 - Interrupted first-run setup restarts onboarding and discards incomplete vault slots.
 - When the app backgrounds, SQLCipher is closed and Encly's in-memory DEK copy is
-  zeroized.
+  zeroized. ViewModels holding decrypted content (notes list, tasks, editor, a decrypted
+  backup, new recovery words) drop it at that moment, not only when the UI resumes.
 - The next foreground entry must unwrap the DEK again through PIN, biometric, or
   recovery.
+- A process started with a committed, closed vault starts in the locked state, and a central
+  navigation guard sends every vault screen to the lock screen while the database is closed, so
+  a back stack restored after process death shows nothing. Search queries and tag drafts are
+  not kept in saved instance state. Navigation deep-link extras are stripped from incoming
+  intents.
+- An unlock whose screen is gone by the time the key derivation finishes (or that finishes in
+  the background) closes the vault again. A re-lock during the unlock animation cancels it.
+- The PIN typed on the lock screen is kept in a `CharArray` that is wiped after the attempt
+  (never a `String`); unlock DEK copies are wiped after use. While open, the database accepts a
+  second unlock call only with the same key, compared in constant time.
 - `FLAG_SECURE` is applied before the first Activity frame and cannot be disabled in
   settings.
 
@@ -153,27 +205,53 @@ The beta security boundary intentionally removes system-visible plaintext featur
 - no seed clipboard, file, Drive, or generic share export (encrypted backups never contain the
   seed; see "Encrypted backups");
 - no plaintext note share flow;
-- no note/link clipboard copy flow;
 - no task export to the system calendar;
 - no FileProvider retained for those export flows.
 
-All Compose text fields run inside a shared input boundary that requests
-`IME_FLAG_NO_PERSONALIZED_LEARNING` from the Android IME. The app requests no
-`INTERNET` permission and performs no analytics or sync.
+**Clipboard.** Everything Encly puts on the clipboard (a text-field copy, a copied link) is
+marked sensitive (`ClipDescription.EXTRA_IS_SENSITIVE`, honoured from Android 13) and cleared
+after 60 seconds unless something else was copied since. When the system hides the clipboard
+from a backgrounded app, the clear happens without that check. A recovery phrase pasted into
+the 12 cells is removed from the clipboard right away.
+
+**Autofill, accessibility, overlays.** The window excludes itself and all its fields from
+autofill services. On Android 14+ its content is marked accessibility-data-sensitive, so only
+services that declare themselves accessibility tools (TalkBack, Switch Access) can read it. On
+Android 12+ other apps' overlay windows are hidden while Encly is in front
+(`HIDE_OVERLAY_WINDOWS`).
+
+**Keyboard.** All Compose text fields run inside a shared input boundary that requests
+`IME_FLAG_NO_PERSONALIZED_LEARNING`. The opt-in **Strict keyboard privacy** setting
+(Settings → Security, off by default) additionally presents every text field as a
+visible-password field with `TYPE_TEXT_FLAG_NO_SUGGESTIONS`: compliant keyboards then show no
+suggestions, use no cloud prediction and receive no surrounding text. The residual risk is the
+keyboard itself: it still receives every key it types, and a malicious or non-compliant IME can
+ignore all of these flags (see "Important limitations"). The cost is no autocorrect, and some
+keyboards hide emoji or voice input in password fields.
+
+The app requests no `INTERNET` permission and performs no analytics or sync.
 
 ## Platform storage
 
 - Android app sandbox isolates local files from ordinary apps.
 - `allowBackup=false` is set.
 - Database/security state is excluded from cloud backup and device transfer.
-- The v2 slot metadata (PBKDF2 salt, AES-GCM envelopes, lockout counters, biometric flag) is
-  kept in `secure_prefs_v2`, an `EncryptedSharedPreferences` file from
-  `androidx.security:security-crypto` whose master key lives in AndroidKeyStore.
-  That library is **deprecated upstream** and receives no further fixes. Encly does not rely on
-  it for confidentiality of the DEK: every slot is already an AES-256-GCM envelope, so the
-  encrypted-preferences layer only hides non-secret metadata. It stays because the
-  vault metadata is stored in its format; replacing it requires a migration of that file and is
-  tracked as future work.
+- The key slots (PIN, recovery, backup-key and biometric envelopes) and the PIN lockout state
+  live in one app-private file, `no_backup/vault_state_v3.bin`. Every secret in it is already
+  an AES-256-GCM envelope, so it needs no further encryption layer and **no Keystore key to be
+  read**: a broken Keystore or Tink keyset can no longer make the vault state unreadable at
+  startup. Every change rewrites the file to a temp file, `fsync`s it and renames it over the
+  old one (an atomic replace), so a crash leaves the old or the new state, never a mix. A
+  SHA-256 over the content detects damage: a damaged file reads as empty (nothing unlocks),
+  refuses writes, and startup routes to the damaged-vault screen instead of crashing. (That
+  digest detects accident, not tampering; tampering with an envelope fails its GCM tag.)
+- The envelopes are what protect the DEK, and each is only as strong as its KEK. The file
+  itself is readable by anyone who can read the app's private storage (root, a forensic
+  extraction of an unlocked device). That is why the PIN KEK includes a non-exportable Keystore
+  factor: with only a copy of the file, the 10^6 PINs can not be tried off the device.
+- Non-secret flags (onboarding finished, last export time, strict keyboard privacy) are kept in
+  plain app-private preferences.
+- Encly no longer uses `androidx.security:security-crypto` (deprecated upstream).
 
 ## Network and third parties
 
@@ -201,8 +279,15 @@ All Compose text fields run inside a shared input boundary that requests
 - A rooted or fully compromised OS can observe process memory, UI input, or execute code
   in the app's security context. Encly cannot provide a trustworthy boundary against a
   hostile kernel / system image.
-- A numeric PIN has finite entropy. PBKDF2 increases offline attack cost but does not
-  turn a short PIN into a high-entropy secret.
+- A numeric PIN has finite entropy (10^6 values). Off the device, a copied PIN slot is useless
+  without the Keystore factor. **On** a rooted device that is unlocked, an attacker can drive
+  the Keystore key from the app's own security context: guesses then run at the secure
+  hardware's HMAC speed (StrongBox is much slower than the TEE), the PBKDF2 half can be
+  computed off the device, and the lockout file can be reset. A device that has never been
+  unlocked since boot, or is locked (API 28+), refuses the key entirely. Where StrongBox is
+  missing the key lives in the TEE; on devices without hardware-backed Keystore it is software
+  only.
+- The lockout is enforced by the app, not by the secure hardware.
 - The recovery seed restores the local vault (recovery slot) and opens encrypted backups. On a
   new phone the seed alone recreates nothing: the user also needs a backup file, and only data
   up to that export is restored.
@@ -216,7 +301,10 @@ All Compose text fields run inside a shared input boundary that requests
   entered. Encly minimizes avoidable copies but cannot guarantee JVM/Compose heap
   zeroization of every immutable string representation.
 - A third-party keyboard is part of the device trust boundary. Encly requests Android's
-  no-personalized-learning flag, but an IME may ignore that request.
+  no-personalized-learning flag (and, with strict keyboard privacy, a password-type field
+  without suggestions), but an IME sees every key typed and may ignore these requests.
+- Clipboard clearing is best effort: a clipboard manager or another app may read or keep a
+  clip during its 60 seconds.
 
 ## Distribution and signing
 
@@ -231,7 +319,7 @@ uninstall to "fix" it without an exported backup, because uninstalling deletes t
 
 | Version | Storage format | Security fixes |
 |---|---|---|
-| 2.0.x (beta) | v2 vault (random DEK in PIN / biometric / recovery slots) | ✅ yes |
+| 2.0.x (beta) | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
 | 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, reinstall 2.0 |
 
 Reports should include the exact app version (About screen), where it was installed from, and

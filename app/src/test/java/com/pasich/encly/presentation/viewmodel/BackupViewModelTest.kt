@@ -9,7 +9,7 @@ import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
 import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.InMemoryVaultDataStore
-import com.pasich.encly.testutil.anyString
+import com.pasich.encly.testutil.anyCharArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -60,12 +60,12 @@ class BackupViewModelTest {
         val step = viewModel.uiState.value.step as BackupStep.Reauth
         assertNull(step.error)
         // Nothing is verified, so the lockout is neither extended nor reported as a wrong PIN.
-        verify(security, never()).verifyPin(anyString())
+        verify(security, never()).verifyPin(anyCharArray())
     }
 
     @Test
     fun aWrongPinOutsideALockoutIsReported() {
-        `when`(security.verifyPin(anyString())).thenReturn(false)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
 
         viewModel.reauthFlow.submitPin("000000")
 
@@ -75,7 +75,7 @@ class BackupViewModelTest {
 
     @Test
     fun theRightPinOutsideALockoutProceeds() {
-        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
 
         viewModel.reauthFlow.submitPin("123456")
 
@@ -84,7 +84,7 @@ class BackupViewModelTest {
 
     @Test
     fun creatingARecoveryPhraseLaterShowsNewWordsAfterThePin() {
-        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.hasRecoverySeed()).thenReturn(false)
         `when`(security.generateMnemonicCode()).thenReturn(WORDS.toCharArray())
         viewModel.start(BackupAction.CREATE_PHRASE)
@@ -97,7 +97,7 @@ class BackupViewModelTest {
 
     @Test
     fun eachWrongPinCountsAFailureSoTheDotsShakeAgain() {
-        `when`(security.verifyPin(anyString())).thenReturn(false)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
 
         viewModel.reauthFlow.submitPin("000000")
         waitForStep { (it as? BackupStep.Reauth)?.failures == 1 }
@@ -108,7 +108,7 @@ class BackupViewModelTest {
 
     @Test
     fun creatingARecoveryPhraseWhenOneExistsSaysSo() {
-        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.hasRecoverySeed()).thenReturn(true)
         viewModel.start(BackupAction.CREATE_PHRASE)
 
@@ -120,7 +120,7 @@ class BackupViewModelTest {
 
     @Test
     fun theCheckKnowsItsWordsAndCanGoBackToThem() {
-        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.hasRecoverySeed()).thenReturn(false)
         `when`(security.generateMnemonicCode()).thenReturn(WORDS.toCharArray())
         viewModel.start(BackupAction.CREATE_PHRASE)
@@ -137,7 +137,7 @@ class BackupViewModelTest {
 
     @Test
     fun eraseNeedsThePinAndAnExplicitConfirmation() {
-        `when`(security.verifyPin(anyString())).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         viewModel.start(BackupAction.ERASE)
 
         viewModel.eraseAllData() // not confirmed yet: ignored

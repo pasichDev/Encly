@@ -1,4 +1,4 @@
-Prima versione su Google Play.
+Encly 2.0: ricostruita da zero attorno a una nuova cassaforte criptata.
 • Note e attività criptate, salvate solo sul tuo telefono.
 • Blocco con PIN a 6 cifre, impronta o volto facoltativi.
 • Frase di recupero di 12 parole facoltativa.

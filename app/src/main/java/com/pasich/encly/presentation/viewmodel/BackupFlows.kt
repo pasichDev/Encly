@@ -19,16 +19,18 @@ import com.pasich.encly.presentation.screen.backup.backupErrorMessage
 import com.pasich.encly.presentation.screen.backup.backupExportErrorMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * What a re-authenticated flow goes on to do. [CREATE_PHRASE] and [ERASE] start from
- * Settings → Security; they share the re-authentication and phrase steps with backups.
+ * What a re-authenticated flow goes on to do. [CREATE_PHRASE], [REPLACE_PHRASE] and [ERASE]
+ * start from Settings → Security; they share the re-authentication and phrase steps with
+ * backups.
  */
-enum class BackupAction { EXPORT, IMPORT, CREATE_PHRASE, ERASE }
+enum class BackupAction { EXPORT, IMPORT, CREATE_PHRASE, REPLACE_PHRASE, ERASE }
 
 /** Where a backup or vault flow currently is. Each step is one dialog or system picker. */
 sealed interface BackupStep {
@@ -48,7 +50,14 @@ sealed interface BackupStep {
     /** Export needs a recovery phrase and this vault has none: explain and offer to create it. */
     data object NeedsPhrase : BackupStep
 
-    data class ShowNewPhrase(val words: List<String>) : BackupStep
+    /** [replacing]: the words will replace the vault's current recovery phrase. */
+    data class ShowNewPhrase(val words: List<String>, val replacing: Boolean = false) : BackupStep
+
+    /**
+     * Before new words replace the recovery phrase: the old words stop unlocking this vault,
+     * and backups already made with them still open only with them.
+     */
+    data object ConfirmReplacePhrase : BackupStep
 
     /**
      * 0-based positions of the words the user must type back, and those words, so each field
@@ -167,7 +176,7 @@ class ReauthFlow(
             return
         }
         state.launchBusy {
-            val ok = withContext(Dispatchers.Default) { securityManager.verifyPin(pin) }
+            val ok = withContext(Dispatchers.Default) { securityManager.verifyPin(pin.toCharArray()) }
             if (ok) {
                 onAuthenticated(step.action)
             } else {
@@ -214,7 +223,9 @@ class ExportFlow(
         if (uri == null) return
         state.launchBusy {
             try {
-                withContext(Dispatchers.IO) { documents.write(uri, file) }
+                // Not cancelled by a re-lock clearing this screen: a half-written document
+                // would look like a backup and never restore. The file is ciphertext.
+                withContext(NonCancellable + Dispatchers.IO) { documents.write(uri, file) }
                 backupManager.recordExport()
                 state.ui.update { it.copy(lastExportAt = backupManager.lastExportAt()) }
                 state.finish(BackupMessage.Text(R.string.backup_export_done))
@@ -233,6 +244,7 @@ class ExportFlow(
  * Gives a vault the recovery phrase exports need: a new one (shown, then three words typed
  * back) or, for an older recovery-seed vault, a one-time confirmation of its words.
  */
+@Suppress("TooManyFunctions") // Create, replace, show, check and confirm share one phrase buffer.
 class RecoveryPhraseFlow(
     private val state: BackupFlowState,
     private val backupManager: BackupManager,
@@ -241,11 +253,22 @@ class RecoveryPhraseFlow(
 ) {
     private var newPhrase: CharArray? = null
 
-    fun create() {
+    /** The new words replace the vault's recovery phrase instead of being its first one. */
+    private var replacing = false
+
+    fun create() = start(replace = false)
+
+    /** "Replace" on [BackupStep.ConfirmReplacePhrase]: new words, shown, then checked. */
+    fun replace() {
+        if (state.step == BackupStep.ConfirmReplacePhrase) start(replace = true)
+    }
+
+    private fun start(replace: Boolean) {
         drop()
         val phrase = phraseSetup.generate()
         newPhrase = phrase
-        state.go(BackupStep.ShowNewPhrase(String(phrase).split(' ')))
+        replacing = replace
+        state.go(BackupStep.ShowNewPhrase(String(phrase).split(' '), replacing))
     }
 
     fun writtenDown() {
@@ -257,7 +280,9 @@ class RecoveryPhraseFlow(
     /** "Show the words again" (and back) from the check. */
     fun showAgain() {
         val phrase = newPhrase ?: return
-        if (state.step is BackupStep.CheckNewPhrase) state.go(BackupStep.ShowNewPhrase(String(phrase).split(' ')))
+        if (state.step is BackupStep.CheckNewPhrase) {
+            state.go(BackupStep.ShowNewPhrase(String(phrase).split(' '), replacing))
+        }
     }
 
     fun submitCheck(answers: List<String>) {
@@ -274,14 +299,21 @@ class RecoveryPhraseFlow(
     }
 
     private fun add(phrase: CharArray) {
+        val replace = replacing
         state.launchBusy {
-            val added = withContext(Dispatchers.Default) { phraseSetup.add(phrase) }
+            val saved = withContext(Dispatchers.Default) {
+                if (replace) phraseSetup.replace(phrase) else phraseSetup.add(phrase)
+            }
             drop()
-            if (added) {
-                state.message(R.string.backup_phrase_added)
-                onReady()
-            } else {
-                state.finish(BackupMessage.Text(R.string.backup_error_phrase_setup))
+            when {
+                !saved -> state.finish(BackupMessage.Text(R.string.backup_error_phrase_setup))
+
+                replace -> state.finish(BackupMessage.Text(R.string.security_recovery_replaced))
+
+                else -> {
+                    state.message(R.string.backup_phrase_added)
+                    onReady()
+                }
             }
         }
     }
@@ -312,6 +344,7 @@ class RecoveryPhraseFlow(
     fun drop() {
         newPhrase?.let(SensitiveDataCleaner::clear)
         newPhrase = null
+        replacing = false
     }
 
     private fun matches(phrase: CharArray, positions: List<Int>, answers: List<String>): Boolean {
@@ -333,6 +366,7 @@ class ImportFlow(
     private val state: BackupFlowState,
     private val backupManager: BackupManager,
     private val documents: BackupDocuments,
+    private val onPickerReturned: () -> Unit = {},
 ) {
     private var file: ByteArray? = null
     private var decrypted: BackupPayload? = null
@@ -341,6 +375,8 @@ class ImportFlow(
     private var choice: BackupStep.ChooseImportMode? = null
 
     fun onFile(uri: Uri?) {
+        // The picker is back: its grace on the vault ends here, whatever was picked.
+        onPickerReturned()
         if (uri == null) return
         state.launchBusy {
             try {

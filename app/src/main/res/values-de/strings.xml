@@ -392,6 +392,7 @@
     <string name="link_edit">Link bearbeiten</string>
     <string name="link_copied">Link kopiert</string>
     <string name="link_open_failed">Keine App auf diesem Gerät kann diesen Link öffnen.</string>
+    <string name="link_blocked">Nur Web-Links (http, https) und E-Mail-Links können gespeichert oder geöffnet werden.</string>
     <string name="notes_load_failed_title">Notizen konnten nicht gelesen werden</string>
     <string name="tags_load_failed_title">Labels konnten nicht gelesen werden</string>
     <string name="notes_load_failed_desc">Deine Notizen sind weiterhin verschlüsselt auf diesem Gerät gespeichert. Schließe Encly und öffne es erneut, um es noch einmal zu versuchen.</string>

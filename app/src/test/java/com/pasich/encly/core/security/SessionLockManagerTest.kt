@@ -2,6 +2,7 @@ package com.pasich.encly.core.security
 
 import androidx.lifecycle.LifecycleOwner
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -187,5 +188,139 @@ class SessionLockManagerTest {
 
         verify(security).lock()
         assertTrue(manager.locked.value)
+    }
+
+    // --- picker grace: capped, monotonic, ended by screen-off / keyguard / return -------
+
+    private val watcher = FakeDeviceLock()
+
+    private fun withWatcher() {
+        manager = SessionLockManager(security, watcher)
+        manager.onStart(owner)
+        withFakeTime()
+    }
+
+    @Test
+    fun thePickerGraceIsCappedAtAMinute() {
+        withFakeTime()
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.allowSystemPicker()
+        manager.onStop(owner)
+        now += 61_000
+        manager.onStart(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun deepSleepCountsAgainstTheGraceEvenIfTheTimerNeverFired() {
+        // Handler timers stop in deep sleep; elapsedRealtime does not. The return re-checks.
+        withFakeTime()
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.allowSystemPicker()
+        manager.onStop(owner)
+        now += 3 * 60 * 60_000L // three hours, screen off, timer never ran
+        manager.onStart(owner)
+
+        verify(security).lock()
+    }
+
+    @Test
+    fun theScreenTurningOffDuringThePickerLocksAtOnce() {
+        withWatcher()
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.allowSystemPicker()
+        manager.onStop(owner)
+        watcher.screenOff()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+        assertFalse("the receiver is gone once the grace ended", watcher.watching)
+    }
+
+    @Test
+    fun aKeyguardShownMeanwhileLocksOnReturn() {
+        withWatcher()
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.allowSystemPicker()
+        manager.onStop(owner)
+        now += 10_000
+        watcher.locked = true
+        manager.onStart(owner)
+
+        verify(security).lock()
+    }
+
+    @Test
+    fun aQuickReturnFromThePickerKeepsTheVaultAndStopsWatching() {
+        withWatcher()
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.allowSystemPicker()
+        manager.onStop(owner)
+        assertTrue(watcher.watching)
+        now += 10_000
+        manager.onStart(owner)
+
+        verify(security, never()).lock()
+        assertFalse(watcher.watching)
+        assertNull(pendingTimer)
+    }
+
+    @Test
+    fun thePickerReturningEndsTheAllowance() {
+        withFakeTime()
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.allowSystemPicker()
+        manager.endSystemPicker() // e.g. the picker could not open
+        manager.onStop(owner) // Home, within the launch window
+
+        verify(security).lock()
+    }
+
+    @Test
+    fun startupWithACommittedVaultStartsLocked() {
+        manager.requireUnlock()
+
+        assertTrue(manager.locked.value)
+        assertTrue(manager.onUnlocked())
+        assertFalse(manager.locked.value)
+    }
+
+    @Test
+    fun anAbandonedUnlockIsClosedAgain() {
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        manager.onUnlockAbandoned()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    private class FakeDeviceLock : DeviceLockWatcher {
+        var locked = false
+        var watching = false
+        private var onScreenOff: (() -> Unit)? = null
+
+        override fun isDeviceLocked(): Boolean = locked
+
+        override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit {
+            watching = true
+            this.onScreenOff = onScreenOff
+            return {
+                watching = false
+                this.onScreenOff = null
+            }
+        }
+
+        fun screenOff() {
+            onScreenOff?.invoke()
+        }
     }
 }

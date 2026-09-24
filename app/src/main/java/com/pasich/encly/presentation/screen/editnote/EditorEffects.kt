@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.screen.editnote
 
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -58,11 +59,33 @@ internal fun CarryOutFocusRequests(
         viewModel.focusRequests.collectLatest { request ->
             registry.focusWhenComposed(request) { blockId ->
                 val index = viewModel.blocks.indexOfFirst { it.id == blockId }
-                if (index >= 0) listState.animateScrollToItem(currentBlocksStart + index)
+                if (index >= 0) listState.reveal(currentBlocksStart + index)
             }
         }
     }
 }
+
+/**
+ * Scrolls item [index] into view. An item just below the screen (the paragraph Enter adds under
+ * the last line, with the keyboard up) is scrolled up from the bottom by a little, as typing
+ * would, instead of jumping it to the top; its field then keeps its cursor in view itself.
+ */
+private suspend fun LazyListState.reveal(index: Int) {
+    val info = layoutInfo
+    val last = info.visibleItemsInfo.lastOrNull()
+    if (last != null && index > last.index && index - last.index <= NEAR_ITEMS) {
+        val hidden = (last.offset + last.size - info.viewportEndOffset).coerceAtLeast(0)
+        animateScrollBy((hidden + info.viewportSize.height / REVEAL_FRACTION).toFloat())
+    } else if (info.visibleItemsInfo.none { it.index == index }) {
+        animateScrollToItem(index)
+    }
+}
+
+/** How far past the last item on screen an item counts as just below it. */
+private const val NEAR_ITEMS = 2
+
+/** An item just below the screen is revealed by this fraction of the screen's height. */
+private const val REVEAL_FRACTION = 4
 
 /** A new note starts in its title with the keyboard up: once, not again after a restore. */
 @Composable

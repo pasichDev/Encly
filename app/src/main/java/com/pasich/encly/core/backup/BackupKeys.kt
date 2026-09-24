@@ -1,9 +1,8 @@
 package com.pasich.encly.core.backup
 
 import com.pasich.encly.core.security.Hkdf
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SensitiveDataCleaner
-import java.nio.CharBuffer
-import java.security.MessageDigest
 
 /**
  * Key derivation for encrypted backups. Every function returns a fresh array the caller owns
@@ -30,35 +29,11 @@ internal object BackupKeys {
     private val ROOT_INFO = "encly/backup/root/v1".toByteArray(Charsets.UTF_8)
     private val FILE_INFO = "encly/backup/file/v1".toByteArray(Charsets.UTF_8)
 
-    /** Lower-cases and collapses any whitespace between words to a single space. */
-    fun normalizeMnemonic(words: CharArray): CharArray {
-        val out = CharArray(words.size)
-        var length = 0
-        var pendingSpace = false
-        for (c in words) {
-            if (c.isWhitespace()) {
-                pendingSpace = length > 0
-            } else {
-                if (pendingSpace) {
-                    out[length++] = ' '
-                    pendingSpace = false
-                }
-                out[length++] = c.lowercaseChar()
-            }
-        }
-        return try {
-            out.copyOf(length)
-        } finally {
-            SensitiveDataCleaner.clear(out)
-        }
-    }
+    /** Lower-cases and collapses any whitespace between words to a single space (see [Mnemonic]). */
+    fun normalizeMnemonic(words: CharArray): CharArray = Mnemonic.normalize(words)
 
     fun rootFromMnemonic(words: CharArray): ByteArray {
-        val normalized = normalizeMnemonic(words)
-        val utf8 = utf8(normalized)
-        SensitiveDataCleaner.clear(normalized)
-        val seedHash = MessageDigest.getInstance("SHA-256").digest(utf8)
-        SensitiveDataCleaner.clear(utf8)
+        val seedHash = Mnemonic.seedHash(words)
         return try {
             Hkdf.sha256(seedHash, ROOT_SALT, ROOT_INFO, KEY_LENGTH)
         } finally {
@@ -69,13 +44,5 @@ internal object BackupKeys {
     fun fileKeyFromRoot(root: ByteArray, salt: ByteArray): ByteArray {
         require(root.size == KEY_LENGTH)
         return Hkdf.sha256(root, salt, FILE_INFO, KEY_LENGTH)
-    }
-
-    private fun utf8(chars: CharArray): ByteArray {
-        val buffer = Charsets.UTF_8.encode(CharBuffer.wrap(chars))
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        if (buffer.hasArray()) SensitiveDataCleaner.clear(buffer.array())
-        return bytes
     }
 }

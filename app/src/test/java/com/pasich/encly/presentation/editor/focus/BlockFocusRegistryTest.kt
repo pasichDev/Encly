@@ -24,26 +24,30 @@ class BlockFocusRegistryTest {
     @Test
     fun focusIsRequestedEveryTimeEvenForTheSameBlock() {
         var requests = 0
-        var cursorMoves = 0
+        val carets = mutableListOf<Int>()
         registry.registerFocusTarget(blocks[0].id) { requests++ }
-        registry.registerCursorToEnd(blocks[0].id) { cursorMoves++ }
+        registry.registerCaret(blocks[0].id) { carets += it }
 
         assertTrue(registry.focus(blocks[0].id))
         assertTrue(registry.focus(blocks[0].id, cursorToEnd = true))
+        assertTrue(registry.focus(FocusRequest(blocks[0].id, caret = 3)))
 
-        assertEquals(2, requests)
-        assertEquals(1, cursorMoves)
+        assertEquals(3, requests)
+        assertEquals(listOf(Int.MAX_VALUE, 3), carets)
     }
 
     @Test
-    fun aListIsFocusedAtItsStartOrItsEnd() {
-        val asked = mutableListOf<Boolean>()
-        registry.registerFieldsFocusTarget(blocks[0].id) { atEnd -> asked += atEnd }
+    fun aListIsFocusedAtItsStartItsEndOrANamedItem() {
+        val asked = mutableListOf<FocusRequest>()
+        registry.registerFieldsFocusTarget(blocks[0].id) { request -> asked += request }
 
         registry.focus(blocks[0].id)
         registry.focus(blocks[0].id, cursorToEnd = true)
+        registry.focus(FocusRequest(blocks[0].id, caret = 2, itemId = "item"))
 
-        assertEquals(listOf(false, true), asked)
+        assertEquals(listOf(false, true, false), asked.map { it.cursorToEnd })
+        assertEquals("item", asked.last().itemId)
+        assertEquals(2, asked.last().caretOffset)
     }
 
     @Test
