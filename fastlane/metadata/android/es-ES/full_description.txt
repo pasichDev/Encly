@@ -6,7 +6,7 @@ PRIVADA DESDE EL DISEÑO
 • Sin cuenta, sin registro, sin analíticas, sin anuncios, sin compras en la app.
 • Sin conexión de verdad: Encly no pide el permiso INTERNET, así que no puede enviar tus notas a ninguna parte.
 • Notas cifradas: base de datos SQLCipher (AES-256) con una clave aleatoria de 256 bits.
-• Notas con contraseña: un PIN de 6 dígitos cada vez que la abres y, si quieres, huella o cara (solo biometría fuerte).
+• Notas con contraseña: un PIN de 6 dígitos ligado al hardware seguro del teléfono y, si quieres, huella o cara (solo biometría fuerte).
 • Se bloquea sola: al salir (a los 15 segundos por defecto, o al instante) o en cuanto se apaga la pantalla, la base de datos se cierra y la clave se borra de la memoria.
 • Se bloquean las capturas, la grabación de pantalla y la vista previa en apps recientes. La copia en la nube de Android está desactivada.
 

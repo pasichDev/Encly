@@ -6,7 +6,7 @@ PRIVAT VON ANFANG AN
 • Kein Konto, keine Registrierung, keine Analyse, keine Werbung, keine In-App-Käufe.
 • Wirklich offline: Encly fordert die Berechtigung INTERNET gar nicht an und kann deine Notizen daher nirgendwohin senden.
 • Verschlüsselte Notizen: SQLCipher-Datenbank (AES-256) unter einem zufälligen 256-Bit-Schlüssel.
-• Notizen mit Passwortschutz: eine 6-stellige PIN bei jedem Öffnen, optional Fingerabdruck oder Gesicht (nur starke Biometrie).
+• Notizen mit Passwortschutz: eine 6-stellige PIN, an die Sicherheitshardware des Telefons gebunden, optional Fingerabdruck oder Gesicht (nur starke Biometrie).
 • Sperrt sich selbst: nach dem Verlassen (standardmäßig nach 15 Sekunden oder sofort) oder sobald der Bildschirm ausgeht, wird die Datenbank geschlossen und der Schlüssel aus dem Speicher gelöscht.
 • Screenshots, Bildschirmaufnahmen und die Vorschau in „Letzte Apps“ sind blockiert. Die Android-Cloudsicherung ist aus.
 
