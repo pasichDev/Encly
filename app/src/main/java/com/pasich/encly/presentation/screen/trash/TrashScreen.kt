@@ -1,130 +1,163 @@
 package com.pasich.encly.presentation.screen.trash
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyOverflowMenu
+import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.OverflowAction
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
 
 enum class DialogTrashAction {
-    DELETE_PERMANENTLY, CLEAN_ALL, DISABLE
+    DELETE_PERMANENTLY,
+    CLEAN_ALL,
+    DISABLE,
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashScreen(
-    navController: NavHostController, trashViewModel: TrashViewModel = hiltViewModel()
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    trashViewModel: TrashViewModel = hiltViewModel(),
 ) {
-
     val state by trashViewModel.state.collectAsStateWithLifecycle()
-    var isDialogVisible by remember { mutableStateOf<DialogTrashAction>(DialogTrashAction.DISABLE) }
+    var isDialogVisible by remember { mutableStateOf(DialogTrashAction.DISABLE) }
 
-    ConfirmDialog(
-        isVisible = isDialogVisible != DialogTrashAction.DISABLE,
-        titleText = if (isDialogVisible == DialogTrashAction.CLEAN_ALL) stringResource(R.string.clean_trash_title) else pluralStringResource(
-            R.plurals.delete_notes_confirm, state.checkedCount, state.checkedCount
-        ),
-        messageText = if (isDialogVisible == DialogTrashAction.CLEAN_ALL) stringResource(R.string.clean_trash_message) else stringResource(
-            R.string.clean_permanent_message
-        ),
-        onConfirm = {
-            when (isDialogVisible) {
+    // Back (gesture or bar) first leaves the selection, then the screen.
+    BackHandler(enabled = state.canCheck) { trashViewModel.onEvent(TrashListEvent.ClearSelection) }
+
+    TrashConfirmDialog(
+        action = isDialogVisible,
+        checkedCount = state.checkedCount,
+        onConfirm = { action ->
+            when (action) {
                 DialogTrashAction.CLEAN_ALL -> trashViewModel.onEvent(TrashListEvent.CleanAll())
-                DialogTrashAction.DELETE_PERMANENTLY -> trashViewModel.onEvent(
-                    TrashListEvent.CleanNotes()
-                )
-
+                DialogTrashAction.DELETE_PERMANENTLY -> trashViewModel.onEvent(TrashListEvent.CleanNotes())
                 DialogTrashAction.DISABLE -> {}
             }
             isDialogVisible = DialogTrashAction.DISABLE
-
         },
-        onDismiss = {
-            isDialogVisible = DialogTrashAction.DISABLE
-        })
-
+        onDismiss = { isDialogVisible = DialogTrashAction.DISABLE },
+    )
 
     Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            TopAppBar(title = {
-                if (state.canCheck) Text(
-                    stringResource(
-                        id = R.string.checked_count, state.checkedCount
-                    )
-                )
-                else Text(stringResource(R.string.main_drawer_trash))
-            }, navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            }, actions = {
-
-
-                AnimatedVisibility(state.canCheck) {
-                    IconButton(onClick = { trashViewModel.onEvent(TrashListEvent.RestoreNotes()) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_trash_restore),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                if (state.notes.isEmpty()) IconButton(onClick = {}, enabled = false) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_trash_empty),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else IconButton(onClick = {
-                    isDialogVisible =
-                        if (state.canCheck) DialogTrashAction.DELETE_PERMANENTLY else DialogTrashAction.CLEAN_ALL
-                }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_trash_all_clean),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-            })
-        }) { padding ->
-        Column(
+            TrashTopBar(
+                checkedCount = state.checkedCount.takeIf { state.canCheck },
+                hasNotes = state.notes.isNotEmpty(),
+                actions = TrashBarActions(
+                    onBack = { navController.popBackStack() },
+                    onClearSelection = { trashViewModel.onEvent(TrashListEvent.ClearSelection) },
+                    onRestore = { trashViewModel.onEvent(TrashListEvent.RestoreNotes()) },
+                    onDeleteSelected = { isDialogVisible = DialogTrashAction.DELETE_PERMANENTLY },
+                    onEmptyTrash = { isDialogVisible = DialogTrashAction.CLEAN_ALL },
+                ),
+            )
+        },
+    ) { padding ->
+        // TrashNotesList resolves the same back-stack-scoped TrashViewModel itself.
+        TrashNotesList(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-        ) {
-            TrashNotesList(onItemClick = { index, note ->
+                .padding(padding),
+            onItemClick = { _, note ->
                 navController.navigate("${NavRoutes.EditNoteRoute.name}/${note.id}?isReadTrashOnly=true")
-            }, trashViewModel)
-        }
+            },
+        )
     }
+}
+
+private class TrashBarActions(
+    val onBack: () -> Unit,
+    val onClearSelection: () -> Unit,
+    val onRestore: () -> Unit,
+    val onDeleteSelected: () -> Unit,
+    val onEmptyTrash: () -> Unit,
+)
+
+/**
+ * "Trash" with an overflow "Empty trash"; while notes are selected ([checkedCount] set), "N
+ * selected" with close, restore and delete forever.
+ */
+@Composable
+private fun TrashTopBar(checkedCount: Int?, hasNotes: Boolean, actions: TrashBarActions) {
+    val selecting = checkedCount != null
+    EnclyTopBar(
+        title = if (checkedCount != null) {
+            pluralStringResource(R.plurals.trash_selected, checkedCount, checkedCount)
+        } else {
+            stringResource(R.string.main_drawer_trash)
+        },
+        onBack = actions.onBack.takeUnless { selecting },
+        onClose = actions.onClearSelection.takeIf { selecting },
+        actions = {
+            AnimatedVisibility(selecting) {
+                IconButton(onClick = actions.onRestore) {
+                    Icon(EnclyIcons.Restore, contentDescription = stringResource(R.string.restore))
+                }
+            }
+            AnimatedVisibility(selecting) {
+                IconButton(onClick = actions.onDeleteSelected) {
+                    Icon(EnclyIcons.Trash, contentDescription = stringResource(R.string.delete_forever))
+                }
+            }
+            if (!selecting && hasNotes) {
+                EnclyOverflowMenu(
+                    items = listOf(
+                        OverflowAction(
+                            text = stringResource(R.string.empty_trash_action),
+                            onClick = actions.onEmptyTrash,
+                            destructive = true,
+                        ),
+                    ),
+                )
+            }
+        },
+    )
+}
+
+/** Confirms emptying the trash, or deleting the selected notes for good. */
+@Composable
+private fun TrashConfirmDialog(
+    action: DialogTrashAction,
+    checkedCount: Int,
+    onConfirm: (DialogTrashAction) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val cleanAll = action == DialogTrashAction.CLEAN_ALL
+    ConfirmDialog(
+        isVisible = action != DialogTrashAction.DISABLE,
+        titleText = if (cleanAll) {
+            stringResource(R.string.clean_trash_title)
+        } else {
+            pluralStringResource(R.plurals.delete_notes_confirm, checkedCount, checkedCount)
+        },
+        messageText = stringResource(if (cleanAll) R.string.clean_trash_message else R.string.clean_permanent_message),
+        onConfirm = { onConfirm(action) },
+        onDismiss = onDismiss,
+        destructive = true,
+    )
 }

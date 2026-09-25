@@ -7,14 +7,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.pasich.encly.data.datasource.local.FontStyleType
+import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.dynamicBlocks.BlockType
-import com.pasich.encly.ui.theme.ibmPlex
-import com.pasich.encly.ui.theme.inter
-import com.pasich.encly.ui.theme.playfair
-import com.pasich.encly.ui.theme.poppins
-import com.pasich.encly.ui.theme.roboto
-import com.pasich.encly.ui.theme.sourceSans
+import com.pasich.encly.ui.theme.fontSet
 import com.pasich.encly.utils.FontSizeUtils
 
 /**
@@ -22,13 +17,10 @@ import com.pasich.encly.utils.FontSizeUtils
  */
 private object EditNoteDefaults {
     val DEFAULT_FONT_SIZE = 16.sp
-    val DEFAULT_FONT_STYLE = FontStyleType.MODERN_SIMPLE
+    val DEFAULT_FONT_STYLE = FontStyleType.DEFAULT
     const val DEFAULT_SIMPLE_EDIT = false
 
-    val DEFAULT_FONT_FAMILIES = FontFamilies(
-        heading = poppins,
-        body = roboto
-    )
+    val DEFAULT_FONT_FAMILIES = DEFAULT_FONT_STYLE.fontFamilies()
 }
 
 /**
@@ -59,12 +51,12 @@ fun EditNoteSettingsProvider(
     baseFontSize: TextUnit = EditNoteDefaults.DEFAULT_FONT_SIZE,
     fontStyle: FontStyleType = EditNoteDefaults.DEFAULT_FONT_STYLE,
     simpleEdit: Boolean = EditNoteDefaults.DEFAULT_SIMPLE_EDIT,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     // Pre-compute font styles for better performance
     val fontStyles = rememberFontStylesOptimized(
         baseFontSize = baseFontSize,
-        fontStyle = fontStyle
+        fontStyle = fontStyle,
     )
 
     CompositionLocalProvider(
@@ -72,10 +64,9 @@ fun EditNoteSettingsProvider(
         LocalFontStyle provides fontStyle,
         LocalSimpleEdit provides simpleEdit,
         LocalFontStyles provides fontStyles,
-        content = content
+        content = content,
     )
 }
-
 
 /**
  * Optimized combined font styles provider with resource management
@@ -95,72 +86,56 @@ fun rememberFontStyles(): FontStyles {
 @Composable
 private fun rememberFontStylesOptimized(
     baseFontSize: TextUnit = LocalBaseFontSize.current,
-    fontStyle: FontStyleType = LocalFontStyle.current
-): FontStyles {
-    return remember(baseFontSize, fontStyle) {
-        try {
-            val fontSizes = computeFontSizes(baseFontSize)
-            val fontFamilies = computeFontFamilies(fontStyle)
+    fontStyle: FontStyleType = LocalFontStyle.current,
+): FontStyles = remember(baseFontSize, fontStyle) {
+    try {
+        val fontSizes = computeFontSizes(baseFontSize)
+        val fontFamilies = computeFontFamilies(fontStyle)
 
-            FontStyles(
-                sizes = fontSizes,
-                families = fontFamilies
-            )
-        } catch (_: Exception) {
-            createDefaultFontStyles()
-        }
+        FontStyles(
+            sizes = fontSizes,
+            families = fontFamilies,
+        )
+    } catch (_: Exception) {
+        createDefaultFontStyles()
     }
 }
 
 /**
  * Safe font sizes computation without Compose context
  */
-private fun computeFontSizes(baseFontSize: TextUnit): FontSizes {
-    return try {
-        val baseSize = baseFontSize.value.toInt().coerceIn(
-            FontSizeUtils.MIN_FONT_SIZE,
-            FontSizeUtils.MAX_FONT_SIZE
-        )
+private fun computeFontSizes(baseFontSize: TextUnit): FontSizes = try {
+    val baseSize = baseFontSize.value.toInt().coerceIn(
+        FontSizeUtils.MIN_FONT_SIZE,
+        FontSizeUtils.MAX_FONT_SIZE,
+    )
 
-        FontSizes(
-            textBlock = FontSizeUtils.getTextBlockFontSize(baseSize),
-            h1 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H1),
-            h2 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H2),
-            h3 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H3),
-            h4 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H4),
-            quote = FontSizeUtils.getQuoteFontSize(baseSize),
-            list = FontSizeUtils.getListFontSize(baseSize),
-            noteTitle = FontSizeUtils.getNoteTitleFontSize(baseSize)
-        )
-    } catch (_: Exception) {
-        createDefaultFontSizes()
-    }
+    FontSizes(
+        textBlock = FontSizeUtils.getTextBlockFontSize(baseSize),
+        h1 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H1),
+        h2 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H2),
+        h3 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H3),
+        h4 = FontSizeUtils.getHeaderFontSize(baseSize, BlockType.H4),
+        quote = FontSizeUtils.getQuoteFontSize(baseSize),
+        list = FontSizeUtils.getListFontSize(baseSize),
+        noteTitle = FontSizeUtils.getNoteTitleFontSize(baseSize),
+    )
+} catch (_: Exception) {
+    createDefaultFontSizes()
 }
 
 /**
  * Safe font families computation without Compose context
  */
-private fun computeFontFamilies(fontStyle: FontStyleType): FontFamilies {
-    return try {
-        when (fontStyle) {
-            FontStyleType.MODERN_SIMPLE -> FontFamilies(
-                heading = poppins,
-                body = roboto
-            )
+private fun computeFontFamilies(fontStyle: FontStyleType): FontFamilies = try {
+    fontStyle.fontFamilies()
+} catch (_: Exception) {
+    EditNoteDefaults.DEFAULT_FONT_FAMILIES
+}
 
-            FontStyleType.COZY_EDITOR -> FontFamilies(
-                heading = playfair,
-                body = sourceSans
-            )
-
-            FontStyleType.TECH_MINIMAL -> FontFamilies(
-                heading = ibmPlex,
-                body = inter
-            )
-        }
-    } catch (_: Exception) {
-        EditNoteDefaults.DEFAULT_FONT_FAMILIES
-    }
+/** The editor uses the app-wide font set (Settings → Appearance → Font). */
+private fun FontStyleType.fontFamilies(): FontFamilies = fontSet().let {
+    FontFamilies(heading = it.display, body = it.body)
 }
 
 /**
@@ -176,27 +151,22 @@ private fun createDefaultFontSizes(): FontSizes {
         h4 = 20.sp,
         quote = 18.sp,
         list = defaultSize,
-        noteTitle = 24.sp
+        noteTitle = 24.sp,
     )
 }
 
 /**
  * Creates default font styles for error scenarios
  */
-private fun createDefaultFontStyles(): FontStyles {
-    return FontStyles(
-        sizes = createDefaultFontSizes(),
-        families = EditNoteDefaults.DEFAULT_FONT_FAMILIES
-    )
-}
+private fun createDefaultFontStyles(): FontStyles = FontStyles(
+    sizes = createDefaultFontSizes(),
+    families = EditNoteDefaults.DEFAULT_FONT_FAMILIES,
+)
 
 /**
  * Class holding the font families
  */
-data class FontFamilies(
-    val heading: FontFamily,
-    val body: FontFamily
-)
+data class FontFamilies(val heading: FontFamily, val body: FontFamily)
 
 /**
  * Class holding font sizes for all block types
@@ -209,13 +179,10 @@ data class FontSizes(
     val h4: TextUnit,
     val quote: TextUnit,
     val list: TextUnit,
-    val noteTitle: TextUnit
+    val noteTitle: TextUnit,
 )
 
 /**
  * Combined class for font styles
  */
-data class FontStyles(
-    val sizes: FontSizes,
-    val families: FontFamilies
-)
+data class FontStyles(val sizes: FontSizes, val families: FontFamilies)

@@ -1,0 +1,33 @@
+Encly est un bloc-notes sécurisé : vos notes privées et vos tâches restent chiffrées sur votre téléphone et nulle part ailleurs. Des notes chiffrées hors ligne, avec code PIN, sans compte, sans cloud, sans publicité et sans aucune permission Internet.
+
+La plupart des applis de notes exigent un compte et un serveur. Encly n'a ni l'un ni l'autre. Vos notes chiffrées vivent à un seul endroit : votre téléphone.
+
+PRIVÉ PAR CONCEPTION
+• Pas de compte, pas d'inscription, pas d'analyse, pas de publicité, pas d'achats intégrés.
+• Vraiment hors ligne : Encly ne demande pas la permission INTERNET et ne peut donc envoyer vos notes nulle part.
+• Notes chiffrées : base SQLCipher (AES-256) sous une clé aléatoire de 256 bits.
+• Notes protégées par code : un code PIN à 6 chiffres à chaque ouverture, plus empreinte ou visage en option (biométrie forte uniquement).
+• Verrouillage automatique : dès qu'Encly passe en arrière-plan, la base est fermée et la clé effacée de la mémoire.
+• Captures d'écran, enregistrement d'écran et aperçu dans les applis récentes sont bloqués. La sauvegarde cloud d'Android est désactivée.
+
+PHRASE DE RÉCUPÉRATION ET SAUVEGARDES CHIFFRÉES
+• Phrase de récupération de 12 mots en option : code PIN oublié ? La phrase ouvre votre coffre et vous en choisissez un nouveau.
+• Exportez toutes vos notes, tâches et étiquettes dans un seul fichier chiffré (AES-256-GCM) et rangez-le où vous voulez : un dossier, une clé USB, votre propre cloud. Encly ne l'envoie jamais nulle part.
+• Restaurez-le sur un nouveau téléphone avec les mêmes 12 mots, ou fusionnez une sauvegarde avec un coffre existant.
+• Personne ne peut récupérer vos notes à votre place, pas même le développeur. Gardez les mots sur papier.
+
+UN BLOC-NOTES SÛR ET AGRÉABLE
+• Éditeur par blocs : texte, titres, citations, listes à cocher, listes à puces et numérotées, liens, séparateurs.
+• Étiquettes, recherche, vue en liste ou en grille, plusieurs tris.
+• Tâches avec priorités, juste à côté de vos notes.
+• Corbeille avec restauration.
+• Cinq thèmes (Papier, Forêt, Océan, Graphite, Minuit), mode clair, sombre ou système, couleurs dynamiques sur Android 12+ et trois jeux de polices intégrés.
+
+OPEN SOURCE
+• Encly est open source (Apache-2.0) : chacun peut vérifier ce qu'elle fait.
+• Fonctionne sans les services Google Play. Android 8.0 ou plus récent.
+• 9 langues : français, anglais, ukrainien, allemand, espagnol, italien, polonais, portugais et néerlandais. Choisissez une langue pour Encly seule dans Paramètres → Langue.
+
+Encly : des notes chiffrées qui restent à vous.
+
+Politique de confidentialité : https://pasichdev.xyz/apps/encly/privacy-policy/

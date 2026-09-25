@@ -1,0 +1,33 @@
+Encly is een veilig notitieblok: je privé notities en taken blijven versleuteld op je telefoon en nergens anders. Versleutelde notities, offline, met pincode, zonder account, zonder cloud, zonder advertenties en zonder internettoestemming.
+
+De meeste notitie-apps willen een account en een server. Encly heeft geen van beide. Je versleutelde notities staan op één plek: je telefoon.
+
+PRIVÉ VANAF HET BEGIN
+• Geen account, geen registratie, geen analyse, geen advertenties, geen in-app-aankopen.
+• Echt offline: Encly vraagt de toestemming INTERNET niet aan en kan je notities dus nergens heen sturen.
+• Versleutelde notities: een SQLCipher-database (AES-256) met een willekeurige 256-bits sleutel.
+• Notities met wachtwoord: een 6-cijferige pincode bij elke keer openen, optioneel vingerafdruk of gezicht (alleen sterke biometrie).
+• Vergrendelt zichzelf: zodra Encly naar de achtergrond gaat, wordt de database gesloten en de sleutel uit het geheugen gewist.
+• Screenshots, schermopnames en het voorbeeld bij recente apps zijn geblokkeerd. De cloudback-up van Android staat uit.
+
+HERSTELZIN EN VERSLEUTELDE BACK-UPS
+• Optionele herstelzin van 12 woorden: pincode vergeten? De zin opent je kluis en je kiest een nieuwe.
+• Exporteer alle notities, taken en labels naar één versleuteld bestand (AES-256-GCM) en bewaar het waar je wilt: een map, een usb-stick, je eigen cloud. Encly uploadt het nooit.
+• Zet het terug op een nieuwe telefoon met dezelfde 12 woorden, of voeg een back-up samen met een bestaande kluis.
+• Niemand kan je notities voor je terughalen, ook de ontwikkelaar niet. Bewaar de woorden op papier.
+
+EEN VEILIG NOTITIEBLOK DAT PRETTIG SCHRIJFT
+• Blokeditor: tekst, koppen, citaten, checklists, opsommingen en genummerde lijsten, links en scheidingslijnen.
+• Labels, zoeken, lijst- of rasterweergave, meerdere sorteringen.
+• Taken met prioriteit, naast je notities.
+• Prullenbak met herstel.
+• Vijf thema's (Papier, Bos, Oceaan, Grafiet, Middernacht), lichte, donkere of systeemmodus, dynamische kleuren op Android 12+ en drie lettertypesets, ingebouwd in de app.
+
+OPEN SOURCE
+• Encly is open source (Apache-2.0): iedereen kan nagaan wat de app doet.
+• Werkt zonder Google Play-services. Android 8.0 of nieuwer.
+• 9 talen: Nederlands, Engels, Oekraïens, Duits, Frans, Spaans, Italiaans, Pools en Portugees. Kies een taal alleen voor Encly in Instellingen → Taal.
+
+Encly: versleutelde notities die van jou blijven.
+
+Privacybeleid: https://pasichdev.xyz/apps/encly/privacy-policy/

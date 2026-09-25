@@ -1,174 +1,330 @@
 package com.pasich.encly.presentation.screen.settings
 
-import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.composables.icons.lucide.Lock
-import com.composables.icons.lucide.Lucide
+import com.pasich.encly.R
+import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthType
-import com.pasich.encly.presentation.components.custombox.RoundPosition
-import com.pasich.encly.presentation.components.custombox.SettingBox
-import com.pasich.encly.presentation.components.settings.AuthMethodSelector
+import com.pasich.encly.core.security.AutoLockDelay
+import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.presentation.designsystem.EnclyGroup
+import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyListRow
+import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
+import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
+import com.pasich.encly.presentation.designsystem.EnclySwitchRow
+import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.screen.backup.BackupDialogs
+import com.pasich.encly.presentation.screen.backup.rememberBackupDialogActions
+import com.pasich.encly.presentation.viewmodel.BackupAction
+import com.pasich.encly.presentation.viewmodel.BackupMessage
+import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecuritySettingsScreen(
     navController: NavHostController,
-    securityViewModel: SecuritySettingsViewModel = hiltViewModel()
+    modifier: Modifier = Modifier,
+    securityViewModel: SecuritySettingsViewModel = hiltViewModel(),
+    vaultViewModel: BackupViewModel = hiltViewModel(),
 ) {
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val strictKeyboard by securityViewModel.strictKeyboard.collectAsStateWithLifecycle()
+    val autoLockDelay by securityViewModel.autoLockDelay.collectAsStateWithLifecycle()
+    val vaultState by vaultViewModel.uiState.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current as? FragmentActivity
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Безпека") }, navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Назад")
+    val snackbarHostState = remember { SnackbarHostState() }
+    val dialogActions = rememberBackupDialogActions(vaultViewModel)
+    val effectActions = remember(navController, securityViewModel, vaultViewModel) {
+        SecurityEffectActions(
+            onVaultMessageShown = {
+                vaultViewModel.clearMessage()
+                securityViewModel.refresh()
+            },
+            onVaultErased = {
+                navController.navigate(NavRoutes.OnboardingRoute.name) {
+                    popUpTo(0) { inclusive = true }
                 }
-            })
-        }) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-        ) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(15.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Lucide.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Column {
-                            Text(
-                                text = "Шифрування активне",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                text = if (!securityState.isUserCreatedSeedKey) "Ваші дані повністю зашифровані. Доступ можливий лише за допомогою вашої сід-фрази." else "Ваші дані захищені. Ключ створено автоматично й зберігається лише на вашому пристрої.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
-            }
-
-            item { Spacer(Modifier.height(20.dp)) }
-
-            // Authorization
-            item {
-                Text(
-                    text = "Авторизація",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            item {
-                AuthMethodSelector(
-                    selected = securityState.authType, onSelected = {
-                        navController.navigate(NavRoutes.PinCodeConfig.name)
-                    }, isDisableSeedPhase = securityState.isUserCreatedSeedKey
-                )
-            }
-            item { Spacer(Modifier.height(15.dp)) }
-            if (securityState.authType != AuthType.NONE) {
-                item {
-                    SettingBox(
-                        title = "Біометрична авторизація",
-                        subTitle = if (securityState.isBiometricAvailable) "Відбиток пальця"
-                        else "Недоступно на цьому пристрої",
-                        roundPosition = RoundPosition.Full,
-                        endWidget = {
-                            Switch(
-                                checked = securityState.biometricEnable,
-                                enabled = securityState.isBiometricAvailable,
-                                onCheckedChange = { securityViewModel.toggleBiometric(it) })
-                        })
-                }
-            }
-
-
-
-            item { Spacer(Modifier.height(20.dp)) }
-
-            // Security information
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "ℹ️ Інформація про безпеку",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "• Сід-фраза доступна тільки з біометричною автентифікацією\n" + "• Всі дані шифруються локально з використанням AES-256\n" + "• Без сід-фрази неможливо відновити дані",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                }
-            }
-        }
+            },
+            onErrorShown = securityViewModel::clearError,
+        )
     }
+    SecurityScreenEffects(vaultState.message, vaultState.erased, securityState.error, snackbarHostState, effectActions)
 
-    LaunchedEffect(securityState.error) {
-        securityState.error?.let { errorMessage ->
-            Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-            securityViewModel.clearError()
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.surface,
+            topBar = {
+                EnclyTopBar(title = stringResource(R.string.security_title), onBack = { navController.popBackStack() })
+            },
+            snackbarHost = { EnclySnackbarHost(snackbarHostState) },
+        ) { paddingValues ->
+            // Nothing until the first load: no PIN text that turns into the phrase text.
+            if (securityState.loaded) {
+                SecurityContent(
+                    securityState = securityState,
+                    options = SecurityOptions(strictKeyboard = strictKeyboard, autoLock = autoLockDelay),
+                    vaultBusy = vaultState.busy,
+                    actions = SecurityActions(
+                        onChangePin = { navController.navigate(NavRoutes.PinCodeConfig.name) },
+                        onBiometric = { enabled ->
+                            if (activity != null) securityViewModel.toggleBiometric(activity, enabled)
+                        },
+                        onVaultAction = vaultViewModel::start,
+                        onStrictKeyboard = securityViewModel::setStrictKeyboard,
+                        onAutoLock = securityViewModel::setAutoLockDelay,
+                    ),
+                    modifier = Modifier.padding(paddingValues),
+                )
+            }
         }
+        // Re-authentication, the new-phrase steps and the erase confirmation; the phrase steps
+        // cover the whole screen, so they are drawn last.
+        BackupDialogs(dialogActions, vaultState.step, vaultState.busy)
     }
 }
 
+/** What the security page can start. */
+private class SecurityActions(
+    val onChangePin: () -> Unit,
+    val onBiometric: (Boolean) -> Unit,
+    val onVaultAction: (BackupAction) -> Unit,
+    val onStrictKeyboard: (Boolean) -> Unit,
+    val onAutoLock: (AutoLockDelay) -> Unit,
+)
+
+/** The page's own preferences: strict keyboard privacy and the auto-lock delay. */
+private class SecurityOptions(val strictKeyboard: Boolean, val autoLock: AutoLockDelay)
+
+@Composable
+private fun SecurityContent(
+    securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
+    options: SecurityOptions,
+    vaultBusy: Boolean,
+    actions: SecurityActions,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
+    ) {
+        EncryptionStatusCard(
+            title = stringResource(R.string.security_encryption_active),
+            text = stringResource(
+                if (securityState.isUserCreatedSeedKey) {
+                    R.string.security_encryption_seed_plain
+                } else {
+                    R.string.security_encryption_pin_plain
+                },
+            ),
+        )
+        SectionOverline(
+            text = stringResource(R.string.auth_title),
+            modifier = Modifier.padding(top = EnclyTheme.spacing.s),
+        )
+        EnclyGroup {
+            EnclyNavigationRow(
+                title = stringResource(R.string.auth_method_pin_title),
+                supporting = stringResource(R.string.auth_method_pin_desc),
+                icon = EnclyIcons.Key,
+                onClick = actions.onChangePin,
+                modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+            )
+            if (securityState.authType != AuthType.NONE) {
+                EnclyGroupDivider()
+                BiometricSetting(securityState, actions.onBiometric)
+            }
+            EnclyGroupDivider()
+            AutoLockRow(current = options.autoLock, onSelect = actions.onAutoLock)
+            EnclyGroupDivider()
+            RecoveryPhraseRow(
+                hasRecoveryPhrase = securityState.isUserCreatedSeedKey,
+                busy = vaultBusy,
+                onStart = actions.onVaultAction,
+            )
+            if (securityState.isUserCreatedSeedKey) {
+                EnclyGroupDivider()
+                ReplacePhraseRow(busy = vaultBusy, onStart = actions.onVaultAction)
+            }
+        }
+        PrivacySection(strictKeyboard = options.strictKeyboard, onStrictKeyboard = actions.onStrictKeyboard)
+        ProtectionSection()
+        EraseSection(busy = vaultBusy, onErase = { actions.onVaultAction(BackupAction.ERASE) })
+    }
+}
+
+private class SecurityEffectActions(
+    val onVaultMessageShown: () -> Unit,
+    val onVaultErased: () -> Unit,
+    val onErrorShown: () -> Unit,
+)
+
+/** Messages and the end of the vault flows (a new recovery phrase, an erased vault), and errors. */
+@Composable
+private fun SecurityScreenEffects(
+    vaultMessage: BackupMessage?,
+    vaultErased: Boolean,
+    securityError: UiText?,
+    snackbarHostState: SnackbarHostState,
+    actions: SecurityEffectActions,
+) {
+    val context = LocalContext.current
+    // Clearing a message restarts its effect, which must not cancel the snackbar it just opened.
+    val snackbarScope = rememberCoroutineScope()
+
+    LaunchedEffect(vaultMessage) {
+        val message = vaultMessage as? BackupMessage.Text ?: return@LaunchedEffect
+        actions.onVaultMessageShown()
+        snackbarScope.launch { snackbarHostState.showSnackbar(context.getString(message.id)) }
+    }
+
+    LaunchedEffect(vaultErased) {
+        if (vaultErased) actions.onVaultErased()
+    }
+
+    LaunchedEffect(securityError) {
+        val errorMessage = securityError ?: return@LaunchedEffect
+        actions.onErrorShown()
+        snackbarScope.launch { snackbarHostState.showSnackbar(errorMessage.asString(context)) }
+    }
+}
+
+@Composable
+private fun BiometricSetting(
+    securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
+    onToggle: (Boolean) -> Unit,
+) {
+    EnclySwitchRow(
+        title = stringResource(R.string.security_biometric_title),
+        supporting = stringResource(
+            when (securityState.biometricStatus) {
+                BiometricStatus.AVAILABLE -> R.string.security_biometric_available
+
+                // The sensor is there: say what is missing, not that the device cannot do it.
+                BiometricStatus.NOT_ENROLLED -> R.string.security_biometric_not_enrolled
+
+                BiometricStatus.UNAVAILABLE -> R.string.security_biometric_unavailable
+            },
+        ),
+        icon = EnclyIcons.Fingerprint,
+        checked = securityState.biometricEnable,
+        enabled = securityState.isBiometricAvailable,
+        onCheckedChange = onToggle,
+        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+    )
+}
+
+/**
+ * The recovery phrase: once set up it is a status (it is never shown again; a separate row
+ * replaces it with new words).
+ * Without one the row creates it, after re-authentication: a vault set up without one can
+ * otherwise only be wiped when the PIN is forgotten.
+ */
+@Composable
+private fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStart: (BackupAction) -> Unit) {
+    val title = stringResource(R.string.backup_needs_phrase_title)
+    val modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s)
+    if (hasRecoveryPhrase) {
+        EnclyListRow(
+            title = title,
+            supporting = stringResource(R.string.security_recovery_set_desc),
+            icon = EnclyIcons.File,
+            modifier = modifier,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+            ) {
+                Icon(
+                    EnclyIcons.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(EnclyTheme.spacing.iconXSmall),
+                )
+                Text(
+                    text = stringResource(R.string.security_recovery_status_set),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    } else {
+        EnclyNavigationRow(
+            title = title,
+            supporting = stringResource(R.string.security_recovery_missing),
+            icon = EnclyIcons.File,
+            onClick = { if (!busy) onStart(BackupAction.CREATE_PHRASE) },
+            modifier = modifier,
+        )
+    }
+}
+
+/**
+ * "Replace recovery phrase": re-authentication, a warning that backups made before keep needing
+ * the old words, then new words shown and checked like the first ones.
+ */
+@Composable
+private fun ReplacePhraseRow(busy: Boolean, onStart: (BackupAction) -> Unit) {
+    EnclyNavigationRow(
+        title = stringResource(R.string.security_recovery_replace_title),
+        supporting = stringResource(R.string.security_recovery_replace_desc),
+        icon = EnclyIcons.Restore,
+        onClick = { if (!busy) onStart(BackupAction.REPLACE_PHRASE) },
+        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+    )
+}
+
+/** Privacy options that are not about unlocking: strict keyboard privacy (off by default). */
+@Composable
+private fun PrivacySection(strictKeyboard: Boolean, onStrictKeyboard: (Boolean) -> Unit) {
+    SectionOverline(
+        text = stringResource(R.string.security_privacy_section),
+        modifier = Modifier.padding(top = EnclyTheme.spacing.s),
+    )
+    EnclyGroup {
+        EnclySwitchRow(
+            title = stringResource(R.string.security_keyboard_strict_title),
+            supporting = stringResource(R.string.security_keyboard_strict_desc),
+            icon = EnclyIcons.Keyboard,
+            checked = strictKeyboard,
+            onCheckedChange = onStrictKeyboard,
+            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+        )
+    }
+}

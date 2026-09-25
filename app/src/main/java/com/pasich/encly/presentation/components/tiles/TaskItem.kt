@@ -2,201 +2,119 @@ package com.pasich.encly.presentation.components.tiles
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Calendar
-import com.composables.icons.lucide.Lucide
+import androidx.compose.ui.res.stringResource
+import com.pasich.encly.R
 import com.pasich.encly.data.model.Task
-import com.pasich.encly.presentation.components.tasks.CompletedIndicator
-import com.pasich.encly.presentation.components.tasks.PriorityIndicator
-import com.pasich.encly.presentation.components.tasks.ReminderIndicator
+import com.pasich.encly.presentation.components.tasks.PriorityValues
+import com.pasich.encly.presentation.designsystem.EnclyTaskRow
+import com.pasich.encly.utils.rememberDateTimeFormat
 import kotlinx.coroutines.delay
+import java.util.Date
+
+private const val TASK_REMOVAL_ANIMATION_MS = 400
+private const val TASK_TRANSLATION_X = 100f
+
+private data class TaskCardState(val enabled: Boolean, val isRemoving: Boolean, val animationProgress: Float)
+
+private data class TaskCardActions(val onClick: () -> Unit, val onComplete: () -> Unit, val onUndo: () -> Unit)
 
 @Composable
 fun TaskItem(
     task: Task,
     onTaskToggle: (Long, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
     onTaskClick: ((Task) -> Unit)? = null,
-    onAddToCalendar: ((Task) -> Unit)? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ) {
-    // State for the disappearance animation
     var isRemoving by remember(task.id) { mutableStateOf(false) }
     var shouldComplete by remember(task.id) { mutableStateOf(false) }
-
-    // Disappearance animation
     val animationProgress by animateFloatAsState(
         targetValue = if (isRemoving) 0f else 1f,
-        animationSpec = tween(durationMillis = 400),
-        label = "task_removal_animation"
+        animationSpec = tween(durationMillis = TASK_REMOVAL_ANIMATION_MS),
+        label = "task_removal_animation",
     )
 
-    // Handling the animation completion
+    CompleteTaskAfterAnimation(
+        task = task,
+        shouldComplete = shouldComplete,
+        onRemovingChange = { isRemoving = it },
+        onCompleteChange = { shouldComplete = it },
+        onTaskToggle = onTaskToggle,
+    )
+
+    val state = TaskCardState(
+        enabled = enabled,
+        isRemoving = isRemoving,
+        animationProgress = animationProgress,
+    )
+    val actions = TaskCardActions(
+        onClick = { onTaskClick?.invoke(task) },
+        onComplete = { shouldComplete = true },
+        onUndo = { onTaskToggle(task.id, false) },
+    )
+    TaskCard(task, state, actions, modifier)
+}
+
+@Composable
+private fun CompleteTaskAfterAnimation(
+    task: Task,
+    shouldComplete: Boolean,
+    onRemovingChange: (Boolean) -> Unit,
+    onCompleteChange: (Boolean) -> Unit,
+    onTaskToggle: (Long, Boolean) -> Unit,
+) {
+    // The effect outlives recompositions (it restarts only on shouldComplete); always call the
+    // latest callbacks.
+    val currentOnRemovingChange by rememberUpdatedState(onRemovingChange)
+    val currentOnCompleteChange by rememberUpdatedState(onCompleteChange)
+    val currentOnTaskToggle by rememberUpdatedState(onTaskToggle)
     LaunchedEffect(shouldComplete) {
-        if (shouldComplete) {
-            isRemoving = true
-            delay(400) // Wait for the animation to finish
-            onTaskToggle(task.id, true)
-            shouldComplete = false
-            isRemoving = false
-        }
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer {
-                alpha = animationProgress
-                scaleX = animationProgress
-                scaleY = animationProgress
-                translationX = (1f - animationProgress) * 100f
-            }
-            .clickable(enabled = enabled && !task.isCompleted && !isRemoving) {
-                onTaskClick?.invoke(task)
-            },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 5.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.weight(1f)
-            ) {
-                Checkbox(
-                    checked = task.isCompleted,
-                    onCheckedChange = { isChecked ->
-                        if (isChecked && !task.isCompleted) {
-                            // Start the disappearance animation to complete the task
-                            shouldComplete = true
-                        } else if (!isChecked && task.isCompleted) {
-                            // To undo completion, call onTaskToggle immediately
-                            onTaskToggle(task.id, false)
-                        }
-                    },
-                    enabled = enabled && !isRemoving,
-                    modifier = Modifier
-                        .scale(0.8f)
-                        .padding(end = 8.dp)
-                        .align(Alignment.Top)
-                )
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = task.title,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                        ),
-                        color = if (task.isCompleted)
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    task.description?.let { description ->
-                        Text(
-                            text = description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (task.isCompleted)
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                        )
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (!task.isCompleted) {
-                            PriorityIndicator(priority = task.priority)
-                        }
-
-                        task.reminderDate?.let { reminderDate ->
-                            if (!task.isCompleted) {
-                                ReminderIndicator(reminderDate)
-                            }
-                        }
-
-                        if (task.isCompleted && task.completedDate != null) {
-                            CompletedIndicator(task.completedDate)
-                        }
-                    }
-                }
-            }
-
-            if (!task.isCompleted && onAddToCalendar != null) {
-                IconButton(
-                    onClick = { onAddToCalendar(task) },
-                    modifier = Modifier.align(Alignment.Top)
-                ) {
-                    Icon(
-                        imageVector = Lucide.Calendar,
-                        contentDescription = "Додати до календаря",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-
+        if (!shouldComplete) return@LaunchedEffect
+        currentOnRemovingChange(true)
+        delay(TASK_REMOVAL_ANIMATION_MS.toLong())
+        currentOnTaskToggle(task.id, true)
+        currentOnCompleteChange(false)
+        currentOnRemovingChange(false)
     }
 }
 
-
-// Add-to-calendar button (only for active tasks)
-/*  if (!task.isCompleted && onAddToCalendar != null) {
-      IconButton(
-          onClick = { onAddToCalendar(task) },
-          modifier = Modifier.size(24.dp)
-      ) {
-          Icon(
-              Lucide.Calendar,
-              contentDescription = "Додати до календаря",
-              tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(16.dp)
-          )
-      }
-  }
-
- */
+@Composable
+private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions, modifier: Modifier = Modifier) {
+    val dateFormat = rememberDateTimeFormat()
+    val priority = PriorityValues.getById(task.priority)
+    EnclyTaskRow(
+        title = task.title,
+        checked = task.isCompleted,
+        onCheckedChange = { checked ->
+            when {
+                checked && !task.isCompleted -> actions.onComplete()
+                !checked && task.isCompleted -> actions.onUndo()
+            }
+        },
+        description = task.description,
+        meta = task.completedDate?.takeIf { task.isCompleted }?.let {
+            stringResource(R.string.task_completed_at, dateFormat.format(Date(it)))
+        },
+        priority = stringResource(priority.label).takeIf { !task.isCompleted },
+        priorityEmphasis = priority.emphasis,
+        large = true,
+        enabled = state.enabled && !state.isRemoving,
+        // Completed tasks open too, to read or edit them.
+        onClick = actions.onClick,
+        modifier = modifier.graphicsLayer {
+            alpha = state.animationProgress
+            scaleX = state.animationProgress
+            scaleY = state.animationProgress
+            translationX = (1f - state.animationProgress) * TASK_TRANSLATION_X
+        },
+    )
+}

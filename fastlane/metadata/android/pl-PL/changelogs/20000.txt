@@ -1,0 +1,7 @@
+Encly 2.0: aplikacja zbudowana od nowa wokół nowego szyfrowanego sejfu.
+• Szyfrowane notatki i zadania, zapisane tylko w telefonie.
+• Blokada 6-cyfrowym PIN-em, opcjonalnie odcisk palca lub twarz.
+• Opcjonalna fraza odzyskiwania z 12 słów.
+• Szyfrowana kopia zapasowa w pliku, który zapisujesz, gdzie chcesz.
+• Pięć motywów, trzy czcionki, dziewięć języków.
+• Bez konta, reklam i uprawnienia do internetu.

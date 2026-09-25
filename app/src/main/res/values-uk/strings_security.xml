@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Введіть або вставте свої 12 слів</string>
+    <string name="recovery_word_cell">Слово %1$d з %2$d</string>
+    <string name="recovery_word_unknown">Слово %1$d не зі списку слів фрази відновлення. Перевірте написання.</string>
+    <string name="recovery_phrase_checksum">Ці 12 слів не утворюють правильної фрази відновлення. Перевірте кожне слово та їхній порядок.</string>
+    <string name="backup_phrase_exists">У цього сховища вже є фраза відновлення</string>
+    <string name="backup_import_mode_title">Додати до нотаток чи замінити їх?</string>
+    <string name="backup_import_summary">У цій копії: %1$s, %2$s і %3$s.</string>
+    <string name="backup_merge_row_desc">Усе, що тут є, залишиться, а відсутнє додасться. Те, що вже є, буде пропущено.</string>
+    <string name="backup_replace_all">Замінити все</string>
+    <string name="backup_replace_row_desc">Видалити всі нотатки, завдання й теги на цьому телефоні, а потім відновити копію.</string>
+    <string name="backup_intro_short">Збережіть усі нотатки, завдання й теги в одному зашифрованому файлі та відновіть їх на будь-якому телефоні.</string>
+    <string name="backup_section_export">Експорт</string>
+    <string name="backup_section_import">Імпорт</string>
+    <string name="security_encryption_pin_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено).</string>
+    <string name="security_encryption_seed_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено), а якщо ви забудете PIN, то фраза відновлення.</string>
+    <string name="security_recovery_set_desc">Створена під час налаштування. Encly не зберігає слова й не може показати їх знову. Немає їх? Замініть фразу нижче.</string>
+    <string name="security_recovery_status_set">Налаштовано</string>
+    <string name="vault_reset_restore_hint">Після скидання можна відновити резервну копію з файлу за її 12 словами.</string>
+    <string name="pin_change_bar_title">Змінити PIN</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d нотатка</item>
+        <item quantity="few">%d нотатки</item>
+        <item quantity="many">%d нотаток</item>
+        <item quantity="other">%d нотатки</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d завдання</item>
+        <item quantity="few">%d завдання</item>
+        <item quantity="many">%d завдань</item>
+        <item quantity="other">%d завдання</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d тег</item>
+        <item quantity="few">%d теги</item>
+        <item quantity="many">%d тегів</item>
+        <item quantity="other">%d тега</item>
+    </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Ваш PIN більше не може розблокувати Encly на цьому телефоні: його апаратний ключ скинуто. Скористайтеся фразою відновлення (або відбитком пальця), а потім задайте новий PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Забагато спроб. Спробуйте через %d хвилину</item>
+        <item quantity="few">Забагато спроб. Спробуйте через %d хвилини</item>
+        <item quantity="many">Забагато спроб. Спробуйте через %d хвилин</item>
+        <item quantity="other">Забагато спроб. Спробуйте через %d хвилини</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Забагато спроб. Спробуйте через %d годину</item>
+        <item quantity="few">Забагато спроб. Спробуйте через %d години</item>
+        <item quantity="many">Забагато спроб. Спробуйте через %d годин</item>
+        <item quantity="other">Забагато спроб. Спробуйте через %d години</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Замінити фразу відновлення</string>
+    <string name="security_recovery_replace_desc">Отримайте 12 нових слів. Для резервних копій, зроблених раніше, і далі потрібні старі.</string>
+    <string name="security_recovery_replace_confirm_title">Замінити фразу відновлення?</string>
+    <string name="security_recovery_replace_confirm_body">Ви отримаєте 12 нових слів. Стара фраза більше не розблоковуватиме ваші нотатки на цьому телефоні. Уже зроблені резервні копії відкриваються лише старою фразою, тож зберігайте її, доки зберігаєте ці копії, або згодом зробіть нову копію.</string>
+    <string name="security_recovery_replace_confirm">Отримати нові слова</string>
+    <string name="security_recovery_replace_warning_title">Стара фраза тут більше не працює</string>
+    <string name="security_recovery_replace_warning_body">Після підтвердження лише ці слова розблоковуватимуть ваші нотатки, якщо ви забудете PIN. Для резервних копій, зроблених раніше, і далі потрібні старі слова.</string>
+    <string name="security_recovery_replaced">Фразу відновлення замінено. Зробіть нову резервну копію, щоб використовувати її і для копій.</string>
+    <string name="security_privacy_section">Приватність</string>
+    <string name="security_keyboard_strict_title">Сувора приватність клавіатури</string>
+    <string name="security_keyboard_strict_desc">Просить клавіатуру не показувати підказки, не використовувати хмарне передбачення й не читати текст біля курсора. Вимикає автовиправлення, а деякі клавіатури ховають емодзі чи голосовий ввід.</string>
+    <string name="auto_lock_title">Блокувати після виходу</string>
+    <string name="auto_lock_desc">Скільки Encly лишається відкритим, коли ви переходите в інший застосунок. Вимкнення екрана чи блокування телефона завжди блокує його одразу.</string>
+    <string name="auto_lock_immediately">Одразу</string>
+    <string name="auto_lock_15s">Через 15 секунд</string>
+    <string name="auto_lock_30s">Через 30 секунд</string>
+    <string name="auto_lock_1m">Через 1 хвилину</string>
+    <string name="auto_lock_2m">Через 2 хвилини</string>
+    <string name="security_protection_section">Як Encly захищає нотатки</string>
+    <string name="security_protection_key_title">Випадковий 256-бітний ключ</string>
+    <string name="security_protection_key_desc">Уся база зашифрована ключем, створеним на цьому телефоні.</string>
+    <string name="security_protection_pin_title">PIN прив’язаний до телефона</string>
+    <string name="security_protection_pin_desc">PIN змішується з ключем у захищеному чипі телефона, тож його не підібрати на іншому пристрої.</string>
+    <string name="security_protection_slots_title">Окремий замок для кожного входу</string>
+    <string name="security_protection_slots_desc">PIN, фраза відновлення й відбиток відкривають кожен свій зашифрований слот. Відбиток потрібен щоразу.</string>
+    <string name="security_danger_section">Небезпечна зона</string>
+    <string name="security_erase_hold">Утримуйте 5 секунд, щоб стерти</string>
+</resources>

@@ -1,70 +1,133 @@
 package com.pasich.encly.presentation.viewmodel
 
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.core.security.AuthenticationManager
-import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.SecurityManager
-import com.pasich.encly.core.security.authenticateWithBiometric
+import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.data.backup.PendingRestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
- * Backs the mandatory auth-setup screen shown after onboarding: the user must create a
- * PIN and, when the device supports it, enable biometric unlock. It then unlocks the
- * database and enters the app. The heavy work (PBKDF2 PIN hashing and opening the
- * SQLCipher database) runs off the main thread; [busy] drives a loading indicator.
+ * The last step of first-run setup: onboarding has created the vault and set its PIN (and
+ * biometric) slots; this opens it, imports a backup staged by "Restore from backup" and commits.
  */
 @HiltViewModel
 class AuthSetupViewModel @Inject constructor(
     private val securityManager: SecurityManager,
-    private val authenticationManager: AuthenticationManager,
-    private val biometricManager: BiometricManager
+    private val sessionLockManager: SessionLockManager,
+    private val pendingRestore: PendingRestore,
 ) : ViewModel() {
 
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
-    fun biometricAvailable(): Boolean = biometricManager.isStrongBiometricAvailable()
+    // Kept here, not in saved state: both die with the process, like the staged backup they
+    // refer to. A "Retry" restored after a process death would otherwise commit an empty vault.
+    private val _restoreFailed = MutableStateFlow(false)
 
-    /** Stores the chosen PIN (PBKDF2 hashing runs off the main thread). */
-    fun setPin(pin: String, onResult: (Boolean) -> Unit) {
+    /** The staged backup did not import; the screen asks to retry or to skip it. */
+    val restoreFailed: StateFlow<Boolean> = _restoreFailed.asStateFlow()
+
+    private val _finishFailed = MutableStateFlow(false)
+
+    /** Setup did not complete (the vault did not open or the commit failed). */
+    val finishFailed: StateFlow<Boolean> = _finishFailed.asStateFlow()
+
+    /**
+     * [FinishResult.ok] is `true` only when the vault is open and the app is still in the
+     * foreground; [FinishResult.backgrounded] tells the caller setup succeeded but the session
+     * was re-locked, so it should neither navigate nor show an error.
+     *
+     * A backup chosen with "Restore from backup" during onboarding is imported here, into the
+     * vault setup just opened and before onboarding is committed. If that import fails,
+     * nothing is committed and the vault is closed again; [FinishResult.restoreFailed] asks the
+     * user to retry (the backup stays staged) or to [skipRestore]. A process killed meanwhile
+     * restarts onboarding instead of opening an empty vault.
+     */
+    fun finishSetup(onResult: (FinishResult) -> Unit) {
+        _restoreFailed.value = false
+        _finishFailed.value = false
         viewModelScope.launch {
+            val owner = coroutineContext.job
             _busy.value = true
-            val ok = withContext(Dispatchers.Default) { authenticationManager.activatePinAuth(pin) }
-            _busy.value = false
-            onResult(ok)
-        }
-    }
+            // Runs to its end even if this ViewModel is cleared meanwhile: a vault opened for
+            // a screen that no longer exists is closed again instead of staying open.
+            val (outcome, published) = withContext(NonCancellable) {
+                val outcome = withContext(Dispatchers.IO) { openRestoreAndCommit() }
+                val committed = outcome == SetupOutcome.COMMITTED
+                val published = when {
+                    !committed -> false
 
-    /** Runs a biometric prompt and, on success, enables biometric unlock. */
-    fun enableBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
-        activity.authenticateWithBiometric(
-            biometricManager,
-            BiometricManager.BiometricType.SETTINGS_TOGGLE,
-            onSuccess = { onResult(authenticationManager.activateBiometricAuth()) },
-            onError = { onResult(false) },
-            onCancelled = { onResult(false) }
-        )
-    }
+                    !owner.isActive -> {
+                        sessionLockManager.onUnlockAbandoned()
+                        false
+                    }
 
-    /** Finalizes setup: marks onboarding complete and unlocks the database (off-thread). */
-    fun finishSetup(onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            _busy.value = true
-            val ok = withContext(Dispatchers.IO) {
-                securityManager.setOnboardingShown()
-                securityManager.unlockAfterAuth()
+                    else -> sessionLockManager.onUnlocked()
+                }
+                outcome to published
             }
+            val committed = outcome == SetupOutcome.COMMITTED
             _busy.value = false
-            onResult(ok)
+            report(
+                FinishResult(
+                    ok = published,
+                    backgrounded = committed && !published,
+                    restoreFailed = outcome == SetupOutcome.RESTORE_FAILED,
+                ),
+                onResult,
+            )
         }
     }
+
+    /**
+     * "Retry" after a failed restore. Refuses, committing nothing, when no backup is staged any
+     * more: finishing then would silently open an empty vault instead of the user's notes.
+     */
+    fun retryRestore(onResult: (FinishResult) -> Unit) {
+        if (pendingRestore.isStaged) {
+            finishSetup(onResult)
+        } else {
+            _restoreFailed.value = false
+            report(FinishResult(ok = false, backgrounded = false, restoreFailed = false), onResult)
+        }
+    }
+
+    /** Drops the staged backup, then finishes setup with an empty vault. */
+    fun skipRestore(onResult: (FinishResult) -> Unit) {
+        pendingRestore.clear()
+        finishSetup(onResult)
+    }
+
+    private fun report(result: FinishResult, onResult: (FinishResult) -> Unit) {
+        _restoreFailed.value = result.restoreFailed
+        _finishFailed.value = !result.ok && !result.backgrounded && !result.restoreFailed
+        onResult(result)
+    }
+
+    private suspend fun openRestoreAndCommit(): SetupOutcome {
+        // A failed open keeps a staged restore for a retry of this same setup.
+        if (!securityManager.openInitialVault()) return SetupOutcome.FAILED
+        val outcome = when {
+            !pendingRestore.apply() -> SetupOutcome.RESTORE_FAILED
+            !securityManager.commitInitialSetup() -> SetupOutcome.FAILED
+            else -> SetupOutcome.COMMITTED
+        }
+        // Nothing committed: close the new vault rather than leave it open behind an error.
+        if (outcome != SetupOutcome.COMMITTED) securityManager.lock()
+        return outcome
+    }
+
+    private enum class SetupOutcome { COMMITTED, RESTORE_FAILED, FAILED }
+
+    data class FinishResult(val ok: Boolean, val backgrounded: Boolean, val restoreFailed: Boolean)
 }

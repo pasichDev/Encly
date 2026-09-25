@@ -1,6 +1,5 @@
 package com.pasich.encly.dynamicBlocks.utils
 
-import com.pasich.encly.core.AppLogger
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.TextualBlock
 
@@ -13,29 +12,16 @@ object BlockUtils {
     /**
      * Checks whether the block is empty.
      */
-    fun isBlockEmpty(block: Block): Boolean {
-        val result = when (block) {
-            is TextualBlock -> {
-                val isEmpty = block.isEmpty()
-                AppLogger.d("BlockUtils", "TextualBlock (${block::class.simpleName}) isEmpty: $isEmpty, text: '${block.text.value}'")
-                isEmpty
-            }
-            is Block.LinkBlock -> {
-                val isEmpty = block.block.value.url.isEmpty()
-                AppLogger.d("BlockUtils", "LinkBlock isEmpty: $isEmpty")
-                isEmpty
-            }
-            is Block.ListBlock -> {
-                val isEmpty = block.items.value.isEmpty() || (block.items.value.size == 1 && block.items.value[0].value.isEmpty())
-                AppLogger.d("BlockUtils", "ListBlock isEmpty: $isEmpty")
-                isEmpty
-            }
-            else -> {
-                AppLogger.d("BlockUtils", "Unknown block type: ${block::class.simpleName}")
-                false
-            }
+    fun isBlockEmpty(block: Block): Boolean = when (block) {
+        is TextualBlock -> block.isEmpty()
+
+        is Block.LinkBlock -> block.block.value.url.isEmpty()
+
+        is Block.ListBlock -> {
+            val items = block.items.value
+            items.isEmpty() || (items.size == 1 && items[0].value.isEmpty())
         }
-        AppLogger.d("BlockUtils", "isBlockEmpty result for ${block::class.simpleName}: $result")
-        return result
+
+        else -> false
     }
 }

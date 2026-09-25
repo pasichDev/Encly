@@ -1,0 +1,33 @@
+Encly to bezpieczny notatnik: twoje prywatne notatki i zadania są szyfrowane w telefonie i nigdzie poza nim. Szyfrowane notatki offline z PIN-em, bez konta, bez chmury, bez reklam i bez uprawnienia do internetu.
+
+Większość aplikacji do notatek wymaga konta i serwera. Encly nie ma ani jednego, ani drugiego. Twoje szyfrowane notatki są w jednym miejscu: w twoim telefonie.
+
+PRYWATNOŚĆ OD PODSTAW
+• Bez konta, rejestracji, analityki, reklam i zakupów w aplikacji.
+• Naprawdę offline: Encly nie prosi o uprawnienie INTERNET, więc nie może nigdzie wysłać twoich notatek.
+• Szyfrowane notatki: baza SQLCipher (AES-256) z losowym kluczem 256-bitowym.
+• Notatki z hasłem: 6-cyfrowy PIN przy każdym otwarciu, opcjonalnie odcisk palca lub twarz (tylko silna biometria).
+• Blokuje się sama: gdy Encly przechodzi w tło, baza jest zamykana, a klucz usuwany z pamięci.
+• Zrzuty ekranu, nagrywanie ekranu i podgląd w ostatnich aplikacjach są zablokowane. Kopia w chmurze Androida jest wyłączona.
+
+FRAZA ODZYSKIWANIA I SZYFROWANE KOPIE
+• Opcjonalna fraza odzyskiwania z 12 słów: zapomniany PIN? Fraza otwiera sejf i pozwala ustawić nowy.
+• Eksportuj wszystkie notatki, zadania i tagi do jednego szyfrowanego pliku (AES-256-GCM) i zapisz go, gdzie chcesz: w folderze, na pendrivie, we własnej chmurze. Encly nigdy go nie wysyła.
+• Przywróć dane na nowym telefonie tymi samymi 12 słowami albo scal kopię z istniejącym sejfem.
+• Nikt nie odzyska twoich notatek za ciebie, nawet twórca aplikacji. Trzymaj słowa na papierze.
+
+BEZPIECZNY NOTATNIK, W KTÓRYM DOBRZE SIĘ PISZE
+• Edytor blokowy: tekst, nagłówki, cytaty, listy kontrolne, listy punktowane i numerowane, linki i separatory.
+• Tagi, wyszukiwanie, widok listy lub siatki, kilka sposobów sortowania.
+• Zadania z priorytetami, obok notatek.
+• Kosz z przywracaniem.
+• Pięć motywów (Papier, Las, Ocean, Grafit, Północ), tryb jasny, ciemny lub systemowy, dynamiczne kolory na Androidzie 12+ i trzy zestawy czcionek wbudowane w aplikację.
+
+OTWARTE ŹRÓDŁO
+• Encly ma otwarty kod (Apache-2.0): każdy może sprawdzić, co robi.
+• Działa bez Usług Google Play. Android 8.0 lub nowszy.
+• 9 języków: polski, angielski, ukraiński, niemiecki, francuski, hiszpański, włoski, portugalski i niderlandzki. Język tylko dla Encly wybierzesz w Ustawienia → Język.
+
+Encly: szyfrowane notatki, które zostają twoje.
+
+Polityka prywatności: https://pasichdev.xyz/apps/encly/privacy-policy/

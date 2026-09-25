@@ -1,0 +1,33 @@
+# Shared editor settings. ktlint (run through Spotless: `./gradlew spotlessCheck` / `spotlessApply`)
+# reads the [*.{kt,kts}] section, so IDE formatting and the build agree.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.bat]
+end_of_line = crlf
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{kt,kts}]
+# IntelliJ IDEA / Android Studio default Kotlin style ("Kotlin coding conventions").
+ktlint_code_style = intellij_idea
+max_line_length = 120
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+# Explicit imports only.
+ij_kotlin_name_count_to_use_star_import = 999
+ij_kotlin_name_count_to_use_star_import_for_members = 999
+ij_kotlin_packages_to_use_import_on_demand = unset
+# Jetpack Compose: @Composable functions are PascalCase.
+ktlint_function_naming_ignore_when_annotated_with = Composable

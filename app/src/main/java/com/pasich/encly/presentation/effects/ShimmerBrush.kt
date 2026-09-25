@@ -15,18 +15,11 @@ import androidx.compose.ui.graphics.Brush
  * Creates a shimmer-effect brush for the loading skeleton
  */
 @Composable
-fun ShimmerBrush(
-    widthOfShadowBrush: Int = 500,
-    angleOfAxisY: Float = 270f,
-    durationMillis: Int = 1000
-): Brush {
-    val shimmerColors = listOf(
-        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.3f),
-        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f),
-        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 1.0f),
-        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f),
-        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.3f),
-    )
+fun shimmerBrush(widthOfShadowBrush: Int = 500, angleOfAxisY: Float = 270f, durationMillis: Int = 1000): Brush {
+    // Shimmers between the card surface and the next tone up (design spec §4.6).
+    val base = MaterialTheme.colorScheme.surfaceContainer
+    val highlight = MaterialTheme.colorScheme.surfaceContainerHigh
+    val shimmerColors = listOf(base, highlight, base)
 
     val transition = rememberInfiniteTransition(label = "shimmer_transition")
     val translateAnimation = transition.animateFloat(

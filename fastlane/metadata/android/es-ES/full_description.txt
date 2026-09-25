@@ -1,0 +1,33 @@
+Encly es un bloc de notas seguro: tus notas privadas y tus tareas se guardan cifradas en tu móvil y en ningún otro sitio. Notas encriptadas sin conexión, con PIN, sin cuenta, sin nube, sin anuncios y sin permiso de internet.
+
+La mayoría de apps de notas piden una cuenta y un servidor. Encly no tiene ni lo uno ni lo otro. Tus notas cifradas viven en un solo lugar: tu móvil.
+
+PRIVADA DESDE EL DISEÑO
+• Sin cuenta, sin registro, sin analíticas, sin anuncios, sin compras en la app.
+• Sin conexión de verdad: Encly no pide el permiso INTERNET, así que no puede enviar tus notas a ninguna parte.
+• Notas cifradas: base de datos SQLCipher (AES-256) con una clave aleatoria de 256 bits.
+• Notas con contraseña: un PIN de 6 dígitos cada vez que la abres y, si quieres, huella o cara (solo biometría fuerte).
+• Se bloquea sola: cuando Encly pasa a segundo plano, la base de datos se cierra y la clave se borra de la memoria.
+• Se bloquean las capturas, la grabación de pantalla y la vista previa en apps recientes. La copia en la nube de Android está desactivada.
+
+FRASE DE RECUPERACIÓN Y COPIAS CIFRADAS
+• Frase de recuperación de 12 palabras opcional: ¿olvidaste el PIN? La frase abre tu bóveda y te deja poner uno nuevo.
+• Exporta todas las notas, tareas y etiquetas a un único archivo cifrado (AES-256-GCM) y guárdalo donde quieras: una carpeta, un USB, tu propia nube. Encly nunca lo sube a ningún sitio.
+• Restáuralo en un móvil nuevo con las mismas 12 palabras o combínalo con una bóveda existente.
+• Nadie puede recuperar tus notas por ti, ni siquiera el desarrollador. Guarda las palabras en papel.
+
+UN BLOC DE NOTAS SEGURO Y CÓMODO
+• Editor por bloques: texto, títulos, citas, listas de verificación, listas con viñetas y numeradas, enlaces y separadores.
+• Etiquetas, búsqueda, vista de lista o cuadrícula, varios órdenes.
+• Tareas con prioridades, junto a tus notas.
+• Papelera con restauración.
+• Cinco temas (Papel, Bosque, Océano, Grafito, Medianoche), modo claro, oscuro o del sistema, color dinámico en Android 12+ y tres juegos de fuentes incluidos en la app.
+
+CÓDIGO ABIERTO
+• Encly es de código abierto (Apache-2.0): cualquiera puede comprobar lo que hace.
+• Funciona sin los servicios de Google Play. Android 8.0 o superior.
+• 9 idiomas: español, inglés, ucraniano, alemán, francés, italiano, polaco, portugués y neerlandés. Elige un idioma solo para Encly en Ajustes → Idioma.
+
+Encly: notas cifradas que siguen siendo tuyas.
+
+Política de privacidad: https://pasichdev.xyz/apps/encly/privacy-policy/

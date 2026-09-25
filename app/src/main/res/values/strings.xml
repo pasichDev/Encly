@@ -1,244 +1,573 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Default (English) strings. Every key here must exist in every values-<lang>/strings.xml;
+     TranslationCompletenessTest and lint (MissingTranslation) enforce it. See README → Languages. -->
 <resources>
-    <string name="app_name"> Encly </string>
-    <string name="delete_tag">Видалити мітку</string>
-    <string name="delete_tag_desrpt">Цю мітку буде видалено з усіх ваших нотаток. Самі нотатки не видалятимуться</string>
-    <string name="delete">Видалити</string>
-    <string name="cancel">Скасувати</string>
-    <string name="edit_tags">Редагувати мітки</string>
-    <string name="create_new_tag">Створити нову мітку</string>
-    <string name="exit_account_title">Вихід з аккаунту</string>
-    <string name="exit_account_descrpt">Ви впевнені, що хочете вийти з аккаунту Google? В разі виходу вам буде недоступна синхронізація даних.</string>
-    <string name="exit_account_approve">Так, вийти</string>
-    <string name="main_drawer_tags">Мітки</string>
-    <string name="main_drawer_trash">Корзина</string>
-    <string name="main_drawer_backups">Рез. копії та відновленя</string>
-    <string name="main_drawer_settings">Налаштування</string>
-    <string name="search_notes">Натисніть для пошуку</string>
-    
-    <!-- Widget strings -->
-    <string name="widget_task_description">Віджет для швидкого перегляду завдань</string>
-    <string name="widget_task_name">Завдання</string>
+    <!-- Not translated: brand names, pure formats and each language's own name (the language picker shows them as-is). -->
+    <string name="app_name" translatable="false">Encly</string>
+    <string name="about_app_title" translatable="false">Encly</string>
+    <string name="font_size_value" translatable="false">%1$d sp</string>
+    <string name="language_name_en" translatable="false">English</string>
+    <string name="language_name_uk" translatable="false">Українська</string>
+    <string name="language_name_de" translatable="false">Deutsch</string>
+    <string name="language_name_fr" translatable="false">Français</string>
+    <string name="language_name_es" translatable="false">Español</string>
+    <string name="language_name_it" translatable="false">Italiano</string>
+    <string name="language_name_pl" translatable="false">Polski</string>
+    <string name="language_name_pt" translatable="false">Português</string>
+    <string name="language_name_nl" translatable="false">Nederlands</string>
 
-    <string name="theme_dialog_title">Вибрати тему</string>
-    <string name="theme_type_system">За умовчанням у системі</string>
-    <string name="theme_type_dark">Темна</string>
-    <string name="theme_type_light">Світла</string>
-    <string name="appearance">Зовнішній вигляд</string>
-    <string name="theme">Тема</string>
-    <string name="dynamic_color">Динамічний колір</string>
-    <string name="donate_desc">Проявіть свою любов — підтримайте нас донатом!</string>
-    <string name="donate">Проявіть свою любов</string>
-    <string name="about">Про додаток</string>
-    <string name="about_desc">Версія, Розробники, Ліцензія</string>
-    
-    <!-- About app screen -->
-    <string name="about_app_title">Мої Нотатки</string>
-    <string name="about_version">Версія</string>
-    <string name="about_build_date">Дата збірки</string>
-    <string name="about_app_description">Сучасний блокнот для ваших нотаток, ідей та завдань з локальним шифруванням.</string>
+    <string name="about">About</string>
+    <string name="about_app_description">A local encrypted space for notes, ideas and tasks, with no cloud sync.</string>
+    <string name="about_data_protection">Data protection</string>
+    <string name="about_encryption_note">Vault data is stored locally in an encrypted SQLCipher database</string>
+    <string name="about_faq_title">Frequently asked questions</string>
+    <string name="about_feedback">Feedback</string>
+    <string name="about_feedback_desc">Report a bug or suggest an improvement on GitHub</string>
+    <string name="about_no_browser">No browser found. Open the link manually: %1$s</string>
+    <string name="about_no_mail_client">No email app found</string>
+    <string name="about_privacy_policy">Privacy policy</string>
+    <string name="about_privacy_policy_desc">How we store and protect your data</string>
+    <string name="about_rate_app">Rate the app</string>
+    <string name="about_rate_app_desc">Leave a rating on the Google Play Store</string>
+    <string name="about_support_title">Support and contact</string>
+    <string name="about_write_developer">Contact the developer</string>
+    <string name="about_write_developer_desc">If you have questions or suggestions, you can email me.</string>
 
-    <!-- Developer info -->
-    <string name="about_developer">Розробник</string>
-    <string name="about_developer_name">Pasich</string>
-    <string name="about_github">GitHub</string>
-    <string name="about_telegram">Telegram</string>
-    <string name="about_email">Пошта</string>
+    <string name="action_continue">Continue</string>
 
-    <!-- Statistics -->
-    <string name="about_statistics_title">Статистика</string>
-    <string name="about_notes_count">Нотатки</string>
-    <string name="about_tags_count">Мітки</string>
-    <string name="about_tasks_count">Завдання</string>
-    <string name="about_completed_tasks">Виконані завдання</string>
+    <string name="add">Add</string>
 
-    <!-- Privacy and feedback -->
-    <string name="about_privacy_policy">Політика конфіденційності</string>
-    <string name="about_privacy_policy_desc">Як ми зберігаємо та захищаємо ваші дані</string>
-    <string name="about_feedback">Зворотний зв\'язок</string>
-    <string name="about_feedback_desc">Повідомити про помилку або запропонувати покращення</string>
-    <string name="about_rate_app">Оцінити додаток</string>
-    <string name="about_rate_app_desc">Поставте оцінку в Google Play Store</string>
-    <string name="about_support_title">Підтримка та зв\'язок</string>
-    <string name="about_encryption_note">Ваші дані шифруються локально на пристрої</string>
+    <string name="all">All</string>
 
-    <!-- Email subject -->
-    <string name="about_email_subject">My Notes - Зворотний зв\'язок</string>
+    <string name="auth_method_pin_desc">Required access key. Tap to change your PIN.</string>
+    <string name="auth_method_pin_title">6-digit PIN</string>
+    <string name="auth_title">Authorization</string>
 
-    <string name="screen_protection_title">Захист вмісту</string>
-    <string name="screen_protection_descrpt">Приховувати застосунок нещодавніх, заборонити знімки екрану</string>
+    <string name="back">Back</string>
 
-    <string name="empty_notes">Немає нотаток</string>
-    <string name="empty_notes_desc">Створіть свою першу нотатку, натиснувши кнопку Додати.</string>
-    <string name="empty_trash_desc">У кошику немає нотаток</string>
+    <string name="biometric_change_not_confirmed">The biometric protection change was not confirmed</string>
+    <string name="biometric_enroll_failed">Couldn\'t create the biometric key</string>
+    <string name="biometric_prompt_general_subtitle">Confirm your identity</string>
+    <string name="biometric_prompt_general_title">Authentication</string>
+    <string name="biometric_prompt_key_subtitle">Confirm your biometrics</string>
+    <string name="biometric_prompt_key_title">Key access</string>
+    <string name="biometric_prompt_settings_subtitle">Confirm your biometrics to change protection</string>
+    <string name="biometric_prompt_settings_title">Security confirmation</string>
+    <string name="biometric_prompt_unlock_subtitle">Confirm your biometrics to access the encrypted key</string>
+    <string name="biometric_prompt_unlock_title">Unlock Encly</string>
+    <string name="biometric_prompt_use_pin">Use PIN</string>
+    <string name="biometric_unavailable">Biometric authentication is unavailable</string>
+
+    <string name="block_add">Add block</string>
+    <string name="block_bulleted_list">Bulleted list</string>
+    <string name="block_checklist">Checklist</string>
+    <string name="block_heading">Heading</string>
+    <string name="block_heading_level">Heading %1$d</string>
+    <string name="block_link">Link</string>
+    <string name="block_list">List</string>
+    <string name="block_move_down">Move down</string>
+    <string name="block_move_up">Move up</string>
+    <string name="block_numbered_list">Numbered list</string>
+    <string name="block_separator">Separator</string>
+
+    <string name="cancel">Cancel</string>
 
 
-    <string name="enter_url">Введіть посилання</string>
-    <string name="falied_content">Не вдалося завантажити вміст</string>
-    <string name="new_page">Нова сторінка</string>
-    <string name="press_to_edit">Натисніть щоб почати редагування…</string>
-    <string name="no_tag">Без мітки</string>
-    <string name="quote">Цитата</string>
-    <string name="text">Текст</string>
-    <string name="open_browser">Відкрити в браузері</string>
-    <string name="copy_link">Скопіювати посилання</string>
-    <string name="delete_block">Видалити блок</string>
-    <string name="done">Готово</string>
-    <string name="all">Всі</string>
-    <string name="saving">Збереження…</string>
-    <string name="saved">Збережено</string>
-    <string name="loading">Завантаження…</string>
-    <string name="edit">Редагувати</string>
-    <string name="share">Поділитися</string>
-    <string name="more_options">Інші дії</string>
-    <string name="untitled">Без назви</string>
-    <string name="drag_block">Пересунути</string>
-    <string name="duplicate">Дублікат</string>
-    <string name="restore">Відновити</string>
-    <string name="delete_from_trash">Видалити</string>
+    <string name="clean_permanent_message">Do you really want to delete these notes permanently? This can\'t be undone.</string>
+    <string name="clean_trash_message">Do you really want to empty the trash permanently? This can\'t be undone.</string>
+    <string name="clean_trash_title">Empty the trash?</string>
 
-    <string name="dialog_title">Видалити нотатку?</string>
-    <string name="dialog_message">Ви дійсно хочете видалити нотатку назавжди? Цю дію не можна буде скасувати.</string>
-    <string name="dialog_confirm">Видалити</string>
-    <string name="dialog_dismiss">Скасувати</string>
+    <string name="clear">Clear</string>
+
+    <string name="close">Close</string>
+
+    <string name="collapse">Collapse</string>
+
+    <string name="create_new_tag">Create a new tag</string>
+
+    <string name="date_today_at">Today %1$s</string>
+    <string name="date_yesterday_at">Yesterday %1$s</string>
+
+    <string name="delete">Delete</string>
+    <string name="delete_block">Delete block</string>
+    <string name="delete_from_trash">Delete</string>
+    <string name="delete_tag">Delete tag</string>
+    <string name="delete_tag_desrpt">This tag will be removed from all your notes. The notes themselves won\'t be deleted.</string>
+
+    <string name="dialog_confirm">Delete</string>
+    <string name="dialog_dismiss">Cancel</string>
+    <string name="dialog_message">Do you really want to delete this note permanently? This can\'t be undone.</string>
+    <string name="dialog_title">Delete note?</string>
+
+    <string name="donation_description">Your support helps us add new features, fix bugs and improve the app. Any amount is greatly appreciated!</string>
+    <string name="donation_title">Support development</string>
+
+    <string name="done">Done</string>
+
+    <string name="duplicate">Duplicate</string>
+
+    <string name="dynamic_color">Dynamic color</string>
+
+    <string name="edit">Edit</string>
+
+    <string name="editor_lock">Lock editing</string>
+
+    <string name="empty_notes">No notes yet</string>
+    <string name="empty_notes_desc">Tap New note to write your first one.</string>
+    <string name="empty_trash_desc">Deleted notes wait here until you restore them or delete them for good.</string>
+
+    <string name="enter_url">Enter a link</string>
+
+    <string name="error_database_open">Couldn\'t open the database</string>
+
+    <string name="expand">Expand</string>
+
+    <string name="falied_content">Couldn\'t load the content</string>
+
+    <string name="faq_background_a">Encly saves your current changes, closes the encrypted database and wipes the session key. You need to unlock again when you come back.</string>
+    <string name="faq_background_q">What happens when I leave the app?</string>
+    <string name="faq_biometrics_a">Use the biometrics switch in Settings → Security. Creating or removing the biometric slot requires strong biometric authentication.</string>
+    <string name="faq_biometrics_q">How do I turn biometrics on or off?</string>
+    <string name="faq_change_pin_a">Open Settings → Security, confirm your current PIN, then enter the new one twice.</string>
+    <string name="faq_change_pin_q">How do I change my PIN?</string>
+    <string name="faq_db_key_a">Encly creates a random 256-bit database key. Your PIN protects a separate AES-GCM unlock slot, and biometrics use an auth-per-use Android Keystore key.</string>
+    <string name="faq_db_key_q">How is the database key protected?</string>
+    <string name="faq_forgot_pin_a">On the lock screen, tap \"Recover access\", enter your 12 words and set a new PIN. Without a recovery phrase there is no other way in: nobody, not even the developer, can reset it.</string>
+    <string name="faq_forgot_pin_q">What if I forget my PIN?</string>
+    <string name="faq_language_a">Open Settings → Language and pick one of the available languages, or \"System default\" to follow your device. The change applies right away.</string>
+    <string name="faq_language_q">How do I change the language?</string>
+    <string name="faq_new_note_a">Tap \"New note\" on the home screen. The toolbar above the keyboard adds headings, checklists, bulleted and numbered lists, quotes, links and separators.</string>
+    <string name="faq_new_note_q">How do I create a new note?</string>
+    <string name="faq_recovery_phrase_a">It is a spare key of 12 words. It unlocks the vault if you forget your PIN, and it is the only key to your backup files. You create it during setup, or later in Settings → Security if you skipped it. Keep it on paper, offline.</string>
+    <string name="faq_recovery_phrase_q">What is the recovery phrase for?</string>
+    <string name="faq_report_bug_a">Open \"About\" and use the feedback option, or write to the developer. Never include your recovery phrase, PIN or private note text in a bug report.</string>
+    <string name="faq_report_bug_q">How do I report a bug?</string>
+    <string name="faq_saving_a">Automatically, as you type, and leaving the editor finishes the last save. If a save ever fails, the editor shows \"Not saved\" in red.</string>
+    <string name="faq_saving_q">How are changes saved?</string>
+    <string name="faq_screen_description">Notes, tasks, local encryption and access recovery, with no cloud sync.</string>
+    <string name="faq_screen_subtitle">Answers to the most common questions</string>
+    <string name="faq_screenshots_a">No. Screen protection is always on: Encly blocks screenshots, screen recording and unprotected previews in the recent apps list.</string>
+    <string name="faq_screenshots_q">Can I take screenshots of Encly?</string>
+    <string name="faq_section_basics">Basics</string>
+    <string name="faq_section_security">Security and recovery</string>
+    <string name="faq_section_settings">Settings</string>
+    <string name="faq_section_troubleshooting">Troubleshooting</string>
+    <string name="faq_storage_a">Notes, tags and tasks are stored only in Encly\'s local SQLCipher database. There is no cloud sync and no automatic backup: you can export an encrypted backup yourself in Settings → Backup.</string>
+    <string name="faq_storage_q">Where is my data stored?</string>
+    <string name="faq_tags_a">Tags group your notes. You can create, rename, hide and delete them, drag them into any order, and filter the home screen by tag.</string>
+    <string name="faq_tags_q">How do tags work?</string>
+    <string name="faq_tasks_a">Tasks have a description and a priority. You can filter them by priority and mark them as done. Encly never puts task text into system notifications.</string>
+    <string name="faq_tasks_q">What can tasks do?</string>
+    <string name="faq_theme_a">In Settings → Appearance choose one of five themes, light, dark or system mode, one of three font styles and the text size. On Android 12 and later you can also take the accent color from your wallpaper.</string>
+    <string name="faq_theme_q">How do I change the theme?</string>
+    <string name="faq_vault_damaged_a">Encly deliberately never creates an empty database over a lost or unreadable vault. Don\'t confirm the full wipe if you still need your local data.</string>
+    <string name="faq_vault_damaged_q">Encly says the vault is damaged</string>
+
+    <string name="font_size_title">Text size</string>
+    <string name="font_style_cozy">Editorial</string>
+    <string name="font_style_modern">Modern</string>
+    <string name="font_style_tech">Technical</string>
 
 
-    <string name="clean_trash_title">Очистити корзину?</string>
-    <string name="clean_trash_message">Ви дійсно хочете очистити корзину назавжди? Цю дію не можна буде скасувати.</string>
+    <string name="language_dialog_title">Choose language</string>
+    <string name="language_system_default">System default</string>
+
+    <string name="link_add">Add link</string>
+
+    <string name="list_item_placeholder">List item</string>
+
+
+    <string name="lock_back_to_pin">Back to PIN</string>
+    <string name="lock_recover_access">Recover access</string>
+    <string name="lock_recovery_subtitle">Enter your 12-word recovery phrase</string>
+    <string name="lock_recovery_title">Recovery</string>
+    <string name="lock_subtitle">Enter your 6-digit PIN to continue</string>
+    <string name="lock_title">Unlock your notes</string>
+    <string name="lock_unlocking">Unlocking…</string>
+    <string name="lock_use_recovery_phrase">Recover access with your recovery phrase</string>
+    <string name="lock_wrong_pin">Wrong PIN</string>
+    <string name="lock_wrong_recovery_phrase">Wrong recovery phrase</string>
+
+    <string name="loss_hold_to_wipe">Hold to wipe everything</string>
+    <string name="loss_message">It looks like the encrypted data or the encryption keys were changed or damaged, so recovery is not possible.\n\nTo keep using the app, you need to reset it and wipe the damaged data. This permanently deletes all saved notes and settings.</string>
+    <string name="loss_title">Sorry, your data is damaged</string>
+    <string name="legacy_vault_title">This data is from an older version</string>
+    <string name="legacy_vault_message">Encly found notes saved by a version before 2.0. Encly 2.0 uses a new encrypted format and cannot open them, and there is no way to convert them.\n\nTo use the app, start fresh. This permanently deletes the old notes and settings on this phone.</string>
+    <string name="legacy_vault_hold_to_start">Hold to start fresh</string>
+
+    <string name="main_drawer_faq">FAQ</string>
+    <string name="main_drawer_settings">Settings</string>
+    <string name="main_drawer_support">Support the developer</string>
+    <string name="main_drawer_tags">Tags</string>
+    <string name="main_drawer_tasks">Tasks</string>
+    <string name="main_drawer_trash">Trash</string>
+
+    <string name="more_options">More options</string>
+
+
+    <string name="no_tag">No tag</string>
+
+    <string name="note_add">New note</string>
+    <string name="note_delete_failed">Couldn\'t delete the note</string>
+    <string name="note_description_placeholder">Description…</string>
+    <string name="note_discard_all_changes">Discard all changes</string>
+    <string name="note_discard_failed">Couldn\'t discard changes</string>
+    <string name="note_duplicate_failed">Couldn\'t create a copy</string>
+    <string name="note_load_failed">Couldn\'t read the note\'s content. Editing is turned off so the data isn\'t damaged.</string>
+    <!-- Title of a duplicated note; %1$s is the original title. -->
+    <string name="note_copy_title">%1$s (Copy)</string>
+    <string name="note_restore_failed">Couldn\'t restore the note</string>
+    <string name="note_save_failed">Couldn\'t save changes</string>
+    <string name="note_trash_failed">Couldn\'t move the note to the trash</string>
+
+    <string name="onboarding_error_initialization">Couldn\'t initialize the app</string>
+    <string name="onboarding_error_seed_generation">Couldn\'t create the recovery phrase</string>
+    <string name="onboarding_error_vault_creation">Couldn\'t create the encrypted vault</string>
+
+    <string name="open_menu">Open menu</string>
+
+    <string name="percent_value">%1$d%%</string>
+
+    <string name="pin_change_confirm_subtitle">Enter the PIN again to confirm</string>
+    <string name="pin_change_confirm_title">Confirm your 6-digit PIN</string>
+    <string name="pin_change_current_subtitle">Confirm your current PIN before changing your access key</string>
+    <string name="pin_change_current_title">Enter your current PIN</string>
+    <string name="pin_change_new_subtitle">Enter a new PIN to protect your notes</string>
+    <string name="pin_changed">PIN changed</string>
+    <string name="pin_create_title">Create a 6-digit PIN</string>
+    <string name="pin_current_wrong">Current PIN is incorrect</string>
+    <string name="pin_delete_digit">Delete digit</string>
+    <string name="pin_mismatch_retry">PINs don\'t match. Please try again.</string>
+    <string name="pin_save_failed">Couldn\'t save the PIN</string>
+    <string name="pin_update_failed">Couldn\'t update the PIN. Please try again.</string>
+
+
+    <string name="press_to_edit">Tap to start editing…</string>
+
+    <string name="priority_high">High</string>
+    <string name="priority_low">Low</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_select_title">Choose a priority</string>
+
+    <string name="quote">Quote</string>
+    <string name="redo">Redo</string>
+
+    <string name="restore">Restore</string>
+
+    <string name="save">Save</string>
+
+
+
+
+    <string name="search_clear">Clear search</string>
+
+    <string name="security_biometric_available">Fingerprint</string>
+    <string name="security_biometric_title">Biometric unlock</string>
+    <string name="security_biometric_unavailable">Not available on this device</string>
+    <string name="security_biometric_not_enrolled">No fingerprint enrolled. Add one in system settings.</string>
+    <string name="security_encryption_active">Encryption is on</string>
+    <string name="security_recovery_missing">Not set up. Without it, a forgotten PIN means losing everything. Tap to create one.</string>
+    <string name="security_erase_title">Erase all data</string>
+    <string name="security_erase_desc">Delete every note, task and tag and the encryption keys on this device</string>
+    <string name="security_erase_confirm_body">Every note, task and tag and the encryption keys will be deleted from this device, and Encly will start over. This can\'t be undone: export a backup first if you want to keep anything.</string>
+    <string name="security_subtitle">Encryption and data protection</string>
+    <string name="security_title">Security</string>
+
+
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_general">General</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_show_tasks">Show tasks</string>
+    <string name="settings_show_tasks_desc">Show the tasks card on the home screen</string>
+    <string name="settings_simple_edit">Simple editing</string>
+    <string name="settings_simple_edit_desc">Turn off dynamic blocks and edit notes as plain text</string>
+
+    <string name="sort_by">Sort by:</string>
+    <string name="sort_created_asc">By creation date (oldest first)</string>
+    <string name="sort_created_asc_short">Created ↑</string>
+    <string name="sort_created_desc">By creation date (newest first)</string>
+    <string name="sort_created_desc_short">Created ↓</string>
+    <string name="sort_updated_asc">By last edited (oldest first)</string>
+    <string name="sort_updated_asc_short">Edited ↑</string>
+    <string name="sort_updated_desc">By last edited (newest first)</string>
+    <string name="sort_updated_desc_short">Edited ↓</string>
+    <string name="support_title">Support the developer</string>
+
+    <string name="tag_create_failed">Couldn\'t save the tag. Please try again.</string>
+    <string name="tag_delete_failed">Couldn\'t delete the tag. Please try again.</string>
+    <string name="tag_edit">Edit tag</string>
+    <string name="tag_hidden">Hidden tag</string>
+    <string name="tag_name_taken">A tag with this name already exists</string>
+    <string name="tag_reorder_failed">Couldn\'t save the tag order. Please try again.</string>
+    <string name="tag_update_failed">Couldn\'t update the tag. Please try again.</string>
+
+    <string name="tap_again_to_delete">Tap again to delete</string>
+
+    <string name="task_add">New task</string>
+    <string name="task_clear_completed_failed">Couldn\'t clear completed tasks. Please try again.</string>
+    <string name="task_clear_completed_message">Do you really want to delete all completed tasks? This can\'t be undone.</string>
+    <string name="task_clear_completed_title">Clear completed tasks</string>
+    <string name="task_completed_at">Completed: %1$s</string>
+    <string name="task_create_failed">Couldn\'t save the task. Please try again.</string>
+    <string name="task_description_placeholder">Description</string>
+    <string name="task_edit_placeholder">Edit task</string>
+    <string name="task_empty_active">No active tasks.</string>
+    <string name="task_empty_filtered">No tasks match the selected filters.</string>
+    <string name="task_filter_all">All tasks</string>
+    <string name="task_filter_completed">Completed</string>
+    <string name="task_new_placeholder">New task</string>
+    <string name="task_progress_title">Progress</string>
+    <string name="task_status_update_failed">Couldn\'t change the task status. Please try again.</string>
+    <string name="task_update_failed">Couldn\'t update the task. Please try again.</string>
+
+    <string name="text">Text</string>
+
+    <string name="theme">Theme</string>
+    <string name="theme_type_dark">Dark</string>
+    <string name="theme_type_light">Light</string>
+    <string name="theme_type_system">System</string>
+
+
+    <string name="undo">Undo</string>
+
+    <string name="untitled">Untitled</string>
+
+    <string name="view_switch_to_grid">Switch to grid view</string>
+    <string name="view_switch_to_list">Switch to list view</string>
 
     <plurals name="delete_notes_confirm">
-        <item quantity="one">Видалити %d нотатку?</item>
-        <item quantity="few">Видалити %d нотатки?</item>
-        <item quantity="many">Видалити %d нотаток?</item>
+        <item quantity="one">Delete %d note?</item>
+        <item quantity="other">Delete %d notes?</item>
     </plurals>
-
-    <string name="clean_permanent_message">Ви дійсно хочете видалити ці нотатки назавжди? Цю дію не можна буде скасувати.</string>
-
-
-    <string name="checked_count">Відмічено: %d</string>
-
-    <!-- Help strings -->
-    <string name="help_button">Довідка</string>
-    <string name="tag_help_title">Довідка: Мітки</string>
-    <string name="main_drawer_help">Довідка</string>
-    <string name="main_drawer_tasks">Завдання</string>
-    <string name="main_drawer_support">Підтримка розробника</string>
-
-    <!-- Settings sections -->
-    <string name="settings_appearance">Зовнішній вигляд</string>
-    <string name="settings_general">Загальні</string>
-    <string name="settings_about_app">Про додаток</string>
-    <string name="settings_simple_edit">Просте редагування</string>
-    <string name="settings_simple_edit_desc">Відключити динамічні блоки та використовувати просте редагування нотаток</string>
-    <string name="settings_show_tasks">Показувати завдання</string>
-    <string name="settings_show_tasks_desc">Відображати блок завдань на головній сторінці</string>
-
-    <!-- New Settings Categories -->
-    <string name="settings_privacy">Конфіденційність</string>
-    <string name="settings_data">Дані</string>
-
-    <!-- Theme Dialog -->
-    <string name="apply">Застосувати</string>
-    <string name="theme_preview">Попередній перегляд теми</string>
-    <string name="primary_color">Основний</string>
-    <string name="secondary_color">Другорядний</string>
-    <string name="background_color">Фон</string>
-
-    <!-- Authentication Settings -->
-    <string name="auth_title">Авторизація</string>
-    <string name="auth_subtitle">Налаштування безпеки та входу</string>
-    
-    <!-- Security Settings -->
-    <string name="security_title">Безпека</string>
-    <string name="security_subtitle">Шифрування та захист даних</string>
-
-    <!-- Support page -->
-    <string name="support_title">Підтримка розробника</string>
-    <string name="support_subtitle">Допоможіть розвитку додатку</string>
-    <string name="support_description">Цей додаток розробляє один розробник у вільний час. Ваша підтримка дуже важлива для подальшого розвитку проекту!</string>
-    <string name="support_why_title">Чому важлива ваша підтримка?</string>
-    <string name="support_why_desc">• Додавання нових функцій\n• Виправлення помилок\n• Покращення дизайну\n• Підтримка серверів\n• Мотивація розробника</string>
-    <string name="support_methods_title">Способи підтримки</string>
-    <string name="support_coming_soon">Незабаром буде доступно:</string>
-    <string name="support_google_play">Покупка в Google Play</string>
-    <string name="support_donation_services">Донат сервіси</string>
-
-
-    <!-- Повні назви -->
-    <string name="sort_created_asc">За датою створення (зростання)</string>
-    <string name="sort_created_desc">За датою створення (спадання)</string>
-    <string name="sort_updated_asc">За датою редагування (зростання)</string>
-    <string name="sort_updated_desc">За датою редагування (спадання)</string>
-
-    <!-- Скорочені назви -->
-    <string name="sort_created_asc_short">Ств ↑</string>
-    <string name="sort_created_desc_short">Ств ↓</string>
-    <string name="sort_updated_asc_short">Ред ↑</string>
-    <string name="sort_updated_desc_short">Ред ↓</string>
-
-    <!-- FAQ Section -->
-    <string name="about_faq_title">Часті запитання</string>
-    <string name="faq_sync_title">Як працює синхронізація?</string>
-    <string name="faq_sync_answer">Синхронізація працює через Google Drive. Увійдіть у свій Google аккаунт у налаштуваннях для автоматичного збереження ваших даних.</string>
-    <string name="faq_encryption_title">Чи безпечні мої дані?</string>
-    <string name="faq_encryption_answer">Так, всі ваші дані шифруються локально на пристрої перед збереженням. Навіть при синхронізації дані залишаються зашифрованими.</string>
-    <string name="faq_backup_title">Як створити резервну копію?</string>
-    <string name="faq_backup_answer">Відкрийте меню → Резервні копії та відновлення → Створити резервну копію. Файл збережеться у вашому сховищі.</string>
-    <string name="faq_tags_title">Як використовувати теги?</string>
-    <string name="faq_tags_answer">Створіть теги в меню → Теги. Потім в нотатці натисніть на іконку тегу і виберіть потрібний. Теги допомагають організувати нотатки.</string>
-    <string name="faq_tasks_title">Як працюють завдання?</string>
-    <string name="faq_tasks_answer">Завдання можна створити у відповідному розділі меню. Встановлюйте дедлайни, додавайте нотатки і відмічайте виконані завдання.</string>
-
-    <!-- Feedback System -->
-    <string name="feedback_title">Залишити відгук</string>
-    <string name="feedback_bug_report">Повідомити про помилку</string>
-    <string name="feedback_bug_report_desc">Знайшли баг? Розкажіть нам про це</string>
-    <string name="feedback_feature_request">Запропонувати функцію</string>
-    <string name="feedback_feature_request_desc">Є ідея покращення? Поділіться з нами</string>
-    <string name="feedback_general">Загальний відгук</string>
-    <string name="feedback_general_desc">Оцінка, пропозиції або подяка</string>
-    <string name="feedback_contact_info">Контактна інформація (необов\'язково)</string>
-    <string name="feedback_contact_hint">Ваш email для відповіді</string>
-    <string name="feedback_message_hint">Опишіть детально вашу проблему, пропозицію або відгук...</string>
-    <string name="feedback_send">Надіслати відгук</string>
-    <string name="feedback_success">Дякуємо за відгук! Ми обов\'язково його розглянемо.</string>
-    <string name="feedback_error">Помилка відправки. Спробуйте пізніше.</string>
-
-    <!-- Donation -->
-    <string name="donation_title">Підтримати розробку</string>
-    <string name="donation_subtitle">Допоможіть зробити додаток ще кращим</string>
-    <string name="donation_description">Ваша підтримка допомагає нам додавати нові функції, виправляти помилки і покращувати додаток. Будь-яка сума буде дуже вдячна!</string>
-    <string name="donation_coffee">☕ Кава</string>
-    <string name="donation_coffee_desc">Подарувати розробнику каву</string>
-    <string name="donation_lunch">Обід</string>
-    <string name="donation_lunch_desc">Підтримати розробку новою функцією</string>
-    <string name="donation_support">Підтримка</string>
-    <string name="donation_support_desc">Значна допомога у розвитку проекту</string>
-    <string name="donation_premium">Преміум</string>
-    <string name="donation_premium_desc">Максимальна підтримка розробника</string>
-    <string name="donation_custom">Інша сума</string>
-    <string name="donation_custom_desc">Оберіть свою суму для підтримки</string>
-    <string name="donation_thanks">Дякуємо за підтримку!</string>
-    <string name="donation_processing">Обробка платежу...</string>
-
-    <!-- FAQ strings -->
-    <string name="main_drawer_faq">Часті запитання</string>
-    <string name="faq_screen_title">Часті запитання</string>
-    <string name="faq_screen_subtitle">Відповіді на найпоширеніші запитання</string>
-    <string name="faq_screen_description">Знайдіть відповіді на запитання про використання додатку, синхронізацію, безпеку та інші корисні поради.</string>
-
-    <!-- Validation Messages -->
-    <string name="screen_protection_warning">Увага: Вимкнення захисту екрану може зробити ваші дані видимими в нещодавніх програмах</string>
-    <string name="auth_disable_warning">Увага: При вимкненні авторизації PIN-код та біометрія будуть скинуті</string>
-    <string name="biometric_disable_error">Помилка: Неможливо вимкнути біометрію як основний метод авторизації</string>
-
-    <!-- Task reminder notifications -->
-    <string name="notification_channel_name">Нагадування завдань</string>
-    <string name="notification_channel_desc">Сповіщення про завдання</string>
-    <string name="reminder_notification_title">Нагадування про завдання</string>
-    <string name="reminder_action_done">Виконано</string>
-    <string name="reminder_action_snooze">Через 10 хв</string>
-
-    <string name="note_load_failed">Не вдалося прочитати вміст нотатки. Щоб не пошкодити дані, редагування вимкнено.</string>
-
+    <plurals name="lock_lockout_seconds">
+        <item quantity="one">Too many attempts. Try again in %d second</item>
+        <item quantity="other">Too many attempts. Try again in %d seconds</item>
+    </plurals>
+    <plurals name="task_progress_summary">
+        <item quantity="one">%1$d of %2$d task completed</item>
+        <item quantity="other">%1$d of %2$d tasks completed</item>
+    </plurals>
+    <string name="settings_backup">Backup</string>
+    <string name="backup_settings_subtitle">Encrypted export and import</string>
+    <string name="backup_title">Backup</string>
+    <string name="backup_intro_title">Encrypted with your recovery phrase</string>
+    <string name="backup_intro_body">A backup holds all your notes, tasks and tags, encrypted with your 12-word recovery phrase. Encly never uploads it: you choose where the file is saved. On a new phone, the same 12 words restore it.</string>
+    <string name="backup_last_export">Last export: %1$s</string>
+    <string name="backup_never_exported">No backup exported yet</string>
+    <string name="backup_export">Export backup</string>
+    <string name="backup_import">Import backup</string>
+    <string name="backup_import_desc">Restore notes, tasks and tags from a backup file</string>
+    <string name="backup_export_done">Backup saved</string>
+    <string name="backup_reauth_title">Confirm it\'s you</string>
+    <string name="backup_reauth_subtitle">Enter your PIN to continue</string>
+    <string name="backup_needs_phrase_title">Recovery phrase</string>
+    <string name="backup_needs_phrase_body">Backups are encrypted with a recovery phrase, so only its 12 words can open them. This vault has none yet. Create one now: it also lets you unlock this vault if you forget your PIN.</string>
+    <string name="backup_create_phrase">Create recovery phrase</string>
+    <string name="backup_phrase_write_down">Write these 12 words down on paper, in order, and keep them offline. Anyone who has them can open your backups.</string>
+    <string name="backup_phrase_written">I wrote them down</string>
+    <string name="backup_phrase_check_wrong">These words don\'t match. Check what you wrote down.</string>
+    <string name="backup_phrase_added">Recovery phrase saved</string>
+    <string name="backup_confirm_phrase_title">Confirm your recovery phrase</string>
+    <string name="backup_confirm_phrase_body">Enter this vault\'s 12-word recovery phrase once, so Encly can encrypt backups with it.</string>
+    <string name="backup_enter_phrase_title">Enter recovery phrase</string>
+    <string name="backup_enter_phrase_body">Enter the 12 words of the recovery phrase this backup was made with.</string>
+    <string name="backup_decrypt">Decrypt</string>
+    <string name="backup_import_choose">Import backup</string>
+    <string name="backup_merge">Merge</string>
+    <string name="backup_replace">Replace</string>
+    <string name="backup_replace_confirm_title">Replace all data?</string>
+    <string name="backup_replace_confirm_body">Every note, task and tag in this vault will be deleted and replaced with the backup. This can\'t be undone.</string>
+    <string name="backup_import_done">Imported: notes %1$d, tasks %2$d, tags %3$d. Skipped (already here): %4$d.</string>
+    <string name="backup_error_not_a_backup">This file is not an Encly backup</string>
+    <string name="backup_error_unsupported">This backup was made by a newer version of Encly. Update the app and try again.</string>
+    <string name="backup_error_corrupted">The backup file is damaged or incomplete</string>
+    <string name="backup_error_too_large">The file is too large to be an Encly backup</string>
+    <string name="backup_error_export_too_large">Your vault is too large for one backup file (64 MB). Nothing was saved.</string>
+    <string name="backup_error_target_exists">That file already exists. Choose a new name: an older backup is never overwritten.</string>
+    <string name="backup_error_no_picker">No app on this device can open or save files.</string>
+    <string name="backup_error_wrong_phrase">These words don\'t open this backup, or the file was modified</string>
+    <string name="backup_error_invalid_phrase">Enter a valid 12-word recovery phrase</string>
+    <string name="backup_error_locked">The vault was locked. Unlock it and try again.</string>
+    <string name="backup_error_io">Couldn\'t read or write the backup. Nothing was changed.</string>
+    <string name="backup_error_phrase_mismatch">These words are not this vault\'s recovery phrase</string>
+    <string name="backup_error_phrase_setup">Couldn\'t save the recovery phrase</string>
+    <string name="onboarding_restore_title">Restore from a backup</string>
+    <string name="onboarding_restore_pick">Choose a backup file</string>
+    <string name="auth_setup_restore_failed">The backup couldn\'t be restored, so setup isn\'t finished yet. Try again, or continue with an empty vault and import the file later in Settings → Backup.</string>
+    <string name="auth_setup_restore_failed_title">Backup not restored</string>
+    <string name="auth_setup_restore_retry">Try again</string>
+    <string name="auth_setup_restore_skip">Continue without it</string>
+    <string name="note_preview_unreadable">This note can\'t be read by this version of Encly.</string>
+    <string name="link_open">Open link</string>
+    <string name="link_copy">Copy link</string>
+    <string name="link_edit">Edit link</string>
+    <string name="link_copied">Link copied</string>
+    <string name="link_open_failed">No app on this device can open this link.</string>
+    <string name="link_blocked">Only web (http, https) and email links can be saved or opened.</string>
+    <string name="notes_load_failed_title">Couldn\'t read your notes</string>
+    <string name="tags_load_failed_title">Couldn\'t read your tags</string>
+    <string name="notes_load_failed_desc">Your notes are still stored encrypted on this device. Close Encly and open it again to retry.</string>
+    <string name="pin_reset_subtitle">You unlocked Encly with your recovery phrase. Set a new PIN to continue.</string>
+    <string name="task_delete">Delete task</string>
+    <string name="task_deleted">Task deleted</string>
+    <string name="task_delete_failed">Couldn\'t delete the task. Please try again.</string>
+    <string name="appearance_mode">Mode</string>
+    <string name="appearance_font">Font</string>
+    <string name="palette_paper">Paper</string>
+    <string name="palette_forest">Forest</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_graphite">Graphite</string>
+    <string name="palette_midnight">Midnight</string>
+    <string name="appearance_mode_note_system_light">Follows the system setting. Showing light.</string>
+    <string name="appearance_mode_note_system_dark">Follows the system setting. Showing dark.</string>
+    <string name="appearance_mode_note_light">Always light.</string>
+    <string name="appearance_mode_note_dark">Always dark.</string>
+    <string name="appearance_mode_note_midnight">Midnight is always dark.</string>
+    <string name="dynamic_color_desc">Take the accent from your wallpaper. Android 12 and later.</string>
+    <string name="appearance_dynamic_on_note">Dynamic color is on: the accent comes from your wallpaper.</string>
+    <string name="font_style_cozy_desc">Playfair Display and Source Sans 3</string>
+    <string name="font_style_modern_desc">Poppins and Source Sans 3</string>
+    <string name="font_style_tech_desc">IBM Plex Sans throughout</string>
+    <string name="appearance_preview_title">Flat viewing checklist</string>
+    <string name="appearance_preview_body">Before the visit: check the water pressure, ask what heating cost last winter.</string>
+    <string name="appearance_preview_tag">Personal</string>
+    <string name="appearance_preview_label">Preview</string>
+    <string name="appearance_settings_subtitle">Theme, mode and font</string>
+    <string name="field_correct">Correct</string>
+    <string name="pin_digits_entered">Digits entered: %1$d of %2$d</string>
+    <string name="pin_unlock_with_fingerprint">Unlock with fingerprint</string>
+    <string name="onboarding_step_of">Step %1$d of %2$d</string>
+    <string name="font_sample" translatable="false">Aa</string>
+    <string name="onboarding_welcome_headline">A notebook only you can open.</string>
+    <string name="onboarding_welcome_sub">Notes and tasks, encrypted on this phone. Setup takes about a minute.</string>
+    <string name="onboarding_fact_account_title">No account</string>
+    <string name="onboarding_fact_account_desc">No sign-up, no email, no password reset.</string>
+    <string name="onboarding_fact_offline_title">Works offline</string>
+    <string name="onboarding_fact_offline_desc">Encly never connects to the internet.</string>
+    <string name="onboarding_fact_encrypted_title">Encrypted on the device</string>
+    <string name="onboarding_fact_encrypted_desc">Your vault is locked with a key only you hold.</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_have_backup">I have a backup</string>
+    <string name="onboarding_pin_title">Choose a 6-digit PIN</string>
+    <string name="onboarding_pin_body">It unlocks Encly and protects the key to your vault. There is no email to reset it.</string>
+    <string name="onboarding_pin_again_title">Enter the PIN again</string>
+    <string name="onboarding_pin_again_body">So we know it\'s the one you meant.</string>
+    <string name="onboarding_biometric_desc">The PIN still works as a fallback</string>
+    <string name="onboarding_recovery_title">Twelve words bring everything back</string>
+    <string name="onboarding_recovery_body">Encly will give you a recovery phrase. Write it on paper; it is the only spare key.</string>
+    <string name="onboarding_recovery_pin_title">Forgot your PIN?</string>
+    <string name="onboarding_recovery_pin_desc">The phrase unlocks your vault and lets you set a new PIN.</string>
+    <string name="onboarding_recovery_backups_title">Opens your backups</string>
+    <string name="onboarding_recovery_backups_desc">Encrypted backup files can only be read with these words.</string>
+    <string name="onboarding_recovery_phone_title">New phone</string>
+    <string name="onboarding_recovery_phone_desc">Backup file plus phrase restores every note, task and tag.</string>
+    <string name="onboarding_recovery_warning">Nobody can recover it for you, not even us. Lose both the PIN and the phrase and the notes are gone.</string>
+    <string name="onboarding_recovery_create">Create my phrase</string>
+    <string name="onboarding_recovery_skip">Skip: PIN only, no backups</string>
+    <string name="onboarding_phrase_title">Write these words down</string>
+    <string name="onboarding_phrase_body">On paper, in this order. Not in a screenshot, not in the cloud.</string>
+    <string name="onboarding_phrase_hide">Hide words</string>
+    <string name="onboarding_phrase_show">Show words</string>
+    <string name="onboarding_phrase_done">I wrote them down</string>
+    <string name="onboarding_verify_title">Check three words</string>
+    <string name="onboarding_verify_body">Type them from your paper copy, not from memory.</string>
+    <string name="onboarding_verify_label">Word #%1$d</string>
+    <string name="onboarding_verify_placeholder">Enter the word</string>
+    <string name="onboarding_verify_wrong">That is not word #%1$d</string>
+    <string name="onboarding_verify_confirm">Confirm</string>
+    <string name="onboarding_verify_show_again">Show the words again</string>
+    <string name="onboarding_ready_title">Your vault is ready</string>
+    <string name="onboarding_ready_body">Everything you write from now on is encrypted before it is saved.</string>
+    <string name="onboarding_ready_pin_title">PIN set</string>
+    <string name="onboarding_ready_pin_desc">Asked every time Encly opens</string>
+    <string name="onboarding_ready_biometric_title">Fingerprint unlock on</string>
+    <string name="onboarding_ready_biometric_desc">Change it in Settings, Security</string>
+    <string name="onboarding_ready_phrase_title">Recovery phrase checked</string>
+    <string name="onboarding_ready_phrase_desc">Keep the paper somewhere safe</string>
+    <string name="onboarding_ready_no_phrase_title">No recovery phrase</string>
+    <string name="onboarding_ready_no_phrase_desc">Backups are off. You can create a phrase later in Settings, Security.</string>
+    <string name="onboarding_ready_restored_title">Backup restored</string>
+    <string name="onboarding_ready_restored_desc">Your notes, tasks and tags are back</string>
+    <string name="onboarding_ready_tip">Tip: export an encrypted backup now and then from Settings, Backup. Your phrase is what opens it.</string>
+    <string name="onboarding_ready_open">Open my notebook</string>
+    <string name="onboarding_restore_label">Restore, then set a PIN</string>
+    <string name="onboarding_restore_intro">Choose your Encly backup file, then enter the 12 words it was made with.</string>
+    <string name="onboarding_restore_file_section">1 · Backup file</string>
+    <string name="onboarding_restore_tap_other">Tap to choose another file</string>
+    <string name="onboarding_restore_phrase_section">2 · Recovery phrase</string>
+    <string name="onboarding_restore_phrase_helper">These words also become this phone\'s recovery phrase.</string>
+    <string name="notes_title">Notes</string>
+    <string name="lock_now">Lock now</string>
+    <string name="search_placeholder">Search titles and text</string>
+    <string name="view_options">View options</string>
+    <string name="search_nothing_matches">Nothing matches “%1$s”</string>
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+    <plurals name="home_tasks_open">
+        <item quantity="one">Tasks · %d open</item>
+        <item quantity="other">Tasks · %d open</item>
+    </plurals>
+    <string name="home_tasks_none_open">Tasks · none open</string>
+    <string name="task_empty_title">No tasks yet</string>
+    <string name="task_empty_desc">Tap New task to add your first one.</string>
+    <string name="task_all_done_title">All done</string>
+    <string name="task_done_section">Done · %1$d</string>
+    <string name="empty_notes_tagged">No notes tagged “%1$s”</string>
+    <string name="empty_notes_tagged_desc">Notes you give this tag show up here.</string>
+    <string name="show_all_notes">Show all notes</string>
+    <string name="empty_trash_title">Trash is empty</string>
+    <string name="trash_hint">Tap a note to read it. Long-press to select.</string>
+    <string name="delete_forever">Delete forever</string>
+    <string name="empty_trash_action">Empty trash</string>
+    <string name="search_notes">Search notes</string>
+    <string name="settings_notes_and_tasks">Notes and tasks</string>
+    <string name="settings_about_desc">Version, privacy policy and contact</string>
+    <string name="settings_faq_desc">Answers to common questions</string>
+    <string name="licenses_title">Open-source licenses</string>
+    <string name="licenses_row_desc">The libraries and fonts Encly uses</string>
+    <string name="licenses_heading">Built on open source</string>
+    <string name="licenses_intro">Encly is made with these libraries and fonts. Tap one to read its license.</string>
+    <string name="licenses_libraries">Libraries</string>
+    <string name="licenses_fonts">Fonts</string>
+    <string name="tags_empty_title">No tags yet</string>
+    <string name="tags_empty_desc">Tags group your notes. Create one above, then pick it for a note from its long-press menu.</string>
+    <string name="tags_hint">Tap a tag to rename, hide or delete it. Drag the handle to reorder.</string>
+    <string name="tag_add">Add tag</string>
+    <string name="tag_name_label">Name</string>
+    <string name="tag_show_in_list">Show in the notes list</string>
+    <string name="tag_show_in_list_desc">A hidden tag keeps its notes but gets no filter chip</string>
+    <string name="tag_drag_handle">Drag to reorder</string>
+    <string name="tag_move_up">Move up</string>
+    <string name="tag_move_down">Move down</string>
+    <plurals name="trash_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="edit_tags">Edit tags</string>
+    <string name="note_title_placeholder">Title</string>
+    <string name="note_not_saved">Not saved</string>
+    <string name="tags_manage">Manage tags</string>
+    <string name="note_discard_confirm_title">Discard changes?</string>
+    <string name="note_discard_confirm_message">Everything you changed since you opened this note will be lost. This can\'t be undone.</string>
+    <string name="support_fact_free_title">Everything is already yours</string>
+    <string name="support_fact_free_desc">Every feature is in the app for everyone. Nothing is locked behind a payment.</string>
+    <string name="support_fact_private_title">No ads, no tracking</string>
+    <string name="support_fact_private_desc">Encly never sees your notes and earns nothing from data. Support is how it pays for itself.</string>
+    <string name="support_fact_uses_title">Where it goes</string>
+    <string name="support_fact_uses_desc">New features, security review and testing, design and fixes.</string>
+    <string name="support_kofi_button">Support on Ko-fi</string>
+    <string name="support_kofi_note">Opens ko-fi.com in your browser. Any amount helps.</string>
+    <string name="faq_note_actions_q">What does a long press on a note do?</string>
+    <string name="faq_note_actions_a">It opens the note\'s actions: change its tag, add a short description shown on the card, duplicate the note or move it to the trash.</string>
+    <string name="faq_trash_q">How do I get a deleted note back?</string>
+    <string name="faq_trash_a">Deleted notes go to Trash in the menu. There you can restore a note or delete it forever. Encly never empties the trash on its own.</string>
+    <string name="faq_lock_note_q">What does \"Lock editing\" do?</string>
+    <string name="faq_lock_note_a">It makes a note read-only so it can\'t be changed by accident. You can still select and copy the text. Turn it on or off from the editor\'s menu.</string>
+    <string name="faq_backup_q">How do backups work?</string>
+    <string name="faq_backup_a">In Settings → Backup you export one encrypted file that only your recovery phrase can open. To restore, pick the file, type or paste the 12 words, then merge it into this vault or replace everything.</string>
+    <string name="keyboard_show">Show keyboard</string>
+    <string name="keyboard_hide">Hide keyboard</string>
+    <string name="security_erase_confirm_title">Erase all data?</string>
+    <string name="security_erase_confirm">Erase</string>
 </resources>

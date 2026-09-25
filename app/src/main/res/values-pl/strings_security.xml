@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Wpisz lub wklej swoje 12 słów</string>
+    <string name="recovery_word_cell">Słowo %1$d z %2$d</string>
+    <string name="recovery_word_unknown">Słowo %1$d nie należy do słów frazy odzyskiwania. Sprawdź pisownię.</string>
+    <string name="recovery_phrase_checksum">Te 12 słów nie tworzy prawidłowej frazy odzyskiwania. Sprawdź każde słowo i ich kolejność.</string>
+    <string name="backup_phrase_exists">Ten sejf ma już frazę odzyskiwania</string>
+    <string name="backup_import_mode_title">Dodać do notatek czy je zastąpić?</string>
+    <string name="backup_import_summary">Ta kopia zawiera: %1$s, %2$s i %3$s.</string>
+    <string name="backup_merge_row_desc">Wszystko tutaj zostaje, a brakujące elementy zostaną dodane. Te, które już są, zostaną pominięte.</string>
+    <string name="backup_replace_all">Zastąp wszystko</string>
+    <string name="backup_replace_row_desc">Usuń wszystkie notatki, zadania i tagi z tego telefonu, a potem przywróć kopię.</string>
+    <string name="backup_intro_short">Zachowaj wszystkie notatki, zadania i tagi w jednym zaszyfrowanym pliku i przywróć je na dowolnym telefonie.</string>
+    <string name="backup_section_export">Eksport</string>
+    <string name="backup_section_import">Import</string>
+    <string name="security_encryption_pin_plain">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN (i odcisk palca, jeśli jest włączony).</string>
+    <string name="security_encryption_seed_plain">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN (i odcisk palca, jeśli jest włączony), a gdy zapomnisz PIN, fraza odzyskiwania.</string>
+    <string name="security_recovery_set_desc">Utworzona podczas konfiguracji. Encly nigdy nie przechowuje słów i nie może ich ponownie pokazać. Nie masz ich? Zastąp frazę poniżej.</string>
+    <string name="security_recovery_status_set">Skonfigurowana</string>
+    <string name="vault_reset_restore_hint">Po zresetowaniu możesz przywrócić plik kopii zapasowej za pomocą jego 12 słów.</string>
+    <string name="pin_change_bar_title">Zmień PIN</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d notatka</item>
+        <item quantity="few">%d notatki</item>
+        <item quantity="many">%d notatek</item>
+        <item quantity="other">%d notatki</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d zadanie</item>
+        <item quantity="few">%d zadania</item>
+        <item quantity="many">%d zadań</item>
+        <item quantity="other">%d zadania</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d tag</item>
+        <item quantity="few">%d tagi</item>
+        <item quantity="many">%d tagów</item>
+        <item quantity="other">%d tagu</item>
+    </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Twój PIN nie może już odblokować Encly na tym telefonie: jego klucz sprzętowy został zresetowany. Użyj frazy odzyskiwania (lub odcisku palca), a potem ustaw nowy PIN.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %d minutę</item>
+        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %d minuty</item>
+        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %d minut</item>
+        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %d minuty</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %d godzinę</item>
+        <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %d godziny</item>
+        <item quantity="many">Zbyt wiele prób. Spróbuj ponownie za %d godzin</item>
+        <item quantity="other">Zbyt wiele prób. Spróbuj ponownie za %d godziny</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Zmień frazę odzyskiwania</string>
+    <string name="security_recovery_replace_desc">Otrzymaj 12 nowych słów. Kopie zapasowe zrobione wcześniej nadal wymagają starych.</string>
+    <string name="security_recovery_replace_confirm_title">Zmienić frazę odzyskiwania?</string>
+    <string name="security_recovery_replace_confirm_body">Otrzymasz 12 nowych słów. Stara fraza przestanie odblokowywać Twoje notatki na tym telefonie. Kopie zapasowe, które już masz, otworzą się tylko starą frazą, więc zachowaj ją, dopóki przechowujesz te kopie, albo zrób potem nową kopię.</string>
+    <string name="security_recovery_replace_confirm">Otrzymaj nowe słowa</string>
+    <string name="security_recovery_replace_warning_title">Stara fraza przestaje tu działać</string>
+    <string name="security_recovery_replace_warning_body">Po potwierdzeniu tylko te słowa odblokują Twoje notatki, gdy zapomnisz PIN. Kopie zapasowe zrobione wcześniej nadal wymagają starych słów.</string>
+    <string name="security_recovery_replaced">Fraza odzyskiwania zmieniona. Zrób nową kopię zapasową, aby używać jej także do kopii.</string>
+    <string name="security_privacy_section">Prywatność</string>
+    <string name="security_keyboard_strict_title">Ścisła prywatność klawiatury</string>
+    <string name="security_keyboard_strict_desc">Prosi klawiaturę o brak podpowiedzi, brak przewidywania w chmurze i nieodczytywanie tekstu wokół kursora. Wyłącza autokorektę, a niektóre klawiatury ukrywają emoji lub wprowadzanie głosowe.</string>
+    <string name="auto_lock_title">Blokuj po wyjściu</string>
+    <string name="auto_lock_desc">Jak długo Encly pozostaje otwarty, gdy przełączasz się do innej aplikacji. Wyłączenie ekranu lub zablokowanie telefonu zawsze blokuje go od razu.</string>
+    <string name="auto_lock_immediately">Od razu</string>
+    <string name="auto_lock_15s">Po 15 sekundach</string>
+    <string name="auto_lock_30s">Po 30 sekundach</string>
+    <string name="auto_lock_1m">Po 1 minucie</string>
+    <string name="auto_lock_2m">Po 2 minutach</string>
+    <string name="security_protection_section">Jak Encly chroni twoje notatki</string>
+    <string name="security_protection_key_title">Losowy klucz 256-bitowy</string>
+    <string name="security_protection_key_desc">Cała baza jest zaszyfrowana kluczem utworzonym na tym telefonie.</string>
+    <string name="security_protection_pin_title">PIN powiązany z tym telefonem</string>
+    <string name="security_protection_pin_desc">PIN jest łączony z kluczem w bezpiecznym układzie telefonu, więc nie da się go odgadnąć nigdzie indziej.</string>
+    <string name="security_protection_slots_title">Osobny zamek dla każdego wejścia</string>
+    <string name="security_protection_slots_desc">PIN, fraza odzyskiwania i odcisk palca otwierają własne zaszyfrowane miejsca. Odcisk jest wymagany za każdym razem.</string>
+    <string name="security_danger_section">Strefa zagrożenia</string>
+    <string name="security_erase_hold">Przytrzymaj 5 sekund, aby usunąć</string>
+</resources>

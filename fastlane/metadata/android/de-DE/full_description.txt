@@ -1,0 +1,33 @@
+Encly ist eine App für verschlüsselte Notizen: private Notizen und Aufgaben, die dein Handy nie verlassen. Offline-Notizen mit PIN-Sperre, ohne Konto, ohne Cloud, ohne Werbung und ganz ohne Internetberechtigung.
+
+Die meisten Notiz-Apps wollen ein Konto und einen Server. Encly hat beides nicht. Deine verschlüsselten Notizen liegen an genau einem Ort: auf deinem Handy.
+
+PRIVAT VON ANFANG AN
+• Kein Konto, keine Registrierung, keine Analyse, keine Werbung, keine In-App-Käufe.
+• Wirklich offline: Encly fordert die Berechtigung INTERNET gar nicht an und kann deine Notizen daher nirgendwohin senden.
+• Verschlüsselte Notizen: SQLCipher-Datenbank (AES-256) unter einem zufälligen 256-Bit-Schlüssel.
+• Notizen mit Passwortschutz: eine 6-stellige PIN bei jedem Öffnen, optional Fingerabdruck oder Gesicht (nur starke Biometrie).
+• Sperrt sich selbst: Sobald Encly in den Hintergrund geht, wird die Datenbank geschlossen und der Schlüssel aus dem Speicher gelöscht.
+• Screenshots, Bildschirmaufnahmen und die Vorschau in „Letzte Apps“ sind blockiert. Die Android-Cloudsicherung ist aus.
+
+WIEDERHERSTELLUNGSPHRASE UND VERSCHLÜSSELTE BACKUPS
+• Optionale Wiederherstellungsphrase aus 12 Wörtern: PIN vergessen? Die Phrase öffnet deinen Tresor und du legst eine neue PIN fest.
+• Exportiere alle Notizen, Aufgaben und Tags in eine verschlüsselte Datei (AES-256-GCM) und speichere sie, wo du willst: in einem Ordner, auf einem USB-Stick, in deiner eigenen Cloud. Encly lädt sie nie hoch.
+• Auf einem neuen Handy mit denselben 12 Wörtern wiederherstellen oder ein Backup mit einem bestehenden Tresor zusammenführen.
+• Niemand kann deine Notizen für dich wiederherstellen, auch nicht der Entwickler. Bewahre die Wörter auf Papier auf.
+
+EIN SICHERER NOTIZBLOCK, IN DEM MAN GERN SCHREIBT
+• Block-Editor: Text, Überschriften, Zitate, Checklisten, Aufzählungen und nummerierte Listen, Links und Trennlinien.
+• Tags, Suche, Listen- oder Rasteransicht, mehrere Sortierungen.
+• Aufgaben mit Prioritäten, direkt neben deinen Notizen.
+• Papierkorb mit Wiederherstellung.
+• Fünf Designs (Papier, Wald, Ozean, Graphit, Mitternacht), heller, dunkler oder System-Modus, dynamische Farben ab Android 12 und drei Schriftsets, alle in der App enthalten.
+
+OPEN SOURCE
+• Encly ist Open Source (Apache-2.0): Jeder kann prüfen, was die App tut.
+• Läuft ohne Google Play-Dienste. Android 8.0 oder neuer.
+• 9 Sprachen: Deutsch, Englisch, Ukrainisch, Französisch, Spanisch, Italienisch, Polnisch, Portugiesisch und Niederländisch. Unter Einstellungen → Sprache wählst du eine Sprache nur für Encly.
+
+Encly: verschlüsselte Notizen, die dir gehören.
+
+Datenschutzerklärung: https://pasichdev.xyz/apps/encly/privacy-policy/

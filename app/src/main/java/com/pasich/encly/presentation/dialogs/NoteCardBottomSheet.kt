@@ -1,276 +1,218 @@
 package com.pasich.encly.presentation.dialogs
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.data.model.NoteWithTag
-import com.pasich.encly.presentation.components.custombox.ModalBoxItem
-import com.pasich.encly.presentation.components.custombox.RoundPosition
-import com.pasich.encly.presentation.components.editNote.NoteSubTitle
-import com.pasich.encly.presentation.viewmodel.SaveStatusNote
-import com.pasich.encly.ui.theme.bodyNote
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
+import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
+import com.pasich.encly.presentation.designsystem.EnclyButton
+import com.pasich.encly.presentation.designsystem.EnclyChip
+import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclySheetRow
+import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.EnclyTextField
+import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.utils.formatNoteDate
+import java.util.Date
 
 sealed class NoteAction {
     object Edit : NoteAction()
-    object Share : NoteAction()
     object Duplicate : NoteAction()
     object Delete : NoteAction()
     data class ChangeTag(val tagId: Long) : NoteAction()
     data class ChangeDescription(val description: String) : NoteAction()
 }
 
-@Composable
-fun NoteActionHeader(
-    item: NoteWithTag,
-    changeTag: (Long) -> Unit,
-) {
-    var isVisibleTitle by remember { mutableStateOf(true) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 10.dp)
-    ) {
-
-        Row {
-            AnimatedVisibility(visible = isVisibleTitle) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_copy),
-                    contentDescription = "Note Icon",
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(8.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            AnimatedVisibility(visible = isVisibleTitle) {
-                Spacer(modifier = Modifier.width(10.dp))
-            }
-            Column(
-                verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.Start
-            ) {
-                AnimatedVisibility(visible = isVisibleTitle) {
-                    Text(
-                        text = item.note.title.ifEmpty {
-                            stringResource(
-                                R.string.untitled
-                            )
-                        },
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                AnimatedVisibility(visible = isVisibleTitle) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
-                NoteSubTitle(
-                    tagsViewListen = { isVisibleTitle = !it },
-                    statusSaveNote = SaveStatusNote.OLD,
-                    note = item.note,
-                    changeTag = changeTag
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-
-    }
-}
-
+/**
+ * Long-press actions for a note. Every block sits on the sheet's gutter, so the title, the tag chips,
+ * the description and the rows share one left edge.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteCardBottomSheet(
     isVisible: Boolean,
     item: NoteWithTag,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     onAction: (NoteAction) -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    var noteDescription by remember { mutableStateOf(item.note.description) }
-    val descriptionFR = remember { FocusRequester() }
-    var isTextFieldEnabled by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+    // Per note and per opening: a dismissed sheet never reopens mid-edit.
+    var isEditingDescription by remember(item.note.id, isVisible) { mutableStateOf(false) }
 
     if (isVisible) {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface
-        ) {
-            Column {
-                NoteActionHeader(item, changeTag = { onAction(NoteAction.ChangeTag(it)) })
-                TextField(
-                    value = noteDescription,
-                    enabled = isTextFieldEnabled,
-                    onValueChange = { newValue -> noteDescription = newValue },
-                    textStyle = bodyNote.copy(
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    placeholder = {
-                        Text(
-                            text = "Опис...",
-                            style = bodyNote.copy(
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
-                        )
-                    },
-                    maxLines = 5,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp)
-                        .padding(horizontal = 16.dp)
-                        .focusRequester(descriptionFR)
-                        .onFocusChanged { focusState ->
-                            if (isTextFieldEnabled != focusState.isFocused) {
-                                isTextFieldEnabled = focusState.isFocused
-                            }
-                        },
-                    colors = TextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
-                    ),
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_thought),
-                            contentDescription = "Description",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }, trailingIcon = {
-                        if (!isTextFieldEnabled)
-                            Icon(
-                                Icons.Default.Edit,
-                                tint = MaterialTheme.colorScheme.primary,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            isTextFieldEnabled = true
-                                            delay(300)
-                                            descriptionFR.requestFocus()
-                                        }
-                                    }
-                            )
-                        else
-                            Icon(
-                                Icons.Default.Check,
-                                tint = MaterialTheme.colorScheme.primary,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable {
-                                        onAction(NoteAction.ChangeDescription(noteDescription))
-                                        isTextFieldEnabled = false
-                                    }
-                            )
-                    }
-                )
-
-                AnimatedVisibility(!isTextFieldEnabled) {
-                    LazyColumn(
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    ) {
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.edit),
-                                icon = painterResource(R.drawable.ic_edit_modal),
-                                roundPosition = RoundPosition.First,
-                                action = { onAction(NoteAction.Edit) })
-                        }
-
-
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.share),
-                                icon = painterResource(R.drawable.ic_share),
-                                roundPosition = RoundPosition.Medium,
-                                action = { onAction(NoteAction.Share) })
-                        }
-
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.duplicate),
-                                icon = painterResource(R.drawable.ic_duplicate),
-                                roundPosition = RoundPosition.Medium,
-                                action = { onAction(NoteAction.Duplicate) })
-                        }
-
-
-                        item {
-                            ModalBoxItem(
-                                title = stringResource(id = R.string.delete),
-                                icon = painterResource(R.drawable.ic_delete),
-                                roundPosition = RoundPosition.Last,
-                                confirmationRequest = MaterialTheme.colorScheme.error,
-                                action = { onAction(NoteAction.Delete) })
-                        }
-                    }
+        EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, modifier = modifier) {
+            NoteActionHeader(item)
+            TagChips(selectedTagId = item.note.tagId ?: 0L, onSelect = { onAction(NoteAction.ChangeTag(it)) })
+            EnclyGroupDivider()
+            DescriptionEditor(
+                initial = item.note.description,
+                editing = isEditingDescription,
+                onEditingChange = { isEditingDescription = it },
+                onSave = { onAction(NoteAction.ChangeDescription(it)) },
+            )
+            AnimatedVisibility(!isEditingDescription) {
+                Column {
+                    EnclySheetRow(
+                        title = stringResource(id = R.string.edit),
+                        icon = EnclyIcons.Edit,
+                        onClick = { onAction(NoteAction.Edit) },
+                    )
+                    EnclySheetRow(
+                        title = stringResource(id = R.string.duplicate),
+                        icon = EnclyIcons.Duplicate,
+                        onClick = { onAction(NoteAction.Duplicate) },
+                    )
+                    EnclySheetRow(
+                        title = stringResource(id = R.string.delete),
+                        icon = EnclyIcons.Trash,
+                        destructive = true,
+                        confirmFirst = true,
+                        onClick = { onAction(NoteAction.Delete) },
+                    )
                 }
-
-                Spacer(Modifier.height(20.dp))
-
             }
         }
     }
+}
+
+/** Title and last edit: the sheet's heading. */
+@Composable
+private fun NoteActionHeader(item: NoteWithTag) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = item.note.title.ifEmpty { stringResource(R.string.untitled) },
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = formatNoteDate(if (item.note.date == 0L) Date() else Date(item.note.date)),
+            style = EnclyTheme.typography.meta,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** "No tag" and every tag as chips; the selected one is the note's tag. */
+@Composable
+private fun TagChips(
+    selectedTagId: Long,
+    onSelect: (Long) -> Unit,
+    tagListViewModel: TagListViewModel = hiltViewModel(),
+) {
+    val state by tagListViewModel.state.collectAsState()
+    val gutter = EnclyTheme.spacing.gutter
+    // The row bleeds into the sheet's gutters so chips scroll off the edge instead of being cut at
+    // the gutter; the content padding puts the first chip back on the shared left edge.
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+        contentPadding = PaddingValues(horizontal = gutter),
+        modifier = Modifier.bleedHorizontally(gutter),
+    ) {
+        item {
+            EnclyChip(
+                label = stringResource(R.string.no_tag),
+                selected = selectedTagId == 0L,
+                onClick = { onSelect(0L) },
+            )
+        }
+        items(state.listTags, key = { it.id }) { tag ->
+            EnclyChip(label = tag.nameTag, selected = selectedTagId == tag.id, onClick = { onSelect(tag.id) })
+        }
+    }
+}
+
+/** The description as a row; tapping it turns it into a field with Cancel and Save. */
+@Composable
+private fun DescriptionEditor(
+    initial: String,
+    editing: Boolean,
+    onEditingChange: (Boolean) -> Unit,
+    onSave: (String) -> Unit,
+) {
+    if (!editing) {
+        EnclySheetRow(
+            title = initial.ifBlank { stringResource(R.string.note_description_placeholder) },
+            muted = initial.isBlank(),
+            icon = EnclyIcons.Comment,
+            onClick = { onEditingChange(true) },
+        )
+        return
+    }
+    var text by remember(initial) { mutableStateOf(initial) }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
+        EnclyTextField(
+            value = text,
+            onValueChange = { text = it },
+            label = stringResource(R.string.note_description_placeholder),
+            fieldModifier = Modifier.focusRequester(focus),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            singleLine = false,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            EnclyTextButton(text = stringResource(R.string.cancel), onClick = { onEditingChange(false) }, muted = true)
+            EnclyButton(
+                text = stringResource(R.string.save),
+                onClick = {
+                    onSave(text.trim())
+                    onEditingChange(false)
+                },
+            )
+        }
+    }
+}
+
+/** Widens the element by [bleed] on both sides, past its parent's padding. */
+private fun Modifier.bleedHorizontally(bleed: Dp) = layout { measurable, constraints ->
+    val extra = bleed.roundToPx() * 2
+    val placeable = measurable.measure(
+        constraints.copy(
+            maxWidth = constraints.maxWidth + extra,
+            minWidth =
+            constraints.maxWidth + extra,
+        ),
+    )
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
 }

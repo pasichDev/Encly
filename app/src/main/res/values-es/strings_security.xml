@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recovery_phrase_entry_label">Escribe o pega tus 12 palabras</string>
+    <string name="recovery_word_cell">Palabra %1$d de %2$d</string>
+    <string name="recovery_word_unknown">La palabra %1$d no es de una frase de recuperación. Revisa cómo está escrita.</string>
+    <string name="recovery_phrase_checksum">Estas 12 palabras no forman una frase de recuperación válida. Revisa cada palabra y su orden.</string>
+    <string name="backup_phrase_exists">Esta caja fuerte ya tiene una frase de recuperación</string>
+    <string name="backup_import_mode_title">¿Añadir a tus notas o reemplazarlas?</string>
+    <string name="backup_import_summary">Esta copia contiene %1$s, %2$s y %3$s.</string>
+    <string name="backup_merge_row_desc">Todo lo de aquí se queda y se añade lo que falta. Lo que ya está se omite.</string>
+    <string name="backup_replace_all">Reemplazar todo</string>
+    <string name="backup_replace_row_desc">Borra todas las notas, tareas y etiquetas de este teléfono y luego restaura la copia.</string>
+    <string name="backup_intro_short">Guarda todas tus notas, tareas y etiquetas en un archivo cifrado y restáuralas en cualquier teléfono.</string>
+    <string name="backup_section_export">Exportar</string>
+    <string name="backup_section_import">Importar</string>
+    <string name="security_encryption_pin_plain">Tus notas están cifradas. Tu PIN (y tu huella, si está activada) las desbloquea.</string>
+    <string name="security_encryption_seed_plain">Tus notas están cifradas. Tu PIN (y tu huella, si está activada) las desbloquea, y tu frase de recuperación si olvidas el PIN.</string>
+    <string name="security_recovery_set_desc">Creada durante la configuración. Encly nunca guarda las palabras y no puede volver a mostrarlas. ¿No las tienes? Sustituye la frase abajo.</string>
+    <string name="security_recovery_status_set">Configurada</string>
+    <string name="vault_reset_restore_hint">Después del restablecimiento puedes restaurar un archivo de copia con sus 12 palabras.</string>
+    <string name="pin_change_bar_title">Cambiar PIN</string>
+    <plurals name="backup_count_notes">
+        <item quantity="one">%d nota</item>
+        <item quantity="many">%d de notas</item>
+        <item quantity="other">%d notas</item>
+    </plurals>
+    <plurals name="backup_count_tasks">
+        <item quantity="one">%d tarea</item>
+        <item quantity="many">%d de tareas</item>
+        <item quantity="other">%d tareas</item>
+    </plurals>
+    <plurals name="backup_count_tags">
+        <item quantity="one">%d etiqueta</item>
+        <item quantity="many">%d de etiquetas</item>
+        <item quantity="other">%d etiquetas</item>
+    </plurals>
+    <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
+    <string name="lock_pin_key_lost">Tu PIN ya no puede desbloquear Encly en este teléfono: su clave de hardware se ha restablecido. Usa tu frase de recuperación (o tu huella) y luego establece un PIN nuevo.</string>
+    <plurals name="lock_lockout_minutes">
+        <item quantity="one">Demasiados intentos. Vuelve a intentarlo en %d minuto</item>
+        <item quantity="many">Demasiados intentos. Vuelve a intentarlo en %d minutos</item>
+        <item quantity="other">Demasiados intentos. Vuelve a intentarlo en %d minutos</item>
+    </plurals>
+    <plurals name="lock_lockout_hours">
+        <item quantity="one">Demasiados intentos. Vuelve a intentarlo en %d hora</item>
+        <item quantity="many">Demasiados intentos. Vuelve a intentarlo en %d horas</item>
+        <item quantity="other">Demasiados intentos. Vuelve a intentarlo en %d horas</item>
+    </plurals>
+    <string name="security_recovery_replace_title">Reemplazar la frase de recuperación</string>
+    <string name="security_recovery_replace_desc">Obtén 12 palabras nuevas. Las copias hechas antes siguen necesitando las antiguas.</string>
+    <string name="security_recovery_replace_confirm_title">¿Reemplazar la frase de recuperación?</string>
+    <string name="security_recovery_replace_confirm_body">Obtendrás 12 palabras nuevas. La frase antigua deja de desbloquear tus notas en este teléfono. Las copias de seguridad que ya hiciste solo se abren con la frase antigua, así que guárdala mientras conserves esas copias, o haz una copia nueva después.</string>
+    <string name="security_recovery_replace_confirm">Obtener palabras nuevas</string>
+    <string name="security_recovery_replace_warning_title">Tu frase antigua deja de funcionar aquí</string>
+    <string name="security_recovery_replace_warning_body">Cuando confirmes, solo estas palabras desbloquearán tus notas si olvidas el PIN. Las copias hechas antes siguen necesitando las palabras antiguas.</string>
+    <string name="security_recovery_replaced">Frase de recuperación reemplazada. Haz una copia de seguridad nueva para usarla también en las copias.</string>
+    <string name="security_privacy_section">Privacidad</string>
+    <string name="security_keyboard_strict_title">Privacidad estricta del teclado</string>
+    <string name="security_keyboard_strict_desc">Pide al teclado que no muestre sugerencias, no use predicción en la nube y no lea el texto junto al cursor. Desactiva la autocorrección, y algunos teclados ocultan los emojis o la entrada por voz.</string>
+    <string name="auto_lock_title">Bloquear al salir</string>
+    <string name="auto_lock_desc">Cuánto tiempo sigue abierto Encly cuando cambias a otra app. Apagar la pantalla o bloquear el teléfono siempre lo bloquea al momento.</string>
+    <string name="auto_lock_immediately">Inmediatamente</string>
+    <string name="auto_lock_15s">Tras 15 segundos</string>
+    <string name="auto_lock_30s">Tras 30 segundos</string>
+    <string name="auto_lock_1m">Tras 1 minuto</string>
+    <string name="auto_lock_2m">Tras 2 minutos</string>
+    <string name="security_protection_section">Cómo protege Encly tus notas</string>
+    <string name="security_protection_key_title">Una clave aleatoria de 256 bits</string>
+    <string name="security_protection_key_desc">Toda la base de datos está cifrada con una clave creada en este teléfono.</string>
+    <string name="security_protection_pin_title">Un PIN ligado a este teléfono</string>
+    <string name="security_protection_pin_desc">Tu PIN se combina con una clave del chip seguro del teléfono, así que no se puede adivinar en ningún otro sitio.</string>
+    <string name="security_protection_slots_title">Una cerradura para cada acceso</string>
+    <string name="security_protection_slots_desc">El PIN, la frase de recuperación y la huella abren cada uno su propio espacio cifrado. La huella se pide siempre.</string>
+    <string name="security_danger_section">Zona de peligro</string>
+    <string name="security_erase_hold">Mantén 5 segundos para borrar</string>
+</resources>

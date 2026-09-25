@@ -1,0 +1,410 @@
+package com.pasich.encly.ui.theme
+
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import com.pasich.encly.domain.model.ThemePalette
+
+// The five Encly palettes (design spec §1.2, Appendix A). Every role of every scheme is set, so no
+// screen ever falls back to a Material baseline colour. Screens read MaterialTheme.colorScheme
+// roles only: colour literals belong in ui/theme and nowhere else (NoColorLiteralsTest).
+
+internal val paperLightScheme = lightColorScheme(
+    primary = Color(color = 0xFF9A4A1F),
+    onPrimary = Color(color = 0xFFFFFFFF),
+    primaryContainer = Color(color = 0xFFF6DCC8),
+    onPrimaryContainer = Color(color = 0xFF3A1705),
+    inversePrimary = Color(color = 0xFFE8A57C),
+    secondary = Color(color = 0xFF765749),
+    onSecondary = Color(color = 0xFFFFFFFF),
+    secondaryContainer = Color(color = 0xFFFFDBCC),
+    onSecondaryContainer = Color(color = 0xFF5C4033),
+    tertiary = Color(color = 0xFF665F31),
+    onTertiary = Color(color = 0xFFFFFFFF),
+    tertiaryContainer = Color(color = 0xFFEDE4A9),
+    onTertiaryContainer = Color(color = 0xFF4D471C),
+    background = Color(color = 0xFFF7F3EA),
+    onBackground = Color(color = 0xFF1F1B16),
+    surface = Color(color = 0xFFF7F3EA),
+    onSurface = Color(color = 0xFF1F1B16),
+    surfaceVariant = Color(color = 0xFFDFD5C1),
+    onSurfaceVariant = Color(color = 0xFF5A5247),
+    surfaceTint = Color(color = 0xFF9A4A1F),
+    inverseSurface = Color(color = 0xFF302C27),
+    inverseOnSurface = Color(color = 0xFFF2EDE2),
+    error = Color(color = 0xFFB3261E),
+    onError = Color(color = 0xFFFFFFFF),
+    errorContainer = Color(color = 0xFFF9DEDC),
+    onErrorContainer = Color(color = 0xFF410E0B),
+    outline = Color(color = 0xFF8A8174),
+    outlineVariant = Color(color = 0xFFD8CFBE),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFFF7F3EA),
+    surfaceContainer = Color(color = 0xFFEFE9DC),
+    surfaceContainerHigh = Color(color = 0xFFE6DECD),
+    surfaceContainerHighest = Color(color = 0xFFDFD5C1),
+    surfaceContainerLow = Color(color = 0xFFF3EEE3),
+    surfaceContainerLowest = Color(color = 0xFFFCFAF7),
+    surfaceDim = Color(color = 0xFFD9D5CC),
+)
+
+internal val paperDarkScheme = darkColorScheme(
+    primary = Color(color = 0xFFE8A57C),
+    onPrimary = Color(color = 0xFF3A1A06),
+    primaryContainer = Color(color = 0xFF5E2E12),
+    onPrimaryContainer = Color(color = 0xFFFFDCC7),
+    inversePrimary = Color(color = 0xFF9A4A1F),
+    secondary = Color(color = 0xFFE6BEAD),
+    onSecondary = Color(color = 0xFF442A1E),
+    secondaryContainer = Color(color = 0xFF5C4033),
+    onSecondaryContainer = Color(color = 0xFFFFDBCC),
+    tertiary = Color(color = 0xFFD1C88F),
+    onTertiary = Color(color = 0xFF363107),
+    tertiaryContainer = Color(color = 0xFF4D471C),
+    onTertiaryContainer = Color(color = 0xFFEDE4A9),
+    background = Color(color = 0xFF1C1915),
+    onBackground = Color(color = 0xFFEDE6D9),
+    surface = Color(color = 0xFF1C1915),
+    onSurface = Color(color = 0xFFEDE6D9),
+    surfaceVariant = Color(color = 0xFF3E382F),
+    onSurfaceVariant = Color(color = 0xFFBDB3A3),
+    surfaceTint = Color(color = 0xFFE8A57C),
+    inverseSurface = Color(color = 0xFFEDE6D9),
+    inverseOnSurface = Color(color = 0xFF3B352D),
+    error = Color(color = 0xFFF2B8B5),
+    onError = Color(color = 0xFF601410),
+    errorContainer = Color(color = 0xFF8C1D18),
+    onErrorContainer = Color(color = 0xFFF9DEDC),
+    outline = Color(color = 0xFF958B7D),
+    outlineVariant = Color(color = 0xFF3D372F),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFF35322D),
+    surfaceContainer = Color(color = 0xFF26221D),
+    surfaceContainerHigh = Color(color = 0xFF322D26),
+    surfaceContainerHighest = Color(color = 0xFF3E382F),
+    surfaceContainerLow = Color(color = 0xFF221F1A),
+    surfaceContainerLowest = Color(color = 0xFF12100E),
+    surfaceDim = Color(color = 0xFF1C1915),
+)
+
+internal val forestLightScheme = lightColorScheme(
+    primary = Color(color = 0xFF4C662B),
+    onPrimary = Color(color = 0xFFFFFFFF),
+    primaryContainer = Color(color = 0xFFCDEDA3),
+    onPrimaryContainer = Color(color = 0xFF102000),
+    inversePrimary = Color(color = 0xFFB1D18A),
+    secondary = Color(color = 0xFF586249),
+    onSecondary = Color(color = 0xFFFFFFFF),
+    secondaryContainer = Color(color = 0xFFDCE7C8),
+    onSecondaryContainer = Color(color = 0xFF151E0B),
+    tertiary = Color(color = 0xFF386663),
+    onTertiary = Color(color = 0xFFFFFFFF),
+    tertiaryContainer = Color(color = 0xFFBCECE7),
+    onTertiaryContainer = Color(color = 0xFF00201E),
+    background = Color(color = 0xFFF9FAEF),
+    onBackground = Color(color = 0xFF1A1C16),
+    surface = Color(color = 0xFFF9FAEF),
+    onSurface = Color(color = 0xFF1A1C16),
+    surfaceVariant = Color(color = 0xFFD8D9CF),
+    onSurfaceVariant = Color(color = 0xFF44483D),
+    surfaceTint = Color(color = 0xFF4C662B),
+    inverseSurface = Color(color = 0xFF2F312A),
+    inverseOnSurface = Color(color = 0xFFF1F2E6),
+    error = Color(color = 0xFFBA1A1A),
+    onError = Color(color = 0xFFFFFFFF),
+    errorContainer = Color(color = 0xFFFFDAD6),
+    onErrorContainer = Color(color = 0xFF410002),
+    outline = Color(color = 0xFF75796C),
+    outlineVariant = Color(color = 0xFFC5C8BA),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFFF9FAEF),
+    surfaceContainer = Color(color = 0xFFEEEFE3),
+    surfaceContainerHigh = Color(color = 0xFFE2E3D8),
+    surfaceContainerHighest = Color(color = 0xFFD8D9CF),
+    surfaceContainerLow = Color(color = 0xFFF3F4E9),
+    surfaceContainerLowest = Color(color = 0xFFFFFFFF),
+    surfaceDim = Color(color = 0xFFDADBD0),
+)
+
+internal val forestDarkScheme = darkColorScheme(
+    primary = Color(color = 0xFFB1D18A),
+    onPrimary = Color(color = 0xFF1F3701),
+    primaryContainer = Color(color = 0xFF354E16),
+    onPrimaryContainer = Color(color = 0xFFCDEDA3),
+    inversePrimary = Color(color = 0xFF4C662B),
+    secondary = Color(color = 0xFFBFCBAD),
+    onSecondary = Color(color = 0xFF2A331E),
+    secondaryContainer = Color(color = 0xFF404A33),
+    onSecondaryContainer = Color(color = 0xFFDCE7C8),
+    tertiary = Color(color = 0xFFA0D0CB),
+    onTertiary = Color(color = 0xFF003735),
+    tertiaryContainer = Color(color = 0xFF1F4E4B),
+    onTertiaryContainer = Color(color = 0xFFBCECE7),
+    background = Color(color = 0xFF12140E),
+    onBackground = Color(color = 0xFFE2E3D8),
+    surface = Color(color = 0xFF12140E),
+    onSurface = Color(color = 0xFFE2E3D8),
+    surfaceVariant = Color(color = 0xFF32362E),
+    onSurfaceVariant = Color(color = 0xFFC5C8BA),
+    surfaceTint = Color(color = 0xFFB1D18A),
+    inverseSurface = Color(color = 0xFFE2E3D8),
+    inverseOnSurface = Color(color = 0xFF2F312A),
+    error = Color(color = 0xFFFFB4AB),
+    onError = Color(color = 0xFF690005),
+    errorContainer = Color(color = 0xFF93000A),
+    onErrorContainer = Color(color = 0xFFFFDAD6),
+    outline = Color(color = 0xFF8F9285),
+    outlineVariant = Color(color = 0xFF3A3E33),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFF383A32),
+    surfaceContainer = Color(color = 0xFF1E201A),
+    surfaceContainerHigh = Color(color = 0xFF282B24),
+    surfaceContainerHighest = Color(color = 0xFF33362E),
+    surfaceContainerLow = Color(color = 0xFF1A1C16),
+    surfaceContainerLowest = Color(color = 0xFF0C0F09),
+    surfaceDim = Color(color = 0xFF12140E),
+)
+
+internal val oceanLightScheme = lightColorScheme(
+    primary = Color(color = 0xFF2B5F8A),
+    onPrimary = Color(color = 0xFFFFFFFF),
+    primaryContainer = Color(color = 0xFFCFE4F7),
+    onPrimaryContainer = Color(color = 0xFF0A2A45),
+    inversePrimary = Color(color = 0xFF9CC9F0),
+    secondary = Color(color = 0xFF52606F),
+    onSecondary = Color(color = 0xFFFFFFFF),
+    secondaryContainer = Color(color = 0xFFD5E4F7),
+    onSecondaryContainer = Color(color = 0xFF3A4857),
+    tertiary = Color(color = 0xFF68577A),
+    onTertiary = Color(color = 0xFFFFFFFF),
+    tertiaryContainer = Color(color = 0xFFEFDBFF),
+    onTertiaryContainer = Color(color = 0xFF504061),
+    background = Color(color = 0xFFF5F8FB),
+    onBackground = Color(color = 0xFF151C23),
+    surface = Color(color = 0xFFF5F8FB),
+    onSurface = Color(color = 0xFF151C23),
+    surfaceVariant = Color(color = 0xFFD2DCE6),
+    onSurfaceVariant = Color(color = 0xFF43505C),
+    surfaceTint = Color(color = 0xFF2B5F8A),
+    inverseSurface = Color(color = 0xFF272E34),
+    inverseOnSurface = Color(color = 0xFFEDF2F7),
+    error = Color(color = 0xFFB3261E),
+    onError = Color(color = 0xFFFFFFFF),
+    errorContainer = Color(color = 0xFFF9DEDC),
+    onErrorContainer = Color(color = 0xFF410E0B),
+    outline = Color(color = 0xFF717D89),
+    outlineVariant = Color(color = 0xFFC1CAD3),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFFF5F8FB),
+    surfaceContainer = Color(color = 0xFFE8EEF4),
+    surfaceContainerHigh = Color(color = 0xFFDCE4EC),
+    surfaceContainerHighest = Color(color = 0xFFD2DCE6),
+    surfaceContainerLow = Color(color = 0xFFEEF3F8),
+    surfaceContainerLowest = Color(color = 0xFFFFFFFF),
+    surfaceDim = Color(color = 0xFFD6D9DD),
+)
+
+internal val oceanDarkScheme = darkColorScheme(
+    primary = Color(color = 0xFF9CC9F0),
+    onPrimary = Color(color = 0xFF0A3050),
+    primaryContainer = Color(color = 0xFF1F4868),
+    onPrimaryContainer = Color(color = 0xFFCFE4F7),
+    inversePrimary = Color(color = 0xFF2B5F8A),
+    secondary = Color(color = 0xFFB9C8DA),
+    onSecondary = Color(color = 0xFF243240),
+    secondaryContainer = Color(color = 0xFF3A4857),
+    onSecondaryContainer = Color(color = 0xFFD5E4F7),
+    tertiary = Color(color = 0xFFD3BFE6),
+    onTertiary = Color(color = 0xFF392A49),
+    tertiaryContainer = Color(color = 0xFF504061),
+    onTertiaryContainer = Color(color = 0xFFEFDBFF),
+    background = Color(color = 0xFF0F151B),
+    onBackground = Color(color = 0xFFDEE5EC),
+    surface = Color(color = 0xFF0F151B),
+    onSurface = Color(color = 0xFFDEE5EC),
+    surfaceVariant = Color(color = 0xFF2E3842),
+    onSurfaceVariant = Color(color = 0xFFB6C2CD),
+    surfaceTint = Color(color = 0xFF9CC9F0),
+    inverseSurface = Color(color = 0xFFDEE5EC),
+    inverseOnSurface = Color(color = 0xFF2C3741),
+    error = Color(color = 0xFFF2B8B5),
+    onError = Color(color = 0xFF601410),
+    errorContainer = Color(color = 0xFF8C1D18),
+    onErrorContainer = Color(color = 0xFFF9DEDC),
+    outline = Color(color = 0xFF87929D),
+    outlineVariant = Color(color = 0xFF303B45),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFF282E34),
+    surfaceContainer = Color(color = 0xFF1A222A),
+    surfaceContainerHigh = Color(color = 0xFF242D36),
+    surfaceContainerHighest = Color(color = 0xFF2E3842),
+    surfaceContainerLow = Color(color = 0xFF161D25),
+    surfaceContainerLowest = Color(color = 0xFF0A0E12),
+    surfaceDim = Color(color = 0xFF0F151B),
+)
+
+internal val graphiteLightScheme = lightColorScheme(
+    primary = Color(color = 0xFF303034),
+    onPrimary = Color(color = 0xFFFFFFFF),
+    primaryContainer = Color(color = 0xFFDEDEE2),
+    onPrimaryContainer = Color(color = 0xFF18181A),
+    inversePrimary = Color(color = 0xFFE4E4E7),
+    secondary = Color(color = 0xFF5E5E5E),
+    onSecondary = Color(color = 0xFFFFFFFF),
+    secondaryContainer = Color(color = 0xFFD4D4D4),
+    onSecondaryContainer = Color(color = 0xFF1B1B1B),
+    tertiary = Color(color = 0xFF3B3B3B),
+    onTertiary = Color(color = 0xFFE2E2E2),
+    tertiaryContainer = Color(color = 0xFF747474),
+    onTertiaryContainer = Color(color = 0xFFFFFFFF),
+    background = Color(color = 0xFFF6F6F5),
+    onBackground = Color(color = 0xFF18181A),
+    surface = Color(color = 0xFFF6F6F5),
+    onSurface = Color(color = 0xFF18181A),
+    surfaceVariant = Color(color = 0xFFD7D7D6),
+    onSurfaceVariant = Color(color = 0xFF4A4A4F),
+    surfaceTint = Color(color = 0xFF303034),
+    inverseSurface = Color(color = 0xFF2A2A2C),
+    inverseOnSurface = Color(color = 0xFFEFEFEE),
+    error = Color(color = 0xFFB3261E),
+    onError = Color(color = 0xFFFFFFFF),
+    errorContainer = Color(color = 0xFFF9DEDC),
+    onErrorContainer = Color(color = 0xFF410E0B),
+    outline = Color(color = 0xFF7A7A80),
+    outlineVariant = Color(color = 0xFFCACACD),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFFF6F6F5),
+    surfaceContainer = Color(color = 0xFFEBEBEA),
+    surfaceContainerHigh = Color(color = 0xFFE0E0DF),
+    surfaceContainerHighest = Color(color = 0xFFD7D7D6),
+    surfaceContainerLow = Color(color = 0xFFF0F0F0),
+    surfaceContainerLowest = Color(color = 0xFFFFFFFF),
+    surfaceDim = Color(color = 0xFFD7D7D6),
+)
+
+internal val graphiteDarkScheme = darkColorScheme(
+    primary = Color(color = 0xFFE4E4E7),
+    onPrimary = Color(color = 0xFF1B1B1E),
+    primaryContainer = Color(color = 0xFF3A3A40),
+    onPrimaryContainer = Color(color = 0xFFF0F0F2),
+    inversePrimary = Color(color = 0xFF303034),
+    secondary = Color(color = 0xFFC6C6C6),
+    onSecondary = Color(color = 0xFF1B1B1B),
+    secondaryContainer = Color(color = 0xFF474747),
+    onSecondaryContainer = Color(color = 0xFFE2E2E2),
+    tertiary = Color(color = 0xFFE2E2E2),
+    onTertiary = Color(color = 0xFF1B1B1B),
+    tertiaryContainer = Color(color = 0xFF919191),
+    onTertiaryContainer = Color(color = 0xFF000000),
+    background = Color(color = 0xFF151517),
+    onBackground = Color(color = 0xFFE6E6E8),
+    surface = Color(color = 0xFF151517),
+    onSurface = Color(color = 0xFFE6E6E8),
+    surfaceVariant = Color(color = 0xFF35353A),
+    onSurfaceVariant = Color(color = 0xFFB4B4BA),
+    surfaceTint = Color(color = 0xFFE4E4E7),
+    inverseSurface = Color(color = 0xFFE6E6E8),
+    inverseOnSurface = Color(color = 0xFF323237),
+    error = Color(color = 0xFFF2B8B5),
+    onError = Color(color = 0xFF601410),
+    errorContainer = Color(color = 0xFF8C1D18),
+    onErrorContainer = Color(color = 0xFFF9DEDC),
+    outline = Color(color = 0xFF8A8A90),
+    outlineVariant = Color(color = 0xFF36363B),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFF2E2E30),
+    surfaceContainer = Color(color = 0xFF1F1F22),
+    surfaceContainerHigh = Color(color = 0xFF2A2A2E),
+    surfaceContainerHighest = Color(color = 0xFF35353A),
+    surfaceContainerLow = Color(color = 0xFF1C1C1E),
+    surfaceContainerLowest = Color(color = 0xFF0E0E0F),
+    surfaceDim = Color(color = 0xFF151517),
+)
+
+internal val midnightScheme = darkColorScheme(
+    primary = Color(color = 0xFFF2B45C),
+    onPrimary = Color(color = 0xFF2A1800),
+    primaryContainer = Color(color = 0xFF3D2A0E),
+    onPrimaryContainer = Color(color = 0xFFFFDDB0),
+    inversePrimary = Color(color = 0xFF805611),
+    secondary = Color(color = 0xFFDEC2A1),
+    onSecondary = Color(color = 0xFF3E2D16),
+    secondaryContainer = Color(color = 0xFF56432B),
+    onSecondaryContainer = Color(color = 0xFFFBDEBC),
+    tertiary = Color(color = 0xFFB9CDA0),
+    onTertiary = Color(color = 0xFF253515),
+    tertiaryContainer = Color(color = 0xFF3B4C29),
+    onTertiaryContainer = Color(color = 0xFFD4EABB),
+    background = Color(color = 0xFF000000),
+    onBackground = Color(color = 0xFFEAE8E3),
+    surface = Color(color = 0xFF000000),
+    onSurface = Color(color = 0xFFEAE8E3),
+    surfaceVariant = Color(color = 0xFF222226),
+    onSurfaceVariant = Color(color = 0xFFA9A6A0),
+    surfaceTint = Color(color = 0xFFF2B45C),
+    inverseSurface = Color(color = 0xFFEAE8E3),
+    inverseOnSurface = Color(color = 0xFF2A2A2E),
+    error = Color(color = 0xFFFFB4AB),
+    onError = Color(color = 0xFF690005),
+    errorContainer = Color(color = 0xFF93000A),
+    onErrorContainer = Color(color = 0xFFFFDAD6),
+    outline = Color(color = 0xFF6E6C68),
+    outlineVariant = Color(color = 0xFF26262A),
+    scrim = Color(color = 0xFF000000),
+    surfaceBright = Color(color = 0xFF1C1C1B),
+    surfaceContainer = Color(color = 0xFF0E0E10),
+    surfaceContainerHigh = Color(color = 0xFF18181B),
+    surfaceContainerHighest = Color(color = 0xFF222226),
+    surfaceContainerLow = Color(color = 0xFF09090A),
+    surfaceContainerLowest = Color(color = 0xFF000000),
+    surfaceDim = Color(color = 0xFF000000),
+)
+
+// The one colour that is not a Material role: the FAB and bottom-sheet shadow (spec §1.4).
+internal val paperLightShadow = Color(color = 0x2E3C2814)
+internal val forestLightShadow = Color(color = 0x2E1E2814)
+internal val oceanLightShadow = Color(color = 0x2E14283C)
+internal val graphiteLightShadow = Color(color = 0x29000000)
+internal val darkShadow = Color(color = 0x80000000)
+internal val midnightShadow = Color(color = 0x99000000)
+
+/** Pure black, forced onto the background surfaces of Midnight when dynamic colour is on. */
+internal val trueBlack = Color(color = 0xFF000000)
+
+/** The theme colours that are not Material roles. */
+@Immutable
+data class EnclyColors(val shadow: Color)
+
+val LocalEnclyColors = staticCompositionLocalOf { EnclyColors(shadow = paperLightShadow) }
+
+/** The scheme of [palette] in the resolved mode. Midnight has one scheme, always dark. */
+fun colorSchemeFor(palette: ThemePalette, dark: Boolean): ColorScheme = when (palette) {
+    ThemePalette.PAPER -> if (dark) paperDarkScheme else paperLightScheme
+    ThemePalette.FOREST -> if (dark) forestDarkScheme else forestLightScheme
+    ThemePalette.OCEAN -> if (dark) oceanDarkScheme else oceanLightScheme
+    ThemePalette.GRAPHITE -> if (dark) graphiteDarkScheme else graphiteLightScheme
+    ThemePalette.MIDNIGHT -> midnightScheme
+}
+
+/** The FAB and sheet shadow colour of [palette] in the resolved mode. */
+fun enclyColorsFor(palette: ThemePalette, dark: Boolean): EnclyColors = EnclyColors(
+    shadow = when {
+        palette == ThemePalette.MIDNIGHT -> midnightShadow
+        dark -> darkShadow
+        palette == ThemePalette.PAPER -> paperLightShadow
+        palette == ThemePalette.FOREST -> forestLightShadow
+        palette == ThemePalette.OCEAN -> oceanLightShadow
+        else -> graphiteLightShadow
+    },
+)
+
+/** Midnight keeps true black surfaces even when the accent comes from the wallpaper. */
+fun ColorScheme.withTrueBlackSurfaces(): ColorScheme = copy(
+    surface = trueBlack,
+    background = trueBlack,
+    surfaceDim = trueBlack,
+    surfaceContainerLowest = trueBlack,
+)

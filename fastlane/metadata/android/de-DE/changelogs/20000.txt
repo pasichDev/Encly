@@ -1,0 +1,7 @@
+Encly 2.0: von Grund auf neu gebaut, mit einem neuen verschlüsselten Tresor.
+• Verschlüsselte Notizen und Aufgaben, nur auf deinem Handy.
+• Sperre mit 6-stelliger PIN, optional per Fingerabdruck oder Gesicht.
+• Optionale Wiederherstellungsphrase aus 12 Wörtern.
+• Verschlüsseltes Backup als Datei, die du selbst speicherst.
+• Fünf Designs, drei Schriften, neun Sprachen.
+• Kein Konto, keine Werbung, keine Internetberechtigung.

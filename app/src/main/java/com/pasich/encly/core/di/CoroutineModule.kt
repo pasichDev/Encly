@@ -4,6 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,6 +22,17 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.BINARY)
 annotation class ApplicationScope
 
+/**
+ * Qualifier for the dispatcher that blocking I/O (Room/SQLCipher) runs on.
+ *
+ * Injected instead of referencing [Dispatchers.IO] directly so unit tests can run that work on
+ * their test dispatcher: a real I/O thread outlives the test and resumes onto a
+ * Dispatchers.Main that was already reset.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class IoDispatcher
+
 /** Provides coroutine infrastructure that lives for the whole application process. */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -34,6 +46,9 @@ object CoroutineModule {
     @Provides
     @Singleton
     @ApplicationScope
-    fun provideApplicationScope(): CoroutineScope =
-        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    @Provides
+    @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 }

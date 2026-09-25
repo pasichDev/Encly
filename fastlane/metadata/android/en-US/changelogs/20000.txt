@@ -1,0 +1,7 @@
+Encly 2.0: rebuilt from the ground up around a new encrypted vault.
+• Encrypted notes and tasks, stored only on your phone.
+• 6-digit PIN lock, optional fingerprint or face unlock.
+• Optional 12-word recovery phrase.
+• Encrypted backup file you save where you want, restored with your 12 words.
+• Five themes, three fonts, nine languages.
+• No account, no ads, no internet permission.

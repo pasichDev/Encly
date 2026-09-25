@@ -1,0 +1,7 @@
+Encly 2.0: ricostruita da zero attorno a una nuova cassaforte criptata.
+• Note e attività criptate, salvate solo sul tuo telefono.
+• Blocco con PIN a 6 cifre, impronta o volto facoltativi.
+• Frase di recupero di 12 parole facoltativa.
+• Backup criptato in un file che salvi dove vuoi.
+• Cinque temi, tre font, nove lingue.
+• Niente account, niente pubblicità, nessun permesso internet.

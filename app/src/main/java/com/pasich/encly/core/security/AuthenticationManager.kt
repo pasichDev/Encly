@@ -1,259 +1,278 @@
 package com.pasich.encly.core.security
 
-import android.content.SharedPreferences
-import android.util.Base64
-import androidx.core.content.edit
-import com.pasich.encly.core.security.wrapper.IntWrapper
-import com.pasich.encly.core.security.wrapper.StringWrapper
-import java.security.MessageDigest
+import java.security.GeneralSecurityException
 import java.security.SecureRandom
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
+const val PIN_LENGTH = 6
+
 enum class AuthType {
-    NONE, PIN, SEED_PHRASE
+    NONE,
+    PIN,
+    SEED_PHRASE,
 }
 
 enum class AuthStrategy {
-    NONE, PIN, PIN_BIOMETRIC, SEED_PHRASE, SEED_PHRASE_BIOMETRIC, RECOVERY_DATA
+    NONE,
+    PIN,
+    PIN_BIOMETRIC,
+    SEED_PHRASE,
+    SEED_PHRASE_BIOMETRIC,
+    RECOVERY_DATA,
+}
+
+/** The outcome of one PIN attempt. */
+sealed interface PinUnlock {
+    /** The PIN opened the slot. [dek] belongs to the caller, who must wipe it. */
+    class Success(val dek: ByteArray) : PinUnlock
+
+    /** A wrong (or malformed) PIN; the attempt was counted. */
+    data object WrongPin : PinUnlock
+
+    /** A lockout is running; nothing was checked or counted. */
+    data object LockedOut : PinUnlock
+
+    /**
+     * The device-bound PIN key is gone for good (see [PinHardwareFactor]): this PIN slot can
+     * never open again on this device. The recovery phrase (or fingerprint) still unlocks.
+     */
+    data object KeyLost : PinUnlock
+
+    /** The attempt could not be made (Keystore or storage failure); nothing was counted. */
+    data object Failed : PinUnlock
 }
 
 /**
- * Handles local PIN and biometric authentication settings.
+ * Encly v3 PIN unlock slot.
  *
- * The PIN is stored as a PBKDF2-HMAC-SHA256 hash with a per-PIN random salt, then
- * encrypted under the seed-derived AUTH key. Repeated failures trigger a progressive
- * lockout. This class governs the auth strategy ([AuthStrategy]); it does not by
- * itself release any data-encryption key.
+ * There is no stored PIN hash. The PIN derives a KEK that must authenticate and decrypt the
+ * random database DEK with AES-256-GCM:
+ *
+ *     hw  = HMAC-SHA256_keystore(salt ‖ pin)             (device-bound, see PinHardwareFactor)
+ *     sw  = PBKDF2-HMAC-SHA256(pin, salt, 600 000)
+ *     kek = HKDF-SHA256(ikm = sw ‖ hw, salt = salt, info = "encly/pin/kek/v3")
+ *
+ * `hw` means a copied slot is useless off the device: every guess needs this phone's secure
+ * hardware, which also enforces "device unlocked" on API 28+. PBKDF2 is kept at full cost as
+ * defence in depth for the case where the Keystore key itself were ever extracted.
+ *
+ * Failed attempts are counted durably *before* the KDF runs, under one lock, so killing the
+ * app mid-check or racing two checks never gets a free guess. The lockout runs on
+ * [LockoutClock.elapsedRealtime], not the wall clock, and escalates up to [MAX_LOCKOUT_MS].
  */
 @Singleton
+@Suppress("TooManyFunctions") // The complete PIN slot and lockout lifecycle in one place.
 class AuthenticationManager @Inject constructor(
-    private val secureStoragePrefs: SharedPreferences,
-    private val seedPhraseManager: SeedPhraseManager
+    private val store: VaultStore,
+    private val factor: PinHardwareFactor,
+    private val clock: LockoutClock,
 ) {
-    companion object {
-        private const val PIN_CODE_KEY = "code_auth"
-        private const val AUTH_TYPE_KEY = "auth_type"
-        private const val BIOMETRIC_ENABLED_KEY = "biometric_enabled"
-        private const val AES_MODE = "AES/CBC/PKCS7Padding"
-        private const val IV_SIZE = 16 // 128 bits
+    private val attemptLock = Any()
 
-        // PIN hardening
-        private const val PIN_ATTEMPTS_KEY = "pin_attempts"
-        private const val PIN_LOCKOUT_UNTIL_KEY = "pin_lockout_until"
-        private const val MAX_ATTEMPTS = 5
-        private const val PIN_SALT_SIZE = 16
-        private const val PBKDF2_ITERATIONS = 600_000
-    }
-
-    /**
-     * Enables PIN authentication by storing the PIN hash in secure storage.
-     *
-     * @param code The PIN code entered by the user, as a string.
-     */
-    fun activatePinAuth(code: String): Boolean {
-        if (getAuthType() == AuthType.PIN) {
+    /** Creates (or replaces) the PIN slot around [dek]. [pin] stays the caller's to wipe. */
+    @Suppress("ReturnCount") // Validation gates fail closed before any key is touched.
+    fun configurePin(pin: CharArray, dek: ByteArray): Boolean {
+        if (!isWellFormed(pin) || dek.size != DEK_LENGTH) return false
+        val salt = ByteArray(PIN_SALT_SIZE).also { SecureRandom().nextBytes(it) }
+        val kek = try {
+            factor.ensureKey()
+            try {
+                derivePinKek(pin, salt)
+            } catch (e: PinFactorException) {
+                // A key the system invalidated can be replaced: the PIN it served is lost anyway.
+                if (!e.lost) throw e
+                factor.reset()
+                derivePinKek(pin, salt)
+            }
+        } catch (_: PinFactorException) {
+            SensitiveDataCleaner.clear(salt)
             return false
         }
-
-        val pinChars = code.toCharArray()
         return try {
-            // Per-PIN random salt + slow KDF (PBKDF2-HMAC-SHA256, 600k) instead of
-            // unsalted SHA-256. Format: base64(salt):base64(hash).
-            val salt = ByteArray(PIN_SALT_SIZE).also { SecureRandom().nextBytes(it) }
-            val hash = derivePinHash(pinChars, salt)
-            val stored = Base64.encodeToString(salt, Base64.NO_WRAP) + ":" +
-                    Base64.encodeToString(hash, Base64.NO_WRAP)
-            SensitiveDataCleaner.clear(hash)
-
-            // Wrap + encrypt with the seed-derived AES key
-            val encryptedPin = encryptData(StringWrapper.wrapMasterKey(stored))
-
-            secureStoragePrefs.edit {
-                putString(PIN_CODE_KEY, encryptedPin)
-                putInt(AUTH_TYPE_KEY, IntWrapper.wrap(AuthType.PIN.ordinal))
-                remove(PIN_ATTEMPTS_KEY)
-                remove(PIN_LOCKOUT_UNTIL_KEY)
+            val slot = sealSlot(dek, kek, salt)
+            try {
+                store.edit {
+                    putBytes(PIN_SLOT_KEY, slot)
+                    putInt(AUTH_TYPE_KEY, AuthType.PIN.ordinal)
+                    removePrefix(LOCKOUT_PREFIX)
+                }
+            } finally {
+                SensitiveDataCleaner.clear(slot)
             }
-            true
-        } catch (_: Exception) {
+        } catch (_: GeneralSecurityException) {
             false
         } finally {
-            SensitiveDataCleaner.clear(pinChars)
+            SensitiveDataCleaner.clear(salt)
+            SensitiveDataCleaner.clear(kek)
         }
     }
 
     /**
-     * Verifies the entered PIN by comparing its hash against the stored one.
-     *
-     * @param inputCode The PIN code entered by the user to verify.
-     * @return true if the PIN codes match, false otherwise.
+     * One PIN attempt. [pin] stays the caller's to wipe. On [PinUnlock.Success] the caller
+     * owns the DEK and must wipe it.
      */
-    fun verifyPinAuth(inputCode: String): Boolean {
-        // Rate-limit: while locked out, do not even check
-        if (remainingLockoutMillis() > 0) return false
+    @Suppress("ReturnCount") // Fail-closed gates: lockout, missing slot, unrecorded attempt.
+    fun unlockWithPin(pin: CharArray): PinUnlock = synchronized(attemptLock) {
+        if (remainingLockoutMillis() > 0) return PinUnlock.LockedOut
+        val slot = store.getBytes(PIN_SLOT_KEY) ?: return PinUnlock.WrongPin
+        try {
+            val previousFailures = store.getInt(FAILURES_KEY, 0)
+            // Counted before the KDF: an attempt the app is killed during still counts.
+            if (!chargeAttempt(previousFailures + 1)) return PinUnlock.Failed
+            if (!isWellFormed(pin)) return PinUnlock.WrongPin
 
-        val encryptedPin = secureStoragePrefs.getString(PIN_CODE_KEY, null) ?: return false
-        val decryptedPinWrapped = decryptData(encryptedPin) ?: return false
-        val stored = StringWrapper.unwrapMasterKey(decryptedPinWrapped) ?: return false
-
-        val parts = stored.split(":")
-        if (parts.size != 2) return false
-
-        val pinChars = inputCode.toCharArray()
-        return try {
-            val salt = Base64.decode(parts[0], Base64.NO_WRAP)
-            val storedHash = Base64.decode(parts[1], Base64.NO_WRAP)
-            val inputHash = derivePinHash(pinChars, salt)
-            // Constant-time comparison
-            val matches = MessageDigest.isEqual(storedHash, inputHash)
-            SensitiveDataCleaner.clear(inputHash)
-            if (matches) resetAttempts() else recordFailedAttempt()
-            matches
-        } catch (_: Exception) {
-            false
+            val parsed = parseSlot(slot) ?: return PinUnlock.WrongPin
+            try {
+                val kek = try {
+                    derivePinKek(pin, parsed.salt)
+                } catch (e: PinFactorException) {
+                    // Not a guess: the hardware never answered. Give the attempt back.
+                    refundAttempt(previousFailures)
+                    return if (e.lost) PinUnlock.KeyLost else PinUnlock.Failed
+                }
+                try {
+                    val dek = openSlot(parsed, kek)
+                    store.edit { removePrefix(LOCKOUT_PREFIX) }
+                    PinUnlock.Success(dek)
+                } catch (_: AEADBadTagException) {
+                    PinUnlock.WrongPin
+                } catch (_: GeneralSecurityException) {
+                    PinUnlock.WrongPin
+                } finally {
+                    SensitiveDataCleaner.clear(kek)
+                }
+            } finally {
+                parsed.wipe()
+            }
         } finally {
-            SensitiveDataCleaner.clear(pinChars)
+            SensitiveDataCleaner.clear(slot)
         }
     }
 
-    /**
-     * Cancels (removes) PIN authentication if the entered code is correct.
-     * Checks whether the entered PIN matches the stored one.
-     * If so, removes the stored PIN and changes the auth type to NONE.
-     *
-     * @param inputCode The PIN code entered by the user to verify.
-     * @return true if the PIN is correct and authentication was cancelled, false otherwise.
-     */
-    fun cancelPinAuth(inputCode: String): Boolean {
-        if (verifyPinAuth(inputCode)) {
-            secureStoragePrefs.edit {
-                remove(PIN_CODE_KEY)
-                putBoolean(BIOMETRIC_ENABLED_KEY, false)
-                putInt(AUTH_TYPE_KEY, IntWrapper.wrap(AuthType.NONE.ordinal))
-            }
-            return true
-        }
-        return false
+    /** Whether [pin] opens the slot; counts like an unlock attempt. [pin] stays the caller's. */
+    fun verifyPinAuth(pin: CharArray): Boolean {
+        val result = unlockWithPin(pin)
+        if (result is PinUnlock.Success) SensitiveDataCleaner.clear(result.dek)
+        return result is PinUnlock.Success
     }
 
-    /**
-     * Determines the user's active authorization strategy (AuthStrategy),
-     * based on the stored auth type (AuthType) and the biometric state.
-     *
-     * @return AuthStrategy describing exactly how the user must authenticate:
-     * - NONE — no authentication configured
-     * - PIN — PIN code only
-     * - PIN_BIOMETRIC — PIN code + biometrics
-     * - SEED_PHRASE — seed phrase only
-     * - SEED_PHRASE_BIOMETRIC — seed phrase + biometrics
-     */
-    fun isAuthStrategy(): AuthStrategy {
-        val enableBiometric = secureStoragePrefs.getBoolean(BIOMETRIC_ENABLED_KEY, false)
-        val authType = getAuthType()
-        val hasPinCode = !secureStoragePrefs.getString(PIN_CODE_KEY, null).isNullOrBlank()
+    fun hasPinSlot(): Boolean = store.contains(PIN_SLOT_KEY)
 
-        return when (authType) {
-            AuthType.NONE -> AuthStrategy.NONE
-            AuthType.PIN -> {
-                if (!hasPinCode) {
-                    AuthStrategy.RECOVERY_DATA
-                } else if (enableBiometric) {
-                    AuthStrategy.PIN_BIOMETRIC
-                } else {
-                    AuthStrategy.PIN
-                }
-            }
-
-            AuthType.SEED_PHRASE -> {
-                if (enableBiometric) {
-                    AuthStrategy.SEED_PHRASE_BIOMETRIC
-                } else {
-                    AuthStrategy.SEED_PHRASE
-                }
-            }
-        }
-    }
-
-    /**
-     * Enables biometric authentication if a PIN or Seed Phrase (master key) is already configured.
-     *
-     * @return true if biometrics was successfully enabled, false if no prior authentication is configured.
-     */
-    fun activateBiometricAuth(): Boolean {
-        val hasPinCode = !secureStoragePrefs.getString(PIN_CODE_KEY, null).isNullOrBlank()
-        val isMasterKeyAvailable = seedPhraseManager.hasStoredSeed()
-        val isMasterKeyUserCreated = seedPhraseManager.isUserManuallyCreatedKeyByDecryption()
-        val authType = getAuthType()
-
-        val canEnableBiometric = when (authType) {
-            AuthType.PIN -> hasPinCode
-            AuthType.SEED_PHRASE -> isMasterKeyAvailable && isMasterKeyUserCreated
-            else -> false
-        }
-        if (canEnableBiometric) {
-            secureStoragePrefs.edit {
-                putBoolean(BIOMETRIC_ENABLED_KEY, true)
-            }
-            return true
-        }
-
-        return false
-    }
-
-
-    /**
-     * Checks whether biometric authentication is enabled.
-     *
-     * @return true if biometrics is enabled, false otherwise.
-     */
-    fun isBiometricEnabled(): Boolean {
-        return secureStoragePrefs.getBoolean(BIOMETRIC_ENABLED_KEY, false)
-    }
-
-    /**
-     * Disables biometric authentication by resetting the flag in SharedPreferences.
-     */
-    fun deactivateBiometricAuth() {
-        secureStoragePrefs.edit {
-            putBoolean(BIOMETRIC_ENABLED_KEY, false)
-        }
-    }
-
-    /**
-     * Returns the user's stored authorization type.
-     *
-     * Reads the AuthType value from SharedPreferences under the AUTH_TYPE_KEY key.
-     * If the value is missing or invalid, returns AuthType.NONE.
-     *
-     * @return AuthType — the active authorization type:
-     * - NONE — no authentication configured
-     * - PIN — a PIN code is used
-     * - SEED_PHRASE — a seed phrase is used
-     */
     fun getAuthType(): AuthType {
-        val authOrdinal = secureStoragePrefs.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
-        return AuthType.entries.getOrNull(IntWrapper.unwrap(authOrdinal)) ?: AuthType.NONE
+        val ordinal = store.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
+        return AuthType.entries.getOrNull(ordinal) ?: AuthType.NONE
     }
 
+    fun isAuthStrategy(): AuthStrategy {
+        val biometric = isBiometricEnabled()
+        return when (getAuthType()) {
+            AuthType.NONE -> AuthStrategy.NONE
+
+            AuthType.PIN -> when {
+                !hasPinSlot() -> AuthStrategy.RECOVERY_DATA
+                biometric -> AuthStrategy.PIN_BIOMETRIC
+                else -> AuthStrategy.PIN
+            }
+
+            AuthType.SEED_PHRASE ->
+                if (biometric) AuthStrategy.SEED_PHRASE_BIOMETRIC else AuthStrategy.SEED_PHRASE
+        }
+    }
+
+    fun markBiometricEnabled(enabled: Boolean) {
+        store.edit { putBoolean(BIOMETRIC_ENABLED_KEY, enabled) }
+    }
+
+    fun isBiometricEnabled(): Boolean = store.getBoolean(BIOMETRIC_ENABLED_KEY, false)
+
+    fun deactivateBiometricAuth() = markBiometricEnabled(false)
 
     /**
-     * Milliseconds of PIN lockout still remaining (0 = not locked out).
-     * The UI uses this to show a countdown and block input.
+     * What is left of the running lockout. The store keeps the penalty that was left at an
+     * `elapsedRealtime` anchor in a given boot. After a reboot (another boot count, or the
+     * clock behind the anchor) the time since the anchor is unknown, so the whole remaining
+     * penalty starts again from now: a reboot never shortens a lockout.
      */
+    @Suppress("ReturnCount")
     fun remainingLockoutMillis(): Long {
-        val until = secureStoragePrefs.getLong(PIN_LOCKOUT_UNTIL_KEY, 0L)
-        val now = System.currentTimeMillis()
-        return if (until > now) until - now else 0L
+        // Not under [attemptLock]: the UI polls this every second, also while an attempt runs.
+        val penalty = store.getLong(PENALTY_KEY, 0L)
+        if (penalty <= 0L) return 0L
+        val anchor = store.getLong(ANCHOR_KEY, 0L)
+        val now = clock.elapsedRealtime()
+        val boot = clock.bootCount()
+        if (store.getInt(BOOT_KEY, boot) != boot || now < anchor) {
+            store.edit {
+                putLong(ANCHOR_KEY, now)
+                putInt(BOOT_KEY, boot)
+            }
+            return penalty
+        }
+        return (penalty - (now - anchor)).coerceAtLeast(0L)
     }
 
-    /** Derives the PIN hash via salted PBKDF2-HMAC-SHA256. */
-    private fun derivePinHash(pin: CharArray, salt: ByteArray): ByteArray {
-        val spec = PBEKeySpec(pin, salt, PBKDF2_ITERATIONS, 256)
+    /** Deletes the PIN slot, the lockout and the device-bound PIN key. */
+    fun wipe() {
+        store.edit {
+            removePrefix(PIN_PREFIX)
+            removePrefix(LOCKOUT_PREFIX)
+            removePrefix(AUTH_PREFIX)
+        }
+        factor.delete()
+    }
+
+    private fun chargeAttempt(failures: Int): Boolean = store.edit {
+        putInt(FAILURES_KEY, failures)
+        val penalty = penaltyFor(failures)
+        if (penalty > 0L) {
+            putLong(PENALTY_KEY, penalty)
+            putLong(ANCHOR_KEY, clock.elapsedRealtime())
+            putInt(BOOT_KEY, clock.bootCount())
+        } else {
+            remove(PENALTY_KEY)
+        }
+    }
+
+    private fun refundAttempt(previousFailures: Int) {
+        store.edit {
+            putInt(FAILURES_KEY, previousFailures)
+            remove(PENALTY_KEY)
+        }
+    }
+
+    private fun isWellFormed(pin: CharArray): Boolean = pin.size == PIN_LENGTH && pin.all { it in '0'..'9' }
+
+    /** [PinFactorException] leaves nothing behind; the result is the caller's to wipe. */
+    private fun derivePinKek(pin: CharArray, salt: ByteArray): ByteArray {
+        val macInput = ByteArray(salt.size + pin.size)
+        System.arraycopy(salt, 0, macInput, 0, salt.size)
+        pin.forEachIndexed { index, c -> macInput[salt.size + index] = c.code.toByte() }
+        // The hardware half first: it is cheap, and a lost key fails before the PBKDF2 cost.
+        val hardware = try {
+            factor.mac(macInput)
+        } finally {
+            SensitiveDataCleaner.clear(macInput)
+        }
+        val stretched = pbkdf2(pin, salt)
+        val ikm = stretched + hardware
+        return try {
+            Hkdf.sha256(ikm = ikm, salt = salt, info = KEK_INFO, length = DEK_LENGTH)
+        } finally {
+            SensitiveDataCleaner.clear(hardware)
+            SensitiveDataCleaner.clear(stretched)
+            SensitiveDataCleaner.clear(ikm)
+        }
+    }
+
+    private fun pbkdf2(pin: CharArray, salt: ByteArray): ByteArray {
+        val spec = PBEKeySpec(pin, salt, PBKDF2_ITERATIONS, DEK_LENGTH * Byte.SIZE_BITS)
         return try {
             SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
         } finally {
@@ -261,73 +280,85 @@ class AuthenticationManager @Inject constructor(
         }
     }
 
-    /** Records a failed attempt; enables a progressive lockout past MAX_ATTEMPTS. */
-    private fun recordFailedAttempt() {
-        val attempts = secureStoragePrefs.getInt(PIN_ATTEMPTS_KEY, 0) + 1
-        secureStoragePrefs.edit {
-            putInt(PIN_ATTEMPTS_KEY, attempts)
-            if (attempts >= MAX_ATTEMPTS) {
-                // 30s * 2^(over), capped at 15 min
-                val over = (attempts - MAX_ATTEMPTS).coerceIn(0, 5)
-                val lockMs = (30_000L shl over).coerceAtMost(15 * 60_000L)
-                putLong(PIN_LOCKOUT_UNTIL_KEY, System.currentTimeMillis() + lockMs)
-            }
-        }
-    }
-
-    /** Clears the attempt counter and lockout (successful login / fresh activation). */
-    private fun resetAttempts() {
-        secureStoragePrefs.edit {
-            remove(PIN_ATTEMPTS_KEY)
-            remove(PIN_LOCKOUT_UNTIL_KEY)
-        }
-    }
-
-    /**
-     * Encrypts a text string using the AES key.
-     * @return Base64 string containing the encrypted data + IV.
-     */
-    private fun encryptData(data: String): String? {
+    /** `version ‖ salt ‖ iv ‖ AES-GCM(dek)`, with the version and salt authenticated as AAD. */
+    private fun sealSlot(dek: ByteArray, kek: ByteArray, salt: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance(AES_GCM)
+        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
+        cipher.updateAAD(aad(salt))
+        val encrypted = cipher.doFinal(dek)
+        val iv = cipher.iv
         return try {
-            val secretKey = seedPhraseManager.getEncryptionKeyForData(SaltData.AUTH)
-            val cipher = Cipher.getInstance(AES_MODE)
-            val iv = ByteArray(IV_SIZE)
-            SecureRandom().nextBytes(iv)
-            val ivSpec = IvParameterSpec(iv)
-
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec)
-            val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
-
-            // Prepend the IV to the encrypted data (the IV is needed for decryption)
-            val combined = iv + encryptedBytes
-
-            Base64.encodeToString(combined, Base64.DEFAULT)
-        } catch (_: Exception) {
-            null
+            byteArrayOf(SLOT_VERSION) + salt + iv + encrypted
+        } finally {
+            SensitiveDataCleaner.clear(encrypted)
         }
     }
 
-    /**
-     * Decrypts a text string using the AES key.
-     */
-    private fun decryptData(encryptedData: String): String? {
-        return try {
-            val secretKey = seedPhraseManager.getEncryptionKeyForData(SaltData.AUTH)
+    private fun parseSlot(slot: ByteArray): ParsedSlot? {
+        if (slot.size != SLOT_LENGTH || slot[0] != SLOT_VERSION) return null
+        var offset = 1
+        val salt = slot.copyOfRange(offset, offset + PIN_SALT_SIZE)
+        offset += PIN_SALT_SIZE
+        val iv = slot.copyOfRange(offset, offset + IV_LENGTH)
+        offset += IV_LENGTH
+        return ParsedSlot(salt, iv, slot.copyOfRange(offset, slot.size))
+    }
 
-            val combined = Base64.decode(encryptedData, Base64.DEFAULT)
+    private fun openSlot(slot: ParsedSlot, kek: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance(AES_GCM)
+        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(kek, "AES"), GCMParameterSpec(GCM_TAG_LENGTH, slot.iv))
+        cipher.updateAAD(aad(slot.salt))
+        return cipher.doFinal(slot.ciphertext)
+    }
 
-            val iv = combined.copyOfRange(0, IV_SIZE)
-            val encryptedBytes = combined.copyOfRange(IV_SIZE, combined.size)
+    private fun aad(salt: ByteArray): ByteArray = PIN_AAD + byteArrayOf(SLOT_VERSION) + salt
 
-            val cipher = Cipher.getInstance(AES_MODE)
-            val ivSpec = IvParameterSpec(iv)
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec)
-
-            val decryptedBytes = cipher.doFinal(encryptedBytes)
-            String(decryptedBytes, Charsets.UTF_8)
-        } catch (_: Exception) {
-            null
+    private class ParsedSlot(val salt: ByteArray, val iv: ByteArray, val ciphertext: ByteArray) {
+        fun wipe() {
+            SensitiveDataCleaner.clear(salt)
+            SensitiveDataCleaner.clear(iv)
+            SensitiveDataCleaner.clear(ciphertext)
         }
     }
 
+    companion object {
+        private const val PIN_PREFIX = "pin."
+        private const val PIN_SLOT_KEY = "pin.slot"
+        private const val AUTH_PREFIX = "auth."
+        private const val AUTH_TYPE_KEY = "auth.type"
+        private const val BIOMETRIC_ENABLED_KEY = "auth.biometric_enabled"
+        private const val LOCKOUT_PREFIX = "lockout."
+        private const val FAILURES_KEY = "lockout.failures"
+        private const val PENALTY_KEY = "lockout.penalty_ms"
+        private const val ANCHOR_KEY = "lockout.anchor_elapsed"
+        private const val BOOT_KEY = "lockout.boot"
+
+        const val MAX_ATTEMPTS = 5
+        const val FIRST_LOCKOUT_MS = 30_000L
+        const val MAX_LOCKOUT_MS = 24 * 60 * 60_000L
+        private const val MAX_DOUBLINGS = 12
+
+        private const val PIN_SALT_SIZE = 16
+        private const val PBKDF2_ITERATIONS = 600_000
+        private const val GCM_TAG_LENGTH = 128
+        private const val GCM_TAG_BYTES = GCM_TAG_LENGTH / 8
+        private const val IV_LENGTH = 12
+        private const val DEK_LENGTH = 32
+        private const val SLOT_VERSION: Byte = 3
+        private const val SLOT_LENGTH = 1 + PIN_SALT_SIZE + IV_LENGTH + DEK_LENGTH + GCM_TAG_BYTES
+        private const val AES_GCM = "AES/GCM/NoPadding"
+
+        private val PIN_AAD = "encly/pin/slot/v3".toByteArray(Charsets.UTF_8)
+        private val KEK_INFO = "encly/pin/kek/v3".toByteArray(Charsets.UTF_8)
+
+        /**
+         * The lockout after [failures] consecutive misses: none before [MAX_ATTEMPTS], then
+         * 30 s, doubling each miss (1 min, 2, 4, 8, 16, 32 min, ~1 h, ~2 h ...) up to 24 h.
+         */
+        fun penaltyFor(failures: Int): Long {
+            if (failures < MAX_ATTEMPTS) return 0L
+            val doublings = (failures - MAX_ATTEMPTS).coerceAtMost(MAX_DOUBLINGS)
+            return (FIRST_LOCKOUT_MS shl doublings).coerceAtMost(MAX_LOCKOUT_MS)
+        }
+    }
 }

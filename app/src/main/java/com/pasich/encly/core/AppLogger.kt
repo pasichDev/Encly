@@ -1,39 +1,19 @@
 package com.pasich.encly.core
 
-import android.util.Log
-
 /**
- * Central application logger.
+ * Central application logger, for failure events only.
  *
- * All logging goes through here so it can be filtered in one place: messages are
- * emitted only in debug builds (release is additionally stripped by R8). Keep tags
- * short and messages in English.
+ * Security-first beta policy: application logging is intentionally disabled in every build.
+ * Notes, tasks, recovery material, database failures and exception messages can contain
+ * protected plaintext or metadata that must not cross into logcat. There are no debug/trace
+ * levels on purpose: call sites pass a fixed event description, never note content or
+ * `Throwable.message`. Release builds strip the calls, arguments included
+ * (`-assumenosideeffects` in proguard-rules.pro).
  *
- * Note: [com.pasich.encly.BuildConfig] is referenced fully-qualified on purpose — an
- * unqualified `BuildConfig` import gets auto-resolved to the SQLCipher library's
- * BuildConfig (whose DEBUG is always false), which would silently disable logging.
+ * Re-introduce output only through a structured, explicitly non-sensitive event schema.
  */
+@Suppress("UNUSED_PARAMETER")
 object AppLogger {
-
-    private val enabled: Boolean = com.pasich.encly.BuildConfig.DEBUG
-
-    fun v(tag: String, message: String) {
-        if (enabled) Log.v(tag, message)
-    }
-
-    fun d(tag: String, message: String) {
-        if (enabled) Log.d(tag, message)
-    }
-
-    fun i(tag: String, message: String) {
-        if (enabled) Log.i(tag, message)
-    }
-
-    fun w(tag: String, message: String, throwable: Throwable? = null) {
-        if (enabled) Log.w(tag, message, throwable)
-    }
-
-    fun e(tag: String, message: String, throwable: Throwable? = null) {
-        if (enabled) Log.e(tag, message, throwable)
-    }
+    fun w(tag: String, event: String, throwable: Throwable? = null) = Unit
+    fun e(tag: String, event: String, throwable: Throwable? = null) = Unit
 }

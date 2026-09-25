@@ -1,0 +1,90 @@
+#!/bin/sh
+# Encly pre-commit hook: formatting (Spotless/ktlint) and detekt, only when the commit touches
+# Kotlin or Gradle files. Enable once per clone:  ./gradlew installGitHooks
+# (same as: git config core.hooksPath .githooks). Skip one commit with: git commit --no-verify
+#
+# The Gradle tasks check the working tree, not only the staged snapshot; stage or stash
+# unrelated edits first if they are not meant to be checked.
+#
+# The build needs a JDK that Gradle 8.14 can run on (17 to 24; CI uses 21). The hook does not
+# rely on whatever `java` is on PATH: it uses JAVA_HOME when that JDK fits, and otherwise looks
+# for one (macOS java_home, the Android Studio JBR). If none fits it says so, instead of
+# reporting a Gradle start-up failure as a formatting or detekt failure.
+set -eu
+
+MIN_JAVA=17
+MAX_JAVA=24
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+relevant=$(printf '%s\n' "$staged" | grep -E '\.(kt|kts)$|(^|/)gradle/libs\.versions\.toml$|(^|/)\.editorconfig$|(^|/)config/detekt/' || true)
+
+if [ -z "$relevant" ]; then
+    exit 0
+fi
+
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+
+# Major version of the JDK at $1 ("1.8.0_x" -> 8, "21.0.2" -> 21), or nothing.
+java_major() {
+    [ -x "$1/bin/java" ] || return 0
+    "$1/bin/java" -version 2>&1 | awk -F'"' '/version/ { print $2; exit }' | sed -e 's/^1\.//' -e 's/[^0-9].*//'
+}
+
+fits() {
+    major=$(java_major "$1")
+    [ -n "$major" ] && [ "$major" -ge "$MIN_JAVA" ] && [ "$major" -le "$MAX_JAVA" ]
+}
+
+find_jdk() {
+    if [ -n "${JAVA_HOME:-}" ] && fits "$JAVA_HOME"; then
+        printf '%s\n' "$JAVA_HOME"
+        return 0
+    fi
+    if [ -x /usr/libexec/java_home ]; then
+        for version in 21 17; do
+            candidate=$(/usr/libexec/java_home -v "$version" 2>/dev/null || true)
+            if [ -n "$candidate" ] && fits "$candidate"; then
+                printf '%s\n' "$candidate"
+                return 0
+            fi
+        done
+    fi
+    for candidate in \
+        "/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+        "$HOME/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+        /opt/android-studio/jbr \
+        "$HOME/android-studio/jbr" \
+        /snap/android-studio/current/jbr; do
+        if fits "$candidate"; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+if ! jdk=$(find_jdk); then
+    echo >&2
+    echo "pre-commit: no JDK $MIN_JAVA-$MAX_JAVA found, so Gradle cannot run the checks." >&2
+    echo "Java on PATH: $(java -version 2>&1 | head -n 1 || echo 'none')" >&2
+    echo "Set JAVA_HOME to JDK 17-21 (for example Android Studio's bundled JBR) and commit again." >&2
+    echo "This is not a formatting or detekt failure." >&2
+    exit 1
+fi
+JAVA_HOME=$jdk
+export JAVA_HOME
+
+echo "pre-commit: Kotlin/Gradle files staged; running spotlessCheck and detekt..."
+if ! ./gradlew --quiet help >/dev/null 2>&1; then
+    echo >&2
+    echo "pre-commit: Gradle could not start or configure the build with JAVA_HOME=$JAVA_HOME." >&2
+    echo "Run ./gradlew help to see why. This is not a formatting or detekt failure." >&2
+    exit 1
+fi
+if ! ./gradlew --quiet spotlessCheck :app:detekt; then
+    echo >&2
+    echo "pre-commit: checks failed. Fix formatting with ./gradlew spotlessApply, fix the" >&2
+    echo "detekt findings (do not add them to app/detekt-baseline.xml), then commit again." >&2
+    exit 1
+fi

@@ -1,12 +1,14 @@
 <resources>
-    <style name="Theme.Encly" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- AppCompat parent: MainActivity is an AppCompatActivity (per-app language support). -->
+    <style name="Theme.Encly" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/window_background</item>
     </style>
 
     <style name="Theme.Encly.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
         <item name="windowSplashScreenAnimationDuration">500</item>
         <item name="postSplashScreenTheme">@style/Theme.Encly</item>
     </style>

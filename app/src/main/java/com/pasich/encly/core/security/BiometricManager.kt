@@ -1,64 +1,44 @@
 package com.pasich.encly.core.security
 
 import android.content.Context
-import androidx.biometric.BiometricManager as AndroidBiometricManager
+import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
+import android.security.keystore.KeyProperties
 import androidx.biometric.BiometricPrompt
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
+import com.pasich.encly.R
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.biometric.BiometricManager as AndroidBiometricManager
 
 /**
- * Centralized manager for biometric authentication.
- * Consolidates all BiometricPrompt usage scenarios in the app.
+ * Biometric v2 unlock slot.
+ *
+ * The wrapping key lives in AndroidKeyStore and is auth-per-use. The DEK can only be wrapped or
+ * unwrapped by the Cipher instance returned from a successful BIOMETRIC_STRONG CryptoObject
+ * prompt. A plain "prompt succeeded" boolean never releases the database key.
  */
 @Singleton
+@Suppress("TooManyFunctions") // Centralizes the complete auth-bound biometric slot lifecycle.
 class BiometricManager @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val store: VaultStore,
 ) {
-
-    /**
-     * Biometric authentication statuses.
-     */
-    enum class BiometricStatus {
-        AVAILABLE,
-        NO_HARDWARE,
-        HARDWARE_UNAVAILABLE,
-        NONE_ENROLLED,
-        SECURITY_UPDATE_REQUIRED,
-        UNSUPPORTED,
-        UNKNOWN
-    }
-
-    /**
-     * Biometric prompt types.
-     */
     enum class BiometricType {
-        APP_UNLOCK,           // App unlock
-        MASTER_KEY_ACCESS,    // Master key access
-        SETTINGS_TOGGLE,      // Enable/disable biometrics in settings
-        GENERAL              // General use
+        APP_UNLOCK,
+        MASTER_KEY_ACCESS,
+        SETTINGS_TOGGLE,
+        GENERAL,
     }
 
-    /**
-     * Biometric authentication result.
-     */
-    sealed class BiometricResult {
-        object Success : BiometricResult()
-        data class Error(val errorCode: Int, val errorMessage: String) : BiometricResult()
-        object Failed : BiometricResult()
-        object Cancelled : BiometricResult()
-    }
-
-    /**
-     * Callback for authentication results.
-     */
     interface BiometricCallback {
         fun onSuccess()
         fun onError(errorCode: Int, errorMessage: String)
@@ -66,242 +46,331 @@ class BiometricManager @Inject constructor(
         fun onCancelled() {}
     }
 
-    /** Checks whether weak biometric authentication is available. */
-    fun isBiometricAvailable(): Boolean {
-        val biometricManager = AndroidBiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK)) {
-            AndroidBiometricManager.BIOMETRIC_SUCCESS -> true
-            else -> false
-        }
-    }
-
-    /**
-     * Checks whether strong biometric authentication is available.
-     */
-    fun isStrongBiometricAvailable(): Boolean {
-        val biometricManager = AndroidBiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-            AndroidBiometricManager.BIOMETRIC_SUCCESS -> true
-            else -> false
-        }
-    }
-
-    /**
-     * Gets the detailed biometric authentication status.
-     */
-    fun getBiometricStatus(): BiometricStatus {
-        val biometricManager = AndroidBiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK)) {
-            AndroidBiometricManager.BIOMETRIC_SUCCESS -> BiometricStatus.AVAILABLE
-            AndroidBiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> BiometricStatus.NO_HARDWARE
-            AndroidBiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> BiometricStatus.HARDWARE_UNAVAILABLE
-            AndroidBiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> BiometricStatus.NONE_ENROLLED
-            AndroidBiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> BiometricStatus.SECURITY_UPDATE_REQUIRED
-            AndroidBiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> BiometricStatus.UNSUPPORTED
-            AndroidBiometricManager.BIOMETRIC_STATUS_UNKNOWN -> BiometricStatus.UNKNOWN
-            else -> BiometricStatus.UNKNOWN
-        }
-    }
-
-    /**
-     * Creates a biometric prompt for authentication.
-     */
-    fun createBiometricPrompt(
-        activity: FragmentActivity,
-        callback: BiometricCallback
-    ): BiometricPrompt {
-        val executor = ContextCompat.getMainExecutor(activity)
-        
-        val authCallback = object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                super.onAuthenticationSucceeded(result)
-                callback.onSuccess()
-            }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                super.onAuthenticationError(errorCode, errString)
-                if (errorCode == BiometricPrompt.ERROR_USER_CANCELED || 
-                    errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
-                    callback.onCancelled()
-                } else {
-                    callback.onError(errorCode, errString.toString())
-                }
-            }
-
-            override fun onAuthenticationFailed() {
-                super.onAuthenticationFailed()
-                callback.onFailed()
-            }
-        }
-
-        return BiometricPrompt(activity, executor, authCallback)
-    }
-
-    /**
-     * Creates prompt info depending on the usage type.
-     */
-    fun createPromptInfo(type: BiometricType, customConfig: PromptConfig? = null): BiometricPrompt.PromptInfo {
-        val config = customConfig ?: getDefaultConfig(type)
-        
-        val builder = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(config.title)
-            .setSubtitle(config.subtitle)
-            .setNegativeButtonText(config.negativeButtonText)
-
-        config.description?.let { builder.setDescription(it) }
-        
-        builder.setAllowedAuthenticators(
-            if (type == BiometricType.APP_UNLOCK) {
-                AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG
-            } else {
-                AndroidBiometricManager.Authenticators.BIOMETRIC_WEAK
-            }
-        )
-
-        return builder.build()
-    }
-
-    /**
-     * Launches biometric authentication.
-     */
-    fun authenticate(
-        activity: FragmentActivity,
-        type: BiometricType,
-        callback: BiometricCallback,
-        customConfig: PromptConfig? = null
-    ) {
-        if (!isBiometricAvailable()) {
-            callback.onError(-1, "Біометрична автентифікація недоступна")
-            return
-        }
-
-        val prompt = createBiometricPrompt(activity, callback)
-        val promptInfo = createPromptInfo(type, customConfig)
-        
-        try {
-            prompt.authenticate(promptInfo)
-        } catch (e: Exception) {
-            callback.onError(-1, "Помилка запуску біометричної автентифікації: ${e.message}")
-        }
-    }
-
-    /**
-     * Coroutine-based asynchronous version of authentication.
-     */
-    suspend fun authenticateAsync(
-        activity: FragmentActivity,
-        type: BiometricType,
-        customConfig: PromptConfig? = null
-    ): BiometricResult {
-        return suspendCancellableCoroutine { continuation ->
-            val callback = object : BiometricCallback {
-                override fun onSuccess() {
-                    continuation.resumeWith(Result.success(BiometricResult.Success))
-                }
-
-                override fun onError(errorCode: Int, errorMessage: String) {
-                    continuation.resumeWith(Result.success(BiometricResult.Error(errorCode, errorMessage)))
-                }
-
-                override fun onFailed() {
-                    continuation.resumeWith(Result.success(BiometricResult.Failed))
-                }
-
-                override fun onCancelled() {
-                    continuation.resumeWith(Result.success(BiometricResult.Cancelled))
-                }
-            }
-
-            authenticate(activity, type, callback, customConfig)
-        }
-    }
-
-    /**
-     * Configuration for the prompt.
-     */
+    /** Prompt text. A null [negativeButtonText] falls back to the localized "Cancel". */
     data class PromptConfig(
         val title: String,
         val subtitle: String,
         val description: String? = null,
-        val negativeButtonText: String = "Скасувати"
+        val negativeButtonText: String? = null,
     )
 
-    /**
-     * Returns the default configuration for each type.
-     */
-    private fun getDefaultConfig(type: BiometricType): PromptConfig {
-        return when (type) {
-            BiometricType.APP_UNLOCK -> PromptConfig(
-                title = "Розблокування додатку",
-                subtitle = "Використайте відбиток пальця для входу",
-                description = "Підтвердіть свою особу для доступу до нотаток",
-                negativeButtonText = "Використати PIN"
+    companion object {
+        private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
+        private const val KEY_ALIAS = "encly_biometric_wrap_v2"
+        private const val SLOT_PREFIX = "bio."
+        private const val SLOT_KEY = "bio.slot"
+        private const val GCM_TAG_LENGTH = 128
+        private const val IV_LENGTH = 12
+        private const val DEK_LENGTH = 32
+        private const val AES_KEY_SIZE_BITS = 256
+        private const val AUTH_PER_USE_SECONDS = 0
+    }
+
+    private val keyStore by lazy {
+        KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
+    }
+
+    fun isStrongBiometricAvailable(): Boolean = strongBiometricStatus() == BiometricStatus.AVAILABLE
+
+    /** Whether strong biometrics can be used, or why not. */
+    fun strongBiometricStatus(): BiometricStatus = BiometricStatus.fromCanAuthenticate(
+        AndroidBiometricManager.from(context).canAuthenticate(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG),
+    )
+
+    fun hasSlot(): Boolean = try {
+        keyStore.containsAlias(KEY_ALIAS) && store.contains(SLOT_KEY)
+    } catch (_: Exception) {
+        false
+    }
+
+    fun enroll(activity: FragmentActivity, dek: ByteArray, onResult: (Boolean) -> Unit) {
+        if (!isStrongBiometricAvailable() || dek.size != DEK_LENGTH) {
+            onResult(false)
+            return
+        }
+
+        val dekCopy = dek.copyOf()
+        try {
+            store.edit { remove(SLOT_KEY) }
+            deleteKeyOnly()
+            val key = generateAuthBoundKey()
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, key)
+
+            promptWithCipher(
+                activity = activity,
+                type = BiometricType.SETTINGS_TOGGLE,
+                cipher = cipher,
+                onSuccess = { authenticatedCipher ->
+                    try {
+                        val encrypted = authenticatedCipher.doFinal(dekCopy)
+                        val iv = authenticatedCipher.iv
+                        val combined = ByteArray(iv.size + encrypted.size).also { out ->
+                            System.arraycopy(iv, 0, out, 0, iv.size)
+                            System.arraycopy(encrypted, 0, out, iv.size, encrypted.size)
+                        }
+                        val stored = store.edit { putBytes(SLOT_KEY, combined) }
+                        SensitiveDataCleaner.clear(encrypted)
+                        SensitiveDataCleaner.clear(combined)
+                        if (!stored) disable()
+                        onResult(stored)
+                    } catch (_: Exception) {
+                        disable()
+                        onResult(false)
+                    } finally {
+                        SensitiveDataCleaner.clear(dekCopy)
+                    }
+                },
+                onFailure = {
+                    SensitiveDataCleaner.clear(dekCopy)
+                    deleteKeyOnly()
+                    onResult(false)
+                },
             )
-            
-            BiometricType.MASTER_KEY_ACCESS -> PromptConfig(
-                title = "Доступ до сід-фрази",
-                subtitle = "Підтвердіть свою особу для перегляду сід-фрази",
-                description = "Використовуйте відбиток пальця або розпізнавання обличчя"
-            )
-            
-            BiometricType.SETTINGS_TOGGLE -> PromptConfig(
-                title = "Підтвердження",
-                subtitle = "Підтвердіть зміну налаштувань безпеки",
-                description = "Біометрична автентифікація для зміни налаштувань"
-            )
-            
-            BiometricType.GENERAL -> PromptConfig(
-                title = "Автентифікація",
-                subtitle = "Підтвердіть свою особу",
-                description = "Використовуйте біометричну автентифікацію"
-            )
+        } catch (_: Exception) {
+            SensitiveDataCleaner.clear(dekCopy)
+            disable()
+            onResult(false)
         }
     }
-}
 
-/**
- * Composable helper for working with the biometric manager.
- */
-@Composable
-fun rememberBiometricManager(
-    context: Context
-): BiometricManager {
-    return remember { BiometricManager(context) }
-}
+    /**
+     * Returns the DEK only after a successful auth-bound CryptoObject operation.
+     * The caller owns the returned bytes and must zeroize them.
+     */
+    fun unlock(activity: FragmentActivity, onResult: (ByteArray?) -> Unit) {
+        val combined = store.getBytes(SLOT_KEY)
+        if (!isStrongBiometricAvailable() || combined == null) {
+            combined?.let(SensitiveDataCleaner::clear)
+            onResult(null)
+            return
+        }
 
-/**
- * Extension for FragmentActivity for convenient use.
- */
-fun FragmentActivity.authenticateWithBiometric(
-    biometricManager: BiometricManager,
-    type: BiometricManager.BiometricType,
-    onSuccess: () -> Unit,
-    onError: (String) -> Unit = {},
-    onFailed: () -> Unit = {},
-    onCancelled: () -> Unit = {},
-    customConfig: BiometricManager.PromptConfig? = null
-) {
-    val callback = object : BiometricManager.BiometricCallback {
-        override fun onSuccess() = onSuccess()
-        override fun onError(errorCode: Int, errorMessage: String) = onError(errorMessage)
-        override fun onFailed() = onFailed()
-        override fun onCancelled() = onCancelled()
+        try {
+            if (combined.size <= IV_LENGTH) {
+                SensitiveDataCleaner.clear(combined)
+                onResult(null)
+                return
+            }
+
+            val iv = combined.copyOfRange(0, IV_LENGTH)
+            val ciphertext = combined.copyOfRange(IV_LENGTH, combined.size)
+            val key = getAuthBoundKey()
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                key,
+                GCMParameterSpec(GCM_TAG_LENGTH, iv),
+            )
+
+            promptWithCipher(
+                activity = activity,
+                type = BiometricType.APP_UNLOCK,
+                cipher = cipher,
+                onSuccess = { authenticatedCipher ->
+                    val dek = try {
+                        authenticatedCipher.doFinal(ciphertext)
+                    } catch (_: Exception) {
+                        null
+                    } finally {
+                        SensitiveDataCleaner.clear(iv)
+                        SensitiveDataCleaner.clear(ciphertext)
+                        SensitiveDataCleaner.clear(combined)
+                    }
+                    onResult(dek)
+                },
+                onFailure = {
+                    SensitiveDataCleaner.clear(iv)
+                    SensitiveDataCleaner.clear(ciphertext)
+                    SensitiveDataCleaner.clear(combined)
+                    onResult(null)
+                },
+            )
+        } catch (_: KeyPermanentlyInvalidatedException) {
+            disable()
+            onResult(null)
+        } catch (_: Exception) {
+            onResult(null)
+        }
     }
-    
-    biometricManager.authenticate(this, type, callback, customConfig)
+
+    /** Generic re-auth prompt for settings actions that do not themselves release a key. */
+    fun authenticate(
+        activity: FragmentActivity,
+        type: BiometricType,
+        callback: BiometricCallback,
+        customConfig: PromptConfig? = null,
+    ) {
+        if (!isStrongBiometricAvailable()) {
+            callback.onError(-1, activity.getString(R.string.biometric_unavailable))
+            return
+        }
+        val executor = ContextCompat.getMainExecutor(activity)
+        val prompt = BiometricPrompt(
+            activity,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    callback.onSuccess()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    if (
+                        errorCode == BiometricPrompt.ERROR_USER_CANCELED ||
+                        errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON
+                    ) {
+                        callback.onCancelled()
+                    } else {
+                        callback.onError(errorCode, errString.toString())
+                    }
+                }
+
+                override fun onAuthenticationFailed() {
+                    callback.onFailed()
+                }
+            },
+        )
+        prompt.authenticate(createPromptInfo(activity, type, customConfig))
+    }
+
+    private fun promptWithCipher(
+        activity: FragmentActivity,
+        type: BiometricType,
+        cipher: Cipher,
+        onSuccess: (Cipher) -> Unit,
+        onFailure: () -> Unit,
+    ) {
+        val executor = ContextCompat.getMainExecutor(activity)
+        val prompt = BiometricPrompt(
+            activity,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    val authenticatedCipher = result.cryptoObject?.cipher
+                    if (authenticatedCipher != null) onSuccess(authenticatedCipher) else onFailure()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    onFailure()
+                }
+
+                override fun onAuthenticationFailed() {
+                    // Keep the system prompt alive. A failed scan is not a terminal result.
+                }
+            },
+        )
+        prompt.authenticate(
+            createPromptInfo(activity, type),
+            BiometricPrompt.CryptoObject(cipher),
+        )
+    }
+
+    /**
+     * Prompt text is resolved from the activity (not the application context) so it follows the
+     * in-app language chosen through AppCompatDelegate.setApplicationLocales.
+     */
+    private fun createPromptInfo(
+        activity: FragmentActivity,
+        type: BiometricType,
+        customConfig: PromptConfig? = null,
+    ): BiometricPrompt.PromptInfo {
+        val config = customConfig ?: when (type) {
+            BiometricType.APP_UNLOCK -> PromptConfig(
+                title = activity.getString(R.string.biometric_prompt_unlock_title),
+                subtitle = activity.getString(R.string.biometric_prompt_unlock_subtitle),
+                negativeButtonText = activity.getString(R.string.biometric_prompt_use_pin),
+            )
+
+            BiometricType.MASTER_KEY_ACCESS -> PromptConfig(
+                title = activity.getString(R.string.biometric_prompt_key_title),
+                subtitle = activity.getString(R.string.biometric_prompt_key_subtitle),
+            )
+
+            BiometricType.SETTINGS_TOGGLE -> PromptConfig(
+                title = activity.getString(R.string.biometric_prompt_settings_title),
+                subtitle = activity.getString(R.string.biometric_prompt_settings_subtitle),
+            )
+
+            BiometricType.GENERAL -> PromptConfig(
+                title = activity.getString(R.string.biometric_prompt_general_title),
+                subtitle = activity.getString(R.string.biometric_prompt_general_subtitle),
+            )
+        }
+
+        val builder = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(config.title)
+            .setSubtitle(config.subtitle)
+            .setNegativeButtonText(
+                config.negativeButtonText ?: activity.getString(R.string.cancel),
+            )
+            .setAllowedAuthenticators(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG)
+
+        config.description?.let { builder.setDescription(it) }
+        return builder.build()
+    }
+
+    private fun generateAuthBoundKey(): SecretKey {
+        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, KEYSTORE_PROVIDER)
+        val builder = KeyGenParameterSpec.Builder(
+            KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setKeySize(AES_KEY_SIZE_BITS)
+            .setUserAuthenticationRequired(true)
+            .setInvalidatedByBiometricEnrollment(true)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            builder.setUserAuthenticationParameters(
+                AUTH_PER_USE_SECONDS,
+                KeyProperties.AUTH_BIOMETRIC_STRONG,
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            builder.setUserAuthenticationValidityDurationSeconds(-1)
+        }
+
+        generator.init(builder.build())
+        return generator.generateKey()
+    }
+
+    private fun getAuthBoundKey(): SecretKey {
+        val entry = keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry
+            ?: error("Biometric key is missing")
+        return entry.secretKey
+    }
+
+    private fun deleteKeyOnly() {
+        try {
+            if (keyStore.containsAlias(KEY_ALIAS)) keyStore.deleteEntry(KEY_ALIAS)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun disable() {
+        store.edit { removePrefix(SLOT_PREFIX) }
+        deleteKeyOnly()
+    }
 }
 
-/**
- * Coroutine extension for asynchronous authentication.
- */
-fun FragmentActivity.authenticateWithBiometricAsync(
-    biometricManager: BiometricManager,
-    type: BiometricManager.BiometricType,
-    customConfig: BiometricManager.PromptConfig? = null,
-    onResult: (BiometricManager.BiometricResult) -> Unit
-) {
-    lifecycleScope.launch {
-        val result = biometricManager.authenticateAsync(this@authenticateWithBiometricAsync, type, customConfig)
-        onResult(result)
+/** Whether strong (class 3) biometrics can unlock the vault on this device. */
+enum class BiometricStatus {
+    AVAILABLE,
+
+    /** The hardware is there, but no fingerprint (or other strong biometric) is enrolled yet. */
+    NOT_ENROLLED,
+
+    /** No suitable hardware, or it cannot be used right now. */
+    UNAVAILABLE,
+    ;
+
+    companion object {
+        /** Maps a `BiometricManager.canAuthenticate` result. */
+        fun fromCanAuthenticate(result: Int): BiometricStatus = when (result) {
+            AndroidBiometricManager.BIOMETRIC_SUCCESS -> AVAILABLE
+            AndroidBiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> NOT_ENROLLED
+            else -> UNAVAILABLE
+        }
     }
 }

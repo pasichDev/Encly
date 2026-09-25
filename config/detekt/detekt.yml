@@ -1,0 +1,120 @@
+# Project detekt overrides, layered on top of the default config
+# (buildUponDefaultConfig = true). Only rules that need tuning are listed here.
+naming:
+  FunctionNaming:
+    # Jetpack Compose @Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+
+complexity:
+  LongParameterList:
+    # Parameters with defaults (Compose `modifier`, injected ViewModels, optional flags) cost
+    # callers nothing; count only the ones every call has to pass.
+    ignoreDefaultParameters: true
+
+style:
+  # Unused code. Stricter than the defaults: unused imports are reported too, and nothing is
+  # whitelisted by name except the conventional `_`. Private @Preview functions are only used by
+  # the IDE, so they are exempt.
+  UnusedImports:
+    active: true
+  UnusedParameter:
+    active: true
+    allowedNames: '_'
+  UnusedPrivateClass:
+    active: true
+  UnusedPrivateMember:
+    active: true
+    allowedNames: ''
+    ignoreAnnotated: ['Preview', 'PreviewLightDark', 'PreviewScreenSizes', 'PreviewFontScale']
+  UnusedPrivateProperty:
+    active: true
+    allowedNames: '_'
+
+# Jetpack Compose rules (io.nlopez.compose.rules:detekt, https://mrmans0n.github.io/compose-rules/).
+Compose:
+  ComposableAnnotationNaming:
+    active: true
+  ComposableNaming:
+    active: true
+  ComposableParamOrder:
+    active: true
+  CompositionLocalAllowlist:
+    active: true
+    # The note editor's typography settings, provided once per screen like a theme
+    # (presentation/screen/editnote/EditNoteLocalProvider.kt).
+    allowedCompositionLocals:
+      - LocalBaseFontSize
+      - LocalFontStyle
+      - LocalSimpleEdit
+      - LocalFontStyles
+      # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
+      - LocalEnclyColors
+      - LocalEnclyTypography
+      # The unlock reveal, provided once by App (presentation/effects/UnlockReveal.kt).
+      - LocalUnlockReveal
+      - LocalSpacing
+  CompositionLocalNaming:
+    active: true
+  ContentEmitterReturningValues:
+    active: true
+  ContentSlotReused:
+    active: true
+  ContentTrailingLambda:
+    active: true
+  DefaultsVisibility:
+    active: true
+  LambdaParameterEventTrailing:
+    active: true
+  LambdaParameterInRestartableEffect:
+    active: true
+  # The app is Material 3 only; keep androidx.compose.material (M2) out.
+  Material2:
+    active: true
+  ModifierClickableOrder:
+    active: true
+  ModifierComposed:
+    active: true
+  ModifierMissing:
+    active: true
+  ModifierNaming:
+    active: true
+  ModifierNotUsedAtRoot:
+    active: true
+  ModifierReused:
+    active: true
+  ModifierWithoutDefault:
+    active: true
+  MultipleEmitters:
+    active: true
+  MutableParams:
+    active: true
+  MutableStateAutoboxing:
+    active: true
+  MutableStateParam:
+    active: true
+  ParameterNaming:
+    active: true
+  PreviewAnnotationNaming:
+    active: true
+  PreviewNaming:
+    active: false
+  PreviewPublic:
+    active: true
+  RememberContentMissing:
+    active: true
+  RememberMissing:
+    active: true
+  # Collections from kotlinx.collections.immutable are not a dependency; the Compose compiler's
+  # strong skipping mode already handles List/Set/Map parameters.
+  UnstableCollections:
+    active: false
+  ViewModelForwarding:
+    active: true
+    # The rule treats every capitalised call as a composable. BlockActionsImpl is a plain class
+    # (the editor's per-block callbacks) that is built from the ViewModel on purpose.
+    allowedForwarding:
+      - BlockActionsImpl
+      - EditorBlocksHost
+      - EditorExits
+  ViewModelInjection:
+    active: true

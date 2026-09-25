@@ -7,13 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class DeviceCapabilities @Inject constructor(
-    @param:ApplicationContext private val context: Context
-) {
+class DeviceCapabilities @Inject constructor(@param:ApplicationContext private val context: Context) {
 
-    fun supportsDynamicColors(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    }
-
-
+    fun supportsDynamicColors(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 }

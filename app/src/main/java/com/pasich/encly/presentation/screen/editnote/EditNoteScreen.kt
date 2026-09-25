@@ -1,447 +1,359 @@
 package com.pasich.encly.presentation.screen.editnote
 
-import android.widget.Toast
-import com.pasich.encly.core.AppLogger
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalOverscrollFactory
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
-import com.pasich.encly.domain.enums.BottomSheetsOpenType
-import com.pasich.encly.dynamicBlocks.BlockRemoveAction
-import com.pasich.encly.dynamicBlocks.DynamicBlocksEditor
-import com.pasich.encly.presentation.components.appbar.AppBarIconButton
-import com.pasich.encly.presentation.components.appbar.AppBarTextButton
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
-import com.pasich.encly.presentation.components.editNote.NoteSubTitle
+import com.pasich.encly.presentation.components.editNote.NoteOverline
 import com.pasich.encly.presentation.components.editNote.TitleField
+import com.pasich.encly.presentation.designsystem.CalloutTone
+import com.pasich.encly.presentation.designsystem.EnclyCallout
+import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
+import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheet
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheetAction
-import com.pasich.encly.presentation.dialogs.blocks.ActionBlockDialog
-import com.pasich.encly.presentation.dialogs.blocks.ActionLinkBottomSheet
-import com.pasich.encly.presentation.dialogs.blocks.ActionOtherBottomSheet
-import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
-import com.pasich.encly.presentation.effects.NoteSkeleton
+import com.pasich.encly.presentation.editor.EditorBlocksHost
+import com.pasich.encly.presentation.editor.editorBlocks
+import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
+import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
+import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
-import com.pasich.encly.presentation.viewmodel.SaveStatusNote
-import com.pasich.encly.utils.NotesTextFormatter
-import com.pasich.encly.utils.shareText
-import kotlinx.coroutines.delay
+import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
-@OptIn(
-    ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class,
-    ExperimentalLayoutApi::class
-)
+/** Items above the blocks: the overline and the title. */
+private const val HEADER_ITEMS = 2
+
 @Composable
 fun EditNoteScreen(
     navController: NavHostController,
+    modifier: Modifier = Modifier,
     viewModel: EditNoteViewModel = hiltViewModel(),
 ) {
-    val currentContext = LocalContext.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val sheetState =
-        rememberModalBottomSheetState(
-            skipPartiallyExpanded = true,
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val exits = remember(viewModel, navController) {
+        EditorExits(
+            viewModel = viewModel,
+            navController = navController,
+            entry = lifecycleOwner as? NavBackStackEntry,
+            scope = scope,
+            onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(context.getString(message)) } },
+            beforeLeaving = {
+                keyboardController?.hide()
+                focusManager.clearFocus()
+            },
         )
-    val saveStatus by viewModel.status.collectAsState()
+    }
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val fontStyle by viewModel.fontStyle.collectAsStateWithLifecycle()
     val simpleEdit by viewModel.simpleEdit.collectAsStateWithLifecycle()
-    val lockEditor by viewModel.lockEditor.collectAsState()
-    var isDialogVisible by remember { mutableStateOf(false) }
-    val noteState by viewModel.state.collectAsState()
-    val lastInteractionIndex by viewModel.lastInteractionIndex.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
-
-    // Warn the user when stored content could not be read, instead of showing a silent
-    // blank editor. Editing/saving is already guarded so the unreadable data is preserved.
-    LaunchedEffect(contentLoadFailed) {
-        if (contentLoadFailed) {
-            Toast.makeText(
-                currentContext,
-                currentContext.getString(R.string.note_load_failed),
-                Toast.LENGTH_LONG,
-            ).show()
-        }
+    val overlays = rememberEditorOverlays()
+    val listState = rememberLazyListState()
+    val focusRegistry = rememberBlockFocusRegistry(viewModel.blocks)
+    val host = remember(viewModel, focusRegistry) {
+        EditorBlocksHost(viewModel, focusRegistry) { type, block -> overlays.blockSheet.open(type, block.id) }
     }
+    val titleFocus = remember { FocusRequester() }
 
-    var bottomSheetsType by rememberSaveable {
-        mutableStateOf(
-            BottomSheetsOpenType.NONE,
-        )
-    }
-    var isEditMenuBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+    SaveWhenPaused()
+    CarryOutFocusRequests(focusRegistry, listState, blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0)
+    FocusNewNoteTitle(titleFocus)
+    BackHandler { exits.back() }
+    EditorOverlays(overlays, exits, onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) })
 
-    // Function for correctly closing the screen
-    val closeScreen = {
-        scope.launch {
-            // Hide the keyboard
-            keyboardController?.hide()
-            // Clear focus
-            focusManager.clearFocus()
-            // Small delay to let animations finish
-            delay(100)
-            // Close the screen
-            navController.popBackStack()
-        }
-    }
-    val imeVisible = WindowInsets.isImeVisible
-
-    // Handling the system "Back" button
-    BackHandler {
-        closeScreen()
-    }
-
-    ConfirmDialog(
-        isVisible = isDialogVisible,
-        titleText = stringResource(R.string.dialog_title),
-        messageText = stringResource(R.string.dialog_message),
-        onConfirm = {
-            scope.launch {
-                viewModel.noteDelete()
-                isDialogVisible = false
-                closeScreen()
-            }
-        },
-        onDismiss = {
-            isDialogVisible = false
-        },
-    )
-
-    ActionOtherBottomSheet(
-        settings =
-            SettingsBlockDialog(
-                block = viewModel.blocks[lastInteractionIndex],
-                isBottomSheetVisible = BottomSheetsOpenType.ACTION_OTHER == bottomSheetsType,
-                blockMove = viewModel.getMoveBlockState(),
+    EditNoteSettingsProvider(baseFontSize = fontSize.sp, fontStyle = fontStyle, simpleEdit = simpleEdit) {
+        EditorScaffold(
+            actions = EditorBarActions(
+                onBack = exits::back,
+                onRestore = exits::restore,
+                onDelete = { overlays.isDeleteDialogVisible = true },
+                onTags = { overlays.isTagSheetVisible = true },
+                onMenu = { overlays.isEditMenuVisible = true },
+                onLockToggle = viewModel::toggleLockEditor,
             ),
-        sheetState = sheetState,
-        onDismiss = {
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                bottomSheetsType = BottomSheetsOpenType.NONE
-            }
-        },
-        onAction = { action ->
-            when (action) {
-                ActionBlockDialog.Delete -> {
-                    viewModel.blocks[lastInteractionIndex].let {
-                        viewModel.removeBlock(
-                            it,
-                            BlockRemoveAction.REMOVE,
-                        )
-                    }
-                }
-
-                is ActionBlockDialog.Move -> {
-                    viewModel.moveBlock(action.move == 1)
-                }
-
-            }
-        },
-    )
-
-    ActionLinkBottomSheet(
-        sheetState = sheetState,
-        settings =
-            SettingsBlockDialog(
-                block = viewModel.blocks[lastInteractionIndex],
-                isBottomSheetVisible = BottomSheetsOpenType.ACTION_LINK == bottomSheetsType,
-            ),
-        onDismiss = {
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                bottomSheetsType = BottomSheetsOpenType.NONE
-            }
-        },
-        onAction = {
-            when (it) {
-                ActionBlockDialog.Delete -> {
-                    viewModel.blocks[lastInteractionIndex].let { it1 ->
-                        viewModel.removeBlock(
-                            it1,
-                            BlockRemoveAction.REMOVE,
-                        )
-                    }
-                }
-
-                is ActionBlockDialog.Move -> {
-                    viewModel.moveBlock(it.move == 1)
-                }
-            }
-        },
-    )
-
-
-
-    EditNoteSettingsProvider(
-        baseFontSize = fontSize.sp,
-        fontStyle = fontStyle,
-        simpleEdit = simpleEdit,
-    ) {
-        Scaffold(
-            contentWindowInsets = WindowInsets.ime,
-            bottomBar = {
-                if (imeVisible && !lockEditor && !viewModel.isReadTrashOnly) {
-                    NoteBottomBar(
-                        viewModel = viewModel,
-                        simpleEdit = LocalSimpleEdit.current,
-                    )
-                }
-            },
+            listState = listState,
+            snackbarHostState = snackbarHostState,
+            modifier = modifier,
         ) { padding ->
-            CompositionLocalProvider(
-                LocalOverscrollFactory provides null,
-            ) {
-                LazyColumn(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .statusBarsPadding(),
-                ) {
-                    item {
-                        TopBarContent(
-                            isReadTrashOnly = viewModel.isReadTrashOnly,
-                            lockEditor = lockEditor,
-                            onBackClick = { closeScreen() },
-                            onRestoreClick = {
-                                scope.launch {
-                                    viewModel.noteRestore()
-                                    keyboardController?.hide()
-                                    focusManager.clearFocus()
-                                    delay(100)
-                                    navController.popBackStack()
-                                }
-                            },
-                            onDeleteClick = { isDialogVisible = true },
-                            onMenuClick = { isEditMenuBottomSheetVisible = true },
-                            onLockToggle = { viewModel.toggleLockEditor() },
-                            onDoneClick = {
-                                scope.launch {
-                                    viewModel.saveNote(actionButton = true)
-                                    keyboardController?.hide()
-                                    focusManager.clearFocus()
-                                    delay(100)
-                                    navController.popBackStack()
-                                }
-                            },
-                        )
-                    }
-
-                    // NoteSubTitle
-                    if (!lockEditor && !viewModel.isReadTrashOnly) {
-                        item {
-                            NoteSubTitle(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                                statusSaveNote = saveStatus,
-                                note = noteState.note,
-                                changeTag = { viewModel.updateTagNote(it) },
-                                isDuplicate = viewModel.copySource != -1L,
-                            )
-                        }
-                    }
-
-                    // Skeleton or content
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            AnimatedVisibility(
-                                visible = saveStatus == SaveStatusNote.LOADING,
-                                enter = fadeIn(initialAlpha = 0.3f),
-                                exit = fadeOut(targetAlpha = 0f),
-                            ) {
-                                NoteSkeleton()
-                            }
-
-                            AnimatedVisibility(
-                                visible = saveStatus != SaveStatusNote.LOADING,
-                                enter =
-                                    fadeIn(
-                                        initialAlpha = 0f,
-                                        animationSpec =
-                                            tween(
-                                                durationMillis = 300,
-                                                delayMillis = 100,
-                                                easing = FastOutSlowInEasing,
-                                            ),
-                                    ),
-                                exit =
-                                    fadeOut(
-                                        animationSpec =
-                                            tween(
-                                                durationMillis = 150,
-                                                easing = LinearEasing,
-                                            ),
-                                    ),
-                            ) {
-                                Column {
-                                    // TitleField
-                                    TitleField(
-                                        enabled = lockEditor,
-                                        title = noteState.note.title,
-                                        onTitleChange = { newTitle ->
-                                            viewModel.updateTitle(newTitle)
-                                        },
-                                    )
-
-                                    // DynamicBlocksEditor
-                                    DynamicBlocksEditor(
-                                        bottomSheetsOpen = { type, block, index ->
-                                            AppLogger.d(
-                                                "EditNoteScreen",
-                                                "bottomSheetsOpen called with type: $type, index: $index"
-                                            )
-                                            bottomSheetsType = type
-                                            scope.launch { sheetState.show() }
-                                        },
-                                        isLocked = lockEditor,
-                                        enableScroll = false,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            EditorContent(
+                host = host,
+                listState = listState,
+                titleFocus = titleFocus,
+                modifier = Modifier.padding(padding),
+            )
         }
-
-        // Edit menu
-        EditNoteBottomSheet(
-            isVisible = isEditMenuBottomSheetVisible,
-            onDismiss = { isEditMenuBottomSheetVisible = false },
-            onAction = {
-                when (it) {
-                    EditNoteBottomSheetAction.CLOSE_NO_SAVE -> {
-                        scope.launch {
-                            viewModel.saveNote(saveBackupVersion = true)
-                            closeScreen()
-                        }
-                    }
-
-                    EditNoteBottomSheetAction.SHARE -> {
-                        shareText(
-                            currentContext,
-                            "${noteState.note.title}\n\n${
-                                NotesTextFormatter.blocksToPlainText(
-                                    viewModel.blocks
-                                )
-                            }"
-                        )
-                    }
-
-                    EditNoteBottomSheetAction.DUPLICATE -> {
-                        scope.launch {
-                            viewModel.noteDuplicate()
-                            closeScreen()
-                        }
-                    }
-
-                    EditNoteBottomSheetAction.TRASH -> {
-                        scope.launch {
-                            viewModel.noteMoveToTrash()
-                            closeScreen()
-                        }
-                    }
-                }
-            }
-        )
     }
 }
 
+/**
+ * The editor's frame: the pinned bar, and the formatting toolbar, always there while the note
+ * can be edited, keyboard or not (a hardware keyboard never shows one); it lifts itself above
+ * the keyboard.
+ */
+@Composable
+private fun EditorScaffold(
+    actions: EditorBarActions,
+    listState: LazyListState,
+    snackbarHostState: SnackbarHostState,
+    modifier: Modifier = Modifier,
+    viewModel: EditNoteViewModel = hiltViewModel(),
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    val lockEditor by viewModel.lockEditor.collectAsState()
+    val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+    Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
+        // Status and navigation bars, a display cutout and the keyboard all stay clear of text.
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            EditorTopBar(
+                state = EditorBarState(
+                    isReadTrashOnly = viewModel.isReadTrashOnly,
+                    lockEditor = lockEditor,
+                    canToggleLock = !contentLoadFailed,
+                ),
+                listState = listState,
+                actions = actions,
+            )
+        },
+        bottomBar = {
+            if (!lockEditor && !viewModel.isReadTrashOnly) NoteBottomBar(simpleEdit = LocalSimpleEdit.current)
+        },
+        snackbarHost = { EnclySnackbarHost(snackbarHostState) },
+        content = content,
+    )
+}
+
+/** Which of the editor's sheets and dialogs are open. */
+internal class EditorOverlaysState(
+    val blockSheet: BlockSheetState,
+    editMenu: MutableState<Boolean>,
+    tagSheet: MutableState<Boolean>,
+) {
+    var isEditMenuVisible by editMenu
+    var isTagSheetVisible by tagSheet
+    var isDeleteDialogVisible by mutableStateOf(false)
+    var isDiscardDialogVisible by mutableStateOf(false)
+}
 
 @Composable
-private fun TopBarContent(
-    isReadTrashOnly: Boolean,
-    lockEditor: Boolean,
-    onBackClick: () -> Unit,
-    onRestoreClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    onMenuClick: () -> Unit,
-    onLockToggle: () -> Unit,
-    onDoneClick: () -> Unit,
+private fun rememberEditorOverlays(): EditorOverlaysState {
+    val blockSheet = rememberBlockSheetState()
+    val editMenu = rememberSaveable { mutableStateOf(false) }
+    val tagSheet = rememberSaveable { mutableStateOf(false) }
+    return remember { EditorOverlaysState(blockSheet, editMenu, tagSheet) }
+}
+
+/** The editor's sheets and dialogs: block sheets, tags, More actions, delete and discard. */
+@Composable
+private fun EditorOverlays(
+    overlays: EditorOverlaysState,
+    exits: EditorExits,
+    onManageTags: () -> Unit,
+    viewModel: EditNoteViewModel = hiltViewModel(),
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (isReadTrashOnly) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            AppBarTextButton(text = R.string.restore, onClick = onRestoreClick)
-            Spacer(modifier = Modifier.width(10.dp))
-            AppBarTextButton(text = R.string.delete_from_trash, onClick = onDeleteClick)
-        } else {
-            AppBarIconButton(icon = R.drawable.more, onPressed = onMenuClick)
-            Spacer(modifier = Modifier.weight(1f))
-            AppBarIconButton(
-                icon = if (lockEditor) R.drawable.ic_lock else R.drawable.ic_unlock,
-                tint = if (lockEditor) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                onPressed = onLockToggle,
-            )
-
-            AnimatedVisibility(!lockEditor) {
-                AppBarTextButton(text = R.string.done, onClick = onDoneClick)
-            }
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
+    val lockEditor by viewModel.lockEditor.collectAsState()
+    EditorConfirmDialogs(
+        isDeleteVisible = overlays.isDeleteDialogVisible,
+        isDiscardVisible = overlays.isDiscardDialogVisible,
+        onDelete = exits::delete,
+        onDiscard = exits::discard,
+        onDismiss = {
+            overlays.isDeleteDialogVisible = false
+            overlays.isDiscardDialogVisible = false
+        },
+    )
+    EditorBlockSheets(overlays.blockSheet, canEdit = !lockEditor && !viewModel.isReadTrashOnly)
+    if (overlays.isTagSheetVisible) {
+        EditorTagSheet(
+            onManageTags = {
+                overlays.isTagSheetVisible = false
+                onManageTags()
+            },
+            onDismiss = { overlays.isTagSheetVisible = false },
+        )
     }
+    EditNoteBottomSheet(
+        isVisible = overlays.isEditMenuVisible,
+        onDismiss = { overlays.isEditMenuVisible = false },
+        onAction = { action ->
+            when (action) {
+                EditNoteBottomSheetAction.CLOSE_NO_SAVE -> exits.discardOrConfirm {
+                    overlays.isDiscardDialogVisible =
+                        true
+                }
+
+                EditNoteBottomSheetAction.DUPLICATE -> exits.duplicate()
+
+                EditNoteBottomSheetAction.TRASH -> exits.trash()
+            }
+        },
+    )
+}
+
+/** The editor's list: overline, title, a notice when the content is unreadable, then the blocks. */
+@Composable
+private fun EditorContent(
+    host: EditorBlocksHost,
+    listState: LazyListState,
+    titleFocus: FocusRequester,
+    modifier: Modifier = Modifier,
+    viewModel: EditNoteViewModel = hiltViewModel(),
+) {
+    val lockEditor by viewModel.lockEditor.collectAsState()
+    val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+    val editingLinkIds by viewModel.editingLinkIds.collectAsState()
+    // Only whether it is loading: a save changing the status must not recompose the list.
+    val status = viewModel.status.collectAsState()
+    val loading by remember(status) { derivedStateOf { status.value == SaveStatusNote.LOADING } }
+
+    CompositionLocalProvider(LocalOverscrollFactory provides null) {
+        LazyColumn(
+            state = listState,
+            // With a block's 4 dp frame inset above and below, blocks sit 14 apart (spec §4.4).
+            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.labelGap),
+            contentPadding = PaddingValues(top = EnclyTheme.spacing.xxs),
+            modifier = modifier.fillMaxSize(),
+        ) {
+            if (loading) {
+                item(key = "skeleton") {
+                    NoteSkeleton(modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter))
+                }
+                return@LazyColumn
+            }
+            item(key = "overline") { EditorOverline() }
+            item(key = "title") { EditorTitle(readOnly = lockEditor, modifier = Modifier.focusRequester(titleFocus)) }
+            if (contentLoadFailed) {
+                item(key = "unreadable") {
+                    EnclyCallout(
+                        text = stringResource(R.string.note_load_failed),
+                        tone = CalloutTone.WARNING,
+                        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter),
+                    )
+                }
+            }
+            editorBlocks(host, viewModel.blocks, isLocked = lockEditor, editingLinkIds = editingLinkIds)
+        }
+    }
+}
+
+/** The title field, bound to the note's title; "Next" moves on to the first block. */
+@Composable
+private fun EditorTitle(
+    readOnly: Boolean,
+    modifier: Modifier = Modifier,
+    viewModel: EditNoteViewModel = hiltViewModel(),
+) {
+    TitleField(
+        title = { viewModel.state.value.note.title },
+        titleChanges = viewModel.state,
+        onTitleChange = viewModel::updateTitle,
+        onNext = viewModel::focusFirstBlock,
+        readOnly = readOnly,
+        modifier = modifier,
+    )
+}
+
+/** The overline: the note's tag and when it was edited, and "Not saved" after a failed save. */
+@Composable
+private fun EditorOverline(
+    modifier: Modifier = Modifier,
+    viewModel: EditNoteViewModel = hiltViewModel(),
+    tagViewModel: TagListViewModel = hiltViewModel(),
+) {
+    // Read through derived state: a title keystroke or a save does not recompose the overline.
+    val noteState = viewModel.state.collectAsState()
+    val status = viewModel.status.collectAsState()
+    val meta by remember(noteState) { derivedStateOf { noteState.value.note.let { it.tagId to it.date } } }
+    val notSaved by remember(status) { derivedStateOf { status.value == SaveStatusNote.FAILED } }
+    val tagState by tagViewModel.state.collectAsState()
+    val (tagId, date) = meta
+    NoteOverline(
+        tagName = tagState.listTags.firstOrNull { it.id == tagId }?.nameTag,
+        date = date,
+        notSaved = notSaved,
+        modifier = modifier.padding(
+            start = EnclyTheme.spacing.gutter,
+            end = EnclyTheme.spacing.gutter,
+            bottom = EnclyTheme.spacing.xs,
+        ),
+    )
+}
+
+/** Delete (from the trash) and discard both ask first. */
+@Composable
+private fun EditorConfirmDialogs(
+    isDeleteVisible: Boolean,
+    isDiscardVisible: Boolean,
+    onDelete: () -> Unit,
+    onDiscard: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ConfirmDialog(
+        isVisible = isDeleteVisible,
+        titleText = stringResource(R.string.dialog_title),
+        messageText = stringResource(R.string.dialog_message),
+        onConfirm = {
+            onDismiss()
+            onDelete()
+        },
+        onDismiss = onDismiss,
+        destructive = true,
+    )
+    ConfirmDialog(
+        isVisible = isDiscardVisible,
+        titleText = stringResource(R.string.note_discard_confirm_title),
+        messageText = stringResource(R.string.note_discard_confirm_message),
+        onConfirm = {
+            onDismiss()
+            onDiscard()
+        },
+        onDismiss = onDismiss,
+        destructive = true,
+    )
 }

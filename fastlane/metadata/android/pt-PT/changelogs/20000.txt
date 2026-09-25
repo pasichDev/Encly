@@ -1,0 +1,7 @@
+Encly 2.0: reconstruída de raiz em torno de um novo cofre encriptado.
+• Notas e tarefas encriptadas, guardadas só no telemóvel.
+• Bloqueio com PIN de 6 dígitos, impressão digital ou rosto opcionais.
+• Frase de recuperação de 12 palavras opcional.
+• Cópia de segurança encriptada num ficheiro guardado onde quiser.
+• Cinco temas, três tipos de letra, nove idiomas.
+• Sem conta, sem anúncios, sem permissão de internet.
