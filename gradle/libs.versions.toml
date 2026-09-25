@@ -41,7 +41,7 @@ androidxTestCore = "1.6.1"
 androidxTestRunner = "1.6.2"
 androidxTestExtJunit = "1.2.1"
 mockito = "5.18.0"
-robolectric = "4.16.1"
+robolectric = "4.17"
 
 [libraries]
 androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
