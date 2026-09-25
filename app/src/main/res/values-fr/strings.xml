@@ -108,7 +108,7 @@
 
     <string name="falied_content">Impossible de charger le contenu</string>
 
-    <string name="faq_background_a">Encly enregistre vos modifications en cours, ferme la base de données chiffrée et efface la clé de session. Vous devez déverrouiller à nouveau à votre retour.</string>
+    <string name="faq_background_a">Encly enregistre vos modifications puis, après le délai choisi dans Paramètres → Sécurité (15 secondes par défaut), ferme la base chiffrée et efface la clé de session. Éteindre l’écran ou verrouiller le téléphone le fait immédiatement. Vous déverrouillez ensuite à nouveau.</string>
     <string name="faq_background_q">Que se passe-t-il quand je quitte l\'application ?</string>
     <string name="faq_biometrics_a">Utilisez l\'interrupteur de biométrie dans Paramètres → Sécurité. La création ou la suppression de l\'emplacement biométrique nécessite une authentification biométrique forte.</string>
     <string name="faq_biometrics_q">Comment activer ou désactiver la biométrie ?</string>

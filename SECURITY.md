@@ -63,6 +63,14 @@ Biometric unlock is optional.
 A successful biometric prompt by itself is therefore insufficient to open the
 database. The authenticated cryptographic operation must release the DEK.
 
+- The system screen lock (device PIN, pattern or password) is never accepted in place of a
+  biometric: the prompt allows `BIOMETRIC_STRONG` only, and falling back means Encly's own
+  PIN.
+- Turning biometric unlock **on** needs a biometric prompt that wraps the DEK through the
+  new key's CryptoObject; turning it **off** needs a Class 3 biometric confirmation, and
+  deletes the slot and the key. Only one such prompt can be open at a time, and the switch
+  is disabled on devices without enrolled strong biometrics.
+
 ### Recovery slot
 
 User-managed onboarding creates an optional BIP39 recovery slot.
@@ -180,8 +188,14 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
 - The database is not considered committed until mandatory PIN setup succeeds.
 - Interrupted first-run setup restarts onboarding and discards incomplete vault slots.
 - When the app backgrounds, SQLCipher is closed and Encly's in-memory DEK copy is
-  zeroized. ViewModels holding decrypted content (notes list, tasks, editor, a decrypted
-  backup, new recovery words) drop it at that moment, not only when the UI resumes.
+  zeroized, after the user's auto-lock delay (Settings → Security: immediately, 15 s by
+  default, 30 s, 1 min or 2 min; measured on `elapsedRealtime`, so deep sleep counts). The
+  screen turning off or the device locking closes it at once, whatever the delay. ViewModels
+  holding decrypted content (notes list, tasks, editor, a decrypted backup, new recovery
+  words) drop it at that moment, not only when the UI resumes.
+- Within the delay the vault stays open in the background: the DEK and decrypted content are
+  in memory, and the recents thumbnail is still blocked by `FLAG_SECURE`. Choose
+  "Immediately" to close it the moment Encly leaves the screen.
 - The next foreground entry must unwrap the DEK again through PIN, biometric, or
   recovery.
 - A process started with a committed, closed vault starts in the locked state, and a central
@@ -262,6 +276,13 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - The About screen offers links (privacy policy, GitHub issues, developer email and, only in the
   `play` flavor, the Play Store listing). They open in another app **only after an explicit
   tap**; Encly itself sends nothing.
+- **Links in notes are a deliberate exception** to "nothing leaves the vault". A link block
+  opens only from its sheet, which first shows the full address, after an explicit tap on
+  "Open", through the system chooser. Only `http`, `https` and `mailto` are saved or opened;
+  addresses with user info, backslashes, whitespace or control characters are refused, and
+  hosts are shown in punycode, so the card cannot name a different host than the one that
+  opens. The receiving app (a browser, a mail client) then sees that one address. Encly
+  fetches no previews: a link card is built from the stored address alone.
 
 ## Threat model
 

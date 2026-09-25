@@ -132,7 +132,7 @@ class BackupFlowsTest {
     fun aWrongPinNeverSealsTheVault() {
         viewModel.start(BackupAction.EXPORT)
 
-        viewModel.reauthFlow.submitPin("000000")
+        viewModel.reauthFlow.submitPin("000000".toCharArray())
 
         waitFor { (it as? BackupStep.Reauth)?.error != null }
         verify(security, never()).copyBackupRootKey()
@@ -438,7 +438,7 @@ class BackupFlowsTest {
 
     private fun startAndAuthenticate(action: BackupAction) {
         viewModel.start(action)
-        viewModel.reauthFlow.submitPin(PIN)
+        viewModel.reauthFlow.submitPin(PIN.toCharArray())
     }
 
     private fun export() {

@@ -8,9 +8,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.pasich.encly.R
-import com.pasich.encly.core.security.PIN_LENGTH
-import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
+import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
@@ -26,15 +25,11 @@ internal class LockFormState {
     /** The recovery-phrase form is shown instead of the PIN pad. */
     var useRecovery by mutableStateOf(false)
 
-    /**
-     * The digits typed so far live in a CharArray that is wiped when taken or cleared, never
-     * in a String: only their count is Compose state.
-     */
-    private val pinDigits = CharArray(PIN_LENGTH)
+    /** The digits typed so far, wiped when taken or cleared (see [PinBuffer]). */
+    private val pinDigits = PinBuffer()
 
     /** How many PIN digits are typed. */
-    var pinLength by mutableIntStateOf(0)
-        private set
+    val pinLength: Int get() = pinDigits.length
 
     @get:StringRes
     var pinError by mutableStateOf<Int?>(null)
@@ -57,27 +52,18 @@ internal class LockFormState {
 
     /** A digit on the keypad; the first digit of a new attempt clears the last error. */
     fun typeDigit(digit: Int) {
-        if (pinLength >= PIN_LENGTH || lockedOut || digit !in 0..MAX_DIGIT) return
+        if (pinDigits.isFull || lockedOut || digit !in 0..MAX_DIGIT) return
         if (pinLength == 0) pinError = null
-        pinDigits[pinLength] = '0' + digit
-        pinLength++
+        pinDigits.add(digit)
     }
 
-    fun deleteDigit() {
-        if (pinLength > 0) {
-            pinLength--
-            pinDigits[pinLength] = '\u0000'
-        }
-    }
+    fun deleteDigit() = pinDigits.deleteLast()
 
     /** The full PIN, taken out of the form to be checked. The caller wipes the copy. */
-    fun takePin(): CharArray = pinDigits.copyOf(pinLength).also { clearPin() }
+    fun takePin(): CharArray = pinDigits.take()
 
     /** Forgets the typed digits. */
-    fun clearPin() {
-        SensitiveDataCleaner.clear(pinDigits)
-        pinLength = 0
-    }
+    fun clearPin() = pinDigits.clear()
 
     fun onPinResult(result: PinUnlockResult, lockoutRemainingMillis: Long) {
         when (result) {

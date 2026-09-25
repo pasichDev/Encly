@@ -100,18 +100,22 @@ a seed or PIN:
 
 1. Onboarding creates a random 256-bit **DEK** (data-encryption key).
 2. SQLCipher is opened with that DEK.
-3. The mandatory PIN is processed with **PBKDF2-HMAC-SHA256 (600k)** and a random salt.
-   The resulting KEK wraps the DEK using **AES-256-GCM**. Encly does not store a PIN hash.
+3. The mandatory PIN is processed with **PBKDF2-HMAC-SHA256 (600k)** and a random salt,
+   and mixed (HKDF) with an HMAC from a non-exportable **Android Keystore** key (StrongBox
+   when the phone has one), so PIN guesses can only run on this device. The resulting KEK
+   wraps the DEK using **AES-256-GCM**. Encly does not store a PIN hash.
 4. If biometrics are enabled, the same DEK gets a second AES-GCM slot protected by an
    auth-per-use AndroidKeyStore key. Unwrapping requires
    `BiometricPrompt.CryptoObject` with `BIOMETRIC_STRONG`.
-5. In user-managed recovery mode, a 12-word BIP39 seed derives a recovery KEK and wraps
-   the same DEK in a separate AES-GCM recovery slot.
-6. When Encly goes to the background, SQLCipher is closed and Encly's in-memory DEK copy
-   is zeroized. The next entry must unwrap the DEK again.
+5. With a recovery phrase (offered during setup, or later in Settings → Security), a 12-word
+   BIP39 seed derives a recovery KEK and wraps the same DEK in a separate AES-GCM recovery
+   slot. The same words are the only key to encrypted backups.
+6. After Encly leaves the screen (after the auto-lock delay in Settings → Security, 15 s by
+   default, or at once when the screen turns off), SQLCipher is closed and Encly's in-memory
+   DEK copy is zeroized. The next entry must unwrap the DEK again.
 
-The auto-managed onboarding option deliberately has **no recovery seed**. Losing the PIN
-and local unlock material in that mode makes the encrypted database unrecoverable.
+Skipping the recovery phrase leaves the vault with **no recovery seed** and no backups.
+Losing the PIN in that case makes the encrypted database unrecoverable.
 
 The app also disables Android backup/device transfer for protected data and has no
 system notifications, plaintext note sharing, calendar export, or seed export; the only

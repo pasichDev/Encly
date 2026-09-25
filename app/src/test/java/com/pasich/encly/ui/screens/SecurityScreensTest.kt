@@ -1,12 +1,17 @@
 package com.pasich.encly.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
 import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.R
+import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
@@ -14,8 +19,8 @@ import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.testutil.anyCharArray
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
 class SecurityScreensTest : ComposeScreenTest() {
@@ -23,8 +28,8 @@ class SecurityScreensTest : ComposeScreenTest() {
     private val app by lazy { TestApp(context).withWorkingVault(words) }
     private lateinit var vault: BackupViewModel
 
-    private fun showSecurity(recoveryPhrase: Boolean) {
-        app.withAuth(recoveryPhrase)
+    private fun showSecurity(recoveryPhrase: Boolean, biometric: BiometricStatus = BiometricStatus.UNAVAILABLE) {
+        app.withAuth(recoveryPhrase, biometric)
         vault = app.backup()
         setNavScreen(viewModels(app.securitySettings(), vault), route = NavRoutes.SecuritySettingsRoute.name) { nav ->
             SecuritySettingsScreen(nav)
@@ -129,6 +134,14 @@ class SecurityScreensTest : ComposeScreenTest() {
 
     @Test
     fun aNewPinIsConfirmedAndSaved() {
+        val saved = mutableListOf<String>()
+        val passed = mutableListOf<CharArray>()
+        `when`(app.security.configurePin(anyCharArray())).thenAnswer {
+            val pin = it.getArgument<CharArray>(0)
+            passed += pin
+            saved += String(pin)
+            true
+        }
         showPinChange()
 
         typePin("123456")
@@ -138,9 +151,36 @@ class SecurityScreensTest : ComposeScreenTest() {
         typePin("654321")
 
         waitFor { rule.onAllNodesWithContentDescription(str(R.string.pin_changed)).fetchSemanticsNodes().isNotEmpty() }
-        verify(app.security).configurePin("654321".toCharArray())
+        assertEquals(listOf("654321"), saved)
         waitFor { currentRoute() == NavRoutes.SecuritySettingsRoute.name }
+        // The PIN handed over was wiped once stored.
+        assertTrue(passed.single().all { it == '\u0000' })
     }
+
+    @Test
+    fun theBiometricSwitchIsOffLimitsWithoutUsableHardware() {
+        showSecurity(recoveryPhrase = true, biometric = BiometricStatus.UNAVAILABLE)
+
+        biometricSwitch().assertIsNotEnabled()
+        rule.onNodeWithText(str(R.string.security_biometric_unavailable)).assertExists()
+    }
+
+    @Test
+    fun theBiometricSwitchIsOffLimitsWithoutAnEnrolledFingerprint() {
+        showSecurity(recoveryPhrase = true, biometric = BiometricStatus.NOT_ENROLLED)
+
+        biometricSwitch().assertIsNotEnabled()
+        rule.onNodeWithText(str(R.string.security_biometric_not_enrolled)).assertExists()
+    }
+
+    @Test
+    fun theBiometricSwitchWorksWithUsableHardware() {
+        showSecurity(recoveryPhrase = true, biometric = BiometricStatus.AVAILABLE)
+
+        biometricSwitch().assertIsEnabled()
+    }
+
+    private fun biometricSwitch() = rule.onNode(isToggleable() and hasText(str(R.string.security_biometric_title)))
 
     @Test
     fun aMismatchedConfirmationStartsTheNewPinAgain() {

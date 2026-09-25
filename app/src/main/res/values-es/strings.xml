@@ -108,7 +108,7 @@
 
     <string name="falied_content">No se pudo cargar el contenido</string>
 
-    <string name="faq_background_a">Encly guarda tus cambios actuales, cierra la base de datos cifrada y borra la clave de sesión. Al volver, tendrás que desbloquear de nuevo.</string>
+    <string name="faq_background_a">Encly guarda tus cambios y, tras el retraso elegido en Ajustes → Seguridad (15 segundos por defecto), cierra la base de datos cifrada y borra la clave de sesión. Apagar la pantalla o bloquear el teléfono lo hace al instante. Después, desbloqueas de nuevo.</string>
     <string name="faq_background_q">¿Qué pasa cuando salgo de la aplicación?</string>
     <string name="faq_biometrics_a">Usa el interruptor de biometría en Ajustes → Seguridad. Crear o eliminar la ranura biométrica requiere autenticación biométrica fuerte.</string>
     <string name="faq_biometrics_q">¿Cómo activo o desactivo la biometría?</string>

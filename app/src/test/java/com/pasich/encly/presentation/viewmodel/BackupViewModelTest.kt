@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -55,7 +56,7 @@ class BackupViewModelTest {
     fun theRightPinDuringALockoutIsNotReportedAsWrong() {
         `when`(security.pinLockoutRemainingMillis()).thenReturn(30_000L)
 
-        viewModel.reauthFlow.submitPin("123456")
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         val step = viewModel.uiState.value.step as BackupStep.Reauth
         assertNull(step.error)
@@ -64,10 +65,25 @@ class BackupViewModelTest {
     }
 
     @Test
+    fun theSubmittedPinIsWipedWhetherItIsCheckedOrNot() {
+        `when`(security.pinLockoutRemainingMillis()).thenReturn(30_000L)
+        val refused = "123456".toCharArray()
+        viewModel.reauthFlow.submitPin(refused)
+        assertArrayEquals(CharArray(refused.size), refused)
+
+        `when`(security.pinLockoutRemainingMillis()).thenReturn(0L)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        val checked = "000000".toCharArray()
+        viewModel.reauthFlow.submitPin(checked)
+        waitForStep { (it as? BackupStep.Reauth)?.error != null }
+        assertArrayEquals(CharArray(checked.size), checked)
+    }
+
+    @Test
     fun aWrongPinOutsideALockoutIsReported() {
         `when`(security.verifyPin(anyCharArray())).thenReturn(false)
 
-        viewModel.reauthFlow.submitPin("000000")
+        viewModel.reauthFlow.submitPin("000000".toCharArray())
 
         waitForStep { (it as? BackupStep.Reauth)?.error != null }
         assertEquals(R.string.lock_wrong_pin, (viewModel.uiState.value.step as BackupStep.Reauth).error)
@@ -77,7 +93,7 @@ class BackupViewModelTest {
     fun theRightPinOutsideALockoutProceeds() {
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
 
-        viewModel.reauthFlow.submitPin("123456")
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it == BackupStep.PickImportFile }
     }
@@ -89,7 +105,7 @@ class BackupViewModelTest {
         `when`(security.generateMnemonicCode()).thenReturn(WORDS.toCharArray())
         viewModel.start(BackupAction.CREATE_PHRASE)
 
-        viewModel.reauthFlow.submitPin("123456")
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it is BackupStep.ShowNewPhrase }
         assertEquals(WORDS.split(' '), (viewModel.uiState.value.step as BackupStep.ShowNewPhrase).words)
@@ -99,9 +115,9 @@ class BackupViewModelTest {
     fun eachWrongPinCountsAFailureSoTheDotsShakeAgain() {
         `when`(security.verifyPin(anyCharArray())).thenReturn(false)
 
-        viewModel.reauthFlow.submitPin("000000")
+        viewModel.reauthFlow.submitPin("000000".toCharArray())
         waitForStep { (it as? BackupStep.Reauth)?.failures == 1 }
-        viewModel.reauthFlow.submitPin("000000")
+        viewModel.reauthFlow.submitPin("000000".toCharArray())
 
         waitForStep { (it as? BackupStep.Reauth)?.failures == 2 }
     }
@@ -112,7 +128,7 @@ class BackupViewModelTest {
         `when`(security.hasRecoverySeed()).thenReturn(true)
         viewModel.start(BackupAction.CREATE_PHRASE)
 
-        viewModel.reauthFlow.submitPin("123456")
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it == BackupStep.Idle }
         assertEquals(BackupMessage.Text(R.string.backup_phrase_exists), viewModel.uiState.value.message)
@@ -124,7 +140,7 @@ class BackupViewModelTest {
         `when`(security.hasRecoverySeed()).thenReturn(false)
         `when`(security.generateMnemonicCode()).thenReturn(WORDS.toCharArray())
         viewModel.start(BackupAction.CREATE_PHRASE)
-        viewModel.reauthFlow.submitPin("123456")
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
         waitForStep { it is BackupStep.ShowNewPhrase }
 
         viewModel.phraseFlow.writtenDown()
@@ -143,7 +159,7 @@ class BackupViewModelTest {
         viewModel.eraseAllData() // not re-authenticated yet: ignored
         verify(security, never()).wipeAndReset()
 
-        viewModel.reauthFlow.submitPin("123456")
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it == BackupStep.Idle && viewModel.uiState.value.erased }
         verify(security).wipeAndReset()

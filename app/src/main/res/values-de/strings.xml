@@ -108,7 +108,7 @@
 
     <string name="falied_content">Inhalt konnte nicht geladen werden</string>
 
-    <string name="faq_background_a">Encly speichert deine aktuellen Änderungen, schließt die verschlüsselte Datenbank und löscht den Sitzungsschlüssel. Wenn du zurückkehrst, musst du erneut entsperren.</string>
+    <string name="faq_background_a">Encly speichert deine Änderungen und schließt nach der unter Einstellungen → Sicherheit gewählten Verzögerung (standardmäßig 15 Sekunden) die verschlüsselte Datenbank und löscht den Sitzungsschlüssel. Bildschirm aus oder Telefon sperren tut das sofort. Danach entsperrst du erneut.</string>
     <string name="faq_background_q">Was passiert, wenn ich die App verlasse?</string>
     <string name="faq_biometrics_a">Nutze den Biometrie-Schalter unter Einstellungen → Sicherheit. Das Anlegen oder Entfernen des biometrischen Slots erfordert eine starke biometrische Authentifizierung.</string>
     <string name="faq_biometrics_q">Wie aktiviere oder deaktiviere ich die Biometrie?</string>

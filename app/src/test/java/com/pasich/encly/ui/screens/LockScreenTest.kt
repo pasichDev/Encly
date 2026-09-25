@@ -1,5 +1,9 @@
 package com.pasich.encly.ui.screens
 
+import android.app.Activity
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
@@ -20,10 +24,13 @@ import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.LockScreen
 import com.pasich.encly.testutil.anyCharArray
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.`when`
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalTestApi::class)
 class LockScreenTest : ComposeScreenTest() {
@@ -31,7 +38,45 @@ class LockScreenTest : ComposeScreenTest() {
 
     private fun show(recovery: Boolean = true) {
         `when`(app.security.hasRecoverySeed()).thenReturn(recovery)
-        setNavScreen(viewModels(app.lock()), route = NavRoutes.LockRoute.name) { nav -> LockScreen(nav) }
+        setNavScreen(viewModels(app.lock()), route = NavRoutes.LockRoute.name) { nav ->
+            back = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
+            activity = LocalActivity.current
+            LockScreen(nav)
+        }
+    }
+
+    private lateinit var back: OnBackPressedDispatcher
+    private var activity: Activity? = null
+
+    /**
+     * The lock screen over a vault screen, as after a re-lock whose navigation left Home below it:
+     * the worst case, where a Back that got through would reveal the notes.
+     */
+    private fun showOverTheVault() {
+        `when`(app.security.hasRecoverySeed()).thenReturn(true)
+        setNavScreen(
+            viewModels(app.lock()),
+            route = NavRoutes.LockRoute.name,
+            start = NavRoutes.HomeRoute.name,
+        ) { nav ->
+            back = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
+            activity = LocalActivity.current
+            LockScreen(nav)
+        }
+        navigateTo(NavRoutes.LockRoute.name)
+        assertStillLocked()
+    }
+
+    private fun pressBack() {
+        rule.runOnIdle { back.onBackPressed() }
+        rule.waitForIdle()
+    }
+
+    /** Still on the lock screen; the vault screen below was never drawn and the app did not close. */
+    private fun assertStillLocked() {
+        assertEquals(NavRoutes.LockRoute.name, currentRoute())
+        assertEquals(0, countText("stub:${NavRoutes.HomeRoute.name}"))
+        assertFalse(activity?.isFinishing == true)
     }
 
     private fun anyChars(): CharArray = ArgumentMatchers.any(CharArray::class.java) ?: CharArray(0)
@@ -171,6 +216,65 @@ class LockScreenTest : ComposeScreenTest() {
         rule.onNodeWithText(str(R.string.lock_recover_access)).performClick()
 
         waitFor { currentRoute() == NavRoutes.PinCodeConfig.name }
+    }
+
+    @Test
+    fun backOnThePinPadNeverLeavesTheLockScreen() {
+        showOverTheVault()
+        typePin("12")
+
+        repeat(3) {
+            pressBack()
+            assertStillLocked()
+        }
+        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun backWhenTheLockScreenIsAllThereIsDoesNotCloseTheApp() {
+        show()
+
+        pressBack()
+
+        assertStillLocked()
+        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun backFromTheRecoveryFormReturnsToThePinPadNotTheVault() {
+        showOverTheVault()
+        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(R.string.lock_recovery_title)).assertIsDisplayed()
+
+        pressBack()
+
+        assertStillLocked()
+        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
+        assertEquals(0, countText(str(R.string.lock_recovery_title)))
+
+        pressBack()
+        assertStillLocked()
+    }
+
+    @Test
+    fun backWhileThePinIsCheckedStaysOnTheLockScreen() {
+        val checking = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        `when`(app.security.unlockWithPin(anyCharArray())).thenAnswer {
+            checking.countDown()
+            release.await(WAIT_MS, TimeUnit.MILLISECONDS)
+            VaultUnlockResult.INVALID_CREDENTIAL
+        }
+        showOverTheVault()
+        typePin("000000")
+        assertTrue(checking.await(WAIT_MS, TimeUnit.MILLISECONDS))
+
+        pressBack()
+        assertStillLocked()
+
+        release.countDown()
+        waitForText(str(R.string.lock_wrong_pin))
+        assertStillLocked()
     }
 
     @Test

@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -39,11 +40,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
-import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
@@ -64,12 +66,17 @@ enum class PinAnimationState {
 
 /**
  * The three-step PIN change: current PIN (skipped after a recovery-phrase unlock), new PIN,
- * confirmation. Holds the screen state so the composable only renders it.
+ * confirmation. Holds the screen state so the composable only renders it. The PINs are
+ * CharArrays that are wiped once used, never Strings (see [PinBuffer]).
  */
 private class PinChangeState(val isReset: Boolean) {
     var step by mutableIntStateOf(if (isReset) 1 else 0)
-    var firstPin by mutableStateOf("")
-    var currentInput by mutableStateOf("")
+
+    /** The new PIN typed at step 1, until the confirmation is compared with it. */
+    private var firstPin: CharArray? = null
+
+    /** The digits of the current step. */
+    val input = PinBuffer()
     var errorText by mutableStateOf<Int?>(null)
     var animationState by mutableStateOf(PinAnimationState.Entering)
     var lockoutSeconds by mutableLongStateOf(0L)
@@ -80,30 +87,53 @@ private class PinChangeState(val isReset: Boolean) {
     /** Digits are refused while the current PIN is locked out. */
     val keysEnabled: Boolean get() = !(step == 0 && lockoutSeconds > 0L)
 
+    /** A digit on the keypad; refused during a lockout. */
+    fun typeDigit(digit: Int) {
+        if (keysEnabled) input.add(digit)
+    }
+
+    /** The PIN of the current step is complete: check it, keep it, or compare it. */
     fun onPinComplete(viewModel: SecuritySettingsViewModel) {
-        val pin = currentInput
-        currentInput = ""
+        // The ViewModel wipes what it is given; everything else is wiped here.
+        val pin = input.take()
         when (step) {
             0 -> viewModel.verifyCurrentPin(pin) { ok -> onCurrentPinChecked(ok, viewModel) }
 
             1 -> {
+                firstPin?.let(SensitiveDataCleaner::clear)
                 firstPin = pin
                 errorText = null
                 step = 2
             }
 
-            else -> if (pin == firstPin) {
-                viewModel.activationPinAuth(pin) { ok ->
-                    if (ok) {
-                        animationState = PinAnimationState.SuccessAnimation
-                    } else {
-                        restartNewPin(R.string.pin_update_failed)
-                    }
-                }
-            } else {
-                restartNewPin(R.string.pin_mismatch_retry)
-            }
+            else -> confirmNewPin(pin, viewModel)
         }
+    }
+
+    private fun confirmNewPin(pin: CharArray, viewModel: SecuritySettingsViewModel) {
+        val first = firstPin
+        firstPin = null
+        val matches = first != null && pin.contentEquals(first)
+        first?.let(SensitiveDataCleaner::clear)
+        if (matches) {
+            viewModel.activationPinAuth(pin) { ok ->
+                if (ok) {
+                    animationState = PinAnimationState.SuccessAnimation
+                } else {
+                    restartNewPin(R.string.pin_update_failed)
+                }
+            }
+        } else {
+            SensitiveDataCleaner.clear(pin)
+            restartNewPin(R.string.pin_mismatch_retry)
+        }
+    }
+
+    /** Typed or kept digits do not outlive the screen. */
+    fun clear() {
+        input.clear()
+        firstPin?.let(SensitiveDataCleaner::clear)
+        firstPin = null
     }
 
     private fun onCurrentPinChecked(ok: Boolean, viewModel: SecuritySettingsViewModel) {
@@ -128,7 +158,8 @@ private class PinChangeState(val isReset: Boolean) {
     private fun restartNewPin(@StringRes error: Int) {
         errorText = error
         shakeKey++
-        firstPin = ""
+        firstPin?.let(SensitiveDataCleaner::clear)
+        firstPin = null
         step = 1
     }
 }
@@ -149,11 +180,12 @@ fun PinCodeConfigScreen(
         pinState.lockoutSeconds = it
     }
 
-    LaunchedEffect(pinState.currentInput) {
-        if (pinState.currentInput.length == PIN_LENGTH && pinState.animationState == PinAnimationState.Entering) {
+    LaunchedEffect(pinState.input.length) {
+        if (pinState.input.isFull && pinState.animationState == PinAnimationState.Entering) {
             pinState.onPinComplete(securityViewModel)
         }
     }
+    DisposableEffect(pinState) { onDispose { pinState.clear() } }
 
     LaunchedEffect(pinState.animationState) {
         if (pinState.animationState == PinAnimationState.SuccessAnimation) {
@@ -183,18 +215,14 @@ fun PinCodeConfigScreen(
                     ) { currentStep ->
                         MainPinContent(
                             text = pinStepText(currentStep, pinState),
-                            currentInput = pinState.currentInput,
+                            entered = pinState.input.length,
                             entry = PinEntryState(
                                 enabled = pinState.keysEnabled,
                                 shakeKey = pinState.shakeKey,
                                 compact = !pinState.isReset,
                             ),
-                            onInput = {
-                                if (pinState.currentInput.length < PIN_LENGTH && pinState.keysEnabled) {
-                                    pinState.currentInput += it
-                                }
-                            },
-                            onDelete = { pinState.currentInput = pinState.currentInput.dropLast(1) },
+                            onInput = pinState::typeDigit,
+                            onDelete = pinState.input::deleteLast,
                         )
                     }
                 } else {
@@ -249,9 +277,9 @@ private class PinEntryState(val enabled: Boolean, val shakeKey: Int, val compact
 @Composable
 private fun MainPinContent(
     text: PinStepText,
-    currentInput: String,
+    entered: Int,
     entry: PinEntryState,
-    onInput: (String) -> Unit,
+    onInput: (Int) -> Unit,
     onDelete: () -> Unit,
 ) {
     val message = text.message
@@ -263,12 +291,12 @@ private fun MainPinContent(
         compact = entry.compact,
     ) {
         PinEntry(
-            entered = currentInput.length,
-            error = message != null && currentInput.isEmpty(),
+            entered = entered,
+            error = message != null && entered == 0,
             shakeKey = entry.shakeKey,
             enabled = entry.enabled,
             actions = PinEntryActions(
-                onDigit = { onInput(it.toString()) },
+                onDigit = onInput,
                 onBackspace = onDelete,
             ),
         )

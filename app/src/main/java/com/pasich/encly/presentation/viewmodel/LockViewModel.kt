@@ -39,8 +39,11 @@ class LockViewModel @Inject constructor(
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
-    @Volatile
-    private var biometricInFlight = false
+    /** The open biometric prompt, if any (see [BiometricPromptGuard]). */
+    private val biometricPrompt = BiometricPromptGuard()
+
+    /** A biometric prompt is open; a new request is ignored meanwhile. */
+    val biometricInFlight: Boolean get() = biometricPrompt.inFlight
 
     fun strategy(): AuthStrategy = securityManager.authStrategy()
 
@@ -89,24 +92,32 @@ class LockViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Unlocks with the biometric slot. Ignored while a prompt is open; an answer that arrives
+     * after the prompt's activity was destroyed (the screen it would report to is gone) is dropped
+     * and its key wiped.
+     */
     fun authenticateBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
-        if (biometricInFlight) return
-        biometricInFlight = true
-        securityManager.requestBiometricKey(activity) { dek ->
-            biometricInFlight = false
-            if (dek == null) {
-                onResult(false)
-                return@requestBiometricKey
-            }
-            launchUnlock(onResult) {
-                val ok = withContext(Dispatchers.IO) {
-                    try {
-                        securityManager.unlockWithRawKey(dek)
-                    } finally {
-                        SensitiveDataCleaner.clear(dek)
-                    }
+        biometricPrompt.launch(activity) { release ->
+            securityManager.requestBiometricKey(activity) { dek ->
+                if (!release()) {
+                    dek?.let(SensitiveDataCleaner::clear)
+                    return@requestBiometricKey
                 }
-                publish(ok, ok, false)
+                if (dek == null) {
+                    onResult(false)
+                    return@requestBiometricKey
+                }
+                launchUnlock(onResult) {
+                    val ok = withContext(Dispatchers.IO) {
+                        try {
+                            securityManager.unlockWithRawKey(dek)
+                        } finally {
+                            SensitiveDataCleaner.clear(dek)
+                        }
+                    }
+                    publish(ok, ok, false)
+                }
             }
         }
     }

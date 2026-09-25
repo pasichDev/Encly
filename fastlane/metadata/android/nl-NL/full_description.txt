@@ -7,7 +7,7 @@ PRIVÉ VANAF HET BEGIN
 • Echt offline: Encly vraagt de toestemming INTERNET niet aan en kan je notities dus nergens heen sturen.
 • Versleutelde notities: een SQLCipher-database (AES-256) met een willekeurige 256-bits sleutel.
 • Notities met wachtwoord: een 6-cijferige pincode bij elke keer openen, optioneel vingerafdruk of gezicht (alleen sterke biometrie).
-• Vergrendelt zichzelf: zodra Encly naar de achtergrond gaat, wordt de database gesloten en de sleutel uit het geheugen gewist.
+• Vergrendelt zichzelf: na het verlaten (standaard na 15 seconden, of meteen) of zodra het scherm uitgaat, wordt de database gesloten en de sleutel uit het geheugen gewist.
 • Screenshots, schermopnames en het voorbeeld bij recente apps zijn geblokkeerd. De cloudback-up van Android staat uit.
 
 HERSTELZIN EN VERSLEUTELDE BACK-UPS

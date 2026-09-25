@@ -10,6 +10,7 @@ import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.core.security.VaultUnlockResult
+import com.pasich.encly.testutil.MockActivity
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyByteArray
 import com.pasich.encly.testutil.anyCallback
@@ -30,6 +31,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers
+import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.timeout
@@ -46,7 +48,8 @@ class LockViewModelTest {
     private lateinit var security: SecurityManager
     private lateinit var sessionLock: SessionLockManager
     private lateinit var viewModel: LockViewModel
-    private val activity: FragmentActivity = mock(FragmentActivity::class.java)
+    private val host = MockActivity()
+    private val activity: FragmentActivity = host.activity
 
     @Before
     fun setUp() {
@@ -195,6 +198,52 @@ class LockViewModelTest {
         viewModel.authenticateBiometric(activity) {}
 
         verify(security, times(1)).requestBiometricKey(eqValue(activity), anyCallback())
+        assertTrue(viewModel.biometricInFlight)
+    }
+
+    @Test
+    fun aRotationDuringThePromptReleasesItForTheRecreatedScreen() {
+        viewModel.authenticateBiometric(activity) {}
+        assertTrue(viewModel.biometricInFlight)
+
+        // androidx.biometric drops the answer of a prompt whose activity is gone: without this the
+        // ViewModel, which outlives the rotation, would never prompt again.
+        host.destroy()
+
+        assertFalse(viewModel.biometricInFlight)
+        val recreated = MockActivity().activity
+        viewModel.authenticateBiometric(recreated) {}
+        verify(security).requestBiometricKey(eqValue(recreated), anyCallback())
+    }
+
+    @Test
+    fun aLateAnswerFromTheDestroyedActivityIsDroppedAndItsKeyWiped() {
+        val answer = arrayOfNulls<(ByteArray?) -> Unit>(1)
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            answer[0] = invocation.arguments.last() as (ByteArray?) -> Unit
+            null
+        }.`when`(security).requestBiometricKey(eqValue(activity), anyCallback())
+        val results = mutableListOf<Boolean>()
+        viewModel.authenticateBiometric(activity) { results += it }
+        host.destroy()
+
+        val key = ByteArray(KEY_LENGTH) { 7 }
+        answer[0]!!(key)
+
+        assertTrue(results.isEmpty())
+        assertArrayEquals(ByteArray(KEY_LENGTH), key)
+        verify(security, never()).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
+    }
+
+    @Test
+    fun aDestroyedActivityGetsNoPrompt() {
+        host.destroy()
+
+        viewModel.authenticateBiometric(activity) {}
+
+        verify(security, never()).requestBiometricKey(eqValue(activity), anyCallback())
+        assertFalse(viewModel.biometricInFlight)
     }
 
     @Test
