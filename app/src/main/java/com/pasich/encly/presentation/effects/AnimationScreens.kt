@@ -29,17 +29,17 @@ fun NavGraphBuilder.animationScreens(
         if (targetState.destination.route == LOCK_ROUTE || initialState.destination.route == LOCK_ROUTE) {
             EnterTransition.None
         } else {
-            defaultScreenEnterAnimation()
+            axisEnter(forward = true)
         }
     },
     exitTransition = {
         if (targetState.destination.route == LOCK_ROUTE || initialState.destination.route == LOCK_ROUTE) {
             ExitTransition.None
         } else {
-            defaultScreenExitAnimation()
+            axisExit(forward = true)
         }
     },
-    popEnterTransition = { defaultScreenEnterAnimation() },
-    popExitTransition = { defaultScreenExitAnimation() },
+    popEnterTransition = { axisEnter(forward = false) },
+    popExitTransition = { axisExit(forward = false) },
     content = content,
 )

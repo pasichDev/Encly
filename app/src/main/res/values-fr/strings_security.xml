@@ -15,7 +15,7 @@
     <string name="backup_section_import">Importer</string>
     <string name="security_encryption_pin_plain">Vos notes sont chiffrées. Votre code PIN (et votre empreinte, si elle est activée) les déverrouille.</string>
     <string name="security_encryption_seed_plain">Vos notes sont chiffrées. Votre code PIN (et votre empreinte, si elle est activée) les déverrouille, et votre phrase de récupération si vous oubliez le PIN.</string>
-    <string name="security_recovery_set_desc">Déverrouille vos notes si vous oubliez le PIN et ouvre vos sauvegardes.</string>
+    <string name="security_recovery_set_desc">Créée lors de la configuration. Encly ne conserve jamais les mots et ne peut pas les réafficher. Vous ne les avez plus ? Remplacez la phrase ci-dessous.</string>
     <string name="security_recovery_status_set">Configurée</string>
     <string name="vault_reset_restore_hint">Après la réinitialisation, vous pourrez restaurer un fichier de sauvegarde avec ses 12 mots.</string>
     <string name="pin_change_bar_title">Changer le code PIN</string>
@@ -57,4 +57,20 @@
     <string name="security_privacy_section">Confidentialité</string>
     <string name="security_keyboard_strict_title">Confidentialité stricte du clavier</string>
     <string name="security_keyboard_strict_desc">Demande au clavier de ne pas faire de suggestions, pas de prédiction dans le cloud et pas de lecture autour du curseur. Désactive la correction automatique, et certains claviers masquent les emoji ou la saisie vocale.</string>
+    <string name="auto_lock_title">Verrouiller après la sortie</string>
+    <string name="auto_lock_desc">Durée pendant laquelle Encly reste ouvert quand vous passez à une autre app. Éteindre l’écran ou verrouiller le téléphone le verrouille toujours aussitôt.</string>
+    <string name="auto_lock_immediately">Immédiatement</string>
+    <string name="auto_lock_15s">Après 15 secondes</string>
+    <string name="auto_lock_30s">Après 30 secondes</string>
+    <string name="auto_lock_1m">Après 1 minute</string>
+    <string name="auto_lock_2m">Après 2 minutes</string>
+    <string name="security_protection_section">Comment Encly protège vos notes</string>
+    <string name="security_protection_key_title">Une clé aléatoire de 256 bits</string>
+    <string name="security_protection_key_desc">Toute la base est chiffrée avec une clé créée sur ce téléphone.</string>
+    <string name="security_protection_pin_title">Un code PIN lié à ce téléphone</string>
+    <string name="security_protection_pin_desc">Votre code PIN est combiné à une clé de la puce sécurisée du téléphone : impossible de le deviner ailleurs.</string>
+    <string name="security_protection_slots_title">Une serrure par moyen d’accès</string>
+    <string name="security_protection_slots_desc">Le code PIN, la phrase de récupération et l’empreinte ouvrent chacun leur propre emplacement chiffré. L’empreinte est demandée à chaque fois.</string>
+    <string name="security_danger_section">Zone de danger</string>
+    <string name="security_erase_hold">Maintenez 5 secondes pour effacer</string>
 </resources>

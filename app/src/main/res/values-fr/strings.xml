@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">Non disponible sur cet appareil</string>
     <string name="security_biometric_not_enrolled">Aucune empreinte enregistrée. Ajoutez-en une dans les paramètres du système.</string>
     <string name="security_encryption_active">Le chiffrement est actif</string>
-    <string name="security_info_body">• SQLCipher est ouvert avec une clé aléatoire de 256 bits\n• Le code PIN et la phrase de récupération disposent d\'emplacements de déverrouillage AES-GCM distincts\n• La biométrie utilise une clé Android Keystore exigeant une authentification à chaque utilisation</string>
-    <string name="security_info_title">ℹ️ Informations de sécurité</string>
     <string name="security_recovery_missing">Non configurée. Sans elle, un PIN oublié signifie tout perdre. Touchez pour en créer une.</string>
     <string name="security_erase_title">Effacer toutes les données</string>
     <string name="security_erase_desc">Supprimer toutes les notes, tâches et libellés ainsi que les clés de chiffrement de cet appareil</string>
-    <string name="security_erase_confirm_title">Effacer toutes les données ?</string>
     <string name="security_erase_confirm_body">Toutes les notes, tâches et libellés ainsi que les clés de chiffrement seront supprimés de cet appareil, et Encly repartira de zéro. Action irréversible : exportez d\'abord une sauvegarde si vous voulez conserver quelque chose.</string>
-    <string name="security_erase_confirm">Effacer</string>
     <string name="security_subtitle">Chiffrement et protection des données</string>
     <string name="security_title">Sécurité</string>
 
@@ -560,4 +556,6 @@
     <string name="faq_backup_a">Dans Paramètres → Sauvegarde, vous exportez un fichier chiffré que seule votre phrase de récupération peut ouvrir. Pour restaurer, choisissez le fichier, saisissez ou collez les 12 mots, puis fusionnez-le avec ce coffre ou remplacez tout.</string>
     <string name="keyboard_show">Afficher le clavier</string>
     <string name="keyboard_hide">Masquer le clavier</string>
+    <string name="security_erase_confirm_title">Effacer toutes les données ?</string>
+    <string name="security_erase_confirm">Effacer</string>
 </resources>

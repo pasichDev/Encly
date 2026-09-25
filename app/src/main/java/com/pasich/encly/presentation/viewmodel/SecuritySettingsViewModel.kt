@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthType
+import com.pasich.encly.core.security.AutoLock
+import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
@@ -22,6 +24,7 @@ import javax.inject.Inject
 class SecuritySettingsViewModel @Inject constructor(
     private val securityManager: SecurityManager,
     private val keyboardPrivacy: KeyboardPrivacy,
+    private val autoLock: AutoLock,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SecuritySettingsUiState())
@@ -31,6 +34,11 @@ class SecuritySettingsViewModel @Inject constructor(
     val strictKeyboard: StateFlow<Boolean> = keyboardPrivacy.strict
 
     fun setStrictKeyboard(enabled: Boolean) = keyboardPrivacy.setStrict(enabled)
+
+    /** How long the vault stays open after leaving the app (see AutoLock). */
+    val autoLockDelay: StateFlow<AutoLockDelay> = autoLock.delay
+
+    fun setAutoLockDelay(delay: AutoLockDelay) = autoLock.setDelay(delay)
 
     init {
         refresh()

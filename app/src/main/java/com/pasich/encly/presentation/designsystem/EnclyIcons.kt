@@ -248,6 +248,16 @@ object EnclyIcons {
         )
     }
 
+    /** View options (sort order, list or grid): lines narrowing like a funnel. */
+    val Filter: ImageVector by lazy {
+        enclyIcon(
+            "Filter",
+            "M4 7h16",
+            "M7 12h10",
+            "M10 17h4",
+        )
+    }
+
     val Keyboard: ImageVector by lazy {
         enclyIcon(
             "Keyboard",

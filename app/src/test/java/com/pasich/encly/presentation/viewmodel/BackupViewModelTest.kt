@@ -136,18 +136,16 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun eraseNeedsThePinAndAnExplicitConfirmation() {
+    fun eraseNeedsThePinThenRunsAtOnce() {
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         viewModel.start(BackupAction.ERASE)
 
-        viewModel.eraseAllData() // not confirmed yet: ignored
+        viewModel.eraseAllData() // not re-authenticated yet: ignored
         verify(security, never()).wipeAndReset()
 
         viewModel.reauthFlow.submitPin("123456")
-        waitForStep { it == BackupStep.ConfirmErase }
-        viewModel.eraseAllData()
 
-        waitForStep { it == BackupStep.Idle }
+        waitForStep { it == BackupStep.Idle && viewModel.uiState.value.erased }
         verify(security).wipeAndReset()
         assertTrue(viewModel.uiState.value.erased)
     }

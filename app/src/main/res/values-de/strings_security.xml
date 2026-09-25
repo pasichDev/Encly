@@ -15,7 +15,7 @@
     <string name="backup_section_import">Importieren</string>
     <string name="security_encryption_pin_plain">Deine Notizen sind verschlüsselt. Deine PIN (und dein Fingerabdruck, falls aktiviert) entsperrt sie.</string>
     <string name="security_encryption_seed_plain">Deine Notizen sind verschlüsselt. Deine PIN (und dein Fingerabdruck, falls aktiviert) entsperrt sie, und wenn du die PIN vergisst, deine Wiederherstellungsphrase.</string>
-    <string name="security_recovery_set_desc">Entsperrt deine Notizen, wenn du die PIN vergisst, und öffnet deine Backups.</string>
+    <string name="security_recovery_set_desc">Bei der Einrichtung erstellt. Encly speichert die Wörter nie und kann sie nicht erneut zeigen. Hast du sie nicht? Ersetze die Phrase unten.</string>
     <string name="security_recovery_status_set">Eingerichtet</string>
     <string name="vault_reset_restore_hint">Nach dem Zurücksetzen kannst du eine Backup-Datei mit ihren 12 Wörtern wiederherstellen.</string>
     <string name="pin_change_bar_title">PIN ändern</string>
@@ -52,4 +52,20 @@
     <string name="security_privacy_section">Datenschutz</string>
     <string name="security_keyboard_strict_title">Strenger Tastatur-Datenschutz</string>
     <string name="security_keyboard_strict_desc">Bittet die Tastatur um keine Vorschläge, keine Cloud-Vorhersage und kein Mitlesen rund um den Cursor. Schaltet die Autokorrektur aus, und manche Tastaturen blenden Emojis oder Spracheingabe aus.</string>
+    <string name="auto_lock_title">Sperren nach dem Verlassen</string>
+    <string name="auto_lock_desc">Wie lange Encly offen bleibt, wenn du zu einer anderen App wechselst. Bildschirm aus oder Telefon sperren sperrt es immer sofort.</string>
+    <string name="auto_lock_immediately">Sofort</string>
+    <string name="auto_lock_15s">Nach 15 Sekunden</string>
+    <string name="auto_lock_30s">Nach 30 Sekunden</string>
+    <string name="auto_lock_1m">Nach 1 Minute</string>
+    <string name="auto_lock_2m">Nach 2 Minuten</string>
+    <string name="security_protection_section">So schützt Encly deine Notizen</string>
+    <string name="security_protection_key_title">Ein zufälliger 256-Bit-Schlüssel</string>
+    <string name="security_protection_key_desc">Die ganze Datenbank ist mit einem Schlüssel verschlüsselt, der auf diesem Telefon erzeugt wurde.</string>
+    <string name="security_protection_pin_title">Eine PIN, an dieses Telefon gebunden</string>
+    <string name="security_protection_pin_desc">Deine PIN wird mit einem Schlüssel im Sicherheitschip des Telefons verknüpft und kann nirgendwo sonst erraten werden.</string>
+    <string name="security_protection_slots_title">Ein eigenes Schloss für jeden Zugang</string>
+    <string name="security_protection_slots_desc">PIN, Wiederherstellungsphrase und Fingerabdruck öffnen je einen eigenen verschlüsselten Slot. Der Fingerabdruck wird jedes Mal verlangt.</string>
+    <string name="security_danger_section">Gefahrenbereich</string>
+    <string name="security_erase_hold">5 Sekunden halten zum Löschen</string>
 </resources>

@@ -9,6 +9,7 @@ import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
+import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
@@ -166,7 +167,11 @@ internal class TestApp(context: Context) {
 
     fun lock() = LockViewModel(security, sessionLock)
 
-    fun securitySettings() = SecuritySettingsViewModel(security, KeyboardPrivacy(InMemorySharedPreferences()))
+    fun securitySettings() = SecuritySettingsViewModel(
+        security,
+        KeyboardPrivacy(InMemorySharedPreferences()),
+        AutoLock(InMemorySharedPreferences()),
+    )
 
     fun backup() = BackupViewModel(
         backupManager = backupManager,

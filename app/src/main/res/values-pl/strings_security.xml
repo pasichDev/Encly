@@ -15,7 +15,7 @@
     <string name="backup_section_import">Import</string>
     <string name="security_encryption_pin_plain">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN (i odcisk palca, jeśli jest włączony).</string>
     <string name="security_encryption_seed_plain">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN (i odcisk palca, jeśli jest włączony), a gdy zapomnisz PIN, fraza odzyskiwania.</string>
-    <string name="security_recovery_set_desc">Odblokowuje notatki, gdy zapomnisz PIN, i otwiera Twoje kopie zapasowe.</string>
+    <string name="security_recovery_set_desc">Utworzona podczas konfiguracji. Encly nigdy nie przechowuje słów i nie może ich ponownie pokazać. Nie masz ich? Zastąp frazę poniżej.</string>
     <string name="security_recovery_status_set">Skonfigurowana</string>
     <string name="vault_reset_restore_hint">Po zresetowaniu możesz przywrócić plik kopii zapasowej za pomocą jego 12 słów.</string>
     <string name="pin_change_bar_title">Zmień PIN</string>
@@ -62,4 +62,20 @@
     <string name="security_privacy_section">Prywatność</string>
     <string name="security_keyboard_strict_title">Ścisła prywatność klawiatury</string>
     <string name="security_keyboard_strict_desc">Prosi klawiaturę o brak podpowiedzi, brak przewidywania w chmurze i nieodczytywanie tekstu wokół kursora. Wyłącza autokorektę, a niektóre klawiatury ukrywają emoji lub wprowadzanie głosowe.</string>
+    <string name="auto_lock_title">Blokuj po wyjściu</string>
+    <string name="auto_lock_desc">Jak długo Encly pozostaje otwarty, gdy przełączasz się do innej aplikacji. Wyłączenie ekranu lub zablokowanie telefonu zawsze blokuje go od razu.</string>
+    <string name="auto_lock_immediately">Od razu</string>
+    <string name="auto_lock_15s">Po 15 sekundach</string>
+    <string name="auto_lock_30s">Po 30 sekundach</string>
+    <string name="auto_lock_1m">Po 1 minucie</string>
+    <string name="auto_lock_2m">Po 2 minutach</string>
+    <string name="security_protection_section">Jak Encly chroni twoje notatki</string>
+    <string name="security_protection_key_title">Losowy klucz 256-bitowy</string>
+    <string name="security_protection_key_desc">Cała baza jest zaszyfrowana kluczem utworzonym na tym telefonie.</string>
+    <string name="security_protection_pin_title">PIN powiązany z tym telefonem</string>
+    <string name="security_protection_pin_desc">PIN jest łączony z kluczem w bezpiecznym układzie telefonu, więc nie da się go odgadnąć nigdzie indziej.</string>
+    <string name="security_protection_slots_title">Osobny zamek dla każdego wejścia</string>
+    <string name="security_protection_slots_desc">PIN, fraza odzyskiwania i odcisk palca otwierają własne zaszyfrowane miejsca. Odcisk jest wymagany za każdym razem.</string>
+    <string name="security_danger_section">Strefa zagrożenia</string>
+    <string name="security_erase_hold">Przytrzymaj 5 sekund, aby usunąć</string>
 </resources>

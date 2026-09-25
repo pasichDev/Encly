@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">Indisponível neste dispositivo</string>
     <string name="security_biometric_not_enrolled">Nenhuma digital cadastrada. Adicione uma nas configurações do sistema.</string>
     <string name="security_encryption_active">A criptografia está ativa</string>
-    <string name="security_info_body">• O SQLCipher é aberto com uma chave aleatória de 256 bits\n• O PIN e a frase de recuperação têm slots de desbloqueio AES-GCM separados\n• A biometria usa uma chave do Android Keystore que exige autenticação a cada uso</string>
-    <string name="security_info_title">ℹ️ Informações de segurança</string>
     <string name="security_recovery_missing">Não configurada. Sem ela, esquecer o PIN significa perder tudo. Toque para criar uma.</string>
     <string name="security_erase_title">Apagar todos os dados</string>
     <string name="security_erase_desc">Excluir todas as notas, tarefas e etiquetas e as chaves de criptografia deste dispositivo</string>
-    <string name="security_erase_confirm_title">Apagar todos os dados?</string>
     <string name="security_erase_confirm_body">Todas as notas, tarefas e etiquetas e as chaves de criptografia serão excluídas deste dispositivo, e o Encly vai recomeçar do zero. Isso não pode ser desfeito: exporte um backup antes se quiser guardar algo.</string>
-    <string name="security_erase_confirm">Apagar</string>
     <string name="security_subtitle">Criptografia e proteção de dados</string>
     <string name="security_title">Segurança</string>
 
@@ -560,4 +556,6 @@
     <string name="faq_backup_a">Em Configurações → Backup você exporta um arquivo criptografado que só a sua frase de recuperação abre. Para restaurar, escolha o arquivo, digite ou cole as 12 palavras e depois mescle com este cofre ou substitua tudo.</string>
     <string name="keyboard_show">Mostrar teclado</string>
     <string name="keyboard_hide">Ocultar teclado</string>
+    <string name="security_erase_confirm_title">Apagar todos os dados?</string>
+    <string name="security_erase_confirm">Apagar</string>
 </resources>

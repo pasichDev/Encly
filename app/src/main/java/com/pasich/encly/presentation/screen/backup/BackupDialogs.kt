@@ -121,15 +121,6 @@ fun BackupDialogs(actions: BackupDialogActions, step: BackupStep, busy: Boolean 
             onDismiss = actions.importing::backToChoice,
         )
 
-        BackupStep.ConfirmErase -> MessageDialog(
-            title = R.string.security_erase_confirm_title,
-            body = R.string.security_erase_confirm_body,
-            confirm = R.string.security_erase_confirm,
-            onConfirm = actions.eraseAllData,
-            destructive = true,
-            onDismiss = actions.cancel,
-        )
-
         else -> Unit
     }
 }

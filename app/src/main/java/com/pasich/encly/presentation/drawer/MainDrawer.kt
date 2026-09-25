@@ -2,12 +2,14 @@ package com.pasich.encly.presentation.drawer
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.drawerNavItems
 import com.pasich.encly.presentation.viewmodel.StatisticViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val TABLET_MIN_WIDTH_DP = 600
@@ -42,6 +45,7 @@ fun MainDrawer(
     drawerState: DrawerState,
     onItemClick: (DrawerNavItem) -> Unit,
     modifier: Modifier = Modifier,
+    topInset: Dp = 0.dp,
     statisticViewModel: StatisticViewModel = hiltViewModel(),
 ) {
     val totalTags by statisticViewModel.totalTagsCreated.collectAsStateWithLifecycle()
@@ -58,11 +62,15 @@ fun MainDrawer(
         drawerShape = RectangleShape,
         drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         drawerTonalElevation = 0.dp,
+        // The sheet runs under the status bar (see MainRootScreen); its content is padded below it
+        // explicitly, since App already consumed the status-bar inset.
+        windowInsets = WindowInsets(0),
         modifier = modifier.width(getDrawerWidth()),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
+                .padding(top = topInset)
                 .verticalScroll(rememberScrollState()),
         ) {
             EnclyWordmark(
@@ -84,8 +92,15 @@ fun MainDrawer(
                     selected = isHome,
                     onClick = {
                         scope.launch {
-                            if (!isHome) onItemClick(item)
-                            drawerState.close()
+                            if (isHome) {
+                                drawerState.close()
+                            } else {
+                                // The notes screen leaves with the drawer on it (a page
+                                // transition), and the drawer shuts once it is out of sight.
+                                onItemClick(item)
+                                delay(DRAWER_SNAP_DELAY_MS)
+                                drawerState.snapTo(DrawerValue.Closed)
+                            }
                         }
                     },
                 )
@@ -94,6 +109,9 @@ fun MainDrawer(
         }
     }
 }
+
+/** Longer than the page transition, so the drawer never visibly snaps shut. */
+private const val DRAWER_SNAP_DELAY_MS = 400L
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable

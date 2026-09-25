@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">Non disponibile su questo dispositivo</string>
     <string name="security_biometric_not_enrolled">Nessuna impronta registrata. Aggiungine una nelle impostazioni di sistema.</string>
     <string name="security_encryption_active">La crittografia è attiva</string>
-    <string name="security_info_body">• SQLCipher viene aperto con una chiave casuale a 256 bit\n• PIN e frase di recupero hanno slot di sblocco AES-GCM separati\n• La biometria usa una chiave Android Keystore che richiede l\'autenticazione a ogni utilizzo</string>
-    <string name="security_info_title">ℹ️ Informazioni sulla sicurezza</string>
     <string name="security_recovery_missing">Non configurata. Senza di essa, un PIN dimenticato significa perdere tutto. Tocca per crearne una.</string>
     <string name="security_erase_title">Cancella tutti i dati</string>
     <string name="security_erase_desc">Elimina tutte le note, le attività, le etichette e le chiavi di cifratura su questo dispositivo</string>
-    <string name="security_erase_confirm_title">Cancellare tutti i dati?</string>
     <string name="security_erase_confirm_body">Tutte le note, le attività, le etichette e le chiavi di cifratura verranno eliminate da questo dispositivo ed Encly ripartirà da zero. L\'operazione non si può annullare: esporta prima un backup se vuoi conservare qualcosa.</string>
-    <string name="security_erase_confirm">Cancella</string>
     <string name="security_subtitle">Crittografia e protezione dei dati</string>
     <string name="security_title">Sicurezza</string>
 
@@ -560,4 +556,6 @@
     <string name="faq_backup_a">In Impostazioni → Backup esporti un file crittografato che solo la tua frase di recupero può aprire. Per ripristinare, scegli il file, digita o incolla le 12 parole, poi uniscilo a questa cassaforte o sostituisci tutto.</string>
     <string name="keyboard_show">Mostra tastiera</string>
     <string name="keyboard_hide">Nascondi tastiera</string>
+    <string name="security_erase_confirm_title">Cancellare tutti i dati?</string>
+    <string name="security_erase_confirm">Cancella</string>
 </resources>

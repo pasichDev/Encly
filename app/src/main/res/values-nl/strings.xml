@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">Niet beschikbaar op dit apparaat</string>
     <string name="security_biometric_not_enrolled">Geen vingerafdruk ingesteld. Voeg er een toe in de systeeminstellingen.</string>
     <string name="security_encryption_active">Versleuteling staat aan</string>
-    <string name="security_info_body">• SQLCipher wordt geopend met een willekeurige sleutel van 256 bits\n• De pincode en de herstelzin hebben afzonderlijke AES-GCM-ontgrendelslots\n• Biometrie gebruikt een Android Keystore-sleutel die bij elk gebruik verificatie vereist</string>
-    <string name="security_info_title">ℹ️ Beveiligingsinformatie</string>
     <string name="security_recovery_missing">Niet ingesteld. Zonder deze zin betekent een vergeten pincode dat je alles kwijt bent. Tik om er een te maken.</string>
     <string name="security_erase_title">Alle gegevens wissen</string>
     <string name="security_erase_desc">Alle notities, taken, labels en de versleutelingssleutels op dit apparaat verwijderen</string>
-    <string name="security_erase_confirm_title">Alle gegevens wissen?</string>
     <string name="security_erase_confirm_body">Alle notities, taken, labels en de versleutelingssleutels worden van dit apparaat verwijderd en Encly begint opnieuw. Dit kan niet ongedaan worden gemaakt: exporteer eerst een back-up als je iets wilt bewaren.</string>
-    <string name="security_erase_confirm">Wissen</string>
     <string name="security_subtitle">Versleuteling en gegevensbescherming</string>
     <string name="security_title">Beveiliging</string>
 
@@ -555,4 +551,6 @@
     <string name="faq_backup_a">Via Instellingen → Back-up exporteer je één versleuteld bestand dat alleen je herstelzin kan openen. Om te herstellen kies je het bestand, typ of plak je de 12 woorden en voeg je het samen met deze kluis of vervang je alles.</string>
     <string name="keyboard_show">Toetsenbord tonen</string>
     <string name="keyboard_hide">Toetsenbord verbergen</string>
+    <string name="security_erase_confirm_title">Alle gegevens wissen?</string>
+    <string name="security_erase_confirm">Wissen</string>
 </resources>

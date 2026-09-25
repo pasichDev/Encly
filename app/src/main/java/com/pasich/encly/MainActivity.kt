@@ -80,11 +80,13 @@ class MainActivity : AppCompatActivity() {
         // lifecycle starts so screenshots, screen recording, casting and recents snapshots
         // cannot capture an unprotected first frame.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        protectWindow()
         // Before NavHost reads the intent: no caller picks a screen through nav deep-link extras.
         stripNavigationExtras(intent)
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // After super.onCreate: touching decorView earlier builds the window with the splash
+        // theme, which has an action bar, instead of Theme.Encly.
+        protectWindow()
         enableEdgeToEdge()
         supportActionBar?.hide()
 

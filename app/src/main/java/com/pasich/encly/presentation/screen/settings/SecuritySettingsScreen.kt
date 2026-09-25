@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,9 +32,8 @@ import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthType
+import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
-import com.pasich.encly.presentation.designsystem.CalloutTone
-import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -41,7 +41,6 @@ import com.pasich.encly.presentation.designsystem.EnclyListRow
 import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclySwitchRow
-import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -63,6 +62,7 @@ fun SecuritySettingsScreen(
 ) {
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
     val strictKeyboard by securityViewModel.strictKeyboard.collectAsStateWithLifecycle()
+    val autoLockDelay by securityViewModel.autoLockDelay.collectAsStateWithLifecycle()
     val vaultState by vaultViewModel.uiState.collectAsStateWithLifecycle()
     val activity = LocalActivity.current as? FragmentActivity
 
@@ -96,7 +96,7 @@ fun SecuritySettingsScreen(
             if (securityState.loaded) {
                 SecurityContent(
                     securityState = securityState,
-                    strictKeyboard = strictKeyboard,
+                    options = SecurityOptions(strictKeyboard = strictKeyboard, autoLock = autoLockDelay),
                     vaultBusy = vaultState.busy,
                     actions = SecurityActions(
                         onChangePin = { navController.navigate(NavRoutes.PinCodeConfig.name) },
@@ -105,6 +105,7 @@ fun SecuritySettingsScreen(
                         },
                         onVaultAction = vaultViewModel::start,
                         onStrictKeyboard = securityViewModel::setStrictKeyboard,
+                        onAutoLock = securityViewModel::setAutoLockDelay,
                     ),
                     modifier = Modifier.padding(paddingValues),
                 )
@@ -122,12 +123,16 @@ private class SecurityActions(
     val onBiometric: (Boolean) -> Unit,
     val onVaultAction: (BackupAction) -> Unit,
     val onStrictKeyboard: (Boolean) -> Unit,
+    val onAutoLock: (AutoLockDelay) -> Unit,
 )
+
+/** The page's own preferences: strict keyboard privacy and the auto-lock delay. */
+private class SecurityOptions(val strictKeyboard: Boolean, val autoLock: AutoLockDelay)
 
 @Composable
 private fun SecurityContent(
     securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
-    strictKeyboard: Boolean,
+    options: SecurityOptions,
     vaultBusy: Boolean,
     actions: SecurityActions,
     modifier: Modifier = Modifier,
@@ -139,7 +144,7 @@ private fun SecurityContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
     ) {
-        EnclyCallout(
+        EncryptionStatusCard(
             title = stringResource(R.string.security_encryption_active),
             text = stringResource(
                 if (securityState.isUserCreatedSeedKey) {
@@ -148,7 +153,6 @@ private fun SecurityContent(
                     R.string.security_encryption_pin_plain
                 },
             ),
-            icon = EnclyIcons.Lock,
         )
         SectionOverline(
             text = stringResource(R.string.auth_title),
@@ -167,6 +171,8 @@ private fun SecurityContent(
                 BiometricSetting(securityState, actions.onBiometric)
             }
             EnclyGroupDivider()
+            AutoLockRow(current = options.autoLock, onSelect = actions.onAutoLock)
+            EnclyGroupDivider()
             RecoveryPhraseRow(
                 hasRecoveryPhrase = securityState.isUserCreatedSeedKey,
                 busy = vaultBusy,
@@ -177,12 +183,9 @@ private fun SecurityContent(
                 ReplacePhraseRow(busy = vaultBusy, onStart = actions.onVaultAction)
             }
         }
-        PrivacySection(strictKeyboard = strictKeyboard, onStrictKeyboard = actions.onStrictKeyboard)
-        EraseSection(busy = vaultBusy, onStart = actions.onVaultAction)
-        EnclyCallout(
-            title = stringResource(R.string.security_info_title),
-            text = stringResource(R.string.security_info_body),
-        )
+        PrivacySection(strictKeyboard = options.strictKeyboard, onStrictKeyboard = actions.onStrictKeyboard)
+        ProtectionSection()
+        EraseSection(busy = vaultBusy, onErase = { actions.onVaultAction(BackupAction.ERASE) })
     }
 }
 
@@ -322,27 +325,6 @@ private fun PrivacySection(strictKeyboard: Boolean, onStrictKeyboard: (Boolean) 
             checked = strictKeyboard,
             onCheckedChange = onStrictKeyboard,
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
-        )
-    }
-}
-
-/** Erasing all data: a warning callout and an `error` text button, confirmed in a dialog. */
-@Composable
-private fun EraseSection(busy: Boolean, onStart: (BackupAction) -> Unit) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
-        modifier = Modifier.padding(top = EnclyTheme.spacing.s),
-    ) {
-        EnclyCallout(
-            title = stringResource(R.string.security_erase_title),
-            text = stringResource(R.string.security_erase_desc),
-            tone = CalloutTone.WARNING,
-        )
-        EnclyTextButton(
-            text = stringResource(R.string.security_erase_title),
-            onClick = { if (!busy) onStart(BackupAction.ERASE) },
-            destructive = true,
-            icon = EnclyIcons.Trash,
         )
     }
 }

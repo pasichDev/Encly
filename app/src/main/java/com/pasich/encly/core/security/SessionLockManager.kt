@@ -37,10 +37,11 @@ object NeverLocked : VaultLockEvents {
  * Re-locking closes SQLCipher and zeroizes Encly's in-memory DEK copy. The next foreground
  * unlock must unwrap the DEK again through the PIN, auth-bound biometric, or recovery slot.
  *
- * The one exception is the system file picker of a backup import (another app, so the process
- * goes to the background): see [allowSystemPicker]. Its grace is short, measured on
- * `elapsedRealtime` (deep sleep counts), ends when the screen turns off, and is re-checked
- * the moment the app comes back.
+ * It waits the user's auto-lock delay first ([AutoLockPolicy], 15 s by default, "immediately"
+ * possible), and a backup import's system file picker (another app) gets its own short grace:
+ * see [allowSystemPicker]. Both are measured on `elapsedRealtime` (deep sleep counts), end
+ * the moment the screen turns off or the device locks, and are re-checked when the app comes
+ * back.
  */
 @Singleton
 @Suppress("TooManyFunctions") // The whole session lifecycle: lifecycle hooks, picker grace, unlock publishing.
@@ -48,6 +49,7 @@ class SessionLockManager @Inject constructor(
     private val securityManager: SecurityManager,
     private val deviceLock: DeviceLockWatcher = DeviceLockWatcher.None,
     systemClock: LockoutClock = JvmMonotonicClock,
+    private val autoLock: AutoLockPolicy = AutoLockPolicy.Immediately,
 ) : DefaultLifecycleObserver,
     VaultLockEvents {
 
@@ -71,6 +73,10 @@ class SessionLockManager @Inject constructor(
 
     @Volatile
     private var suspendedAt = NONE
+
+    /** How long the current suspension may last: the picker grace or the auto-lock delay. */
+    @Volatile
+    private var awayLimitMs = 0L
 
     /** Set when the screen went off (or the keyguard came up) during a picker grace. */
     @Volatile
@@ -134,22 +140,30 @@ class SessionLockManager @Inject constructor(
         systemPickerRequestedAt = NONE
         val now = clock()
         if (requestedAt != NONE && now - requestedAt in 0..PICKER_LAUNCH_WINDOW_MS) {
-            suspendedAt = now
-            lockedWhileAway = false
-            // The screen going off during the picker closes the vault right away, even if the
-            // app never comes back; the timeout covers leaving the picker for another app.
-            stopScreenOffWatch = deviceLock.watchScreenOff { onAwayTimeout(screenOff = true) }
-            cancelPickerTimeout = timer(PICKER_MAX_AWAY_MS) { onAwayTimeout(screenOff = false) }
+            suspend(now, PICKER_MAX_AWAY_MS)
             return
         }
-        if (isOpenAndLockable()) {
-            relock()
-        }
+        if (!isOpenAndLockable()) return
+        val delay = autoLock.delayMillis
+        if (delay > 0) suspend(now, delay) else relock()
     }
 
-    /** The picker grace no longer holds: too long away, the screen went off, or the keyguard is up. */
+    /**
+     * Keeps the vault open for up to [limitMs] while the app is away (the picker grace, or the
+     * auto-lock delay). The screen going off closes it right away, even if the app never comes
+     * back; the timer closes it when the time runs out.
+     */
+    private fun suspend(now: Long, limitMs: Long) {
+        suspendedAt = now
+        awayLimitMs = limitMs
+        lockedWhileAway = false
+        stopScreenOffWatch = deviceLock.watchScreenOff { onAwayTimeout(screenOff = true) }
+        cancelPickerTimeout = timer(limitMs) { onAwayTimeout(screenOff = false) }
+    }
+
+    /** The grace no longer holds: too long away, the screen went off, or the keyguard is up. */
     private fun graceBroken(stoppedAt: Long, lockedAway: Boolean): Boolean =
-        clock() - stoppedAt > PICKER_MAX_AWAY_MS || lockedAway || deviceLock.isDeviceLocked()
+        clock() - stoppedAt > awayLimitMs || lockedAway || deviceLock.isDeviceLocked()
 
     private fun onAwayTimeout(screenOff: Boolean) {
         if (foreground || suspendedAt == NONE) return

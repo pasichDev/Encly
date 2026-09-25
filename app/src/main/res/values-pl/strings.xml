@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">Niedostępne na tym urządzeniu</string>
     <string name="security_biometric_not_enrolled">Nie dodano odcisku palca. Dodaj go w ustawieniach systemu.</string>
     <string name="security_encryption_active">Szyfrowanie jest aktywne</string>
-    <string name="security_info_body">• SQLCipher jest otwierany losowym kluczem 256-bitowym\n• PIN i fraza odzyskiwania mają osobne sloty odblokowania AES-GCM\n• Biometria korzysta z klucza Android Keystore, który wymaga uwierzytelnienia przy każdym użyciu</string>
-    <string name="security_info_title">ℹ️ Informacje o bezpieczeństwie</string>
     <string name="security_recovery_missing">Nieskonfigurowana. Bez niej zapomniany PIN oznacza utratę wszystkiego. Dotknij, aby ją utworzyć.</string>
     <string name="security_erase_title">Wymaż wszystkie dane</string>
     <string name="security_erase_desc">Usuń wszystkie notatki, zadania, etykiety i klucze szyfrowania z tego urządzenia</string>
-    <string name="security_erase_confirm_title">Wymazać wszystkie dane?</string>
     <string name="security_erase_confirm_body">Wszystkie notatki, zadania, etykiety i klucze szyfrowania zostaną usunięte z tego urządzenia, a Encly zacznie od nowa. Tego nie można cofnąć: najpierw wyeksportuj kopię zapasową, jeśli chcesz coś zachować.</string>
-    <string name="security_erase_confirm">Wymaż</string>
     <string name="security_subtitle">Szyfrowanie i ochrona danych</string>
     <string name="security_title">Bezpieczeństwo</string>
 
@@ -565,4 +561,6 @@
     <string name="faq_backup_a">W Ustawienia → Kopia zapasowa eksportujesz jeden zaszyfrowany plik, który otworzy tylko twoja fraza odzyskiwania. Aby przywrócić, wybierz plik, wpisz lub wklej 12 słów, a następnie scal go z tym sejfem albo zastąp wszystko.</string>
     <string name="keyboard_show">Pokaż klawiaturę</string>
     <string name="keyboard_hide">Ukryj klawiaturę</string>
+    <string name="security_erase_confirm_title">Wymazać wszystkie dane?</string>
+    <string name="security_erase_confirm">Wymaż</string>
 </resources>

@@ -303,6 +303,78 @@ class SessionLockManagerTest {
         assertTrue(manager.locked.value)
     }
 
+    // --- auto-lock delay ------------------------------------------------------------------
+
+    private fun withDelay(millis: Long) {
+        manager = SessionLockManager(
+            security,
+            watcher,
+            autoLock = object : AutoLockPolicy {
+                override val delayMillis: Long = millis
+            },
+        )
+        manager.onStart(owner)
+        withFakeTime()
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+    }
+
+    @Test
+    fun comingBackWithinTheAutoLockDelayKeepsTheVaultOpen() {
+        withDelay(15_000)
+
+        manager.onStop(owner)
+        now += 10_000
+        manager.onStart(owner)
+
+        verify(security, never()).lock()
+        assertFalse(manager.locked.value)
+        assertFalse(watcher.watching)
+    }
+
+    @Test
+    fun theAutoLockDelayRunningOutLocksInTheBackground() {
+        withDelay(15_000)
+
+        manager.onStop(owner)
+        pendingTimer!!.invoke()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun comingBackAfterTheAutoLockDelayLocks() {
+        withDelay(30_000)
+
+        manager.onStop(owner)
+        now += 31_000 // deep sleep: the timer never fired
+        manager.onStart(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun theScreenTurningOffIgnoresTheAutoLockDelay() {
+        withDelay(120_000)
+
+        manager.onStop(owner)
+        watcher.screenOff()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun anImmediateAutoLockLocksOnLeaving() {
+        withDelay(0)
+
+        manager.onStop(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
     private class FakeDeviceLock : DeviceLockWatcher {
         var locked = false
         var watching = false

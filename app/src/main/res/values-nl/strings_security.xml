@@ -15,7 +15,7 @@
     <string name="backup_section_import">Importeren</string>
     <string name="security_encryption_pin_plain">Je notities zijn versleuteld. Je pincode (en je vingerafdruk, als die aan staat) ontgrendelt ze.</string>
     <string name="security_encryption_seed_plain">Je notities zijn versleuteld. Je pincode (en je vingerafdruk, als die aan staat) ontgrendelt ze, en je herstelzin als je de pincode vergeet.</string>
-    <string name="security_recovery_set_desc">Ontgrendelt je notities als je de pincode vergeet, en opent je back-ups.</string>
+    <string name="security_recovery_set_desc">Gemaakt tijdens het instellen. Encly bewaart de woorden nooit en kan ze niet opnieuw tonen. Heb je ze niet? Vervang de zin hieronder.</string>
     <string name="security_recovery_status_set">Ingesteld</string>
     <string name="vault_reset_restore_hint">Na de reset kun je een back-upbestand terugzetten met de 12 woorden ervan.</string>
     <string name="pin_change_bar_title">Pincode wijzigen</string>
@@ -52,4 +52,20 @@
     <string name="security_privacy_section">Privacy</string>
     <string name="security_keyboard_strict_title">Strikte toetsenbordprivacy</string>
     <string name="security_keyboard_strict_desc">Vraagt het toetsenbord om geen suggesties, geen voorspelling in de cloud en geen meelezen rond de cursor. Zet autocorrectie uit, en sommige toetsenborden verbergen emoji of spraakinvoer.</string>
+    <string name="auto_lock_title">Vergrendelen na verlaten</string>
+    <string name="auto_lock_desc">Hoelang Encly open blijft als je naar een andere app gaat. Het scherm uitzetten of de telefoon vergrendelen vergrendelt het altijd meteen.</string>
+    <string name="auto_lock_immediately">Meteen</string>
+    <string name="auto_lock_15s">Na 15 seconden</string>
+    <string name="auto_lock_30s">Na 30 seconden</string>
+    <string name="auto_lock_1m">Na 1 minuut</string>
+    <string name="auto_lock_2m">Na 2 minuten</string>
+    <string name="security_protection_section">Zo beschermt Encly je notities</string>
+    <string name="security_protection_key_title">Een willekeurige 256-bits sleutel</string>
+    <string name="security_protection_key_desc">De hele database is versleuteld met een sleutel die op deze telefoon is gemaakt.</string>
+    <string name="security_protection_pin_title">Een pincode gebonden aan deze telefoon</string>
+    <string name="security_protection_pin_desc">Je pincode wordt gecombineerd met een sleutel in de beveiligde chip van de telefoon, dus hij is nergens anders te raden.</string>
+    <string name="security_protection_slots_title">Een eigen slot voor elke toegang</string>
+    <string name="security_protection_slots_desc">Pincode, herstelzin en vingerafdruk openen elk hun eigen versleutelde slot. De vingerafdruk is elke keer nodig.</string>
+    <string name="security_danger_section">Gevarenzone</string>
+    <string name="security_erase_hold">Houd 5 seconden vast om te wissen</string>
 </resources>

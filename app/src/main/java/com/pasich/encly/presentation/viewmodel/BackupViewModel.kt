@@ -70,7 +70,12 @@ class BackupViewModel @Inject constructor(
         when {
             action == BackupAction.IMPORT -> state.go(BackupStep.PickImportFile)
 
-            action == BackupAction.ERASE -> state.go(BackupStep.ConfirmErase)
+            // Held for five seconds on the security page, then re-authenticated: that is the
+            // confirmation, so the erase runs straight away.
+            action == BackupAction.ERASE -> {
+                state.go(BackupStep.ConfirmErase)
+                eraseAllData()
+            }
 
             action == BackupAction.CREATE_PHRASE ->
                 if (phraseSetup.hasRecoveryPhrase()) {
@@ -96,8 +101,8 @@ class BackupViewModel @Inject constructor(
     }
 
     /**
-     * Deletes the vault (database, key slots, settings) after [BackupStep.ConfirmErase]. There
-     * is no undo: the only way back is a backup file.
+     * Deletes the vault (database, key slots, settings) once re-authentication confirmed it
+     * ([BackupStep.ConfirmErase]). There is no undo: the only way back is a backup file.
      */
     fun eraseAllData() {
         if (state.step != BackupStep.ConfirmErase) return

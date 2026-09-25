@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">No disponible en este dispositivo</string>
     <string name="security_biometric_not_enrolled">No hay ninguna huella registrada. Añade una en los ajustes del sistema.</string>
     <string name="security_encryption_active">El cifrado está activo</string>
-    <string name="security_info_body">• SQLCipher se abre con una clave aleatoria de 256 bits\n• El PIN y la frase de recuperación tienen ranuras de desbloqueo AES-GCM independientes\n• La biometría usa una clave de Android Keystore que exige autenticación en cada uso</string>
-    <string name="security_info_title">ℹ️ Información de seguridad</string>
     <string name="security_recovery_missing">Sin configurar. Sin ella, olvidar el PIN significa perderlo todo. Toca para crear una.</string>
     <string name="security_erase_title">Borrar todos los datos</string>
     <string name="security_erase_desc">Eliminar todas las notas, tareas y etiquetas y las claves de cifrado de este dispositivo</string>
-    <string name="security_erase_confirm_title">¿Borrar todos los datos?</string>
     <string name="security_erase_confirm_body">Todas las notas, tareas y etiquetas y las claves de cifrado se eliminarán de este dispositivo, y Encly empezará de cero. No se puede deshacer: exporta antes una copia si quieres conservar algo.</string>
-    <string name="security_erase_confirm">Borrar</string>
     <string name="security_subtitle">Cifrado y protección de datos</string>
     <string name="security_title">Seguridad</string>
 
@@ -560,4 +556,6 @@
     <string name="faq_backup_a">En Ajustes → Copia de seguridad exportas un archivo cifrado que solo tu frase de recuperación puede abrir. Para restaurar, elige el archivo, escribe o pega las 12 palabras y luego combínalo con esta bóveda o reemplázalo todo.</string>
     <string name="keyboard_show">Mostrar teclado</string>
     <string name="keyboard_hide">Ocultar teclado</string>
+    <string name="security_erase_confirm_title">¿Borrar todos los datos?</string>
+    <string name="security_erase_confirm">Borrar</string>
 </resources>

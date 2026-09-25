@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">Auf diesem Gerät nicht verfügbar</string>
     <string name="security_biometric_not_enrolled">Kein Fingerabdruck eingerichtet. Füge einen in den Systemeinstellungen hinzu.</string>
     <string name="security_encryption_active">Verschlüsselung ist aktiv</string>
-    <string name="security_info_body">• SQLCipher wird mit einem zufälligen 256-Bit-Schlüssel geöffnet\n• PIN und Wiederherstellungsphrase haben separate AES-GCM-Entsperrslots\n• Die Biometrie nutzt einen Android-Keystore-Schlüssel mit Authentifizierung bei jeder Verwendung</string>
-    <string name="security_info_title">ℹ️ Sicherheitsinformationen</string>
     <string name="security_recovery_missing">Nicht eingerichtet. Ohne sie bedeutet eine vergessene PIN, dass alles verloren ist. Tippe, um eine zu erstellen.</string>
     <string name="security_erase_title">Alle Daten löschen</string>
     <string name="security_erase_desc">Alle Notizen, Aufgaben und Labels sowie die Schlüssel auf diesem Gerät löschen</string>
-    <string name="security_erase_confirm_title">Alle Daten löschen?</string>
     <string name="security_erase_confirm_body">Alle Notizen, Aufgaben und Labels sowie die Schlüssel werden von diesem Gerät gelöscht und Encly beginnt von vorn. Das lässt sich nicht rückgängig machen: Exportiere zuerst ein Backup, wenn du etwas behalten möchtest.</string>
-    <string name="security_erase_confirm">Löschen</string>
     <string name="security_subtitle">Verschlüsselung und Datenschutz</string>
     <string name="security_title">Sicherheit</string>
 
@@ -555,4 +551,6 @@
     <string name="faq_backup_a">Unter Einstellungen → Backup exportierst du eine verschlüsselte Datei, die nur deine Wiederherstellungsphrase öffnen kann. Zum Wiederherstellen wählst du die Datei, tippst oder fügst die 12 Wörter ein und führst sie dann mit diesem Tresor zusammen oder ersetzt alles.</string>
     <string name="keyboard_show">Tastatur einblenden</string>
     <string name="keyboard_hide">Tastatur ausblenden</string>
+    <string name="security_erase_confirm_title">Alle Daten löschen?</string>
+    <string name="security_erase_confirm">Löschen</string>
 </resources>

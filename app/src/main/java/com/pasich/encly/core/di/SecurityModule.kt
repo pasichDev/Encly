@@ -2,6 +2,8 @@ package com.pasich.encly.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.pasich.encly.core.security.AutoLock
+import com.pasich.encly.core.security.AutoLockPolicy
 import com.pasich.encly.core.security.DeviceLockWatcher
 import com.pasich.encly.core.security.KeystorePinFactor
 import com.pasich.encly.core.security.LockoutClock
@@ -62,4 +64,7 @@ abstract class SecurityBindingsModule {
 
     @Binds
     abstract fun bindVaultLockEvents(manager: SessionLockManager): VaultLockEvents
+
+    @Binds
+    abstract fun bindAutoLockPolicy(autoLock: AutoLock): AutoLockPolicy
 }

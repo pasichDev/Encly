@@ -15,7 +15,7 @@
     <string name="backup_section_import">Importa</string>
     <string name="security_encryption_pin_plain">Le tue note sono cifrate. Il tuo PIN (e l\'impronta, se attiva) le sblocca.</string>
     <string name="security_encryption_seed_plain">Le tue note sono cifrate. Il tuo PIN (e l\'impronta, se attiva) le sblocca, e la frase di recupero se dimentichi il PIN.</string>
-    <string name="security_recovery_set_desc">Sblocca le note se dimentichi il PIN e apre i tuoi backup.</string>
+    <string name="security_recovery_set_desc">Creata durante la configurazione. Encly non salva mai le parole e non può mostrarle di nuovo. Non le hai? Sostituisci la frase qui sotto.</string>
     <string name="security_recovery_status_set">Configurata</string>
     <string name="vault_reset_restore_hint">Dopo il ripristino potrai recuperare un file di backup con le sue 12 parole.</string>
     <string name="pin_change_bar_title">Cambia PIN</string>
@@ -57,4 +57,20 @@
     <string name="security_privacy_section">Privacy</string>
     <string name="security_keyboard_strict_title">Privacy rigorosa della tastiera</string>
     <string name="security_keyboard_strict_desc">Chiede alla tastiera nessun suggerimento, nessuna previsione nel cloud e nessuna lettura intorno al cursore. Disattiva la correzione automatica e alcune tastiere nascondono emoji o input vocale.</string>
+    <string name="auto_lock_title">Blocca dopo l’uscita</string>
+    <string name="auto_lock_desc">Per quanto Encly resta aperto quando passi a un’altra app. Spegnere lo schermo o bloccare il telefono lo blocca sempre subito.</string>
+    <string name="auto_lock_immediately">Subito</string>
+    <string name="auto_lock_15s">Dopo 15 secondi</string>
+    <string name="auto_lock_30s">Dopo 30 secondi</string>
+    <string name="auto_lock_1m">Dopo 1 minuto</string>
+    <string name="auto_lock_2m">Dopo 2 minuti</string>
+    <string name="security_protection_section">Come Encly protegge le tue note</string>
+    <string name="security_protection_key_title">Una chiave casuale a 256 bit</string>
+    <string name="security_protection_key_desc">L’intero database è cifrato con una chiave creata su questo telefono.</string>
+    <string name="security_protection_pin_title">Un PIN legato a questo telefono</string>
+    <string name="security_protection_pin_desc">Il PIN è combinato con una chiave del chip sicuro del telefono, quindi non si può indovinare altrove.</string>
+    <string name="security_protection_slots_title">Una serratura per ogni accesso</string>
+    <string name="security_protection_slots_desc">PIN, frase di recupero e impronta aprono ciascuno il proprio spazio cifrato. L’impronta viene chiesta ogni volta.</string>
+    <string name="security_danger_section">Zona pericolosa</string>
+    <string name="security_erase_hold">Tieni premuto 5 secondi per cancellare</string>
 </resources>

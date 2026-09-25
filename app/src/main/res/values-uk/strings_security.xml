@@ -15,7 +15,7 @@
     <string name="backup_section_import">Імпорт</string>
     <string name="security_encryption_pin_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено).</string>
     <string name="security_encryption_seed_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено), а якщо ви забудете PIN, то фраза відновлення.</string>
-    <string name="security_recovery_set_desc">Відкриває нотатки, якщо ви забудете PIN, і розшифровує ваші резервні копії.</string>
+    <string name="security_recovery_set_desc">Створена під час налаштування. Encly не зберігає слова й не може показати їх знову. Немає їх? Замініть фразу нижче.</string>
     <string name="security_recovery_status_set">Налаштовано</string>
     <string name="vault_reset_restore_hint">Після скидання можна відновити резервну копію з файлу за її 12 словами.</string>
     <string name="pin_change_bar_title">Змінити PIN</string>
@@ -62,4 +62,20 @@
     <string name="security_privacy_section">Приватність</string>
     <string name="security_keyboard_strict_title">Сувора приватність клавіатури</string>
     <string name="security_keyboard_strict_desc">Просить клавіатуру не показувати підказки, не використовувати хмарне передбачення й не читати текст біля курсора. Вимикає автовиправлення, а деякі клавіатури ховають емодзі чи голосовий ввід.</string>
+    <string name="auto_lock_title">Блокувати після виходу</string>
+    <string name="auto_lock_desc">Скільки Encly лишається відкритим, коли ви переходите в інший застосунок. Вимкнення екрана чи блокування телефона завжди блокує його одразу.</string>
+    <string name="auto_lock_immediately">Одразу</string>
+    <string name="auto_lock_15s">Через 15 секунд</string>
+    <string name="auto_lock_30s">Через 30 секунд</string>
+    <string name="auto_lock_1m">Через 1 хвилину</string>
+    <string name="auto_lock_2m">Через 2 хвилини</string>
+    <string name="security_protection_section">Як Encly захищає нотатки</string>
+    <string name="security_protection_key_title">Випадковий 256-бітний ключ</string>
+    <string name="security_protection_key_desc">Уся база зашифрована ключем, створеним на цьому телефоні.</string>
+    <string name="security_protection_pin_title">PIN прив’язаний до телефона</string>
+    <string name="security_protection_pin_desc">PIN змішується з ключем у захищеному чипі телефона, тож його не підібрати на іншому пристрої.</string>
+    <string name="security_protection_slots_title">Окремий замок для кожного входу</string>
+    <string name="security_protection_slots_desc">PIN, фраза відновлення й відбиток відкривають кожен свій зашифрований слот. Відбиток потрібен щоразу.</string>
+    <string name="security_danger_section">Небезпечна зона</string>
+    <string name="security_erase_hold">Утримуйте 5 секунд, щоб стерти</string>
 </resources>

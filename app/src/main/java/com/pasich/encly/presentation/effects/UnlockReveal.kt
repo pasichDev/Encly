@@ -52,6 +52,10 @@ private val UnlockEasing = CubicBezierEasing(a = 0.3f, b = 0f, c = 0.2f, d = 1f)
 /** Material's emphasized decelerate: the list glides in fast and settles slowly into place. */
 private val PushEasing = CubicBezierEasing(a = 0.05f, b = 0.7f, c = 0.1f, d = 1f)
 
+/** The short reveal: the lock screen fades out, then the app fades in. */
+private const val QUICK_OUT_MS = 120
+private const val QUICK_IN_MS = 200
+
 /** Frames the first screen gets to compose and draw under the cover before it starts to rise. */
 private const val SETTLE_FRAMES = 3
 
@@ -84,8 +88,18 @@ class UnlockRevealState {
             return
         }
         this.onCovered = onCovered
+        full = !playedFull
+        playedFull = true
         running = true
     }
+
+    /**
+     * Whether this run is the full reveal. Only the first unlock after the app starts gets it;
+     * coming back to an unlocked-before app gets a short cross-fade instead.
+     */
+    var full by mutableStateOf(true)
+        private set
+    private var playedFull = false
 
     internal fun cover() {
         contentOffset = 1f
@@ -137,6 +151,10 @@ fun UnlockRevealOverlay(state: UnlockRevealState, modifier: Modifier = Modifier)
     val glyph = painterResource(R.drawable.ic_launcher_foreground)
     val grow = remember { Animatable(0f) }
     val push = remember { Animatable(0f) }
+    if (!state.full) {
+        QuickUnlockFade(state, modifier)
+        return
+    }
     LaunchedEffect(Unit) {
         grow.animateTo(1f, tween(UNLOCK_GROW_MS, easing = UnlockEasing))
         state.cover()
@@ -181,5 +199,34 @@ fun UnlockRevealOverlay(state: UnlockRevealState, modifier: Modifier = Modifier)
             // A flat sheet, so the edge the list pushes against is a straight line.
             drawRect(color = colors.primary, topLeft = Offset(-push.value * size.width, 0f))
         }
+    }
+}
+
+/**
+ * The short reveal for later unlocks: the lock screen fades into the ground, the app leaves it
+ * out of sight, and the screen underneath fades in. No logo, no slide.
+ */
+@Composable
+private fun QuickUnlockFade(state: UnlockRevealState, modifier: Modifier = Modifier) {
+    val surface = MaterialTheme.colorScheme.surface
+    val cover = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        cover.animateTo(1f, tween(QUICK_OUT_MS))
+        state.cover()
+        state.push(1f)
+        repeat(SETTLE_FRAMES) { withFrameNanos { } }
+        cover.animateTo(0f, tween(QUICK_IN_MS, easing = UnlockEasing))
+        state.finish()
+    }
+    Canvas(
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) awaitPointerEvent().changes.forEach { it.consume() }
+                }
+            },
+    ) {
+        drawRect(color = surface, alpha = cover.value)
     }
 }

@@ -2,8 +2,10 @@ package com.pasich.encly.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
@@ -16,7 +18,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +32,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,17 +62,23 @@ private const val DRAWER_SCRIM_ALPHA = 0.32f
 
 @Composable
 fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifier) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    // Not saved: coming back from a page opened in the drawer shows the notes with it closed.
+    val drawerState = remember { DrawerState(DrawerValue.Closed) }
     val scope = rememberCoroutineScope()
+    // App pads every screen below the status bar; the drawer and its scrim reach up under it, so
+    // the scrim dims the whole window instead of leaving a light band over the top bar.
+    val statusBar = WindowInsets.statusBars.getTop(LocalDensity.current)
+    val statusBarDp = with(LocalDensity.current) { statusBar.toDp() }
 
     ModalNavigationDrawer(
-        modifier = modifier,
+        modifier = modifier.extendUp(statusBar),
         drawerState = drawerState,
         gesturesEnabled = true,
         scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = DRAWER_SCRIM_ALPHA),
         drawerContent = {
             MainDrawer(
                 drawerState = drawerState,
+                topInset = statusBarDp,
                 onItemClick = { selectedItem ->
                     scope.launch {
                         val navOptions = NavOptions.Builder()
@@ -82,8 +91,20 @@ fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifi
             )
         },
     ) {
-        MainScreen(drawerState = drawerState, navController = navController)
+        MainScreen(
+            drawerState = drawerState,
+            navController = navController,
+            modifier = Modifier.padding(top = statusBarDp),
+        )
     }
+}
+
+/** Grows the element [px] upward, past its parent's top padding. */
+private fun Modifier.extendUp(px: Int) = layout { measurable, constraints ->
+    val placeable = measurable.measure(
+        constraints.copy(minHeight = constraints.minHeight + px, maxHeight = constraints.maxHeight + px),
+    )
+    layout(placeable.width, placeable.height - px) { placeable.place(0, -px) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -276,7 +297,7 @@ private fun NotesHeader(query: String, onQueryChange: (String) -> Unit, onViewOp
                     }
                 } else {
                     IconButton(onClick = onViewOptions) {
-                        Icon(EnclyIcons.Sliders, contentDescription = stringResource(R.string.view_options))
+                        Icon(EnclyIcons.Filter, contentDescription = stringResource(R.string.view_options))
                     }
                 }
             },

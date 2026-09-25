@@ -44,6 +44,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -107,15 +110,21 @@ private fun SkeletonLine(fraction: Float) {
 }
 
 /**
- * A destructive action that only runs after the button is held for four seconds; the fill grows
- * while it is held and resets when released.
+ * A destructive action that only runs after the button is held for [holdMillis] (four seconds by
+ * default); the fill grows while it is held and resets when released. TalkBack users trigger it
+ * with a long press (double-tap and hold), announced as a button.
  */
 @Composable
-fun EnclyHoldToConfirmButton(text: String, onConfirm: () -> Unit, modifier: Modifier = Modifier) {
+fun EnclyHoldToConfirmButton(
+    text: String,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+    holdMillis: Int = HOLD_TO_CONFIRM_MS,
+) {
     var holding by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (holding) 1f else 0f,
-        animationSpec = tween(durationMillis = if (holding) HOLD_TO_CONFIRM_MS else 0),
+        animationSpec = tween(durationMillis = if (holding) holdMillis else 0),
         label = "hold",
         finishedListener = { if (it >= 1f) onConfirm() },
     )
@@ -127,6 +136,13 @@ fun EnclyHoldToConfirmButton(text: String, onConfirm: () -> Unit, modifier: Modi
             .height(EnclyTheme.spacing.buttonHeight)
             .clip(CircleShape)
             .background(colors.errorContainer)
+            .semantics {
+                role = Role.Button
+                onLongClick {
+                    onConfirm()
+                    true
+                }
+            }
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {

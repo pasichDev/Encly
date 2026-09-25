@@ -250,14 +250,10 @@
     <string name="security_biometric_unavailable">Недоступно на цьому пристрої</string>
     <string name="security_biometric_not_enrolled">Відбиток пальця не додано. Додайте його в налаштуваннях системи.</string>
     <string name="security_encryption_active">Шифрування активне</string>
-    <string name="security_info_body">• SQLCipher відкривається випадковим 256-бітним ключем\n• PIN і фраза відновлення захищають окремі зашифровані (AES-GCM) копії цього ключа\n• Біометрія використовує ключ Android Keystore, який щоразу потребує підтвердження</string>
-    <string name="security_info_title">ℹ️ Інформація про безпеку</string>
     <string name="security_recovery_missing">Не налаштовано. Без неї забутий PIN означає втрату всього. Торкніться, щоб створити.</string>
     <string name="security_erase_title">Стерти всі дані</string>
     <string name="security_erase_desc">Видалити всі нотатки, завдання, мітки та ключі шифрування на цьому пристрої</string>
-    <string name="security_erase_confirm_title">Стерти всі дані?</string>
     <string name="security_erase_confirm_body">Усі нотатки, завдання, мітки та ключі шифрування буде видалено з цього пристрою, і Encly почне з початку. Цю дію неможливо скасувати: спершу експортуйте резервну копію, якщо хочете щось зберегти.</string>
-    <string name="security_erase_confirm">Стерти</string>
     <string name="security_subtitle">Шифрування та захист даних</string>
     <string name="security_title">Безпека</string>
 
@@ -565,4 +561,6 @@
     <string name="faq_backup_a">У Налаштування → Резервна копія ви експортуєте один зашифрований файл, який відкриває лише ваша фраза відновлення. Щоб відновити, виберіть файл, введіть або вставте 12 слів, а тоді об’єднайте копію з цим сховищем або замініть усе.</string>
     <string name="keyboard_show">Показати клавіатуру</string>
     <string name="keyboard_hide">Сховати клавіатуру</string>
+    <string name="security_erase_confirm_title">Стерти всі дані?</string>
+    <string name="security_erase_confirm">Стерти</string>
 </resources>

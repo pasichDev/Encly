@@ -15,7 +15,7 @@
     <string name="backup_section_import">Importar</string>
     <string name="security_encryption_pin_plain">Suas notas estão criptografadas. Seu PIN (e sua digital, se ativada) as desbloqueia.</string>
     <string name="security_encryption_seed_plain">Suas notas estão criptografadas. Seu PIN (e sua digital, se ativada) as desbloqueia, e sua frase de recuperação se você esquecer o PIN.</string>
-    <string name="security_recovery_set_desc">Desbloqueia suas notas se você esquecer o PIN e abre seus backups.</string>
+    <string name="security_recovery_set_desc">Criada durante a configuração. O Encly nunca guarda as palavras e não pode mostrá-las de novo. Não as tem? Substitua a frase abaixo.</string>
     <string name="security_recovery_status_set">Configurada</string>
     <string name="vault_reset_restore_hint">Depois de redefinir, você pode restaurar um arquivo de backup com as 12 palavras dele.</string>
     <string name="pin_change_bar_title">Alterar PIN</string>
@@ -57,4 +57,20 @@
     <string name="security_privacy_section">Privacidade</string>
     <string name="security_keyboard_strict_title">Privacidade rigorosa do teclado</string>
     <string name="security_keyboard_strict_desc">Pede ao teclado que não mostre sugestões, não use previsão na nuvem e não leia o texto ao redor do cursor. Desativa a correção automática, e alguns teclados ocultam emojis ou a entrada por voz.</string>
+    <string name="auto_lock_title">Bloquear ao sair</string>
+    <string name="auto_lock_desc">Quanto tempo o Encly fica aberto quando você muda para outro app. Desligar a tela ou bloquear o telefone sempre o bloqueia na hora.</string>
+    <string name="auto_lock_immediately">Imediatamente</string>
+    <string name="auto_lock_15s">Após 15 segundos</string>
+    <string name="auto_lock_30s">Após 30 segundos</string>
+    <string name="auto_lock_1m">Após 1 minuto</string>
+    <string name="auto_lock_2m">Após 2 minutos</string>
+    <string name="security_protection_section">Como o Encly protege as suas notas</string>
+    <string name="security_protection_key_title">Uma chave aleatória de 256 bits</string>
+    <string name="security_protection_key_desc">Todo o banco de dados é criptografado com uma chave criada neste telefone.</string>
+    <string name="security_protection_pin_title">Um PIN ligado a este telefone</string>
+    <string name="security_protection_pin_desc">O seu PIN é combinado com uma chave do chip seguro do telefone, por isso não pode ser adivinhado em nenhum outro lugar.</string>
+    <string name="security_protection_slots_title">Uma fechadura para cada acesso</string>
+    <string name="security_protection_slots_desc">PIN, frase de recuperação e impressão digital abrem cada um o seu próprio espaço criptografado. A digital é pedida sempre.</string>
+    <string name="security_danger_section">Zona de perigo</string>
+    <string name="security_erase_hold">Segure 5 segundos para apagar</string>
 </resources>

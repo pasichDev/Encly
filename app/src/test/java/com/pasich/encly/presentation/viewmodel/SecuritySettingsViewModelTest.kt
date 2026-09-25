@@ -5,6 +5,7 @@ import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
+import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
@@ -48,7 +49,12 @@ class SecuritySettingsViewModelTest {
             AuthSettings(authType = AuthType.PIN, isBiometricEnabled = true, isUserCreatedSeedKey = false),
         )
         `when`(security.biometricStatus()).thenReturn(BiometricStatus.AVAILABLE)
-        viewModel = SecuritySettingsViewModel(security, KeyboardPrivacy(InMemorySharedPreferences()))
+        viewModel =
+            SecuritySettingsViewModel(
+                security,
+                KeyboardPrivacy(InMemorySharedPreferences()),
+                AutoLock(InMemorySharedPreferences()),
+            )
         // The first load reads the mock on an IO thread; stubbing it meanwhile would race.
         runBlocking { viewModel.uiState.first { it.loaded } }
     }

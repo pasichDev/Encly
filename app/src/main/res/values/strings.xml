@@ -266,14 +266,10 @@
     <string name="security_biometric_unavailable">Not available on this device</string>
     <string name="security_biometric_not_enrolled">No fingerprint enrolled. Add one in system settings.</string>
     <string name="security_encryption_active">Encryption is on</string>
-    <string name="security_info_body">• SQLCipher is opened with a random 256-bit key\n• The PIN and the recovery phrase have separate AES-GCM unlock slots\n• Biometrics use an auth-per-use Android Keystore key</string>
-    <string name="security_info_title">ℹ️ Security information</string>
     <string name="security_recovery_missing">Not set up. Without it, a forgotten PIN means losing everything. Tap to create one.</string>
     <string name="security_erase_title">Erase all data</string>
     <string name="security_erase_desc">Delete every note, task and tag and the encryption keys on this device</string>
-    <string name="security_erase_confirm_title">Erase all data?</string>
     <string name="security_erase_confirm_body">Every note, task and tag and the encryption keys will be deleted from this device, and Encly will start over. This can\'t be undone: export a backup first if you want to keep anything.</string>
-    <string name="security_erase_confirm">Erase</string>
     <string name="security_subtitle">Encryption and data protection</string>
     <string name="security_title">Security</string>
 
@@ -572,4 +568,6 @@
     <string name="faq_backup_a">In Settings → Backup you export one encrypted file that only your recovery phrase can open. To restore, pick the file, type or paste the 12 words, then merge it into this vault or replace everything.</string>
     <string name="keyboard_show">Show keyboard</string>
     <string name="keyboard_hide">Hide keyboard</string>
+    <string name="security_erase_confirm_title">Erase all data?</string>
+    <string name="security_erase_confirm">Erase</string>
 </resources>

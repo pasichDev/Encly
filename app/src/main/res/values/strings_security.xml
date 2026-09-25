@@ -15,7 +15,7 @@
     <string name="backup_section_import">Import</string>
     <string name="security_encryption_pin_plain">Your notes are encrypted. Your PIN (and your fingerprint, if it is on) unlocks them.</string>
     <string name="security_encryption_seed_plain">Your notes are encrypted. Your PIN (and your fingerprint, if it is on) unlocks them, and your recovery phrase does if you forget the PIN.</string>
-    <string name="security_recovery_set_desc">Unlocks your notes if you forget the PIN, and opens your backups.</string>
+    <string name="security_recovery_set_desc">Created during setup. Encly never stores the words and can\'t show them again. Don\'t have them? Replace the phrase below.</string>
     <string name="security_recovery_status_set">Set up</string>
     <string name="vault_reset_restore_hint">After the reset you can restore a backup file with its 12 words.</string>
     <string name="pin_change_bar_title">Change PIN</string>
@@ -52,4 +52,20 @@
     <string name="security_privacy_section">Privacy</string>
     <string name="security_keyboard_strict_title">Strict keyboard privacy</string>
     <string name="security_keyboard_strict_desc">Asks the keyboard for no suggestions, no cloud prediction and no reading around the cursor. Turns off autocorrect, and some keyboards hide emoji or voice input.</string>
+    <string name="auto_lock_title">Lock after leaving the app</string>
+    <string name="auto_lock_desc">How long Encly stays open when you switch to another app. Turning off the screen or locking the phone always locks it at once.</string>
+    <string name="auto_lock_immediately">Immediately</string>
+    <string name="auto_lock_15s">After 15 seconds</string>
+    <string name="auto_lock_30s">After 30 seconds</string>
+    <string name="auto_lock_1m">After 1 minute</string>
+    <string name="auto_lock_2m">After 2 minutes</string>
+    <string name="security_protection_section">How Encly protects your notes</string>
+    <string name="security_protection_key_title">A random 256-bit key</string>
+    <string name="security_protection_key_desc">The whole database is encrypted with a key made on this phone.</string>
+    <string name="security_protection_pin_title">A PIN bound to this phone</string>
+    <string name="security_protection_pin_desc">Your PIN is mixed with a key in the phone\'s secure chip, so it can\'t be guessed anywhere else.</string>
+    <string name="security_protection_slots_title">Separate locks for each way in</string>
+    <string name="security_protection_slots_desc">PIN, recovery phrase and fingerprint each open their own encrypted slot. Fingerprint needs your finger every time.</string>
+    <string name="security_danger_section">Danger zone</string>
+    <string name="security_erase_hold">Hold for 5 seconds to erase</string>
 </resources>
