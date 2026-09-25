@@ -16,6 +16,9 @@ permissions:
 
 jobs:
   build:
+    # Dependabot bumps (build(deps) / ci(deps)) don't run CI on their own PR: they are merged in
+    # batches and checked on the branch that takes them, or on main after the merge.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
