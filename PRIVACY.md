@@ -55,10 +55,10 @@ block, the address you wrote).
 ## Sharing
 
 Encly does not share, sell or transfer any data to anyone. It has no share flow for note
-content, and the only thing it copies to the clipboard is a link from a note's link block, when
-you choose to copy it (marked as sensitive on Android 13 and later, so it is hidden from the
-clipboard preview). Apart from that, the only way data leaves the app is an encrypted backup file
-that you export yourself (below).
+content. It puts something on the clipboard only when you copy it yourself: text you select, or a
+link from a note's link block. Every copy is marked as sensitive (on Android 13 and later it is
+hidden from the clipboard preview) and cleared after about a minute. Apart from that, the only way
+data leaves the app is an encrypted backup file that you export yourself (below).
 
 ## Encrypted backup file
 
