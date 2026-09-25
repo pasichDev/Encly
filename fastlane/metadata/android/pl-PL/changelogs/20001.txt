@@ -1,0 +1,1 @@
+Encly 2.0.1: bez zmian w aplikacji. Wydanie jest teraz podpisane tak, aby F-Droid mógł zbudować Encly ze źródeł i udostępniać je z tym samym podpisem co na GitHubie.

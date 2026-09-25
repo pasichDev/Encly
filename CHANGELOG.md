@@ -11,6 +11,20 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-09-25
+
+versionCode 20001.
+
+No changes to the app itself. The release APKs are now signed without touching the zip layout
+that Gradle produced, so F-Droid can rebuild Encly from source and ship it with the same
+signature as GitHub Releases.
+
+### Changed
+
+- Release signing keeps AGP's alignment (`--alignment-preserved`) and drops the v1 scheme,
+  which minSdk 26 never uses.
+- Store listings: the PIN wording now matches the app.
+
 ## [2.0.0] - 2026-09-25
 
 versionCode 20000.
@@ -129,5 +143,6 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/pasichDev/Encly/releases/tag/v2.0.1
 [2.0.0]: https://github.com/pasichDev/Encly/releases/tag/v2.0.0

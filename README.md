@@ -81,7 +81,7 @@ Every release ships a `SHA256SUMS` file (and `SHA256SUMS.asc` when it is GPG-sig
 
 ```bash
 sha256sum -c --ignore-missing SHA256SUMS          # APK matches the published checksum
-apksigner verify --print-certs Encly-2.0.0-fdroid.apk
+apksigner verify --print-certs Encly-2.0.1-fdroid.apk
 ```
 
 `apksigner` (Android SDK build-tools) must print this release signing certificate SHA-256
