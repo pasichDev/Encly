@@ -1,0 +1,1 @@
+Encly 2.0.1: nessuna modifica all’app. La versione ora è firmata in modo che F-Droid possa compilare Encly dal codice sorgente e distribuirla con la stessa firma di GitHub.

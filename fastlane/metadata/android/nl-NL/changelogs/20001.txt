@@ -1,0 +1,1 @@
+Encly 2.0.1: geen wijzigingen in de app. De release is nu zo ondertekend dat F-Droid Encly vanuit de broncode kan bouwen en met dezelfde handtekening als op GitHub kan verspreiden.

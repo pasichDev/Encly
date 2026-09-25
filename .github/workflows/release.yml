@@ -102,8 +102,11 @@ jobs:
             apk="$(find "app/build/outputs/apk/$flavor/release" -name '*.apk' | head -n1)"
             [ -n "$apk" ] || { echo "::error::No $flavor release APK"; exit 1; }
             # AGP already aligned it (native libraries on 16 KB pages); signing must not move them.
+            # Keeping AGP's alignment also keeps the zip byte-identical to an unsigned rebuild, which
+            # F-Droid needs to copy our signature onto its own build. minSdk 26 needs no v1 scheme.
             "$tools/zipalign" -c -P 16 4 "$apk"
             "$tools/apksigner" sign \
+              --alignment-preserved true --v1-signing-enabled false \
               --ks "$keystore" --ks-pass env:ENCLY_KEYSTORE_PASSWORD \
               --ks-key-alias "$ENCLY_KEY_ALIAS" --key-pass env:ENCLY_KEY_PASSWORD \
               --out "dist/Encly-$VERSION-$flavor.apk" "$apk"
