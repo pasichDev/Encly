@@ -12,15 +12,22 @@ a mandatory app PIN and, optionally, strong biometrics.
 ## Features
 
 - 🔒 **Encrypted at rest** — Room on SQLCipher with a random 256-bit database key.
-- 🧩 **Block editor** — text, headings, quotes, checklists / numbered lists, links, separators.
+- 🔐 **Mandatory lock** — a 6-digit PIN bound to the phone's Android Keystore, plus optional
+  Class 3 biometric unlock.
+- ⏱️ **Auto-lock** — the database closes and its key is wiped after you leave the app
+  (immediately up to 2 minutes, 15 s by default) and at once when the screen turns off.
+- 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN.
+- 💾 **Encrypted backups** — one file, sealed with the recovery phrase, saved wherever you choose.
+- 🧩 **Block editor** — text, headings, quotes, checklists, bulleted / numbered lists, links,
+  separators.
 - 🏷️ **Tags & tasks** — local organization: tags for notes, tasks with priorities.
 - 🗑️ **Trash** — soft-delete with restore.
-- 🔑 **Optional BIP39 recovery seed** — a separate recovery slot for the database key.
+- 🎨 **5 themes** — Paper, Forest, Ocean, Graphite and Midnight; light, dark or system mode and
+  three bundled font sets.
 - 📴 **Fully offline** — no `INTERNET` permission, cloud sync, analytics or downloadable fonts
-  (editor fonts are bundled). The only links out (privacy policy, issue tracker, email, a note's
-  link block and, in the Play build, the store page or, in the F-Droid build, the Ko-fi page)
-  open in another app and only when you tap them.
-- 🔐 **Mandatory lock** — 6-digit PIN plus optional Class 3 biometric unlock.
+  (editor fonts are bundled). The only links out (privacy policy, issue tracker, email, the
+  open-source license pages, a note's link block and, in the `play` flavor, the store page or, in
+  the `fdroid` flavor, the Ko-fi page) open in another app and only when you tap them.
 - 🛡️ **Protected UI** — `FLAG_SECURE` is enforced from the first Activity frame.
 - 🌍 **9 languages** — pick one in Settings → Language, independently of the system language.
 
@@ -95,7 +102,7 @@ if you ran it yourself, uninstall it before installing 2.0.
 
 ## Security model
 
-Encly v2 uses envelope encryption rather than deriving the SQLCipher key directly from
+Encly 2.0 uses envelope encryption rather than deriving the SQLCipher key directly from
 a seed or PIN:
 
 1. Onboarding creates a random 256-bit **DEK** (data-encryption key).
@@ -117,11 +124,16 @@ a seed or PIN:
 Skipping the recovery phrase leaves the vault with **no recovery seed** and no backups.
 Losing the PIN in that case makes the encrypted database unrecoverable.
 
+**Erase all data** (Settings → Security, in the danger zone: hold the button for 5 s, confirm,
+then enter the PIN or use the fingerprint) deletes the database, every key slot and Encly's
+Keystore keys, and starts setup again.
+
 The app also disables Android backup/device transfer for protected data and has no
 system notifications, plaintext note sharing, calendar export, or seed export; the only
-thing it copies to the clipboard is a link block's address, on request and marked sensitive. The one way data leaves the phone is an **encrypted backup**
-you export yourself (Settings → Backup): it is sealed with your 12-word recovery phrase, and
-the same words restore it on a new phone ("Restore from backup" in onboarding).
+thing it copies to the clipboard by itself is a link block's address, on request and marked
+sensitive. The one way data leaves the phone is an **encrypted backup** you export yourself
+(Settings → Backup): it is sealed with your 12-word recovery phrase, and the same words
+restore it on a new phone ("Restore from backup" in onboarding).
 
 See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and the
 [privacy policy](https://pasichdev.xyz/apps/encly/privacy-policy/) (also in
@@ -133,7 +145,7 @@ Kotlin · Jetpack Compose · Material 3 · Hilt · Room · SQLCipher · Coroutin
 kotlinx.serialization · BIP39 (kotlin-bip39)
 
 Clean architecture: `presentation` → `domain` → `data`, with `core/security`
-coordinating the v2 key vault.
+coordinating the key vault.
 
 ## Build
 

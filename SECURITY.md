@@ -1,7 +1,7 @@
 # Security
 
-Encly is a local encrypted notes application. This document describes the current v3
-security model, its trust boundaries, and known limitations.
+Encly is a local encrypted notes application. This document describes the security model of
+Encly 2.0 (vault format v3), its trust boundaries, and known limitations.
 
 ## Key hierarchy
 
@@ -73,7 +73,7 @@ database. The authenticated cryptographic operation must release the DEK.
 
 ### Recovery slot
 
-User-managed onboarding creates an optional BIP39 recovery slot.
+Onboarding offers an optional BIP39 recovery slot.
 
 - Encly generates a 12-word BIP39 seed.
 - The seed is normalized (lower case, single spaces; the one normalization shared with the
@@ -83,9 +83,10 @@ User-managed onboarding creates an optional BIP39 recovery slot.
 - Entering the correct recovery seed can therefore recover local database access even
   when the PIN is unavailable.
 
-Auto-managed mode intentionally creates no recovery slot. One can be added later from an
-unlocked session (Settings → Backup, after re-entering the PIN): the live DEK is wrapped under a
-newly generated seed that the user writes down and confirms.
+Choosing "PIN only, no backups" during onboarding intentionally creates no recovery slot. One
+can be added later from an unlocked session (Settings → Security, or Settings → Backup before
+the first export, after re-entering the PIN): the live DEK is wrapped under a newly generated
+seed that the user writes down and confirms.
 
 **Replacing the phrase.** Settings → Security → "Replace recovery phrase" (unlocked session,
 after PIN or biometric re-authentication, and a confirmation) generates 12 new words, shows
@@ -210,10 +211,16 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   second unlock call only with the same key, compared in constant time.
 - `FLAG_SECURE` is applied before the first Activity frame and cannot be disabled in
   settings.
+- **Erase all data** (Settings → Security, danger zone) is held for 5 seconds, confirmed in a
+  dialog, then re-authenticated with the PIN or a Class 3 biometric. It closes and deletes the
+  database, every key slot, the lockout state, Encly's Keystore keys (PIN factor and biometric
+  key) and the vault flags (onboarding state, last export, strict keyboard privacy), and
+  returns to onboarding. There is no undo; only an exported
+  backup brings the data back.
 
 ## Outbound data policy
 
-The beta security boundary intentionally removes system-visible plaintext features:
+Encly intentionally leaves out system-visible plaintext features:
 
 - no notifications at all: no notification permission, channel, alarm or scheduled work;
 - no seed clipboard, file, Drive, or generic share export (encrypted backups never contain the
@@ -274,8 +281,9 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   downloadable-font provider, so no font request goes to Google and the app works the same on
   devices without Google Play Services.
 - The About screen offers links (privacy policy, GitHub issues, developer email and, only in the
-  `play` flavor, the Play Store listing). They open in another app **only after an explicit
-  tap**; Encly itself sends nothing.
+  `play` flavor, the Play Store listing), the open-source licenses page links each library's and
+  font's license, and, only in the `fdroid` flavor, the Support page links the developer's Ko-fi
+  page. They open in another app **only after an explicit tap**; Encly itself sends nothing.
 - **Links in notes are a deliberate exception** to "nothing leaves the vault". A link block
   opens only from its sheet, which first shows the full address, after an explicit tap on
   "Open", through the system chooser. Only `http`, `https` and `mailto` are saved or opened;
@@ -340,7 +348,7 @@ uninstall to "fix" it without an exported backup, because uninstalling deletes t
 
 | Version | Storage format | Security fixes |
 |---|---|---|
-| 2.0.x (beta) | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
+| 2.0.x | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
 | 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, reinstall 2.0 |
 
 Reports should include the exact app version (About screen), where it was installed from, and

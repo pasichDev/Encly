@@ -104,13 +104,14 @@ purpose.
 
 Every user-visible string lives in string resources. English is the default
 (`app/src/main/res/values/`); each translation is a `values-<lang>/` folder with a `strings.xml`
-(UI) and a `motivation.xml` (home-screen quotes).
+(most of the UI) and a `strings_security.xml` (security settings).
 
-**Fixing a translation:** edit the string in `values-<lang>/strings.xml` and open a PR. Keep the
-key; only change the text.
+**Fixing a translation:** edit the string in `values-<lang>/strings.xml` (or
+`strings_security.xml`) and open a PR. Keep the key; only change the text.
 
-**Adding a string (code change):** add it to `values/strings.xml` in English and to *every*
-`values-<lang>/strings.xml`, even if only with an English placeholder you flag in the PR. Use it
+**Adding a string (code change):** add it in English to `values/strings.xml` (or
+`strings_security.xml`) and to the same file in *every* `values-<lang>/`, even if only with an
+English placeholder you flag in the PR. Use it
 with `stringResource(R.string.…)` in Compose. Text produced outside the UI (ViewModels,
 managers, validators) must not be resolved there: return a resource id or a `UiText`
 (`core/common/UiText.kt`) and resolve it in the UI, so it follows the in-app language. Never
@@ -119,7 +120,7 @@ lower.
 
 **Adding a language:**
 
-1. copy `values/strings.xml` and `values/motivation.xml` to `values-<lang>/` and translate them,
+1. copy `values/strings.xml` and `values/strings_security.xml` to `values-<lang>/` and translate them,
    leaving out the entries marked `translatable="false"`;
 2. add `<locale android:name="<lang>" />` to `res/xml/locales_config.xml`;
 3. add an entry to `AppLanguage` (`core/locale/AppLanguage.kt`) and its own-language name as a
@@ -173,8 +174,10 @@ upload this key instead of letting Google generate one).
 1. Bump `VERSION_MAJOR/MINOR/PATCH` in `version.properties`. `versionCode` follows
    automatically (`MAJOR*10000 + MINOR*100 + PATCH`) and must only grow.
 2. Move `[Unreleased]` in `CHANGELOG.md` to a dated `## [X.Y.Z] - YYYY-MM-DD` section whose first
-   line is `versionCode N.` (F-Droid's update check reads the version from these two lines; the
-   unit tests fail when they disagree with `version.properties`).
+   line is `versionCode N.` F-Droid's update check reads the version name and code from these two
+   lines, because it cannot evaluate `version.properties`; no test checks them, so compare them
+   with `version.properties` by hand. The release workflow uses this section as the GitHub Release
+   notes, so use absolute links in it.
 3. Write the store release notes (≤ 500 characters each) to
    `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` for **every** locale folder
    (`en-US`, `uk`, `de-DE`, `fr-FR`, `es-ES`, `it-IT`, `pl-PL`, `pt-PT`, `nl-NL`);
@@ -184,7 +187,9 @@ upload this key instead of letting Google generate one).
    [release workflow](.github/workflows/release.yml) refuses a tag that does not match
    `version.properties`, fails when a signing secret or `ENCLY_CERT_SHA256` is missing, builds
    both flavors unsigned, signs them with `apksigner` in a separate step (Gradle never sees
-   the keystore), checks the certificate against `ENCLY_CERT_SHA256`, and publishes the APKs with `SHA256SUMS` and R8 mapping files.
+   the keystore), checks the certificate against `ENCLY_CERT_SHA256`, and publishes the APKs
+   with `SHA256SUMS` (signed as `SHA256SUMS.asc` when the GPG secrets are set) and the R8
+   mapping files.
 6. Google Play: either upload `app-play-release.aab` by hand
    (`./gradlew :app:bundlePlayRelease` with the `ENCLY_*` variables set), or, once enabled, run
    the [Publish to Google Play](.github/workflows/publish-play.yml) workflow with the tag; it
