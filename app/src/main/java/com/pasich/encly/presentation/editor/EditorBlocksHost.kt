@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -133,7 +132,7 @@ private fun EditorBlock(
     val focusRequester = remember { FocusRequester() }
     // A list registers its own target: it focuses its first or last item.
     if (block !is Block.ListBlock) RegisterFocusRequester(block.id, focusRegistry, focusRequester)
-    // Only for the outline of the block being edited; the focus callback below is unchanged.
+    // Whether the block is being edited: its placeholder shows then.
     var hasFocus by remember { mutableStateOf(false) }
 
     Box(
@@ -150,7 +149,7 @@ private fun EditorBlock(
                     !focusState.hasFocus -> callbacks.onFocusLost()
                 }
             }
-            .editorBlockFrame(active = hasFocus && !isLocked, color = MaterialTheme.colorScheme.primary),
+            .editorBlockFrame(),
     ) {
         BlockContent(
             block = block,
