@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -32,7 +33,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.R
-import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -52,6 +52,7 @@ import com.pasich.encly.presentation.screen.onboarding.FooterSpec
 import com.pasich.encly.presentation.screen.onboarding.OnboardingFooter
 import com.pasich.encly.presentation.screen.onboarding.PhraseCheckFields
 import com.pasich.encly.presentation.screen.onboarding.allChecksCorrect
+import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
@@ -157,7 +158,9 @@ private fun MessageDialog(
 @Composable
 private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) {
     val activity = LocalActivity.current as? FragmentActivity
-    var input by remember { mutableStateOf("") }
+    // Wiped once submitted or when the dialog closes, never a String (see PinBuffer).
+    val input = remember { PinBuffer() }
+    DisposableEffect(input) { onDispose { input.clear() } }
     var lockoutSeconds by remember { mutableLongStateOf(0L) }
     // Keyed on the step too: a wrong PIN (a new step) may just have started a lockout.
     PinLockoutTicker(step to (lockoutSeconds > 0L), actions.reauth::pinLockoutRemainingMillis) {
@@ -181,18 +184,16 @@ private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) 
         ) {
             PinEntry(
                 entered = input.length,
-                error = error != null && input.isEmpty(),
+                error = error != null && input.length == 0,
                 shakeKey = step.failures,
                 enabled = !lockedOut,
                 actions = PinEntryActions(
                     onDigit = { digit ->
-                        if (input.length < PIN_LENGTH && !lockedOut) input += digit
-                        if (input.length == PIN_LENGTH) {
-                            actions.reauth.submitPin(input)
-                            input = ""
-                        }
+                        if (!lockedOut) input.add(digit)
+                        // The flow wipes the PIN it is given.
+                        if (input.isFull) actions.reauth.submitPin(input.take())
                     },
-                    onBackspace = { if (input.isNotEmpty()) input = input.dropLast(1) },
+                    onBackspace = input::deleteLast,
                     onBiometric = if (step.biometric && activity != null) {
                         { actions.reauth.withBiometric(activity) }
                     } else {

@@ -15,8 +15,9 @@ user intent; persistence and security decisions remain outside Composables.
 - **Domain** — use cases plus repository contracts. ViewModels use these contracts for feature
   operations such as saving a note, moving it to trash or changing a task.
 - **Data** — Room entities/DAOs, repository implementations and the local data-source facade.
-- **Core security** — vault setup/unlock, session lock, biometric slot, recovery slot and the
-  SQLCipher database lifecycle.
+- **Core security** — vault setup/unlock, session lock and auto-lock delay (`SessionLockManager`,
+  `AutoLock`), the Keystore-bound PIN factor, biometric slot, recovery slot and the SQLCipher
+  database lifecycle.
 - **Backup** — encrypted export/import (`core/backup`, `data/backup`), described below.
 
 ## Vault and session lifecycle
@@ -26,7 +27,7 @@ flowchart TD
     Setup["Onboarding"] --> Pin["PIN wraps random DEK"]
     Pin --> Open["Open SQLCipher"]
     Open --> Session["Unlocked session"]
-    Session --> Background["App backgrounds"]
+    Session --> Background["Left the app past the auto-lock delay, or screen off"]
     Background --> Lock["Close DB and clear DEK"]
     Lock --> Unlock["PIN / biometric / recovery"]
     Unlock --> Open
@@ -55,7 +56,8 @@ visible destination, an opaque shield covers the previous screen, so the first f
 returning never shows plaintext. An unlock that completes after the app left the foreground is
 closed again at once. Open task and tag editors save on pause, like the note editor, because the
 re-lock discards them. The note that was open when the app re-locked is recorded (`RelockReturn`) and
-opened again after the unlock, with fresh ViewModels.
+opened again after the unlock, with fresh ViewModels. Pages move on Material's shared X axis;
+the full unlock reveal plays only on the first unlock after launch, later unlocks cross-fade.
 
 ## Encrypted backups
 
@@ -94,7 +96,8 @@ flowchart LR
     end
 ```
 
-Onboarding offers "Restore from backup" next to the two vault types: it decrypts and validates
+Onboarding offers "Restore from backup" next to the two setup choices (with a recovery phrase,
+or PIN only): it decrypts and validates
 the file with the typed words, creates the vault with those words as its recovery seed, and
 `AuthSetupViewModel` writes the backup (replace, into the empty vault) right after the PIN setup
 opens the database and before onboarding is committed (`SecurityManager.openInitialVault` →

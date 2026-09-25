@@ -112,8 +112,6 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
         return !recoveryEnabled || hasRecoverySeed()
     }
 
-    fun isUserManuallyCreatedKeyByDecryption(): Boolean = hasRecoverySeed()
-
     @Synchronized
     fun copyBootstrapKey(): ByteArray? = bootstrapDek?.copyOf()
 

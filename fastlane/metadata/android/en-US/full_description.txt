@@ -7,7 +7,7 @@ PRIVATE BY DESIGN
 • Truly offline: Encly does not request the INTERNET permission, so it cannot send your notes anywhere.
 • Encrypted notes at rest: a SQLCipher (AES-256) database under a random 256-bit key.
 • PIN lock every time you open it: a 6-digit PIN, plus optional fingerprint or face unlock (strong biometrics only).
-• Locks itself: when Encly goes to the background, the database is closed and the key is wiped from memory.
+• Locks itself: after you leave (15 seconds by default, or immediately) or the moment the screen turns off, the database is closed and the key is wiped from memory.
 • Screenshots, screen recording and recent-apps previews are blocked. Android cloud backup is off.
 
 RECOVERY PHRASE AND ENCRYPTED BACKUPS

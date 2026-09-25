@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.designsystem
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,9 +31,6 @@ import com.pasich.encly.ui.theme.EnclyTheme
 /** Editor tool buttons: 44 dp, radius 14 (design spec §3.3). */
 private val ToolSize = 44.dp
 private val ToolShape = RoundedCornerShape(14.dp)
-
-/** Outline of the block being edited: 2 dp `primary`, radius 12, bleeding 8 dp into the gutter. */
-private val BlockOutlineShape = RoundedCornerShape(12.dp)
 
 /**
  * The editor's formatting toolbar, pinned above the keyboard: `surfaceContainerHigh`, a 1 dp
@@ -108,13 +104,10 @@ private val BlockBleed = 8.dp
 private val BlockInset = 4.dp
 
 /**
- * The frame of one editor block: inner padding 4/8 and, while [active], a 2 dp outline in [color]
- * with radius 12. The editor column sits [BlockBleed] inside the gutter, so text lines up with
- * the title and the outline bleeds into the gutter (design spec §4.4).
+ * The inner padding of one editor block, 4/8. The editor column sits [BlockBleed] inside the
+ * gutter, so text lines up with the title. No outline while editing: the caret is the focus mark.
  */
-fun Modifier.editorBlockFrame(active: Boolean, color: Color): Modifier =
-    (if (active) border(2.dp, color, BlockOutlineShape) else this)
-        .padding(horizontal = BlockBleed, vertical = BlockInset)
+fun Modifier.editorBlockFrame(): Modifier = padding(horizontal = BlockBleed, vertical = BlockInset)
 
 /** A thin vertical rule between groups of toolbar buttons. */
 @Composable

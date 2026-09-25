@@ -108,7 +108,7 @@
 
     <string name="falied_content">Não foi possível carregar o conteúdo</string>
 
-    <string name="faq_background_a">O Encly salva suas alterações atuais, fecha o banco de dados criptografado e apaga a chave da sessão. Ao voltar, você precisa desbloquear novamente.</string>
+    <string name="faq_background_a">O Encly salva as suas alterações e, após o atraso escolhido em Configurações → Segurança (15 segundos por padrão), fecha o banco de dados criptografado e apaga a chave de sessão. Desligar a tela ou bloquear o telefone faz isso na hora. Depois, você desbloqueia de novo.</string>
     <string name="faq_background_q">O que acontece quando saio do app?</string>
     <string name="faq_biometrics_a">Use a chave de biometria em Configurações → Segurança. Criar ou remover o slot biométrico exige autenticação biométrica forte.</string>
     <string name="faq_biometrics_q">Como ativo ou desativo a biometria?</string>

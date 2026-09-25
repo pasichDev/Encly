@@ -7,7 +7,7 @@ PRIVADO DESDE A ORIGEM
 • Mesmo offline: o Encly não pede a permissão INTERNET, por isso não consegue enviar as suas notas para lado nenhum.
 • Notas encriptadas: base de dados SQLCipher (AES-256) com uma chave aleatória de 256 bits.
 • Notas com palavra-passe: um PIN de 6 dígitos sempre que abre a app e, opcionalmente, impressão digital ou rosto (só biometria forte).
-• Bloqueia-se sozinho: quando o Encly passa para segundo plano, a base de dados é fechada e a chave apagada da memória.
+• Bloqueia-se sozinho: depois de sair (15 segundos por omissão, ou de imediato) ou assim que o ecrã se desliga, a base de dados é fechada e a chave apagada da memória.
 • Capturas de ecrã, gravação de ecrã e pré-visualização nas apps recentes estão bloqueadas. A cópia na nuvem do Android está desligada.
 
 FRASE DE RECUPERAÇÃO E CÓPIAS ENCRIPTADAS

@@ -108,7 +108,7 @@
 
     <string name="falied_content">Impossibile caricare il contenuto</string>
 
-    <string name="faq_background_a">Encly salva le modifiche in corso, chiude il database crittografato e cancella la chiave di sessione. Al ritorno dovrai sbloccare di nuovo.</string>
+    <string name="faq_background_a">Encly salva le modifiche e, dopo il ritardo scelto in Impostazioni → Sicurezza (15 secondi per impostazione predefinita), chiude il database crittografato e cancella la chiave di sessione. Spegnere lo schermo o bloccare il telefono lo fa subito. Poi sblocchi di nuovo.</string>
     <string name="faq_background_q">Cosa succede quando esco dall\'app?</string>
     <string name="faq_biometrics_a">Usa l\'interruttore della biometria in Impostazioni → Sicurezza. Creare o rimuovere lo slot biometrico richiede un\'autenticazione biometrica forte.</string>
     <string name="faq_biometrics_q">Come attivo o disattivo la biometria?</string>

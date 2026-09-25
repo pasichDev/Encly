@@ -108,7 +108,7 @@
 
     <string name="falied_content">Nie udało się wczytać treści</string>
 
-    <string name="faq_background_a">Encly zapisuje bieżące zmiany, zamyka zaszyfrowaną bazę danych i usuwa klucz sesji. Po powrocie trzeba ponownie odblokować aplikację.</string>
+    <string name="faq_background_a">Encly zapisuje zmiany i po opóźnieniu wybranym w Ustawienia → Bezpieczeństwo (domyślnie 15 sekund) zamyka zaszyfrowaną bazę i czyści klucz sesji. Wyłączenie ekranu lub zablokowanie telefonu robi to od razu. Potem odblokowujesz ponownie.</string>
     <string name="faq_background_q">Co się dzieje, gdy wychodzę z aplikacji?</string>
     <string name="faq_biometrics_a">Użyj przełącznika biometrii w Ustawienia → Bezpieczeństwo. Utworzenie lub usunięcie slotu biometrycznego wymaga silnego uwierzytelnienia biometrycznego.</string>
     <string name="faq_biometrics_q">Jak włączyć lub wyłączyć biometrię?</string>

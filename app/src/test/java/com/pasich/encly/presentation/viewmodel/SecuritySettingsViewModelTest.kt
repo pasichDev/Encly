@@ -10,8 +10,10 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.MockActivity
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyCallback
+import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.testutil.eqValue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -23,14 +25,17 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
@@ -39,7 +44,8 @@ import org.mockito.Mockito.`when`
 class SecuritySettingsViewModelTest {
     private lateinit var security: SecurityManager
     private lateinit var viewModel: SecuritySettingsViewModel
-    private val activity: FragmentActivity = mock(FragmentActivity::class.java)
+    private val host = MockActivity()
+    private val activity: FragmentActivity = host.activity
 
     @Before
     fun setUp() {
@@ -119,6 +125,21 @@ class SecuritySettingsViewModelTest {
     }
 
     @Test
+    fun theCheckedAndTheNewPinAreWipedAfterUse() = runTest {
+        viewModel.uiState.first { it.loaded }
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.configurePin(anyCharArray())).thenReturn(false)
+
+        val current = "111111".toCharArray()
+        assertTrue(checkCurrent(current))
+        assertArrayEquals(CharArray(current.size), current)
+
+        val new = "222222".toCharArray()
+        assertFalse(activate(new))
+        assertArrayEquals(CharArray(new.size), new)
+    }
+
+    @Test
     fun afterARecoveryUnlockTheNewPinIsSetWithoutTheOldOne() {
         `when`(security.canResetPinWithoutCurrent()).thenReturn(true)
         assertFalse(viewModel.requiresCurrentPin())
@@ -177,13 +198,76 @@ class SecuritySettingsViewModelTest {
         assertEquals(UiText.of(R.string.biometric_change_not_confirmed), viewModel.uiState.value.error)
     }
 
-    private suspend fun checkCurrent(pin: String): Boolean {
+    @Test
+    fun tapsWhileTheEnrolPromptIsOpenAreIgnored() = runTest {
+        viewModel.uiState.first { it.loaded }
+        // The prompt never answers: it stays open.
+        viewModel.toggleBiometric(activity, enable = true)
+        viewModel.toggleBiometric(activity, enable = true)
+        viewModel.toggleBiometric(activity, enable = false)
+
+        assertTrue(viewModel.biometricInFlight)
+        verify(security, times(1)).enrollBiometric(eqValue(activity), anyCallback())
+        verify(security, never()).confirmBiometric(eqValue(activity), anyCallback())
+    }
+
+    @Test
+    fun tapsWhileTheDisablePromptIsOpenAreIgnored() = runTest {
+        viewModel.uiState.first { it.loaded }
+        viewModel.toggleBiometric(activity, enable = false)
+        viewModel.toggleBiometric(activity, enable = false)
+        viewModel.toggleBiometric(activity, enable = true)
+
+        verify(security, times(1)).confirmBiometric(eqValue(activity), anyCallback())
+        verify(security, never()).enrollBiometric(eqValue(activity), anyCallback())
+        verify(security, never()).disableBiometric()
+    }
+
+    @Test
+    fun onceThePromptAnswersTheSwitchWorksAgain() = runTest {
+        viewModel.uiState.first { it.loaded }
+        val answer = arrayOfNulls<(Boolean) -> Unit>(1)
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            answer[0] = invocation.arguments.last() as (Boolean) -> Unit
+            null
+        }.`when`(security).enrollBiometric(eqValue(activity), anyCallback())
+
+        viewModel.toggleBiometric(activity, enable = true)
+        viewModel.toggleBiometric(activity, enable = true)
+        answer[0]!!(false)
+
+        assertFalse(viewModel.biometricInFlight)
+        viewModel.toggleBiometric(activity, enable = true)
+        verify(security, times(2)).enrollBiometric(eqValue(activity), anyCallback())
+    }
+
+    @Test
+    fun aRotationDuringThePromptDoesNotLeaveTheSwitchStuck() = runTest {
+        viewModel.uiState.first { it.loaded }
+        viewModel.toggleBiometric(activity, enable = true)
+        assertTrue(viewModel.biometricInFlight)
+
+        // androidx.biometric drops the answer of a prompt whose activity is gone.
+        host.destroy()
+
+        assertFalse(viewModel.biometricInFlight)
+        val recreated = MockActivity().activity
+        viewModel.toggleBiometric(recreated, enable = true)
+        verify(security).enrollBiometric(eqValue(recreated), anyCallback())
+    }
+
+    private suspend fun checkCurrent(pin: String): Boolean = checkCurrent(pin.toCharArray())
+
+    private suspend fun checkCurrent(pin: CharArray): Boolean {
         val result = CompletableDeferred<Boolean>()
         viewModel.verifyCurrentPin(pin) { result.complete(it) }
         return result.await()
     }
 
-    private suspend fun activate(pin: String): Boolean {
+    private suspend fun activate(pin: String): Boolean = activate(pin.toCharArray())
+
+    private suspend fun activate(pin: CharArray): Boolean {
         val result = CompletableDeferred<Boolean>()
         viewModel.activationPinAuth(pin) { result.complete(it) }
         return result.await()

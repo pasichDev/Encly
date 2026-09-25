@@ -124,7 +124,7 @@
 
     <string name="falied_content">Couldn\'t load the content</string>
 
-    <string name="faq_background_a">Encly saves your current changes, closes the encrypted database and wipes the session key. You need to unlock again when you come back.</string>
+    <string name="faq_background_a">Encly saves your changes and, after the delay chosen in Settings → Security (15 seconds by default), closes the encrypted database and wipes the session key. Turning off the screen or locking the phone does this at once. After that you unlock again.</string>
     <string name="faq_background_q">What happens when I leave the app?</string>
     <string name="faq_biometrics_a">Use the biometrics switch in Settings → Security. Creating or removing the biometric slot requires strong biometric authentication.</string>
     <string name="faq_biometrics_q">How do I turn biometrics on or off?</string>

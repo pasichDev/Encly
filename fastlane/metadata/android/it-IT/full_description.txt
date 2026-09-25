@@ -7,7 +7,7 @@ PRIVATA PER PROGETTO
 • Davvero offline: Encly non chiede il permesso INTERNET, quindi non può inviare le tue note da nessuna parte.
 • Note criptate: database SQLCipher (AES-256) con una chiave casuale a 256 bit.
 • Note con password: un PIN a 6 cifre a ogni apertura e, se vuoi, impronta o volto (solo biometria forte).
-• Si blocca da sola: quando Encly va in background, il database viene chiuso e la chiave cancellata dalla memoria.
+• Si blocca da sola: dopo l'uscita (15 secondi per impostazione predefinita, o subito) o appena lo schermo si spegne, il database viene chiuso e la chiave cancellata dalla memoria.
 • Screenshot, registrazione dello schermo e anteprima nelle app recenti sono bloccati. Il backup cloud di Android è disattivato.
 
 FRASE DI RECUPERO E BACKUP CRIPTATI

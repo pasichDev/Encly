@@ -108,7 +108,7 @@
 
     <string name="falied_content">Kan de inhoud niet laden</string>
 
-    <string name="faq_background_a">Encly slaat je huidige wijzigingen op, sluit de versleutelde database en wist de sessiesleutel. Als je terugkomt, moet je opnieuw ontgrendelen.</string>
+    <string name="faq_background_a">Encly slaat je wijzigingen op en sluit na de vertraging die je in Instellingen → Beveiliging kiest (standaard 15 seconden) de versleutelde database en wist de sessiesleutel. Het scherm uitzetten of de telefoon vergrendelen doet dit meteen. Daarna ontgrendel je opnieuw.</string>
     <string name="faq_background_q">Wat gebeurt er als ik de app verlaat?</string>
     <string name="faq_biometrics_a">Gebruik de biometrieschakelaar in Instellingen → Beveiliging. Voor het maken of verwijderen van het biometrische slot is sterke biometrische verificatie nodig.</string>
     <string name="faq_biometrics_q">Hoe zet ik biometrie aan of uit?</string>

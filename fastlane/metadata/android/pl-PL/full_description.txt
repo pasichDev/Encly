@@ -7,7 +7,7 @@ PRYWATNOŚĆ OD PODSTAW
 • Naprawdę offline: Encly nie prosi o uprawnienie INTERNET, więc nie może nigdzie wysłać twoich notatek.
 • Szyfrowane notatki: baza SQLCipher (AES-256) z losowym kluczem 256-bitowym.
 • Notatki z hasłem: 6-cyfrowy PIN przy każdym otwarciu, opcjonalnie odcisk palca lub twarz (tylko silna biometria).
-• Blokuje się sama: gdy Encly przechodzi w tło, baza jest zamykana, a klucz usuwany z pamięci.
+• Blokuje się sama: po wyjściu (domyślnie po 15 sekundach lub od razu) albo gdy ekran się wyłącza, baza jest zamykana, a klucz usuwany z pamięci.
 • Zrzuty ekranu, nagrywanie ekranu i podgląd w ostatnich aplikacjach są zablokowane. Kopia w chmurze Androida jest wyłączona.
 
 FRAZA ODZYSKIWANIA I SZYFROWANE KOPIE

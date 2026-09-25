@@ -13,8 +13,8 @@ body:
     id: app-version
     attributes:
       label: Encly version
-      description: About screen, e.g. 2.0.0. Add where you installed it from (GitHub Releases, F-Droid, IzzyOnDroid, Google Play, own build).
-      placeholder: 2.0.0 (GitHub Releases)
+      description: Settings → About, e.g. 2.0.0.
+      placeholder: 2.0.0
     validations:
       required: true
   - type: input
@@ -32,13 +32,16 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: upgrade
+    id: source
     attributes:
-      label: Did this start after updating from Encly 1.x?
+      label: Installed from
       options:
-        - "No / fresh install"
-        - "Yes, after upgrading from 1.x"
-        - "Not sure"
+        - "GitHub Releases or Obtainium (fdroid APK)"
+        - "GitHub Releases or Obtainium (play APK)"
+        - "F-Droid"
+        - "Google Play"
+        - "Built from source"
+        - "Other / not sure"
     validations:
       required: true
   - type: textarea

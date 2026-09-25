@@ -1,6 +1,6 @@
 # Privacy Policy
 
-_Effective: 2026-09-22 · Applies to Encly 2.0.0 and later (Android, package `com.pasich.encly`)._
+_Effective: 2026-09-25 · Applies to Encly 2.0.0 and later (Android, package `com.pasich.encly`)._
 
 Encly is an offline notes and tasks app. This policy explains what happens to your data.
 The short version: **everything stays on your device, encrypted, and nobody (including the
@@ -35,13 +35,18 @@ transfer are disabled for it, so it is not copied to Google Drive or another pho
 | Permission | Why |
 |---|---|
 | `USE_BIOMETRIC` | Optional fingerprint / face unlock of your vault. Biometric data never leaves the Android system; Encly only receives "authenticated" or "not authenticated". |
+| `USE_FINGERPRINT` | Added by Android's biometric library for fingerprint unlock on Android 8.x, which predates `USE_BIOMETRIC`. Same purpose, same limits. |
 | `HIDE_OVERLAY_WINDOWS` | Lets Encly stop other apps from drawing over its screens (Android 12 and later), so an overlay cannot cover or imitate the PIN pad. It gives Encly no access to any data. |
+
+Encly requests no internet, storage, contacts, location, camera, microphone or notification
+permission.
 
 ## Links that leave the app
 
 A few items open a page outside Encly, **only when you tap them**: on the About screen, this
-privacy policy, the GitHub issue tracker, an email to the developer, and, in builds distributed
-through Google Play only, the Play Store listing; in builds distributed through F-Droid only, the
+privacy policy, the GitHub issue tracker, an email to the developer, and, in the Google Play
+build only, the Play Store listing; on the open-source licenses screen, each library's or font's
+license; in the F-Droid build only (also offered as the `fdroid` APK on GitHub Releases), the
 developer's Ko-fi donation page (Support screen); and a link block you added to a note, which
 opens in your browser. These are handled by your browser, email or store app under their own
 privacy policies. Encly sends them nothing beyond the fact that the link was opened (for a link
@@ -50,10 +55,10 @@ block, the address you wrote).
 ## Sharing
 
 Encly does not share, sell or transfer any data to anyone. It has no share flow for note
-content, and the only thing it copies to the clipboard is a link from a note's link block, when
-you choose to copy it (marked as sensitive on Android 13 and later, so it is hidden from the
-clipboard preview). Apart from that, the only way data leaves the app is an encrypted backup file
-that you export yourself (below).
+content. It puts something on the clipboard only when you copy it yourself: text you select, or a
+link from a note's link block. Every copy is marked as sensitive (on Android 13 and later it is
+hidden from the clipboard preview) and cleared after about a minute. Apart from that, the only way
+data leaves the app is an encrypted backup file that you export yourself (below).
 
 ## Encrypted backup file
 
@@ -81,8 +86,9 @@ be revoked, so keep the words and the file apart. See
 ## Deleting your data
 
 Uninstalling Encly, or clearing its storage in Android settings, permanently deletes all of
-it. There is no copy anywhere else, apart from encrypted backups you exported yourself. If you did not keep a recovery seed, a forgotten PIN also
-means the data cannot be recovered.
+it, and so does **Settings → Security → Erase all data**. There is no copy anywhere else, apart
+from encrypted backups you exported yourself. If you did not keep a recovery seed, a forgotten
+PIN also means the data cannot be recovered.
 
 ## Children
 

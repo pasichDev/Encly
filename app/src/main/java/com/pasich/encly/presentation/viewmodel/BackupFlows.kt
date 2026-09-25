@@ -166,17 +166,25 @@ class ReauthFlow(
     fun pinLockoutRemainingMillis(): Long = securityManager.pinLockoutRemainingMillis()
 
     /**
-     * During a PIN lockout nothing is verified (every attempt would be refused, even the right
-     * PIN), so no "wrong PIN" is shown either: the dialog shows the remaining lockout instead.
+     * Checks [pin], which is wiped. During a PIN lockout nothing is verified (every attempt
+     * would be refused, even the right PIN), so no "wrong PIN" is shown either: the dialog shows
+     * the remaining lockout instead.
      */
-    fun submitPin(pin: String) {
-        val step = state.step as? BackupStep.Reauth ?: return
-        if (pinLockoutRemainingMillis() > 0L) {
-            state.go(step.copy(error = null))
+    fun submitPin(pin: CharArray) {
+        val step = state.step as? BackupStep.Reauth
+        if (step == null || pinLockoutRemainingMillis() > 0L) {
+            SensitiveDataCleaner.clear(pin)
+            if (step != null) state.go(step.copy(error = null))
             return
         }
         state.launchBusy {
-            val ok = withContext(Dispatchers.Default) { securityManager.verifyPin(pin.toCharArray()) }
+            val ok = withContext(Dispatchers.Default) {
+                try {
+                    securityManager.verifyPin(pin)
+                } finally {
+                    SensitiveDataCleaner.clear(pin)
+                }
+            }
             if (ok) {
                 onAuthenticated(step.action)
             } else {
