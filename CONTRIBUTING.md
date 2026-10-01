@@ -166,8 +166,9 @@ upload this key instead of letting Google generate one).
 - Make the repository public, then enable **Settings → Code security → Private vulnerability
   reporting** (SECURITY.md links to it).
 - Google Play: create the app and fill in *App content*. The first bundle is uploaded by hand.
-- F-Droid: open an inclusion merge request against
-  [fdroiddata](https://gitlab.com/fdroid/fdroiddata) once `v2.0.0` is tagged.
+- F-Droid: done. The app is listed at <https://f-droid.org/packages/com.pasich.encly/>; its
+  metadata lives in [fdroiddata](https://gitlab.com/fdroid/fdroiddata) as
+  `metadata/com.pasich.encly.yml`.
 
 ### Every release
 
