@@ -59,14 +59,14 @@ All eight, with captions in every store language, are in
 ## Install
 
 [<img src="https://img.shields.io/github/v/release/pasichDev/Encly?label=GitHub%20Releases&logo=github" alt="Get it on GitHub" height="28">](https://github.com/pasichDev/Encly/releases/latest)
-&nbsp;![Google Play: coming soon](https://img.shields.io/badge/Google%20Play-coming%20soon-lightgrey?logo=googleplay)
+&nbsp;[<img src="https://img.shields.io/badge/Google%20Play-available-34A853?logo=googleplay" alt="Get it on Google Play" height="28">](https://play.google.com/store/apps/details?id=com.pasich.encly)
 &nbsp;[<img src="https://img.shields.io/f-droid/v/com.pasich.encly?label=F-Droid&logo=f-droid" alt="Get it on F-Droid" height="28">](https://f-droid.org/packages/com.pasich.encly/)
 
 | Channel | Status | What you get |
 |---|---|---|
 | **GitHub Releases** | available | `Encly-<version>-fdroid.apk` (no Google Play links) or `Encly-<version>-play.apk` from [Releases](https://github.com/pasichDev/Encly/releases); verify it (below) before installing. |
 | **Obtainium** | available | Add `https://github.com/pasichDev/Encly` as the source and filter APKs with `fdroid` to get updates straight from GitHub Releases. |
-| **Google Play** | coming soon | The `play` flavor. |
+| **Google Play** | available | The `play` flavor from [Google Play](https://play.google.com/store/apps/details?id=com.pasich.encly). |
 | **F-Droid** | available | The `fdroid` flavor from [F-Droid](https://f-droid.org/packages/com.pasich.encly/), built by F-Droid from source and shipped with the developer signature (reproducible build), so it updates the GitHub APK and back. |
 
 All channels use the same application ID and are meant to be signed with the same certificate,
