@@ -61,7 +61,7 @@ jobs:
           ref: refs/tags/${{ inputs.ref }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
       - name: Tag must match version.properties
         id: version
