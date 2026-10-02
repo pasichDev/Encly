@@ -1,9 +1,21 @@
 name: Android CI
 
+# Docs-only changes don't build. Store texts (fastlane/) are NOT ignored: StoreMetadataTest
+# checks them. A change that also touches anything else runs CI as usual.
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
 
 # Only the newest run per branch / PR matters; cancel superseded ones.

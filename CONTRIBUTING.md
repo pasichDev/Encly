@@ -165,7 +165,8 @@ upload this key instead of letting Google generate one).
   <https://pasichdev.xyz/apps/encly/privacy-policy/>; keep it in step with `PRIVACY.md`.
 - Make the repository public, then enable **Settings → Code security → Private vulnerability
   reporting** (SECURITY.md links to it).
-- Google Play: create the app and fill in *App content*. The first bundle is uploaded by hand.
+- Google Play: done. The app is listed at <https://play.google.com/store/apps/details?id=com.pasich.encly>; the Play Console answers are in
+  [docs/play-store.md](docs/play-store.md).
 - F-Droid: done. The app is listed at <https://f-droid.org/packages/com.pasich.encly/>; its
   metadata lives in [fdroiddata](https://gitlab.com/fdroid/fdroiddata) as
   `metadata/com.pasich.encly.yml`.
