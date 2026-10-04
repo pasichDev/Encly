@@ -45,16 +45,14 @@ import com.pasich.encly.ui.theme.EnclyTheme
 
 /** The app's lock screen: unlocking opens Home (or the note that was open), see [leaveLockScreen]. */
 @Composable
-fun LockScreen(
-    navController: NavHostController,
-    modifier: Modifier = Modifier,
-    viewModel: LockViewModel = hiltViewModel(),
-) {
+fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+    // The same instance the inner LockScreen gets: both come from this back-stack entry.
+    val canReopenNote = hiltViewModel<LockViewModel>()::canReopenNote
     val unlockReveal = LocalUnlockReveal.current
     val exits = remember(navController, unlockReveal) {
         LockExits(
             onUnlock = { isSessionLocked ->
-                navController.leaveLockScreen(unlockReveal, isSessionLocked, viewModel::canReopenNote)
+                navController.leaveLockScreen(unlockReveal, isSessionLocked, canReopenNote)
             },
             // A recovery-phrase unlock means the PIN was forgotten: set a new one before going on.
             onRecoveryUnlock = {
@@ -69,7 +67,7 @@ fun LockScreen(
             },
         )
     }
-    LockScreen(exits = exits, modifier = modifier, viewModel = viewModel)
+    LockScreen(exits = exits, modifier = modifier)
 }
 
 @Composable
