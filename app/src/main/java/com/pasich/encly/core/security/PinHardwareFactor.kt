@@ -15,26 +15,40 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * The two places the device-bound PIN key can live. [A] is the one every vault starts with
+ * (and the only one older builds know); a wipe-PIN unlock moves the PIN slot to the other one
+ * and deletes the old key, so the erased slots can never be opened again (crypto-erase). The
+ * vault records which one is active.
+ */
+enum class PinKeySlot {
+    A,
+    B,
+    ;
+
+    val other: PinKeySlot get() = if (this == A) B else A
+}
+
+/**
  * The device-bound half of the PIN key: an HMAC-SHA256 whose key never leaves this device's
  * secure hardware. Mixed into the PIN KEK, it makes every PIN guess run here, on the
  * Keystore, instead of on an attacker's GPU against a copied slot. An interface so JVM tests
  * can replace the Keystore.
  */
 interface PinHardwareFactor {
-    /** Creates the key unless it already exists. */
+    /** Creates the key in [slot] unless it already exists. */
     @Throws(PinFactorException::class)
-    fun ensureKey()
+    fun ensureKey(slot: PinKeySlot)
 
-    /** Replaces the key with a new one; the old PIN slot can no longer be opened. */
+    /** Replaces the key in [slot] with a new one; slots sealed with the old one can no longer be opened. */
     @Throws(PinFactorException::class)
-    fun reset()
+    fun reset(slot: PinKeySlot)
 
-    /** HMAC-SHA256 of [data] under the device-bound key. The caller wipes the result. */
+    /** HMAC-SHA256 of [data] under the key in [slot]. The caller wipes the result. */
     @Throws(PinFactorException::class)
-    fun mac(data: ByteArray): ByteArray
+    fun mac(slot: PinKeySlot, data: ByteArray): ByteArray
 
-    /** Deletes the key, if any. Never throws. */
-    fun delete()
+    /** Deletes the key in [slot], if any. Never throws. */
+    fun delete(slot: PinKeySlot)
 }
 
 /**
@@ -56,21 +70,21 @@ class PinFactorException(val lost: Boolean, cause: Throwable? = null) : Exceptio
 class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
     private val keyStore by lazy { KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) } }
 
-    override fun ensureKey() {
+    override fun ensureKey(slot: PinKeySlot) {
         val exists = try {
-            keyStore.containsAlias(KEY_ALIAS)
+            keyStore.containsAlias(alias(slot))
         } catch (e: GeneralSecurityException) {
             throw PinFactorException(lost = false, cause = e)
         } catch (e: RuntimeException) {
             throw PinFactorException(lost = false, cause = e)
         }
-        if (!exists) reset()
+        if (!exists) reset(slot)
     }
 
-    override fun reset() {
-        delete()
+    override fun reset(slot: PinKeySlot) {
+        delete(slot)
         try {
-            generate()
+            generate(slot)
         } catch (e: GeneralSecurityException) {
             throw PinFactorException(lost = false, cause = e)
         } catch (e: RuntimeException) {
@@ -78,9 +92,9 @@ class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
         }
     }
 
-    override fun mac(data: ByteArray): ByteArray {
+    override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray {
         val key = try {
-            keyStore.getKey(KEY_ALIAS, null) as? SecretKey
+            keyStore.getKey(alias(slot), null) as? SecretKey
         } catch (e: UnrecoverableKeyException) {
             throw PinFactorException(lost = true, cause = e)
         } catch (e: GeneralSecurityException) {
@@ -101,9 +115,10 @@ class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
         }
     }
 
-    override fun delete() {
+    override fun delete(slot: PinKeySlot) {
+        val alias = alias(slot)
         try {
-            if (keyStore.containsAlias(KEY_ALIAS)) keyStore.deleteEntry(KEY_ALIAS)
+            if (keyStore.containsAlias(alias)) keyStore.deleteEntry(alias)
         } catch (e: GeneralSecurityException) {
             AppLogger.w(TAG, "PIN factor key could not be deleted", e)
         } catch (e: RuntimeException) {
@@ -115,7 +130,7 @@ class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
      * StrongBox first; a device without one (or whose StrongBox lacks HMAC) falls back to the
      * TEE. The unlocked-device requirement is dropped only if the platform rejects it outright.
      */
-    private fun generate() {
+    private fun generate(slot: PinKeySlot) {
         val attempts = buildList {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) add(Options(strongBox = true, unlockedOnly = true))
             add(Options(strongBox = false, unlockedOnly = true))
@@ -125,7 +140,7 @@ class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
         for (options in attempts) {
             try {
                 KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, KEYSTORE_PROVIDER).run {
-                    init(spec(options))
+                    init(spec(alias(slot), options))
                     generateKey()
                 }
                 return
@@ -136,13 +151,13 @@ class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
                 // ProviderExceptions.
                 last = e
             }
-            delete()
+            delete(slot)
         }
         throw last ?: error("no key generated")
     }
 
-    private fun spec(options: Options): KeyGenParameterSpec {
-        val builder = KeyGenParameterSpec.Builder(KEY_ALIAS, KeyProperties.PURPOSE_SIGN)
+    private fun spec(alias: String, options: Options): KeyGenParameterSpec {
+        val builder = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_SIGN)
             .setKeySize(HMAC_KEY_BITS)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             builder.setIsStrongBoxBacked(options.strongBox)
@@ -156,7 +171,15 @@ class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
     private companion object {
         const val TAG = "KeystorePinFactor"
         const val KEYSTORE_PROVIDER = "AndroidKeyStore"
-        const val KEY_ALIAS = "encly_pin_factor_v3"
+
+        /** Slot A keeps the alias every vault has used since v3, so existing installs are untouched. */
+        const val KEY_ALIAS_A = "encly_pin_factor_v3"
+        const val KEY_ALIAS_B = "encly_pin_factor_v3b"
         const val HMAC_KEY_BITS = 256
+
+        fun alias(slot: PinKeySlot): String = when (slot) {
+            PinKeySlot.A -> KEY_ALIAS_A
+            PinKeySlot.B -> KEY_ALIAS_B
+        }
     }
 }

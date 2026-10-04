@@ -98,8 +98,10 @@ class BackupManager @Inject constructor(
         throw BackupException(BackupError.IO)
     }
 
-    private companion object {
-        const val TAG = "BackupManager"
-        const val LAST_EXPORT_KEY = "backup_last_export_at"
+    companion object {
+        private const val TAG = "BackupManager"
+
+        /** In the app flags; a wipe-PIN erase removes it with the vault it described. */
+        internal const val LAST_EXPORT_KEY = "backup_last_export_at"
     }
 }

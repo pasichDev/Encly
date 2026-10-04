@@ -73,4 +73,25 @@
     <string name="security_protection_slots_desc">El PIN, la frase de recuperación y la huella abren cada uno su propio espacio cifrado. La huella se pide siempre.</string>
     <string name="security_danger_section">Zona de peligro</string>
     <string name="security_erase_hold">Mantén 5 segundos para borrar</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">PIN de borrado</string>
+    <string name="wipe_pin_row_desc">Un segundo PIN que borra tus notas si lo escribes en la pantalla de bloqueo</string>
+    <string name="wipe_pin_row_turned_off">Se desactivó al restablecerse la clave de tu PIN. Vuelve a configurarlo si lo usabas.</string>
+    <string name="wipe_pin_intro">Si alguien te obliga a abrir Encly, escribe el PIN de borrado en lugar de tu PIN. Encly borra tus notas, tareas y etiquetas sin dejar señal y se abre como una bóveda vacía. Solo funciona en la pantalla de bloqueo.</string>
+    <string name="wipe_pin_backups">Los archivos de copia que ya exportaste no se tocan. Se siguen abriendo con tu frase de recuperación y son la única forma de volver atrás.</string>
+    <string name="wipe_pin_biometric_warning">El desbloqueo biométrico sigue activado: alguien puede obligarte a poner el dedo en el sensor. Desactívalo si eso es un riesgo para ti.</string>
+    <string name="wipe_pin_biometric_off">Desactivar el desbloqueo biométrico</string>
+    <string name="wipe_pin_limits">Te protege cuando alguien te obliga a desbloquear, no frente a un análisis forense del teléfono. Durante un bloqueo por intentos fallidos el PIN de borrado tampoco funciona. Encly nunca muestra si hay un PIN de borrado: uno nuevo sustituye al anterior, y si cambias tu PIN al PIN de borrado, este se desactiva.</string>
+    <string name="wipe_pin_set">Configurar PIN de borrado</string>
+    <string name="wipe_pin_remove">Desactivar PIN de borrado</string>
+    <string name="wipe_pin_current_subtitle">Confirma tu PIN para configurar el PIN de borrado</string>
+    <string name="wipe_pin_new_title">Crea un PIN de borrado</string>
+    <string name="wipe_pin_new_subtitle">6 dígitos, distintos de tu PIN</string>
+    <string name="wipe_pin_confirm_title">Confirma el PIN de borrado</string>
+    <string name="wipe_pin_confirm_subtitle">Vuelve a escribir el PIN de borrado</string>
+    <string name="wipe_pin_same_as_pin">El PIN de borrado debe ser distinto de tu PIN</string>
+    <string name="wipe_pin_failed">No se pudo guardar el PIN de borrado. Inténtalo de nuevo.</string>
+    <string name="wipe_pin_saved">PIN de borrado configurado</string>
+    <string name="wipe_pin_removed">PIN de borrado desactivado</string>
+    <string name="wipe_pin_turned_off">Se restableció la clave de tu PIN, así que el PIN de borrado, si tenías uno, se desactivó. Vuelve a configurarlo si lo quieres.</string>
 </resources>

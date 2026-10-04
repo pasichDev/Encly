@@ -21,6 +21,12 @@ IzzyOnDroid) and used as the GitHub Release notes.
 - Encrypted backups carry sub-tasks (backup schema 3). Older backups (schema 1 and 2) still
   restore, with no sub-tasks. Merge import adds the sub-tasks a task already on the device is
   missing.
+- Wipe PIN (Settings → Security → Wipe PIN): an optional second PIN that, typed on the lock
+  screen, erases the vault without a visible sign and opens Encly as an empty vault. Nothing in
+  the app or its storage shows whether one is set. Off by default; nothing changes for vaults
+  that never set one (a random decoy slot is added at startup without asking for the PIN).
+  Exported backups are not touched. See SECURITY.md → Wipe PIN for what it does and does not
+  protect against.
 
 ### ⚠️ Compatibility
 
@@ -29,6 +35,10 @@ IzzyOnDroid) and used as the GitHub Release notes.
   downgrade fails to open the vault. Export a backup first if you might go back.
 - A backup made with this version is schema 3. Older Encly versions refuse it as "made by a
   newer version, update the app" instead of restoring it without sub-tasks.
+
+### Changed
+
+- Changing the PIN keeps the PIN slot's salt.
 
 ## [2.0.1] - 2026-09-25
 

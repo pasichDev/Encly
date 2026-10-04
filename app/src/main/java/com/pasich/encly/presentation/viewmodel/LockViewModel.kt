@@ -58,6 +58,12 @@ class LockViewModel @Inject constructor(
     /** Whether the session is closed (again); an unlock reveal then must not open Home. */
     fun isSessionLocked(): Boolean = sessionLockManager.locked.value
 
+    /**
+     * Whether the note open before the re-lock may be reopened: not in the empty vault a
+     * wipe-PIN unlock made, where it does not exist (an empty editor would give the erase away).
+     */
+    fun canReopenNote(): Boolean = !securityManager.isErasedVaultSession()
+
     /** Unlocks with [pin], which is wiped. */
     fun authenticatePin(pin: CharArray, onResult: (PinUnlockResult) -> Unit) {
         launchUnlock(onResult) {

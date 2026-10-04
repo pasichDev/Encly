@@ -46,6 +46,9 @@ class VaultStore(private val file: File) {
 
     fun contains(key: String): Boolean = synchronized(lock) { load().containsKey(key) }
 
+    /** The keys present; for tests that compare what a store reveals by its shape. */
+    internal fun keys(): Set<String> = synchronized(lock) { load().keys.toSet() }
+
     fun getBytes(key: String): ByteArray? = synchronized(lock) { load()[key]?.copyOf() }
 
     fun getInt(key: String, default: Int): Int = synchronized(lock) {

@@ -78,4 +78,25 @@
     <string name="security_protection_slots_desc">PIN, fraza odzyskiwania i odcisk palca otwierają własne zaszyfrowane miejsca. Odcisk jest wymagany za każdym razem.</string>
     <string name="security_danger_section">Strefa zagrożenia</string>
     <string name="security_erase_hold">Przytrzymaj 5 sekund, aby usunąć</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">PIN kasujący</string>
+    <string name="wipe_pin_row_desc">Drugi PIN, który kasuje notatki, gdy wpiszesz go na ekranie blokady</string>
+    <string name="wipe_pin_row_turned_off">Wyłączony po zresetowaniu klucza PIN. Ustaw go ponownie, jeśli go używałeś.</string>
+    <string name="wipe_pin_intro">Jeśli ktoś zmusza cię do otwarcia Encly, wpisz PIN kasujący zamiast swojego PIN-u. Encly bez żadnego śladu skasuje notatki, zadania i etykiety i otworzy się jako pusty sejf. Działa tylko na ekranie blokady.</string>
+    <string name="wipe_pin_backups">Wyeksportowane już pliki kopii zapasowych pozostają nietknięte. Nadal otwierają się frazą odzyskiwania i są jedyną drogą powrotu.</string>
+    <string name="wipe_pin_biometric_warning">Odblokowanie biometryczne pozostaje włączone: ktoś może zmusić cię do przyłożenia palca do czytnika. Wyłącz je, jeśli to dla ciebie ryzyko.</string>
+    <string name="wipe_pin_biometric_off">Wyłącz odblokowanie biometryczne</string>
+    <string name="wipe_pin_limits">Chroni, gdy ktoś zmusza cię do odblokowania, ale nie przed analizą kryminalistyczną telefonu. Podczas blokady po nieudanych próbach PIN kasujący również nie działa. Encly nigdy nie pokazuje, czy PIN kasujący jest ustawiony: nowy zastępuje stary, a jeśli zmienisz swój PIN na PIN kasujący, zostanie on wyłączony.</string>
+    <string name="wipe_pin_set">Ustaw PIN kasujący</string>
+    <string name="wipe_pin_remove">Wyłącz PIN kasujący</string>
+    <string name="wipe_pin_current_subtitle">Potwierdź swój PIN, aby skonfigurować PIN kasujący</string>
+    <string name="wipe_pin_new_title">Utwórz PIN kasujący</string>
+    <string name="wipe_pin_new_subtitle">6 cyfr, inny niż twój PIN</string>
+    <string name="wipe_pin_confirm_title">Potwierdź PIN kasujący</string>
+    <string name="wipe_pin_confirm_subtitle">Wpisz PIN kasujący ponownie</string>
+    <string name="wipe_pin_same_as_pin">PIN kasujący musi różnić się od twojego PIN-u</string>
+    <string name="wipe_pin_failed">Nie udało się zapisać PIN-u kasującego. Spróbuj ponownie.</string>
+    <string name="wipe_pin_saved">PIN kasujący ustawiony</string>
+    <string name="wipe_pin_removed">PIN kasujący wyłączony</string>
+    <string name="wipe_pin_turned_off">Klucz twojego PIN-u został zresetowany, więc ewentualny PIN kasujący został wyłączony. Ustaw go ponownie, jeśli chcesz.</string>
 </resources>

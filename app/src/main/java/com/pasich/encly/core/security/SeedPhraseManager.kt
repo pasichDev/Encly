@@ -31,8 +31,8 @@ import javax.inject.Singleton
 class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
     companion object {
         private const val VAULT_PREFIX = "vault."
-        private const val RECOVERY_PREFIX = "recovery."
-        private const val BACKUP_PREFIX = "backup."
+        internal const val RECOVERY_PREFIX = "recovery."
+        internal const val BACKUP_PREFIX = "backup."
         private const val VERSION_KEY = "vault.version"
         private const val RECOVERY_SLOT_KEY = "recovery.slot"
         private const val RECOVERY_ENABLED_KEY = "recovery.enabled"

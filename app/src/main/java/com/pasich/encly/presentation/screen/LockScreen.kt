@@ -63,7 +63,7 @@ fun LockScreen(
 
     val unlockReveal = LocalUnlockReveal.current
 
-    fun goHome() = navController.leaveLockScreen(unlockReveal, viewModel::isSessionLocked)
+    fun goHome() = navController.leaveLockScreen(unlockReveal, viewModel::isSessionLocked, viewModel::canReopenNote)
 
     // A recovery-phrase unlock means the PIN was forgotten: set a new one before going on.
     fun goToPinReset() {
@@ -132,16 +132,21 @@ private class PinAuth(
  * Leaves the lock screen for Home, and the note that was open when the app re-locked (see
  * MainActivity), once the reveal covers the window so Home composes out of sight. If the
  * session closed again while the reveal played (e.g. the app went to the background), it stays
- * on the lock screen rather than open Home over a locked vault.
+ * on the lock screen rather than open Home over a locked vault. The note is not reopened when
+ * [canReopenNote] says the open vault is not the one it was in (a wipe-PIN unlock).
  */
-private fun NavHostController.leaveLockScreen(reveal: UnlockRevealState?, isSessionLocked: () -> Boolean) {
+private fun NavHostController.leaveLockScreen(
+    reveal: UnlockRevealState?,
+    isSessionLocked: () -> Boolean,
+    canReopenNote: () -> Boolean,
+) {
     val returnRoute = currentBackStackEntry?.savedStateHandle?.get<String>(RelockReturn.RETURN_ROUTE)
     reveal.revealThen {
         if (!isSessionLocked()) {
             navigate(NavRoutes.HomeRoute.name) {
                 popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
             }
-            if (returnRoute != null) navigate(returnRoute)
+            if (returnRoute != null && canReopenNote()) navigate(returnRoute)
         }
     }
 }

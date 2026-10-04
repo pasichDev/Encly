@@ -46,7 +46,76 @@ DEK (random 256 bit) ── SQLCipher raw key
   and doubles with each further miss (1, 2, 4 … 32 min, ~1 h …) up to 24 h. It runs on
   `SystemClock.elapsedRealtime`, so changing the wall clock does not end it; across a reboot
   the remaining penalty is kept and restarts from boot (a reboot never shortens a lockout). A
-  failure of the Keystore itself is not counted as a guess. There is no auto-wipe.
+  failure of the Keystore itself is not counted as a guess. Wrong PINs never erase anything:
+  the only wipe is the optional **wipe PIN** below, and only when the user set one up.
+- Changing the PIN keeps the slot's salt (slots written before keep their own), so a wipe PIN
+  set earlier keeps working.
+
+### Wipe PIN
+
+An optional second PIN (Settings → Security → Wipe PIN; set, replace or turn off, each after
+the real PIN). Typed on the lock screen, it erases the vault without a visible sign and opens
+Encly as an empty vault, not onboarding. It is meant for coercion on the spot ("open the app
+and show me"), not against a forensic examination.
+
+- **Recognising it without showing it is set.** Every vault with a PIN slot has a
+  `pin.wipe.slot` of the same length: `version ‖ IV ‖ AES-GCM_wkek(random marker)`, with
+  `wkek = HKDF(sw ‖ hw, salt, info = "encly/pin/wipe/v3")` from the same KDF run as the PIN
+  KEK and the AAD (`"encly/pin/wipe-slot/v3"`) bound to the PIN slot's salt. It has no salt of
+  its own (a second salt equal to or different from the first would give it away). Without a
+  wipe PIN it holds random bytes, written by a startup migration that needs no PIN and leaves
+  `pin.slot` byte for byte as it was. The store has the same keys and sizes either way; no
+  verifier, hash or extra Keystore key exists for it. Only the wipe PIN itself can tell, so
+  Settings never shows whether one is set.
+- **Same cost either way.** Each attempt runs PBKDF2 and the Keystore HMAC once, derives both
+  KEKs and always tries both AES-GCM opens, without early exit.
+- **Rules.** 6 digits and different from the PIN (checked by opening the PIN slot with it).
+  Changing the PIN to the wipe PIN turns the wipe PIN off (one PIN never opens both slots). A
+  reset of the PIN's Keystore key (see above) turns it off too, since the slot can never open
+  again; Settings then says so.
+- **Lockout.** It counts as an attempt before the KDF like any PIN and is refused during a
+  lockout. Once it matched, the erase clears the lockout like a right PIN. Inside an open vault
+  (PIN re-checks in Settings or before an export) it is just a wrong PIN; it wipes only from the
+  lock screen.
+- **What is destroyed, crypto-erase first.** The PIN's Keystore key alternates between two
+  aliases (`encly_pin_factor_v3`, the one every vault starts with, and `encly_pin_factor_v3b`);
+  the active one is recorded in the store (`pin.key_slot`). On the wipe PIN:
+  1. with the wipe PIN still in memory: a new key under the other alias, a new random DEK, a new
+     PIN slot that the wipe PIN opens (same salt, reusing the PBKDF2 result already computed, so
+     the slow half does not run twice) and a fresh decoy wipe slot;
+  2. one atomic store write swaps them in and drops the recovery, backup-key and biometric
+     slots, the biometric flag and the lockout, and records `wipe.pending`;
+  3. the old `database.db` (with `-wal`, `-shm`) is deleted, the empty database is created with
+     the new DEK and opened, then the old PIN key, the biometric key and the "last export" date
+     are deleted and `wipe.pending` is dropped.
+
+  A kill at any point ends in either the old vault (before step 2) or an empty one: startup
+  repeats step 3 while `wipe.pending` is set (every step is a deletion), and the next PIN unlock
+  creates the empty database if it does not exist yet. If no key can be created under the other
+  alias, the erase still replaces the slots and deletes the database, only without erasing the
+  old PIN key. Afterwards the old PIN is a wrong PIN like any other, and the wipe PIN is the PIN
+  of the empty vault. Theme, sorting, auto-lock and keyboard settings stay. `vault.version`
+  stays so that the empty vault is a committed vault; it has no recovery phrase until one is
+  added.
+- **Not touched:** backup files already exported. They stay encrypted with the recovery phrase
+  and are the only way back; the settings page says so.
+- **Biometrics** are not switched off when a wipe PIN is set (a fingerprint icon disappearing
+  from the lock screen would itself be a sign). Someone can force a finger onto the sensor and
+  open the real vault, so the settings page warns about it and offers to turn biometric unlock
+  off.
+- **Unlock time.** The wipe path adds a Keystore key generation, one HMAC, a store write and
+  creating the empty database to the same KDF run; the empty vault opens behind the same
+  unlock animation.
+- **Limits.** Against a forensic look at the phone this is partial: leftovers in flash, the
+  filesystem journal, two snapshots taken before and after, or simply an empty vault on a phone
+  where Encly was used for years. On a rooted, unlocked phone PIN guessing through the Keystore
+  (see "Important limitations") finds the wipe PIN as well. Overwriting files on flash is not
+  reliable, which is why the erase relies on deleting keys first.
+- **Downgrade.** Older builds ignore the new store entries and keep opening a vault that never
+  used the wipe PIN. After a wipe has happened (the PIN key moved to the second alias), an older
+  build only knows the first alias: the PIN reports a lost key there and cannot unlock. Apart
+  from this, the same release moves the database to version 4, which older builds cannot open at
+  all (see CHANGELOG).
 
 ### Biometric slot
 
@@ -214,8 +283,8 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   settings.
 - **Erase all data** (Settings → Security, danger zone) is held for 5 seconds, confirmed in a
   dialog, then re-authenticated with the PIN or a Class 3 biometric. It closes and deletes the
-  database, every key slot, the lockout state, Encly's Keystore keys (PIN factor and biometric
-  key) and the vault flags (onboarding state, last export, strict keyboard privacy), and
+  database, every key slot, the lockout state, Encly's Keystore keys (both PIN factor aliases and
+  the biometric key) and the vault flags (onboarding state, last export, strict keyboard privacy), and
   returns to onboarding. There is no undo; only an exported
   backup brings the data back.
 
@@ -258,8 +327,8 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - Android app sandbox isolates local files from ordinary apps.
 - `allowBackup=false` is set.
 - Database/security state is excluded from cloud backup and device transfer.
-- The key slots (PIN, recovery, backup-key and biometric envelopes) and the PIN lockout state
-  live in one app-private file, `no_backup/vault_state_v3.bin`. Every secret in it is already
+- The key slots (PIN, wipe-PIN, recovery, backup-key and biometric envelopes) and the PIN
+  lockout state live in one app-private file, `no_backup/vault_state_v3.bin`. Every secret in it is already
   an AES-256-GCM envelope, so it needs no further encryption layer and **no Keystore key to be
   read**: a broken Keystore or Tink keyset can no longer make the vault state unreadable at
   startup. Every change rewrites the file to a temp file, `fsync`s it and renames it over the
@@ -318,6 +387,8 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   missing the key lives in the TEE; on devices without hardware-backed Keystore it is software
   only.
 - The lockout is enforced by the app, not by the secure hardware.
+- The wipe PIN (see "Wipe PIN") defends against being forced to unlock on the spot, not against
+  a forensic examination or a rooted phone.
 - The recovery seed restores the local vault (recovery slot) and opens encrypted backups. On a
   new phone the seed alone recreates nothing: the user also needs a backup file, and only data
   up to that export is restored.

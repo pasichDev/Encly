@@ -29,6 +29,7 @@ import com.pasich.encly.presentation.screen.onboarding.OnboardingScreen
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.screen.settings.SettingsScreen
+import com.pasich.encly.presentation.screen.settings.WipePinScreen
 import com.pasich.encly.presentation.screen.trash.TrashScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
@@ -125,6 +126,10 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
         }
         animationScreens(NavRoutes.PinCodeConfig.name) {
             PinCodeConfigScreen(navController)
+        }
+
+        animationScreens(NavRoutes.WipePinRoute.name) {
+            WipePinScreen(navController)
         }
 
         animationScreens(NavRoutes.LockRoute.name) {

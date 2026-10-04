@@ -3,6 +3,7 @@ package com.pasich.encly.core.security
 import android.content.SharedPreferences
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -68,6 +69,11 @@ class SecurityManager @Inject constructor(
     @Volatile
     private var sessionUnlockedWithRecovery = false
 
+    // True while the open session is the empty vault a wipe-PIN unlock just made. Nothing of
+    // the erased vault (such as the note that was open when the app re-locked) may reappear.
+    @Volatile
+    private var sessionIsErasedVault = false
+
     var securityStatus = InitialStatus.NO
 
     /**
@@ -89,8 +95,15 @@ class SecurityManager @Inject constructor(
     private fun initializeSecurity(): InitialStatus {
         if (vaultStore.isCorrupt()) return InitialStatus.LOSS_CRYPTO
         if (!isOnboardingShown()) return uncommittedVaultStatus()
+        // Vaults from before the wipe PIN get their decoy wipe slot; no PIN needed, nothing shown.
+        authenticationManager.ensureWipeSlot()
+        // A wipe-PIN erase the process died in is finished before anything else looks at the vault.
+        completePendingWipe()
         if (!seedPhraseManager.verificationKeyData()) return InitialStatus.LOSS_CRYPTO
-        if (!secureDatabaseManager.hasEncryptedDatabase()) return InitialStatus.LOSS_DATABASE
+        // An erase that has not created the empty database yet does so at the next PIN unlock.
+        if (!secureDatabaseManager.hasEncryptedDatabase() && authenticationManager.pendingWipe() == null) {
+            return InitialStatus.LOSS_DATABASE
+        }
 
         // A lost PIN slot is recoverable only when the user explicitly created a recovery slot.
         // The lock screen can unwrap the DEK with that seed; once unlocked, Settings can create
@@ -148,7 +161,11 @@ class SecurityManager @Inject constructor(
      */
     fun canResetPinWithoutCurrent(): Boolean = sessionUnlockedWithRecovery && sessionDek != null
 
-    /** One PIN attempt; [pin] is wiped. */
+    /**
+     * One PIN attempt from the lock screen; [pin] is wiped. The wipe PIN reports
+     * [VaultUnlockResult.SUCCESS] like the PIN, with the new, empty vault open (see
+     * [openErasedVault]).
+     */
     fun unlockWithPin(pin: CharArray): VaultUnlockResult {
         val attempt = try {
             authenticationManager.unlockWithPin(pin)
@@ -158,6 +175,12 @@ class SecurityManager @Inject constructor(
         return when (attempt) {
             is PinUnlock.Success -> try {
                 if (unlockWithRawKey(attempt.dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+            } finally {
+                SensitiveDataCleaner.clear(attempt.dek)
+            }
+
+            is PinUnlock.Erased -> try {
+                if (openErasedVault(attempt.dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
             } finally {
                 SensitiveDataCleaner.clear(attempt.dek)
             }
@@ -291,16 +314,74 @@ class SecurityManager @Inject constructor(
     /**
      * Opens SQLCipher with an already unwrapped v2 DEK.
      * Caller retains ownership of [dek] and should wipe it after this call.
+     *
+     * While a wipe-PIN erase still has to create the empty database ([WipeStage.DATABASE]),
+     * whatever is left of the old one is deleted first and the new one is created with [dek]:
+     * only the new PIN slot can still produce a DEK then.
      */
     fun unlockWithRawKey(dek: ByteArray, allowCreate: Boolean = false): Boolean {
         if (dek.size != DEK_LENGTH) return false
-        val ok = secureDatabaseManager.unlockDatabase(dek, allowCreate = allowCreate)
+        val replaceDatabase = authenticationManager.pendingWipe() == WipeStage.DATABASE
+        if (replaceDatabase) secureDatabaseManager.wipe()
+        val ok = secureDatabaseManager.unlockDatabase(dek, allowCreate = allowCreate || replaceDatabase)
         if (ok) {
+            if (replaceDatabase) {
+                authenticationManager.markWipeDatabaseCreated()
+                completePendingWipe()
+            }
             setSessionKey(dek)
             securityStatus = InitialStatus.MAIN
         }
         return ok
     }
+
+    /**
+     * Phase 3 of a wipe-PIN erase, on the lock screen: [unlockWithRawKey] replaces the old
+     * database with an empty one opened with [dek] and cleans up the rest. The erased slots are
+     * already gone (phases 1 and 2, in [AuthenticationManager.unlockWithPin]), so a kill from
+     * here on ends in an empty vault, which the next start or unlock finishes.
+     */
+    private fun openErasedVault(dek: ByteArray): Boolean {
+        val opened = unlockWithRawKey(dek)
+        if (opened) sessionIsErasedVault = true
+        return opened
+    }
+
+    /**
+     * Finishes a wipe-PIN erase (see [WipeStage]); does nothing when none is pending. Safe to
+     * repeat: every step is a deletion. Runs at startup and once the empty database is open.
+     * Theme, sorting and auto-lock settings are kept, as on any vault.
+     */
+    fun completePendingWipe() {
+        val stage = authenticationManager.pendingWipe() ?: return
+        // Before the empty database exists, whatever is left of the old one goes (never an open one).
+        if (stage == WipeStage.DATABASE && !secureDatabaseManager.isDatabaseUnlocked()) {
+            secureDatabaseManager.wipe()
+        }
+        authenticationManager.deleteRetiredPinKey()
+        // Its slot went with the erase; this deletes the Keystore key behind it.
+        biometricManager.disable()
+        appFlags.edit().remove(BackupManager.LAST_EXPORT_KEY).commit()
+        if (stage == WipeStage.CLEANUP) authenticationManager.clearPendingWipe()
+    }
+
+    /** Whether the open session is the empty vault a wipe-PIN unlock just made. */
+    fun isErasedVaultSession(): Boolean = sessionIsErasedVault && sessionDek != null
+
+    // --- wipe PIN -----------------------------------------------------------------------
+
+    /**
+     * Sets (or replaces) the wipe PIN; only in an unlocked session, after the caller checked the
+     * PIN. [pin] is wiped.
+     */
+    fun configureWipePin(pin: CharArray): WipePinChange = try {
+        if (sessionDek == null) WipePinChange.FAILED else authenticationManager.configureWipePin(pin)
+    } finally {
+        SensitiveDataCleaner.clear(pin)
+    }
+
+    /** Turns the wipe PIN off; only in an unlocked session, after the caller checked the PIN. */
+    fun removeWipePin(): Boolean = sessionDek != null && authenticationManager.removeWipePin()
 
     /**
      * Completes first-run setup only after a PIN slot exists and the bootstrap DEK opens SQLCipher.
@@ -397,6 +478,7 @@ class SecurityManager @Inject constructor(
         sessionDek?.let(SensitiveDataCleaner::clear)
         sessionDek = null
         sessionUnlockedWithRecovery = false
+        sessionIsErasedVault = false
     }
 
     fun wipeAndReset() {
@@ -415,7 +497,19 @@ class SecurityManager @Inject constructor(
         authType = authenticationManager.getAuthType(),
         isBiometricEnabled = isBiometricEnabled(),
         isUserCreatedSeedKey = seedPhraseManager.hasRecoverySeed(),
+        hasPinSlot = authenticationManager.hasPinSlot(),
+        wipePinTurnedOff = authenticationManager.wipePinTurnedOff(),
     )
 }
 
-data class AuthSettings(val authType: AuthType, val isBiometricEnabled: Boolean, val isUserCreatedSeedKey: Boolean)
+/**
+ * The vault's security state as Settings shows it. [wipePinTurnedOff]: the PIN key was reset,
+ * so any wipe PIN stopped working (whether one was set is never known without it).
+ */
+data class AuthSettings(
+    val authType: AuthType,
+    val isBiometricEnabled: Boolean,
+    val isUserCreatedSeedKey: Boolean,
+    val hasPinSlot: Boolean = authType == AuthType.PIN,
+    val wipePinTurnedOff: Boolean = false,
+)

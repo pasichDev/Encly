@@ -12,15 +12,19 @@ import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
 import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.R
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
+import com.pasich.encly.presentation.screen.settings.WipePinScreen
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.testutil.anyCharArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
 class SecurityScreensTest : ComposeScreenTest() {
@@ -203,5 +207,97 @@ class SecurityScreensTest : ComposeScreenTest() {
         rule.onNodeWithText(str(R.string.pin_create_title)).assertIsDisplayed()
         rule.onNodeWithText(str(R.string.pin_reset_subtitle)).assertIsDisplayed()
         assertEquals(0, countText(str(R.string.pin_change_bar_title)))
+    }
+
+    // --- wipe PIN -------------------------------------------------------------------------
+
+    private fun showWipePin(pinIsRight: Boolean = true) {
+        `when`(app.security.verifyPin(anyCharArray())).thenReturn(pinIsRight)
+        setNavScreen(
+            viewModels(app.securitySettings()),
+            route = NavRoutes.WipePinRoute.name,
+            start = NavRoutes.SecuritySettingsRoute.name,
+        ) { nav -> WipePinScreen(nav) }
+        navigateTo(NavRoutes.WipePinRoute.name)
+    }
+
+    @Test
+    fun theWipePinRowOpensTheWipePinPage() {
+        showSecurity(recoveryPhrase = true)
+
+        scrollToText(str(R.string.wipe_pin_row_desc))
+        rule.onNodeWithText(str(R.string.wipe_pin_row_desc)).performClick()
+
+        waitFor { currentRoute() == NavRoutes.WipePinRoute.name }
+    }
+
+    @Test
+    fun theWipePinPageAsksForThePinFirst() {
+        showWipePin(pinIsRight = false)
+
+        rule.onNodeWithText(str(R.string.wipe_pin_current_subtitle)).assertIsDisplayed()
+        typePin("000000")
+
+        waitForText(str(R.string.pin_current_wrong))
+        assertEquals(0, countText(str(R.string.wipe_pin_set)))
+    }
+
+    @Test
+    fun aWipePinIsConfirmedAndSaved() {
+        val saved = mutableListOf<String>()
+        val passed = mutableListOf<CharArray>()
+        showWipePin()
+        `when`(app.security.configureWipePin(anyCharArray())).thenAnswer {
+            val pin = it.getArgument<CharArray>(0)
+            passed += pin
+            saved += String(pin)
+            pin.fill('\u0000')
+            WipePinChange.SET
+        }
+
+        typePin("123456")
+        waitForText(str(R.string.wipe_pin_intro))
+        rule.onNodeWithText(str(R.string.wipe_pin_backups)).assertIsDisplayed()
+        scrollToText(str(R.string.wipe_pin_set))
+        rule.onNodeWithText(str(R.string.wipe_pin_set)).performClick()
+        waitForText(str(R.string.wipe_pin_new_title))
+        typePin("864200")
+        waitForText(str(R.string.wipe_pin_confirm_title))
+        typePin("864200")
+
+        waitForText(str(R.string.wipe_pin_saved))
+        assertEquals(listOf("864200"), saved)
+        assertTrue(passed.single().all { it == '\u0000' })
+    }
+
+    @Test
+    fun aWipePinEqualToThePinIsRefused() {
+        showWipePin()
+        `when`(app.security.configureWipePin(anyCharArray())).thenReturn(WipePinChange.SAME_AS_PIN)
+
+        typePin("123456")
+        waitForText(str(R.string.wipe_pin_intro))
+        scrollToText(str(R.string.wipe_pin_set))
+        rule.onNodeWithText(str(R.string.wipe_pin_set)).performClick()
+        typePin("123456")
+        waitForText(str(R.string.wipe_pin_confirm_title))
+        typePin("123456")
+
+        waitForText(str(R.string.wipe_pin_same_as_pin))
+        rule.onNodeWithText(str(R.string.wipe_pin_new_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun theWipePinCanBeTurnedOff() {
+        showWipePin()
+        `when`(app.security.removeWipePin()).thenReturn(true)
+
+        typePin("123456")
+        waitForText(str(R.string.wipe_pin_intro))
+        scrollToText(str(R.string.wipe_pin_remove))
+        rule.onNodeWithText(str(R.string.wipe_pin_remove)).performClick()
+
+        waitForText(str(R.string.wipe_pin_removed))
+        verify(app.security, never()).configureWipePin(anyCharArray())
     }
 }

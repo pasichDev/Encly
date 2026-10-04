@@ -100,6 +100,7 @@ fun SecuritySettingsScreen(
                     vaultBusy = vaultState.busy,
                     actions = SecurityActions(
                         onChangePin = { navController.navigate(NavRoutes.PinCodeConfig.name) },
+                        onWipePin = { navController.navigate(NavRoutes.WipePinRoute.name) },
                         onBiometric = { enabled ->
                             if (activity != null) securityViewModel.toggleBiometric(activity, enabled)
                         },
@@ -120,6 +121,7 @@ fun SecuritySettingsScreen(
 /** What the security page can start. */
 private class SecurityActions(
     val onChangePin: () -> Unit,
+    val onWipePin: () -> Unit,
     val onBiometric: (Boolean) -> Unit,
     val onVaultAction: (BackupAction) -> Unit,
     val onStrictKeyboard: (Boolean) -> Unit,
@@ -169,6 +171,10 @@ private fun SecurityContent(
             if (securityState.authType != AuthType.NONE) {
                 EnclyGroupDivider()
                 BiometricSetting(securityState, actions.onBiometric)
+            }
+            if (securityState.hasPinSlot) {
+                EnclyGroupDivider()
+                WipePinRow(turnedOff = securityState.wipePinTurnedOff, onClick = actions.onWipePin)
             }
             EnclyGroupDivider()
             AutoLockRow(current = options.autoLock, onSelect = actions.onAutoLock)
@@ -246,6 +252,21 @@ private fun BiometricSetting(
         checked = securityState.biometricEnable,
         enabled = securityState.isBiometricAvailable,
         onCheckedChange = onToggle,
+        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+    )
+}
+
+/**
+ * "Wipe PIN": always the same row, set or not (only the wipe PIN itself could tell). After a PIN
+ * key reset it says that any wipe PIN was turned off.
+ */
+@Composable
+private fun WipePinRow(turnedOff: Boolean, onClick: () -> Unit) {
+    EnclyNavigationRow(
+        title = stringResource(R.string.wipe_pin_title),
+        supporting = stringResource(if (turnedOff) R.string.wipe_pin_row_turned_off else R.string.wipe_pin_row_desc),
+        icon = EnclyIcons.Trash,
+        onClick = onClick,
         modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
     )
 }

@@ -3,6 +3,7 @@ package com.pasich.encly.testutil
 import com.pasich.encly.core.security.LockoutClock
 import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinHardwareFactor
+import com.pasich.encly.core.security.PinKeySlot
 import com.pasich.encly.core.security.VaultStore
 import java.io.File
 import java.nio.file.Files
@@ -11,32 +12,38 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * A [PinHardwareFactor] with a software HMAC key standing in for the Keystore one. [lost] and
- * [failing] simulate an invalidated key and a transient Keystore error; [calls] counts MACs,
- * i.e. PIN guesses that reached the "hardware".
+ * A [PinHardwareFactor] with software HMAC keys standing in for the Keystore ones, one per
+ * [PinKeySlot]. [lost] and [failing] simulate an invalidated key and a transient Keystore error
+ * (for every slot); [failingReset] a key that cannot be generated. [calls] counts MACs, i.e.
+ * PIN guesses that reached the "hardware".
  */
 internal class FakePinFactor : PinHardwareFactor {
-    private var key: ByteArray? = null
+    private val keys = mutableMapOf<PinKeySlot, ByteArray>()
     var lost = false
     var failing = false
+    var failingReset = false
     var calls = 0
         private set
     var resets = 0
         private set
 
-    override fun ensureKey() {
-        if (key == null) reset()
+    fun hasKey(slot: PinKeySlot): Boolean = slot in keys
+
+    override fun ensureKey(slot: PinKeySlot) {
+        if (slot !in keys) reset(slot)
     }
 
-    override fun reset() {
-        key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+    override fun reset(slot: PinKeySlot) {
+        keys.remove(slot)
+        if (failingReset) throw PinFactorException(lost = false)
+        keys[slot] = ByteArray(32).also { SecureRandom().nextBytes(it) }
         lost = false
         resets++
     }
 
-    override fun mac(data: ByteArray): ByteArray {
+    override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray {
         if (failing) throw PinFactorException(lost = false)
-        val current = key
+        val current = keys[slot]
         if (lost || current == null) throw PinFactorException(lost = true)
         calls++
         return Mac.getInstance("HmacSHA256").run {
@@ -45,8 +52,8 @@ internal class FakePinFactor : PinHardwareFactor {
         }
     }
 
-    override fun delete() {
-        key = null
+    override fun delete(slot: PinKeySlot) {
+        keys.remove(slot)
     }
 }
 

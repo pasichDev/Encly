@@ -68,4 +68,25 @@
     <string name="security_protection_slots_desc">PIN, recovery phrase and fingerprint each open their own encrypted slot. Fingerprint needs your finger every time.</string>
     <string name="security_danger_section">Danger zone</string>
     <string name="security_erase_hold">Hold for 5 seconds to erase</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">Wipe PIN</string>
+    <string name="wipe_pin_row_desc">A second PIN that erases your notes when typed on the lock screen</string>
+    <string name="wipe_pin_row_turned_off">Turned off when your PIN key was reset. Set it again if you used one.</string>
+    <string name="wipe_pin_intro">If someone makes you open Encly, type the wipe PIN instead of your PIN. Encly erases your notes, tasks and tags without any sign and opens as an empty vault. It works only on the lock screen.</string>
+    <string name="wipe_pin_backups">Backup files you already exported are not touched. They still open with your recovery phrase and are the only way back.</string>
+    <string name="wipe_pin_biometric_warning">Biometric unlock stays on: someone can force your finger onto the sensor. Turn it off if that is a risk for you.</string>
+    <string name="wipe_pin_biometric_off">Turn off biometric unlock</string>
+    <string name="wipe_pin_limits">It protects you when someone forces you to unlock, not against a forensic examination of the phone. During a lockout the wipe PIN can\'t be used either. Encly never shows whether a wipe PIN is set: a new one replaces the old one, and changing your PIN to the wipe PIN turns it off.</string>
+    <string name="wipe_pin_set">Set wipe PIN</string>
+    <string name="wipe_pin_remove">Turn off wipe PIN</string>
+    <string name="wipe_pin_current_subtitle">Confirm your PIN to set up the wipe PIN</string>
+    <string name="wipe_pin_new_title">Create a wipe PIN</string>
+    <string name="wipe_pin_new_subtitle">6 digits, different from your PIN</string>
+    <string name="wipe_pin_confirm_title">Confirm the wipe PIN</string>
+    <string name="wipe_pin_confirm_subtitle">Enter the wipe PIN again</string>
+    <string name="wipe_pin_same_as_pin">The wipe PIN must be different from your PIN</string>
+    <string name="wipe_pin_failed">Couldn\'t save the wipe PIN. Please try again.</string>
+    <string name="wipe_pin_saved">Wipe PIN set</string>
+    <string name="wipe_pin_removed">Wipe PIN turned off</string>
+    <string name="wipe_pin_turned_off">Your PIN key was reset, so any wipe PIN you had was turned off. Set it again if you want one.</string>
 </resources>

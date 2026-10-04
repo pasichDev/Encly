@@ -56,7 +56,8 @@ class AuthenticationManagerTest {
         // A copied slot on another device (another hardware key) cannot be opened even with
         // the right PIN: the attacker has no way to compute the hardware half of the KEK.
         assertTrue(manager.configurePin(pin("123456"), ByteArray(32) { 7 }))
-        val otherDevice = AuthenticationManager(VaultStore(file), FakePinFactor().apply { reset() }, FakeLockoutClock())
+        val otherDevice =
+            AuthenticationManager(VaultStore(file), FakePinFactor().apply { reset(PinKeySlot.A) }, FakeLockoutClock())
 
         assertEquals(PinUnlock.WrongPin, otherDevice.unlockWithPin(pin("123456")))
     }
@@ -134,13 +135,17 @@ class AuthenticationManagerTest {
     }
 
     @Test
-    fun eachPinSlotUsesAFreshSaltAndIv() {
+    fun aNewPinSlotKeepsTheSaltButGetsAFreshIv() {
+        // The salt is kept so that a wipe PIN set before keeps opening its slot.
         val dek = ByteArray(32) { 1 }
         assertTrue(manager.configurePin(pin("123456"), dek))
         val first = store.getBytes("pin.slot")!!
         assertTrue(manager.configurePin(pin("123456"), dek))
+        val second = store.getBytes("pin.slot")!!
 
-        assertNotEquals(first.toList(), store.getBytes("pin.slot")!!.toList())
+        assertEquals(first.copyOfRange(1, 17).toList(), second.copyOfRange(1, 17).toList())
+        assertNotEquals(first.copyOfRange(17, 29).toList(), second.copyOfRange(17, 29).toList())
+        assertNotEquals(first.toList(), second.toList())
     }
 
     @Test
