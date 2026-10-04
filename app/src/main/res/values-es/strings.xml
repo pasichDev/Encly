@@ -558,4 +558,10 @@
     <string name="keyboard_hide">Ocultar teclado</string>
     <string name="security_erase_confirm_title">¿Borrar todos los datos?</string>
     <string name="security_erase_confirm">Borrar</string>
+    <string name="subtasks_title">Subtareas</string>
+    <string name="subtask_placeholder">Subtarea</string>
+    <string name="subtask_add">Añadir subtarea</string>
+    <string name="subtask_delete">Eliminar subtarea</string>
+    <string name="subtasks_all_done">Todas las subtareas están hechas</string>
+    <string name="subtasks_complete_task">Completar tarea</string>
 </resources>

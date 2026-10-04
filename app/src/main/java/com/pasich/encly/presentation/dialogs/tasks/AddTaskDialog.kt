@@ -39,6 +39,7 @@ import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.SectionOverline
+import com.pasich.encly.presentation.viewmodel.SubtaskDraft
 import com.pasich.encly.presentation.viewmodel.TaskDraft
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
@@ -47,11 +48,13 @@ private const val TASK_TITLE_MAX_LENGTH = 100
 private const val TASK_DESCRIPTION_MAX_LENGTH = 150
 private const val INITIAL_FOCUS_DELAY_MS = 300L
 
+/** [subtasks] is the checklist to save, null while an edited task's one has not loaded. */
 private data class TaskEditorState(
     val title: String,
     val description: String,
     val priority: Int,
     val editTaskId: Long?,
+    val subtasks: List<SubtaskDraft>?,
 ) {
     val isEditMode: Boolean get() = editTaskId != null
 }
@@ -65,13 +68,18 @@ private data class TaskEditorActions(
     val onDelete: (() -> Unit)? = null,
 )
 
+/** Saves the sheet: title, description, priority and the checklist (null: leave it as stored). */
+private fun interface TaskSubmit {
+    fun submit(title: String, description: String?, priority: Int, subtasks: List<SubtaskDraft>?)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongParameterList") // Compose sheet API: independent state + callbacks from TasksScreen.
 @Composable
 fun AddTaskDialog(
     onDismiss: () -> Unit,
     sheetState: SheetState,
-    onAddTask: (title: String, description: String?, priority: Int) -> Unit,
+    onAddTask: (title: String, description: String?, priority: Int, subtasks: List<SubtaskDraft>) -> Unit,
     editTask: Task? = null,
     onEditTask: (
         (
@@ -79,14 +87,17 @@ fun AddTaskDialog(
             title: String,
             description: String?,
             priority: Int,
+            subtasks: List<SubtaskDraft>?,
         ) -> Unit
     )? = null,
     onBackgroundSave: (TaskDraft) -> Unit = {},
     onDeleteTask: ((Task) -> Unit)? = null,
+    editSubtasks: List<SubtaskDraft>? = emptyList(),
 ) {
     var title by remember { mutableStateOf(editTask?.title.orEmpty()) }
     var description by remember { mutableStateOf(editTask?.description.orEmpty()) }
     var selectedPriority by remember { mutableIntStateOf(editTask?.priority ?: 0) }
+    val checklist = rememberSubtaskListState(editSubtasks)
     val titleFocusRequester = remember { FocusRequester() }
 
     val state = TaskEditorState(
@@ -94,19 +105,28 @@ fun AddTaskDialog(
         description = description,
         priority = selectedPriority,
         editTaskId = editTask?.id,
+        subtasks = checklist.toSave(),
     )
+    val submit = TaskSubmit { taskTitle, taskDescription, priority, checklist ->
+        val taskId = editTask?.id
+        if (taskId != null && onEditTask != null) {
+            onEditTask(taskId, taskTitle, taskDescription, priority, checklist)
+        } else {
+            onAddTask(taskTitle, taskDescription, priority, checklist.orEmpty())
+        }
+    }
     val actions = TaskEditorActions(
         onTitleChange = { title = it.take(TASK_TITLE_MAX_LENGTH) },
         onDescriptionChange = { description = it.take(TASK_DESCRIPTION_MAX_LENGTH) },
         onPrioritySelect = { selectedPriority = it },
-        onSubmit = { submitTask(state, onAddTask, onEditTask) },
+        onSubmit = { submitTask(state, submit) },
         onDelete = editTask?.let { task -> onDeleteTask?.let { delete -> { delete(task) } } },
     )
 
     // Backgrounding re-locks the vault and drops this sheet; flush the draft first, like
     // EditNote does. ON_PAUSE fires well before ProcessLifecycleOwner's delayed ON_STOP.
     val currentDraft by rememberUpdatedState(
-        TaskDraft(title, description, selectedPriority),
+        TaskDraft(title, description, selectedPriority, state.subtasks),
     )
     val currentOnBackgroundSave by rememberUpdatedState(onBackgroundSave)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -119,7 +139,7 @@ fun AddTaskDialog(
     }
 
     EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        TaskEditorContent(state, titleFocusRequester, actions)
+        TaskEditorContent(state, titleFocusRequester, actions, checklist)
     }
 
     LaunchedEffect(Unit) {
@@ -128,19 +148,9 @@ fun AddTaskDialog(
     }
 }
 
-private fun submitTask(
-    state: TaskEditorState,
-    onAddTask: (String, String?, Int) -> Unit,
-    onEditTask: ((Long, String, String?, Int) -> Unit)?,
-) {
+private fun submitTask(state: TaskEditorState, submit: TaskSubmit) {
     if (state.title.isBlank()) return
-    val description = state.description.ifBlank { null }
-    val taskId = state.editTaskId
-    if (taskId != null && onEditTask != null) {
-        onEditTask(taskId, state.title, description, state.priority)
-    } else {
-        onAddTask(state.title, description, state.priority)
-    }
+    submit.submit(state.title, state.description.ifBlank { null }, state.priority, state.subtasks)
 }
 
 @Composable
@@ -148,6 +158,7 @@ private fun TaskEditorContent(
     state: TaskEditorState,
     titleFocusRequester: FocusRequester,
     actions: TaskEditorActions,
+    checklist: SubtaskListState,
 ) {
     val descriptionFocus = remember { FocusRequester() }
     Column(
@@ -176,6 +187,7 @@ private fun TaskEditorContent(
             fieldModifier = Modifier.focusRequester(descriptionFocus),
         )
         PriorityChips(selected = state.priority, onSelect = actions.onPrioritySelect)
+        SubtaskEditor(checklist)
         TaskEditorFooter(state, actions)
     }
 }

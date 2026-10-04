@@ -563,4 +563,10 @@
     <string name="keyboard_hide">Сховати клавіатуру</string>
     <string name="security_erase_confirm_title">Стерти всі дані?</string>
     <string name="security_erase_confirm">Стерти</string>
+    <string name="subtasks_title">Підзавдання</string>
+    <string name="subtask_placeholder">Підзавдання</string>
+    <string name="subtask_add">Додати підзавдання</string>
+    <string name="subtask_delete">Видалити підзавдання</string>
+    <string name="subtasks_all_done">Усі підзавдання виконано</string>
+    <string name="subtasks_complete_task">Завершити завдання</string>
 </resources>

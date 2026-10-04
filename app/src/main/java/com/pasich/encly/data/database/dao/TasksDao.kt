@@ -5,7 +5,10 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
+import com.pasich.encly.data.model.Subtask
+import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import kotlinx.coroutines.flow.Flow
 
@@ -47,4 +50,44 @@ interface TasksDao {
 
     @Query("DELETE FROM tasks WHERE id = :id")
     suspend fun deleteTaskById(id: Long): Int
+
+    @Query("SELECT * FROM subtasks WHERE taskId = :taskId ORDER BY position, id")
+    suspend fun getSubtasks(taskId: Long): List<Subtask>
+
+    /** Done and total sub-tasks per task; tasks without sub-tasks are absent. */
+    @Query(
+        "SELECT taskId, SUM(isCompleted) AS done, COUNT(*) AS total FROM subtasks GROUP BY taskId",
+    )
+    fun getSubtaskProgress(): Flow<List<SubtaskProgress>>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertSubtask(subtask: Subtask): Long
+
+    @Update
+    suspend fun updateSubtask(subtask: Subtask): Int
+
+    @Query("DELETE FROM subtasks WHERE taskId = :taskId AND id NOT IN (:keepIds)")
+    suspend fun deleteSubtasksExcept(taskId: Long, keepIds: List<Long>): Int
+
+    /**
+     * Makes [subtasks] the task's whole checklist, in this order: rows that are no longer in
+     * the list are deleted, the others are updated in place (keeping their id and uid), and
+     * new ones (id 0) are inserted.
+     */
+    @Transaction
+    suspend fun replaceSubtasks(taskId: Long, subtasks: List<Subtask>) {
+        deleteSubtasksExcept(taskId, subtasks.map { it.id }.filter { it != 0L })
+        subtasks.forEachIndexed { index, subtask ->
+            val row = subtask.copy(taskId = taskId, position = index)
+            // A row id that is gone (deleted meanwhile) is inserted again rather than lost.
+            if (row.id == 0L || updateSubtask(row) == 0) insertSubtask(row)
+        }
+    }
+
+    /** Puts a deleted task back together with its sub-tasks (undo). */
+    @Transaction
+    suspend fun restoreTask(task: Task, subtasks: List<Subtask>) {
+        insertTask(task)
+        subtasks.forEach { insertSubtask(it.copy(taskId = task.id)) }
+    }
 }

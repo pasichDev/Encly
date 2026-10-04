@@ -558,4 +558,10 @@
     <string name="keyboard_hide">Nascondi tastiera</string>
     <string name="security_erase_confirm_title">Cancellare tutti i dati?</string>
     <string name="security_erase_confirm">Cancella</string>
+    <string name="subtasks_title">Sottoattività</string>
+    <string name="subtask_placeholder">Sottoattività</string>
+    <string name="subtask_add">Aggiungi sottoattività</string>
+    <string name="subtask_delete">Elimina sottoattività</string>
+    <string name="subtasks_all_done">Tutte le sottoattività sono completate</string>
+    <string name="subtasks_complete_task">Completa l\'attività</string>
 </resources>

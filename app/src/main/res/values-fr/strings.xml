@@ -558,4 +558,10 @@
     <string name="keyboard_hide">Masquer le clavier</string>
     <string name="security_erase_confirm_title">Effacer toutes les données ?</string>
     <string name="security_erase_confirm">Effacer</string>
+    <string name="subtasks_title">Sous-tâches</string>
+    <string name="subtask_placeholder">Sous-tâche</string>
+    <string name="subtask_add">Ajouter une sous-tâche</string>
+    <string name="subtask_delete">Supprimer la sous-tâche</string>
+    <string name="subtasks_all_done">Toutes les sous-tâches sont terminées</string>
+    <string name="subtasks_complete_task">Terminer la tâche</string>
 </resources>

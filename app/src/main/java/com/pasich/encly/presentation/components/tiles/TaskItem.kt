@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
+import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.PriorityValues
 import com.pasich.encly.presentation.designsystem.EnclyTaskRow
@@ -22,6 +23,7 @@ import java.util.Date
 
 private const val TASK_REMOVAL_ANIMATION_MS = 400
 private const val TASK_TRANSLATION_X = 100f
+private const val META_SEPARATOR = " · "
 
 private data class TaskCardState(val enabled: Boolean, val isRemoving: Boolean, val animationProgress: Float)
 
@@ -34,6 +36,8 @@ fun TaskItem(
     modifier: Modifier = Modifier,
     onTaskClick: ((Task) -> Unit)? = null,
     enabled: Boolean = true,
+    /** Shown as `2/5` when the task has sub-tasks. */
+    subtasks: SubtaskProgress? = null,
 ) {
     var isRemoving by remember(task.id) { mutableStateOf(false) }
     var shouldComplete by remember(task.id) { mutableStateOf(false) }
@@ -61,7 +65,7 @@ fun TaskItem(
         onComplete = { shouldComplete = true },
         onUndo = { onTaskToggle(task.id, false) },
     )
-    TaskCard(task, state, actions, modifier)
+    TaskCard(task, subtasks, state, actions, modifier)
 }
 
 @Composable
@@ -88,9 +92,21 @@ private fun CompleteTaskAfterAnimation(
 }
 
 @Composable
-private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions, modifier: Modifier = Modifier) {
+private fun TaskCard(
+    task: Task,
+    subtasks: SubtaskProgress?,
+    state: TaskCardState,
+    actions: TaskCardActions,
+    modifier: Modifier = Modifier,
+) {
     val dateFormat = rememberDateTimeFormat()
     val priority = PriorityValues.getById(task.priority)
+    val completedAt = task.completedDate?.takeIf { task.isCompleted }?.let {
+        stringResource(R.string.task_completed_at, dateFormat.format(Date(it)))
+    }
+    val progress = subtasks?.takeIf { it.total > 0 }?.let {
+        stringResource(R.string.subtask_progress, it.done, it.total)
+    }
     EnclyTaskRow(
         title = task.title,
         checked = task.isCompleted,
@@ -101,9 +117,7 @@ private fun TaskCard(task: Task, state: TaskCardState, actions: TaskCardActions,
             }
         },
         description = task.description,
-        meta = task.completedDate?.takeIf { task.isCompleted }?.let {
-            stringResource(R.string.task_completed_at, dateFormat.format(Date(it)))
-        },
+        meta = listOfNotNull(progress, completedAt).joinToString(META_SEPARATOR).ifEmpty { null },
         priority = stringResource(priority.label).takeIf { !task.isCompleted },
         priorityEmphasis = priority.emphasis,
         large = true,

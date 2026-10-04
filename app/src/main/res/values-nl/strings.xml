@@ -553,4 +553,10 @@
     <string name="keyboard_hide">Toetsenbord verbergen</string>
     <string name="security_erase_confirm_title">Alle gegevens wissen?</string>
     <string name="security_erase_confirm">Wissen</string>
+    <string name="subtasks_title">Subtaken</string>
+    <string name="subtask_placeholder">Subtaak</string>
+    <string name="subtask_add">Subtaak toevoegen</string>
+    <string name="subtask_delete">Subtaak verwijderen</string>
+    <string name="subtasks_all_done">Alle subtaken zijn klaar</string>
+    <string name="subtasks_complete_task">Taak voltooien</string>
 </resources>

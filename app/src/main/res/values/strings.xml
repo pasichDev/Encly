@@ -570,4 +570,11 @@
     <string name="keyboard_hide">Hide keyboard</string>
     <string name="security_erase_confirm_title">Erase all data?</string>
     <string name="security_erase_confirm">Erase</string>
+    <string name="subtasks_title">Sub-tasks</string>
+    <string name="subtask_placeholder">Sub-task</string>
+    <string name="subtask_add">Add sub-task</string>
+    <string name="subtask_delete">Delete sub-task</string>
+    <string name="subtasks_all_done">All sub-tasks are done</string>
+    <string name="subtasks_complete_task">Complete task</string>
+    <string name="subtask_progress" translatable="false">%1$d/%2$d</string>
 </resources>

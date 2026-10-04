@@ -553,4 +553,10 @@
     <string name="keyboard_hide">Tastatur ausblenden</string>
     <string name="security_erase_confirm_title">Alle Daten löschen?</string>
     <string name="security_erase_confirm">Löschen</string>
+    <string name="subtasks_title">Unteraufgaben</string>
+    <string name="subtask_placeholder">Unteraufgabe</string>
+    <string name="subtask_add">Unteraufgabe hinzufügen</string>
+    <string name="subtask_delete">Unteraufgabe löschen</string>
+    <string name="subtasks_all_done">Alle Unteraufgaben sind erledigt</string>
+    <string name="subtasks_complete_task">Aufgabe erledigen</string>
 </resources>

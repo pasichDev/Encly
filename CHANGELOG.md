@@ -11,6 +11,25 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+
+- Sub-tasks: a task can have a checklist of sub-tasks (one level). Add, edit, tick, reorder
+  (drag or the accessibility actions) and delete them in the task sheet; the task tile shows the
+  progress, e.g. `2/5`. Completing a task never ticks its sub-tasks, and ticking the last open
+  sub-task does not complete the task on its own: a snackbar offers "Complete task". Deleting a
+  task deletes its sub-tasks, and Undo brings them back.
+- Encrypted backups carry sub-tasks (backup schema 3). Older backups (schema 1 and 2) still
+  restore, with no sub-tasks. Merge import adds the sub-tasks a task already on the device is
+  missing.
+
+### ⚠️ Compatibility
+
+- The database moves to version 4 (new `subtasks` table, migrated in place). Installing an older
+  Encly over this version is not supported: Room refuses to open a newer database, so a
+  downgrade fails to open the vault. Export a backup first if you might go back.
+- A backup made with this version is schema 3. Older Encly versions refuse it as "made by a
+  newer version, update the app" instead of restoring it without sub-tasks.
+
 ## [2.0.1] - 2026-09-25
 
 versionCode 20001.

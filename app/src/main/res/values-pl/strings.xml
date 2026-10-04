@@ -563,4 +563,10 @@
     <string name="keyboard_hide">Ukryj klawiaturę</string>
     <string name="security_erase_confirm_title">Wymazać wszystkie dane?</string>
     <string name="security_erase_confirm">Wymaż</string>
+    <string name="subtasks_title">Podzadania</string>
+    <string name="subtask_placeholder">Podzadanie</string>
+    <string name="subtask_add">Dodaj podzadanie</string>
+    <string name="subtask_delete">Usuń podzadanie</string>
+    <string name="subtasks_all_done">Wszystkie podzadania wykonane</string>
+    <string name="subtasks_complete_task">Wykonaj zadanie</string>
 </resources>

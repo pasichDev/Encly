@@ -1,5 +1,7 @@
 package com.pasich.encly.ui.screens
 
+import com.pasich.encly.data.model.Subtask
+import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.enums.NoteSortOption
@@ -12,6 +14,7 @@ import com.pasich.encly.domain.repository.TagsRepository
 import com.pasich.encly.domain.repository.TasksRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
@@ -124,6 +127,17 @@ internal class FakeTasksRepository(initial: List<Task> = emptyList()) : TasksRep
 
     override suspend fun deleteAllCompletedTasks(): Result<Unit> {
         tasks.update { list -> list.filterNot { it.isCompleted } }
+        return Result.success(Unit)
+    }
+
+    override fun getSubtaskProgress(): Flow<List<SubtaskProgress>> = flowOf(emptyList())
+
+    override suspend fun getSubtasks(taskId: Long): Result<List<Subtask>> = Result.success(emptyList())
+
+    override suspend fun saveSubtasks(taskId: Long, subtasks: List<Subtask>): Result<Unit> = Result.success(Unit)
+
+    override suspend fun restoreTask(task: Task, subtasks: List<Subtask>): Result<Unit> {
+        tasks.update { it + task }
         return Result.success(Unit)
     }
 }

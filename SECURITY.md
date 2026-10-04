@@ -159,8 +159,9 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   payload (schema version, unique uids, links that resolve, known priorities) — all **before
   touching the database**. It is then applied in one SQLite transaction: any failure rolls the
   whole import back.
-- Merge adds only records whose uid is not in the vault yet (local versions win); replace deletes
-  every note, tag and task first and needs an explicit confirmation.
+- Merge adds only records (sub-tasks included) whose uid is not in the vault yet (local versions
+  win); replace deletes every note, tag, task and sub-task first and needs an explicit
+  confirmation.
 - Wrong words and any modification of the header or ciphertext fail AES-GCM authentication and
   are reported as one error ("these words don't open this backup, or the file was modified"),
   with nothing written.

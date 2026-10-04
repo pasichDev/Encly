@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 
@@ -12,6 +13,7 @@ import com.pasich.encly.data.model.Task
  * Whole-vault reads and writes for encrypted export/import. Inserts ABORT on a uid clash so a
  * bad import fails (and its transaction rolls back) instead of silently replacing a row.
  */
+@Suppress("TooManyFunctions") // One read, insert and delete per vault table.
 @Dao
 interface BackupDao {
     @Query("SELECT * FROM notes ORDER BY id")
@@ -23,6 +25,9 @@ interface BackupDao {
     @Query("SELECT * FROM tasks ORDER BY id")
     suspend fun allTasks(): List<Task>
 
+    @Query("SELECT * FROM subtasks ORDER BY taskId, position, id")
+    suspend fun allSubtasks(): List<Subtask>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertNote(note: Note): Long
 
@@ -32,6 +37,9 @@ interface BackupDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTask(task: Task): Long
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertSubtask(subtask: Subtask): Long
+
     @Query("DELETE FROM notes")
     suspend fun deleteAllNotes()
 
@@ -40,4 +48,7 @@ interface BackupDao {
 
     @Query("DELETE FROM tasks")
     suspend fun deleteAllTasks()
+
+    @Query("DELETE FROM subtasks")
+    suspend fun deleteAllSubtasks()
 }

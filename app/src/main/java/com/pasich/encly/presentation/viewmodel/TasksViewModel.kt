@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.security.NeverLocked
 import com.pasich.encly.core.security.VaultLockEvents
+import com.pasich.encly.data.model.Subtask
+import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
@@ -55,8 +57,16 @@ const val HOME_WIDGET_TASKS = 2
 fun widgetTasks(tasks: List<Task>, limit: Int = HOME_WIDGET_TASKS): List<Task> =
     tasks.filterNot { it.isCompleted }.sortedByDescending { it.priority }.take(limit)
 
-/** Unsaved content of the task editor sheet. */
-data class TaskDraft(val title: String, val description: String, val priority: Int)
+/**
+ * Unsaved content of the task editor sheet. [subtasks] is null while the edited task's
+ * checklist has not loaded: the stored one is then left as it is.
+ */
+data class TaskDraft(
+    val title: String,
+    val description: String,
+    val priority: Int,
+    val subtasks: List<SubtaskDraft>? = null,
+)
 
 data class TasksUiState(
     val activeTasks: List<Task> = emptyList(),
@@ -70,6 +80,8 @@ data class TasksUiState(
     val selectedPriorityFilter: TaskFilter? = null,
     val selectedCompletedFilter: TaskFilter? = null,
     val filteredActiveTasks: List<Task> = emptyList(),
+    /** Sub-task progress by task id; a task without sub-tasks has no entry. */
+    val subtaskProgress: Map<Long, SubtaskProgress> = emptyMap(),
     val isLoading: Boolean = true,
 )
 
@@ -96,6 +108,22 @@ class TasksViewModel @Inject constructor(
     private val _editingTask = MutableStateFlow<Task?>(null)
     val editingTask: StateFlow<Task?> = _editingTask.asStateFlow()
 
+    /** The edited task's checklist: empty for a new task, null until an edited one has loaded. */
+    private val _editingSubtasks = MutableStateFlow<List<SubtaskDraft>?>(emptyList())
+    val editingSubtasks: StateFlow<List<SubtaskDraft>?> = _editingSubtasks.asStateFlow()
+
+    /**
+     * A task whose last open sub-task was just ticked, so the screen can offer to complete it
+     * with one tap. The task is never completed without that tap.
+     */
+    private val _completionOffers = MutableSharedFlow<Long>(extraBufferCapacity = 1)
+    val completionOffers: SharedFlow<Long> = _completionOffers.asSharedFlow()
+
+    /** Sub-tasks of deleted tasks by task id, for [restoreTask]; the delete cascades to them. */
+    private val deletedSubtasks = mutableMapOf<Long, List<Subtask>>()
+
+    private var subtasksJob: Job? = null
+
     /** Serializes background draft saves so two quick pauses cannot insert twice. */
     private val draftMutex = Mutex()
 
@@ -105,8 +133,11 @@ class TasksViewModel @Inject constructor(
         observeTasks()
         clearOnLock(lockEvents) {
             tasksJob?.cancel()
+            subtasksJob?.cancel()
             _uiState.value = TasksUiState()
             _editingTask.value = null
+            _editingSubtasks.value = emptyList()
+            deletedSubtasks.clear()
             _showAddTaskDialog.value = false
         }
     }
@@ -118,8 +149,10 @@ class TasksViewModel @Inject constructor(
                 tasksRepository.getAllCompletedTasks(),
                 tasksRepository.getActiveTasksCount(),
                 tasksRepository.getCompletedTasksCount(),
-            ) { activeTasks, completedTasks, activeCount, completedCount ->
+                tasksRepository.getSubtaskProgress(),
+            ) { activeTasks, completedTasks, activeCount, completedCount, progress ->
                 TaskFilterEngine.reduce(_uiState.value, activeTasks, completedTasks, activeCount, completedCount)
+                    .copy(subtaskProgress = progress.associateBy { it.taskId })
             }.collect { newState ->
                 _uiState.value = newState
             }
@@ -127,21 +160,38 @@ class TasksViewModel @Inject constructor(
     }
 
     fun showAddTaskDialog() {
+        subtasksJob?.cancel()
         _editingTask.value = null
+        _editingSubtasks.value = emptyList()
         _showAddTaskDialog.value = true
     }
 
     fun showEditTaskDialog(task: Task) {
+        subtasksJob?.cancel()
         _editingTask.value = task
+        // Unknown until loaded: a sheet saved before then leaves the stored checklist alone,
+        // and one that fails to load never overwrites it with an empty list.
+        _editingSubtasks.value = null
         _showAddTaskDialog.value = true
+        subtasksJob = viewModelScope.launch {
+            tasksRepository.getSubtasks(task.id).onSuccess { _editingSubtasks.value = SubtaskDrafts.fromSubtasks(it) }
+        }
     }
 
     fun hideAddTaskDialog() {
+        subtasksJob?.cancel()
         _showAddTaskDialog.value = false
         _editingTask.value = null
+        _editingSubtasks.value = emptyList()
     }
 
-    fun addTask(title: String, description: String?, priority: Int, categoryId: Long? = null) {
+    fun addTask(
+        title: String,
+        description: String?,
+        priority: Int,
+        subtasks: List<SubtaskDraft> = emptyList(),
+        categoryId: Long? = null,
+    ) {
         viewModelScope.launch {
             val task = Task.new(
                 title = title,
@@ -149,15 +199,31 @@ class TasksViewModel @Inject constructor(
                 priority = priority,
                 categoryId = categoryId,
             )
-            if (tasksRepository.insertTask(task).isSuccess) {
-                hideAddTaskDialog()
-            } else {
+            val id = tasksRepository.insertTask(task).getOrNull()
+            if (id == null) {
                 _operationFailures.emit(TaskOperationFailure.CREATE)
+                return@launch
             }
+            val rows = SubtaskDrafts.toSubtasks(id, subtasks)
+            if (rows.isNotEmpty() && tasksRepository.saveSubtasks(id, rows).isFailure) {
+                _operationFailures.emit(TaskOperationFailure.CREATE)
+                return@launch
+            }
+            hideAddTaskDialog()
+            if (SubtaskDrafts.offersCompletion(task.isCompleted, emptyList(), rows)) _completionOffers.emit(id)
         }
     }
 
-    fun editTask(taskId: Long, title: String, description: String?, priority: Int, categoryId: Long? = null) {
+    /** [subtasks] null leaves the stored checklist as it is. */
+    @Suppress("LongParameterList") // The editor's fields, each optional for the callers that lack it.
+    fun editTask(
+        taskId: Long,
+        title: String,
+        description: String?,
+        priority: Int,
+        subtasks: List<SubtaskDraft>? = null,
+        categoryId: Long? = null,
+    ) {
         viewModelScope.launch {
             val existingTask = uiState.value.activeTasks.find { it.id == taskId }
                 ?: uiState.value.completedTasks.find { it.id == taskId }
@@ -175,12 +241,27 @@ class TasksViewModel @Inject constructor(
                 categoryId = categoryId ?: existingTask.categoryId,
             )
 
-            if (tasksRepository.updateTask(updatedTask).isSuccess) {
-                hideAddTaskDialog()
-            } else {
+            if (tasksRepository.updateTask(updatedTask).isFailure) {
                 _operationFailures.emit(TaskOperationFailure.UPDATE)
+                return@launch
             }
+            if (subtasks != null && !saveEditedSubtasks(updatedTask, subtasks)) {
+                _operationFailures.emit(TaskOperationFailure.UPDATE)
+                return@launch
+            }
+            hideAddTaskDialog()
         }
+    }
+
+    /** Stores the edited checklist and, when that ticked the last open sub-task, offers to complete the task. */
+    private suspend fun saveEditedSubtasks(task: Task, drafts: List<SubtaskDraft>): Boolean {
+        val after = SubtaskDrafts.toSubtasks(task.id, drafts)
+        val before = tasksRepository.getSubtasks(task.id).getOrNull()
+        val saved = before != null && (before == after || tasksRepository.saveSubtasks(task.id, after).isSuccess)
+        if (saved && SubtaskDrafts.offersCompletion(task.isCompleted, before.orEmpty(), after)) {
+            _completionOffers.emit(task.id)
+        }
+        return saved
     }
 
     /**
@@ -199,6 +280,15 @@ class TasksViewModel @Inject constructor(
     }
 
     private suspend fun persistDraft(draft: TaskDraft) {
+        val taskId = persistDraftTask(draft) ?: return
+        val subtasks = draft.subtasks ?: return
+        if (tasksRepository.saveSubtasks(taskId, SubtaskDrafts.toSubtasks(taskId, subtasks)).isFailure) {
+            _operationFailures.emit(TaskOperationFailure.UPDATE)
+        }
+    }
+
+    /** Inserts or updates the draft's task; its id, or null when the write failed. */
+    private suspend fun persistDraftTask(draft: TaskDraft): Long? {
         val description = draft.description.ifBlank { null }
         val editing = _editingTask.value
         if (editing == null) {
@@ -207,22 +297,19 @@ class TasksViewModel @Inject constructor(
                 description = description,
                 priority = draft.priority,
             )
-            tasksRepository.insertTask(task)
+            return tasksRepository.insertTask(task)
                 .onSuccess { id -> _editingTask.value = task.copy(id = id) }
                 .onFailure { _operationFailures.emit(TaskOperationFailure.CREATE) }
-        } else {
-            val updated = editing.copy(
-                title = draft.title,
-                description = description,
-                priority = draft.priority,
-            )
-            if (updated == editing) return
-            if (tasksRepository.updateTask(updated).isSuccess) {
-                _editingTask.value = updated
-            } else {
-                _operationFailures.emit(TaskOperationFailure.UPDATE)
-            }
+                .getOrNull()
         }
+        val updated = editing.copy(
+            title = draft.title,
+            description = description,
+            priority = draft.priority,
+        )
+        val saved = updated == editing || tasksRepository.updateTask(updated).isSuccess
+        if (saved) _editingTask.value = updated else _operationFailures.emit(TaskOperationFailure.UPDATE)
+        return editing.id.takeIf { saved }
     }
 
     fun toggleTaskCompletion(taskId: Long, isCompleted: Boolean) {
@@ -235,7 +322,10 @@ class TasksViewModel @Inject constructor(
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
+            // Read before the delete cascades to them, so Undo can bring them back.
+            val subtasks = tasksRepository.getSubtasks(task.id).getOrDefault(emptyList())
             if (tasksRepository.deleteTaskById(task.id).isSuccess) {
+                deletedSubtasks[task.id] = subtasks
                 hideAddTaskDialog()
                 _deletedTasks.emit(task)
             } else {
@@ -244,10 +334,13 @@ class TasksViewModel @Inject constructor(
         }
     }
 
-    /** Undo for [deleteTask]: puts the same task (id, uid, dates) back. */
+    /** Undo for [deleteTask]: puts the same task (id, uid, dates) back, with its sub-tasks. */
     fun restoreTask(task: Task) {
         viewModelScope.launch {
-            if (tasksRepository.insertTask(task).isFailure) {
+            val subtasks = deletedSubtasks[task.id].orEmpty()
+            if (tasksRepository.restoreTask(task, subtasks).isSuccess) {
+                deletedSubtasks.remove(task.id)
+            } else {
                 _operationFailures.emit(TaskOperationFailure.CREATE)
             }
         }

@@ -100,9 +100,7 @@ fun TasksScreen(
     ) { padding ->
         LazyColumn(
             state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
             contentPadding = tasksListPadding(),
         ) {
@@ -124,6 +122,7 @@ fun TasksScreen(
                 onEditTask = viewModel::editTask,
                 onBackgroundSave = viewModel::saveDraftForBackground,
                 onDeleteTask = viewModel::deleteTask,
+                editSubtasks = viewModel.editingSubtasks.collectAsState().value,
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             )
         }
@@ -169,7 +168,10 @@ private fun tasksListPadding() = PaddingValues(
     bottom = EnclyTheme.spacing.fabHeight + EnclyTheme.spacing.l + EnclyTheme.spacing.m,
 )
 
-/** Failures, and "Task deleted" with Undo, as snackbars, until the calling effect ends. */
+/**
+ * Failures, "Task deleted" with Undo, and "All sub-tasks done" with Complete task, as
+ * snackbars, until the calling effect ends.
+ */
 private suspend fun showTaskMessages(
     viewModel: TasksViewModel,
     snackbarHostState: SnackbarHostState,
@@ -188,6 +190,16 @@ private suspend fun showTaskMessages(
                 duration = SnackbarDuration.Short,
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.restoreTask(task)
+        }
+    }
+    launch {
+        viewModel.completionOffers.collect { taskId ->
+            val result = snackbarHostState.showSnackbar(
+                message = context.getString(R.string.subtasks_all_done),
+                actionLabel = context.getString(R.string.subtasks_complete_task),
+                duration = SnackbarDuration.Long,
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.toggleTaskCompletion(taskId, true)
         }
     }
 }
@@ -246,16 +258,30 @@ private fun LazyListScope.tasksContent(
             )
         }
     }
-    items(open, key = { it.id }) { task ->
-        TaskItem(task = task, onTaskToggle = onToggle, onTaskClick = onOpen, modifier = Modifier.animateItem())
-    }
+    taskRows(open, state, onToggle, onOpen)
     if (done.isNotEmpty()) {
         item(key = "done") {
             DoneHeader(count = done.size, onClear = onClearCompleted)
         }
-        items(done, key = { it.id }) { task ->
-            TaskItem(task = task, onTaskToggle = onToggle, onTaskClick = onOpen, modifier = Modifier.animateItem())
-        }
+        taskRows(done, state, onToggle, onOpen)
+    }
+}
+
+/** One tile per task, with its sub-task progress when it has sub-tasks. */
+private fun LazyListScope.taskRows(
+    tasks: List<Task>,
+    state: TasksUiState,
+    onToggle: (Long, Boolean) -> Unit,
+    onOpen: (Task) -> Unit,
+) {
+    items(tasks, key = { it.id }) { task ->
+        TaskItem(
+            task = task,
+            onTaskToggle = onToggle,
+            onTaskClick = onOpen,
+            subtasks = state.subtaskProgress[task.id],
+            modifier = Modifier.animateItem(),
+        )
     }
 }
 

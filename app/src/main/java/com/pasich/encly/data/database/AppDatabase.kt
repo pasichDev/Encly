@@ -7,14 +7,15 @@ import com.pasich.encly.data.database.dao.NotesDao
 import com.pasich.encly.data.database.dao.TagsDao
 import com.pasich.encly.data.database.dao.TasksDao
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 
 /** Room schema version. Every bump needs a migration and an exported schema in app/schemas. */
-const val DB_VERSION = 3
+const val DB_VERSION = 4
 
 @Database(
-    entities = [Note::class, Tag::class, Task::class],
+    entities = [Note::class, Tag::class, Task::class, Subtask::class],
     version = DB_VERSION,
     exportSchema = true,
 )

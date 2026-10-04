@@ -10,6 +10,7 @@ import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.backup.assertError
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.model.ItemListBlock
@@ -76,6 +77,14 @@ class BackupImporterTest {
         insertTask(Task(title = "Done", isCompleted = true, createdDate = 1, completedDate = 2, uid = "k-done"))
     }
 
+    /** [seededVault] where "Call" has a checklist of three, one of them done. */
+    private suspend fun seededVaultWithSubtasks() = seededVault().apply {
+        val call = tasks.single { it.uid == "k-call" }.id
+        insertSubtask(Subtask(taskId = call, title = "Bread", position = 1, uid = "s-bread"))
+        insertSubtask(Subtask(taskId = call, title = "Milk", isCompleted = true, position = 0, uid = "s-milk"))
+        insertSubtask(Subtask(taskId = call, title = "Eggs", position = 2, uid = "s-eggs"))
+    }
+
     /** Export exactly as the app does: snapshot -> payload -> JSON -> sealed file. */
     private suspend fun export(store: InMemoryVaultDataStore): ByteArray {
         val plaintext = BackupPayloadCodec.encode(BackupMapper.toPayload(store.snapshot(), exportedAt = 42))
@@ -95,6 +104,70 @@ class BackupImporterTest {
         assertEquals(ImportSummary(notesAdded = 2, tagsAdded = 2, tasksAdded = 2, skipped = 0), summary)
         assertEquals(portable(source), portable(restored))
         assertEquals(allBlocks, restored.notes.single { it.uid == "n-plan" }.value)
+    }
+
+    @Test
+    fun subtasksSurviveExportAndReplaceImport() = runTest {
+        val source = seededVaultWithSubtasks()
+        val restored = InMemoryVaultDataStore().apply {
+            val local = insertTask(Task(title = "Local", uid = "k-local"))
+            insertSubtask(Subtask(taskId = local, title = "Gone after replace", uid = "s-local"))
+        }
+
+        val payload = open(export(source))
+        val summary = BackupImporter.import(payload, ImportMode.REPLACE, restored)
+
+        assertEquals(
+            listOf("s-milk", "s-bread", "s-eggs"),
+            payload.tasks.single {
+                it.uid == "k-call"
+            }.subtasks.map { it.uid },
+        )
+        assertEquals(
+            ImportSummary(notesAdded = 2, tagsAdded = 2, tasksAdded = 2, skipped = 0, subtasksAdded = 3),
+            summary,
+        )
+        assertEquals(portable(source), portable(restored))
+        assertEquals(setOf("s-milk", "s-bread", "s-eggs"), restored.subtasks.map { it.uid }.toSet())
+    }
+
+    @Test
+    fun mergeAddsTheMissingSubtasksOfATaskThatIsAlreadyHere() = runTest {
+        val payload = open(export(seededVaultWithSubtasks()))
+        val target = InMemoryVaultDataStore().apply {
+            val call = insertTask(Task(title = "Call (edited here)", uid = "k-call"))
+            insertSubtask(Subtask(taskId = call, title = "Mine", position = 0, uid = "s-mine"))
+            insertSubtask(Subtask(taskId = call, title = "Milk (edited here)", position = 1, uid = "s-milk"))
+        }
+
+        val summary = BackupImporter.import(payload, ImportMode.MERGE, target)
+
+        assertEquals(1, summary.tasksAdded)
+        assertEquals(2, summary.subtasksAdded)
+        val call = target.tasks.single { it.uid == "k-call" }
+        assertEquals("Call (edited here)", call.title)
+        // The local ones stay first and win; the missing ones follow in their backup order.
+        assertEquals(
+            listOf("Mine" to 0, "Milk (edited here)" to 1, "Bread" to 2, "Eggs" to 3),
+            target.subtasks.filter { it.taskId == call.id }.sortedBy { it.position }.map { it.title to it.position },
+        )
+
+        val again = BackupImporter.import(payload, ImportMode.MERGE, target)
+        assertEquals(0, again.subtasksAdded)
+        assertEquals(4, target.subtasks.size)
+    }
+
+    @Test
+    fun mergeBringsANewTaskWithItsSubtasks() = runTest {
+        val payload = open(export(seededVaultWithSubtasks()))
+        val target = InMemoryVaultDataStore()
+
+        val summary = BackupImporter.import(payload, ImportMode.MERGE, target)
+
+        assertEquals(3, summary.subtasksAdded)
+        val call = target.tasks.single { it.uid == "k-call" }.id
+        assertTrue(target.subtasks.all { it.taskId == call })
+        assertEquals(listOf("Milk", "Bread", "Eggs"), target.subtasks.sortedBy { it.position }.map { it.title })
     }
 
     @Test
@@ -191,10 +264,11 @@ class BackupImporterTest {
         assertError(BackupError.WRONG_SECRET) { BackupCipher.open(file, BackupSecret.RecoveryPhrase(other)) }
     }
 
-    /** Vault content without the device-local autoincrement ids: links become tag uids. */
+    /** Vault content without the device-local autoincrement ids: links become tag and task uids. */
     private fun portable(store: InMemoryVaultDataStore): Any {
         val tagUid = store.tags.associate { it.id to it.uid }
-        return Triple(
+        val taskUid = store.tasks.associate { it.id to it.uid }
+        return listOf(
             store.tags.map { listOf(it.uid, it.nameTag, it.isVisible, it.position) }.toSet(),
             store.notes.map {
                 listOf(
@@ -214,6 +288,7 @@ class BackupImporterTest {
                     it.priority, tagUid[it.categoryId], it.position,
                 )
             }.toSet(),
+            store.subtasks.map { listOf(it.uid, taskUid[it.taskId], it.title, it.isCompleted, it.position) }.toSet(),
         )
     }
 }
