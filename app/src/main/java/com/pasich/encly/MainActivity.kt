@@ -1,5 +1,6 @@
 package com.pasich.encly
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -147,20 +148,21 @@ class MainActivity : AppCompatActivity() {
         stripNavigationExtras(intent)
         super.onNewIntent(intent)
     }
+}
 
-    /**
-     * Window-level privacy: no autofill service sees any field (notes are not form data), the
-     * content is marked sensitive for accessibility services that are not accessibility tools
-     * (TalkBack still reads it), and other apps' overlays are hidden while Encly is in front.
-     */
-    private fun protectWindow() {
-        window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            window.decorView.setAccessibilityDataSensitive(View.ACCESSIBILITY_DATA_SENSITIVE_YES)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            window.setHideOverlayWindows(true)
-        }
+/**
+ * Window-level privacy: no autofill service sees any field (notes are not form data), the
+ * content is marked sensitive for accessibility services that are not accessibility tools
+ * (TalkBack still reads it), and other apps' overlays are hidden while Encly is in front.
+ * Every activity calls it after super.onCreate, next to FLAG_SECURE set before it.
+ */
+internal fun Activity.protectWindow() {
+    window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        window.decorView.setAccessibilityDataSensitive(View.ACCESSIBILITY_DATA_SENSITIVE_YES)
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        window.setHideOverlayWindows(true)
     }
 }
 

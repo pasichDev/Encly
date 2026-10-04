@@ -10,6 +10,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
+import java.util.Locale
 
 enum class ImportMode {
     /**
@@ -20,6 +21,19 @@ enum class ImportMode {
 
     /** Delete every note, tag, task and sub-task first, then add the whole backup. */
     REPLACE,
+}
+
+/** How a backup tag finds the vault tag it is. */
+enum class TagMatch {
+    /** Only by uid: a tag with an unknown uid is added, even if one with its name exists. */
+    UID,
+
+    /**
+     * By uid, else by name (trimmed, case-insensitive): a tag whose name the vault already has
+     * reuses that tag instead of adding a second one with the same name. For sources whose tags
+     * are just names, such as the My Notes hand-off.
+     */
+    UID_OR_NAME,
 }
 
 /** [skipped] counts notes, tags and tasks; sub-tasks are reported on their own. */
@@ -77,7 +91,12 @@ object BackupMapper {
  */
 object BackupImporter {
 
-    suspend fun import(payload: BackupPayload, mode: ImportMode, store: VaultDataStore): ImportSummary {
+    suspend fun import(
+        payload: BackupPayload,
+        mode: ImportMode,
+        store: VaultDataStore,
+        tagMatch: TagMatch = TagMatch.UID,
+    ): ImportSummary {
         BackupPayloadCodec.validate(payload)
         return store.inTransaction {
             val existing = if (mode == ImportMode.REPLACE) {
@@ -87,7 +106,7 @@ object BackupImporter {
                 store.snapshot()
             }
             val tagIds = existing.tags.associate { it.uid to it.id }.toMutableMap()
-            val tagsAdded = importTags(payload.tags, existing, mode, tagIds, store)
+            val tagsAdded = importTags(payload.tags, existing, TagTarget(mode, tagMatch, tagIds), store)
 
             val noteUids = existing.notes.mapTo(HashSet()) { it.uid }
             val newNotes = payload.notes.filter { it.uid !in noteUids }
@@ -115,27 +134,41 @@ object BackupImporter {
         }
     }
 
-    /** Adds missing tags and fills [tagIds] (uid -> local id) for every backup tag. */
+    /** [tagIds]: uid -> local id, filled in for every backup tag. */
+    private class TagTarget(val mode: ImportMode, val match: TagMatch, val tagIds: MutableMap<String, Long>)
+
+    /**
+     * Adds missing tags and fills [TagTarget.tagIds] for every backup tag. A tag matched by name
+     * ([TagMatch.UID_OR_NAME]) is not added; it counts as skipped, like a uid match.
+     */
     private suspend fun importTags(
         tags: List<BackupTag>,
         existing: VaultSnapshot,
-        mode: ImportMode,
-        tagIds: MutableMap<String, Long>,
+        target: TagTarget,
         store: VaultDataStore,
     ): Int {
+        val merge = target.mode == ImportMode.MERGE
         // Merged tags go after the ones already on this device, in their backup order.
-        var nextPosition = if (mode == ImportMode.MERGE) {
-            existing.tags.maxOfOrNull { it.position + 1 } ?: 0
-        } else {
-            0
+        var nextPosition = if (merge) existing.tags.maxOfOrNull { it.position + 1 } ?: 0 else 0
+        // Name -> local id; the first tag with a name wins, also for tags added below.
+        val idsByName = HashMap<String, Long>()
+        if (target.match == TagMatch.UID_OR_NAME) {
+            existing.tags.forEach { idsByName.putIfAbsent(tagNameKey(it.nameTag), it.id) }
         }
         var added = 0
         tags.sortedBy { it.position }.forEach { tag ->
-            if (tag.uid in tagIds) return@forEach
-            val position = if (mode == ImportMode.MERGE) nextPosition++ else tag.position
-            tagIds[tag.uid] = store.insertTag(
+            if (tag.uid in target.tagIds) return@forEach
+            val sameName = if (target.match == TagMatch.UID_OR_NAME) idsByName[tagNameKey(tag.name)] else null
+            if (sameName != null) {
+                target.tagIds[tag.uid] = sameName
+                return@forEach
+            }
+            val position = if (merge) nextPosition++ else tag.position
+            val id = store.insertTag(
                 Tag(nameTag = tag.name, isVisible = tag.visible, position = position, uid = tag.uid),
             )
+            target.tagIds[tag.uid] = id
+            if (target.match == TagMatch.UID_OR_NAME) idsByName.putIfAbsent(tagNameKey(tag.name), id)
             added++
         }
         return added
@@ -176,6 +209,9 @@ object BackupImporter {
         position = position,
         uid = uid,
     )
+
+    /** Two tag names are the same tag for [TagMatch.UID_OR_NAME] when their keys are equal. */
+    fun tagNameKey(name: String): String = name.trim().lowercase(Locale.ROOT)
 
     private fun BackupNote.toEntity(tagIds: Map<String, Long>) = Note(
         title = title,

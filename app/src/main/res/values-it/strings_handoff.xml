@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Import from My Notes (one-way hand-off, see ImportFromMyNotesActivity). -->
+    <string name="handoff_title">Importa da My Notes</string>
+    <string name="handoff_reading">Lettura delle note da My Notes…</string>
+    <string name="handoff_preview_title">Porta le tue note in Encly</string>
+    <string name="handoff_preview_body">My Notes su questo telefono consegna %1$s, %2$s e %3$s. Vengono aggiunte alla tua cassaforte cifrata: qui non viene sostituito nulla e ciò che è già stato importato viene saltato.</string>
+    <string name="handoff_preview_attachments">Allegati che restano in My Notes: %1$d. Encly non importa immagini né file.</string>
+    <string name="handoff_preview_pinned">Note fissate che non resteranno fissate: %1$d. Encly non ha le note fissate.</string>
+    <string name="handoff_import">Importa le note</string>
+    <string name="handoff_importing">Importazione…</string>
+    <string name="handoff_done_title">Importato</string>
+    <string name="handoff_done_hint">Tutto resta anche in My Notes. Dopo aver controllato le note qui, puoi cancellarle lì.</string>
+    <string name="handoff_error_title">Non è stato importato nulla</string>
+    <string name="handoff_error_unsupported">My Notes ha inviato le note in un formato più recente. Aggiorna Encly, poi riavvia il trasferimento in My Notes.</string>
+    <string name="handoff_error_invalid">Impossibile leggere i dati di My Notes.</string>
+    <string name="handoff_error_too_large">I dati di My Notes sono troppo grandi per essere importati in una volta.</string>
+    <string name="handoff_error_failed">Qualcosa è andato storto durante l\'importazione. Riprova da My Notes.</string>
+    <string name="handoff_error_vault">Encly non riesce ad aprire qui la tua cassaforte. Apri Encly, verifica che sia configurata e che si sblocchi, poi riavvia il trasferimento in My Notes.</string>
+</resources>

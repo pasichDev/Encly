@@ -43,36 +43,55 @@ import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import com.pasich.encly.ui.theme.EnclyTheme
 
+/** The app's lock screen: unlocking opens Home (or the note that was open), see [leaveLockScreen]. */
 @Composable
 fun LockScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     viewModel: LockViewModel = hiltViewModel(),
 ) {
+    val unlockReveal = LocalUnlockReveal.current
+    val exits = remember(navController, unlockReveal) {
+        LockExits(
+            onUnlock = { isSessionLocked ->
+                navController.leaveLockScreen(unlockReveal, isSessionLocked, viewModel::canReopenNote)
+            },
+            // A recovery-phrase unlock means the PIN was forgotten: set a new one before going on.
+            onRecoveryUnlock = {
+                navController.navigate(NavRoutes.PinCodeConfig.name) {
+                    popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
+                }
+            },
+            onVaultLost = {
+                navController.navigate(NavRoutes.LossDataRoute.name) {
+                    popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
+                }
+            },
+        )
+    }
+    LockScreen(exits = exits, modifier = modifier, viewModel = viewModel)
+}
+
+@Composable
+fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockViewModel = hiltViewModel()) {
     val activity = LocalActivity.current as? FragmentActivity
     val busy by viewModel.busy.collectAsState()
     // Above the loading view below: the forms' input and errors survive the credential check.
     val form = remember { LockFormState() }
 
-    // Back never leaves the lock screen; from the recovery form it returns to the PIN pad.
-    BackHandler(enabled = true) { if (!busy) form.back() }
+    // From the recovery form Back returns to the PIN pad; from the PIN pad it goes to
+    // [LockExits.onBack], or nowhere: by default Back never leaves the lock screen.
+    BackHandler(enabled = true) { onLockBack(busy, form, exits.onBack) }
 
     val biometricEnabled = remember {
         viewModel.biometricEnabled() && viewModel.biometricAvailable()
     }
 
-    val unlockReveal = LocalUnlockReveal.current
+    fun goHome() = exits.onUnlock(viewModel::isSessionLocked)
 
-    fun goHome() = navController.leaveLockScreen(unlockReveal, viewModel::isSessionLocked, viewModel::canReopenNote)
+    fun goToPinReset() = exits.onRecoveryUnlock(viewModel::isSessionLocked)
 
-    // A recovery-phrase unlock means the PIN was forgotten: set a new one before going on.
-    fun goToPinReset() {
-        navController.navigate(NavRoutes.PinCodeConfig.name) {
-            popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
-        }
-    }
-
-    fun onPinKeyLoss() = navController.onPinKeyLoss(form, viewModel.recoveryAvailable(), biometricEnabled)
+    fun onPinKeyLoss() = handlePinKeyLoss(form, viewModel.recoveryAvailable(), biometricEnabled, exits.onVaultLost)
 
     fun promptBiometric() {
         if (activity != null && viewModel.lockoutRemainingMillis() <= 0) {
@@ -117,6 +136,14 @@ fun LockScreen(
     }
 }
 
+private fun onLockBack(busy: Boolean, form: LockFormState, onBack: (() -> Unit)?) {
+    when {
+        busy -> Unit
+        form.useRecovery -> form.back()
+        else -> onBack?.invoke()
+    }
+}
+
 private data class LockCapabilities(val biometricEnabled: Boolean, val recoveryAvailable: Boolean)
 
 /** The LockViewModel state and operations the PIN form needs, so the ViewModel itself stays in [LockScreen]. */
@@ -154,15 +181,18 @@ private fun NavHostController.leaveLockScreen(
 /**
  * The PIN can no longer unlock on this device. With a recovery phrase the lock screen switches
  * to it (the form shows why); with only a fingerprint the PIN pad keeps the message; with
- * neither, nothing can open the vault here any more and the damaged-vault screen explains it.
+ * neither, nothing can open the vault here any more ([onVaultLost]).
  */
-private fun NavHostController.onPinKeyLoss(form: LockFormState, recoveryAvailable: Boolean, biometric: Boolean) {
+private fun handlePinKeyLoss(
+    form: LockFormState,
+    recoveryAvailable: Boolean,
+    biometric: Boolean,
+    onVaultLost: () -> Unit,
+) {
     if (recoveryAvailable) {
         form.useRecovery = true
     } else if (!biometric) {
-        navigate(NavRoutes.LossDataRoute.name) {
-            popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
-        }
+        onVaultLost()
     }
 }
 

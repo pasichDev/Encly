@@ -83,6 +83,16 @@ Anyone who has both the file and your 12 words can read that backup, and an expo
 be revoked, so keep the words and the file apart. See
 [SECURITY.md → Encrypted backups](SECURITY.md#encrypted-backups) for the technical details.
 
+## Import from My Notes
+
+If you also use My Notes (the developer's earlier notes app), it can move its notes, tasks, tags
+and task categories into Encly. This happens **only on your device**, only when you start it in
+My Notes, and only after you unlock Encly and confirm what will be imported. Encly accepts the
+data only from the genuine My Notes app (checked by its signing certificate). The temporary copy
+Encly makes while reading it is deleted right away; the imported notes are stored encrypted like
+everything else. Nothing is sent over the network, and Encly sends nothing back to My Notes
+except how many items were imported. Attachments and images stay in My Notes.
+
 ## Deleting your data
 
 Uninstalling Encly, or clearing its storage in Android settings, permanently deletes all of

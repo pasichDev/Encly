@@ -27,6 +27,10 @@ IzzyOnDroid) and used as the GitHub Release notes.
   that never set one (a random decoy slot is added at startup without asking for the PIN).
   Exported backups are not touched. See SECURITY.md → Wipe PIN for what it does and does not
   protect against.
+- Import from My Notes: My Notes can hand its notes (trash included), tasks, tags and task
+  categories over to Encly on the same device. Encly accepts it only from the genuine My Notes
+  app, after you unlock and confirm a preview; a repeated hand-off adds nothing twice. Tags and
+  task categories are matched by name; attachments, images and pinning do not come over.
 
 ### ⚠️ Compatibility
 

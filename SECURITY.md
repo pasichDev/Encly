@@ -254,6 +254,31 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   messages (which can quote row content). Derived keys and the plaintext payload buffer are
   zeroized after use.
 
+## Import from My Notes
+
+Encly is the successor of My Notes, which can hand its data over once
+(pasichDev/Encly#46). One way only: Encly never sends anything to My Notes except the result
+counts, and exposes no provider or anything readable.
+
+- `ImportFromMyNotesActivity` is exported for the action
+  `com.pasich.encly.action.IMPORT_FROM_MY_NOTES` only. Before it looks at the intent's data it
+  requires `getCallingPackage() == "com.pasich.mynotes"` (set by the system for
+  `startActivityForResult`) **and** a signing certificate from a pinned SHA-256 set
+  (`MyNotesCallerVerifier.TRUSTED_MY_NOTES_CERT_SHA256`): `hasSigningCertificate(…,
+  CERT_INPUT_SHA256)` on Android 9+, and on Android 8.x `GET_SIGNATURES` with exactly one signer.
+  Anything else is refused (`untrusted_caller`) without reading the URI.
+- The vault must be unlocked through the normal lock screen first; an open session (within the
+  auto-lock grace) is used as is. Backgrounding locks it as everywhere else.
+- My Notes' ZIP (plaintext) is copied to Encly's private cache, because the URI grant ends with
+  the activity, then read and deleted in a `finally`; leftovers of a killed process are deleted
+  the next time. It is never logged. Reading is strict: one `handoff.json` entry, `format` and
+  `schema` checked first (a newer schema asks for an Encly update), at most 32 MiB compressed and
+  32 MiB uncompressed (counted on the bytes read, so a ZIP bomb stops there), 100 000 records
+  per list, 1 Mi characters per text field. Editor.js HTML is reduced to plain text.
+- Only counts are shown; nothing is written before the user confirms. The data then goes through
+  the backup merge import: one transaction, records whose uid exists are skipped (a repeated
+  hand-off adds nothing), tags are matched by name.
+
 ## Session lifecycle
 
 - The database is not considered committed until mandatory PIN setup succeeds.

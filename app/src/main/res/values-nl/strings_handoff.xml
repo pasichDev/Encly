@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Import from My Notes (one-way hand-off, see ImportFromMyNotesActivity). -->
+    <string name="handoff_title">Importeren uit My Notes</string>
+    <string name="handoff_reading">Je notities uit My Notes worden gelezen…</string>
+    <string name="handoff_preview_title">Haal je notities naar Encly</string>
+    <string name="handoff_preview_body">My Notes op deze telefoon draagt %1$s, %2$s en %3$s over. Ze worden toegevoegd aan je versleutelde kluis: hier wordt niets vervangen en wat al geïmporteerd is, wordt overgeslagen.</string>
+    <string name="handoff_preview_attachments">Bijlagen die in My Notes blijven: %1$d. Encly importeert geen afbeeldingen of bestanden.</string>
+    <string name="handoff_preview_pinned">Vastgezette notities die niet vastgezet blijven: %1$d. Encly kent geen vastzetten.</string>
+    <string name="handoff_import">Notities importeren</string>
+    <string name="handoff_importing">Bezig met importeren…</string>
+    <string name="handoff_done_title">Geïmporteerd</string>
+    <string name="handoff_done_hint">Alles staat ook nog in My Notes. Als je je notities hier hebt gecontroleerd, kun je ze daar wissen.</string>
+    <string name="handoff_error_title">Er is niets geïmporteerd</string>
+    <string name="handoff_error_unsupported">My Notes heeft de notities in een nieuwer formaat gestuurd. Werk Encly bij en start de verhuizing opnieuw in My Notes.</string>
+    <string name="handoff_error_invalid">De gegevens uit My Notes konden niet worden gelezen.</string>
+    <string name="handoff_error_too_large">De gegevens uit My Notes zijn te groot om in één keer te importeren.</string>
+    <string name="handoff_error_failed">Er ging iets mis bij het importeren. Probeer het opnieuw vanuit My Notes.</string>
+    <string name="handoff_error_vault">Encly kan je kluis hier niet openen. Open Encly, controleer of hij is ingesteld en ontgrendelt, en start de verhuizing opnieuw in My Notes.</string>
+</resources>

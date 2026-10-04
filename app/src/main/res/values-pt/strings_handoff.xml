@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Import from My Notes (one-way hand-off, see ImportFromMyNotesActivity). -->
+    <string name="handoff_title">Importar do My Notes</string>
+    <string name="handoff_reading">Lendo suas notas do My Notes…</string>
+    <string name="handoff_preview_title">Traga suas notas para o Encly</string>
+    <string name="handoff_preview_body">O My Notes neste telefone está entregando %1$s, %2$s e %3$s. Elas são adicionadas ao seu cofre criptografado: nada aqui é substituído e o que já foi importado é ignorado.</string>
+    <string name="handoff_preview_attachments">Anexos que ficam no My Notes: %1$d. O Encly não importa imagens nem arquivos.</string>
+    <string name="handoff_preview_pinned">Notas fixadas que deixarão de estar fixadas: %1$d. O Encly não tem notas fixadas.</string>
+    <string name="handoff_import">Importar notas</string>
+    <string name="handoff_importing">Importando…</string>
+    <string name="handoff_done_title">Importado</string>
+    <string name="handoff_done_hint">Tudo continua também no My Notes. Depois de conferir suas notas aqui, você pode excluí-las lá.</string>
+    <string name="handoff_error_title">Nada foi importado</string>
+    <string name="handoff_error_unsupported">O My Notes enviou as notas num formato mais recente. Atualize o Encly e inicie a transferência de novo no My Notes.</string>
+    <string name="handoff_error_invalid">Não foi possível ler os dados do My Notes.</string>
+    <string name="handoff_error_too_large">Os dados do My Notes são grandes demais para importar de uma vez.</string>
+    <string name="handoff_error_failed">Algo deu errado durante a importação. Tente de novo pelo My Notes.</string>
+    <string name="handoff_error_vault">O Encly não consegue abrir seu cofre aqui. Abra o Encly, confirme que ele está configurado e desbloqueia, e inicie a transferência de novo no My Notes.</string>
+</resources>

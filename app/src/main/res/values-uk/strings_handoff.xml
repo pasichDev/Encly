@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Import from My Notes (one-way hand-off, see ImportFromMyNotesActivity). -->
+    <string name="handoff_title">Імпорт з My Notes</string>
+    <string name="handoff_reading">Читаємо ваші нотатки з My Notes…</string>
+    <string name="handoff_preview_title">Перенесіть нотатки в Encly</string>
+    <string name="handoff_preview_body">My Notes на цьому телефоні передає %1$s, %2$s і %3$s. Їх буде додано до вашого зашифрованого сховища: тут нічого не замінюється, а вже імпортоване пропускається.</string>
+    <string name="handoff_preview_attachments">Вкладень, що залишаться в My Notes: %1$d. Encly не імпортує зображення й файли.</string>
+    <string name="handoff_preview_pinned">Закріплених нотаток, які більше не будуть закріплені: %1$d. В Encly немає закріплення.</string>
+    <string name="handoff_import">Імпортувати нотатки</string>
+    <string name="handoff_importing">Імпортуємо…</string>
+    <string name="handoff_done_title">Імпортовано</string>
+    <string name="handoff_done_hint">Усе й далі є в My Notes. Коли перевірите нотатки тут, можете очистити їх там.</string>
+    <string name="handoff_error_title">Нічого не імпортовано</string>
+    <string name="handoff_error_unsupported">My Notes передав нотатки в новішому форматі. Оновіть Encly і почніть перенесення в My Notes ще раз.</string>
+    <string name="handoff_error_invalid">Не вдалося прочитати дані з My Notes.</string>
+    <string name="handoff_error_too_large">Дані з My Notes завеликі, щоб Encly імпортував їх за один раз.</string>
+    <string name="handoff_error_failed">Під час імпорту щось пішло не так. Спробуйте ще раз з My Notes.</string>
+    <string name="handoff_error_vault">Encly не може тут відкрити ваше сховище. Відкрийте Encly, переконайтеся, що його налаштовано і воно розблоковується, і почніть перенесення в My Notes ще раз.</string>
+</resources>

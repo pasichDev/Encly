@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Import from My Notes (one-way hand-off, see ImportFromMyNotesActivity). -->
+    <string name="handoff_title">Import z My Notes</string>
+    <string name="handoff_reading">Odczytywanie notatek z My Notes…</string>
+    <string name="handoff_preview_title">Przenieś notatki do Encly</string>
+    <string name="handoff_preview_body">My Notes na tym telefonie przekazuje: %1$s, %2$s i %3$s. Zostaną dodane do Twojego zaszyfrowanego sejfu: nic tu nie zostanie zastąpione, a to, co już zaimportowano, zostanie pominięte.</string>
+    <string name="handoff_preview_attachments">Załączniki, które zostają w My Notes: %1$d. Encly nie importuje obrazów ani plików.</string>
+    <string name="handoff_preview_pinned">Przypięte notatki, które nie pozostaną przypięte: %1$d. Encly nie ma przypinania.</string>
+    <string name="handoff_import">Importuj notatki</string>
+    <string name="handoff_importing">Importowanie…</string>
+    <string name="handoff_done_title">Zaimportowano</string>
+    <string name="handoff_done_hint">Wszystko nadal jest też w My Notes. Gdy sprawdzisz notatki tutaj, możesz je tam usunąć.</string>
+    <string name="handoff_error_title">Nic nie zaimportowano</string>
+    <string name="handoff_error_unsupported">My Notes wysłał notatki w nowszym formacie. Zaktualizuj Encly i rozpocznij przenoszenie w My Notes jeszcze raz.</string>
+    <string name="handoff_error_invalid">Nie udało się odczytać danych z My Notes.</string>
+    <string name="handoff_error_too_large">Dane z My Notes są zbyt duże, aby zaimportować je za jednym razem.</string>
+    <string name="handoff_error_failed">Podczas importu coś poszło nie tak. Spróbuj ponownie z My Notes.</string>
+    <string name="handoff_error_vault">Encly nie może tutaj otworzyć Twojego sejfu. Otwórz Encly, upewnij się, że jest skonfigurowany i się odblokowuje, a potem rozpocznij przenoszenie w My Notes jeszcze raz.</string>
+</resources>

@@ -78,8 +78,8 @@ class BackupManager @Inject constructor(
     fun normalizeRecoveryPhrase(input: CharArray): CharArray = BackupKeys.normalizeMnemonic(input)
 
     /** Imports into the unlocked vault in one transaction; nothing is written on failure. */
-    suspend fun import(payload: BackupPayload, mode: ImportMode): ImportSummary =
-        guarded { BackupImporter.import(payload, mode, store) }
+    suspend fun import(payload: BackupPayload, mode: ImportMode, tagMatch: TagMatch = TagMatch.UID): ImportSummary =
+        guarded { BackupImporter.import(payload, mode, store, tagMatch) }
 
     fun lastExportAt(): Long? = secureStoragePrefs.getLong(LAST_EXPORT_KEY, 0L).takeIf { it > 0L }
 
