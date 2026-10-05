@@ -338,7 +338,7 @@ private fun InlineSubtaskField(
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     BackHandler(onBack = close)
-    CloseWhenKeyboardHides(focused = focused, onClose = close)
+    CloseWhenKeyboardHides(focused = focused, onClose = { if (activity?.isChangingConfigurations != true) close() })
     // The list is ime-padded: once the keyboard is up (or its height changes), scroll to the field.
     val keyboardHeight = WindowInsets.ime.getBottom(LocalDensity.current)
     LaunchedEffect(focused, keyboardHeight) {
@@ -387,8 +387,15 @@ private fun CloseWhenKeyboardHides(focused: Boolean, onClose: () -> Unit) {
 
             seenOpen -> {
                 seenOpen = false
+                // A rotation hides the keyboard too, just before it disposes the field. Wait a
+                // moment: a disposed field cancels this, and the field comes back open with its
+                // text instead of saving a half-typed title.
+                delay(KEYBOARD_HIDE_SETTLE_MS)
                 currentOnClose()
             }
         }
     }
 }
+
+/** How long a hidden keyboard must stay hidden before it closes the inline field. */
+private const val KEYBOARD_HIDE_SETTLE_MS = 250L
