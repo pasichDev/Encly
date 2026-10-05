@@ -104,6 +104,11 @@ and show me"), not against a forensic examination.
   from the lock screen would itself be a sign). Someone can force a finger onto the sensor and
   open the real vault, so the settings page warns about it and offers to turn biometric unlock
   off.
+- **After the erase** nothing of the old vault reappears: the note that was open when the app
+  re-locked is reopened after an unlock only in the vault it was opened in (each erase starts a
+  new epoch, and a restarted process starts one that matches nothing), and a screen that was in
+  the background while the vault was unlocked elsewhere (the My Notes hand-off's lock screen)
+  is replaced by the lock screen or the notes list when it comes back.
 - **Unlock time.** The wipe path adds a Keystore key generation, one HMAC, a store write and
   creating the empty database to the same KDF run; the empty vault opens behind the same
   unlock animation.

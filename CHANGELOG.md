@@ -51,6 +51,8 @@ IzzyOnDroid) and used as the GitHub Release notes.
 ### Changed
 
 - Changing the PIN keeps the PIN slot's salt.
+- When Encly was restarted in the background while locked, unlocking opens the notes list
+  instead of the note that was open.
 
 ## [2.0.1] - 2026-09-25
 

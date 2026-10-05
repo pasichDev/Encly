@@ -75,6 +75,15 @@ class LockViewModelTest {
     }
 
     @Test
+    fun aNoteIsReopenedOnlyInTheVaultItWasRememberedIn() {
+        `when`(security.eraseEpoch()).thenReturn(7L)
+
+        assertTrue(viewModel.canReopenNote(7L))
+        assertFalse("an erase changed the epoch", viewModel.canReopenNote(6L))
+        assertFalse("nothing remembered", viewModel.canReopenNote(null))
+    }
+
+    @Test
     fun aWrongPinAndABrokenVaultAreToldApart() = runTest {
         `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
         assertEquals(PinUnlockResult.WRONG_PIN, pin())

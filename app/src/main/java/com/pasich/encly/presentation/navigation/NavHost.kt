@@ -165,7 +165,9 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
 
 /**
  * The note editor. Records the id of its note on [entry] (also the id a new note gets on its
- * first save), so a background re-lock can return to it (see [RelockReturn]).
+ * first save), so a background re-lock can return to it (see [RelockReturn]), and the vault's
+ * erase epoch ([LocalEraseEpoch]) when it first showed it: the note is reopened only in that
+ * vault.
  */
 @Composable
 private fun EditNoteDestination(
@@ -174,8 +176,14 @@ private fun EditNoteDestination(
     viewModel: EditNoteViewModel = hiltViewModel(),
 ) {
     val noteState by viewModel.state.collectAsState()
-    LaunchedEffect(entry, noteState.note.id) {
-        entry.savedStateHandle[RelockReturn.OPEN_NOTE_ID] = noteState.note.id
+    val eraseEpoch = LocalEraseEpoch.current
+    LaunchedEffect(entry, noteState.note.id, eraseEpoch) {
+        val state = entry.savedStateHandle
+        state[RelockReturn.OPEN_NOTE_ID] = noteState.note.id
+        // Kept from the first time: an erase while the editor stays open does not adopt it.
+        if (eraseEpoch != null && !state.contains(RelockReturn.OPEN_NOTE_EPOCH)) {
+            state[RelockReturn.OPEN_NOTE_EPOCH] = eraseEpoch()
+        }
     }
     // The screen resolves the same ViewModel instance: it is scoped to [entry].
     EditNoteScreen(navController)

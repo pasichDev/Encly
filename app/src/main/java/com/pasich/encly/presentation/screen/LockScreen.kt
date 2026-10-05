@@ -158,20 +158,23 @@ private class PinAuth(
  * MainActivity), once the reveal covers the window so Home composes out of sight. If the
  * session closed again while the reveal played (e.g. the app went to the background), it stays
  * on the lock screen rather than open Home over a locked vault. The note is not reopened when
- * [canReopenNote] says the open vault is not the one it was in (a wipe-PIN unlock).
+ * [canReopenNote] says the open vault is not the one it was in (a wipe-PIN erase since).
  */
 private fun NavHostController.leaveLockScreen(
     reveal: UnlockRevealState?,
     isSessionLocked: () -> Boolean,
-    canReopenNote: () -> Boolean,
+    canReopenNote: (savedEpoch: Long?) -> Boolean,
 ) {
-    val returnRoute = currentBackStackEntry?.savedStateHandle?.get<String>(RelockReturn.RETURN_ROUTE)
+    val lockState = currentBackStackEntry?.savedStateHandle
+    val returnRoute = lockState?.get<String>(RelockReturn.RETURN_ROUTE)
+    val returnEpoch = lockState?.get<Long>(RelockReturn.RETURN_EPOCH)
     reveal.revealThen {
         if (!isSessionLocked()) {
             navigate(NavRoutes.HomeRoute.name) {
                 popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
             }
-            if (returnRoute != null && canReopenNote()) navigate(returnRoute)
+            // Checked after the unlock: an erase is what changes the epoch.
+            if (returnRoute != null && canReopenNote(returnEpoch)) navigate(returnRoute)
         }
     }
 }

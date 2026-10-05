@@ -59,6 +59,15 @@ class SessionLockManager @Inject constructor(
     override val locked: StateFlow<Boolean> = _locked.asStateFlow()
 
     /**
+     * Counts published unlocks: each one starts a new session. A screen that was stopped while
+     * this changed (the vault was unlocked on another lock screen, such as the My Notes
+     * hand-off's) shows a session it never saw, possibly after an erase.
+     */
+    @Volatile
+    var sessionGeneration = 0L
+        private set
+
+    /**
      * Whether the process is in the foreground (between ProcessLifecycleOwner ON_START and
      * ON_STOP). An unlock that finishes after ON_STOP must not leave the vault open.
      */
@@ -197,6 +206,7 @@ class SessionLockManager @Inject constructor(
             relock()
             return false
         }
+        sessionGeneration++
         _locked.value = false
         return true
     }

@@ -55,8 +55,12 @@ fresh unlock starts with new database-backed ViewModels. Until the lock screen i
 visible destination, an opaque shield covers the previous screen, so the first frame after
 returning never shows plaintext. An unlock that completes after the app left the foreground is
 closed again at once. Open task and tag editors save on pause, like the note editor, because the
-re-lock discards them. The note that was open when the app re-locked is recorded (`RelockReturn`) and
-opened again after the unlock, with fresh ViewModels. Pages move on Material's shared X axis;
+re-lock discards them. The note that was open when the app re-locked is recorded (`RelockReturn`),
+with the erase epoch of the vault it was opened in, and opened again after the unlock, with fresh
+ViewModels, only while that epoch is current (a wipe-PIN erase or a new process changes it). A
+screen that was in the background while the vault was unlocked on another lock screen (the My
+Notes hand-off) is replaced by the lock screen or Home when it comes back (`SessionResume`).
+Pages move on Material's shared X axis;
 the full unlock reveal plays only on the first unlock after launch, later unlocks cross-fade.
 
 ## Encrypted backups

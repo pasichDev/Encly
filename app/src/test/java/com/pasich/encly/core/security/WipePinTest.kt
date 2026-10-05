@@ -11,6 +11,7 @@ import com.pasich.encly.testutil.tempVaultStore
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -399,6 +400,7 @@ class WipePinTest {
     fun theWipePinOnTheLockScreenOpensAnEmptyVault() {
         val vault = Vault()
         `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        val epoch = vault.security.eraseEpoch()
 
         assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(WIPE_PIN)))
 
@@ -409,13 +411,15 @@ class WipePinTest {
         assertNull(vault.auth.pendingWipe())
         assertFalse(vault.factor.hasKey(PinKeySlot.A))
         assertFalse(vault.prefs.contains(BackupManager.LAST_EXPORT_KEY))
-        assertTrue(vault.security.isErasedVaultSession())
+        assertNotEquals(epoch, vault.security.eraseEpoch())
         // Onboarding stays committed: a restart asks for the PIN of the empty vault.
         `when`(vault.database.hasEncryptedDatabase()).thenReturn(true)
         assertEquals(InitialStatus.AUTH, vault.restart().resolveInitialStatus())
 
+        // Locking does not bring the old vault's epoch back.
+        val erased = vault.security.eraseEpoch()
         vault.security.lock()
-        assertFalse(vault.security.isErasedVaultSession())
+        assertEquals(erased, vault.security.eraseEpoch())
     }
 
     @Test
@@ -455,12 +459,28 @@ class WipePinTest {
     fun aNormalUnlockIsNotAnErasedVaultSession() {
         val vault = Vault()
         `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        val epoch = vault.security.eraseEpoch()
 
         assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(PIN)))
 
         verify(vault.database, never()).wipe()
-        assertFalse(vault.security.isErasedVaultSession())
+        assertEquals(epoch, vault.security.eraseEpoch())
         assertTrue(vault.prefs.contains(BackupManager.LAST_EXPORT_KEY))
+    }
+
+    @Test
+    fun anUnlockThatOnlyThenCreatesTheErasedDatabaseAlsoChangesTheEpoch() {
+        // The wipe PIN's own open failed; the retry is a plain PIN unlock of the new slot.
+        val vault = Vault()
+        `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(false)
+        assertEquals(VaultUnlockResult.DB_ERROR, vault.security.unlockWithPin(pin(WIPE_PIN)))
+        val epoch = vault.security.eraseEpoch()
+        `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+
+        assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(WIPE_PIN)))
+
+        assertNotEquals(epoch, vault.security.eraseEpoch())
+        assertNull(vault.auth.pendingWipe())
     }
 
     @Test

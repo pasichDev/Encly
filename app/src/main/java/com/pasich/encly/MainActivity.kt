@@ -31,6 +31,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -46,8 +49,10 @@ import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
 import com.pasich.encly.presentation.navigation.AppNavHost
+import com.pasich.encly.presentation.navigation.LocalEraseEpoch
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
+import com.pasich.encly.presentation.navigation.SessionResume
 import com.pasich.encly.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -126,6 +131,7 @@ class MainActivity : AppCompatActivity() {
             val locked by sessionLockManager.locked.collectAsState()
             val strictKeyboard by keyboardPrivacy.strict.collectAsState()
             LockRouteGuard(navController, securityManager::isDatabaseUnlocked)
+            SessionResumeGuard(navController, sessionLockManager)
             val visibleEntries by navController.visibleEntries.collectAsState()
             val shielded = locked && visibleEntries.any {
                 it.destination.route != NavRoutes.LockRoute.name
@@ -137,6 +143,7 @@ class MainActivity : AppCompatActivity() {
             App(
                 navController = navController,
                 startDestination = destination.name,
+                eraseEpoch = securityManager::eraseEpoch,
                 shielded = shielded,
                 locked = locked,
                 strictKeyboard = strictKeyboard,
@@ -202,6 +209,46 @@ private fun LockRouteGuard(navController: NavHostController, isDatabaseUnlocked:
     }
 }
 
+/**
+ * Coming back to the foreground after the vault was unlocked on another lock screen (see
+ * [SessionResume.afterStop]) rebuilds the back stack instead of showing screens of a session
+ * that ended. Runs on ON_START itself, before the first frame and the re-lock effect.
+ */
+@Composable
+private fun SessionResumeGuard(navController: NavHostController, sessionLockManager: SessionLockManager) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, navController) {
+        var stoppedAt: Long? = null
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> stoppedAt = sessionLockManager.sessionGeneration
+
+                Lifecycle.Event.ON_START -> {
+                    val resume = SessionResume.afterStop(
+                        stoppedAt = stoppedAt,
+                        generation = sessionLockManager.sessionGeneration,
+                        locked = sessionLockManager.locked.value,
+                    )
+                    stoppedAt = null
+                    when (resume) {
+                        SessionResume.KEEP -> Unit
+
+                        SessionResume.LOCK_SCREEN -> navController.showLockScreen(keepNote = false)
+
+                        SessionResume.HOME -> navController.navigate(NavRoutes.HomeRoute.name) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
+                }
+
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+}
+
 /** Navigation's own deep-link extras; the exported launcher activity must not honour them. */
 private const val NAV_EXTRA_PREFIX = "android-support-nav:controller:"
 
@@ -225,16 +272,20 @@ private const val EDIT_NOTE_READ_ONLY_ARG = "isReadTrashOnly"
 
 /**
  * Replaces every screen with the lock screen after a background re-lock, remembering the note
- * that was open (see [RelockReturn]) so the unlock can return to it.
+ * that was open (see [RelockReturn]) with the erase epoch of the vault it was opened in, so the
+ * unlock returns to it only in that vault. Without [keepNote], or from any other screen,
+ * whatever was remembered before is forgotten.
  */
-private fun NavHostController.showLockScreen() {
-    val returnRoute = currentBackStackEntry?.let { entry ->
+private fun NavHostController.showLockScreen(keepNote: Boolean = true) {
+    val editor = currentBackStackEntry?.takeIf { keepNote }
+    val returnRoute = editor?.let { entry ->
         RelockReturn.routeFor(
             destinationRoute = entry.destination.route,
             openNoteId = entry.savedStateHandle.get<Long>(RelockReturn.OPEN_NOTE_ID),
             readOnly = entry.arguments?.getBoolean(EDIT_NOTE_READ_ONLY_ARG) == true,
         )
     }
+    val returnEpoch = editor?.savedStateHandle?.get<Long>(RelockReturn.OPEN_NOTE_EPOCH)
     navigate(NavRoutes.LockRoute.name) {
         // Drop every screen/ViewModel backed by the now-closed Room instance.
         // Unlock starts a fresh Home graph with fresh DAO flows.
@@ -243,13 +294,21 @@ private fun NavHostController.showLockScreen() {
         }
         launchSingleTop = true
     }
-    if (returnRoute != null) currentBackStackEntry?.savedStateHandle?.set(RelockReturn.RETURN_ROUTE, returnRoute)
+    val lockState = currentBackStackEntry?.savedStateHandle ?: return
+    if (returnRoute != null && returnEpoch != null) {
+        lockState[RelockReturn.RETURN_ROUTE] = returnRoute
+        lockState[RelockReturn.RETURN_EPOCH] = returnEpoch
+    } else {
+        lockState.remove<String>(RelockReturn.RETURN_ROUTE)
+        lockState.remove<Long>(RelockReturn.RETURN_EPOCH)
+    }
 }
 
 @Composable
 fun App(
     navController: NavHostController,
     startDestination: String,
+    eraseEpoch: () -> Long,
     modifier: Modifier = Modifier,
     shielded: Boolean = false,
     locked: Boolean = false,
@@ -286,10 +345,12 @@ fun App(
                                     .fillMaxSize()
                                     .windowInsetsPadding(WindowInsets.statusBars),
                             ) {
-                                AppNavHost(
-                                    navController = navController,
-                                    startDestination = startDestination,
-                                )
+                                CompositionLocalProvider(LocalEraseEpoch provides eraseEpoch) {
+                                    AppNavHost(
+                                        navController = navController,
+                                        startDestination = startDestination,
+                                    )
+                                }
                             }
                         }
                     }

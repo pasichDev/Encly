@@ -1,6 +1,7 @@
 package com.pasich.encly.core.security
 
 import androidx.lifecycle.LifecycleOwner
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -73,6 +74,22 @@ class SessionLockManagerTest {
 
         verify(security, never()).lock()
         assertFalse(manager.locked.value)
+    }
+
+    @Test
+    fun eachPublishedUnlockStartsANewSessionGenerationAndALockDoesNot() {
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        val first = manager.sessionGeneration
+
+        manager.lockNow()
+        assertEquals(first, manager.sessionGeneration)
+        assertTrue(manager.onUnlocked())
+        assertEquals(first + 1, manager.sessionGeneration)
+
+        // An unlock that lands in the background is closed again, never published.
+        manager.onStop(owner)
+        assertFalse(manager.onUnlocked())
+        assertEquals(first + 1, manager.sessionGeneration)
     }
 
     @Test

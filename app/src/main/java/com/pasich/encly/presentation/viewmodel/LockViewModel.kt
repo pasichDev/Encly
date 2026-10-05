@@ -59,10 +59,11 @@ class LockViewModel @Inject constructor(
     fun isSessionLocked(): Boolean = sessionLockManager.locked.value
 
     /**
-     * Whether the note open before the re-lock may be reopened: not in the empty vault a
-     * wipe-PIN unlock made, where it does not exist (an empty editor would give the erase away).
+     * Whether the note remembered at the re-lock under [savedEpoch] may be reopened: only in the
+     * vault it was in. After a wipe-PIN erase (here or on another lock screen) it does not
+     * exist, and an empty editor would give the erase away.
      */
-    fun canReopenNote(): Boolean = !securityManager.isErasedVaultSession()
+    fun canReopenNote(savedEpoch: Long?): Boolean = savedEpoch != null && savedEpoch == securityManager.eraseEpoch()
 
     /** Unlocks with [pin], which is wiped. */
     fun authenticatePin(pin: CharArray, onResult: (PinUnlockResult) -> Unit) {
