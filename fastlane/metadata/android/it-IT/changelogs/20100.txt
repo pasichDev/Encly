@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Sotto-attività: dividi un'attività in passi. L'elenco mostra il passo successivo e l'avanzamento; tocca un'attività per vederli e modificarli tutti.
+• PIN di cancellazione (facoltativo): un secondo PIN che cancella la cassaforte senza lasciare segni e ne apre una vuota se qualcuno ti costringe a sbloccare.
+• Sposta le note da My Notes in un solo passo.
+Questa versione cambia il database e il formato dei backup: le versioni precedenti non potranno aprirli.

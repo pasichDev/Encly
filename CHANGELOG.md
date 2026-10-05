@@ -11,6 +11,14 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-05
+
+versionCode 20100.
+
+Tasks get sub-tasks, an optional wipe PIN can silently erase the vault, and notes can move over
+from My Notes in one step. The database and the backup format change with this version, so an
+older Encly cannot open either (see Compatibility).
+
 ### Added
 
 - Sub-tasks: a task can have a checklist of sub-tasks (one level). On the Tasks list an open
@@ -186,6 +194,7 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/pasichDev/Encly/releases/tag/v2.1.0
 [2.0.1]: https://github.com/pasichDev/Encly/releases/tag/v2.0.1
 [2.0.0]: https://github.com/pasichDev/Encly/releases/tag/v2.0.0

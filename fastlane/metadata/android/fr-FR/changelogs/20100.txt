@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Sous-tâches : découpez une tâche en étapes. La liste montre l'étape suivante et la progression ; touchez une tâche pour toutes les voir et les modifier.
+• PIN d'effacement (facultatif) : un second PIN qui efface le coffre sans laisser de trace et en ouvre un vide si l'on vous force à déverrouiller.
+• Importez vos notes de My Notes en une étape.
+Cette version change la base de données et le format des sauvegardes : les versions antérieures ne pourront pas les ouvrir.
