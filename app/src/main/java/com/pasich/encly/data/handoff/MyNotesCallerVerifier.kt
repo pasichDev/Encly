@@ -41,8 +41,11 @@ class AndroidPackageSignatures(private val packageManager: PackageManager) : Pac
  * is read: anything else is refused without touching its data.
  *
  * The calling package comes from `Activity.getCallingPackage()`, which the system fills in for
- * `startActivityForResult` and a caller cannot forge; the signing certificate then proves that
- * package is the real My Notes and not an app installed under its name.
+ * `startActivityForResult`; the signing certificate then proves that package is the real My
+ * Notes and not an app installed under its name. It names the app the result goes to, not the
+ * one that sent the intent: an activity My Notes started for a result can pass the request on
+ * with `FLAG_ACTIVITY_FORWARD_RESULT`, and then My Notes is the calling package of an intent
+ * another app wrote. [HandoffRequest] refuses that and checks where the URI comes from.
  */
 class MyNotesCallerVerifier(
     private val signatures: PackageSignatures,
@@ -68,6 +71,9 @@ class MyNotesCallerVerifier(
     companion object {
         const val MY_NOTES_PACKAGE = "com.pasich.mynotes"
         private const val HEX = 16
+
+        /** The authority of My Notes' FileProvider, which the hand-off's URI must use. */
+        const val MY_NOTES_AUTHORITY = "$MY_NOTES_PACKAGE.provider"
 
         /**
          * SHA-256 (lower-case hex) of every certificate My Notes is signed with. A caller signed

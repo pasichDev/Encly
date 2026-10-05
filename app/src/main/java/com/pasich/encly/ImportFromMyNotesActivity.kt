@@ -1,7 +1,7 @@
 package com.pasich.encly
 
-import android.content.ContentResolver
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -25,6 +25,8 @@ import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.handoff.AndroidPackageSignatures
 import com.pasich.encly.data.handoff.HandoffError
+import com.pasich.encly.data.handoff.HandoffLaunch
+import com.pasich.encly.data.handoff.HandoffRequest
 import com.pasich.encly.data.handoff.MyNotesCallerVerifier
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.presentation.components.SecureTextInputBoundary
@@ -46,8 +48,9 @@ import javax.inject.Inject
  * grants read access to. Encly never sends anything back except the result counts.
  *
  * Order, each step only after the one before succeeded:
- * 1. the caller must be My Notes, signed with a pinned certificate ([MyNotesCallerVerifier]);
- *    anything else is refused before the URI is even looked at;
+ * 1. the caller must be My Notes, signed with a pinned certificate ([MyNotesCallerVerifier]),
+ *    not passing on another app's request, and the URI from My Notes' own FileProvider
+ *    ([HandoffRequest]); anything else is refused before the URI is read;
  * 2. the vault is unlocked through the normal lock screen;
  * 3. the ZIP is copied, read and deleted, and only counts are shown;
  * 4. the import runs when the user confirms.
@@ -76,14 +79,12 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         protectWindow()
 
-        val verifier = MyNotesCallerVerifier(AndroidPackageSignatures(packageManager))
-        if (!verifier.isTrusted(callingPackage)) {
-            finishWith(HandoffError.UNTRUSTED_CALLER)
-            return
+        val refused = HandoffRequest.check(launch()) { authority ->
+            packageManager.resolveContentProvider(authority, 0)?.packageName
         }
         val uri = intent?.data
-        if (intent?.action != ACTION_IMPORT_FROM_MY_NOTES || uri?.scheme != ContentResolver.SCHEME_CONTENT) {
-            finishWith(HandoffError.INVALID_PAYLOAD)
+        if (refused != null || uri == null) {
+            finishWith(refused ?: HandoffError.INVALID_PAYLOAD)
             return
         }
         // Leaving before the end (Back, the close button) reports a cancellation.
@@ -125,6 +126,22 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
         }
     }
 
+    /** How this activity was started, for [HandoffRequest.check]. */
+    private fun launch(): HandoffLaunch {
+        val verifier = MyNotesCallerVerifier(AndroidPackageSignatures(packageManager))
+        return HandoffLaunch(
+            flags = intent?.flags ?: 0,
+            callerTrusted = { verifier.isTrusted(callingPackage) },
+            launchedFromPackage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                launchedFromPackage
+            } else {
+                null
+            },
+            action = intent?.action,
+            uri = intent?.data,
+        )
+    }
+
     /** Keeps the activity result in step with the hand-off, so any way out reports it. */
     private fun publishResult(step: HandoffStep) {
         when (step) {
@@ -151,7 +168,7 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
     private fun reasonIntent(error: HandoffError) = Intent().putExtra(EXTRA_REASON, error.reason)
 
     companion object {
-        const val ACTION_IMPORT_FROM_MY_NOTES = "com.pasich.encly.action.IMPORT_FROM_MY_NOTES"
+        const val ACTION_IMPORT_FROM_MY_NOTES = HandoffRequest.ACTION_IMPORT_FROM_MY_NOTES
         const val EXTRA_NOTES = "notes"
         const val EXTRA_TASKS = "tasks"
         const val EXTRA_TAGS = "tags"

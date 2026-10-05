@@ -6,6 +6,7 @@ import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
+import com.pasich.encly.data.handoff.MyNotesCallerVerifier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -31,8 +32,8 @@ class ImportFromMyNotesActivityTest {
         shadowOf(application).grantPermissions(Manifest.permission.HIDE_OVERLAY_WINDOWS)
     }
 
-    private fun refusalOf(callingPackage: String?): Pair<Int, String?> {
-        val controller = Robolectric.buildActivity(ImportFromMyNotesActivity::class.java, handoffIntent)
+    private fun refusalOf(callingPackage: String?, intent: Intent = handoffIntent): Pair<Int, String?> {
+        val controller = Robolectric.buildActivity(ImportFromMyNotesActivity::class.java, intent)
         val shadow = shadowOf(controller.get())
         shadow.setCallingPackage(callingPackage)
         controller.create()
@@ -54,6 +55,19 @@ class ImportFromMyNotesActivityTest {
         assertEquals(Activity.RESULT_CANCELED to "untrusted_caller", refusalOf(null))
     }
 
-    // My Notes' name with the wrong certificate: MyNotesCallerVerifierTest (Robolectric does not
-    // implement PackageManager.hasSigningCertificate).
+    @Test
+    fun aRequestAnotherAppPassedOnIsRefusedEvenInMyNotesName() {
+        // A picker that My Notes started for a result forwards that request into Encly: the system
+        // then reports My Notes as the caller of the picker's own intent and URI.
+        val forwarded = Intent(handoffIntent).addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
+
+        assertEquals(
+            Activity.RESULT_CANCELED to "untrusted_caller",
+            refusalOf(MyNotesCallerVerifier.MY_NOTES_PACKAGE, forwarded),
+        )
+    }
+
+    // Each check before the URI is read: HandoffRequestTest. My Notes' name with the wrong
+    // certificate: MyNotesCallerVerifierTest (Robolectric does not implement
+    // PackageManager.hasSigningCertificate).
 }

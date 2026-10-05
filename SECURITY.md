@@ -281,12 +281,22 @@ Encly is the successor of My Notes, which can hand its data over once
 counts, and exposes no provider or anything readable.
 
 - `ImportFromMyNotesActivity` is exported for the action
-  `com.pasich.encly.action.IMPORT_FROM_MY_NOTES` only. Before it looks at the intent's data it
-  requires `getCallingPackage() == "com.pasich.mynotes"` (set by the system for
-  `startActivityForResult`) **and** a signing certificate from a pinned SHA-256 set
-  (`MyNotesCallerVerifier.TRUSTED_MY_NOTES_CERT_SHA256`): `hasSigningCertificate(…,
-  CERT_INPUT_SHA256)` on Android 9+, and on Android 8.x `GET_SIGNATURES` with exactly one signer.
-  Anything else is refused (`untrusted_caller`) without reading the URI.
+  `com.pasich.encly.action.IMPORT_FROM_MY_NOTES` only. Before it reads the intent's URI it
+  requires (`HandoffRequest`):
+  - `getCallingPackage() == "com.pasich.mynotes"` **and** a signing certificate from a pinned
+    SHA-256 set (`MyNotesCallerVerifier.TRUSTED_MY_NOTES_CERT_SHA256`): `hasSigningCertificate(…,
+    CERT_INPUT_SHA256)` on Android 9+, and on Android 8.x `GET_SIGNATURES` with exactly one signer;
+  - no `FLAG_ACTIVITY_FORWARD_RESULT`. The calling package names the app the result goes to, not
+    the one that wrote the intent: an app My Notes starts for a result (the file picker of its
+    own import, say) could forward that request here, and the system would report My Notes as
+    the caller of that app's intent and URI;
+  - on Android 14+, where the system names the app that launched the activity
+    (`getLaunchedFromPackage`, only when that app shares its identity), that it is My Notes;
+  - a `content://` URI of My Notes' own FileProvider: the authority `com.pasich.mynotes.provider`,
+    which `PackageManager.resolveContentProvider` must find in the My Notes package.
+
+  Anything else is refused (`untrusted_caller`, or `invalid_payload` for a wrong action or a
+  URI that is not `content://`) without reading the URI.
 - The vault must be unlocked through the normal lock screen first; an open session (within the
   auto-lock grace) is used as is. Backgrounding locks it as everywhere else.
 - My Notes' ZIP (plaintext) is copied to Encly's private cache, because the URI grant ends with
