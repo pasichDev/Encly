@@ -97,6 +97,9 @@ class SecurityManager @Inject constructor(
      */
     @Suppress("TooGenericExceptionCaught") // Any startup failure must route, never crash-loop.
     fun resolveInitialStatus(): InitialStatus {
+        // A recreated activity (rotation, dark mode, font size) asks again while the vault is
+        // open in this process: it stays open. Only a vault that is not open starts locked.
+        if (isSessionOpen()) return InitialStatus.MAIN.also { securityStatus = it }
         val status = try {
             initializeSecurity()
         } catch (e: Exception) {
@@ -464,6 +467,9 @@ class SecurityManager @Inject constructor(
         isOnboardingShown() && (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed())
 
     fun isDatabaseUnlocked(): Boolean = secureDatabaseManager.isDatabaseUnlocked()
+
+    /** True while this process holds the vault open: the session key and the database. */
+    private fun isSessionOpen(): Boolean = sessionDek != null && secureDatabaseManager.isDatabaseUnlocked()
 
     fun isOnboardingShow(): Boolean = !isOnboardingShown()
 
