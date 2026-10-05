@@ -404,6 +404,39 @@ class WipePinTest {
     }
 
     @Test
+    fun afterTheWipeAColdStartOpensTheEmptyVaultWithTheWipePinAndNotTheOldPin() {
+        val vault = Vault()
+        val keys = mutableListOf<Pair<ByteArray, Boolean>>()
+        `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenAnswer {
+            keys += (it.arguments[0] as ByteArray).copyOf() to (it.arguments[1] as Boolean)
+            true
+        }
+        assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(WIPE_PIN)))
+        val (emptyVaultKey, created) = keys.single()
+        assertTrue(created)
+        vault.security.lock()
+
+        // A new process: every file read back from disk.
+        val store = VaultStore(file)
+        val auth = AuthenticationManager(store, factor, clock)
+        val database: SecureDatabaseManager = mock(SecureDatabaseManager::class.java)
+        `when`(database.hasEncryptedDatabase()).thenReturn(true)
+        `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenAnswer {
+            keys += (it.arguments[0] as ByteArray).copyOf() to (it.arguments[1] as Boolean)
+            true
+        }
+        val security = SecurityManager(vault.prefs, store, SeedPhraseManager(store), database, auth, vault.biometric)
+        assertEquals(InitialStatus.AUTH, security.resolveInitialStatus())
+
+        assertEquals(VaultUnlockResult.INVALID_CREDENTIAL, security.unlockWithPin(pin(PIN)))
+        assertEquals(VaultUnlockResult.SUCCESS, security.unlockWithPin(pin(WIPE_PIN)))
+        val (reopenKey, reopenCreates) = keys.last()
+        assertFalse(reopenCreates)
+        assertArrayEquals(emptyVaultKey, reopenKey)
+        verify(database, never()).wipe()
+    }
+
+    @Test
     fun aNormalUnlockIsNotAnErasedVaultSession() {
         val vault = Vault()
         `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)

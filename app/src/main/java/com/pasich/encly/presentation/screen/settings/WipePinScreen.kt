@@ -275,6 +275,7 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        EnclyCallout(text = stringResource(R.string.wipe_pin_after_erase), tone = CalloutTone.WARNING)
         EnclyCallout(text = stringResource(R.string.wipe_pin_backups))
         if (info.biometricOn) {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {

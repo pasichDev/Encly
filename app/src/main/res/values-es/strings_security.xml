@@ -78,6 +78,7 @@
     <string name="wipe_pin_row_desc">Un segundo PIN que borra tus notas si lo escribes en la pantalla de bloqueo</string>
     <string name="wipe_pin_row_turned_off">Se desactivó al restablecerse la clave de tu PIN. Vuelve a configurarlo si lo usabas.</string>
     <string name="wipe_pin_intro">Si alguien te obliga a abrir Encly, escribe el PIN de borrado en lugar de tu PIN. Encly borra tus notas, tareas y etiquetas sin dejar señal y se abre como una bóveda vacía. Solo funciona en la pantalla de bloqueo.</string>
+    <string name="wipe_pin_after_erase">Tras el borrado, Encly se abre con el PIN de borrado: pasa a ser el PIN de la nueva bóveda vacía. Tu PIN anterior deja de funcionar, así que quien te vio escribir el PIN de borrado puede volver a abrir Encly con él sin notar nada raro.</string>
     <string name="wipe_pin_backups">Los archivos de copia que ya exportaste no se tocan. Se siguen abriendo con tu frase de recuperación y son la única forma de volver atrás.</string>
     <string name="wipe_pin_biometric_warning">El desbloqueo biométrico sigue activado: alguien puede obligarte a poner el dedo en el sensor. Desactívalo si eso es un riesgo para ti.</string>
     <string name="wipe_pin_biometric_off">Desactivar el desbloqueo biométrico</string>

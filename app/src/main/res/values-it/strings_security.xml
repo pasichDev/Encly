@@ -78,6 +78,7 @@
     <string name="wipe_pin_row_desc">Un secondo PIN che cancella le tue note se lo digiti nella schermata di blocco</string>
     <string name="wipe_pin_row_turned_off">Disattivato quando la chiave del PIN è stata reimpostata. Impostalo di nuovo se ne usavi uno.</string>
     <string name="wipe_pin_intro">Se qualcuno ti costringe ad aprire Encly, digita il PIN di cancellazione invece del tuo PIN. Encly cancella note, attività ed etichette senza lasciare segni e si apre come una cassaforte vuota. Funziona solo nella schermata di blocco.</string>
+    <string name="wipe_pin_after_erase">Dopo la cancellazione, Encly si apre con il PIN di cancellazione: diventa il PIN della nuova cassaforte vuota. Il vecchio PIN smette di funzionare, così chi ti ha visto digitare il PIN di cancellazione può riaprire Encly con esso senza notare nulla di strano.</string>
     <string name="wipe_pin_backups">I file di backup che hai già esportato non vengono toccati. Si aprono ancora con la frase di recupero e sono l\'unico modo per tornare indietro.</string>
     <string name="wipe_pin_biometric_warning">Lo sblocco biometrico resta attivo: qualcuno può costringerti ad appoggiare il dito sul sensore. Disattivalo se per te è un rischio.</string>
     <string name="wipe_pin_biometric_off">Disattiva lo sblocco biometrico</string>

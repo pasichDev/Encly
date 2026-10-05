@@ -78,6 +78,7 @@
     <string name="wipe_pin_row_desc">Um segundo PIN que apaga suas notas quando digitado na tela de bloqueio</string>
     <string name="wipe_pin_row_turned_off">Desativado quando a chave do seu PIN foi redefinida. Defina-o de novo se você usava um.</string>
     <string name="wipe_pin_intro">Se alguém obrigar você a abrir o Encly, digite o PIN de apagamento em vez do seu PIN. O Encly apaga suas notas, tarefas e etiquetas sem deixar sinal e abre como um cofre vazio. Só funciona na tela de bloqueio.</string>
+    <string name="wipe_pin_after_erase">Depois do apagamento, o Encly abre com o PIN de apagamento: ele passa a ser o PIN do novo cofre vazio. Seu PIN antigo deixa de funcionar, então quem viu você digitar o PIN de apagamento pode abrir o Encly com ele de novo sem notar nada estranho.</string>
     <string name="wipe_pin_backups">Os arquivos de backup que você já exportou não são tocados. Eles continuam abrindo com sua frase de recuperação e são o único caminho de volta.</string>
     <string name="wipe_pin_biometric_warning">O desbloqueio biométrico continua ativado: alguém pode forçar seu dedo no sensor. Desative-o se isso for um risco para você.</string>
     <string name="wipe_pin_biometric_off">Desativar desbloqueio biométrico</string>

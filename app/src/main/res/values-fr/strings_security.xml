@@ -78,6 +78,7 @@
     <string name="wipe_pin_row_desc">Un second PIN qui efface vos notes s\'il est saisi sur l\'écran de verrouillage</string>
     <string name="wipe_pin_row_turned_off">Désactivé lors de la réinitialisation de la clé de votre PIN. Définissez-le à nouveau si vous en utilisiez un.</string>
     <string name="wipe_pin_intro">Si quelqu\'un vous force à ouvrir Encly, saisissez le PIN d\'effacement au lieu de votre PIN. Encly efface vos notes, tâches et libellés sans aucun signe et s\'ouvre comme un coffre vide. Cela ne fonctionne que sur l\'écran de verrouillage.</string>
+    <string name="wipe_pin_after_erase">Après l\'effacement, Encly s\'ouvre avec le PIN d\'effacement : il devient le PIN du nouveau coffre vide. Votre ancien PIN ne fonctionne plus. La personne qui vous a vu saisir le PIN d\'effacement peut rouvrir Encly avec et ne remarque rien d\'inhabituel.</string>
     <string name="wipe_pin_backups">Les fichiers de sauvegarde déjà exportés ne sont pas touchés. Ils s\'ouvrent toujours avec votre phrase de récupération et sont le seul moyen de revenir en arrière.</string>
     <string name="wipe_pin_biometric_warning">Le déverrouillage biométrique reste actif : quelqu\'un peut vous forcer à poser le doigt sur le capteur. Désactivez-le si c\'est un risque pour vous.</string>
     <string name="wipe_pin_biometric_off">Désactiver le déverrouillage biométrique</string>

@@ -83,6 +83,7 @@
     <string name="wipe_pin_row_desc">Drugi PIN, który kasuje notatki, gdy wpiszesz go na ekranie blokady</string>
     <string name="wipe_pin_row_turned_off">Wyłączony po zresetowaniu klucza PIN. Ustaw go ponownie, jeśli go używałeś.</string>
     <string name="wipe_pin_intro">Jeśli ktoś zmusza cię do otwarcia Encly, wpisz PIN kasujący zamiast swojego PIN-u. Encly bez żadnego śladu skasuje notatki, zadania i etykiety i otworzy się jako pusty sejf. Działa tylko na ekranie blokady.</string>
+    <string name="wipe_pin_after_erase">Po skasowaniu Encly otwiera się PIN-em kasującym: staje się on PIN-em nowego, pustego sejfu. Twój stary PIN przestaje działać, więc ktoś, kto widział, jak wpisujesz PIN kasujący, może nim znów otworzyć Encly i nie zauważy nic dziwnego.</string>
     <string name="wipe_pin_backups">Wyeksportowane już pliki kopii zapasowych pozostają nietknięte. Nadal otwierają się frazą odzyskiwania i są jedyną drogą powrotu.</string>
     <string name="wipe_pin_biometric_warning">Odblokowanie biometryczne pozostaje włączone: ktoś może zmusić cię do przyłożenia palca do czytnika. Wyłącz je, jeśli to dla ciebie ryzyko.</string>
     <string name="wipe_pin_biometric_off">Wyłącz odblokowanie biometryczne</string>

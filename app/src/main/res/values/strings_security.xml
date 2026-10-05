@@ -73,6 +73,7 @@
     <string name="wipe_pin_row_desc">A second PIN that erases your notes when typed on the lock screen</string>
     <string name="wipe_pin_row_turned_off">Turned off when your PIN key was reset. Set it again if you used one.</string>
     <string name="wipe_pin_intro">If someone makes you open Encly, type the wipe PIN instead of your PIN. Encly erases your notes, tasks and tags without any sign and opens as an empty vault. It works only on the lock screen.</string>
+    <string name="wipe_pin_after_erase">After an erase, Encly opens with the wipe PIN: it becomes the PIN of the new, empty vault. Your old PIN stops working, so whoever saw you type the wipe PIN can open Encly with it again and sees nothing unusual.</string>
     <string name="wipe_pin_backups">Backup files you already exported are not touched. They still open with your recovery phrase and are the only way back.</string>
     <string name="wipe_pin_biometric_warning">Biometric unlock stays on: someone can force your finger onto the sensor. Turn it off if that is a risk for you.</string>
     <string name="wipe_pin_biometric_off">Turn off biometric unlock</string>
