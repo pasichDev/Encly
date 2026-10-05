@@ -8,10 +8,14 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -309,6 +313,43 @@ class TasksScreenTest : ComposeScreenTest() {
         // The sheet with the task's checklist.
         waitForText("Milk")
     }
+
+    @Test
+    fun moveUpAndDownAreOnTheTitleTalkBackFocusesInTheTree() {
+        withShoppingList()
+        show()
+        waitForText("Shop")
+        rule.onNodeWithText("Shop").performClick()
+        waitForText("Milk")
+
+        val milk = rule.onNode(hasText("Milk") and hasClickAction())
+        val eggs = rule.onNode(hasText("Eggs") and hasClickAction())
+        assertEquals(listOf(str(R.string.tag_move_down)), customActions(milk))
+        assertEquals(listOf(str(R.string.tag_move_up)), customActions(eggs))
+
+        // And they move the row.
+        rule.runOnIdle {
+            milk.fetchSemanticsNode().config[SemanticsActions.CustomActions].single().action()
+        }
+        waitFor { app.tasks.subtasks.value.sortedBy { it.position }.map { it.title } == listOf("Eggs", "Milk") }
+    }
+
+    @Test
+    fun moveUpAndDownAreOnTheDragHandlesInTheSheet() {
+        withShoppingList()
+        show()
+        waitForText("Shop")
+        rule.onNodeWithContentDescription(str(R.string.task_edit_placeholder)).performClick()
+        waitForText(str(R.string.task_delete))
+        waitForText("Milk")
+
+        val handles = rule.onAllNodesWithContentDescription(str(R.string.tag_drag_handle))
+        assertEquals(listOf(str(R.string.tag_move_down)), customActions(handles[0]))
+        assertEquals(listOf(str(R.string.tag_move_up)), customActions(handles[1]))
+    }
+
+    private fun customActions(node: SemanticsNodeInteraction): List<String> =
+        node.fetchSemanticsNode().config.getOrNull(SemanticsActions.CustomActions).orEmpty().map { it.label }
 
     private fun withShoppingList(vararg more: Subtask) {
         app.withTasks(Task(id = 1, title = "Shop"))

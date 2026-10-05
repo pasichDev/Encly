@@ -28,6 +28,30 @@ internal object SubtaskDrafts {
     }
 
     /**
+     * [rows] with the one whose id is [movedId] moved to where the one with [targetId] is; null
+     * when either is not among them (deleted meanwhile). Unchanged when they are the same.
+     */
+    fun moveById(rows: List<Subtask>, movedId: Long, targetId: Long): List<Subtask>? {
+        val from = rows.indexOfFirst { it.id == movedId }
+        val to = rows.indexOfFirst { it.id == targetId }
+        if (from < 0 || to < 0) return null
+        return if (from == to) rows else rows.toMutableList().apply { add(to, removeAt(from)) }
+    }
+
+    /**
+     * After [saved] was stored as [stored] (a save in the order [toSubtasks] gives), the stored
+     * row of each saved draft, by the draft's key. A row whose title does not match (the
+     * checklist changed under the save) is left out.
+     */
+    fun storedRows(saved: List<SubtaskDraft>, stored: List<Subtask>): Map<Long, Subtask> {
+        val kept = saved.filter { it.title.isNotBlank() }
+        if (kept.size != stored.size) return emptyMap()
+        return kept.zip(stored)
+            .filter { (draft, row) -> draft.title.trim() == row.title }
+            .associate { (draft, row) -> draft.key to row }
+    }
+
+    /**
      * The rows to store for [taskId], in this order. A row left blank is dropped, like a task
      * without a title is never saved.
      */

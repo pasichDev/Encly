@@ -159,9 +159,13 @@ internal class FakeTasksRepository(initial: List<Task> = emptyList()) : TasksRep
     }
 
     override suspend fun getSubtasks(taskId: Long): Result<List<Subtask>> =
-        Result.success(subtasks.value.filter { it.taskId == taskId })
+        Result.success(subtasks.value.filter { it.taskId == taskId }.sortedBy { it.position })
 
-    override suspend fun saveSubtasks(taskId: Long, subtasks: List<Subtask>): Result<Unit> = Result.success(Unit)
+    override suspend fun saveSubtasks(taskId: Long, subtasks: List<Subtask>): Result<Unit> {
+        val saved = subtasks.mapIndexed { index, row -> row.copy(taskId = taskId, position = index) }
+        this.subtasks.update { list -> list.filterNot { it.taskId == taskId } + saved }
+        return Result.success(Unit)
+    }
 
     override suspend fun restoreTask(task: Task, subtasks: List<Subtask>): Result<Unit> {
         tasks.update { it + task }

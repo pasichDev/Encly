@@ -14,6 +14,7 @@ import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.presentation.dialogs.tasks.SUBTASK_TITLE_MAX_LENGTH
+import com.pasich.encly.presentation.dialogs.tasks.SubtaskListState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -125,6 +126,14 @@ class TasksViewModel @Inject constructor(
     val editingSubtasks: StateFlow<List<SubtaskDraft>?> = _editingSubtasks.asStateFlow()
 
     /**
+     * The sheet's checklist as it is being edited. Held here rather than in the sheet, so a
+     * configuration change (rotation) keeps it exactly as it was, including the ids rows got
+     * from a background save meanwhile.
+     */
+    var checklist: SubtaskListState by mutableStateOf(SubtaskListState(emptyList()))
+        private set
+
+    /**
      * A task whose last open sub-task was just ticked, so the screen can offer to complete it
      * with one tap. The task is never completed without that tap.
      */
@@ -133,7 +142,7 @@ class TasksViewModel @Inject constructor(
 
     /**
      * Tasks whose sub-task tree is open on the list (all closed at first). Kept in the saved
-     * state, so a rotation keeps them open; ids of tasks that are gone are dropped.
+     * state, so a rotation keeps them open; a task deleted here is dropped from it.
      */
     private val _expandedTaskIds =
         MutableStateFlow(savedStateHandle.get<LongArray>(KEY_EXPANDED_TASKS)?.toSet().orEmpty())
@@ -167,6 +176,9 @@ class TasksViewModel @Inject constructor(
 
     private var tasksJob: Job? = null
 
+    /** Whether the open trees restored from the saved state were checked against the first list. */
+    private var restoredTreesChecked = false
+
     init {
         observeTasks()
         clearOnLock(lockEvents) {
@@ -175,6 +187,7 @@ class TasksViewModel @Inject constructor(
             _uiState.value = TasksUiState()
             _editingTask.value = null
             _editingSubtasks.value = emptyList()
+            checklist = SubtaskListState(emptyList())
             deletedSubtasks.clear()
             _showAddTaskDialog.value = false
             inlineEdit = null
@@ -194,16 +207,25 @@ class TasksViewModel @Inject constructor(
                     .copy(subtasks = subtasks.groupBy { it.taskId })
             }.collect { newState ->
                 _uiState.value = newState
+                if (!restoredTreesChecked) {
+                    restoredTreesChecked = true
+                    forgetTreesOtherThan(newState)
+                }
                 dropGoneListState(newState)
             }
         }
     }
 
-    /** Forgets open trees and the inline field of tasks (or a renamed sub-task) that are gone. */
+    /**
+     * Closes the inline field of a task (or a renamed sub-task) that is gone. Open trees are not
+     * pruned on every list update: the lists and counts arrive one by one, so completing or
+     * reopening a task passes through a state where it is in neither list. They are checked once
+     * against the first list (ids restored from the saved state) and dropped where a task is
+     * deleted ([deleteTask], [clearCompletedTasks]); an id of a task deleted elsewhere only
+     * matches nothing.
+     */
     private fun dropGoneListState(state: TasksUiState) {
         val ids = (state.activeTasks + state.completedTasks).mapTo(HashSet()) { it.id }
-        val expanded = _expandedTaskIds.value
-        if (!ids.containsAll(expanded)) setExpanded(expanded.filterTo(LinkedHashSet()) { it in ids })
         val target = inlineEdit?.target ?: return
         val renamedGone = target is InlineSubtaskTarget.Rename &&
             state.subtasks[target.taskId].orEmpty().none { it.id == target.subtaskId }
@@ -234,19 +256,27 @@ class TasksViewModel @Inject constructor(
         return true
     }
 
-    /** Drag or "Move up/down" in a task's open tree: stores the new order, keeping each row's identity. */
-    fun moveSubtask(taskId: Long, from: Int, to: Int) {
+    /**
+     * Drag or "Move up/down" in a task's open tree: moves the sub-task [movedId] to where
+     * [targetId] is in the stored order, keeping each row's identity. Ids rather than positions,
+     * so a row deleted (or added) meanwhile cannot make another one move. [onFailed] runs when
+     * nothing was stored (a row is gone, or the write failed), so the tree can show the stored
+     * order again.
+     */
+    fun moveSubtask(taskId: Long, movedId: Long, targetId: Long, onFailed: () -> Unit = {}) {
         commitInlineEdit()
         launchSubtaskWrite {
-            val rows = tasksRepository.getSubtasks(taskId).getOrNull() ?: return@launchSubtaskWrite
-            if (from !in rows.indices || to !in rows.indices || from == to) return@launchSubtaskWrite
-            val moved = rows.toMutableList().apply { add(to, removeAt(from)) }
-            if (tasksRepository.saveSubtasks(
-                    taskId,
-                    moved,
-                ).isFailure
-            ) {
-                _operationFailures.emit(TaskOperationFailure.UPDATE)
+            val rows = tasksRepository.getSubtasks(taskId).getOrNull()
+            val moved = rows?.let { SubtaskDrafts.moveById(it, movedId, targetId) }
+            when {
+                moved == null -> later(onFailed)
+
+                moved == rows -> Unit
+
+                tasksRepository.saveSubtasks(taskId, moved).isFailure -> {
+                    failed(TaskOperationFailure.UPDATE)
+                    later(onFailed)
+                }
             }
         }
     }
@@ -308,7 +338,7 @@ class TasksViewModel @Inject constructor(
     /** Undo for a sub-task deleted from the list: back at its position, with its uid. */
     fun restoreSubtask(subtask: Subtask) {
         launchSubtaskWrite {
-            if (tasksRepository.restoreSubtask(subtask).isFailure) _operationFailures.emit(TaskOperationFailure.UPDATE)
+            if (tasksRepository.restoreSubtask(subtask).isFailure) failed(TaskOperationFailure.UPDATE)
         }
     }
 
@@ -339,7 +369,7 @@ class TasksViewModel @Inject constructor(
         val title = edit.text.trim()
         val original = edit.original
         launchSubtaskWrite {
-            val failed = when {
+            val writeFailed = when {
                 original == null -> title.isNotEmpty() &&
                     tasksRepository.addSubtask(edit.target.taskId, title).isFailure
 
@@ -349,7 +379,7 @@ class TasksViewModel @Inject constructor(
 
                 else -> false
             }
-            if (failed) _operationFailures.emit(TaskOperationFailure.UPDATE)
+            if (writeFailed) failed(TaskOperationFailure.UPDATE)
         }
     }
 
@@ -358,26 +388,47 @@ class TasksViewModel @Inject constructor(
      * sub-task of an open task leaves only done ones, so it offers to complete the task too,
      * like ticking it would.
      */
-    private suspend fun deleteSubtaskWithUndo(subtask: Subtask): Boolean {
+    private suspend fun PendingEvents.deleteSubtaskWithUndo(subtask: Subtask): Boolean {
         val deleted = tasksRepository.deleteSubtask(subtask.id).isSuccess
         if (deleted) {
-            _subtaskDeletions.emit(subtask)
+            events += PendingEvent.Deleted(subtask)
             offerCompletionAfterDelete(subtask)
         }
         return deleted
     }
 
-    private suspend fun offerCompletionAfterDelete(deleted: Subtask) {
+    private suspend fun PendingEvents.offerCompletionAfterDelete(deleted: Subtask) {
         val after = tasksRepository.getSubtasks(deleted.taskId).getOrNull() ?: return
-        val state = uiState.value
-        val task = (state.activeTasks + state.completedTasks).find { it.id == deleted.taskId }
+        val task = findTask(deleted.taskId)
         if (task != null && SubtaskDrafts.offersCompletion(task.isCompleted, after + deleted, after)) {
-            _completionOffers.emit(task.id)
+            events += PendingEvent.Offer(task.id)
         }
     }
 
-    private fun launchSubtaskWrite(write: suspend () -> Unit) {
-        viewModelScope.launch { subtaskMutex.withLock { write() } }
+    private fun findTask(taskId: Long): Task? = uiState.value.let { state ->
+        (state.activeTasks + state.completedTasks).find { it.id == taskId }
+    }
+
+    /**
+     * Runs [write] under [subtaskMutex], then tells the screen what it did. The snackbars wait
+     * for one another, so their flows can suspend: sent inside the lock, a backlog would hold
+     * every later sub-task write, the sheet's load and the background save behind it.
+     */
+    private fun launchSubtaskWrite(write: suspend PendingEvents.() -> Unit) {
+        viewModelScope.launch {
+            val events = PendingEvents()
+            subtaskMutex.withLock { events.write() }
+            events.events.forEach { send(it) }
+        }
+    }
+
+    private suspend fun send(event: PendingEvent) {
+        when (event) {
+            is PendingEvent.Failure -> _operationFailures.emit(event.failure)
+            is PendingEvent.Deleted -> _subtaskDeletions.emit(event.subtask)
+            is PendingEvent.Offer -> _completionOffers.emit(event.taskId)
+            is PendingEvent.Then -> event.action()
+        }
     }
 
     fun showAddTaskDialog() {
@@ -385,6 +436,7 @@ class TasksViewModel @Inject constructor(
         subtasksJob?.cancel()
         _editingTask.value = null
         _editingSubtasks.value = emptyList()
+        checklist = SubtaskListState(emptyList())
         _showAddTaskDialog.value = true
     }
 
@@ -395,11 +447,16 @@ class TasksViewModel @Inject constructor(
         // Unknown until loaded: a sheet saved before then leaves the stored checklist alone,
         // and one that fails to load never overwrites it with an empty list.
         _editingSubtasks.value = null
+        val sheet = SubtaskListState(null).also { checklist = it }
         _showAddTaskDialog.value = true
         subtasksJob = viewModelScope.launch {
             // After any list write still in flight, so the sheet shows it.
             subtaskMutex.withLock { tasksRepository.getSubtasks(task.id) }
-                .onSuccess { _editingSubtasks.value = SubtaskDrafts.fromSubtasks(it) }
+                .onSuccess {
+                    val drafts = SubtaskDrafts.fromSubtasks(it)
+                    _editingSubtasks.value = drafts
+                    sheet.load(drafts)
+                }
         }
     }
 
@@ -408,6 +465,7 @@ class TasksViewModel @Inject constructor(
         _showAddTaskDialog.value = false
         _editingTask.value = null
         _editingSubtasks.value = emptyList()
+        checklist = SubtaskListState(emptyList())
     }
 
     fun addTask(
@@ -500,20 +558,40 @@ class TasksViewModel @Inject constructor(
     fun saveDraftForBackground(draft: TaskDraft) {
         if (draft.title.isBlank() || !_showAddTaskDialog.value) return
         viewModelScope.launch {
-            draftMutex.withLock { persistDraft(draft) }
+            val events = PendingEvents()
+            draftMutex.withLock { events.persistDraft(draft) }
+            events.events.forEach { send(it) }
         }
     }
 
-    private suspend fun persistDraft(draft: TaskDraft) {
+    /**
+     * Stores the draft, then makes the sheet match what was stored: the rows it saved take
+     * their ids (and uids), so the next save, background or Save, updates them instead of
+     * adding them again, and [editingSubtasks] is the stored checklist.
+     */
+    private suspend fun PendingEvents.persistDraft(draft: TaskDraft) {
+        val sheet = checklist
         val taskId = persistDraftTask(draft) ?: return
         val subtasks = draft.subtasks ?: return
-        if (tasksRepository.saveSubtasks(taskId, SubtaskDrafts.toSubtasks(taskId, subtasks)).isFailure) {
-            _operationFailures.emit(TaskOperationFailure.UPDATE)
+        val stored = storeDraftSubtasks(taskId, subtasks)
+        // Only while the sheet that was saved is still the one open on this task.
+        if (stored != null && sheet === checklist && _editingTask.value?.id == taskId) {
+            _editingSubtasks.value = SubtaskDrafts.fromSubtasks(stored)
+            sheet.adoptStored(SubtaskDrafts.storedRows(subtasks, stored))
         }
+    }
+
+    /** Stores the draft's checklist; the stored rows, or null when the write failed. */
+    private suspend fun PendingEvents.storeDraftSubtasks(taskId: Long, subtasks: List<SubtaskDraft>): List<Subtask>? {
+        if (tasksRepository.saveSubtasks(taskId, SubtaskDrafts.toSubtasks(taskId, subtasks)).isFailure) {
+            failed(TaskOperationFailure.UPDATE)
+            return null
+        }
+        return tasksRepository.getSubtasks(taskId).getOrNull()
     }
 
     /** Inserts or updates the draft's task; its id, or null when the write failed. */
-    private suspend fun persistDraftTask(draft: TaskDraft): Long? {
+    private suspend fun PendingEvents.persistDraftTask(draft: TaskDraft): Long? {
         val description = draft.description.ifBlank { null }
         val editing = _editingTask.value
         if (editing == null) {
@@ -524,7 +602,7 @@ class TasksViewModel @Inject constructor(
             )
             return tasksRepository.insertTask(task)
                 .onSuccess { id -> _editingTask.value = task.copy(id = id) }
-                .onFailure { _operationFailures.emit(TaskOperationFailure.CREATE) }
+                .onFailure { failed(TaskOperationFailure.CREATE) }
                 .getOrNull()
         }
         val updated = editing.copy(
@@ -533,7 +611,7 @@ class TasksViewModel @Inject constructor(
             priority = draft.priority,
         )
         val saved = updated == editing || tasksRepository.updateTask(updated).isSuccess
-        if (saved) _editingTask.value = updated else _operationFailures.emit(TaskOperationFailure.UPDATE)
+        if (saved) _editingTask.value = updated else failed(TaskOperationFailure.UPDATE)
         return editing.id.takeIf { saved }
     }
 
@@ -552,19 +630,18 @@ class TasksViewModel @Inject constructor(
      */
     fun toggleSubtask(subtask: Subtask, done: Boolean) {
         commitInlineEdit()
-        viewModelScope.launch {
-            subtaskMutex.withLock {
-                if (tasksRepository.setSubtaskCompleted(subtask.id, done).isFailure) {
-                    _operationFailures.emit(TaskOperationFailure.STATUS_UPDATE)
-                    return@withLock
-                }
-                val after = tasksRepository.getSubtasks(subtask.taskId).getOrNull() ?: return@withLock
-                val before = after.map { if (it.id == subtask.id) it.copy(isCompleted = !done) else it }
-                val state = uiState.value
-                val task = (state.activeTasks + state.completedTasks).find { it.id == subtask.taskId }
-                if (task != null && SubtaskDrafts.offersCompletion(task.isCompleted, before, after)) {
-                    _completionOffers.emit(task.id)
-                }
+        launchSubtaskWrite {
+            val before = tasksRepository.getSubtasks(subtask.taskId).getOrNull()
+            // Already stored that way (a second tap of a double tap): nothing to save or offer.
+            if (before?.find { it.id == subtask.id }?.isCompleted == done) return@launchSubtaskWrite
+            if (tasksRepository.setSubtaskCompleted(subtask.id, done).isFailure) {
+                failed(TaskOperationFailure.STATUS_UPDATE)
+                return@launchSubtaskWrite
+            }
+            val after = tasksRepository.getSubtasks(subtask.taskId).getOrNull() ?: return@launchSubtaskWrite
+            val task = findTask(subtask.taskId)
+            if (task != null && before != null && SubtaskDrafts.offersCompletion(task.isCompleted, before, after)) {
+                events += PendingEvent.Offer(task.id)
             }
         }
     }
@@ -575,6 +652,7 @@ class TasksViewModel @Inject constructor(
             val subtasks = tasksRepository.getSubtasks(task.id).getOrDefault(emptyList())
             if (tasksRepository.deleteTaskById(task.id).isSuccess) {
                 deletedSubtasks[task.id] = subtasks
+                forgetTrees(setOf(task.id))
                 hideAddTaskDialog()
                 _deletedTasks.emit(task)
             } else {
@@ -597,7 +675,9 @@ class TasksViewModel @Inject constructor(
 
     fun clearCompletedTasks(onSuccess: () -> Unit) {
         viewModelScope.launch {
+            val completed = uiState.value.completedTasks.mapTo(HashSet()) { it.id }
             if (tasksRepository.deleteAllCompletedTasks().isSuccess) {
+                forgetTrees(completed)
                 onSuccess()
             } else {
                 _operationFailures.emit(TaskOperationFailure.CLEAR_COMPLETED)
@@ -605,8 +685,44 @@ class TasksViewModel @Inject constructor(
         }
     }
 
+    private fun forgetTreesOtherThan(state: TasksUiState) {
+        val ids = (state.activeTasks + state.completedTasks).mapTo(HashSet()) { it.id }
+        val expanded = _expandedTaskIds.value
+        if (!ids.containsAll(expanded)) setExpanded(expanded.filterTo(LinkedHashSet()) { it in ids })
+    }
+
+    private fun forgetTrees(taskIds: Set<Long>) {
+        val expanded = _expandedTaskIds.value
+        if (expanded.any { it in taskIds }) setExpanded(expanded.filterNotTo(LinkedHashSet()) { it in taskIds })
+    }
+
     fun onFilterSelected(filter: TaskFilter) {
         commitInlineEdit()
         _uiState.value = TaskFilterEngine.select(_uiState.value, filter)
+    }
+}
+
+/** What a write tells the screen once it has left its lock (see launchSubtaskWrite). */
+private sealed interface PendingEvent {
+    data class Failure(val failure: TaskOperationFailure) : PendingEvent
+
+    data class Deleted(val subtask: Subtask) : PendingEvent
+
+    data class Offer(val taskId: Long) : PendingEvent
+
+    /** A callback of the caller's, such as resetting a tree whose move was not stored. */
+    class Then(val action: () -> Unit) : PendingEvent
+}
+
+/** The events one write collects while it holds its lock. */
+private class PendingEvents {
+    val events = mutableListOf<PendingEvent>()
+
+    fun failed(failure: TaskOperationFailure) {
+        events += PendingEvent.Failure(failure)
+    }
+
+    fun later(action: () -> Unit) {
+        events += PendingEvent.Then(action)
     }
 }

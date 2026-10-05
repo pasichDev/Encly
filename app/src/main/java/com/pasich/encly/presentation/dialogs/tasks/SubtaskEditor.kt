@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import com.pasich.encly.R
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.presentation.designsystem.CheckboxSize
 import com.pasich.encly.presentation.designsystem.EnclyCheckbox
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -53,7 +54,7 @@ internal const val SUBTASK_TITLE_MAX_LENGTH = 100
  * loaded) and the text of the "add" field.
  */
 @Stable
-internal class SubtaskListState(initial: List<SubtaskDraft>?) {
+class SubtaskListState(initial: List<SubtaskDraft>?) {
     var subtasks by mutableStateOf(initial)
         private set
     var newTitle by mutableStateOf("")
@@ -65,6 +66,18 @@ internal class SubtaskListState(initial: List<SubtaskDraft>?) {
     /** Takes an edited task's rows once they arrive, after the sheet opened. */
     fun load(loaded: List<SubtaskDraft>?) {
         if (subtasks == null && loaded != null) subtasks = loaded
+    }
+
+    /**
+     * A background save stored the rows: each new row in [stored] (by its key) takes the id and
+     * uid it got, so the next save updates it rather than adding it again. Edits made since are
+     * kept.
+     */
+    fun adoptStored(stored: Map<Long, Subtask>) {
+        subtasks = subtasks?.map { row ->
+            val saved = stored[row.key]
+            if (saved != null && row.id == 0L) row.copy(id = saved.id, uid = saved.uid) else row
+        }
     }
 
     /** The checklist to save: a title still in the "add" field counts as a new sub-task. */
@@ -145,26 +158,24 @@ private fun ReorderableScope.SubtaskRow(
 ) {
     val moveUpLabel = stringResource(R.string.tag_move_up)
     val moveDownLabel = stringResource(R.string.tag_move_down)
+    // On the drag handle, a node TalkBack focuses (the row itself is not one).
+    val moves = listOfNotNull(
+        moveUp?.let { up ->
+            CustomAccessibilityAction(moveUpLabel) {
+                up()
+                true
+            }
+        },
+        moveDown?.let { down ->
+            CustomAccessibilityAction(moveDownLabel) {
+                down()
+                true
+            }
+        },
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics {
-                customActions = listOfNotNull(
-                    moveUp?.let { up ->
-                        CustomAccessibilityAction(moveUpLabel) {
-                            up()
-                            true
-                        }
-                    },
-                    moveDown?.let { down ->
-                        CustomAccessibilityAction(moveDownLabel) {
-                            down()
-                            true
-                        }
-                    },
-                )
-            },
+        modifier = Modifier.fillMaxWidth(),
     ) {
         EnclyCheckbox(
             checked = subtask.isCompleted,
@@ -186,19 +197,25 @@ private fun ReorderableScope.SubtaskRow(
                 modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
             )
         }
-        DragHandle(Modifier.draggableHandle())
+        DragHandle(moves = moves, modifier = Modifier.draggableHandle())
     }
 }
 
-/** The grip a row is dragged by; [modifier] carries the reorderable drag gesture. */
+/**
+ * The grip a row is dragged by; [modifier] carries the reorderable drag gesture, and [moves]
+ * the same moves for TalkBack.
+ */
 @Composable
-private fun DragHandle(modifier: Modifier = Modifier) {
+private fun DragHandle(moves: List<CustomAccessibilityAction>, modifier: Modifier = Modifier) {
     val description = stringResource(R.string.tag_drag_handle)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(EnclyTheme.spacing.minTouchTarget)
-            .semantics { contentDescription = description },
+            .semantics {
+                contentDescription = description
+                customActions = moves
+            },
     ) {
         Icon(
             EnclyIcons.Grip,

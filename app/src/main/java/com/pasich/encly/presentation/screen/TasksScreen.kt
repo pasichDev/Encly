@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.screen
 
 import android.content.Context
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -68,7 +69,7 @@ fun TasksScreen(
     val listState = rememberTasksListState(uiState)
     val list = TasksListState(uiState, viewModel.expandedTaskIds.collectAsState().value, viewModel.inlineEdit)
     val itemActions = remember(viewModel) { taskItemActions(viewModel) }
-    // Backgrounding re-locks the vault and drops this screen: save the inline field first.
+    // Backgrounding re-locks the vault and drops this screen: save the inline field first (see OnPause).
     OnPause(viewModel::flushInlineEditForBackground)
     FoldTreesOnBack(list, viewModel::collapseLastExpanded)
 
@@ -110,7 +111,7 @@ fun TasksScreen(
                 onEditTask = viewModel::editTask,
                 onBackgroundSave = viewModel::saveDraftForBackground,
                 onDeleteTask = viewModel::deleteTask,
-                editSubtasks = viewModel.editingSubtasks.collectAsState().value,
+                subtasks = viewModel.checklist,
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             )
         }
@@ -129,14 +130,19 @@ private fun TasksFab(listState: LazyListState, onClick: () -> Unit) {
     EnclyFab(text = stringResource(R.string.task_add), icon = EnclyIcons.Plus, expanded = expanded, onClick = onClick)
 }
 
-/** Runs [action] whenever the screen's lifecycle pauses (the app leaves the foreground). */
+/**
+ * Runs [action] whenever the screen's lifecycle pauses because the app leaves the foreground,
+ * not for a configuration change (the activity is only recreated). ON_PAUSE comes well before
+ * the re-lock: that waits for the process to stop and then for the auto-lock delay.
+ */
 @Composable
 private fun OnPause(action: () -> Unit) {
     val currentAction by rememberUpdatedState(action)
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
+    val activity = LocalActivity.current
+    DisposableEffect(lifecycleOwner, activity) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_PAUSE) currentAction()
+            if (event == Lifecycle.Event.ON_PAUSE && activity?.isChangingConfigurations != true) currentAction()
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }

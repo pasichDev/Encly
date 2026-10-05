@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.components.tasks
 
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
@@ -32,7 +34,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import com.pasich.encly.R
 import com.pasich.encly.data.model.Subtask
@@ -69,8 +70,11 @@ class SubtaskTreeActions(
     val onToggle: (Subtask, Boolean) -> Unit,
     val onStartAdding: (taskId: Long) -> Unit,
     val onStartRenaming: (Subtask) -> Unit,
-    /** Drag or "Move up/down" within the task's tree. */
-    val onMove: (taskId: Long, from: Int, to: Int) -> Unit,
+    /**
+     * Drag or "Move up/down" within the task's tree: the sub-task [movedId] takes the place of
+     * [targetId]. The tree calls [onFailed] back when the new order was not stored.
+     */
+    val onMove: (taskId: Long, movedId: Long, targetId: Long, onFailed: () -> Unit) -> Unit,
     /** The chevron: opens the whole tree, or folds it back to the next step. */
     val onToggleTree: (taskId: Long) -> Unit,
     val inline: InlineSubtaskActions,
@@ -158,33 +162,35 @@ internal fun SubtaskTree(
     enabled: Boolean = true,
 ) {
     val haptics = LocalHapticFeedback.current
-    // Shows a dropped row in its new place until the stored order comes back.
-    var rows by remember(subtasks) { mutableStateOf(subtasks) }
+    // Shows a dropped row in its new place until the stored order comes back (see moveRow).
+    val rows = remember(subtasks) { mutableStateOf(subtasks) }
+    val currentSubtasks by rememberUpdatedState(subtasks)
     val collapse = stringResource(R.string.subtasks_hide)
     val chevron: @Composable () -> Unit = {
         EnclyExpandButton(expanded = true, contentDescription = collapse, onClick = { actions.onToggleTree(taskId) })
     }
     val move = { from: Int, to: Int ->
-        rows = rows.toMutableList().apply { add(to, removeAt(from)) }
-        actions.onMove(taskId, from, to)
+        rows.moveRow(from, to) { moved, target ->
+            actions.onMove(taskId, moved, target) { rows.value = currentSubtasks }
+        }
     }
     Column(modifier = modifier) {
         ReorderableColumn(
-            list = rows,
+            list = rows.value,
             onSettle = move,
             onMove = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
         ) { index, subtask, dragging ->
             key(subtask.id) {
                 val renaming = edit != null && edit.target == InlineSubtaskTarget.Rename(taskId, subtask.id)
-                val reorder = Modifier
-                    .longPressDraggableHandle(
-                        enabled = enabled && !renaming,
-                        onDragStarted = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
-                    )
-                    .moveActions(
-                        moveUp = { move(index, index - 1) }.takeIf { index > 0 },
-                        moveDown = { move(index, index + 1) }.takeIf { index < rows.lastIndex },
-                    )
+                val reorder = Modifier.longPressDraggableHandle(
+                    enabled = enabled && !renaming,
+                    onDragStarted = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+                )
+                // Given to the title: the node TalkBack focuses (a plain row is not one).
+                val moves = moveActions(
+                    moveUp = { move(index, index - 1) }.takeIf { index > 0 },
+                    moveDown = { move(index, index + 1) }.takeIf { index < rows.value.lastIndex },
+                )
                 if (renaming) {
                     RenameField(subtask, edit, actions, enabled)
                 } else {
@@ -199,6 +205,7 @@ internal fun SubtaskTree(
                         enabled = enabled,
                         onClick = { actions.onStartRenaming(subtask) },
                         onClickLabel = stringResource(R.string.edit),
+                        customActions = moves,
                         dragging = dragging,
                         trailing = chevron.takeIf { index == 0 },
                     )
@@ -211,34 +218,41 @@ internal fun SubtaskTree(
             actions,
             enabled,
             first = subtasks.isEmpty(),
-            trailing = chevron.takeIf {
-                subtasks.isEmpty()
-            },
+            trailing = chevron.takeIf { subtasks.isEmpty() },
         )
     }
 }
 
+/**
+ * Moves the row at [from] to [to] at once and asks [store] to store that by ids (the moved row
+ * and the one whose place it takes); the caller puts the stored order back if that fails.
+ */
+private fun MutableState<List<Subtask>>.moveRow(from: Int, to: Int, store: (movedId: Long, targetId: Long) -> Unit) {
+    val current = value
+    if (from !in current.indices || to !in current.indices || from == to) return
+    value = current.toMutableList().apply { add(to, removeAt(from)) }
+    store(current[from].id, current[to].id)
+}
+
 /** "Move up" and "Move down" for TalkBack, where the row can move that way. */
 @Composable
-private fun Modifier.moveActions(moveUp: (() -> Unit)?, moveDown: (() -> Unit)?): Modifier {
+private fun moveActions(moveUp: (() -> Unit)?, moveDown: (() -> Unit)?): List<CustomAccessibilityAction> {
     val up = stringResource(R.string.tag_move_up)
     val down = stringResource(R.string.tag_move_down)
-    return semantics {
-        customActions = listOfNotNull(
-            moveUp?.let { action ->
-                CustomAccessibilityAction(up) {
-                    action()
-                    true
-                }
-            },
-            moveDown?.let { action ->
-                CustomAccessibilityAction(down) {
-                    action()
-                    true
-                }
-            },
-        )
-    }
+    return listOfNotNull(
+        moveUp?.let { action ->
+            CustomAccessibilityAction(up) {
+                action()
+                true
+            }
+        },
+        moveDown?.let { action ->
+            CustomAccessibilityAction(down) {
+                action()
+                true
+            }
+        },
+    )
 }
 
 /** The add leaf (└ + Sub-task, or + First step), or the inline field it turned into. */
@@ -318,6 +332,9 @@ private fun InlineSubtaskField(
     var focused by remember { mutableStateOf(false) }
     val currentActions by rememberUpdatedState(actions)
     val close = { currentActions.onClose(target) }
+    // A rotation disposes the field, which takes its focus away: that is not the user leaving it
+    // (the field lives in the ViewModel and comes back open, with its text).
+    val activity = LocalActivity.current
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     BackHandler(onBack = close)
@@ -342,7 +359,7 @@ private fun InlineSubtaskField(
                     focused = true
                 } else if (focused) {
                     focused = false
-                    close()
+                    if (activity?.isChangingConfigurations != true) close()
                 }
             },
         done = done,

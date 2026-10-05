@@ -3,7 +3,9 @@ package com.pasich.encly.presentation.viewmodel
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
+import com.pasich.encly.presentation.dialogs.tasks.SubtaskListState
 import com.pasich.encly.testutil.TestTasksRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -18,6 +20,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -256,6 +259,119 @@ class TasksViewModelSubtasksTest {
 
         val trip = repository.tasks.value.single { it.title == "Trip" }
         assertEquals(listOf("Tickets"), repository.subtasks.value.filter { it.taskId == trip.id }.map { it.title })
+    }
+
+    @Test
+    fun aRotationAfterABackgroundSaveKeepsTheNewTasksSheetAsItWas() = runTest(dispatcher) {
+        // The sheet's checklist lives in the ViewModel, so the recreated sheet gets the same one.
+        viewModel.showAddTaskDialog()
+        val sheet = viewModel.checklist
+        sheet.addRow("Tickets")
+        sheet.addRow("Hotel")
+        sheet.changeNewTitle("Pass")
+
+        // Rotating pauses the activity: the sheet is saved in the background.
+        viewModel.saveDraftForBackground(TaskDraft("Trip", "", 0, sheet.toSave()))
+        advanceUntilIdle()
+        val trip = repository.tasks.value.single { it.title == "Trip" }
+        val flushed = repository.subtasks.value.filter { it.taskId == trip.id }
+        assertEquals(listOf("Tickets", "Hotel", "Pass"), flushed.map { it.title })
+        assertEquals(SubtaskDrafts.fromSubtasks(flushed), viewModel.editingSubtasks.value)
+
+        // The recreated sheet shows what was there; the user goes on editing, then saves.
+        assertSame(sheet, viewModel.checklist)
+        assertEquals(listOf("Tickets", "Hotel"), sheet.subtasks?.map { it.title })
+        sheet.remove(sheet.subtasks!!.first { it.title == "Tickets" }.key)
+        sheet.setChecked(sheet.subtasks!!.first { it.title == "Hotel" }.key, true)
+        viewModel.editTask(trip.id, "Trip", null, priority = 0, subtasks = sheet.toSave())
+        advanceUntilIdle()
+
+        val rows = repository.subtasks.value.filter { it.taskId == trip.id }.sortedBy { it.position }
+        assertEquals(listOf("Hotel", "Pass"), rows.map { it.title })
+        assertTrue(rows.first().isCompleted)
+        // The row the background save stored is updated, not stored again.
+        assertEquals(flushed.single { it.title == "Hotel" }.uid, rows.first().uid)
+    }
+
+    @Test
+    fun aRotationAfterABackgroundSaveKeepsAnEditedTasksSheetAsItWas() = runTest(dispatcher) {
+        viewModel.showEditTaskDialog(repository.tasks.value.first())
+        advanceUntilIdle()
+        val sheet = viewModel.checklist
+        sheet.setTitle(10, "Oat milk")
+        sheet.addRow("Bread")
+
+        viewModel.saveDraftForBackground(TaskDraft("Shop", "", 0, sheet.toSave()))
+        advanceUntilIdle()
+        val bread = repository.subtasks.value.single { it.title == "Bread" }
+        assertEquals(bread.id, sheet.subtasks!!.single { it.title == "Bread" }.id)
+
+        // After the rotation: a deleted row stays deleted, a renamed one renamed, a tick kept.
+        sheet.remove(11)
+        sheet.setChecked(sheet.subtasks!!.single { it.title == "Bread" }.key, true)
+        viewModel.editTask(1, "Shop", null, priority = 0, subtasks = sheet.toSave())
+        advanceUntilIdle()
+
+        val rows = repository.subtasks.value.filter { it.taskId == 1L }.sortedBy { it.position }
+        assertEquals(listOf("Oat milk", "Bread"), rows.map { it.title })
+        assertEquals(listOf("u10", bread.uid), rows.map { it.uid })
+        assertEquals(listOf(true, true), rows.map { it.isCompleted })
+    }
+
+    @Test
+    fun aDoubleTapOnTheLastOpenCheckboxOffersToCompleteOnce() = runTest(dispatcher) {
+        val offers = collectOffers()
+        advanceUntilIdle()
+        val eggs = viewModel.uiState.value.subtasks.getValue(1L)[1]
+
+        // Both taps come from the same row, still drawn open.
+        viewModel.toggleSubtask(eggs, done = true)
+        viewModel.toggleSubtask(eggs, done = true)
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L), offers)
+        assertTrue(repository.subtasks.value.single { it.id == 11L }.isCompleted)
+    }
+
+    @Test
+    fun snackbarsWaitingToBeShownDoNotHoldUpSubtaskWrites() = runTest(dispatcher) {
+        repository.subtasks.value += listOf(
+            Subtask(id = 12, taskId = 1, title = "Bread", position = 2, uid = "u12"),
+            Subtask(id = 13, taskId = 1, title = "Jam", position = 3, uid = "u13"),
+        )
+        // The screen shows one "Sub-task deleted" snackbar at a time: the first one never ends here.
+        val shown = mutableListOf<Subtask>()
+        val dismissed = CompletableDeferred<Unit>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.subtaskDeletions.collect {
+                shown += it
+                dismissed.await()
+            }
+        }
+        advanceUntilIdle()
+        listOf(11L, 12L, 13L).forEach { id ->
+            viewModel.startRenamingSubtask(repository.subtasks.value.single { it.id == id })
+            viewModel.deleteInlineSubtask()
+        }
+        advanceUntilIdle()
+
+        // A tick and the sheet's load still go through while the Undo offers wait.
+        viewModel.toggleSubtask(repository.subtasks.value.single { it.id == 10L }, done = false)
+        viewModel.showEditTaskDialog(repository.tasks.value.first())
+        advanceUntilIdle()
+        assertFalse(repository.subtasks.value.single { it.id == 10L }.isCompleted)
+        assertEquals(listOf("Milk"), viewModel.editingSubtasks.value?.map { it.title })
+
+        // None of the Undo offers is dropped.
+        dismissed.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(listOf(11L, 12L, 13L), shown.map { it.id })
+    }
+
+    /** Types [title] into the sheet's "add" field and adds it. */
+    private fun SubtaskListState.addRow(title: String) {
+        changeNewTitle(title)
+        add()
     }
 
     private fun TestScope.collectOffers(): List<Long> {

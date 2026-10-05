@@ -93,11 +93,14 @@ fun AddTaskDialog(
     onBackgroundSave: (TaskDraft) -> Unit = {},
     onDeleteTask: ((Task) -> Unit)? = null,
     editSubtasks: List<SubtaskDraft>? = emptyList(),
+    subtasks: SubtaskListState? = null,
 ) {
     var title by remember { mutableStateOf(editTask?.title.orEmpty()) }
     var description by remember { mutableStateOf(editTask?.description.orEmpty()) }
     var selectedPriority by remember { mutableIntStateOf(editTask?.priority ?: 0) }
-    val checklist = rememberSubtaskListState(editSubtasks)
+    // The caller's checklist (TasksViewModel's, which outlives a rotation), or one of its own.
+    val ownChecklist = rememberSubtaskListState(editSubtasks)
+    val checklist = subtasks ?: ownChecklist
     val titleFocusRequester = remember { FocusRequester() }
 
     val state = TaskEditorState(

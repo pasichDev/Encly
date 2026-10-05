@@ -99,7 +99,7 @@ class TasksViewModelInlineSubtasksTest {
 
         assertEquals(setOf(1L), viewModel.expandedTaskIds.value)
         assertEquals(longArrayOf(1L).toList(), savedState.get<LongArray>("expandedTaskIds")?.toList())
-        // Ids restored from the saved state of tasks that no longer exist are dropped too.
+        // Ids restored from the saved state of tasks that no longer exist are dropped once loaded.
         savedState["expandedTaskIds"] = longArrayOf(1L, 99L)
         val recreated = newViewModel()
         advanceUntilIdle()
@@ -127,15 +127,78 @@ class TasksViewModelInlineSubtasksTest {
     @Test
     fun movingASubtaskStoresTheNewOrderKeepingItsIdentity() = runTest(dispatcher) {
         advanceUntilIdle()
+        var resets = 0
 
-        viewModel.moveSubtask(1, from = 2, to = 0)
+        // Bread into Milk's place.
+        viewModel.moveSubtask(1, movedId = 12, targetId = 10) { resets++ }
         advanceUntilIdle()
 
         assertEquals(listOf("Bread", "Milk", "Eggs"), shop.map { it.title })
         assertEquals(listOf("u12", "u10", "u11"), shop.map { it.uid })
-        viewModel.moveSubtask(1, from = 0, to = 5)
+        assertEquals(0, resets)
+    }
+
+    @Test
+    fun aMoveAfterADeleteMovesTheRowThatWasDraggedOrNothing() = runTest(dispatcher) {
         advanceUntilIdle()
-        assertEquals(listOf("Bread", "Milk", "Eggs"), shop.map { it.title })
+        // The tree still shows Milk, Eggs, Bread; Milk's delete is already stored.
+        repository.subtasks.value = repository.subtasks.value.filterNot { it.id == 10L }
+        var resets = 0
+
+        // Bread dragged onto Eggs: positions 2 -> 1 on screen, which no longer match the store.
+        viewModel.moveSubtask(1, movedId = 12, targetId = 11) { resets++ }
+        advanceUntilIdle()
+        assertEquals(listOf("Bread", "Eggs"), shop.map { it.title })
+
+        // Onto the deleted row: nothing moves, and the tree is told to show the stored order.
+        viewModel.moveSubtask(1, movedId = 11, targetId = 10) { resets++ }
+        advanceUntilIdle()
+        assertEquals(listOf("Bread", "Eggs"), shop.map { it.title })
+        assertEquals(1, resets)
+    }
+
+    @Test
+    fun aMoveThatIsNotStoredIsReportedAndResetsTheTree() = runTest(dispatcher) {
+        val failures = collect<TaskOperationFailure> { viewModel.operationFailures.collect(it::add) }
+        advanceUntilIdle()
+        repository.failSubtasks = true
+        var resets = 0
+
+        viewModel.moveSubtask(1, movedId = 12, targetId = 10) { resets++ }
+        advanceUntilIdle()
+
+        assertEquals(listOf("Milk", "Eggs", "Bread"), shop.map { it.title })
+        assertEquals(listOf(TaskOperationFailure.UPDATE), failures)
+        assertEquals(1, resets)
+    }
+
+    @Test
+    fun completingOrReopeningATaskKeepsItsTreeOpen() = runTest(dispatcher) {
+        advanceUntilIdle()
+        viewModel.toggleSubtasks(1)
+        val shopTask = repository.tasks.value.single { it.id == 1L }
+
+        // The lists arrive one by one: for a moment the task is in neither.
+        repository.tasks.value = repository.tasks.value.filterNot { it.id == 1L }
+        advanceUntilIdle()
+        repository.tasks.value += shopTask.copy(isCompleted = true, completedDate = 1L)
+        advanceUntilIdle()
+
+        assertEquals(setOf(1L), viewModel.expandedTaskIds.value)
+        assertEquals(longArrayOf(1L).toList(), savedState.get<LongArray>("expandedTaskIds")?.toList())
+    }
+
+    @Test
+    fun clearingTheDoneTasksForgetsTheirTrees() = runTest(dispatcher) {
+        repository.tasks.value = repository.tasks.value.map { if (it.id == 2L) it.copy(isCompleted = true) else it }
+        advanceUntilIdle()
+        viewModel.toggleSubtasks(1)
+        viewModel.toggleSubtasks(2)
+
+        viewModel.clearCompletedTasks {}
+        advanceUntilIdle()
+
+        assertEquals(setOf(1L), viewModel.expandedTaskIds.value)
     }
 
     @Test

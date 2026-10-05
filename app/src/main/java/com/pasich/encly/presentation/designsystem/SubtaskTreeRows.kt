@@ -37,8 +37,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -107,8 +109,9 @@ fun EnclyStepTransition(
  * A sub-task in its task's tree: a [CheckboxSize.SMALL] checkbox and a bodyMedium title, struck
  * through and muted when done, and an optional [trailing] action. [dimmed] mutes the title of a
  * done task's sub-task. The checkbox announces [checkboxDescription] (the title by default);
- * [onClick] (the title) is announced with [onClickLabel]. While [dragging] the row is lifted on
- * `surfaceContainerHigh` and leaves its connector behind.
+ * [onClick] (the title) is announced with [onClickLabel], and the title carries
+ * [customActions] (such as Move up/down), where TalkBack offers them. While [dragging] the row
+ * is lifted on `surfaceContainerHigh` and leaves its connector behind.
  */
 @Suppress("LongParameterList") // A row's content, state and callbacks, like EnclyTaskRow.
 @Composable
@@ -123,6 +126,7 @@ fun EnclySubtaskRow(
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
     checkboxDescription: String = title,
+    customActions: List<CustomAccessibilityAction> = emptyList(),
     dragging: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -150,6 +154,14 @@ fun EnclySubtaskRow(
                 .then(
                     if (onClick != null) {
                         Modifier.clickable(onClickLabel = onClickLabel, onClick = onClick)
+                    } else {
+                        Modifier
+                    },
+                )
+                .then(
+                    if (customActions.isNotEmpty()) {
+                        // Same node as the clickable title above: one semantics node per layout node.
+                        Modifier.semantics { this.customActions = customActions }
                     } else {
                         Modifier
                     },
