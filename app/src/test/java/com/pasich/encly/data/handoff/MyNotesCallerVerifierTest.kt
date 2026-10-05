@@ -70,9 +70,12 @@ class MyNotesCallerVerifierTest {
     }
 
     @Test
-    fun theShippedPinIsTheGitHubReleaseCertificate() {
+    fun theShippedPinsAreThePlayAndGitHubReleaseCertificates() {
         assertEquals(
-            setOf("03f2b8c7c96778b7efb80bb08af99b273a6c0c24e5864d0a211c3a8e3d02483f"),
+            setOf(
+                "fd25d0a05a29c7f294f5b6c4230b482e9a55aba89908d64f2015a4acfdee81e3",
+                "03f2b8c7c96778b7efb80bb08af99b273a6c0c24e5864d0a211c3a8e3d02483f",
+            ),
             MyNotesCallerVerifier.TRUSTED_MY_NOTES_CERT_SHA256,
         )
         MyNotesCallerVerifier.TRUSTED_MY_NOTES_CERT_SHA256.forEach { assertTrue(it.matches(Regex("[0-9a-f]{64}"))) }

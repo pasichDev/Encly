@@ -73,14 +73,13 @@ class MyNotesCallerVerifier(
          * SHA-256 (lower-case hex) of every certificate My Notes is signed with. A caller signed
          * with none of them is refused.
          *
-         * - `03f2b8c7…483f`: the release key of the GitHub / F-Droid builds (checked on the
-         *   GitHub release APK 2.6.55, CN=Andrii Pasichnik12).
-         *
-         * TODO(pasichDev/Encly#46): before release, add the Google Play App Signing certificate
-         *  SHA-256 of My Notes (Play Console -> My Notes -> Test and release -> App integrity ->
-         *  App signing). Without it the Play build of My Notes is refused as untrusted_caller.
+         * - `fd25d0a0…81e3`: the Google Play App Signing key, which signs every build installed
+         *   from Google Play (Play Console -> My Notes -> App signing).
+         * - `03f2b8c7…483f`: the release key of the GitHub / F-Droid builds, which is also the
+         *   Play upload key (GitHub release APK 2.6.55, CN=Andrii Pasichnik12).
          */
         val TRUSTED_MY_NOTES_CERT_SHA256: Set<String> = setOf(
+            "fd25d0a05a29c7f294f5b6c4230b482e9a55aba89908d64f2015a4acfdee81e3",
             "03f2b8c7c96778b7efb80bb08af99b273a6c0c24e5864d0a211c3a8e3d02483f",
         )
     }
