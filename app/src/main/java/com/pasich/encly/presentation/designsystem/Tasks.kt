@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
@@ -291,8 +292,9 @@ fun EnclyRowIconButton(
  * Sub-task progress on a task row: one rounded segment per sub-task, 3 dp apart, at most 160 dp
  * wide. A done one is `primary` and 4 dp tall, an open one `outlineVariant` and 2 dp: the height
  * tells them apart where the palette's primary is low in chroma. Past a dozen segments the gaps
- * narrow so they still fit. Starts at the start edge (mirrored in RTL). Decorative: the row
- * announces the count.
+ * narrow so they still fit; with more sub-tasks than 1 dp segments 1 dp apart can show, fewer
+ * segments stand for them (see [segmentsToDraw]). Starts at the start edge (mirrored in RTL).
+ * Decorative: the row announces the count.
  */
 @Composable
 fun EnclySegmentBar(done: List<Boolean>, modifier: Modifier = Modifier) {
@@ -302,14 +304,16 @@ fun EnclySegmentBar(done: List<Boolean>, modifier: Modifier = Modifier) {
         modifier = modifier
             .widthIn(max = SEGMENT_BAR_MAX_WIDTH)
             .fillMaxWidth()
-            .height(SEGMENT_DONE_HEIGHT),
+            .height(SEGMENT_DONE_HEIGHT)
+            .clipToBounds(),
     ) {
         if (done.isEmpty()) return@Canvas
-        val count = done.size
+        val segments = segmentsToDraw(done, size.width, SEGMENT_MIN_GAP.toPx(), SEGMENT_MIN_GAP.toPx())
+        val count = segments.size
         val gap = (SEGMENT_GAP * minOf(1f, SEGMENT_FULL_GAP_COUNT.toFloat() / count)).toPx()
             .coerceAtLeast(SEGMENT_MIN_GAP.toPx())
         val width = ((size.width - gap * (count - 1)) / count).coerceAtLeast(SEGMENT_MIN_GAP.toPx())
-        done.forEachIndexed { index, isDone ->
+        segments.forEachIndexed { index, isDone ->
             val height = (if (isDone) SEGMENT_DONE_HEIGHT else SEGMENT_OPEN_HEIGHT).toPx()
             val start = index * (width + gap)
             val left = if (rtl) size.width - start - width else start
@@ -356,4 +360,21 @@ fun EnclyProgressTrack(progress: Float, modifier: Modifier = Modifier) {
                 .background(MaterialTheme.colorScheme.primary, shape),
         )
     }
+}
+
+/**
+ * The segments [EnclySegmentBar] draws for [done] in [widthPx], each at least [minSegmentPx]
+ * wide and [minGapPx] apart: [done] itself when they all fit, otherwise as many as fit, done
+ * ones first, in the same proportion of done to open (rounded), with at least one of each kind
+ * there is, so a nearly finished or barely started list never looks complete or untouched.
+ */
+internal fun segmentsToDraw(done: List<Boolean>, widthPx: Float, minSegmentPx: Float, minGapPx: Float): List<Boolean> {
+    val count = done.size
+    val fit = ((widthPx + minGapPx) / (minSegmentPx + minGapPx)).toInt().coerceAtLeast(1)
+    if (count <= fit) return done
+    val doneCount = done.count { it }
+    var drawnDone = ((doneCount.toLong() * fit + count / 2) / count).toInt()
+    if (doneCount > 0) drawnDone = drawnDone.coerceAtLeast(1)
+    if (doneCount < count) drawnDone = drawnDone.coerceAtMost(fit - 1)
+    return List(fit) { it < drawnDone }
 }
