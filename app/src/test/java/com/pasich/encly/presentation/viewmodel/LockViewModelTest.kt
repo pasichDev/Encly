@@ -58,7 +58,7 @@ class LockViewModelTest {
         security = mock(SecurityManager::class.java)
         sessionLock = SessionLockManager(security)
         sessionLock.onStart(mock(LifecycleOwner::class.java))
-        viewModel = LockViewModel(security, sessionLock, CoroutineScope(Dispatchers.Unconfined))
+        viewModel = LockViewModel(security, sessionLock, CoroutineScope(Dispatchers.Default))
     }
 
     @After
@@ -84,7 +84,8 @@ class LockViewModelTest {
         `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
         assertEquals(PinUnlockResult.SUCCESS, pin())
 
-        verify(security).completePendingWipe()
+        // On the application scope, off the unlock's path.
+        verify(security, timeout(WAIT_MS)).completePendingWipe()
     }
 
     @Test
@@ -315,5 +316,6 @@ class LockViewModelTest {
         const val WORDS = "one two three four five six seven eight nine ten eleven twelve"
         const val KEY_LENGTH = 32
         const val LOCKOUT_MS = 30_000L
+        const val WAIT_MS = 5_000L
     }
 }
