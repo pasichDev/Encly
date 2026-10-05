@@ -35,9 +35,13 @@ enum class PinKeySlot {
  * can replace the Keystore.
  */
 interface PinHardwareFactor {
-    /** Creates the key in [slot] unless it already exists. */
+    /**
+     * Creates the key in [slot] unless it already exists. True when it had to be created: any
+     * slot sealed with a key that was there before (a key the system or a backup restore deleted)
+     * can no longer be opened.
+     */
     @Throws(PinFactorException::class)
-    fun ensureKey(slot: PinKeySlot)
+    fun ensureKey(slot: PinKeySlot): Boolean
 
     /** Replaces the key in [slot] with a new one; slots sealed with the old one can no longer be opened. */
     @Throws(PinFactorException::class)
@@ -70,7 +74,7 @@ class PinFactorException(val lost: Boolean, cause: Throwable? = null) : Exceptio
 class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
     private val keyStore by lazy { KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) } }
 
-    override fun ensureKey(slot: PinKeySlot) {
+    override fun ensureKey(slot: PinKeySlot): Boolean {
         val exists = try {
             keyStore.containsAlias(alias(slot))
         } catch (e: GeneralSecurityException) {
@@ -79,6 +83,7 @@ class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
             throw PinFactorException(lost = false, cause = e)
         }
         if (!exists) reset(slot)
+        return !exists
     }
 
     override fun reset(slot: PinKeySlot) {

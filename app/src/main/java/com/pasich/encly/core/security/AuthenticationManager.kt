@@ -115,8 +115,8 @@ class AuthenticationManager @Inject constructor(
      *
      * A replaced slot keeps its salt, so a wipe PIN set earlier keeps working. The wipe slot is
      * replaced by a decoy (the wipe PIN turned off) when it can no longer open, because the
-     * PIN key had to be reset (Settings then says so), or must not, because [pin] is the wipe
-     * PIN itself: one PIN never opens both slots.
+     * PIN key had to be reset or was gone and had to be made anew (Settings then says so), or
+     * must not, because [pin] is the wipe PIN itself: one PIN never opens both slots.
      */
     @Suppress("ReturnCount") // Validation gates fail closed before any key is touched.
     fun configurePin(pin: CharArray, dek: ByteArray): Boolean {
@@ -126,7 +126,9 @@ class AuthenticationManager @Inject constructor(
         val salt = keptSalt ?: ByteArray(PIN_SALT_SIZE).also { SecureRandom().nextBytes(it) }
         var keyReset = false
         val keys = try {
-            factor.ensureKey(keySlot)
+            // A key made here (deleted by the system, not just invalidated) is a reset too: the
+            // wipe slot was sealed with the one that is gone.
+            keyReset = factor.ensureKey(keySlot)
             try {
                 derivePinKeys(pin, salt, keySlot)
             } catch (e: PinFactorException) {

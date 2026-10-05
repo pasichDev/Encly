@@ -302,6 +302,21 @@ class WipePinTest {
     }
 
     @Test
+    fun aPinKeyTheSystemDeletedTurnsTheWipePinOffAndSaysSo() {
+        assertTrue(auth.configurePin(pin(PIN), dek))
+        assertEquals(WipePinChange.SET, auth.configureWipePin(pin(WIPE_PIN)))
+        // Not invalidated but gone: setting a PIN has to make a new key, which the wipe slot was
+        // not sealed with.
+        factor.delete(PinKeySlot.A)
+
+        assertTrue(auth.configurePin(pin("246810"), dek))
+
+        assertTrue(auth.wipePinTurnedOff())
+        assertEquals(PinUnlock.WrongPin, auth.unlockWithPin(pin(WIPE_PIN)))
+        assertArrayEquals(dek, (auth.unlockWithPin(pin("246810")) as PinUnlock.Success).dek)
+    }
+
+    @Test
     fun removingTheWipePinAlsoClearsTheNotice() {
         assertTrue(auth.configurePin(pin(PIN), dek))
         factor.lost = true

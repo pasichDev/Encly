@@ -71,8 +71,9 @@ and show me"), not against a forensic examination.
   KEKs and always tries both AES-GCM opens, without early exit.
 - **Rules.** 6 digits and different from the PIN (checked by opening the PIN slot with it).
   Changing the PIN to the wipe PIN turns the wipe PIN off (one PIN never opens both slots). A
-  reset of the PIN's Keystore key (see above) turns it off too, since the slot can never open
-  again; Settings then says so.
+  reset of the PIN's Keystore key (see above), or a new PIN set after that key was deleted and
+  had to be created anew, turns it off too, since the slot can never open again; Settings then
+  says so.
 - **Lockout.** It counts as an attempt before the KDF like any PIN and is refused during a
   lockout. Once it matched, the erase clears the lockout like a right PIN. Inside an open vault
   (PIN re-checks in Settings or before an export) it is just a wrong PIN; it wipes only from the
