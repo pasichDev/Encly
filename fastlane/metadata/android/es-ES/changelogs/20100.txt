@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Subtareas: divide una tarea en pasos. La lista muestra el siguiente paso y el progreso; toca una tarea para ver y editar todos.
+• PIN de borrado (opcional): un segundo PIN que borra la bóveda sin dejar rastro y abre una vacía si alguien te obliga a desbloquear.
+• Trae tus notas de My Notes en un solo paso.
+Esta versión cambia la base de datos y el formato de las copias: las versiones anteriores no podrán abrirlas.

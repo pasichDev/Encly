@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Podzadania: podziel zadanie na kroki. Lista pokazuje następny krok i postęp; dotknij zadania, aby zobaczyć i edytować wszystkie.
+• PIN kasujący (opcjonalny): drugi PIN, który bez śladu kasuje sejf i otwiera pusty, gdy ktoś zmusza cię do odblokowania.
+• Przenieś notatki z My Notes w jednym kroku.
+Ta wersja zmienia bazę danych i format kopii zapasowych: starsze wersje ich nie otworzą.

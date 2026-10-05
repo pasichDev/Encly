@@ -122,7 +122,7 @@ class PinLockoutTest {
         // The fifth attempt dies inside the key derivation (the process is killed there).
         var lockoutOnDiskDuringKdf = -1L
         val dying = object : PinHardwareFactor by factor {
-            override fun mac(data: ByteArray): ByteArray {
+            override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray {
                 // What a fresh process would read from disk at this moment.
                 lockoutOnDiskDuringKdf = AuthenticationManager(VaultStore(file), factor, clock).remainingLockoutMillis()
                 throw ProcessDeath()

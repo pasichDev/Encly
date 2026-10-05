@@ -3,6 +3,7 @@ package com.pasich.encly.testutil
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 
@@ -14,6 +15,7 @@ internal class InMemoryVaultDataStore : VaultDataStore {
     val notes = mutableListOf<Note>()
     val tags = mutableListOf<Tag>()
     val tasks = mutableListOf<Task>()
+    val subtasks = mutableListOf<Subtask>()
 
     /** Makes the n-th insert (1-based, counted across tables) fail, like a constraint error. */
     var failOnInsert: Int? = null
@@ -24,16 +26,19 @@ internal class InMemoryVaultDataStore : VaultDataStore {
         notes = notes.map { it.copy() },
         tags = tags.map { it.copy() },
         tasks = tasks.toList(),
+        subtasks = subtasks.toList(),
     )
 
     override suspend fun <R> inTransaction(block: suspend () -> R): R {
         val saved = Triple(notes.toList(), tags.toList(), tasks.toList())
+        val savedSubtasks = subtasks.toList()
         return try {
             block()
         } catch (e: RuntimeException) {
             restore(notes, saved.first)
             restore(tags, saved.second)
             restore(tasks, saved.third)
+            restore(subtasks, savedSubtasks)
             throw e
         }
     }
@@ -42,6 +47,7 @@ internal class InMemoryVaultDataStore : VaultDataStore {
         notes.clear()
         tags.clear()
         tasks.clear()
+        subtasks.clear()
     }
 
     override suspend fun insertTag(tag: Tag): Long {
@@ -59,6 +65,13 @@ internal class InMemoryVaultDataStore : VaultDataStore {
     override suspend fun insertTask(task: Task): Long {
         val id = nextInsert(task.uid, tasks.map { it.uid })
         tasks += task.copy(id = id, uid = task.uid.ifBlank { "task-$id" })
+        return id
+    }
+
+    override suspend fun insertSubtask(subtask: Subtask): Long {
+        check(tasks.any { it.id == subtask.taskId }) { "FOREIGN KEY constraint failed" }
+        val id = nextInsert(subtask.uid, subtasks.map { it.uid })
+        subtasks += subtask.copy(id = id, uid = subtask.uid.ifBlank { "subtask-$id" })
         return id
     }
 

@@ -13,6 +13,8 @@ import com.pasich.encly.core.security.SystemDeviceLockWatcher
 import com.pasich.encly.core.security.SystemLockoutClock
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.security.VaultStore
+import com.pasich.encly.data.handoff.CacheHandoffStagingSweeper
+import com.pasich.encly.data.handoff.HandoffStagingSweeper
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -67,4 +69,7 @@ abstract class SecurityBindingsModule {
 
     @Binds
     abstract fun bindAutoLockPolicy(autoLock: AutoLock): AutoLockPolicy
+
+    @Binds
+    abstract fun bindHandoffStagingSweeper(sweeper: CacheHandoffStagingSweeper): HandoffStagingSweeper
 }

@@ -53,6 +53,8 @@ Compose:
       # The unlock reveal, provided once by App (presentation/effects/UnlockReveal.kt).
       - LocalUnlockReveal
       - LocalSpacing
+      # The vault's erase epoch, provided once by App for the note editor (presentation/navigation/RelockReturn.kt).
+      - LocalEraseEpoch
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

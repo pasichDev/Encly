@@ -15,6 +15,7 @@ enum class NavRoutes {
     LossDataRoute,
     LegacyVaultRoute,
     PinCodeConfig,
+    WipePinRoute,
     LockRoute,
     BackupRoute,
     AppearanceRoute,

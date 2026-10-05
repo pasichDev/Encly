@@ -73,4 +73,26 @@
     <string name="security_protection_slots_desc">PIN, frase de recuperação e impressão digital abrem cada um o seu próprio espaço criptografado. A digital é pedida sempre.</string>
     <string name="security_danger_section">Zona de perigo</string>
     <string name="security_erase_hold">Segure 5 segundos para apagar</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">PIN de apagamento</string>
+    <string name="wipe_pin_row_desc">Um segundo PIN que apaga suas notas quando digitado na tela de bloqueio</string>
+    <string name="wipe_pin_row_turned_off">Desativado quando a chave do seu PIN foi redefinida. Defina-o de novo se você usava um.</string>
+    <string name="wipe_pin_intro">Se alguém obrigar você a abrir o Encly, digite o PIN de apagamento em vez do seu PIN. O Encly apaga suas notas, tarefas e etiquetas sem deixar sinal e abre como um cofre vazio. Só funciona na tela de bloqueio.</string>
+    <string name="wipe_pin_after_erase">Depois do apagamento, o Encly abre com o PIN de apagamento: ele passa a ser o PIN do novo cofre vazio. Seu PIN antigo deixa de funcionar, então quem viu você digitar o PIN de apagamento pode abrir o Encly com ele de novo sem notar nada estranho.</string>
+    <string name="wipe_pin_backups">Os arquivos de backup que você já exportou não são tocados. Eles continuam abrindo com sua frase de recuperação e são o único caminho de volta.</string>
+    <string name="wipe_pin_biometric_warning">O desbloqueio biométrico continua ativado: alguém pode forçar seu dedo no sensor. Desative-o se isso for um risco para você.</string>
+    <string name="wipe_pin_biometric_off">Desativar desbloqueio biométrico</string>
+    <string name="wipe_pin_limits">Isso protege você quando alguém o obriga a desbloquear, não contra uma perícia forense do telefone. Durante um bloqueio por tentativas erradas, o PIN de apagamento também não funciona. O Encly nunca mostra se há um PIN de apagamento: um novo substitui o anterior, e se você mudar seu PIN para o PIN de apagamento, ele é desativado.</string>
+    <string name="wipe_pin_set">Definir PIN de apagamento</string>
+    <string name="wipe_pin_remove">Desativar PIN de apagamento</string>
+    <string name="wipe_pin_current_subtitle">Confirme seu PIN para configurar o PIN de apagamento</string>
+    <string name="wipe_pin_new_title">Crie um PIN de apagamento</string>
+    <string name="wipe_pin_new_subtitle">6 dígitos, diferentes do seu PIN</string>
+    <string name="wipe_pin_confirm_title">Confirme o PIN de apagamento</string>
+    <string name="wipe_pin_confirm_subtitle">Digite o PIN de apagamento de novo</string>
+    <string name="wipe_pin_same_as_pin">O PIN de apagamento precisa ser diferente do seu PIN</string>
+    <string name="wipe_pin_failed">Não foi possível salvar o PIN de apagamento. Tente novamente.</string>
+    <string name="wipe_pin_saved">PIN de apagamento definido</string>
+    <string name="wipe_pin_removed">PIN de apagamento desativado</string>
+    <string name="wipe_pin_turned_off">A chave do seu PIN foi redefinida, então o PIN de apagamento, se houver, foi desativado. Defina-o de novo se quiser um.</string>
 </resources>

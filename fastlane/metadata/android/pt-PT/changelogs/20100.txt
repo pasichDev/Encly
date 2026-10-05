@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Subtarefas: divida uma tarefa em passos. A lista mostra o passo seguinte e o progresso; toque numa tarefa para ver e editar todos.
+• PIN de apagamento (opcional): um segundo PIN que apaga o cofre sem deixar sinal e abre um vazio se alguém o obrigar a desbloquear.
+• Traga as suas notas do My Notes num só passo.
+Esta versão altera a base de dados e o formato das cópias: versões anteriores não as conseguem abrir.

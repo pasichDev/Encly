@@ -9,6 +9,7 @@ import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.MockActivity
 import com.pasich.encly.testutil.answerCallback
@@ -149,6 +150,59 @@ class SecuritySettingsViewModelTest {
 
         `when`(security.pinLockoutRemainingMillis()).thenReturn(LOCKOUT_MS)
         assertEquals(LOCKOUT_MS, viewModel.pinLockoutRemainingMillis())
+    }
+
+    @Test
+    fun aWipePinIsHandedOnAndClearsTheTurnedOffNotice() = runTest {
+        `when`(security.getSettingsAuth()).thenReturn(
+            AuthSettings(
+                AuthType.PIN,
+                isBiometricEnabled = false,
+                isUserCreatedSeedKey = false,
+                wipePinTurnedOff = true,
+            ),
+        )
+        viewModel.refresh()
+        viewModel.uiState.first { it.wipePinTurnedOff }
+        `when`(security.configureWipePin(anyCharArray())).thenReturn(WipePinChange.SET)
+        val result = CompletableDeferred<WipePinChange>()
+
+        viewModel.setWipePin("864200".toCharArray()) { result.complete(it) }
+
+        assertEquals(WipePinChange.SET, result.await())
+        assertFalse(viewModel.uiState.value.wipePinTurnedOff)
+    }
+
+    @Test
+    fun aRefusedWipePinKeepsTheNotice() = runTest {
+        `when`(security.getSettingsAuth()).thenReturn(
+            AuthSettings(
+                AuthType.PIN,
+                isBiometricEnabled = false,
+                isUserCreatedSeedKey = false,
+                wipePinTurnedOff = true,
+            ),
+        )
+        viewModel.refresh()
+        viewModel.uiState.first { it.wipePinTurnedOff }
+        `when`(security.configureWipePin(anyCharArray())).thenReturn(WipePinChange.SAME_AS_PIN)
+        val result = CompletableDeferred<WipePinChange>()
+
+        viewModel.setWipePin("135790".toCharArray()) { result.complete(it) }
+
+        assertEquals(WipePinChange.SAME_AS_PIN, result.await())
+        assertTrue(viewModel.uiState.value.wipePinTurnedOff)
+    }
+
+    @Test
+    fun turningTheWipePinOffReportsTheResult() = runTest {
+        `when`(security.removeWipePin()).thenReturn(true)
+        val result = CompletableDeferred<Boolean>()
+
+        viewModel.removeWipePin { result.complete(it) }
+
+        assertTrue(result.await())
+        verify(security).removeWipePin()
     }
 
     @Test

@@ -13,13 +13,34 @@ class BackupPayloadCodecTest {
             BackupNote("n1", "Title", "[]", "desc", 2L, 1L, tagUid = "t1", isTrash = true),
         ),
         tasks = listOf(
-            BackupTask("k1", "Task", null, false, 3L, null, priority = 2, categoryTagUid = "t1", position = 5),
+            BackupTask(
+                "k1",
+                "Task",
+                null,
+                false,
+                3L,
+                null,
+                priority = 2,
+                categoryTagUid = "t1",
+                position = 5,
+                subtasks = emptyList(),
+            ),
         ),
     )
+    private val subtasks = listOf(
+        BackupSubtask(uid = "s1", title = "Milk", isCompleted = true, position = 0),
+        BackupSubtask(uid = "s2", title = "Bread", isCompleted = false, position = 1),
+    )
+    private val withSubtasks = payload.copy(tasks = payload.tasks.map { it.copy(subtasks = subtasks) })
 
     @Test
     fun encodeDecodeRoundTrips() {
         assertEquals(payload, BackupPayloadCodec.decode(BackupPayloadCodec.encode(payload)))
+    }
+
+    @Test
+    fun subtasksRoundTrip() {
+        assertEquals(withSubtasks, BackupPayloadCodec.decode(BackupPayloadCodec.encode(withSubtasks)))
     }
 
     @Test
@@ -70,6 +91,29 @@ class BackupPayloadCodecTest {
     }
 
     @Test
+    fun schema2BackupDecodesWithNoSubtasks() {
+        val decoded = BackupPayloadCodec.decode(schema2Json().toByteArray(Charsets.UTF_8))
+
+        assertEquals(payload, decoded)
+        assertEquals(BackupPayload.SCHEMA_VERSION, decoded.schema)
+    }
+
+    @Test
+    fun schema2BackupWithSubtasksIsInvalid() {
+        // Schema 2 never had sub-tasks: such a file is malformed, not a newer one.
+        val json = schema2Json().replace("\"position\":5}", "\"position\":5,\"subtasks\":[]}")
+
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(json.toByteArray(Charsets.UTF_8)) }
+    }
+
+    @Test
+    fun currentSchemaRequiresTheSubtasksList() {
+        val json = String(BackupPayloadCodec.encode(payload), Charsets.UTF_8).replace(",\"subtasks\":[]", "")
+
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(json.toByteArray(Charsets.UTF_8)) }
+    }
+
+    @Test
     fun schema1BackupStillRejectsOtherUnknownFields() {
         val json = schema1Json().replaceFirst("{", "{\"pinnedNotes\":[\"n1\"],")
 
@@ -90,14 +134,16 @@ class BackupPayloadCodecTest {
      */
     @Test
     fun encodedKeyNamesArePinned() {
-        val expected = """{"schema":2,"exportedAt":1700000000000,""" +
+        val expected = """{"schema":3,"exportedAt":1700000000000,""" +
             """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
             """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
             """"dateCreate":1,"tagUid":"t1","isTrash":true}],""" +
             """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
-            """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5}]}"""
+            """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5,""" +
+            """"subtasks":[{"uid":"s1","title":"Milk","isCompleted":true,"position":0},""" +
+            """{"uid":"s2","title":"Bread","isCompleted":false,"position":1}]}]}"""
 
-        assertEquals(expected, String(BackupPayloadCodec.encode(payload), Charsets.UTF_8))
+        assertEquals(expected, String(BackupPayloadCodec.encode(withSubtasks), Charsets.UTF_8))
     }
 
     /** [payload] as the schema-1 app wrote it: every task carried a `reminderDate`. */
@@ -108,6 +154,14 @@ class BackupPayloadCodecTest {
         """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
         """"createdDate":3,"completedDate":null,"reminderDate":4,"priority":2,""" +
         """"categoryTagUid":"t1","position":5}]}"""
+
+    /** [payload] as the schema-2 app wrote it: tasks had no `subtasks`. */
+    private fun schema2Json(): String = """{"schema":2,"exportedAt":1700000000000,""" +
+        """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
+        """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
+        """"dateCreate":1,"tagUid":"t1","isTrash":true}],""" +
+        """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
+        """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5}]}"""
 
     private fun withExtraField(value: BackupPayload): ByteArray {
         val json = String(BackupPayloadCodec.encode(value), Charsets.UTF_8)
@@ -126,6 +180,27 @@ class BackupPayloadCodecTest {
         assertInvalid(payload.copy(notes = payload.notes + payload.notes))
         assertInvalid(payload.copy(tasks = payload.tasks.map { it.copy(uid = " ") }))
         assertInvalid(payload.copy(tasks = payload.tasks.map { it.copy(uid = "x".repeat(65)) }))
+    }
+
+    @Test
+    fun subtaskUidsMustBeUniqueAcrossTheVaultAndPresent() {
+        val second = payload.tasks.single().copy(uid = "k2", subtasks = listOf(subtasks.first()))
+        assertInvalid(withSubtasks.copy(tasks = withSubtasks.tasks + second))
+        assertInvalid(payload.copy(tasks = payload.tasks.map { it.copy(subtasks = subtasks + subtasks) }))
+        assertInvalid(
+            payload.copy(
+                tasks = payload.tasks.map {
+                    it.copy(subtasks = listOf(subtasks[0].copy(uid = "")))
+                },
+            ),
+        )
+        assertInvalid(
+            payload.copy(
+                tasks = payload.tasks.map {
+                    it.copy(subtasks = listOf(subtasks[0].copy(uid = "x".repeat(65))))
+                },
+            ),
+        )
     }
 
     @Test

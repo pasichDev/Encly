@@ -68,4 +68,26 @@
     <string name="security_protection_slots_desc">PIN, Wiederherstellungsphrase und Fingerabdruck öffnen je einen eigenen verschlüsselten Slot. Der Fingerabdruck wird jedes Mal verlangt.</string>
     <string name="security_danger_section">Gefahrenbereich</string>
     <string name="security_erase_hold">5 Sekunden halten zum Löschen</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">Lösch-PIN</string>
+    <string name="wipe_pin_row_desc">Eine zweite PIN, die deine Notizen löscht, wenn du sie auf dem Sperrbildschirm eingibst</string>
+    <string name="wipe_pin_row_turned_off">Ausgeschaltet, als dein PIN-Schlüssel zurückgesetzt wurde. Lege sie neu fest, wenn du eine hattest.</string>
+    <string name="wipe_pin_intro">Wenn dich jemand zwingt, Encly zu öffnen, gib statt deiner PIN die Lösch-PIN ein. Encly löscht deine Notizen, Aufgaben und Labels ohne sichtbares Zeichen und öffnet sich als leerer Tresor. Das funktioniert nur auf dem Sperrbildschirm.</string>
+    <string name="wipe_pin_after_erase">Nach dem Löschen öffnet sich Encly mit der Lösch-PIN: Sie wird zur PIN des neuen, leeren Tresors. Deine alte PIN funktioniert nicht mehr. Wer gesehen hat, wie du die Lösch-PIN eingibst, kann Encly damit wieder öffnen und bemerkt nichts Ungewöhnliches.</string>
+    <string name="wipe_pin_backups">Bereits exportierte Backup-Dateien bleiben unberührt. Sie lassen sich weiterhin mit deiner Wiederherstellungsphrase öffnen und sind der einzige Weg zurück.</string>
+    <string name="wipe_pin_biometric_warning">Biometrisches Entsperren bleibt an: Jemand kann deinen Finger auf den Sensor zwingen. Schalte es aus, wenn das für dich ein Risiko ist.</string>
+    <string name="wipe_pin_biometric_off">Biometrisches Entsperren ausschalten</string>
+    <string name="wipe_pin_limits">Das schützt dich, wenn dich jemand zum Entsperren zwingt, nicht vor einer forensischen Untersuchung des Telefons. Während einer Sperre nach Fehlversuchen funktioniert auch die Lösch-PIN nicht. Encly zeigt nie an, ob eine Lösch-PIN festgelegt ist: Eine neue ersetzt die alte, und wenn du deine PIN auf die Lösch-PIN änderst, wird sie ausgeschaltet.</string>
+    <string name="wipe_pin_set">Lösch-PIN festlegen</string>
+    <string name="wipe_pin_remove">Lösch-PIN ausschalten</string>
+    <string name="wipe_pin_current_subtitle">Bestätige deine PIN, um die Lösch-PIN einzurichten</string>
+    <string name="wipe_pin_new_title">Lösch-PIN erstellen</string>
+    <string name="wipe_pin_new_subtitle">6 Ziffern, anders als deine PIN</string>
+    <string name="wipe_pin_confirm_title">Lösch-PIN bestätigen</string>
+    <string name="wipe_pin_confirm_subtitle">Gib die Lösch-PIN noch einmal ein</string>
+    <string name="wipe_pin_same_as_pin">Die Lösch-PIN muss sich von deiner PIN unterscheiden</string>
+    <string name="wipe_pin_failed">Die Lösch-PIN konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
+    <string name="wipe_pin_saved">Lösch-PIN festgelegt</string>
+    <string name="wipe_pin_removed">Lösch-PIN ausgeschaltet</string>
+    <string name="wipe_pin_turned_off">Dein PIN-Schlüssel wurde zurückgesetzt, daher ist eine eventuelle Lösch-PIN ausgeschaltet. Lege sie neu fest, wenn du eine möchtest.</string>
 </resources>

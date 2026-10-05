@@ -55,8 +55,12 @@ fresh unlock starts with new database-backed ViewModels. Until the lock screen i
 visible destination, an opaque shield covers the previous screen, so the first frame after
 returning never shows plaintext. An unlock that completes after the app left the foreground is
 closed again at once. Open task and tag editors save on pause, like the note editor, because the
-re-lock discards them. The note that was open when the app re-locked is recorded (`RelockReturn`) and
-opened again after the unlock, with fresh ViewModels. Pages move on Material's shared X axis;
+re-lock discards them. The note that was open when the app re-locked is recorded (`RelockReturn`),
+with the erase epoch of the vault it was opened in, and opened again after the unlock, with fresh
+ViewModels, only while that epoch is current (a wipe-PIN erase or a new process changes it). A
+screen that was in the background while the vault was unlocked on another lock screen (the My
+Notes hand-off) is replaced by the lock screen or Home when it comes back (`SessionResume`).
+Pages move on Material's shared X axis;
 the full unlock reveal plays only on the first unlock after launch, later unlocks cross-fade.
 
 ## Encrypted backups
@@ -129,18 +133,19 @@ refuse. A wrong phrase or any modified byte fails GCM (`WRONG_SECRET`); an authe
 with a newer `schema` is `UNSUPPORTED_VERSION` ("update the app"), and one that does not
 validate is `INVALID_PAYLOAD`.
 
-The payload (`schema` = 2) is:
+The payload (`schema` = 3) is:
 
 ```json
 {
-  "schema": 2,
+  "schema": 3,
   "exportedAt": 1758620000000,
   "tags":  [{ "uid": "…", "name": "…", "visible": true, "position": 0 }],
   "notes": [{ "uid": "…", "title": "…", "value": "<serialized blocks>", "description": "…",
               "date": 0, "dateCreate": 0, "tagUid": "…|null", "isTrash": false }],
   "tasks": [{ "uid": "…", "title": "…", "description": "…|null", "isCompleted": false,
               "createdDate": 0, "completedDate": null, "priority": 0,
-              "categoryTagUid": "…|null", "position": 0 }]
+              "categoryTagUid": "…|null", "position": 0,
+              "subtasks": [{ "uid": "…", "title": "…", "isCompleted": false, "position": 0 }] }]
 }
 ```
 
@@ -148,10 +153,13 @@ Unknown keys are rejected rather than ignored, so **every** payload change, even
 field, must bump `BackupPayload.SCHEMA_VERSION`: the schema is read first, and an older app then
 reports the file as unsupported instead of damaged. Older schemas stay readable:
 `BackupPayloadCodec.decode` upgrades them before the strict decode (schema 1 tasks carried a
-`reminderDate`, which is dropped).
+`reminderDate`, which is dropped; schema 1 and 2 tasks get an empty `subtasks` list).
+Sub-task uids are unique across the whole payload. A merge import adds the sub-tasks that a
+task already on the device is missing (by uid), after its own ones.
 
-Every note, tag and task row has a unique, never-blank `uid` column (database version 2;
-version 3 dropped `tasks.reminderDate`); two triggers in `VaultSchema` fill a blank uid on
+Every note, tag, task and sub-task row has a unique, never-blank `uid` column (database
+version 2; version 3 dropped `tasks.reminderDate`; version 4 added the `subtasks` table, whose
+rows are deleted with their task by an `ON DELETE CASCADE` foreign key); two triggers in `VaultSchema` fill a blank uid on
 insert and keep it on update, so app code never has to assign one.
 
 For implementation details and limits, see [SECURITY.md](../SECURITY.md).

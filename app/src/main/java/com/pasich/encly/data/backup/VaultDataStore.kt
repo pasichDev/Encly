@@ -1,11 +1,17 @@
 package com.pasich.encly.data.backup
 
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 
-/** Every note (trash included), tag and task in the vault, as stored. */
-data class VaultSnapshot(val notes: List<Note>, val tags: List<Tag>, val tasks: List<Task>)
+/** Every note (trash included), tag, task and sub-task in the vault, as stored. */
+data class VaultSnapshot(
+    val notes: List<Note>,
+    val tags: List<Tag>,
+    val tasks: List<Task>,
+    val subtasks: List<Subtask> = emptyList(),
+)
 
 /**
  * The narrow storage contract encrypted export/import needs. The Room implementation is
@@ -24,4 +30,6 @@ interface VaultDataStore {
     suspend fun insertNote(note: Note): Long
 
     suspend fun insertTask(task: Task): Long
+
+    suspend fun insertSubtask(subtask: Subtask): Long
 }

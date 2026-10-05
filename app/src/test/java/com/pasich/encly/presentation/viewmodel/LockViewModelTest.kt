@@ -17,6 +17,7 @@ import com.pasich.encly.testutil.anyCallback
 import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.testutil.eqValue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -57,7 +58,7 @@ class LockViewModelTest {
         security = mock(SecurityManager::class.java)
         sessionLock = SessionLockManager(security)
         sessionLock.onStart(mock(LifecycleOwner::class.java))
-        viewModel = LockViewModel(security, sessionLock)
+        viewModel = LockViewModel(security, sessionLock, CoroutineScope(Dispatchers.Default))
     }
 
     @After
@@ -72,6 +73,28 @@ class LockViewModelTest {
         assertEquals(PinUnlockResult.SUCCESS, pin())
         assertFalse(viewModel.busy.value)
         assertFalse(sessionLock.locked.value)
+    }
+
+    @Test
+    fun theRestOfAWipePinEraseRunsAfterThePinUnlockedAndOnlyThen() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+        pin()
+        verify(security, never()).completePendingWipe()
+
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        assertEquals(PinUnlockResult.SUCCESS, pin())
+
+        // On the application scope, off the unlock's path.
+        verify(security, timeout(WAIT_MS)).completePendingWipe()
+    }
+
+    @Test
+    fun aNoteIsReopenedOnlyInTheVaultItWasRememberedIn() {
+        `when`(security.eraseEpoch()).thenReturn(7L)
+
+        assertTrue(viewModel.canReopenNote(7L))
+        assertFalse("an erase changed the epoch", viewModel.canReopenNote(6L))
+        assertFalse("nothing remembered", viewModel.canReopenNote(null))
     }
 
     @Test
@@ -293,5 +316,6 @@ class LockViewModelTest {
         const val WORDS = "one two three four five six seven eight nine ten eleven twelve"
         const val KEY_LENGTH = 32
         const val LOCKOUT_MS = 30_000L
+        const val WAIT_MS = 5_000L
     }
 }

@@ -563,4 +563,23 @@
     <string name="keyboard_hide">Сховати клавіатуру</string>
     <string name="security_erase_confirm_title">Стерти всі дані?</string>
     <string name="security_erase_confirm">Стерти</string>
+    <string name="subtasks_title">Підзавдання</string>
+    <string name="subtask_placeholder">Підзавдання</string>
+    <string name="subtask_add">Додати підзавдання</string>
+    <string name="subtask_delete">Видалити підзавдання</string>
+    <string name="subtasks_all_done">Усі підзавдання виконано</string>
+    <string name="subtasks_complete_task">Завершити завдання</string>
+    <string name="subtasks_show">Показати підзавдання</string>
+    <string name="subtasks_hide">Сховати підзавдання</string>
+    <string name="subtasks_state_shown">Розгорнуто</string>
+    <string name="subtasks_state_hidden">Згорнуто</string>
+    <string name="subtask_deleted">Підзавдання видалено</string>
+    <string name="subtask_next_step">Наступний крок: %1$s</string>
+    <string name="subtask_first_step">Перший крок</string>
+    <plurals name="subtasks_done_summary">
+        <item quantity="one">%1$d з %2$d підзавдання виконано</item>
+        <item quantity="few">%1$d з %2$d підзавдань виконано</item>
+        <item quantity="many">%1$d з %2$d підзавдань виконано</item>
+        <item quantity="other">%1$d з %2$d підзавдання виконано</item>
+    </plurals>
 </resources>

@@ -70,6 +70,64 @@ class AppDatabaseSchemaTest {
         }
     }
 
+    @Test
+    fun migrate3To4AddsSubtasksWithTriggersAndCascade() {
+        helper.createDatabase(TEST_DB, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO tasks (id, title, isCompleted, createdDate, priority, position, uid) " +
+                    "VALUES (7, 'Buy milk', 0, 100, 2, 3, 'task-uid')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 4, true, VaultSchema.MIGRATION_3_4).use { db ->
+            db.query("SELECT id, title, uid FROM tasks").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(7L, c.getLong(0))
+                assertEquals("Buy milk", c.getString(1))
+                assertEquals("task-uid", c.getString(2))
+            }
+            db.query("SELECT COUNT(*) FROM subtasks").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+
+            // A blank uid is filled in, and a later blank update keeps it.
+            db.execSQL("INSERT INTO subtasks (taskId, title, isCompleted, position) VALUES (7, 'Oat', 0, 0)")
+            val uid = db.query("SELECT uid FROM subtasks").use { c ->
+                assertTrue(c.moveToFirst())
+                c.getString(0)
+            }
+            assertEquals(32, uid.length)
+            db.execSQL("UPDATE subtasks SET uid = '' WHERE taskId = 7")
+            db.query("SELECT uid FROM subtasks").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(uid, c.getString(0))
+            }
+
+            // Deleting the task deletes its sub-tasks (Room turns foreign keys on when it opens the vault).
+            db.execSQL("PRAGMA foreign_keys = ON")
+            db.execSQL("DELETE FROM tasks WHERE id = 7")
+            db.query("SELECT COUNT(*) FROM subtasks").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+        }
+    }
+
+    @Test
+    fun migrate1ToCurrentRunsTheWholeChain() {
+        helper.createDatabase(TEST_DB, 1).close()
+
+        helper.runMigrationsAndValidate(
+            TEST_DB,
+            DB_VERSION,
+            true,
+            VaultSchema.MIGRATION_1_2,
+            VaultSchema.MIGRATION_2_3,
+            VaultSchema.MIGRATION_3_4,
+        ).close()
+    }
+
     private companion object {
         const val TEST_DB = "schema-test.db"
     }

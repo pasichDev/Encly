@@ -3,12 +3,14 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.core.security.VaultUnlockResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -34,6 +36,8 @@ enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED }
 class LockViewModel @Inject constructor(
     private val securityManager: SecurityManager,
     private val sessionLockManager: SessionLockManager,
+    /** Where the rest of a wipe-PIN erase runs once the vault is open; outlives this screen. */
+    @param:ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _busy = MutableStateFlow(false)
@@ -58,6 +62,13 @@ class LockViewModel @Inject constructor(
     /** Whether the session is closed (again); an unlock reveal then must not open Home. */
     fun isSessionLocked(): Boolean = sessionLockManager.locked.value
 
+    /**
+     * Whether the note remembered at the re-lock under [savedEpoch] may be reopened: only in the
+     * vault it was in. After a wipe-PIN erase (here or on another lock screen) it does not
+     * exist, and an empty editor would give the erase away.
+     */
+    fun canReopenNote(savedEpoch: Long?): Boolean = savedEpoch != null && savedEpoch == securityManager.eraseEpoch()
+
     /** Unlocks with [pin], which is wiped. */
     fun authenticatePin(pin: CharArray, onResult: (PinUnlockResult) -> Unit) {
         launchUnlock(onResult) {
@@ -70,6 +81,8 @@ class LockViewModel @Inject constructor(
                     VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
                 }
             }
+            // The rest of a wipe-PIN erase (if that was one) runs while the vault is revealed.
+            if (result == PinUnlockResult.SUCCESS) appScope.launch { securityManager.completePendingWipe() }
             publish(result == PinUnlockResult.SUCCESS, result, PinUnlockResult.BACKGROUNDED)
         }
     }

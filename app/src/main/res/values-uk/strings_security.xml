@@ -78,4 +78,26 @@
     <string name="security_protection_slots_desc">PIN, фраза відновлення й відбиток відкривають кожен свій зашифрований слот. Відбиток потрібен щоразу.</string>
     <string name="security_danger_section">Небезпечна зона</string>
     <string name="security_erase_hold">Утримуйте 5 секунд, щоб стерти</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">PIN для стирання</string>
+    <string name="wipe_pin_row_desc">Другий PIN, що стирає нотатки, якщо ввести його на екрані блокування</string>
+    <string name="wipe_pin_row_turned_off">Вимкнено після скидання ключа PIN. Задайте його знову, якщо користувалися ним.</string>
+    <string name="wipe_pin_intro">Якщо вас змушують відкрити Encly, введіть PIN для стирання замість свого PIN. Encly непомітно зітре нотатки, завдання й мітки та відкриється як порожнє сховище. Працює лише на екрані блокування.</string>
+    <string name="wipe_pin_after_erase">Після стирання Encly відкривається PIN для стирання: він стає PIN нового, порожнього сховища. Ваш старий PIN більше не працює. Тож той, хто бачив, як ви вводили PIN для стирання, зможе знову відкрити ним Encly й не помітить нічого дивного.</string>
+    <string name="wipe_pin_backups">Уже експортовані файли резервних копій не зачіпаються. Вони й далі відкриваються фразою відновлення і є єдиним шляхом назад.</string>
+    <string name="wipe_pin_biometric_warning">Розблокування біометрією лишається ввімкненим: вас можуть змусити прикласти палець. Вимкніть його, якщо це для вас ризик.</string>
+    <string name="wipe_pin_biometric_off">Вимкнути розблокування біометрією</string>
+    <string name="wipe_pin_limits">Це захищає, коли вас змушують розблокувати телефон, але не від криміналістичної експертизи. Під час блокування після невдалих спроб PIN для стирання теж не діє. Encly ніколи не показує, чи його задано: новий замінює старий, а якщо змінити свій PIN на PIN для стирання, його буде вимкнено.</string>
+    <string name="wipe_pin_set">Задати PIN для стирання</string>
+    <string name="wipe_pin_remove">Вимкнути PIN для стирання</string>
+    <string name="wipe_pin_current_subtitle">Підтвердьте свій PIN, щоб налаштувати PIN для стирання</string>
+    <string name="wipe_pin_new_title">Створіть PIN для стирання</string>
+    <string name="wipe_pin_new_subtitle">6 цифр, відмінні від вашого PIN</string>
+    <string name="wipe_pin_confirm_title">Підтвердьте PIN для стирання</string>
+    <string name="wipe_pin_confirm_subtitle">Введіть PIN для стирання ще раз</string>
+    <string name="wipe_pin_same_as_pin">PIN для стирання має відрізнятися від вашого PIN</string>
+    <string name="wipe_pin_failed">Не вдалося зберегти PIN для стирання. Спробуйте ще раз.</string>
+    <string name="wipe_pin_saved">PIN для стирання задано</string>
+    <string name="wipe_pin_removed">PIN для стирання вимкнено</string>
+    <string name="wipe_pin_turned_off">Ключ вашого PIN було скинуто, тож PIN для стирання, якщо він був, вимкнено. Задайте його знову, якщо він вам потрібен.</string>
 </resources>

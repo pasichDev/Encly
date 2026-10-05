@@ -68,4 +68,26 @@
     <string name="security_protection_slots_desc">Pincode, herstelzin en vingerafdruk openen elk hun eigen versleutelde slot. De vingerafdruk is elke keer nodig.</string>
     <string name="security_danger_section">Gevarenzone</string>
     <string name="security_erase_hold">Houd 5 seconden vast om te wissen</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">Wis-pincode</string>
+    <string name="wipe_pin_row_desc">Een tweede pincode die je notities wist als je hem op het vergrendelscherm invoert</string>
+    <string name="wipe_pin_row_turned_off">Uitgeschakeld toen de sleutel van je pincode werd gereset. Stel hem opnieuw in als je er een gebruikte.</string>
+    <string name="wipe_pin_intro">Als iemand je dwingt Encly te openen, voer dan de wis-pincode in plaats van je pincode in. Encly wist je notities, taken en labels zonder zichtbaar teken en opent als een lege kluis. Dit werkt alleen op het vergrendelscherm.</string>
+    <string name="wipe_pin_after_erase">Na het wissen opent Encly met de wis-pincode: die wordt de pincode van de nieuwe, lege kluis. Je oude pincode werkt niet meer. Wie je de wis-pincode zag invoeren, kan Encly er opnieuw mee openen en merkt niets ongewoons.</string>
+    <string name="wipe_pin_backups">Back-upbestanden die je al hebt geëxporteerd, blijven onaangeroerd. Ze openen nog steeds met je herstelzin en zijn de enige weg terug.</string>
+    <string name="wipe_pin_biometric_warning">Biometrisch ontgrendelen blijft aan: iemand kan je vinger op de sensor dwingen. Zet het uit als dat voor jou een risico is.</string>
+    <string name="wipe_pin_biometric_off">Biometrisch ontgrendelen uitzetten</string>
+    <string name="wipe_pin_limits">Dit beschermt je als iemand je dwingt te ontgrendelen, niet tegen forensisch onderzoek van de telefoon. Tijdens een blokkering na mislukte pogingen werkt ook de wis-pincode niet. Encly laat nooit zien of er een wis-pincode is ingesteld: een nieuwe vervangt de oude, en als je je pincode wijzigt in de wis-pincode, wordt die uitgeschakeld.</string>
+    <string name="wipe_pin_set">Wis-pincode instellen</string>
+    <string name="wipe_pin_remove">Wis-pincode uitzetten</string>
+    <string name="wipe_pin_current_subtitle">Bevestig je pincode om de wis-pincode in te stellen</string>
+    <string name="wipe_pin_new_title">Maak een wis-pincode</string>
+    <string name="wipe_pin_new_subtitle">6 cijfers, anders dan je pincode</string>
+    <string name="wipe_pin_confirm_title">Bevestig de wis-pincode</string>
+    <string name="wipe_pin_confirm_subtitle">Voer de wis-pincode nogmaals in</string>
+    <string name="wipe_pin_same_as_pin">De wis-pincode moet anders zijn dan je pincode</string>
+    <string name="wipe_pin_failed">Kan de wis-pincode niet opslaan. Probeer het opnieuw.</string>
+    <string name="wipe_pin_saved">Wis-pincode ingesteld</string>
+    <string name="wipe_pin_removed">Wis-pincode uitgezet</string>
+    <string name="wipe_pin_turned_off">De sleutel van je pincode is gereset, dus een eventuele wis-pincode is uitgeschakeld. Stel hem opnieuw in als je er een wilt.</string>
 </resources>

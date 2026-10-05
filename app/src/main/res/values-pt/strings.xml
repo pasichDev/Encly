@@ -558,4 +558,22 @@
     <string name="keyboard_hide">Ocultar teclado</string>
     <string name="security_erase_confirm_title">Apagar todos os dados?</string>
     <string name="security_erase_confirm">Apagar</string>
+    <string name="subtasks_title">Subtarefas</string>
+    <string name="subtask_placeholder">Subtarefa</string>
+    <string name="subtask_add">Adicionar subtarefa</string>
+    <string name="subtask_delete">Excluir subtarefa</string>
+    <string name="subtasks_all_done">Todas as subtarefas estão concluídas</string>
+    <string name="subtasks_complete_task">Concluir tarefa</string>
+    <string name="subtasks_show">Mostrar subtarefas</string>
+    <string name="subtasks_hide">Ocultar subtarefas</string>
+    <string name="subtasks_state_shown">Expandido</string>
+    <string name="subtasks_state_hidden">Recolhido</string>
+    <string name="subtask_deleted">Subtarefa excluída</string>
+    <string name="subtask_next_step">Próximo passo: %1$s</string>
+    <string name="subtask_first_step">Primeiro passo</string>
+    <plurals name="subtasks_done_summary">
+        <item quantity="one">%1$d de %2$d subtarefa concluída</item>
+        <item quantity="many">%1$d de %2$d subtarefas concluídas</item>
+        <item quantity="other">%1$d de %2$d subtarefas concluídas</item>
+    </plurals>
 </resources>

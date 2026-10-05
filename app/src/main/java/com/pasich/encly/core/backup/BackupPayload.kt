@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream
  * Schema history:
  * - 1: first format; tasks carried a `reminderDate`.
  * - 2: task reminders removed from the app, so tasks no longer carry `reminderDate`.
+ * - 3: each task carries its `subtasks` (a list, empty for a task without any).
  */
 @Serializable
 data class BackupPayload(
@@ -40,10 +41,13 @@ data class BackupPayload(
     val tasks: List<BackupTask>,
 ) {
     companion object {
-        const val SCHEMA_VERSION = 2
+        const val SCHEMA_VERSION = 3
 
         /** Tasks carried a `reminderDate`, dropped on import. */
         const val SCHEMA_V1 = 1
+
+        /** Tasks had no sub-tasks; they are imported with none. */
+        const val SCHEMA_V2 = 2
     }
 }
 
@@ -74,13 +78,20 @@ data class BackupTask(
     val priority: Int,
     val categoryTagUid: String?,
     val position: Int,
+    val subtasks: List<BackupSubtask>,
 )
+
+/** A task's checklist item. Its task is the [BackupTask] that holds it; [uid]s are vault-wide unique. */
+@Serializable
+data class BackupSubtask(val uid: String, val title: String, val isCompleted: Boolean, val position: Int)
 
 /** UTF-8 JSON encoding of [BackupPayload] with strict validation on the way in. */
 @OptIn(ExperimentalSerializationApi::class)
 object BackupPayloadCodec {
     const val MAX_UID_LENGTH = 64
     private const val REMINDER_DATE_KEY = "reminderDate"
+    private const val TASKS_KEY = "tasks"
+    private const val SUBTASKS_KEY = "subtasks"
     private val PRIORITIES = 0..2
 
     private val json = Json {
@@ -116,9 +127,9 @@ object BackupPayloadCodec {
         val schema = invalidPayloadOn { decodeStream(schemaJson, SchemaProbe.serializer(), plaintext).schema }
         if (schema > BackupPayload.SCHEMA_VERSION) throw BackupException(BackupError.UNSUPPORTED_VERSION)
         val payload = invalidPayloadOn {
-            if (schema == BackupPayload.SCHEMA_V1) {
+            if (schema == BackupPayload.SCHEMA_V1 || schema == BackupPayload.SCHEMA_V2) {
                 val tree = decodeStream(json, JsonElement.serializer(), plaintext)
-                json.decodeFromJsonElement(BackupPayload.serializer(), upgradeFromV1(tree.jsonObject))
+                json.decodeFromJsonElement(BackupPayload.serializer(), upgrade(tree.jsonObject, schema))
             } else {
                 decodeStream(json, BackupPayload.serializer(), plaintext)
             }
@@ -127,12 +138,20 @@ object BackupPayloadCodec {
         return payload
     }
 
-    /** Schema 1 -> 2: drop each task's `reminderDate`; everything else is unchanged. */
-    private fun upgradeFromV1(v1: JsonObject): JsonObject {
-        val tasks = v1["tasks"]?.jsonArray?.map { JsonObject(it.jsonObject - REMINDER_DATE_KEY) }
+    /**
+     * Schema 1 or 2 -> current. 1 -> 2 drops each task's `reminderDate`; 2 -> 3 gives each task
+     * an empty `subtasks` list. Everything else is unchanged. A `subtasks` key in an older file
+     * is not something that schema had, so it fails like any other unknown key.
+     */
+    private fun upgrade(old: JsonObject, schema: Int): JsonObject {
+        val tasks = old[TASKS_KEY]?.jsonArray?.map { element ->
+            val task = element.jsonObject.let { if (schema == BackupPayload.SCHEMA_V1) it - REMINDER_DATE_KEY else it }
+            require(SUBTASKS_KEY !in task) { "Unexpected sub-tasks in schema $schema" }
+            JsonObject(task + (SUBTASKS_KEY to JsonArray(emptyList())))
+        }
         return JsonObject(
-            v1 + ("schema" to JsonPrimitive(BackupPayload.SCHEMA_VERSION)) +
-                (tasks?.let { mapOf("tasks" to JsonArray(it)) }.orEmpty()),
+            old + ("schema" to JsonPrimitive(BackupPayload.SCHEMA_VERSION)) +
+                (tasks?.let { mapOf(TASKS_KEY to JsonArray(it)) }.orEmpty()),
         )
     }
 
@@ -153,6 +172,7 @@ object BackupPayloadCodec {
             uniqueValidUids(payload.tags.map { it.uid }) &&
             uniqueValidUids(payload.notes.map { it.uid }) &&
             uniqueValidUids(payload.tasks.map { it.uid }) &&
+            uniqueValidUids(payload.tasks.flatMap { task -> task.subtasks.map { it.uid } }) &&
             payload.notes.all { it.tagUid == null || it.tagUid in tagUids } &&
             payload.tasks.all {
                 it.priority in PRIORITIES && (it.categoryTagUid == null || it.categoryTagUid in tagUids)

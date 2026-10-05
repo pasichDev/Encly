@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Sub-tasks: break a task into steps. The list shows each task's next step and its progress; tap a task to see and edit all of them.
+• Wipe PIN (optional): a second PIN that silently erases the vault and opens an empty one, for when someone forces you to unlock.
+• Move your notes from My Notes in one step.
+This version updates the database and the backup format: older versions can't open them.

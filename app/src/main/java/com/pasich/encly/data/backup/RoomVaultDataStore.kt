@@ -3,6 +3,7 @@ package com.pasich.encly.data.backup
 import androidx.room.withTransaction
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import javax.inject.Inject
@@ -13,13 +14,20 @@ class RoomVaultDataStore @Inject constructor(private val databaseProvider: Datab
     private fun dao() = database().backupDao()
 
     override suspend fun snapshot(): VaultSnapshot = database().withTransaction {
-        VaultSnapshot(notes = dao().allNotes(), tags = dao().allTags(), tasks = dao().allTasks())
+        VaultSnapshot(
+            notes = dao().allNotes(),
+            tags = dao().allTags(),
+            tasks = dao().allTasks(),
+            subtasks = dao().allSubtasks(),
+        )
     }
 
     override suspend fun <R> inTransaction(block: suspend () -> R): R = database().withTransaction { block() }
 
     override suspend fun deleteAll() {
         dao().deleteAllNotes()
+        // The foreign key would cascade them with their tasks; deleted explicitly all the same.
+        dao().deleteAllSubtasks()
         dao().deleteAllTasks()
         dao().deleteAllTags()
     }
@@ -29,4 +37,6 @@ class RoomVaultDataStore @Inject constructor(private val databaseProvider: Datab
     override suspend fun insertNote(note: Note): Long = dao().insertNote(note)
 
     override suspend fun insertTask(task: Task): Long = dao().insertTask(task)
+
+    override suspend fun insertSubtask(subtask: Subtask): Long = dao().insertSubtask(subtask)
 }

@@ -553,4 +553,21 @@
     <string name="keyboard_hide">Tastatur ausblenden</string>
     <string name="security_erase_confirm_title">Alle Daten löschen?</string>
     <string name="security_erase_confirm">Löschen</string>
+    <string name="subtasks_title">Unteraufgaben</string>
+    <string name="subtask_placeholder">Unteraufgabe</string>
+    <string name="subtask_add">Unteraufgabe hinzufügen</string>
+    <string name="subtask_delete">Unteraufgabe löschen</string>
+    <string name="subtasks_all_done">Alle Unteraufgaben sind erledigt</string>
+    <string name="subtasks_complete_task">Aufgabe erledigen</string>
+    <string name="subtasks_show">Unteraufgaben anzeigen</string>
+    <string name="subtasks_hide">Unteraufgaben ausblenden</string>
+    <string name="subtasks_state_shown">Ausgeklappt</string>
+    <string name="subtasks_state_hidden">Eingeklappt</string>
+    <string name="subtask_deleted">Unteraufgabe gelöscht</string>
+    <string name="subtask_next_step">Nächster Schritt: %1$s</string>
+    <string name="subtask_first_step">Erster Schritt</string>
+    <plurals name="subtasks_done_summary">
+        <item quantity="one">%1$d von %2$d Unteraufgabe erledigt</item>
+        <item quantity="other">%1$d von %2$d Unteraufgaben erledigt</item>
+    </plurals>
 </resources>

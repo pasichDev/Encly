@@ -75,6 +75,22 @@ class SecurityManagerTest {
     }
 
     @Test
+    fun aRecreatedActivityKeepsTheOpenVaultOpenAndALockedOneAsksAgain() {
+        commitVault()
+        `when`(auth.hasPinSlot()).thenReturn(true)
+        `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        assertTrue(manager.unlockWithRawKey(ByteArray(32) { 7 }))
+        `when`(database.isDatabaseUnlocked()).thenReturn(true)
+
+        // Rotation, dark mode or font size: the activity asks again while the vault is open.
+        assertEquals(InitialStatus.MAIN, manager.resolveInitialStatus())
+
+        manager.lock()
+        `when`(database.isDatabaseUnlocked()).thenReturn(false)
+        assertEquals(InitialStatus.AUTH, manager.resolveInitialStatus())
+    }
+
+    @Test
     fun committedVaultWithOnlyRecoverySlotStillAsksForAuthentication() {
         commitVault()
         `when`(seed.hasRecoverySeed()).thenReturn(true)

@@ -553,4 +553,21 @@
     <string name="keyboard_hide">Toetsenbord verbergen</string>
     <string name="security_erase_confirm_title">Alle gegevens wissen?</string>
     <string name="security_erase_confirm">Wissen</string>
+    <string name="subtasks_title">Subtaken</string>
+    <string name="subtask_placeholder">Subtaak</string>
+    <string name="subtask_add">Subtaak toevoegen</string>
+    <string name="subtask_delete">Subtaak verwijderen</string>
+    <string name="subtasks_all_done">Alle subtaken zijn klaar</string>
+    <string name="subtasks_complete_task">Taak voltooien</string>
+    <string name="subtasks_show">Subtaken tonen</string>
+    <string name="subtasks_hide">Subtaken verbergen</string>
+    <string name="subtasks_state_shown">Uitgevouwen</string>
+    <string name="subtasks_state_hidden">Samengevouwen</string>
+    <string name="subtask_deleted">Subtaak verwijderd</string>
+    <string name="subtask_next_step">Volgende stap: %1$s</string>
+    <string name="subtask_first_step">Eerste stap</string>
+    <plurals name="subtasks_done_summary">
+        <item quantity="one">%1$d van %2$d subtaak voltooid</item>
+        <item quantity="other">%1$d van %2$d subtaken voltooid</item>
+    </plurals>
 </resources>

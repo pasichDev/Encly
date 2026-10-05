@@ -19,6 +19,8 @@
             <action android:name="android.intent.action.SENDTO" />
             <data android:scheme="mailto" />
         </intent>
+        <!-- The My Notes hand-off checks the caller's signing certificate (ImportFromMyNotesActivity). -->
+        <package android:name="com.pasich.mynotes" />
     </queries>
 
     <application
@@ -44,6 +46,30 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+        </activity>
+
+        <!-- One-way hand-off from My Notes (pasichDev/Encly#46). Exported for this action only;
+             the activity refuses any caller that is not My Notes signed with a pinned certificate
+             before it reads the URI. -->
+        <activity
+            android:name=".ImportFromMyNotesActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Encly"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="com.pasich.encly.action.IMPORT_FROM_MY_NOTES" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:mimeType="application/zip"
+                    android:scheme="content" />
+            </intent-filter>
+            <!-- The same hand-off sent without a type: an explicit intent must still match a filter
+                 (Android 14+), and one with a mimeType does not match an untyped intent. -->
+            <intent-filter>
+                <action android:name="com.pasich.encly.action.IMPORT_FROM_MY_NOTES" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+            </intent-filter>
         </activity>
 
         <!-- Stores the in-app language chosen in Settings on Android 12 and lower (Android 13+

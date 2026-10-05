@@ -12,6 +12,7 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.core.security.WipePinChange
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,6 +62,8 @@ class SecuritySettingsViewModel @Inject constructor(
                 authType = authSettings.authType,
                 biometricEnable = authSettings.isBiometricEnabled,
                 biometricStatus = securityManager.biometricStatus(),
+                hasPinSlot = authSettings.hasPinSlot,
+                wipePinTurnedOff = authSettings.wipePinTurnedOff,
                 loaded = true,
             )
         }
@@ -106,6 +109,27 @@ class SecuritySettingsViewModel @Inject constructor(
             } else {
                 _uiState.value = _uiState.value.copy(error = UiText.of(R.string.pin_update_failed))
             }
+            onResult(ok)
+        }
+    }
+
+    /**
+     * Makes [pin] the wipe PIN, replacing any earlier one; [pin] is wiped. Only reached after
+     * [verifyCurrentPin] in the same screen.
+     */
+    fun setWipePin(pin: CharArray, onResult: (WipePinChange) -> Unit) {
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.Default) { securityManager.configureWipePin(pin) }
+            if (result == WipePinChange.SET) _uiState.value = _uiState.value.copy(wipePinTurnedOff = false)
+            onResult(result)
+        }
+    }
+
+    /** Turns the wipe PIN off (whether one was set is never known). */
+    fun removeWipePin(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) { securityManager.removeWipePin() }
+            if (ok) _uiState.value = _uiState.value.copy(wipePinTurnedOff = false)
             onResult(ok)
         }
     }
@@ -157,6 +181,10 @@ class SecuritySettingsViewModel @Inject constructor(
         val isUserCreatedSeedKey: Boolean = false,
         val biometricEnable: Boolean = false,
         val biometricStatus: BiometricStatus = BiometricStatus.UNAVAILABLE,
+        /** A PIN slot exists, so a wipe PIN can be set next to it. */
+        val hasPinSlot: Boolean = false,
+        /** The PIN key was reset and any wipe PIN with it; Settings asks to set it again. */
+        val wipePinTurnedOff: Boolean = false,
         /** The first [refresh] finished; until then the page shows nothing rather than guesses. */
         val loaded: Boolean = false,
     ) {

@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.viewmodel
 
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
@@ -7,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -170,6 +172,7 @@ private const val CATEGORY_ID = 4L
 
 private class InMemoryTasksRepository : TasksRepository {
     val tasks = MutableStateFlow<List<Task>>(emptyList())
+    var subtasks = emptyList<Subtask>()
     private var nextId = 1L
 
     override fun getAllActiveTasks(): Flow<List<Task>> = tasks.map { l -> l.filterNot { it.isCompleted } }
@@ -195,6 +198,31 @@ private class InMemoryTasksRepository : TasksRepository {
     }
 
     override suspend fun deleteAllCompletedTasks(): Result<Unit> = Result.success(Unit)
+
+    override fun observeSubtasks(): Flow<List<Subtask>> = flowOf(emptyList())
+
+    override suspend fun setSubtaskCompleted(id: Long, done: Boolean): Result<Unit> = Result.success(Unit)
+
+    override suspend fun addSubtask(taskId: Long, title: String): Result<Long> = Result.success(0)
+
+    override suspend fun renameSubtask(id: Long, title: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun deleteSubtask(id: Long): Result<Unit> = Result.success(Unit)
+
+    override suspend fun restoreSubtask(subtask: Subtask): Result<Unit> = Result.success(Unit)
+
+    override suspend fun getSubtasks(taskId: Long): Result<List<Subtask>> =
+        Result.success(subtasks.filter { it.taskId == taskId })
+
+    override suspend fun saveSubtasks(taskId: Long, subtasks: List<Subtask>): Result<Unit> {
+        this.subtasks = this.subtasks.filterNot { it.taskId == taskId } + subtasks
+        return Result.success(Unit)
+    }
+
+    override suspend fun restoreTask(task: Task, subtasks: List<Subtask>): Result<Unit> {
+        tasks.value = tasks.value + task
+        return Result.success(Unit)
+    }
     override suspend fun deleteTaskById(id: Long): Result<Unit> = runCatching {
         check(tasks.value.any { it.id == id })
         tasks.value = tasks.value.filterNot { it.id == id }

@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Subtaken: deel een taak op in stappen. De lijst toont de volgende stap en de voortgang; tik op een taak om ze allemaal te zien en te bewerken.
+• Wis-pincode (optioneel): een tweede pincode die de kluis ongemerkt wist en een lege opent als iemand je dwingt te ontgrendelen.
+• Haal je notities uit My Notes in één stap over.
+Deze versie wijzigt de database en het back-upformaat: oudere versies kunnen ze niet openen.

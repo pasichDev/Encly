@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Import from My Notes (one-way hand-off, see ImportFromMyNotesActivity). -->
+    <string name="handoff_title">Import from My Notes</string>
+    <string name="handoff_reading">Reading your notes from My Notes…</string>
+    <string name="handoff_preview_title">Bring your notes into Encly</string>
+    <string name="handoff_preview_body">My Notes on this phone is handing over %1$s, %2$s and %3$s. They are added to your encrypted vault: nothing here is replaced, and anything imported before is skipped.</string>
+    <string name="handoff_preview_attachments">Attachments that stay in My Notes: %1$d. Encly does not import images or files.</string>
+    <string name="handoff_preview_pinned">Pinned notes that will not stay pinned: %1$d. Encly has no pinning.</string>
+    <string name="handoff_import">Import notes</string>
+    <string name="handoff_importing">Importing…</string>
+    <string name="handoff_done_title">Imported</string>
+    <string name="handoff_done_hint">Everything is still in My Notes too. Once you have checked your notes here, you can clear it there.</string>
+    <string name="handoff_error_title">Nothing was imported</string>
+    <string name="handoff_error_unsupported">My Notes sent its notes in a newer format. Update Encly, then start the move again in My Notes.</string>
+    <string name="handoff_error_invalid">The data from My Notes couldn\'t be read.</string>
+    <string name="handoff_error_too_large">The data from My Notes is larger than Encly can import at once.</string>
+    <string name="handoff_error_failed">Something went wrong while importing. Try again from My Notes.</string>
+    <string name="handoff_error_vault">Encly can\'t open your vault here. Open Encly, make sure it is set up and unlocks, then start the move again in My Notes.</string>
+</resources>

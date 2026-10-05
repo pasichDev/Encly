@@ -57,7 +57,7 @@ class BiometricManager @Inject constructor(
     companion object {
         private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
         private const val KEY_ALIAS = "encly_biometric_wrap_v2"
-        private const val SLOT_PREFIX = "bio."
+        internal const val SLOT_PREFIX = "bio."
         private const val SLOT_KEY = "bio.slot"
         private const val GCM_TAG_LENGTH = 128
         private const val IV_LENGTH = 12

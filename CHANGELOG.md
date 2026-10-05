@@ -11,6 +11,57 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-05
+
+versionCode 20100.
+
+Tasks get sub-tasks, an optional wipe PIN can silently erase the vault, and notes can move over
+from My Notes in one step. The database and the backup format change with this version, so an
+older Encly cannot open either (see Compatibility).
+
+### Added
+
+- Sub-tasks: a task can have a checklist of sub-tasks (one level). On the Tasks list an open
+  task shows its next step (its first open sub-task) as one leaf under it, and every task with
+  sub-tasks a segment bar of its progress; a task without sub-tasks looks as before. Ticking the
+  next step saves it at once and the following one slides up into its place. A tap on the task
+  (or the leaf's chevron) opens the whole tree, done ones struck through, ending with an add leaf
+  ("First step" on a task without any) whose field adds each title on Done and stays open for
+  the next. In the tree a sub-task ticks in place, a tap on its title renames it, clearing the
+  title or its ✕ deletes it with Undo, and a long press drags it into a new place (Move up/down
+  for TalkBack); Back closes the field, then folds the tree. The pencil opens the task sheet,
+  which still adds, edits, ticks, reorders and deletes them. Completing a task never ticks its
+  sub-tasks, and ticking the last open sub-task does not complete the task on its own: a
+  snackbar offers "Complete task". Deleting a task deletes its sub-tasks, and Undo brings them
+  back.
+- Encrypted backups carry sub-tasks (backup schema 3). Older backups (schema 1 and 2) still
+  restore, with no sub-tasks. Merge import adds the sub-tasks a task already on the device is
+  missing.
+- Wipe PIN (Settings → Security → Wipe PIN): an optional second PIN that, typed on the lock
+  screen, erases the vault without a visible sign and opens Encly as an empty vault. Nothing in
+  the app or its storage shows whether one is set. Off by default; nothing changes for vaults
+  that never set one (a random decoy slot is added at startup without asking for the PIN).
+  Exported backups are not touched. See SECURITY.md → Wipe PIN for what it does and does not
+  protect against.
+- Import from My Notes: My Notes can hand its notes (trash included), tasks, tags and task
+  categories over to Encly on the same device. Encly accepts it only from the genuine My Notes
+  app, after you unlock and confirm a preview; a repeated hand-off adds nothing twice. Tags and
+  task categories are matched by name; attachments, images and pinning do not come over.
+
+### ⚠️ Compatibility
+
+- The database moves to version 4 (new `subtasks` table, migrated in place). Installing an older
+  Encly over this version is not supported: Room refuses to open a newer database, so a
+  downgrade fails to open the vault. Export a backup first if you might go back.
+- A backup made with this version is schema 3. Older Encly versions refuse it as "made by a
+  newer version, update the app" instead of restoring it without sub-tasks.
+
+### Changed
+
+- Changing the PIN keeps the PIN slot's salt.
+- When Encly was restarted in the background while locked, unlocking opens the notes list
+  instead of the note that was open.
+
 ## [2.0.1] - 2026-09-25
 
 versionCode 20001.
@@ -143,6 +194,7 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/pasichDev/Encly/releases/tag/v2.1.0
 [2.0.1]: https://github.com/pasichDev/Encly/releases/tag/v2.0.1
 [2.0.0]: https://github.com/pasichDev/Encly/releases/tag/v2.0.0

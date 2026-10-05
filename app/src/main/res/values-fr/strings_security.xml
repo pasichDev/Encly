@@ -73,4 +73,26 @@
     <string name="security_protection_slots_desc">Le code PIN, la phrase de récupération et l’empreinte ouvrent chacun leur propre emplacement chiffré. L’empreinte est demandée à chaque fois.</string>
     <string name="security_danger_section">Zone de danger</string>
     <string name="security_erase_hold">Maintenez 5 secondes pour effacer</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">PIN d\'effacement</string>
+    <string name="wipe_pin_row_desc">Un second PIN qui efface vos notes s\'il est saisi sur l\'écran de verrouillage</string>
+    <string name="wipe_pin_row_turned_off">Désactivé lors de la réinitialisation de la clé de votre PIN. Définissez-le à nouveau si vous en utilisiez un.</string>
+    <string name="wipe_pin_intro">Si quelqu\'un vous force à ouvrir Encly, saisissez le PIN d\'effacement au lieu de votre PIN. Encly efface vos notes, tâches et libellés sans aucun signe et s\'ouvre comme un coffre vide. Cela ne fonctionne que sur l\'écran de verrouillage.</string>
+    <string name="wipe_pin_after_erase">Après l\'effacement, Encly s\'ouvre avec le PIN d\'effacement : il devient le PIN du nouveau coffre vide. Votre ancien PIN ne fonctionne plus. La personne qui vous a vu saisir le PIN d\'effacement peut rouvrir Encly avec et ne remarque rien d\'inhabituel.</string>
+    <string name="wipe_pin_backups">Les fichiers de sauvegarde déjà exportés ne sont pas touchés. Ils s\'ouvrent toujours avec votre phrase de récupération et sont le seul moyen de revenir en arrière.</string>
+    <string name="wipe_pin_biometric_warning">Le déverrouillage biométrique reste actif : quelqu\'un peut vous forcer à poser le doigt sur le capteur. Désactivez-le si c\'est un risque pour vous.</string>
+    <string name="wipe_pin_biometric_off">Désactiver le déverrouillage biométrique</string>
+    <string name="wipe_pin_limits">Cela vous protège quand quelqu\'un vous force à déverrouiller, pas contre une analyse forensique du téléphone. Pendant un blocage après des essais ratés, le PIN d\'effacement ne fonctionne pas non plus. Encly n\'indique jamais si un PIN d\'effacement est défini : un nouveau remplace l\'ancien, et si vous changez votre PIN pour le PIN d\'effacement, celui-ci est désactivé.</string>
+    <string name="wipe_pin_set">Définir le PIN d\'effacement</string>
+    <string name="wipe_pin_remove">Désactiver le PIN d\'effacement</string>
+    <string name="wipe_pin_current_subtitle">Confirmez votre PIN pour configurer le PIN d\'effacement</string>
+    <string name="wipe_pin_new_title">Créez un PIN d\'effacement</string>
+    <string name="wipe_pin_new_subtitle">6 chiffres, différents de votre PIN</string>
+    <string name="wipe_pin_confirm_title">Confirmez le PIN d\'effacement</string>
+    <string name="wipe_pin_confirm_subtitle">Saisissez à nouveau le PIN d\'effacement</string>
+    <string name="wipe_pin_same_as_pin">Le PIN d\'effacement doit être différent de votre PIN</string>
+    <string name="wipe_pin_failed">Impossible d\'enregistrer le PIN d\'effacement. Veuillez réessayer.</string>
+    <string name="wipe_pin_saved">PIN d\'effacement défini</string>
+    <string name="wipe_pin_removed">PIN d\'effacement désactivé</string>
+    <string name="wipe_pin_turned_off">La clé de votre PIN a été réinitialisée : un éventuel PIN d\'effacement a donc été désactivé. Définissez-le à nouveau si vous le souhaitez.</string>
 </resources>

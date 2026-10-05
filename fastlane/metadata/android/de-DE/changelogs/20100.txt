@@ -1,0 +1,5 @@
+Encly 2.1.0
+• Unteraufgaben: Teile eine Aufgabe in Schritte. Die Liste zeigt den nächsten Schritt und den Fortschritt; tippe auf eine Aufgabe, um alle zu sehen und zu bearbeiten.
+• Lösch-PIN (optional): eine zweite PIN, die den Tresor unbemerkt löscht und einen leeren öffnet, wenn dich jemand zum Entsperren zwingt.
+• Notizen aus My Notes in einem Schritt übernehmen.
+Diese Version ändert die Datenbank und das Backup-Format: ältere Versionen können sie nicht öffnen.

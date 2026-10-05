@@ -73,4 +73,26 @@
     <string name="security_protection_slots_desc">PIN, frase di recupero e impronta aprono ciascuno il proprio spazio cifrato. L’impronta viene chiesta ogni volta.</string>
     <string name="security_danger_section">Zona pericolosa</string>
     <string name="security_erase_hold">Tieni premuto 5 secondi per cancellare</string>
+    <!-- Wipe PIN (Settings → Security). -->
+    <string name="wipe_pin_title">PIN di cancellazione</string>
+    <string name="wipe_pin_row_desc">Un secondo PIN che cancella le tue note se lo digiti nella schermata di blocco</string>
+    <string name="wipe_pin_row_turned_off">Disattivato quando la chiave del PIN è stata reimpostata. Impostalo di nuovo se ne usavi uno.</string>
+    <string name="wipe_pin_intro">Se qualcuno ti costringe ad aprire Encly, digita il PIN di cancellazione invece del tuo PIN. Encly cancella note, attività ed etichette senza lasciare segni e si apre come una cassaforte vuota. Funziona solo nella schermata di blocco.</string>
+    <string name="wipe_pin_after_erase">Dopo la cancellazione, Encly si apre con il PIN di cancellazione: diventa il PIN della nuova cassaforte vuota. Il vecchio PIN smette di funzionare, così chi ti ha visto digitare il PIN di cancellazione può riaprire Encly con esso senza notare nulla di strano.</string>
+    <string name="wipe_pin_backups">I file di backup che hai già esportato non vengono toccati. Si aprono ancora con la frase di recupero e sono l\'unico modo per tornare indietro.</string>
+    <string name="wipe_pin_biometric_warning">Lo sblocco biometrico resta attivo: qualcuno può costringerti ad appoggiare il dito sul sensore. Disattivalo se per te è un rischio.</string>
+    <string name="wipe_pin_biometric_off">Disattiva lo sblocco biometrico</string>
+    <string name="wipe_pin_limits">Ti protegge quando qualcuno ti costringe a sbloccare, non da un\'analisi forense del telefono. Durante un blocco dopo tentativi errati anche il PIN di cancellazione non funziona. Encly non mostra mai se un PIN di cancellazione è impostato: uno nuovo sostituisce il precedente, e se cambi il tuo PIN nel PIN di cancellazione, questo viene disattivato.</string>
+    <string name="wipe_pin_set">Imposta PIN di cancellazione</string>
+    <string name="wipe_pin_remove">Disattiva PIN di cancellazione</string>
+    <string name="wipe_pin_current_subtitle">Conferma il tuo PIN per configurare il PIN di cancellazione</string>
+    <string name="wipe_pin_new_title">Crea un PIN di cancellazione</string>
+    <string name="wipe_pin_new_subtitle">6 cifre, diverse dal tuo PIN</string>
+    <string name="wipe_pin_confirm_title">Conferma il PIN di cancellazione</string>
+    <string name="wipe_pin_confirm_subtitle">Digita di nuovo il PIN di cancellazione</string>
+    <string name="wipe_pin_same_as_pin">Il PIN di cancellazione deve essere diverso dal tuo PIN</string>
+    <string name="wipe_pin_failed">Impossibile salvare il PIN di cancellazione. Riprova.</string>
+    <string name="wipe_pin_saved">PIN di cancellazione impostato</string>
+    <string name="wipe_pin_removed">PIN di cancellazione disattivato</string>
+    <string name="wipe_pin_turned_off">La chiave del tuo PIN è stata reimpostata, quindi l\'eventuale PIN di cancellazione è stato disattivato. Impostalo di nuovo se ti serve.</string>
 </resources>
