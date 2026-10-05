@@ -89,8 +89,8 @@ If you also use My Notes (the developer's earlier notes app), it can move its no
 and task categories into Encly. This happens **only on your device**, only when you start it in
 My Notes, and only after you unlock Encly and confirm what will be imported. Encly accepts the
 data only from the genuine My Notes app (checked by its signing certificate). The temporary copy
-Encly makes while reading it is deleted right away; the imported notes are stored encrypted like
-everything else. Nothing is sent over the network, and Encly sends nothing back to My Notes
+Encly makes while reading it is deleted right away (or, if Encly is closed in the middle, the next
+time it starts); the imported notes are stored encrypted like everything else. Nothing is sent over the network, and Encly sends nothing back to My Notes
 except how many items were imported. Attachments and images stay in My Notes.
 
 ## Deleting your data

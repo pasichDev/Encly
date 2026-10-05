@@ -583,6 +583,17 @@ class WipePinTest {
     }
 
     @Test
+    fun theEraseAlsoDeletesWhatAHandoffLeftInTheCache() {
+        val vault = Vault()
+        `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(WIPE_PIN)))
+
+        vault.security.completePendingWipe()
+
+        assertEquals(1, vault.sweeps)
+    }
+
+    @Test
     fun theStartupFinishRunsOncePerProcess() {
         val vault = Vault()
         assertTrue(vault.auth.unlockWithPin(pin(WIPE_PIN)) is PinUnlock.Erased)
@@ -665,7 +676,10 @@ class WipePinTest {
         val seed = SeedPhraseManager(store)
         val database: SecureDatabaseManager = mock(SecureDatabaseManager::class.java)
         val biometric: BiometricManager = mock(BiometricManager::class.java)
-        val security = SecurityManager(prefs, store, seed, database, auth, biometric)
+
+        /** How often the My Notes hand-off's staging directory was swept. */
+        var sweeps = 0
+        val security = SecurityManager(prefs, store, seed, database, auth, biometric) { sweeps++ }
 
         init {
             assertTrue(seed.initializeVault(seed.generateMnemonic().chars))
@@ -679,7 +693,7 @@ class WipePinTest {
         }
 
         /** The same files read by a new process. */
-        fun restart() = SecurityManager(prefs, store, seed, database, auth, biometric)
+        fun restart() = SecurityManager(prefs, store, seed, database, auth, biometric) { sweeps++ }
     }
 
     private fun thread(block: () -> Unit): Thread = Thread(block).apply { start() }

@@ -48,7 +48,9 @@ fun ImportFromMyNotesScreen(
 ) {
     val locked by viewModel.locked.collectAsState()
     val step by viewModel.step.collectAsState()
-    if (locked) {
+    // A failure shows even while the vault is closed: "nothing can open the vault" comes from
+    // the lock screen itself, and nothing of the vault is on that page.
+    if (locked && step !is HandoffStep.Failed) {
         // Unlocking publishes itself to the session (LockViewModel); the steps then follow.
         val exits = remember(viewModel, onClose) {
             LockExits(

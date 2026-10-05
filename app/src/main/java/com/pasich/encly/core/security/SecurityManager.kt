@@ -5,6 +5,7 @@ import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
+import com.pasich.encly.data.handoff.HandoffStagingSweeper
 import java.security.SecureRandom
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -56,6 +57,8 @@ class SecurityManager @Inject constructor(
     private val secureDatabaseManager: SecureDatabaseManager,
     private val authenticationManager: AuthenticationManager,
     private val biometricManager: BiometricManager,
+    /** Hilt always passes the real one; the default only spares tests that never erase. */
+    private val handoffStaging: HandoffStagingSweeper = HandoffStagingSweeper {},
 ) {
     companion object {
         private const val TAG = "SecurityManager"
@@ -386,6 +389,8 @@ class SecurityManager @Inject constructor(
             // Its slot went with the erase; this deletes the Keystore key behind it.
             biometricManager.disable()
             appFlags.edit().remove(BackupManager.LAST_EXPORT_KEY).commit()
+            // A My Notes hand-off a killed process left in the cache is plaintext of the old vault's time.
+            handoffStaging.sweep()
             if (stage == WipeStage.CLEANUP) authenticationManager.clearPendingWipe()
         }
     }

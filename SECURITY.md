@@ -299,9 +299,11 @@ counts, and exposes no provider or anything readable.
   URI that is not `content://`) without reading the URI.
 - The vault must be unlocked through the normal lock screen first; an open session (within the
   auto-lock grace) is used as is. Backgrounding locks it as everywhere else.
-- My Notes' ZIP (plaintext) is copied to Encly's private cache, because the URI grant ends with
-  the activity, then read and deleted in a `finally`; leftovers of a killed process are deleted
-  the next time. It is never logged. Reading is strict: one `handoff.json` entry, `format` and
+- My Notes' ZIP (plaintext) is copied to a file of its own in Encly's private cache, because the
+  URI grant ends with the activity, then read and deleted in a `finally`. What a killed process
+  left there is deleted when the app next starts (off the main thread) and when a wipe-PIN erase
+  finishes; a file another hand-off of the same process is still reading is left alone. It is
+  never logged. Reading is strict: one `handoff.json` entry, `format` and
   `schema` checked first (a newer schema asks for an Encly update), at most 32 MiB compressed and
   32 MiB uncompressed (counted on the bytes read, so a ZIP bomb stops there), 100 000 records
   per list, 1 Mi characters per text field. Editor.js HTML is reduced to plain text.

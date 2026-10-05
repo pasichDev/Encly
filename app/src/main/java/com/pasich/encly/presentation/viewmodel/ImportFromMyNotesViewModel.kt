@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.backup.BackupException
@@ -63,6 +64,7 @@ class ImportFromMyNotesViewModel @Inject constructor(
     private val sessionLockManager: SessionLockManager,
     private val backupManager: BackupManager,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val staging = HandoffStaging(File(context.cacheDir, HandoffStaging.DIR_NAME))
@@ -76,10 +78,18 @@ class ImportFromMyNotesViewModel @Inject constructor(
     private var started = false
     private var handoff: HandoffImport? = null
 
-    /** Starts the hand-off of [uri] once; a recreated activity calls it again and is ignored. */
+    /**
+     * Starts the hand-off of [uri] once; a recreated activity calls it again and is ignored. One
+     * that already finished before the process was killed shows its counts again instead of
+     * offering the same import a second time.
+     */
     fun start(uri: Uri) {
         if (started) return
         started = true
+        restoredDone()?.let {
+            _step.value = it
+            return
+        }
         viewModelScope.launch {
             if (!vaultOpen() && !requireUnlock()) {
                 _step.value = HandoffStep.Failed(HandoffError.FAILED, vaultUnavailable = true)
@@ -102,7 +112,7 @@ class ImportFromMyNotesViewModel @Inject constructor(
                     backupManager.import(pending.payload, ImportMode.MERGE, TagMatch.UID_OR_NAME)
                 }
                 handoff = null
-                HandoffStep.Done(summary, skipped = summary.skipped + pending.dropped)
+                HandoffStep.Done(summary, skipped = summary.skipped + pending.dropped).also(::rememberDone)
             } catch (_: BackupException) {
                 HandoffStep.Failed(HandoffError.FAILED)
             }
@@ -116,8 +126,35 @@ class ImportFromMyNotesViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        // The staged copy is already gone: each load deletes its own.
         handoff = null
-        staging.clear()
+    }
+
+    /** Only the counts, which is all Done shows: nothing of the notes themselves. */
+    private fun rememberDone(done: HandoffStep.Done) {
+        val summary = done.summary
+        savedStateHandle[KEY_DONE] = intArrayOf(
+            summary.notesAdded,
+            summary.tagsAdded,
+            summary.tasksAdded,
+            summary.skipped,
+            summary.subtasksAdded,
+            done.skipped,
+        )
+    }
+
+    private fun restoredDone(): HandoffStep.Done? {
+        val counts = savedStateHandle.get<IntArray>(KEY_DONE)?.takeIf { it.size == DONE_COUNTS } ?: return null
+        // In the order rememberDone wrote them.
+        val next = counts.iterator()
+        val summary = ImportSummary(
+            notesAdded = next.nextInt(),
+            tagsAdded = next.nextInt(),
+            tasksAdded = next.nextInt(),
+            skipped = next.nextInt(),
+            subtasksAdded = next.nextInt(),
+        )
+        return HandoffStep.Done(summary, skipped = next.nextInt())
     }
 
     private fun vaultOpen(): Boolean = securityManager.isDatabaseUnlocked() && !sessionLockManager.locked.value
@@ -149,3 +186,7 @@ class ImportFromMyNotesViewModel @Inject constructor(
         HandoffStep.Failed(HandoffError.FAILED)
     }
 }
+
+/** SavedStateHandle key of a finished hand-off's counts (see ImportFromMyNotesViewModel.start). */
+private const val KEY_DONE = "handoff_done_counts"
+private const val DONE_COUNTS = 6
