@@ -1,15 +1,19 @@
 package com.pasich.encly.presentation.viewmodel
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.security.NeverLocked
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
+import com.pasich.encly.presentation.dialogs.tasks.SUBTASK_TITLE_MAX_LENGTH
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -47,6 +51,9 @@ enum class TaskOperationFailure {
     DELETE,
 }
 
+/** SavedStateHandle key of the tasks whose sub-task tree is open. */
+private const val KEY_EXPANDED_TASKS = "expandedTaskIds"
+
 /** How many open tasks the notes screen previews. */
 const val HOME_WIDGET_TASKS = 2
 
@@ -80,16 +87,21 @@ data class TasksUiState(
     val selectedPriorityFilter: TaskFilter? = null,
     val selectedCompletedFilter: TaskFilter? = null,
     val filteredActiveTasks: List<Task> = emptyList(),
-    /** Sub-task progress by task id; a task without sub-tasks has no entry. */
-    val subtaskProgress: Map<Long, SubtaskProgress> = emptyMap(),
+    /** Sub-tasks by task id, in their order; a task without sub-tasks has no entry. */
+    val subtasks: Map<Long, List<Subtask>> = emptyMap(),
     val isLoading: Boolean = true,
 )
 
+/**
+ * The Tasks screen: the lists and filters, the editor sheet, and the list's own sub-task
+ * editing (each task's tree opens on a tap; one inline field adds or renames a sub-task).
+ */
 @HiltViewModel
 class TasksViewModel @Inject constructor(
     private val tasksRepository: TasksRepository,
     private val updateTaskStatusUseCase: UpdateTaskStatusUseCase,
     lockEvents: VaultLockEvents = NeverLocked,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TasksUiState())
@@ -119,6 +131,25 @@ class TasksViewModel @Inject constructor(
     private val _completionOffers = MutableSharedFlow<Long>(extraBufferCapacity = 1)
     val completionOffers: SharedFlow<Long> = _completionOffers.asSharedFlow()
 
+    /**
+     * Tasks whose sub-task tree is open on the list (all closed at first). Kept in the saved
+     * state, so a rotation keeps them open; ids of tasks that are gone are dropped.
+     */
+    private val _expandedTaskIds =
+        MutableStateFlow(savedStateHandle.get<LongArray>(KEY_EXPANDED_TASKS)?.toSet().orEmpty())
+    val expandedTaskIds: StateFlow<Set<Long>> = _expandedTaskIds.asStateFlow()
+
+    /**
+     * The one inline sub-task field open on the list, or null. Compose state rather than a flow,
+     * so the field reads back what was typed without a frame of delay.
+     */
+    var inlineEdit: InlineSubtaskEdit? by mutableStateOf(null)
+        private set
+
+    /** A sub-task that was just deleted from the list, so the screen can offer to undo it. */
+    private val _subtaskDeletions = MutableSharedFlow<Subtask>(extraBufferCapacity = 1)
+    val subtaskDeletions: SharedFlow<Subtask> = _subtaskDeletions.asSharedFlow()
+
     /** Sub-tasks of deleted tasks by task id, for [restoreTask]; the delete cascades to them. */
     private val deletedSubtasks = mutableMapOf<Long, List<Subtask>>()
 
@@ -126,6 +157,13 @@ class TasksViewModel @Inject constructor(
 
     /** Serializes background draft saves so two quick pauses cannot insert twice. */
     private val draftMutex = Mutex()
+
+    /**
+     * Serializes the list's sub-task writes (ticks, inline adds, renames, deletes) and the
+     * sheet's checklist load after them: two quick ticks cannot both offer to complete the task,
+     * and the sheet shows what the list just saved.
+     */
+    private val subtaskMutex = Mutex()
 
     private var tasksJob: Job? = null
 
@@ -139,6 +177,7 @@ class TasksViewModel @Inject constructor(
             _editingSubtasks.value = emptyList()
             deletedSubtasks.clear()
             _showAddTaskDialog.value = false
+            inlineEdit = null
         }
     }
 
@@ -149,17 +188,200 @@ class TasksViewModel @Inject constructor(
                 tasksRepository.getAllCompletedTasks(),
                 tasksRepository.getActiveTasksCount(),
                 tasksRepository.getCompletedTasksCount(),
-                tasksRepository.getSubtaskProgress(),
-            ) { activeTasks, completedTasks, activeCount, completedCount, progress ->
+                tasksRepository.observeSubtasks(),
+            ) { activeTasks, completedTasks, activeCount, completedCount, subtasks ->
                 TaskFilterEngine.reduce(_uiState.value, activeTasks, completedTasks, activeCount, completedCount)
-                    .copy(subtaskProgress = progress.associateBy { it.taskId })
+                    .copy(subtasks = subtasks.groupBy { it.taskId })
             }.collect { newState ->
                 _uiState.value = newState
+                dropGoneListState(newState)
             }
         }
     }
 
+    /** Forgets open trees and the inline field of tasks (or a renamed sub-task) that are gone. */
+    private fun dropGoneListState(state: TasksUiState) {
+        val ids = (state.activeTasks + state.completedTasks).mapTo(HashSet()) { it.id }
+        val expanded = _expandedTaskIds.value
+        if (!ids.containsAll(expanded)) setExpanded(expanded.filterTo(LinkedHashSet()) { it in ids })
+        val target = inlineEdit?.target ?: return
+        val renamedGone = target is InlineSubtaskTarget.Rename &&
+            state.subtasks[target.taskId].orEmpty().none { it.id == target.subtaskId }
+        val gone = target.taskId !in ids || renamedGone
+        if (gone) inlineEdit = null
+    }
+
+    private fun setExpanded(ids: Set<Long>) {
+        _expandedTaskIds.value = ids
+        savedStateHandle[KEY_EXPANDED_TASKS] = ids.toLongArray()
+    }
+
+    /** Opens or closes the task's sub-task tree on the list. The set keeps the order they opened in. */
+    fun toggleSubtasks(taskId: Long) {
+        commitInlineEdit()
+        val expanded = _expandedTaskIds.value
+        setExpanded(if (taskId in expanded) expanded - taskId else expanded + taskId)
+    }
+
+    /**
+     * Back on the list: folds the tree opened last among [visible] (the tasks the list shows
+     * now). False when none of them is open, so Back can leave the screen.
+     */
+    fun collapseLastExpanded(visible: Set<Long>): Boolean {
+        val last = _expandedTaskIds.value.lastOrNull { it in visible } ?: return false
+        commitInlineEdit()
+        setExpanded(_expandedTaskIds.value - last)
+        return true
+    }
+
+    /** Drag or "Move up/down" in a task's open tree: stores the new order, keeping each row's identity. */
+    fun moveSubtask(taskId: Long, from: Int, to: Int) {
+        commitInlineEdit()
+        launchSubtaskWrite {
+            val rows = tasksRepository.getSubtasks(taskId).getOrNull() ?: return@launchSubtaskWrite
+            if (from !in rows.indices || to !in rows.indices || from == to) return@launchSubtaskWrite
+            val moved = rows.toMutableList().apply { add(to, removeAt(from)) }
+            if (tasksRepository.saveSubtasks(
+                    taskId,
+                    moved,
+                ).isFailure
+            ) {
+                _operationFailures.emit(TaskOperationFailure.UPDATE)
+            }
+        }
+    }
+
+    /** Turns the task's "Add sub-task" button into the inline field (closing any other one). */
+    fun startAddingSubtask(taskId: Long) {
+        val target = InlineSubtaskTarget.Add(taskId)
+        if (inlineEdit?.target == target) return
+        commitInlineEdit()
+        setExpanded(_expandedTaskIds.value + taskId)
+        inlineEdit = InlineSubtaskEdit(target, text = "")
+    }
+
+    /** Turns the sub-task's row into the inline field with its title (closing any other one). */
+    fun startRenamingSubtask(subtask: Subtask) {
+        val target = InlineSubtaskTarget.Rename(subtask.taskId, subtask.id)
+        if (inlineEdit?.target == target) return
+        commitInlineEdit()
+        inlineEdit = InlineSubtaskEdit(target, text = subtask.title, original = subtask)
+    }
+
+    fun onInlineTextChange(text: String) {
+        inlineEdit = inlineEdit?.copy(text = text.take(SUBTASK_TITLE_MAX_LENGTH))
+    }
+
+    /**
+     * The keyboard's Done. Adding: a title is saved as the task's last sub-task and the field
+     * stays open, empty, for the next one; a blank field closes. Renaming: like [closeInlineEdit].
+     */
+    fun submitInlineEdit() {
+        val edit = inlineEdit ?: return
+        if (edit.target is InlineSubtaskTarget.Add && edit.text.isNotBlank()) {
+            inlineEdit = edit.copy(text = "")
+            writeInlineEdit(edit)
+        } else {
+            closeInlineEdit(edit.target)
+        }
+    }
+
+    /**
+     * Closes the field for [target] (it lost focus, the user tapped elsewhere or pressed Back)
+     * and saves it: a new title is added, a rename is stored, and a rename left blank deletes the
+     * sub-task (with Undo). A blank new sub-task is simply dropped. Ignored when the field open
+     * now is another one.
+     */
+    fun closeInlineEdit(target: InlineSubtaskTarget) {
+        val edit = inlineEdit?.takeIf { it.target == target } ?: return
+        inlineEdit = null
+        writeInlineEdit(edit)
+    }
+
+    /** The ✕ of a sub-task being renamed: deletes it, with Undo. */
+    fun deleteInlineSubtask() {
+        val original = inlineEdit?.original ?: return
+        inlineEdit = null
+        launchSubtaskWrite { deleteSubtaskWithUndo(original) }
+    }
+
+    /** Undo for a sub-task deleted from the list: back at its position, with its uid. */
+    fun restoreSubtask(subtask: Subtask) {
+        launchSubtaskWrite {
+            if (tasksRepository.restoreSubtask(subtask).isFailure) _operationFailures.emit(TaskOperationFailure.UPDATE)
+        }
+    }
+
+    /**
+     * Saves what the inline field holds when the app leaves the foreground (the re-lock drops
+     * the screen), like the sheet's [saveDraftForBackground]. A blank field saves nothing. The
+     * field stays open: an added title is cleared from it so it is not added twice.
+     */
+    fun flushInlineEditForBackground() {
+        val edit = inlineEdit ?: return
+        if (edit.text.isBlank()) return
+        inlineEdit = when (edit.target) {
+            is InlineSubtaskTarget.Add -> edit.copy(text = "")
+            is InlineSubtaskTarget.Rename -> edit.copy(original = edit.original?.copy(title = edit.text.trim()))
+        }
+        writeInlineEdit(edit)
+    }
+
+    /**
+     * Saves and closes the open inline field, like losing focus does: before any other
+     * interaction with the list, and when the screen is left.
+     */
+    fun commitInlineEdit() {
+        inlineEdit?.let { closeInlineEdit(it.target) }
+    }
+
+    private fun writeInlineEdit(edit: InlineSubtaskEdit) {
+        val title = edit.text.trim()
+        val original = edit.original
+        launchSubtaskWrite {
+            val failed = when {
+                original == null -> title.isNotEmpty() &&
+                    tasksRepository.addSubtask(edit.target.taskId, title).isFailure
+
+                title.isEmpty() -> !deleteSubtaskWithUndo(original)
+
+                title != original.title -> tasksRepository.renameSubtask(original.id, title).isFailure
+
+                else -> false
+            }
+            if (failed) _operationFailures.emit(TaskOperationFailure.UPDATE)
+        }
+    }
+
+    /**
+     * Deletes [subtask] and offers Undo; false when the delete failed. Deleting the last open
+     * sub-task of an open task leaves only done ones, so it offers to complete the task too,
+     * like ticking it would.
+     */
+    private suspend fun deleteSubtaskWithUndo(subtask: Subtask): Boolean {
+        val deleted = tasksRepository.deleteSubtask(subtask.id).isSuccess
+        if (deleted) {
+            _subtaskDeletions.emit(subtask)
+            offerCompletionAfterDelete(subtask)
+        }
+        return deleted
+    }
+
+    private suspend fun offerCompletionAfterDelete(deleted: Subtask) {
+        val after = tasksRepository.getSubtasks(deleted.taskId).getOrNull() ?: return
+        val state = uiState.value
+        val task = (state.activeTasks + state.completedTasks).find { it.id == deleted.taskId }
+        if (task != null && SubtaskDrafts.offersCompletion(task.isCompleted, after + deleted, after)) {
+            _completionOffers.emit(task.id)
+        }
+    }
+
+    private fun launchSubtaskWrite(write: suspend () -> Unit) {
+        viewModelScope.launch { subtaskMutex.withLock { write() } }
+    }
+
     fun showAddTaskDialog() {
+        commitInlineEdit()
         subtasksJob?.cancel()
         _editingTask.value = null
         _editingSubtasks.value = emptyList()
@@ -167,6 +389,7 @@ class TasksViewModel @Inject constructor(
     }
 
     fun showEditTaskDialog(task: Task) {
+        commitInlineEdit()
         subtasksJob?.cancel()
         _editingTask.value = task
         // Unknown until loaded: a sheet saved before then leaves the stored checklist alone,
@@ -174,7 +397,9 @@ class TasksViewModel @Inject constructor(
         _editingSubtasks.value = null
         _showAddTaskDialog.value = true
         subtasksJob = viewModelScope.launch {
-            tasksRepository.getSubtasks(task.id).onSuccess { _editingSubtasks.value = SubtaskDrafts.fromSubtasks(it) }
+            // After any list write still in flight, so the sheet shows it.
+            subtaskMutex.withLock { tasksRepository.getSubtasks(task.id) }
+                .onSuccess { _editingSubtasks.value = SubtaskDrafts.fromSubtasks(it) }
         }
     }
 
@@ -313,9 +538,33 @@ class TasksViewModel @Inject constructor(
     }
 
     fun toggleTaskCompletion(taskId: Long, isCompleted: Boolean) {
+        commitInlineEdit()
         viewModelScope.launch {
             if (updateTaskStatusUseCase(taskId, isCompleted).isFailure) {
                 _operationFailures.emit(TaskOperationFailure.STATUS_UPDATE)
+            }
+        }
+    }
+
+    /**
+     * Ticks or unticks a sub-task from the list, saved at once. When that ticks the last open
+     * sub-task of an open task, offers to complete it, like a sheet save does.
+     */
+    fun toggleSubtask(subtask: Subtask, done: Boolean) {
+        commitInlineEdit()
+        viewModelScope.launch {
+            subtaskMutex.withLock {
+                if (tasksRepository.setSubtaskCompleted(subtask.id, done).isFailure) {
+                    _operationFailures.emit(TaskOperationFailure.STATUS_UPDATE)
+                    return@withLock
+                }
+                val after = tasksRepository.getSubtasks(subtask.taskId).getOrNull() ?: return@withLock
+                val before = after.map { if (it.id == subtask.id) it.copy(isCompleted = !done) else it }
+                val state = uiState.value
+                val task = (state.activeTasks + state.completedTasks).find { it.id == subtask.taskId }
+                if (task != null && SubtaskDrafts.offersCompletion(task.isCompleted, before, after)) {
+                    _completionOffers.emit(task.id)
+                }
             }
         }
     }
@@ -357,6 +606,7 @@ class TasksViewModel @Inject constructor(
     }
 
     fun onFilterSelected(filter: TaskFilter) {
+        commitInlineEdit()
         _uiState.value = TaskFilterEngine.select(_uiState.value, filter)
     }
 }

@@ -2,7 +2,6 @@ package com.pasich.encly.data.repository
 
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import kotlinx.coroutines.flow.Flow
@@ -48,7 +47,28 @@ class TasksRepositoryImpl @Inject constructor(private val databaseProvider: Data
         dao().deleteAllCompletedTasks()
     }
 
-    override fun getSubtaskProgress(): Flow<List<SubtaskProgress>> = daoFlow { dao().getSubtaskProgress() }
+    override fun observeSubtasks(): Flow<List<Subtask>> = daoFlow { dao().observeSubtasks() }
+
+    override suspend fun setSubtaskCompleted(id: Long, done: Boolean): Result<Unit> =
+        storageWrite(TAG, "setSubtaskCompleted") {
+            dao().setSubtaskCompleted(id, done).requireRows()
+        }
+
+    override suspend fun addSubtask(taskId: Long, title: String): Result<Long> = storageWrite(TAG, "addSubtask") {
+        dao().appendSubtask(taskId, title)
+    }
+
+    override suspend fun renameSubtask(id: Long, title: String): Result<Unit> = storageWrite(TAG, "renameSubtask") {
+        dao().renameSubtask(id, title).requireRows()
+    }
+
+    override suspend fun deleteSubtask(id: Long): Result<Unit> = storageWrite(TAG, "deleteSubtask") {
+        dao().deleteSubtaskById(id).requireRows()
+    }
+
+    override suspend fun restoreSubtask(subtask: Subtask): Result<Unit> = storageWrite(TAG, "restoreSubtask") {
+        dao().restoreSubtask(subtask)
+    }
 
     override suspend fun getSubtasks(taskId: Long): Result<List<Subtask>> = storageWrite(TAG, "getSubtasks") {
         dao().getSubtasks(taskId)

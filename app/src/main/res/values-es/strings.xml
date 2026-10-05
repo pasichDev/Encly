@@ -564,4 +564,16 @@
     <string name="subtask_delete">Eliminar subtarea</string>
     <string name="subtasks_all_done">Todas las subtareas están hechas</string>
     <string name="subtasks_complete_task">Completar tarea</string>
+    <string name="subtasks_show">Mostrar subtareas</string>
+    <string name="subtasks_hide">Ocultar subtareas</string>
+    <string name="subtasks_state_shown">Expandido</string>
+    <string name="subtasks_state_hidden">Contraído</string>
+    <string name="subtask_deleted">Subtarea eliminada</string>
+    <string name="subtask_next_step">Siguiente paso: %1$s</string>
+    <string name="subtask_first_step">Primer paso</string>
+    <plurals name="subtasks_done_summary">
+        <item quantity="one">%1$d de %2$d subtarea completada</item>
+        <item quantity="many">%1$d de %2$d subtareas completadas</item>
+        <item quantity="other">%1$d de %2$d subtareas completadas</item>
+    </plurals>
 </resources>

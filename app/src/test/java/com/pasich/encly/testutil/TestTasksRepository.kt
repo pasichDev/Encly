@@ -1,7 +1,6 @@
 package com.pasich.encly.testutil
 
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import kotlinx.coroutines.flow.Flow
@@ -65,10 +64,44 @@ internal class TestTasksRepository(initial: List<Task> = emptyList(), initialSub
         tasks.value = tasks.value.filterNot { it.isCompleted }
     }
 
-    override fun getSubtaskProgress(): Flow<List<SubtaskProgress>> = subtasks.map { list ->
-        list.groupBy {
-            it.taskId
-        }.map { (taskId, rows) -> SubtaskProgress(taskId, rows.count { it.isCompleted }, rows.size) }
+    override fun observeSubtasks(): Flow<List<Subtask>> =
+        subtasks.map { list -> list.sortedWith(compareBy({ it.taskId }, { it.position }, { it.id })) }
+
+    override suspend fun setSubtaskCompleted(id: Long, done: Boolean): Result<Unit> = write(failSubtasks) {
+        check(subtasks.value.any { it.id == id })
+        subtasks.value = subtasks.value.map { if (it.id == id) it.copy(isCompleted = done) else it }
+    }
+
+    override suspend fun addSubtask(taskId: Long, title: String): Result<Long> {
+        if (failSubtasks) return Result.failure(IllegalStateException("add"))
+        val id = nextSubtaskId++
+        val position = subtasks.value.filter { it.taskId == taskId }.maxOfOrNull { it.position + 1 } ?: 0
+        subtasks.value += Subtask(id = id, taskId = taskId, title = title, position = position, uid = "sub-$id")
+        return Result.success(id)
+    }
+
+    override suspend fun renameSubtask(id: Long, title: String): Result<Unit> = write(failSubtasks) {
+        check(subtasks.value.any { it.id == id })
+        subtasks.value = subtasks.value.map { if (it.id == id) it.copy(title = title) else it }
+    }
+
+    override suspend fun deleteSubtask(id: Long): Result<Unit> = write(failSubtasks) {
+        check(subtasks.value.any { it.id == id })
+        subtasks.value = subtasks.value.filterNot { it.id == id }
+    }
+
+    /** Like the DAO: the rows from its position on move down one, and it gets a new id. */
+    override suspend fun restoreSubtask(subtask: Subtask): Result<Unit> = write(failSubtasks) {
+        val shifted = subtasks.value.map {
+            if (it.taskId == subtask.taskId &&
+                it.position >= subtask.position
+            ) {
+                it.copy(position = it.position + 1)
+            } else {
+                it
+            }
+        }
+        subtasks.value = shifted + subtask.copy(id = nextSubtaskId++)
     }
 
     override suspend fun getSubtasks(taskId: Long): Result<List<Subtask>> =

@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.testutil.TestTasksRepository
@@ -49,10 +48,85 @@ class TasksViewModelSubtasksTest {
     }
 
     @Test
-    fun theTileProgressCountsDoneAndTotal() = runTest(dispatcher) {
+    fun theListGetsEachTasksSubtasksInOrder() = runTest(dispatcher) {
         advanceUntilIdle()
 
-        assertEquals(mapOf(1L to SubtaskProgress(1, done = 1, total = 2)), viewModel.uiState.value.subtaskProgress)
+        val byTask = viewModel.uiState.value.subtasks
+        assertEquals(setOf(1L), byTask.keys)
+        assertEquals(listOf("Milk", "Eggs"), byTask.getValue(1L).map { it.title })
+    }
+
+    @Test
+    fun tickingTheLastOpenSubtaskInTheListSavesItAndOffersToComplete() = runTest(dispatcher) {
+        val offers = collectOffers()
+        advanceUntilIdle()
+        val eggs = viewModel.uiState.value.subtasks.getValue(1L)[1]
+
+        viewModel.toggleSubtask(eggs, done = true)
+        advanceUntilIdle()
+
+        assertTrue(repository.subtasks.value.single { it.id == 11L }.isCompleted)
+        assertEquals(listOf(1L), offers)
+        assertFalse(repository.tasks.value.single { it.id == 1L }.isCompleted)
+        assertTrue(viewModel.uiState.value.subtasks.getValue(1L).all { it.isCompleted })
+        assertFalse(viewModel.showAddTaskDialog.value)
+    }
+
+    @Test
+    fun untickingInTheListSavesWithoutAnOffer() = runTest(dispatcher) {
+        val offers = collectOffers()
+        advanceUntilIdle()
+        val milk = viewModel.uiState.value.subtasks.getValue(1L)[0]
+
+        viewModel.toggleSubtask(milk, done = false)
+        advanceUntilIdle()
+
+        assertFalse(repository.subtasks.value.single { it.id == 10L }.isCompleted)
+        assertTrue(offers.isEmpty())
+    }
+
+    @Test
+    fun tickingAnOpenSubtaskThatLeavesOthersOpenDoesNotOffer() = runTest(dispatcher) {
+        repository.subtasks.value += Subtask(id = 12, taskId = 1, title = "Bread", position = 2, uid = "u12")
+        val offers = collectOffers()
+        advanceUntilIdle()
+
+        viewModel.toggleSubtask(repository.subtasks.value.single { it.id == 11L }, done = true)
+        advanceUntilIdle()
+
+        assertTrue(repository.subtasks.value.single { it.id == 11L }.isCompleted)
+        assertTrue(offers.isEmpty())
+    }
+
+    @Test
+    fun tickingTheLastSubtaskOfACompletedTaskDoesNotOffer() = runTest(dispatcher) {
+        repository.tasks.value = repository.tasks.value.map { if (it.id == 1L) it.copy(isCompleted = true) else it }
+        val offers = collectOffers()
+        advanceUntilIdle()
+
+        viewModel.toggleSubtask(repository.subtasks.value.single { it.id == 11L }, done = true)
+        advanceUntilIdle()
+
+        assertTrue(repository.subtasks.value.all { it.isCompleted })
+        assertTrue(offers.isEmpty())
+    }
+
+    @Test
+    fun aFailedListTickIsReported() = runTest(dispatcher) {
+        val failures = mutableListOf<TaskOperationFailure>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.operationFailures.collect(failures::add)
+        }
+        val offers = collectOffers()
+        advanceUntilIdle()
+        repository.failSubtasks = true
+
+        viewModel.toggleSubtask(repository.subtasks.value.single { it.id == 11L }, done = true)
+        advanceUntilIdle()
+
+        assertEquals(listOf(TaskOperationFailure.STATUS_UPDATE), failures)
+        assertFalse(repository.subtasks.value.single { it.id == 11L }.isCompleted)
+        assertTrue(offers.isEmpty())
     }
 
     @Test
@@ -151,7 +225,7 @@ class TasksViewModelSubtasksTest {
         viewModel.restoreTask(task)
         advanceUntilIdle()
         assertEquals(before, repository.subtasks.value)
-        assertEquals(SubtaskProgress(1, done = 1, total = 2), viewModel.uiState.value.subtaskProgress[1L])
+        assertEquals(before, viewModel.uiState.value.subtasks[1L])
     }
 
     @Test

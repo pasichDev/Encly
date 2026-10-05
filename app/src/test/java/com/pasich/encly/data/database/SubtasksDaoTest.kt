@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -103,19 +102,85 @@ class SubtasksDaoTest {
     }
 
     @Test
-    fun progressCountsDoneAndTotalPerTask() = runBlocking {
-        val task = dao.insertTask(Task(title = "Trip"))
+    fun observeSubtasksListsEveryTaskInItsOrder() = runBlocking {
+        val trip = dao.insertTask(Task(title = "Trip"))
+        val shop = dao.insertTask(Task(title = "Shop"))
         dao.insertTask(Task(title = "No checklist"))
+        dao.replaceSubtasks(shop, listOf(Subtask(taskId = shop, title = "Milk")))
         dao.replaceSubtasks(
-            task,
+            trip,
             listOf(
-                Subtask(taskId = task, title = "a", isCompleted = true),
-                Subtask(taskId = task, title = "b"),
-                Subtask(taskId = task, title = "c", isCompleted = true),
+                Subtask(taskId = trip, title = "a", isCompleted = true),
+                Subtask(taskId = trip, title = "b"),
             ),
         )
 
-        assertEquals(listOf(SubtaskProgress(task, done = 2, total = 3)), dao.getSubtaskProgress().first())
+        val rows = dao.observeSubtasks().first()
+
+        assertEquals(listOf(trip to "a", trip to "b", shop to "Milk"), rows.map { it.taskId to it.title })
+        assertEquals(listOf(0, 1, 0), rows.map { it.position })
+    }
+
+    @Test
+    fun setSubtaskCompletedTicksAndUnticksOneRow() = runBlocking {
+        val task = dao.insertTask(Task(title = "Trip"))
+        dao.replaceSubtasks(task, listOf(Subtask(taskId = task, title = "a"), Subtask(taskId = task, title = "b")))
+        val (a, b) = dao.getSubtasks(task)
+
+        assertEquals(1, dao.setSubtaskCompleted(a.id, done = true))
+        assertEquals(listOf(true, false), dao.observeSubtasks().first().map { it.isCompleted })
+
+        dao.setSubtaskCompleted(a.id, done = false)
+        assertEquals(listOf(false, false), dao.getSubtasks(task).map { it.isCompleted })
+        assertEquals(b.uid, dao.getSubtasks(task)[1].uid)
+        assertEquals(0, dao.setSubtaskCompleted(id = 999, done = true))
+    }
+
+    @Test
+    fun appendSubtaskAddsAfterTheLastOne() = runBlocking {
+        val task = dao.insertTask(Task(title = "Trip"))
+        val first = dao.appendSubtask(task, "Tickets")
+        dao.replaceSubtasks(task, dao.getSubtasks(task) + Subtask(taskId = task, title = "Hotel"))
+
+        val last = dao.appendSubtask(task, "Bags")
+
+        val rows = dao.getSubtasks(task)
+        assertEquals(listOf("Tickets", "Hotel", "Bags"), rows.map { it.title })
+        assertEquals(listOf(0, 1, 2), rows.map { it.position })
+        assertEquals(listOf(first, last), listOf(rows.first().id, rows.last().id))
+        assertEquals(32, rows.last().uid.length)
+    }
+
+    @Test
+    fun renameAndDeleteTouchOneRow() = runBlocking {
+        val task = dao.insertTask(Task(title = "Trip"))
+        listOf("a", "b", "c").forEach { dao.appendSubtask(task, it) }
+        val (a, b, c) = dao.getSubtasks(task)
+
+        assertEquals(1, dao.renameSubtask(b.id, "B"))
+        assertEquals(1, dao.deleteSubtaskById(a.id))
+
+        assertEquals(listOf(b.copy(title = "B"), c), dao.getSubtasks(task))
+        assertEquals(0, dao.renameSubtask(a.id, "gone"))
+        assertEquals(0, dao.deleteSubtaskById(a.id))
+    }
+
+    @Test
+    fun restoreSubtaskPutsItBackAtItsPositionWithItsUid() = runBlocking {
+        val task = dao.insertTask(Task(title = "Trip"))
+        listOf("a", "b", "c").forEach { dao.appendSubtask(task, it) }
+        val b = dao.getSubtasks(task)[1].copy(isCompleted = true)
+        dao.setSubtaskCompleted(b.id, done = true)
+        dao.deleteSubtaskById(b.id)
+        // Positions were compacted meanwhile (the sheet saved): b's slot is taken by c.
+        dao.replaceSubtasks(task, dao.getSubtasks(task))
+
+        dao.restoreSubtask(b)
+
+        val rows = dao.getSubtasks(task)
+        assertEquals(listOf("a", "b", "c"), rows.map { it.title })
+        assertEquals(b.uid, rows[1].uid)
+        assertTrue(rows[1].isCompleted)
     }
 
     @Test

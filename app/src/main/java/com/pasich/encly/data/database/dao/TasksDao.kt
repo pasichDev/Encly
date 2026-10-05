@@ -8,7 +8,6 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import kotlinx.coroutines.flow.Flow
 
@@ -54,14 +53,43 @@ interface TasksDao {
     @Query("SELECT * FROM subtasks WHERE taskId = :taskId ORDER BY position, id")
     suspend fun getSubtasks(taskId: Long): List<Subtask>
 
-    /** Done and total sub-tasks per task; tasks without sub-tasks are absent. */
-    @Query(
-        "SELECT taskId, SUM(isCompleted) AS done, COUNT(*) AS total FROM subtasks GROUP BY taskId",
-    )
-    fun getSubtaskProgress(): Flow<List<SubtaskProgress>>
+    /** Every sub-task, grouped by task and in each task's order, for the Tasks list. */
+    @Query("SELECT * FROM subtasks ORDER BY taskId, position, id")
+    fun observeSubtasks(): Flow<List<Subtask>>
+
+    @Query("UPDATE subtasks SET isCompleted = :done WHERE id = :id")
+    suspend fun setSubtaskCompleted(id: Long, done: Boolean): Int
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSubtask(subtask: Subtask): Long
+
+    /** The position after the task's last sub-task; 0 when it has none. */
+    @Query("SELECT COALESCE(MAX(position) + 1, 0) FROM subtasks WHERE taskId = :taskId")
+    suspend fun nextSubtaskPosition(taskId: Long): Int
+
+    /** Adds a sub-task after the task's last one; its row id. */
+    @Transaction
+    suspend fun appendSubtask(taskId: Long, title: String): Long =
+        insertSubtask(Subtask(taskId = taskId, title = title, position = nextSubtaskPosition(taskId)))
+
+    @Query("UPDATE subtasks SET title = :title WHERE id = :id")
+    suspend fun renameSubtask(id: Long, title: String): Int
+
+    @Query("DELETE FROM subtasks WHERE id = :id")
+    suspend fun deleteSubtaskById(id: Long): Int
+
+    @Query("UPDATE subtasks SET position = position + 1 WHERE taskId = :taskId AND position >= :position")
+    suspend fun shiftSubtasksFrom(taskId: Long, position: Int): Int
+
+    /**
+     * Puts a deleted sub-task back (undo) at its old position, with its uid: the rows from that
+     * position on move down one. It gets a new row id, as its old one may have been reused.
+     */
+    @Transaction
+    suspend fun restoreSubtask(subtask: Subtask) {
+        shiftSubtasksFrom(subtask.taskId, subtask.position)
+        insertSubtask(subtask.copy(id = 0))
+    }
 
     @Update
     suspend fun updateSubtask(subtask: Subtask): Int

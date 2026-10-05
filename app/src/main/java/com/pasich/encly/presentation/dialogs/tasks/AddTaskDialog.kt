@@ -186,8 +186,9 @@ private fun TaskEditorContent(
             keyboardActions = KeyboardActions(onDone = { actions.onSubmit() }),
             fieldModifier = Modifier.focusRequester(descriptionFocus),
         )
-        PriorityChips(selected = state.priority, onSelect = actions.onPrioritySelect)
+        // Right under the description, so it stays in view above the keyboard.
         SubtaskEditor(checklist)
+        PriorityChips(selected = state.priority, onSelect = actions.onPrioritySelect)
         TaskEditorFooter(state, actions)
     }
 }

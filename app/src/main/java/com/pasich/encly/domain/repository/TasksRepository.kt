@@ -1,7 +1,6 @@
 package com.pasich.encly.domain.repository
 
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Task
 import kotlinx.coroutines.flow.Flow
 
@@ -21,8 +20,21 @@ interface TasksRepository {
     suspend fun deleteTaskById(id: Long): Result<Unit>
     suspend fun deleteAllCompletedTasks(): Result<Unit>
 
-    /** Done/total sub-tasks of every task that has any. */
-    fun getSubtaskProgress(): Flow<List<SubtaskProgress>>
+    /** Every sub-task, by task and in each task's order. */
+    fun observeSubtasks(): Flow<List<Subtask>>
+
+    /** Ticks or unticks one sub-task. */
+    suspend fun setSubtaskCompleted(id: Long, done: Boolean): Result<Unit>
+
+    /** Adds a sub-task titled [title] after the task's last one; its row id. */
+    suspend fun addSubtask(taskId: Long, title: String): Result<Long>
+
+    suspend fun renameSubtask(id: Long, title: String): Result<Unit>
+
+    suspend fun deleteSubtask(id: Long): Result<Unit>
+
+    /** Undo of [deleteSubtask]: the same sub-task (uid, title, state) back at its position. */
+    suspend fun restoreSubtask(subtask: Subtask): Result<Unit>
 
     /** The task's sub-tasks in their order. */
     suspend fun getSubtasks(taskId: Long): Result<List<Subtask>>

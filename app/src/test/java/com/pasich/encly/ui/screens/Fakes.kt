@@ -1,7 +1,6 @@
 package com.pasich.encly.ui.screens
 
 import com.pasich.encly.data.model.Subtask
-import com.pasich.encly.data.model.SubtaskProgress
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.enums.NoteSortOption
@@ -14,7 +13,6 @@ import com.pasich.encly.domain.repository.TagsRepository
 import com.pasich.encly.domain.repository.TasksRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
@@ -95,6 +93,7 @@ internal class FakeTagsRepository(initial: List<Tag> = emptyList()) : TagsReposi
 
 internal class FakeTasksRepository(initial: List<Task> = emptyList()) : TasksRepository {
     val tasks = MutableStateFlow(initial)
+    val subtasks = MutableStateFlow(emptyList<Subtask>())
 
     override fun getAllActiveTasks(): Flow<List<Task>> = tasks.map { list -> list.filterNot { it.isCompleted } }
     override fun getAllCompletedTasks(): Flow<List<Task>> = tasks.map { list -> list.filter { it.isCompleted } }
@@ -130,9 +129,37 @@ internal class FakeTasksRepository(initial: List<Task> = emptyList()) : TasksRep
         return Result.success(Unit)
     }
 
-    override fun getSubtaskProgress(): Flow<List<SubtaskProgress>> = flowOf(emptyList())
+    override fun observeSubtasks(): Flow<List<Subtask>> = subtasks
 
-    override suspend fun getSubtasks(taskId: Long): Result<List<Subtask>> = Result.success(emptyList())
+    override suspend fun setSubtaskCompleted(id: Long, done: Boolean): Result<Unit> {
+        subtasks.update { list -> list.map { if (it.id == id) it.copy(isCompleted = done) else it } }
+        return Result.success(Unit)
+    }
+
+    override suspend fun addSubtask(taskId: Long, title: String): Result<Long> {
+        val id = (subtasks.value.maxOfOrNull { it.id } ?: 0L) + 1
+        val position = subtasks.value.filter { it.taskId == taskId }.maxOfOrNull { it.position + 1 } ?: 0
+        subtasks.update { it + Subtask(id = id, taskId = taskId, title = title, position = position) }
+        return Result.success(id)
+    }
+
+    override suspend fun renameSubtask(id: Long, title: String): Result<Unit> {
+        subtasks.update { list -> list.map { if (it.id == id) it.copy(title = title) else it } }
+        return Result.success(Unit)
+    }
+
+    override suspend fun deleteSubtask(id: Long): Result<Unit> {
+        subtasks.update { list -> list.filterNot { it.id == id } }
+        return Result.success(Unit)
+    }
+
+    override suspend fun restoreSubtask(subtask: Subtask): Result<Unit> {
+        subtasks.update { list -> (list + subtask).sortedWith(compareBy({ it.taskId }, { it.position })) }
+        return Result.success(Unit)
+    }
+
+    override suspend fun getSubtasks(taskId: Long): Result<List<Subtask>> =
+        Result.success(subtasks.value.filter { it.taskId == taskId })
 
     override suspend fun saveSubtasks(taskId: Long, subtasks: List<Subtask>): Result<Unit> = Result.success(Unit)
 

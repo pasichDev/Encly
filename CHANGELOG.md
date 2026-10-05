@@ -13,11 +13,19 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ### Added
 
-- Sub-tasks: a task can have a checklist of sub-tasks (one level). Add, edit, tick, reorder
-  (drag or the accessibility actions) and delete them in the task sheet; the task tile shows the
-  progress, e.g. `2/5`. Completing a task never ticks its sub-tasks, and ticking the last open
-  sub-task does not complete the task on its own: a snackbar offers "Complete task". Deleting a
-  task deletes its sub-tasks, and Undo brings them back.
+- Sub-tasks: a task can have a checklist of sub-tasks (one level). On the Tasks list an open
+  task shows its next step (its first open sub-task) as one leaf under it, and every task with
+  sub-tasks a segment bar of its progress; a task without sub-tasks looks as before. Ticking the
+  next step saves it at once and the following one slides up into its place. A tap on the task
+  (or the leaf's chevron) opens the whole tree, done ones struck through, ending with an add leaf
+  ("First step" on a task without any) whose field adds each title on Done and stays open for
+  the next. In the tree a sub-task ticks in place, a tap on its title renames it, clearing the
+  title or its ✕ deletes it with Undo, and a long press drags it into a new place (Move up/down
+  for TalkBack); Back closes the field, then folds the tree. The pencil opens the task sheet,
+  which still adds, edits, ticks, reorders and deletes them. Completing a task never ticks its
+  sub-tasks, and ticking the last open sub-task does not complete the task on its own: a
+  snackbar offers "Complete task". Deleting a task deletes its sub-tasks, and Undo brings them
+  back.
 - Encrypted backups carry sub-tasks (backup schema 3). Older backups (schema 1 and 2) still
   restore, with no sub-tasks. Merge import adds the sub-tasks a task already on the device is
   missing.

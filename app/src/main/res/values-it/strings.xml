@@ -564,4 +564,16 @@
     <string name="subtask_delete">Elimina sottoattività</string>
     <string name="subtasks_all_done">Tutte le sottoattività sono completate</string>
     <string name="subtasks_complete_task">Completa l\'attività</string>
+    <string name="subtasks_show">Mostra sottoattività</string>
+    <string name="subtasks_hide">Nascondi sottoattività</string>
+    <string name="subtasks_state_shown">Espanso</string>
+    <string name="subtasks_state_hidden">Compresso</string>
+    <string name="subtask_deleted">Sottoattività eliminata</string>
+    <string name="subtask_next_step">Prossimo passo: %1$s</string>
+    <string name="subtask_first_step">Primo passo</string>
+    <plurals name="subtasks_done_summary">
+        <item quantity="one">%1$d di %2$d sottoattività completata</item>
+        <item quantity="many">%1$d di %2$d sottoattività completate</item>
+        <item quantity="other">%1$d di %2$d sottoattività completate</item>
+    </plurals>
 </resources>

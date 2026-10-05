@@ -33,6 +33,3 @@ data class Subtask(
     @ColumnInfo(defaultValue = "''")
     val uid: String = "",
 )
-
-/** How many of a task's sub-tasks are done, for the `2/5` on its tile. */
-data class SubtaskProgress(val taskId: Long, val done: Int, val total: Int)

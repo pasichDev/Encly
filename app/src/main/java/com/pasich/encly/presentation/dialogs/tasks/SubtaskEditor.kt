@@ -45,6 +45,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import sh.calvin.reorderable.ReorderableColumn
 import sh.calvin.reorderable.ReorderableScope
 
+/** Longest sub-task title, in the sheet and in the list's inline field alike. */
 internal const val SUBTASK_TITLE_MAX_LENGTH = 100
 
 /**
