@@ -14,15 +14,18 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * A [PinHardwareFactor] with software HMAC keys standing in for the Keystore ones, one per
  * [PinKeySlot]. [lost] and [failing] simulate an invalidated key and a transient Keystore error
- * (for every slot); [failingReset] a key that cannot be generated. [delete] removes a key the
- * way the system can, so [ensureKey] then reports a new one. [calls] counts MACs, i.e. PIN
- * guesses that reached the "hardware".
+ * (for every slot), [failingSlots] one for some slots only; [failingReset] a key that cannot be
+ * generated. [delete] removes a key the way the system can, so [ensureKey] then reports a new
+ * one. [calls] counts MACs, i.e. PIN guesses that reached the "hardware".
  */
 internal class FakePinFactor : PinHardwareFactor {
     private val keys = mutableMapOf<PinKeySlot, ByteArray>()
     var lost = false
     var failing = false
     var failingReset = false
+
+    /** Slots whose MAC fails like a transient Keystore error, while the others still work. */
+    var failingSlots: Set<PinKeySlot> = emptySet()
     var calls = 0
         private set
     var resets = 0
@@ -45,7 +48,7 @@ internal class FakePinFactor : PinHardwareFactor {
     }
 
     override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray {
-        if (failing) throw PinFactorException(lost = false)
+        if (failing || slot in failingSlots) throw PinFactorException(lost = false)
         val current = keys[slot]
         if (lost || current == null) throw PinFactorException(lost = true)
         calls++

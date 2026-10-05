@@ -131,6 +131,18 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
         deleteDatabaseFiles()
     }
 
+    /**
+     * Deletes the database files unless the database is open, checked and done under the same
+     * lock [unlockDatabase] holds, so a database being opened (or just created) meanwhile is
+     * never deleted. True when they were deleted.
+     */
+    @Synchronized
+    fun wipeIfClosed(): Boolean {
+        if (isUnlocked) return false
+        deleteDatabaseFiles()
+        return true
+    }
+
     companion object {
         private const val TAG = "SecureDatabaseManager"
         private const val DB_NAME = "database.db"

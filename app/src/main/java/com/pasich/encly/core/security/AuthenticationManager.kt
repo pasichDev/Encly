@@ -306,7 +306,17 @@ class AuthenticationManager @Inject constructor(
     fun markWipeDatabaseCreated(): Boolean = store.edit { putInt(WIPE_PENDING_KEY, WipeStage.CLEANUP.ordinal) }
 
     /** Deletes the PIN key the erase moved away from (nothing when there is none). */
-    fun deleteRetiredPinKey() = factor.delete(activeKeySlot().other)
+    fun deleteRetiredPinKey() = synchronized(attemptLock) { factor.delete(activeKeySlot().other) }
+
+    /**
+     * Startup: deletes a key in slot B that no committed state uses, left by a wipe-PIN erase
+     * the process died in between phase 1 (the new key) and phase 2 (the store edit). Only with
+     * slot A active and no erase pending; slot A itself is never touched here, it is the one key
+     * older builds know. Under the attempt lock, so it never races an erase in progress.
+     */
+    fun deleteStrayPinKey() = synchronized(attemptLock) {
+        if (pendingWipe() == null && activeKeySlot() == PinKeySlot.A) factor.delete(PinKeySlot.B)
+    }
 
     /** The wipe-PIN erase is complete. */
     fun clearPendingWipe(): Boolean = store.edit { remove(WIPE_PENDING_KEY) }
@@ -404,10 +414,18 @@ class AuthenticationManager @Inject constructor(
      * Phases 1 and 2 of the wipe-PIN erase (see [unlockWithPin]). If no key can be made in the
      * other Keystore slot, the new PIN slot uses the current key: the old slots are still
      * dropped and the old database still deleted, only the crypto-erase of the old PIN key is
-     * lost. A store that cannot be written changes nothing and reports [PinUnlock.Failed].
+     * lost. A store that cannot be written changes nothing and reports [PinUnlock.Failed]; the
+     * key made for it is deleted again, so a failed erase leaves no extra Keystore key behind.
      */
     private fun eraseVault(pin: CharArray, salt: ByteArray, keys: PinKeys): PinUnlock {
         val keySlot = freshKeySlot(keys.keySlot)
+        val result = sealErasedVault(pin, salt, keys, keySlot)
+        if (result !is PinUnlock.Erased && keySlot != keys.keySlot) factor.delete(keySlot)
+        return result
+    }
+
+    /** Phases 1 and 2 with the new key in [keySlot]; see [eraseVault]. */
+    private fun sealErasedVault(pin: CharArray, salt: ByteArray, keys: PinKeys, keySlot: PinKeySlot): PinUnlock {
         val kek = try {
             val hardware = hardwareHalf(pin, salt, keySlot)
             try {

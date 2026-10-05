@@ -87,14 +87,21 @@ and show me"), not against a forensic examination.
   2. one atomic store write swaps them in and drops the recovery, backup-key and biometric
      slots, the biometric flag and the lockout, and records `wipe.pending`;
   3. the old `database.db` (with `-wal`, `-shm`) is deleted, the empty database is created with
-     the new DEK and opened, then the old PIN key, the biometric key and the "last export" date
+     the new DEK and opened, and `wipe.pending` records that it exists before the vault is shown
+     (if that write fails, the database is closed again and the unlock fails; the next one
+     creates it anew);
+  4. while the vault is revealed, the old PIN key, the biometric key and the "last export" date
      are deleted and `wipe.pending` is dropped.
 
   A kill at any point ends in either the old vault (before step 2) or an empty one: startup
-  repeats step 3 while `wipe.pending` is set (every step is a deletion), and the next PIN unlock
-  creates the empty database if it does not exist yet. If no key can be created under the other
-  alias, the erase still replaces the slots and deletes the database, only without erasing the
-  old PIN key. Afterwards the old PIN is a wrong PIN like any other, and the wipe PIN is the PIN
+  repeats steps 3 and 4 while `wipe.pending` is set (every step is a deletion; the database is
+  only deleted while it is not open, under the same lock as the unlock that creates it, and only
+  at the first start of a process), and the next PIN unlock creates the empty database if it does
+  not exist yet. If no key can be created under the other alias, the erase still replaces the
+  slots and deletes the database, only without erasing the old PIN key. An erase that fails
+  before step 2 changes nothing and deletes the key it made; one the process died in before
+  step 2 leaves that key under the second alias, which the next start deletes (while the first
+  alias is active and nothing is pending). Afterwards the old PIN is a wrong PIN like any other, and the wipe PIN is the PIN
   of the empty vault. Theme, sorting, auto-lock and keyboard settings stay. `vault.version`
   stays so that the empty vault is a committed vault; it has no recovery phrase until one is
   added.
@@ -109,9 +116,13 @@ and show me"), not against a forensic examination.
   new epoch, and a restarted process starts one that matches nothing), and a screen that was in
   the background while the vault was unlocked elsewhere (the My Notes hand-off's lock screen)
   is replaced by the lock screen or the notes list when it comes back.
-- **Unlock time.** The wipe path adds a Keystore key generation, one HMAC, a store write and
-  creating the empty database to the same KDF run; the empty vault opens behind the same
-  unlock animation.
+- **Unlock time.** The wipe path is slower than a normal unlock, and this is not hidden: on top
+  of the same KDF run it generates a new Keystore key (in StrongBox where there is one, which
+  can take noticeably longer than the TEE), runs one more HMAC, writes the store twice (each
+  write synced to disk) and creates the empty database. The rest of the erase (deleting the old
+  keys) runs after the vault is shown, and the empty vault opens behind the same unlock
+  animation, but someone timing the unlock, or simply noticing a longer pause on a phone with
+  StrongBox, may tell the two apart. No delay is added to normal unlocks to hide it.
 - **Limits.** Against a forensic look at the phone this is partial: leftovers in flash, the
   filesystem journal, two snapshots taken before and after, or simply an empty vault on a phone
   where Encly was used for years. On a rooted, unlocked phone PIN guessing through the Keystore
@@ -119,9 +130,12 @@ and show me"), not against a forensic examination.
   reliable, which is why the erase relies on deleting keys first.
 - **Downgrade.** Older builds ignore the new store entries and keep opening a vault that never
   used the wipe PIN. After a wipe has happened (the PIN key moved to the second alias), an older
-  build only knows the first alias: the PIN reports a lost key there and cannot unlock. Apart
-  from this, the same release moves the database to version 4, which older builds cannot open at
-  all (see CHANGELOG).
+  build only knows the first alias: the PIN reports a lost key there and cannot unlock. A PIN
+  changed in an older build gets a new salt, which silently turns a wipe PIN off: after upgrading
+  again the wipe slot is kept but can never open, and Settings does not say so (it cannot tell
+  without the wipe PIN), so set the wipe PIN again after such a round trip. Apart from this, the
+  same release moves the database to version 4, which older builds cannot open at all (see
+  CHANGELOG).
 
 ### Biometric slot
 

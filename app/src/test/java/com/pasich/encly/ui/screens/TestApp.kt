@@ -165,7 +165,7 @@ internal class TestApp(context: Context) {
         },
     )
 
-    fun lock() = LockViewModel(security, sessionLock)
+    fun lock() = LockViewModel(security, sessionLock, appScope)
 
     fun securitySettings() = SecuritySettingsViewModel(
         security,

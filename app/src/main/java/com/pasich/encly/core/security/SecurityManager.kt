@@ -6,6 +6,7 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
 import java.security.SecureRandom
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -71,6 +72,15 @@ class SecurityManager @Inject constructor(
     @Volatile
     private var sessionUnlockedWithRecovery = false
 
+    // Serializes what creates, opens or deletes the database file while a wipe-PIN erase is
+    // pending: an unlock that replaces the database, and the erase's finish at startup (which a
+    // recreated activity runs again while an unlock may be in the middle of creating the new one).
+    private val databaseLock = Any()
+
+    // The erase's finish at startup runs once per process: later calls (a rotated activity, the
+    // My Notes hand-off) find the vault already in use.
+    private val startupFinished = AtomicBoolean(false)
+
     // Changes whenever a wipe-PIN erase replaces the database, and never on lock or unlock, so a
     // screen remembered before an erase (the note open when the app re-locked) is not shown in
     // the empty vault. Random per process: one saved by an earlier process never matches.
@@ -99,8 +109,12 @@ class SecurityManager @Inject constructor(
         if (!isOnboardingShown()) return uncommittedVaultStatus()
         // Vaults from before the wipe PIN get their decoy wipe slot; no PIN needed, nothing shown.
         authenticationManager.ensureWipeSlot()
-        // A wipe-PIN erase the process died in is finished before anything else looks at the vault.
-        completePendingWipe()
+        if (startupFinished.compareAndSet(false, true)) {
+            // A key left by an erase the process died in before it was recorded.
+            authenticationManager.deleteStrayPinKey()
+            // A wipe-PIN erase the process died in is finished before anything else looks at the vault.
+            completePendingWipe()
+        }
         if (!seedPhraseManager.verificationKeyData()) return InitialStatus.LOSS_CRYPTO
         // An erase that has not created the empty database yet does so at the next PIN unlock.
         if (!secureDatabaseManager.hasEncryptedDatabase() && authenticationManager.pendingWipe() == null) {
@@ -167,7 +181,9 @@ class SecurityManager @Inject constructor(
      * One PIN attempt from the lock screen; [pin] is wiped. The wipe PIN reports
      * [VaultUnlockResult.SUCCESS] like the PIN, with the new, empty vault open: phases 1 and 2
      * of the erase ran in [AuthenticationManager.unlockWithPin], and [unlockWithRawKey] replaces
-     * the old database with an empty one.
+     * the old database with an empty one. The rest of the erase is left for
+     * [completePendingWipe], which the caller runs once the vault is shown (or the next start
+     * does), so the wipe PIN does not wait for it.
      */
     fun unlockWithPin(pin: CharArray): VaultUnlockResult {
         val attempt = try {
@@ -326,37 +342,52 @@ class SecurityManager @Inject constructor(
      */
     fun unlockWithRawKey(dek: ByteArray, allowCreate: Boolean = false): Boolean {
         if (dek.size != DEK_LENGTH) return false
-        val replaceDatabase = authenticationManager.pendingWipe() == WipeStage.DATABASE
-        if (replaceDatabase) secureDatabaseManager.wipe()
-        val ok = secureDatabaseManager.unlockDatabase(dek, allowCreate = allowCreate || replaceDatabase)
-        if (ok) {
-            if (replaceDatabase) {
-                authenticationManager.markWipeDatabaseCreated()
-                eraseEpoch.incrementAndGet()
-                completePendingWipe()
+        return synchronized(databaseLock) {
+            val replaceDatabase = authenticationManager.pendingWipe() == WipeStage.DATABASE
+            if (replaceDatabase) secureDatabaseManager.wipe()
+            val opened = secureDatabaseManager.unlockDatabase(dek, allowCreate = allowCreate || replaceDatabase)
+            val ok = opened && (!replaceDatabase || recordErasedDatabase())
+            if (ok) {
+                setSessionKey(dek)
+                securityStatus = InitialStatus.MAIN
             }
-            setSessionKey(dek)
-            securityStatus = InitialStatus.MAIN
+            ok
         }
-        return ok
+    }
+
+    /**
+     * The empty database of an erase was created: records it before anything can be written to
+     * it. Unrecorded, the next start would take it for the old database and delete it, with
+     * everything added since; so when the store cannot be written the database is closed again
+     * and the unlock fails, and the next one creates it anew.
+     */
+    private fun recordErasedDatabase(): Boolean {
+        if (!authenticationManager.markWipeDatabaseCreated()) {
+            AppLogger.w(TAG, "The erased vault's new database could not be recorded")
+            secureDatabaseManager.reset()
+            return false
+        }
+        eraseEpoch.incrementAndGet()
+        return true
     }
 
     /**
      * Finishes a wipe-PIN erase (see [WipeStage]); does nothing when none is pending. Safe to
-     * repeat: every step is a deletion. Runs at startup and once the empty database is open.
-     * Theme, sorting and auto-lock settings are kept, as on any vault.
+     * repeat: every step is a deletion. Runs at startup, and after an unlock that opened the
+     * empty database (off the unlock's path, see [unlockWithPin]). Theme, sorting and
+     * auto-lock settings are kept, as on any vault.
      */
     fun completePendingWipe() {
-        val stage = authenticationManager.pendingWipe() ?: return
-        // Before the empty database exists, whatever is left of the old one goes (never an open one).
-        if (stage == WipeStage.DATABASE && !secureDatabaseManager.isDatabaseUnlocked()) {
-            secureDatabaseManager.wipe()
+        synchronized(databaseLock) {
+            val stage = authenticationManager.pendingWipe() ?: return
+            // Before the empty database exists, whatever is left of the old one goes (never an open one).
+            if (stage == WipeStage.DATABASE) secureDatabaseManager.wipeIfClosed()
+            authenticationManager.deleteRetiredPinKey()
+            // Its slot went with the erase; this deletes the Keystore key behind it.
+            biometricManager.disable()
+            appFlags.edit().remove(BackupManager.LAST_EXPORT_KEY).commit()
+            if (stage == WipeStage.CLEANUP) authenticationManager.clearPendingWipe()
         }
-        authenticationManager.deleteRetiredPinKey()
-        // Its slot went with the erase; this deletes the Keystore key behind it.
-        biometricManager.disable()
-        appFlags.edit().remove(BackupManager.LAST_EXPORT_KEY).commit()
-        if (stage == WipeStage.CLEANUP) authenticationManager.clearPendingWipe()
     }
 
     /**

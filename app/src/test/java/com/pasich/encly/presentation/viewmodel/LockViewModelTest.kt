@@ -17,6 +17,7 @@ import com.pasich.encly.testutil.anyCallback
 import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.testutil.eqValue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -57,7 +58,7 @@ class LockViewModelTest {
         security = mock(SecurityManager::class.java)
         sessionLock = SessionLockManager(security)
         sessionLock.onStart(mock(LifecycleOwner::class.java))
-        viewModel = LockViewModel(security, sessionLock)
+        viewModel = LockViewModel(security, sessionLock, CoroutineScope(Dispatchers.Unconfined))
     }
 
     @After
@@ -72,6 +73,18 @@ class LockViewModelTest {
         assertEquals(PinUnlockResult.SUCCESS, pin())
         assertFalse(viewModel.busy.value)
         assertFalse(sessionLock.locked.value)
+    }
+
+    @Test
+    fun theRestOfAWipePinEraseRunsAfterThePinUnlockedAndOnlyThen() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+        pin()
+        verify(security, never()).completePendingWipe()
+
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        assertEquals(PinUnlockResult.SUCCESS, pin())
+
+        verify(security).completePendingWipe()
     }
 
     @Test

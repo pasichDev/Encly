@@ -19,12 +19,17 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.eq
+import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.io.File
+import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * The wipe PIN (issue #52): a second PIN that, typed on the lock screen, erases the vault and
@@ -318,6 +323,37 @@ class WipePinTest {
     }
 
     @Test
+    fun anEraseThatFailsLeavesNoSecondKeyAndCanBeTriedAgain() {
+        assertTrue(auth.configurePin(pin(PIN), dek))
+        assertEquals(WipePinChange.SET, auth.configureWipePin(pin(WIPE_PIN)))
+        // The new key was made, but deriving the new slot's key with it fails.
+        factor.failingSlots = setOf(PinKeySlot.B)
+
+        assertEquals(PinUnlock.Failed, auth.unlockWithPin(pin(WIPE_PIN)))
+
+        assertFalse(factor.hasKey(PinKeySlot.B))
+        assertNull(auth.pendingWipe())
+        factor.failingSlots = emptySet()
+        assertTrue(auth.unlockWithPin(pin(WIPE_PIN)) is PinUnlock.Erased)
+    }
+
+    @Test
+    fun anEraseWhoseStoreWriteFailsLeavesNoSecondKey() {
+        assertTrue(auth.configurePin(pin(PIN), dek))
+        assertEquals(WipePinChange.SET, auth.configureWipePin(pin(WIPE_PIN)))
+        // The attempt is counted (one write), then phase 2's write fails.
+        var writes = 0
+        store.beforeRename = { if (++writes == 2) throw IOException("disk full") }
+
+        assertEquals(PinUnlock.Failed, auth.unlockWithPin(pin(WIPE_PIN)))
+
+        store.beforeRename = null
+        assertFalse(factor.hasKey(PinKeySlot.B))
+        assertNull(auth.pendingWipe())
+        assertArrayEquals(dek, (auth.unlockWithPin(pin(PIN)) as PinUnlock.Success).dek)
+    }
+
+    @Test
     fun removingTheWipePinAlsoClearsTheNotice() {
         assertTrue(auth.configurePin(pin(PIN), dek))
         factor.lost = true
@@ -368,7 +404,7 @@ class WipePinTest {
         val restarted = vault.restart()
         assertEquals(InitialStatus.AUTH, restarted.resolveInitialStatus())
 
-        verify(vault.database).wipe()
+        verify(vault.database).wipeIfClosed()
         verify(vault.biometric).disable()
         assertFalse(vault.prefs.contains(BackupManager.LAST_EXPORT_KEY))
         assertFalse(vault.factor.hasKey(PinKeySlot.A))
@@ -379,6 +415,8 @@ class WipePinTest {
         assertEquals(VaultUnlockResult.SUCCESS, restarted.unlockWithPin(pin(WIPE_PIN)))
 
         verify(vault.database).unlockDatabase(anyByteArray(), eq(true))
+        assertEquals(WipeStage.CLEANUP, vault.auth.pendingWipe())
+        restarted.completePendingWipe()
         assertNull(vault.auth.pendingWipe())
     }
 
@@ -392,6 +430,7 @@ class WipePinTest {
         assertEquals(InitialStatus.AUTH, vault.restart().resolveInitialStatus())
 
         verify(vault.database, never()).wipe()
+        verify(vault.database, never()).wipeIfClosed()
         verify(vault.biometric).disable()
         assertNull(vault.auth.pendingWipe())
     }
@@ -408,10 +447,14 @@ class WipePinTest {
         val order = inOrder(vault.database)
         order.verify(vault.database).wipe()
         order.verify(vault.database).unlockDatabase(anyByteArray(), eq(true))
+        assertNotEquals(epoch, vault.security.eraseEpoch())
+        // The rest waits until the vault is shown, so the wipe PIN does not wait for it.
+        assertEquals(WipeStage.CLEANUP, vault.auth.pendingWipe())
+        assertTrue(vault.factor.hasKey(PinKeySlot.A))
+        vault.security.completePendingWipe()
         assertNull(vault.auth.pendingWipe())
         assertFalse(vault.factor.hasKey(PinKeySlot.A))
         assertFalse(vault.prefs.contains(BackupManager.LAST_EXPORT_KEY))
-        assertNotEquals(epoch, vault.security.eraseEpoch())
         // Onboarding stays committed: a restart asks for the PIN of the empty vault.
         `when`(vault.database.hasEncryptedDatabase()).thenReturn(true)
         assertEquals(InitialStatus.AUTH, vault.restart().resolveInitialStatus())
@@ -444,7 +487,8 @@ class WipePinTest {
             keys += (it.arguments[0] as ByteArray).copyOf() to (it.arguments[1] as Boolean)
             true
         }
-        val security = SecurityManager(vault.prefs, store, SeedPhraseManager(store), database, auth, vault.biometric)
+        val security =
+            SecurityManager(vault.prefs, store, SeedPhraseManager(store), database, auth, vault.biometric)
         assertEquals(InitialStatus.AUTH, security.resolveInitialStatus())
 
         assertEquals(VaultUnlockResult.INVALID_CREDENTIAL, security.unlockWithPin(pin(PIN)))
@@ -459,6 +503,7 @@ class WipePinTest {
     fun aNormalUnlockIsNotAnErasedVaultSession() {
         val vault = Vault()
         `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+
         val epoch = vault.security.eraseEpoch()
 
         assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(PIN)))
@@ -480,7 +525,104 @@ class WipePinTest {
         assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(WIPE_PIN)))
 
         assertNotEquals(epoch, vault.security.eraseEpoch())
+        assertEquals(WipeStage.CLEANUP, vault.auth.pendingWipe())
+    }
+
+    @Test
+    fun anErasedDatabaseThatCannotBeRecordedIsClosedAndCreatedAgainByTheNextUnlock() {
+        val vault = Vault()
+        // The erase itself is written; recording the new database is not.
+        `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenAnswer {
+            vault.store.beforeRename = { throw IOException("disk full") }
+            true
+        }
+
+        assertEquals(VaultUnlockResult.DB_ERROR, vault.security.unlockWithPin(pin(WIPE_PIN)))
+
+        verify(vault.database).reset()
+        assertEquals(WipeStage.DATABASE, vault.auth.pendingWipe())
+        assertNull(vault.security.copyBackupRootKey())
+        vault.store.beforeRename = null
+        doReturn(true).`when`(vault.database).unlockDatabase(anyByteArray(), anyBoolean())
+
+        assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(WIPE_PIN)))
+        verify(vault.database, times(2)).unlockDatabase(anyByteArray(), eq(true))
+        assertEquals(WipeStage.CLEANUP, vault.auth.pendingWipe())
+    }
+
+    @Test
+    fun theStartupFinishCannotDeleteTheDatabaseAnUnlockIsCreating() {
+        // A recreated activity resolves the startup state again while the wipe PIN's unlock is
+        // creating the empty database on another thread.
+        val vault = Vault()
+        val creating = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenAnswer {
+            creating.countDown()
+            release.await(5, TimeUnit.SECONDS)
+            true
+        }
+        `when`(vault.database.hasEncryptedDatabase()).thenReturn(true)
+        var unlocked: VaultUnlockResult? = null
+        val unlock = thread { unlocked = vault.security.unlockWithPin(pin(WIPE_PIN)) }
+        assertTrue(creating.await(5, TimeUnit.SECONDS))
+
+        val startup = thread { vault.security.completePendingWipe() }
+        startup.join(STARTUP_WAIT_MS)
+        assertTrue("the finish waits for the unlock", startup.isAlive)
+        release.countDown()
+        unlock.join()
+        startup.join()
+        assertEquals(VaultUnlockResult.SUCCESS, unlocked)
+
+        // Only the unlock's own delete of the old database, before creating the new one.
+        verify(vault.database).wipe()
+        verify(vault.database, never()).wipeIfClosed()
+        // The finish ran after the database was recorded: the cleanup, not the database step.
         assertNull(vault.auth.pendingWipe())
+    }
+
+    @Test
+    fun theStartupFinishRunsOncePerProcess() {
+        val vault = Vault()
+        assertTrue(vault.auth.unlockWithPin(pin(WIPE_PIN)) is PinUnlock.Erased)
+        val restarted = vault.restart()
+        assertEquals(InitialStatus.AUTH, restarted.resolveInitialStatus())
+        verify(vault.database).wipeIfClosed()
+
+        // The activity is recreated (a rotation): the same process resolves the state again.
+        assertEquals(InitialStatus.AUTH, restarted.resolveInitialStatus())
+
+        verify(vault.database).wipeIfClosed()
+    }
+
+    @Test
+    fun aKeyLeftByAnEraseThatNeverCommittedIsDeletedAtTheNextStart() {
+        val vault = Vault()
+        // Phase 1 made key B, then the process died before phase 2 recorded it.
+        vault.factor.reset(PinKeySlot.B)
+        `when`(vault.database.hasEncryptedDatabase()).thenReturn(true)
+
+        assertEquals(InitialStatus.AUTH, vault.restart().resolveInitialStatus())
+
+        assertFalse(vault.factor.hasKey(PinKeySlot.B))
+        assertTrue(vault.factor.hasKey(PinKeySlot.A))
+        `when`(vault.database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
+        assertEquals(VaultUnlockResult.SUCCESS, vault.security.unlockWithPin(pin(PIN)))
+    }
+
+    @Test
+    fun theStartupKeepsTheKeyOfAnEraseThatIsPending() {
+        val vault = Vault()
+        assertTrue(vault.auth.unlockWithPin(pin(WIPE_PIN)) is PinUnlock.Erased)
+        assertTrue(vault.auth.markWipeDatabaseCreated())
+        `when`(vault.database.hasEncryptedDatabase()).thenReturn(true)
+
+        assertEquals(InitialStatus.AUTH, vault.restart().resolveInitialStatus())
+
+        // B is the active key now; the retired one, A, went with the cleanup.
+        assertTrue(vault.factor.hasKey(PinKeySlot.B))
+        assertFalse(vault.factor.hasKey(PinKeySlot.A))
     }
 
     @Test
@@ -540,6 +682,8 @@ class WipePinTest {
         fun restart() = SecurityManager(prefs, store, seed, database, auth, biometric)
     }
 
+    private fun thread(block: () -> Unit): Thread = Thread(block).apply { start() }
+
     private fun configured(withWipePin: Boolean): AuthenticationManager {
         val manager = AuthenticationManager(tempVaultStore(), FakePinFactor(), FakeLockoutClock())
         assertTrue(manager.configurePin(pin(PIN), dek))
@@ -567,6 +711,7 @@ class WipePinTest {
         const val SALT_SIZE = 16
         const val NANOS_PER_MILLI = 1_000_000L
         const val TIMING_SLACK_MS = 250L
+        const val STARTUP_WAIT_MS = 300L
         const val PIN_SLOT = "pin.slot"
         const val WIPE_SLOT = "pin.wipe.slot"
         const val KEY_SLOT = "pin.key_slot"
