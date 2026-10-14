@@ -104,10 +104,28 @@ purpose.
 
 Every user-visible string lives in string resources. English is the default
 (`app/src/main/res/values/`); each translation is a `values-<lang>/` folder with a `strings.xml`
-(most of the UI) and a `strings_security.xml` (security settings).
+(most of the UI), a `strings_security.xml` (security settings) and a `strings_handoff.xml` (the
+import from My Notes).
 
-**Fixing a translation:** edit the string in `values-<lang>/strings.xml` (or
-`strings_security.xml`) and open a PR. Keep the key; only change the text.
+**Translating on Weblate (recommended):** the project is on
+[Hosted Weblate](https://hosted.weblate.org/projects/encly/), one component per file (*App*,
+*Security*, *Handoff*). Sign in, pick a language and translate in the browser; no Git or Android
+Studio needed. English source strings can only be changed in this repository, not on Weblate.
+Weblate collects the changes and opens a pull request from its `weblate-translations` branch;
+it never pushes to `main`. That pull request runs the same CI as any other, so it is merged only
+when every check below passes.
+
+**Fixing a translation in Git:** edit the string in `values-<lang>/strings.xml` (or
+`strings_security.xml`, `strings_handoff.xml`) and open a PR. Keep the key; only change the
+text. If a Weblate pull request is open, say so in yours; Weblate picks up merged changes from
+`main` on its own.
+
+**For maintainers:** Weblate pulls `main` on every push (GitHub webhook
+`https://hosted.weblate.org/hooks/github/`). Merge its pull request like any other, preferably
+before changing the same strings in a branch of your own; on a conflict, merge `main` first,
+then use *Repository maintenance → Reset* on Weblate, which drops only Weblate's unmerged
+changes and re-reads `main`. A language started on Weblate also needs steps 2–4 below before its
+pull request can pass CI.
 
 **Adding a string (code change):** add it in English to `values/strings.xml` (or
 `strings_security.xml`) and to the same file in *every* `values-<lang>/`, even if only with an
@@ -120,7 +138,8 @@ lower.
 
 **Adding a language:**
 
-1. copy `values/strings.xml` and `values/strings_security.xml` to `values-<lang>/` and translate them,
+1. start it on Weblate, or copy `values/strings.xml`, `values/strings_security.xml` and
+   `values/strings_handoff.xml` to `values-<lang>/` and translate them,
    leaving out the entries marked `translatable="false"`;
 2. add `<locale android:name="<lang>" />` to `res/xml/locales_config.xml`;
 3. add an entry to `AppLanguage` (`core/locale/AppLanguage.kt`) and its own-language name as a

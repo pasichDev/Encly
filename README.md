@@ -41,8 +41,12 @@ To use a different language for Encly only, open **Settings → Language** and p
 **System default** to follow the device again. The choice applies immediately; on Android 13+
 it also appears in the system's per-app language settings.
 
-Found a wrong or clumsy translation, or want to add a language? See
+Translations are done on [Hosted Weblate](https://hosted.weblate.org/projects/encly/), which
+offers free hosting to open-source projects. Found a wrong or clumsy translation, or want to add
+a language? Fix it there, no Git needed, or see
 [CONTRIBUTING.md → Translations](CONTRIBUTING.md#translations).
+
+[![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
 
 ## Screenshots
 
