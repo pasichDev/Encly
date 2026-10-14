@@ -66,6 +66,31 @@ class BackupManagerTest {
         assertEquals(BackupFormat.MAX_FILE_BYTES, manager.maxFileBytes)
     }
 
+    @Test
+    fun exportRefusesAStoreWhoseSessionClosedAfterSnapshot() = runTest {
+        val security = mock(SecurityManager::class.java)
+        `when`(security.copyBackupRootKey()).thenAnswer { ByteArray(ROOT_LENGTH) { 5 } }
+        val memory = InMemoryVaultDataStore()
+        var active = true
+        val bound = object : VaultDataStore by memory {
+            override suspend fun snapshot(): VaultSnapshot = memory.snapshot().also { active = false }
+
+            override fun assertCurrentSession() {
+                if (!active) error("session closed")
+            }
+        }
+        val store = object : VaultDataStore by memory {
+            override fun bindToCurrentSession(): VaultDataStore = bound
+        }
+
+        try {
+            BackupManager(security, store, InMemorySharedPreferences()).createBackup()
+            fail("expected a closed-session failure")
+        } catch (e: BackupException) {
+            assertEquals(BackupError.IO, e.error)
+        }
+    }
+
     private companion object {
         const val ROOT_LENGTH = 32
     }

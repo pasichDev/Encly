@@ -58,11 +58,14 @@ class SecureDatabaseManagerInstrumentedTest {
     @Test
     fun lockThenUnlockAgainReopensTheSameData() = runBlocking {
         assertTrue(manager.unlockDatabase(KEY_A, allowCreate = true))
+        val oldLease = requireNotNull(manager.captureLease())
         insertNotes(NOTE_COUNT)
 
         manager.reset()
         assertFalse(manager.isDatabaseUnlocked())
         assertTrue(manager.unlockDatabase(KEY_A))
+        assertTrue(runCatching { manager.getDatabase(oldLease) }.isFailure)
+        assertTrue(manager.getDatabase(requireNotNull(manager.captureLease())).isOpen)
 
         assertEquals(NOTE_COUNT, manager.getDatabase().notesDao().getAllNotes().first().size)
     }
@@ -74,6 +77,19 @@ class SecureDatabaseManagerInstrumentedTest {
 
         assertFalse(manager.unlockDatabase(KEY_B))
         assertTrue(manager.hasEncryptedDatabase())
+    }
+
+    @Test
+    fun aDaoFromTheClosedOpeningCannotWriteAfterReopen() = runBlocking {
+        assertTrue(manager.unlockDatabase(KEY_A, allowCreate = true))
+        val oldDao = manager.getDatabase(requireNotNull(manager.captureLease())).notesDao()
+
+        manager.reset()
+        assertTrue(manager.unlockDatabase(KEY_A))
+
+        val staleWrite = runCatching { oldDao.insertNote(Note(title = "stale", value = "old session")) }
+        assertTrue(staleWrite.isFailure)
+        assertTrue(manager.getDatabase().notesDao().getAllNotes().first().isEmpty())
     }
 
     private suspend fun insertNotes(count: Int) {

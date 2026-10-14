@@ -40,17 +40,22 @@ class BackupManager @Inject constructor(
      * would look like a good backup but could never be restored.
      */
     suspend fun createBackup(): ByteArray {
-        val payload = guarded { BackupMapper.toPayload(store.snapshot(), clock()) }
+        val boundStore = guarded { store.bindToCurrentSession() }
+        val payload = guarded { BackupMapper.toPayload(boundStore.snapshot(), clock()) }
         val root = securityManager.copyBackupRootKey()
             ?: throw BackupException(BackupError.VAULT_UNAVAILABLE)
-        val plaintext = BackupPayloadCodec.encode(payload)
         return try {
-            if (BackupFormat.fileSizeFor(plaintext.size) > maxFileBytes) {
-                throw BackupException(BackupError.TOO_LARGE)
+            guarded { boundStore.assertCurrentSession() }
+            val plaintext = BackupPayloadCodec.encode(payload)
+            try {
+                if (BackupFormat.fileSizeFor(plaintext.size) > maxFileBytes) {
+                    throw BackupException(BackupError.TOO_LARGE)
+                }
+                BackupCipher.seal(plaintext, BackupSecret.RecoveryRoot(root))
+            } finally {
+                SensitiveDataCleaner.clear(plaintext)
             }
-            BackupCipher.seal(plaintext, BackupSecret.RecoveryRoot(root))
         } finally {
-            SensitiveDataCleaner.clear(plaintext)
             SensitiveDataCleaner.clear(root)
         }
     }
@@ -79,7 +84,7 @@ class BackupManager @Inject constructor(
 
     /** Imports into the unlocked vault in one transaction; nothing is written on failure. */
     suspend fun import(payload: BackupPayload, mode: ImportMode, tagMatch: TagMatch = TagMatch.UID): ImportSummary =
-        guarded { BackupImporter.import(payload, mode, store, tagMatch) }
+        guarded { BackupImporter.import(payload, mode, store.bindToCurrentSession(), tagMatch) }
 
     fun lastExportAt(): Long? = secureStoragePrefs.getLong(LAST_EXPORT_KEY, 0L).takeIf { it > 0L }
 

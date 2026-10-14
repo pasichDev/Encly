@@ -18,6 +18,12 @@ data class VaultSnapshot(
  * [RoomVaultDataStore]; tests use an in-memory one.
  */
 interface VaultDataStore {
+    /** Capture one vault opening for a multi-step export or import. */
+    fun bindToCurrentSession(): VaultDataStore = this
+
+    /** Refuse a result if its vault closed while the operation was suspended. */
+    fun assertCurrentSession() = Unit
+
     suspend fun snapshot(): VaultSnapshot
 
     /** Runs [block] atomically: if it throws, none of its writes are kept. */

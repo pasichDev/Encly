@@ -26,6 +26,7 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
     DatabaseProvider {
     private var database: AppDatabase? = null
     private var isUnlocked = false
+    private var lease: DatabaseLease? = null
 
     /**
      * The passphrase buffer handed to Room's [SupportOpenHelperFactory]. SQLCipher keeps this
@@ -40,6 +41,15 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
     fun hasEncryptedDatabase(): Boolean =
         SQLCipherUtils.getDatabaseState(context, DB_NAME) == SQLCipherUtils.State.ENCRYPTED
 
+    @Synchronized
+    override fun captureLease(): DatabaseLease? = lease
+
+    @Synchronized
+    override fun getDatabase(lease: DatabaseLease): AppDatabase = database?.takeIf {
+        isUnlocked && this.lease === lease
+    } ?: error("Database session expired")
+
+    @Synchronized
     override fun getDatabase(): AppDatabase = database?.takeIf { isUnlocked }
         ?: error("Database accessed before unlock — call unlockDatabase() first")
 
@@ -92,11 +102,13 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
             database = opened
             roomPassphrase = passphrase
             isUnlocked = true
+            lease = DatabaseLease()
             true
         } catch (e: Exception) {
             openedDatabase?.close()
             database = null
             isUnlocked = false
+            lease = null
             AppLogger.e(TAG, "Failed to unlock the database", e)
             false
         } finally {
@@ -119,6 +131,7 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
 
     @Synchronized
     fun reset() {
+        lease = null
         database?.close()
         database = null
         isUnlocked = false
