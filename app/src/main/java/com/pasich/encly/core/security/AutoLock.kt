@@ -15,6 +15,8 @@ enum class AutoLockDelay(val millis: Long) {
     SECONDS_30(30_000L),
     MINUTE_1(60_000L),
     MINUTES_2(120_000L),
+    MINUTES_15(900_000L),
+    MINUTES_30(1_800_000L),
     ;
 
     companion object {

@@ -22,7 +22,13 @@ class AutoLockTest {
     }
 
     @Test
-    fun noDelayIsLongerThanTwoMinutes() {
-        assertEquals(120_000L, AutoLockDelay.entries.maxOf { it.millis })
+    fun longerDelaysPersistWithoutChangingTheDefault() {
+        val prefs = InMemorySharedPreferences()
+        AutoLock(prefs).setDelay(AutoLockDelay.MINUTES_15)
+        assertEquals(900_000L, AutoLock(prefs).delayMillis)
+
+        AutoLock(prefs).setDelay(AutoLockDelay.MINUTES_30)
+        assertEquals(1_800_000L, AutoLock(prefs).delayMillis)
+        assertEquals(AutoLockDelay.SECONDS_15, AutoLock(InMemorySharedPreferences()).delay.value)
     }
 }

@@ -59,6 +59,9 @@
     <string name="auto_lock_30s">After 30 seconds</string>
     <string name="auto_lock_1m">After 1 minute</string>
     <string name="auto_lock_2m">After 2 minutes</string>
+    <string name="auto_lock_15m">After 15 minutes</string>
+    <string name="auto_lock_30m">After 30 minutes</string>
+    <string name="auto_lock_long_delay_warning">Longer delays leave your vault open in the background. Anyone with access to your unlocked phone may see your notes.</string>
     <string name="security_protection_section">How Encly protects your notes</string>
     <string name="security_protection_key_title">A random 256-bit key</string>
     <string name="security_protection_key_desc">The whole database is encrypted with a key made on this phone.</string>

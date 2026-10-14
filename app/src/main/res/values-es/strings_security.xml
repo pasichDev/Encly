@@ -64,6 +64,9 @@
     <string name="auto_lock_30s">Tras 30 segundos</string>
     <string name="auto_lock_1m">Tras 1 minuto</string>
     <string name="auto_lock_2m">Tras 2 minutos</string>
+    <string name="auto_lock_15m">Tras 15 minutos</string>
+    <string name="auto_lock_30m">Tras 30 minutos</string>
+    <string name="auto_lock_long_delay_warning">Un plazo mayor deja la bóveda abierta en segundo plano. Cualquiera con acceso al teléfono desbloqueado puede ver tus notas.</string>
     <string name="security_protection_section">Cómo protege Encly tus notas</string>
     <string name="security_protection_key_title">Una clave aleatoria de 256 bits</string>
     <string name="security_protection_key_desc">Toda la base de datos está cifrada con una clave creada en este teléfono.</string>

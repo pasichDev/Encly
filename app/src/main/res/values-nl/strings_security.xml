@@ -59,6 +59,9 @@
     <string name="auto_lock_30s">Na 30 seconden</string>
     <string name="auto_lock_1m">Na 1 minuut</string>
     <string name="auto_lock_2m">Na 2 minuten</string>
+    <string name="auto_lock_15m">Na 15 minuten</string>
+    <string name="auto_lock_30m">Na 30 minuten</string>
+    <string name="auto_lock_long_delay_warning">Bij een langere tijd blijft de kluis op de achtergrond open. Wie toegang heeft tot je ontgrendelde telefoon, kan je notities zien.</string>
     <string name="security_protection_section">Zo beschermt Encly je notities</string>
     <string name="security_protection_key_title">Een willekeurige 256-bits sleutel</string>
     <string name="security_protection_key_desc">De hele database is versleuteld met een sleutel die op deze telefoon is gemaakt.</string>

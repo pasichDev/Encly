@@ -64,6 +64,9 @@
     <string name="auto_lock_30s">Après 30 secondes</string>
     <string name="auto_lock_1m">Après 1 minute</string>
     <string name="auto_lock_2m">Après 2 minutes</string>
+    <string name="auto_lock_15m">Après 15 minutes</string>
+    <string name="auto_lock_30m">Après 30 minutes</string>
+    <string name="auto_lock_long_delay_warning">Un délai plus long laisse le coffre ouvert en arrière-plan. Toute personne ayant accès à votre téléphone déverrouillé peut voir vos notes.</string>
     <string name="security_protection_section">Comment Encly protège vos notes</string>
     <string name="security_protection_key_title">Une clé aléatoire de 256 bits</string>
     <string name="security_protection_key_desc">Toute la base est chiffrée avec une clé créée sur ce téléphone.</string>

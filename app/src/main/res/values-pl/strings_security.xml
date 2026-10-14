@@ -69,6 +69,9 @@
     <string name="auto_lock_30s">Po 30 sekundach</string>
     <string name="auto_lock_1m">Po 1 minucie</string>
     <string name="auto_lock_2m">Po 2 minutach</string>
+    <string name="auto_lock_15m">Po 15 minutach</string>
+    <string name="auto_lock_30m">Po 30 minutach</string>
+    <string name="auto_lock_long_delay_warning">Dłuższy czas pozostawia sejf otwarty w tle. Osoba z dostępem do odblokowanego telefonu może zobaczyć Twoje notatki.</string>
     <string name="security_protection_section">Jak Encly chroni twoje notatki</string>
     <string name="security_protection_key_title">Losowy klucz 256-bitowy</string>
     <string name="security_protection_key_desc">Cała baza jest zaszyfrowana kluczem utworzonym na tym telefonie.</string>

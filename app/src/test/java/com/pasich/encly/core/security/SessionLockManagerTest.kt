@@ -372,6 +372,29 @@ class SessionLockManagerTest {
     }
 
     @Test
+    fun fifteenMinuteDelayLocksAtTheBoundary() {
+        withDelay(AutoLockDelay.MINUTES_15.millis)
+
+        manager.onStop(owner)
+        now += AutoLockDelay.MINUTES_15.millis
+        manager.onStart(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun thirtyMinuteDelayStillEndsOnScreenOff() {
+        withDelay(AutoLockDelay.MINUTES_30.millis)
+
+        manager.onStop(owner)
+        watcher.screenOff()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
     fun theScreenTurningOffIgnoresTheAutoLockDelay() {
         withDelay(120_000)
 

@@ -69,6 +69,9 @@
     <string name="auto_lock_30s">Через 30 секунд</string>
     <string name="auto_lock_1m">Через 1 хвилину</string>
     <string name="auto_lock_2m">Через 2 хвилини</string>
+    <string name="auto_lock_15m">Через 15 хвилин</string>
+    <string name="auto_lock_30m">Через 30 хвилин</string>
+    <string name="auto_lock_long_delay_warning">Довший час залишає сховище відкритим у фоні. Людина з доступом до розблокованого телефона може побачити ваші нотатки.</string>
     <string name="security_protection_section">Як Encly захищає нотатки</string>
     <string name="security_protection_key_title">Випадковий 256-бітний ключ</string>
     <string name="security_protection_key_desc">Уся база зашифрована ключем, створеним на цьому телефоні.</string>

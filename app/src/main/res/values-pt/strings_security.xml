@@ -64,6 +64,9 @@
     <string name="auto_lock_30s">Após 30 segundos</string>
     <string name="auto_lock_1m">Após 1 minuto</string>
     <string name="auto_lock_2m">Após 2 minutos</string>
+    <string name="auto_lock_15m">Após 15 minutos</string>
+    <string name="auto_lock_30m">Após 30 minutos</string>
+    <string name="auto_lock_long_delay_warning">Um prazo maior deixa o cofre aberto em segundo plano. Quem tiver acesso ao telefone desbloqueado poderá ver suas notas.</string>
     <string name="security_protection_section">Como o Encly protege as suas notas</string>
     <string name="security_protection_key_title">Uma chave aleatória de 256 bits</string>
     <string name="security_protection_key_desc">Todo o banco de dados é criptografado com uma chave criada neste telefone.</string>
