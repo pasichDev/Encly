@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
@@ -50,6 +49,7 @@ import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
@@ -57,8 +57,8 @@ import kotlinx.coroutines.launch
 fun SecuritySettingsScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    securityViewModel: SecuritySettingsViewModel = hiltViewModel(),
-    vaultViewModel: BackupViewModel = hiltViewModel(),
+    securityViewModel: SecuritySettingsViewModel = enclyViewModel(),
+    vaultViewModel: BackupViewModel = enclyViewModel(),
 ) {
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
     val strictKeyboard by securityViewModel.strictKeyboard.collectAsStateWithLifecycle()
@@ -211,13 +211,14 @@ private fun SecurityScreenEffects(
     actions: SecurityEffectActions,
 ) {
     val context = LocalContext.current
+    val vaultMessageText = (vaultMessage as? BackupMessage.Text)?.let { stringResource(it.id) }
     // Clearing a message restarts its effect, which must not cancel the snackbar it just opened.
     val snackbarScope = rememberCoroutineScope()
 
-    LaunchedEffect(vaultMessage) {
-        val message = vaultMessage as? BackupMessage.Text ?: return@LaunchedEffect
+    LaunchedEffect(vaultMessage, vaultMessageText) {
+        val message = vaultMessageText ?: return@LaunchedEffect
         actions.onVaultMessageShown()
-        snackbarScope.launch { snackbarHostState.showSnackbar(context.getString(message.id)) }
+        snackbarScope.launch { snackbarHostState.showSnackbar(message) }
     }
 
     LaunchedEffect(vaultErased) {

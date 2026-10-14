@@ -152,6 +152,7 @@ private fun rememberAnimationsEnabled(): Boolean {
  * [edit] is the list's inline field when it belongs to this task; [dimmed] for a task that is done.
  */
 @Composable
+@Suppress("LongMethod") // Reorderable row keeps its drag, accessibility, and inline-edit scope together.
 internal fun SubtaskTree(
     taskId: Long,
     subtasks: List<Subtask>,
@@ -181,34 +182,36 @@ internal fun SubtaskTree(
             onMove = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
         ) { index, subtask, dragging ->
             key(subtask.id) {
-                val renaming = edit != null && edit.target == InlineSubtaskTarget.Rename(taskId, subtask.id)
-                val reorder = Modifier.longPressDraggableHandle(
-                    enabled = enabled && !renaming,
-                    onDragStarted = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
-                )
-                // Given to the title: the node TalkBack focuses (a plain row is not one).
-                val moves = moveActions(
-                    moveUp = { move(index, index - 1) }.takeIf { index > 0 },
-                    moveDown = { move(index, index + 1) }.takeIf { index < rows.value.lastIndex },
-                )
-                if (renaming) {
-                    RenameField(subtask, edit, actions, enabled)
-                } else {
-                    EnclySubtaskRow(
-                        title = subtask.title,
-                        checked = subtask.isCompleted,
-                        onCheckedChange = { actions.onToggle(subtask, it) },
-                        // The add leaf always closes the tree.
-                        isLast = false,
-                        modifier = reorder,
-                        dimmed = dimmed,
-                        enabled = enabled,
-                        onClick = { actions.onStartRenaming(subtask) },
-                        onClickLabel = stringResource(R.string.edit),
-                        customActions = moves,
-                        dragging = dragging,
-                        trailing = chevron.takeIf { index == 0 },
+                ReorderableItem {
+                    val renaming = edit != null && edit.target == InlineSubtaskTarget.Rename(taskId, subtask.id)
+                    val reorder = Modifier.longPressDraggableHandle(
+                        enabled = enabled && !renaming,
+                        onDragStarted = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
                     )
+                    // Given to the title: the node TalkBack focuses (a plain row is not one).
+                    val moves = moveActions(
+                        moveUp = { move(index, index - 1) }.takeIf { index > 0 },
+                        moveDown = { move(index, index + 1) }.takeIf { index < rows.value.lastIndex },
+                    )
+                    if (renaming) {
+                        RenameField(subtask, edit, actions, enabled)
+                    } else {
+                        EnclySubtaskRow(
+                            title = subtask.title,
+                            checked = subtask.isCompleted,
+                            onCheckedChange = { actions.onToggle(subtask, it) },
+                            // The add leaf always closes the tree.
+                            isLast = false,
+                            modifier = reorder,
+                            dimmed = dimmed,
+                            enabled = enabled,
+                            onClick = { actions.onStartRenaming(subtask) },
+                            onClickLabel = stringResource(R.string.edit),
+                            customActions = moves,
+                            dragging = dragging,
+                            trailing = chevron.takeIf { index == 0 },
+                        )
+                    }
                 }
             }
         }

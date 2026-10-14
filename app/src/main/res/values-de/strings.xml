@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">Encly meldet einen beschädigten Tresor</string>
 
     <string name="font_size_title">Textgröße</string>
+    <string name="note_line_spacing_title">Zeilenabstand</string>
+    <string name="note_line_spacing_default">Standard</string>
+    <string name="note_line_spacing_compact">Kompakt</string>
     <string name="font_style_cozy">Redaktionell</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technisch</string>

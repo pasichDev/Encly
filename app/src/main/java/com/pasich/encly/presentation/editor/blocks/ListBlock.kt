@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.CheckboxSize
@@ -49,6 +50,7 @@ import com.pasich.encly.presentation.designsystem.EnclyCheckbox
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.focus.KeyboardUtils
 import com.pasich.encly.presentation.editor.state.LineBreak
+import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -279,10 +281,12 @@ private class ListEditor(
 @Composable
 private fun listTextStyle(): TextStyle {
     val fontStyles = rememberFontStyles()
+    val compact = LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT
     return MaterialTheme.typography.bodyLarge.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontFamily = fontStyles.families.body,
         fontSize = fontStyles.sizes.list,
+        lineHeight = if (compact) fontStyles.sizes.list else MaterialTheme.typography.bodyLarge.lineHeight,
     )
 }
 

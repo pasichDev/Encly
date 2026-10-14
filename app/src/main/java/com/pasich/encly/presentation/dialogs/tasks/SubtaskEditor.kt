@@ -44,7 +44,7 @@ import com.pasich.encly.presentation.viewmodel.SubtaskDraft
 import com.pasich.encly.presentation.viewmodel.SubtaskDrafts
 import com.pasich.encly.ui.theme.EnclyTheme
 import sh.calvin.reorderable.ReorderableColumn
-import sh.calvin.reorderable.ReorderableScope
+import sh.calvin.reorderable.ReorderableListItemScope
 
 /** Longest sub-task title, in the sheet and in the list's inline field alike. */
 internal const val SUBTASK_TITLE_MAX_LENGTH = 100
@@ -137,12 +137,14 @@ internal fun SubtaskEditor(state: SubtaskListState) {
             onMove = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
         ) { index, subtask, _ ->
             key(subtask.key) {
-                SubtaskRow(
-                    subtask = subtask,
-                    state = state,
-                    moveUp = { state.move(index, index - 1) }.takeIf { index > 0 },
-                    moveDown = { state.move(index, index + 1) }.takeIf { index < subtasks.lastIndex },
-                )
+                ReorderableItem {
+                    SubtaskRow(
+                        subtask = subtask,
+                        state = state,
+                        moveUp = { state.move(index, index - 1) }.takeIf { index > 0 },
+                        moveDown = { state.move(index, index + 1) }.takeIf { index < subtasks.lastIndex },
+                    )
+                }
             }
         }
         NewSubtaskRow(title = state.newTitle, onTitleChange = state::changeNewTitle, onAdd = state::add)
@@ -150,7 +152,7 @@ internal fun SubtaskEditor(state: SubtaskListState) {
 }
 
 @Composable
-private fun ReorderableScope.SubtaskRow(
+private fun ReorderableListItemScope.SubtaskRow(
     subtask: SubtaskDraft,
     state: SubtaskListState,
     moveUp: (() -> Unit)?,

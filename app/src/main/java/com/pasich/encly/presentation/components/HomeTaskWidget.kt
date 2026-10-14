@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.presentation.components.tasks.PriorityValues
 import com.pasich.encly.presentation.designsystem.EnclyCard
@@ -19,6 +18,7 @@ import com.pasich.encly.presentation.designsystem.EnclyInlineLink
 import com.pasich.encly.presentation.designsystem.EnclyTaskRow
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.presentation.viewmodel.widgetTasks
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -32,7 +32,7 @@ fun HomeTaskWidget(
     modifier: Modifier = Modifier,
     onTasksClick: () -> Unit = {},
     onNewTask: () -> Unit = onTasksClick,
-    viewModel: TasksViewModel = hiltViewModel(),
+    viewModel: TasksViewModel = enclyViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val preview = remember(uiState.activeTasks) { widgetTasks(uiState.activeTasks) }

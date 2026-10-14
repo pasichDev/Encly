@@ -39,7 +39,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
@@ -52,6 +51,7 @@ import com.pasich.encly.presentation.editor.mainBlockTools
 import com.pasich.encly.presentation.editor.moreBlockTools
 import com.pasich.encly.presentation.editor.state.toolType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
@@ -64,7 +64,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun NoteBottomBar(
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
     simpleEdit: Boolean = false,
 ) {
     var showMore by rememberSaveable { mutableStateOf(false) }

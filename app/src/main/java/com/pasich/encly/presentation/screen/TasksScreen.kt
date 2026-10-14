@@ -28,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -43,6 +42,7 @@ import com.pasich.encly.presentation.dialogs.tasks.AddTaskDialog
 import com.pasich.encly.presentation.viewmodel.TaskOperationFailure
 import com.pasich.encly.presentation.viewmodel.TasksUiState
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -57,7 +57,7 @@ fun TasksScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     openNewTask: Boolean = false,
-    viewModel: TasksViewModel = hiltViewModel(),
+    viewModel: TasksViewModel = enclyViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }

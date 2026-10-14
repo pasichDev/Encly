@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
@@ -16,6 +15,7 @@ import com.pasich.encly.presentation.designsystem.EnclyRadio
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 
 /** View options of the notes list: the sort order, and the switch between list and grid. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +26,7 @@ fun NotesSortBottomSheet(
     isGrid: Boolean,
     onToggleView: () -> Unit,
     isBottomSheetVisible: Boolean = false,
-    noteListViewModel: NoteListViewModel = hiltViewModel(),
+    noteListViewModel: NoteListViewModel = enclyViewModel(),
 ) {
     val state by noteListViewModel.state.collectAsState()
 

@@ -164,6 +164,9 @@
     <string name="faq_vault_damaged_q">Encly says the vault is damaged</string>
 
     <string name="font_size_title">Text size</string>
+    <string name="note_line_spacing_title">Line spacing</string>
+    <string name="note_line_spacing_default">Default</string>
+    <string name="note_line_spacing_compact">Compact</string>
     <string name="font_style_cozy">Editorial</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technical</string>

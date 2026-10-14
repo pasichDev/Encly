@@ -37,7 +37,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.core.security.SensitiveDataCleaner
@@ -53,6 +52,7 @@ import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 
@@ -169,7 +169,7 @@ private class PinChangeState(val isReset: Boolean) {
 fun PinCodeConfigScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    securityViewModel: SecuritySettingsViewModel = hiltViewModel(),
+    securityViewModel: SecuritySettingsViewModel = enclyViewModel(),
 ) {
     // After a recovery-phrase unlock the old PIN is forgotten: start at "new PIN", and do not
     // let the user leave without one.

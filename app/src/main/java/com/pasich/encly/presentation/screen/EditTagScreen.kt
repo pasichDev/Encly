@@ -51,7 +51,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -80,6 +79,7 @@ import com.pasich.encly.presentation.viewmodel.TAG_NAME_MAX_LENGTH
 import com.pasich.encly.presentation.viewmodel.TagListEvent
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.TagOperationFailure
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.presentation.viewmodel.hasTagNamed
 import com.pasich.encly.presentation.viewmodel.normalizeTagName
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -102,7 +102,7 @@ private val TagNameKeyboard = KeyboardOptions(keyboardType = KeyboardType.Passwo
 fun EditTagScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: TagListViewModel = hiltViewModel(),
+    viewModel: TagListViewModel = enclyViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val counts by viewModel.noteCounts.collectAsStateWithLifecycle()

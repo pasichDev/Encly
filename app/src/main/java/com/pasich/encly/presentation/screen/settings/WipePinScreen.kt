@@ -26,10 +26,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
@@ -49,6 +47,7 @@ import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
@@ -179,7 +178,7 @@ private class WipePinState {
 fun WipePinScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    securityViewModel: SecuritySettingsViewModel = hiltViewModel(),
+    securityViewModel: SecuritySettingsViewModel = enclyViewModel(),
 ) {
     val state = remember { WipePinState() }
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
@@ -241,14 +240,14 @@ fun WipePinScreen(
 /** Shows [message] once as a snackbar; [onShow] clears it. */
 @Composable
 private fun WipePinMessageEffect(@StringRes message: Int?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
-    val context = LocalContext.current
+    val messageText = message?.let { stringResource(it) }
     val currentOnShow by rememberUpdatedState(onShow)
     // Clearing the message restarts this effect, which must not cancel the snackbar it opened.
     val snackbarScope = rememberCoroutineScope()
-    LaunchedEffect(message) {
-        val id = message ?: return@LaunchedEffect
+    LaunchedEffect(message, messageText) {
+        val text = messageText ?: return@LaunchedEffect
         currentOnShow()
-        snackbarScope.launch { snackbarHostState.showSnackbar(context.getString(id)) }
+        snackbarScope.launch { snackbarHostState.showSnackbar(text) }
     }
 }
 

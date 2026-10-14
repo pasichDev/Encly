@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -41,6 +42,16 @@ class SettingsLocalDataSourceTest {
     fun emptyStoreGivesDefaults() = runTest {
         assertEquals(ThemeSettings(), source.themeSettingsFlow.first())
         assertEquals(FontStyleType.DEFAULT, source.fontStyleFlow.first())
+        assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
+    }
+
+    @Test
+    fun compactLineSpacingRoundTrips() = runTest {
+        source.setNoteLineSpacing(NoteLineSpacing.COMPACT)
+
+        assertEquals(NoteLineSpacing.COMPACT, SettingsLocalDataSource(dataStore).noteLineSpacingFlow.first())
+        source.setNoteLineSpacing(NoteLineSpacing.DEFAULT)
+        assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
     }
 
     @Test
@@ -66,9 +77,11 @@ class SettingsLocalDataSourceTest {
             it[intPreferencesKey(THEME_PALETTE)] = 99
             it[intPreferencesKey(THEME_TYPE)] = -1
             it[intPreferencesKey(FONT_STYLE)] = 7
+            it[intPreferencesKey(NOTE_LINE_SPACING)] = 7
         }
         assertEquals(ThemeSettings(), source.themeSettingsFlow.first())
         assertEquals(FontStyleType.DEFAULT, source.fontStyleFlow.first())
+        assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
     }
 
     @Test

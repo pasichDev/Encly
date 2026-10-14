@@ -32,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.dynamicBlocks.Block
@@ -47,6 +46,7 @@ import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
@@ -59,7 +59,7 @@ import kotlinx.coroutines.launch
 internal fun EditorBlockSheets(
     sheet: BlockSheetState,
     canEdit: Boolean,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -111,8 +111,8 @@ internal fun EditorBlockSheets(
 internal fun EditorTagSheet(
     onManageTags: () -> Unit,
     onDismiss: () -> Unit,
-    viewModel: EditNoteViewModel = hiltViewModel(),
-    tagViewModel: TagListViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
+    tagViewModel: TagListViewModel = enclyViewModel(),
 ) {
     val tagState by tagViewModel.state.collectAsState()
     val noteState by viewModel.state.collectAsState()

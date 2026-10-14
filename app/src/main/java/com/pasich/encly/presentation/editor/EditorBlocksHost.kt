@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.designsystem.editorBlockFrame
 import com.pasich.encly.presentation.editor.blocks.HBlock
@@ -35,6 +36,7 @@ import com.pasich.encly.presentation.editor.blocks.TextBlock
 import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.editor.focus.RegisterFocusRequester
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
+import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -149,7 +151,7 @@ private fun EditorBlock(
                     !focusState.hasFocus -> callbacks.onFocusLost()
                 }
             }
-            .editorBlockFrame(),
+            .editorBlockFrame(block is Block.TextBlock && LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT),
     ) {
         BlockContent(
             block = block,

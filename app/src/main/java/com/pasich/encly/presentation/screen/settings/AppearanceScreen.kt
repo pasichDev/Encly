@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
@@ -43,6 +42,7 @@ import com.pasich.encly.presentation.designsystem.Segment
 import com.pasich.encly.presentation.designsystem.ThemeSwatch
 import com.pasich.encly.presentation.viewmodel.AppearanceViewModel
 import com.pasich.encly.presentation.viewmodel.ModeNote
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.colorSchemeFor
 import com.pasich.encly.ui.theme.fontSet
@@ -54,7 +54,7 @@ private const val DYNAMIC_SWATCH_ALPHA = 0.38f
 fun AppearanceScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: AppearanceViewModel = hiltViewModel(),
+    viewModel: AppearanceViewModel = enclyViewModel(),
 ) {
     val settings by viewModel.themeSettings.collectAsStateWithLifecycle()
     AppearanceContent(

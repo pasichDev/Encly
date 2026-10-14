@@ -2,6 +2,7 @@ package com.pasich.encly.testutil
 
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -17,6 +18,7 @@ internal class TestSettingsRepository(override var latestThemeSettings: ThemeSet
     override val simpleEditFlow = MutableStateFlow(false)
     override val fontSizeFlow = MutableStateFlow(DEFAULT_FONT_SIZE)
     override val fontStyleFlow = MutableStateFlow(FontStyleType.DEFAULT)
+    override val noteLineSpacingFlow = MutableStateFlow(NoteLineSpacing.DEFAULT)
 
     override suspend fun loadThemeSettings(existingInstall: Boolean): ThemeSettings = themeSettingsFlow.value
 
@@ -55,6 +57,10 @@ internal class TestSettingsRepository(override var latestThemeSettings: ThemeSet
     override suspend fun setFontStyle(value: FontStyleType) {
         fontStyleFlow.value = value
         themeSettingsFlow.value = themeSettingsFlow.value.copy(fontStyle = value)
+    }
+
+    override suspend fun setNoteLineSpacing(value: NoteLineSpacing) {
+        noteLineSpacingFlow.value = value
     }
 
     private companion object {

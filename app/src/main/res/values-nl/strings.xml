@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">Encly meldt dat de kluis beschadigd is</string>
 
     <string name="font_size_title">Tekstgrootte</string>
+    <string name="note_line_spacing_title">Regelafstand</string>
+    <string name="note_line_spacing_default">Standaard</string>
+    <string name="note_line_spacing_compact">Compact</string>
     <string name="font_style_cozy">Redactioneel</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technisch</string>

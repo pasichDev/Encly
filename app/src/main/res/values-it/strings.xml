@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">Encly segnala che la cassaforte è danneggiata</string>
 
     <string name="font_size_title">Dimensione del testo</string>
+    <string name="note_line_spacing_title">Interlinea</string>
+    <string name="note_line_spacing_default">Predefinita</string>
+    <string name="note_line_spacing_compact">Compatta</string>
     <string name="font_style_cozy">Editoriale</string>
     <string name="font_style_modern">Moderno</string>
     <string name="font_style_tech">Tecnico</string>

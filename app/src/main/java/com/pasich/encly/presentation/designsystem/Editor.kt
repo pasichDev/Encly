@@ -107,7 +107,8 @@ private val BlockInset = 4.dp
  * The inner padding of one editor block, 4/8. The editor column sits [BlockBleed] inside the
  * gutter, so text lines up with the title. No outline while editing: the caret is the focus mark.
  */
-fun Modifier.editorBlockFrame(): Modifier = padding(horizontal = BlockBleed, vertical = BlockInset)
+fun Modifier.editorBlockFrame(compactText: Boolean = false): Modifier =
+    padding(horizontal = BlockBleed, vertical = if (compactText) 0.dp else BlockInset)
 
 /** A thin vertical rule between groups of toolbar buttons. */
 @Composable

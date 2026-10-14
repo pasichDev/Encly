@@ -46,6 +46,7 @@ Compose:
       - LocalBaseFontSize
       - LocalFontStyle
       - LocalSimpleEdit
+      - LocalNoteLineSpacing
       - LocalFontStyles
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors

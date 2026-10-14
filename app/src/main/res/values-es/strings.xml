@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">Encly indica que la caja fuerte está dañada</string>
 
     <string name="font_size_title">Tamaño del texto</string>
+    <string name="note_line_spacing_title">Interlineado</string>
+    <string name="note_line_spacing_default">Predeterminado</string>
+    <string name="note_line_spacing_compact">Compacto</string>
     <string name="font_style_cozy">Editorial</string>
     <string name="font_style_modern">Moderno</string>
     <string name="font_style_tech">Técnico</string>

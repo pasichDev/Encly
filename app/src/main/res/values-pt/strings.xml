@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">O Encly informa que o cofre está danificado</string>
 
     <string name="font_size_title">Tamanho do texto</string>
+    <string name="note_line_spacing_title">Espaçamento entre linhas</string>
+    <string name="note_line_spacing_default">Padrão</string>
+    <string name="note_line_spacing_compact">Compacto</string>
     <string name="font_style_cozy">Editorial</string>
     <string name="font_style_modern">Moderno</string>
     <string name="font_style_tech">Técnico</string>

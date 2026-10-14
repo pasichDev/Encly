@@ -172,7 +172,7 @@ class SessionLockManager @Inject constructor(
 
     /** The grace no longer holds: too long away, the screen went off, or the keyguard is up. */
     private fun graceBroken(stoppedAt: Long, lockedAway: Boolean): Boolean =
-        clock() - stoppedAt > awayLimitMs || lockedAway || deviceLock.isDeviceLocked()
+        clock() - stoppedAt >= awayLimitMs || lockedAway || deviceLock.isDeviceLocked()
 
     private fun onAwayTimeout(screenOff: Boolean) {
         if (foreground || suspendedAt == NONE) return

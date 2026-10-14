@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">Encly indique que le coffre-fort est endommagé</string>
 
     <string name="font_size_title">Taille du texte</string>
+    <string name="note_line_spacing_title">Espacement des lignes</string>
+    <string name="note_line_spacing_default">Par défaut</string>
+    <string name="note_line_spacing_compact">Compact</string>
     <string name="font_style_cozy">Éditorial</string>
     <string name="font_style_modern">Moderne</string>
     <string name="font_style_tech">Technique</string>

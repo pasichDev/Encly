@@ -16,7 +16,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
@@ -28,6 +27,7 @@ import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 
 enum class DialogTrashAction {
     DELETE_PERMANENTLY,
@@ -39,7 +39,7 @@ enum class DialogTrashAction {
 fun TrashScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    trashViewModel: TrashViewModel = hiltViewModel(),
+    trashViewModel: TrashViewModel = enclyViewModel(),
 ) {
     val state by trashViewModel.state.collectAsStateWithLifecycle()
     var isDialogVisible by remember { mutableStateOf(DialogTrashAction.DISABLE) }

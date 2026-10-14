@@ -15,8 +15,10 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.editor.BlockActions
+import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 
 /**
@@ -39,11 +41,13 @@ fun TextBlock(
     showPlaceholder: Boolean = true,
 ) {
     val fontStyles = rememberFontStyles()
+    val compact = LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT
     val state = rememberBlockTextFieldState(block.text, blockActions)
     val style = MaterialTheme.typography.bodyLarge.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = fontStyles.sizes.textBlock,
         fontFamily = fontStyles.families.body,
+        lineHeight = if (compact) fontStyles.sizes.textBlock else MaterialTheme.typography.bodyLarge.lineHeight,
     )
     val actions by rememberUpdatedState(blockActions)
     val input = remember { BlockInput(BlockField.Paragraph) { actions } }

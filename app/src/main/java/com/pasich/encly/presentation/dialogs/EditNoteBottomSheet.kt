@@ -5,15 +5,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.presentation.components.FontSizeSlider
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyRadioRow
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 
 enum class EditNoteBottomSheetAction {
     CLOSE_NO_SAVE,
@@ -31,16 +34,28 @@ fun EditNoteBottomSheet(
     isVisible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel<EditNoteViewModel>(),
+    viewModel: EditNoteViewModel = enclyViewModel<EditNoteViewModel>(),
     onAction: (EditNoteBottomSheetAction) -> Unit = {},
 ) {
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
+    val lineSpacing by viewModel.noteLineSpacing.collectAsStateWithLifecycle()
 
     if (isVisible) {
         EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
             FontSizeSlider(
                 currentSize = fontSize,
                 onSizeChange = { newSize -> viewModel.updateFontSize(newSize) },
+            )
+            SectionOverline(stringResource(R.string.note_line_spacing_title))
+            EnclyRadioRow(
+                title = stringResource(R.string.note_line_spacing_default),
+                selected = lineSpacing == NoteLineSpacing.DEFAULT,
+                onClick = { viewModel.updateNoteLineSpacing(NoteLineSpacing.DEFAULT) },
+            )
+            EnclyRadioRow(
+                title = stringResource(R.string.note_line_spacing_compact),
+                selected = lineSpacing == NoteLineSpacing.COMPACT,
+                onClick = { viewModel.updateNoteLineSpacing(NoteLineSpacing.COMPACT) },
             )
             EnclyGroupDivider()
             EnclySheetRow(

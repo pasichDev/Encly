@@ -10,6 +10,7 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
@@ -150,6 +151,12 @@ constructor(
         initialValue = FontStyleType.DEFAULT,
     )
 
+    val noteLineSpacing = settingsRepository.noteLineSpacingFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = NoteLineSpacing.DEFAULT,
+    )
+
     val simpleEdit = settingsRepository.simpleEditFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -258,6 +265,10 @@ constructor(
     fun updateFontSize(size: Int) {
         // The app scope: closing the editor right after a change must not cancel the write.
         appScope.launch { settingsRepository.setFontSize(size) }
+    }
+
+    fun updateNoteLineSpacing(value: NoteLineSpacing) {
+        appScope.launch { settingsRepository.setNoteLineSpacing(value) }
     }
 
     /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */

@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">Encly повідомляє про пошкодження сховища</string>
 
     <string name="font_size_title">Розмір тексту</string>
+    <string name="note_line_spacing_title">Міжряддя</string>
+    <string name="note_line_spacing_default">Звичайне</string>
+    <string name="note_line_spacing_compact">Компактне</string>
     <string name="font_style_cozy">Редакційний</string>
     <string name="font_style_modern">Сучасний</string>
     <string name="font_style_tech">Технічний</string>

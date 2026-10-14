@@ -148,6 +148,9 @@
     <string name="faq_vault_damaged_q">Encly zgłasza uszkodzenie sejfu</string>
 
     <string name="font_size_title">Rozmiar tekstu</string>
+    <string name="note_line_spacing_title">Odstępy między wierszami</string>
+    <string name="note_line_spacing_default">Domyślne</string>
+    <string name="note_line_spacing_compact">Kompaktowe</string>
     <string name="font_style_cozy">Redakcyjny</string>
     <string name="font_style_modern">Nowoczesny</string>
     <string name="font_style_tech">Techniczny</string>

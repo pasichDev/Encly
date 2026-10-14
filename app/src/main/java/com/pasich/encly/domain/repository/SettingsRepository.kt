@@ -2,11 +2,13 @@ package com.pasich.encly.domain.repository
 
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions") // One typed accessor per independent user setting.
 interface SettingsRepository {
     val themeSettingsFlow: Flow<ThemeSettings>
     val isGridNoteList: Flow<Boolean>
@@ -15,6 +17,7 @@ interface SettingsRepository {
     val simpleEditFlow: Flow<Boolean>
     val fontSizeFlow: Flow<Int>
     val fontStyleFlow: Flow<FontStyleType>
+    val noteLineSpacingFlow: Flow<NoteLineSpacing>
 
     /** The theme last read from the store, or null before the first read. */
     val latestThemeSettings: ThemeSettings?
@@ -34,4 +37,5 @@ interface SettingsRepository {
     suspend fun setSimpleEdit(value: Boolean)
     suspend fun setFontSize(value: Int)
     suspend fun setFontStyle(value: FontStyleType)
+    suspend fun setNoteLineSpacing(value: NoteLineSpacing)
 }

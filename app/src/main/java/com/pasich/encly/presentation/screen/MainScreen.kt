@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -54,6 +53,7 @@ import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
@@ -113,11 +113,11 @@ fun MainScreen(
     navController: NavHostController,
     drawerState: DrawerState,
     modifier: Modifier = Modifier,
-    mainListStateViewModel: MainListStateViewModel = hiltViewModel(),
-    settingsViewModel: SettingsViewModel = hiltViewModel(),
-    noteListViewModel: NoteListViewModel = hiltViewModel(),
-    searchViewModel: NoteSearchViewModel = hiltViewModel(),
-    lockNowViewModel: LockNowViewModel = hiltViewModel(),
+    mainListStateViewModel: MainListStateViewModel = enclyViewModel(),
+    settingsViewModel: SettingsViewModel = enclyViewModel(),
+    noteListViewModel: NoteListViewModel = enclyViewModel(),
+    searchViewModel: NoteSearchViewModel = enclyViewModel(),
+    lockNowViewModel: LockNowViewModel = enclyViewModel(),
 ) {
     val isGrid by mainListStateViewModel.isGridNoteList.collectAsState()
     val showTasks by settingsViewModel.showTasksFlow.collectAsState()

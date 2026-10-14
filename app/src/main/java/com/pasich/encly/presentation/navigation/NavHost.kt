@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -33,6 +32,7 @@ import com.pasich.encly.presentation.screen.settings.WipePinScreen
 import com.pasich.encly.presentation.screen.trash.TrashScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 
 @Composable
 fun AppNavHost(navController: NavHostController, startDestination: String = NavRoutes.HomeRoute.name) {
@@ -173,7 +173,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
 private fun EditNoteDestination(
     navController: NavHostController,
     entry: NavBackStackEntry,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val noteState by viewModel.state.collectAsState()
     val eraseEpoch = LocalEraseEpoch.current
@@ -195,7 +195,7 @@ private fun LossRoute(
     navController: NavHostController,
     route: NavRoutes,
     reason: LossReason,
-    recoveryViewModel: LossRecoveryViewModel = hiltViewModel(),
+    recoveryViewModel: LossRecoveryViewModel = enclyViewModel(),
 ) {
     LossRecoveryScreen(
         reason = reason,

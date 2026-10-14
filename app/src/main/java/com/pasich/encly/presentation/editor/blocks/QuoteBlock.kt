@@ -24,9 +24,11 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.editor.BlockActions
+import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -54,6 +56,11 @@ fun QuoteBlock(
     val quoteStyle = EnclyTheme.typography.quote.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = fontStyles.sizes.quote,
+        lineHeight = if (LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT) {
+            fontStyles.sizes.quote
+        } else {
+            EnclyTheme.typography.quote.lineHeight
+        },
     )
 
     // A tonal card between an opening and a closing quote mark in `primary`, 8 dp below the block

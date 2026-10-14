@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.core.locale.AppLanguage
@@ -56,6 +55,7 @@ import com.pasich.encly.presentation.viewmodel.OnboardingPath
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
 private const val SLIDE_MS = 500
@@ -73,8 +73,8 @@ private const val FADE_OUT_MS = 300
 fun OnboardingScreen(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: OnboardingViewModel = hiltViewModel(),
-    setupViewModel: AuthSetupViewModel = hiltViewModel(),
+    viewModel: OnboardingViewModel = enclyViewModel(),
+    setupViewModel: AuthSetupViewModel = enclyViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val finishing by setupViewModel.busy.collectAsStateWithLifecycle()

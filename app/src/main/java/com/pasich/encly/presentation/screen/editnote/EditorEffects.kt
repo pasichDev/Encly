@@ -15,13 +15,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 private const val INITIAL_FOCUS_FRAMES = 5
@@ -31,7 +31,7 @@ private const val INITIAL_FOCUS_FRAMES = 5
  * closes SQLCipher later in the background transition, so this closes the autosave window first.
  */
 @Composable
-internal fun SaveWhenPaused(viewModel: EditNoteViewModel = hiltViewModel()) {
+internal fun SaveWhenPaused(viewModel: EditNoteViewModel = enclyViewModel()) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -52,7 +52,7 @@ internal fun CarryOutFocusRequests(
     registry: BlockFocusRegistry,
     listState: LazyListState,
     blocksStart: Int,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val currentBlocksStart by rememberUpdatedState(blocksStart)
     LaunchedEffect(viewModel, registry) {
@@ -89,7 +89,7 @@ private const val REVEAL_FRACTION = 4
 
 /** A new note starts in its title with the keyboard up: once, not again after a restore. */
 @Composable
-internal fun FocusNewNoteTitle(titleFocus: FocusRequester, viewModel: EditNoteViewModel = hiltViewModel()) {
+internal fun FocusNewNoteTitle(titleFocus: FocusRequester, viewModel: EditNoteViewModel = enclyViewModel()) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var done by rememberSaveable { mutableStateOf(!viewModel.isNewNote) }
     LaunchedEffect(done) {
