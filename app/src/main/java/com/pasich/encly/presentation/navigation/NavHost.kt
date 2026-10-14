@@ -24,6 +24,7 @@ import com.pasich.encly.presentation.screen.SupportScreen
 import com.pasich.encly.presentation.screen.TasksScreen
 import com.pasich.encly.presentation.screen.backup.BackupScreen
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
+import com.pasich.encly.presentation.screen.importnotes.ImportNotesScreen
 import com.pasich.encly.presentation.screen.onboarding.OnboardingScreen
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
 import com.pasich.encly.presentation.screen.settings.DuressPinScreen
@@ -107,6 +108,10 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
 
         animationScreens(NavRoutes.BackupRoute.name) {
             RealVaultOnly(navController) { BackupScreen(navController) }
+        }
+
+        animationScreens(NavRoutes.ImportNotesRoute.name) {
+            ImportNotesScreen(navController)
         }
 
         animationScreens(NavRoutes.OnboardingRoute.name) {

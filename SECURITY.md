@@ -374,6 +374,40 @@ counts, and exposes no provider or anything readable.
   the backup merge import: one transaction, records whose uid exists are skipped (a repeated
   hand-off adds nothing), tags are matched by name.
 
+## Import from other apps
+
+Settings → Import notes reads exports of other notes apps (pasichDev/Encly#62): Google Keep
+Takeout, a decrypted Standard Notes backup, Joplin JEX or RAW, Notesnook Markdown/TXT exports and
+generic Markdown/TXT (Obsidian, Markor).
+
+- **Input.** Only documents and folders the user picks through the Storage Access Framework,
+  read as streams through `ContentResolver` while the vault is unlocked (the picker gets the
+  same short grace as a backup import). No path, seek or declared size is trusted. The source
+  files are never written.
+- **Bounded reading, in memory only.** ZIP is read sequentially from local headers with a reader
+  of Encly's own (every entry's CRC checked; encrypted entries refused), TAR with a minimal
+  ustar/GNU reader that hands data out only up to the size of each entry. Limits, counted on the
+  bytes actually read and inflated: 64 MiB read, 64 MiB uncompressed, 4 MiB per file (16 MiB for
+  a JSON export that holds every note), 20 000 entries (directories included), 20 000 notes, path
+  depth 16, JSON nesting 64. Absolute paths, `..`, backslashes, NUL, links, devices and archives
+  inside archives are skipped and counted; a ZIP bomb or an endless archive ends as "too large".
+  Nothing is staged in `cacheDir` or anywhere else on disk, and nothing is logged.
+- **Formats are recognised by content, not by extension;** an ambiguous selection asks the user.
+  Encrypted Standard Notes backups and Notesnook backups (`.nnbackupz`) are refused with guidance
+  instead of being parsed. Markdown and HTML become plain Encly blocks; nothing is executed or
+  rendered as HTML, and frontmatter is read for a few known keys only.
+- **Review before writing.** Parsed notes (titles, a snippet, the read-only text) are shown on a
+  review screen and live only in that screen's ViewModel: no saved state, nothing persisted, and
+  they are dropped on cancel, on finish and when the vault locks. The selected notes go through
+  the backup merge import: one transaction on the database session the import started in, all
+  or nothing, notes whose uid exists are skipped (the uid is derived from the source's own id, so
+  a repeated import adds nothing), tags matched by name.
+- **Vaults.** It is available in a decoy session too and imports into whichever vault is open;
+  a vault switch or re-lock during the import makes the transaction fail instead of writing
+  elsewhere.
+- **Limits.** Like the editor and the backup import, parsed text passes through JVM strings that
+  cannot be zeroized.
+
 ## Session lifecycle
 
 - The database is not considered committed until mandatory PIN setup succeeds.

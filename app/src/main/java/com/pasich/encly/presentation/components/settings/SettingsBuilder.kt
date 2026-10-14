@@ -14,6 +14,7 @@ data class SettingsNavigation(
     val onAppearance: () -> Unit,
     val onSecurity: () -> Unit,
     val onBackup: () -> Unit,
+    val onImportNotes: () -> Unit,
     val onAbout: () -> Unit,
     val onFaq: () -> Unit,
 )
@@ -46,6 +47,15 @@ class SettingsBuilder {
         ) {
             navigation.onBackup()
         }.takeIf { backupAvailable },
+        // Import goes into whichever vault is open, so the decoy vault has it too.
+        single(
+            R.string.settings_import,
+            R.string.import_title,
+            R.string.import_settings_subtitle,
+            EnclyIcons.File,
+        ) {
+            navigation.onImportNotes()
+        },
         SettingsCategory(
             titleRes = R.string.about,
             items = listOf(

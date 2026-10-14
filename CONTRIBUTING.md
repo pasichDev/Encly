@@ -104,8 +104,8 @@ purpose.
 
 Every user-visible string lives in string resources. English is the default
 (`app/src/main/res/values/`); each translation is a `values-<lang>/` folder with a `strings.xml`
-(most of the UI), a `strings_security.xml` (security settings) and a `strings_handoff.xml` (the
-import from My Notes).
+(most of the UI), a `strings_security.xml` (security settings), a `strings_handoff.xml` (the
+import from My Notes) and a `strings_import.xml` (Import notes from other apps).
 
 **Translating on Weblate (recommended):** the project is on
 [Hosted Weblate](https://hosted.weblate.org/projects/encly/), one component per file (*App*,
@@ -116,7 +116,7 @@ it never pushes to `main`. That pull request runs the same CI as any other, so i
 when every check below passes.
 
 **Fixing a translation in Git:** edit the string in `values-<lang>/strings.xml` (or
-`strings_security.xml`, `strings_handoff.xml`) and open a PR. Keep the key; only change the
+`strings_security.xml`, `strings_handoff.xml`, `strings_import.xml`) and open a PR. Keep the key; only change the
 text. If a Weblate pull request is open, say so in yours; Weblate picks up merged changes from
 `main` on its own.
 
@@ -139,7 +139,7 @@ lower.
 **Adding a language:**
 
 1. start it on Weblate, or copy `values/strings.xml`, `values/strings_security.xml` and
-   `values/strings_handoff.xml` to `values-<lang>/` and translate them,
+   `values/strings_handoff.xml` and `values/strings_import.xml` to `values-<lang>/` and translate them,
    leaving out the entries marked `translatable="false"`;
 2. add `<locale android:name="<lang>" />` to `res/xml/locales_config.xml`;
 3. add an entry to `AppLanguage` (`core/locale/AppLanguage.kt`) and its own-language name as a

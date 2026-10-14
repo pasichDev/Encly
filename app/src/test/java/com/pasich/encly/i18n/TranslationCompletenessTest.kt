@@ -198,7 +198,8 @@ class TranslationCompletenessTest {
     private companion object {
         const val DEFAULT_LOCALE = "en"
         const val MIN_EXPECTED_KEYS = 100
-        val TRANSLATION_COMPONENTS = listOf("strings.xml", "strings_security.xml")
+        val TRANSLATION_COMPONENTS =
+            listOf("strings.xml", "strings_security.xml", "strings_handoff.xml", "strings_import.xml")
         val LOCALE_DIR = Regex("""values-[a-z]{2,3}(-r[A-Z]{2})?""")
         val LOCALE_FILTERS = Regex("""localeFilters\s*\+=\s*listOf\(([^)]*)\)""")
         val FORMAT_ARG = Regex("""%(\d+\$)?[-#+ 0,(]*\d*(\.\d+)?[a-zA-Z%]""")

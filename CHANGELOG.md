@@ -13,6 +13,9 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ### Added
 
+- Import notes (Settings → Import): bring notes from Google Keep, Standard Notes, Joplin, Notesnook or
+  Markdown/TXT files, fully offline. The format is recognised from the files, you review and tick the
+  notes first, and a repeated import adds nothing.
 - Compact line spacing for notes, with a persistent editor setting; Default preserves the existing layout.
 - Optional 15- and 30-minute auto-lock delays, with a warning about longer background sessions.
 - Duress PIN (Settings → Security): a third PIN that opens a separate, fully usable decoy vault
