@@ -255,6 +255,7 @@ private fun EditorContent(
     viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val compactText = LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT
+    val headerGap = if (compactText) EnclyTheme.spacing.labelGap else 0.dp
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val editingLinkIds by viewModel.editingLinkIds.collectAsState()
@@ -265,7 +266,7 @@ private fun EditorContent(
     CompositionLocalProvider(LocalOverscrollFactory provides null) {
         LazyColumn(
             state = listState,
-            // With a block's 4 dp frame inset above and below, blocks sit 14 apart (spec §4.4).
+            // Default block frames and this gap give 14 dp between blocks (spec §4.4).
             verticalArrangement = Arrangement.spacedBy(if (compactText) 0.dp else EnclyTheme.spacing.labelGap),
             contentPadding = PaddingValues(top = EnclyTheme.spacing.xxs),
             modifier = modifier.fillMaxSize(),
@@ -276,14 +277,26 @@ private fun EditorContent(
                 }
                 return@LazyColumn
             }
-            item(key = "overline") { EditorOverline() }
-            item(key = "title") { EditorTitle(readOnly = lockEditor, modifier = Modifier.focusRequester(titleFocus)) }
+            item(key = "overline") {
+                EditorOverline(modifier = Modifier.padding(bottom = headerGap))
+            }
+            item(key = "title") {
+                EditorTitle(
+                    readOnly = lockEditor,
+                    modifier = Modifier
+                        .focusRequester(titleFocus)
+                        .padding(bottom = headerGap),
+                )
+            }
             if (contentLoadFailed) {
                 item(key = "unreadable") {
                     EnclyCallout(
                         text = stringResource(R.string.note_load_failed),
                         tone = CalloutTone.WARNING,
-                        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter),
+                        modifier = Modifier.padding(
+                            horizontal = EnclyTheme.spacing.gutter,
+                            vertical = headerGap,
+                        ),
                     )
                 }
             }

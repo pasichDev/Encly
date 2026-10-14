@@ -132,7 +132,9 @@ fun ListBlock(
     )
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(if (checklist) 0.dp else EnclyTheme.spacing.xxs),
+        verticalArrangement = Arrangement.spacedBy(
+            if (checklist || LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT) 0.dp else EnclyTheme.spacing.xxs,
+        ),
     ) {
         items.forEachIndexed { itemIndex, item ->
             key(item.id) {

@@ -151,7 +151,10 @@ private fun EditorBlock(
                     !focusState.hasFocus -> callbacks.onFocusLost()
                 }
             }
-            .editorBlockFrame(block is Block.TextBlock && LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT),
+            .editorBlockFrame(
+                LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT &&
+                    (block is Block.TextBlock || block is Block.ListBlock || block is Block.QuoteBlock),
+            ),
     ) {
         BlockContent(
             block = block,

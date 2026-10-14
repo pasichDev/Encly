@@ -11,6 +11,11 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+
+- Compact line spacing for notes, with a persistent editor setting; Default preserves the existing layout.
+- Optional 15- and 30-minute auto-lock delays, with a warning about longer background sessions.
+
 ## [2.1.0] - 2026-10-05
 
 versionCode 20100.
