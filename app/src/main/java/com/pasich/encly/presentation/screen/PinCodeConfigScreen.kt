@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -116,11 +117,11 @@ private class PinChangeState(val isReset: Boolean) {
         val matches = first != null && pin.contentEquals(first)
         first?.let(SensitiveDataCleaner::clear)
         if (matches) {
-            viewModel.activationPinAuth(pin) { ok ->
-                if (ok) {
-                    animationState = PinAnimationState.SuccessAnimation
-                } else {
-                    restartNewPin(R.string.pin_update_failed)
+            viewModel.activationPinAuth(pin) { result ->
+                when (result) {
+                    PinChange.SET -> animationState = PinAnimationState.SuccessAnimation
+                    PinChange.IN_USE -> restartNewPin(R.string.pin_in_use)
+                    PinChange.FAILED -> restartNewPin(R.string.pin_update_failed)
                 }
             }
         } else {

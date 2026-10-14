@@ -12,6 +12,7 @@ import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
@@ -101,10 +102,20 @@ internal class TestApp(context: Context) {
         `when`(security.generateMnemonicCode()).thenAnswer { phrase.toCharArray() }
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
         `when`(security.configurePin(anyCharArray())).thenReturn(true)
+        `when`(security.changePin(anyCharArray())).thenReturn(PinChange.SET)
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {
             runCatching { MnemonicCode(it.getArgument<CharArray>(0).copyOf()).validate() }.isSuccess
         }
+    }
+
+    /** The decoy vault is open: Security lists nothing of the real vault. */
+    fun inDecoySession() = apply {
+        `when`(security.getSettingsAuth()).thenReturn(
+            AuthSettings(AuthType.PIN, false, false, isDecoySession = true),
+        )
+        `when`(security.biometricStatus()).thenReturn(BiometricStatus.UNAVAILABLE)
+        `when`(security.isDecoySession()).thenReturn(true)
     }
 
     /** The vault's stored security settings, as the Security page reads them. */

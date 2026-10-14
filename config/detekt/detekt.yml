@@ -56,6 +56,8 @@ Compose:
       - LocalSpacing
       # The vault's erase epoch, provided once by App for the note editor (presentation/navigation/RelockReturn.kt).
       - LocalEraseEpoch
+      # Whether the open vault is the decoy one, provided once by App (presentation/navigation/DecoySession.kt).
+      - LocalDecoySession
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

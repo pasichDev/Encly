@@ -37,9 +37,14 @@ A fresh vault generates a random 256-bit DEK. SQLCipher uses the DEK; the mandat
 optional auth-bound biometric key and optional recovery seed each protect a separate AES-GCM
 envelope of that same DEK. No UI layer derives or stores the database key directly.
 
-`SecureDatabaseManager` owns the active Room instance. Repositories resolve DAOs through
-`DatabaseLocalDataSource` at operation time, rather than retaining an old DAO after the
-database is closed on re-lock.
+`SecureDatabaseManager` owns the active Room instance: the real vault's `database.db` or, after
+the duress PIN, the decoy vault's `vault_b.db`, never both at once. Each opening issues a
+`DatabaseLease`; repositories and the backup data store capture the lease when they are created
+and resolve DAOs through it at operation time, so after a re-lock (or an unlock of the other
+vault) they fail instead of reading or writing a database they were not created for.
+`SecurityManager` records which vault the session opened and refuses every operation on the
+real vault's key slots (PIN, wipe and duress PINs, biometric, recovery, backup key) in a decoy
+session; Settings leaves those screens out.
 
 ## Notes and tasks
 
@@ -57,7 +62,8 @@ returning never shows plaintext. An unlock that completes after the app left the
 closed again at once. Open task and tag editors save on pause, like the note editor, because the
 re-lock discards them. The note that was open when the app re-locked is recorded (`RelockReturn`),
 with the erase epoch of the vault it was opened in, and opened again after the unlock, with fresh
-ViewModels, only while that epoch is current (a wipe-PIN erase or a new process changes it). A
+ViewModels, only while that epoch is current (a wipe-PIN erase, an unlock of the other vault or a new
+process changes it). A
 screen that was in the background while the vault was unlocked on another lock screen (the My
 Notes hand-off) is replaced by the lock screen or Home when it comes back (`SessionResume`).
 Pages move on Material's shared X axis;

@@ -15,6 +15,11 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 - Compact line spacing for notes, with a persistent editor setting; Default preserves the existing layout.
 - Optional 15- and 30-minute auto-lock delays, with a warning about longer background sessions.
+- Duress PIN (Settings → Security): a third PIN that opens a separate, fully usable decoy vault
+  with its own encryption key and database, from the same lock screen and with the same unlock.
+  The real vault stays closed and unchanged, and nothing in the decoy vault leads back to it.
+  Unlike the wipe PIN it erases nothing. It does not hide the real vault from a forensic
+  examination (see SECURITY.md).
 
 ## [2.1.0] - 2026-10-05
 

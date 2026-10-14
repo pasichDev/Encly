@@ -18,7 +18,11 @@ DEK (random 256 bit) ── SQLCipher raw key
 ├─ PIN slot       AES-GCM(kek_pin)       kek_pin = HKDF(PBKDF2(pin, salt, 600k) ‖ HMAC_keystore(salt ‖ pin))
 ├─ biometric slot AES-GCM(keystore key)  auth-per-use, BIOMETRIC_STRONG CryptoObject
 ├─ recovery slot  AES-GCM(kek_rec)       kek_rec = HKDF(SHA-256(normalized 12 words), "encly/recovery/kek/v3")
-└─ backup-key slot AES-GCM(HKDF(DEK))    holds backupRoot = HKDF(SHA-256(words), "encly/backup/root/v1")
+├─ backup-key slot AES-GCM(HKDF(DEK))    holds backupRoot = HKDF(SHA-256(words), "encly/backup/root/v1")
+└─ decoy key      AES-GCM(HKDF(DEK))    holds decoy DEK (see "Duress PIN")
+
+decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.db)
+└─ duress slot    AES-GCM(kek_duress)    kek_duress = HKDF(same PIN KDF run, "encly/pin/decoy/v3")
 ```
 
 ### PIN slot
@@ -136,6 +140,65 @@ and show me"), not against a forensic examination.
   without the wipe PIN), so set the wipe PIN again after such a round trip. Apart from this, the
   same release moves the database to version 4, which older builds cannot open at all (see
   CHANGELOG).
+
+### Duress PIN
+
+An optional third PIN (Settings → Security → Duress PIN; set, change or turn off, each after
+the real PIN). Typed on the lock screen, it opens a **decoy vault**: a second, fully usable
+vault with its own random DEK and its own SQLCipher database (`vault_b.db`, with its `-wal` and
+`-shm`), empty the first time. Its notes, tags and tasks persist across re-locks and restarts.
+The real vault stays closed and is not changed. Unlike the wipe PIN, it erases nothing. It is
+meant for "open the app and show me", not against a forensic examination.
+
+- **Key material.** The duress slot (`pin.decoy.slot`) is
+  `version ‖ IV ‖ AES-GCM_dkek(decoy DEK)`, `dkek = HKDF(sw ‖ hw, salt, info =
+  "encly/pin/decoy/v3")` from the same KDF run as the PIN KEK, its AAD
+  (`"encly/pin/decoy-slot/v3"`) bound to the PIN slot's salt, like the wipe slot. The real vault
+  also keeps the decoy DEK in `decoy.key`, sealed under `HKDF(DEK, "encly/decoy/key/salt/v1",
+  "encly/decoy/key/kek/v1")`, so changing the duress PIN keeps the decoy notes and only the real
+  vault's session can tell whether a decoy vault exists. The decoy DEK never wraps or unwraps
+  anything of the real vault, and nothing derived from it opens a real-vault slot.
+- **Nothing in the store shows it.** Both entries always exist with the same length: a startup
+  migration that needs no PIN writes random bytes into them and leaves `pin.slot` byte for byte
+  as it was; turning the duress PIN off writes random bytes again.
+- **One attempt, three slots.** Every lock-screen attempt is counted before the KDF, runs
+  PBKDF2 and the Keystore HMAC once, derives the three KEKs and always tries all three AES-GCM
+  opens, without early exit. The PIN opens the real vault and the duress PIN the decoy one with
+  the same result, animation and screen; the wipe PIN erases. Settings never lets one PIN open
+  two slots; should it happen anyway, the order is PIN, duress, wipe (never the erase while a
+  PIN could open a vault). The duress PIN is refused during a lockout and clears it like the
+  PIN.
+- **Rules.** 6 digits, different from the PIN and from the wipe PIN (checked by opening their
+  slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
+  the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
+  Keystore key (or a PIN set with a new salt) turns the duress PIN off like the wipe PIN, and
+  Settings says so in the real vault; setting it again opens the same decoy notes.
+- **Inside the decoy vault.** Notes, tags, tasks, trash, search, sorting and appearance work as
+  usual. Everything that belongs to the real vault is refused by the security layer and left
+  out of Settings: changing the PIN, the wipe and duress PINs, fingerprint unlock, the
+  recovery phrase, encrypted backups (export and import) and "Erase all data". A PIN re-check
+  there accepts the duress PIN only, so the decoy vault cannot be used to test guesses of the
+  real PIN. Fingerprint unlock and the recovery phrase on the lock screen always open the real
+  vault, and nothing in the decoy vault offers a way to switch: to change vaults, lock and type
+  the other PIN. App settings (theme, sorting, font, auto-lock, keyboard privacy) are shared.
+- **Session isolation.** Only one database is open at a time. Every repository is bound to the
+  opening it was created in (a lease revoked before Room closes), so nothing created in one
+  vault reads or writes the other. Opening the other vault starts a new epoch, so the note that
+  was open when the app re-locked is reopened only in the vault it belongs to.
+- **Failures never fall back.** A decoy database that does not open fails the unlock; it is
+  neither deleted nor replaced by the real vault. Turning the duress PIN off (after the PIN and a
+  confirmation) forgets the decoy key first and then deletes `vault_b.db`; a kill in between
+  leaves a file nothing can open, which the next duress PIN set replaces.
+- **Wipe PIN.** The erase also replaces both decoy entries with random bytes and deletes
+  `vault_b.db` with the real database: the empty vault has no decoy vault either.
+- **Limits.** The decoy vault does not hide that the real one exists from a forensic look: the
+  second database file, its size and timestamps, filesystem leftovers, or comparing two
+  snapshots. The first unlock with the duress PIN creates that database and takes longer.
+  Biometrics can be forced. On a rooted, unlocked phone PIN guessing through the Keystore (see
+  "Important limitations") finds the duress PIN as well.
+- **Downgrade.** Older builds ignore both entries and the second database and keep opening the
+  real vault. A PIN changed in an older build gets a new salt, which silently turns the duress
+  PIN off; the decoy notes come back once it is set again in this version.
 
 ### Biometric slot
 
@@ -384,7 +447,7 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - Android app sandbox isolates local files from ordinary apps.
 - `allowBackup=false` is set.
 - Database/security state is excluded from cloud backup and device transfer.
-- The key slots (PIN, wipe-PIN, recovery, backup-key and biometric envelopes) and the PIN
+- The key slots (PIN, wipe-PIN, duress-PIN, decoy-key, recovery, backup-key and biometric envelopes) and the PIN
   lockout state live in one app-private file, `no_backup/vault_state_v3.bin`. Every secret in it is already
   an AES-256-GCM envelope, so it needs no further encryption layer and **no Keystore key to be
   read**: a broken Keystore or Tink keyset can no longer make the vault state unreadable at
@@ -444,8 +507,8 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   missing the key lives in the TEE; on devices without hardware-backed Keystore it is software
   only.
 - The lockout is enforced by the app, not by the secure hardware.
-- The wipe PIN (see "Wipe PIN") defends against being forced to unlock on the spot, not against
-  a forensic examination or a rooted phone.
+- The wipe PIN (see "Wipe PIN") and the duress PIN (see "Duress PIN") defend against being
+  forced to unlock on the spot, not against a forensic examination or a rooted phone.
 - The recovery seed restores the local vault (recovery slot) and opens encrypted backups. On a
   new phone the seed alone recreates nothing: the user also needs a backup file, and only data
   up to that export is restored.

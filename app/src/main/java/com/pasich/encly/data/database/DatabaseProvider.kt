@@ -8,9 +8,9 @@ interface DatabaseProvider {
     /** Null while locked. The returned lease is revoked before Room closes. */
     fun captureLease(): DatabaseLease?
 
-    /** Refuses a lease from an earlier opening, even when another database is now open. */
+    /**
+     * Refuses a lease from an earlier opening, even when another database (the other vault's,
+     * real or decoy) is now open.
+     */
     fun getDatabase(lease: DatabaseLease): AppDatabase
-
-    /** Legacy entry point for backup code; it must be bound to a lease before decoy is enabled. */
-    fun getDatabase(): AppDatabase
 }

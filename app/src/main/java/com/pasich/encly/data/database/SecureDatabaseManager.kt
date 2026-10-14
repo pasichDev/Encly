@@ -16,10 +16,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * The two database files a vault can have: the real one, and the decoy vault the duress PIN
+ * opens (its own file, its own random DEK). At most one of them is open at a time.
+ */
+enum class VaultFile(internal val fileName: String) {
+    PRIMARY("database.db"),
+    DECOY("vault_b.db"),
+}
+
+/**
  * Owns the SQLCipher-encrypted Room database and its unlocked lifecycle.
  *
  * A committed vault must already have an encrypted database file. Database creation is allowed
- * only during the atomic first-run setup path.
+ * only during the atomic first-run setup path (and the first opening of a decoy vault).
  */
 @Singleton
 class SecureDatabaseManager @Inject constructor(@param:ApplicationContext private val context: Context) :
@@ -27,6 +36,7 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
     private var database: AppDatabase? = null
     private var isUnlocked = false
     private var lease: DatabaseLease? = null
+    private var openFile: VaultFile? = null
 
     /**
      * The passphrase buffer handed to Room's [SupportOpenHelperFactory]. SQLCipher keeps this
@@ -38,8 +48,8 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
 
     fun isDatabaseUnlocked(): Boolean = isUnlocked
 
-    fun hasEncryptedDatabase(): Boolean =
-        SQLCipherUtils.getDatabaseState(context, DB_NAME) == SQLCipherUtils.State.ENCRYPTED
+    fun hasEncryptedDatabase(file: VaultFile = VaultFile.PRIMARY): Boolean =
+        SQLCipherUtils.getDatabaseState(context, file.fileName) == SQLCipherUtils.State.ENCRYPTED
 
     @Synchronized
     override fun captureLease(): DatabaseLease? = lease
@@ -49,10 +59,6 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
         isUnlocked && this.lease === lease
     } ?: error("Database session expired")
 
-    @Synchronized
-    override fun getDatabase(): AppDatabase = database?.takeIf { isUnlocked }
-        ?: error("Database accessed before unlock — call unlockDatabase() first")
-
     /**
      * Opens the vault with the raw 32-byte [dek]; the caller keeps (and wipes) [dek].
      *
@@ -60,17 +66,22 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
      * the page key directly instead of running its own PBKDF2 over it on every connection: the
      * DEK is already a uniformly random 256-bit key.
      *
-     * While open, a second call succeeds only with the same key (compared in constant time);
-     * any other key is refused, never silently accepted.
+     * While open, a second call succeeds only with the same key (compared in constant time) and
+     * the same [file]; any other key or file is refused, never silently accepted.
      */
+    @Synchronized
+    fun unlockDatabase(dek: ByteArray, allowCreate: Boolean = false): Boolean =
+        unlockDatabase(dek, allowCreate, VaultFile.PRIMARY)
+
+    /** [unlockDatabase] for [file]: the real vault's database or the decoy vault's. */
     @Suppress("ReturnCount") // Fail-closed vault-state/key gates are clearer as early exits.
     @Synchronized
-    fun unlockDatabase(dek: ByteArray, allowCreate: Boolean = false): Boolean {
+    fun unlockDatabase(dek: ByteArray, allowCreate: Boolean, file: VaultFile): Boolean {
         if (dek.size != DEK_LENGTH) return false
         val passphrase = rawKeyPassphrase(dek)
         if (isUnlocked) {
             return try {
-                roomPassphrase?.let { MessageDigest.isEqual(it, passphrase) } == true
+                openFile == file && roomPassphrase?.let { MessageDigest.isEqual(it, passphrase) } == true
             } finally {
                 SensitiveDataCleaner.clear(passphrase)
             }
@@ -79,7 +90,7 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
 
         var openedDatabase: AppDatabase? = null
         return try {
-            when (SQLCipherUtils.getDatabaseState(context, DB_NAME)) {
+            when (SQLCipherUtils.getDatabaseState(context, file.fileName)) {
                 SQLCipherUtils.State.DOES_NOT_EXIST -> if (!allowCreate) return false
 
                 // Never silently adopt/migrate a plaintext database into a committed vault.
@@ -90,7 +101,7 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
 
             // No destructive fallback: a schema change without a migration must fail to open
             // (and be caught in tests), never drop the user's notes.
-            val opened = VaultSchema.databaseBuilder(context.applicationContext, DB_NAME)
+            val opened = VaultSchema.databaseBuilder(context.applicationContext, file.fileName)
                 .openHelperFactory(SupportOpenHelperFactory(passphrase, VaultConnectionHook, false))
                 .build()
             openedDatabase = opened
@@ -102,12 +113,14 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
             database = opened
             roomPassphrase = passphrase
             isUnlocked = true
+            openFile = file
             lease = DatabaseLease()
             true
         } catch (e: Exception) {
             openedDatabase?.close()
             database = null
             isUnlocked = false
+            openFile = null
             lease = null
             AppLogger.e(TAG, "Failed to unlock the database", e)
             false
@@ -118,12 +131,13 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
         }
     }
 
-    private fun deleteDatabaseFiles() {
+    private fun deleteDatabaseFiles(file: VaultFile) {
         try {
-            val dbFile = context.getDatabasePath(DB_NAME)
+            val dbFile = context.getDatabasePath(file.fileName)
             File(dbFile.absolutePath).delete()
             File(dbFile.absolutePath + "-wal").delete()
             File(dbFile.absolutePath + "-shm").delete()
+            File(dbFile.absolutePath + "-journal").delete()
         } catch (e: Exception) {
             AppLogger.e(TAG, "Failed to delete database files", e)
         }
@@ -135,30 +149,35 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
         database?.close()
         database = null
         isUnlocked = false
+        openFile = null
         roomPassphrase?.let(SensitiveDataCleaner::clear)
         roomPassphrase = null
     }
 
+    /** Closes and deletes both databases: the real vault's and the decoy vault's. */
+    @Synchronized
     fun wipe() {
         reset()
-        deleteDatabaseFiles()
+        VaultFile.entries.forEach(::deleteDatabaseFiles)
     }
 
     /**
      * Deletes the database files unless the database is open, checked and done under the same
      * lock [unlockDatabase] holds, so a database being opened (or just created) meanwhile is
      * never deleted. True when they were deleted.
+     *
+     * With [only], just that file goes, refused only while that one is open: the decoy vault's
+     * database is deleted from a session of the real vault, whose file is never touched.
      */
     @Synchronized
-    fun wipeIfClosed(): Boolean {
-        if (isUnlocked) return false
-        deleteDatabaseFiles()
+    fun wipeIfClosed(only: VaultFile? = null): Boolean {
+        if (isUnlocked && (only == null || openFile == only)) return false
+        (only?.let(::listOf) ?: VaultFile.entries).forEach(::deleteDatabaseFiles)
         return true
     }
 
     companion object {
         private const val TAG = "SecureDatabaseManager"
-        private const val DB_NAME = "database.db"
         private const val DEK_LENGTH = 32
         private val HEX = "0123456789abcdef".toCharArray()
 

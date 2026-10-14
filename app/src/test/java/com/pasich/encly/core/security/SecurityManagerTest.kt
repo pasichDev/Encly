@@ -223,7 +223,7 @@ class SecurityManagerTest {
     @Test
     fun lockClosesTheDatabaseAndDropsTheSessionKey() {
         `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
-        `when`(auth.configurePin(anyCharArray(), anyByteArray())).thenReturn(true)
+        `when`(auth.changePin(anyCharArray(), anyByteArray())).thenReturn(PinChange.SET)
         assertTrue(manager.unlockWithRawKey(ByteArray(32) { 7 }))
         assertTrue(manager.configurePin("123456".toCharArray())) // the live session DEK is available
 
@@ -242,7 +242,7 @@ class SecurityManagerTest {
         val phrase = "words".toCharArray()
         `when`(seed.unlockWithSeed(phrase)).thenReturn(ByteArray(32) { 5 })
         `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
-        `when`(auth.configurePin(anyCharArray(), anyByteArray())).thenReturn(true)
+        `when`(auth.changePin(anyCharArray(), anyByteArray())).thenReturn(PinChange.SET)
 
         assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithSeed(phrase))
         assertTrue(manager.canResetPinWithoutCurrent())

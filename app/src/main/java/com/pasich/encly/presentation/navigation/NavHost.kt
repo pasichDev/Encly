@@ -26,6 +26,7 @@ import com.pasich.encly.presentation.screen.backup.BackupScreen
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
 import com.pasich.encly.presentation.screen.onboarding.OnboardingScreen
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
+import com.pasich.encly.presentation.screen.settings.DuressPinScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.screen.settings.SettingsScreen
 import com.pasich.encly.presentation.screen.settings.WipePinScreen
@@ -105,7 +106,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
         }
 
         animationScreens(NavRoutes.BackupRoute.name) {
-            BackupScreen(navController)
+            RealVaultOnly(navController) { BackupScreen(navController) }
         }
 
         animationScreens(NavRoutes.OnboardingRoute.name) {
@@ -125,11 +126,15 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
             LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION)
         }
         animationScreens(NavRoutes.PinCodeConfig.name) {
-            PinCodeConfigScreen(navController)
+            RealVaultOnly(navController) { PinCodeConfigScreen(navController) }
         }
 
         animationScreens(NavRoutes.WipePinRoute.name) {
-            WipePinScreen(navController)
+            RealVaultOnly(navController) { WipePinScreen(navController) }
+        }
+
+        animationScreens(NavRoutes.DuressPinRoute.name) {
+            RealVaultOnly(navController) { DuressPinScreen(navController) }
         }
 
         animationScreens(NavRoutes.LockRoute.name) {

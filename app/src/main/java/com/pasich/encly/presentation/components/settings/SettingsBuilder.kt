@@ -30,12 +30,14 @@ class SettingsBuilder {
         showTasks: Boolean,
         simpleEdit: Boolean,
         navigation: SettingsNavigation,
-    ): List<SettingsCategory> = listOf(
+        backupAvailable: Boolean = true,
+    ): List<SettingsCategory> = listOfNotNull(
         general(viewModel, navigation),
         notesAndTasks(viewModel, showTasks, simpleEdit),
         single(R.string.settings_privacy, R.string.security_title, R.string.security_subtitle, EnclyIcons.Shield) {
             navigation.onSecurity()
         },
+        // Backups belong to the real vault; the decoy one lists none.
         single(
             R.string.settings_backup,
             R.string.backup_title,
@@ -43,7 +45,7 @@ class SettingsBuilder {
             EnclyIcons.Download,
         ) {
             navigation.onBackup()
-        },
+        }.takeIf { backupAvailable },
         SettingsCategory(
             titleRes = R.string.about,
             items = listOf(

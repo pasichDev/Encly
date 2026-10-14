@@ -41,11 +41,6 @@ class RepositoryImplTest {
             if (locked || lease !== this@RepositoryImplTest.lease) error("vault locked")
             return database
         }
-
-        override fun getDatabase(): AppDatabase {
-            if (locked) error("vault locked")
-            return database
-        }
     }
 
     @Test

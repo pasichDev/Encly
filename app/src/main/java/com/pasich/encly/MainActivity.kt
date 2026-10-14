@@ -49,6 +49,7 @@ import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
 import com.pasich.encly.presentation.navigation.AppNavHost
+import com.pasich.encly.presentation.navigation.LocalDecoySession
 import com.pasich.encly.presentation.navigation.LocalEraseEpoch
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
@@ -144,6 +145,7 @@ class MainActivity : AppCompatActivity() {
                 navController = navController,
                 startDestination = destination.name,
                 eraseEpoch = securityManager::eraseEpoch,
+                isDecoySession = securityManager::isDecoySession,
                 shielded = shielded,
                 locked = locked,
                 strictKeyboard = strictKeyboard,
@@ -309,6 +311,7 @@ fun App(
     navController: NavHostController,
     startDestination: String,
     eraseEpoch: () -> Long,
+    isDecoySession: () -> Boolean,
     modifier: Modifier = Modifier,
     shielded: Boolean = false,
     locked: Boolean = false,
@@ -345,7 +348,10 @@ fun App(
                                     .fillMaxSize()
                                     .windowInsetsPadding(WindowInsets.statusBars),
                             ) {
-                                CompositionLocalProvider(LocalEraseEpoch provides eraseEpoch) {
+                                CompositionLocalProvider(
+                                    LocalEraseEpoch provides eraseEpoch,
+                                    LocalDecoySession provides isDecoySession,
+                                ) {
                                     AppNavHost(
                                         navController = navController,
                                         startDestination = startDestination,

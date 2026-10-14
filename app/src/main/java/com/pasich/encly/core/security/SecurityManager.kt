@@ -5,6 +5,7 @@ import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
+import com.pasich.encly.data.database.VaultFile
 import com.pasich.encly.data.handoff.HandoffStagingSweeper
 import java.security.SecureRandom
 import java.util.concurrent.atomic.AtomicBoolean
@@ -69,6 +70,14 @@ class SecurityManager @Inject constructor(
     @Volatile
     private var sessionDek: ByteArray? = null
 
+    // Which vault [sessionDek] opens: the real one, or the decoy vault of the duress PIN. Every
+    // operation that touches the real vault's key slots is refused in a decoy session.
+    @Volatile
+    private var sessionVault: VaultFile? = null
+
+    // The vault the last session of this process opened, so a switch moves [eraseEpoch].
+    private var lastVault: VaultFile? = null
+
     // True while the open session was unlocked with the recovery phrase and no new PIN has
     // been set since. The user proved the vault's strongest secret, so they may replace a
     // forgotten PIN without typing it.
@@ -84,9 +93,10 @@ class SecurityManager @Inject constructor(
     // My Notes hand-off) find the vault already in use.
     private val startupFinished = AtomicBoolean(false)
 
-    // Changes whenever a wipe-PIN erase replaces the database, and never on lock or unlock, so a
-    // screen remembered before an erase (the note open when the app re-locked) is not shown in
-    // the empty vault. Random per process: one saved by an earlier process never matches.
+    // Changes whenever a wipe-PIN erase replaces the database or an unlock opens the other vault
+    // (real or decoy), and never on a lock and unlock of the same vault, so a screen remembered
+    // before (the note open when the app re-locked) is not shown in another vault. Random per
+    // process: one saved by an earlier process never matches.
     private val eraseEpoch = AtomicLong(SecureRandom().nextLong())
 
     var securityStatus = InitialStatus.NO
@@ -164,24 +174,40 @@ class SecurityManager @Inject constructor(
 
     fun hasRecoverySeed(): Boolean = seedPhraseManager.hasRecoverySeed()
 
+    /**
+     * True while the open session is the decoy vault the duress PIN opened. Nothing on screen
+     * may say so; Settings uses it to leave out what belongs to the real vault.
+     */
+    fun isDecoySession(): Boolean = sessionDek != null && sessionVault == VaultFile.DECOY
+
     /** Sets a new PIN slot around the live DEK. [pin] is wiped. */
-    fun configurePin(pin: CharArray): Boolean {
+    fun configurePin(pin: CharArray): Boolean = changePin(pin) == PinChange.SET
+
+    /**
+     * [configurePin], telling why it was refused ([PinChange.IN_USE]: the duress PIN). Never in a
+     * decoy session: the PIN slot holds the real vault's DEK.
+     */
+    fun changePin(pin: CharArray): PinChange {
+        if (isDecoySession()) {
+            SensitiveDataCleaner.clear(pin)
+            return PinChange.FAILED
+        }
         val dek = currentKeyCopy()
-        val configured = try {
-            dek != null && authenticationManager.configurePin(pin, dek)
+        val change = try {
+            if (dek == null) PinChange.FAILED else authenticationManager.changePin(pin, dek)
         } finally {
             dek?.let(SensitiveDataCleaner::clear)
             SensitiveDataCleaner.clear(pin)
         }
-        if (configured) sessionUnlockedWithRecovery = false
-        return configured
+        if (change == PinChange.SET) sessionUnlockedWithRecovery = false
+        return change
     }
 
     /**
      * Whether a new PIN may be set without the current one: only in a session the recovery
      * phrase unlocked (the PIN was forgotten), until a new PIN is set or the vault locks.
      */
-    fun canResetPinWithoutCurrent(): Boolean = sessionUnlockedWithRecovery && sessionDek != null
+    fun canResetPinWithoutCurrent(): Boolean = sessionUnlockedWithRecovery && sessionDek != null && !isDecoySession()
 
     /**
      * One PIN attempt from the lock screen; [pin] is wiped. The wipe PIN reports
@@ -206,6 +232,13 @@ class SecurityManager @Inject constructor(
 
             is PinUnlock.Erased -> try {
                 if (unlockWithRawKey(attempt.dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+            } finally {
+                SensitiveDataCleaner.clear(attempt.dek)
+            }
+
+            // The same result as the PIN: nothing tells the two apart on screen.
+            is PinUnlock.Decoy -> try {
+                if (unlockDecoy(attempt.dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
             } finally {
                 SensitiveDataCleaner.clear(attempt.dek)
             }
@@ -237,7 +270,8 @@ class SecurityManager @Inject constructor(
     }
 
     fun enrollBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
-        val dek = currentKeyCopy()
+        // The biometric slot opens the real vault only.
+        val dek = if (isDecoySession()) null else currentKeyCopy()
         if (dek == null) {
             onResult(false)
             return
@@ -251,11 +285,17 @@ class SecurityManager @Inject constructor(
     }
 
     fun disableBiometric() {
+        if (isDecoySession()) return
         biometricManager.disable()
         authenticationManager.markBiometricEnabled(false)
     }
 
     fun confirmBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
+        // A fingerprint belongs to the real vault; it never confirms anything in the decoy one.
+        if (isDecoySession()) {
+            onResult(false)
+            return
+        }
         biometricManager.authenticate(
             activity,
             BiometricManager.BiometricType.SETTINGS_TOGGLE,
@@ -280,7 +320,7 @@ class SecurityManager @Inject constructor(
      * or the vault has no backup-key slot. The caller must wipe the returned key.
      */
     fun copyBackupRootKey(): ByteArray? {
-        val dek = sessionDek?.copyOf() ?: return null
+        val dek = primarySessionKeyCopy() ?: return null
         return try {
             seedPhraseManager.unwrapBackupRoot(dek)
         } finally {
@@ -293,7 +333,7 @@ class SecurityManager @Inject constructor(
      * created in user-managed mode. See [SeedPhraseManager.addRecoverySeed].
      */
     fun addRecoverySeed(phrase: CharArray): Boolean {
-        val dek = sessionDek?.copyOf() ?: return false
+        val dek = primarySessionKeyCopy() ?: return false
         return try {
             seedPhraseManager.addRecoverySeed(phrase, dek)
         } finally {
@@ -307,7 +347,7 @@ class SecurityManager @Inject constructor(
      * sealed to them still need them. The caller wipes [phrase].
      */
     fun replaceRecoverySeed(phrase: CharArray): Boolean {
-        val dek = sessionDek?.copyOf() ?: return false
+        val dek = primarySessionKeyCopy() ?: return false
         return try {
             seedPhraseManager.replaceRecoverySeed(phrase, dek)
         } finally {
@@ -317,7 +357,7 @@ class SecurityManager @Inject constructor(
 
     /** Adds the backup-key slot to an unlocked recovery-seed vault; [phrase] must be its seed. */
     fun createBackupKey(phrase: CharArray): Boolean {
-        val dek = sessionDek?.copyOf() ?: return false
+        val dek = primarySessionKeyCopy() ?: return false
         return try {
             seedPhraseManager.createBackupKey(phrase, dek)
         } finally {
@@ -327,9 +367,12 @@ class SecurityManager @Inject constructor(
 
     fun pinLockoutRemainingMillis(): Long = authenticationManager.remainingLockoutMillis()
 
-    /** Re-authentication with the PIN; counts like an unlock attempt. [pin] is wiped. */
+    /**
+     * Re-authentication with the PIN of the open vault (the duress PIN in a decoy session);
+     * counts like an unlock attempt. [pin] is wiped.
+     */
     fun verifyPin(pin: CharArray): Boolean = try {
-        authenticationManager.verifyPinAuth(pin)
+        authenticationManager.verifyPinAuth(pin, decoy = isDecoySession())
     } finally {
         SensitiveDataCleaner.clear(pin)
     }
@@ -354,7 +397,27 @@ class SecurityManager @Inject constructor(
             val opened = secureDatabaseManager.unlockDatabase(dek, allowCreate = allowCreate || replaceDatabase)
             val ok = opened && (!replaceDatabase || recordErasedDatabase())
             if (ok) {
-                setSessionKey(dek)
+                setSessionKey(dek, VaultFile.PRIMARY)
+                securityStatus = InitialStatus.MAIN
+            }
+            ok
+        }
+    }
+
+    /**
+     * Opens the decoy vault with its DEK (from the duress slot); the caller keeps and wipes
+     * [dek]. Its database is created on the first opening. A decoy database that does not open
+     * fails the unlock: it is never deleted and never falls back to the real vault.
+     */
+    private fun unlockDecoy(dek: ByteArray): Boolean {
+        if (dek.size != DEK_LENGTH) return false
+        return synchronized(databaseLock) {
+            // An erase still in progress replaced the duress slot; nothing may open meanwhile.
+            if (authenticationManager.pendingWipe() != null) return@synchronized false
+            val create = !secureDatabaseManager.hasEncryptedDatabase(VaultFile.DECOY)
+            val ok = secureDatabaseManager.unlockDatabase(dek, create, VaultFile.DECOY)
+            if (ok) {
+                setSessionKey(dek, VaultFile.DECOY)
                 securityStatus = InitialStatus.MAIN
             }
             ok
@@ -399,8 +462,9 @@ class SecurityManager @Inject constructor(
     }
 
     /**
-     * Changes whenever a wipe-PIN erase replaces the database, never on lock or unlock: what was
-     * remembered under another value belongs to a vault that is gone.
+     * Changes whenever a wipe-PIN erase replaces the database or the other vault (real or decoy)
+     * is opened, never on a lock and unlock of the same vault: what was remembered under another
+     * value belongs to a vault that is gone or not open.
      */
     fun eraseEpoch(): Long = eraseEpoch.get()
 
@@ -411,13 +475,56 @@ class SecurityManager @Inject constructor(
      * PIN. [pin] is wiped.
      */
     fun configureWipePin(pin: CharArray): WipePinChange = try {
-        if (sessionDek == null) WipePinChange.FAILED else authenticationManager.configureWipePin(pin)
+        if (!primarySessionOpen()) WipePinChange.FAILED else authenticationManager.configureWipePin(pin)
     } finally {
         SensitiveDataCleaner.clear(pin)
     }
 
     /** Turns the wipe PIN off; only in an unlocked session, after the caller checked the PIN. */
-    fun removeWipePin(): Boolean = sessionDek != null && authenticationManager.removeWipePin()
+    fun removeWipePin(): Boolean = primarySessionOpen() && authenticationManager.removeWipePin()
+
+    // --- duress PIN (decoy vault) ---------------------------------------------------------
+
+    /**
+     * Sets (or replaces) the duress PIN; only in a session of the real vault, after the caller
+     * checked the PIN. A replaced duress PIN opens the same decoy notes. [pin] is wiped.
+     */
+    fun configureDuressPin(pin: CharArray): DuressPinChange {
+        val dek = primarySessionKeyCopy()
+        return try {
+            if (dek == null) {
+                DuressPinChange.FAILED
+            } else {
+                authenticationManager.configureDuressPin(pin, dek) {
+                    secureDatabaseManager.wipeIfClosed(VaultFile.DECOY)
+                }
+            }
+        } finally {
+            dek?.let(SensitiveDataCleaner::clear)
+            SensitiveDataCleaner.clear(pin)
+        }
+    }
+
+    /**
+     * Turns the duress PIN off and deletes the decoy vault with its notes; only in a session of
+     * the real vault, after the caller checked the PIN and the user confirmed. The real vault is
+     * not touched. The key goes first: a kill before the files are deleted leaves a database
+     * nothing can open, which the next duress PIN set replaces.
+     */
+    fun removeDuressPin(): Boolean {
+        if (!primarySessionOpen()) return false
+        return authenticationManager.removeDuressPin() && secureDatabaseManager.wipeIfClosed(VaultFile.DECOY)
+    }
+
+    /** Whether the real vault has a decoy vault; false outside a session of the real vault. */
+    fun hasDuressPin(): Boolean {
+        val dek = primarySessionKeyCopy() ?: return false
+        return try {
+            authenticationManager.hasDecoyVault(dek)
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
 
     /**
      * Completes first-run setup only after a PIN slot exists and the bootstrap DEK opens SQLCipher.
@@ -508,18 +615,36 @@ class SecurityManager @Inject constructor(
 
     private fun currentKeyCopy(): ByteArray? = sessionDek?.copyOf() ?: seedPhraseManager.copyBootstrapKey()
 
-    private fun setSessionKey(dek: ByteArray) {
+    private fun primarySessionOpen(): Boolean = sessionDek != null && sessionVault == VaultFile.PRIMARY
+
+    /** A copy of the real vault's DEK, or null when no session of the real vault is open. */
+    private fun primarySessionKeyCopy(): ByteArray? = if (sessionVault ==
+        VaultFile.PRIMARY
+    ) {
+        sessionDek?.copyOf()
+    } else {
+        null
+    }
+
+    private fun setSessionKey(dek: ByteArray, vault: VaultFile) {
         clearSessionKey()
+        // What a screen remembered in the other vault must not come back in this one.
+        if (lastVault != null && lastVault != vault) eraseEpoch.incrementAndGet()
+        lastVault = vault
         sessionDek = dek.copyOf()
+        sessionVault = vault
     }
 
     private fun clearSessionKey() {
         sessionDek?.let(SensitiveDataCleaner::clear)
         sessionDek = null
+        sessionVault = null
         sessionUnlockedWithRecovery = false
     }
 
+    /** Erases everything: both vaults, every key slot. Never from a decoy session. */
     fun wipeAndReset() {
+        if (isDecoySession()) return
         secureDatabaseManager.wipe()
         clearSessionKey()
         biometricManager.disable()
@@ -537,6 +662,9 @@ class SecurityManager @Inject constructor(
         isUserCreatedSeedKey = seedPhraseManager.hasRecoverySeed(),
         hasPinSlot = authenticationManager.hasPinSlot(),
         wipePinTurnedOff = authenticationManager.wipePinTurnedOff(),
+        isDecoySession = isDecoySession(),
+        hasDuressPin = hasDuressPin(),
+        duressPinTurnedOff = !isDecoySession() && authenticationManager.duressPinTurnedOff(),
     )
 }
 
@@ -550,4 +678,10 @@ data class AuthSettings(
     val isUserCreatedSeedKey: Boolean,
     val hasPinSlot: Boolean = authType == AuthType.PIN,
     val wipePinTurnedOff: Boolean = false,
+    /** The decoy vault is open: Settings leaves out everything of the real vault. */
+    val isDecoySession: Boolean = false,
+    /** The real vault has a duress PIN (known only in its own session). */
+    val hasDuressPin: Boolean = false,
+    /** The PIN key was reset, so the duress PIN stopped working; setting it again keeps the notes. */
+    val duressPinTurnedOff: Boolean = false,
 )

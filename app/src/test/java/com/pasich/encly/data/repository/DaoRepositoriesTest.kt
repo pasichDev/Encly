@@ -38,8 +38,6 @@ class DaoRepositoriesTest {
             if (lease !== this@DaoRepositoriesTest.lease) error("Database session expired")
             return database
         }
-
-        override fun getDatabase(): AppDatabase = database
     }
 
     private val tasks = TasksRepositoryImpl(provider)
