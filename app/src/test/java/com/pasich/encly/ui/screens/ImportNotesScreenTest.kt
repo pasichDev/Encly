@@ -108,6 +108,9 @@ class ImportNotesScreenTest : ComposeScreenTest() {
         ImportSource.entries.forEach { source ->
             rule.onNodeWithText(str(source.title)).performScrollTo().assertIsDisplayed()
             rule.onNodeWithText(str(source.formats)).assertExists()
+            // How to export and what is lost unfold on a tap, so the list stays short.
+            rule.onNodeWithText(str(source.howTo)).assertDoesNotExist()
+            rule.onNodeWithText(str(source.title)).performClick()
             rule.onNodeWithText(str(source.howTo)).assertExists()
             rule.onNodeWithText(str(source.losses)).assertExists()
         }

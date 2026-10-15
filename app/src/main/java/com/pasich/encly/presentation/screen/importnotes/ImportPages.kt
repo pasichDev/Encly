@@ -14,8 +14,6 @@ import com.pasich.encly.data.importer.ImportPreview
 import com.pasich.encly.data.importer.ImportSource
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyCallout
-import com.pasich.encly.presentation.designsystem.EnclyCard
-import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTonalButton
 import com.pasich.encly.presentation.designsystem.SectionOverline
@@ -38,23 +36,10 @@ internal fun StartPage(actions: ImportNotesActions) {
         }
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
             SectionOverline(text = stringResource(R.string.import_section_supported))
-            ImportSource.entries.forEach { SourceCard(it) }
+            Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.cardGap)) {
+                ImportSource.entries.forEach { SourceRow(it) }
+            }
         }
-    }
-}
-
-/** One supported app: what to pick, how to get it out of the app, and what will not come over. */
-@Composable
-internal fun SourceCard(source: ImportSource, modifier: Modifier = Modifier) {
-    EnclyCard(modifier = modifier, style = EnclyCardStyle.OUTLINED) {
-        Text(text = stringResource(source.title), style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = stringResource(source.formats),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Labelled(stringResource(R.string.import_label_how_to), stringResource(source.howTo))
-        Labelled(stringResource(R.string.import_label_losses), stringResource(source.losses))
     }
 }
 
