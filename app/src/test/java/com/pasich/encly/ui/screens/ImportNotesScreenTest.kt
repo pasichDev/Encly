@@ -170,6 +170,17 @@ class ImportNotesScreenTest : ComposeScreenTest() {
     }
 
     @Test
+    fun whenEveryNoteIsAlreadyHereThereIsNothingToSelect() {
+        val seen = listOf(row("c", "Seen before", existing = true))
+        show(ImportStep.Preview(plain, ReviewState(seen, emptySet(), ReviewFilter.ALL)))
+
+        rule.onNodeWithText(str(R.string.import_review_selected, 0, 0)).assertIsDisplayed()
+        rule.onNodeWithText(str(R.string.import_select_all)).assertDoesNotExist()
+        rule.onNodeWithText(str(R.string.import_select_none)).assertDoesNotExist()
+        rule.onNodeWithText(str(R.string.import_action_import_count, 0)).assertIsNotEnabled()
+    }
+
+    @Test
     fun withASelectionImportIsEnabledAndCountsIt() {
         show(review())
 

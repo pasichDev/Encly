@@ -137,11 +137,14 @@ private fun Controls(review: ReviewState, actions: ImportNotesActions) {
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.weight(1f),
             )
-            val all = review.newCount > 0 && review.selected.size == review.newCount
-            EnclyTextButton(
-                text = stringResource(if (all) R.string.import_select_none else R.string.import_select_all),
-                onClick = actions.onToggleAll,
-            )
+            // Nothing new to pick (every note is already here): no select-all to offer.
+            if (review.newCount > 0) {
+                val all = review.selected.size == review.newCount
+                EnclyTextButton(
+                    text = stringResource(if (all) R.string.import_select_none else R.string.import_select_all),
+                    onClick = actions.onToggleAll,
+                )
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
             FilterChip(ReviewFilter.ALL, R.string.import_filter_all, review, actions)
