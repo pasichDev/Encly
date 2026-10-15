@@ -11,6 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
 import com.pasich.encly.BuildConfig
 import com.pasich.encly.presentation.effects.animationScreens
+import com.pasich.encly.presentation.effects.axisEnter
+import com.pasich.encly.presentation.effects.axisExit
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
@@ -38,7 +40,14 @@ import com.pasich.encly.presentation.viewmodel.enclyViewModel
 
 @Composable
 fun AppNavHost(navController: NavHostController, startDestination: String = NavRoutes.HomeRoute.name) {
-    NavHost(navController, startDestination = startDestination) {
+    NavHost(
+        navController,
+        startDestination = startDestination,
+        // The back gesture plays the same shared-axis motion as a tap on Back. Navigation's own
+        // default for the gesture shrinks the leaving screen into the middle of the window.
+        predictivePopEnterTransition = { axisEnter(forward = false) },
+        predictivePopExitTransition = { axisExit(forward = false) },
+    ) {
         animationScreens(NavRoutes.HomeRoute.name) {
             MainRootScreen(
                 navController,
