@@ -282,7 +282,12 @@ kover {
 
 dependencies {
 
-    // Jetpack Compose
+    // Jetpack Compose: every androidx.compose module takes its version from the BOM.
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    debugImplementation(composeBom)
+    testImplementation(composeBom)
+    androidTestImplementation(composeBom)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -328,8 +333,6 @@ dependencies {
     implementation(libs.sqlcipher.android)
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.kotlin.bip39)
-
-    // Security Crypto (see the note in gradle/libs.versions.toml before replacing it)
 
     implementation(libs.icons.lucide)
 
