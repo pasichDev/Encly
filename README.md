@@ -181,7 +181,7 @@ links, no baseline profile) and `play`.
 ```bash
 ./gradlew assembleFdroidDebug                      # debug APK (com.pasich.encly.debug)
 ./gradlew :app:testFdroidDebugUnitTest             # JVM unit tests
-./gradlew :app:koverVerifyFdroidDebug              # coverage gate for core/security
+./gradlew :app:koverVerifyFdroidDebug              # coverage gate (whole app, 85%)
 ./gradlew :app:detekt :app:lintFdroidRelease       # static analysis
 ./gradlew spotlessApply                            # format Kotlin/Gradle (ktlint; spotlessCheck in CI)
 ./gradlew assembleRelease                          # both release APKs, R8 enabled

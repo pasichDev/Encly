@@ -1,7 +1,7 @@
 import java.util.Properties
 
-// Minimum line coverage (%) of com.pasich.encly.core.security enforced by koverVerify.
-val koverMinSecurityLineCoverage = 40
+// Minimum line coverage (%) of the whole app (generated code excluded) enforced by koverVerify.
+val koverMinLineCoverage = 85
 
 // Derive the app version from the tracked root `version.properties` so versionName and
 // versionCode always stay in sync and only one file needs bumping per release.
@@ -251,13 +251,29 @@ kover {
     reports {
         variant("fdroidDebug") {
             filters {
-                includes {
-                    packages("com.pasich.encly.core.security")
+                // Code the compilers and annotation processors write, not this project.
+                excludes {
+                    classes(
+                        "*.BuildConfig",
+                        "*.R",
+                        "*.R$*",
+                        "*ComposableSingletons*",
+                        "*Hilt_*",
+                        "*_HiltModules*",
+                        "*_Factory",
+                        "*_Factory$*",
+                        "*_MembersInjector",
+                        "*_GeneratedInjector",
+                        "*_Impl",
+                        "*_Impl$*",
+                        "*Dagger*",
+                    )
+                    packages("dagger.hilt", "hilt_aggregated_deps")
                 }
             }
             verify {
-                rule("core/security line coverage") {
-                    minBound(koverMinSecurityLineCoverage)
+                rule("App line coverage") {
+                    minBound(koverMinLineCoverage)
                 }
             }
         }

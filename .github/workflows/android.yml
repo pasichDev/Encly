@@ -74,8 +74,16 @@ jobs:
       - name: Check merged manifest has no INTERNET permission
         run: |
           set -euo pipefail
+          # AGP has used both directory names; a check that finds no manifest must fail, not pass.
+          manifests=$(find app/build/intermediates/merged_manifest app/build/intermediates/merged_manifests \
+            -name AndroidManifest.xml -path '*fdroidRelease*' 2>/dev/null || true)
+          if [ -z "$manifests" ]; then
+            echo "::error::No merged fdroidRelease manifest found to check"
+            exit 1
+          fi
           found=0
-          for m in $(find app/build/intermediates/merged_manifests -name AndroidManifest.xml -path '*elease*'); do
+          for m in $manifests; do
+            echo "Checking $m"
             if grep -q 'android.permission.INTERNET' "$m"; then
               echo "::error file=$m::INTERNET permission found in merged release manifest"
               found=1
@@ -83,7 +91,7 @@ jobs:
           done
           exit $found
 
-      # For information only: posts (and keeps updating) one PR comment with the core/security
+      # For information only: posts (and keeps updating) one PR comment with the app
       # coverage. It never fails the build.
       - name: Coverage comment
         if: github.event_name == 'pull_request'
@@ -92,7 +100,7 @@ jobs:
         with:
           paths: app/build/reports/kover/reportFdroidDebug.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: 'Coverage (core/security)'
+          title: 'Coverage'
           update-comment: true
           min-coverage-overall: 0
           min-coverage-changed-files: 0

@@ -40,8 +40,9 @@ Run the same gates as CI:
 ./gradlew assembleRelease                                              # R8 build
 ```
 
-- Add or extend unit tests for behaviour you change. Code in `core/security` has a minimum line
-  coverage gate (Kover, see `app/build.gradle.kts`); do not lower it to get a PR through.
+- Add or extend unit tests for behaviour you change. The app has a minimum line coverage gate of
+  85% (Kover, generated code excluded, see `app/build.gradle.kts`); do not lower it to get a PR
+  through.
 - For storage, Keystore or SQLCipher changes also run the instrumented tests on an emulator:
   `./gradlew :app:connectedFdroidDebugAndroidTest` (they wipe the debug app's data).
 - New detekt or lint findings must be fixed, not added to `app/detekt-baseline.xml` or
