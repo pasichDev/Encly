@@ -69,10 +69,12 @@ class ImportException(val error: ImportError) : Exception(error.name)
  * so a ZIP bomb stops at the limit.
  */
 data class ImportLimits(
-    /** Bytes read from the selected files in total (compressed bytes count as read). */
-    val maxInputBytes: Long = MAX_TOTAL_BYTES,
-    /** Bytes after decompression, over every entry (skipped ones included). */
+    /** Bytes read from the selected files in total (compressed bytes count as read); room for a Takeout of photos. */
+    val maxInputBytes: Long = MAX_INPUT_BYTES,
+    /** Bytes after decompression, over every entry that is kept or looked at (oversized ones included). */
     val maxTotalBytes: Long = MAX_TOTAL_BYTES,
+    /** Bytes inflated and thrown away: media and attachments in a ZIP, which are counted, never kept. */
+    val maxSkippedBytes: Long = MAX_SKIPPED_BYTES,
     /** One note file. */
     val maxEntryBytes: Int = MAX_ENTRY_BYTES,
     /** A JSON export that holds many notes at once (Standard Notes). */
@@ -86,6 +88,8 @@ data class ImportLimits(
     companion object {
         private const val MIB = 1024 * 1024
         const val MAX_TOTAL_BYTES = 64L * MIB
+        const val MAX_INPUT_BYTES = 2048L * MIB
+        const val MAX_SKIPPED_BYTES = 2048L * MIB
         const val MAX_ENTRY_BYTES = 4 * MIB
         const val MAX_CONTAINER_BYTES = 16 * MIB
         const val MAX_ENTRIES = 20_000

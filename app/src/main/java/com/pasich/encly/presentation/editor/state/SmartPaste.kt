@@ -24,11 +24,14 @@ fun trimBlankLines(lines: List<String>): List<String> {
  * link, a rule a separator, anything else a paragraph. A blank line (any number of them) starts
  * the next paragraph while a single line break stays inside its paragraph, and consecutive
  * items of one kind of list become one list. Whitespace-only lines at either end are not
- * content and are dropped; none in between is.
+ * content and are dropped; none in between is. With [plainFirstLine] the first line stays plain
+ * text, marks and all: a paste that continues what is already on the line must not turn it into
+ * a heading, list or link card.
  */
-fun pastedBlocks(lines: List<String>): List<Block> {
-    val text = trimBlankLines(lines).joinToString("\n", transform = ::asMarkdownMark)
-    return MarkdownBlockMapper.pasteBlocks(text, claim = ::pastedAddress)
+fun pastedBlocks(lines: List<String>, plainFirstLine: Boolean = false): List<Block> {
+    val text = trimBlankLines(lines).withIndex()
+        .joinToString("\n") { (i, line) -> if (i == 0 && plainFirstLine) line else asMarkdownMark(line) }
+    return MarkdownBlockMapper.pasteBlocks(text, plainFirstLine, ::pastedAddress)
 }
 
 /** [line] with the editor's own short marks ("[] ", "[x] ", "• ") written the way Markdown does. */

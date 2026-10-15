@@ -522,14 +522,15 @@ constructor(
     /**
      * Whether to offer "Start from template": a brand-new note that is still completely empty,
      * and not in Simple Edit (it never shows block tools). Following the text, so it goes away
-     * with the first character and comes back if undo makes the note blank again.
+     * with the first character and comes back if undo makes the note blank again, but not once
+     * the note has been saved (its stored id is set): from then on it is an existing note.
      */
     val templatesOffered: StateFlow<Boolean> = combine(
-        persistence.state.map { it.note.title.isEmpty() }.distinctUntilChanged(),
+        persistence.state.map { it.note.title.isEmpty() && it.note.id <= 0L }.distinctUntilChanged(),
         editor.contentChanges.map { editor.isBlankNote() }.onStart { emit(editor.isBlankNote()) },
         simpleEdit,
         _lockEditor,
-    ) { blankTitle, blankBody, simple, locked -> isNewNote && blankTitle && blankBody && !simple && !locked }
+    ) { blankUnsaved, blankBody, simple, locked -> isNewNote && blankUnsaved && blankBody && !simple && !locked }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
 

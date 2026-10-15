@@ -59,7 +59,7 @@
     <string name="import_error_encrypted_sn">Este backup do Standard Notes está criptografado. Baixe um backup descriptografado no Standard Notes e escolha-o.</string>
     <string name="import_error_encrypted_nn">Este é um backup criptografado do Notesnook. No Notesnook exporte as notas como Markdown e escolha o .zip.</string>
     <string name="import_error_unsupported">Estes arquivos não são uma exportação compatível. Veja os apps compatíveis ou escolha arquivos Markdown ou de texto.</string>
-    <string name="import_error_too_large">Esta seleção é maior do que o Encly consegue importar de uma vez (64 MB ou 20.000 notas). Importe em partes.</string>
+    <string name="import_error_too_large">Esta seleção é maior do que o Encly consegue importar de uma vez (64 MB de notas, 2 GB no total ou 20.000 notas). Importe em partes.</string>
     <string name="import_error_nothing">Nenhuma nota foi encontrada nesta seleção.</string>
     <string name="import_error_unreadable">Não foi possível ler os arquivos escolhidos.</string>
     <string name="import_error_no_picker">Este telefone não tem um app seletor de arquivos que o Encly possa usar.</string>

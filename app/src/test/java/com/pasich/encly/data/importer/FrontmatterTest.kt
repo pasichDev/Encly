@@ -60,4 +60,28 @@ class FrontmatterTest {
         val doc = Frontmatter.split("---\nrun: !!python/object/apply:os.system [\"x\"]\ntitle: ok\n---\n")
         assertEquals("ok", doc.value("title"))
     }
+
+    @Test
+    fun aBlockBetweenTwoRulesWithNoKeyIsBodyNotFrontMatter() {
+        val text = "---\nBuy milk\nCall Anna\n---\nrest"
+        val doc = Frontmatter.split(text)
+        assertFalse(doc.hasFrontmatter)
+        assertEquals(text, doc.body)
+    }
+
+    @Test
+    fun anEmptyBlockIsStillFrontMatter() {
+        assertEquals("body", Frontmatter.split("---\n---\nbody").body)
+    }
+
+    @Test
+    fun aNoteThatStartsWithARuleKeepsItsLinesInTheImport() {
+        val parsed = ImportFixtures.parse(
+            ImportSource.MARKDOWN,
+            ImportFixtures.entry("todo.md", "---\nBuy milk\nCall Anna\n---\nrest"),
+        )
+        val text = ImportFixtures.describe(parsed.notes.single().blocks).joinToString("\n")
+        assertTrue(text.contains("Buy milk"))
+        assertTrue(text.contains("Call Anna"))
+    }
 }

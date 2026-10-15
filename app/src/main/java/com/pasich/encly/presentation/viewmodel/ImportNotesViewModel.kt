@@ -171,10 +171,27 @@ class ImportNotesViewModel @Inject constructor(
         }
         bound = store
         _step.value = ImportStep.Reading
-        job = viewModelScope.launch { _step.value = read(store, source) }
+        job = viewModelScope.launch { settle(read(store, source)) }
     }
 
-    private suspend fun read(store: VaultDataStore, source: ImportFileSource): ImportStep = try {
+    /**
+     * What a read or analysis produced. It is applied on the main thread only, once the job is
+     * known to be live, so a cancelled or replaced job can never leave its notes behind.
+     */
+    private class Outcome(val step: ImportStep, val plan: ImportPlan? = null, val pending: ReadResult? = null)
+
+    private suspend fun settle(outcome: Outcome) {
+        currentCoroutineContext().ensureActive()
+        if (outcome.step is ImportStep.Failed) {
+            drop()
+        } else {
+            plan = outcome.plan
+            pending = outcome.pending
+        }
+        _step.value = outcome.step
+    }
+
+    private suspend fun read(store: VaultDataStore, source: ImportFileSource): Outcome = try {
         withContext(ioDispatcher) {
             val context = currentCoroutineContext()
             val read = ImportReader().read(source) { context.ensureActive() }
@@ -183,44 +200,41 @@ class ImportNotesViewModel @Inject constructor(
     } catch (e: CancellationException) {
         throw e
     } catch (e: ImportException) {
-        failed(failureOf(e.error))
+        failure(failureOf(e.error))
     } catch (_: IOException) {
-        failed(ImportFailure.UNREADABLE)
+        failure(ImportFailure.UNREADABLE)
     } catch (_: SecurityException) {
-        failed(ImportFailure.UNREADABLE)
+        failure(ImportFailure.UNREADABLE)
     } catch (_: OutOfMemoryError) {
-        failed(ImportFailure.TOO_LARGE)
+        failure(ImportFailure.TOO_LARGE)
     } catch (_: RuntimeException) {
         // The vault closed while reading, or the snapshot failed. The cause can quote content.
-        failed(ImportFailure.VAULT)
+        failure(ImportFailure.VAULT)
     }
 
-    private suspend fun show(analysis: Analysis, read: ReadResult, store: VaultDataStore): ImportStep =
-        when (analysis) {
-            is Analysis.Ready -> {
-                val existing = store.snapshot().notes.mapTo(HashSet()) { it.uid }
-                val ready = analysis.plan.withExisting(existing)
-                plan = ready
-                pending = null
-                ImportStep.Preview(ready.preview, ReviewState.of(ready.rows))
-            }
+    private fun failure(failure: ImportFailure) = Outcome(ImportStep.Failed(failure))
 
-            Analysis.Ambiguous -> {
-                // Kept in memory so the user's choice can be applied without reading again.
-                pending = read
-                ImportStep.ChooseSource
-            }
-
-            is Analysis.Encrypted -> failed(
-                if (analysis.source == ImportSource.NOTESNOOK) {
-                    ImportFailure.ENCRYPTED_NOTESNOOK
-                } else {
-                    ImportFailure.ENCRYPTED_STANDARD_NOTES
-                },
-            )
-
-            is Analysis.Failed -> failed(failureOf(analysis.error))
+    /** Pure: nothing of the view model is touched here, as this runs off the main thread. */
+    private suspend fun show(analysis: Analysis, read: ReadResult, store: VaultDataStore): Outcome = when (analysis) {
+        is Analysis.Ready -> {
+            val existing = store.snapshot().notes.mapTo(HashSet()) { it.uid }
+            val ready = analysis.plan.withExisting(existing)
+            Outcome(ImportStep.Preview(ready.preview, ReviewState.of(ready.rows)), plan = ready)
         }
+
+        // Kept in memory so the user's choice can be applied without reading again.
+        Analysis.Ambiguous -> Outcome(ImportStep.ChooseSource, pending = read)
+
+        is Analysis.Encrypted -> failure(
+            if (analysis.source == ImportSource.NOTESNOOK) {
+                ImportFailure.ENCRYPTED_NOTESNOOK
+            } else {
+                ImportFailure.ENCRYPTED_STANDARD_NOTES
+            },
+        )
+
+        is Analysis.Failed -> failure(failureOf(analysis.error))
+    }
 
     /** The user named the source of an ambiguous selection; it still has to validate. */
     fun chooseSource(source: ImportSource) {
@@ -229,15 +243,17 @@ class ImportNotesViewModel @Inject constructor(
         val store = bound ?: return
         _step.value = ImportStep.Reading
         job = viewModelScope.launch {
-            _step.value = try {
-                withContext(ioDispatcher) { show(ImportAnalyzer.analyze(read, forced = source), read, store) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: ImportException) {
-                failed(failureOf(e.error))
-            } catch (_: RuntimeException) {
-                failed(ImportFailure.VAULT)
-            }
+            settle(
+                try {
+                    withContext(ioDispatcher) { show(ImportAnalyzer.analyze(read, forced = source), read, store) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: ImportException) {
+                    failure(failureOf(e.error))
+                } catch (_: RuntimeException) {
+                    failure(ImportFailure.VAULT)
+                },
+            )
         }
     }
 

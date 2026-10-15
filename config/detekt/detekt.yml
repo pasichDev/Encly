@@ -48,6 +48,8 @@ Compose:
       - LocalSimpleEdit
       - LocalNoteLineSpacing
       - LocalFontStyles
+      # The slash picker's labels, built once for the editor (editor/blocks/SlashMenuPopup.kt).
+      - LocalSlashLabels
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors
       - LocalEnclyTypography

@@ -10,6 +10,8 @@ import androidx.compose.ui.unit.sp
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.presentation.editor.blocks.LocalSlashLabels
+import com.pasich.encly.presentation.editor.blocks.rememberSlashLabels
 import com.pasich.encly.ui.theme.fontSet
 import com.pasich.encly.utils.FontSizeUtils
 
@@ -70,6 +72,7 @@ fun EditNoteSettingsProvider(
         LocalSimpleEdit provides simpleEdit,
         LocalNoteLineSpacing provides lineSpacing,
         LocalFontStyles provides fontStyles,
+        LocalSlashLabels provides rememberSlashLabels(),
         content = content,
     )
 }

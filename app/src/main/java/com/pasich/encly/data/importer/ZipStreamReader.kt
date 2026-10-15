@@ -2,6 +2,10 @@ package com.pasich.encly.data.importer
 
 import java.io.IOException
 import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.charset.CharacterCodingException
+import java.nio.charset.Charset
+import java.nio.charset.CodingErrorAction
 import java.util.zip.CRC32
 import java.util.zip.DataFormatException
 import java.util.zip.Inflater
@@ -15,7 +19,8 @@ import java.util.zip.Inflater
  * Supported: stored entries with known sizes and deflated entries, with or without a data
  * descriptor (32- or 64-bit sizes, signature or not, told apart by the sizes the inflater actually
  * produced). Encrypted entries and other methods are an [IOException]. Each entry's CRC-32 is
- * checked. Names are UTF-8; paths are validated by the caller, never here.
+ * checked. Names are UTF-8 when the archive says so (or when they are valid UTF-8 anyway) and
+ * CP437 otherwise, so different names stay different; paths are validated by the caller, never here.
  */
 // One small format (header, ZIP64 extra, descriptor layouts, buffer); every corrupt archive is an IOException.
 @Suppress("TooManyFunctions", "ThrowsCount")
@@ -37,13 +42,21 @@ internal class ZipStreamReader(private val input: InputStream) {
     private var lim = 0
     private var state: State? = null
 
-    /** The next entry, or null at the central directory or the end; unread data of the last one is dropped. */
+    /**
+     * The next entry, or null at the central directory, an end record or a clean end of the
+     * stream; unread data of the last one is dropped. Any other bytes between entries are an
+     * [IOException], so a damaged archive never looks like a finished one.
+     */
     fun next(): Entry? {
         state?.let { drain(it) }
         state = null
         val signature = readIntOrNull()
-        val header = if (signature == LOCAL_HEADER) readExact(LOCAL_FIXED) else null
-        return header?.let(::open)
+        return when (signature) {
+            null -> null
+            LOCAL_HEADER -> open(readExact(LOCAL_FIXED))
+            in END_SIGNATURES -> null
+            else -> throw IOException("bad zip signature")
+        }
     }
 
     /** The uncompressed data of the current entry. */
@@ -64,7 +77,7 @@ internal class ZipStreamReader(private val input: InputStream) {
         ) {
             throw IOException("unsupported zip entry")
         }
-        val name = String(readExact(u16(header, NAME_LENGTH)), Charsets.UTF_8)
+        val name = decodeName(readExact(u16(header, NAME_LENGTH)))
         val extra = readExact(u16(header, EXTRA_LENGTH))
         var compressed = u32(header, COMPRESSED)
         var size = u32(header, SIZE)
@@ -74,6 +87,23 @@ internal class ZipStreamReader(private val input: InputStream) {
         if (method == STORED && flags and DESCRIPTOR != 0) throw IOException("stored zip entry of unknown size")
         state = State(flags, method, u32(header, CRC), compressed, size)
         return Entry(name)
+    }
+
+    /**
+     * A name as UTF-8 if the bytes are valid UTF-8 (what the UTF-8 flag, bit 11, promises, and what
+     * many writers produce without it), else as CP437, the format's default: a name that breaks
+     * the promise still decodes to distinct text instead of U+FFFD.
+     */
+    private fun decodeName(bytes: ByteArray): String {
+        val utf8 = try {
+            Charsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(bytes)).toString()
+        } catch (_: CharacterCodingException) {
+            null
+        }
+        return utf8 ?: String(bytes, cp437)
     }
 
     /** The (size, compressed size) of the ZIP64 extra field, if present. */
@@ -239,10 +269,18 @@ internal class ZipStreamReader(private val input: InputStream) {
     }
 
     private companion object {
+        val cp437: Charset = try {
+            Charset.forName("IBM437")
+        } catch (_: IllegalArgumentException) {
+            Charsets.ISO_8859_1
+        }
         const val BUFFER = 16 * 1024
         const val MAX_DRAIN = 1024 * 1024
         const val LOCAL_HEADER = 0x04034b50L
         const val DESCRIPTOR_SIGNATURE = 0x08074b50L
+
+        // Central directory header, end of central directory (and its ZIP64 forms), archive extra data.
+        val END_SIGNATURES = setOf(0x02014b50L, 0x06054b50L, 0x06064b50L, 0x07064b50L, 0x08064b50L)
         const val MAX_32 = 0xffffffffL
         const val STORED = 0
         const val DEFLATED = 8

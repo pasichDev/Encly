@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -30,7 +31,9 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyToolbarReserve
 import com.pasich.encly.presentation.editor.SlashActions
 import com.pasich.encly.presentation.editor.state.SlashCommand
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 /**
  * The slash picker of a paragraph: a small list of block kinds under the field, filtered by what
@@ -41,6 +44,17 @@ import kotlinx.coroutines.flow.first
  */
 @Composable
 internal fun SlashMenuPopup(field: TextFieldState, slash: SlashActions, modifier: Modifier = Modifier) {
+    // Only whether this paragraph owns the menu is observed here, so the other paragraphs do not
+    // recompose each time the open menu changes (a typed letter, a moved highlight). A menu opens
+    // only after the "/" is typed, so starting from "not the owner" never hides an open one.
+    val owns by remember(slash.menu, slash.blockId) {
+        slash.menu.map { it?.blockId == slash.blockId }.distinctUntilChanged()
+    }.collectAsState(initial = false)
+    if (owns) OpenSlashMenu(field, slash, modifier)
+}
+
+@Composable
+private fun OpenSlashMenu(field: TextFieldState, slash: SlashActions, modifier: Modifier = Modifier) {
     val all by slash.menu.collectAsState()
     val menu = all?.takeIf { it.blockId == slash.blockId }
     val labels = slashLabels()
@@ -78,9 +92,16 @@ internal fun SlashMenuPopup(field: TextFieldState, slash: SlashActions, modifier
     }
 }
 
+/** The labels built once for the whole editor (see [rememberSlashLabels]); null where nothing provides them. */
+internal val LocalSlashLabels = compositionLocalOf<Map<SlashCommand, String>?> { null }
+
 /** The localized label of every command, for the list and for matching the query. */
 @Composable
-private fun slashLabels(): Map<SlashCommand, String> {
+private fun slashLabels(): Map<SlashCommand, String> = LocalSlashLabels.current ?: rememberSlashLabels()
+
+/** The localized label of every command, built once per locale: provide it as [LocalSlashLabels] above the editor. */
+@Composable
+internal fun rememberSlashLabels(): Map<SlashCommand, String> {
     val resources = LocalResources.current
     val configuration = LocalConfiguration.current
     return remember(resources, configuration) {

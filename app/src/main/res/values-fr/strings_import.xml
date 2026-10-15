@@ -59,7 +59,7 @@
     <string name="import_error_encrypted_sn">Cette sauvegarde Standard Notes est chiffrée. Téléchargez une sauvegarde déchiffrée dans Standard Notes et choisissez-la.</string>
     <string name="import_error_encrypted_nn">C\'est une sauvegarde Notesnook chiffrée. Dans Notesnook, exportez plutôt vos notes en Markdown et choisissez le .zip.</string>
     <string name="import_error_unsupported">Ces fichiers ne sont pas un export pris en charge. Consultez les applications prises en charge ou choisissez des fichiers Markdown ou texte.</string>
-    <string name="import_error_too_large">Cette sélection dépasse ce qu\'Encly peut importer d\'un coup (64 Mo ou 20 000 notes). Importez-la en plusieurs parties.</string>
+    <string name="import_error_too_large">Cette sélection dépasse ce qu\'Encly peut importer d\'un coup (64 Mo de notes, 2 Go au total ou 20 000 notes). Importez-la en plusieurs parties.</string>
     <string name="import_error_nothing">Aucune note n\'a été trouvée dans cette sélection.</string>
     <string name="import_error_unreadable">Les fichiers choisis n\'ont pas pu être lus.</string>
     <string name="import_error_no_picker">Ce téléphone n\'a pas d\'application de sélection de fichiers qu\'Encly puisse utiliser.</string>

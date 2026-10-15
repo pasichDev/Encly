@@ -2,6 +2,7 @@ package com.pasich.encly.data.importer
 
 import com.pasich.encly.data.importer.ImportFixtures.describe
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MarkdownBlockMapperTest {
@@ -84,11 +85,12 @@ class MarkdownBlockMapperTest {
     }
 
     @Test
-    fun aPasteNeedsAtMostThreeDigitsForANumberedList() {
+    fun aNumberedListNeedsAtMostThreeDigitsInAPasteAndInAnImport() {
         assertEquals(listOf("text:2024. Report"), pasted("2024. Report"))
         assertEquals(listOf("number:[ ] one"), pasted("12. one"))
-        // An import keeps its longer numbers as items.
-        assertEquals(listOf("number:[ ] Report"), blocks("2024. Report"))
+        // Encly numbers items itself, so an import cannot keep a start number: a long number is text.
+        assertEquals(listOf("text:2024. Report"), blocks("2024. Report"))
+        assertEquals(listOf("number:[ ] one|[ ] two"), blocks("1. one\n2) two"))
     }
 
     @Test
@@ -97,5 +99,40 @@ class MarkdownBlockMapperTest {
             ImportBlocks.quote(line).takeIf { line.startsWith("https://") }
         }
         assertEquals(listOf("text:before", "quote:https://x.org", "text:after"), describe(claimed))
+    }
+
+    @Test
+    fun angleBracketTextThatIsNotHtmlIsKept() {
+        assertEquals(
+            listOf("text:Map<String, Int> and Dear <name>, <TODO> a<b && c>d"),
+            blocks("Map<String, Int> and Dear <name>, <TODO> a<b && c>d"),
+        )
+    }
+
+    @Test
+    fun realInlineTagsAreRemovedAndTheirTextStays() {
+        assertEquals(
+            listOf("text:x l\ny z"),
+            blocks("<b>x</b> <A HREF=\"u\">l</A><br>y <span class='c'>z</span> <img src=x/>"),
+        )
+    }
+
+    @Test
+    fun aLongRunOfBracketsDoesNotHangTheWikiLinkMatch() {
+        val started = System.nanoTime()
+        MarkdownBlockMapper.toBlocks("[".repeat(200_000))
+        MarkdownBlockMapper.toBlocks("[[a|".repeat(50_000))
+        assertTrue("took ${(System.nanoTime() - started) / 1_000_000} ms", System.nanoTime() - started < 1_000_000_000L)
+    }
+
+    @Test
+    fun aWikiLinkWithBracketsAroundItStillResolves() {
+        assertEquals(listOf("text:see alias and Name"), blocks("see [[Note|alias]] and [[Name]]"))
+    }
+
+    @Test
+    fun anImportDropsABlankItemButAPasteKeepsIt() {
+        assertEquals(listOf("bullet:[ ] a|[ ] b"), blocks("- a\n- \n- b"))
+        assertEquals(listOf("bullet:[ ] a|[ ] |[ ] b"), pasted("- a\n- \n- b"))
     }
 }

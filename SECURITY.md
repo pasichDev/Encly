@@ -50,7 +50,9 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
   and doubles with each further miss (1, 2, 4 … 32 min, ~1 h …) up to 24 h. It runs on
   `SystemClock.elapsedRealtime`, so changing the wall clock does not end it; across a reboot
   the remaining penalty is kept and restarts from boot (a reboot never shortens a lockout). A
-  failure of the Keystore itself is not counted as a guess. Wrong PINs never erase anything:
+  failure of the Keystore itself is not counted as a guess. A second counter (`pin.strikes`)
+  keeps the misses since the PIN itself was last right; see the duress PIN below for why. Wrong
+  PINs never erase anything:
   the only wipe is the optional **wipe PIN** below, and only when the user set one up.
 - Changing the PIN keeps the slot's salt (slots written before keep their own), so a wipe PIN
   set earlier keeps working.
@@ -70,7 +72,9 @@ and show me"), not against a forensic examination.
   wipe PIN it holds random bytes, written by a startup migration that needs no PIN and leaves
   `pin.slot` byte for byte as it was. The store has the same keys and sizes either way; no
   verifier, hash or extra Keystore key exists for it. Only the wipe PIN itself can tell, so
-  Settings never shows whether one is set.
+  Settings never shows whether one is set. Setting another PIN (wipe, duress or a new PIN) in
+  Settings is refused when it is one of the others, which tells; each such refusal therefore
+  costs a miss like a wrong guess, and the wipe and duress PIN cannot be set during a lockout.
 - **Same cost either way.** Each attempt runs PBKDF2 and the Keystore HMAC once, derives both
   KEKs and always tries both AES-GCM opens, without early exit.
 - **Rules.** 6 digits and different from the PIN (checked by opening the PIN slot with it).
@@ -158,27 +162,39 @@ meant for "open the app and show me", not against a forensic examination.
   "encly/decoy/key/kek/v1")`, so changing the duress PIN keeps the decoy notes and only the real
   vault's session can tell whether a decoy vault exists. The decoy DEK never wraps or unwraps
   anything of the real vault, and nothing derived from it opens a real-vault slot.
-- **Nothing in the store shows it.** Both entries always exist with the same length: a startup
-  migration that needs no PIN writes random bytes into them and leaves `pin.slot` byte for byte
-  as it was; turning the duress PIN off writes random bytes again.
+- **Nothing in the store shows it is set.** Both entries always exist with the same length: a
+  startup migration that needs no PIN writes random bytes into them and leaves `pin.slot` byte
+  for byte as it was; turning the duress PIN off writes random bytes again, and every step that
+  replaces one of them (a new PIN slot, the erase) replaces it with or without a decoy vault.
+  Whether a dead duress slot needs setting again is kept inside `decoy.key` (sealed with another
+  AAD, `"encly/decoy/key/off/v1"`), not in a store entry of its own. The lockout counters are the
+  exception, see below.
 - **One attempt, three slots.** Every lock-screen attempt is counted before the KDF, runs
   PBKDF2 and the Keystore HMAC once, derives the three KEKs and always tries all three AES-GCM
   opens, without early exit. The PIN opens the real vault and the duress PIN the decoy one with
   the same result, animation and screen; the wipe PIN erases. Settings never lets one PIN open
   two slots; should it happen anyway, the order is PIN, duress, wipe (never the erase while a
-  PIN could open a vault). The duress PIN is refused during a lockout and clears it like the
-  PIN.
+  PIN could open a vault). The duress PIN is refused during a lockout and ends it like the
+  PIN, but not the strikes (misses since the PIN itself was last right): from the 10th strike
+  on every miss is locked out, escalating as above, even right after the duress PIN opened the
+  decoy vault. Without that, someone who was given the duress PIN could guess at the real
+  PIN 4 times, type the duress PIN to reset the lockout, and repeat without limit. The cost is a
+  tell after that many misses (a lockout sooner than the screen suggests), and a store-level
+  one: lockout failures at 0 while `pin.strikes` is not shows a non-PIN unlock since the misses.
 - **Rules.** 6 digits, different from the PIN and from the wipe PIN (checked by opening their
   slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
   the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
-  Keystore key (or a PIN set with a new salt) turns the duress PIN off like the wipe PIN, and
-  Settings says so in the real vault; setting it again opens the same decoy notes.
+  Keystore key, or a PIN set with a new salt (after a recovery-phrase unlock when the PIN slot
+  could not be read), turns the duress PIN off like the wipe PIN; Settings in the real vault
+  then shows it as off and says why, and setting it again opens the same decoy notes. A refused
+  collision costs a miss, as for the wipe PIN.
 - **Inside the decoy vault.** Notes, tags, tasks, trash, search, sorting and appearance work as
-  usual. Everything that belongs to the real vault is refused by the security layer and left
-  out of Settings: changing the PIN, the wipe and duress PINs, fingerprint unlock, the
+  usual. Settings shows the same entries as in the real vault, and everything that belongs
+  to the real vault is refused by the security layer and fails like a storage error would, with
+  the usual generic message: changing the PIN, the wipe and duress PINs, fingerprint unlock, the
   recovery phrase, encrypted backups (export and import) and "Erase all data". A PIN re-check
-  there accepts the duress PIN only, so the decoy vault cannot be used to test guesses of the
-  real PIN. Fingerprint unlock and the recovery phrase on the lock screen always open the real
+  there accepts the duress PIN only, so the decoy vault itself cannot be used to test guesses
+  of the real PIN; on the lock screen the strikes above bound them. Fingerprint unlock and the recovery phrase on the lock screen always open the real
   vault, and nothing in the decoy vault offers a way to switch: to change vaults, lock and type
   the other PIN. App settings (theme, sorting, font, auto-lock, keyboard privacy) are shared.
 - **Session isolation.** Only one database is open at a time. Every repository is bound to the
@@ -387,21 +403,28 @@ generic Markdown/TXT (Obsidian, Markor).
 - **Bounded reading, in memory only.** ZIP is read sequentially from local headers with a reader
   of Encly's own (every entry's CRC checked; encrypted entries refused), TAR with a minimal
   ustar/GNU reader that hands data out only up to the size of each entry. Limits, counted on the
-  bytes actually read and inflated: 64 MiB read, 64 MiB uncompressed, 4 MiB per file (16 MiB for
-  a JSON export that holds every note), 20 000 entries (directories included), 20 000 notes, path
-  depth 16, JSON nesting 64. Absolute paths, `..`, backslashes, NUL, links, devices and archives
-  inside archives are skipped and counted; a ZIP bomb or an endless archive ends as "too large".
+  bytes actually read and inflated: 2 GiB read, 64 MiB uncompressed for what is kept, 4 MiB per
+  file (16 MiB for a JSON export that holds every note), 20 000 entries (directories and every
+  archive header included), 20 000 notes, path depth 16, JSON nesting 64. Media and attachments
+  (images, audio, video, PDFs, by name) are counted and never kept: a picked file or folder entry
+  is not opened and a TAR member is skipped unread; a ZIP member has to be inflated to find the
+  next header, so it is streamed through a small buffer against its own 2 GiB cap, and a bomb
+  named `photo.jpg` still ends as "too large". Absolute paths, `..`, drive letters, NUL, links,
+  devices, archives inside archives and folders deeper than the limit are skipped and counted
+  (a backslash is read as `/`); a ZIP bomb or an endless archive ends as "too large", and a
+  damaged archive keeps the notes read before the damage and counts the rest as unreadable.
   Nothing is staged in `cacheDir` or anywhere else on disk, and nothing is logged.
 - **Formats are recognised by content, not by extension;** an ambiguous selection asks the user.
   Encrypted Standard Notes backups and Notesnook backups (`.nnbackupz`) are refused with guidance
-  instead of being parsed. Markdown and HTML become plain Encly blocks; nothing is executed or
-  rendered as HTML, and frontmatter is read for a few known keys only.
+  instead of being parsed. Markdown and HTML become plain Encly blocks (inline HTML tags are
+  removed, other angle-bracket text stays); nothing is executed or rendered as HTML, and
+  frontmatter is read for a few known keys only.
 - **Review before writing.** Parsed notes (titles, a snippet, the read-only text) are shown on a
   review screen and live only in that screen's ViewModel: no saved state, nothing persisted, and
   they are dropped on cancel, on finish and when the vault locks. The selected notes go through
   the backup merge import: one transaction on the database session the import started in, all
-  or nothing, notes whose uid exists are skipped (the uid is derived from the source's own id, so
-  a repeated import adds nothing), tags matched by name.
+  or nothing, notes whose uid exists are skipped (the uid is derived from the source's own id, or for Markdown from the path
+  and a digest of the text, so a repeated import adds nothing), tags matched by name.
 - **Vaults.** It is available in a decoy session too and imports into whichever vault is open;
   a vault switch or re-lock during the import makes the transaction fail instead of writing
   elsewhere.

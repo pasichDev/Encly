@@ -18,9 +18,11 @@ interface DocumentTree {
 }
 
 /**
- * Walks a [DocumentTree] lazily into [SourceFile]s with paths relative to its root, never deeper
- * than [ImportLimits.maxPathDepth] and never listing more than [ImportLimits.maxEntries] entries in
- * all, so a cyclic or enormous tree ends instead of looping.
+ * Walks a [DocumentTree] lazily into [SourceFile]s with paths relative to its root and never
+ * listing more than [ImportLimits.maxEntries] entries in all, so a cyclic or enormous tree ends
+ * instead of looping. Deeper than [ImportLimits.maxPathDepth] nothing is opened or listed: the entries
+ * there are handed on as unsafe, so the reader counts them instead of silently losing them.
+ * Media is never opened either; the reader recognises it by name.
  */
 class TreeWalker(private val tree: DocumentTree, private val limits: ImportLimits = ImportLimits()) {
     fun source(): ImportFileSource = ImportFileSource {
@@ -31,19 +33,13 @@ class TreeWalker(private val tree: DocumentTree, private val limits: ImportLimit
     private var entriesLeft = 0
 
     private fun files(parentId: String, prefix: String, depth: Int): Sequence<SourceFile> = sequence {
-        if (depth <= limits.maxPathDepth) {
-            for (node in tree.children(parentId).take(limits.maxEntries)) {
-                if (entriesLeft-- <= 0) break
-                val path = if (prefix.isEmpty()) node.name else "$prefix/${node.name}"
-                if (node.isDirectory) {
-                    yieldAll(files(node.id, path, depth + 1))
-                } else {
-                    yield(
-                        SourceFile(path) {
-                            tree.open(node.id)
-                        },
-                    )
-                }
+        for (node in tree.children(parentId).take(limits.maxEntries)) {
+            if (entriesLeft-- <= 0) break
+            val path = if (prefix.isEmpty()) node.name else "$prefix/${node.name}"
+            when {
+                depth > limits.maxPathDepth -> yield(SourceFile(path, unsafe = true) { null })
+                node.isDirectory -> yieldAll(files(node.id, path, depth + 1))
+                else -> yield(SourceFile(path) { tree.open(node.id) })
             }
         }
     }

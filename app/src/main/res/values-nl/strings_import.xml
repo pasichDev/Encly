@@ -59,7 +59,7 @@
     <string name="import_error_encrypted_sn">Deze Standard Notes-back-up is versleuteld. Download in Standard Notes een ontsleutelde back-up en kies die.</string>
     <string name="import_error_encrypted_nn">Dit is een versleutelde Notesnook-back-up. Exporteer je notities in Notesnook in plaats daarvan als Markdown en kies de .zip.</string>
     <string name="import_error_unsupported">Deze bestanden zijn geen ondersteunde export. Bekijk de ondersteunde apps of kies Markdown- of tekstbestanden.</string>
-    <string name="import_error_too_large">Deze selectie is groter dan Encly in één keer kan importeren (64 MB of 20.000 notities). Importeer hem in delen.</string>
+    <string name="import_error_too_large">Deze selectie is groter dan Encly in één keer kan importeren (64 MB aan notities, 2 GB in totaal of 20.000 notities). Importeer hem in delen.</string>
     <string name="import_error_nothing">Er zijn geen notities gevonden in deze selectie.</string>
     <string name="import_error_unreadable">De gekozen bestanden konden niet worden gelezen.</string>
     <string name="import_error_no_picker">Deze telefoon heeft geen bestandskiezer die Encly kan gebruiken.</string>

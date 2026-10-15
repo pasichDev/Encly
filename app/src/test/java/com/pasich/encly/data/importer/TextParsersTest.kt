@@ -98,6 +98,27 @@ class StandardNotesParserTest {
     }
 
     @Test
+    fun superNoteCodeTablesAndCollapsiblesKeepTheirLayoutInsteadOfOneBlockPerToken() {
+        val lexical = """{"root":{"type":"root","children":[
+            {"type":"code","language":"js","children":[
+              {"type":"code-highlight","text":"const","highlightType":"keyword"},
+              {"type":"code-highlight","text":" x "},{"type":"code-highlight","text":"="},
+              {"type":"code-highlight","text":" 1"},{"type":"linebreak"},{"type":"tab"},
+              {"type":"code-highlight","text":"f()"}]},
+            {"type":"collapsible-container","children":[
+              {"type":"collapsible-title","children":[{"type":"text","text":"Title"}]},
+              {"type":"collapsible-content","children":[
+                {"type":"paragraph","children":[{"type":"text","text":"body"}]}]}]},
+            {"type":"table","children":[{"type":"tablerow","children":[
+              {"type":"tablecell","children":[{"type":"paragraph","children":[{"type":"text","text":"a"}]}]},
+              {"type":"tablecell","children":[{"type":"paragraph","children":[{"type":"text","text":"b"}]}]}]}]}
+            ]}}"""
+        val text = lexical.replace("\n", "").replace("\"", "\\\"")
+        val n = run(backup(note("s", """"title":"Super","text":"$text","noteType":"super""""))).notes.single()
+        assertEquals(listOf("text:const x = 1\n\tf()", "text:Title", "text:body", "text:a | b"), describe(n.blocks))
+    }
+
+    @Test
     fun aSuperNoteThatIsNotLexicalFallsBackToItsPreviewThenItsText() {
         val withPreview = run(
             backup(note("s", """"title":"a","text":"{broken","noteType":"super","preview_plain":"preview"""")),

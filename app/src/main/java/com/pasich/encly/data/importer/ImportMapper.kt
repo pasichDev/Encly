@@ -44,7 +44,8 @@ class ImportPlan(val payload: BackupPayload, val preview: ImportPreview, val row
  * same single transaction and uid skip as a backup.
  *
  * - uid: SHA-256 of `encly-import/v1|<source>|<source id>` when the export has a stable id
- *   (uuid, Joplin id, path, Keep path + creation time), else of the normalized title and text.
+ *   (uuid, Joplin id, Keep path + creation time, Markdown path + [contentDigest]), else of the
+ *   normalized title and text.
  *   The same export imports to the same uids, so a second import adds nothing; two notes with
  *   equal text but different titles or paths stay two notes.
  * - Tags are matched by name against the vault ([com.pasich.encly.data.backup.TagMatch.UID_OR_NAME]).
@@ -62,6 +63,7 @@ object ImportMapper {
 
     internal fun map(parsed: ParsedNotes, source: ImportSource, read: ReadSkips, now: Long): ImportPlan {
         val tags = LinkedHashMap<String, BackupTag>()
+        val tagNames = HashMap<String, String>()
         val uids = HashSet<String>()
         val notes = ArrayList<BackupNote>()
         val rows = ArrayList<ReviewNote>()
@@ -75,7 +77,7 @@ object ImportMapper {
                 duplicates++
                 continue
             }
-            val tagUid = note.tags.firstNotNullOfOrNull { tag(it, tags) }
+            val tagUid = note.tags.firstNotNullOfOrNull { tag(it, tags, tagNames) }
             val edited = note.edited ?: note.created ?: now
             notes += BackupNote(
                 uid = uid,
@@ -87,7 +89,7 @@ object ImportMapper {
                 tagUid = tagUid,
                 isTrash = note.trashed,
             )
-            rows += ImportReview.row(uid, note, tagUid?.let { id -> tags.values.first { it.uid == id }.name }, edited)
+            rows += ImportReview.row(uid, note, tagUid?.let(tagNames::get), edited)
             losses += note.losses
             if (note.blocks.any { it is Block.ListBlock && it.blockType == BlockType.LIST_CHECK }) checklists++
             if (note.trashed) trashed++
@@ -115,13 +117,15 @@ object ImportMapper {
         return ImportPlan(payload, preview, rows)
     }
 
-    private fun tag(raw: String, tags: MutableMap<String, BackupTag>): String? {
+    private fun tag(raw: String, tags: MutableMap<String, BackupTag>, names: MutableMap<String, String>): String? {
         val name = raw.trim().split(WHITESPACE).filter { it.isNotEmpty() }.joinToString(" ").take(MAX_TAG_NAME).trim()
         if (name.isEmpty()) return null
         val key = BackupImporter.tagNameKey(name)
-        return tags.getOrPut(key) {
+        val tag = tags.getOrPut(key) {
             BackupTag(uid = sha256Hex("encly-import/v1|tag|$key"), name = name, visible = true, position = tags.size)
-        }.uid
+        }
+        names[tag.uid] = tag.name
+        return tag.uid
     }
 
     private fun uidFor(source: ImportSource, note: ImportedNote): String {
@@ -136,7 +140,13 @@ object ImportMapper {
 
     private fun normalized(text: String): String = text.trim().replace(WHITESPACE, " ").lowercase()
 
-    private fun textOf(note: ImportedNote): String = note.blocks.joinToString("\n") { block ->
+    /** SHA-256 of the normalized [title] and text of [blocks]: for a source key of a note with no id of its own. */
+    internal fun contentDigest(title: String, blocks: List<Block>): String =
+        sha256Hex("${normalized(title)}\n${normalized(textOf(blocks))}")
+
+    private fun textOf(note: ImportedNote): String = textOf(note.blocks)
+
+    private fun textOf(blocks: List<Block>): String = blocks.joinToString("\n") { block ->
         when (block) {
             is Block.TextBlock -> block.text.value
             is Block.HBlock -> block.text.value
@@ -191,7 +201,7 @@ object ImportAnalyzer {
             is Detection.Encrypted -> Analysis.Encrypted(detection.source)
 
             is Detection.Found -> try {
-                Analysis.Ready(plan(detection.source, read, kinds, limits, now))
+                Analysis.Ready(plan(detection.source, read, classified(kinds, forced), limits, now))
             } catch (e: ImportException) {
                 Analysis.Failed(e.error)
             }
@@ -203,6 +213,28 @@ object ImportAnalyzer {
         skips.tooLarge > 0 -> ImportError.TOO_LARGE
         skips.unreadable > 0 -> ImportError.UNREADABLE
         else -> ImportError.NOTHING_FOUND
+    }
+
+    /** A Notesnook choice also reads plain text as Notesnook's (a `.txt` export has no front matter to recognise). */
+    private fun classified(kinds: List<EntryKind>, forced: ImportSource?): List<EntryKind> = if (forced ==
+        ImportSource.NOTESNOOK
+    ) {
+        kinds.map { if (it == EntryKind.TEXT) EntryKind.NOTESNOOK else it }
+    } else {
+        kinds
+    }
+
+    private fun parse(
+        source: ImportSource,
+        entries: List<ImportEntry>,
+        limits: ImportLimits,
+        notesnookFile: (ImportEntry) -> Boolean,
+    ): ParsedNotes = when (source) {
+        ImportSource.GOOGLE_KEEP -> KeepParser.parse(entries, limits)
+        ImportSource.STANDARD_NOTES -> StandardNotesParser.parse(entries, limits)
+        ImportSource.JOPLIN -> JoplinParser.parse(entries, limits)
+        ImportSource.NOTESNOOK -> MarkdownNotesParser.parse(entries, limits, notesnook = true, notesnookFile)
+        ImportSource.MARKDOWN -> MarkdownNotesParser.parse(entries, limits, notesnook = false)
     }
 
     private fun plan(
@@ -219,17 +251,15 @@ object ImportAnalyzer {
                 (kinds[index] == EntryKind.IGNORED && !ImportKinds.isHidden(entry) && ImportKinds.isMedia(entry))
         }
         val encrypted = kinds.count { it == EntryKind.STANDARD_NOTES_ENCRYPTED || it == EntryKind.NOTESNOOK_BACKUP }
-        val parsed = when (source) {
-            ImportSource.GOOGLE_KEEP -> KeepParser.parse(usable, limits)
-            ImportSource.STANDARD_NOTES -> StandardNotesParser.parse(usable, limits)
-            ImportSource.JOPLIN -> JoplinParser.parse(usable, limits)
-            ImportSource.NOTESNOOK -> MarkdownNotesParser.parse(usable, limits, notesnook = true)
-            ImportSource.MARKDOWN -> MarkdownNotesParser.parse(usable, limits, notesnook = false)
-        }
+        // Notesnook's rules belong to the files recognised as its own, not to the whole selection.
+        val notesnook = read.entries.filterIndexedTo(HashSet()) { index, _ -> kinds[index] == EntryKind.NOTESNOOK }
+        val parsed = parse(source, usable, limits, notesnook::contains)
+        val markdown = source == ImportSource.NOTESNOOK || source == ImportSource.MARKDOWN
+        // Media the reader passed over without keeping it: the attachments of a Markdown folder.
         val withEncrypted = ParsedNotes(
             parsed.notes,
             parsed.skips.copy(unsupported = parsed.skips.unsupported + encrypted),
-            parsed.extraLosses,
+            if (markdown) parsed.extraLosses + ImportLosses(attachments = read.attachments) else parsed.extraLosses,
         )
         val plan = ImportMapper.map(withEncrypted, source, read.skips, now)
         if (plan.payload.notes.isEmpty()) throw ImportException(ImportError.NOTHING_FOUND)

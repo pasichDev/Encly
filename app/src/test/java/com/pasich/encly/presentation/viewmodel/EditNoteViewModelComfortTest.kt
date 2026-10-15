@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -233,18 +234,38 @@ class EditNoteViewModelComfortTest {
         advanceUntilIdle()
         assertTrue(fresh.templatesOffered.value)
 
+        // runCurrent, not advanceUntilIdle: the note must not reach its autosave (2 s) in between.
         fresh.onBlockTextChanged(fresh.blocks.single(), "a")
-        advanceUntilIdle()
+        runCurrent()
         assertFalse(fresh.templatesOffered.value)
 
         fresh.undo()
-        advanceUntilIdle()
+        runCurrent()
         assertTrue(fresh.templatesOffered.value)
 
         val opened = viewModel(noteId = NOTE_ID)
         collecting(opened)
         advanceUntilIdle()
         assertFalse(opened.templatesOffered.value)
+    }
+
+    @Test
+    fun templatesAreNotOfferedAgainOnceTheNewNoteHasBeenSaved() = runTest(dispatcher) {
+        val fresh = viewModel(noteId = -1L)
+        collecting(fresh)
+        advanceUntilIdle()
+        assertTrue(fresh.templatesOffered.value)
+
+        fresh.onBlockTextChanged(fresh.blocks.single(), "a")
+        advanceTimeBy(10_000)
+        advanceUntilIdle()
+        assertEquals(1, repository.insertCalls)
+
+        // Blank again, as after a re-lock or an undo: it is a saved note now, not a new one.
+        fresh.undo()
+        Snapshot.sendApplyNotifications()
+        advanceUntilIdle()
+        assertFalse(fresh.templatesOffered.value)
     }
 
     @Test
@@ -265,14 +286,14 @@ class EditNoteViewModelComfortTest {
 
         viewModel.applyTemplate(NoteTemplate.CHECKLIST.blocks { "To do" })
         Snapshot.sendApplyNotifications() // what Compose does for snapshotFlow in the app
-        advanceUntilIdle()
+        runCurrent() // not advanceUntilIdle: the note must not reach its autosave in between
 
         assertEquals(2, viewModel.blocks.size)
         assertEquals("To do", (viewModel.blocks[0] as Block.HBlock).text.value)
         assertFalse(viewModel.templatesOffered.value)
         viewModel.undo()
         Snapshot.sendApplyNotifications()
-        advanceUntilIdle()
+        runCurrent()
         assertTrue(viewModel.templatesOffered.value)
     }
 

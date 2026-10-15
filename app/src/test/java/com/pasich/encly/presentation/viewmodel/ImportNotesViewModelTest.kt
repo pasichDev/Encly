@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.VaultDataStore
+import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.importer.ImportFixtures
 import com.pasich.encly.data.importer.ImportSource
 import com.pasich.encly.data.importer.SafImportFiles
@@ -15,11 +16,13 @@ import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -331,4 +334,30 @@ class ImportNotesViewModelTest {
         vm.onPickerUnavailable()
         assertEquals(ImportStep.Failed(ImportFailure.NO_PICKER), vm.step.value)
     }
+
+    @Test
+    fun aReadCancelledWhileItRunsLeavesNoPlanOrReadFilesBehind() {
+        lateinit var vm: ImportNotesViewModel
+        val cancelling = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            override suspend fun snapshot(): VaultSnapshot {
+                vm.cancel() // the user taps Cancel while the notes are being looked at
+                return store.snapshot()
+            }
+        }
+        // The read runs on its own dispatcher, so begin() has stored its job before Cancel arrives.
+        val io = StandardTestDispatcher()
+        vm = ImportNotesViewModel(SafImportFiles(context), cancelling, sessionLock, io)
+
+        vm.begin(ImportFixtures.textSource(*files))
+        io.scheduler.advanceUntilIdle()
+
+        assertEquals(ImportStep.Start, vm.step.value)
+        assertNull(held(vm, "plan"))
+        assertNull(held(vm, "pending"))
+    }
+
+    private fun held(vm: ImportNotesViewModel, name: String): Any? =
+        ImportNotesViewModel::class.java.getDeclaredField(name).apply { isAccessible = true }.get(vm)
 }

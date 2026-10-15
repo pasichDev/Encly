@@ -13,6 +13,11 @@ package com.pasich.encly.data.importer
  * - Tag: the front matter tags, else the first folder of the path (`_archive` is no tag).
  * - Notesnook: `pinned`, `archived`, `color` are counted as losses, `_archive/` marks archived
  *   notes, `attachments/` files stay behind, and a `.txt` export starts with the title line.
+ *   These rules apply to the files that are Notesnook's ([parse]'s `notesnookFile`), not to every
+ *   file of a mixed selection.
+ * - Identity: a note has no id of its own, so its key is its path plus a digest of its title and
+ *   text. Two `todo.md` of different folders stay two notes, an edited re-export is a new note,
+ *   and the same file imported again is not imported twice.
  * - Image and media files next to the notes are not imported and are counted as attachments.
  */
 internal object MarkdownNotesParser {
@@ -24,15 +29,29 @@ internal object MarkdownNotesParser {
 
     fun isTextFile(entry: ImportEntry): Boolean = entry.extension in TEXT_EXTENSIONS
 
-    fun parse(entries: List<ImportEntry>, limits: ImportLimits, notesnook: Boolean): ParsedNotes {
+    /**
+     * [notesnook] is the selection's source; [notesnookFile] says which of its text files carry
+     * Notesnook's extras (all of them, by default).
+     */
+    fun parse(
+        entries: List<ImportEntry>,
+        limits: ImportLimits,
+        notesnook: Boolean,
+        notesnookFile: (ImportEntry) -> Boolean = { notesnook },
+    ): ParsedNotes {
         val context = ParseContext(limits)
         var attachments = 0
         for (entry in entries) {
             val dirs = entry.path.split('/').dropLast(1)
+            val nn = notesnook && notesnookFile(entry)
             when {
-                (notesnook && ATTACHMENTS_DIR in dirs) || ImportKinds.isMedia(entry) -> attachments++
-                isTextFile(entry) -> context.text(entry)?.let { context.add(note(entry, it, dirs, notesnook)) }
+                (ATTACHMENTS_DIR in dirs && notesnook && (nn || !isTextFile(entry))) || ImportKinds.isMedia(entry) ->
+                    attachments++
+
+                isTextFile(entry) -> context.text(entry)?.let { context.add(note(entry, it, dirs, nn)) }
+
                 ImportKinds.isIgnorable(entry) -> Unit
+
                 else -> context.unsupported++
             }
         }
@@ -48,10 +67,11 @@ internal object MarkdownNotesParser {
         val titled = titled(doc, entry.name.substringBeforeLast('.'), plain, firstLineIsTitle = notesnook && plain)
         val folder = dirs.firstOrNull { it != ARCHIVE_DIR }
         val tags = ImportText.names(doc.list("tags")).ifEmpty { ImportText.names(listOfNotNull(folder)) }
+        val blocks = MarkdownBlockMapper.toBlocks(titled.body)
         return ImportedNote(
-            sourceKey = entry.path,
+            sourceKey = entry.path + "|" + ImportMapper.contentDigest(titled.title, blocks),
             title = titled.title,
-            blocks = MarkdownBlockMapper.toBlocks(titled.body),
+            blocks = blocks,
             tags = tags,
             created = ImportTime.parse(doc.firstValue("created_at", "created", "date")),
             edited = ImportTime.parse(doc.firstValue("updated_at", "updated", "modified")),

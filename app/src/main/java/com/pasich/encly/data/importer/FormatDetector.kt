@@ -157,12 +157,21 @@ internal object ImportKinds {
     )
 
     /** A hidden file or folder (`.obsidian/`, `.DS_Store`) or macOS metadata (`__MACOSX/`). */
-    fun isHidden(entry: ImportEntry): Boolean = entry.path.split('/').any { it.startsWith(".") || it == "__MACOSX" }
+    fun isHidden(entry: ImportEntry): Boolean = isHidden(entry.path)
+
+    fun isHidden(path: String): Boolean = path.split('/').any { it.startsWith(".") || it == "__MACOSX" }
 
     fun isIgnorable(entry: ImportEntry): Boolean = entry.extension in IGNORABLE
 
     /** Images, audio, video and PDFs: attachments, which are not imported. */
-    fun isMedia(entry: ImportEntry): Boolean = entry.extension in IGNORABLE && entry.extension !in MARKUP
+    fun isMedia(entry: ImportEntry): Boolean = isMedia(entry.path)
+
+    /** [path] (either separator) names media, judged by its extension alone, so it need not be read. */
+    fun isMedia(path: String): Boolean {
+        val name = path.substringAfterLast('/').substringAfterLast('\\')
+        val extension = name.substringAfterLast('.', "").lowercase()
+        return extension in IGNORABLE && extension !in MARKUP
+    }
 
     private val MARKUP = setOf("html", "htm", "css", "js", "ds_store")
 

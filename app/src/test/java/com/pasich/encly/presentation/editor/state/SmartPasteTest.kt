@@ -164,13 +164,94 @@ class SmartPasteTest {
     }
 
     @Test
-    fun aHeadingFirstInAPasteAtTheEndOfTextLeavesTheTextAlone() {
+    fun aHeadingMarkFirstInAPasteAfterTextIsPlainTextAndTheTextIsNotSplit() {
         val block = Block.TextBlock(MutableStateFlow("Intro"))
         editor.load(listOf(block))
 
         editor.breakLine(block.id, paste("Intro", 5, "# Head\ntext"))
 
-        assertEquals(listOf("P:Intro", "H1:Head", "P:text"), shape(editor.blocks))
+        assertEquals(listOf("P:Intro# Head\ntext"), shape(editor.blocks))
+    }
+
+    @Test
+    fun theFirstLineOfACodeOrLogPasteIsNotReadAsAMarkMidParagraph() {
+        val block = Block.TextBlock(MutableStateFlow("abc"))
+        editor.load(listOf(block))
+
+        editor.breakLine(block.id, paste("abc", 3, "# install deps\nnpm i"))
+
+        assertEquals(listOf("P:abc# install deps\nnpm i"), shape(editor.blocks))
+    }
+
+    @Test
+    fun linesAfterThePlainFirstLineStillConvert() {
+        val block = Block.TextBlock(MutableStateFlow("abc"))
+        editor.load(listOf(block))
+
+        editor.breakLine(block.id, paste("abc", 3, "- x\n# H"))
+
+        assertEquals(listOf("P:abc- x", "H1:H"), shape(editor.blocks))
+    }
+
+    @Test
+    fun aSingleLineWithATrailingLineBreakIsPlainTextNextToText() {
+        val block = Block.TextBlock(MutableStateFlow("abc"))
+        editor.load(listOf(block))
+        editor.breakLine(block.id, paste("abc", 3, "see https://x.com\n"))
+        assertEquals(listOf("P:abcsee https://x.com"), shape(editor.blocks))
+
+        val other = Block.TextBlock(MutableStateFlow("abc"))
+        editor.load(listOf(other))
+        editor.breakLine(other.id, paste("abc", 3, "https://x.com\n"))
+        assertEquals(listOf("P:abchttps://x.com"), shape(editor.blocks))
+
+        // Into an empty paragraph a lone address is still a link.
+        val empty = Block.TextBlock()
+        editor.load(listOf(empty))
+        editor.breakLine(empty.id, paste("", 0, "https://x.com\n"))
+        assertEquals("LINK:https://x.com", shape(editor.blocks).first())
+    }
+
+    @Test
+    fun theTextAfterTheCursorKeepsTheKindOfTheHeadingOrQuote() {
+        val heading = Block.HBlock(MutableStateFlow("Title"), BlockType.H2)
+        editor.load(listOf(heading))
+        editor.breakLine(heading.id, paste("Title", 2, "x\n\n- l"))
+        assertEquals(listOf("H2:Tix", "LIST_BULLET:l", "H2:tle"), shape(editor.blocks))
+
+        val joined = Block.HBlock(MutableStateFlow("Title"), BlockType.H3)
+        editor.load(listOf(joined))
+        editor.breakLine(joined.id, paste("Title", 2, "x\n\ny"))
+        assertEquals(listOf("H3:Tix", "H3:ytle"), shape(editor.blocks))
+
+        val quote = Block.QuoteBlock(MutableStateFlow("abcd"))
+        editor.load(listOf(quote))
+        editor.breakLine(quote.id, paste("abcd", 2, "x\n- l"))
+        assertEquals(listOf("QUOTE:abx", "LIST_BULLET:l", "QUOTE:cd"), shape(editor.blocks))
+    }
+
+    @Test
+    fun anEmptyChecklistOrBulletTemplateIsPastedWithItsEmptyItems() {
+        assertEquals(listOf("LIST_CHECK:[ ]|[ ]"), shape(pasted("- [ ] ", "- [ ] ")))
+        assertEquals(listOf("LIST_BULLET:a||b"), shape(pasted("- a", "- ", "- b")))
+        assertEquals(listOf("LIST_NUMBER:|"), shape(pasted("1. ", "2. ")))
+        assertEquals(listOf("LIST_BULLET:|"), shape(pasted("• ", "• ")))
+
+        val block = Block.TextBlock()
+        editor.load(listOf(block))
+        editor.breakLine(block.id, paste("", 0, "- [ ] \n- [ ] \n"))
+        assertEquals("LIST_CHECK:[ ]|[ ]", shape(editor.blocks).first())
+    }
+
+    @Test
+    fun textTheMapperLeavesNothingOfIsPastedAsTyped() {
+        val block = Block.TextBlock()
+        editor.load(listOf(block))
+
+        val kept = editor.breakLine(block.id, paste("", 0, "> \n> "))
+
+        assertEquals("> \n> ", kept)
+        assertEquals(listOf("P:> \n> "), shape(editor.blocks))
     }
 
     @Test

@@ -15,14 +15,16 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 - Import notes (Settings → Import): bring notes from Google Keep, Standard Notes, Joplin, Notesnook or
   Markdown/TXT files, fully offline. The format is recognised from the files, you review and tick the
-  notes first, and a repeated import adds nothing.
+  notes first, and a repeated import adds nothing. Photos and other attachments are left out and
+  listed without counting toward the size limit, so large Takeouts and Markdown vaults import.
 - Reading density for notes (Compact, Default, Comfortable) from the editor's More actions, with a
   persistent setting; Default is the existing layout and the stored note never changes.
 - Slash commands: type `/` in an empty paragraph to pick a block kind (text, headings, checklist,
   lists, quote, link, divider) from a small filtered list. Not available in Simple Edit.
 - Smarter paste: pasted text keeps its paragraphs (a blank line starts a new one, a single line
   break stays inside it) and Markdown headings, lists, checkboxes, quotes and rules become blocks.
-  Nothing is rewritten or dropped, and one undo takes the whole paste back.
+  Pasted after existing text, the first line stays plain text. Nothing is rewritten or dropped,
+  and one undo takes the whole paste back.
 - Block actions: duplicate a block from the toolbar, the block sheets and TalkBack, next to move,
   delete and convert.
 - Find in this note (More actions, or Ctrl/Cmd+F): highlights matches, shows "n of m" and jumps
@@ -33,7 +35,8 @@ IzzyOnDroid) and used as the GitHub Release notes.
 - Duress PIN (Settings → Security): a third PIN that opens a separate, fully usable decoy vault
   with its own encryption key and database, from the same lock screen and with the same unlock.
   The real vault stays closed and unchanged, and nothing in the decoy vault leads back to it.
-  Unlike the wipe PIN it erases nothing. It does not hide the real vault from a forensic
+  Unlike the wipe PIN it erases nothing, and typing it between wrong guesses never lifts the
+  limit on guesses at the real PIN. It does not hide the real vault from a forensic
   examination (see SECURITY.md).
 
 ## [2.1.0] - 2026-10-05

@@ -111,4 +111,50 @@ class ZipStreamReaderTest {
         assertEquals("d/", reader.next()?.name)
         assertThrows(IOException::class.java) { reader.next() }
     }
+
+    @Test
+    fun anUnknownSignatureBetweenEntriesIsAnIoErrorNotTheEnd() {
+        val bytes = ImportFixtures.zipText("a.txt" to "a", "b.txt" to "b")
+        val second = bytes.indices.drop(1).first { at ->
+            at + 3 < bytes.size && bytes[at] == 0x50.toByte() && bytes[at + 1] == 0x4b.toByte() &&
+                bytes[at + 2] == 3.toByte() && bytes[at + 3] == 4.toByte()
+        }
+        bytes[second + 2] = 9
+        val reader = ZipStreamReader(bytes.inputStream())
+        assertEquals("a.txt", reader.next()?.name)
+        assertThrows(IOException::class.java) { reader.next() }
+    }
+
+    @Test
+    fun onlyTheCentralDirectoryAnEndRecordOrACleanEndFinishesAnArchive() {
+        fun ends(third: Int, fourth: Int): Boolean {
+            val bytes = byteArrayOf(0x50, 0x4b, third.toByte(), fourth.toByte()) + ByteArray(18)
+            return ZipStreamReader(bytes.inputStream()).next() == null
+        }
+        assertEquals(true, ends(0x01, 0x02)) // central directory header
+        assertEquals(true, ends(0x05, 0x06)) // end of central directory
+        assertEquals(true, ends(0x06, 0x06)) // ZIP64 end of central directory
+        assertEquals(true, ends(0x06, 0x08)) // archive extra data
+        assertNull(ZipStreamReader(ByteArray(0).inputStream()).next())
+    }
+
+    @Test
+    fun aNameThatIsNotUtf8IsReadAsCp437SoDifferentNamesStayDifferent() {
+        val out = ByteArrayOutputStream()
+        // Latin-1 name bytes and no UTF-8 flag: 0x82 and 0x83 are not valid UTF-8 on their own.
+        ZipOutputStream(out, Charsets.ISO_8859_1).use { zip ->
+            for (name in listOf("\u0082.md", "\u0083.md")) {
+                zip.putNextEntry(ZipEntry(name))
+                zip.write(1)
+                zip.closeEntry()
+            }
+        }
+        assertEquals(listOf("\u00e9.md", "\u00e2.md"), readAll(out.toByteArray()).map { it.first })
+    }
+
+    @Test
+    fun aUtf8NameIsReadAsUtf8() {
+        val names = readAll(ImportFixtures.zipText("Привіт/нотатка.md" to "x")).map { it.first }
+        assertEquals(listOf("Привіт/нотатка.md"), names)
+    }
 }

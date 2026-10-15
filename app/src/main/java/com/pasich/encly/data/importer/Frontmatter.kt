@@ -30,7 +30,8 @@ class MarkdownDocument(private val meta: Map<String, List<String>>, val body: St
  * Front matter read by hand, with no YAML library and nothing executed: `key: value` lines, a
  * `[a, b]` inline list or `- item` lines under a key, quoted values unquoted. Anything else
  * (nested maps, block scalars, anchors, tags) is ignored. Without a closing `---` within
- * [MAX_LINES] lines the file has no front matter and is all body.
+ * [MAX_LINES] lines the file has no front matter and is all body; nor has a block with no
+ * `key:` line in it (a horizontal rule, some text, another rule).
  */
 object Frontmatter {
     private const val MAX_LINES = 200
@@ -47,12 +48,16 @@ object Frontmatter {
         } else {
             null
         }
-        return if (end == null) {
+        return if (end == null || !isFrontmatter(lines.subList(1, end))) {
             MarkdownDocument(emptyMap(), text)
         } else {
             MarkdownDocument(parse(lines.subList(1, end)), lines.drop(end + 1).joinToString("\n"))
         }
     }
+
+    /** A block is front matter if it is empty or has a `key:` line (list lines only mean something under one). */
+    private fun isFrontmatter(block: List<String>): Boolean =
+        block.all { it.isBlank() } || block.any { KEY_VALUE.matches(it) && !it.first().isWhitespace() }
 
     private fun parse(lines: List<String>): Map<String, List<String>> {
         val meta = LinkedHashMap<String, MutableList<String>>()

@@ -8,7 +8,8 @@ import kotlinx.serialization.json.JsonObject
 
 /**
  * A Standard Notes Super note: Lexical JSON read for its text, in order. Paragraphs, headings,
- * quotes, rules and (flattened) lists become blocks; any other node contributes its text.
+ * quotes, code, rules and (flattened) lists become blocks; a table row is one line; any other node
+ * contributes its text, a run of inline text staying one paragraph.
  */
 internal class LexicalBlocks private constructor() {
     private val blocks = ArrayList<Block>()
@@ -23,6 +24,8 @@ internal class LexicalBlocks private constructor() {
             "paragraph" -> add(inline(node), ImportBlocks::text)
             "heading" -> add(inline(node)) { ImportBlocks.heading(it, headingLevel(node)) }
             "quote" -> add(inline(node), ImportBlocks::quote)
+            "code" -> add(inline(node), ImportBlocks::text)
+            "tablerow" -> add(children(node).joinToString(" | ") { inline(it).trim() }, ImportBlocks::text)
             "horizontalrule" -> blocks += Block.SeparatorBlock()
             "list" -> list(node, depth)
             else -> other(node, depth)
@@ -31,10 +34,13 @@ internal class LexicalBlocks private constructor() {
 
     private fun other(node: JsonObject, depth: Int) {
         val children = children(node)
-        if (children.isEmpty()) {
-            add(ImportText.string(node["text"]).orEmpty(), ImportBlocks::text)
-        } else {
-            children.forEach { block(it, depth + 1) }
+        when {
+            children.isEmpty() -> add(ImportText.string(node["text"]).orEmpty(), ImportBlocks::text)
+
+            // Text and line breaks directly inside (a collapsible's title, ...) are one paragraph.
+            children.any { ImportText.string(it["type"]) in INLINE_TYPES } -> add(inline(node), ImportBlocks::text)
+
+            else -> children.forEach { block(it, depth + 1) }
         }
     }
 
@@ -66,8 +72,9 @@ internal class LexicalBlocks private constructor() {
         fun walk(current: JsonObject, depth: Int) {
             val skipped = depth > MAX_DEPTH
             when (ImportText.string(current["type"])) {
-                "text" -> append(ImportText.string(current["text"]).orEmpty())
+                "text", "code-highlight" -> append(ImportText.string(current["text"]).orEmpty())
                 "linebreak" -> append('\n')
+                "tab" -> append('\t')
                 "list" -> if (!skipLists && !skipped) children(current).forEach { walk(it, depth + 1) }
                 else -> if (!skipped) children(current).forEach { walk(it, depth + 1) }
             }
@@ -81,6 +88,7 @@ internal class LexicalBlocks private constructor() {
     companion object {
         private const val MAX_DEPTH = 40
         private const val DEFAULT_HEADING = 2
+        private val INLINE_TYPES = setOf("text", "code-highlight", "linebreak", "tab", "link", "autolink")
 
         /** [text] as blocks, or null if it is not a Lexical document. */
         fun parse(text: String): List<Block>? {

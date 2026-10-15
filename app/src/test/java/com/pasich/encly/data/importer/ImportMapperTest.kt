@@ -175,4 +175,47 @@ class ImportMapperTest {
         val none = ImportFixtures.read(ImportFixtures.textSource())
         assertEquals(Analysis.Failed(ImportError.NOTHING_FOUND), ImportAnalyzer.analyze(none))
     }
+
+    @Test
+    fun twoMarkdownFilesWithTheSameNameButDifferentTextAreTwoNotes() {
+        val plan = ImportFixtures.ready(ImportFixtures.textSource("todo.md" to "milk", "other/todo.md" to "bread"))
+        assertEquals(2, plan.payload.notes.size)
+        assertEquals(0, plan.preview.duplicatesInSelection)
+    }
+
+    @Test
+    fun anEditedMarkdownFileIsANewNoteAndAnIdenticalOneIsTheSame() {
+        fun uid(text: String) =
+            ImportFixtures.ready(ImportFixtures.textSource("Inbox/todo.md" to text)).payload.notes.single().uid
+        assertEquals(uid("# Todo\nmilk"), uid("# Todo\nmilk"))
+        assertEquals(uid("# Todo\nmilk"), uid("# Todo\n  Milk\n"))
+        assertNotEquals(uid("# Todo\nmilk"), uid("# Todo\nmilk and bread"))
+    }
+
+    @Test
+    fun theNotesnookRulesApplyOnlyToTheFilesThatAreNotesnooks() {
+        val notesnook = "---\ntitle: A\ncreated_at: 2024-01-01\nupdated_at: 2024-01-02\npinned: true\n---\nbody"
+        val plan = ImportFixtures.ready(
+            ImportFixtures.textSource(
+                "a.md" to notesnook,
+                "docs/attachments/b.md" to "# B\ntext",
+                "c.txt" to "First line\nrest",
+            ),
+        )
+        assertEquals(ImportSource.NOTESNOOK, plan.preview.source)
+        assertEquals(setOf("A", "B", "c"), plan.payload.notes.map { it.title }.toSet())
+        assertEquals(0, plan.preview.losses.attachments)
+        assertEquals(1, plan.preview.losses.pinned)
+        assertTrue(plan.rows.single { it.title == "c" }.snippet.startsWith("First line"))
+    }
+
+    @Test
+    fun theTagOfEveryRowIsItsOwnTagName() {
+        val plan = map(
+            note("A", "a", key = "1", tags = listOf("Work")),
+            note("B", "b", key = "2", tags = listOf("home")),
+            note("C", "c", key = "3", tags = listOf("work")),
+        )
+        assertEquals(listOf("Work", "home", "Work"), plan.rows.map { it.tag })
+    }
 }
