@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Importa le note da Google Keep, Standard Notes, Joplin, Notesnook o file Markdown, completamente offline.
+• PIN di coercizione (facoltativo): un altro PIN che apre una cassaforte esca separata, mentre le note vere restano bloccate.
+• Editor: comandi /, incolla più intelligente, ricerca nella nota, modelli, duplicazione dei blocchi e una vista più ariosa.
+• Blocco automatico dopo 15 o 30 minuti, se vuoi.

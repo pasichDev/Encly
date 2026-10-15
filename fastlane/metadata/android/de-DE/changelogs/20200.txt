@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Notizen aus Google Keep, Standard Notes, Joplin, Notesnook oder Markdown-Dateien importieren, komplett offline.
+• Zwangs-PIN (optional): eine weitere PIN, die einen separaten Tarn-Tresor öffnet, während deine echten Notizen gesperrt bleiben.
+• Editor: /-Befehle, besseres Einfügen, Suche in der Notiz, Vorlagen, Blöcke duplizieren und eine luftigere Ansicht.
+• Automatische Sperre nach 15 oder 30 Minuten, wenn du möchtest.

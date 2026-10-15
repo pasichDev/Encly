@@ -11,6 +11,14 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-15
+
+versionCode 20200.
+
+Notes can be imported from other apps, an optional duress PIN opens a separate decoy vault, and
+the editor gets slash commands, smarter paste, find in note and templates. The database and the
+backup format do not change.
+
 ### Added
 
 - Import notes (Settings → Import): bring notes from Google Keep, Standard Notes, Joplin, Notesnook or
@@ -38,6 +46,21 @@ IzzyOnDroid) and used as the GitHub Release notes.
   Unlike the wipe PIN it erases nothing, and typing it between wrong guesses never lifts the
   limit on guesses at the real PIN. It does not hide the real vault from a forensic
   examination (see SECURITY.md).
+
+### Changed
+
+- Pasting several lines of plain text keeps paragraphs (a blank line starts a new block) instead
+  of creating one block per line.
+- The predictive back gesture plays the same sliding motion as the back button instead of
+  shrinking the screen.
+- Dependencies updated to their latest stable versions, Compose through its BOM; the app now
+  compiles against SDK 37 (minimum and target SDK unchanged).
+
+### ⚠️ Compatibility
+
+- Going back to 2.1.0 keeps the vault and its backups readable: neither the database nor the
+  backup format changes. The duress PIN only works in 2.2.0 and later, and changing the PIN in an
+  older version turns it off (see SECURITY.md → Duress PIN).
 
 ## [2.1.0] - 2026-10-05
 
@@ -222,7 +245,8 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/pasichDev/Encly/releases/tag/v2.2.0
 [2.1.0]: https://github.com/pasichDev/Encly/releases/tag/v2.1.0
 [2.0.1]: https://github.com/pasichDev/Encly/releases/tag/v2.0.1
 [2.0.0]: https://github.com/pasichDev/Encly/releases/tag/v2.0.0

@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Import notatek z Google Keep, Standard Notes, Joplin, Notesnook lub plików Markdown, całkowicie offline.
+• PIN przymusowy (opcjonalny): dodatkowy PIN, który otwiera osobny sejf-wabik, a prawdziwe notatki pozostają zablokowane.
+• Edytor: polecenia /, sprytniejsze wklejanie, szukanie w notatce, szablony, duplikowanie bloków i przestronniejszy widok.
+• Automatyczna blokada po 15 lub 30 minutach, jeśli chcesz.

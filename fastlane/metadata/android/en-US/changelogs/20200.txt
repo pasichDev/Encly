@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Import notes from Google Keep, Standard Notes, Joplin, Notesnook or Markdown files, fully offline.
+• Duress PIN (optional): another PIN that opens a separate decoy vault while your real notes stay locked.
+• Editor: / commands, smarter paste, find in note, templates, duplicate blocks and a roomier reading layout.
+• Auto-lock after 15 or 30 minutes, if you want it.
