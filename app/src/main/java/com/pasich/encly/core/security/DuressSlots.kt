@@ -21,6 +21,9 @@ internal object DuressSlots {
     private const val DECOY_SLOT_LENGTH = 1 + IV_LENGTH + DEK_LENGTH + GCM_TAG_BYTES
     private val DECOY_AAD = "encly/pin/decoy-slot/v3".toByteArray(Charsets.UTF_8)
     val DECOY_KEY_AAD = "encly/decoy/key/v1".toByteArray(Charsets.UTF_8) + byteArrayOf(SLOT_VERSION)
+
+    /** The decoy key while its duress PIN is turned off (a new PIN slot killed the duress slot). */
+    val DECOY_KEY_OFF_AAD = "encly/decoy/key/off/v1".toByteArray(Charsets.UTF_8) + byteArrayOf(SLOT_VERSION)
     private val DECOY_KEY_SALT = "encly/decoy/key/salt/v1".toByteArray(Charsets.UTF_8)
     private val DECOY_KEY_INFO = "encly/decoy/key/kek/v1".toByteArray(Charsets.UTF_8)
 

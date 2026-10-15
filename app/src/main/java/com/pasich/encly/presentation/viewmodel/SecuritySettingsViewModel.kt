@@ -66,7 +66,6 @@ class SecuritySettingsViewModel @Inject constructor(
                 biometricStatus = securityManager.biometricStatus(),
                 hasPinSlot = authSettings.hasPinSlot,
                 wipePinTurnedOff = authSettings.wipePinTurnedOff,
-                isDecoySession = authSettings.isDecoySession,
                 hasDuressPin = authSettings.hasDuressPin,
                 duressPinTurnedOff = authSettings.duressPinTurnedOff,
                 loaded = true,
@@ -216,8 +215,6 @@ class SecuritySettingsViewModel @Inject constructor(
         val hasPinSlot: Boolean = false,
         /** The PIN key was reset and any wipe PIN with it; Settings asks to set it again. */
         val wipePinTurnedOff: Boolean = false,
-        /** The decoy vault is open: the page shows nothing of the real vault. */
-        val isDecoySession: Boolean = false,
         /** The real vault has a duress PIN. */
         val hasDuressPin: Boolean = false,
         /** The PIN key was reset and the duress PIN with it; setting it again keeps the notes. */

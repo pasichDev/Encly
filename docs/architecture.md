@@ -44,7 +44,7 @@ and resolve DAOs through it at operation time, so after a re-lock (or an unlock 
 vault) they fail instead of reading or writing a database they were not created for.
 `SecurityManager` records which vault the session opened and refuses every operation on the
 real vault's key slots (PIN, wipe and duress PINs, biometric, recovery, backup key) in a decoy
-session; Settings leaves those screens out.
+session; Settings still lists them, and they fail like a storage error.
 
 ## Notes and tasks
 

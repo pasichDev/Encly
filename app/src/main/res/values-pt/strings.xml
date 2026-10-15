@@ -561,6 +561,7 @@
     <string name="keyboard_show">Mostrar teclado</string>
     <string name="keyboard_hide">Ocultar teclado</string>
     <string name="security_erase_confirm_title">Apagar todos os dados?</string>
+    <string name="security_erase_failed">Não foi possível apagar os dados. Nada foi alterado.</string>
     <string name="security_erase_confirm">Apagar</string>
     <string name="subtasks_title">Subtarefas</string>
     <string name="subtask_placeholder">Subtarefa</string>

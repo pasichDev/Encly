@@ -107,7 +107,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
         }
 
         animationScreens(NavRoutes.BackupRoute.name) {
-            RealVaultOnly(navController) { BackupScreen(navController) }
+            BackupScreen(navController)
         }
 
         animationScreens(NavRoutes.ImportNotesRoute.name) {
@@ -131,15 +131,15 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
             LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION)
         }
         animationScreens(NavRoutes.PinCodeConfig.name) {
-            RealVaultOnly(navController) { PinCodeConfigScreen(navController) }
+            PinCodeConfigScreen(navController)
         }
 
         animationScreens(NavRoutes.WipePinRoute.name) {
-            RealVaultOnly(navController) { WipePinScreen(navController) }
+            WipePinScreen(navController)
         }
 
         animationScreens(NavRoutes.DuressPinRoute.name) {
-            RealVaultOnly(navController) { DuressPinScreen(navController) }
+            DuressPinScreen(navController)
         }
 
         animationScreens(NavRoutes.LockRoute.name) {

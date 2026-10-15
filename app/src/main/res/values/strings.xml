@@ -573,6 +573,7 @@
     <string name="keyboard_show">Show keyboard</string>
     <string name="keyboard_hide">Hide keyboard</string>
     <string name="security_erase_confirm_title">Erase all data?</string>
+    <string name="security_erase_failed">Couldn\'t erase the data. Nothing was changed.</string>
     <string name="security_erase_confirm">Erase</string>
     <string name="subtasks_title">Sub-tasks</string>
     <string name="subtask_placeholder">Sub-task</string>

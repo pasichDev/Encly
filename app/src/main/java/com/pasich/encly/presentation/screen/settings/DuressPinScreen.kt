@@ -41,9 +41,9 @@ private val DuressPinTexts = PinFlowTexts(
 )
 
 /**
- * Settings → Security → Duress PIN, only in a session of the real vault (see the guard in
- * AppNavHost). Same flow as the wipe PIN: the real PIN first, then what the duress PIN does and
- * whether one is set, then the new PIN typed twice.
+ * Settings → Security → Duress PIN. Same flow as the wipe PIN: the real PIN first, then what the
+ * duress PIN does and whether one is set, then the new PIN typed twice. In a decoy session it
+ * opens too, and setting or turning it off fails like a storage error (see SecurityManager).
  */
 @Composable
 fun DuressPinScreen(
@@ -93,7 +93,7 @@ private fun PinFlowState.onDuressPinResult(result: DuressPinChange) {
     }
 }
 
-/** What the options page shows besides the actions. */
+/** What the options page shows besides the actions; [isSet]: a decoy vault exists, live or [turnedOff]. */
 private class DuressPinInfo(val turnedOff: Boolean, val isSet: Boolean)
 
 private class DuressPinActions(val onSet: () -> Unit, val onRemove: () -> Unit)
@@ -133,7 +133,9 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = stringResource(if (info.isSet) R.string.duress_pin_status_on else R.string.duress_pin_status_off),
+            text = stringResource(
+                if (info.isSet && !info.turnedOff) R.string.duress_pin_status_on else R.string.duress_pin_status_off,
+            ),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )

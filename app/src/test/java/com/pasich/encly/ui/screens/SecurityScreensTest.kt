@@ -1,6 +1,5 @@
 package com.pasich.encly.ui.screens
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -18,13 +17,12 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.WipePinChange
-import com.pasich.encly.presentation.navigation.LocalDecoySession
 import com.pasich.encly.presentation.navigation.NavRoutes
-import com.pasich.encly.presentation.navigation.RealVaultOnly
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
 import com.pasich.encly.presentation.screen.settings.DuressPinScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.screen.settings.WipePinScreen
+import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.testutil.anyCharArray
@@ -425,41 +423,125 @@ class SecurityScreensTest : ComposeScreenTest() {
 
     // --- decoy session --------------------------------------------------------------------
 
-    @Test
-    fun theDecoySecurityPageListsOnlyAutoLockAndKeyboardPrivacy() {
-        app.inDecoySession()
-        vault = app.backup()
-        setNavScreen(viewModels(app.securitySettings(), vault), route = NavRoutes.SecuritySettingsRoute.name) { nav ->
-            SecuritySettingsScreen(nav)
-        }
+    /** What Security lists for a PIN vault with a recovery phrase, in the real vault and the decoy one alike. */
+    private val securityRows = listOf(
+        R.string.security_encryption_active,
+        R.string.auth_method_pin_title,
+        R.string.security_biometric_title,
+        R.string.wipe_pin_title,
+        R.string.duress_pin_title,
+        R.string.auto_lock_title,
+        R.string.backup_needs_phrase_title,
+        R.string.security_recovery_replace_title,
+        R.string.security_keyboard_strict_title,
+        R.string.security_protection_section,
+        R.string.security_erase_title,
+    )
 
-        waitForText(str(R.string.security_keyboard_strict_title))
-        listOf(
-            R.string.auth_method_pin_title,
-            R.string.security_biometric_title,
-            R.string.wipe_pin_title,
-            R.string.duress_pin_title,
-            R.string.backup_needs_phrase_title,
-            R.string.security_erase_title,
-            R.string.security_encryption_active,
-        ).forEach { assertEquals(str(it), 0, countText(str(it))) }
+    private fun assertSecurityRowsListed() = securityRows.forEach {
+        // Section headings are drawn in capitals.
+        scrollToText(str(it), ignoreCase = true)
+        assertTrue(str(it), countText(str(it), ignoreCase = true) > 0)
     }
 
     @Test
-    fun theRealVaultOnlyScreensSendTheDecoySessionToSettings() {
-        app.inDecoySession()
-        setNavScreen(
-            viewModels(app.securitySettings()),
-            route = NavRoutes.WipePinRoute.name,
-            start = NavRoutes.SecuritySettingsRoute.name,
-        ) { nav ->
-            CompositionLocalProvider(LocalDecoySession provides { true }) {
-                RealVaultOnly(nav) { WipePinScreen(nav) }
-            }
-        }
-        navigateTo(NavRoutes.WipePinRoute.name)
+    fun theRealSecurityPageListsTheSharedRows() {
+        showSecurity(recoveryPhrase = true)
 
-        waitFor { currentRoute() == NavRoutes.SettingsRoute.name }
-        assertEquals(0, countText(str(R.string.wipe_pin_current_subtitle)))
+        assertSecurityRowsListed()
+    }
+
+    @Test
+    fun theDecoySecurityPageListsTheSameRowsAsTheRealVault() {
+        app.inDecoySession()
+        showSecurity(recoveryPhrase = true)
+
+        assertSecurityRowsListed()
+    }
+
+    @Test
+    fun aPinChangeInTheDecoyVaultFailsLikeAStorageError() {
+        app.inDecoySession()
+        showPinChange()
+
+        typePin("123456")
+        waitForText(str(R.string.pin_create_title))
+        typePin("654321")
+        waitForText(str(R.string.pin_change_confirm_title))
+        typePin("654321")
+
+        waitForText(str(R.string.pin_update_failed))
+        assertEquals(NavRoutes.PinCodeConfig.name, currentRoute())
+    }
+
+    @Test
+    fun aWipePinInTheDecoyVaultFailsLikeAStorageError() {
+        app.inDecoySession()
+        showWipePin()
+
+        typePin("123456")
+        waitForText(str(R.string.wipe_pin_intro))
+        scrollToText(str(R.string.wipe_pin_set))
+        rule.onNodeWithText(str(R.string.wipe_pin_set)).performClick()
+        typePin("864200")
+        waitForText(str(R.string.wipe_pin_confirm_title))
+        typePin("864200")
+
+        waitForText(str(R.string.wipe_pin_failed))
+    }
+
+    @Test
+    fun turningTheWipePinOffInTheDecoyVaultFailsLikeAStorageError() {
+        app.inDecoySession()
+        showWipePin()
+
+        typePin("123456")
+        waitForText(str(R.string.wipe_pin_intro))
+        scrollToText(str(R.string.wipe_pin_remove))
+        rule.onNodeWithText(str(R.string.wipe_pin_remove)).performClick()
+
+        waitForText(str(R.string.wipe_pin_failed))
+    }
+
+    @Test
+    fun aDuressPinInTheDecoyVaultFailsLikeAStorageError() {
+        app.inDecoySession()
+        showDuressPin()
+
+        enterDuressPin(DuressPinChange.FAILED)
+
+        waitForText(str(R.string.duress_pin_failed))
+    }
+
+    @Test
+    fun eraseInTheDecoyVaultFailsAndKeepsTheVault() {
+        app.inDecoySession()
+        showSecurity(recoveryPhrase = true)
+
+        rule.runOnIdle { vault.start(BackupAction.ERASE) }
+        waitForText(str(R.string.backup_reauth_title))
+        typePin("123456")
+
+        waitForText(str(R.string.security_erase_failed))
+        assertEquals(false, vault.uiState.value.erased)
+        assertEquals(NavRoutes.SecuritySettingsRoute.name, currentRoute())
+        assertTrue(countText(str(R.string.security_erase_title)) > 0)
+    }
+
+    @Test
+    fun aNewRecoveryPhraseInTheDecoyVaultFailsAtTheEnd() {
+        app.inDecoySession(recoveryPhrase = false)
+        showSecurity(recoveryPhrase = false)
+
+        rule.onNodeWithText(str(R.string.security_recovery_missing)).performClick()
+        waitForText(str(R.string.backup_reauth_title))
+        typePin("123456")
+        waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.ShowNewPhrase }
+        rule.onNodeWithText(str(R.string.backup_phrase_written)).performClick()
+        waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.CheckNewPhrase }
+        val step = vault.uiState.value.step as BackupStep.CheckNewPhrase
+        rule.runOnIdle { vault.phraseFlow.submitCheck(step.expected) }
+
+        waitForText(str(R.string.backup_error_phrase_setup))
     }
 }

@@ -176,7 +176,7 @@ class SecurityManager @Inject constructor(
 
     /**
      * True while the open session is the decoy vault the duress PIN opened. Nothing on screen
-     * may say so; Settings uses it to leave out what belongs to the real vault.
+     * may say so: Settings looks the same, and this layer refuses what belongs to the real vault.
      */
     fun isDecoySession(): Boolean = sessionDek != null && sessionVault == VaultFile.DECOY
 
@@ -516,11 +516,19 @@ class SecurityManager @Inject constructor(
         return authenticationManager.removeDuressPin() && secureDatabaseManager.wipeIfClosed(VaultFile.DECOY)
     }
 
-    /** Whether the real vault has a decoy vault; false outside a session of the real vault. */
-    fun hasDuressPin(): Boolean {
+    /**
+     * Whether the real vault has a decoy vault (its duress PIN may have been turned off, see
+     * [duressPinTurnedOff]); false outside a session of the real vault.
+     */
+    fun hasDuressPin(): Boolean = withPrimaryKey(authenticationManager::hasDecoyVault)
+
+    /** Whether the real vault's duress PIN stopped working; false outside a session of the real vault. */
+    fun duressPinTurnedOff(): Boolean = withPrimaryKey(authenticationManager::duressPinTurnedOff)
+
+    private fun withPrimaryKey(check: (ByteArray) -> Boolean): Boolean {
         val dek = primarySessionKeyCopy() ?: return false
         return try {
-            authenticationManager.hasDecoyVault(dek)
+            check(dek)
         } finally {
             SensitiveDataCleaner.clear(dek)
         }
@@ -642,9 +650,12 @@ class SecurityManager @Inject constructor(
         sessionUnlockedWithRecovery = false
     }
 
-    /** Erases everything: both vaults, every key slot. Never from a decoy session. */
-    fun wipeAndReset() {
-        if (isDecoySession()) return
+    /**
+     * Erases everything: both vaults, every key slot. Never from a decoy session, where it
+     * changes nothing and returns false.
+     */
+    fun wipeAndReset(): Boolean {
+        if (isDecoySession()) return false
         secureDatabaseManager.wipe()
         clearSessionKey()
         biometricManager.disable()
@@ -654,6 +665,7 @@ class SecurityManager @Inject constructor(
         vaultStore.clear()
         appFlags.edit().clear().commit()
         securityStatus = InitialStatus.ONBOARDING
+        return true
     }
 
     fun getSettingsAuth(): AuthSettings = AuthSettings(
@@ -662,9 +674,8 @@ class SecurityManager @Inject constructor(
         isUserCreatedSeedKey = seedPhraseManager.hasRecoverySeed(),
         hasPinSlot = authenticationManager.hasPinSlot(),
         wipePinTurnedOff = authenticationManager.wipePinTurnedOff(),
-        isDecoySession = isDecoySession(),
         hasDuressPin = hasDuressPin(),
-        duressPinTurnedOff = !isDecoySession() && authenticationManager.duressPinTurnedOff(),
+        duressPinTurnedOff = duressPinTurnedOff(),
     )
 }
 
@@ -678,10 +689,8 @@ data class AuthSettings(
     val isUserCreatedSeedKey: Boolean,
     val hasPinSlot: Boolean = authType == AuthType.PIN,
     val wipePinTurnedOff: Boolean = false,
-    /** The decoy vault is open: Settings leaves out everything of the real vault. */
-    val isDecoySession: Boolean = false,
     /** The real vault has a duress PIN (known only in its own session). */
     val hasDuressPin: Boolean = false,
-    /** The PIN key was reset, so the duress PIN stopped working; setting it again keeps the notes. */
+    /** A new PIN slot turned the duress PIN off; setting it again keeps the notes. */
     val duressPinTurnedOff: Boolean = false,
 )

@@ -108,8 +108,13 @@ class BackupViewModel @Inject constructor(
         if (state.step != BackupStep.ConfirmErase) return
         dropPending()
         state.launchBusy {
-            withContext(Dispatchers.IO) { securityManager.wipeAndReset() }
-            state.ui.update { it.copy(step = BackupStep.Idle, erased = true) }
+            val erased = withContext(Dispatchers.IO) { securityManager.wipeAndReset() }
+            // A refused erase (see SecurityManager.wipeAndReset) must not be announced as done.
+            if (erased) {
+                state.ui.update { it.copy(step = BackupStep.Idle, erased = true) }
+            } else {
+                state.finish(BackupMessage.Text(R.string.security_erase_failed))
+            }
         }
     }
 

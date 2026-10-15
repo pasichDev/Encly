@@ -561,6 +561,7 @@
     <string name="keyboard_show">Mostra tastiera</string>
     <string name="keyboard_hide">Nascondi tastiera</string>
     <string name="security_erase_confirm_title">Cancellare tutti i dati?</string>
+    <string name="security_erase_failed">Impossibile cancellare i dati. Non è stato modificato nulla.</string>
     <string name="security_erase_confirm">Cancella</string>
     <string name="subtasks_title">Sottoattività</string>
     <string name="subtask_placeholder">Sottoattività</string>

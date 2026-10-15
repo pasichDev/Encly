@@ -556,6 +556,7 @@
     <string name="keyboard_show">Tastatur einblenden</string>
     <string name="keyboard_hide">Tastatur ausblenden</string>
     <string name="security_erase_confirm_title">Alle Daten löschen?</string>
+    <string name="security_erase_failed">Die Daten konnten nicht gelöscht werden. Nichts wurde geändert.</string>
     <string name="security_erase_confirm">Löschen</string>
     <string name="subtasks_title">Unteraufgaben</string>
     <string name="subtask_placeholder">Unteraufgabe</string>

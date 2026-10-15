@@ -32,13 +32,15 @@ class DuressPinTest {
     private lateinit var store: VaultStore
     private lateinit var factor: FakePinFactor
     private lateinit var auth: AuthenticationManager
+    private lateinit var clock: FakeLockoutClock
     private val dek = ByteArray(DEK_LENGTH) { 0x3C }
 
     @Before
     fun setUp() {
         store = tempVaultStore()
         factor = FakePinFactor()
-        auth = AuthenticationManager(store, factor, FakeLockoutClock())
+        clock = FakeLockoutClock()
+        auth = AuthenticationManager(store, factor, clock)
         assertTrue(auth.configurePin(pin(PIN), dek))
     }
 
@@ -123,6 +125,96 @@ class DuressPinTest {
         assertTrue(auth.unlockWithPin(pin(DURESS_PIN)) is PinUnlock.Decoy)
 
         assertEquals(0, store.getInt(FAILURES, 0))
+        assertEquals(
+            "the duress PIN itself is no strike",
+            AuthenticationManager.MAX_ATTEMPTS - 1,
+            store.getInt(STRIKES, 0),
+        )
+    }
+
+    @Test
+    fun theDuressPinBetweenGuessesNeverBuysUnlimitedGuessesAtThePin() {
+        assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+        val free = AuthenticationManager.MAX_ATTEMPTS - 1
+        var guesses = 0
+        var locked = false
+        // Four wrong guesses, the duress PIN, again: the coercer's loop.
+        while (!locked && guesses < 100) {
+            repeat(free) {
+                if (auth.unlockWithPin(pin("000000")) == PinUnlock.LockedOut) locked = true else guesses++
+            }
+            if (!locked) assertTrue(auth.unlockWithPin(pin(DURESS_PIN)) is PinUnlock.Decoy)
+        }
+
+        assertEquals(
+            "free guesses end after the grace",
+            AuthenticationManager.MAX_ATTEMPTS + AuthenticationManager.STRIKE_GRACE,
+            guesses,
+        )
+        // Past the grace every miss is locked out, even right after the duress PIN, and longer each time.
+        var lastPenalty = 0L
+        repeat(3) {
+            clock.elapsed += auth.remainingLockoutMillis()
+            assertTrue(auth.unlockWithPin(pin(DURESS_PIN)) is PinUnlock.Decoy)
+            assertEquals(PinUnlock.WrongPin, auth.unlockWithPin(pin("000000")))
+            val penalty = auth.remainingLockoutMillis()
+            assertTrue("locked out at once: $penalty", penalty > lastPenalty)
+            lastPenalty = penalty
+        }
+    }
+
+    @Test
+    fun theRightPinStartsTheStrikesOver() {
+        assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+        repeat(2) {
+            repeat(AuthenticationManager.MAX_ATTEMPTS - 1) { auth.unlockWithPin(pin("000000")) }
+            assertTrue(auth.unlockWithPin(pin(DURESS_PIN)) is PinUnlock.Decoy)
+        }
+        assertTrue(store.getInt(STRIKES, 0) > AuthenticationManager.MAX_ATTEMPTS)
+
+        assertTrue(auth.unlockWithPin(pin(PIN)) is PinUnlock.Success)
+
+        assertFalse(store.contains(STRIKES))
+        repeat(AuthenticationManager.MAX_ATTEMPTS - 1) { auth.unlockWithPin(pin("000000")) }
+        assertEquals(0L, auth.remainingLockoutMillis())
+    }
+
+    @Test
+    fun aHardwareFailureGivesTheStrikeBackAndAKillMidCheckKeepsIt() {
+        repeat(2) { auth.unlockWithPin(pin("000000")) }
+        factor.failing = true
+
+        assertEquals(PinUnlock.Failed, auth.unlockWithPin(pin("000000")))
+
+        assertEquals(2, store.getInt(STRIKES, 0))
+        factor.failing = false
+        // Killed during the KDF: the strike was written before it ran and is never refunded.
+        val killing = AuthenticationManager(
+            store,
+            object : PinHardwareFactor by factor {
+                override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray = error("killed")
+            },
+            clock,
+        )
+        runCatching { killing.unlockWithPin(pin("000000")) }
+        assertEquals(3, store.getInt(STRIKES, 0))
+    }
+
+    @Test
+    fun refusingAnotherPinInSettingsCostsAMissAndALockoutRefusesIt() {
+        assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+
+        assertEquals(WipePinChange.IN_USE, auth.configureWipePin(pin(DURESS_PIN)))
+        assertEquals(WipePinChange.SAME_AS_PIN, auth.configureWipePin(pin(PIN)))
+        assertEquals(PinChange.IN_USE, auth.changePin(pin(DURESS_PIN), dek))
+        assertEquals(DuressPinChange.SAME_AS_PIN, auth.configureDuressPin(pin(PIN), dek) { true })
+        assertEquals(4, store.getInt(FAILURES, 0))
+
+        assertEquals(WipePinChange.IN_USE, auth.configureWipePin(pin(DURESS_PIN)))
+        assertTrue(auth.remainingLockoutMillis() > 0)
+        assertEquals(WipePinChange.FAILED, auth.configureWipePin(pin(DURESS_PIN)))
+        assertEquals(DuressPinChange.FAILED, auth.configureDuressPin(pin(OTHER_DURESS_PIN), dek) { true })
+        assertEquals(PinUnlock.LockedOut, auth.unlockWithPin(pin(PIN)))
     }
 
     @Test
@@ -183,7 +275,7 @@ class DuressPinTest {
 
         assertArrayEquals(decoyDek, (auth.unlockWithPin(pin(DURESS_PIN)) as PinUnlock.Decoy).dek)
         assertArrayEquals(dek, (auth.unlockWithPin(pin(NEW_PIN)) as PinUnlock.Success).dek)
-        assertFalse(auth.duressPinTurnedOff())
+        assertFalse(auth.duressPinTurnedOff(dek))
     }
 
     @Test
@@ -194,7 +286,7 @@ class DuressPinTest {
 
         assertTrue(auth.configurePin(pin(NEW_PIN), dek))
 
-        assertTrue(auth.duressPinTurnedOff())
+        assertTrue(auth.duressPinTurnedOff(dek))
         assertEquals(PinUnlock.WrongPin, auth.unlockWithPin(pin(DURESS_PIN)))
         var newVault = false
         assertEquals(
@@ -205,7 +297,7 @@ class DuressPinTest {
             },
         )
         assertFalse("the decoy database is kept", newVault)
-        assertFalse(auth.duressPinTurnedOff())
+        assertFalse(auth.duressPinTurnedOff(dek))
         assertArrayEquals(decoyDek, (auth.unlockWithPin(pin(DURESS_PIN)) as PinUnlock.Decoy).dek)
     }
 
@@ -215,7 +307,59 @@ class DuressPinTest {
 
         assertTrue(auth.configurePin(pin(NEW_PIN), dek))
 
-        assertFalse(auth.duressPinTurnedOff())
+        assertFalse(auth.duressPinTurnedOff(dek))
+    }
+
+    @Test
+    fun aPinSetWithANewSaltTurnsTheDuressPinOffAndSettingsSaysSo() {
+        assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+        // The PIN slot is unreadable (recovery phrase unlock, then a new PIN): a new salt.
+        store.edit { remove(PIN_SLOT) }
+
+        assertTrue(auth.configurePin(pin(NEW_PIN), dek))
+
+        assertEquals(PinUnlock.WrongPin, auth.unlockWithPin(pin(DURESS_PIN)))
+        assertTrue(auth.hasDecoyVault(dek))
+        assertTrue(auth.duressPinTurnedOff(dek))
+        assertEquals(DuressPinChange.SET, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+        assertFalse(auth.duressPinTurnedOff(dek))
+    }
+
+    @Test
+    fun everyLifecycleStepLeavesTheSameStoreShapeWithAndWithoutADecoyVault() {
+        val plain = tempVaultStore()
+        val plainFactor = FakePinFactor()
+        val other = AuthenticationManager(plain, plainFactor, FakeLockoutClock())
+        assertTrue(other.configurePin(pin(PIN), dek))
+        assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+        fun same(step: String) = assertEquals(step, shape(plain), shape(store))
+        same("set")
+
+        assertEquals(PinChange.SET, other.changePin(pin(NEW_PIN), dek))
+        assertEquals(PinChange.SET, auth.changePin(pin(NEW_PIN), dek))
+        same("PIN change")
+
+        plainFactor.lost = true
+        factor.lost = true
+        assertTrue(other.configurePin(pin(PIN), dek))
+        assertTrue(auth.configurePin(pin(PIN), dek))
+        same("key reset")
+
+        plain.edit { remove(PIN_SLOT) }
+        store.edit { remove(PIN_SLOT) }
+        assertTrue(other.configurePin(pin(NEW_PIN), dek))
+        assertTrue(auth.configurePin(pin(NEW_PIN), dek))
+        same("new salt")
+
+        assertTrue(other.removeDuressPin())
+        assertTrue(auth.removeDuressPin())
+        same("removed")
+
+        assertEquals(WipePinChange.SET, other.configureWipePin(pin(WIPE_PIN)))
+        assertEquals(WipePinChange.SET, auth.configureWipePin(pin(WIPE_PIN)))
+        assertTrue(other.unlockWithPin(pin(WIPE_PIN)) is PinUnlock.Erased)
+        assertTrue(auth.unlockWithPin(pin(WIPE_PIN)) is PinUnlock.Erased)
+        same("erase")
     }
 
     @Test
@@ -329,13 +473,12 @@ class DuressPinTest {
         assertFalse(vault.security.createBackupKey(vault.seed.generateMnemonic().chars))
         assertFalse(vault.security.canResetPinWithoutCurrent())
         vault.security.disableBiometric()
-        vault.security.wipeAndReset()
+        assertFalse(vault.security.wipeAndReset())
 
         verify(vault.biometric, never()).disable()
         verify(vault.database, never()).wipe()
         assertEquals(before, vault.store.keys().associateWith { vault.store.getBytes(it)!!.toList() })
         assertTrue(vault.security.isDecoySession())
-        assertTrue(vault.security.getSettingsAuth().isDecoySession)
     }
 
     @Test
@@ -462,5 +605,6 @@ class DuressPinTest {
         const val DECOY_SLOT = "pin.decoy.slot"
         const val DECOY_KEY = "decoy.key"
         const val FAILURES = "lockout.failures"
+        const val STRIKES = "pin.strikes"
     }
 }

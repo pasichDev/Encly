@@ -1,7 +1,6 @@
 package com.pasich.encly.ui.screens
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -15,7 +14,6 @@ import com.pasich.encly.core.locale.AppLocales
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeType
-import com.pasich.encly.presentation.navigation.LocalDecoySession
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
 import com.pasich.encly.presentation.screen.settings.SettingsScreen
@@ -67,15 +65,20 @@ class SettingsScreensTest : ComposeScreenTest() {
     }
 
     @Test
-    fun theDecoyVaultHasNoBackupEntry() {
-        setNavScreen(viewModels(app.settingsVm()), route = NavRoutes.SettingsRoute.name) { nav ->
-            CompositionLocalProvider(LocalDecoySession provides { true }) { SettingsScreen(nav) }
-        }
+    fun theDecoyVaultListsTheSameSectionsAsTheRealOne() {
+        app.inDecoySession()
+        showSettings()
 
-        scrollToText(str(R.string.settings_privacy), ignoreCase = true)
-        scrollToText(str(R.string.settings_appearance))
-        assertEquals(0, countText(str(R.string.settings_backup), ignoreCase = true))
-        assertEquals(0, countText(str(R.string.backup_title)))
+        listOf(
+            R.string.settings_general,
+            R.string.settings_notes_and_tasks,
+            R.string.settings_privacy,
+            R.string.settings_backup,
+        ).forEach { scrollToText(str(it), ignoreCase = true) }
+        scrollToText(str(R.string.backup_title))
+        rule.onNodeWithText(str(R.string.backup_title)).performClick()
+
+        waitFor { currentRoute() == NavRoutes.BackupRoute.name }
     }
 
     @Test

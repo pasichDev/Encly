@@ -566,6 +566,7 @@
     <string name="keyboard_show">Показати клавіатуру</string>
     <string name="keyboard_hide">Сховати клавіатуру</string>
     <string name="security_erase_confirm_title">Стерти всі дані?</string>
+    <string name="security_erase_failed">Не вдалося стерти дані. Нічого не змінено.</string>
     <string name="security_erase_confirm">Стерти</string>
     <string name="subtasks_title">Підзавдання</string>
     <string name="subtask_placeholder">Підзавдання</string>

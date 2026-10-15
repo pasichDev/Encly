@@ -300,7 +300,7 @@ class SecurityManagerTest {
         val onDamagedFile = SecurityManager(prefs, VaultStore(file), seed, database, auth, biometric)
         prefs.edit().putBoolean(ONBOARDING_KEY, true).commit()
 
-        onDamagedFile.wipeAndReset()
+        assertTrue(onDamagedFile.wipeAndReset())
 
         assertFalse(file.exists())
         assertFalse(prefs.getBoolean(ONBOARDING_KEY, false))

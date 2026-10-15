@@ -139,30 +139,12 @@ private fun SecurityContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
     ) {
-        if (securityState.isDecoySession) {
-            // Nothing of the real vault: no PIN, phrase, biometric or erase entries, and no notices.
-            DecoySecurityContent(options, actions)
-        } else {
-            RealSecurityContent(securityState, options, vaultBusy, actions)
-        }
+        SecurityRows(securityState, options, vaultBusy, actions)
     }
 }
 
-/** What Security shows in the decoy vault: only the two preferences that belong to the app. */
 @Composable
-private fun DecoySecurityContent(options: SecurityOptions, actions: SecurityActions) {
-    SectionOverline(
-        text = stringResource(R.string.auth_title),
-        modifier = Modifier.padding(top = EnclyTheme.spacing.s),
-    )
-    EnclyGroup {
-        AutoLockRow(current = options.autoLock, onSelect = actions.onAutoLock)
-    }
-    PrivacySection(strictKeyboard = options.strictKeyboard, onStrictKeyboard = actions.onStrictKeyboard)
-}
-
-@Composable
-private fun RealSecurityContent(
+private fun SecurityRows(
     securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
     options: SecurityOptions,
     vaultBusy: Boolean,

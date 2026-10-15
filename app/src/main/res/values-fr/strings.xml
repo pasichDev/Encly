@@ -561,6 +561,7 @@
     <string name="keyboard_show">Afficher le clavier</string>
     <string name="keyboard_hide">Masquer le clavier</string>
     <string name="security_erase_confirm_title">Effacer toutes les données ?</string>
+    <string name="security_erase_failed">Impossible d\'effacer les données. Rien n\'a été modifié.</string>
     <string name="security_erase_confirm">Effacer</string>
     <string name="subtasks_title">Sous-tâches</string>
     <string name="subtask_placeholder">Sous-tâche</string>

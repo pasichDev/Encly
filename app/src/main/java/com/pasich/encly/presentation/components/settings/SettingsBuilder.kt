@@ -31,14 +31,12 @@ class SettingsBuilder {
         showTasks: Boolean,
         simpleEdit: Boolean,
         navigation: SettingsNavigation,
-        backupAvailable: Boolean = true,
-    ): List<SettingsCategory> = listOfNotNull(
+    ): List<SettingsCategory> = listOf(
         general(viewModel, navigation),
         notesAndTasks(viewModel, showTasks, simpleEdit),
         single(R.string.settings_privacy, R.string.security_title, R.string.security_subtitle, EnclyIcons.Shield) {
             navigation.onSecurity()
         },
-        // Backups belong to the real vault; the decoy one lists none.
         single(
             R.string.settings_backup,
             R.string.backup_title,
@@ -46,8 +44,7 @@ class SettingsBuilder {
             EnclyIcons.Download,
         ) {
             navigation.onBackup()
-        }.takeIf { backupAvailable },
-        // Import goes into whichever vault is open, so the decoy vault has it too.
+        },
         single(
             R.string.settings_import,
             R.string.import_title,

@@ -3,6 +3,7 @@ package com.pasich.encly.data.backup
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupFormat
+import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.testutil.InMemorySharedPreferences
@@ -89,6 +90,22 @@ class BackupManagerTest {
         } catch (e: BackupException) {
             assertEquals(BackupError.IO, e.error)
         }
+    }
+
+    @Test
+    fun theDecoyVaultRefusesEveryBackupStepAsAStorageError() = runTest {
+        val security = mock(SecurityManager::class.java)
+        `when`(security.isDecoySession()).thenReturn(true)
+        val decoy = BackupManager(security, InMemoryVaultDataStore(), InMemorySharedPreferences())
+        val empty = BackupPayload(exportedAt = 0, tags = emptyList(), notes = emptyList(), tasks = emptyList())
+
+        val errors = listOf(
+            runCatching { decoy.decrypt(ByteArray(1), "words".toCharArray()) },
+            runCatching { decoy.import(empty, ImportMode.MERGE) },
+            runCatching { decoy.createBackup() },
+        ).map { (it.exceptionOrNull() as BackupException).error }
+
+        assertEquals(List(3) { BackupError.IO }, errors)
     }
 
     private companion object {

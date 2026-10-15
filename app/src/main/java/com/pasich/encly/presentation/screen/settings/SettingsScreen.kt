@@ -23,7 +23,6 @@ import com.pasich.encly.presentation.components.settings.SettingsNavigation
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
-import com.pasich.encly.presentation.navigation.isDecoySession
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -40,7 +39,6 @@ fun SettingsScreen(
 
     val languageDialogVisible by settingViewState.languageDialogVisible.collectAsState()
 
-    val decoy = isDecoySession()
     val settingsBuilder = remember { SettingsBuilder() }
     val settingsCategories = settingsBuilder.buildSettingsCategories(
         viewModel = settingViewState,
@@ -54,7 +52,6 @@ fun SettingsScreen(
             onAbout = { navController?.navigate(NavRoutes.AboutRoute.name) },
             onFaq = { navController?.navigate(NavRoutes.FaqRoute.name) },
         ),
-        backupAvailable = !decoy,
     )
 
     Scaffold(

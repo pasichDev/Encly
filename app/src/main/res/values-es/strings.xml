@@ -561,6 +561,7 @@
     <string name="keyboard_show">Mostrar teclado</string>
     <string name="keyboard_hide">Ocultar teclado</string>
     <string name="security_erase_confirm_title">¿Borrar todos los datos?</string>
+    <string name="security_erase_failed">No se pudieron borrar los datos. No se ha cambiado nada.</string>
     <string name="security_erase_confirm">Borrar</string>
     <string name="subtasks_title">Subtareas</string>
     <string name="subtask_placeholder">Subtarea</string>
