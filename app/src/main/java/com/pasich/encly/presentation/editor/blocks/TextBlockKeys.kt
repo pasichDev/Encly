@@ -2,8 +2,14 @@ package com.pasich.encly.presentation.editor.blocks
 
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import com.pasich.encly.presentation.editor.BlockActions
+import com.pasich.encly.presentation.editor.SlashActions
 import com.pasich.encly.presentation.editor.focus.KeyboardUtils
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 
@@ -17,7 +23,7 @@ import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 internal fun Modifier.textBlockKeys(state: TextFieldState, blockActions: BlockActions): Modifier =
     onPreviewKeyEvent { event ->
         val selection = state.selection
-        KeyboardUtils.handleKeyEvent(
+        slashKey(event, blockActions.slash) || KeyboardUtils.handleKeyEvent(
             event = event,
             text = state.text,
             // A selection is not a cursor at either end: the field moves within it.
@@ -31,3 +37,19 @@ internal fun Modifier.textBlockKeys(state: TextFieldState, blockActions: BlockAc
             },
         )
     }
+
+/**
+ * Keys for a slash picker that is showing on this paragraph: Down and Up move its highlight,
+ * Escape closes it (the "/" stays as typed). Enter is the field's own line break, which the editor
+ * turns into picking the highlighted command. Everything else, and every key while no picker
+ * shows, is left to the field.
+ */
+private fun slashKey(event: KeyEvent, slash: SlashActions): Boolean {
+    val shown = slash.menu.value?.takeIf { it.blockId == slash.blockId && it.isShown } != null
+    return shown && event.type == KeyEventType.KeyDown && when (event.key) {
+        Key.DirectionDown -> true.also { slash.moveHighlight(1) }
+        Key.DirectionUp -> true.also { slash.moveHighlight(-1) }
+        Key.Escape -> true.also { slash.dismiss() }
+        else -> false
+    }
+}

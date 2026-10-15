@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.screen.editnote
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -39,7 +41,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
-import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
 import com.pasich.encly.presentation.components.editNote.NoteOverline
 import com.pasich.encly.presentation.components.editNote.TitleField
@@ -47,10 +48,13 @@ import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
+import com.pasich.encly.presentation.designsystem.blockGap
+import com.pasich.encly.presentation.designsystem.isCompact
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheet
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheetAction
 import com.pasich.encly.presentation.editor.EditorBlocksHost
+import com.pasich.encly.presentation.editor.FindHighlights
 import com.pasich.encly.presentation.editor.editorBlocks
 import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
@@ -98,15 +102,22 @@ fun EditNoteScreen(
     val overlays = rememberEditorOverlays()
     val listState = rememberLazyListState()
     val focusRegistry = rememberBlockFocusRegistry(viewModel.blocks)
-    val host = remember(viewModel, focusRegistry) {
-        EditorBlocksHost(viewModel, focusRegistry) { type, block -> overlays.blockSheet.open(type, block.id) }
+    val findState = viewModel.find.collectAsState()
+    val highlights = remember(findState) { FindHighlights(findState) }
+    val host = remember(viewModel, focusRegistry, highlights) {
+        EditorBlocksHost(viewModel, focusRegistry, highlights) { type, block ->
+            overlays.blockSheet.open(type, block.id)
+        }
     }
     val titleFocus = remember { FocusRequester() }
 
     SaveWhenPaused()
-    CarryOutFocusRequests(focusRegistry, listState, blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0)
+    val blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0
+    CarryOutFocusRequests(focusRegistry, listState, blocksStart = blocksStart)
+    ScrollToFindMatch(listState, blocksStart)
     FocusNewNoteTitle(titleFocus)
     BackHandler { exits.back() }
+    CloseFindOrSlashOnBack()
     EditorOverlays(overlays, exits, onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) })
 
     EditNoteSettingsProvider(
@@ -154,21 +165,25 @@ private fun EditorScaffold(
 ) {
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+    val findOpen by rememberFindOpen()
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.onPreviewKeyEvent { event -> viewModel.handleFindKey(event) },
         containerColor = MaterialTheme.colorScheme.surface,
         // Status and navigation bars, a display cutout and the keyboard all stay clear of text.
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
-            EditorTopBar(
-                state = EditorBarState(
-                    isReadTrashOnly = viewModel.isReadTrashOnly,
-                    lockEditor = lockEditor,
-                    canToggleLock = !contentLoadFailed,
-                ),
-                listState = listState,
-                actions = actions,
-            )
+            Column {
+                EditorTopBar(
+                    state = EditorBarState(
+                        isReadTrashOnly = viewModel.isReadTrashOnly,
+                        lockEditor = lockEditor,
+                        canToggleLock = !contentLoadFailed,
+                    ),
+                    listState = listState,
+                    actions = actions,
+                )
+                if (findOpen) EditorFindBar()
+            }
         },
         bottomBar = {
             if (!lockEditor && !viewModel.isReadTrashOnly) NoteBottomBar(simpleEdit = LocalSimpleEdit.current)
@@ -239,6 +254,8 @@ private fun EditorOverlays(
 
                 EditNoteBottomSheetAction.DUPLICATE -> exits.duplicate()
 
+                EditNoteBottomSheetAction.FIND -> viewModel.openFind()
+
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
             }
         },
@@ -254,11 +271,12 @@ private fun EditorContent(
     modifier: Modifier = Modifier,
     viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
-    val compactText = LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT
-    val headerGap = if (compactText) EnclyTheme.spacing.labelGap else 0.dp
+    val spacing = LocalNoteLineSpacing.current
+    val headerGap = if (spacing.isCompact) EnclyTheme.spacing.labelGap else 0.dp
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val editingLinkIds by viewModel.editingLinkIds.collectAsState()
+    val templatesOffered by viewModel.templatesOffered.collectAsState()
     // Only whether it is loading: a save changing the status must not recompose the list.
     val status = viewModel.status.collectAsState()
     val loading by remember(status) { derivedStateOf { status.value == SaveStatusNote.LOADING } }
@@ -267,7 +285,7 @@ private fun EditorContent(
         LazyColumn(
             state = listState,
             // Default block frames and this gap give 14 dp between blocks (spec §4.4).
-            verticalArrangement = Arrangement.spacedBy(if (compactText) 0.dp else EnclyTheme.spacing.labelGap),
+            verticalArrangement = Arrangement.spacedBy(spacing.blockGap(EnclyTheme.spacing.labelGap)),
             contentPadding = PaddingValues(top = EnclyTheme.spacing.xxs),
             modifier = modifier.fillMaxSize(),
         ) {
@@ -300,7 +318,13 @@ private fun EditorContent(
                     )
                 }
             }
-            editorBlocks(host, viewModel.blocks, isLocked = lockEditor, editingLinkIds = editingLinkIds)
+            editorBlocks(
+                host,
+                viewModel.blocks,
+                isLocked = lockEditor,
+                editingLinkIds = editingLinkIds,
+                afterBlocks = if (templatesOffered) ({ TemplateChooser() }) else null,
+            )
         }
     }
 }

@@ -151,6 +151,7 @@
     <string name="note_line_spacing_title">Interlinea</string>
     <string name="note_line_spacing_default">Predefinita</string>
     <string name="note_line_spacing_compact">Compatta</string>
+    <string name="note_line_spacing_comfortable">Ampia</string>
     <string name="font_style_cozy">Editoriale</string>
     <string name="font_style_modern">Moderno</string>
     <string name="font_style_tech">Tecnico</string>
@@ -579,4 +580,30 @@
         <item quantity="many">%1$d di %2$d sottoattività completate</item>
         <item quantity="other">%1$d di %2$d sottoattività completate</item>
     </plurals>
+    <string name="slash_menu_title">Inserisci blocco</string>
+    <string name="find_in_note">Cerca nella nota</string>
+    <string name="find_placeholder">Cerca in questa nota</string>
+    <string name="find_count">%1$d di %2$d</string>
+    <string name="find_no_matches">Nessun risultato</string>
+    <string name="find_next">Risultato successivo</string>
+    <string name="find_previous">Risultato precedente</string>
+    <string name="find_close">Chiudi ricerca</string>
+    <string name="block_duplicate">Duplica blocco</string>
+    <string name="template_start">Inizia da un modello</string>
+    <string name="template_blank">Vuota</string>
+    <string name="template_meeting">Riunione</string>
+    <string name="template_journal">Diario</string>
+    <string name="template_project">Note di progetto</string>
+    <string name="template_attendees">Partecipanti</string>
+    <string name="template_agenda">Ordine del giorno</string>
+    <string name="template_notes">Note</string>
+    <string name="template_action_items">Azioni da svolgere</string>
+    <string name="template_journal_today">Oggi</string>
+    <string name="template_journal_gratitude">Gratitudine</string>
+    <string name="template_journal_tomorrow">Domani</string>
+    <string name="template_project_goal">Obiettivo</string>
+    <string name="template_project_tasks">Attività</string>
+    <string name="template_project_decisions">Decisioni</string>
+    <string name="template_project_questions">Domande aperte</string>
+    <string name="template_checklist_todo">Da fare</string>
 </resources>

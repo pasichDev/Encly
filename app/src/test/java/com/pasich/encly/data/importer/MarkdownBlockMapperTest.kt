@@ -62,4 +62,40 @@ class MarkdownBlockMapperTest {
         )
         assertEquals(emptyList<String>(), blocks("\n\n  \n"))
     }
+
+    // --- paste mode: the same line rules, nothing rewritten --------------------------------------------
+
+    private fun pasted(markdown: String) = describe(MarkdownBlockMapper.pasteBlocks(markdown))
+
+    @Test
+    fun aPasteReadsTheSameMarksAsAnImport() {
+        val markdown = "# A\n\nintro\nstill intro\n\n- [x] a\n- b\n1. c\n\n> q1\n> q2\n\n---"
+        assertEquals(blocks(markdown), pasted(markdown))
+    }
+
+    @Test
+    fun aPasteKeepsHtmlWikiLinksCalloutMarkersAndFenceLines() {
+        assertEquals(
+            listOf("text:use <div>here</div> &amp; [[Note|alias]]"),
+            pasted("use <div>here</div> &amp; [[Note|alias]]"),
+        )
+        assertEquals(listOf("quote:[!note] Title\nbody"), pasted("> [!note] Title\n> body"))
+        assertEquals(listOf("text:```kotlin\nval x = <b>1</b>\n```"), pasted("```kotlin\nval x = <b>1</b>\n```"))
+    }
+
+    @Test
+    fun aPasteNeedsAtMostThreeDigitsForANumberedList() {
+        assertEquals(listOf("text:2024. Report"), pasted("2024. Report"))
+        assertEquals(listOf("number:[ ] one"), pasted("12. one"))
+        // An import keeps its longer numbers as items.
+        assertEquals(listOf("number:[ ] Report"), blocks("2024. Report"))
+    }
+
+    @Test
+    fun aPasteCanLetTheCallerClaimALineAsABlockOfItsOwn() {
+        val claimed = MarkdownBlockMapper.pasteBlocks("before\nhttps://x.org\nafter") { line ->
+            ImportBlocks.quote(line).takeIf { line.startsWith("https://") }
+        }
+        assertEquals(listOf("text:before", "quote:https://x.org", "text:after"), describe(claimed))
+    }
 }

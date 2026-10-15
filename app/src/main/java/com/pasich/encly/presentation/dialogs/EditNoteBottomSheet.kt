@@ -21,6 +21,7 @@ import com.pasich.encly.presentation.viewmodel.enclyViewModel
 enum class EditNoteBottomSheetAction {
     CLOSE_NO_SAVE,
     DUPLICATE,
+    FIND,
     TRASH,
 }
 
@@ -47,17 +48,16 @@ fun EditNoteBottomSheet(
                 onSizeChange = { newSize -> viewModel.updateFontSize(newSize) },
             )
             SectionOverline(stringResource(R.string.note_line_spacing_title))
-            EnclyRadioRow(
-                title = stringResource(R.string.note_line_spacing_default),
-                selected = lineSpacing == NoteLineSpacing.DEFAULT,
-                onClick = { viewModel.updateNoteLineSpacing(NoteLineSpacing.DEFAULT) },
-            )
-            EnclyRadioRow(
-                title = stringResource(R.string.note_line_spacing_compact),
-                selected = lineSpacing == NoteLineSpacing.COMPACT,
-                onClick = { viewModel.updateNoteLineSpacing(NoteLineSpacing.COMPACT) },
-            )
+            LineSpacingChoices(selected = lineSpacing, onSelect = viewModel::updateNoteLineSpacing)
             EnclyGroupDivider()
+            EnclySheetRow(
+                title = stringResource(R.string.find_in_note),
+                icon = EnclyIcons.Search,
+                onClick = {
+                    onAction(EditNoteBottomSheetAction.FIND)
+                    onDismiss()
+                },
+            )
             EnclySheetRow(
                 title = stringResource(id = R.string.duplicate),
                 icon = EnclyIcons.Duplicate,
@@ -85,5 +85,23 @@ fun EditNoteBottomSheet(
                 },
             )
         }
+    }
+}
+
+/** The reading densities in display order; the enum's own order is fixed by what is stored. */
+private val lineSpacingOrder = listOf(
+    NoteLineSpacing.COMPACT to R.string.note_line_spacing_compact,
+    NoteLineSpacing.DEFAULT to R.string.note_line_spacing_default,
+    NoteLineSpacing.COMFORTABLE to R.string.note_line_spacing_comfortable,
+)
+
+@Composable
+private fun LineSpacingChoices(selected: NoteLineSpacing, onSelect: (NoteLineSpacing) -> Unit) {
+    lineSpacingOrder.forEach { (spacing, label) ->
+        EnclyRadioRow(
+            title = stringResource(label),
+            selected = selected == spacing,
+            onClick = { onSelect(spacing) },
+        )
     }
 }

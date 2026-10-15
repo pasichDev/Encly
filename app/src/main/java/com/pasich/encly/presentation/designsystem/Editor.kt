@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -107,8 +108,8 @@ private val BlockInset = 4.dp
  * The inner padding of one editor block, 4/8. The editor column sits [BlockBleed] inside the
  * gutter, so text lines up with the title. No outline while editing: the caret is the focus mark.
  */
-fun Modifier.editorBlockFrame(compactText: Boolean = false): Modifier =
-    padding(horizontal = BlockBleed, vertical = if (compactText) 0.dp else BlockInset)
+fun Modifier.editorBlockFrame(verticalInset: Dp? = null): Modifier =
+    padding(horizontal = BlockBleed, vertical = verticalInset ?: BlockInset)
 
 /** A thin vertical rule between groups of toolbar buttons. */
 @Composable
@@ -119,3 +120,6 @@ fun EnclyToolbarRule(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.outlineVariant),
     )
 }
+
+/** Room the editor toolbar takes above the keyboard; floating menus keep clear of it. */
+val EnclyToolbarReserve = 72.dp

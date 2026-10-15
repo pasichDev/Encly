@@ -138,14 +138,20 @@ private fun ValidMark() {
     }
 }
 
-/** The notes search field: 48 dp, fully round, `surfaceContainer`, no border. */
+/**
+ * The notes search field: 48 dp, fully round, `surfaceContainer`, no border. The keyboard's Search
+ * action runs [onSubmit], else puts the keyboard away; [fieldModifier] reaches the text field itself
+ * (to focus it).
+ */
 @Composable
 fun EnclySearchField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
     trailing: @Composable (() -> Unit)? = null,
+    onSubmit: (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val keyboard = LocalSoftwareKeyboardController.current
@@ -162,13 +168,7 @@ fun EnclySearchField(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.padding(
                 start = EnclyTheme.spacing.m,
-                end = if (trailing ==
-                    null
-                ) {
-                    EnclyTheme.spacing.m
-                } else {
-                    4.dp
-                },
+                end = if (trailing == null) EnclyTheme.spacing.m else 4.dp,
             ),
         ) {
             Icon(
@@ -185,9 +185,10 @@ fun EnclySearchField(
                 cursorBrush = SolidColor(colors.primary),
                 // Results filter as the user types; Search only puts the keyboard away.
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                keyboardActions = KeyboardActions(onSearch = { onSubmit?.invoke() ?: keyboard?.hide() }),
                 modifier = Modifier
                     .weight(1f)
+                    .then(fieldModifier)
                     .semantics { contentDescription = searchDescription },
                 decorationBox = { inner ->
                     Box {

@@ -7,6 +7,9 @@ import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.editor.state.FocusRequest
 import com.pasich.encly.presentation.editor.state.LineBreak
 import com.pasich.encly.presentation.editor.state.Shortcut
+import com.pasich.encly.presentation.editor.state.SlashCommand
+import com.pasich.encly.presentation.editor.state.SlashMenu
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * What a block composable can do. Content edits go through [onTextChanged],
@@ -61,9 +64,45 @@ interface BlockActions {
      */
     fun registerFieldsFocusTarget(requestFocus: (FocusRequest) -> Unit): () -> Unit
 
+    /** What Find in this note tints in this block's fields. */
+    val highlights: FindHighlights
+
+    /** The slash picker of this paragraph. */
+    val slash: SlashActions
+
+    /**
+     * This paragraph now reads [text]. [started] when a "/" was just typed into the empty paragraph;
+     * otherwise it keeps an open slash picker in step with the text.
+     */
+    fun onSlashTyped(text: String, started: Boolean)
+
     /** Focuses the next block; false when this is the last one. */
     fun navigateToNext(): Boolean
 
     /** Focuses the focusable block above; false when there is none. */
     fun navigateToPrevious(): Boolean
+}
+
+/** What a paragraph's slash picker can do. The editor decides whether it may open (Simple Edit, read-only). */
+interface SlashActions {
+    /** The paragraph this picker belongs to: the menu shows only when it is open on this one. */
+    val blockId: String
+
+    /** The picker as it is now; null while none is open on any paragraph. */
+    val menu: StateFlow<SlashMenu?>
+
+    /** The "/" is committed text: the picker may show. */
+    fun commit()
+
+    /** Turns this paragraph into [command]'s block. */
+    fun select(command: SlashCommand)
+
+    /** Closes the picker; the typed text stays. */
+    fun dismiss()
+
+    /** Moves the highlight [delta] places. */
+    fun moveHighlight(delta: Int)
+
+    /** The localized labels the query is matched against. */
+    fun setLabels(labels: Map<SlashCommand, String>)
 }

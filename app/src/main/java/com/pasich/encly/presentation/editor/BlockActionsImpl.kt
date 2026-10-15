@@ -9,7 +9,10 @@ import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.editor.state.FocusRequest
 import com.pasich.encly.presentation.editor.state.LineBreak
 import com.pasich.encly.presentation.editor.state.Shortcut
+import com.pasich.encly.presentation.editor.state.SlashCommand
+import com.pasich.encly.presentation.editor.state.SlashMenu
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Block actions bound to one [block]. Its position is looked up when an action runs, so an
@@ -21,6 +24,7 @@ internal class BlockActionsImpl(
     private val block: Block,
     private val viewModel: EditNoteViewModel,
     private val focusRegistry: BlockFocusRegistry,
+    override val highlights: FindHighlights,
 ) : BlockActions {
     private val index: Int get() = viewModel.indexOfBlock(block)
 
@@ -71,6 +75,26 @@ internal class BlockActionsImpl(
 
     override fun registerFieldsFocusTarget(requestFocus: (FocusRequest) -> Unit): () -> Unit =
         focusRegistry.registerFieldsFocusTarget(block.id, requestFocus)
+
+    override val slash: SlashActions = object : SlashActions {
+        override val blockId: String get() = block.id
+
+        override val menu: StateFlow<SlashMenu?> get() = viewModel.slashPicker.menu
+
+        override fun commit() = viewModel.slashPicker.commit()
+
+        override fun select(command: SlashCommand) {
+            viewModel.applySlash(block, command)
+        }
+
+        override fun dismiss() = viewModel.slashPicker.dismiss()
+
+        override fun moveHighlight(delta: Int) = viewModel.slashPicker.moveHighlight(delta)
+
+        override fun setLabels(labels: Map<SlashCommand, String>) = viewModel.slashPicker.setLabels(labels)
+    }
+
+    override fun onSlashTyped(text: String, started: Boolean) = viewModel.onSlashTyped(block, text, started)
 
     override fun navigateToNext(): Boolean =
         viewModel.moveFocusTo(focusRegistry.nextBlock(block.id), focusRegistry, cursorToEnd = false)

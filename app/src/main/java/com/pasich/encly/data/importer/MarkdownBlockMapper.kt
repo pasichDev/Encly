@@ -25,6 +25,7 @@ object MarkdownBlockMapper {
     private val WIKI_LINK = Regex("""!?\[\[([^\]|\n]+)(?:\|([^\]\n]+))?]]""")
     private val BULLET = Regex("""^[ \t]*[-*+][ \t]+(.*)$""")
     private val NUMBER = Regex("""^[ \t]*\d{1,9}[.)][ \t]+(.*)$""")
+    private val PASTED_NUMBER = Regex("""^[ \t]*\d{1,3}[.)][ \t]+(.*)$""")
     private val QUOTE = Regex("""^ {0,3}>[ \t]?(.*)$""")
     private val SEPARATOR = Regex("""^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$""")
     private val FENCE = Regex("""^ {0,3}(```|~~~).*$""")
@@ -32,6 +33,18 @@ object MarkdownBlockMapper {
     private val AUTOLINK = Regex("""<((?:https?://|mailto:)[^\s<>]+|[^\s<>@/]+@[^\s<>@/]+)>""")
 
     fun toBlocks(markdown: String): List<Block> = Builder().apply { markdown.lines().forEach(::line) }.finish()
+
+    /**
+     * The same line rules for text the user pastes into the editor, where nothing may be
+     * rewritten: HTML, wiki links and callout markers stay as typed, fence lines stay in their
+     * code paragraph, and a number only starts a list when it has up to three digits (so
+     * "2024. Report" stays text). [claim] may take a line whole as a block of its own (a lone web
+     * address); it runs before every other rule. [toBlocks] is unchanged.
+     */
+    internal fun pasteBlocks(text: String, claim: (String) -> Block? = { null }): List<Block> =
+        Builder(PasteRules(claim)).apply { text.lines().forEach(::line) }.finish()
+
+    private class PasteRules(val claim: (String) -> Block?)
 
     /** [text] with HTML removed outside code spans. */
     internal fun inline(text: String): String {
@@ -50,7 +63,7 @@ object MarkdownBlockMapper {
         WIKI_LINK.replace(text) { it.groupValues[2].ifEmpty { it.groupValues[1] } },
     )
 
-    private class Builder {
+    private class Builder(private val paste: PasteRules? = null) {
         private val blocks = ArrayList<Block>()
         private val paragraph = ArrayList<String>()
         private val quote = ArrayList<String>()
@@ -62,13 +75,17 @@ object MarkdownBlockMapper {
         fun line(raw: String) {
             val fence = FENCE.matches(raw)
             when {
-                inFence && fence -> closeFence()
+                inFence && fence -> {
+                    if (paste != null) code += raw
+                    closeFence()
+                }
 
                 inFence -> code += raw
 
                 fence -> {
                     flushAll()
                     inFence = true
+                    if (paste != null) code += raw
                 }
 
                 raw.isBlank() -> {
@@ -92,9 +109,15 @@ object MarkdownBlockMapper {
             val check = CHECK.matchEntire(raw)
             val glyph = GLYPH_ITEM.matchEntire(raw)
             val bullet = BULLET.matchEntire(raw)
-            val number = NUMBER.matchEntire(raw)
+            val number = (if (paste != null) PASTED_NUMBER else NUMBER).matchEntire(raw)
             val quoted = QUOTE.matchEntire(raw)
+            val claimed = paste?.claim?.invoke(raw)
             when {
+                claimed != null -> {
+                    flushAll()
+                    blocks += claimed
+                }
+
                 SEPARATOR.matches(raw) -> {
                     flushAll()
                     blocks += Block.SeparatorBlock()
@@ -103,7 +126,7 @@ object MarkdownBlockMapper {
                 heading != null -> {
                     flushAll()
                     val level = heading.groupValues[1].length
-                    blocks += ImportBlocks.heading(inline(heading.groupValues[2]), level)
+                    blocks += ImportBlocks.heading(readable(heading.groupValues[2]), level)
                 }
 
                 check != null -> item(BlockType.LIST_CHECK, check.groupValues[2], check.groupValues[1] != " ")
@@ -117,29 +140,41 @@ object MarkdownBlockMapper {
                 quoted != null -> {
                     flushParagraph()
                     flushList()
-                    quote += inline(CALLOUT.replaceFirst(quoted.groupValues[1], ""))
+                    quote +=
+                        readable(
+                            if (paste ==
+                                null
+                            ) {
+                                CALLOUT.replaceFirst(quoted.groupValues[1], "")
+                            } else {
+                                quoted.groupValues[1]
+                            },
+                        )
                 }
 
                 // Indented text right after a list item continues that item.
                 listType != null && raw.first().isWhitespace() -> {
                     val last = items.removeAt(items.lastIndex)
-                    items += last.copy(value = (last.value + " " + inline(raw.trim())).trim())
+                    items += last.copy(value = (last.value + " " + readable(raw.trim())).trim())
                 }
 
                 else -> {
                     flushList()
                     flushQuote()
-                    paragraph += inline(raw.trimEnd())
+                    paragraph += readable(raw.trimEnd())
                 }
             }
         }
+
+        /** [text] as the importer reads it; a paste keeps it as it is. */
+        private fun readable(text: String): String = if (paste == null) inline(text) else text
 
         private fun item(type: BlockType, text: String, checked: Boolean) {
             flushParagraph()
             flushQuote()
             if (listType != type) flushList()
             listType = type
-            items += ItemListBlock(value = inline(text).trim(), isCheck = checked)
+            items += ItemListBlock(value = readable(text).trim(), isCheck = checked)
         }
 
         private fun closeFence() {

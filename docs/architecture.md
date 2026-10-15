@@ -52,6 +52,16 @@ Note editor writes are serialized by its ViewModel and must complete before navi
 success. Notes, tags and tasks remain local Room records inside the encrypted database. Room
 Flows drive list state; the active note list is derived from selected tag and sort state.
 
+The block editor keeps its logic out of the composables: `BlockEditorState` owns the blocks, the
+undo history and the focus; the slash picker (`SlashPicker`), Find in this note (`NoteFind`),
+Smart Paste, block actions and templates are plain state or extension functions beside it, tested
+on the JVM. Find, the slash picker and the template offer are transient UI state in the editor
+ViewModel: never written to the note, to `SavedStateHandle` or to disk, and cleared when the vault
+locks. They use the existing block kinds only, so the stored `Note.value` format is unchanged and
+a note is saved only when the user edits it. Smart Paste reads pasted plain text through the
+importer's `MarkdownBlockMapper` in its paste mode (nothing rewritten); the reading density
+(`NoteLineSpacing`) is presentation only.
+
 ## Navigation
 
 Startup resolves vault state before rendering the main graph. Locked sessions route to the lock

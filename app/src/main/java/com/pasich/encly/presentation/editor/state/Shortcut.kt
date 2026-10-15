@@ -18,7 +18,6 @@ private val NUMBER_MARK = Regex("^\\d{1,3}[.)] ")
 private val BULLET_MARKS = listOf("- ", "* ", "• ")
 private val OPEN_CHECK_MARKS = listOf("[] ", "[ ] ", "- [ ] ", "- [] ")
 private val DONE_CHECK_MARKS = listOf("[x] ", "[X] ", "- [x] ", "- [X] ")
-private val RULES = setOf("---", "***", "___")
 private const val QUOTE_MARK = "> "
 private const val TYPED_RULE = "---"
 
@@ -77,37 +76,6 @@ private val LONE_WEB_ADDRESS = Regex("^https?://[^\\s\\\\]+$", RegexOption.IGNOR
 
 /** Whether [line] is a web address and nothing else: pasted alone, it becomes a link card. */
 fun isLoneWebAddress(line: String): Boolean = LONE_WEB_ADDRESS.matches(line.trim())
-
-/**
- * Pasted [lines] as blocks: marks become their blocks, a lone web address a link, a rule a
- * separator, anything else a paragraph. Blank lines only separate paragraphs, and consecutive
- * items of one kind of list become one list.
- */
-fun pastedBlocks(lines: List<String>): List<Block> {
-    val result = mutableListOf<Block>()
-    for (line in lines) {
-        if (line.isBlank()) continue
-        val block = pastedBlock(line)
-        val previous = result.lastOrNull()
-        if (block is Block.ListBlock && previous is Block.ListBlock && previous.blockType == block.blockType) {
-            previous.items.value += block.items.value
-        } else {
-            result += block
-        }
-    }
-    return result
-}
-
-private fun pastedBlock(line: String): Block {
-    val trimmed = line.trim()
-    val shortcut = leadingShortcut(line)
-    return when {
-        trimmed in RULES -> Block.SeparatorBlock()
-        isLoneWebAddress(trimmed) -> Block.LinkBlock(MutableStateFlow(LinkDataBlock(title = "", url = trimmed)))
-        shortcut != null -> shortcutBlock(shortcut, line.removePrefix(shortcut.marker))
-        else -> Block.TextBlock(MutableStateFlow(line))
-    }
-}
 
 /** A pasted line as a list item's text: without a list mark of its own. */
 fun listItemText(line: String): ItemListBlock {

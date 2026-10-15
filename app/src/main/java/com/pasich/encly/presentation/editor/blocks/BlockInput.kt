@@ -30,6 +30,10 @@ internal sealed interface BlockField {
  * the text before it. A paragraph also turns into a heading, list, quote or separator when its
  * mark is typed at its start, and into a link card when a web address alone is pasted into it.
  *
+ * A "/" typed into an empty paragraph opens the slash picker ([BlockActions.onSlashTyped]); it
+ * reacts to committed edits only: the picker is shown once the "/" is no longer under IME
+ * composition, and nothing is converted until the user picks a command.
+ *
  * The editor applies each rule at once, in one undo step. When it declines (simple editing),
  * the line break stays in the text.
  */
@@ -57,9 +61,13 @@ internal class BlockInput(private val field: BlockField, private val actions: ()
                 }
             }
 
-            field != BlockField.Paragraph || diff.removed.isNotEmpty() -> Unit
+            field != BlockField.Paragraph -> Unit
 
-            else -> onParagraphInsert(old, new, cursor, diff.inserted)
+            else -> {
+                if (diff.removed.isEmpty()) onParagraphInsert(old, new, cursor, diff.inserted)
+                // An open slash picker follows every edit, typed or deleted.
+                actions().onSlashTyped(new, started = old.isEmpty() && new == SLASH && cursor == 1)
+            }
         }
     }
 
@@ -74,3 +82,6 @@ internal class BlockInput(private val field: BlockField, private val actions: ()
         }
     }
 }
+
+/** The character that opens the slash picker in an empty paragraph. */
+private const val SLASH = "/"

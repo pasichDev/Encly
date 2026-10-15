@@ -74,6 +74,7 @@ internal fun EditorBlockSheets(
     fun onAction(action: ActionBlockDialog) {
         val link = (block as? Block.LinkBlock)?.block?.value?.url.orEmpty()
         when (action) {
+            ActionBlockDialog.Duplicate -> viewModel.duplicateBlock(block)
             ActionBlockDialog.Delete -> viewModel.removeBlock(block, BlockRemoveAction.REMOVE)
             is ActionBlockDialog.Move -> viewModel.moveBlock(action.move == 1)
             ActionBlockDialog.OpenLink -> openNoteLink(context, link)

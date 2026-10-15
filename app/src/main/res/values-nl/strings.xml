@@ -151,6 +151,7 @@
     <string name="note_line_spacing_title">Regelafstand</string>
     <string name="note_line_spacing_default">Standaard</string>
     <string name="note_line_spacing_compact">Compact</string>
+    <string name="note_line_spacing_comfortable">Ruim</string>
     <string name="font_style_cozy">Redactioneel</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technisch</string>
@@ -573,4 +574,30 @@
         <item quantity="one">%1$d van %2$d subtaak voltooid</item>
         <item quantity="other">%1$d van %2$d subtaken voltooid</item>
     </plurals>
+    <string name="slash_menu_title">Blok invoegen</string>
+    <string name="find_in_note">Zoeken in notitie</string>
+    <string name="find_placeholder">Zoeken in deze notitie</string>
+    <string name="find_count">%1$d van %2$d</string>
+    <string name="find_no_matches">Geen resultaten</string>
+    <string name="find_next">Volgend resultaat</string>
+    <string name="find_previous">Vorig resultaat</string>
+    <string name="find_close">Zoeken sluiten</string>
+    <string name="block_duplicate">Blok dupliceren</string>
+    <string name="template_start">Beginnen met een sjabloon</string>
+    <string name="template_blank">Leeg</string>
+    <string name="template_meeting">Vergadering</string>
+    <string name="template_journal">Dagboek</string>
+    <string name="template_project">Projectnotities</string>
+    <string name="template_attendees">Deelnemers</string>
+    <string name="template_agenda">Agenda</string>
+    <string name="template_notes">Notities</string>
+    <string name="template_action_items">Actiepunten</string>
+    <string name="template_journal_today">Vandaag</string>
+    <string name="template_journal_gratitude">Dankbaarheid</string>
+    <string name="template_journal_tomorrow">Morgen</string>
+    <string name="template_project_goal">Doel</string>
+    <string name="template_project_tasks">Taken</string>
+    <string name="template_project_decisions">Beslissingen</string>
+    <string name="template_project_questions">Open vragen</string>
+    <string name="template_checklist_todo">Te doen</string>
 </resources>

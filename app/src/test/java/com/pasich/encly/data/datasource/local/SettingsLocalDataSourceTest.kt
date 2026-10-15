@@ -55,6 +55,25 @@ class SettingsLocalDataSourceTest {
     }
 
     @Test
+    fun storedLineSpacingValuesKeepTheirMeaning() = runTest {
+        // The preference is the enum's ordinal: 0 and 1 were written by earlier versions.
+        assertEquals(0, NoteLineSpacing.DEFAULT.ordinal)
+        assertEquals(1, NoteLineSpacing.COMPACT.ordinal)
+        assertEquals(2, NoteLineSpacing.COMFORTABLE.ordinal)
+        val expected = mapOf(
+            0 to NoteLineSpacing.DEFAULT,
+            1 to NoteLineSpacing.COMPACT,
+            2 to NoteLineSpacing.COMFORTABLE,
+        )
+        expected.forEach { (stored, spacing) ->
+            dataStore.edit { it[intPreferencesKey(NOTE_LINE_SPACING)] = stored }
+            assertEquals(spacing, source.noteLineSpacingFlow.first())
+        }
+        source.setNoteLineSpacing(NoteLineSpacing.COMFORTABLE)
+        assertEquals(2, dataStore.data.first()[intPreferencesKey(NOTE_LINE_SPACING)])
+    }
+
+    @Test
     fun appearanceRoundTrips() = runTest {
         source.setThemePalette(ThemePalette.GRAPHITE)
         source.setThemeType(ThemeType.DARK)

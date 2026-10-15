@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.presentation.designsystem.lineHeight
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
@@ -41,16 +41,17 @@ fun TextBlock(
     showPlaceholder: Boolean = true,
 ) {
     val fontStyles = rememberFontStyles()
-    val compact = LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT
+    val spacing = LocalNoteLineSpacing.current
     val state = rememberBlockTextFieldState(block.text, blockActions)
     val style = MaterialTheme.typography.bodyLarge.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = fontStyles.sizes.textBlock,
         fontFamily = fontStyles.families.body,
-        lineHeight = if (compact) fontStyles.sizes.textBlock else MaterialTheme.typography.bodyLarge.lineHeight,
+        lineHeight = spacing.lineHeight(fontStyles.sizes.textBlock, MaterialTheme.typography.bodyLarge.lineHeight),
     )
     val actions by rememberUpdatedState(blockActions)
     val input = remember { BlockInput(BlockField.Paragraph) { actions } }
+    val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
 
     BasicTextField(
         state = state,
@@ -60,11 +61,14 @@ fun TextBlock(
         textStyle = style,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = WritingKeyboard,
+        onTextLayout = highlight.onTextLayout,
         modifier = modifier
             .fillMaxWidth()
+            .then(highlight.modifier)
             .textBlockKeys(state, blockActions),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
+                SlashMenuPopup(field = state, slash = blockActions.slash)
                 if (showPlaceholder && state.text.isEmpty()) {
                     Text(
                         text = stringResource(block.placeholder),

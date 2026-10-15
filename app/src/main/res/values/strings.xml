@@ -167,6 +167,7 @@
     <string name="note_line_spacing_title">Line spacing</string>
     <string name="note_line_spacing_default">Default</string>
     <string name="note_line_spacing_compact">Compact</string>
+    <string name="note_line_spacing_comfortable">Comfortable</string>
     <string name="font_style_cozy">Editorial</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technical</string>
@@ -590,4 +591,30 @@
         <item quantity="one">%1$d of %2$d sub-task done</item>
         <item quantity="other">%1$d of %2$d sub-tasks done</item>
     </plurals>
+    <string name="slash_menu_title">Insert block</string>
+    <string name="find_in_note">Find in note</string>
+    <string name="find_placeholder">Find in this note</string>
+    <string name="find_count">%1$d of %2$d</string>
+    <string name="find_no_matches">No matches</string>
+    <string name="find_next">Next match</string>
+    <string name="find_previous">Previous match</string>
+    <string name="find_close">Close find</string>
+    <string name="block_duplicate">Duplicate block</string>
+    <string name="template_start">Start from template</string>
+    <string name="template_blank">Blank</string>
+    <string name="template_meeting">Meeting</string>
+    <string name="template_journal">Journal</string>
+    <string name="template_project">Project notes</string>
+    <string name="template_attendees">Attendees</string>
+    <string name="template_agenda">Agenda</string>
+    <string name="template_notes">Notes</string>
+    <string name="template_action_items">Action items</string>
+    <string name="template_journal_today">Today</string>
+    <string name="template_journal_gratitude">Gratitude</string>
+    <string name="template_journal_tomorrow">Tomorrow</string>
+    <string name="template_project_goal">Goal</string>
+    <string name="template_project_tasks">Tasks</string>
+    <string name="template_project_decisions">Decisions</string>
+    <string name="template_project_questions">Open questions</string>
+    <string name="template_checklist_todo">To do</string>
 </resources>

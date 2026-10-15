@@ -16,7 +16,19 @@ IzzyOnDroid) and used as the GitHub Release notes.
 - Import notes (Settings → Import): bring notes from Google Keep, Standard Notes, Joplin, Notesnook or
   Markdown/TXT files, fully offline. The format is recognised from the files, you review and tick the
   notes first, and a repeated import adds nothing.
-- Compact line spacing for notes, with a persistent editor setting; Default preserves the existing layout.
+- Reading density for notes (Compact, Default, Comfortable) from the editor's More actions, with a
+  persistent setting; Default is the existing layout and the stored note never changes.
+- Slash commands: type `/` in an empty paragraph to pick a block kind (text, headings, checklist,
+  lists, quote, link, divider) from a small filtered list. Not available in Simple Edit.
+- Smarter paste: pasted text keeps its paragraphs (a blank line starts a new one, a single line
+  break stays inside it) and Markdown headings, lists, checkboxes, quotes and rules become blocks.
+  Nothing is rewritten or dropped, and one undo takes the whole paste back.
+- Block actions: duplicate a block from the toolbar, the block sheets and TalkBack, next to move,
+  delete and convert.
+- Find in this note (More actions, or Ctrl/Cmd+F): highlights matches, shows "n of m" and jumps
+  between them without changing the note. The query is never saved and is cleared when the vault locks.
+- Start from template: an optional Meeting, Journal, Project notes or Checklist outline for a new,
+  empty note. Blank stays the default.
 - Optional 15- and 30-minute auto-lock delays, with a warning about longer background sessions.
 - Duress PIN (Settings → Security): a third PIN that opens a separate, fully usable decoy vault
   with its own encryption key and database, from the same lock screen and with the same unlock.

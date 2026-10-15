@@ -39,14 +39,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
-import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.CheckboxSize
 import com.pasich.encly.presentation.designsystem.EnclyCheckbox
+import com.pasich.encly.presentation.designsystem.lineHeight
+import com.pasich.encly.presentation.designsystem.listItemGap
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.focus.KeyboardUtils
 import com.pasich.encly.presentation.editor.state.LineBreak
@@ -133,7 +133,7 @@ fun ListBlock(
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(
-            if (checklist || LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT) 0.dp else EnclyTheme.spacing.xxs,
+            LocalNoteLineSpacing.current.listItemGap(checklist, EnclyTheme.spacing.xxs),
         ),
     ) {
         items.forEachIndexed { itemIndex, item ->
@@ -155,7 +155,7 @@ fun ListBlock(
                 ListItemRow(
                     item = item,
                     marker = marker.forItem(itemIndex + 1),
-                    state = state,
+                    field = ItemField(state, rememberFieldHighlight(blockActions.highlights, block.id, item.id)),
                     editor = editor,
                     isLocked = isLocked,
                     fieldModifier = fieldModifier.focusRequester(requester),
@@ -164,6 +164,9 @@ fun ListBlock(
         }
     }
 }
+
+/** A list item's text field state and what Find tints in it. */
+private class ItemField(val state: TextFieldState, val highlight: FieldHighlight)
 
 /**
  * How a list marks its items: checkboxes, bullets or numbers in a hanging-indent column of
@@ -177,12 +180,13 @@ private data class ListMarker(val type: BlockType, val width: Dp, val number: In
 private fun ListItemRow(
     item: ItemListBlock,
     marker: ListMarker,
-    state: TextFieldState,
+    field: ItemField,
     editor: ListEditor,
     isLocked: Boolean,
     modifier: Modifier = Modifier,
     fieldModifier: Modifier = Modifier,
 ) {
+    val state = field.state
     val checklist = marker.type == BlockType.LIST_CHECK
     val placeholder = stringResource(R.string.list_item_placeholder)
     Row(
@@ -203,7 +207,7 @@ private fun ListItemRow(
             else -> Marker("•", marker.width, listTextStyle(), Modifier.clearAndSetSemantics { })
         }
         ListItemField(
-            state = state,
+            field = field,
             input = editor.inputFor(item.id),
             checked = checklist && item.isCheck,
             placeholder = placeholder,
@@ -283,12 +287,12 @@ private class ListEditor(
 @Composable
 private fun listTextStyle(): TextStyle {
     val fontStyles = rememberFontStyles()
-    val compact = LocalNoteLineSpacing.current == NoteLineSpacing.COMPACT
+    val spacing = LocalNoteLineSpacing.current
     return MaterialTheme.typography.bodyLarge.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontFamily = fontStyles.families.body,
         fontSize = fontStyles.sizes.list,
-        lineHeight = if (compact) fontStyles.sizes.list else MaterialTheme.typography.bodyLarge.lineHeight,
+        lineHeight = spacing.lineHeight(fontStyles.sizes.list, MaterialTheme.typography.bodyLarge.lineHeight),
     )
 }
 
@@ -328,13 +332,15 @@ private fun CheckMark(checked: Boolean, label: String, enabled: Boolean, onToggl
 
 @Composable
 private fun ListItemField(
-    state: TextFieldState,
+    field: ItemField,
     input: BlockInput,
     checked: Boolean,
     placeholder: String,
     isLocked: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val state = field.state
+    val highlight = field.highlight
     val base = listTextStyle()
     // Checked items stay editable; they are only muted and struck through.
     val style = if (checked) {
@@ -349,7 +355,8 @@ private fun ListItemField(
         textStyle = style,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = WritingKeyboard,
-        modifier = modifier,
+        onTextLayout = highlight.onTextLayout,
+        modifier = modifier.then(highlight.modifier),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
                 if (state.text.isEmpty() && !isLocked) {

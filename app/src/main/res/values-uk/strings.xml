@@ -151,6 +151,7 @@
     <string name="note_line_spacing_title">Міжряддя</string>
     <string name="note_line_spacing_default">Звичайне</string>
     <string name="note_line_spacing_compact">Компактне</string>
+    <string name="note_line_spacing_comfortable">Просторе</string>
     <string name="font_style_cozy">Редакційний</string>
     <string name="font_style_modern">Сучасний</string>
     <string name="font_style_tech">Технічний</string>
@@ -585,4 +586,30 @@
         <item quantity="many">%1$d з %2$d підзавдань виконано</item>
         <item quantity="other">%1$d з %2$d підзавдання виконано</item>
     </plurals>
+    <string name="slash_menu_title">Вставити блок</string>
+    <string name="find_in_note">Знайти в нотатці</string>
+    <string name="find_placeholder">Знайти в цій нотатці</string>
+    <string name="find_count">%1$d з %2$d</string>
+    <string name="find_no_matches">Збігів немає</string>
+    <string name="find_next">Наступний збіг</string>
+    <string name="find_previous">Попередній збіг</string>
+    <string name="find_close">Закрити пошук</string>
+    <string name="block_duplicate">Дублювати блок</string>
+    <string name="template_start">Почати із шаблону</string>
+    <string name="template_blank">Порожня</string>
+    <string name="template_meeting">Зустріч</string>
+    <string name="template_journal">Щоденник</string>
+    <string name="template_project">Нотатки проєкту</string>
+    <string name="template_attendees">Учасники</string>
+    <string name="template_agenda">Порядок денний</string>
+    <string name="template_notes">Нотатки</string>
+    <string name="template_action_items">Дії до виконання</string>
+    <string name="template_journal_today">Сьогодні</string>
+    <string name="template_journal_gratitude">Вдячність</string>
+    <string name="template_journal_tomorrow">Завтра</string>
+    <string name="template_project_goal">Мета</string>
+    <string name="template_project_tasks">Завдання</string>
+    <string name="template_project_decisions">Рішення</string>
+    <string name="template_project_questions">Відкриті питання</string>
+    <string name="template_checklist_todo">Зробити</string>
 </resources>

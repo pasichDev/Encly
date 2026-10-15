@@ -6,7 +6,7 @@ import com.pasich.encly.R
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 
-/** Move up, move down and delete (confirmed by a second tap), shared by the block sheets. */
+/** Move up, move down, duplicate and delete (confirmed by a second tap), shared by the block sheets. */
 @Composable
 internal fun BlockEditRows(settings: SettingsBlockDialog, onAction: (ActionBlockDialog) -> Unit) {
     EnclySheetRow(
@@ -20,6 +20,11 @@ internal fun BlockEditRows(settings: SettingsBlockDialog, onAction: (ActionBlock
         icon = EnclyIcons.ArrowDown,
         enabled = settings.blockMove != 2,
         onClick = { onAction(ActionBlockDialog.Move(2)) },
+    )
+    EnclySheetRow(
+        title = stringResource(R.string.block_duplicate),
+        icon = EnclyIcons.Duplicate,
+        onClick = { onAction(ActionBlockDialog.Duplicate) },
     )
     EnclySheetRow(
         title = stringResource(id = R.string.delete_block),
