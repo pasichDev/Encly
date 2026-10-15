@@ -44,7 +44,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
         navController,
         startDestination = startDestination,
         // The back gesture plays the same shared-axis motion as a tap on Back. Navigation's own
-        // default for the gesture shrinks the leaving screen into the middle of the window.
+        // default for the gesture (since 2.10) shrinks the leaving screen into the middle of the window.
         predictivePopEnterTransition = { axisEnter(forward = false) },
         predictivePopExitTransition = { axisExit(forward = false) },
     ) {

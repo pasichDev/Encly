@@ -29,11 +29,12 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
- * One supported app: its mark, name and what to pick. A tap unfolds how to get the export out of
- * the app and what will not come over, so the list stays short enough to scan.
+ * One supported app on the Import notes page: its mark, its name and what to pick. A tap anywhere
+ * on the card unfolds how to get the export out of the app and what will not come over, so the
+ * list stays short enough to scan.
  */
 @Composable
-internal fun SourceRow(source: ImportSource, modifier: Modifier = Modifier) {
+internal fun SourceCard(source: ImportSource, modifier: Modifier = Modifier) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val turn by animateFloatAsState(if (expanded) CHEVRON_TURN else 0f, label = "chevron")
     EnclyCard(modifier = modifier, style = EnclyCardStyle.OUTLINED, onClick = { expanded = !expanded }) {
@@ -77,7 +78,7 @@ internal fun SourceRow(source: ImportSource, modifier: Modifier = Modifier) {
     }
 }
 
-/** A 40 dp tile with the app's initials: a plain mark, not the app's own logo. */
+/** The app's initials on a small tile: a plain mark, never the app's own logo or colours. */
 @Composable
 private fun SourceMark(source: ImportSource) {
     Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {

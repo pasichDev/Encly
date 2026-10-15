@@ -37,7 +37,7 @@ internal fun StartPage(actions: ImportNotesActions) {
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
             SectionOverline(text = stringResource(R.string.import_section_supported))
             Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.cardGap)) {
-                ImportSource.entries.forEach { SourceRow(it) }
+                ImportSource.entries.forEach { SourceCard(it) }
             }
         }
     }

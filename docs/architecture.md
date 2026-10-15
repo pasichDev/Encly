@@ -76,7 +76,8 @@ ViewModels, only while that epoch is current (a wipe-PIN erase, an unlock of the
 process changes it). A
 screen that was in the background while the vault was unlocked on another lock screen (the My
 Notes hand-off) is replaced by the lock screen or Home when it comes back (`SessionResume`).
-Pages move on Material's shared X axis;
+Pages move on Material's shared X axis, and the predictive back gesture plays the same motion
+(`AppNavHost`; Navigation's own default would shrink the leaving page);
 the full unlock reveal plays only on the first unlock after launch, later unlocks cross-fade.
 
 ## Encrypted backups
