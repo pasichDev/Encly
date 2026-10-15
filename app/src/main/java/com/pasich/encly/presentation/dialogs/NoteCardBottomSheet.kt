@@ -30,7 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
@@ -42,6 +41,7 @@ import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
 import java.util.Date
@@ -134,7 +134,7 @@ private fun NoteActionHeader(item: NoteWithTag) {
 private fun TagChips(
     selectedTagId: Long,
     onSelect: (Long) -> Unit,
-    tagListViewModel: TagListViewModel = hiltViewModel(),
+    tagListViewModel: TagListViewModel = enclyViewModel(),
 ) {
     val state by tagListViewModel.state.collectAsState()
     val gutter = EnclyTheme.spacing.gutter

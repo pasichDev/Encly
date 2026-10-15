@@ -39,7 +39,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
@@ -52,6 +51,7 @@ import com.pasich.encly.presentation.editor.mainBlockTools
 import com.pasich.encly.presentation.editor.moreBlockTools
 import com.pasich.encly.presentation.editor.state.toolType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
@@ -64,7 +64,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun NoteBottomBar(
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
     simpleEdit: Boolean = false,
 ) {
     var showMore by rememberSaveable { mutableStateOf(false) }
@@ -110,6 +110,7 @@ fun NoteBottomBar(
                         blockTools = BlockMoveTools(
                             onMoveUp = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
                             onMoveDown = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
+                            onDuplicate = viewModel::duplicateInteractedBlock,
                             onDelete = if (canDelete) viewModel::removeInteractedBlock else null,
                         ),
                         onApply = { viewModel.applyTool(it, exact = true) },
@@ -131,8 +132,13 @@ fun NoteBottomBar(
 /** Undo and redo; a null action shows its button disabled. */
 private class HistoryTools(val onUndo: (() -> Unit)?, val onRedo: (() -> Unit)?)
 
-/** Moving and deleting the block the user works on; a null action shows its button disabled. */
-private class BlockMoveTools(val onMoveUp: (() -> Unit)?, val onMoveDown: (() -> Unit)?, val onDelete: (() -> Unit)?)
+/** Moving, duplicating and deleting the block the user works on; a null action shows its button disabled. */
+private class BlockMoveTools(
+    val onMoveUp: (() -> Unit)?,
+    val onMoveDown: (() -> Unit)?,
+    val onDuplicate: (() -> Unit)?,
+    val onDelete: (() -> Unit)?,
+)
 
 /** "Add block", then the block tools, the one of the block the user works on marked active. */
 @Composable
@@ -266,7 +272,7 @@ private fun HistoryButtons(history: HistoryTools) {
     )
 }
 
-/** Behind "Add block": close, paragraph and heading levels, undo and redo, move and delete. */
+/** Behind "Add block": close, paragraph and heading levels, undo and redo, move, duplicate and delete. */
 @Composable
 private fun MoreTools(
     history: HistoryTools,
@@ -298,6 +304,11 @@ private fun MoreTools(
             icon = EnclyIcons.ArrowDown,
             contentDescription = stringResource(R.string.block_move_down),
             onClick = blockTools.onMoveDown,
+        )
+        EnclyToolButton(
+            icon = EnclyIcons.Duplicate,
+            contentDescription = stringResource(R.string.block_duplicate),
+            onClick = blockTools.onDuplicate,
         )
         EnclyToolButton(
             icon = EnclyIcons.Trash,

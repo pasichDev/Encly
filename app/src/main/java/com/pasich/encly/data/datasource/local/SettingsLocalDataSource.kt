@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -27,9 +28,11 @@ const val SHOW_TASKS = "show_tasks"
 const val SIMPLE_EDIT = "simple_edit"
 const val FONT_SIZE = "font_size"
 const val FONT_STYLE = "font_style"
+const val NOTE_LINE_SPACING = "note_line_spacing"
 const val APPEARANCE_MIGRATED = "appearance_migrated_v1"
 
 @Singleton
+@Suppress("TooManyFunctions") // One small getter/setter pair per persisted editor or display setting.
 class SettingsLocalDataSource @Inject constructor(private val dataStore: DataStore<Preferences>) {
 
     private companion object {
@@ -42,6 +45,7 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
         val simpleEdit = booleanPreferencesKey(SIMPLE_EDIT)
         val fontSize = intPreferencesKey(FONT_SIZE)
         val fontStyle = intPreferencesKey(FONT_STYLE)
+        val noteLineSpacing = intPreferencesKey(NOTE_LINE_SPACING)
         val appearanceMigrated = booleanPreferencesKey(APPEARANCE_MIGRATED)
     }
 
@@ -102,6 +106,10 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
         enumAtOrDefault(preferences[fontStyle], FontStyleType.DEFAULT)
     }.distinctUntilChanged()
 
+    val noteLineSpacingFlow: Flow<NoteLineSpacing> = dataStore.data.map { preferences ->
+        enumAtOrDefault(preferences[noteLineSpacing], NoteLineSpacing.DEFAULT)
+    }.distinctUntilChanged()
+
     suspend fun setSortNotes(option: NoteSortOption) {
         dataStore.edit { preferences ->
             preferences[sortNotes] = option.index
@@ -153,6 +161,12 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
     suspend fun setFontStyle(value: FontStyleType) {
         dataStore.edit { preferences ->
             preferences[fontStyle] = value.ordinal
+        }
+    }
+
+    suspend fun setNoteLineSpacing(value: NoteLineSpacing) {
+        dataStore.edit { preferences ->
+            preferences[noteLineSpacing] = value.ordinal
         }
     }
 }

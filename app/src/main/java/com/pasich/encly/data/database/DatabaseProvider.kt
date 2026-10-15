@@ -1,11 +1,16 @@
 package com.pasich.encly.data.database
 
-/**
- * Supplies the Room instance currently backed by the unlocked encrypted vault.
- *
- * Keeping this contract separate from the SQLCipher lifecycle manager lets repository tests
- * exercise DAO error handling without loading the native SQLCipher library on the JVM.
- */
+/** One opening of the encrypted database. Identity, not its contents, grants DAO access. */
+class DatabaseLease internal constructor()
+
+/** Supplies Room only to callers still bound to the opening in which they were created. */
 interface DatabaseProvider {
-    fun getDatabase(): AppDatabase
+    /** Null while locked. The returned lease is revoked before Room closes. */
+    fun captureLease(): DatabaseLease?
+
+    /**
+     * Refuses a lease from an earlier opening, even when another database (the other vault's,
+     * real or decoy) is now open.
+     */
+    fun getDatabase(lease: DatabaseLease): AppDatabase
 }

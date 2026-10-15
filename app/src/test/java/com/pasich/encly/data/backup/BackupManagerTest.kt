@@ -3,6 +3,7 @@ package com.pasich.encly.data.backup
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupFormat
+import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.testutil.InMemorySharedPreferences
@@ -64,6 +65,47 @@ class BackupManagerTest {
     @Test
     fun theDefaultExportLimitIsTheImportLimit() {
         assertEquals(BackupFormat.MAX_FILE_BYTES, manager.maxFileBytes)
+    }
+
+    @Test
+    fun exportRefusesAStoreWhoseSessionClosedAfterSnapshot() = runTest {
+        val security = mock(SecurityManager::class.java)
+        `when`(security.copyBackupRootKey()).thenAnswer { ByteArray(ROOT_LENGTH) { 5 } }
+        val memory = InMemoryVaultDataStore()
+        var active = true
+        val bound = object : VaultDataStore by memory {
+            override suspend fun snapshot(): VaultSnapshot = memory.snapshot().also { active = false }
+
+            override fun assertCurrentSession() {
+                if (!active) error("session closed")
+            }
+        }
+        val store = object : VaultDataStore by memory {
+            override fun bindToCurrentSession(): VaultDataStore = bound
+        }
+
+        try {
+            BackupManager(security, store, InMemorySharedPreferences()).createBackup()
+            fail("expected a closed-session failure")
+        } catch (e: BackupException) {
+            assertEquals(BackupError.IO, e.error)
+        }
+    }
+
+    @Test
+    fun theDecoyVaultRefusesEveryBackupStepAsAStorageError() = runTest {
+        val security = mock(SecurityManager::class.java)
+        `when`(security.isDecoySession()).thenReturn(true)
+        val decoy = BackupManager(security, InMemoryVaultDataStore(), InMemorySharedPreferences())
+        val empty = BackupPayload(exportedAt = 0, tags = emptyList(), notes = emptyList(), tasks = emptyList())
+
+        val errors = listOf(
+            runCatching { decoy.decrypt(ByteArray(1), "words".toCharArray()) },
+            runCatching { decoy.import(empty, ImportMode.MERGE) },
+            runCatching { decoy.createBackup() },
+        ).map { (it.exceptionOrNull() as BackupException).error }
+
+        assertEquals(List(3) { BackupError.IO }, errors)
     }
 
     private companion object {

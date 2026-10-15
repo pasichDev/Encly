@@ -1,0 +1,4 @@
+Plain text note from Markor.
+Second line of the same paragraph.
+
+New paragraph.

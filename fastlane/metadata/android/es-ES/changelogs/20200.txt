@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Importa notas de Google Keep, Standard Notes, Joplin, Notesnook o archivos Markdown, totalmente sin conexión.
+• PIN de coacción (opcional): otro PIN que abre una bóveda señuelo aparte mientras tus notas reales siguen bloqueadas.
+• Editor: comandos con /, pegado más inteligente, buscar en la nota, plantillas, duplicar bloques y una vista más espaciosa.
+• Bloqueo automático tras 15 o 30 minutos, si lo quieres.

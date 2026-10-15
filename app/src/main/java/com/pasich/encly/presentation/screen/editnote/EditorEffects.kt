@@ -1,11 +1,14 @@
 package com.pasich.encly.presentation.screen.editnote
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,15 +17,24 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 private const val INITIAL_FOCUS_FRAMES = 5
 
@@ -31,7 +43,7 @@ private const val INITIAL_FOCUS_FRAMES = 5
  * closes SQLCipher later in the background transition, so this closes the autosave window first.
  */
 @Composable
-internal fun SaveWhenPaused(viewModel: EditNoteViewModel = hiltViewModel()) {
+internal fun SaveWhenPaused(viewModel: EditNoteViewModel = enclyViewModel()) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -52,7 +64,7 @@ internal fun CarryOutFocusRequests(
     registry: BlockFocusRegistry,
     listState: LazyListState,
     blocksStart: Int,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val currentBlocksStart by rememberUpdatedState(blocksStart)
     LaunchedEffect(viewModel, registry) {
@@ -89,7 +101,7 @@ private const val REVEAL_FRACTION = 4
 
 /** A new note starts in its title with the keyboard up: once, not again after a restore. */
 @Composable
-internal fun FocusNewNoteTitle(titleFocus: FocusRequester, viewModel: EditNoteViewModel = hiltViewModel()) {
+internal fun FocusNewNoteTitle(titleFocus: FocusRequester, viewModel: EditNoteViewModel = enclyViewModel()) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var done by rememberSaveable { mutableStateOf(!viewModel.isNewNote) }
     LaunchedEffect(done) {
@@ -127,4 +139,52 @@ internal fun rememberBlockSheetState(): BlockSheetState {
     val type = rememberSaveable { mutableStateOf(BottomSheetsOpenType.NONE) }
     val blockId = rememberSaveable { mutableStateOf<String?>(null) }
     return remember { BlockSheetState(type, blockId) }
+}
+
+/** Whether the find bar is open. */
+@Composable
+internal fun rememberFindOpen(viewModel: EditNoteViewModel = enclyViewModel()): State<Boolean> {
+    val open = remember(viewModel) { viewModel.find.map { it.isOpen }.distinctUntilChanged() }
+    return open.collectAsState(initial = false)
+}
+
+/**
+ * Scrolls the list to the block of the match Find is on, when that block is off screen. Nothing
+ * gets focus and nothing is edited.
+ */
+@Composable
+internal fun ScrollToFindMatch(
+    listState: LazyListState,
+    blocksStart: Int,
+    viewModel: EditNoteViewModel = enclyViewModel(),
+) {
+    val current = remember(viewModel) { viewModel.find.map { it.currentMatch }.distinctUntilChanged() }
+    val match by current.collectAsState(initial = null)
+    val currentBlocksStart by rememberUpdatedState(blocksStart)
+    LaunchedEffect(match) {
+        val blockId = match?.blockId ?: return@LaunchedEffect
+        val index = viewModel.blocks.indexOfFirst { it.id == blockId }
+        if (index >= 0) listState.reveal(currentBlocksStart + index)
+    }
+}
+
+/** Back closes the find bar, else an open slash picker, before it leaves the note. */
+@Composable
+internal fun CloseFindOrSlashOnBack(viewModel: EditNoteViewModel = enclyViewModel()) {
+    val findOpen by rememberFindOpen()
+    val slashMenu by viewModel.slashPicker.menu.collectAsState()
+    val slashShown = slashMenu?.isShown == true
+    BackHandler(enabled = findOpen || slashShown) {
+        if (findOpen) viewModel.closeFind() else viewModel.slashPicker.dismiss()
+    }
+}
+
+/** Hardware keyboard: Ctrl or Cmd+F opens Find, Escape closes it. True when the key was used. */
+internal fun EditNoteViewModel.handleFindKey(event: KeyEvent): Boolean {
+    if (event.type != KeyEventType.KeyDown) return false
+    return when {
+        event.key == Key.F && (event.isCtrlPressed || event.isMetaPressed) -> true.also { openFind() }
+        event.key == Key.Escape && find.value.isOpen -> true.also { closeFind() }
+        else -> false
+    }
 }

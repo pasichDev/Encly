@@ -10,6 +10,7 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
@@ -23,21 +24,29 @@ import com.pasich.encly.presentation.editor.persistence.NotePersistence
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.editor.state.BlockEditorState
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
+import com.pasich.encly.presentation.editor.state.FindState
 import com.pasich.encly.presentation.editor.state.FocusRequest
 import com.pasich.encly.presentation.editor.state.LineBreak
 import com.pasich.encly.presentation.editor.state.Shortcut
+import com.pasich.encly.presentation.editor.state.SlashCommand
+import com.pasich.encly.presentation.editor.state.SlashPicker
 import com.pasich.encly.presentation.editor.state.addBlockAfter
 import com.pasich.encly.presentation.editor.state.addBlockToEnd
 import com.pasich.encly.presentation.editor.state.applyShortcut
+import com.pasich.encly.presentation.editor.state.applySlash
+import com.pasich.encly.presentation.editor.state.applyTemplate
 import com.pasich.encly.presentation.editor.state.applyTool
 import com.pasich.encly.presentation.editor.state.backspaceAtStart
 import com.pasich.encly.presentation.editor.state.breakLine
 import com.pasich.encly.presentation.editor.state.canMoveInteracted
 import com.pasich.encly.presentation.editor.state.canRemoveInteracted
+import com.pasich.encly.presentation.editor.state.duplicateBlockOf
+import com.pasich.encly.presentation.editor.state.duplicateInteracted
 import com.pasich.encly.presentation.editor.state.focusFirstBlock
 import com.pasich.encly.presentation.editor.state.focusWorkingBlock
 import com.pasich.encly.presentation.editor.state.indexOf
 import com.pasich.encly.presentation.editor.state.interactedBlockPosition
+import com.pasich.encly.presentation.editor.state.isBlankNote
 import com.pasich.encly.presentation.editor.state.listBackspaceAtStart
 import com.pasich.encly.presentation.editor.state.listLineBreak
 import com.pasich.encly.presentation.editor.state.listTypingStep
@@ -48,12 +57,17 @@ import com.pasich.encly.presentation.editor.state.removeInteracted
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -128,6 +142,12 @@ constructor(
     /** Which block the editor UI should focus next. */
     val focusRequests: Flow<FocusRequest> get() = editor.selection.requests
 
+    /** The slash picker (UI state; the paragraph it belongs to is named in its menu). */
+    val slashPicker: SlashPicker get() = editor.slash
+
+    /** The find bar: open or not, its query and matches. Never saved; cleared when the vault locks. */
+    val find: StateFlow<FindState> get() = editor.find.state
+
     private val _lockEditor = MutableStateFlow(false)
     val lockEditor: StateFlow<Boolean> get() = _lockEditor
 
@@ -150,6 +170,12 @@ constructor(
         initialValue = FontStyleType.DEFAULT,
     )
 
+    val noteLineSpacing = settingsRepository.noteLineSpacingFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = NoteLineSpacing.DEFAULT,
+    )
+
     val simpleEdit = settingsRepository.simpleEditFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -166,11 +192,13 @@ constructor(
             addTag != 0L -> persistence.updateNote { it.copy(tagId = addTag) }
         }
         persistence.startAutosave(viewModelScope, editor.contentChanges)
+        keepFindInStep()
         rememberStoredId()
         // Session lock hook (security): a re-lock drops the note's plaintext at once, even
         // while the app is in the background and this screen is not composed.
         clearOnLock(lockEvents) {
             persistence.close()
+            // Also closes the find bar and the slash picker: no query or match survives a lock.
             editor.load(emptyList())
             persistence.updateNote { it.copy(title = "") }
         }
@@ -185,6 +213,16 @@ constructor(
                     savedStateHandle["idNote"] = id
                     savedStateHandle["copySource"] = -1L
                 }
+            }
+        }
+    }
+
+    /** While the find bar is open, its matches follow the text. Read-only: the blocks are only looked at. */
+    @OptIn(FlowPreview::class)
+    private fun keepFindInStep() {
+        viewModelScope.launch {
+            editor.find.state.map { it.isOpen }.distinctUntilChanged().collectLatest { open ->
+                if (open) editor.contentChanges.debounce(FIND_REFRESH_MS).collect { editor.find.refresh(editor.blocks) }
             }
         }
     }
@@ -260,6 +298,10 @@ constructor(
         appScope.launch { settingsRepository.setFontSize(size) }
     }
 
+    fun updateNoteLineSpacing(value: NoteLineSpacing) {
+        appScope.launch { settingsRepository.setNoteLineSpacing(value) }
+    }
+
     /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */
     fun toggleLockEditor() {
         if (contentLoadFailed.value || isReadTrashOnly) return
@@ -277,10 +319,17 @@ constructor(
     fun onBlockFocused(block: Block) = editor.selection.onFocused(block.id)
 
     /** The field of [block] (for a list: all of its items) lost focus. */
-    fun onBlockFocusLost(block: Block) = editor.selection.onFocusLost(block.id)
+    fun onBlockFocusLost(block: Block) {
+        editor.selection.onFocusLost(block.id)
+        // Leaving the paragraph leaves its "/" as plain text.
+        if (editor.slash.menu.value?.blockId == block.id) editor.slash.dismiss()
+    }
 
     /** The user works on [block] without its field taking focus (a list item, a block sheet). */
-    fun onBlockInteraction(block: Block) = editor.selection.onInteraction(block.id)
+    fun onBlockInteraction(block: Block) {
+        editor.selection.onInteraction(block.id)
+        editor.slash.dismiss()
+    }
 
     /**
      * Adds a block of [blockType] after the focused block (or the last one the user touched).
@@ -334,8 +383,15 @@ constructor(
      * A line break typed or pasted into the field of [block] (see breakLine). Returns the text the
      * field keeps, or null to keep the break as text: in simple editing, or a locked editor.
      */
-    fun onLineBreak(block: Block, lineBreak: LineBreak): String? =
-        if (canEdit(block) && !simpleEdit.value) editor.breakLine(block.id, lineBreak) else null
+    fun onLineBreak(block: Block, lineBreak: LineBreak): String? {
+        if (!canEdit(block) || simpleEdit.value) return null
+        // Enter with the slash picker showing picks the highlighted command instead of splitting.
+        val picked = editor.slash.menu.value
+            ?.takeIf { it.blockId == block.id && lineBreak.isEnter && it.isShown }
+            ?.highlightedCommand
+        val pickedHere = picked != null && editor.applySlash(block.id, picked)
+        return if (pickedHere) "" else editor.breakLine(block.id, lineBreak)
+    }
 
     /** Backspace at the start of [block]'s field; false when it does nothing there. */
     fun onBackspaceAtStart(block: Block): Boolean = canEdit(block) && editor.backspaceAtStart(block.id)
@@ -343,6 +399,23 @@ constructor(
     /** A mark typed at the start of paragraph [block] ("# ", "- ", ...): it becomes that block. */
     fun onShortcut(block: Block, typed: String, shortcut: Shortcut): Boolean =
         canEdit(block) && !simpleEdit.value && editor.applyShortcut(block.id, typed, shortcut)
+
+    /**
+     * Paragraph [block] now reads [text]. [started]: a "/" was just typed into the empty
+     * paragraph, which opens the slash picker (never in Simple Edit or a read-only editor);
+     * otherwise an open picker follows the text.
+     */
+    fun onSlashTyped(block: Block, text: String, started: Boolean) {
+        if (started && block is Block.TextBlock && canOfferSlash(block)) editor.slash.open(block.id)
+        editor.slash.onText(block.id, text)
+    }
+
+    private fun canOfferSlash(block: Block): Boolean = canEdit(block) && !simpleEdit.value
+
+    /** The slash picker's [command] chosen for paragraph [block]. */
+    fun applySlash(block: Block, command: SlashCommand) {
+        if (canEdit(block) && !simpleEdit.value) editor.applySlash(block.id, command)
+    }
 
     /** A lone web address pasted into the empty paragraph [block]: it becomes a link card. */
     fun onLinkPasted(block: Block, pasted: String, link: LinkDataBlock): Boolean =
@@ -422,6 +495,56 @@ constructor(
         if (canEdit()) editor.removeInteracted()
     }
 
+    /** Duplicates the block the user works on, right after it. */
+    fun duplicateInteractedBlock() {
+        if (canEdit()) editor.duplicateInteracted()
+    }
+
+    /** Duplicates [block], right after it: TalkBack's and the block sheets' action. */
+    fun duplicateBlock(block: Block) {
+        if (canEdit(block)) editor.duplicateBlockOf(block.id)
+    }
+
+    // --- find in this note: read-only, so it works in a locked or trashed note too ---------------
+
+    fun openFind() = editor.find.open()
+
+    fun closeFind() = editor.find.close()
+
+    fun onFindQueryChanged(query: String) = editor.find.search(query, editor.blocks)
+
+    fun findNext() = editor.find.next()
+
+    fun findPrevious() = editor.find.previous()
+
+    // --- templates -------------------------------------------------------------------------
+
+    /**
+     * Whether to offer "Start from template": a brand-new note that is still completely empty,
+     * and not in Simple Edit (it never shows block tools). Following the text, so it goes away
+     * with the first character and comes back if undo makes the note blank again, but not once
+     * the note has been saved (its stored id is set): from then on it is an existing note.
+     */
+    val templatesOffered: StateFlow<Boolean> = combine(
+        persistence.state.map { it.note.title.isEmpty() && it.note.id <= 0L }.distinctUntilChanged(),
+        editor.contentChanges.map { editor.isBlankNote() }.onStart { emit(editor.isBlankNote()) },
+        simpleEdit,
+        _lockEditor,
+    ) { blankUnsaved, blankBody, simple, locked -> isNewNote && blankUnsaved && blankBody && !simple && !locked }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+
+    /** Starts the blank note from [blocks] (a template's, see NoteTemplate.blocks). */
+    fun applyTemplate(blocks: List<Block>) {
+        if (canEdit() && !simpleEdit.value) editor.applyTemplate(blocks)
+    }
+
     /** Whether the block the user works on is the first, the last or in between. */
     fun getMoveBlockState(): Int = editor.interactedBlockPosition()
 }
+
+/** The find bar refreshes its matches this long after the text stops changing. */
+private const val FIND_REFRESH_MS = 100L
+
+/** How long state shared with the UI is kept after the last collector leaves. */
+private const val STOP_TIMEOUT_MS = 5_000L

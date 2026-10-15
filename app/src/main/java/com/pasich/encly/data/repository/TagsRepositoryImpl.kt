@@ -1,20 +1,20 @@
 package com.pasich.encly.data.repository
 
+import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.TagsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
-import javax.inject.Singleton
 
 private const val TAG = "TagsRepository"
 
-/** See [NotesRepositoryImpl] for why the DAO is resolved per call. */
-@Singleton
+/** Bound to the opening that created it; see [NotesRepositoryImpl]. */
 class TagsRepositoryImpl @Inject constructor(private val databaseProvider: DatabaseProvider) : TagsRepository {
+    private val lease: DatabaseLease? = databaseProvider.captureLease()
 
-    private fun dao() = databaseProvider.getDatabase().tagsDao()
+    private fun dao() = databaseProvider.getDatabase(lease ?: error("Vault locked")).tagsDao()
 
     override fun getTags(): Flow<List<Tag>> = daoFlow { dao().getTags() }.map { tags -> tags.sortedBy { it.position } }
 

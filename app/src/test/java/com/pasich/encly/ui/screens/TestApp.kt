@@ -11,9 +11,12 @@ import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
@@ -80,6 +83,7 @@ internal class TestApp(context: Context) {
         // The app is in the foreground, so a completed unlock is published, not re-locked.
         sessionLock.onStart(mock(androidx.lifecycle.LifecycleOwner::class.java))
         withAuth(recoveryPhrase = false)
+        `when`(security.wipeAndReset()).thenReturn(true)
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -101,10 +105,29 @@ internal class TestApp(context: Context) {
         `when`(security.generateMnemonicCode()).thenAnswer { phrase.toCharArray() }
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
         `when`(security.configurePin(anyCharArray())).thenReturn(true)
+        `when`(security.changePin(anyCharArray())).thenReturn(PinChange.SET)
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {
             runCatching { MnemonicCode(it.getArgument<CharArray>(0).copyOf()).validate() }.isSuccess
         }
+    }
+
+    /**
+     * The decoy vault is open. Settings looks as it does in the real vault ([recoveryPhrase] is
+     * the real vault's state), the duress PIN passes a PIN re-check, and the security layer
+     * refuses every real-vault action the way it does in the app: a PIN, wipe PIN or duress PIN
+     * change fails, an erase does nothing (the vault stays open), and backups throw.
+     */
+    fun inDecoySession(recoveryPhrase: Boolean = true) = apply {
+        withAuth(recoveryPhrase)
+        `when`(security.isDecoySession()).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.hasBackupKey()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        `when`(security.wipeAndReset()).thenReturn(false)
+        `when`(security.changePin(anyCharArray())).thenReturn(PinChange.FAILED)
+        `when`(security.configureWipePin(anyCharArray())).thenReturn(WipePinChange.FAILED)
+        `when`(security.configureDuressPin(anyCharArray())).thenReturn(DuressPinChange.FAILED)
     }
 
     /** The vault's stored security settings, as the Security page reads them. */

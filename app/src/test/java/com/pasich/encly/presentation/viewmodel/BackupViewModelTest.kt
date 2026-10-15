@@ -154,6 +154,7 @@ class BackupViewModelTest {
     @Test
     fun eraseNeedsThePinThenRunsAtOnce() {
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.wipeAndReset()).thenReturn(true)
         viewModel.start(BackupAction.ERASE)
 
         viewModel.eraseAllData() // not re-authenticated yet: ignored
@@ -164,6 +165,20 @@ class BackupViewModelTest {
         waitForStep { it == BackupStep.Idle && viewModel.uiState.value.erased }
         verify(security).wipeAndReset()
         assertTrue(viewModel.uiState.value.erased)
+    }
+
+    @Test
+    fun aRefusedEraseIsReportedAsFailed() {
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        // The security layer refused (a decoy session): nothing was erased.
+        `when`(security.wipeAndReset()).thenReturn(false)
+        viewModel.start(BackupAction.ERASE)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle && viewModel.uiState.value.message != null }
+        assertEquals(BackupMessage.Text(R.string.security_erase_failed), viewModel.uiState.value.message)
+        assertEquals(false, viewModel.uiState.value.erased)
     }
 
     @Test

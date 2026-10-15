@@ -33,6 +33,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.domain.model.ThemeSettings
+import com.pasich.encly.presentation.viewmodel.PreloadedViewModelOwner
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.After
@@ -242,7 +243,7 @@ abstract class ComposeScreenTest {
  * A [ViewModelStoreOwner] holding ready-made ViewModels. It deliberately has no default factory:
  * `hiltViewModel()` then asks the store directly and gets the instance put here.
  */
-class FakeViewModels(vararg viewModels: ViewModel) : ViewModelStoreOwner {
+class FakeViewModels(vararg viewModels: ViewModel) : PreloadedViewModelOwner {
     override val viewModelStore = ViewModelStore()
 
     init {

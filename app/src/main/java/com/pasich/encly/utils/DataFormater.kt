@@ -2,7 +2,7 @@ package com.pasich.encly.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
 import java.text.DateFormat
@@ -15,7 +15,7 @@ import java.util.Locale
  * follows the language picked in Settings, on every API level.
  */
 @Composable
-fun currentLocale(): Locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+fun currentLocale(): Locale = LocalResources.current.configuration.locales[0] ?: Locale.ENGLISH
 
 /** A short date-and-time format in the in-app language (e.g. "5/14/26, 3:04 PM"). */
 @Composable

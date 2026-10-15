@@ -148,6 +148,10 @@
     <string name="faq_vault_damaged_q">Encly meldet einen beschädigten Tresor</string>
 
     <string name="font_size_title">Textgröße</string>
+    <string name="note_line_spacing_title">Zeilenabstand</string>
+    <string name="note_line_spacing_default">Standard</string>
+    <string name="note_line_spacing_compact">Kompakt</string>
+    <string name="note_line_spacing_comfortable">Großzügig</string>
     <string name="font_style_cozy">Redaktionell</string>
     <string name="font_style_modern">Modern</string>
     <string name="font_style_tech">Technisch</string>
@@ -552,6 +556,7 @@
     <string name="keyboard_show">Tastatur einblenden</string>
     <string name="keyboard_hide">Tastatur ausblenden</string>
     <string name="security_erase_confirm_title">Alle Daten löschen?</string>
+    <string name="security_erase_failed">Die Daten konnten nicht gelöscht werden. Nichts wurde geändert.</string>
     <string name="security_erase_confirm">Löschen</string>
     <string name="subtasks_title">Unteraufgaben</string>
     <string name="subtask_placeholder">Unteraufgabe</string>
@@ -570,4 +575,30 @@
         <item quantity="one">%1$d von %2$d Unteraufgabe erledigt</item>
         <item quantity="other">%1$d von %2$d Unteraufgaben erledigt</item>
     </plurals>
+    <string name="slash_menu_title">Block einfügen</string>
+    <string name="find_in_note">In Notiz suchen</string>
+    <string name="find_placeholder">In dieser Notiz suchen</string>
+    <string name="find_count">%1$d von %2$d</string>
+    <string name="find_no_matches">Keine Treffer</string>
+    <string name="find_next">Nächster Treffer</string>
+    <string name="find_previous">Vorheriger Treffer</string>
+    <string name="find_close">Suche schließen</string>
+    <string name="block_duplicate">Block duplizieren</string>
+    <string name="template_start">Mit Vorlage beginnen</string>
+    <string name="template_blank">Leer</string>
+    <string name="template_meeting">Besprechung</string>
+    <string name="template_journal">Tagebuch</string>
+    <string name="template_project">Projektnotizen</string>
+    <string name="template_attendees">Teilnehmer</string>
+    <string name="template_agenda">Tagesordnung</string>
+    <string name="template_notes">Notizen</string>
+    <string name="template_action_items">Aufgaben</string>
+    <string name="template_journal_today">Heute</string>
+    <string name="template_journal_gratitude">Dankbarkeit</string>
+    <string name="template_journal_tomorrow">Morgen</string>
+    <string name="template_project_goal">Ziel</string>
+    <string name="template_project_tasks">Aufgaben</string>
+    <string name="template_project_decisions">Entscheidungen</string>
+    <string name="template_project_questions">Offene Fragen</string>
+    <string name="template_checklist_todo">Zu erledigen</string>
 </resources>

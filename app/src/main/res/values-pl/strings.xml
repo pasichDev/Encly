@@ -148,6 +148,10 @@
     <string name="faq_vault_damaged_q">Encly zgłasza uszkodzenie sejfu</string>
 
     <string name="font_size_title">Rozmiar tekstu</string>
+    <string name="note_line_spacing_title">Odstępy między wierszami</string>
+    <string name="note_line_spacing_default">Domyślne</string>
+    <string name="note_line_spacing_compact">Kompaktowe</string>
+    <string name="note_line_spacing_comfortable">Przestronne</string>
     <string name="font_style_cozy">Redakcyjny</string>
     <string name="font_style_modern">Nowoczesny</string>
     <string name="font_style_tech">Techniczny</string>
@@ -562,6 +566,7 @@
     <string name="keyboard_show">Pokaż klawiaturę</string>
     <string name="keyboard_hide">Ukryj klawiaturę</string>
     <string name="security_erase_confirm_title">Wymazać wszystkie dane?</string>
+    <string name="security_erase_failed">Nie udało się usunąć danych. Nic nie zostało zmienione.</string>
     <string name="security_erase_confirm">Wymaż</string>
     <string name="subtasks_title">Podzadania</string>
     <string name="subtask_placeholder">Podzadanie</string>
@@ -582,4 +587,30 @@
         <item quantity="many">Wykonano %1$d z %2$d podzadań</item>
         <item quantity="other">Wykonano %1$d z %2$d podzadania</item>
     </plurals>
+    <string name="slash_menu_title">Wstaw blok</string>
+    <string name="find_in_note">Znajdź w notatce</string>
+    <string name="find_placeholder">Znajdź w tej notatce</string>
+    <string name="find_count">%1$d z %2$d</string>
+    <string name="find_no_matches">Brak wyników</string>
+    <string name="find_next">Następny wynik</string>
+    <string name="find_previous">Poprzedni wynik</string>
+    <string name="find_close">Zamknij wyszukiwanie</string>
+    <string name="block_duplicate">Duplikuj blok</string>
+    <string name="template_start">Zacznij od szablonu</string>
+    <string name="template_blank">Pusta</string>
+    <string name="template_meeting">Spotkanie</string>
+    <string name="template_journal">Dziennik</string>
+    <string name="template_project">Notatki projektowe</string>
+    <string name="template_attendees">Uczestnicy</string>
+    <string name="template_agenda">Program</string>
+    <string name="template_notes">Notatki</string>
+    <string name="template_action_items">Zadania do wykonania</string>
+    <string name="template_journal_today">Dzisiaj</string>
+    <string name="template_journal_gratitude">Wdzięczność</string>
+    <string name="template_journal_tomorrow">Jutro</string>
+    <string name="template_project_goal">Cel</string>
+    <string name="template_project_tasks">Zadania</string>
+    <string name="template_project_decisions">Decyzje</string>
+    <string name="template_project_questions">Otwarte pytania</string>
+    <string name="template_checklist_todo">Do zrobienia</string>
 </resources>

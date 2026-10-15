@@ -40,17 +40,23 @@ class BackupManager @Inject constructor(
      * would look like a good backup but could never be restored.
      */
     suspend fun createBackup(): ByteArray {
-        val payload = guarded { BackupMapper.toPayload(store.snapshot(), clock()) }
+        realVaultOnly()
+        val boundStore = guarded { store.bindToCurrentSession() }
+        val payload = guarded { BackupMapper.toPayload(boundStore.snapshot(), clock()) }
         val root = securityManager.copyBackupRootKey()
             ?: throw BackupException(BackupError.VAULT_UNAVAILABLE)
-        val plaintext = BackupPayloadCodec.encode(payload)
         return try {
-            if (BackupFormat.fileSizeFor(plaintext.size) > maxFileBytes) {
-                throw BackupException(BackupError.TOO_LARGE)
+            guarded { boundStore.assertCurrentSession() }
+            val plaintext = BackupPayloadCodec.encode(payload)
+            try {
+                if (BackupFormat.fileSizeFor(plaintext.size) > maxFileBytes) {
+                    throw BackupException(BackupError.TOO_LARGE)
+                }
+                BackupCipher.seal(plaintext, BackupSecret.RecoveryRoot(root))
+            } finally {
+                SensitiveDataCleaner.clear(plaintext)
             }
-            BackupCipher.seal(plaintext, BackupSecret.RecoveryRoot(root))
         } finally {
-            SensitiveDataCleaner.clear(plaintext)
             SensitiveDataCleaner.clear(root)
         }
     }
@@ -61,8 +67,10 @@ class BackupManager @Inject constructor(
     /**
      * Authenticates, decrypts and validates [file] without touching the database.
      * [phrase] must already be normalized ([normalizeRecoveryPhrase]); the caller wipes it.
+     * Refused in the decoy vault, like export.
      */
     fun decrypt(file: ByteArray, phrase: CharArray): BackupPayload {
+        realVaultOnly()
         if (!securityManager.isValidRecoveryPhrase(phrase)) {
             throw BackupException(BackupError.INVALID_PHRASE)
         }
@@ -77,9 +85,22 @@ class BackupManager @Inject constructor(
     /** Lower-case words separated by single spaces, as stored for the vault's recovery slot. */
     fun normalizeRecoveryPhrase(input: CharArray): CharArray = BackupKeys.normalizeMnemonic(input)
 
-    /** Imports into the unlocked vault in one transaction; nothing is written on failure. */
-    suspend fun import(payload: BackupPayload, mode: ImportMode, tagMatch: TagMatch = TagMatch.UID): ImportSummary =
-        guarded { BackupImporter.import(payload, mode, store, tagMatch) }
+    /**
+     * Imports into the unlocked vault in one transaction; nothing is written on failure. Refused
+     * in the decoy vault.
+     */
+    suspend fun import(payload: BackupPayload, mode: ImportMode, tagMatch: TagMatch = TagMatch.UID): ImportSummary {
+        realVaultOnly()
+        return guarded { BackupImporter.import(payload, mode, store.bindToCurrentSession(), tagMatch) }
+    }
+
+    /**
+     * Backups belong to the real vault. In the decoy vault every step fails like a storage error
+     * would, so the Backup screen looks like it does anywhere else and says nothing more.
+     */
+    private fun realVaultOnly() {
+        if (securityManager.isDecoySession()) throw BackupException(BackupError.IO)
+    }
 
     fun lastExportAt(): Long? = secureStoragePrefs.getLong(LAST_EXPORT_KEY, 0L).takeIf { it > 0L }
 

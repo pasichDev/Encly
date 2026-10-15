@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.pasich.encly.R
 import com.pasich.encly.data.handoff.HandoffError
 import com.pasich.encly.data.handoff.HandoffPreview
@@ -34,6 +33,7 @@ import com.pasich.encly.presentation.screen.LockScreen
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.viewmodel.HandoffStep
 import com.pasich.encly.presentation.viewmodel.ImportFromMyNotesViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -44,7 +44,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 fun ImportFromMyNotesScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ImportFromMyNotesViewModel = hiltViewModel(),
+    viewModel: ImportFromMyNotesViewModel = enclyViewModel(),
 ) {
     val locked by viewModel.locked.collectAsState()
     val step by viewModel.step.collectAsState()

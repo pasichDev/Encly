@@ -49,7 +49,9 @@ class SecureDatabaseManagerInstrumentedTest {
         // passphrase buffer the open-helper factory keeps. A zeroed buffer fails here with
         // "file is not a database".
         val counts = (1..PARALLEL_READERS).map {
-            async(Dispatchers.IO) { manager.getDatabase().notesDao().getAllNotes().first().size }
+            async(Dispatchers.IO) {
+                manager.getDatabase(manager.captureLease()!!).notesDao().getAllNotes().first().size
+            }
         }.awaitAll()
 
         assertTrue(counts.all { it == NOTE_COUNT })
@@ -58,13 +60,16 @@ class SecureDatabaseManagerInstrumentedTest {
     @Test
     fun lockThenUnlockAgainReopensTheSameData() = runBlocking {
         assertTrue(manager.unlockDatabase(KEY_A, allowCreate = true))
+        val oldLease = requireNotNull(manager.captureLease())
         insertNotes(NOTE_COUNT)
 
         manager.reset()
         assertFalse(manager.isDatabaseUnlocked())
         assertTrue(manager.unlockDatabase(KEY_A))
+        assertTrue(runCatching { manager.getDatabase(oldLease) }.isFailure)
+        assertTrue(manager.getDatabase(requireNotNull(manager.captureLease())).isOpen)
 
-        assertEquals(NOTE_COUNT, manager.getDatabase().notesDao().getAllNotes().first().size)
+        assertEquals(NOTE_COUNT, manager.getDatabase(manager.captureLease()!!).notesDao().getAllNotes().first().size)
     }
 
     @Test
@@ -76,8 +81,21 @@ class SecureDatabaseManagerInstrumentedTest {
         assertTrue(manager.hasEncryptedDatabase())
     }
 
+    @Test
+    fun aDaoFromTheClosedOpeningCannotWriteAfterReopen() = runBlocking {
+        assertTrue(manager.unlockDatabase(KEY_A, allowCreate = true))
+        val oldDao = manager.getDatabase(requireNotNull(manager.captureLease())).notesDao()
+
+        manager.reset()
+        assertTrue(manager.unlockDatabase(KEY_A))
+
+        val staleWrite = runCatching { oldDao.insertNote(Note(title = "stale", value = "old session")) }
+        assertTrue(staleWrite.isFailure)
+        assertTrue(manager.getDatabase(manager.captureLease()!!).notesDao().getAllNotes().first().isEmpty())
+    }
+
     private suspend fun insertNotes(count: Int) {
-        val dao = manager.getDatabase().notesDao()
+        val dao = manager.getDatabase(manager.captureLease()!!).notesDao()
         repeat(count) { dao.insertNote(Note(title = "note $it", value = "body $it")) }
     }
 

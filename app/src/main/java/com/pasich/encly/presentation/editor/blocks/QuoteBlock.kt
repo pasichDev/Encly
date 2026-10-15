@@ -26,7 +26,9 @@ import androidx.compose.ui.text.TextStyle
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.lineHeight
 import com.pasich.encly.presentation.editor.BlockActions
+import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -51,9 +53,14 @@ fun QuoteBlock(
     val actions by rememberUpdatedState(blockActions)
     // Enter ends the quote: the text after the cursor goes on as a paragraph (BlockInput).
     val input = remember { BlockInput(BlockField.Styled) { actions } }
+    val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
     val quoteStyle = EnclyTheme.typography.quote.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = fontStyles.sizes.quote,
+        lineHeight = LocalNoteLineSpacing.current.lineHeight(
+            fontSize = fontStyles.sizes.quote,
+            normal = EnclyTheme.typography.quote.lineHeight,
+        ),
     )
 
     // A tonal card between an opening and a closing quote mark in `primary`, 8 dp below the block
@@ -79,9 +86,11 @@ fun QuoteBlock(
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = WritingKeyboard,
             textStyle = quoteStyle,
+            onTextLayout = highlight.onTextLayout,
             modifier = fieldModifier
                 .focusRequester(focusRequester)
                 .fillMaxWidth()
+                .then(highlight.modifier)
                 .textBlockKeys(state, blockActions),
             decorator = { innerTextField ->
                 QuoteDecoration(state.text.isEmpty(), quoteStyle, innerTextField)

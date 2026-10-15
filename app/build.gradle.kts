@@ -1,7 +1,7 @@
 import java.util.Properties
 
-// Minimum line coverage (%) of com.pasich.encly.core.security enforced by koverVerify.
-val koverMinSecurityLineCoverage = 40
+// Minimum line coverage (%) of the whole app (generated code excluded) enforced by koverVerify.
+val koverMinLineCoverage = 85
 
 // Derive the app version from the tracked root `version.properties` so versionName and
 // versionCode always stay in sync and only one file needs bumping per release.
@@ -39,7 +39,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
@@ -57,7 +56,7 @@ detekt {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "com.pasich.encly"
 
     defaultConfig {
@@ -252,13 +251,29 @@ kover {
     reports {
         variant("fdroidDebug") {
             filters {
-                includes {
-                    packages("com.pasich.encly.core.security")
+                // Code the compilers and annotation processors write, not this project.
+                excludes {
+                    classes(
+                        "*.BuildConfig",
+                        "*.R",
+                        "*.R$*",
+                        "*ComposableSingletons*",
+                        "*Hilt_*",
+                        "*_HiltModules*",
+                        "*_Factory",
+                        "*_Factory$*",
+                        "*_MembersInjector",
+                        "*_GeneratedInjector",
+                        "*_Impl",
+                        "*_Impl$*",
+                        "*Dagger*",
+                    )
+                    packages("dagger.hilt", "hilt_aggregated_deps")
                 }
             }
             verify {
-                rule("core/security line coverage") {
-                    minBound(koverMinSecurityLineCoverage)
+                rule("App line coverage") {
+                    minBound(koverMinLineCoverage)
                 }
             }
         }
@@ -267,7 +282,12 @@ kover {
 
 dependencies {
 
-    // Jetpack Compose
+    // Jetpack Compose: every androidx.compose module takes its version from the BOM.
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    debugImplementation(composeBom)
+    testImplementation(composeBom)
+    androidTestImplementation(composeBom)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -313,8 +333,6 @@ dependencies {
     implementation(libs.sqlcipher.android)
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.kotlin.bip39)
-
-    // Security Crypto (see the note in gradle/libs.versions.toml before replacing it)
 
     implementation(libs.icons.lucide)
 

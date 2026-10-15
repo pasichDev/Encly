@@ -1,6 +1,7 @@
 package com.pasich.encly.data.repository
 
 import com.pasich.encly.data.database.AppDatabase
+import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.database.dao.NotesDao
 import com.pasich.encly.data.database.dao.TagsDao
@@ -32,9 +33,12 @@ class RepositoryImplTest {
         `when`(it.tasksDao()).thenReturn(tasksDao)
     }
     private var locked = false
+    private var lease = DatabaseLease()
     private val provider = object : DatabaseProvider {
-        override fun getDatabase(): AppDatabase {
-            if (locked) error("vault locked")
+        override fun captureLease(): DatabaseLease? = if (locked) null else lease
+
+        override fun getDatabase(lease: DatabaseLease): AppDatabase {
+            if (locked || lease !== this@RepositoryImplTest.lease) error("vault locked")
             return database
         }
     }
@@ -68,6 +72,19 @@ class RepositoryImplTest {
         locked = true
 
         assertTrue(TasksRepositoryImpl(provider).deleteTaskById(TASK_ID).isFailure)
+    }
+
+    @Test
+    fun repositoryCreatedWhileLockedCannotAttachToALaterOpening() = runBlocking {
+        locked = true
+        val stale = NotesRepositoryImpl(provider)
+        locked = false
+        lease = DatabaseLease()
+        val note = Note(title = "new session")
+        `when`(notesDao.insertNote(note)).thenReturn(NOTE_ID)
+
+        assertTrue(stale.insertNote(note).isFailure)
+        assertEquals(NOTE_ID, NotesRepositoryImpl(provider).insertNote(note).getOrNull())
     }
 
     @Test

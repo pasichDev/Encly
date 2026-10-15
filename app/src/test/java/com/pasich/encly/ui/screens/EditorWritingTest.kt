@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.text.TextRange
 import com.pasich.encly.R
 import com.pasich.encly.core.serialization.BlockConverter
@@ -104,6 +105,65 @@ class EditorWritingTest : ComposeScreenTest() {
 
         waitFor { editor.blocks.size == 1 }
         assertEquals(listOf("Hello world"), texts())
+    }
+
+    @Test
+    fun aSlashInAnEmptyParagraphOpensThePickerAndPickingAHeadingConvertsIt() {
+        open(text(""))
+        val field = rule.onAllNodes(hasSetTextAction())[1]
+        field.performClick()
+
+        field.performTextInput("/")
+
+        waitFor { editor.slashPicker.menu.value?.isShown == true }
+        rule.onNodeWithText(str(R.string.block_heading_level, 2)).performClick()
+        waitFor { editor.blocks.first() is Block.HBlock }
+        assertEquals(BlockType.H2, (editor.blocks.first() as Block.HBlock).blockType)
+        rule.runOnUiThread { editor.undo() }
+        waitFor { editor.blocks.first() is Block.TextBlock }
+        assertEquals(listOf("/"), texts())
+    }
+
+    @Test
+    fun aSlashTypedInTheMiddleOfTextNeverOpensThePicker() {
+        open(text("a b"))
+        paragraph("a b").performClick()
+        paragraph("a b").performTextInputSelection(TextRange(2))
+
+        paragraph("a b").performTextInput("/")
+
+        waitFor { texts() == listOf("a /b") }
+        assertEquals(null, editor.slashPicker.menu.value)
+    }
+
+    @Test
+    fun findShowsTheCountStepsThroughMatchesAndLeavesTheNoteAlone() {
+        open(text("the cat sat"), text("another cat"))
+        rule.runOnUiThread { editor.openFind() }
+        val query = rule.onNode(hasSetTextAction() and hasContentDescription(str(R.string.search_notes)))
+
+        query.performTextInput("cat")
+
+        rule.onNodeWithText(str(R.string.find_count, 1, 2)).assertExists()
+        rule.onNode(hasContentDescription(str(R.string.find_next)) and hasClickAction()).performClick()
+        rule.onNodeWithText(str(R.string.find_count, 2, 2)).assertExists()
+        assertEquals(listOf("the cat sat", "another cat"), texts())
+        rule.onNode(hasContentDescription(str(R.string.find_close)) and hasClickAction()).performClick()
+        waitFor { !editor.find.value.isOpen }
+        assertEquals("", editor.find.value.query)
+    }
+
+    @Test
+    fun controlFOpensFindAndEscapeClosesIt() {
+        open(text("body"))
+        paragraph("body").performClick()
+
+        paragraph("body").performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.F) } }
+        waitFor { editor.find.value.isOpen }
+
+        rule.onNode(hasSetTextAction() and hasContentDescription(str(R.string.search_notes)))
+            .performKeyInput { pressKey(Key.Escape) }
+        waitFor { !editor.find.value.isOpen }
     }
 
     @Test

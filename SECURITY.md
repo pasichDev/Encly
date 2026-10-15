@@ -18,7 +18,11 @@ DEK (random 256 bit) ── SQLCipher raw key
 ├─ PIN slot       AES-GCM(kek_pin)       kek_pin = HKDF(PBKDF2(pin, salt, 600k) ‖ HMAC_keystore(salt ‖ pin))
 ├─ biometric slot AES-GCM(keystore key)  auth-per-use, BIOMETRIC_STRONG CryptoObject
 ├─ recovery slot  AES-GCM(kek_rec)       kek_rec = HKDF(SHA-256(normalized 12 words), "encly/recovery/kek/v3")
-└─ backup-key slot AES-GCM(HKDF(DEK))    holds backupRoot = HKDF(SHA-256(words), "encly/backup/root/v1")
+├─ backup-key slot AES-GCM(HKDF(DEK))    holds backupRoot = HKDF(SHA-256(words), "encly/backup/root/v1")
+└─ decoy key      AES-GCM(HKDF(DEK))    holds decoy DEK (see "Duress PIN")
+
+decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.db)
+└─ duress slot    AES-GCM(kek_duress)    kek_duress = HKDF(same PIN KDF run, "encly/pin/decoy/v3")
 ```
 
 ### PIN slot
@@ -46,7 +50,9 @@ DEK (random 256 bit) ── SQLCipher raw key
   and doubles with each further miss (1, 2, 4 … 32 min, ~1 h …) up to 24 h. It runs on
   `SystemClock.elapsedRealtime`, so changing the wall clock does not end it; across a reboot
   the remaining penalty is kept and restarts from boot (a reboot never shortens a lockout). A
-  failure of the Keystore itself is not counted as a guess. Wrong PINs never erase anything:
+  failure of the Keystore itself is not counted as a guess. A second counter (`pin.strikes`)
+  keeps the misses since the PIN itself was last right; see the duress PIN below for why. Wrong
+  PINs never erase anything:
   the only wipe is the optional **wipe PIN** below, and only when the user set one up.
 - Changing the PIN keeps the slot's salt (slots written before keep their own), so a wipe PIN
   set earlier keeps working.
@@ -66,7 +72,9 @@ and show me"), not against a forensic examination.
   wipe PIN it holds random bytes, written by a startup migration that needs no PIN and leaves
   `pin.slot` byte for byte as it was. The store has the same keys and sizes either way; no
   verifier, hash or extra Keystore key exists for it. Only the wipe PIN itself can tell, so
-  Settings never shows whether one is set.
+  Settings never shows whether one is set. Setting another PIN (wipe, duress or a new PIN) in
+  Settings is refused when it is one of the others, which tells; each such refusal therefore
+  costs a miss like a wrong guess, and the wipe and duress PIN cannot be set during a lockout.
 - **Same cost either way.** Each attempt runs PBKDF2 and the Keystore HMAC once, derives both
   KEKs and always tries both AES-GCM opens, without early exit.
 - **Rules.** 6 digits and different from the PIN (checked by opening the PIN slot with it).
@@ -136,6 +144,77 @@ and show me"), not against a forensic examination.
   without the wipe PIN), so set the wipe PIN again after such a round trip. Apart from this, the
   same release moves the database to version 4, which older builds cannot open at all (see
   CHANGELOG).
+
+### Duress PIN
+
+An optional third PIN (Settings → Security → Duress PIN; set, change or turn off, each after
+the real PIN). Typed on the lock screen, it opens a **decoy vault**: a second, fully usable
+vault with its own random DEK and its own SQLCipher database (`vault_b.db`, with its `-wal` and
+`-shm`), empty the first time. Its notes, tags and tasks persist across re-locks and restarts.
+The real vault stays closed and is not changed. Unlike the wipe PIN, it erases nothing. It is
+meant for "open the app and show me", not against a forensic examination.
+
+- **Key material.** The duress slot (`pin.decoy.slot`) is
+  `version ‖ IV ‖ AES-GCM_dkek(decoy DEK)`, `dkek = HKDF(sw ‖ hw, salt, info =
+  "encly/pin/decoy/v3")` from the same KDF run as the PIN KEK, its AAD
+  (`"encly/pin/decoy-slot/v3"`) bound to the PIN slot's salt, like the wipe slot. The real vault
+  also keeps the decoy DEK in `decoy.key`, sealed under `HKDF(DEK, "encly/decoy/key/salt/v1",
+  "encly/decoy/key/kek/v1")`, so changing the duress PIN keeps the decoy notes and only the real
+  vault's session can tell whether a decoy vault exists. The decoy DEK never wraps or unwraps
+  anything of the real vault, and nothing derived from it opens a real-vault slot.
+- **Nothing in the store shows it is set.** Both entries always exist with the same length: a
+  startup migration that needs no PIN writes random bytes into them and leaves `pin.slot` byte
+  for byte as it was; turning the duress PIN off writes random bytes again, and every step that
+  replaces one of them (a new PIN slot, the erase) replaces it with or without a decoy vault.
+  Whether a dead duress slot needs setting again is kept inside `decoy.key` (sealed with another
+  AAD, `"encly/decoy/key/off/v1"`), not in a store entry of its own. The lockout counters are the
+  exception, see below.
+- **One attempt, three slots.** Every lock-screen attempt is counted before the KDF, runs
+  PBKDF2 and the Keystore HMAC once, derives the three KEKs and always tries all three AES-GCM
+  opens, without early exit. The PIN opens the real vault and the duress PIN the decoy one with
+  the same result, animation and screen; the wipe PIN erases. Settings never lets one PIN open
+  two slots; should it happen anyway, the order is PIN, duress, wipe (never the erase while a
+  PIN could open a vault). The duress PIN is refused during a lockout and ends it like the
+  PIN, but not the strikes (misses since the PIN itself was last right): from the 10th strike
+  on every miss is locked out, escalating as above, even right after the duress PIN opened the
+  decoy vault. Without that, someone who was given the duress PIN could guess at the real
+  PIN 4 times, type the duress PIN to reset the lockout, and repeat without limit. The cost is a
+  tell after that many misses (a lockout sooner than the screen suggests), and a store-level
+  one: lockout failures at 0 while `pin.strikes` is not shows a non-PIN unlock since the misses.
+- **Rules.** 6 digits, different from the PIN and from the wipe PIN (checked by opening their
+  slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
+  the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
+  Keystore key, or a PIN set with a new salt (after a recovery-phrase unlock when the PIN slot
+  could not be read), turns the duress PIN off like the wipe PIN; Settings in the real vault
+  then shows it as off and says why, and setting it again opens the same decoy notes. A refused
+  collision costs a miss, as for the wipe PIN.
+- **Inside the decoy vault.** Notes, tags, tasks, trash, search, sorting and appearance work as
+  usual. Settings shows the same entries as in the real vault, and everything that belongs
+  to the real vault is refused by the security layer and fails like a storage error would, with
+  the usual generic message: changing the PIN, the wipe and duress PINs, fingerprint unlock, the
+  recovery phrase, encrypted backups (export and import) and "Erase all data". A PIN re-check
+  there accepts the duress PIN only, so the decoy vault itself cannot be used to test guesses
+  of the real PIN; on the lock screen the strikes above bound them. Fingerprint unlock and the recovery phrase on the lock screen always open the real
+  vault, and nothing in the decoy vault offers a way to switch: to change vaults, lock and type
+  the other PIN. App settings (theme, sorting, font, auto-lock, keyboard privacy) are shared.
+- **Session isolation.** Only one database is open at a time. Every repository is bound to the
+  opening it was created in (a lease revoked before Room closes), so nothing created in one
+  vault reads or writes the other. Opening the other vault starts a new epoch, so the note that
+  was open when the app re-locked is reopened only in the vault it belongs to.
+- **Failures never fall back.** A decoy database that does not open fails the unlock; it is
+  neither deleted nor replaced by the real vault. Turning the duress PIN off (after the PIN and a
+  confirmation) forgets the decoy key first and then deletes `vault_b.db`; a kill in between
+  leaves a file nothing can open, which the next duress PIN set replaces.
+- **Wipe PIN.** The erase also replaces both decoy entries with random bytes and deletes
+  `vault_b.db` with the real database: the empty vault has no decoy vault either.
+- **Limits.** The decoy vault does not hide that the real one exists from a forensic look: the
+  second database file, its size and timestamps, filesystem leftovers, or comparing two
+  snapshots. The first unlock with the duress PIN creates that database and takes longer.
+  Biometrics can be forced. On a rooted, unlocked phone PIN guessing through the Keystore (see
+  "Important limitations") finds the duress PIN as well.
+- **Downgrade.** Older builds ignore both entries and the second database and keep opening the
+  real vault. A PIN changed in an older build gets a new salt, which silently turns the duress
+  PIN off; the decoy notes come back once it is set again in this version.
 
 ### Biometric slot
 
@@ -311,6 +390,47 @@ counts, and exposes no provider or anything readable.
   the backup merge import: one transaction, records whose uid exists are skipped (a repeated
   hand-off adds nothing), tags are matched by name.
 
+## Import from other apps
+
+Settings → Import notes reads exports of other notes apps (pasichDev/Encly#62): Google Keep
+Takeout, a decrypted Standard Notes backup, Joplin JEX or RAW, Notesnook Markdown/TXT exports and
+generic Markdown/TXT (Obsidian, Markor).
+
+- **Input.** Only documents and folders the user picks through the Storage Access Framework,
+  read as streams through `ContentResolver` while the vault is unlocked (the picker gets the
+  same short grace as a backup import). No path, seek or declared size is trusted. The source
+  files are never written.
+- **Bounded reading, in memory only.** ZIP is read sequentially from local headers with a reader
+  of Encly's own (every entry's CRC checked; encrypted entries refused), TAR with a minimal
+  ustar/GNU reader that hands data out only up to the size of each entry. Limits, counted on the
+  bytes actually read and inflated: 2 GiB read, 64 MiB uncompressed for what is kept, 4 MiB per
+  file (16 MiB for a JSON export that holds every note), 20 000 entries (directories and every
+  archive header included), 20 000 notes, path depth 16, JSON nesting 64. Media and attachments
+  (images, audio, video, PDFs, by name) are counted and never kept: a picked file or folder entry
+  is not opened and a TAR member is skipped unread; a ZIP member has to be inflated to find the
+  next header, so it is streamed through a small buffer against its own 2 GiB cap, and a bomb
+  named `photo.jpg` still ends as "too large". Absolute paths, `..`, drive letters, NUL, links,
+  devices, archives inside archives and folders deeper than the limit are skipped and counted
+  (a backslash is read as `/`); a ZIP bomb or an endless archive ends as "too large", and a
+  damaged archive keeps the notes read before the damage and counts the rest as unreadable.
+  Nothing is staged in `cacheDir` or anywhere else on disk, and nothing is logged.
+- **Formats are recognised by content, not by extension;** an ambiguous selection asks the user.
+  Encrypted Standard Notes backups and Notesnook backups (`.nnbackupz`) are refused with guidance
+  instead of being parsed. Markdown and HTML become plain Encly blocks (inline HTML tags are
+  removed, other angle-bracket text stays); nothing is executed or rendered as HTML, and
+  frontmatter is read for a few known keys only.
+- **Review before writing.** Parsed notes (titles, a snippet, the read-only text) are shown on a
+  review screen and live only in that screen's ViewModel: no saved state, nothing persisted, and
+  they are dropped on cancel, on finish and when the vault locks. The selected notes go through
+  the backup merge import: one transaction on the database session the import started in, all
+  or nothing, notes whose uid exists are skipped (the uid is derived from the source's own id, or for Markdown from the path
+  and a digest of the text, so a repeated import adds nothing), tags matched by name.
+- **Vaults.** It is available in a decoy session too and imports into whichever vault is open;
+  a vault switch or re-lock during the import makes the transaction fail instead of writing
+  elsewhere.
+- **Limits.** Like the editor and the backup import, parsed text passes through JVM strings that
+  cannot be zeroized.
+
 ## Session lifecycle
 
 - The database is not considered committed until mandatory PIN setup succeeds.
@@ -384,7 +504,7 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - Android app sandbox isolates local files from ordinary apps.
 - `allowBackup=false` is set.
 - Database/security state is excluded from cloud backup and device transfer.
-- The key slots (PIN, wipe-PIN, recovery, backup-key and biometric envelopes) and the PIN
+- The key slots (PIN, wipe-PIN, duress-PIN, decoy-key, recovery, backup-key and biometric envelopes) and the PIN
   lockout state live in one app-private file, `no_backup/vault_state_v3.bin`. Every secret in it is already
   an AES-256-GCM envelope, so it needs no further encryption layer and **no Keystore key to be
   read**: a broken Keystore or Tink keyset can no longer make the vault state unreadable at
@@ -444,8 +564,8 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   missing the key lives in the TEE; on devices without hardware-backed Keystore it is software
   only.
 - The lockout is enforced by the app, not by the secure hardware.
-- The wipe PIN (see "Wipe PIN") defends against being forced to unlock on the spot, not against
-  a forensic examination or a rooted phone.
+- The wipe PIN (see "Wipe PIN") and the duress PIN (see "Duress PIN") defend against being
+  forced to unlock on the spot, not against a forensic examination or a rooted phone.
 - The recovery seed restores the local vault (recovery slot) and opens encrypted backups. On a
   new phone the seed alone recreates nothing: the user also needs a backup file, and only data
   up to that export is restored.

@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
@@ -21,6 +20,7 @@ import com.pasich.encly.data.model.Tag
 import com.pasich.encly.presentation.components.tiles.TagItem
 import com.pasich.encly.presentation.viewmodel.TagListEvent.SelectTag
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -28,7 +28,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
  * scrolling row that runs to the screen edges.
  */
 @Composable
-fun TagsList(modifier: Modifier = Modifier, tagListViewModel: TagListViewModel = hiltViewModel()) {
+fun TagsList(modifier: Modifier = Modifier, tagListViewModel: TagListViewModel = enclyViewModel()) {
     val state by tagListViewModel.state.collectAsStateWithLifecycle()
     val gutter = EnclyTheme.spacing.listGutter
 

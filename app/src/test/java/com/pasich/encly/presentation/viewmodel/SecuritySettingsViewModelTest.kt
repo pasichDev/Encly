@@ -7,7 +7,9 @@ import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.testutil.InMemorySharedPreferences
@@ -114,8 +116,8 @@ class SecuritySettingsViewModelTest {
     @Test
     fun aNewPinIsStoredOrItsFailureShown() = runTest {
         viewModel.uiState.first { it.loaded }
-        `when`(security.configurePin("333333".toCharArray())).thenReturn(true)
-        `when`(security.configurePin("444444".toCharArray())).thenReturn(false)
+        `when`(security.changePin("333333".toCharArray())).thenReturn(PinChange.SET)
+        `when`(security.changePin("444444".toCharArray())).thenReturn(PinChange.FAILED)
 
         assertTrue(activate("333333"))
         assertEquals(AuthType.PIN, viewModel.uiState.value.authType)
@@ -126,10 +128,47 @@ class SecuritySettingsViewModelTest {
     }
 
     @Test
+    fun aPinEqualToTheDuressPinIsRefusedWithoutAnError() = runTest {
+        viewModel.uiState.first { it.loaded }
+        `when`(security.changePin("555555".toCharArray())).thenReturn(PinChange.IN_USE)
+
+        assertFalse(activate("555555"))
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun aDuressPinIsHandedOnAndRemembered() = runTest {
+        viewModel.uiState.first { it.loaded }
+        `when`(security.configureDuressPin(anyCharArray())).thenReturn(DuressPinChange.SET_NEW_VAULT)
+        val result = CompletableDeferred<DuressPinChange>()
+
+        viewModel.setDuressPin("864200".toCharArray()) { result.complete(it) }
+
+        assertEquals(DuressPinChange.SET_NEW_VAULT, result.await())
+        assertTrue(viewModel.uiState.value.hasDuressPin)
+    }
+
+    @Test
+    fun turningTheDuressPinOffForgetsIt() = runTest {
+        `when`(security.getSettingsAuth()).thenReturn(
+            AuthSettings(AuthType.PIN, isBiometricEnabled = false, isUserCreatedSeedKey = false, hasDuressPin = true),
+        )
+        viewModel.refresh()
+        viewModel.uiState.first { it.hasDuressPin }
+        `when`(security.removeDuressPin()).thenReturn(true)
+        val result = CompletableDeferred<Boolean>()
+
+        viewModel.removeDuressPin { result.complete(it) }
+
+        assertTrue(result.await())
+        assertFalse(viewModel.uiState.value.hasDuressPin)
+    }
+
+    @Test
     fun theCheckedAndTheNewPinAreWipedAfterUse() = runTest {
         viewModel.uiState.first { it.loaded }
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
-        `when`(security.configurePin(anyCharArray())).thenReturn(false)
+        `when`(security.changePin(anyCharArray())).thenReturn(PinChange.FAILED)
 
         val current = "111111".toCharArray()
         assertTrue(checkCurrent(current))
@@ -322,9 +361,9 @@ class SecuritySettingsViewModelTest {
     private suspend fun activate(pin: String): Boolean = activate(pin.toCharArray())
 
     private suspend fun activate(pin: CharArray): Boolean {
-        val result = CompletableDeferred<Boolean>()
+        val result = CompletableDeferred<PinChange>()
         viewModel.activationPinAuth(pin) { result.complete(it) }
-        return result.await()
+        return result.await() == PinChange.SET
     }
 
     private companion object {

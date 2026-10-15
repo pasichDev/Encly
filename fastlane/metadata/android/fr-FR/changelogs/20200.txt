@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Importez vos notes depuis Google Keep, Standard Notes, Joplin, Notesnook ou des fichiers Markdown, entièrement hors ligne.
+• PIN de contrainte (facultatif) : un autre PIN qui ouvre un coffre leurre séparé, vos vraies notes restant verrouillées.
+• Éditeur : commandes /, collage plus intelligent, recherche dans la note, modèles, duplication de blocs et affichage plus aéré.
+• Verrouillage automatique après 15 ou 30 minutes, si vous le souhaitez.

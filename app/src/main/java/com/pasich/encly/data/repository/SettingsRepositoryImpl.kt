@@ -3,6 +3,7 @@ package com.pasich.encly.data.repository
 import com.pasich.encly.data.datasource.local.SettingsLocalDataSource
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -13,6 +14,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+@Suppress("TooManyFunctions") // Implements the settings interface with one delegate per setting.
 class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSource: SettingsLocalDataSource) :
     SettingsRepository {
 
@@ -23,6 +25,7 @@ class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSo
     override val simpleEditFlow: Flow<Boolean> = settingsLocalDataSource.simpleEditFlow
     override val fontSizeFlow: Flow<Int> = settingsLocalDataSource.fontSizeFlow
     override val fontStyleFlow: Flow<FontStyleType> = settingsLocalDataSource.fontStyleFlow
+    override val noteLineSpacingFlow: Flow<NoteLineSpacing> = settingsLocalDataSource.noteLineSpacingFlow
 
     override val latestThemeSettings: ThemeSettings?
         get() = settingsLocalDataSource.latestThemeSettings
@@ -49,4 +52,6 @@ class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSo
     override suspend fun setFontSize(value: Int) = settingsLocalDataSource.setFontSize(value)
 
     override suspend fun setFontStyle(value: FontStyleType) = settingsLocalDataSource.setFontStyle(value)
+
+    override suspend fun setNoteLineSpacing(value: NoteLineSpacing) = settingsLocalDataSource.setNoteLineSpacing(value)
 }

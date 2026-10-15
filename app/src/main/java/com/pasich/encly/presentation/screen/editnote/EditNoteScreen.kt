@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.screen.editnote
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,12 +29,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -46,16 +48,20 @@ import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
+import com.pasich.encly.presentation.designsystem.blockGap
+import com.pasich.encly.presentation.designsystem.isCompact
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheet
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheetAction
 import com.pasich.encly.presentation.editor.EditorBlocksHost
+import com.pasich.encly.presentation.editor.FindHighlights
 import com.pasich.encly.presentation.editor.editorBlocks
 import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
 
@@ -63,24 +69,25 @@ import kotlinx.coroutines.launch
 private const val HEADER_ITEMS = 2
 
 @Composable
+@Suppress("LongMethod") // Screen state and editor settings feed one scoped editor composition.
 fun EditNoteScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val exits = remember(viewModel, navController) {
+    val exits = remember(viewModel, navController, resources) {
         EditorExits(
             viewModel = viewModel,
             navController = navController,
             entry = lifecycleOwner as? NavBackStackEntry,
             scope = scope,
-            onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(context.getString(message)) } },
+            onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(resources.getString(message)) } },
             beforeLeaving = {
                 keyboardController?.hide()
                 focusManager.clearFocus()
@@ -89,23 +96,36 @@ fun EditNoteScreen(
     }
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val fontStyle by viewModel.fontStyle.collectAsStateWithLifecycle()
+    val lineSpacing by viewModel.noteLineSpacing.collectAsStateWithLifecycle()
     val simpleEdit by viewModel.simpleEdit.collectAsStateWithLifecycle()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val overlays = rememberEditorOverlays()
     val listState = rememberLazyListState()
     val focusRegistry = rememberBlockFocusRegistry(viewModel.blocks)
-    val host = remember(viewModel, focusRegistry) {
-        EditorBlocksHost(viewModel, focusRegistry) { type, block -> overlays.blockSheet.open(type, block.id) }
+    val findState = viewModel.find.collectAsState()
+    val highlights = remember(findState) { FindHighlights(findState) }
+    val host = remember(viewModel, focusRegistry, highlights) {
+        EditorBlocksHost(viewModel, focusRegistry, highlights) { type, block ->
+            overlays.blockSheet.open(type, block.id)
+        }
     }
     val titleFocus = remember { FocusRequester() }
 
     SaveWhenPaused()
-    CarryOutFocusRequests(focusRegistry, listState, blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0)
+    val blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0
+    CarryOutFocusRequests(focusRegistry, listState, blocksStart = blocksStart)
+    ScrollToFindMatch(listState, blocksStart)
     FocusNewNoteTitle(titleFocus)
     BackHandler { exits.back() }
+    CloseFindOrSlashOnBack()
     EditorOverlays(overlays, exits, onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) })
 
-    EditNoteSettingsProvider(baseFontSize = fontSize.sp, fontStyle = fontStyle, simpleEdit = simpleEdit) {
+    EditNoteSettingsProvider(
+        baseFontSize = fontSize.sp,
+        fontStyle = fontStyle,
+        simpleEdit = simpleEdit,
+        lineSpacing = lineSpacing,
+    ) {
         EditorScaffold(
             actions = EditorBarActions(
                 onBack = exits::back,
@@ -140,26 +160,30 @@ private fun EditorScaffold(
     listState: LazyListState,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+    val findOpen by rememberFindOpen()
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.onPreviewKeyEvent { event -> viewModel.handleFindKey(event) },
         containerColor = MaterialTheme.colorScheme.surface,
         // Status and navigation bars, a display cutout and the keyboard all stay clear of text.
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
-            EditorTopBar(
-                state = EditorBarState(
-                    isReadTrashOnly = viewModel.isReadTrashOnly,
-                    lockEditor = lockEditor,
-                    canToggleLock = !contentLoadFailed,
-                ),
-                listState = listState,
-                actions = actions,
-            )
+            Column {
+                EditorTopBar(
+                    state = EditorBarState(
+                        isReadTrashOnly = viewModel.isReadTrashOnly,
+                        lockEditor = lockEditor,
+                        canToggleLock = !contentLoadFailed,
+                    ),
+                    listState = listState,
+                    actions = actions,
+                )
+                if (findOpen) EditorFindBar()
+            }
         },
         bottomBar = {
             if (!lockEditor && !viewModel.isReadTrashOnly) NoteBottomBar(simpleEdit = LocalSimpleEdit.current)
@@ -195,7 +219,7 @@ private fun EditorOverlays(
     overlays: EditorOverlaysState,
     exits: EditorExits,
     onManageTags: () -> Unit,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val lockEditor by viewModel.lockEditor.collectAsState()
     EditorConfirmDialogs(
@@ -230,6 +254,8 @@ private fun EditorOverlays(
 
                 EditNoteBottomSheetAction.DUPLICATE -> exits.duplicate()
 
+                EditNoteBottomSheetAction.FIND -> viewModel.openFind()
+
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
             }
         },
@@ -243,11 +269,14 @@ private fun EditorContent(
     listState: LazyListState,
     titleFocus: FocusRequester,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
+    val spacing = LocalNoteLineSpacing.current
+    val headerGap = if (spacing.isCompact) EnclyTheme.spacing.labelGap else 0.dp
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val editingLinkIds by viewModel.editingLinkIds.collectAsState()
+    val templatesOffered by viewModel.templatesOffered.collectAsState()
     // Only whether it is loading: a save changing the status must not recompose the list.
     val status = viewModel.status.collectAsState()
     val loading by remember(status) { derivedStateOf { status.value == SaveStatusNote.LOADING } }
@@ -255,8 +284,8 @@ private fun EditorContent(
     CompositionLocalProvider(LocalOverscrollFactory provides null) {
         LazyColumn(
             state = listState,
-            // With a block's 4 dp frame inset above and below, blocks sit 14 apart (spec §4.4).
-            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.labelGap),
+            // Default block frames and this gap give 14 dp between blocks (spec §4.4).
+            verticalArrangement = Arrangement.spacedBy(spacing.blockGap(EnclyTheme.spacing.labelGap)),
             contentPadding = PaddingValues(top = EnclyTheme.spacing.xxs),
             modifier = modifier.fillMaxSize(),
         ) {
@@ -266,18 +295,36 @@ private fun EditorContent(
                 }
                 return@LazyColumn
             }
-            item(key = "overline") { EditorOverline() }
-            item(key = "title") { EditorTitle(readOnly = lockEditor, modifier = Modifier.focusRequester(titleFocus)) }
+            item(key = "overline") {
+                EditorOverline(modifier = Modifier.padding(bottom = headerGap))
+            }
+            item(key = "title") {
+                EditorTitle(
+                    readOnly = lockEditor,
+                    modifier = Modifier
+                        .focusRequester(titleFocus)
+                        .padding(bottom = headerGap),
+                )
+            }
             if (contentLoadFailed) {
                 item(key = "unreadable") {
                     EnclyCallout(
                         text = stringResource(R.string.note_load_failed),
                         tone = CalloutTone.WARNING,
-                        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter),
+                        modifier = Modifier.padding(
+                            horizontal = EnclyTheme.spacing.gutter,
+                            vertical = headerGap,
+                        ),
                     )
                 }
             }
-            editorBlocks(host, viewModel.blocks, isLocked = lockEditor, editingLinkIds = editingLinkIds)
+            editorBlocks(
+                host,
+                viewModel.blocks,
+                isLocked = lockEditor,
+                editingLinkIds = editingLinkIds,
+                afterBlocks = if (templatesOffered) ({ TemplateChooser() }) else null,
+            )
         }
     }
 }
@@ -287,7 +334,7 @@ private fun EditorContent(
 private fun EditorTitle(
     readOnly: Boolean,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     TitleField(
         title = { viewModel.state.value.note.title },
@@ -303,8 +350,8 @@ private fun EditorTitle(
 @Composable
 private fun EditorOverline(
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = hiltViewModel(),
-    tagViewModel: TagListViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
+    tagViewModel: TagListViewModel = enclyViewModel(),
 ) {
     // Read through derived state: a title keystroke or a save does not recompose the overline.
     val noteState = viewModel.state.collectAsState()

@@ -67,6 +67,14 @@ private fun AutoLockDialog(current: AutoLockDelay, onDismiss: () -> Unit, onConf
                     onClick = { selected = delay },
                 )
             }
+            if (selected == AutoLockDelay.MINUTES_15 || selected == AutoLockDelay.MINUTES_30) {
+                Text(
+                    text = stringResource(R.string.auto_lock_long_delay_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = EnclyTheme.spacing.xs),
+                )
+            }
         }
     }
 }
@@ -77,4 +85,6 @@ private fun AutoLockDelay.label(): Int = when (this) {
     AutoLockDelay.SECONDS_30 -> R.string.auto_lock_30s
     AutoLockDelay.MINUTE_1 -> R.string.auto_lock_1m
     AutoLockDelay.MINUTES_2 -> R.string.auto_lock_2m
+    AutoLockDelay.MINUTES_15 -> R.string.auto_lock_15m
+    AutoLockDelay.MINUTES_30 -> R.string.auto_lock_30m
 }

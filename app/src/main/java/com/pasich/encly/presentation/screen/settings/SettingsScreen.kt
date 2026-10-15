@@ -14,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.presentation.components.settings.SettingsBuilder
@@ -25,13 +24,14 @@ import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
 @Composable
 fun SettingsScreen(
     navController: NavHostController?,
     modifier: Modifier = Modifier,
-    settingViewState: SettingsViewModel = hiltViewModel(),
+    settingViewState: SettingsViewModel = enclyViewModel(),
     securityDisable: Boolean = false,
 ) {
     val showTasks by settingViewState.showTasksFlow.collectAsState()
@@ -48,6 +48,7 @@ fun SettingsScreen(
             onAppearance = { navController?.navigate(NavRoutes.AppearanceRoute.name) },
             onSecurity = { navController?.navigate(NavRoutes.SecuritySettingsRoute.name) },
             onBackup = { navController?.navigate(NavRoutes.BackupRoute.name) },
+            onImportNotes = { navController?.navigate(NavRoutes.ImportNotesRoute.name) },
             onAbout = { navController?.navigate(NavRoutes.AboutRoute.name) },
             onFaq = { navController?.navigate(NavRoutes.FaqRoute.name) },
         ),

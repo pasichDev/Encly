@@ -5,6 +5,7 @@ import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -23,6 +24,7 @@ internal class FakeSettingsRepository : SettingsRepository {
     val showTasks = MutableStateFlow(true)
     val simpleEdit = MutableStateFlow(false)
     val fontSize = MutableStateFlow(DEFAULT_FONT_SIZE)
+    val noteLineSpacing = MutableStateFlow(NoteLineSpacing.DEFAULT)
 
     override val themeSettingsFlow: Flow<ThemeSettings> = theme
     override val isGridNoteList: Flow<Boolean> = grid
@@ -31,6 +33,7 @@ internal class FakeSettingsRepository : SettingsRepository {
     override val simpleEditFlow: Flow<Boolean> = simpleEdit
     override val fontSizeFlow: Flow<Int> = fontSize
     override val fontStyleFlow: Flow<FontStyleType> = theme.map { it.fontStyle }
+    override val noteLineSpacingFlow: Flow<NoteLineSpacing> = noteLineSpacing
     override val latestThemeSettings: ThemeSettings get() = theme.value
 
     override suspend fun loadThemeSettings(existingInstall: Boolean): ThemeSettings = theme.value
@@ -58,6 +61,10 @@ internal class FakeSettingsRepository : SettingsRepository {
     }
 
     override suspend fun setFontStyle(value: FontStyleType) = theme.update { it.copy(fontStyle = value) }
+
+    override suspend fun setNoteLineSpacing(value: NoteLineSpacing) {
+        noteLineSpacing.value = value
+    }
 
     private companion object {
         const val DEFAULT_FONT_SIZE = 16

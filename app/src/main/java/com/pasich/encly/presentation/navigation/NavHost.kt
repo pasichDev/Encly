@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -12,6 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
 import com.pasich.encly.BuildConfig
 import com.pasich.encly.presentation.effects.animationScreens
+import com.pasich.encly.presentation.effects.axisEnter
+import com.pasich.encly.presentation.effects.axisExit
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
@@ -25,18 +26,28 @@ import com.pasich.encly.presentation.screen.SupportScreen
 import com.pasich.encly.presentation.screen.TasksScreen
 import com.pasich.encly.presentation.screen.backup.BackupScreen
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
+import com.pasich.encly.presentation.screen.importnotes.ImportNotesScreen
 import com.pasich.encly.presentation.screen.onboarding.OnboardingScreen
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
+import com.pasich.encly.presentation.screen.settings.DuressPinScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.screen.settings.SettingsScreen
 import com.pasich.encly.presentation.screen.settings.WipePinScreen
 import com.pasich.encly.presentation.screen.trash.TrashScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 
 @Composable
 fun AppNavHost(navController: NavHostController, startDestination: String = NavRoutes.HomeRoute.name) {
-    NavHost(navController, startDestination = startDestination) {
+    NavHost(
+        navController,
+        startDestination = startDestination,
+        // The back gesture plays the same shared-axis motion as a tap on Back. Navigation's own
+        // default for the gesture (since 2.10) shrinks the leaving screen into the middle of the window.
+        predictivePopEnterTransition = { axisEnter(forward = false) },
+        predictivePopExitTransition = { axisExit(forward = false) },
+    ) {
         animationScreens(NavRoutes.HomeRoute.name) {
             MainRootScreen(
                 navController,
@@ -108,6 +119,10 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
             BackupScreen(navController)
         }
 
+        animationScreens(NavRoutes.ImportNotesRoute.name) {
+            ImportNotesScreen(navController)
+        }
+
         animationScreens(NavRoutes.OnboardingRoute.name) {
             // Onboarding includes the mandatory PIN setup; it completes only once the vault
             // is committed and open.
@@ -130,6 +145,10 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
 
         animationScreens(NavRoutes.WipePinRoute.name) {
             WipePinScreen(navController)
+        }
+
+        animationScreens(NavRoutes.DuressPinRoute.name) {
+            DuressPinScreen(navController)
         }
 
         animationScreens(NavRoutes.LockRoute.name) {
@@ -173,7 +192,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
 private fun EditNoteDestination(
     navController: NavHostController,
     entry: NavBackStackEntry,
-    viewModel: EditNoteViewModel = hiltViewModel(),
+    viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val noteState by viewModel.state.collectAsState()
     val eraseEpoch = LocalEraseEpoch.current
@@ -195,7 +214,7 @@ private fun LossRoute(
     navController: NavHostController,
     route: NavRoutes,
     reason: LossReason,
-    recoveryViewModel: LossRecoveryViewModel = hiltViewModel(),
+    recoveryViewModel: LossRecoveryViewModel = enclyViewModel(),
 ) {
     LossRecoveryScreen(
         reason = reason,

@@ -1,20 +1,20 @@
 package com.pasich.encly.data.repository
 
+import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-import javax.inject.Singleton
 
 private const val TAG = "TasksRepository"
 
-/** See [NotesRepositoryImpl] for why the DAO is resolved per call. */
-@Singleton
+/** Bound to the opening that created it; see [NotesRepositoryImpl]. */
 class TasksRepositoryImpl @Inject constructor(private val databaseProvider: DatabaseProvider) : TasksRepository {
+    private val lease: DatabaseLease? = databaseProvider.captureLease()
 
-    private fun dao() = databaseProvider.getDatabase().tasksDao()
+    private fun dao() = databaseProvider.getDatabase(lease ?: error("Vault locked")).tasksDao()
 
     override fun getAllActiveTasks(): Flow<List<Task>> = daoFlow { dao().getAllActiveTasks() }
 

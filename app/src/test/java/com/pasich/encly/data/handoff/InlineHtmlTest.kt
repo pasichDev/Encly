@@ -46,4 +46,17 @@ class InlineHtmlTest {
         val input = "${Char(0x200B)}a${Char(0x00A0)}b${Char(0xFEFF)}"
         assertEquals("a b", InlineHtml.toPlainText(input))
     }
+
+    @Test
+    fun onlyKnownTagsGoWhenAskedAndOtherAngleBracketTextStays() {
+        assertEquals(
+            "bold link\nMap<String, Int> <name> a<b && c>d <script>x",
+            InlineHtml.toPlainText(
+                "<b>bold</b> <a href=\"u\">link</a><br>Map<String, Int> <name> a<b && c>d <script>x",
+                knownTagsOnly = true,
+            ),
+        )
+        // The hand-off still removes every tag.
+        assertEquals("Dear , x", InlineHtml.toPlainText("Dear <name>, x"))
+    }
 }

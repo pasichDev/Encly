@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.core.security.PIN_LENGTH
@@ -41,13 +40,14 @@ import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /** The app's lock screen: unlocking opens Home (or the note that was open), see [leaveLockScreen]. */
 @Composable
 fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     // The same instance the inner LockScreen gets: both come from this back-stack entry.
-    val canReopenNote = hiltViewModel<LockViewModel>()::canReopenNote
+    val canReopenNote = enclyViewModel<LockViewModel>()::canReopenNote
     val unlockReveal = LocalUnlockReveal.current
     val exits = remember(navController, unlockReveal) {
         LockExits(
@@ -71,7 +71,7 @@ fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) 
 }
 
 @Composable
-fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockViewModel = hiltViewModel()) {
+fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockViewModel = enclyViewModel()) {
     val activity = LocalActivity.current as? FragmentActivity
     val busy by viewModel.busy.collectAsState()
     // Above the loading view below: the forms' input and errors survive the credential check.

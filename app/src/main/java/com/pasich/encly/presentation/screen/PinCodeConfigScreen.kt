@@ -37,9 +37,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -53,6 +53,7 @@ import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 
@@ -116,11 +117,11 @@ private class PinChangeState(val isReset: Boolean) {
         val matches = first != null && pin.contentEquals(first)
         first?.let(SensitiveDataCleaner::clear)
         if (matches) {
-            viewModel.activationPinAuth(pin) { ok ->
-                if (ok) {
-                    animationState = PinAnimationState.SuccessAnimation
-                } else {
-                    restartNewPin(R.string.pin_update_failed)
+            viewModel.activationPinAuth(pin) { result ->
+                when (result) {
+                    PinChange.SET -> animationState = PinAnimationState.SuccessAnimation
+                    PinChange.IN_USE -> restartNewPin(R.string.pin_in_use)
+                    PinChange.FAILED -> restartNewPin(R.string.pin_update_failed)
                 }
             }
         } else {
@@ -169,7 +170,7 @@ private class PinChangeState(val isReset: Boolean) {
 fun PinCodeConfigScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    securityViewModel: SecuritySettingsViewModel = hiltViewModel(),
+    securityViewModel: SecuritySettingsViewModel = enclyViewModel(),
 ) {
     // After a recovery-phrase unlock the old PIN is forgotten: start at "new PIN", and do not
     // let the user leave without one.

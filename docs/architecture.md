@@ -37,15 +37,30 @@ A fresh vault generates a random 256-bit DEK. SQLCipher uses the DEK; the mandat
 optional auth-bound biometric key and optional recovery seed each protect a separate AES-GCM
 envelope of that same DEK. No UI layer derives or stores the database key directly.
 
-`SecureDatabaseManager` owns the active Room instance. Repositories resolve DAOs through
-`DatabaseLocalDataSource` at operation time, rather than retaining an old DAO after the
-database is closed on re-lock.
+`SecureDatabaseManager` owns the active Room instance: the real vault's `database.db` or, after
+the duress PIN, the decoy vault's `vault_b.db`, never both at once. Each opening issues a
+`DatabaseLease`; repositories and the backup data store capture the lease when they are created
+and resolve DAOs through it at operation time, so after a re-lock (or an unlock of the other
+vault) they fail instead of reading or writing a database they were not created for.
+`SecurityManager` records which vault the session opened and refuses every operation on the
+real vault's key slots (PIN, wipe and duress PINs, biometric, recovery, backup key) in a decoy
+session; Settings still lists them, and they fail like a storage error.
 
 ## Notes and tasks
 
 Note editor writes are serialized by its ViewModel and must complete before navigation reports
 success. Notes, tags and tasks remain local Room records inside the encrypted database. Room
 Flows drive list state; the active note list is derived from selected tag and sort state.
+
+The block editor keeps its logic out of the composables: `BlockEditorState` owns the blocks, the
+undo history and the focus; the slash picker (`SlashPicker`), Find in this note (`NoteFind`),
+Smart Paste, block actions and templates are plain state or extension functions beside it, tested
+on the JVM. Find, the slash picker and the template offer are transient UI state in the editor
+ViewModel: never written to the note, to `SavedStateHandle` or to disk, and cleared when the vault
+locks. They use the existing block kinds only, so the stored `Note.value` format is unchanged and
+a note is saved only when the user edits it. Smart Paste reads pasted plain text through the
+importer's `MarkdownBlockMapper` in its paste mode (nothing rewritten); the reading density
+(`NoteLineSpacing`) is presentation only.
 
 ## Navigation
 
@@ -57,10 +72,12 @@ returning never shows plaintext. An unlock that completes after the app left the
 closed again at once. Open task and tag editors save on pause, like the note editor, because the
 re-lock discards them. The note that was open when the app re-locked is recorded (`RelockReturn`),
 with the erase epoch of the vault it was opened in, and opened again after the unlock, with fresh
-ViewModels, only while that epoch is current (a wipe-PIN erase or a new process changes it). A
+ViewModels, only while that epoch is current (a wipe-PIN erase, an unlock of the other vault or a new
+process changes it). A
 screen that was in the background while the vault was unlocked on another lock screen (the My
 Notes hand-off) is replaced by the lock screen or Home when it comes back (`SessionResume`).
-Pages move on Material's shared X axis;
+Pages move on Material's shared X axis, and the predictive back gesture plays the same motion
+(`AppNavHost`; Navigation's own default would shrink the leaving page);
 the full unlock reveal plays only on the first unlock after launch, later unlocks cross-fade.
 
 ## Encrypted backups
@@ -163,3 +180,23 @@ rows are deleted with their task by an `ON DELETE CASCADE` foreign key); two tri
 insert and keep it on update, so app code never has to assign one.
 
 For implementation details and limits, see [SECURITY.md](../SECURITY.md).
+
+## Import from other apps
+
+Settings → Import notes (`data/importer`, `ImportNotesViewModel`) reads another app's export from
+files or a folder the user picks through the Storage Access Framework, entirely offline. The
+pipeline is all in memory: `ImportReader` (ZIP and TAR read sequentially from `ContentResolver`
+streams by readers of our own, since `ZipInputStream` fails on the ZIP64 data descriptors that
+streaming exporters write, bounded by `ImportLimits` on the bytes actually read; unsafe paths, links and nested
+archives skipped) → `FormatDetector` (by content, never by extension alone; encrypted Standard
+Notes and Notesnook backups are refused, a mixed selection asks for the source) → one parser per
+source (Google Keep, Standard Notes, Joplin, Notesnook, generic Markdown/TXT) → `ImportMapper`,
+which builds the same `BackupPayload` as a backup with uids derived from the source's own ids, so
+`BackupImporter` MERGE (tags matched by name) skips what is already there and a repeated import
+adds nothing. The user reviews and ticks the notes first; only the ticked ones (and the tags they
+use) are written, in one transaction on the vault session bound when the read started. The read
+files, parsed notes and selection live in the ViewModel only, are never put in saved state, and are
+dropped on cancel, on finish and when the vault locks. Import is available in a decoy session too
+and imports into whichever vault is open. The real exporters' files are the test fixtures
+(`app/src/test/resources/import-fixtures`).
+

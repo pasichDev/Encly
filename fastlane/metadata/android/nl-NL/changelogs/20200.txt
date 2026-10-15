@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Importeer notities uit Google Keep, Standard Notes, Joplin, Notesnook of Markdown-bestanden, volledig offline.
+• Dwangpincode (optioneel): een extra pincode die een aparte lokkluis opent, terwijl je echte notities vergrendeld blijven.
+• Editor: /-opdrachten, slimmer plakken, zoeken in de notitie, sjablonen, blokken dupliceren en een ruimere weergave.
+• Automatisch vergrendelen na 15 of 30 minuten, als je wilt.

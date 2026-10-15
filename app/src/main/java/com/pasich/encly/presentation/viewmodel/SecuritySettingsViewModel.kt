@@ -9,7 +9,9 @@ import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.WipePinChange
@@ -64,6 +66,8 @@ class SecuritySettingsViewModel @Inject constructor(
                 biometricStatus = securityManager.biometricStatus(),
                 hasPinSlot = authSettings.hasPinSlot,
                 wipePinTurnedOff = authSettings.wipePinTurnedOff,
+                hasDuressPin = authSettings.hasDuressPin,
+                duressPinTurnedOff = authSettings.duressPinTurnedOff,
                 loaded = true,
             )
         }
@@ -95,21 +99,24 @@ class SecuritySettingsViewModel @Inject constructor(
     }
 
     /** Makes [pin] the vault's new PIN; [pin] is wiped. */
-    fun activationPinAuth(pin: CharArray, onResult: (Boolean) -> Unit = {}) {
+    fun activationPinAuth(pin: CharArray, onResult: (PinChange) -> Unit = {}) {
         viewModelScope.launch {
-            val ok = withContext(Dispatchers.Default) {
+            val result = withContext(Dispatchers.Default) {
                 try {
-                    securityManager.configurePin(pin)
+                    securityManager.changePin(pin)
                 } finally {
                     SensitiveDataCleaner.clear(pin)
                 }
             }
-            if (ok) {
-                _uiState.value = _uiState.value.copy(authType = AuthType.PIN)
-            } else {
-                _uiState.value = _uiState.value.copy(error = UiText.of(R.string.pin_update_failed))
+            when (result) {
+                PinChange.SET -> _uiState.value = _uiState.value.copy(authType = AuthType.PIN)
+
+                // The screen says why, next to the keypad.
+                PinChange.IN_USE -> Unit
+
+                PinChange.FAILED -> _uiState.value = _uiState.value.copy(error = UiText.of(R.string.pin_update_failed))
             }
-            onResult(ok)
+            onResult(result)
         }
     }
 
@@ -130,6 +137,29 @@ class SecuritySettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val ok = withContext(Dispatchers.IO) { securityManager.removeWipePin() }
             if (ok) _uiState.value = _uiState.value.copy(wipePinTurnedOff = false)
+            onResult(ok)
+        }
+    }
+
+    /**
+     * Makes [pin] the duress PIN, replacing any earlier one; [pin] is wiped. Only reached after
+     * [verifyCurrentPin] in the same screen.
+     */
+    fun setDuressPin(pin: CharArray, onResult: (DuressPinChange) -> Unit) {
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.Default) { securityManager.configureDuressPin(pin) }
+            if (result == DuressPinChange.SET || result == DuressPinChange.SET_NEW_VAULT) {
+                _uiState.value = _uiState.value.copy(hasDuressPin = true, duressPinTurnedOff = false)
+            }
+            onResult(result)
+        }
+    }
+
+    /** Turns the duress PIN off and deletes the decoy vault with its notes. */
+    fun removeDuressPin(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) { securityManager.removeDuressPin() }
+            if (ok) _uiState.value = _uiState.value.copy(hasDuressPin = false, duressPinTurnedOff = false)
             onResult(ok)
         }
     }
@@ -185,6 +215,10 @@ class SecuritySettingsViewModel @Inject constructor(
         val hasPinSlot: Boolean = false,
         /** The PIN key was reset and any wipe PIN with it; Settings asks to set it again. */
         val wipePinTurnedOff: Boolean = false,
+        /** The real vault has a duress PIN. */
+        val hasDuressPin: Boolean = false,
+        /** The PIN key was reset and the duress PIN with it; setting it again keeps the notes. */
+        val duressPinTurnedOff: Boolean = false,
         /** The first [refresh] finished; until then the page shows nothing rather than guesses. */
         val loaded: Boolean = false,
     ) {

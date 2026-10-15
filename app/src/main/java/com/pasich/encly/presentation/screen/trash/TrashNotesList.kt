@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
@@ -28,6 +27,7 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
 private const val SKELETON_CARDS = 3
@@ -41,7 +41,7 @@ private const val SKELETON_CARDS = 3
 fun TrashNotesList(
     onItemClick: (Int, Note) -> Unit,
     modifier: Modifier = Modifier,
-    trashViewModel: TrashViewModel = hiltViewModel(),
+    trashViewModel: TrashViewModel = enclyViewModel(),
 ) {
     val listScrollState = rememberLazyListState()
     val state by trashViewModel.state.collectAsStateWithLifecycle()

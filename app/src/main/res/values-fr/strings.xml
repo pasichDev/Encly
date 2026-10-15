@@ -148,6 +148,10 @@
     <string name="faq_vault_damaged_q">Encly indique que le coffre-fort est endommagé</string>
 
     <string name="font_size_title">Taille du texte</string>
+    <string name="note_line_spacing_title">Espacement des lignes</string>
+    <string name="note_line_spacing_default">Par défaut</string>
+    <string name="note_line_spacing_compact">Compact</string>
+    <string name="note_line_spacing_comfortable">Aéré</string>
     <string name="font_style_cozy">Éditorial</string>
     <string name="font_style_modern">Moderne</string>
     <string name="font_style_tech">Technique</string>
@@ -557,6 +561,7 @@
     <string name="keyboard_show">Afficher le clavier</string>
     <string name="keyboard_hide">Masquer le clavier</string>
     <string name="security_erase_confirm_title">Effacer toutes les données ?</string>
+    <string name="security_erase_failed">Impossible d\'effacer les données. Rien n\'a été modifié.</string>
     <string name="security_erase_confirm">Effacer</string>
     <string name="subtasks_title">Sous-tâches</string>
     <string name="subtask_placeholder">Sous-tâche</string>
@@ -576,4 +581,30 @@
         <item quantity="many">%1$d sur %2$d sous-tâches terminées</item>
         <item quantity="other">%1$d sur %2$d sous-tâches terminées</item>
     </plurals>
+    <string name="slash_menu_title">Insérer un bloc</string>
+    <string name="find_in_note">Rechercher dans la note</string>
+    <string name="find_placeholder">Rechercher dans cette note</string>
+    <string name="find_count">%1$d sur %2$d</string>
+    <string name="find_no_matches">Aucun résultat</string>
+    <string name="find_next">Résultat suivant</string>
+    <string name="find_previous">Résultat précédent</string>
+    <string name="find_close">Fermer la recherche</string>
+    <string name="block_duplicate">Dupliquer le bloc</string>
+    <string name="template_start">Commencer avec un modèle</string>
+    <string name="template_blank">Vide</string>
+    <string name="template_meeting">Réunion</string>
+    <string name="template_journal">Journal</string>
+    <string name="template_project">Notes de projet</string>
+    <string name="template_attendees">Participants</string>
+    <string name="template_agenda">Ordre du jour</string>
+    <string name="template_notes">Notes</string>
+    <string name="template_action_items">Actions à mener</string>
+    <string name="template_journal_today">Aujourd’hui</string>
+    <string name="template_journal_gratitude">Gratitude</string>
+    <string name="template_journal_tomorrow">Demain</string>
+    <string name="template_project_goal">Objectif</string>
+    <string name="template_project_tasks">Tâches</string>
+    <string name="template_project_decisions">Décisions</string>
+    <string name="template_project_questions">Questions ouvertes</string>
+    <string name="template_checklist_todo">À faire</string>
 </resources>

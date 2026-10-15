@@ -108,14 +108,15 @@ class BlockEditingTest {
     // --- paste ----------------------------------------------------------------------------------
 
     @Test
-    fun pastedLinesBecomeParagraphsAndTheTextAfterTheCursorFollowsTheLastOne() {
+    fun aBlankLineInAPasteStartsAParagraphAndASingleLineBreakStaysInsideIt() {
         val block = text("Start end")
         editor.load(listOf(block))
 
         editor.breakLine(block.id, paste("Start end", 6, "one\n\ntwo\nthree "))
 
-        assertEquals(listOf("Start one", "two", "three end"), contents())
-        assertFocus(2, caret = "three ".length)
+        // Was three blocks before Smart Paste: "two" and "three" are one paragraph of two lines.
+        assertEquals(listOf("Start one", "two\nthree end"), contents())
+        assertFocus(1, caret = "two\nthree ".length)
         editor.undo()
         assertEquals(listOf("Start end"), contents())
     }
@@ -140,14 +141,15 @@ class BlockEditingTest {
     }
 
     @Test
-    fun aPasteEndingInALineBreakGoesOnInANewParagraph() {
+    fun aTrailingLineBreakOfAPasteIsWhitespaceNotContent() {
         val block = text("Note")
         editor.load(listOf(block))
 
         editor.breakLine(block.id, paste("Note", 4, " one\n"))
 
-        assertEquals(listOf("Note one", ""), contents())
-        assertFocus(1, caret = null)
+        // Was a new empty paragraph before Smart Paste; a copied line's own line break is dropped.
+        assertEquals(listOf("Note one"), contents())
+        assertFocus(0, caret = "Note one".length)
     }
 
     @Test

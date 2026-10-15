@@ -31,7 +31,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
@@ -52,6 +51,7 @@ import com.pasich.encly.presentation.viewmodel.NoteListState
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.NotesEmptyState
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ fun NotesList(
     search: NotesSearch = NotesSearch("", NoteSearchViewModel.SearchResults()),
     onSecondActionClick: (Note) -> Unit = {},
     header: @Composable () -> Unit = {},
-    noteListViewModel: NoteListViewModel = hiltViewModel(),
+    noteListViewModel: NoteListViewModel = enclyViewModel(),
 ) {
     val state by noteListViewModel.state.collectAsStateWithLifecycle()
     val sheet = remember { NoteSheetState() }

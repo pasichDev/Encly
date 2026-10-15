@@ -11,6 +11,57 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-15
+
+versionCode 20200.
+
+Notes can be imported from other apps, an optional duress PIN opens a separate decoy vault, and
+the editor gets slash commands, smarter paste, find in note and templates. The database and the
+backup format do not change.
+
+### Added
+
+- Import notes (Settings → Import): bring notes from Google Keep, Standard Notes, Joplin, Notesnook or
+  Markdown/TXT files, fully offline. The format is recognised from the files, you review and tick the
+  notes first, and a repeated import adds nothing. Photos and other attachments are left out and
+  listed without counting toward the size limit, so large Takeouts and Markdown vaults import.
+- Reading density for notes (Compact, Default, Comfortable) from the editor's More actions, with a
+  persistent setting; Default is the existing layout and the stored note never changes.
+- Slash commands: type `/` in an empty paragraph to pick a block kind (text, headings, checklist,
+  lists, quote, link, divider) from a small filtered list. Not available in Simple Edit.
+- Smarter paste: pasted text keeps its paragraphs (a blank line starts a new one, a single line
+  break stays inside it) and Markdown headings, lists, checkboxes, quotes and rules become blocks.
+  Pasted after existing text, the first line stays plain text. Nothing is rewritten or dropped,
+  and one undo takes the whole paste back.
+- Block actions: duplicate a block from the toolbar, the block sheets and TalkBack, next to move,
+  delete and convert.
+- Find in this note (More actions, or Ctrl/Cmd+F): highlights matches, shows "n of m" and jumps
+  between them without changing the note. The query is never saved and is cleared when the vault locks.
+- Start from template: an optional Meeting, Journal, Project notes or Checklist outline for a new,
+  empty note. Blank stays the default.
+- Optional 15- and 30-minute auto-lock delays, with a warning about longer background sessions.
+- Duress PIN (Settings → Security): a third PIN that opens a separate, fully usable decoy vault
+  with its own encryption key and database, from the same lock screen and with the same unlock.
+  The real vault stays closed and unchanged, and nothing in the decoy vault leads back to it.
+  Unlike the wipe PIN it erases nothing, and typing it between wrong guesses never lifts the
+  limit on guesses at the real PIN. It does not hide the real vault from a forensic
+  examination (see SECURITY.md).
+
+### Changed
+
+- Pasting several lines of plain text keeps paragraphs (a blank line starts a new block) instead
+  of creating one block per line.
+- The predictive back gesture plays the same sliding motion as the back button instead of
+  shrinking the screen.
+- Dependencies updated to their latest stable versions, Compose through its BOM; the app now
+  compiles against SDK 37 (minimum and target SDK unchanged).
+
+### ⚠️ Compatibility
+
+- Going back to 2.1.0 keeps the vault and its backups readable: neither the database nor the
+  backup format changes. The duress PIN only works in 2.2.0 and later, and changing the PIN in an
+  older version turns it off (see SECURITY.md → Duress PIN).
+
 ## [2.1.0] - 2026-10-05
 
 versionCode 20100.
@@ -194,7 +245,8 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/pasichDev/Encly/releases/tag/v2.2.0
 [2.1.0]: https://github.com/pasichDev/Encly/releases/tag/v2.1.0
 [2.0.1]: https://github.com/pasichDev/Encly/releases/tag/v2.0.1
 [2.0.0]: https://github.com/pasichDev/Encly/releases/tag/v2.0.0

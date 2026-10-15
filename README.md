@@ -85,7 +85,7 @@ Every release ships a `SHA256SUMS` file (and `SHA256SUMS.asc` when it is GPG-sig
 
 ```bash
 sha256sum -c --ignore-missing SHA256SUMS          # APK matches the published checksum
-apksigner verify --print-certs Encly-2.1.0-fdroid.apk
+apksigner verify --print-certs Encly-2.2.0-fdroid.apk
 ```
 
 `apksigner` (Android SDK build-tools) must print this release signing certificate SHA-256
@@ -181,7 +181,7 @@ links, no baseline profile) and `play`.
 ```bash
 ./gradlew assembleFdroidDebug                      # debug APK (com.pasich.encly.debug)
 ./gradlew :app:testFdroidDebugUnitTest             # JVM unit tests
-./gradlew :app:koverVerifyFdroidDebug              # coverage gate for core/security
+./gradlew :app:koverVerifyFdroidDebug              # coverage gate (whole app, 85%)
 ./gradlew :app:detekt :app:lintFdroidRelease       # static analysis
 ./gradlew spotlessApply                            # format Kotlin/Gradle (ktlint; spotlessCheck in CI)
 ./gradlew assembleRelease                          # both release APKs, R8 enabled

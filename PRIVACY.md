@@ -93,6 +93,18 @@ Encly makes while reading it is deleted right away (or, if Encly is closed in th
 time it starts); the imported notes are stored encrypted like everything else. Nothing is sent over the network, and Encly sends nothing back to My Notes
 except how many items were imported. Attachments and images stay in My Notes.
 
+## Import notes from other apps
+
+**Settings → Import notes** reads export files of Google Keep (Takeout), Standard Notes
+(decrypted backup), Joplin (JEX or RAW), Notesnook (Markdown or plain-text export) and plain
+Markdown/text notes such as an Obsidian vault. You choose the files or folder in the system file
+picker; Encly reads only what you picked, only while the app is unlocked, and only on this
+phone. Nothing is uploaded, no account is needed, and no network is used. The files are read
+into memory, never copied to disk, and the files themselves are left unchanged. You see the list
+of notes before anything is saved, pick which ones to import, and the selected notes are stored
+encrypted in the vault that is open. Encrypted exports of those apps are not read; export them
+in a readable format first.
+
 ## Deleting your data
 
 Uninstalling Encly, or clearing its storage in Android settings, permanently deletes all of

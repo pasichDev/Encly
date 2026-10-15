@@ -57,38 +57,6 @@ private fun BlockEditorState.enter(index: Int, block: TextualBlock, head: String
     }
 }
 
-private fun BlockEditorState.pasteLines(index: Int, block: TextualBlock, lineBreak: LineBreak): String {
-    val (head, lines, tail) = lineBreak
-    // Pasted into an empty paragraph: every line is read, the first one too.
-    if (block is Block.TextBlock && head.isEmpty() && tail.isEmpty()) {
-        val pasted = withTrailingParagraph(pastedBlocks(lines))
-        batch {
-            replaceBlock(index, pasted.first())
-            pasted.drop(1).forEachIndexed { i, added -> addBlock(index + 1 + i, added) }
-        }
-        selection.focusAt(index + pasted.lastIndex, cursorToEnd = true)
-        return ""
-    }
-    val kept = head + lines.first()
-    val rest = lines.drop(1)
-    // The last line joins the text after the cursor, which stays a paragraph.
-    val carried = Block.TextBlock(MutableStateFlow(rest.last() + tail)).takeIf { tail.isNotEmpty() }
-    val added = when (carried) {
-        null -> withTrailingParagraph(pastedBlocks(rest))
-        else -> pastedBlocks(rest.dropLast(1)) + carried
-    }
-    batch {
-        setValue(blocks[index].id, block.text, kept)
-        added.forEachIndexed { i, new -> addBlock(index + 1 + i, new) }
-    }
-    val last = index + added.size
-    when (carried) {
-        null -> selection.focusAt(last, cursorToEnd = true)
-        else -> selection.focusAt(last, caret = rest.last().length)
-    }
-    return kept
-}
-
 /**
  * Backspace with the cursor at the start of block [blockId]. A heading or quote first turns
  * into a paragraph; a paragraph joins the block above (a heading, quote, paragraph or the last
@@ -190,7 +158,7 @@ fun BlockEditorState.pasteLink(blockId: String, pasted: String, link: LinkDataBl
 }
 
 /** Puts [block] at [index] and focuses the paragraph after it, adding one unless there is one. */
-private fun BlockEditorState.replaceWithBlockAndParagraph(index: Int, block: Block) {
+internal fun BlockEditorState.replaceWithBlockAndParagraph(index: Int, block: Block) {
     batch {
         replaceBlock(index, block)
         if (blocks.getOrNull(index + 1) !is Block.TextBlock) addBlock(index + 1, Block.TextBlock())

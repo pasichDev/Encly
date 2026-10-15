@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -41,6 +42,35 @@ class SettingsLocalDataSourceTest {
     fun emptyStoreGivesDefaults() = runTest {
         assertEquals(ThemeSettings(), source.themeSettingsFlow.first())
         assertEquals(FontStyleType.DEFAULT, source.fontStyleFlow.first())
+        assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
+    }
+
+    @Test
+    fun compactLineSpacingRoundTrips() = runTest {
+        source.setNoteLineSpacing(NoteLineSpacing.COMPACT)
+
+        assertEquals(NoteLineSpacing.COMPACT, SettingsLocalDataSource(dataStore).noteLineSpacingFlow.first())
+        source.setNoteLineSpacing(NoteLineSpacing.DEFAULT)
+        assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
+    }
+
+    @Test
+    fun storedLineSpacingValuesKeepTheirMeaning() = runTest {
+        // The preference is the enum's ordinal: 0 and 1 were written by earlier versions.
+        assertEquals(0, NoteLineSpacing.DEFAULT.ordinal)
+        assertEquals(1, NoteLineSpacing.COMPACT.ordinal)
+        assertEquals(2, NoteLineSpacing.COMFORTABLE.ordinal)
+        val expected = mapOf(
+            0 to NoteLineSpacing.DEFAULT,
+            1 to NoteLineSpacing.COMPACT,
+            2 to NoteLineSpacing.COMFORTABLE,
+        )
+        expected.forEach { (stored, spacing) ->
+            dataStore.edit { it[intPreferencesKey(NOTE_LINE_SPACING)] = stored }
+            assertEquals(spacing, source.noteLineSpacingFlow.first())
+        }
+        source.setNoteLineSpacing(NoteLineSpacing.COMFORTABLE)
+        assertEquals(2, dataStore.data.first()[intPreferencesKey(NOTE_LINE_SPACING)])
     }
 
     @Test
@@ -66,9 +96,11 @@ class SettingsLocalDataSourceTest {
             it[intPreferencesKey(THEME_PALETTE)] = 99
             it[intPreferencesKey(THEME_TYPE)] = -1
             it[intPreferencesKey(FONT_STYLE)] = 7
+            it[intPreferencesKey(NOTE_LINE_SPACING)] = 7
         }
         assertEquals(ThemeSettings(), source.themeSettingsFlow.first())
         assertEquals(FontStyleType.DEFAULT, source.fontStyleFlow.first())
+        assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
     }
 
     @Test

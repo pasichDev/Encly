@@ -34,6 +34,12 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
 
     val selection = BlockSelection(_blocks)
 
+    /** The slash picker: closes at any structural change, so it never outlives its paragraph. */
+    val slash = SlashPicker()
+
+    /** Find in this note: transient, read-only, forgotten when the note is loaded or the vault locks. */
+    val find = NoteFind()
+
     private val _canUndo = MutableStateFlow(false)
     val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
 
@@ -53,6 +59,8 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
      * over: undo never reaches back into what was shown before (nor keeps it in memory).
      */
     fun load(loaded: List<Block>) {
+        slash.dismiss()
+        find.close()
         _blocks.clear()
         _blocks.addAll(loaded)
         history.clear()
@@ -65,6 +73,7 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
      * never leave the note without blocks.
      */
     fun addBlock(block: Block) {
+        slash.dismiss()
         val anchor = selection.workingIndex.coerceIn(-1, _blocks.lastIndex)
         val replacesEmptyFirst = block !is Block.TextBlock && _blocks.isEmptyFirstTextBlock(anchor)
 
@@ -87,6 +96,7 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         }
         if (index == -1 || !allowed) return
 
+        slash.dismiss()
         history.removeBlock(index)
         afterChange()
         if (refocus) selection.focusAt(_blocks.previousFocusableIndex(index), cursorToEnd = true)
@@ -98,6 +108,7 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
      */
     fun replaceBlock(index: Int, newBlock: Block): Boolean {
         if (index !in _blocks.indices) return false
+        slash.dismiss()
         val caret = selection.caretOf(_blocks[index].id)?.takeIf { newBlock is TextualBlock }
         history.replaceBlock(index, newBlock)
         afterChange()
@@ -108,6 +119,7 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
     /** Moves the block at [fromIndex] to [toIndex]; it keeps focus. */
     fun moveBlock(fromIndex: Int, toIndex: Int) {
         if (fromIndex !in _blocks.indices || toIndex !in _blocks.indices) return
+        slash.dismiss()
         history.moveBlock(fromIndex, toIndex)
         afterChange()
         selection.focusAt(toIndex)
@@ -130,15 +142,18 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
 
     /** Makes the operations of [build] as one undo step (see [BlockOperations.batch]). */
     fun batch(build: BlockOperations.Batch.() -> Unit) {
+        slash.dismiss()
         history.batch(build)
         afterChange()
     }
 
     fun undo() {
+        slash.dismiss()
         if (history.undo()) afterChange()
     }
 
     fun redo() {
+        slash.dismiss()
         if (history.redo()) afterChange()
     }
 

@@ -8,7 +8,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.presentation.editor.blocks.LocalSlashLabels
+import com.pasich.encly.presentation.editor.blocks.rememberSlashLabels
 import com.pasich.encly.ui.theme.fontSet
 import com.pasich.encly.utils.FontSizeUtils
 
@@ -38,6 +41,9 @@ val LocalFontStyle = compositionLocalOf { EditNoteDefaults.DEFAULT_FONT_STYLE }
  */
 val LocalSimpleEdit = compositionLocalOf { EditNoteDefaults.DEFAULT_SIMPLE_EDIT }
 
+/** The editor's paragraph and wrapped-line spacing. */
+val LocalNoteLineSpacing = compositionLocalOf { NoteLineSpacing.DEFAULT }
+
 /**
  * CompositionLocal for precomputed font styles (optimization)
  */
@@ -51,6 +57,7 @@ fun EditNoteSettingsProvider(
     baseFontSize: TextUnit = EditNoteDefaults.DEFAULT_FONT_SIZE,
     fontStyle: FontStyleType = EditNoteDefaults.DEFAULT_FONT_STYLE,
     simpleEdit: Boolean = EditNoteDefaults.DEFAULT_SIMPLE_EDIT,
+    lineSpacing: NoteLineSpacing = NoteLineSpacing.DEFAULT,
     content: @Composable () -> Unit,
 ) {
     // Pre-compute font styles for better performance
@@ -63,7 +70,9 @@ fun EditNoteSettingsProvider(
         LocalBaseFontSize provides baseFontSize,
         LocalFontStyle provides fontStyle,
         LocalSimpleEdit provides simpleEdit,
+        LocalNoteLineSpacing provides lineSpacing,
         LocalFontStyles provides fontStyles,
+        LocalSlashLabels provides rememberSlashLabels(),
         content = content,
     )
 }

@@ -1,0 +1,5 @@
+Encly 2.2.0
+• Importe notas do Google Keep, Standard Notes, Joplin, Notesnook ou ficheiros Markdown, totalmente offline.
+• PIN de coação (opcional): outro PIN que abre um cofre isco separado, enquanto as suas notas reais ficam bloqueadas.
+• Editor: comandos /, colar mais inteligente, pesquisa na nota, modelos, duplicar blocos e uma vista mais espaçosa.
+• Bloqueio automático após 15 ou 30 minutos, se quiser.

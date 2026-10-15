@@ -14,6 +14,7 @@ data class SettingsNavigation(
     val onAppearance: () -> Unit,
     val onSecurity: () -> Unit,
     val onBackup: () -> Unit,
+    val onImportNotes: () -> Unit,
     val onAbout: () -> Unit,
     val onFaq: () -> Unit,
 )
@@ -43,6 +44,14 @@ class SettingsBuilder {
             EnclyIcons.Download,
         ) {
             navigation.onBackup()
+        },
+        single(
+            R.string.settings_import,
+            R.string.import_title,
+            R.string.import_settings_subtitle,
+            EnclyIcons.File,
+        ) {
+            navigation.onImportNotes()
         },
         SettingsCategory(
             titleRes = R.string.about,

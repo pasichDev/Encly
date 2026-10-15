@@ -46,7 +46,10 @@ Compose:
       - LocalBaseFontSize
       - LocalFontStyle
       - LocalSimpleEdit
+      - LocalNoteLineSpacing
       - LocalFontStyles
+      # The slash picker's labels, built once for the editor (editor/blocks/SlashMenuPopup.kt).
+      - LocalSlashLabels
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors
       - LocalEnclyTypography
@@ -55,6 +58,8 @@ Compose:
       - LocalSpacing
       # The vault's erase epoch, provided once by App for the note editor (presentation/navigation/RelockReturn.kt).
       - LocalEraseEpoch
+      # Whether the open vault is the decoy one, provided once by App (presentation/navigation/DecoySession.kt).
+      - LocalDecoySession
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

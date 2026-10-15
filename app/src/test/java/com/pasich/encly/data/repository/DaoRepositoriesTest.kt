@@ -1,6 +1,7 @@
 package com.pasich.encly.data.repository
 
 import com.pasich.encly.data.database.AppDatabase
+import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.database.dao.NotesDao
 import com.pasich.encly.data.database.dao.TagsDao
@@ -9,6 +10,8 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -17,17 +20,24 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
-/** The repositories pass reads and writes to the DAO of the database open at call time. */
+/** Repository instances stay bound to the database opening that created them. */
 class DaoRepositoriesTest {
     private val notesDao = mock(NotesDao::class.java)
     private val tagsDao = mock(TagsDao::class.java)
     private val tasksDao = mock(TasksDao::class.java)
     private var database = databaseWith(notesDao, tagsDao, tasksDao)
+    private var lease = DatabaseLease()
     private val provider = object : DatabaseProvider {
-        override fun getDatabase(): AppDatabase = database
+        override fun captureLease(): DatabaseLease = lease
+
+        override fun getDatabase(lease: DatabaseLease): AppDatabase {
+            if (lease !== this@DaoRepositoriesTest.lease) error("Database session expired")
+            return database
+        }
     }
 
     private val tasks = TasksRepositoryImpl(provider)
@@ -99,13 +109,34 @@ class DaoRepositoriesTest {
     }
 
     @Test
-    fun eachCallUsesTheDatabaseOpenAtThatMoment(): Unit = runBlocking {
+    fun oldRepositoryCannotUseANewDatabaseOpening(): Unit = runBlocking {
         val reopened = mock(TasksDao::class.java)
         `when`(reopened.deleteTaskById(1)).thenReturn(1)
         database = databaseWith(notesDao, tagsDao, reopened)
+        lease = DatabaseLease()
 
-        assertTrue(tasks.deleteTaskById(1).isSuccess)
+        assertTrue(tasks.deleteTaskById(1).isFailure)
+        assertTrue(TasksRepositoryImpl(provider).deleteTaskById(1).isSuccess)
         verify(reopened).deleteTaskById(1)
+    }
+
+    @Test
+    fun queuedWriteAndLateFlowCannotCrossIntoTheNextOpening(): Unit = runBlocking {
+        val note = Note(title = "old session")
+        val oldFlow = notes.getTrashNotes()
+        val release = CompletableDeferred<Unit>()
+        val queued = async {
+            release.await()
+            notes.insertNote(note)
+        }
+        val nextNotes = mock(NotesDao::class.java)
+        database = databaseWith(nextNotes, tagsDao, tasksDao)
+        lease = DatabaseLease()
+        release.complete(Unit)
+
+        assertTrue(queued.await().isFailure)
+        assertTrue(runCatching { oldFlow.first() }.isFailure)
+        verify(nextNotes, never()).insertNote(note)
     }
 
     private fun databaseWith(notes: NotesDao, tags: TagsDao, tasks: TasksDao) = mock(AppDatabase::class.java).also {

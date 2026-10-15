@@ -26,6 +26,7 @@ import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.designsystem.editorBlockFrame
+import com.pasich.encly.presentation.designsystem.frameInset
 import com.pasich.encly.presentation.editor.blocks.HBlock
 import com.pasich.encly.presentation.editor.blocks.LinkBlock
 import com.pasich.encly.presentation.editor.blocks.ListBlock
@@ -35,6 +36,7 @@ import com.pasich.encly.presentation.editor.blocks.TextBlock
 import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.editor.focus.RegisterFocusRequester
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
+import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -42,6 +44,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 class EditorBlocksHost(
     val viewModel: EditNoteViewModel,
     val focusRegistry: BlockFocusRegistry,
+    val highlights: FindHighlights,
     val onOpenSheet: (BottomSheetsOpenType, Block) -> Unit,
 )
 
@@ -50,20 +53,23 @@ class EditorBlocksHost(
  * lays out only what is on screen, and remembered field state, the focus target and the cursor
  * callback stay with their block when others are inserted, removed or moved around it. The
  * editor's [blocks] list is read here, so structural changes update the items. Below the last
- * block a tap area focuses (or adds) a trailing paragraph.
+ * block a tap area focuses (or adds) a trailing paragraph; [afterBlocks], if given, is shown
+ * between the last block and that area.
  */
 fun LazyListScope.editorBlocks(
     host: EditorBlocksHost,
     blocks: List<Block>,
     isLocked: Boolean,
     editingLinkIds: Set<String>,
+    afterBlocks: (@Composable () -> Unit)? = null,
 ) {
     itemsIndexed(
         items = blocks,
         key = { _, block -> block.id },
         contentType = { _, block -> block::class.simpleName },
     ) { index, block ->
-        val blockActions = remember(block, host) { BlockActionsImpl(block, host.viewModel, host.focusRegistry) }
+        val blockActions =
+            remember(block, host) { BlockActionsImpl(block, host.viewModel, host.focusRegistry, host.highlights) }
         val callbacks = remember(block, host) {
             EditorBlockCallbacks(
                 onFocus = { host.viewModel.onBlockFocused(block) },
@@ -73,6 +79,7 @@ fun LazyListScope.editorBlocks(
                     host.onOpenSheet(type, block)
                 },
                 onMove = { up -> host.viewModel.moveBlockOf(block, up) },
+                onDuplicate = { host.viewModel.duplicateBlock(block) },
                 onDelete = { host.viewModel.removeBlock(block, BlockRemoveAction.REMOVE) },
             )
         }
@@ -87,6 +94,9 @@ fun LazyListScope.editorBlocks(
             position = BlockPosition(first = index == 0, last = index == blocks.lastIndex),
         )
     }
+
+    // Below the blocks, so the blocks keep their positions in the list.
+    if (afterBlocks != null) item(key = AFTER_BLOCKS_KEY) { afterBlocks() }
 
     item(key = TAP_AREA_KEY) {
         Spacer(
@@ -105,6 +115,7 @@ fun LazyListScope.editorBlocks(
 }
 
 private const val TAP_AREA_KEY = "editor-tap-area"
+private const val AFTER_BLOCKS_KEY = "editor-after-blocks"
 
 /** What a block reports back to the editor: it got or lost focus, or asked for one of its sheets. */
 private class EditorBlockCallbacks(
@@ -112,6 +123,7 @@ private class EditorBlockCallbacks(
     val onFocusLost: () -> Unit,
     val onOpenSheet: (BottomSheetsOpenType) -> Unit,
     val onMove: (up: Boolean) -> Unit,
+    val onDuplicate: () -> Unit,
     val onDelete: () -> Unit,
 )
 
@@ -149,7 +161,11 @@ private fun EditorBlock(
                     !focusState.hasFocus -> callbacks.onFocusLost()
                 }
             }
-            .editorBlockFrame(),
+            .editorBlockFrame(
+                LocalNoteLineSpacing.current.frameInset.takeIf {
+                    block is Block.TextBlock || block is Block.ListBlock || block is Block.QuoteBlock
+                },
+            ),
     ) {
         BlockContent(
             block = block,
@@ -167,7 +183,7 @@ private fun EditorBlock(
 }
 
 /**
- * TalkBack's actions on a block's field: move it up or down, delete it. Without them a TalkBack
+ * TalkBack's actions on a block's field: move it up or down, duplicate it, delete it. Without them a TalkBack
  * user could only reach these through the toolbar's "Add block" row.
  */
 @Composable
@@ -178,10 +194,12 @@ private fun blockAccessibilityActions(
 ): Modifier {
     val moveUp = stringResource(R.string.block_move_up)
     val moveDown = stringResource(R.string.block_move_down)
+    val duplicate = stringResource(R.string.block_duplicate)
     val delete = stringResource(R.string.delete_block)
     val actions = buildList {
         if (!position.first) add(CustomAccessibilityAction(moveUp) { true.also { callbacks.onMove(true) } })
         if (!position.last) add(CustomAccessibilityAction(moveDown) { true.also { callbacks.onMove(false) } })
+        add(CustomAccessibilityAction(duplicate) { true.also { callbacks.onDuplicate() } })
         if (!isOnlyBlock) add(CustomAccessibilityAction(delete) { true.also { callbacks.onDelete() } })
     }
     return Modifier.semantics { customActions = actions }

@@ -1,24 +1,20 @@
 package com.pasich.encly.data.repository
 
+import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.repository.NotesRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-import javax.inject.Singleton
 
 private const val TAG = "NotesRepository"
 
-/**
- * Resolves the DAO from the currently unlocked Room instance on every call. The encrypted
- * database is closed on every app background, so a cached AppDatabase or DAO would point at a
- * closed instance after the first re-lock/unlock cycle.
- */
-@Singleton
+/** Keeps the opening that created this repository; delayed calls cannot cross a re-lock. */
 class NotesRepositoryImpl @Inject constructor(private val databaseProvider: DatabaseProvider) : NotesRepository {
+    private val lease: DatabaseLease? = databaseProvider.captureLease()
 
-    private fun dao() = databaseProvider.getDatabase().notesDao()
+    private fun dao() = databaseProvider.getDatabase(lease ?: error("Vault locked")).notesDao()
 
     override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = daoFlow { dao().getAllNotesWithTags() }
 

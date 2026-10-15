@@ -167,4 +167,31 @@ class BackupScreenTest : ComposeScreenTest() {
     private companion object {
         const val LONG_WAIT_MS = 15_000L
     }
+
+    @Test
+    fun exportInTheDecoyVaultFailsLikeAStorageError() {
+        app.inDecoySession()
+        show()
+
+        rule.onNodeWithText(str(R.string.backup_export)).performClick()
+        waitForText(str(R.string.backup_reauth_title))
+        typePin("123456")
+
+        waitForText(str(R.string.backup_error_io))
+        assertEquals(BackupStep.Idle, step())
+        assertEquals(NavRoutes.BackupRoute.name, currentRoute())
+    }
+
+    @Test
+    fun importInTheDecoyVaultFailsAfterThePhraseLikeAStorageError() {
+        app.inDecoySession()
+        show()
+        openPhraseStep()
+
+        rule.runOnIdle { backup.importFlow.submitPhrase(words.toCharArray()) }
+
+        waitForText(str(R.string.backup_error_io))
+        assertEquals(BackupStep.Idle, step())
+        assertEquals(NavRoutes.BackupRoute.name, currentRoute())
+    }
 }

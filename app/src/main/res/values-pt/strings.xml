@@ -148,6 +148,10 @@
     <string name="faq_vault_damaged_q">O Encly informa que o cofre está danificado</string>
 
     <string name="font_size_title">Tamanho do texto</string>
+    <string name="note_line_spacing_title">Espaçamento entre linhas</string>
+    <string name="note_line_spacing_default">Padrão</string>
+    <string name="note_line_spacing_compact">Compacto</string>
+    <string name="note_line_spacing_comfortable">Espaçoso</string>
     <string name="font_style_cozy">Editorial</string>
     <string name="font_style_modern">Moderno</string>
     <string name="font_style_tech">Técnico</string>
@@ -557,6 +561,7 @@
     <string name="keyboard_show">Mostrar teclado</string>
     <string name="keyboard_hide">Ocultar teclado</string>
     <string name="security_erase_confirm_title">Apagar todos os dados?</string>
+    <string name="security_erase_failed">Não foi possível apagar os dados. Nada foi alterado.</string>
     <string name="security_erase_confirm">Apagar</string>
     <string name="subtasks_title">Subtarefas</string>
     <string name="subtask_placeholder">Subtarefa</string>
@@ -576,4 +581,30 @@
         <item quantity="many">%1$d de %2$d subtarefas concluídas</item>
         <item quantity="other">%1$d de %2$d subtarefas concluídas</item>
     </plurals>
+    <string name="slash_menu_title">Inserir bloco</string>
+    <string name="find_in_note">Localizar na nota</string>
+    <string name="find_placeholder">Localizar nesta nota</string>
+    <string name="find_count">%1$d de %2$d</string>
+    <string name="find_no_matches">Sem resultados</string>
+    <string name="find_next">Próximo resultado</string>
+    <string name="find_previous">Resultado anterior</string>
+    <string name="find_close">Fechar busca</string>
+    <string name="block_duplicate">Duplicar bloco</string>
+    <string name="template_start">Começar com um modelo</string>
+    <string name="template_blank">Em branco</string>
+    <string name="template_meeting">Reunião</string>
+    <string name="template_journal">Diário</string>
+    <string name="template_project">Notas de projeto</string>
+    <string name="template_attendees">Participantes</string>
+    <string name="template_agenda">Pauta</string>
+    <string name="template_notes">Anotações</string>
+    <string name="template_action_items">Ações a realizar</string>
+    <string name="template_journal_today">Hoje</string>
+    <string name="template_journal_gratitude">Gratidão</string>
+    <string name="template_journal_tomorrow">Amanhã</string>
+    <string name="template_project_goal">Objetivo</string>
+    <string name="template_project_tasks">Tarefas</string>
+    <string name="template_project_decisions">Decisões</string>
+    <string name="template_project_questions">Perguntas em aberto</string>
+    <string name="template_checklist_todo">A fazer</string>
 </resources>

@@ -65,6 +65,23 @@ class SettingsScreensTest : ComposeScreenTest() {
     }
 
     @Test
+    fun theDecoyVaultListsTheSameSectionsAsTheRealOne() {
+        app.inDecoySession()
+        showSettings()
+
+        listOf(
+            R.string.settings_general,
+            R.string.settings_notes_and_tasks,
+            R.string.settings_privacy,
+            R.string.settings_backup,
+        ).forEach { scrollToText(str(it), ignoreCase = true) }
+        scrollToText(str(R.string.backup_title))
+        rule.onNodeWithText(str(R.string.backup_title)).performClick()
+
+        waitFor { currentRoute() == NavRoutes.BackupRoute.name }
+    }
+
+    @Test
     fun theAppearanceRowOpensAppearance() {
         showSettings()
 

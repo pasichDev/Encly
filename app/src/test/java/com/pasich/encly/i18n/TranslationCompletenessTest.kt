@@ -50,6 +50,22 @@ class TranslationCompletenessTest {
     }
 
     @Test
+    fun translationComponentFilesKeepTheirOwnKeys() {
+        val base = File(resDir, "values")
+        TRANSLATION_COMPONENTS.forEach { filename ->
+            val source = componentKeys(File(base, filename))
+            assertTrue("$filename has no translatable entries", source.isNotEmpty())
+            localeDirs.forEach { (locale, dir) ->
+                assertEquals(
+                    "values-$locale/$filename changed component keys or resource types",
+                    source,
+                    componentKeys(File(dir, filename)),
+                )
+            }
+        }
+    }
+
+    @Test
     fun formatArgumentsMatchTheDefaultLocale() {
         localeDirs.forEach { (locale, dir) ->
             val translated = parse(dir)
@@ -154,6 +170,21 @@ class TranslationCompletenessTest {
     private fun readElements(file: File): List<Element> =
         DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file).documentElement.children()
 
+    private fun componentKeys(file: File): Set<Pair<String, String>> {
+        val entries = readElements(file)
+            .filter { it.getAttribute("translatable") != "false" }
+            .filter { it.tagName in setOf("string", "plurals", "string-array") }
+        assertTrue(
+            "$file has string-array entries unsupported by the Weblate Android format",
+            entries.none {
+                it.tagName == "string-array"
+            },
+        )
+        val keys = entries.map { it.tagName to it.getAttribute("name") }
+        assertEquals("$file has duplicate resource keys", keys.size, keys.toSet().size)
+        return keys.toSet()
+    }
+
     /** An array of @string references is localized through those strings, so it is skipped. */
     private fun literalItems(array: Element): List<String>? = array.children().map { it.textContent.trim() }
         .takeUnless { items -> items.all { it.startsWith("@string/") } }
@@ -167,6 +198,8 @@ class TranslationCompletenessTest {
     private companion object {
         const val DEFAULT_LOCALE = "en"
         const val MIN_EXPECTED_KEYS = 100
+        val TRANSLATION_COMPONENTS =
+            listOf("strings.xml", "strings_security.xml", "strings_handoff.xml", "strings_import.xml")
         val LOCALE_DIR = Regex("""values-[a-z]{2,3}(-r[A-Z]{2})?""")
         val LOCALE_FILTERS = Regex("""localeFilters\s*\+=\s*listOf\(([^)]*)\)""")
         val FORMAT_ARG = Regex("""%(\d+\$)?[-#+ 0,(]*\d*(\.\d+)?[a-zA-Z%]""")

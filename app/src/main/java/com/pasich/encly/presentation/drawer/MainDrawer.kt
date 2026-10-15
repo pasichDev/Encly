@@ -21,7 +21,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
@@ -32,6 +31,7 @@ import com.pasich.encly.presentation.navigation.DrawerNavItem
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.drawerNavItems
 import com.pasich.encly.presentation.viewmodel.StatisticViewModel
+import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -46,7 +46,7 @@ fun MainDrawer(
     onItemClick: (DrawerNavItem) -> Unit,
     modifier: Modifier = Modifier,
     topInset: Dp = 0.dp,
-    statisticViewModel: StatisticViewModel = hiltViewModel(),
+    statisticViewModel: StatisticViewModel = enclyViewModel(),
 ) {
     val totalTags by statisticViewModel.totalTagsCreated.collectAsStateWithLifecycle()
     val openTasks by statisticViewModel.openTasksCount.collectAsStateWithLifecycle()
