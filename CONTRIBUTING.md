@@ -116,8 +116,8 @@ it never pushes to `main`. That pull request runs the same CI as any other, so i
 when every check below passes.
 
 **Fixing a translation in Git:** edit the string in `values-<lang>/strings.xml` (or
-`strings_security.xml`, `strings_handoff.xml`, `strings_import.xml`) and open a PR. Keep the key; only change the
-text. If a Weblate pull request is open, say so in yours; Weblate picks up merged changes from
+`strings_security.xml`, `strings_handoff.xml`, `strings_import.xml`) and open a PR. Keep the key;
+only change the text. If a Weblate pull request is open, say so in yours; Weblate picks up merged changes from
 `main` on its own.
 
 **For maintainers:** Weblate pulls `main` on every push (GitHub webhook
@@ -138,7 +138,7 @@ lower.
 
 **Adding a language:**
 
-1. start it on Weblate, or copy `values/strings.xml`, `values/strings_security.xml` and
+1. start it on Weblate, or copy `values/strings.xml`, `values/strings_security.xml`,
    `values/strings_handoff.xml` and `values/strings_import.xml` to `values-<lang>/` and translate them,
    leaving out the entries marked `translatable="false"`;
 2. add `<locale android:name="<lang>" />` to `res/xml/locales_config.xml`;
