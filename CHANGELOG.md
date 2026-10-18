@@ -11,6 +11,24 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-10-18
+
+versionCode 20201.
+
+### Fixed
+
+- The app crashed whenever text was selected in a note (for example by double-tapping a word).
+  Encly's sensitive-clipboard wrapper was not an `AndroidClipboard`, which the text selection
+  toolbar of Compose 1.12 requires. Copies stay marked sensitive and still clear after a minute.
+- The app could crash when the vault locked while the Tasks list or the drawer counts were
+  being read. Such a read now keeps what is shown; the lock screen replaces it right after.
+
+### Changed
+
+- Google Play releases are published from CI on the release tag, together with the R8 mapping
+  file, so Play Console shows readable crash reports. No Google credential is stored in the
+  repository settings (Workload Identity Federation).
+
 ## [2.2.0] - 2026-10-15
 
 versionCode 20200.
@@ -245,7 +263,8 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/pasichDev/Encly/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/pasichDev/Encly/releases/tag/v2.2.0
 [2.1.0]: https://github.com/pasichDev/Encly/releases/tag/v2.1.0
 [2.0.1]: https://github.com/pasichDev/Encly/releases/tag/v2.0.1

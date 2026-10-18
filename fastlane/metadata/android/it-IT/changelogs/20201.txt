@@ -1,0 +1,1 @@
+Encly 2.2.1: corregge un arresto anomalo durante la selezione del testo in una nota (ad esempio toccando due volte una parola) e uno quando l’app si bloccava mentre mostrava le attività.

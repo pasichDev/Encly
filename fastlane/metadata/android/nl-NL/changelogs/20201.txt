@@ -1,0 +1,1 @@
+Encly 2.2.1: lost een crash op bij het selecteren van tekst in een notitie (bijvoorbeeld door twee keer op een woord te tikken) en een crash wanneer de app vergrendelde terwijl taken werden getoond.

@@ -1,0 +1,1 @@
+Encly 2.2.1: corrige un cierre inesperado al seleccionar texto en una nota (por ejemplo, al tocar dos veces una palabra) y otro cuando la app se bloqueaba mientras mostraba tareas.

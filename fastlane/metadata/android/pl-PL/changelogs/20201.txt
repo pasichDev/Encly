@@ -1,0 +1,1 @@
+Encly 2.2.1: naprawia awarię podczas zaznaczania tekstu w notatce (na przykład przez dwukrotne stuknięcie słowa) oraz awarię, gdy aplikacja blokowała się podczas wyświetlania zadań.

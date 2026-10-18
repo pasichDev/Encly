@@ -1,0 +1,1 @@
+Encly 2.2.1: fixes a crash when selecting text in a note (for example by double-tapping a word) and a crash when the app locked while showing tasks.
