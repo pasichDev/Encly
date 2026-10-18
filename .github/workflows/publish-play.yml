@@ -108,7 +108,7 @@ jobs:
           cache-read-only: true
 
       - name: Test and build the play bundle (unsigned)
-        run: ./gradlew :app:testPlayReleaseUnitTest :app:bundlePlayRelease
+        run: ./gradlew :app:testPlayDebugUnitTest :app:bundlePlayRelease
 
       - name: Sign the bundle
         env:
