@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.NeverLocked
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Subtask
@@ -23,11 +24,14 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
+
+private const val TAG = "TasksViewModel"
 
 // Filters for tasks
 data class TaskFilter(
@@ -205,6 +209,10 @@ class TasksViewModel @Inject constructor(
             ) { activeTasks, completedTasks, activeCount, completedCount, subtasks ->
                 TaskFilterEngine.reduce(_uiState.value, activeTasks, completedTasks, activeCount, completedCount)
                     .copy(subtasks = subtasks.groupBy { it.taskId })
+            }.catch {
+                // The vault closed under the list (locked; [clearOnLock] resets the screen right
+                // after). Keep what is shown rather than crash or blank it as an empty list.
+                AppLogger.e(TAG, "Tasks read failed")
             }.collect { newState ->
                 _uiState.value = newState
                 if (!restoredTreesChecked) {

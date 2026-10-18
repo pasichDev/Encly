@@ -25,11 +25,18 @@ internal class TestTasksRepository(initial: List<Task> = emptyList(), initialSub
     var failClear = false
     var failSubtasks = false
 
+    /** While set, every list read fails, as it does once the vault's session has closed. */
+    var failReads = false
+
     /** Every (id, isCompleted, completedDate) passed to [updateTaskStatus]. */
     val statusUpdates = mutableListOf<Triple<Long, Boolean, Long?>>()
 
-    override fun getAllActiveTasks(): Flow<List<Task>> = tasks.map { list -> list.filterNot { it.isCompleted } }
-    override fun getAllCompletedTasks(): Flow<List<Task>> = tasks.map { list -> list.filter { it.isCompleted } }
+    override fun getAllActiveTasks(): Flow<List<Task>> =
+        tasks.map { list -> read { list.filterNot { it.isCompleted } } }
+    override fun getAllCompletedTasks(): Flow<List<Task>> =
+        tasks.map { list -> read { list.filter { it.isCompleted } } }
+
+    private fun <T> read(block: () -> T): T = if (failReads) error("Database session expired") else block()
     override fun getAllTasks(): Flow<List<Task>> = tasks
     override fun getActiveTasksCount(): Flow<Int> = getAllActiveTasks().map { it.size }
     override fun getCompletedTasksCount(): Flow<Int> = getAllCompletedTasks().map { it.size }
