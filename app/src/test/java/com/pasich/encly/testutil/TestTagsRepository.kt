@@ -11,12 +11,18 @@ internal class TestTagsRepository(initial: List<Tag> = emptyList()) : TagsReposi
     val tags = MutableStateFlow(initial)
     var failWrites = false
 
+    /** While set, reading the tags fails, as it does once the vault's session has closed. */
+    var failReads = false
+
     /** Every list passed to [updateTags], in call order. */
     val savedOrders = mutableListOf<List<Tag>>()
 
     private var nextId = (initial.maxOfOrNull { it.id } ?: 0L) + 1
 
-    override fun getTags(): Flow<List<Tag>> = tags.map { list -> list.sortedBy { it.position } }
+    override fun getTags(): Flow<List<Tag>> = tags.map { list ->
+        if (failReads) error("Database session expired")
+        list.sortedBy { it.position }
+    }
 
     override suspend fun addTag(tag: Tag): Result<Long> {
         if (failWrites) return Result.failure(IllegalStateException("add"))

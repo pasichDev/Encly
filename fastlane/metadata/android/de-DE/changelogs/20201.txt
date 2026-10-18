@@ -1,0 +1,1 @@
+Encly 2.2.1: behebt einen Absturz beim Markieren von Text in einer Notiz (zum Beispiel durch Doppeltippen auf ein Wort) und einen Absturz, wenn sich die App beim Anzeigen von Aufgaben sperrte.

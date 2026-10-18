@@ -65,6 +65,17 @@ class TasksViewModelTest {
     }
 
     @Test
+    fun aReadFailingAfterTheVaultClosedKeepsTheListInsteadOfCrashing() = runTest(dispatcher) {
+        advanceUntilIdle()
+
+        repository.failReads = true
+        repository.tasks.value = repository.tasks.value + Task(id = 4, title = "New")
+        advanceUntilIdle()
+
+        assertEquals(listOf("High", "Low"), viewModel.uiState.value.activeTasks.map { it.title })
+    }
+
+    @Test
     fun anEmptyListIsLoadedNotLoading() = runTest(dispatcher) {
         repository.tasks.value = emptyList()
         advanceUntilIdle()

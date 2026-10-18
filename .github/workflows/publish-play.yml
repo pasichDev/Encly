@@ -1,97 +1,97 @@
 name: Publish to Google Play
 
-# Uploads the signed `play` bundle of a release tag to the Google Play INTERNAL track.
+# A release tag vX.Y.Z publishes the signed `play` bundle to the Google Play PRODUCTION track,
+# rolled out to 100% of users, with the R8 mapping file and the release notes.
+# It can be re-run by hand (Actions -> "Publish to Google Play" -> Run workflow, choosing the tag
+# under "Use workflow from"); a run from a branch fails.
 #
-# DISABLED BY DEFAULT. It never runs on push, pull request or tag events: it can only be started
-# by hand (Actions -> "Publish to Google Play" -> Run workflow), and even then every job is
-# skipped unless the repository VARIABLE PLAY_PUBLISH_ENABLED is exactly 'true'.
-# To enable it: add the secrets below, then set the repository variable PLAY_PUBLISH_ENABLED=true.
+# Kill switch: every job is skipped unless the repository VARIABLE PLAY_PUBLISH_ENABLED is
+# exactly 'true'.
 #
-# Repository secrets (all required once enabled):
-#   PLAY_SERVICE_ACCOUNT_JSON  JSON key of a Play Console service account limited to this app
-#   ENCLY_KEYSTORE_BASE64      base64 of the release (upload) keystore
-#   ENCLY_KEYSTORE_PASSWORD    keystore password
-#   ENCLY_KEY_ALIAS            key alias
-#   ENCLY_KEY_PASSWORD         key password
-# Repository variable (required):
-#   ENCLY_CERT_SHA256          expected SHA-256 of the signing certificate (as in release.yml)
+# No Google credential is stored in GitHub. The `upload` job exchanges the run's GitHub OIDC
+# token for a short-lived Google token (Workload Identity Federation); the Google side only
+# accepts tokens of this repository's `google-play` environment for a v* tag, and the
+# environment only deploys v* tags. The service account has no Google Cloud roles, only
+# release rights for this app in Play Console.
+#
+# The jobs are split so that no job holds both secrets: `build` has the signing key and no
+# OIDC token, `upload` has the OIDC token and only sees the signed bundle.
+#
+# Repository secrets (build):
+#   ENCLY_KEYSTORE_BASE64, ENCLY_KEYSTORE_PASSWORD, ENCLY_KEY_ALIAS, ENCLY_KEY_PASSWORD
+# Repository variables:
+#   ENCLY_CERT_SHA256    expected SHA-256 of the signing certificate (as in release.yml)
+#   PLAY_PUBLISH_ENABLED 'true' to publish
+#   PLAY_WIF_PROVIDER    projects/<number>/locations/global/workloadIdentityPools/<pool>/providers/<provider>
+#   PLAY_SERVICE_ACCOUNT the service account's e-mail, invited in Play Console
 #
 # Gradle builds the bundle UNSIGNED and never sees the keystore; a separate step signs it with
 # jarsigner using only the signing secrets. Third-party actions are pinned by commit SHA.
 
 on:
+  push:
+    tags: [ 'v*' ]
   workflow_dispatch:
-    inputs:
-      ref:
-        description: 'Release tag to publish (vX.Y.Z, must match version.properties)'
-        required: true
-        type: string
-      status:
-        description: 'Release status on the internal track (draft until the app passed its first review)'
-        required: true
-        default: draft
-        type: choice
-        options: [ draft, completed ]
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: publish-play
   cancel-in-progress: false
 
 jobs:
-  publish:
+  build:
     if: vars.PLAY_PUBLISH_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      name: ${{ steps.version.outputs.name }}
     steps:
       - name: Only release tags
-        env:
-          REF: ${{ inputs.ref }}
         run: |
           set -euo pipefail
-          if ! [[ "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::ref must be a release tag vX.Y.Z, got '$REF'"
+          if ! [[ "$GITHUB_REF" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::run this workflow from a release tag vX.Y.Z, got '$GITHUB_REF'"
             exit 1
           fi
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/tags/${{ inputs.ref }}
+          persist-credentials: false
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       - name: Tag must match version.properties
         id: version
-        env:
-          REF: ${{ inputs.ref }}
         run: |
           set -euo pipefail
           prop() { grep -E "^$1=" version.properties | cut -d= -f2 | tr -d ' \r'; }
           major="$(prop VERSION_MAJOR)"; minor="$(prop VERSION_MINOR)"; patch="$(prop VERSION_PATCH)"
           name="$major.$minor.$patch"
-          if [ "v$name" != "$REF" ]; then
-            echo "::error::Tag $REF does not match version.properties (v$name)"
+          if [ "v$name" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version.properties (v$name)"
             exit 1
           fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "code=$((major * 10000 + minor * 100 + patch))" >> "$GITHUB_OUTPUT"
 
-      - name: Required secrets are set
+      - name: Required secrets and variables are set
         env:
-          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           KEYSTORE_BASE64: ${{ secrets.ENCLY_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ENCLY_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ENCLY_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ENCLY_KEY_PASSWORD }}
           CERT_SHA256: ${{ vars.ENCLY_CERT_SHA256 }}
+          WIF_PROVIDER: ${{ vars.PLAY_WIF_PROVIDER }}
+          SERVICE_ACCOUNT: ${{ vars.PLAY_SERVICE_ACCOUNT }}
         run: |
           set -euo pipefail
           missing=0
-          for v in PLAY_JSON KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD CERT_SHA256; do
-            if [ -z "${!v}" ]; then echo "::error::secret for $v is not set"; missing=1; fi
+          for v in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD CERT_SHA256 WIF_PROVIDER SERVICE_ACCOUNT; do
+            if [ -z "${!v}" ]; then echo "::error::$v is not set"; missing=1; fi
           done
           # Play rejects unsigned bundles; fail here instead of after a long build.
           exit $missing
@@ -141,28 +141,58 @@ jobs:
             exit 1
           fi
 
-      - name: Release notes from fastlane changelogs
+      - name: Collect the bundle, mapping and release notes
         env:
           CODE: ${{ steps.version.outputs.code }}
         run: |
           set -euo pipefail
-          mkdir -p whatsnew
+          mkdir -p play/whatsnew
+          cp app/build/outputs/bundle/playRelease/app-play-release.aab play/
+          cp app/build/outputs/mapping/playRelease/mapping.txt play/
           for dir in fastlane/metadata/android/*/; do
             locale="$(basename "$dir")"
             notes="$dir/changelogs/$CODE.txt"
-            [ -f "$notes" ] && cp "$notes" "whatsnew/whatsnew-$locale"
+            [ -f "$notes" ] && cp "$notes" "play/whatsnew/whatsnew-$locale"
           done
-          test -f whatsnew/whatsnew-en-US || { echo "::error::no en-US changelog for $CODE"; exit 1; }
-          ls whatsnew
+          test -f play/whatsnew/whatsnew-en-US || { echo "::error::no en-US changelog for $CODE"; exit 1; }
+          ls -lR play
 
-      - name: Upload to Google Play (internal track)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: play-release
+          path: play/
+          retention-days: 1
+          if-no-files-found: error
+
+  upload:
+    if: vars.PLAY_PUBLISH_ENABLED == 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: google-play
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: play-release
+          path: play
+
+      - name: Authenticate to Google (Workload Identity Federation)
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.PLAY_WIF_PROVIDER }}
+          service_account: ${{ vars.PLAY_SERVICE_ACCOUNT }}
+
+      - name: Upload to Google Play (production, 100%)
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.pasich.encly
-          releaseFiles: app/build/outputs/bundle/playRelease/app-play-release.aab
-          releaseName: ${{ steps.version.outputs.name }}
-          track: internal
-          status: ${{ inputs.status }}
-          mappingFile: app/build/outputs/mapping/playRelease/mapping.txt
-          whatsNewDirectory: whatsnew
+          releaseFiles: play/app-play-release.aab
+          releaseName: ${{ needs.build.outputs.name }}
+          track: production
+          status: completed
+          mappingFile: play/mapping.txt
+          whatsNewDirectory: play/whatsnew

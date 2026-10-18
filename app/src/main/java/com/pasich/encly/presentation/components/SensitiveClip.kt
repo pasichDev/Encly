@@ -10,6 +10,7 @@ import android.os.PersistableBundle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.AndroidClipboard
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
@@ -92,16 +93,21 @@ object SensitiveClip {
     }
 }
 
-/** A [Clipboard] that applies [SensitiveClip] to everything set through it. */
-private class SensitiveClipboard(private val delegate: Clipboard) : Clipboard {
-    override val nativeClipboard: ClipboardManager get() = delegate.nativeClipboard
+/**
+ * A [Clipboard] that applies [SensitiveClip] to everything set through it. It must be an
+ * [AndroidClipboard]: Compose's text toolbar reads the system clipboard through
+ * `Clipboard.nativeClipboardManager`, which throws for any other [Clipboard], so a plain
+ * wrapper crashed the app on every text selection.
+ */
+private class SensitiveClipboard(private val delegate: Clipboard) : AndroidClipboard {
+    override val clipboardManager: ClipboardManager get() = delegate.nativeClipboard
 
     override suspend fun getClipEntry(): ClipEntry? = delegate.getClipEntry()
 
     override suspend fun setClipEntry(clipEntry: ClipEntry?) {
         clipEntry?.clipData?.let(SensitiveClip::markSensitive)
         delegate.setClipEntry(clipEntry)
-        if (clipEntry != null) SensitiveClip.scheduleClear(nativeClipboard)
+        if (clipEntry != null) SensitiveClip.scheduleClear(clipboardManager)
     }
 }
 

@@ -1,0 +1,1 @@
+Encly 2.2.1 : corrige un plantage lors de la sélection de texte dans une note (par exemple en touchant deux fois un mot) et un plantage quand l’application se verrouillait en affichant les tâches.
