@@ -212,10 +212,10 @@ upload this key instead of letting Google generate one).
    the keystore), checks the certificate against `ENCLY_CERT_SHA256`, and publishes the APKs
    with `SHA256SUMS` (signed as `SHA256SUMS.asc` when the GPG secrets are set) and the R8
    mapping files.
-6. Google Play: either upload `app-play-release.aab` by hand
-   (`./gradlew :app:bundlePlayRelease` with the `ENCLY_*` variables set), or, once enabled, run
-   the [Publish to Google Play](.github/workflows/publish-play.yml) workflow with the tag; it
-   uploads to the internal track, from where you promote it in Play Console.
+6. Google Play: the same tag runs [Publish to Google Play](.github/workflows/publish-play.yml),
+   which builds and signs the `play` bundle and publishes it to production for 100% of users,
+   with the R8 mapping file (so Play Console shows readable crash stack traces) and the release
+   notes from step 3. To re-run it, start the workflow by hand from the tag.
 7. F-Droid picks the new tag up by itself (`AutoUpdateMode: Version`), usually within a few days.
 
 ### F-Droid reproducibility

@@ -13,7 +13,8 @@ import java.util.Properties
  * F-Droid because of a missing file or an over-long text:
  * - fastlane/metadata/android: one listing per shipped language, Play's length limits, release
  *   notes for the current versionCode;
- * - .github/workflows/publish-play.yml: can only be started by hand and only when enabled.
+ * - .github/workflows/publish-play.yml: runs only for release tags and only when enabled, and no
+ *   job holds both the signing key and the Google token.
  */
 class StoreMetadataTest {
 
@@ -83,21 +84,48 @@ class StoreMetadataTest {
     }
 
     @Test
-    fun playPublishingRunsOnlyByHandAndOnlyWhenEnabled() {
-        val lines = File(root, PUBLISH_WORKFLOW).readLines()
-            .map { it.substringBefore(" #").trimEnd() }
-            .filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
+    fun playPublishingRunsOnlyForReleaseTagsAndOnlyWhenEnabled() {
+        val lines = publishWorkflowLines()
 
-        val triggers = section(lines, "on:").filter { it.indentation() == 2 }.map { it.trim() }
-        assertEquals(listOf("workflow_dispatch:"), triggers)
+        val trigger = section(lines, "on:")
+        assertEquals(
+            listOf("push:", "tags: [ 'v*' ]", "workflow_dispatch:"),
+            trigger.map { it.trim() },
+        )
 
-        val jobs = section(lines, "jobs:")
-        val jobNames = jobs.filter { it.indentation() == 2 }
-        assertFalse("no jobs found", jobNames.isEmpty())
-        jobNames.forEach { job ->
-            val body = jobs.dropWhile { it != job }.drop(1).takeWhile { it.indentation() > 2 }
+        val jobs = publishJobs(lines)
+        assertFalse("no jobs found", jobs.isEmpty())
+        jobs.forEach { (job, body) ->
             val guard = body.filter { it.indentation() == 4 }.firstOrNull { it.trim().startsWith("if:") }
-            assertEquals("${job.trim()} must be guarded", "if: $PUBLISH_GUARD", guard?.trim())
+            assertEquals("$job must be guarded", "if: $PUBLISH_GUARD", guard?.trim())
+        }
+    }
+
+    @Test
+    fun noPlayPublishingJobHoldsBothTheSigningKeyAndTheGoogleToken() {
+        val lines = publishWorkflowLines()
+        assertEquals("permissions: {}", lines.firstOrNull { it.startsWith("permissions:") })
+
+        publishJobs(lines).forEach { (job, body) ->
+            val oidc = body.any { it.trim() == "id-token: write" }
+            val secrets = body.any { "secrets." in it }
+            assertFalse("$job has the signing secrets and an OIDC token", oidc && secrets)
+            if (oidc) {
+                val environment = body.any { it.trim() == "environment: google-play" }
+                assertTrue("$job must deploy through the google-play environment", environment)
+            }
+        }
+    }
+
+    private fun publishWorkflowLines(): List<String> = File(root, PUBLISH_WORKFLOW).readLines()
+        .map { it.substringBefore(" #").trimEnd() }
+        .filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
+
+    /** Each job's name with its body. */
+    private fun publishJobs(lines: List<String>): List<Pair<String, List<String>>> {
+        val jobs = section(lines, "jobs:")
+        return jobs.filter { it.indentation() == 2 }.map { job ->
+            job.trim().removeSuffix(":") to jobs.dropWhile { it != job }.drop(1).takeWhile { it.indentation() > 2 }
         }
     }
 
