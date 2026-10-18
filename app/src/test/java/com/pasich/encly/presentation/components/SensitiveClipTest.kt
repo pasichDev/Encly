@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.nativeClipboardManager
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.launch
@@ -112,6 +113,20 @@ class SensitiveClipTest {
 
         passMillis(SensitiveClip.CLEAR_AFTER_MS)
         assertTrue(clipboard.primaryClip == null || clipboard.primaryClip?.getItemAt(0)?.text.isNullOrEmpty())
+    }
+
+    /** The text toolbar (shown on every selection) reads this; any other Clipboard type throws. */
+    @Test
+    fun theBoundaryStillExposesTheSystemClipboardToTheTextToolbar() {
+        var native: ClipboardManager? = null
+        rule.setContent {
+            SensitiveClipboardBoundary {
+                native = LocalClipboard.current.nativeClipboardManager
+            }
+        }
+        rule.waitForIdle()
+
+        assertEquals(clipboard, native)
     }
 
     @Composable
