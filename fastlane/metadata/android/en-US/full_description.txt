@@ -2,6 +2,8 @@ Encly is an encrypted notes app for private notes and tasks that never leave you
 
 Most note apps want an account and a server. Encly has neither. Your encrypted notes live in one place: your phone.
 
+Use it as a password-protected notepad, a private diary or journal, or a safe place to hide notes from anyone who picks up your phone.
+
 PRIVATE BY DESIGN
 • No account, no sign-up, no analytics, no ads, no in-app purchases.
 • Truly offline: Encly does not request the INTERNET permission, so it cannot send your notes anywhere.
