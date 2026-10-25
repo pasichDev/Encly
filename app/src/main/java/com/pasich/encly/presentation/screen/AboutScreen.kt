@@ -59,7 +59,7 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
                 text = stringResource(R.string.about_encryption_note),
                 icon = EnclyIcons.Lock,
             )
-            DeveloperActionsSection(context)
+            DeveloperActionsSection(context, onSupport = { navController.navigate(NavRoutes.SupportRoute.name) })
             EnclyGroup {
                 EnclyNavigationRow(
                     title = stringResource(R.string.licenses_title),
@@ -95,7 +95,7 @@ private fun HeroSection() {
 }
 
 @Composable
-private fun DeveloperActionsSection(context: Context) {
+private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
         SectionOverline(stringResource(R.string.about_support_title))
         EnclyGroup {
@@ -115,6 +115,17 @@ private fun DeveloperActionsSection(context: Context) {
                     supporting = stringResource(R.string.about_rate_app_desc),
                     icon = EnclyIcons.Star,
                     onClick = { openStorePage(context) },
+                    modifier = rowModifier,
+                )
+            }
+            // Support the developer: fdroid only, same page as the drawer entry.
+            if (BuildConfig.DONATIONS_ENABLED) {
+                EnclyGroupDivider()
+                EnclyNavigationRow(
+                    title = stringResource(R.string.main_drawer_support),
+                    supporting = stringResource(R.string.about_support_dev_desc),
+                    icon = EnclyIcons.Coffee,
+                    onClick = onSupport,
                     modifier = rowModifier,
                 )
             }

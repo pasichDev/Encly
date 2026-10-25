@@ -11,6 +11,11 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Changed
+
+- The Support page (`fdroid` flavor only) now explains where donations go and offers a single
+  Ko-fi card. About links to it as well.
+
 ## [2.2.1] - 2026-10-18
 
 versionCode 20201.

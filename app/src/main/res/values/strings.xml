@@ -23,6 +23,7 @@
     <string name="about_faq_title">Frequently asked questions</string>
     <string name="about_feedback">Feedback</string>
     <string name="about_feedback_desc">Report a bug or suggest an improvement on GitHub</string>
+    <string name="about_support_dev_desc">Why it matters and how to chip in on Ko-fi</string>
     <string name="about_no_browser">No browser found. Open the link manually: %1$s</string>
     <string name="about_no_mail_client">No email app found</string>
     <string name="about_privacy_policy">Privacy policy</string>
@@ -99,7 +100,7 @@
     <string name="dialog_message">Do you really want to delete this note permanently? This can\'t be undone.</string>
     <string name="dialog_title">Delete note?</string>
 
-    <string name="donation_description">Your support helps us add new features, fix bugs and improve the app. Any amount is greatly appreciated!</string>
+    <string name="donation_description">Encly is free and open source, with no ads, no tracking and no accounts. Donations are its only income.</string>
     <string name="donation_title">Support development</string>
 
     <string name="done">Done</string>
@@ -557,11 +558,11 @@
     <string name="support_fact_free_title">Everything is already yours</string>
     <string name="support_fact_free_desc">Every feature is in the app for everyone. Nothing is locked behind a payment.</string>
     <string name="support_fact_private_title">No ads, no tracking</string>
-    <string name="support_fact_private_desc">Encly never sees your notes and earns nothing from data. Support is how it pays for itself.</string>
-    <string name="support_fact_uses_title">Where it goes</string>
-    <string name="support_fact_uses_desc">New features, security review and testing, design and fixes.</string>
-    <string name="support_kofi_button">Support on Ko-fi</string>
-    <string name="support_kofi_note">Opens ko-fi.com in your browser. Any amount helps.</string>
+    <string name="support_fact_private_desc">Encly never sees your notes and earns nothing from data. Donations are the only thing that pays for it.</string>
+    <string name="support_fact_uses_title">Where the money goes</string>
+    <string name="support_fact_uses_desc">Test devices (next up: a Mac mini for building and testing) and time for releases and fixes.</string>
+    <string name="support_method_kofi_hint">Card or PayPal, one-off or monthly</string>
+    <string name="support_browser_note">Opens ko-fi.com in your browser. Encly itself never handles payments.</string>
     <string name="faq_note_actions_q">What does a long press on a note do?</string>
     <string name="faq_note_actions_a">It opens the note\'s actions: change its tag, add a short description shown on the card, duplicate the note or move it to the trash.</string>
     <string name="faq_trash_q">How do I get a deleted note back?</string>

@@ -27,7 +27,7 @@ a mandatory app PIN and, optionally, strong biometrics.
 - 📴 **Fully offline** — no `INTERNET` permission, cloud sync, analytics or downloadable fonts
   (editor fonts are bundled). The only links out (privacy policy, issue tracker, email, the
   open-source license pages, a note's link block and, in the `play` flavor, the store page or, in
-  the `fdroid` flavor, the Ko-fi page) open in another app and only when you tap them.
+  the `fdroid` flavor, the Ko-fi donation page) open in another app and only when you tap them.
 - 🛡️ **Protected UI** — `FLAG_SECURE` is enforced from the first Activity frame.
 - 🌍 **9 languages** — pick one in Settings → Language, independently of the system language.
 
@@ -233,6 +233,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - [Security model](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
+
+## 💛 Support Encly
+
+Encly is free and open source, with no ads, no tracking and no accounts; donations are its only
+income. They go to test devices and to time for releases and fixes.
+
+- [Ko-fi](https://ko-fi.com/pasichdev) — card or PayPal, one-off or monthly.
+
+The `fdroid` build shows the same link on its Support screen. The `play` build has no in-app
+donation link, by Google Play policy.
 
 ## Contributing
 

@@ -7,6 +7,7 @@
     <string name="about_faq_title">Domande frequenti</string>
     <string name="about_feedback">Feedback</string>
     <string name="about_feedback_desc">Segnala un bug o suggerisci un miglioramento su GitHub</string>
+    <string name="about_support_dev_desc">Perché conta e come contribuire su Ko-fi</string>
     <string name="about_no_browser">Nessun browser trovato. Apri il link manualmente: %1$s</string>
     <string name="about_no_mail_client">Nessuna app di posta trovata</string>
     <string name="about_privacy_policy">Informativa sulla privacy</string>
@@ -83,7 +84,7 @@
     <string name="dialog_message">Vuoi davvero eliminare definitivamente questa nota? L\'operazione non può essere annullata.</string>
     <string name="dialog_title">Eliminare la nota?</string>
 
-    <string name="donation_description">Il tuo supporto ci aiuta ad aggiungere funzioni, correggere bug e migliorare l\'app. Qualsiasi importo è molto apprezzato!</string>
+    <string name="donation_description">Encly è gratuito e open source, senza pubblicità, tracciamento né account. Le donazioni sono il suo unico introito.</string>
     <string name="donation_title">Sostieni lo sviluppo</string>
 
     <string name="done">Fine</string>
@@ -545,11 +546,11 @@
     <string name="support_fact_free_title">È già tutto tuo</string>
     <string name="support_fact_free_desc">Ogni funzione è disponibile per tutti. Niente è bloccato dietro un pagamento.</string>
     <string name="support_fact_private_title">Niente pubblicità né tracciamento</string>
-    <string name="support_fact_private_desc">Encly non vede mai le tue note e non guadagna dai dati. Il supporto è l’unico modo in cui si sostiene.</string>
-    <string name="support_fact_uses_title">A cosa serve</string>
-    <string name="support_fact_uses_desc">Nuove funzioni, revisione della sicurezza e test, design e correzioni.</string>
-    <string name="support_kofi_button">Sostieni su Ko-fi</string>
-    <string name="support_kofi_note">Apre ko-fi.com nel browser. Ogni importo aiuta.</string>
+    <string name="support_fact_private_desc">Encly non vede mai le tue note e non guadagna dai dati. Solo le donazioni lo sostengono.</string>
+    <string name="support_fact_uses_title">Dove vanno i fondi</string>
+    <string name="support_fact_uses_desc">Dispositivi di test (il prossimo obiettivo: un Mac mini per compilare e testare) e tempo per rilasci e correzioni.</string>
+    <string name="support_method_kofi_hint">Carta o PayPal, una tantum o mensile</string>
+    <string name="support_browser_note">Apre ko-fi.com nel browser. L\'app Encly non gestisce mai i pagamenti.</string>
     <string name="faq_note_actions_q">Cosa fa una pressione prolungata su una nota?</string>
     <string name="faq_note_actions_a">Apre le azioni della nota: cambiare l’etichetta, aggiungere una breve descrizione mostrata sulla scheda, duplicare la nota o spostarla nel cestino.</string>
     <string name="faq_trash_q">Come recupero una nota eliminata?</string>

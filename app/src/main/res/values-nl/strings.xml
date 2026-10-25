@@ -7,6 +7,7 @@
     <string name="about_faq_title">Veelgestelde vragen</string>
     <string name="about_feedback">Feedback</string>
     <string name="about_feedback_desc">Meld een bug of stel een verbetering voor op GitHub</string>
+    <string name="about_support_dev_desc">Waarom het telt en hoe je helpt via Ko-fi</string>
     <string name="about_no_browser">Geen browser gevonden. Open de link handmatig: %1$s</string>
     <string name="about_no_mail_client">Geen e-mailapp gevonden</string>
     <string name="about_privacy_policy">Privacybeleid</string>
@@ -83,7 +84,7 @@
     <string name="dialog_message">Weet je zeker dat je deze notitie definitief wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="dialog_title">Notitie verwijderen?</string>
 
-    <string name="donation_description">Met je steun kunnen we nieuwe functies toevoegen, bugs oplossen en de app verbeteren. Elk bedrag wordt enorm gewaardeerd!</string>
+    <string name="donation_description">Encly is gratis en open source, zonder advertenties, tracking en accounts. Donaties zijn de enige inkomsten.</string>
     <string name="donation_title">Steun de ontwikkeling</string>
 
     <string name="done">Klaar</string>
@@ -540,11 +541,11 @@
     <string name="support_fact_free_title">Alles is al van jou</string>
     <string name="support_fact_free_desc">Elke functie is er voor iedereen. Niets zit achter een betaling.</string>
     <string name="support_fact_private_title">Geen advertenties, geen tracking</string>
-    <string name="support_fact_private_desc">Encly ziet je notities nooit en verdient niets aan data. Steun is de enige manier waarop het zich bedruipt.</string>
-    <string name="support_fact_uses_title">Waar het naartoe gaat</string>
-    <string name="support_fact_uses_desc">Nieuwe functies, beveiligingsaudit en tests, ontwerp en fixes.</string>
-    <string name="support_kofi_button">Steunen op Ko-fi</string>
-    <string name="support_kofi_note">Opent ko-fi.com in je browser. Elk bedrag helpt.</string>
+    <string name="support_fact_private_desc">Encly ziet je notities nooit en verdient niets aan data. Alleen donaties betalen ervoor.</string>
+    <string name="support_fact_uses_title">Waar het geld heen gaat</string>
+    <string name="support_fact_uses_desc">Testapparaten (volgende doel: een Mac mini om te bouwen en testen) en tijd voor releases en fixes.</string>
+    <string name="support_method_kofi_hint">Kaart of PayPal, eenmalig of maandelijks</string>
+    <string name="support_browser_note">Opent ko-fi.com in je browser. Encly zelf verwerkt nooit betalingen.</string>
     <string name="faq_note_actions_q">Wat doet lang drukken op een notitie?</string>
     <string name="faq_note_actions_a">Het opent de acties van de notitie: het label wijzigen, een korte beschrijving op de kaart toevoegen, de notitie dupliceren of naar de prullenbak verplaatsen.</string>
     <string name="faq_trash_q">Hoe krijg ik een verwijderde notitie terug?</string>

@@ -7,6 +7,7 @@
     <string name="about_faq_title">Часті запитання</string>
     <string name="about_feedback">Зворотний зв\'язок</string>
     <string name="about_feedback_desc">Повідомити про помилку або запропонувати покращення на GitHub</string>
+    <string name="about_support_dev_desc">Навіщо це і як підтримати на Ko-fi</string>
     <string name="about_no_browser">Не знайдено браузера. Відкрийте посилання вручну: %1$s</string>
     <string name="about_no_mail_client">Поштовий клієнт не знайдено</string>
     <string name="about_privacy_policy">Політика конфіденційності</string>
@@ -83,7 +84,7 @@
     <string name="dialog_message">Ви дійсно хочете видалити нотатку назавжди? Цю дію не можна буде скасувати.</string>
     <string name="dialog_title">Видалити нотатку?</string>
 
-    <string name="donation_description">Ваша підтримка допомагає нам додавати нові функції, виправляти помилки й покращувати застосунок. Будь-яка сума буде дуже вдячна!</string>
+    <string name="donation_description">Encly безкоштовний і з відкритим кодом: без реклами, стеження й облікових записів. Пожертви — його єдиний дохід.</string>
     <string name="donation_title">Підтримати розробку</string>
 
     <string name="done">Готово</string>
@@ -550,11 +551,11 @@
     <string name="support_fact_free_title">Усе вже ваше</string>
     <string name="support_fact_free_desc">Кожна функція доступна всім. Нічого не заблоковано за оплатою.</string>
     <string name="support_fact_private_title">Без реклами й стеження</string>
-    <string name="support_fact_private_desc">Encly не бачить ваших нотаток і не заробляє на даних. Підтримка — єдине, що його утримує.</string>
-    <string name="support_fact_uses_title">На що йде підтримка</string>
-    <string name="support_fact_uses_desc">Нові функції, аудит безпеки й тестування, дизайн і виправлення.</string>
-    <string name="support_kofi_button">Підтримати на Ko-fi</string>
-    <string name="support_kofi_note">Відкриє ko-fi.com у браузері. Будь-яка сума допомагає.</string>
+    <string name="support_fact_private_desc">Encly не бачить ваших нотаток і не заробляє на даних. Єдине, що його утримує, — пожертви.</string>
+    <string name="support_fact_uses_title">На що йдуть кошти</string>
+    <string name="support_fact_uses_desc">Тестові пристрої (найближча ціль — Mac mini для збирання й тестування) та час на релізи й виправлення.</string>
+    <string name="support_method_kofi_hint">Картка або PayPal, разово чи щомісяця</string>
+    <string name="support_browser_note">Відкриває ko-fi.com у браузері. Сам Encly ніколи не обробляє платежі.</string>
     <string name="faq_note_actions_q">Що робить довге натискання на нотатку?</string>
     <string name="faq_note_actions_a">Відкриває дії з нотаткою: змінити мітку, додати короткий опис на картці, дублювати нотатку або перемістити її в кошик.</string>
     <string name="faq_trash_q">Як повернути видалену нотатку?</string>

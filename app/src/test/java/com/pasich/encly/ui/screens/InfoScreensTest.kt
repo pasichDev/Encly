@@ -40,6 +40,13 @@ class InfoScreensTest : ComposeScreenTest() {
     }
 
     @Test
+    fun aboutLinksTheSupportPageOnlyInTheFdroidBuild() {
+        setNavScreen(route = NavRoutes.AboutRoute.name) { nav -> AboutScreen(nav) }
+
+        assertEquals(BuildConfig.DONATIONS_ENABLED, countText(str(R.string.about_support_dev_desc)) > 0)
+    }
+
+    @Test
     fun aboutLeadsToTheLicenses() {
         setNavScreen(route = NavRoutes.AboutRoute.name) { nav -> AboutScreen(nav) }
         scrollToText(str(R.string.licenses_title))
@@ -77,6 +84,15 @@ class InfoScreensTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(R.string.donation_title)).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 4)
+    }
+
+    @Test
+    fun supportOffersKofi() {
+        setNavScreen(route = NavRoutes.SupportRoute.name) { nav -> SupportScreen(nav) }
+
+        scrollToText("Ko-fi")
+        scrollToText(str(R.string.support_method_kofi_hint))
+        scrollToText(str(R.string.support_browser_note))
     }
 
     @Test
