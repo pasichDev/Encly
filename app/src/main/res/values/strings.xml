@@ -630,4 +630,14 @@
     <string name="archive_empty_desc">Archived notes leave your list and search but stay in the vault. Archive a note from its menu.</string>
     <string name="note_archive_failed">Couldn\'t move the note to the archive</string>
     <string name="note_unarchive_failed">Couldn\'t take the note out of the archive</string>
+    <string name="note_color_title">Color</string>
+    <string name="note_color_none">No color</string>
+    <string name="note_color_red">Red</string>
+    <string name="note_color_orange">Orange</string>
+    <string name="note_color_yellow">Yellow</string>
+    <string name="note_color_green">Green</string>
+    <string name="note_color_teal">Teal</string>
+    <string name="note_color_blue">Blue</string>
+    <string name="note_color_purple">Purple</string>
+    <string name="note_color_pink">Pink</string>
 </resources>

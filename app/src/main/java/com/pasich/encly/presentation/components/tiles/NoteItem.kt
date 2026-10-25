@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.presentation.designsystem.EnclyNoteCard
 import com.pasich.encly.presentation.designsystem.NoteCardMeta
@@ -49,6 +50,7 @@ fun NoteItem(
         selected = note.isChecked,
         dimmed = dimmed,
         pinned = note.isPinned && !dimmed,
+        noteColor = if (dimmed) NoteColor.NONE else NoteColor.fromKey(note.color),
         onClick = { onItemClick(note) },
         onLongClick = {
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)

@@ -625,4 +625,14 @@
     <string name="archive_empty_desc">Архівовані нотатки зникають зі списку й пошуку, але залишаються в сховищі. Архівуйте нотатку з її меню.</string>
     <string name="note_archive_failed">Не вдалося перемістити нотатку в архів</string>
     <string name="note_unarchive_failed">Не вдалося повернути нотатку з архіву</string>
+    <string name="note_color_title">Колір</string>
+    <string name="note_color_none">Без кольору</string>
+    <string name="note_color_red">Червоний</string>
+    <string name="note_color_orange">Помаранчевий</string>
+    <string name="note_color_yellow">Жовтий</string>
+    <string name="note_color_green">Зелений</string>
+    <string name="note_color_teal">Бірюзовий</string>
+    <string name="note_color_blue">Синій</string>
+    <string name="note_color_purple">Фіолетовий</string>
+    <string name="note_color_pink">Рожевий</string>
 </resources>

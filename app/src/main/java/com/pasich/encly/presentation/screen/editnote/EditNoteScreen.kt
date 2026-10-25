@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.screen.editnote
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -41,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
 import com.pasich.encly.presentation.components.editNote.NoteOverline
 import com.pasich.encly.presentation.components.editNote.TitleField
@@ -63,6 +66,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.ui.theme.noteColorStyle
 import kotlinx.coroutines.launch
 
 /** Items above the blocks: the overline and the title. */
@@ -166,9 +170,10 @@ private fun EditorScaffold(
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val findOpen by rememberFindOpen()
+    val pageColor = rememberPageColor()
     Scaffold(
         modifier = modifier.onPreviewKeyEvent { event -> viewModel.handleFindKey(event) },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = pageColor,
         // Status and navigation bars, a display cutout and the keyboard all stay clear of text.
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
@@ -178,6 +183,7 @@ private fun EditorScaffold(
                         isReadTrashOnly = viewModel.isReadTrashOnly,
                         lockEditor = lockEditor,
                         canToggleLock = !contentLoadFailed,
+                        containerColor = pageColor,
                     ),
                     listState = listState,
                     actions = actions,
@@ -191,6 +197,21 @@ private fun EditorScaffold(
         snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         content = content,
     )
+}
+
+/**
+ * The editor's page colour: the theme's surface, tinted by the note's colour. Read through derived
+ * state, so a title keystroke does not recompose the editor; a colour change fades in.
+ */
+@Composable
+private fun rememberPageColor(viewModel: EditNoteViewModel = enclyViewModel()): Color {
+    val noteState = viewModel.state.collectAsState()
+    val colorKey by remember(noteState) { derivedStateOf { noteState.value.note.color } }
+    val scheme = MaterialTheme.colorScheme
+    val target = remember(colorKey, scheme) {
+        noteColorStyle(NoteColor.fromKey(colorKey), scheme)?.page ?: scheme.surface
+    }
+    return animateColorAsState(target, label = "pageColor").value
 }
 
 /** Which of the editor's sheets and dialogs are open. */

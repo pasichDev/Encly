@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
@@ -130,7 +131,12 @@ internal fun EditorTagSheet(
 }
 
 /** What the editor bar shows: trash actions, or tags, lock (unless the note is unreadable) and more. */
-internal class EditorBarState(val isReadTrashOnly: Boolean, val lockEditor: Boolean, val canToggleLock: Boolean)
+internal class EditorBarState(
+    val isReadTrashOnly: Boolean,
+    val lockEditor: Boolean,
+    val canToggleLock: Boolean,
+    val containerColor: Color,
+)
 
 /**
  * The editor bar: back (saves and closes), then Edit tags, Lock editing and More actions. In
@@ -155,7 +161,7 @@ internal fun EditorTopBar(
 ) {
     val scrolled by remember(listState) { derivedStateOf { listState.canScrollBackward } }
     val colors = MaterialTheme.colorScheme
-    Surface(color = colors.surface, modifier = modifier) {
+    Surface(color = state.containerColor, modifier = modifier) {
         Column(
             modifier = Modifier.windowInsetsPadding(
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
@@ -184,7 +190,7 @@ internal fun EditorTopBar(
             }
             HorizontalDivider(
                 thickness = EnclyTheme.spacing.hairline,
-                color = if (scrolled) colors.outlineVariant else colors.surface,
+                color = if (scrolled) colors.outlineVariant else state.containerColor,
             )
         }
     }

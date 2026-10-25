@@ -625,4 +625,14 @@
     <string name="archive_empty_desc">Zarchiwizowane notatki znikają z listy i wyszukiwania, ale zostają w sejfie. Zarchiwizuj notatkę z jej menu.</string>
     <string name="note_archive_failed">Nie udało się zarchiwizować notatki</string>
     <string name="note_unarchive_failed">Nie udało się przywrócić notatki z archiwum</string>
+    <string name="note_color_title">Kolor</string>
+    <string name="note_color_none">Brak koloru</string>
+    <string name="note_color_red">Czerwony</string>
+    <string name="note_color_orange">Pomarańczowy</string>
+    <string name="note_color_yellow">Żółty</string>
+    <string name="note_color_green">Zielony</string>
+    <string name="note_color_teal">Turkusowy</string>
+    <string name="note_color_blue">Niebieski</string>
+    <string name="note_color_purple">Fioletowy</string>
+    <string name="note_color_pink">Różowy</string>
 </resources>

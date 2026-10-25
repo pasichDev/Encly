@@ -619,4 +619,14 @@
     <string name="archive_empty_desc">Les notes archivées quittent la liste et la recherche mais restent dans le coffre-fort. Archivez une note depuis son menu.</string>
     <string name="note_archive_failed">Impossible d\'archiver la note</string>
     <string name="note_unarchive_failed">Impossible de désarchiver la note</string>
+    <string name="note_color_title">Couleur</string>
+    <string name="note_color_none">Aucune couleur</string>
+    <string name="note_color_red">Rouge</string>
+    <string name="note_color_orange">Orange</string>
+    <string name="note_color_yellow">Jaune</string>
+    <string name="note_color_green">Vert</string>
+    <string name="note_color_teal">Sarcelle</string>
+    <string name="note_color_blue">Bleu</string>
+    <string name="note_color_purple">Violet</string>
+    <string name="note_color_pink">Rose</string>
 </resources>

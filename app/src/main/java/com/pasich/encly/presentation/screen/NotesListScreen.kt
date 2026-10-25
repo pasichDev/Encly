@@ -169,12 +169,15 @@ internal fun NoteActionsSheet(
                 NoteAction.Duplicate -> onDuplicate(item.note)
                 else -> action.toEvent(item.note)?.let(onEvent)
             }
-            // Changing the tag or the description keeps the sheet open.
-            if (action !is NoteAction.ChangeTag && action !is NoteAction.ChangeDescription) close()
+            // Changing the tag, the colour or the description keeps the sheet open.
+            if (action.closesSheet()) close()
         },
         onDismiss = ::close,
     )
 }
+
+private fun NoteAction.closesSheet(): Boolean =
+    this !is NoteAction.ChangeTag && this !is NoteAction.ChangeColor && this !is NoteAction.ChangeDescription
 
 /** The list event a sheet [NoteAction] on [note] stands for; null for the ones that open another screen. */
 private fun NoteAction.toEvent(note: Note): NoteListEvent? = when (this) {
@@ -182,6 +185,7 @@ private fun NoteAction.toEvent(note: Note): NoteListEvent? = when (this) {
     NoteAction.Delete -> NoteToTrash(note)
     is NoteAction.Pin -> NoteListEvent.PinNote(note, pinned)
     is NoteAction.Archive -> NoteListEvent.ArchiveNote(note, archived)
+    is NoteAction.ChangeColor -> NoteListEvent.ChangeColor(note, color)
     is NoteAction.ChangeTag -> ChangeTag(note = note, idTag = tagId)
     is NoteAction.ChangeDescription -> NoteListEvent.ChangeDescription(note = note, description = description)
 }

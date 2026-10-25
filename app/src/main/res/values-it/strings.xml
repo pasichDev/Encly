@@ -619,4 +619,14 @@
     <string name="archive_empty_desc">Le note archiviate escono dall\'elenco e dalla ricerca ma restano nella cassaforte. Archivia una nota dal suo menu.</string>
     <string name="note_archive_failed">Impossibile archiviare la nota</string>
     <string name="note_unarchive_failed">Impossibile rimuovere la nota dall\'archivio</string>
+    <string name="note_color_title">Colore</string>
+    <string name="note_color_none">Nessun colore</string>
+    <string name="note_color_red">Rosso</string>
+    <string name="note_color_orange">Arancione</string>
+    <string name="note_color_yellow">Giallo</string>
+    <string name="note_color_green">Verde</string>
+    <string name="note_color_teal">Turchese</string>
+    <string name="note_color_blue">Blu</string>
+    <string name="note_color_purple">Viola</string>
+    <string name="note_color_pink">Rosa</string>
 </resources>

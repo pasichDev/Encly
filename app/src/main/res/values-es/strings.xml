@@ -619,4 +619,14 @@
     <string name="archive_empty_desc">Las notas archivadas salen de la lista y de la búsqueda, pero siguen en la bóveda. Archiva una nota desde su menú.</string>
     <string name="note_archive_failed">No se pudo archivar la nota</string>
     <string name="note_unarchive_failed">No se pudo sacar la nota del archivo</string>
+    <string name="note_color_title">Color</string>
+    <string name="note_color_none">Sin color</string>
+    <string name="note_color_red">Rojo</string>
+    <string name="note_color_orange">Naranja</string>
+    <string name="note_color_yellow">Amarillo</string>
+    <string name="note_color_green">Verde</string>
+    <string name="note_color_teal">Turquesa</string>
+    <string name="note_color_blue">Azul</string>
+    <string name="note_color_purple">Morado</string>
+    <string name="note_color_pink">Rosa</string>
 </resources>

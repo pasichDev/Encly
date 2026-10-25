@@ -619,4 +619,14 @@
     <string name="archive_empty_desc">As notas arquivadas saem da lista e da pesquisa, mas continuam no cofre. Arquive uma nota a partir do seu menu.</string>
     <string name="note_archive_failed">Não foi possível arquivar a nota</string>
     <string name="note_unarchive_failed">Não foi possível tirar a nota do arquivo</string>
+    <string name="note_color_title">Cor</string>
+    <string name="note_color_none">Sem cor</string>
+    <string name="note_color_red">Vermelho</string>
+    <string name="note_color_orange">Laranja</string>
+    <string name="note_color_yellow">Amarelo</string>
+    <string name="note_color_green">Verde</string>
+    <string name="note_color_teal">Turquesa</string>
+    <string name="note_color_blue">Azul</string>
+    <string name="note_color_purple">Roxo</string>
+    <string name="note_color_pink">Rosa</string>
 </resources>
