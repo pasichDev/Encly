@@ -5,6 +5,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.repository.SettingsRepository
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.testutil.TestNotesRepository
@@ -123,6 +124,7 @@ class EditNoteViewModelTest {
             notesRepository = repository,
             savedStateHandle = SavedStateHandle(mapOf("idNote" to noteId)),
             updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
             settingsRepository = settingsRepository,
             appScope = CoroutineScope(dispatcher),
             ioDispatcher = dispatcher,

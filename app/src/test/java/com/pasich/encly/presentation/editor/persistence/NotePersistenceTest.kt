@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.editor.persistence
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.testutil.TestNotesRepository
@@ -395,6 +396,80 @@ class NotePersistenceTest {
         assertEquals(0, repository.insertCalls)
     }
 
+    // --- pin, archive and colour ----------------------------------------------------------------
+
+    @Test
+    fun aNewNoteKeepsItsPinAndColourWhenFirstStored() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "draft", isPinned = true, color = "teal") }
+
+        assertTrue(persistence.save())
+
+        val inserted = repository.insertedNotes.single()
+        assertTrue(inserted.isPinned)
+        assertEquals("teal", inserted.color)
+    }
+
+    @Test
+    fun aChangedPinOrColourIsAutosavedAlthoughTheContentIsTheSame() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { }
+        val changes = MutableStateFlow(0)
+        persistence.startAutosave(backgroundScope, contentChangesOf(changes))
+        passQuietTime()
+        assertEquals(0, repository.updateCalls)
+
+        persistence.updateNote { it.copy(isPinned = true) }
+        passQuietTime()
+        persistence.updateNote { it.copy(color = "blue") }
+        passQuietTime()
+
+        assertEquals(listOf(true, true), repository.updatedNotes.map { it.isPinned })
+        assertEquals(listOf("none", "blue"), repository.updatedNotes.map { it.color })
+    }
+
+    @Test
+    fun archivingStoresTheContentUnpinsAndClosesTheEditor() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { }
+        persistence.updateNote { it.copy(isPinned = true) }
+
+        assertTrue(persistence.setArchived(true))
+
+        val stored = repository.updatedNotes.single()
+        assertTrue(stored.isArchived)
+        assertFalse(stored.isPinned)
+        // Closed: a later save cannot write the note again.
+        assertTrue(persistence.save())
+        assertEquals(1, repository.updateCalls)
+    }
+
+    @Test
+    fun aNewUnsavedNoteCannotBeArchived() = runTest(dispatcher) {
+        assertFalse(persistence().setArchived(true))
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
+    fun aCopyKeepsTheColourButIsNeitherPinnedNorArchived() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTag(
+                Note(id = NOTE_ID, title = "t", value = "[]", isPinned = true, isArchived = true, color = "pink"),
+                null,
+            ),
+        )
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = true) { }
+
+        val copy = persistence.state.value.note
+        assertEquals(-1L, copy.id)
+        assertFalse(copy.isPinned)
+        assertFalse(copy.isArchived)
+        assertEquals("pink", copy.color)
+    }
+
     // The autosave runs in backgroundScope, whose timers advanceUntilIdle() does not wait for.
     private fun TestScope.passQuietTime() {
         advanceTimeBy(AUTOSAVE_DEBOUNCE_MS + 1)
@@ -408,6 +483,7 @@ class NotePersistenceTest {
     private fun persistence(loading: Boolean = false, readOnly: Boolean = false) = NotePersistence(
         notesRepository = repository,
         updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
         ioDispatcher = dispatcher,
         readOnly = readOnly,
         blocks = { blocks },

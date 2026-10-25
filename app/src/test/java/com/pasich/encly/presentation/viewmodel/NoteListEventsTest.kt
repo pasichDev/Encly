@@ -5,7 +5,10 @@ import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.testutil.TestNotesRepository
@@ -51,6 +54,9 @@ class NoteListEventsTest {
             selectedTagHolder = tags,
             settingsRepository = settings,
             updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
+            updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+            updateNoteColorUseCase = UpdateNoteColorUseCase(repository),
         )
     }
 

@@ -54,6 +54,10 @@ internal class TestNotesRepository : NotesRepository {
         return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
     }
 
+    val archivedNotesWithTags = MutableStateFlow<List<NoteWithTag>>(emptyList())
+
+    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = archivedNotesWithTags
+
     val trashNotes = MutableStateFlow<List<Note>>(emptyList())
 
     override fun getTrashNotes(): Flow<List<Note>> = trashNotes

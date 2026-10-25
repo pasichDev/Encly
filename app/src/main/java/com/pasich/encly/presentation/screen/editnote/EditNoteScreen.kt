@@ -257,6 +257,12 @@ private fun EditorOverlays(
                 EditNoteBottomSheetAction.FIND -> viewModel.openFind()
 
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
+
+                EditNoteBottomSheetAction.TOGGLE_PIN -> viewModel.togglePin()
+
+                EditNoteBottomSheetAction.ARCHIVE -> exits.archive(archived = true)
+
+                EditNoteBottomSheetAction.UNARCHIVE -> exits.archive(archived = false)
             }
         },
     )

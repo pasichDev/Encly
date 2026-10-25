@@ -10,9 +10,11 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.SettingsRepository
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
@@ -86,6 +88,7 @@ constructor(
     notesRepository: NotesRepository,
     private val savedStateHandle: SavedStateHandle,
     updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
+    updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,
     private val settingsRepository: SettingsRepository,
     @ApplicationScope private val appScope: CoroutineScope,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
@@ -108,6 +111,7 @@ constructor(
     private val persistence = NotePersistence(
         notesRepository = notesRepository,
         updateNoteTrashStatusUseCase = updateNoteTrashStatusUseCase,
+        updateNoteArchiveStatusUseCase = updateNoteArchiveStatusUseCase,
         ioDispatcher = ioDispatcher,
         readOnly = isReadTrashOnly,
         blocks = { editor.blocks },
@@ -267,6 +271,19 @@ constructor(
 
     /** Moves the note to the trash; returns once the write completed. */
     suspend fun noteMoveToTrash(): Boolean = persistence.moveToTrash()
+
+    /** Moves the note to the archive, or back to the list; returns once the write completed. */
+    suspend fun noteSetArchived(archived: Boolean): Boolean = persistence.setArchived(archived)
+
+    /** Pins the note, or unpins it. Stored with the next save, like the title. */
+    fun togglePin() {
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(isPinned = !it.isPinned && !it.isArchived) }
+    }
+
+    /** Marks the note with [color]. Stored with the next save, like the title. */
+    fun updateColor(color: NoteColor) {
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(color = color.key) }
+    }
 
     /** Inserts a copy of the note, titled by [NoteCopyTitle]; returns its id, or -1 on failure. */
     suspend fun noteDuplicate(): Long = persistence.duplicate()

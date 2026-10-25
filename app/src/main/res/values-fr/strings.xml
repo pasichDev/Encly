@@ -608,4 +608,15 @@
     <string name="template_project_decisions">Décisions</string>
     <string name="template_project_questions">Questions ouvertes</string>
     <string name="template_checklist_todo">À faire</string>
+    <string name="note_pin">Épingler</string>
+    <string name="note_unpin">Désépingler</string>
+    <string name="note_archive">Archiver</string>
+    <string name="note_unarchive">Désarchiver</string>
+    <string name="notes_section_pinned">Épinglées</string>
+    <string name="notes_section_other">Autres</string>
+    <string name="main_drawer_archive">Archives</string>
+    <string name="archive_empty_title">Les archives sont vides</string>
+    <string name="archive_empty_desc">Les notes archivées quittent la liste et la recherche mais restent dans le coffre-fort. Archivez une note depuis son menu.</string>
+    <string name="note_archive_failed">Impossible d\'archiver la note</string>
+    <string name="note_unarchive_failed">Impossible de désarchiver la note</string>
 </resources>

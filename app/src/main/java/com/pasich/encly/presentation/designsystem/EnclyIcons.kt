@@ -424,6 +424,50 @@ object EnclyIcons {
         )
     }
 
+    /** A pushpin: the note stays at the top of the list. */
+    val Pin: ImageVector by lazy {
+        enclyIcon(
+            "Pin",
+            "M9 4h6l-.8 5.2L17 12v1.5H7V12l2.8-2.8z",
+            "M12 13.5V20",
+        )
+    }
+
+    val PinOff: ImageVector by lazy {
+        enclyIcon(
+            "PinOff",
+            "M9 4h6l-.8 5.2L17 12v1.5H7V12l2.8-2.8z",
+            "M12 13.5V20M4.5 4.5l15 15",
+        )
+    }
+
+    /** A box with a lid: the archive. */
+    val Archive: ImageVector by lazy {
+        enclyIcon(
+            "Archive",
+            "M4 5h16v4H4z",
+            "M5.5 9v8.5A1.5 1.5 0 0 0 7 19h10a1.5 1.5 0 0 0 1.5-1.5V9",
+            "M10 13h4",
+        )
+    }
+
+    val Unarchive: ImageVector by lazy {
+        enclyIcon(
+            "Unarchive",
+            "M4 5h16v4H4z",
+            "M5.5 9v8.5A1.5 1.5 0 0 0 7 19h10a1.5 1.5 0 0 0 1.5-1.5V9",
+            "M12 16v-5M9.5 13.5l2.5-2.5 2.5 2.5",
+        )
+    }
+
+    /** An arrow leaving a tray: export. */
+    val Upload: ImageVector by lazy {
+        enclyIcon(
+            "Upload",
+            "M12 15V4M7 8.5l5-5 5 5M5 20h14",
+        )
+    }
+
     val Trash: ImageVector by lazy {
         enclyIcon(
             "Trash",

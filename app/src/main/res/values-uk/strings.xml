@@ -614,4 +614,15 @@
     <string name="template_project_decisions">Рішення</string>
     <string name="template_project_questions">Відкриті питання</string>
     <string name="template_checklist_todo">Зробити</string>
+    <string name="note_pin">Закріпити</string>
+    <string name="note_unpin">Відкріпити</string>
+    <string name="note_archive">Архівувати</string>
+    <string name="note_unarchive">Розархівувати</string>
+    <string name="notes_section_pinned">Закріплені</string>
+    <string name="notes_section_other">Інші</string>
+    <string name="main_drawer_archive">Архів</string>
+    <string name="archive_empty_title">Архів порожній</string>
+    <string name="archive_empty_desc">Архівовані нотатки зникають зі списку й пошуку, але залишаються в сховищі. Архівуйте нотатку з її меню.</string>
+    <string name="note_archive_failed">Не вдалося перемістити нотатку в архів</string>
+    <string name="note_unarchive_failed">Не вдалося повернути нотатку з архіву</string>
 </resources>

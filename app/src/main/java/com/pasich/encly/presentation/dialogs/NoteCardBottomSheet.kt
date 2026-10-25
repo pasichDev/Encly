@@ -50,6 +50,8 @@ sealed class NoteAction {
     object Edit : NoteAction()
     object Duplicate : NoteAction()
     object Delete : NoteAction()
+    data class Pin(val pinned: Boolean) : NoteAction()
+    data class Archive(val archived: Boolean) : NoteAction()
     data class ChangeTag(val tagId: Long) : NoteAction()
     data class ChangeDescription(val description: String) : NoteAction()
 }
@@ -88,6 +90,20 @@ fun NoteCardBottomSheet(
                         title = stringResource(id = R.string.edit),
                         icon = EnclyIcons.Edit,
                         onClick = { onAction(NoteAction.Edit) },
+                    )
+                    if (!item.note.isArchived) {
+                        EnclySheetRow(
+                            title = stringResource(if (item.note.isPinned) R.string.note_unpin else R.string.note_pin),
+                            icon = if (item.note.isPinned) EnclyIcons.PinOff else EnclyIcons.Pin,
+                            onClick = { onAction(NoteAction.Pin(!item.note.isPinned)) },
+                        )
+                    }
+                    EnclySheetRow(
+                        title = stringResource(
+                            if (item.note.isArchived) R.string.note_unarchive else R.string.note_archive,
+                        ),
+                        icon = if (item.note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,
+                        onClick = { onAction(NoteAction.Archive(!item.note.isArchived)) },
                     )
                     EnclySheetRow(
                         title = stringResource(id = R.string.duplicate),

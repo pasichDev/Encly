@@ -608,4 +608,15 @@
     <string name="template_project_decisions">Decisões</string>
     <string name="template_project_questions">Perguntas em aberto</string>
     <string name="template_checklist_todo">A fazer</string>
+    <string name="note_pin">Fixar</string>
+    <string name="note_unpin">Desafixar</string>
+    <string name="note_archive">Arquivar</string>
+    <string name="note_unarchive">Desarquivar</string>
+    <string name="notes_section_pinned">Fixadas</string>
+    <string name="notes_section_other">Outras</string>
+    <string name="main_drawer_archive">Arquivo</string>
+    <string name="archive_empty_title">O arquivo está vazio</string>
+    <string name="archive_empty_desc">As notas arquivadas saem da lista e da pesquisa, mas continuam no cofre. Arquive uma nota a partir do seu menu.</string>
+    <string name="note_archive_failed">Não foi possível arquivar a nota</string>
+    <string name="note_unarchive_failed">Não foi possível tirar a nota do arquivo</string>
 </resources>

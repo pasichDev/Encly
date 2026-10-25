@@ -602,4 +602,15 @@
     <string name="template_project_decisions">Entscheidungen</string>
     <string name="template_project_questions">Offene Fragen</string>
     <string name="template_checklist_todo">Zu erledigen</string>
+    <string name="note_pin">Anheften</string>
+    <string name="note_unpin">Anheften aufheben</string>
+    <string name="note_archive">Archivieren</string>
+    <string name="note_unarchive">Aus dem Archiv holen</string>
+    <string name="notes_section_pinned">Angeheftet</string>
+    <string name="notes_section_other">Weitere</string>
+    <string name="main_drawer_archive">Archiv</string>
+    <string name="archive_empty_title">Das Archiv ist leer</string>
+    <string name="archive_empty_desc">Archivierte Notizen verschwinden aus Liste und Suche, bleiben aber im Tresor. Archiviere eine Notiz über ihr Menü.</string>
+    <string name="note_archive_failed">Die Notiz konnte nicht archiviert werden</string>
+    <string name="note_unarchive_failed">Die Notiz konnte nicht aus dem Archiv geholt werden</string>
 </resources>

@@ -19,11 +19,13 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.R
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -42,7 +44,8 @@ data class NoteCardMeta(val tag: String? = null, val date: String? = null, val p
  * A note card (design spec §3.3): `surfaceContainer`, radius 16, padding 16, no border or shadow.
  * Title in titleMedium, excerpt in bodyMedium `onSurfaceVariant` cut at [excerptLines], then the
  * meta line. [highlight] marks search matches. [selected] draws a 2 dp `primary` ring and a check;
- * [dimmed] fades the title (trash), keeping every text at 4.5:1 or more.
+ * [dimmed] fades the title (trash), keeping every text at 4.5:1 or more. A [pinned] note shows a small
+ * pin after its title.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -57,6 +60,7 @@ fun EnclyNoteCard(
     highlight: String = "",
     selected: Boolean = false,
     dimmed: Boolean = false,
+    pinned: Boolean = false,
 ) {
     val colors = MaterialTheme.colorScheme
     Surface(
@@ -73,7 +77,7 @@ fun EnclyNoteCard(
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.labelGap),
             modifier = Modifier.padding(EnclyTheme.spacing.m),
         ) {
-            if (!title.isNullOrEmpty() || selected) {
+            if (!title.isNullOrEmpty() || selected || pinned) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     HighlightedText(
                         text = title.orEmpty(),
@@ -83,6 +87,14 @@ fun EnclyNoteCard(
                         maxLines = 2,
                         modifier = Modifier.weight(1f),
                     )
+                    if (pinned) {
+                        Icon(
+                            EnclyIcons.Pin,
+                            contentDescription = stringResource(R.string.notes_section_pinned),
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+                        )
+                    }
                     if (selected) {
                         Icon(
                             EnclyIcons.CheckCircle,

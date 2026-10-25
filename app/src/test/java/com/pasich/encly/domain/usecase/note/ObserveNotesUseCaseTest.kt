@@ -62,6 +62,42 @@ class ObserveNotesUseCaseTest {
     }
 
     @Test
+    fun pinnedNotesComeFirstWhateverTheSortOption() = runTest {
+        val repository = TestNotesRepository().apply {
+            allNotesWithTags.value = listOf(
+                noteWithTag(id = 1, date = 10),
+                noteWithTag(id = 2, date = 30),
+                noteWithTag(id = 3, date = 20, pinned = true),
+                noteWithTag(id = 4, date = 5, pinned = true),
+            )
+        }
+
+        assertEquals(listOf(3L, 4L, 2L, 1L), loaded(repository, NoteSortOption.UPDATED_DESC).map { it.note.id })
+        assertEquals(listOf(4L, 3L, 1L, 2L), loaded(repository, NoteSortOption.UPDATED_ASC).map { it.note.id })
+    }
+
+    @Test
+    fun theArchiveIsReadFromItsOwnQueryAndLeavesOutHiddenTags() = runTest {
+        val hidden = Tag(id = 1, nameTag = "Private", isVisible = false)
+        val repository = TestNotesRepository().apply {
+            allNotesWithTags.value = listOf(noteWithTag(id = 1, date = 1))
+            archivedNotesWithTags.value = listOf(
+                noteWithTag(id = 2, date = 10),
+                noteWithTag(id = 3, date = 20),
+                noteWithTag(id = 4, date = 30, tag = hidden),
+            )
+        }
+
+        val archived = ObserveNotesUseCase(repository, StandardTestDispatcher(testScheduler))(
+            tagId = null,
+            sortOption = NoteSortOption.UPDATED_DESC,
+            archived = true,
+        ).first()
+
+        assertEquals(listOf(3L, 2L), archived.map { it.note.id })
+    }
+
+    @Test
     fun oneUnreadableNoteDoesNotTakeTheListDown() = runTest {
         val repository = TestNotesRepository().apply {
             allNotesWithTags.value = listOf(
@@ -79,8 +115,17 @@ class ObserveNotesUseCaseTest {
     private suspend fun TestScope.loaded(repository: NotesRepository, sortOption: NoteSortOption): List<NoteListItem> =
         ObserveNotesUseCase(repository, StandardTestDispatcher(testScheduler))(null, sortOption).first()
 
-    private fun noteWithTag(id: Long, date: Long, tag: Tag? = null, value: String = "") = NoteWithTag(
-        note = Note(id = id, title = "n$id", value = value, date = date, dateCreate = date, tagId = tag?.id),
-        tag = tag,
-    )
+    private fun noteWithTag(id: Long, date: Long, tag: Tag? = null, value: String = "", pinned: Boolean = false) =
+        NoteWithTag(
+            note = Note(
+                id = id,
+                title = "n$id",
+                value = value,
+                date = date,
+                dateCreate = date,
+                tagId = tag?.id,
+                isPinned = pinned,
+            ),
+            tag = tag,
+        )
 }

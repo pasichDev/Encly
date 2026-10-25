@@ -614,4 +614,15 @@
     <string name="template_project_decisions">Decyzje</string>
     <string name="template_project_questions">Otwarte pytania</string>
     <string name="template_checklist_todo">Do zrobienia</string>
+    <string name="note_pin">Przypnij</string>
+    <string name="note_unpin">Odepnij</string>
+    <string name="note_archive">Archiwizuj</string>
+    <string name="note_unarchive">Przywróć z archiwum</string>
+    <string name="notes_section_pinned">Przypięte</string>
+    <string name="notes_section_other">Pozostałe</string>
+    <string name="main_drawer_archive">Archiwum</string>
+    <string name="archive_empty_title">Archiwum jest puste</string>
+    <string name="archive_empty_desc">Zarchiwizowane notatki znikają z listy i wyszukiwania, ale zostają w sejfie. Zarchiwizuj notatkę z jej menu.</string>
+    <string name="note_archive_failed">Nie udało się zarchiwizować notatki</string>
+    <string name="note_unarchive_failed">Nie udało się przywrócić notatki z archiwum</string>
 </resources>

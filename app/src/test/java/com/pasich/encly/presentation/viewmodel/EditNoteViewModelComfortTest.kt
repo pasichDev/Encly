@@ -6,6 +6,7 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
@@ -71,6 +72,7 @@ class EditNoteViewModelComfortTest {
         notesRepository = repository,
         savedStateHandle = SavedStateHandle(mapOf("idNote" to noteId)),
         updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
         settingsRepository = settings,
         appScope = CoroutineScope(dispatcher),
         ioDispatcher = dispatcher,

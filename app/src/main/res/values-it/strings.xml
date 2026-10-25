@@ -608,4 +608,15 @@
     <string name="template_project_decisions">Decisioni</string>
     <string name="template_project_questions">Domande aperte</string>
     <string name="template_checklist_todo">Da fare</string>
+    <string name="note_pin">Fissa</string>
+    <string name="note_unpin">Non fissare più</string>
+    <string name="note_archive">Archivia</string>
+    <string name="note_unarchive">Rimuovi dall\'archivio</string>
+    <string name="notes_section_pinned">Fissate</string>
+    <string name="notes_section_other">Altre</string>
+    <string name="main_drawer_archive">Archivio</string>
+    <string name="archive_empty_title">L\'archivio è vuoto</string>
+    <string name="archive_empty_desc">Le note archiviate escono dall\'elenco e dalla ricerca ma restano nella cassaforte. Archivia una nota dal suo menu.</string>
+    <string name="note_archive_failed">Impossibile archiviare la nota</string>
+    <string name="note_unarchive_failed">Impossibile rimuovere la nota dall\'archivio</string>
 </resources>

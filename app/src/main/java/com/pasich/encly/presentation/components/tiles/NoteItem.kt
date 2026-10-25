@@ -48,6 +48,7 @@ fun NoteItem(
         highlight = highlight,
         selected = note.isChecked,
         dimmed = dimmed,
+        pinned = note.isPinned && !dimmed,
         onClick = { onItemClick(note) },
         onLongClick = {
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)

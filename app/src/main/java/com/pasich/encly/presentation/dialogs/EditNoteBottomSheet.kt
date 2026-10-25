@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
+import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.presentation.components.FontSizeSlider
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
@@ -23,10 +24,13 @@ enum class EditNoteBottomSheetAction {
     DUPLICATE,
     FIND,
     TRASH,
+    TOGGLE_PIN,
+    ARCHIVE,
+    UNARCHIVE,
 }
 
 /**
- * The editor's "More actions" sheet: text size, then duplicate, discard changes and delete. The
+ * The editor's "More actions" sheet: text size, then pin, archive, find, duplicate, discard changes and delete. The
  * font itself is chosen app-wide in Settings, Appearance.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +44,7 @@ fun EditNoteBottomSheet(
 ) {
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val lineSpacing by viewModel.noteLineSpacing.collectAsStateWithLifecycle()
+    val note by viewModel.state.collectAsStateWithLifecycle()
 
     if (isVisible) {
         EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
@@ -50,6 +55,7 @@ fun EditNoteBottomSheet(
             SectionOverline(stringResource(R.string.note_line_spacing_title))
             LineSpacingChoices(selected = lineSpacing, onSelect = viewModel::updateNoteLineSpacing)
             EnclyGroupDivider()
+            PinAndArchiveRows(note = note.note, onAction = onAction, onDismiss = onDismiss)
             EnclySheetRow(
                 title = stringResource(R.string.find_in_note),
                 icon = EnclyIcons.Search,
@@ -104,4 +110,29 @@ private fun LineSpacingChoices(selected: NoteLineSpacing, onSelect: (NoteLineSpa
             onClick = { onSelect(spacing) },
         )
     }
+}
+
+/** Pin (not for an archived note: it is never pinned) and archive, or unarchive. */
+@Composable
+private fun PinAndArchiveRows(note: Note, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
+    if (!note.isArchived) {
+        EnclySheetRow(
+            title = stringResource(if (note.isPinned) R.string.note_unpin else R.string.note_pin),
+            icon = if (note.isPinned) EnclyIcons.PinOff else EnclyIcons.Pin,
+            onClick = {
+                onAction(EditNoteBottomSheetAction.TOGGLE_PIN)
+                onDismiss()
+            },
+        )
+    }
+    EnclySheetRow(
+        title = stringResource(if (note.isArchived) R.string.note_unarchive else R.string.note_archive),
+        icon = if (note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,
+        onClick = {
+            onAction(
+                if (note.isArchived) EditNoteBottomSheetAction.UNARCHIVE else EditNoteBottomSheetAction.ARCHIVE,
+            )
+            onDismiss()
+        },
+    )
 }

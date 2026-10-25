@@ -11,10 +11,14 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,10 +37,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class NoteListViewModel @Inject constructor(
+class NoteListViewModel
+@Suppress("LongParameterList") // Hilt-injected dependencies, one use case per action on a note.
+@Inject
+constructor(
     private val observeNotesUseCase: ObserveNotesUseCase,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val updateNoteTagUseCase: UpdateNoteTagUseCase,
+    private val updateNotePinStatusUseCase: UpdateNotePinStatusUseCase,
+    private val updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,
+    private val updateNoteColorUseCase: UpdateNoteColorUseCase,
     private val selectedTagHolder: SelectedTagHolder,
     private val settingsRepository: SettingsRepository,
     private val updateNoteDescriptionUseCase: UpdateNoteDescriptionUseCase,
@@ -120,6 +130,24 @@ class NoteListViewModel @Inject constructor(
                 }
             }
 
+            is NoteListEvent.PinNote -> {
+                viewModelScope.launch {
+                    updateNotePinStatusUseCase.invoke(event.note, event.pinned)
+                }
+            }
+
+            is NoteListEvent.ArchiveNote -> {
+                viewModelScope.launch {
+                    updateNoteArchiveStatusUseCase.invoke(event.note, event.archived)
+                }
+            }
+
+            is NoteListEvent.ChangeColor -> {
+                viewModelScope.launch {
+                    updateNoteColorUseCase.invoke(event.note, event.color)
+                }
+            }
+
             is NoteListEvent.ChangeTag -> {
                 viewModelScope.launch {
                     updateNoteTagUseCase.invoke(event.note, event.idTag)
@@ -150,6 +178,9 @@ class NoteListViewModel @Inject constructor(
 sealed class NoteListEvent {
     data class SelectTag(val tag: Tag) : NoteListEvent()
     data class NoteToTrash(val note: Note) : NoteListEvent()
+    data class PinNote(val note: Note, val pinned: Boolean) : NoteListEvent()
+    data class ArchiveNote(val note: Note, val archived: Boolean) : NoteListEvent()
+    data class ChangeColor(val note: Note, val color: NoteColor) : NoteListEvent()
     data class ChangeTag(val note: Note, val idTag: Long) : NoteListEvent()
     data class ChangeDescription(val note: Note, val description: String) : NoteListEvent()
     data class ToggleNoteSort(val option: NoteSortOption) : NoteListEvent()

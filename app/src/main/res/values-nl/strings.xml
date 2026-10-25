@@ -602,4 +602,15 @@
     <string name="template_project_decisions">Beslissingen</string>
     <string name="template_project_questions">Open vragen</string>
     <string name="template_checklist_todo">Te doen</string>
+    <string name="note_pin">Vastmaken</string>
+    <string name="note_unpin">Losmaken</string>
+    <string name="note_archive">Archiveren</string>
+    <string name="note_unarchive">Uit archief halen</string>
+    <string name="notes_section_pinned">Vastgemaakt</string>
+    <string name="notes_section_other">Overige</string>
+    <string name="main_drawer_archive">Archief</string>
+    <string name="archive_empty_title">Het archief is leeg</string>
+    <string name="archive_empty_desc">Gearchiveerde notities verdwijnen uit de lijst en de zoekopdracht, maar blijven in de kluis. Archiveer een notitie via het menu.</string>
+    <string name="note_archive_failed">De notitie kon niet worden gearchiveerd</string>
+    <string name="note_unarchive_failed">De notitie kon niet uit het archief worden gehaald</string>
 </resources>

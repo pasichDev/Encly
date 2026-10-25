@@ -619,4 +619,15 @@
     <string name="template_project_decisions">Decisions</string>
     <string name="template_project_questions">Open questions</string>
     <string name="template_checklist_todo">To do</string>
+    <string name="note_pin">Pin</string>
+    <string name="note_unpin">Unpin</string>
+    <string name="note_archive">Archive</string>
+    <string name="note_unarchive">Unarchive</string>
+    <string name="notes_section_pinned">Pinned</string>
+    <string name="notes_section_other">Others</string>
+    <string name="main_drawer_archive">Archive</string>
+    <string name="archive_empty_title">Archive is empty</string>
+    <string name="archive_empty_desc">Archived notes leave your list and search but stay in the vault. Archive a note from its menu.</string>
+    <string name="note_archive_failed">Couldn\'t move the note to the archive</string>
+    <string name="note_unarchive_failed">Couldn\'t take the note out of the archive</string>
 </resources>

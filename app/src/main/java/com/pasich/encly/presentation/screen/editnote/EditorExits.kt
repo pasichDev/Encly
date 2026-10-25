@@ -10,11 +10,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * Every way out of the editor: back (saves), restore, delete, discard, trash and duplicate. Each
+ * Every way out of the editor: back (saves), restore, delete, discard, trash, archive and duplicate. Each
  * writes first and leaves only once the write succeeded; a failure keeps the editor open and is
  * reported through [onFailure]. The first exit wins: a second Back (gesture and arrow) or any
  * other exit tapped meanwhile is ignored, so the editor never pops past the notes list.
  */
+@Suppress("TooManyFunctions") // One function per way out.
 internal class EditorExits(
     private val viewModel: EditNoteViewModel,
     private val navController: NavHostController,
@@ -32,6 +33,15 @@ internal class EditorExits(
     fun delete() = leave(R.string.note_delete_failed, viewModel::noteDelete)
 
     fun trash() = leave(R.string.note_trash_failed, viewModel::noteMoveToTrash)
+
+    /** Moves the note to the archive (or, when it is archived, back to the list) and leaves. */
+    fun archive(archived: Boolean) {
+        if (viewModel.isBlankDraft) return
+        leave(
+            failure = if (archived) R.string.note_archive_failed else R.string.note_unarchive_failed,
+            action = { viewModel.saveNote() && viewModel.noteSetArchived(archived) },
+        )
+    }
 
     fun discard() = leave(R.string.note_discard_failed, viewModel::discardChanges)
 

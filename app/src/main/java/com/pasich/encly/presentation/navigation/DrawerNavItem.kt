@@ -23,6 +23,7 @@ fun drawerNavItems(tagCount: Int, openTasks: Int, donations: Boolean): List<Draw
     add(DrawerNavItem(R.string.notes_title, EnclyIcons.Paper, NavRoutes.HomeRoute.name))
     add(DrawerNavItem(R.string.main_drawer_tasks, EnclyIcons.Checklist, NavRoutes.TasksRoute.name, openTasks))
     add(DrawerNavItem(R.string.main_drawer_tags, EnclyIcons.Tag, NavRoutes.EditTagRoute.name, tagCount))
+    add(DrawerNavItem(R.string.main_drawer_archive, EnclyIcons.Archive, NavRoutes.ArchiveRoute.name))
     add(DrawerNavItem(R.string.main_drawer_trash, EnclyIcons.Trash, NavRoutes.TrashRoute.name, groupEnd = true))
     add(
         DrawerNavItem(

@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.screen
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -41,6 +42,7 @@ import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.dialogs.NoteAction
 import com.pasich.encly.presentation.dialogs.NoteCardBottomSheet
@@ -93,7 +95,8 @@ fun NotesList(
     val searching = search.query.isNotBlank()
     val shown = if (searching) search.results.notes else state.notes
     val content = NotesContent(
-        notes = remember(shown) { shown.map { StableNoteItem(it) } },
+        // Search results come in match order, without the pinned/other sections.
+        entries = remember(shown, searching) { noteEntries(shown, sections = !searching) },
         highlight = if (searching) search.results.query else "",
         onItemClick = onItemClick,
         onItemLongClick = sheet::open,
@@ -116,7 +119,7 @@ fun NotesList(
 
 /** The long-pressed note whose actions sheet is open. */
 @Stable
-private class NoteSheetState {
+internal class NoteSheetState {
     var active by mutableStateOf<NoteListItem?>(null)
     var visible by mutableStateOf(false)
 
@@ -126,10 +129,10 @@ private class NoteSheetState {
     }
 }
 
-/** A note's actions: edit, duplicate, delete, its tag and description. */
+/** A note's actions: edit, pin, archive, duplicate, delete, its tag and description. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NoteActionsSheet(
+internal fun NoteActionsSheet(
     sheet: NoteSheetState,
     notes: List<NoteListItem>,
     onEvent: (NoteListEvent) -> Unit,
@@ -163,16 +166,8 @@ private fun NoteActionsSheet(
         onAction = { action ->
             when (action) {
                 NoteAction.Edit -> onEdit(item.note)
-
                 NoteAction.Duplicate -> onDuplicate(item.note)
-
-                NoteAction.Delete -> onEvent(NoteToTrash(item.note))
-
-                is NoteAction.ChangeTag -> onEvent(ChangeTag(note = item.note, idTag = action.tagId))
-
-                is NoteAction.ChangeDescription -> onEvent(
-                    NoteListEvent.ChangeDescription(note = item.note, description = action.description),
-                )
+                else -> action.toEvent(item.note)?.let(onEvent)
             }
             // Changing the tag or the description keeps the sheet open.
             if (action !is NoteAction.ChangeTag && action !is NoteAction.ChangeDescription) close()
@@ -181,12 +176,22 @@ private fun NoteActionsSheet(
     )
 }
 
+/** The list event a sheet [NoteAction] on [note] stands for; null for the ones that open another screen. */
+private fun NoteAction.toEvent(note: Note): NoteListEvent? = when (this) {
+    NoteAction.Edit, NoteAction.Duplicate -> null
+    NoteAction.Delete -> NoteToTrash(note)
+    is NoteAction.Pin -> NoteListEvent.PinNote(note, pinned)
+    is NoteAction.Archive -> NoteListEvent.ArchiveNote(note, archived)
+    is NoteAction.ChangeTag -> ChangeTag(note = note, idTag = tagId)
+    is NoteAction.ChangeDescription -> NoteListEvent.ChangeDescription(note = note, description = description)
+}
+
 /** What sits above the cards: the caller's header, then the loading, empty or search status. */
 private class NotesTop(val header: @Composable () -> Unit, val status: @Composable () -> Unit)
 
 /** The cards to show and what a tap or long-press on one does. */
 private class NotesContent(
-    val notes: List<StableNoteItem>,
+    val entries: List<NoteEntry>,
     val highlight: String,
     val onItemClick: (Note) -> Unit,
     val onItemLongClick: (NoteListItem) -> Unit,
@@ -211,16 +216,25 @@ private fun NotesColumn(content: NotesContent, state: LazyListState, top: NotesT
                 top.status()
             }
         }
-        items(items = content.notes, key = { it.id }) { stableItem ->
-            NoteItem(
-                item = stableItem.item,
-                highlight = content.highlight,
-                modifier = Modifier
-                    .padding(horizontal = spacing.listGutter)
-                    .animateItem(),
-                onItemClick = content.onItemClick,
-                onItemLongClick = { content.onItemLongClick(stableItem.item) },
-            )
+        items(items = content.entries, key = { it.key }) { entry ->
+            when (entry) {
+                is NoteSection -> SectionOverline(
+                    text = stringResource(entry.title),
+                    modifier = Modifier
+                        .padding(horizontal = spacing.listGutter)
+                        .animateItem(),
+                )
+
+                is NoteRow -> NoteItem(
+                    item = entry.item,
+                    highlight = content.highlight,
+                    modifier = Modifier
+                        .padding(horizontal = spacing.listGutter)
+                        .animateItem(),
+                    onItemClick = content.onItemClick,
+                    onItemLongClick = { content.onItemLongClick(entry.item) },
+                )
+            }
         }
     }
 }
@@ -256,14 +270,24 @@ private fun NotesGrid(
                 top.status()
             }
         }
-        items(items = content.notes, key = { it.id }) { stableItem ->
-            NoteItem(
-                item = stableItem.item,
-                excerptLines = GRID_EXCERPT_LINES,
-                modifier = Modifier.animateItem(),
-                onItemClick = content.onItemClick,
-                onItemLongClick = { content.onItemLongClick(stableItem.item) },
-            )
+        items(
+            items = content.entries,
+            key = { it.key },
+            span = { entry ->
+                if (entry is NoteSection) StaggeredGridItemSpan.FullLine else StaggeredGridItemSpan.SingleLane
+            },
+        ) { entry ->
+            when (entry) {
+                is NoteSection -> SectionOverline(text = stringResource(entry.title), modifier = Modifier.animateItem())
+
+                is NoteRow -> NoteItem(
+                    item = entry.item,
+                    excerptLines = GRID_EXCERPT_LINES,
+                    modifier = Modifier.animateItem(),
+                    onItemClick = content.onItemClick,
+                    onItemLongClick = { content.onItemLongClick(entry.item) },
+                )
+            }
         }
     }
 }
@@ -297,8 +321,39 @@ private fun NotesStatus(state: NoteListState, searching: Boolean, search: NotesS
     }
 }
 
+/** A row of the notes list: a section heading, or a note. [key] is stable across reorders. */
+internal sealed interface NoteEntry {
+    val key: Any
+}
+
+/** The "Pinned" / "Others" heading above a group of notes. */
+internal data class NoteSection(@StringRes val title: Int) : NoteEntry {
+    override val key: Any get() = "section-$title"
+}
+
 @Stable
-private data class StableNoteItem(val item: NoteListItem, val id: Long = item.note.id)
+internal data class NoteRow(val item: NoteListItem) : NoteEntry {
+    override val key: Any get() = item.note.id
+}
+
+/**
+ * [notes] (already ordered: pinned first, then by the chosen sort) as list rows. With [sections],
+ * pinned notes sit under a "Pinned" heading and, when there are unpinned ones too, the rest under
+ * "Others"; with no pinned note there are no headings at all.
+ */
+internal fun noteEntries(notes: List<NoteListItem>, sections: Boolean): List<NoteEntry> {
+    val rows = notes.map(::NoteRow)
+    val (pinned, others) = rows.partition { it.item.note.isPinned }
+    if (!sections || pinned.isEmpty()) return rows
+    return buildList {
+        add(NoteSection(R.string.notes_section_pinned))
+        addAll(pinned)
+        if (others.isNotEmpty()) {
+            add(NoteSection(R.string.notes_section_other))
+            addAll(others)
+        }
+    }
+}
 
 /**
  * "No notes yet" once loading finished with nothing, "No notes tagged …" (with Show all) while a

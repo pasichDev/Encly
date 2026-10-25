@@ -8,7 +8,10 @@ import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.testutil.TestNotesRepository
@@ -62,6 +65,9 @@ class NoteListViewModelTest {
             selectedTagHolder = tagSelection,
             settingsRepository = settings,
             updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
+            updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+            updateNoteColorUseCase = UpdateNoteColorUseCase(repository),
         )
 
         repository.allNotesWithTags.value = listOf(noteWithTitle(ALL_NOTE_ID, "all"))
@@ -96,6 +102,9 @@ class NoteListViewModelTest {
             selectedTagHolder = SelectedTagHolder(),
             settingsRepository = settings,
             updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
+            updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+            updateNoteColorUseCase = UpdateNoteColorUseCase(repository),
         )
         assertEquals(LoadState.Loading, viewModel.state.value.notesLoad)
 
@@ -118,6 +127,9 @@ class NoteListViewModelTest {
             selectedTagHolder = SelectedTagHolder(),
             settingsRepository = settings,
             updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(failing),
+            updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(failing),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(failing),
+            updateNoteColorUseCase = UpdateNoteColorUseCase(failing),
         )
 
         advanceUntilIdle()
@@ -141,6 +153,9 @@ class NoteListViewModelTest {
             selectedTagHolder = SelectedTagHolder(),
             settingsRepository = settings,
             updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
+            updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+            updateNoteColorUseCase = UpdateNoteColorUseCase(repository),
         )
         repository.allNotesWithTags.value = listOf(noteWithTitle(1, "a"), noteWithTitle(2, "b"))
         advanceUntilIdle()
@@ -181,6 +196,9 @@ class NoteListViewModelTest {
             selectedTagHolder = SelectedTagHolder(),
             settingsRepository = settings,
             updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
+            updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+            updateNoteColorUseCase = UpdateNoteColorUseCase(repository),
         )
         repository.allNotesWithTags.value = listOf(noteWithTitle(1, "a"))
         advanceUntilIdle()

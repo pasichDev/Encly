@@ -30,7 +30,10 @@ import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.usecase.OnboardingUseCase
 import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.domain.usecase.tag.ReorderTagsUseCase
@@ -165,6 +168,9 @@ internal class TestApp(context: Context) {
         selectedTagHolder = selectedTag,
         settingsRepository = settings,
         updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(notes),
+        updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(notes),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(notes),
+        updateNoteColorUseCase = UpdateNoteColorUseCase(notes),
     )
 
     fun search() = NoteSearchViewModel(observeNotes, Dispatchers.Default)
@@ -216,6 +222,7 @@ internal class TestApp(context: Context) {
             mapOf("idNote" to noteId, "copySource" to copySource, "isReadTrashOnly" to readTrashOnly),
         ),
         updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(notes),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(notes),
         settingsRepository = settings,
         appScope = appScope,
         // Main, not a worker: Compose tests run effects on an unconfined dispatcher, so an exit

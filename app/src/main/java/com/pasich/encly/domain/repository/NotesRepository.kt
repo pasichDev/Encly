@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface NotesRepository {
     fun getAllNotesWithTag(): Flow<List<NoteWithTag>>
     fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>>
+    fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>>
     fun getTrashNotes(): Flow<List<Note>>
 
     suspend fun getNoteById(noteId: Long): Note?

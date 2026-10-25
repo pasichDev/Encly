@@ -1,6 +1,7 @@
 package com.pasich.encly.domain.usecase.note
 
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.testutil.TestNotesRepository
 import kotlinx.coroutines.flow.flow
@@ -29,6 +30,47 @@ class NoteUseCasesTest {
 
         assertEquals(listOf(true, false), repository.updatedNotes.map { it.isTrash })
         assertTrue(repository.updatedNotes.all { it.title == "Plan" && it.tagId == 1L })
+    }
+
+    @Test
+    fun pinningChangesOnlyThePinAndAnArchivedNoteCannotBePinned() = runTest {
+        val useCase = UpdateNotePinStatusUseCase(repository)
+
+        useCase(note, isPinned = true)
+        useCase(note.copy(isArchived = true), isPinned = true)
+
+        assertEquals(note.copy(isPinned = true), repository.updatedNotes[0])
+        assertEquals(note.copy(isArchived = true, isPinned = false), repository.updatedNotes[1])
+    }
+
+    @Test
+    fun archivingUnpinsAndUnarchivingKeepsThePin() = runTest {
+        val useCase = UpdateNoteArchiveStatusUseCase(repository)
+
+        useCase(note.copy(isPinned = true), isArchived = true)
+        useCase(note.copy(isArchived = true), isArchived = false)
+
+        assertEquals(note.copy(isPinned = false, isArchived = true), repository.updatedNotes[0])
+        assertEquals(note.copy(isPinned = false, isArchived = false), repository.updatedNotes[1])
+    }
+
+    @Test
+    fun trashingAnArchivedNoteKeepsItArchivedSoRestoringReturnsItToTheArchive() = runTest {
+        val useCase = UpdateNoteTrashStatusUseCase(repository)
+        val archived = note.copy(isArchived = true)
+
+        useCase(archived, isTrash = true)
+        useCase(archived.copy(isTrash = true), isTrash = false)
+
+        assertTrue(repository.updatedNotes.all { it.isArchived })
+        assertEquals(listOf(true, false), repository.updatedNotes.map { it.isTrash })
+    }
+
+    @Test
+    fun theColourIsStoredAsItsKey() = runTest {
+        UpdateNoteColorUseCase(repository)(note, NoteColor.TEAL)
+
+        assertEquals(note.copy(color = "teal"), repository.updatedNotes.single())
     }
 
     @Test

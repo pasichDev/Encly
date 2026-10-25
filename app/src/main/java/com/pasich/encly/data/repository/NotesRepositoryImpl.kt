@@ -20,6 +20,8 @@ class NotesRepositoryImpl @Inject constructor(private val databaseProvider: Data
 
     override fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> = daoFlow { dao().getNotesByTagId(tagId) }
 
+    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = daoFlow { dao().getArchivedNotesWithTags() }
+
     override fun getTrashNotes(): Flow<List<Note>> = daoFlow { dao().getTrashNotes() }
 
     override suspend fun getNoteById(noteId: Long): Note? = dao().getNoteById(noteId)
