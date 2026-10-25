@@ -265,8 +265,9 @@ open nothing on this device. Backups exported before still open **only with the 
 
 ## Encrypted backups
 
-Android backup stays disabled. The only way data leaves the device is an **encrypted backup file
-the user exports explicitly** (Settings → Backup), stored wherever they choose through the
+Android backup stays disabled. Data leaves the device only in files the user exports explicitly:
+an **encrypted backup file** (Settings → Backup) and, if they choose, a plaintext Markdown export
+(see "Markdown export" below). The backup is stored wherever they choose through the
 Storage Access Framework. Encly requests no storage permission and no network access for it;
 the file is written only to the single document the user picks. Its storage location, and any
 copying or syncing of it afterwards, is the user's choice and outside Encly's control: the file
@@ -276,8 +277,8 @@ collects and shares no data (see [PRIVACY.md](PRIVACY.md#encrypted-backup-file))
 
 ### What a backup contains
 
-Every note (title, the serialized block list verbatim so every block type survives, trash
-state, created/edited timestamps), every tag (name, visibility, order) and every task (title,
+Every note (title, the serialized block list verbatim so every block type survives, trash,
+pinned and archived state, colour key, created/edited timestamps), every tag (name, visibility, order) and every task (title,
 description, completion, created/completed dates, priority, order). Records carry a
 stable random `uid`; links between them (note → tag, task → tag) are stored as uids, never as
 per-device database ids.
@@ -352,6 +353,42 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
 - No temp files, no plaintext on disk, no logging of payloads, words, keys or SQLite error
   messages (which can quote row content). Derived keys and the plaintext payload buffer are
   zeroized after use.
+
+## Markdown export
+
+The second, **plaintext** way out of the vault. It exists because some users want their notes in
+a portable form; it is therefore built to be impossible to trigger by accident, and to leave no
+copy behind.
+
+- **Warning, then re-authentication, then the save dialog.** A dialog says the file is not
+  encrypted and that wherever it is saved (cloud folders included) holds a readable copy. Only
+  then does the existing `ReauthFlow` run (the PIN, or the biometric confirmation when biometric
+  unlock is on): the same path as backup export and import, with no auth code of its own.
+- **Read after authentication, through that session.** The vault is read only when the save
+  dialog returns, through the vault session that was authenticated (`bindToCurrentSession`). A
+  vault that re-locked in between fails with a message instead of exporting. While the save dialog
+  is in front, `SessionLockManager` keeps the vault open for the same short grace as for the
+  import picker. Nothing plaintext is held before that.
+- **Only a Storage Access Framework document.** The content is streamed into the document the
+  user created with `ACTION_CREATE_DOCUMENT` (`CreateDocument`): no share intent, no
+  `FileProvider`, no temp file in the cache or files directory, no storage permission. A
+  document that already holds data is refused; an incomplete one is deleted where the provider
+  allows it. `NoPlaintextExportTest` keeps the share/FileProvider/notification/clipboard bans and
+  allows `CreateDocument` only in the two screens that host these exports.
+- **What is exported.** One note as one `.md`, or a `.zip` (java.util.zip) with one `.md` per
+  note outside the trash (archived notes under `archive/`, notes under a hidden tag included)
+  and `tasks.md`. It exports the vault that is open: the decoy vault exports what it contains,
+  nothing more, and nothing is special-cased. No PIN, key, recovery phrase or setting is written.
+- **Safe content.** File names come from note titles and are treated as untrusted: NFC,
+  control, format and bidi characters and `/ \ : * ? " < > |` removed, no leading dot, Windows
+  device names avoided, cut by bytes, unique ignoring case (a title cannot escape the folder or
+  collide with `tasks.md`). Text is escaped so it cannot become other Markdown; the header values
+  are JSON strings. A link becomes a Markdown link only for `http`, `https`, `mailto` and `tel`
+  (any other scheme is written as inline code), and a link's preview image address is never
+  written, so opening the file fetches nothing.
+- **What it cannot do.** Once written, the file is outside Encly's control, like any exported
+  file. The user is told so before every export. Strings the app decrypted for the export live in
+  memory only until the garbage collector reclaims them (a JVM `String` cannot be zeroized).
 
 ## Import from My Notes
 
@@ -472,7 +509,9 @@ Encly intentionally leaves out system-visible plaintext features:
 - no notifications at all: no notification permission, channel, alarm or scheduled work;
 - no seed clipboard, file, Drive, or generic share export (encrypted backups never contain the
   seed; see "Encrypted backups");
-- no plaintext note share flow;
+- no share sheet and no plaintext note share flow: the only plaintext path is the Markdown
+  export above, started by the user, warned about, re-authenticated and written to a document
+  the user creates;
 - no task export to the system calendar;
 - no FileProvider retained for those export flows.
 

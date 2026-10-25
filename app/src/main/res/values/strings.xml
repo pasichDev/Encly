@@ -153,7 +153,7 @@
     <string name="faq_section_security">Security and recovery</string>
     <string name="faq_section_settings">Settings</string>
     <string name="faq_section_troubleshooting">Troubleshooting</string>
-    <string name="faq_storage_a">Notes, tags and tasks are stored only in Encly\'s local SQLCipher database. There is no cloud sync and no automatic backup: you can export an encrypted backup yourself in Settings → Backup.</string>
+    <string name="faq_storage_a">Notes, tags and tasks are stored only in Encly\'s local SQLCipher database. There is no cloud sync and no automatic backup: you can export an encrypted backup yourself in Settings → Backup, or a readable Markdown copy, which is not encrypted.</string>
     <string name="faq_storage_q">Where is my data stored?</string>
     <string name="faq_tags_a">Tags group your notes. You can create, rename, hide and delete them, drag them into any order, and filter the home screen by tag.</string>
     <string name="faq_tags_q">How do tags work?</string>
@@ -640,4 +640,12 @@
     <string name="note_color_blue">Blue</string>
     <string name="note_color_purple">Purple</string>
     <string name="note_color_pink">Pink</string>
+    <string name="markdown_export">Export as Markdown</string>
+    <string name="backup_section_markdown">Readable export</string>
+    <string name="markdown_export_desc">Save all notes and tasks as readable .md files in a .zip. The file is not encrypted.</string>
+    <string name="markdown_export_warning_title">Export without encryption?</string>
+    <string name="markdown_export_warning_body">The exported file is not encrypted. Anyone who gets it can read your notes. Wherever you save it, including a cloud folder, will hold a readable copy that Encly can\'t protect or take back. You\'ll confirm with your PIN next.</string>
+    <string name="markdown_export_done">Markdown export saved</string>
+    <string name="faq_markdown_q">Can I export my notes as Markdown?</string>
+    <string name="faq_markdown_a">Yes. In a note\'s menu choose \"Export as Markdown\" for one .md file, or use Settings → Backup → \"Export as Markdown\" for a .zip of all notes (archived ones in an archive folder, the trash left out) and a tasks file. These files are not encrypted: Encly warns you first, asks for your PIN and saves only where you choose.</string>
 </resources>

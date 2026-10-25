@@ -82,7 +82,7 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
     fun editor() {
         val editor = app.editor()
         setNavScreen(
-            viewModels(editor, app.tagList()),
+            viewModels(editor, app.tagList(), app.markdownExport()),
             route = TestRoutes.EDIT_NOTE,
             start = NavRoutes.HomeRoute.name,
         ) { nav ->
@@ -125,7 +125,9 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
 
     @Test
     fun backup() {
-        setNavScreen(viewModels(app.backup()), route = NavRoutes.BackupRoute.name) { nav -> BackupScreen(nav) }
+        setNavScreen(viewModels(app.backup(), app.markdownExport()), route = NavRoutes.BackupRoute.name) { nav ->
+            BackupScreen(nav)
+        }
         assertInLanguage(R.string.backup_intro_short)
     }
 

@@ -137,7 +137,7 @@
     <string name="faq_section_security">Sicherheit und Wiederherstellung</string>
     <string name="faq_section_settings">Einstellungen</string>
     <string name="faq_section_troubleshooting">Fehlerbehebung</string>
-    <string name="faq_storage_a">Notizen, Labels und Aufgaben werden ausschließlich in der lokalen SQLCipher-Datenbank von Encly gespeichert. Es gibt keine Cloud-Synchronisierung und keine automatischen Backups: Ein verschlüsseltes Backup kannst du selbst unter Einstellungen → Backup exportieren.</string>
+    <string name="faq_storage_a">Notizen, Labels und Aufgaben werden ausschließlich in der lokalen SQLCipher-Datenbank von Encly gespeichert. Es gibt keine Cloud-Synchronisierung und keine automatischen Backups: Ein verschlüsseltes Backup kannst du selbst unter Einstellungen → Backup exportieren, außerdem eine lesbare Markdown-Kopie, die nicht verschlüsselt ist.</string>
     <string name="faq_storage_q">Wo werden meine Daten gespeichert?</string>
     <string name="faq_tags_a">Labels gruppieren deine Notizen. Du kannst sie erstellen, umbenennen, ausblenden und löschen, per Ziehen neu ordnen und den Startbildschirm danach filtern.</string>
     <string name="faq_tags_q">Wie funktionieren Labels?</string>
@@ -623,4 +623,12 @@
     <string name="note_color_blue">Blau</string>
     <string name="note_color_purple">Violett</string>
     <string name="note_color_pink">Rosa</string>
+    <string name="markdown_export">Als Markdown exportieren</string>
+    <string name="backup_section_markdown">Lesbarer Export</string>
+    <string name="markdown_export_desc">Alle Notizen und Aufgaben als lesbare .md-Dateien in einer .zip speichern. Die Datei ist nicht verschlüsselt.</string>
+    <string name="markdown_export_warning_title">Ohne Verschlüsselung exportieren?</string>
+    <string name="markdown_export_warning_body">Die exportierte Datei ist nicht verschlüsselt. Jeder, der sie bekommt, kann deine Notizen lesen. Überall, wo du sie speicherst, auch in einem Cloud-Ordner, liegt eine lesbare Kopie, die Encly weder schützen noch zurückholen kann. Als Nächstes bestätigst du mit deiner PIN.</string>
+    <string name="markdown_export_done">Markdown-Export gespeichert</string>
+    <string name="faq_markdown_q">Kann ich meine Notizen als Markdown exportieren?</string>
+    <string name="faq_markdown_a">Ja. Wähle im Menü einer Notiz „Als Markdown exportieren“ für eine .md-Datei, oder nutze Einstellungen → Backup → „Als Markdown exportieren“ für eine .zip mit allen Notizen (archivierte im Ordner archive, ohne Papierkorb) und einer Aufgabendatei. Diese Dateien sind nicht verschlüsselt: Encly warnt dich vorher, fragt nach deiner PIN und speichert nur dort, wo du es festlegst.</string>
 </resources>

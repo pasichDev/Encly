@@ -54,17 +54,19 @@ block, the address you wrote).
 
 ## Sharing
 
-Encly does not share, sell or transfer any data to anyone. It has no share flow for note
-content. It puts something on the clipboard only when you copy it yourself: text you select, or a
+Encly does not share, sell or transfer any data to anyone. It has no share sheet and no share flow
+for note content. It puts something on the clipboard only when you copy it yourself: text you select, or a
 link from a note's link block. Every copy is marked as sensitive (on Android 13 and later it is
-hidden from the clipboard preview) and cleared after about a minute. Apart from that, the only way
-data leaves the app is an encrypted backup file that you export yourself (below).
+hidden from the clipboard preview) and cleared after about a minute. Apart from that, data
+leaves the app only in files that you export yourself: an encrypted backup (below) or, if you
+choose, a readable Markdown export (below).
 
 ## Encrypted backup file
 
 You can export a backup in **Settings → Backup**. Nothing is exported automatically.
 
-- **What it contains:** all your notes (title, content, trash state, created and edited dates),
+- **What it contains:** all your notes (title, content, trash, pin, archive and colour state,
+  created and edited dates),
   tags (name, visibility, order) and tasks (title, description, completion, dates, priority,
   order). It does **not** contain your PIN, your recovery phrase, biometric data, any encryption
   key of the app itself, or app settings.
@@ -82,6 +84,22 @@ You can export a backup in **Settings → Backup**. Nothing is exported automati
 Anyone who has both the file and your 12 words can read that backup, and an exported file cannot
 be revoked, so keep the words and the file apart. See
 [SECURITY.md → Encrypted backups](SECURITY.md#encrypted-backups) for the technical details.
+
+## Markdown export (not encrypted)
+
+You can also export your notes as plain, readable Markdown: from a note's menu (**Export as
+Markdown**, one `.md` file) or in **Settings → Backup** (**Export as Markdown**, one `.zip`).
+Nothing is exported automatically.
+
+- **What it contains:** one `.md` file per note (title, tag, dates, pin, archive and colour in a
+  small header, then the text, checklists, links and so on), archived notes in an `archive`
+  folder, and `tasks.md` with your tasks and sub-tasks. Notes in the trash are left out. It
+  does **not** contain your PIN, recovery phrase, keys or app settings.
+- **It is not encrypted.** Anyone who gets the file can read it, and wherever you save it (a
+  folder, a USB stick, a cloud drive) holds a readable copy that Encly cannot protect or take
+  back. Encly says so before every export and asks for your PIN (or biometrics) again.
+- **Where it goes:** only to the document you create in Android's save dialog. Encly shows no
+  share sheet, writes no temporary copy, and never uploads it.
 
 ## Import from My Notes
 

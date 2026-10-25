@@ -13,6 +13,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.pasich.encly.R
 import com.pasich.encly.core.serialization.BlockConverter
@@ -26,8 +27,10 @@ import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.verifyNoInteractions
 
 class EditNoteScreenTest : ComposeScreenTest() {
     private val app by lazy { TestApp(context) }
@@ -37,7 +40,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
     private fun open(noteId: Long = -1L, readTrashOnly: Boolean = false) {
         editor = app.editor(noteId = noteId, readTrashOnly = readTrashOnly)
         setNavScreen(
-            viewModels(editor, app.tagList()),
+            viewModels(editor, app.tagList(), app.markdownExport()),
             route = TestRoutes.EDIT_NOTE,
             start = NavRoutes.HomeRoute.name,
         ) { nav -> EditNoteScreen(nav) }
@@ -270,6 +273,83 @@ class EditNoteScreenTest : ComposeScreenTest() {
         waitForText(str(R.string.duplicate))
         rule.onNodeWithText(str(R.string.note_discard_all_changes)).assertExists()
         rule.onNodeWithText(str(R.string.delete)).assertExists()
+    }
+
+    @Test
+    fun theMoreMenuOffersPinArchiveColourAndMarkdownExport() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+
+        waitForText(str(R.string.note_archive))
+        listOf(R.string.note_pin, R.string.markdown_export).forEach { rule.onNodeWithText(str(it)).assertExists() }
+        // Section headings are drawn in capitals.
+        rule.onNodeWithText(str(R.string.note_color_title).uppercase()).assertExists()
+        rule.onNodeWithContentDescription(str(R.string.note_color_teal)).assertExists()
+    }
+
+    @Test
+    fun archivingFromTheMenuStoresTheNoteArchivedAndLeaves() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.note_archive))
+        rule.onNodeWithText(str(R.string.note_archive)).performScrollTo().performClick()
+
+        waitFor { currentRoute() == NavRoutes.HomeRoute.name }
+        assertTrue(app.notes.updatedNotes.last().isArchived)
+        assertFalse(app.notes.updatedNotes.last().isPinned)
+    }
+
+    @Test
+    fun anArchivedNoteOffersUnarchiveInsteadOfPin() {
+        Note(id = NOTE_ID, title = "Trip", value = "[]", date = 1L, isArchived = true).also { app.withNotes(it) }
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+
+        waitForText(str(R.string.note_unarchive))
+        assertEquals(0, countText(str(R.string.note_pin)))
+        rule.onNodeWithText(str(R.string.note_unarchive)).performScrollTo().performClick()
+        waitFor { currentRoute() == NavRoutes.HomeRoute.name }
+        assertFalse(app.notes.updatedNotes.last().isArchived)
+    }
+
+    @Test
+    fun pinningAndColouringAreSavedWithTheNote() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.note_pin))
+        rule.onNodeWithContentDescription(str(R.string.note_color_teal)).performScrollTo().performClick()
+        rule.onNodeWithText(str(R.string.note_pin)).performScrollTo().performClick()
+        waitFor { editor.state.value.note.isPinned }
+        assertEquals("teal", editor.state.value.note.color)
+        // Leaving the editor saves the note, with its pin and colour.
+        rule.onNodeWithContentDescription(str(R.string.back)).performClick()
+        waitFor { currentRoute() == NavRoutes.HomeRoute.name }
+
+        assertTrue(app.notes.updatedNotes.last().isPinned)
+        assertEquals("teal", app.notes.updatedNotes.last().color)
+    }
+
+    @Test
+    fun exportingAsMarkdownSavesTheNoteThenWarnsAndTouchesNoFile() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.markdown_export))
+        rule.onNodeWithText(str(R.string.markdown_export)).performScrollTo().performClick()
+
+        waitForText(str(R.string.markdown_export_warning_title))
+        assertEquals(0, countText(str(R.string.backup_reauth_title)))
+        verifyNoInteractions(app.markdownDocuments)
+        // The editor stays open behind the warning.
+        assertEquals(NavRoutes.EditNoteRoute.name, currentRoute()?.substringBefore('/'))
     }
 
     @Test

@@ -11,8 +11,26 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+
+- Pin notes to the top of the list, archive them (a new Archive screen in the drawer; archived
+  notes leave the list, search and tag counts) and mark them with one of eight colours. The
+  colours are tints of your theme, so they read well in all five themes, light and dark.
+- Export as Markdown: one note as a `.md` file from its menu, or every note outside the trash as
+  a `.zip` (archived notes in `archive/`, plus `tasks.md` with sub-tasks and priorities) from
+  Settings → Backup. These files are **not encrypted**: Encly warns you first, asks for your PIN
+  (or biometrics) again, and writes only to the document you create in the save dialog.
+- Import notes now has its own entry in the drawer, above Settings.
+
 ### Changed
 
+- The database moves to version 5 (pin, archive and colour on notes, migrated in place).
+  Installing an older Encly over this version is not supported: Room refuses to open a newer
+  database, so a downgrade fails to open the vault. Export a backup first if you might go back.
+- A backup made with this version is schema 4. Older Encly versions (2.2.1 and before) refuse it
+  as "made by a newer version, update the app" instead of failing; backups made by older versions
+  still restore, with their notes unpinned, unarchived and uncoloured.
+- Support is a highlighted button in the drawer (`fdroid` flavor only).
 - The Support page (`fdroid` flavor only) now explains where donations go and offers a single
   Ko-fi card. About links to it as well.
 

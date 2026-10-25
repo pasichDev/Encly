@@ -39,7 +39,7 @@ class EditorWritingTest : ComposeScreenTest() {
             .also { app.withNotes(it) }
         editor = app.editor(noteId = NOTE_ID)
         setNavScreen(
-            viewModels(editor, app.tagList()),
+            viewModels(editor, app.tagList(), app.markdownExport()),
             route = TestRoutes.EDIT_NOTE,
             start = NavRoutes.HomeRoute.name,
         ) { nav -> EditNoteScreen(nav) }

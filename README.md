@@ -6,8 +6,9 @@
 **Offline encrypted notes and tasks for Android.**
 
 Encly keeps notes and tasks encrypted on-device. There is no account, sync, telemetry,
-notification pipeline, plaintext sharing flow, or network access. Access is protected by
-a mandatory app PIN and, optionally, strong biometrics.
+notification pipeline, share sheet, or network access. Access is protected by a mandatory app
+PIN and, optionally, strong biometrics. The only ways data leaves the phone are an encrypted
+backup and, only when you ask for it, a readable Markdown export that is not encrypted.
 
 ## Features
 
@@ -18,6 +19,9 @@ a mandatory app PIN and, optionally, strong biometrics.
   (immediately up to 2 minutes, 15 s by default) and at once when the screen turns off.
 - 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN.
 - 💾 **Encrypted backups** — one file, sealed with the recovery phrase, saved wherever you choose.
+- 📝 **Markdown export** — one note as `.md`, or everything as a `.zip`, after a warning that the
+  file is not encrypted and a PIN check. Saved through the system save dialog, never shared.
+- 📌 **Organize** — pin, archive and colour notes.
 - 🧩 **Block editor** — text, headings, quotes, checklists, bulleted / numbered lists, links,
   separators.
 - 🏷️ **Tags & tasks** — local organization: tags for notes, tasks with priorities.
@@ -133,11 +137,13 @@ then enter the PIN or use the fingerprint) deletes the database, every key slot 
 Keystore keys, and starts setup again.
 
 The app also disables Android backup/device transfer for protected data and has no
-system notifications, plaintext note sharing, calendar export, or seed export; the only
-thing it copies to the clipboard by itself is a link block's address, on request and marked
-sensitive. The one way data leaves the phone is an **encrypted backup** you export yourself
-(Settings → Backup): it is sealed with your 12-word recovery phrase, and the same words
-restore it on a new phone ("Restore from backup" in onboarding).
+system notifications, a share sheet, calendar export, or seed export; the only thing it copies
+to the clipboard by itself is a link block's address, on request and marked sensitive. Data
+leaves the phone in two ways, both started by you. An **encrypted backup** (Settings → Backup)
+is sealed with your 12-word recovery phrase, and the same words restore it on a new phone
+("Restore from backup" in onboarding). A **Markdown export** (a note's menu, or Settings →
+Backup) is readable by anyone who has the file: Encly warns you first, asks for your PIN (or
+biometrics) again, and writes only to the document you create in the system save dialog.
 
 See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and the
 [privacy policy](https://pasichdev.xyz/apps/encly/privacy-policy/) (also in

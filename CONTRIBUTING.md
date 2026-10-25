@@ -12,7 +12,9 @@ By taking part you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 - **No proprietary dependencies.** Nothing that needs Google Play Services or another closed
   SDK in the shared code; store-only UI goes into the `play` flavor behind `BuildConfig`.
 - **No plaintext outside the vault.** No new share, clipboard, notification, file-export or
-  logging path for note/task content, PINs or seed words.
+  logging path for note/task content, PINs or seed words. The one plaintext exit is the
+  user-started Markdown export (warning, then the existing re-authentication, then a system
+  save dialog; see [SECURITY.md](SECURITY.md#markdown-export)): do not add another or loosen it.
 - **Existing installs must keep opening.** Any change to key derivation, the SQLCipher
   passphrase, the vault slots, preferences layout or the Room schema needs a migration and a
   test that upgrades the old state. Never "fix" a format by wiping data.

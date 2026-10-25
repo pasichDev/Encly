@@ -137,7 +137,7 @@
     <string name="faq_section_security">Beveiliging en herstel</string>
     <string name="faq_section_settings">Instellingen</string>
     <string name="faq_section_troubleshooting">Problemen oplossen</string>
-    <string name="faq_storage_a">Notities, labels en taken worden alleen opgeslagen in de lokale SQLCipher-database van Encly. Er is geen cloudsynchronisatie en geen automatische back-up: je kunt zelf een versleutelde back-up exporteren via Instellingen → Back-up.</string>
+    <string name="faq_storage_a">Notities, labels en taken worden alleen opgeslagen in de lokale SQLCipher-database van Encly. Er is geen cloudsynchronisatie en geen automatische back-up: je kunt zelf een versleutelde back-up exporteren via Instellingen → Back-up, of een leesbare Markdown-kopie, die niet versleuteld is.</string>
     <string name="faq_storage_q">Waar worden mijn gegevens opgeslagen?</string>
     <string name="faq_tags_a">Labels groeperen je notities. Je kunt ze maken, hernoemen, verbergen en verwijderen, in elke volgorde slepen en het startscherm op label filteren.</string>
     <string name="faq_tags_q">Hoe werken labels?</string>
@@ -623,4 +623,12 @@
     <string name="note_color_blue">Blauw</string>
     <string name="note_color_purple">Paars</string>
     <string name="note_color_pink">Roze</string>
+    <string name="markdown_export">Exporteren als Markdown</string>
+    <string name="backup_section_markdown">Leesbare export</string>
+    <string name="markdown_export_desc">Sla alle notities en taken op als leesbare .md-bestanden in een .zip. Het bestand is niet versleuteld.</string>
+    <string name="markdown_export_warning_title">Exporteren zonder versleuteling?</string>
+    <string name="markdown_export_warning_body">Het geëxporteerde bestand is niet versleuteld. Iedereen die het in handen krijgt, kan je notities lezen. Waar je het ook opslaat, ook in een cloudmap, komt een leesbare kopie te staan die Encly niet kan beschermen of terughalen. Daarna bevestig je met je pincode.</string>
+    <string name="markdown_export_done">Markdown-export opgeslagen</string>
+    <string name="faq_markdown_q">Kan ik mijn notities als Markdown exporteren?</string>
+    <string name="faq_markdown_a">Ja. Kies in het menu van een notitie ‘Exporteren als Markdown’ voor één .md-bestand, of ga naar Instellingen → Back-up → ‘Exporteren als Markdown’ voor een .zip met alle notities (gearchiveerde in een map archive, zonder prullenbak) en een takenbestand. Deze bestanden zijn niet versleuteld: Encly waarschuwt eerst, vraagt om je pincode en slaat alleen op waar jij kiest.</string>
 </resources>

@@ -59,6 +59,7 @@ import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.BackupStep
+import com.pasich.encly.presentation.viewmodel.ReauthFlow
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -69,7 +70,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 @Composable
 fun BackupDialogs(actions: BackupDialogActions, step: BackupStep, busy: Boolean = false) {
     when (step) {
-        is BackupStep.Reauth -> ReauthDialog(actions, step)
+        is BackupStep.Reauth -> ReauthDialog(actions.reauth, step, actions.cancel)
 
         BackupStep.NeedsPhrase -> MessageDialog(
             title = R.string.backup_needs_phrase_title,
@@ -154,22 +155,25 @@ private fun MessageDialog(
     )
 }
 
-/** Full-screen PIN entry (plus the fingerprint key, when enabled) before an export or import. */
+/**
+ * Full-screen PIN entry (plus the fingerprint key, when enabled) before an export or import, run
+ * by [reauth]; [onCancel] closes it. The one re-authentication every export goes through.
+ */
 @Composable
-private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) {
+internal fun ReauthDialog(reauth: ReauthFlow, step: BackupStep.Reauth, onCancel: () -> Unit) {
     val activity = LocalActivity.current as? FragmentActivity
     // Wiped once submitted or when the dialog closes, never a String (see PinBuffer).
     val input = remember { PinBuffer() }
     DisposableEffect(input) { onDispose { input.clear() } }
     var lockoutSeconds by remember { mutableLongStateOf(0L) }
     // Keyed on the step too: a wrong PIN (a new step) may just have started a lockout.
-    PinLockoutTicker(step to (lockoutSeconds > 0L), actions.reauth::pinLockoutRemainingMillis) {
+    PinLockoutTicker(step to (lockoutSeconds > 0L), reauth::pinLockoutRemainingMillis) {
         lockoutSeconds = it
     }
     val lockedOut = lockoutSeconds > 0L
     val error = step.error?.let { stringResource(it) }
     Dialog(
-        onDismissRequest = actions.cancel,
+        onDismissRequest = onCancel,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         PinEntryScaffold(
@@ -191,11 +195,11 @@ private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) 
                     onDigit = { digit ->
                         if (!lockedOut) input.add(digit)
                         // The flow wipes the PIN it is given.
-                        if (input.isFull) actions.reauth.submitPin(input.take())
+                        if (input.isFull) reauth.submitPin(input.take())
                     },
                     onBackspace = input::deleteLast,
                     onBiometric = if (step.biometric && activity != null) {
-                        { actions.reauth.withBiometric(activity) }
+                        { reauth.withBiometric(activity) }
                     } else {
                         null
                     },
@@ -203,7 +207,7 @@ private fun ReauthDialog(actions: BackupDialogActions, step: BackupStep.Reauth) 
             )
             EnclyTextButton(
                 text = stringResource(R.string.cancel),
-                onClick = actions.cancel,
+                onClick = onCancel,
                 modifier = Modifier.padding(top = EnclyTheme.spacing.l),
             )
         }

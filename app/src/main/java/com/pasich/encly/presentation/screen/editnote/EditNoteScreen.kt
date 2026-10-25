@@ -62,7 +62,10 @@ import com.pasich.encly.presentation.editor.editorBlocks
 import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
+import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -122,7 +125,12 @@ fun EditNoteScreen(
     FocusNewNoteTitle(titleFocus)
     BackHandler { exits.back() }
     CloseFindOrSlashOnBack()
-    EditorOverlays(overlays, exits, onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) })
+    EditorOverlays(
+        overlays = overlays,
+        exits = exits,
+        onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) },
+        onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
+    )
 
     EditNoteSettingsProvider(
         baseFontSize = fontSize.sp,
@@ -240,7 +248,9 @@ private fun EditorOverlays(
     overlays: EditorOverlaysState,
     exits: EditorExits,
     onManageTags: () -> Unit,
+    onMessage: (String) -> Unit,
     viewModel: EditNoteViewModel = enclyViewModel(),
+    markdownViewModel: MarkdownExportViewModel = enclyViewModel(),
 ) {
     val lockEditor by viewModel.lockEditor.collectAsState()
     EditorConfirmDialogs(
@@ -263,6 +273,7 @@ private fun EditorOverlays(
             onDismiss = { overlays.isTagSheetVisible = false },
         )
     }
+    MarkdownExportHost(onMessage)
     EditNoteBottomSheet(
         isVisible = overlays.isEditMenuVisible,
         onDismiss = { overlays.isEditMenuVisible = false },
@@ -280,6 +291,10 @@ private fun EditorOverlays(
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
 
                 EditNoteBottomSheetAction.TOGGLE_PIN -> viewModel.togglePin()
+
+                EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id, title ->
+                    markdownViewModel.start(MarkdownExportTarget.SingleNote(id, title))
+                }
 
                 EditNoteBottomSheetAction.ARCHIVE -> exits.archive(archived = true)
 

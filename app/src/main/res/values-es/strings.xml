@@ -137,7 +137,7 @@
     <string name="faq_section_security">Seguridad y recuperación</string>
     <string name="faq_section_settings">Ajustes</string>
     <string name="faq_section_troubleshooting">Solución de problemas</string>
-    <string name="faq_storage_a">Las notas, etiquetas y tareas se guardan únicamente en la base de datos SQLCipher local de Encly. No hay sincronización en la nube ni copias automáticas: puedes exportar tú mismo una copia cifrada en Ajustes → Copia de seguridad.</string>
+    <string name="faq_storage_a">Las notas, etiquetas y tareas se guardan únicamente en la base de datos SQLCipher local de Encly. No hay sincronización en la nube ni copias automáticas: puedes exportar tú mismo una copia cifrada en Ajustes → Copia de seguridad, o una copia legible en Markdown, que no está cifrada.</string>
     <string name="faq_storage_q">¿Dónde se guardan mis datos?</string>
     <string name="faq_tags_a">Las etiquetas agrupan tus notas. Puedes crearlas, renombrarlas, ocultarlas y eliminarlas, arrastrarlas en el orden que quieras y filtrar la pantalla principal por etiqueta.</string>
     <string name="faq_tags_q">¿Cómo funcionan las etiquetas?</string>
@@ -629,4 +629,12 @@
     <string name="note_color_blue">Azul</string>
     <string name="note_color_purple">Morado</string>
     <string name="note_color_pink">Rosa</string>
+    <string name="markdown_export">Exportar como Markdown</string>
+    <string name="backup_section_markdown">Exportación legible</string>
+    <string name="markdown_export_desc">Guarda todas las notas y tareas como archivos .md legibles en un .zip. El archivo no está cifrado.</string>
+    <string name="markdown_export_warning_title">¿Exportar sin cifrado?</string>
+    <string name="markdown_export_warning_body">El archivo exportado no está cifrado. Cualquiera que lo obtenga puede leer tus notas. Dondequiera que lo guardes, incluida una carpeta en la nube, habrá una copia legible que Encly no puede proteger ni recuperar. A continuación confirmarás con tu PIN.</string>
+    <string name="markdown_export_done">Exportación Markdown guardada</string>
+    <string name="faq_markdown_q">¿Puedo exportar mis notas como Markdown?</string>
+    <string name="faq_markdown_a">Sí. En el menú de una nota elige «Exportar como Markdown» para obtener un archivo .md, o usa Ajustes → Copia de seguridad → «Exportar como Markdown» para un .zip con todas las notas (las archivadas en una carpeta archive, sin la papelera) y un archivo de tareas. Estos archivos no están cifrados: Encly te avisa antes, te pide el PIN y solo guarda donde tú elijas.</string>
 </resources>

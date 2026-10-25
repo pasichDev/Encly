@@ -137,7 +137,7 @@
     <string name="faq_section_security">Bezpieczeństwo i odzyskiwanie</string>
     <string name="faq_section_settings">Ustawienia</string>
     <string name="faq_section_troubleshooting">Rozwiązywanie problemów</string>
-    <string name="faq_storage_a">Notatki, etykiety i zadania są przechowywane wyłącznie w lokalnej bazie danych SQLCipher aplikacji Encly. Nie ma synchronizacji w chmurze ani automatycznych kopii: zaszyfrowaną kopię możesz wyeksportować samodzielnie w Ustawienia → Kopia zapasowa.</string>
+    <string name="faq_storage_a">Notatki, etykiety i zadania są przechowywane wyłącznie w lokalnej bazie danych SQLCipher aplikacji Encly. Nie ma synchronizacji w chmurze ani automatycznych kopii: zaszyfrowaną kopię możesz wyeksportować samodzielnie w Ustawienia → Kopia zapasowa, a także czytelną kopię w formacie Markdown, która nie jest zaszyfrowana.</string>
     <string name="faq_storage_q">Gdzie przechowywane są moje dane?</string>
     <string name="faq_tags_a">Etykiety grupują notatki. Możesz je tworzyć, zmieniać nazwy, ukrywać i usuwać, przeciągać w dowolnej kolejności oraz filtrować po nich ekran główny.</string>
     <string name="faq_tags_q">Jak działają etykiety?</string>
@@ -635,4 +635,12 @@
     <string name="note_color_blue">Niebieski</string>
     <string name="note_color_purple">Fioletowy</string>
     <string name="note_color_pink">Różowy</string>
+    <string name="markdown_export">Eksportuj jako Markdown</string>
+    <string name="backup_section_markdown">Czytelny eksport</string>
+    <string name="markdown_export_desc">Zapisz wszystkie notatki i zadania jako czytelne pliki .md w archiwum .zip. Plik nie jest zaszyfrowany.</string>
+    <string name="markdown_export_warning_title">Eksportować bez szyfrowania?</string>
+    <string name="markdown_export_warning_body">Wyeksportowany plik nie jest zaszyfrowany. Każdy, kto go zdobędzie, przeczyta twoje notatki. Miejsce, w którym go zapiszesz, także folder w chmurze, będzie zawierać czytelną kopię, której Encly nie może ani chronić, ani cofnąć. Następnie potwierdzisz kodem PIN.</string>
+    <string name="markdown_export_done">Eksport Markdown zapisany</string>
+    <string name="faq_markdown_q">Czy mogę wyeksportować notatki jako Markdown?</string>
+    <string name="faq_markdown_a">Tak. W menu notatki wybierz „Eksportuj jako Markdown”, aby dostać jeden plik .md, albo przejdź do Ustawienia → Kopia zapasowa → „Eksportuj jako Markdown”, aby dostać archiwum .zip ze wszystkimi notatkami (zarchiwizowane w folderze archive, bez kosza) i plikiem z zadaniami. Te pliki nie są zaszyfrowane: Encly najpierw ostrzeże, poprosi o PIN i zapisze tylko tam, gdzie wskażesz.</string>
 </resources>

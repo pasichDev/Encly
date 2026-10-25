@@ -70,6 +70,10 @@ class BackupViewModel @Inject constructor(
         when {
             action == BackupAction.IMPORT -> state.go(BackupStep.PickImportFile)
 
+            // The plaintext export has its own ViewModel; it never asks for a recovery phrase or
+            // seals a backup, so nothing here may start it.
+            action == BackupAction.EXPORT_MARKDOWN -> state.go(BackupStep.Idle)
+
             // Held for five seconds on the security page, then re-authenticated: that is the
             // confirmation, so the erase runs straight away.
             action == BackupAction.ERASE -> {

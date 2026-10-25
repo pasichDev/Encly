@@ -7,6 +7,7 @@ import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
+import com.pasich.encly.core.common.AppStrings
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
@@ -22,6 +23,7 @@ import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.BackupPhraseSetup
 import com.pasich.encly.data.backup.PendingRestore
+import com.pasich.encly.data.export.MarkdownDocuments
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
@@ -45,6 +47,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LockNowViewModel
 import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
+import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
@@ -78,6 +81,7 @@ internal class TestApp(context: Context) {
     val settings = FakeSettingsRepository()
     val security: SecurityManager = mock(SecurityManager::class.java)
     val documents: BackupDocuments = mock(BackupDocuments::class.java)
+    val markdownDocuments: MarkdownDocuments = mock(MarkdownDocuments::class.java)
     val store = InMemoryVaultDataStore()
     val backupManager = BackupManager(security, store, InMemorySharedPreferences())
     val sessionLock = SessionLockManager(security)
@@ -208,6 +212,14 @@ internal class TestApp(context: Context) {
         securityManager = security,
         sessionLockManager = sessionLock,
         documents = documents,
+    )
+
+    fun markdownExport() = MarkdownExportViewModel(
+        securityManager = security,
+        sessionLockManager = sessionLock,
+        store = store,
+        documents = markdownDocuments,
+        strings = AppStrings(appContext),
     )
 
     private val pendingRestore by lazy { PendingRestore(backupManager) }

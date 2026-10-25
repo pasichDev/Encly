@@ -44,6 +44,8 @@ import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.BackupUiState
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
+import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
+import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
@@ -62,6 +64,7 @@ fun BackupScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     viewModel: BackupViewModel = enclyViewModel(),
+    markdownViewModel: MarkdownExportViewModel = enclyViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -104,16 +107,21 @@ fun BackupScreen(
                         )
                     }
                 }
-                BackupContent(state = state, onStart = viewModel::start)
+                BackupContent(
+                    state = state,
+                    onStart = viewModel::start,
+                    onMarkdown = { markdownViewModel.start(MarkdownExportTarget.AllData) },
+                )
             }
         }
         // Drawn last: the phrase steps cover the whole screen.
         BackupDialogs(dialogActions, state.step, state.busy)
+        MarkdownExportHost(onMessage = { text -> snackbarScope.launch { snackbarHostState.showSnackbar(text) } })
     }
 }
 
 @Composable
-private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit) {
+private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit, onMarkdown: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -138,6 +146,10 @@ private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit)
             SectionOverline(text = stringResource(R.string.backup_section_import))
             ImportAction(enabled = !state.busy, onImport = { onStart(BackupAction.IMPORT) })
         }
+        Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
+            SectionOverline(text = stringResource(R.string.backup_section_markdown))
+            MarkdownAction(enabled = !state.busy, onExport = onMarkdown)
+        }
         EnclyCallout(
             title = stringResource(R.string.backup_intro_title),
             text = stringResource(R.string.backup_intro_body),
@@ -154,6 +166,24 @@ private fun ExportAction(lastExportAt: Long?, enabled: Boolean, onExport: () -> 
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
         EnclyTonalButton(text = stringResource(R.string.backup_export), onClick = onExport, enabled = enabled)
         Text(text = lastExport, style = EnclyTheme.typography.meta, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** The plaintext export: a `.zip` of Markdown files, which is not encrypted (a warning comes first). */
+@Composable
+private fun MarkdownAction(enabled: Boolean, onExport: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
+        EnclyPillButton(
+            text = stringResource(R.string.markdown_export),
+            onClick = onExport,
+            enabled = enabled,
+            leadingIcon = EnclyIcons.Upload,
+        )
+        Text(
+            text = stringResource(R.string.markdown_export_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

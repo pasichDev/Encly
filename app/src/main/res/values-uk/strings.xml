@@ -137,7 +137,7 @@
     <string name="faq_section_security">Безпека та відновлення</string>
     <string name="faq_section_settings">Налаштування</string>
     <string name="faq_section_troubleshooting">Вирішення проблем</string>
-    <string name="faq_storage_a">Нотатки, мітки та завдання зберігаються тільки в локальній SQLCipher-базі Encly. Хмарної синхронізації та автоматичного резервного копіювання немає: зашифровану копію можна експортувати самостійно в Налаштування → Резервна копія.</string>
+    <string name="faq_storage_a">Нотатки, мітки та завдання зберігаються тільки в локальній SQLCipher-базі Encly. Хмарної синхронізації та автоматичного резервного копіювання немає: зашифровану копію можна експортувати самостійно в Налаштування → Резервна копія, а також читабельну копію у форматі Markdown — вона не зашифрована.</string>
     <string name="faq_storage_q">Де зберігаються мої дані?</string>
     <string name="faq_tags_a">Мітки групують нотатки. Їх можна створювати, перейменовувати, приховувати й видаляти, перетягувати в будь-якому порядку та фільтрувати за ними головний екран.</string>
     <string name="faq_tags_q">Як працюють мітки?</string>
@@ -635,4 +635,12 @@
     <string name="note_color_blue">Синій</string>
     <string name="note_color_purple">Фіолетовий</string>
     <string name="note_color_pink">Рожевий</string>
+    <string name="markdown_export">Експортувати як Markdown</string>
+    <string name="backup_section_markdown">Читабельний експорт</string>
+    <string name="markdown_export_desc">Зберегти всі нотатки й завдання як читабельні файли .md в архіві .zip. Файл не зашифрований.</string>
+    <string name="markdown_export_warning_title">Експорт без шифрування?</string>
+    <string name="markdown_export_warning_body">Експортований файл не зашифрований. Будь-хто, хто його отримає, зможе прочитати ваші нотатки. Місце, куди ви його збережете, зокрема хмарна тека, міститиме читабельну копію, яку Encly не може ні захистити, ні відкликати. Далі потрібно буде підтвердити PIN-кодом.</string>
+    <string name="markdown_export_done">Експорт Markdown збережено</string>
+    <string name="faq_markdown_q">Чи можна експортувати нотатки у форматі Markdown?</string>
+    <string name="faq_markdown_a">Так. У меню нотатки виберіть «Експортувати як Markdown», щоб отримати один файл .md, або відкрийте Налаштування → Резервна копія → «Експортувати як Markdown», щоб отримати .zip з усіма нотатками (архівні лежать у теці archive, кошик не входить) і файлом із завданнями. Ці файли не зашифровані: Encly спершу попередить, попросить PIN-код і збереже їх лише туди, куди ви вкажете.</string>
 </resources>

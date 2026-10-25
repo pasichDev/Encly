@@ -30,6 +30,7 @@ enum class EditNoteBottomSheetAction {
     FIND,
     TRASH,
     TOGGLE_PIN,
+    EXPORT_MARKDOWN,
     ARCHIVE,
     UNARCHIVE,
 }
@@ -68,42 +69,45 @@ fun EditNoteBottomSheet(
                 contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
             )
             PinAndArchiveRows(note = note.note, onAction = onAction, onDismiss = onDismiss)
-            EnclySheetRow(
-                title = stringResource(R.string.find_in_note),
-                icon = EnclyIcons.Search,
-                onClick = {
-                    onAction(EditNoteBottomSheetAction.FIND)
-                    onDismiss()
-                },
-            )
-            EnclySheetRow(
-                title = stringResource(id = R.string.duplicate),
-                icon = EnclyIcons.Duplicate,
-                onClick = {
-                    onAction(EditNoteBottomSheetAction.DUPLICATE)
-                    onDismiss()
-                },
-            )
-            EnclySheetRow(
-                title = stringResource(R.string.note_discard_all_changes),
-                icon = EnclyIcons.Undo,
-                onClick = {
-                    onAction(EditNoteBottomSheetAction.CLOSE_NO_SAVE)
-                    onDismiss()
-                },
-            )
-            EnclySheetRow(
-                title = stringResource(id = R.string.delete),
-                icon = EnclyIcons.Trash,
-                destructive = true,
-                confirmFirst = true,
-                onClick = {
-                    onAction(EditNoteBottomSheetAction.TRASH)
-                    onDismiss()
-                },
-            )
+            EditorActionRows(onAction = onAction, onDismiss = onDismiss)
         }
     }
+}
+
+/** Find, export, duplicate, discard and delete: each runs its action and closes the sheet. */
+@Composable
+private fun EditorActionRows(onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
+    fun run(action: EditNoteBottomSheetAction) {
+        onAction(action)
+        onDismiss()
+    }
+    EnclySheetRow(
+        title = stringResource(R.string.find_in_note),
+        icon = EnclyIcons.Search,
+        onClick = { run(EditNoteBottomSheetAction.FIND) },
+    )
+    EnclySheetRow(
+        title = stringResource(R.string.markdown_export),
+        icon = EnclyIcons.Upload,
+        onClick = { run(EditNoteBottomSheetAction.EXPORT_MARKDOWN) },
+    )
+    EnclySheetRow(
+        title = stringResource(id = R.string.duplicate),
+        icon = EnclyIcons.Duplicate,
+        onClick = { run(EditNoteBottomSheetAction.DUPLICATE) },
+    )
+    EnclySheetRow(
+        title = stringResource(R.string.note_discard_all_changes),
+        icon = EnclyIcons.Undo,
+        onClick = { run(EditNoteBottomSheetAction.CLOSE_NO_SAVE) },
+    )
+    EnclySheetRow(
+        title = stringResource(id = R.string.delete),
+        icon = EnclyIcons.Trash,
+        destructive = true,
+        confirmFirst = true,
+        onClick = { run(EditNoteBottomSheetAction.TRASH) },
+    )
 }
 
 /** The reading densities in display order; the enum's own order is fixed by what is stored. */
