@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
+import com.pasich.encly.presentation.designsystem.EnclyDrawerHighlight
 import com.pasich.encly.presentation.designsystem.EnclyDrawerItem
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyWordmark
@@ -83,13 +84,9 @@ fun MainDrawer(
             )
             drawerItems.forEach { item ->
                 val isHome = item.route == NavRoutes.HomeRoute.name
-                EnclyDrawerItem(
-                    label = stringResource(item.titleRes),
-                    icon = item.icon,
-                    // Zero reads as noise next to a destination; the badge shows only a real count.
-                    badge = item.badgeCount?.takeIf { it > 0 },
-                    // The drawer opens over the notes, so Notes is the current destination.
-                    selected = isHome,
+                DrawerEntry(
+                    item = item,
+                    isHome = isHome,
                     onClick = {
                         scope.launch {
                             if (isHome) {
@@ -104,10 +101,28 @@ fun MainDrawer(
                         }
                     },
                 )
-                if (item.groupEnd) EnclyGroupDivider(modifier = Modifier.padding(vertical = EnclyTheme.spacing.xs))
             }
         }
     }
+}
+
+/** One destination: a row (Notes is the current one), or the highlighted Support button; a hairline may follow. */
+@Composable
+private fun DrawerEntry(item: DrawerNavItem, isHome: Boolean, onClick: () -> Unit) {
+    if (item.highlighted) {
+        EnclyDrawerHighlight(label = stringResource(item.titleRes), icon = item.icon, onClick = onClick)
+    } else {
+        EnclyDrawerItem(
+            label = stringResource(item.titleRes),
+            icon = item.icon,
+            // Zero reads as noise next to a destination; the badge shows only a real count.
+            badge = item.badgeCount?.takeIf { it > 0 },
+            // The drawer opens over the notes, so Notes is the current destination.
+            selected = isHome,
+            onClick = onClick,
+        )
+    }
+    if (item.groupEnd) EnclyGroupDivider(modifier = Modifier.padding(vertical = EnclyTheme.spacing.xs))
 }
 
 /** Longer than the page transition, so the drawer never visibly snaps shut. */

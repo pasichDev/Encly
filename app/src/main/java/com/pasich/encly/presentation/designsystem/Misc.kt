@@ -30,6 +30,7 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -324,6 +325,34 @@ fun EnclyDrawerItem(
             .heightIn(min = EnclyTheme.spacing.rowHeight)
             .padding(NavigationDrawerItemDefaults.ItemPadding),
     )
+}
+
+/**
+ * The drawer's call-to-action (Support): a filled `primaryContainer` pill with its icon and label,
+ * set apart from the plain destinations. Same size and inset as [EnclyDrawerItem].
+ */
+@Composable
+fun EnclyDrawerHighlight(label: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        modifier = modifier
+            .padding(NavigationDrawerItemDefaults.ItemPadding)
+            .padding(vertical = EnclyTheme.spacing.xxs)
+            .fillMaxWidth()
+            .heightIn(min = EnclyTheme.spacing.rowHeight),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.rowGap),
+            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.m),
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(EnclyTheme.spacing.icon))
+            Text(text = label, style = MaterialTheme.typography.labelLarge)
+        }
+    }
 }
 
 /** An inline text link ("All tasks"): labelMedium in `primary`. */
