@@ -107,6 +107,42 @@ class BackupPayloadCodecTest {
     }
 
     @Test
+    fun schema3BackupDecodesWithDefaultNoteOrganizing() {
+        val decoded = BackupPayloadCodec.decode(schema3Json().toByteArray(Charsets.UTF_8))
+
+        assertEquals(withSubtasks, decoded)
+        assertEquals(BackupPayload.SCHEMA_VERSION, decoded.schema)
+        with(decoded.notes.single()) {
+            assertEquals(false, isPinned)
+            assertEquals(false, isArchived)
+            assertEquals("none", color)
+        }
+    }
+
+    @Test
+    fun schema3BackupWithNoteOrganizingKeysIsInvalid() {
+        // Schema 3 never had these keys: such a file is malformed, not a newer one.
+        val json = schema3Json().replace("\"isTrash\":true}", "\"isTrash\":true,\"isPinned\":true}")
+
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(json.toByteArray(Charsets.UTF_8)) }
+    }
+
+    @Test
+    fun noteOrganizingRoundTrips() {
+        val organized = payload.copy(
+            notes = payload.notes.map { it.copy(isPinned = true, isArchived = true, color = "teal") },
+        )
+
+        assertEquals(organized, BackupPayloadCodec.decode(BackupPayloadCodec.encode(organized)))
+    }
+
+    @Test
+    fun blankOrOverlongColorIsInvalid() {
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(color = "") }))
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(color = "x".repeat(33)) }))
+    }
+
+    @Test
     fun currentSchemaRequiresTheSubtasksList() {
         val json = String(BackupPayloadCodec.encode(payload), Charsets.UTF_8).replace(",\"subtasks\":[]", "")
 
@@ -134,10 +170,11 @@ class BackupPayloadCodecTest {
      */
     @Test
     fun encodedKeyNamesArePinned() {
-        val expected = """{"schema":3,"exportedAt":1700000000000,""" +
+        val expected = """{"schema":4,"exportedAt":1700000000000,""" +
             """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
             """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
-            """"dateCreate":1,"tagUid":"t1","isTrash":true}],""" +
+            """"dateCreate":1,"tagUid":"t1","isTrash":true,"isPinned":false,"isArchived":false,""" +
+            """"color":"none"}],""" +
             """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
             """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5,""" +
             """"subtasks":[{"uid":"s1","title":"Milk","isCompleted":true,"position":0},""" +
@@ -162,6 +199,16 @@ class BackupPayloadCodecTest {
         """"dateCreate":1,"tagUid":"t1","isTrash":true}],""" +
         """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
         """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5}]}"""
+
+    /** [withSubtasks] as the schema-3 app wrote it: notes had no pin, archive or colour. */
+    private fun schema3Json(): String = """{"schema":3,"exportedAt":1700000000000,""" +
+        """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
+        """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
+        """"dateCreate":1,"tagUid":"t1","isTrash":true}],""" +
+        """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
+        """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5,""" +
+        """"subtasks":[{"uid":"s1","title":"Milk","isCompleted":true,"position":0},""" +
+        """{"uid":"s2","title":"Bread","isCompleted":false,"position":1}]}]}"""
 
     private fun withExtraField(value: BackupPayload): ByteArray {
         val json = String(BackupPayloadCodec.encode(value), Charsets.UTF_8)

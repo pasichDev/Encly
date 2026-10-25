@@ -25,6 +25,13 @@ data class Note(
     var isTrash: Boolean = false,
     @ColumnInfo(defaultValue = "''")
     var uid: String = "",
+    @ColumnInfo(defaultValue = "0")
+    var isPinned: Boolean = false,
+    @ColumnInfo(defaultValue = "0")
+    var isArchived: Boolean = false,
+    /** A [com.pasich.encly.domain.model.NoteColor] key, never an ARGB value. */
+    @ColumnInfo(defaultValue = "'none'")
+    var color: String = NO_COLOR,
 ) {
 
     /**
@@ -44,6 +51,9 @@ data class Note(
     }
 
     companion object {
+        /** The stored key of "no colour"; the palette lives in `domain.model.NoteColor`. */
+        const val NO_COLOR = "none"
+
         fun new(title: String, value: String, tagId: Long? = null): Note = Note(
             title = title,
             value = value,

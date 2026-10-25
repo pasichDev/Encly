@@ -31,6 +31,9 @@ object VaultSchema {
     /** Database version that added the `subtasks` table. */
     private const val VERSION_WITH_SUBTASKS = 4
 
+    /** Database version that added pin, archive and colour to notes. */
+    private const val VERSION_WITH_NOTE_ORGANIZING = 5
+
     private fun triggers(table: String) = listOf(
         "CREATE TRIGGER IF NOT EXISTS `${table}_uid_on_insert` AFTER INSERT ON `$table` " +
             "WHEN NEW.uid = '' BEGIN " +
@@ -105,6 +108,19 @@ object VaultSchema {
     }
 
     /**
+     * 4 -> 5: add `isPinned`, `isArchived` and `color` to notes. Plain `ADD COLUMN` with a
+     * default, so every existing note stays as it was: unpinned, not archived, no colour. The
+     * statements match Room's export of version 5 (app/schemas), which the schema test checks.
+     */
+    val MIGRATION_4_5 = object : Migration(VERSION_WITH_SUBTASKS, VERSION_WITH_NOTE_ORGANIZING) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `notes` ADD COLUMN `isPinned` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `notes` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `notes` ADD COLUMN `color` TEXT NOT NULL DEFAULT 'none'")
+        }
+    }
+
+    /**
      * The builder for the vault database: every migration and the trigger callback, and no
      * destructive fallback. Room's default (`requireMigration`) makes a missing migration
      * fail loudly instead of recreating the tables, which would erase every note.
@@ -117,7 +133,7 @@ object VaultSchema {
      * new migration here explicitly.
      */
     fun <T : RoomDatabase> install(builder: RoomDatabase.Builder<T>): RoomDatabase.Builder<T> =
-        builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).addCallback(CALLBACK)
+        builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).addCallback(CALLBACK)
 
     /** Installs the triggers on a freshly created database. */
     val CALLBACK = object : RoomDatabase.Callback() {

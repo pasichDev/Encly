@@ -12,7 +12,7 @@ import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 
 /** Room schema version. Every bump needs a migration and an exported schema in app/schemas. */
-const val DB_VERSION = 4
+const val DB_VERSION = 5
 
 @Database(
     entities = [Note::class, Tag::class, Task::class, Subtask::class],

@@ -63,6 +63,9 @@ object BackupMapper {
                     dateCreate = note.dateCreate,
                     tagUid = note.tagId?.let(tagUidById::get),
                     isTrash = note.isTrash,
+                    isPinned = note.isPinned,
+                    isArchived = note.isArchived,
+                    color = note.color,
                 )
             },
             tasks = snapshot.tasks.map { task ->
@@ -222,6 +225,9 @@ object BackupImporter {
         tagId = tagUid?.let(tagIds::get),
         isTrash = isTrash,
         uid = uid,
+        isPinned = isPinned,
+        isArchived = isArchived,
+        color = color,
     )
 
     private fun BackupTask.toEntity(tagIds: Map<String, Long>) = Task(
