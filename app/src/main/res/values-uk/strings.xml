@@ -344,7 +344,7 @@
         <item quantity="other">Виконано %1$d з %2$d завдання</item>
     </plurals>
     <string name="settings_backup">Резервна копія</string>
-    <string name="backup_settings_subtitle">Зашифрований експорт та імпорт</string>
+    <string name="backup_settings_subtitle">Зашифрована копія, імпорт і Markdown</string>
     <string name="backup_title">Резервна копія</string>
     <string name="backup_intro_title">Зашифровано вашою фразою відновлення</string>
     <string name="backup_intro_body">Резервна копія містить усі ваші нотатки, завдання та мітки, зашифровані вашою фразою відновлення з 12 слів. Encly нікуди її не вивантажує: ви самі обираєте, де зберегти файл. На новому телефоні ті самі 12 слів її відновлять.</string>

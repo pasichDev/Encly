@@ -341,7 +341,7 @@
         <item quantity="other">%1$d sur %2$d tâches terminées</item>
     </plurals>
     <string name="settings_backup">Sauvegarde</string>
-    <string name="backup_settings_subtitle">Export et import chiffrés</string>
+    <string name="backup_settings_subtitle">Sauvegarde chiffrée, import et Markdown</string>
     <string name="backup_title">Sauvegarde</string>
     <string name="backup_intro_title">Chiffrée avec votre phrase de récupération</string>
     <string name="backup_intro_body">Une sauvegarde contient toutes vos notes, tâches et libellés, chiffrés avec votre phrase de récupération de 12 mots. Encly ne l\'envoie nulle part : vous choisissez où le fichier est enregistré. Sur un nouveau téléphone, les mêmes 12 mots la restaurent.</string>

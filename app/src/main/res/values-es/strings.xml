@@ -341,7 +341,7 @@
         <item quantity="other">%1$d de %2$d tareas completadas</item>
     </plurals>
     <string name="settings_backup">Copia de seguridad</string>
-    <string name="backup_settings_subtitle">Exportación e importación cifradas</string>
+    <string name="backup_settings_subtitle">Copia cifrada, importación y Markdown</string>
     <string name="backup_title">Copia de seguridad</string>
     <string name="backup_intro_title">Cifrada con tu frase de recuperación</string>
     <string name="backup_intro_body">Una copia de seguridad contiene todas tus notas, tareas y etiquetas, cifradas con tu frase de recuperación de 12 palabras. Encly nunca la sube a ningún sitio: tú eliges dónde se guarda el archivo. En un teléfono nuevo, las mismas 12 palabras la restauran.</string>

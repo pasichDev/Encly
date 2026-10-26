@@ -344,7 +344,7 @@
         <item quantity="other">Wykonano %1$d z %2$d zadania</item>
     </plurals>
     <string name="settings_backup">Kopia zapasowa</string>
-    <string name="backup_settings_subtitle">Szyfrowany eksport i import</string>
+    <string name="backup_settings_subtitle">Szyfrowana kopia, import i Markdown</string>
     <string name="backup_title">Kopia zapasowa</string>
     <string name="backup_intro_title">Zaszyfrowana Twoją frazą odzyskiwania</string>
     <string name="backup_intro_body">Kopia zapasowa zawiera wszystkie Twoje notatki, zadania i etykiety, zaszyfrowane 12-wyrazową frazą odzyskiwania. Encly nigdzie jej nie wysyła: to Ty wybierasz, gdzie zapisać plik. Na nowym telefonie te same 12 słów ją przywróci.</string>

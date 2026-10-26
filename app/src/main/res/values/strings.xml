@@ -354,7 +354,7 @@
         <item quantity="other">%1$d of %2$d tasks completed</item>
     </plurals>
     <string name="settings_backup">Backup</string>
-    <string name="backup_settings_subtitle">Encrypted export and import</string>
+    <string name="backup_settings_subtitle">Encrypted backup, import and Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Encrypted with your recovery phrase</string>
     <string name="backup_intro_body">A backup holds all your notes, tasks and tags, encrypted with your 12-word recovery phrase. Encly never uploads it: you choose where the file is saved. On a new phone, the same 12 words restore it.</string>

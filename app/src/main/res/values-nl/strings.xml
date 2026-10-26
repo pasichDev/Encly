@@ -338,7 +338,7 @@
         <item quantity="other">%1$d van %2$d taken voltooid</item>
     </plurals>
     <string name="settings_backup">Back-up</string>
-    <string name="backup_settings_subtitle">Versleutelde export en import</string>
+    <string name="backup_settings_subtitle">Versleutelde back-up, import en Markdown</string>
     <string name="backup_title">Back-up</string>
     <string name="backup_intro_title">Versleuteld met je herstelzin</string>
     <string name="backup_intro_body">Een back-up bevat al je notities, taken en labels, versleuteld met je herstelzin van 12 woorden. Encly uploadt hem nergens heen: jij kiest waar het bestand wordt opgeslagen. Op een nieuwe telefoon zetten dezelfde 12 woorden hem terug.</string>

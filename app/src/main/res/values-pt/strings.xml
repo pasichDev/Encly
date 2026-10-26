@@ -341,7 +341,7 @@
         <item quantity="other">%1$d de %2$d tarefas concluídas</item>
     </plurals>
     <string name="settings_backup">Backup</string>
-    <string name="backup_settings_subtitle">Exportação e importação criptografadas</string>
+    <string name="backup_settings_subtitle">Backup criptografado, importação e Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Criptografado com sua frase de recuperação</string>
     <string name="backup_intro_body">Um backup contém todas as suas notas, tarefas e etiquetas, criptografadas com sua frase de recuperação de 12 palavras. O Encly nunca o envia para lugar nenhum: você escolhe onde o arquivo é salvo. Em um celular novo, as mesmas 12 palavras o restauram.</string>

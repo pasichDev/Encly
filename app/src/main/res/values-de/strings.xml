@@ -338,7 +338,7 @@
         <item quantity="other">%1$d von %2$d Aufgaben erledigt</item>
     </plurals>
     <string name="settings_backup">Backup</string>
-    <string name="backup_settings_subtitle">Verschlüsselter Export und Import</string>
+    <string name="backup_settings_subtitle">Verschlüsselte Sicherung, Import und Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Mit deiner Wiederherstellungsphrase verschlüsselt</string>
     <string name="backup_intro_body">Ein Backup enthält alle deine Notizen, Aufgaben und Labels, verschlüsselt mit deiner 12-Wörter-Wiederherstellungsphrase. Encly lädt es nirgendwo hoch: Du entscheidest, wo die Datei gespeichert wird. Auf einem neuen Handy stellen dieselben 12 Wörter es wieder her.</string>
