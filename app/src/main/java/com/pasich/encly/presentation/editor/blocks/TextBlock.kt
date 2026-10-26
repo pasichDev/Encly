@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.presentation.designsystem.EDITOR_PLACEHOLDER_ALPHA
 import com.pasich.encly.presentation.designsystem.lineHeight
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
@@ -72,7 +73,9 @@ fun TextBlock(
                 if (showPlaceholder && state.text.isEmpty()) {
                     Text(
                         text = stringResource(block.placeholder),
-                        style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                        style = style.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EDITOR_PLACEHOLDER_ALPHA),
+                        ),
                     )
                 }
                 innerTextField()

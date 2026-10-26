@@ -14,6 +14,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 ### Fixed
 
 - Blank lines you add between paragraphs are no longer erased when a note is closed and reopened (#76).
+- The hints in empty editor blocks ("Text", "List item", ...) show only on the block you are in and are much lighter, so they no longer look like typed text (#76).
 
 ### Added
 

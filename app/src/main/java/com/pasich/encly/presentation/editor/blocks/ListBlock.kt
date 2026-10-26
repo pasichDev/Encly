@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.res.stringResource
@@ -44,6 +45,7 @@ import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.CheckboxSize
+import com.pasich.encly.presentation.designsystem.EDITOR_PLACEHOLDER_ALPHA
 import com.pasich.encly.presentation.designsystem.EnclyCheckbox
 import com.pasich.encly.presentation.designsystem.lineHeight
 import com.pasich.encly.presentation.designsystem.listItemGap
@@ -342,6 +344,7 @@ private fun ListItemField(
     val state = field.state
     val highlight = field.highlight
     val base = listTextStyle()
+    var focused by remember { mutableStateOf(false) }
     // Checked items stay editable; they are only muted and struck through.
     val style = if (checked) {
         base.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, textDecoration = TextDecoration.LineThrough)
@@ -356,11 +359,16 @@ private fun ListItemField(
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = WritingKeyboard,
         onTextLayout = highlight.onTextLayout,
-        modifier = modifier.then(highlight.modifier),
+        modifier = modifier.onFocusChanged { focused = it.isFocused }.then(highlight.modifier),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
-                if (state.text.isEmpty() && !isLocked) {
-                    Text(text = placeholder, style = base.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+                if (state.text.isEmpty() && !isLocked && focused) {
+                    Text(
+                        text = placeholder,
+                        style = base.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EDITOR_PLACEHOLDER_ALPHA),
+                        ),
+                    )
                 }
                 innerTextField()
             }
