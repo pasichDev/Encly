@@ -275,11 +275,6 @@ constructor(
     /** Moves the note to the archive, or back to the list; returns once the write completed. */
     suspend fun noteSetArchived(archived: Boolean): Boolean = persistence.setArchived(archived)
 
-    /** Pins the note, or unpins it. Stored with the next save, like the title. */
-    fun togglePin() {
-        if (!isReadTrashOnly) persistence.updateNote { it.copy(isPinned = !it.isPinned && !it.isArchived) }
-    }
-
     /** Marks the note with [color]. Stored with the next save, like the title. */
     fun updateColor(color: NoteColor) {
         if (!isReadTrashOnly) persistence.updateNote { it.copy(color = color.key) }

@@ -275,14 +275,16 @@ class EditNoteScreenTest : ComposeScreenTest() {
     }
 
     @Test
-    fun theMoreMenuOffersPinArchiveColourAndMarkdownExport() {
+    fun theMoreMenuOffersArchiveColourAndMarkdownExportButNoPin() {
         stored(text("body"))
         open(NOTE_ID)
 
         rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
 
         waitForText(str(R.string.note_archive))
-        listOf(R.string.note_pin, R.string.markdown_export).forEach { rule.onNodeWithText(str(it)).assertExists() }
+        rule.onNodeWithText(str(R.string.markdown_export)).assertExists()
+        // Pinning orders the notes list, so it is offered there, not inside a note.
+        assertEquals(0, countText(str(R.string.note_pin)))
         // Section headings are drawn in capitals.
         rule.onNodeWithText(str(R.string.note_color_title).uppercase()).assertExists()
         rule.onNodeWithContentDescription(str(R.string.note_color_teal)).assertExists()
@@ -302,35 +304,31 @@ class EditNoteScreenTest : ComposeScreenTest() {
     }
 
     @Test
-    fun anArchivedNoteOffersUnarchiveInsteadOfPin() {
+    fun anArchivedNoteOffersUnarchive() {
         Note(id = NOTE_ID, title = "Trip", value = "[]", date = 1L, isArchived = true).also { app.withNotes(it) }
         open(NOTE_ID)
 
         rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
 
         waitForText(str(R.string.note_unarchive))
-        assertEquals(0, countText(str(R.string.note_pin)))
         rule.onNodeWithText(str(R.string.note_unarchive)).performScrollTo().performClick()
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
         assertEquals(listOf("archived:$NOTE_ID=false"), app.notes.columnWrites)
     }
 
     @Test
-    fun pinningAndColouringAreSavedWithTheNote() {
+    fun colouringIsSavedWithTheNote() {
         stored(text("body"))
         open(NOTE_ID)
 
         rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
-        waitForText(str(R.string.note_pin))
+        waitForText(str(R.string.note_archive))
         rule.onNodeWithContentDescription(str(R.string.note_color_teal)).performScrollTo().performClick()
-        rule.onNodeWithText(str(R.string.note_pin)).performScrollTo().performClick()
-        waitFor { editor.state.value.note.isPinned }
-        assertEquals("teal", editor.state.value.note.color)
-        // Leaving the editor saves the note, with its pin and colour.
+        waitFor { editor.state.value.note.color == "teal" }
+        // Leaving the editor saves the note, with its colour.
         rule.onNodeWithContentDescription(str(R.string.back)).performClick()
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
 
-        assertTrue(app.notes.updatedNotes.last().isPinned)
         assertEquals("teal", app.notes.updatedNotes.last().color)
     }
 

@@ -31,14 +31,13 @@ enum class EditNoteBottomSheetAction {
     DUPLICATE,
     FIND,
     TRASH,
-    TOGGLE_PIN,
     EXPORT_MARKDOWN,
     ARCHIVE,
     UNARCHIVE,
 }
 
 /**
- * The editor's "More actions" sheet: text size, then pin, archive, find, duplicate, discard changes and delete. The
+ * The editor's "More actions" sheet: text size, then archive, find, duplicate, discard changes and delete. The
  * font itself is chosen app-wide in Settings, Appearance.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +68,7 @@ fun EditNoteBottomSheet(
                 modifier = Modifier.bleed(EnclyTheme.spacing.gutter),
                 contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
             )
-            PinAndArchiveRows(note = note.note, onAction = onAction, onDismiss = onDismiss)
+            ArchiveRow(note = note.note, onAction = onAction, onDismiss = onDismiss)
             EditorActionRows(onAction = onAction, onDismiss = onDismiss)
         }
     }
@@ -131,19 +130,9 @@ private fun LineSpacingSlider(selected: NoteLineSpacing, onSelect: (NoteLineSpac
     )
 }
 
-/** Pin (not for an archived note: it is never pinned) and archive, or unarchive. */
+/** Archive, or unarchive. Pinning is a list matter: it lives in the notes list's sheet only. */
 @Composable
-private fun PinAndArchiveRows(note: Note, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
-    if (!note.isArchived) {
-        EnclySheetRow(
-            title = stringResource(if (note.isPinned) R.string.note_unpin else R.string.note_pin),
-            icon = if (note.isPinned) EnclyIcons.PinOff else EnclyIcons.Pin,
-            onClick = {
-                onAction(EditNoteBottomSheetAction.TOGGLE_PIN)
-                onDismiss()
-            },
-        )
-    }
+private fun ArchiveRow(note: Note, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
     EnclySheetRow(
         title = stringResource(if (note.isArchived) R.string.note_unarchive else R.string.note_archive),
         icon = if (note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,

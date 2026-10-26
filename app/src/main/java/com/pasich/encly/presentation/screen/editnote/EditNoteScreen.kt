@@ -290,8 +290,6 @@ private fun EditorOverlays(
 
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
 
-                EditNoteBottomSheetAction.TOGGLE_PIN -> viewModel.togglePin()
-
                 EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id, title ->
                     markdownViewModel.start(MarkdownExportTarget.SingleNote(id, title))
                 }
