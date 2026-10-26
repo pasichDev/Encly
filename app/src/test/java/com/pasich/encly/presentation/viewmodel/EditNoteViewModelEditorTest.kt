@@ -8,6 +8,7 @@ import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.domain.repository.SettingsRepository
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
@@ -513,6 +514,7 @@ class EditNoteViewModelEditorTest {
             notesRepository = repository,
             savedStateHandle = handle,
             updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
             settingsRepository = settingsRepository,
             appScope = CoroutineScope(dispatcher),
             ioDispatcher = dispatcher,

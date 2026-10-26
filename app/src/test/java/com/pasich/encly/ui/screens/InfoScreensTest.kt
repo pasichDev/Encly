@@ -6,6 +6,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
+import com.pasich.encly.core.LINK_REPOSITORY
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.FaqScreen
@@ -33,10 +34,26 @@ class InfoScreensTest : ComposeScreenTest() {
     }
 
     @Test
+    fun aboutLinksTheSourceCodeInEveryBuild() {
+        setNavScreen(route = NavRoutes.AboutRoute.name) { nav -> AboutScreen(nav) }
+
+        scrollToText(str(R.string.about_source_code))
+        scrollToText(str(R.string.about_source_code_desc))
+        assertEquals("https://github.com/pasichDev/Encly", LINK_REPOSITORY)
+    }
+
+    @Test
     fun aboutOffersARatingOnlyInThePlayBuild() {
         setNavScreen(route = NavRoutes.AboutRoute.name) { nav -> AboutScreen(nav) }
 
         assertEquals(BuildConfig.STORE_RATING_ENABLED, countText(str(R.string.about_rate_app)) > 0)
+    }
+
+    @Test
+    fun aboutLinksTheSupportPageOnlyInTheFdroidBuild() {
+        setNavScreen(route = NavRoutes.AboutRoute.name) { nav -> AboutScreen(nav) }
+
+        assertEquals(BuildConfig.DONATIONS_ENABLED, countText(str(R.string.about_support_dev_desc)) > 0)
     }
 
     @Test
@@ -77,6 +94,15 @@ class InfoScreensTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(R.string.donation_title)).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 4)
+    }
+
+    @Test
+    fun supportOffersKofi() {
+        setNavScreen(route = NavRoutes.SupportRoute.name) { nav -> SupportScreen(nav) }
+
+        scrollToText("Ko-fi")
+        scrollToText(str(R.string.support_method_kofi_hint))
+        scrollToText(str(R.string.support_browser_note))
     }
 
     @Test

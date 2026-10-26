@@ -100,8 +100,9 @@ object EnclyIcons {
     val More: ImageVector by lazy {
         enclyIcon(
             "More",
-            dots = "M10.9 5.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM10.9 12a1.1 1.1 0 1 0 2.2 0" +
-                "a1.1 1.1 0 1 0 -2.2 0zM10.9 18.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0z",
+            // Dots about as heavy as the other icons' strokes, so it doesn't read fainter in a bar.
+            dots = "M10.4 5a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0zM10.4 12a1.6 1.6 0 1 0 3.2 0" +
+                "a1.6 1.6 0 1 0 -3.2 0zM10.4 19a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0z",
         )
     }
 
@@ -330,6 +331,13 @@ object EnclyIcons {
         )
     }
 
+    val ChevronUp: ImageVector by lazy {
+        enclyIcon(
+            "ChevronUp",
+            "M6 14.5l6-6 6 6",
+        )
+    }
+
     val ChevronDown: ImageVector by lazy {
         enclyIcon(
             "ChevronDown",
@@ -421,6 +429,50 @@ object EnclyIcons {
             "M6.8 11a1 1 0 1 0 2 0a1 1 0 1 0 -2 0z",
             "M9.5 7.3a1 1 0 1 0 2 0a1 1 0 1 0 -2 0z",
             "M14 7.8a1 1 0 1 0 2 0a1 1 0 1 0 -2 0z",
+        )
+    }
+
+    /** A pushpin: the note stays at the top of the list. */
+    val Pin: ImageVector by lazy {
+        enclyIcon(
+            "Pin",
+            "M9 4h6l-.8 5.2L17 12v1.5H7V12l2.8-2.8z",
+            "M12 13.5V20",
+        )
+    }
+
+    val PinOff: ImageVector by lazy {
+        enclyIcon(
+            "PinOff",
+            "M9 4h6l-.8 5.2L17 12v1.5H7V12l2.8-2.8z",
+            "M12 13.5V20M4.5 4.5l15 15",
+        )
+    }
+
+    /** A box with a lid: the archive. */
+    val Archive: ImageVector by lazy {
+        enclyIcon(
+            "Archive",
+            "M4 5h16v4H4z",
+            "M5.5 9v8.5A1.5 1.5 0 0 0 7 19h10a1.5 1.5 0 0 0 1.5-1.5V9",
+            "M10 13h4",
+        )
+    }
+
+    val Unarchive: ImageVector by lazy {
+        enclyIcon(
+            "Unarchive",
+            "M4 5h16v4H4z",
+            "M5.5 9v8.5A1.5 1.5 0 0 0 7 19h10a1.5 1.5 0 0 0 1.5-1.5V9",
+            "M12 16v-5M9.5 13.5l2.5-2.5 2.5 2.5",
+        )
+    }
+
+    /** An arrow leaving a tray: export. */
+    val Upload: ImageVector by lazy {
+        enclyIcon(
+            "Upload",
+            "M12 15V4M7 8.5l5-5 5 5M5 20h14",
         )
     }
 

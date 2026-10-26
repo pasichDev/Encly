@@ -1,15 +1,19 @@
 package com.pasich.encly.ui.screens
 
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
@@ -233,6 +237,47 @@ class MainScreenTest : ComposeScreenTest() {
             .forEach { rule.onNodeWithText(str(it)).assertExists() }
         rule.onNodeWithText(str(R.string.main_drawer_trash)).performClick()
         waitFor { currentRoute() == NavRoutes.TrashRoute.name }
+    }
+
+    @Test
+    fun theDrawerOffersArchiveAndImportAndLeadsToThem() {
+        show()
+        waitForText(str(R.string.empty_notes))
+
+        rule.onNodeWithContentDescription(str(R.string.open_menu)).performClick()
+        waitForText(str(R.string.main_drawer_archive))
+        rule.onNodeWithText(str(R.string.import_title)).assertExists()
+        rule.onNodeWithText(str(R.string.main_drawer_archive)).performClick()
+
+        waitFor { currentRoute() == NavRoutes.ArchiveRoute.name }
+    }
+
+    @Test
+    fun theDrawerImportOpensTheImportScreen() {
+        show()
+        waitForText(str(R.string.empty_notes))
+
+        rule.onNodeWithContentDescription(str(R.string.open_menu)).performClick()
+        waitForText(str(R.string.import_title))
+        rule.onNodeWithText(str(R.string.import_title)).performClick()
+
+        waitFor { currentRoute() == NavRoutes.ImportNotesRoute.name }
+    }
+
+    @Test
+    fun theDrawerShowsSupportAsAButtonOnlyWhereDonationsAreAllowed() {
+        show()
+        waitForText(str(R.string.empty_notes))
+
+        rule.onNodeWithContentDescription(str(R.string.open_menu)).performClick()
+        waitForText(str(R.string.main_drawer_faq))
+
+        val support = rule.onAllNodesWithText(str(R.string.main_drawer_support))
+        if (BuildConfig.DONATIONS_ENABLED) {
+            support.assertCountEquals(1)[0].assertHasClickAction()
+        } else {
+            support.assertCountEquals(0)
+        }
     }
 
     @Test

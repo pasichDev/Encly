@@ -108,19 +108,29 @@ class BlockFocusRegistryTest {
     }
 
     @Test
-    fun navigationFindsTheNextBlockAndTheFocusableBlockAbove() {
-        assertSame(blocks[1], registry.nextBlock(blocks[0].id))
-        assertNull(registry.nextBlock(blocks[2].id))
+    fun aSavedLinkIsSkippedWhenMovingUp() {
+        blocks[1] = Block.LinkBlock(MutableStateFlow(LinkDataBlock(url = "https://a.b")))
 
-        // The separator in between cannot take focus.
+        assertSame(blocks[0], registry.previousFocusableBlock(blocks[2].id))
+    }
+
+    @Test
+    fun neighboursSkipBlocksWithNoFieldAndStopAtTheEnds() {
+        assertSame(blocks[2], registry.nextFocusableBlock(blocks[0].id))
+        assertNull(registry.nextFocusableBlock(blocks[2].id))
         assertSame(blocks[0], registry.previousFocusableBlock(blocks[2].id))
         assertNull(registry.previousFocusableBlock(blocks[0].id))
     }
 
     @Test
-    fun aSavedLinkIsSkippedWhenMovingUp() {
-        blocks[1] = Block.LinkBlock(MutableStateFlow(LinkDataBlock(url = "https://a.b")))
+    fun aColumnIsHandedToTheFieldAndKeepsItsDirection() {
+        val asked = mutableListOf<Pair<Float, Boolean>>()
+        registry.registerFocusTarget(blocks[0].id) { }
+        registry.registerCaretAtX(blocks[0].id) { x, fromBelow -> asked += x to fromBelow }
 
-        assertSame(blocks[0], registry.previousFocusableBlock(blocks[2].id))
+        registry.focus(FocusRequest(blocks[0].id, caretX = 42f, fromBelow = true))
+        registry.focus(FocusRequest(blocks[0].id, caretX = 7f))
+
+        assertEquals(listOf(42f to true, 7f to false), asked)
     }
 }

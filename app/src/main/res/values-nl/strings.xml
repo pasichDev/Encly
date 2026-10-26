@@ -7,6 +7,7 @@
     <string name="about_faq_title">Veelgestelde vragen</string>
     <string name="about_feedback">Feedback</string>
     <string name="about_feedback_desc">Meld een bug of stel een verbetering voor op GitHub</string>
+    <string name="about_support_dev_desc">Waarom het telt en hoe je helpt via Ko-fi</string>
     <string name="about_no_browser">Geen browser gevonden. Open de link handmatig: %1$s</string>
     <string name="about_no_mail_client">Geen e-mailapp gevonden</string>
     <string name="about_privacy_policy">Privacybeleid</string>
@@ -42,13 +43,15 @@
     <string name="biometric_prompt_use_pin">Pincode gebruiken</string>
     <string name="biometric_unavailable">Biometrische verificatie is niet beschikbaar</string>
 
-    <string name="block_add">Blok toevoegen</string>
+    <string name="block_more_tools">Meer bloktools</string>
     <string name="block_bulleted_list">Lijst met opsommingstekens</string>
     <string name="block_checklist">Checklist</string>
     <string name="block_heading">Kop</string>
     <string name="block_heading_level">Kop %1$d</string>
     <string name="block_link">Link</string>
     <string name="block_list">Lijst</string>
+    <string name="checklist_lock">Checklist vergrendelen</string>
+    <string name="checklist_unlock">Checklist ontgrendelen</string>
     <string name="block_move_down">Omlaag verplaatsen</string>
     <string name="block_move_up">Omhoog verplaatsen</string>
     <string name="block_numbered_list">Genummerde lijst</string>
@@ -83,7 +86,7 @@
     <string name="dialog_message">Weet je zeker dat je deze notitie definitief wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="dialog_title">Notitie verwijderen?</string>
 
-    <string name="donation_description">Met je steun kunnen we nieuwe functies toevoegen, bugs oplossen en de app verbeteren. Elk bedrag wordt enorm gewaardeerd!</string>
+    <string name="donation_description">Encly is gratis en open source, zonder advertenties, tracking en accounts. Donaties zijn de enige inkomsten.</string>
     <string name="donation_title">Steun de ontwikkeling</string>
 
     <string name="done">Klaar</string>
@@ -136,7 +139,7 @@
     <string name="faq_section_security">Beveiliging en herstel</string>
     <string name="faq_section_settings">Instellingen</string>
     <string name="faq_section_troubleshooting">Problemen oplossen</string>
-    <string name="faq_storage_a">Notities, labels en taken worden alleen opgeslagen in de lokale SQLCipher-database van Encly. Er is geen cloudsynchronisatie en geen automatische back-up: je kunt zelf een versleutelde back-up exporteren via Instellingen → Back-up.</string>
+    <string name="faq_storage_a">Notities, labels en taken worden alleen opgeslagen in de lokale SQLCipher-database van Encly. Er is geen cloudsynchronisatie en geen automatische back-up: je kunt zelf een versleutelde back-up exporteren via Instellingen → Back-up, of een leesbare Markdown-kopie, die niet versleuteld is.</string>
     <string name="faq_storage_q">Waar worden mijn gegevens opgeslagen?</string>
     <string name="faq_tags_a">Labels groeperen je notities. Je kunt ze maken, hernoemen, verbergen en verwijderen, in elke volgorde slepen en het startscherm op label filteren.</string>
     <string name="faq_tags_q">Hoe werken labels?</string>
@@ -337,7 +340,7 @@
         <item quantity="other">%1$d van %2$d taken voltooid</item>
     </plurals>
     <string name="settings_backup">Back-up</string>
-    <string name="backup_settings_subtitle">Versleutelde export en import</string>
+    <string name="backup_settings_subtitle">Versleutelde back-up, import en Markdown</string>
     <string name="backup_title">Back-up</string>
     <string name="backup_intro_title">Versleuteld met je herstelzin</string>
     <string name="backup_intro_body">Een back-up bevat al je notities, taken en labels, versleuteld met je herstelzin van 12 woorden. Encly uploadt hem nergens heen: jij kiest waar het bestand wordt opgeslagen. Op een nieuwe telefoon zetten dezelfde 12 woorden hem terug.</string>
@@ -540,11 +543,11 @@
     <string name="support_fact_free_title">Alles is al van jou</string>
     <string name="support_fact_free_desc">Elke functie is er voor iedereen. Niets zit achter een betaling.</string>
     <string name="support_fact_private_title">Geen advertenties, geen tracking</string>
-    <string name="support_fact_private_desc">Encly ziet je notities nooit en verdient niets aan data. Steun is de enige manier waarop het zich bedruipt.</string>
-    <string name="support_fact_uses_title">Waar het naartoe gaat</string>
-    <string name="support_fact_uses_desc">Nieuwe functies, beveiligingsaudit en tests, ontwerp en fixes.</string>
-    <string name="support_kofi_button">Steunen op Ko-fi</string>
-    <string name="support_kofi_note">Opent ko-fi.com in je browser. Elk bedrag helpt.</string>
+    <string name="support_fact_private_desc">Encly ziet je notities nooit en verdient niets aan data. Alleen donaties betalen ervoor.</string>
+    <string name="support_fact_uses_title">Waar het geld heen gaat</string>
+    <string name="support_fact_uses_desc">Testapparaten (volgende doel: een Mac mini om te bouwen en testen) en tijd voor releases en fixes.</string>
+    <string name="support_method_kofi_hint">Kaart of PayPal, eenmalig of maandelijks</string>
+    <string name="support_browser_note">Opent ko-fi.com in je browser. Encly zelf verwerkt nooit betalingen.</string>
     <string name="faq_note_actions_q">Wat doet lang drukken op een notitie?</string>
     <string name="faq_note_actions_a">Het opent de acties van de notitie: het label wijzigen, een korte beschrijving op de kaart toevoegen, de notitie dupliceren of naar de prullenbak verplaatsen.</string>
     <string name="faq_trash_q">Hoe krijg ik een verwijderde notitie terug?</string>
@@ -601,4 +604,51 @@
     <string name="template_project_decisions">Beslissingen</string>
     <string name="template_project_questions">Open vragen</string>
     <string name="template_checklist_todo">Te doen</string>
+    <string name="note_pin">Vastmaken</string>
+    <string name="note_unpin">Losmaken</string>
+    <string name="note_archive">Archiveren</string>
+    <string name="note_unarchive">Uit archief halen</string>
+    <string name="notes_section_pinned">Vastgemaakt</string>
+    <string name="notes_section_other">Overige</string>
+    <string name="main_drawer_archive">Archief</string>
+    <string name="archive_empty_title">Het archief is leeg</string>
+    <string name="archive_empty_desc">Gearchiveerde notities verdwijnen uit de lijst en de zoekopdracht, maar blijven in de kluis. Archiveer een notitie via het menu.</string>
+    <string name="note_archive_failed">De notitie kon niet worden gearchiveerd</string>
+    <string name="note_unarchive_failed">De notitie kon niet uit het archief worden gehaald</string>
+    <string name="note_color_title">Kleur</string>
+    <string name="note_color_none">Geen kleur</string>
+    <string name="note_color_red">Rood</string>
+    <string name="note_color_orange">Oranje</string>
+    <string name="note_color_yellow">Geel</string>
+    <string name="note_color_green">Groen</string>
+    <string name="note_color_teal">Turquoise</string>
+    <string name="note_color_blue">Blauw</string>
+    <string name="note_color_purple">Paars</string>
+    <string name="note_color_pink">Roze</string>
+    <string name="markdown_export">Exporteren als Markdown</string>
+    <string name="backup_section_markdown">Leesbare export</string>
+    <string name="markdown_export_desc">Sla alle notities en taken op als leesbare .md-bestanden in een .zip. Het bestand is niet versleuteld.</string>
+    <string name="markdown_export_warning_title">Exporteren zonder versleuteling?</string>
+    <string name="markdown_export_warning_body">Het geëxporteerde bestand is niet versleuteld. Iedereen die het in handen krijgt, kan je notities lezen. Waar je het ook opslaat, ook in een cloudmap, komt een leesbare kopie te staan die Encly niet kan beschermen of terughalen. Daarna bevestig je met je pincode.</string>
+    <string name="markdown_export_done">Markdown-export opgeslagen</string>
+    <string name="faq_markdown_q">Kan ik mijn notities als Markdown exporteren?</string>
+    <string name="faq_markdown_a">Ja. Kies in het menu van een notitie ‘Exporteren als Markdown’ voor één .md-bestand, of ga naar Instellingen → Back-up → ‘Exporteren als Markdown’ voor een .zip met alle notities (gearchiveerde in een map archive, zonder prullenbak) en een takenbestand. Deze bestanden zijn niet versleuteld: Encly waarschuwt eerst, vraagt om je pincode en slaat alleen op waar jij kiest.</string>
+    <string name="settings_swipe_section">Veegacties</string>
+    <string name="settings_swipe_enabled">Vegen op notities</string>
+    <string name="settings_swipe_enabled_desc">Veeg een notitiekaart om erop te handelen</string>
+    <string name="settings_swipe_right">Naar rechts vegen</string>
+    <string name="settings_swipe_left">Naar links vegen</string>
+    <string name="swipe_choice_pin">Vastmaken of losmaken</string>
+    <string name="swipe_choice_color">Volgende kleur</string>
+    <string name="swipe_choice_delete">Naar prullenbak</string>
+    <string name="swipe_choice_none">Niets</string>
+    <string name="swipe_delete_title">Naar de prullenbak verplaatsen?</string>
+    <string name="swipe_delete_message">Je kunt de notitie uit de prullenbak terugzetten.</string>
+    <string name="faq_swipe_q">Wat doen veegbewegingen op een notitie?</string>
+    <string name="faq_swipe_a">Standaard maakt naar rechts vegen een notitie vast of los, en naar links archiveert ze. Onder Instellingen → Veegacties kies je per richting: vastmaken, archiveren, volgende kleur, naar prullenbak (vraagt altijd eerst) of niets, of zet je vegen uit. TalkBack biedt dezelfde acties in het actiemenu van de notitie.</string>
+    <string name="appearance_text_section">Tekst in notities</string>
+    <string name="appearance_text_desc">De standaard voor elke notitie. Een notitie kan via haar menu een eigen waarde instellen.</string>
+    <string name="note_text_use_default">Standaardtekstinstellingen gebruiken</string>
+    <string name="about_source_code">Broncode</string>
+    <string name="about_source_code_desc">Encly is open source: lees de code op GitHub</string>
 </resources>

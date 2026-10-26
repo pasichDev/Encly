@@ -7,6 +7,7 @@ import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
+import com.pasich.encly.core.common.AppStrings
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
@@ -22,6 +23,7 @@ import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.BackupPhraseSetup
 import com.pasich.encly.data.backup.PendingRestore
+import com.pasich.encly.data.export.MarkdownDocuments
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
@@ -30,7 +32,10 @@ import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.usecase.OnboardingUseCase
 import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.domain.usecase.tag.ReorderTagsUseCase
@@ -42,6 +47,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LockNowViewModel
 import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
+import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
@@ -75,6 +81,7 @@ internal class TestApp(context: Context) {
     val settings = FakeSettingsRepository()
     val security: SecurityManager = mock(SecurityManager::class.java)
     val documents: BackupDocuments = mock(BackupDocuments::class.java)
+    val markdownDocuments: MarkdownDocuments = mock(MarkdownDocuments::class.java)
     val store = InMemoryVaultDataStore()
     val backupManager = BackupManager(security, store, InMemorySharedPreferences())
     val sessionLock = SessionLockManager(security)
@@ -165,6 +172,9 @@ internal class TestApp(context: Context) {
         selectedTagHolder = selectedTag,
         settingsRepository = settings,
         updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(notes),
+        updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(notes),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(notes),
+        updateNoteColorUseCase = UpdateNoteColorUseCase(notes),
     )
 
     fun search() = NoteSearchViewModel(observeNotes, Dispatchers.Default)
@@ -204,6 +214,14 @@ internal class TestApp(context: Context) {
         documents = documents,
     )
 
+    fun markdownExport() = MarkdownExportViewModel(
+        securityManager = security,
+        sessionLockManager = sessionLock,
+        store = store,
+        documents = markdownDocuments,
+        strings = AppStrings(appContext),
+    )
+
     private val pendingRestore by lazy { PendingRestore(backupManager) }
 
     fun onboarding() = OnboardingViewModel(OnboardingUseCase(security, backupManager, pendingRestore), documents)
@@ -216,6 +234,7 @@ internal class TestApp(context: Context) {
             mapOf("idNote" to noteId, "copySource" to copySource, "isReadTrashOnly" to readTrashOnly),
         ),
         updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(notes),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(notes),
         settingsRepository = settings,
         appScope = appScope,
         // Main, not a worker: Compose tests run effects on an unconfined dispatcher, so an exit

@@ -71,6 +71,11 @@ sealed class Block {
         ),
         val blockType: BlockType,
         override val id: String = newBlockId(),
+        /**
+         * A locked checklist keeps its text out of reach (no focus, no keyboard) while its boxes
+         * still toggle. Stored as an optional `isLocked` key, only when true.
+         */
+        val locked: MutableStateFlow<Boolean> = MutableStateFlow(false),
     ) : Block()
 }
 

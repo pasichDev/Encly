@@ -7,6 +7,7 @@
     <string name="about_faq_title">Häufige Fragen</string>
     <string name="about_feedback">Feedback</string>
     <string name="about_feedback_desc">Einen Fehler melden oder eine Verbesserung auf GitHub vorschlagen</string>
+    <string name="about_support_dev_desc">Warum es wichtig ist und wie du über Ko-fi hilfst</string>
     <string name="about_no_browser">Kein Browser gefunden. Öffne den Link manuell: %1$s</string>
     <string name="about_no_mail_client">Keine E-Mail-App gefunden</string>
     <string name="about_privacy_policy">Datenschutzerklärung</string>
@@ -42,13 +43,15 @@
     <string name="biometric_prompt_use_pin">PIN verwenden</string>
     <string name="biometric_unavailable">Biometrische Authentifizierung ist nicht verfügbar</string>
 
-    <string name="block_add">Block hinzufügen</string>
+    <string name="block_more_tools">Weitere Block-Werkzeuge</string>
     <string name="block_bulleted_list">Aufzählung</string>
     <string name="block_checklist">Checkliste</string>
     <string name="block_heading">Überschrift</string>
     <string name="block_heading_level">Überschrift %1$d</string>
     <string name="block_link">Link</string>
     <string name="block_list">Liste</string>
+    <string name="checklist_lock">Checkliste sperren</string>
+    <string name="checklist_unlock">Checkliste entsperren</string>
     <string name="block_move_down">Nach unten verschieben</string>
     <string name="block_move_up">Nach oben verschieben</string>
     <string name="block_numbered_list">Nummerierte Liste</string>
@@ -83,7 +86,7 @@
     <string name="dialog_message">Möchtest du diese Notiz wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.</string>
     <string name="dialog_title">Notiz löschen?</string>
 
-    <string name="donation_description">Deine Unterstützung hilft uns, neue Funktionen hinzuzufügen, Fehler zu beheben und die App zu verbessern. Jeder Betrag ist willkommen!</string>
+    <string name="donation_description">Encly ist kostenlos und Open Source, ohne Werbung, Tracking und Konten. Spenden sind die einzige Einnahmequelle.</string>
     <string name="donation_title">Entwicklung unterstützen</string>
 
     <string name="done">Fertig</string>
@@ -136,7 +139,7 @@
     <string name="faq_section_security">Sicherheit und Wiederherstellung</string>
     <string name="faq_section_settings">Einstellungen</string>
     <string name="faq_section_troubleshooting">Fehlerbehebung</string>
-    <string name="faq_storage_a">Notizen, Labels und Aufgaben werden ausschließlich in der lokalen SQLCipher-Datenbank von Encly gespeichert. Es gibt keine Cloud-Synchronisierung und keine automatischen Backups: Ein verschlüsseltes Backup kannst du selbst unter Einstellungen → Backup exportieren.</string>
+    <string name="faq_storage_a">Notizen, Labels und Aufgaben werden ausschließlich in der lokalen SQLCipher-Datenbank von Encly gespeichert. Es gibt keine Cloud-Synchronisierung und keine automatischen Backups: Ein verschlüsseltes Backup kannst du selbst unter Einstellungen → Backup exportieren, außerdem eine lesbare Markdown-Kopie, die nicht verschlüsselt ist.</string>
     <string name="faq_storage_q">Wo werden meine Daten gespeichert?</string>
     <string name="faq_tags_a">Labels gruppieren deine Notizen. Du kannst sie erstellen, umbenennen, ausblenden und löschen, per Ziehen neu ordnen und den Startbildschirm danach filtern.</string>
     <string name="faq_tags_q">Wie funktionieren Labels?</string>
@@ -337,7 +340,7 @@
         <item quantity="other">%1$d von %2$d Aufgaben erledigt</item>
     </plurals>
     <string name="settings_backup">Backup</string>
-    <string name="backup_settings_subtitle">Verschlüsselter Export und Import</string>
+    <string name="backup_settings_subtitle">Verschlüsselte Sicherung, Import und Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Mit deiner Wiederherstellungsphrase verschlüsselt</string>
     <string name="backup_intro_body">Ein Backup enthält alle deine Notizen, Aufgaben und Labels, verschlüsselt mit deiner 12-Wörter-Wiederherstellungsphrase. Encly lädt es nirgendwo hoch: Du entscheidest, wo die Datei gespeichert wird. Auf einem neuen Handy stellen dieselben 12 Wörter es wieder her.</string>
@@ -540,11 +543,11 @@
     <string name="support_fact_free_title">Alles gehört schon dir</string>
     <string name="support_fact_free_desc">Jede Funktion steht allen zur Verfügung. Nichts ist hinter einer Zahlung versteckt.</string>
     <string name="support_fact_private_title">Keine Werbung, kein Tracking</string>
-    <string name="support_fact_private_desc">Encly sieht deine Notizen nie und verdient nichts an Daten. Unterstützung ist die einzige Finanzierung.</string>
-    <string name="support_fact_uses_title">Wofür sie verwendet wird</string>
-    <string name="support_fact_uses_desc">Neue Funktionen, Sicherheitsprüfung und Tests, Design und Fehlerbehebungen.</string>
-    <string name="support_kofi_button">Auf Ko-fi unterstützen</string>
-    <string name="support_kofi_note">Öffnet ko-fi.com im Browser. Jeder Betrag hilft.</string>
+    <string name="support_fact_private_desc">Encly sieht deine Notizen nie und verdient nichts an Daten. Nur Spenden finanzieren die App.</string>
+    <string name="support_fact_uses_title">Wohin das Geld fließt</string>
+    <string name="support_fact_uses_desc">Testgeräte (als Nächstes: ein Mac mini zum Bauen und Testen) und Zeit für Releases und Fehlerbehebungen.</string>
+    <string name="support_method_kofi_hint">Karte oder PayPal, einmalig oder monatlich</string>
+    <string name="support_browser_note">Öffnet ko-fi.com im Browser. Encly selbst wickelt nie Zahlungen ab.</string>
     <string name="faq_note_actions_q">Was bewirkt langes Drücken auf eine Notiz?</string>
     <string name="faq_note_actions_a">Es öffnet die Aktionen der Notiz: Label ändern, eine kurze Beschreibung für die Karte hinzufügen, die Notiz duplizieren oder in den Papierkorb verschieben.</string>
     <string name="faq_trash_q">Wie bekomme ich eine gelöschte Notiz zurück?</string>
@@ -601,4 +604,51 @@
     <string name="template_project_decisions">Entscheidungen</string>
     <string name="template_project_questions">Offene Fragen</string>
     <string name="template_checklist_todo">Zu erledigen</string>
+    <string name="note_pin">Anheften</string>
+    <string name="note_unpin">Anheften aufheben</string>
+    <string name="note_archive">Archivieren</string>
+    <string name="note_unarchive">Aus dem Archiv holen</string>
+    <string name="notes_section_pinned">Angeheftet</string>
+    <string name="notes_section_other">Weitere</string>
+    <string name="main_drawer_archive">Archiv</string>
+    <string name="archive_empty_title">Das Archiv ist leer</string>
+    <string name="archive_empty_desc">Archivierte Notizen verschwinden aus Liste und Suche, bleiben aber im Tresor. Archiviere eine Notiz über ihr Menü.</string>
+    <string name="note_archive_failed">Die Notiz konnte nicht archiviert werden</string>
+    <string name="note_unarchive_failed">Die Notiz konnte nicht aus dem Archiv geholt werden</string>
+    <string name="note_color_title">Farbe</string>
+    <string name="note_color_none">Keine Farbe</string>
+    <string name="note_color_red">Rot</string>
+    <string name="note_color_orange">Orange</string>
+    <string name="note_color_yellow">Gelb</string>
+    <string name="note_color_green">Grün</string>
+    <string name="note_color_teal">Petrol</string>
+    <string name="note_color_blue">Blau</string>
+    <string name="note_color_purple">Violett</string>
+    <string name="note_color_pink">Rosa</string>
+    <string name="markdown_export">Als Markdown exportieren</string>
+    <string name="backup_section_markdown">Lesbarer Export</string>
+    <string name="markdown_export_desc">Alle Notizen und Aufgaben als lesbare .md-Dateien in einer .zip speichern. Die Datei ist nicht verschlüsselt.</string>
+    <string name="markdown_export_warning_title">Ohne Verschlüsselung exportieren?</string>
+    <string name="markdown_export_warning_body">Die exportierte Datei ist nicht verschlüsselt. Jeder, der sie bekommt, kann deine Notizen lesen. Überall, wo du sie speicherst, auch in einem Cloud-Ordner, liegt eine lesbare Kopie, die Encly weder schützen noch zurückholen kann. Als Nächstes bestätigst du mit deiner PIN.</string>
+    <string name="markdown_export_done">Markdown-Export gespeichert</string>
+    <string name="faq_markdown_q">Kann ich meine Notizen als Markdown exportieren?</string>
+    <string name="faq_markdown_a">Ja. Wähle im Menü einer Notiz „Als Markdown exportieren“ für eine .md-Datei, oder nutze Einstellungen → Backup → „Als Markdown exportieren“ für eine .zip mit allen Notizen (archivierte im Ordner archive, ohne Papierkorb) und einer Aufgabendatei. Diese Dateien sind nicht verschlüsselt: Encly warnt dich vorher, fragt nach deiner PIN und speichert nur dort, wo du es festlegst.</string>
+    <string name="settings_swipe_section">Wischaktionen</string>
+    <string name="settings_swipe_enabled">Wischen auf Notizen</string>
+    <string name="settings_swipe_enabled_desc">Wische eine Notizkarte, um eine Aktion auszuführen</string>
+    <string name="settings_swipe_right">Nach rechts wischen</string>
+    <string name="settings_swipe_left">Nach links wischen</string>
+    <string name="swipe_choice_pin">Anheften oder lösen</string>
+    <string name="swipe_choice_color">Nächste Farbe</string>
+    <string name="swipe_choice_delete">In den Papierkorb</string>
+    <string name="swipe_choice_none">Nichts</string>
+    <string name="swipe_delete_title">In den Papierkorb legen?</string>
+    <string name="swipe_delete_message">Du kannst die Notiz aus dem Papierkorb wiederherstellen.</string>
+    <string name="faq_swipe_q">Was bewirken Wischgesten auf einer Notiz?</string>
+    <string name="faq_swipe_a">Standardmäßig heftet ein Wisch nach rechts eine Notiz an oder löst sie, ein Wisch nach links archiviert sie. Unter Einstellungen → Wischaktionen kannst du für jede Richtung Anheften, Archivieren, nächste Farbe, In den Papierkorb (fragt immer nach) oder nichts wählen oder das Wischen ausschalten. TalkBack bietet dieselben Aktionen im Aktionsmenü der Notiz an.</string>
+    <string name="appearance_text_section">Text in Notizen</string>
+    <string name="appearance_text_desc">Der Standard für jede Notiz. Eine Notiz kann in ihrem Menü eigene Werte festlegen.</string>
+    <string name="note_text_use_default">Standard-Texteinstellungen verwenden</string>
+    <string name="about_source_code">Quellcode</string>
+    <string name="about_source_code_desc">Encly ist Open Source: Lies den Code auf GitHub</string>
 </resources>

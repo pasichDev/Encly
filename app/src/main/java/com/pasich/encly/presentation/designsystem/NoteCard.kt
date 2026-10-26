@@ -16,15 +16,24 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.R
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.ui.theme.noteColorStyle
 
 /**
  * Title opacity of a card in the trash (design spec §4.6). Only the title fades: the excerpt and
@@ -41,8 +50,9 @@ data class NoteCardMeta(val tag: String? = null, val date: String? = null, val p
 /**
  * A note card (design spec §3.3): `surfaceContainer`, radius 16, padding 16, no border or shadow.
  * Title in titleMedium, excerpt in bodyMedium `onSurfaceVariant` cut at [excerptLines], then the
- * meta line. [highlight] marks search matches. [selected] draws a 2 dp `primary` ring and a check;
- * [dimmed] fades the title (trash), keeping every text at 4.5:1 or more.
+ * meta line. [highlight] marks search matches. A [noteColor] tints the card and adds an accent edge.
+ * [selected] draws a 2 dp `primary` ring and a check; [dimmed] fades the title (trash), keeping every
+ * text at 4.5:1 or more. A [pinned] note shows a small pin after its title.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -57,11 +67,15 @@ fun EnclyNoteCard(
     highlight: String = "",
     selected: Boolean = false,
     dimmed: Boolean = false,
+    pinned: Boolean = false,
+    noteColor: NoteColor = NoteColor.NONE,
 ) {
     val colors = MaterialTheme.colorScheme
+    val tint = remember(noteColor, colors) { noteColorStyle(noteColor, colors) }
+    val muted = tint?.onCardVariant ?: colors.onSurfaceVariant
     Surface(
         shape = MaterialTheme.shapes.medium,
-        color = colors.surfaceContainer,
+        color = tint?.card ?: colors.surfaceContainer,
         contentColor = colors.onSurface,
         border = if (selected) BorderStroke(EnclyTheme.spacing.stroke, colors.primary) else null,
         modifier = modifier
@@ -71,45 +85,68 @@ fun EnclyNoteCard(
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.labelGap),
-            modifier = Modifier.padding(EnclyTheme.spacing.m),
+            modifier = Modifier
+                .then(if (tint != null) Modifier.accentEdge(tint.accent, EnclyTheme.spacing.xxs) else Modifier)
+                .padding(EnclyTheme.spacing.m),
         ) {
-            if (!title.isNullOrEmpty() || selected) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    HighlightedText(
-                        text = title.orEmpty(),
-                        searchQuery = highlight,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (dimmed) colors.onSurface.copy(alpha = DIMMED_CARD_ALPHA) else colors.onSurface,
-                        maxLines = 2,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (selected) {
-                        Icon(
-                            EnclyIcons.CheckCircle,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
-                        )
-                    }
-                }
+            if (!title.isNullOrEmpty() || selected || pinned) {
+                NoteTitleRow(
+                    title = title.orEmpty(),
+                    highlight = highlight,
+                    state = TitleState(dimmed = dimmed, pinned = pinned, selected = selected, muted = muted),
+                )
             }
             if (excerpt.isNotEmpty()) {
                 HighlightedText(
                     text = excerpt,
                     searchQuery = highlight,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceVariant,
+                    color = muted,
                     maxLines = excerptLines,
                 )
             }
-            if (meta != NoteCardMeta()) NoteMetaLine(meta)
+            if (meta != NoteCardMeta()) NoteMetaLine(meta, muted)
+        }
+    }
+}
+
+/** What a card's title row marks besides the title. */
+private class TitleState(val dimmed: Boolean, val pinned: Boolean, val selected: Boolean, val muted: Color)
+
+/** The title, then the pin of a pinned note and the check of a selected one. */
+@Composable
+private fun NoteTitleRow(title: String, highlight: String, state: TitleState) {
+    val colors = MaterialTheme.colorScheme
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        HighlightedText(
+            text = title,
+            searchQuery = highlight,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (state.dimmed) colors.onSurface.copy(alpha = DIMMED_CARD_ALPHA) else colors.onSurface,
+            maxLines = 2,
+            modifier = Modifier.weight(1f),
+        )
+        if (state.pinned) {
+            Icon(
+                EnclyIcons.Pin,
+                contentDescription = stringResource(R.string.notes_section_pinned),
+                tint = state.muted,
+                modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+            )
+        }
+        if (state.selected) {
+            Icon(
+                EnclyIcons.CheckCircle,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+            )
         }
     }
 }
 
 @Composable
-private fun NoteMetaLine(meta: NoteCardMeta) {
-    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+private fun NoteMetaLine(meta: NoteCardMeta, muted: Color) {
     val style = EnclyTheme.typography.meta
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -133,12 +170,7 @@ private fun NoteMetaLine(meta: NoteCardMeta) {
 }
 
 @Composable
-private fun MetaItem(
-    icon: ImageVector,
-    text: String,
-    color: androidx.compose.ui.graphics.Color,
-    weight: FontWeight? = null,
-) {
+private fun MetaItem(icon: ImageVector, text: String, color: Color, weight: FontWeight? = null) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
@@ -152,6 +184,14 @@ private fun MetaItem(
             overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+/**
+ * The left edge of a coloured note card: a [width]-wide strip of [color] the full height of the
+ * card. The card's own shape clips it, so its ends follow the rounded corners.
+ */
+private fun Modifier.accentEdge(color: Color, width: Dp): Modifier = drawBehind {
+    drawRect(color = color, size = Size(width.toPx(), size.height))
 }
 
 /** A small tag label (e.g. on the Appearance preview): `primaryContainer`, radius 12. */

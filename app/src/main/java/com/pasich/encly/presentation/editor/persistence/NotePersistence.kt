@@ -5,6 +5,7 @@ import com.pasich.encly.core.common.suspendRunCatching
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.repository.NotesRepository
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.hasContent
@@ -51,10 +52,11 @@ private const val TAG = "NotePersistence"
  * delete or discard, or an explicit exit), no queued or later save writes the note again, so it
  * cannot bring a trashed note back or write edits over a discard.
  */
-@Suppress("TooManyFunctions") // Every write of the note, so all of them share one mutex.
+@Suppress("TooManyFunctions", "LongParameterList") // Every write of the note shares one mutex and its use cases.
 class NotePersistence(
     private val notesRepository: NotesRepository,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
+    private val updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,
     private val ioDispatcher: CoroutineDispatcher,
     private val readOnly: Boolean,
     private val blocks: () -> List<Block>,
@@ -85,7 +87,7 @@ class NotePersistence(
 
     // The title, tag and content last written to (or read from) the database. The autosave
     // only writes when the editor differs from it.
-    private var persistedSnapshot: String = _state.value.note.let { snapshotOf(it.title, it.tagId, "[]") }
+    private var persistedSnapshot: String = snapshotOf(_state.value.note, "[]")
 
     // The note as the editor opened it, for [hasChanges].
     private var openedSnapshot: String = persistedSnapshot
@@ -136,7 +138,7 @@ class NotePersistence(
         parsed?.takeIf { it.isNotEmpty() }?.let(showBlocks)
         val shown = if (isCopy) note.asCopy(copyTitle(note.title)) else note
         _state.value = LoadNoteState(note = shown, backupNote = shown)
-        persistedSnapshot = snapshotOf(shown.title, shown.tagId, contentJson())
+        persistedSnapshot = snapshotOf(shown, contentJson())
         openedSnapshot = persistedSnapshot
         loaded = true
         _status.value = SaveStatusNote.OLD
@@ -146,20 +148,20 @@ class NotePersistence(
 
     /**
      * Saves the note [AUTOSAVE_DEBOUNCE_MS] after the last change of [contentChanges], the
-     * title or the tag, if the editor then differs from what is stored. Opening a note saves nothing, and
+     * title, tag, pin or colour, if the editor then differs from what is stored. Opening a note saves nothing, and
      * the first edit is saved like any other.
      */
     @OptIn(FlowPreview::class)
     fun startAutosave(scope: CoroutineScope, contentChanges: Flow<Unit>) {
         autosaveJob?.cancel()
         autosaveJob = scope.launch {
-            combine(contentChanges, _state.map { it.note.title to it.note.tagId }.distinctUntilChanged()) { _, _ -> }
+            combine(contentChanges, _state.map { it.note.metaKey() }.distinctUntilChanged()) { _, _ -> }
                 .debounce(AUTOSAVE_DEBOUNCE_MS)
                 .collect { save(onlyIfChanged = true) }
         }
     }
 
-    /** Changes the note's metadata (title, tag) in the editor; it is stored with the next save. */
+    /** Changes the note's metadata (title, tag, pin, colour) in the editor; it is stored with the next save. */
     fun updateNote(transform: (Note) -> Note) {
         _state.value = _state.value.copy(note = transform(_state.value.note))
     }
@@ -182,7 +184,7 @@ class NotePersistence(
         }
 
         val blocksJson = contentJson()
-        val snapshot = snapshotOf(currentNote.title, currentNote.tagId, blocksJson)
+        val snapshot = snapshotOf(currentNote, blocksJson)
         if (onlyIfChanged && snapshot == persistedSnapshot) return@withLock true
 
         _status.value = SaveStatusNote.SAVING
@@ -263,6 +265,27 @@ class NotePersistence(
         ok
     }
 
+    /**
+     * Moves the note to the archive (unpinning it) or back to the list, with the editor's
+     * content. The editor is closed afterwards, like [moveToTrash].
+     */
+    suspend fun setArchived(archived: Boolean): Boolean = saveMutex.withLock {
+        val currentNote = _state.value.note
+        if (!loaded || currentNote.id == -1L) return@withLock false
+
+        val updated = currentNote.copy(
+            value = contentJson(),
+            isArchived = archived,
+            isPinned = currentNote.isPinned && !archived,
+        )
+        val ok = updateNoteArchiveStatusUseCase.invoke(updated, archived).isSuccess
+        if (ok) {
+            _state.value = _state.value.copy(note = updated)
+            close()
+        }
+        ok
+    }
+
     /** Whether the editor holds nothing to keep: a new note without a title or content. */
     val isBlankDraft: Boolean
         get() = _state.value.note.let { it.id == -1L && it.title.isBlank() } && blocks().none { it.hasContent() }
@@ -275,7 +298,9 @@ class NotePersistence(
         val (note, backup) = _state.value.let { it.note to it.backupNote }
         if (note.id != backup.id) return true
         return note.title != backup.title || note.tagId != backup.tagId ||
-            snapshotOf(note.title, note.tagId, contentJson()) != openedSnapshot
+            note.isPinned != backup.isPinned || note.color != backup.color ||
+            note.textSize != backup.textSize || note.lineSpacing != backup.lineSpacing ||
+            snapshotOf(note, contentJson()) != openedSnapshot
     }
 
     /** Stores a copy of the note, titled by [copyTitle]. Returns its id, or -1 on failure. */
@@ -284,7 +309,12 @@ class NotePersistence(
         val content = contentJson()
         withContext(ioDispatcher) {
             notesRepository.insertNote(
-                Note.new(title = copyTitle(currentNote.title), value = content, tagId = currentNote.tagId),
+                Note.new(title = copyTitle(currentNote.title), value = content, tagId = currentNote.tagId)
+                    .copy(
+                        color = currentNote.color,
+                        textSize = currentNote.textSize,
+                        lineSpacing = currentNote.lineSpacing,
+                    ),
             )
         }.getOrNull()?.takeIf { it > 0L } ?: -1L
     }
@@ -308,7 +338,21 @@ class NotePersistence(
     }
 }
 
-private fun snapshotOf(title: String, tagId: Long?, blocksJson: String): String = "$title\u0000$tagId\u0000$blocksJson"
+private fun snapshotOf(note: Note, blocksJson: String): String =
+    "${note.title}\u0000${note.tagId}\u0000${note.isPinned}\u0000${note.color}\u0000" +
+        "${note.textSize}\u0000${note.lineSpacing}\u0000$blocksJson"
+
+/** What besides the content makes the editor differ from the stored note; the autosave watches it. */
+private data class NoteMeta(
+    val title: String,
+    val tagId: Long?,
+    val isPinned: Boolean,
+    val color: String,
+    val textSize: Int?,
+    val lineSpacing: Int?,
+)
+
+private fun Note.metaKey() = NoteMeta(title, tagId, isPinned, color, textSize, lineSpacing)
 
 /**
  * Stores [note] with [blocksJson] as its content; returns the stored note, or null. Its date
@@ -329,27 +373,39 @@ private suspend fun NotesRepository.updateStored(note: Note, backup: Note, block
 private fun List<Block>.frozen(): List<Block> = map { block ->
     when (block) {
         is Block.TextBlock -> block.copy(text = MutableStateFlow(block.text.value))
+
         is Block.HBlock -> block.copy(text = MutableStateFlow(block.text.value))
+
         is Block.QuoteBlock -> block.copy(text = MutableStateFlow(block.text.value))
+
         is Block.LinkBlock -> block.copy(block = MutableStateFlow(block.block.value))
-        is Block.ListBlock -> block.copy(items = MutableStateFlow(block.items.value))
+
+        is Block.ListBlock -> block.copy(
+            items = MutableStateFlow(block.items.value),
+            locked = MutableStateFlow(block.locked.value),
+        )
+
         is Block.SeparatorBlock -> block
     }
 }
 
 /** Inserts [note] as a new row with [blocksJson] as its content; returns its id, or null. */
-private suspend fun NotesRepository.insertDraft(note: Note, blocksJson: String): Long? =
-    insertNote(Note.new(title = note.title, value = blocksJson, tagId = note.tagId))
-        .getOrNull()
-        ?.takeIf { it > 0L }
+private suspend fun NotesRepository.insertDraft(note: Note, blocksJson: String): Long? = insertNote(
+    Note.new(title = note.title, value = blocksJson, tagId = note.tagId)
+        .copy(isPinned = note.isPinned, color = note.color, textSize = note.textSize, lineSpacing = note.lineSpacing),
+)
+    .getOrNull()
+    ?.takeIf { it > 0L }
 
 /**
  * [this] note as a new, unsaved copy (id = -1) titled [copyTitle]. "No tag" stays null: it has
- * exactly one representation.
+ * exactly one representation. The copy keeps the colour but starts unpinned and unarchived.
  */
 private fun Note.asCopy(copyTitle: String): Note = copy(
     id = -1,
     title = copyTitle,
     date = System.currentTimeMillis(),
     uid = "",
+    isPinned = false,
+    isArchived = false,
 )

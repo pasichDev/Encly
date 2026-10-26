@@ -13,18 +13,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.presentation.designsystem.EDITOR_PLACEHOLDER_ALPHA
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.lineHeight
 import com.pasich.encly.presentation.editor.BlockActions
@@ -54,6 +58,8 @@ fun QuoteBlock(
     // Enter ends the quote: the text after the cursor goes on as a paragraph (BlockInput).
     val input = remember { BlockInput(BlockField.Styled) { actions } }
     val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
+    RegisterCaretAtX(blockActions, state, highlight)
+    var focused by remember { mutableStateOf(false) }
     val quoteStyle = EnclyTheme.typography.quote.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = fontStyles.sizes.quote,
@@ -89,11 +95,12 @@ fun QuoteBlock(
             onTextLayout = highlight.onTextLayout,
             modifier = fieldModifier
                 .focusRequester(focusRequester)
+                .onFocusChanged { focused = it.isFocused }
                 .fillMaxWidth()
                 .then(highlight.modifier)
-                .textBlockKeys(state, blockActions),
+                .textBlockKeys(state, blockActions, highlight),
             decorator = { innerTextField ->
-                QuoteDecoration(state.text.isEmpty(), quoteStyle, innerTextField)
+                QuoteDecoration(state.text.isEmpty() && focused, quoteStyle, innerTextField)
             },
         )
         // The closing mark: the opening one turned around, at the end of the quote.
@@ -115,7 +122,9 @@ private fun QuoteDecoration(showPlaceholder: Boolean, style: TextStyle, innerTex
         if (showPlaceholder) {
             Text(
                 text = stringResource(R.string.quote),
-                style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = style.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EDITOR_PLACEHOLDER_ALPHA),
+                ),
             )
         }
         innerTextField()

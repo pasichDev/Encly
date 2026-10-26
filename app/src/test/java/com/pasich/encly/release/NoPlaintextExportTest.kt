@@ -9,7 +9,10 @@ import java.io.File
  * Plaintext never leaves the vault by a side door (issue #15): no share sheet, no FileProvider
  * handing out files, no notifications or alarms that could show or schedule note content, and no
  * clipboard write except through SensitiveClip, which marks the clip sensitive and clears it.
- * The one way out is an encrypted backup written through the system document picker.
+ * There are two ways out, both started by the user and written through the system document picker: an
+ * encrypted backup, and a Markdown export, which is plaintext and therefore sits behind a warning and a
+ * re-authentication (see SECURITY.md → Markdown export). Creating a document is allowed only in the
+ * two files that host them.
  *
  * Scans every source and resource under app/src/main; comments are skipped, so a comment may
  * still name what is banned.
@@ -33,7 +36,8 @@ class NoPlaintextExportTest {
             }
             .toList()
         assertTrue(
-            "Plaintext must not leave the app except as an encrypted backup (see SECURITY.md): $offenders",
+            "Plaintext must not leave the app except as an encrypted backup or the warned, re-authenticated " +
+                "Markdown export (see SECURITY.md): $offenders",
             offenders.isEmpty(),
         )
     }
@@ -51,6 +55,8 @@ class NoPlaintextExportTest {
             "clipboard write" to "clipboard.setPrimaryClip(ClipData.newPlainText(\"\", text))",
             "clipboard write" to "clipboard.setClipEntry(entry)",
             "clipboard write" to "val clipboard = LocalClipboardManager.current",
+            "document creation" to "ActivityResultContracts.CreateDocument(\"text/plain\")",
+            "document creation" to "Intent(Intent.ACTION_CREATE_DOCUMENT)",
         )
         caught.forEach { (name, line) ->
             assertTrue("$name: $line", BANNED.getValue(name).matches(OTHER_FILE, line))
@@ -61,6 +67,8 @@ class NoPlaintextExportTest {
             OTHER_FILE to "val intent = Intent(Intent.ACTION_SENDTO).apply {",
             SENSITIVE_CLIP to "clipboard.setPrimaryClip(clip)",
             SENSITIVE_CLIP to "delegate.setClipEntry(clipEntry)",
+            BACKUP_SCREEN to "ActivityResultContracts.CreateDocument(BackupFormat.MIME_TYPE),",
+            MARKDOWN_HOST to "ActivityResultContracts.CreateDocument(MarkdownExport.MIME_NOTE),",
         ).forEach { (path, line) ->
             assertFalse("$path: $line", BANNED.values.any { it.matches(path, line) })
         }
@@ -76,6 +84,8 @@ class NoPlaintextExportTest {
     private companion object {
         val SCANNED = setOf("kt", "java", "xml")
         const val SENSITIVE_CLIP = "java/com/pasich/encly/presentation/components/SensitiveClip.kt"
+        const val BACKUP_SCREEN = "java/com/pasich/encly/presentation/screen/backup/BackupScreen.kt"
+        const val MARKDOWN_HOST = "java/com/pasich/encly/presentation/screen/backup/MarkdownExportHost.kt"
         const val OTHER_FILE = "java/com/pasich/encly/presentation/screen/SomeScreen.kt"
 
         val BANNED = mapOf(
@@ -87,6 +97,11 @@ class NoPlaintextExportTest {
             "clipboard write" to Rule(
                 Regex("""\bsetPrimaryClip\b|\bsetClipEntry\b|\bLocalClipboardManager\b"""),
                 allowedIn = setOf(SENSITIVE_CLIP),
+            ),
+            // Creating a document is how a file leaves the app: only the two export hosts may.
+            "document creation" to Rule(
+                Regex("""\bCreateDocument\b|ACTION_CREATE_DOCUMENT"""),
+                allowedIn = setOf(BACKUP_SCREEN, MARKDOWN_HOST),
             ),
         )
 

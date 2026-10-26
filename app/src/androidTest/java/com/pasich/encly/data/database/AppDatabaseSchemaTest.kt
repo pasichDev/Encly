@@ -115,6 +115,65 @@ class AppDatabaseSchemaTest {
     }
 
     @Test
+    fun migrate4To5KeepsNotesUnpinnedUnarchivedUncoloured() {
+        helper.createDatabase(TEST_DB, 4).use { db ->
+            db.execSQL(
+                "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                    "VALUES (3, 'Groceries', '[]', 'milk', 200, 100, NULL, 1, 'note-uid')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 5, true, VaultSchema.MIGRATION_4_5).use { db ->
+            db.query(
+                "SELECT title, isTrash, uid, isPinned, isArchived, color FROM notes WHERE id = 3",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Groceries", c.getString(0))
+                assertEquals(1, c.getInt(1))
+                assertEquals("note-uid", c.getString(2))
+                assertEquals(0, c.getInt(3))
+                assertEquals(0, c.getInt(4))
+                assertEquals("none", c.getString(5))
+            }
+
+            // A note inserted by older-style code (no new columns) still gets the defaults.
+            db.execSQL(
+                "INSERT INTO notes (title, value, description, date, dateCreate, isTrash) " +
+                    "VALUES ('n', '[]', '', 1, 1, 0)",
+            )
+            db.query("SELECT isPinned, isArchived, color, uid FROM notes WHERE title = 'n'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+                assertEquals(0, c.getInt(1))
+                assertEquals("none", c.getString(2))
+                assertEquals(32, c.getString(3).length)
+            }
+        }
+    }
+
+    @Test
+    fun migrate5To6AddsNullableTextSettings() {
+        helper.createDatabase(TEST_DB, 5).use { db ->
+            db.execSQL(
+                "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid, " +
+                    "isPinned, isArchived, color) VALUES (3, 'Groceries', '[]', 'milk', 200, 100, NULL, 0, " +
+                    "'note-uid', 1, 0, 'red')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 6, true, VaultSchema.MIGRATION_5_6).use { db ->
+            db.query("SELECT title, isPinned, color, textSize, lineSpacing FROM notes WHERE id = 3").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Groceries", c.getString(0))
+                assertEquals(1, c.getInt(1))
+                assertEquals("red", c.getString(2))
+                assertTrue(c.isNull(3))
+                assertTrue(c.isNull(4))
+            }
+        }
+    }
+
+    @Test
     fun migrate1ToCurrentRunsTheWholeChain() {
         helper.createDatabase(TEST_DB, 1).close()
 
@@ -125,6 +184,8 @@ class AppDatabaseSchemaTest {
             VaultSchema.MIGRATION_1_2,
             VaultSchema.MIGRATION_2_3,
             VaultSchema.MIGRATION_3_4,
+            VaultSchema.MIGRATION_4_5,
+            VaultSchema.MIGRATION_5_6,
         ).close()
     }
 

@@ -23,6 +23,7 @@ import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.mockito.Mockito.verifyNoInteractions
 
 class BackupScreenTest : ComposeScreenTest() {
     private val words = String(MnemonicCode(WordCount.COUNT_12).chars)
@@ -31,7 +32,9 @@ class BackupScreenTest : ComposeScreenTest() {
 
     private fun show() {
         backup = app.backup()
-        setNavScreen(viewModels(backup), route = NavRoutes.BackupRoute.name) { nav -> BackupScreen(nav) }
+        setNavScreen(viewModels(backup, app.markdownExport()), route = NavRoutes.BackupRoute.name) { nav ->
+            BackupScreen(nav)
+        }
     }
 
     private fun step() = backup.uiState.value.step
@@ -69,6 +72,37 @@ class BackupScreenTest : ComposeScreenTest() {
         rule.onNodeWithText(str(R.string.backup_reauth_subtitle)).assertIsDisplayed()
         rule.onNodeWithText(str(R.string.cancel)).performClick()
         waitFor { step() == BackupStep.Idle }
+    }
+
+    @Test
+    fun markdownExportWarnsThatTheFileIsNotEncryptedBeforeAnythingElse() {
+        show()
+        rule.onNodeWithText(str(R.string.markdown_export_desc)).assertIsDisplayed()
+
+        rule.onNode(hasText(str(R.string.markdown_export)) and hasClickAction()).performClick()
+
+        waitForText(str(R.string.markdown_export_warning_title))
+        rule.onNodeWithText(str(R.string.markdown_export_warning_body)).assertIsDisplayed()
+        // No PIN prompt and nothing written yet.
+        assertEquals(0, countText(str(R.string.backup_reauth_title)))
+        verifyNoInteractions(app.markdownDocuments)
+        rule.onNodeWithText(str(R.string.cancel)).performClick()
+        waitFor { countText(str(R.string.markdown_export_warning_title)) == 0 }
+    }
+
+    @Test
+    fun markdownExportAsksForThePinAfterTheWarning() {
+        show()
+
+        rule.onNode(hasText(str(R.string.markdown_export)) and hasClickAction()).performClick()
+        waitForText(str(R.string.markdown_export_warning_title))
+        rule.onNodeWithText(str(R.string.action_continue)).performClick()
+
+        waitForText(str(R.string.backup_reauth_title))
+        rule.onNodeWithText(str(R.string.backup_reauth_subtitle)).assertIsDisplayed()
+        verifyNoInteractions(app.markdownDocuments)
+        // The encrypted backup flow was not started by it.
+        assertEquals(BackupStep.Idle, step())
     }
 
     @Test

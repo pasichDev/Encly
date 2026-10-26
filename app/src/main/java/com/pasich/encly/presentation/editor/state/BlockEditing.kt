@@ -87,13 +87,14 @@ private fun BlockEditorState.joinToPrevious(index: Int, text: String): Boolean {
             selection.focusAt(index - 1, caret = 0)
         }
 
-        is Block.TextBlock -> joinText(index, previous.text, text)
+        is Block.TextBlock -> mergeIntoCurrent(index, previous, text)
 
         is Block.HBlock -> joinText(index, previous.text, text)
 
         is Block.QuoteBlock -> joinText(index, previous.text, text)
 
-        is Block.ListBlock -> joinToList(index, previous, text)
+        // A locked checklist takes no edits: Backspace at the start of the block below it does nothing.
+        is Block.ListBlock -> if (!previous.locked.value) joinToList(index, previous, text)
 
         // The first block, or a link card, which has no text to join.
         is Block.LinkBlock, null -> return false
@@ -112,6 +113,22 @@ private fun BlockEditorState.joinToList(index: Int, list: Block.ListBlock, text:
     }
     val item = list.items.value.last()
     selection.focusAt(index - 1, caret = last?.value?.length ?: 0, itemId = item.id)
+}
+
+/**
+ * Two paragraphs: the one above is removed and its text goes in front of [text], the paragraph at
+ * [index], which keeps the focus and the keyboard. Backspace held down then goes on deleting, block
+ * after block, in the field that has it, instead of the focus jumping up a block each time. One undo step.
+ */
+private fun BlockEditorState.mergeIntoCurrent(index: Int, previous: Block.TextBlock, text: String) {
+    val current = blocks[index] as Block.TextBlock
+    val join = previous.text.value.length
+    batch {
+        setValue(current.id, current.text, previous.text.value + text)
+        removeBlock(index - 1)
+    }
+    attachCaretToLastStep(current.id, before = 0, after = join)
+    selection.focusAt(index - 1, caret = join)
 }
 
 /** Appends [text], the paragraph at [index], to [previousText], the block above's, and removes the paragraph. */

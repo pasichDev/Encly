@@ -64,8 +64,10 @@ private val SEGMENT_OPEN_HEIGHT = 2.dp
 /** Up to this many segments keep the full gap; more narrow it. */
 private const val SEGMENT_FULL_GAP_COUNT = 12
 
-/** Checkbox sizes: the task widget (22, radius 6) and full lists and the editor (24, radius 7). */
+/** Checkbox sizes: the editor's checklist (20), the task widget (22, radius 6) and full lists (24, radius 7). */
 enum class CheckboxSize(val size: Dp, val radius: Dp) {
+    /** The editor's checklist: small enough to sit on a line of text. */
+    COMPACT(20.dp, 6.dp),
     SMALL(22.dp, 6.dp),
     LARGE(24.dp, 7.dp),
 }
@@ -81,9 +83,11 @@ fun EnclyCheckbox(
     modifier: Modifier = Modifier,
     size: CheckboxSize = CheckboxSize.LARGE,
     enabled: Boolean = true,
+    /** The square's side, when it must be smaller than [size] (a line of small text). */
+    boxSize: Dp = size.size,
 ) {
     val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(size.radius)
+    val shape = RoundedCornerShape(minOf(size.radius, boxSize * MAX_RADIUS_FRACTION))
     val fill by animateColorAsState(
         targetValue = if (checked) colors.primary else Color.Transparent,
         animationSpec = tween(CONTROL_ANIMATION_MS),
@@ -100,7 +104,7 @@ fun EnclyCheckbox(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(size.size)
+                .size(boxSize)
                 .background(if (enabled) fill else fill.disabled(), shape)
                 .then(
                     if (checked) {
@@ -115,12 +119,15 @@ fun EnclyCheckbox(
                     EnclyIcons.Check,
                     contentDescription = null,
                     tint = colors.onPrimary,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(minOf(16.dp, boxSize * CHECK_ICON_FRACTION)),
                 )
             }
         }
     }
 }
+
+private const val CHECK_ICON_FRACTION = 0.7f
+private const val MAX_RADIUS_FRACTION = 0.3f
 
 /**
  * A task row: checkbox, title (struck through and muted when done), an optional description, a

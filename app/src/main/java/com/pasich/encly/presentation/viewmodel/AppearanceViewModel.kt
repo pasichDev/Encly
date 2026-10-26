@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -31,6 +32,28 @@ class AppearanceViewModel @Inject constructor(
         initialValue = ThemeSettings(),
     )
 
+    /** The text size every note uses until it sets its own (the editor menu overrides it per note). */
+    val defaultFontSize: StateFlow<Int> = settingsRepository.fontSizeFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = DEFAULT_FONT_SIZE,
+    )
+
+    /** The line spacing every note uses until it sets its own. */
+    val defaultLineSpacing: StateFlow<NoteLineSpacing> = settingsRepository.noteLineSpacingFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = NoteLineSpacing.DEFAULT,
+    )
+
+    fun setDefaultFontSize(size: Int) {
+        viewModelScope.launch { settingsRepository.setFontSize(size) }
+    }
+
+    fun setDefaultLineSpacing(value: NoteLineSpacing) {
+        viewModelScope.launch { settingsRepository.setNoteLineSpacing(value) }
+    }
+
     fun supportsDynamicColors(): Boolean = deviceCapabilities.supportsDynamicColors()
 
     fun selectPalette(palette: ThemePalette) {
@@ -55,6 +78,8 @@ class AppearanceViewModel @Inject constructor(
     }
 
     companion object {
+        private const val DEFAULT_FONT_SIZE = 16
+
         fun isModeSelectable(palette: ThemePalette): Boolean = !palette.isAlwaysDark
 
         /** Which explanation the mode section shows under the segmented control. */

@@ -246,6 +246,7 @@ private fun PinFlowEntry(text: PinStepText, state: PinFlowState, modifier: Modif
         subtitle = message ?: stringResource(text.subtitle),
         subtitleIsError = message != null,
         compact = true,
+        bodyAtBottom = true,
         modifier = modifier,
     ) {
         PinEntry(

@@ -3,6 +3,7 @@ package com.pasich.encly.utils
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.dynamicBlocks.hasContent
 
 /**
  * Utility class for formatting note text.
@@ -38,27 +39,29 @@ object NotesTextFormatter {
     }.filter { it.isNotBlank() }.joinToString("\n")
 
     /**
-     * Converts a list of blocks into plain text without Markdown formatting.
+     * Converts a list of blocks into plain text without Markdown formatting, one block or list item
+     * per line. Blank paragraphs (the blank lines a note keeps between its sections) are skipped and
+     * no empty line separates blocks, so a card's short excerpt never spends a line on nothing.
      */
     fun blocksToPlainText(blocks: List<Block>): String {
         val text = StringBuilder()
 
-        blocks.forEach { block ->
+        blocks.filter { it.hasContent() }.forEach { block ->
             when (block) {
                 is Block.TextBlock -> {
                     text.append(block.text.value)
-                    text.append("\n\n")
+                    text.append("\n")
                 }
 
                 is Block.HBlock -> {
                     text.append(block.text.value)
-                    text.append("\n\n")
+                    text.append("\n")
                 }
 
                 is Block.QuoteBlock -> {
                     // For quotes, add quotation marks instead of a Markdown marker
                     text.append("«${block.text.value}»")
-                    text.append("\n\n")
+                    text.append("\n")
                 }
 
                 is Block.LinkBlock -> {
@@ -69,12 +72,12 @@ object NotesTextFormatter {
                     } else {
                         text.append(linkData.url)
                     }
-                    text.append("\n\n")
+                    text.append("\n")
                 }
 
                 is Block.SeparatorBlock -> {
                     text.append("---------------------")
-                    text.append("\n\n")
+                    text.append("\n")
                 }
 
                 is Block.ListBlock -> {
@@ -104,7 +107,6 @@ object NotesTextFormatter {
                                 }
                             }
                         }
-                        text.append("\n")
                     }
                 }
 

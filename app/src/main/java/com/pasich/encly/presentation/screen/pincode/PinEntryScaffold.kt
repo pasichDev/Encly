@@ -7,10 +7,12 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -69,7 +71,8 @@ fun AuthLoading(message: String, modifier: Modifier = Modifier) {
  * [footer] (the recovery screen's buttons) stays pinned under the scrolling part, above the
  * keyboard, so a primary action is never hidden behind the IME. [compact] trades the 96 dp top
  * for 24 dp, under a top bar or for a form that needs the room. While [busy] (a credential being
- * checked) the logo breathes in place of a loading screen.
+ * checked) the logo breathes in place of a loading screen. With [bodyAtBottom] the body (the PIN dots
+ * and keypad) is anchored to the bottom edge for one-handed use, not centred under the header.
  */
 @Composable
 fun PinEntryScaffold(
@@ -80,6 +83,7 @@ fun PinEntryScaffold(
     icon: ImageVector? = null,
     compact: Boolean = false,
     busy: Boolean = false,
+    bodyAtBottom: Boolean = false,
     footer: (@Composable ColumnScope.() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
@@ -92,22 +96,27 @@ fun PinEntryScaffold(
                 .imePadding()
                 .navigationBarsPadding(),
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = if (compact) spacing.l else spacing.lockTop, bottom = spacing.l),
-            ) {
-                PinEntryHeader(
-                    title = title,
-                    subtitle = subtitle,
-                    subtitleIsError = subtitleIsError,
-                    icon = icon,
-                    busy = busy,
-                )
-                body()
+            BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    // At least the screen high, so the header stays on top and the body (the keypad)
+                    // sits on the bottom edge, within a thumb's reach; a short screen scrolls.
+                    verticalArrangement = if (bodyAtBottom) Arrangement.SpaceBetween else Arrangement.Top,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = maxHeight)
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = if (compact) spacing.l else spacing.lockTop, bottom = spacing.l),
+                ) {
+                    PinEntryHeader(
+                        title = title,
+                        subtitle = subtitle,
+                        subtitleIsError = subtitleIsError,
+                        icon = icon,
+                        busy = busy,
+                    )
+                    body()
+                }
             }
             if (footer != null) {
                 Column(
@@ -168,8 +177,14 @@ private fun PinEntryHeader(
     }
 }
 
-/** What a [PinEntry] reports: a digit, a deleted digit, or a tap on the fingerprint key. */
-class PinEntryActions(val onDigit: (Int) -> Unit, val onBackspace: () -> Unit, val onBiometric: (() -> Unit)? = null)
+/** What a [PinEntry] reports: a digit, a deleted digit (or all of them), or a tap on the fingerprint key. */
+class PinEntryActions(
+    val onDigit: (Int) -> Unit,
+    val onBackspace: () -> Unit,
+    val onBiometric: (() -> Unit)? = null,
+    /** Clears every entered digit (long-press on delete); without it, delete is repeated for a whole PIN. */
+    val onClear: (() -> Unit)? = null,
+)
 
 /**
  * The PIN dots and the lock-size keypad. [error] turns the dots `error`; a new [shakeKey] shakes
@@ -200,6 +215,7 @@ fun PinEntry(
             size = KeypadSize.LOCK,
             enabled = enabled,
             onBiometric = actions.onBiometric,
+            onClear = actions.onClear,
         )
     }
 }

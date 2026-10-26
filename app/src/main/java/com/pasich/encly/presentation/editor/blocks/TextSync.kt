@@ -11,6 +11,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.text.TextRange
 import com.pasich.encly.presentation.editor.BlockActions
+import com.pasich.encly.presentation.editor.focus.caretOffsetFor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -55,10 +56,24 @@ internal fun rememberSyncedTextFieldState(
     LaunchedEffect(modelChanges) {
         modelChanges.collect {
             val stored = currentModel() ?: return@collect
-            if (sync.isExternal(stored) && state.text.toString() != stored) state.setTextAndPlaceCursorAtEnd(stored)
+            if (sync.isExternal(stored) && state.text.toString() != stored) state.replaceWith(stored)
         }
     }
     return state
+}
+
+/**
+ * Makes the field read [stored]. Text put in front of what the field already holds (the paragraph
+ * above merged into it) is inserted as an edit, so the field keeps its focus and composition;
+ * anything else replaces the text, with the cursor at the end.
+ */
+internal fun TextFieldState.replaceWith(stored: String) {
+    val current = text.toString()
+    if (current.isNotEmpty() && stored.length > current.length && stored.endsWith(current)) {
+        edit { replace(0, 0, stored.substring(0, stored.length - current.length)) }
+    } else {
+        setTextAndPlaceCursorAtEnd(stored)
+    }
 }
 
 /**
@@ -81,6 +96,22 @@ internal fun rememberBlockTextFieldState(text: StateFlow<String>, blockActions: 
         snapshotFlow { state.selection.start }.collect { actions.onCaretMoved(it) }
     }
     return state
+}
+
+/**
+ * Lets the editor put the cursor of this field at a horizontal position: Up and Down from another
+ * block arrive on the field's last or first line, at the column they left.
+ */
+@Composable
+internal fun RegisterCaretAtX(blockActions: BlockActions, state: TextFieldState, highlight: FieldHighlight) {
+    val actions by rememberUpdatedState(blockActions)
+    DisposableEffect(state, highlight) {
+        val unregister = actions.registerCaretAtX { x, fromBelow ->
+            val offset = caretOffsetFor(highlight.geometry(), x, fromBelow, state.text.length)
+            state.edit { selection = TextRange(offset) }
+        }
+        onDispose { unregister() }
+    }
 }
 
 /**

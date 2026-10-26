@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.screen
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -22,8 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,12 +36,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.model.NoteListItem
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.presentation.components.swipe.SwipeContext
+import com.pasich.encly.presentation.components.swipe.SwipeableNote
+import com.pasich.encly.presentation.components.swipe.rememberSwipeContext
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.dialogs.NoteAction
 import com.pasich.encly.presentation.dialogs.NoteCardBottomSheet
@@ -54,6 +61,8 @@ import com.pasich.encly.presentation.viewmodel.NotesEmptyState
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
 private const val SHEET_CLEAR_DELAY_MS = 200L
@@ -74,6 +83,7 @@ fun NotesList(
     onItemClick: (Note) -> Unit,
     modifier: Modifier = Modifier,
     search: NotesSearch = NotesSearch("", NoteSearchViewModel.SearchResults()),
+    swipe: SwipeSettings = SwipeSettings.Off,
     onSecondActionClick: (Note) -> Unit = {},
     header: @Composable () -> Unit = {},
     noteListViewModel: NoteListViewModel = enclyViewModel(),
@@ -83,7 +93,7 @@ fun NotesList(
 
     NoteActionsSheet(
         sheet = sheet,
-        notes = state.notes,
+        observeNote = noteListViewModel::observeNote,
         onEvent = noteListViewModel::onEvent,
         onEdit = onItemClick,
         onDuplicate = onSecondActionClick,
@@ -93,10 +103,12 @@ fun NotesList(
     val searching = search.query.isNotBlank()
     val shown = if (searching) search.results.notes else state.notes
     val content = NotesContent(
-        notes = remember(shown) { shown.map { StableNoteItem(it) } },
+        // Search results come in match order, without the pinned/other sections.
+        entries = remember(shown, searching) { noteEntries(shown, sections = !searching) },
         highlight = if (searching) search.results.query else "",
         onItemClick = onItemClick,
         onItemLongClick = sheet::open,
+        swipe = rememberSwipeContext(swipe, noteListViewModel::perform),
     )
     val status: @Composable () -> Unit = {
         NotesStatus(
@@ -116,7 +128,7 @@ fun NotesList(
 
 /** The long-pressed note whose actions sheet is open. */
 @Stable
-private class NoteSheetState {
+internal class NoteSheetState {
     var active by mutableStateOf<NoteListItem?>(null)
     var visible by mutableStateOf(false)
 
@@ -126,12 +138,12 @@ private class NoteSheetState {
     }
 }
 
-/** A note's actions: edit, duplicate, delete, its tag and description. */
+/** A note's actions: edit, pin, archive, duplicate, delete, its tag and description. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NoteActionsSheet(
+internal fun NoteActionsSheet(
     sheet: NoteSheetState,
-    notes: List<NoteListItem>,
+    observeNote: (Long) -> Flow<NoteWithTag?>,
     onEvent: (NoteListEvent) -> Unit,
     onEdit: (Note) -> Unit,
     onDuplicate: (Note) -> Unit,
@@ -139,12 +151,10 @@ private fun NoteActionsSheet(
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    LaunchedEffect(notes, sheet.active?.note?.id) {
-        sheet.active?.let { current ->
-            val updated = notes.find { it.note.id == current.note.id }
-            if (updated != null && updated != current) sheet.active = updated
-        }
-    }
+    // The sheet shows the note as stored now, not as the list held it when the sheet opened: a tag
+    // changed here moves the note out of this list, and the next action must still act on the right row.
+    val activeId = sheet.active?.note?.id
+    val live by remember(activeId) { activeId?.let(observeNote) ?: emptyFlow() }.collectAsState(initial = null)
 
     fun close() {
         sheet.visible = false
@@ -155,30 +165,36 @@ private fun NoteActionsSheet(
         }
     }
 
-    val item = sheet.active ?: return
+    val item = live ?: sheet.active?.noteWithTag ?: return
     NoteCardBottomSheet(
         isVisible = sheet.visible,
-        item = item.noteWithTag,
+        item = item,
         sheetState = bottomSheetState,
         onAction = { action ->
             when (action) {
                 NoteAction.Edit -> onEdit(item.note)
-
                 NoteAction.Duplicate -> onDuplicate(item.note)
-
-                NoteAction.Delete -> onEvent(NoteToTrash(item.note))
-
-                is NoteAction.ChangeTag -> onEvent(ChangeTag(note = item.note, idTag = action.tagId))
-
-                is NoteAction.ChangeDescription -> onEvent(
-                    NoteListEvent.ChangeDescription(note = item.note, description = action.description),
-                )
+                else -> action.toEvent(item.note)?.let(onEvent)
             }
-            // Changing the tag or the description keeps the sheet open.
-            if (action !is NoteAction.ChangeTag && action !is NoteAction.ChangeDescription) close()
+            // Changing the tag, the colour or the description keeps the sheet open.
+            if (action.closesSheet()) close()
         },
         onDismiss = ::close,
     )
+}
+
+private fun NoteAction.closesSheet(): Boolean =
+    this !is NoteAction.ChangeTag && this !is NoteAction.ChangeColor && this !is NoteAction.ChangeDescription
+
+/** The list event a sheet [NoteAction] on [note] stands for; null for the ones that open another screen. */
+private fun NoteAction.toEvent(note: Note): NoteListEvent? = when (this) {
+    NoteAction.Edit, NoteAction.Duplicate -> null
+    NoteAction.Delete -> NoteToTrash(note)
+    is NoteAction.Pin -> NoteListEvent.PinNote(note, pinned)
+    is NoteAction.Archive -> NoteListEvent.ArchiveNote(note, archived)
+    is NoteAction.ChangeColor -> NoteListEvent.ChangeColor(note, color)
+    is NoteAction.ChangeTag -> ChangeTag(note = note, idTag = tagId)
+    is NoteAction.ChangeDescription -> NoteListEvent.ChangeDescription(note = note, description = description)
 }
 
 /** What sits above the cards: the caller's header, then the loading, empty or search status. */
@@ -186,10 +202,11 @@ private class NotesTop(val header: @Composable () -> Unit, val status: @Composab
 
 /** The cards to show and what a tap or long-press on one does. */
 private class NotesContent(
-    val notes: List<StableNoteItem>,
+    val entries: List<NoteEntry>,
     val highlight: String,
     val onItemClick: (Note) -> Unit,
     val onItemLongClick: (NoteListItem) -> Unit,
+    val swipe: SwipeContext,
 )
 
 /** Room for the last card above the FAB. */
@@ -211,16 +228,31 @@ private fun NotesColumn(content: NotesContent, state: LazyListState, top: NotesT
                 top.status()
             }
         }
-        items(items = content.notes, key = { it.id }) { stableItem ->
-            NoteItem(
-                item = stableItem.item,
-                highlight = content.highlight,
-                modifier = Modifier
-                    .padding(horizontal = spacing.listGutter)
-                    .animateItem(),
-                onItemClick = content.onItemClick,
-                onItemLongClick = { content.onItemLongClick(stableItem.item) },
-            )
+        items(items = content.entries, key = { it.key }) { entry ->
+            when (entry) {
+                is NoteSection -> SectionOverline(
+                    text = stringResource(entry.title),
+                    modifier = Modifier
+                        .padding(horizontal = spacing.listGutter)
+                        .animateItem(),
+                )
+
+                is NoteRow -> SwipeableNote(
+                    note = entry.item.note,
+                    swipe = content.swipe,
+                    modifier = Modifier
+                        .padding(horizontal = spacing.listGutter)
+                        .animateItem(),
+                ) { cardModifier ->
+                    NoteItem(
+                        item = entry.item,
+                        highlight = content.highlight,
+                        modifier = cardModifier,
+                        onItemClick = content.onItemClick,
+                        onItemLongClick = { content.onItemLongClick(entry.item) },
+                    )
+                }
+            }
         }
     }
 }
@@ -256,14 +288,30 @@ private fun NotesGrid(
                 top.status()
             }
         }
-        items(items = content.notes, key = { it.id }) { stableItem ->
-            NoteItem(
-                item = stableItem.item,
-                excerptLines = GRID_EXCERPT_LINES,
-                modifier = Modifier.animateItem(),
-                onItemClick = content.onItemClick,
-                onItemLongClick = { content.onItemLongClick(stableItem.item) },
-            )
+        items(
+            items = content.entries,
+            key = { it.key },
+            span = { entry ->
+                if (entry is NoteSection) StaggeredGridItemSpan.FullLine else StaggeredGridItemSpan.SingleLane
+            },
+        ) { entry ->
+            when (entry) {
+                is NoteSection -> SectionOverline(text = stringResource(entry.title), modifier = Modifier.animateItem())
+
+                is NoteRow -> SwipeableNote(
+                    note = entry.item.note,
+                    swipe = content.swipe,
+                    modifier = Modifier.animateItem(),
+                ) { cardModifier ->
+                    NoteItem(
+                        item = entry.item,
+                        excerptLines = GRID_EXCERPT_LINES,
+                        modifier = cardModifier,
+                        onItemClick = content.onItemClick,
+                        onItemLongClick = { content.onItemLongClick(entry.item) },
+                    )
+                }
+            }
         }
     }
 }
@@ -297,8 +345,49 @@ private fun NotesStatus(state: NoteListState, searching: Boolean, search: NotesS
     }
 }
 
+/** A row of the notes list: a section heading, or a note. [key] is stable across reorders. */
+internal sealed interface NoteEntry {
+    val key: Any
+}
+
+/** The "Pinned" / "Others" heading above a group of notes. */
+internal data class NoteSection(@StringRes val title: Int) : NoteEntry {
+    override val key: Any get() = "section-$title"
+}
+
 @Stable
-private data class StableNoteItem(val item: NoteListItem, val id: Long = item.note.id)
+internal data class NoteRow(val item: NoteListItem) : NoteEntry {
+    override val key: Any get() = item.note.id
+}
+
+/**
+ * [notes] (already ordered: pinned first, then by the chosen sort, archived last) as list rows. With
+ * [sections], pinned notes sit under "Pinned", the rest under "Others" and, in a hidden tag's view, its
+ * archived notes under "Archive"; with neither pinned nor archived notes there are no headings at all.
+ */
+internal fun noteEntries(notes: List<NoteListItem>, sections: Boolean): List<NoteEntry> {
+    val rows = notes.map(::NoteRow)
+    // An archived note is never pinned; should a stored one be both, it is listed once, as archived.
+    val pinned = rows.filter { it.item.note.isPinned && !it.item.note.isArchived }
+    val archived = rows.filter { it.item.note.isArchived }
+    val others = rows - pinned.toSet() - archived.toSet()
+    // Plain notes alone need no heading; next to pinned or archived ones they are "Others".
+    if (!sections || (pinned.isEmpty() && archived.isEmpty())) return rows
+    return buildList {
+        if (pinned.isNotEmpty()) {
+            add(NoteSection(R.string.notes_section_pinned))
+            addAll(pinned)
+        }
+        if (others.isNotEmpty()) {
+            add(NoteSection(R.string.notes_section_other))
+            addAll(others)
+        }
+        if (archived.isNotEmpty()) {
+            add(NoteSection(R.string.main_drawer_archive))
+            addAll(archived)
+        }
+    }
+}
 
 /**
  * "No notes yet" once loading finished with nothing, "No notes tagged …" (with Show all) while a

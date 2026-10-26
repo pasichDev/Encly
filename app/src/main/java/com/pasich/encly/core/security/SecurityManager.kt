@@ -170,6 +170,13 @@ class SecurityManager @Inject constructor(
 
     fun biometricAvailable(): Boolean = biometricManager.isStrongBiometricAvailable()
 
+    /**
+     * Whether a re-authentication offers the fingerprint: biometric unlock is on and usable, and the
+     * open vault is the real one (a fingerprint belongs to it and never confirms anything in the
+     * decoy vault, so the option is not shown there either).
+     */
+    fun canReauthWithBiometric(): Boolean = isBiometricEnabled() && biometricAvailable() && !isDecoySession()
+
     fun biometricStatus(): BiometricStatus = biometricManager.strongBiometricStatus()
 
     fun hasRecoverySeed(): Boolean = seedPhraseManager.hasRecoverySeed()

@@ -7,6 +7,7 @@
     <string name="about_faq_title">Questions fréquentes</string>
     <string name="about_feedback">Commentaires</string>
     <string name="about_feedback_desc">Signaler un bug ou proposer une amélioration sur GitHub</string>
+    <string name="about_support_dev_desc">Pourquoi c\'est important et comment aider sur Ko-fi</string>
     <string name="about_no_browser">Aucun navigateur trouvé. Ouvrez le lien manuellement : %1$s</string>
     <string name="about_no_mail_client">Aucune application de messagerie trouvée</string>
     <string name="about_privacy_policy">Politique de confidentialité</string>
@@ -42,13 +43,15 @@
     <string name="biometric_prompt_use_pin">Utiliser le code PIN</string>
     <string name="biometric_unavailable">L\'authentification biométrique n\'est pas disponible</string>
 
-    <string name="block_add">Ajouter un bloc</string>
+    <string name="block_more_tools">Plus d\'outils de bloc</string>
     <string name="block_bulleted_list">Liste à puces</string>
     <string name="block_checklist">Liste de contrôle</string>
     <string name="block_heading">Titre</string>
     <string name="block_heading_level">Titre %1$d</string>
     <string name="block_link">Lien</string>
     <string name="block_list">Liste</string>
+    <string name="checklist_lock">Verrouiller la liste de tâches</string>
+    <string name="checklist_unlock">Déverrouiller la liste de tâches</string>
     <string name="block_move_down">Déplacer vers le bas</string>
     <string name="block_move_up">Déplacer vers le haut</string>
     <string name="block_numbered_list">Liste numérotée</string>
@@ -83,7 +86,7 @@
     <string name="dialog_message">Voulez-vous vraiment supprimer définitivement cette note ? Cette action est irréversible.</string>
     <string name="dialog_title">Supprimer la note ?</string>
 
-    <string name="donation_description">Votre soutien nous aide à ajouter des fonctionnalités, corriger des bugs et améliorer l\'application. Chaque contribution compte !</string>
+    <string name="donation_description">Encly est gratuit et open source, sans publicité, sans pistage et sans compte. Les dons sont son seul revenu.</string>
     <string name="donation_title">Soutenir le développement</string>
 
     <string name="done">Terminé</string>
@@ -136,7 +139,7 @@
     <string name="faq_section_security">Sécurité et récupération</string>
     <string name="faq_section_settings">Paramètres</string>
     <string name="faq_section_troubleshooting">Dépannage</string>
-    <string name="faq_storage_a">Les notes, libellés et tâches sont stockés uniquement dans la base de données SQLCipher locale d\'Encly. Il n\'y a ni synchronisation cloud ni sauvegarde automatique : vous pouvez exporter vous-même une sauvegarde chiffrée dans Paramètres → Sauvegarde.</string>
+    <string name="faq_storage_a">Les notes, libellés et tâches sont stockés uniquement dans la base de données SQLCipher locale d\'Encly. Il n\'y a ni synchronisation cloud ni sauvegarde automatique : vous pouvez exporter vous-même une sauvegarde chiffrée dans Paramètres → Sauvegarde, ou une copie Markdown lisible, qui n\'est pas chiffrée.</string>
     <string name="faq_storage_q">Où sont stockées mes données ?</string>
     <string name="faq_tags_a">Les libellés regroupent vos notes. Vous pouvez les créer, les renommer, les masquer et les supprimer, les réordonner par glisser-déposer et filtrer l’écran d’accueil par libellé.</string>
     <string name="faq_tags_q">Comment fonctionnent les libellés ?</string>
@@ -340,7 +343,7 @@
         <item quantity="other">%1$d sur %2$d tâches terminées</item>
     </plurals>
     <string name="settings_backup">Sauvegarde</string>
-    <string name="backup_settings_subtitle">Export et import chiffrés</string>
+    <string name="backup_settings_subtitle">Sauvegarde chiffrée, import et Markdown</string>
     <string name="backup_title">Sauvegarde</string>
     <string name="backup_intro_title">Chiffrée avec votre phrase de récupération</string>
     <string name="backup_intro_body">Une sauvegarde contient toutes vos notes, tâches et libellés, chiffrés avec votre phrase de récupération de 12 mots. Encly ne l\'envoie nulle part : vous choisissez où le fichier est enregistré. Sur un nouveau téléphone, les mêmes 12 mots la restaurent.</string>
@@ -545,11 +548,11 @@
     <string name="support_fact_free_title">Tout est déjà à vous</string>
     <string name="support_fact_free_desc">Chaque fonctionnalité est accessible à tous. Rien n’est bloqué derrière un paiement.</string>
     <string name="support_fact_private_title">Sans pub ni pistage</string>
-    <string name="support_fact_private_desc">Encly ne voit jamais vos notes et ne gagne rien sur les données. Votre soutien est son seul financement.</string>
-    <string name="support_fact_uses_title">À quoi il sert</string>
-    <string name="support_fact_uses_desc">Nouvelles fonctionnalités, audit de sécurité et tests, design et corrections.</string>
-    <string name="support_kofi_button">Soutenir sur Ko-fi</string>
-    <string name="support_kofi_note">Ouvre ko-fi.com dans le navigateur. Chaque montant compte.</string>
+    <string name="support_fact_private_desc">Encly ne voit jamais vos notes et ne gagne rien avec vos données. Seuls les dons le financent.</string>
+    <string name="support_fact_uses_title">À quoi sert l\'argent</string>
+    <string name="support_fact_uses_desc">Des appareils de test (prochain objectif : un Mac mini pour compiler et tester) et du temps pour les versions et les corrections.</string>
+    <string name="support_method_kofi_hint">Carte ou PayPal, ponctuel ou mensuel</string>
+    <string name="support_browser_note">Ouvre ko-fi.com dans votre navigateur. Encly lui-même ne gère jamais de paiement.</string>
     <string name="faq_note_actions_q">Que fait un appui long sur une note ?</string>
     <string name="faq_note_actions_a">Il ouvre les actions de la note : changer son libellé, ajouter une courte description affichée sur la carte, dupliquer la note ou la mettre à la corbeille.</string>
     <string name="faq_trash_q">Comment récupérer une note supprimée ?</string>
@@ -607,4 +610,51 @@
     <string name="template_project_decisions">Décisions</string>
     <string name="template_project_questions">Questions ouvertes</string>
     <string name="template_checklist_todo">À faire</string>
+    <string name="note_pin">Épingler</string>
+    <string name="note_unpin">Désépingler</string>
+    <string name="note_archive">Archiver</string>
+    <string name="note_unarchive">Désarchiver</string>
+    <string name="notes_section_pinned">Épinglées</string>
+    <string name="notes_section_other">Autres</string>
+    <string name="main_drawer_archive">Archives</string>
+    <string name="archive_empty_title">Les archives sont vides</string>
+    <string name="archive_empty_desc">Les notes archivées quittent la liste et la recherche mais restent dans le coffre-fort. Archivez une note depuis son menu.</string>
+    <string name="note_archive_failed">Impossible d\'archiver la note</string>
+    <string name="note_unarchive_failed">Impossible de désarchiver la note</string>
+    <string name="note_color_title">Couleur</string>
+    <string name="note_color_none">Aucune couleur</string>
+    <string name="note_color_red">Rouge</string>
+    <string name="note_color_orange">Orange</string>
+    <string name="note_color_yellow">Jaune</string>
+    <string name="note_color_green">Vert</string>
+    <string name="note_color_teal">Sarcelle</string>
+    <string name="note_color_blue">Bleu</string>
+    <string name="note_color_purple">Violet</string>
+    <string name="note_color_pink">Rose</string>
+    <string name="markdown_export">Exporter en Markdown</string>
+    <string name="backup_section_markdown">Export lisible</string>
+    <string name="markdown_export_desc">Enregistrer toutes les notes et tâches en fichiers .md lisibles dans un .zip. Le fichier n\'est pas chiffré.</string>
+    <string name="markdown_export_warning_title">Exporter sans chiffrement ?</string>
+    <string name="markdown_export_warning_body">Le fichier exporté n\'est pas chiffré. Quiconque l\'obtient peut lire vos notes. Là où vous l\'enregistrez, y compris dans un dossier cloud, se trouvera une copie lisible qu\'Encly ne peut ni protéger ni reprendre. Vous confirmerez ensuite avec votre PIN.</string>
+    <string name="markdown_export_done">Export Markdown enregistré</string>
+    <string name="faq_markdown_q">Puis-je exporter mes notes en Markdown ?</string>
+    <string name="faq_markdown_a">Oui. Dans le menu d\'une note, choisissez « Exporter en Markdown » pour un fichier .md, ou allez dans Paramètres → Sauvegarde → « Exporter en Markdown » pour un .zip de toutes les notes (celles archivées dans un dossier archive, sans la corbeille) et un fichier de tâches. Ces fichiers ne sont pas chiffrés : Encly vous prévient d\'abord, demande votre PIN et n\'enregistre qu\'à l\'endroit que vous choisissez.</string>
+    <string name="settings_swipe_section">Actions par balayage</string>
+    <string name="settings_swipe_enabled">Balayer les notes</string>
+    <string name="settings_swipe_enabled_desc">Balayez une carte de note pour agir dessus</string>
+    <string name="settings_swipe_right">Balayer vers la droite</string>
+    <string name="settings_swipe_left">Balayer vers la gauche</string>
+    <string name="swipe_choice_pin">Épingler ou désépingler</string>
+    <string name="swipe_choice_color">Couleur suivante</string>
+    <string name="swipe_choice_delete">Mettre à la corbeille</string>
+    <string name="swipe_choice_none">Rien</string>
+    <string name="swipe_delete_title">Mettre à la corbeille ?</string>
+    <string name="swipe_delete_message">Vous pourrez restaurer la note depuis la corbeille.</string>
+    <string name="faq_swipe_q">À quoi servent les balayages sur une note ?</string>
+    <string name="faq_swipe_a">Par défaut, balayer une note vers la droite l\'épingle ou la désépingle, et vers la gauche l\'archive. Dans Paramètres → Actions par balayage, vous choisissez pour chaque direction : épingler, archiver, couleur suivante, mettre à la corbeille (avec confirmation) ou rien, ou vous désactivez les balayages. TalkBack propose les mêmes actions dans le menu d\'actions de la note.</string>
+    <string name="appearance_text_section">Texte des notes</string>
+    <string name="appearance_text_desc">La valeur par défaut de chaque note. Une note peut définir la sienne depuis son menu.</string>
+    <string name="note_text_use_default">Utiliser les réglages de texte par défaut</string>
+    <string name="about_source_code">Code source</string>
+    <string name="about_source_code_desc">Encly est open source : lisez le code sur GitHub</string>
 </resources>

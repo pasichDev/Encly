@@ -8,6 +8,9 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -29,6 +32,11 @@ const val SIMPLE_EDIT = "simple_edit"
 const val FONT_SIZE = "font_size"
 const val FONT_STYLE = "font_style"
 const val NOTE_LINE_SPACING = "note_line_spacing"
+const val MIN_FONT_SIZE = 10
+const val MAX_FONT_SIZE = 32
+const val SWIPE_ENABLED = "swipe_enabled"
+const val SWIPE_RIGHT = "swipe_right"
+const val SWIPE_LEFT = "swipe_left"
 const val APPEARANCE_MIGRATED = "appearance_migrated_v1"
 
 @Singleton
@@ -46,6 +54,9 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
         val fontSize = intPreferencesKey(FONT_SIZE)
         val fontStyle = intPreferencesKey(FONT_STYLE)
         val noteLineSpacing = intPreferencesKey(NOTE_LINE_SPACING)
+        val swipeEnabled = booleanPreferencesKey(SWIPE_ENABLED)
+        val swipeRight = intPreferencesKey(SWIPE_RIGHT)
+        val swipeLeft = intPreferencesKey(SWIPE_LEFT)
         val appearanceMigrated = booleanPreferencesKey(APPEARANCE_MIGRATED)
     }
 
@@ -110,6 +121,40 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
         enumAtOrDefault(preferences[noteLineSpacing], NoteLineSpacing.DEFAULT)
     }.distinctUntilChanged()
 
+    val swipeSettingsFlow: Flow<SwipeSettings> = dataStore.data.map { preferences ->
+        SwipeSettings(
+            enabled = preferences[swipeEnabled] ?: true,
+            right = enumAtOrDefault(preferences[swipeRight], SwipeAction.PIN),
+            left = enumAtOrDefault(preferences[swipeLeft], SwipeAction.ARCHIVE),
+        )
+    }.distinctUntilChanged()
+
+    /**
+     * A development build kept a note's own text size and line spacing here, by note id. They live
+     * on the note in the vault now (the ids were also the same in the real and the decoy vault, and
+     * outlived an erase), so any such key is removed.
+     */
+    suspend fun removeLegacyNoteTextKeys() {
+        if (dataStore.data.first().asMap().keys.none { it.name.isLegacyNoteTextKey() }) return
+        dataStore.edit { preferences ->
+            preferences.asMap().keys.filter { it.name.isLegacyNoteTextKey() }.forEach { preferences.remove(it) }
+        }
+    }
+
+    private fun String.isLegacyNoteTextKey() = startsWith("note_text_size_") || startsWith("note_line_spacing_")
+
+    suspend fun setSwipeEnabled(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[swipeEnabled] = value
+        }
+    }
+
+    suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction) {
+        dataStore.edit { preferences ->
+            preferences[if (side == SwipeSide.RIGHT) swipeRight else swipeLeft] = action.ordinal
+        }
+    }
+
     suspend fun setSortNotes(option: NoteSortOption) {
         dataStore.edit { preferences ->
             preferences[sortNotes] = option.index
@@ -154,7 +199,7 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
 
     suspend fun setFontSize(value: Int) {
         dataStore.edit { preferences ->
-            preferences[fontSize] = value.coerceIn(10, 32) // clamp to the 10-32 range
+            preferences[fontSize] = value.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE)
         }
     }
 

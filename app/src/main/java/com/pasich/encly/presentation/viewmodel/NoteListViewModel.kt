@@ -11,15 +11,20 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,10 +38,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class NoteListViewModel @Inject constructor(
+class NoteListViewModel
+@Suppress("LongParameterList") // Hilt-injected dependencies, one use case per action on a note.
+@Inject
+constructor(
     private val observeNotesUseCase: ObserveNotesUseCase,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val updateNoteTagUseCase: UpdateNoteTagUseCase,
+    private val updateNotePinStatusUseCase: UpdateNotePinStatusUseCase,
+    private val updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,
+    private val updateNoteColorUseCase: UpdateNoteColorUseCase,
     private val selectedTagHolder: SelectedTagHolder,
     private val settingsRepository: SettingsRepository,
     private val updateNoteDescriptionUseCase: UpdateNoteDescriptionUseCase,
@@ -108,35 +119,43 @@ class NoteListViewModel @Inject constructor(
         _scrollToTopRequest.compareAndSet(request, null)
     }
 
+    /** The note as stored now, for the actions sheet: it must not show what an older read held. */
+    fun observeNote(noteId: Long) = observeNotesUseCase.observeNote(noteId)
+
     fun onEvent(event: NoteListEvent) {
-        when (event) {
-            is NoteListEvent.SelectTag -> {
-                selectedTagHolder.selectTag(event.tag)
-            }
+        // Picking a tag is not a write: it applies at once, before any coroutine runs.
+        if (event is NoteListEvent.SelectTag) {
+            selectedTagHolder.selectTag(event.tag)
+        } else {
+            viewModelScope.launch { perform(event) }
+        }
+    }
 
-            is NoteListEvent.NoteToTrash -> {
-                viewModelScope.launch {
-                    updateNoteTrashStatusUseCase.invoke(event.note, true)
-                }
-            }
+    /** Carries out [event]; false when its write failed (a swipe then springs the card back). */
+    suspend fun perform(event: NoteListEvent): Boolean = viewModelScope.async { execute(event) }.await()
 
-            is NoteListEvent.ChangeTag -> {
-                viewModelScope.launch {
-                    updateNoteTagUseCase.invoke(event.note, event.idTag)
-                }
-            }
+    // The write runs in the ViewModel's scope: a card that leaves the screen mid-write cannot cancel it.
+    private suspend fun execute(event: NoteListEvent): Boolean = when (event) {
+        is NoteListEvent.SelectTag -> {
+            selectedTagHolder.selectTag(event.tag)
+            true
+        }
 
-            is NoteListEvent.ToggleNoteSort -> {
-                viewModelScope.launch {
-                    settingsRepository.setSortNotes(event.option)
-                }
-            }
+        is NoteListEvent.NoteToTrash -> updateNoteTrashStatusUseCase(event.note, true).isSuccess
 
-            is NoteListEvent.ChangeDescription -> {
-                viewModelScope.launch {
-                    updateNoteDescriptionUseCase.invoke(event.note, event.description)
-                }
-            }
+        is NoteListEvent.PinNote -> updateNotePinStatusUseCase(event.note, event.pinned).isSuccess
+
+        is NoteListEvent.ArchiveNote -> updateNoteArchiveStatusUseCase(event.note, event.archived).isSuccess
+
+        is NoteListEvent.ChangeColor -> updateNoteColorUseCase(event.note, event.color).isSuccess
+
+        is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag).isSuccess
+
+        is NoteListEvent.ChangeDescription -> updateNoteDescriptionUseCase(event.note, event.description).isSuccess
+
+        is NoteListEvent.ToggleNoteSort -> {
+            settingsRepository.setSortNotes(event.option)
+            true
         }
     }
 
@@ -150,6 +169,9 @@ class NoteListViewModel @Inject constructor(
 sealed class NoteListEvent {
     data class SelectTag(val tag: Tag) : NoteListEvent()
     data class NoteToTrash(val note: Note) : NoteListEvent()
+    data class PinNote(val note: Note, val pinned: Boolean) : NoteListEvent()
+    data class ArchiveNote(val note: Note, val archived: Boolean) : NoteListEvent()
+    data class ChangeColor(val note: Note, val color: NoteColor) : NoteListEvent()
     data class ChangeTag(val note: Note, val idTag: Long) : NoteListEvent()
     data class ChangeDescription(val note: Note, val description: String) : NoteListEvent()
     data class ToggleNoteSort(val option: NoteSortOption) : NoteListEvent()

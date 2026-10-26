@@ -8,15 +8,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.presentation.designsystem.EDITOR_PLACEHOLDER_ALPHA
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -29,6 +33,8 @@ fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier =
     // Enter splits the heading; the text after the cursor goes on as a paragraph (BlockInput).
     val input = remember { BlockInput(BlockField.Styled) { actions } }
     val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
+    RegisterCaretAtX(blockActions, state, highlight)
+    var focused by remember { mutableStateOf(false) }
 
     BasicTextField(
         state = state,
@@ -39,16 +45,19 @@ fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier =
         keyboardOptions = WritingKeyboard,
         onTextLayout = highlight.onTextLayout,
         modifier = modifier
+            .onFocusChanged { focused = it.isFocused }
             .fillMaxWidth()
             .padding(top = EnclyTheme.spacing.labelGap)
             .then(highlight.modifier)
-            .textBlockKeys(state, blockActions),
+            .textBlockKeys(state, blockActions, highlight),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
-                if (state.text.isEmpty()) {
+                if (state.text.isEmpty() && focused) {
                     Text(
                         text = stringResource(R.string.block_heading_level, block.blockType.headingLevel()),
-                        style = textStyle.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                        style = textStyle.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EDITOR_PLACEHOLDER_ALPHA),
+                        ),
                     )
                 }
                 innerTextField()

@@ -26,6 +26,7 @@ enum class BlockRemoveAction { REMOVE, REMOVE_BACKSPACE, REMOVE_BACKSPACE_LIST }
  *
  * Invariant: the note always has at least one block.
  */
+@Suppress("TooManyFunctions") // The editor's single entry point: one function per kind of edit.
 class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
     private val _blocks = SnapshotStateList<Block>().apply { add(emptyNoteBlock()) }
     val blocks: List<Block> get() = _blocks
@@ -147,15 +148,28 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         afterChange()
     }
 
-    fun undo() {
+    fun undo() = moveHistory(history::undo) { it.before }
+
+    fun redo() = moveHistory(history::redo) { it.after }
+
+    /** Undo or redo ([move]); a step that carries its own cursor ([caretOf]) puts it there. */
+    private fun moveHistory(move: () -> Boolean, caretOf: (BlockOperations.CaretStep) -> Int) {
         slash.dismiss()
-        if (history.undo()) afterChange()
+        val focused = selection.focusedBlockId.value
+        if (!move()) return
+        afterChange()
+        val step = history.lastMovedCaret()
+        val index = step?.let { s -> blocks.indexOfFirst { it.id == s.blockId } } ?: -1
+        if (step != null && index >= 0 && focused != null) {
+            selection.focusAt(index, caret = caretOf(step))
+        } else {
+            selection.keepFocus(blocks, focused)
+        }
     }
 
-    fun redo() {
-        slash.dismiss()
-        if (history.redo()) afterChange()
-    }
+    /** The step recorded last puts the cursor of block [blockId] at [before] when undone and [after] when redone. */
+    internal fun attachCaretToLastStep(blockId: String, before: Int, after: Int) =
+        history.attachCaret(BlockOperations.CaretStep(blockId, before, after))
 
     private fun afterChange() {
         if (_blocks.isEmpty()) _blocks.add(emptyNoteBlock())
@@ -175,9 +189,34 @@ private fun List<Block>.isEmptyFirstTextBlock(index: Int): Boolean {
 /** The content of [this] block, as a flow; null for a block without content (a separator). */
 private fun Block.contentFlow(): Flow<Any>? = when (this) {
     is Block.TextBlock -> text
+
     is Block.HBlock -> text
+
     is Block.QuoteBlock -> text
+
     is Block.LinkBlock -> block.map { it.url }
-    is Block.ListBlock -> items
+
+    // The lock is content too: locking a list must be saved like typing in it.
+    is Block.ListBlock -> combine(items, locked) { list, locked -> list to locked }
+
     is Block.SeparatorBlock -> null
+}
+
+/**
+ * Undo and redo may rebuild the field the cursor was in (a list item, a block that was replaced),
+ * and a field that leaves composition takes the keyboard with it. When a field had focus
+ * ([blockId]), it is asked for again: the same block if it is still there, else the nearest one above.
+ */
+private fun BlockSelection.keepFocus(blocks: List<Block>, blockId: String?) {
+    if (blockId == null) return
+    val index = blocks.indexOfFirst { it.id == blockId }
+    if (index >= 0 && blocks[index].canTakeFocus()) {
+        // Same block: the cursor goes back where it was (and into the same list item); the field
+        // clamps it if the undone text is shorter. Only a cursor never seen means "the end".
+        val caret = caretOf(blockId)
+        focusAt(index, cursorToEnd = caret == null, caret = caret, itemId = itemOf(blockId))
+    } else {
+        // The block is gone: the nearest one above, the cursor at its end.
+        focusAt(blocks.previousFocusableIndex(interactedIndex + 1), cursorToEnd = true)
+    }
 }

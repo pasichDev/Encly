@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.navigation
 enum class NavRoutes {
     HomeRoute,
     TrashRoute,
+    ArchiveRoute,
     SettingsRoute,
     EditNoteRoute,
     EditTagRoute,

@@ -4,8 +4,12 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.testutil.TestNotesRepository
@@ -19,6 +23,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -51,6 +56,9 @@ class NoteListEventsTest {
             selectedTagHolder = tags,
             settingsRepository = settings,
             updateNoteDescriptionUseCase = UpdateNoteDescriptionUseCase(repository),
+            updateNotePinStatusUseCase = UpdateNotePinStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+            updateNoteColorUseCase = UpdateNoteColorUseCase(repository),
         )
     }
 
@@ -115,6 +123,37 @@ class NoteListEventsTest {
     }
 
     @Test
+    fun anActionOnAStaleNoteWritesOnlyItsOwnColumn() = runTest(dispatcher) {
+        advanceUntilIdle()
+        // The sheet still holds the note as read in tag 7's view; its tag was changed to 4 since.
+        val stale = note(1).copy(tagId = 7)
+
+        viewModel.onEvent(NoteListEvent.ChangeTag(stale, idTag = WORK_TAG))
+        viewModel.onEvent(NoteListEvent.ChangeColor(stale, NoteColor.TEAL))
+        viewModel.onEvent(NoteListEvent.PinNote(stale, pinned = true))
+        viewModel.onEvent(NoteListEvent.ArchiveNote(stale, archived = true))
+        advanceUntilIdle()
+
+        // No write carries the stale tag (or any other column) back.
+        assertEquals(
+            listOf("tag:1=$WORK_TAG", "color:1=teal", "pinned:1=true", "archived:1=true"),
+            repository.columnWrites,
+        )
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
+    fun performTellsWhetherTheWriteSucceeded() = runTest(dispatcher) {
+        advanceUntilIdle()
+
+        assertTrue(viewModel.perform(NoteListEvent.PinNote(note(1), true)))
+
+        repository.columnWriteResult = false
+        assertFalse(viewModel.perform(NoteListEvent.PinNote(note(1), true)))
+        assertFalse(viewModel.perform(NoteListEvent.ArchiveNote(note(1), true)))
+    }
+
+    @Test
     fun movingANoteToTheTrashStoresItAsTrashed() = runTest(dispatcher) {
         advanceUntilIdle()
 
@@ -133,8 +172,7 @@ class NoteListEventsTest {
         viewModel.onEvent(NoteListEvent.ChangeDescription(note(2), "Short summary"))
         advanceUntilIdle()
 
-        assertEquals(WORK_TAG, repository.updatedNotes.single { it.id == 1L }.tagId)
-        assertEquals("Short summary", repository.updatedNotes.single { it.id == 2L }.description)
+        assertEquals(listOf("tag:1=$WORK_TAG", "description:2=Short summary"), repository.columnWrites)
     }
 
     @Test

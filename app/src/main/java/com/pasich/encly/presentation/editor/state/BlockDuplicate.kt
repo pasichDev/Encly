@@ -38,5 +38,6 @@ internal fun Block.duplicate(): Block = when (this) {
     is Block.ListBlock -> copy(
         items = MutableStateFlow(items.value.map { it.copy(id = newBlockId()) }),
         id = newBlockId(),
+        locked = MutableStateFlow(locked.value),
     )
 }

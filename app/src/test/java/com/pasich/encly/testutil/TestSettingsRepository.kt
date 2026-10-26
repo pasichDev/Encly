@@ -3,6 +3,9 @@ package com.pasich.encly.testutil
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -19,6 +22,7 @@ internal class TestSettingsRepository(override var latestThemeSettings: ThemeSet
     override val fontSizeFlow = MutableStateFlow(DEFAULT_FONT_SIZE)
     override val fontStyleFlow = MutableStateFlow(FontStyleType.DEFAULT)
     override val noteLineSpacingFlow = MutableStateFlow(NoteLineSpacing.DEFAULT)
+    override val swipeSettingsFlow = MutableStateFlow(SwipeSettings())
 
     override suspend fun loadThemeSettings(existingInstall: Boolean): ThemeSettings = themeSettingsFlow.value
 
@@ -61,6 +65,16 @@ internal class TestSettingsRepository(override var latestThemeSettings: ThemeSet
 
     override suspend fun setNoteLineSpacing(value: NoteLineSpacing) {
         noteLineSpacingFlow.value = value
+    }
+
+    override suspend fun setSwipeEnabled(value: Boolean) {
+        swipeSettingsFlow.value = swipeSettingsFlow.value.copy(enabled = value)
+    }
+
+    override suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction) {
+        swipeSettingsFlow.value = swipeSettingsFlow.value.let {
+            if (side == SwipeSide.RIGHT) it.copy(right = action) else it.copy(left = action)
+        }
     }
 
     private companion object {

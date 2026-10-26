@@ -43,6 +43,8 @@ private val faqSections = listOf(
         listOf(
             R.string.faq_storage_q to R.string.faq_storage_a,
             R.string.faq_backup_q to R.string.faq_backup_a,
+            R.string.faq_markdown_q to R.string.faq_markdown_a,
+            R.string.faq_swipe_q to R.string.faq_swipe_a,
             R.string.faq_db_key_q to R.string.faq_db_key_a,
             R.string.faq_recovery_phrase_q to R.string.faq_recovery_phrase_a,
             R.string.faq_forgot_pin_q to R.string.faq_forgot_pin_a,

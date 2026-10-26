@@ -6,6 +6,9 @@ import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -25,6 +28,7 @@ internal class FakeSettingsRepository : SettingsRepository {
     val simpleEdit = MutableStateFlow(false)
     val fontSize = MutableStateFlow(DEFAULT_FONT_SIZE)
     val noteLineSpacing = MutableStateFlow(NoteLineSpacing.DEFAULT)
+    val swipe = MutableStateFlow(SwipeSettings())
 
     override val themeSettingsFlow: Flow<ThemeSettings> = theme
     override val isGridNoteList: Flow<Boolean> = grid
@@ -34,6 +38,7 @@ internal class FakeSettingsRepository : SettingsRepository {
     override val fontSizeFlow: Flow<Int> = fontSize
     override val fontStyleFlow: Flow<FontStyleType> = theme.map { it.fontStyle }
     override val noteLineSpacingFlow: Flow<NoteLineSpacing> = noteLineSpacing
+    override val swipeSettingsFlow: Flow<SwipeSettings> = swipe
     override val latestThemeSettings: ThemeSettings get() = theme.value
 
     override suspend fun loadThemeSettings(existingInstall: Boolean): ThemeSettings = theme.value
@@ -54,6 +59,14 @@ internal class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setSimpleEdit(value: Boolean) {
         simpleEdit.value = value
+    }
+
+    override suspend fun setSwipeEnabled(value: Boolean) {
+        swipe.update { it.copy(enabled = value) }
+    }
+
+    override suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction) {
+        swipe.update { if (side == SwipeSide.RIGHT) it.copy(right = action) else it.copy(left = action) }
     }
 
     override suspend fun setFontSize(value: Int) {

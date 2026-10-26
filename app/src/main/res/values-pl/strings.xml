@@ -7,6 +7,7 @@
     <string name="about_faq_title">Najczęstsze pytania</string>
     <string name="about_feedback">Opinie</string>
     <string name="about_feedback_desc">Zgłoś błąd lub zaproponuj ulepszenie na GitHubie</string>
+    <string name="about_support_dev_desc">Dlaczego to ważne i jak wesprzeć na Ko-fi</string>
     <string name="about_no_browser">Nie znaleziono przeglądarki. Otwórz link ręcznie: %1$s</string>
     <string name="about_no_mail_client">Nie znaleziono aplikacji pocztowej</string>
     <string name="about_privacy_policy">Polityka prywatności</string>
@@ -42,13 +43,15 @@
     <string name="biometric_prompt_use_pin">Użyj PIN-u</string>
     <string name="biometric_unavailable">Uwierzytelnianie biometryczne jest niedostępne</string>
 
-    <string name="block_add">Dodaj blok</string>
+    <string name="block_more_tools">Więcej narzędzi bloku</string>
     <string name="block_bulleted_list">Lista punktowana</string>
     <string name="block_checklist">Lista kontrolna</string>
     <string name="block_heading">Nagłówek</string>
     <string name="block_heading_level">Nagłówek %1$d</string>
     <string name="block_link">Link</string>
     <string name="block_list">Lista</string>
+    <string name="checklist_lock">Zablokuj listę kontrolną</string>
+    <string name="checklist_unlock">Odblokuj listę kontrolną</string>
     <string name="block_move_down">Przenieś w dół</string>
     <string name="block_move_up">Przenieś w górę</string>
     <string name="block_numbered_list">Lista numerowana</string>
@@ -83,7 +86,7 @@
     <string name="dialog_message">Czy na pewno chcesz trwale usunąć tę notatkę? Tej operacji nie można cofnąć.</string>
     <string name="dialog_title">Usunąć notatkę?</string>
 
-    <string name="donation_description">Twoje wsparcie pomaga nam dodawać nowe funkcje, naprawiać błędy i ulepszać aplikację. Każda kwota ma znaczenie!</string>
+    <string name="donation_description">Encly jest darmowy i open source, bez reklam, śledzenia i kont. Darowizny to jego jedyny dochód.</string>
     <string name="donation_title">Wesprzyj rozwój</string>
 
     <string name="done">Gotowe</string>
@@ -136,7 +139,7 @@
     <string name="faq_section_security">Bezpieczeństwo i odzyskiwanie</string>
     <string name="faq_section_settings">Ustawienia</string>
     <string name="faq_section_troubleshooting">Rozwiązywanie problemów</string>
-    <string name="faq_storage_a">Notatki, etykiety i zadania są przechowywane wyłącznie w lokalnej bazie danych SQLCipher aplikacji Encly. Nie ma synchronizacji w chmurze ani automatycznych kopii: zaszyfrowaną kopię możesz wyeksportować samodzielnie w Ustawienia → Kopia zapasowa.</string>
+    <string name="faq_storage_a">Notatki, etykiety i zadania są przechowywane wyłącznie w lokalnej bazie danych SQLCipher aplikacji Encly. Nie ma synchronizacji w chmurze ani automatycznych kopii: zaszyfrowaną kopię możesz wyeksportować samodzielnie w Ustawienia → Kopia zapasowa, a także czytelną kopię w formacie Markdown, która nie jest zaszyfrowana.</string>
     <string name="faq_storage_q">Gdzie przechowywane są moje dane?</string>
     <string name="faq_tags_a">Etykiety grupują notatki. Możesz je tworzyć, zmieniać nazwy, ukrywać i usuwać, przeciągać w dowolnej kolejności oraz filtrować po nich ekran główny.</string>
     <string name="faq_tags_q">Jak działają etykiety?</string>
@@ -343,7 +346,7 @@
         <item quantity="other">Wykonano %1$d z %2$d zadania</item>
     </plurals>
     <string name="settings_backup">Kopia zapasowa</string>
-    <string name="backup_settings_subtitle">Szyfrowany eksport i import</string>
+    <string name="backup_settings_subtitle">Szyfrowana kopia, import i Markdown</string>
     <string name="backup_title">Kopia zapasowa</string>
     <string name="backup_intro_title">Zaszyfrowana Twoją frazą odzyskiwania</string>
     <string name="backup_intro_body">Kopia zapasowa zawiera wszystkie Twoje notatki, zadania i etykiety, zaszyfrowane 12-wyrazową frazą odzyskiwania. Encly nigdzie jej nie wysyła: to Ty wybierasz, gdzie zapisać plik. Na nowym telefonie te same 12 słów ją przywróci.</string>
@@ -550,11 +553,11 @@
     <string name="support_fact_free_title">Wszystko już jest twoje</string>
     <string name="support_fact_free_desc">Każda funkcja jest dostępna dla wszystkich. Nic nie jest ukryte za płatnością.</string>
     <string name="support_fact_private_title">Bez reklam i śledzenia</string>
-    <string name="support_fact_private_desc">Encly nigdy nie widzi twoich notatek i nie zarabia na danych. Wsparcie to jedyne źródło utrzymania.</string>
-    <string name="support_fact_uses_title">Na co idzie wsparcie</string>
-    <string name="support_fact_uses_desc">Nowe funkcje, audyt bezpieczeństwa i testy, projekt i poprawki.</string>
-    <string name="support_kofi_button">Wesprzyj na Ko-fi</string>
-    <string name="support_kofi_note">Otwiera ko-fi.com w przeglądarce. Każda kwota pomaga.</string>
+    <string name="support_fact_private_desc">Encly nigdy nie widzi Twoich notatek i nie zarabia na danych. Utrzymują go wyłącznie darowizny.</string>
+    <string name="support_fact_uses_title">Na co idą pieniądze</string>
+    <string name="support_fact_uses_desc">Urządzenia testowe (najbliższy cel: Mac mini do budowania i testowania) oraz czas na wydania i poprawki.</string>
+    <string name="support_method_kofi_hint">Karta lub PayPal, jednorazowo albo co miesiąc</string>
+    <string name="support_browser_note">Otwiera ko-fi.com w przeglądarce. Sam Encly nigdy nie obsługuje płatności.</string>
     <string name="faq_note_actions_q">Co robi długie naciśnięcie notatki?</string>
     <string name="faq_note_actions_a">Otwiera akcje notatki: zmianę etykiety, dodanie krótkiego opisu widocznego na karcie, duplikowanie notatki lub przeniesienie jej do kosza.</string>
     <string name="faq_trash_q">Jak odzyskać usuniętą notatkę?</string>
@@ -613,4 +616,51 @@
     <string name="template_project_decisions">Decyzje</string>
     <string name="template_project_questions">Otwarte pytania</string>
     <string name="template_checklist_todo">Do zrobienia</string>
+    <string name="note_pin">Przypnij</string>
+    <string name="note_unpin">Odepnij</string>
+    <string name="note_archive">Archiwizuj</string>
+    <string name="note_unarchive">Przywróć z archiwum</string>
+    <string name="notes_section_pinned">Przypięte</string>
+    <string name="notes_section_other">Pozostałe</string>
+    <string name="main_drawer_archive">Archiwum</string>
+    <string name="archive_empty_title">Archiwum jest puste</string>
+    <string name="archive_empty_desc">Zarchiwizowane notatki znikają z listy i wyszukiwania, ale zostają w sejfie. Zarchiwizuj notatkę z jej menu.</string>
+    <string name="note_archive_failed">Nie udało się zarchiwizować notatki</string>
+    <string name="note_unarchive_failed">Nie udało się przywrócić notatki z archiwum</string>
+    <string name="note_color_title">Kolor</string>
+    <string name="note_color_none">Brak koloru</string>
+    <string name="note_color_red">Czerwony</string>
+    <string name="note_color_orange">Pomarańczowy</string>
+    <string name="note_color_yellow">Żółty</string>
+    <string name="note_color_green">Zielony</string>
+    <string name="note_color_teal">Turkusowy</string>
+    <string name="note_color_blue">Niebieski</string>
+    <string name="note_color_purple">Fioletowy</string>
+    <string name="note_color_pink">Różowy</string>
+    <string name="markdown_export">Eksportuj jako Markdown</string>
+    <string name="backup_section_markdown">Czytelny eksport</string>
+    <string name="markdown_export_desc">Zapisz wszystkie notatki i zadania jako czytelne pliki .md w archiwum .zip. Plik nie jest zaszyfrowany.</string>
+    <string name="markdown_export_warning_title">Eksportować bez szyfrowania?</string>
+    <string name="markdown_export_warning_body">Wyeksportowany plik nie jest zaszyfrowany. Każdy, kto go zdobędzie, przeczyta twoje notatki. Miejsce, w którym go zapiszesz, także folder w chmurze, będzie zawierać czytelną kopię, której Encly nie może ani chronić, ani cofnąć. Następnie potwierdzisz kodem PIN.</string>
+    <string name="markdown_export_done">Eksport Markdown zapisany</string>
+    <string name="faq_markdown_q">Czy mogę wyeksportować notatki jako Markdown?</string>
+    <string name="faq_markdown_a">Tak. W menu notatki wybierz „Eksportuj jako Markdown”, aby dostać jeden plik .md, albo przejdź do Ustawienia → Kopia zapasowa → „Eksportuj jako Markdown”, aby dostać archiwum .zip ze wszystkimi notatkami (zarchiwizowane w folderze archive, bez kosza) i plikiem z zadaniami. Te pliki nie są zaszyfrowane: Encly najpierw ostrzeże, poprosi o PIN i zapisze tylko tam, gdzie wskażesz.</string>
+    <string name="settings_swipe_section">Gesty przesunięcia</string>
+    <string name="settings_swipe_enabled">Przesuwanie notatek</string>
+    <string name="settings_swipe_enabled_desc">Przesuń kartę notatki, aby wykonać akcję</string>
+    <string name="settings_swipe_right">Przesunięcie w prawo</string>
+    <string name="settings_swipe_left">Przesunięcie w lewo</string>
+    <string name="swipe_choice_pin">Przypnij lub odepnij</string>
+    <string name="swipe_choice_color">Następny kolor</string>
+    <string name="swipe_choice_delete">Przenieś do kosza</string>
+    <string name="swipe_choice_none">Nic</string>
+    <string name="swipe_delete_title">Przenieść do kosza?</string>
+    <string name="swipe_delete_message">Notatkę można przywrócić z kosza.</string>
+    <string name="faq_swipe_q">Do czego służą przesunięcia notatki?</string>
+    <string name="faq_swipe_a">Domyślnie przesunięcie notatki w prawo przypina ją lub odpina, a w lewo archiwizuje. W Ustawienia → Gesty przesunięcia możesz wybrać dla każdego kierunku: przypnij, archiwizuj, następny kolor, przenieś do kosza (zawsze z pytaniem) lub nic, a także wyłączyć przesuwanie. TalkBack oferuje te same akcje w menu akcji notatki.</string>
+    <string name="appearance_text_section">Tekst w notatkach</string>
+    <string name="appearance_text_desc">Wartość domyślna dla każdej notatki. Notatka może ustawić własną w swoim menu.</string>
+    <string name="note_text_use_default">Użyj domyślnych ustawień tekstu</string>
+    <string name="about_source_code">Kod źródłowy</string>
+    <string name="about_source_code_desc">Encly jest open source: przeczytaj kod na GitHubie</string>
 </resources>

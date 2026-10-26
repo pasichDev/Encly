@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.screen.editnote
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -41,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
 import com.pasich.encly.presentation.components.editNote.NoteOverline
 import com.pasich.encly.presentation.components.editNote.TitleField
@@ -48,6 +51,7 @@ import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
+import com.pasich.encly.presentation.designsystem.TintStatusBar
 import com.pasich.encly.presentation.designsystem.blockGap
 import com.pasich.encly.presentation.designsystem.isCompact
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
@@ -59,10 +63,14 @@ import com.pasich.encly.presentation.editor.editorBlocks
 import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
+import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.ui.theme.noteColorStyle
 import kotlinx.coroutines.launch
 
 /** Items above the blocks: the overline and the title. */
@@ -118,7 +126,12 @@ fun EditNoteScreen(
     FocusNewNoteTitle(titleFocus)
     BackHandler { exits.back() }
     CloseFindOrSlashOnBack()
-    EditorOverlays(overlays, exits, onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) })
+    EditorOverlays(
+        overlays = overlays,
+        exits = exits,
+        onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) },
+        onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
+    )
 
     EditNoteSettingsProvider(
         baseFontSize = fontSize.sp,
@@ -166,9 +179,14 @@ private fun EditorScaffold(
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val findOpen by rememberFindOpen()
+    val pageColor = rememberPageColor()
+    // The tinted page runs up under the status bar too.
+    TintStatusBar(pageColor)
     Scaffold(
-        modifier = modifier.onPreviewKeyEvent { event -> viewModel.handleFindKey(event) },
-        containerColor = MaterialTheme.colorScheme.surface,
+        modifier = modifier.onPreviewKeyEvent { event ->
+            viewModel.handleHistoryKey(event) || viewModel.handleFindKey(event)
+        },
+        containerColor = pageColor,
         // Status and navigation bars, a display cutout and the keyboard all stay clear of text.
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
@@ -178,6 +196,7 @@ private fun EditorScaffold(
                         isReadTrashOnly = viewModel.isReadTrashOnly,
                         lockEditor = lockEditor,
                         canToggleLock = !contentLoadFailed,
+                        containerColor = pageColor,
                     ),
                     listState = listState,
                     actions = actions,
@@ -191,6 +210,21 @@ private fun EditorScaffold(
         snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         content = content,
     )
+}
+
+/**
+ * The editor's page colour: the theme's surface, tinted by the note's colour. Read through derived
+ * state, so a title keystroke does not recompose the editor; a colour change fades in.
+ */
+@Composable
+private fun rememberPageColor(viewModel: EditNoteViewModel = enclyViewModel()): Color {
+    val noteState = viewModel.state.collectAsState()
+    val colorKey by remember(noteState) { derivedStateOf { noteState.value.note.color } }
+    val scheme = MaterialTheme.colorScheme
+    val target = remember(colorKey, scheme) {
+        noteColorStyle(NoteColor.fromKey(colorKey), scheme)?.page ?: scheme.surface
+    }
+    return animateColorAsState(target, label = "pageColor").value
 }
 
 /** Which of the editor's sheets and dialogs are open. */
@@ -219,7 +253,9 @@ private fun EditorOverlays(
     overlays: EditorOverlaysState,
     exits: EditorExits,
     onManageTags: () -> Unit,
+    onMessage: (String) -> Unit,
     viewModel: EditNoteViewModel = enclyViewModel(),
+    markdownViewModel: MarkdownExportViewModel = enclyViewModel(),
 ) {
     val lockEditor by viewModel.lockEditor.collectAsState()
     EditorConfirmDialogs(
@@ -242,6 +278,7 @@ private fun EditorOverlays(
             onDismiss = { overlays.isTagSheetVisible = false },
         )
     }
+    MarkdownExportHost(onMessage)
     EditNoteBottomSheet(
         isVisible = overlays.isEditMenuVisible,
         onDismiss = { overlays.isEditMenuVisible = false },
@@ -257,6 +294,14 @@ private fun EditorOverlays(
                 EditNoteBottomSheetAction.FIND -> viewModel.openFind()
 
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
+
+                EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id ->
+                    markdownViewModel.start(MarkdownExportTarget.SingleNote(id))
+                }
+
+                EditNoteBottomSheetAction.ARCHIVE -> exits.archive(archived = true)
+
+                EditNoteBottomSheetAction.UNARCHIVE -> exits.archive(archived = false)
             }
         },
     )

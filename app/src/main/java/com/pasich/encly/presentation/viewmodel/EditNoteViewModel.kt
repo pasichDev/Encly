@@ -10,9 +10,12 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.SettingsRepository
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
@@ -54,6 +57,7 @@ import com.pasich.encly.presentation.editor.state.moveBlockOf
 import com.pasich.encly.presentation.editor.state.moveInteracted
 import com.pasich.encly.presentation.editor.state.pasteLink
 import com.pasich.encly.presentation.editor.state.removeInteracted
+import com.pasich.encly.presentation.editor.state.toggleChecklistLock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -86,6 +90,7 @@ constructor(
     notesRepository: NotesRepository,
     private val savedStateHandle: SavedStateHandle,
     updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
+    updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,
     private val settingsRepository: SettingsRepository,
     @ApplicationScope private val appScope: CoroutineScope,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
@@ -108,6 +113,7 @@ constructor(
     private val persistence = NotePersistence(
         notesRepository = notesRepository,
         updateNoteTrashStatusUseCase = updateNoteTrashStatusUseCase,
+        updateNoteArchiveStatusUseCase = updateNoteArchiveStatusUseCase,
         ioDispatcher = ioDispatcher,
         readOnly = isReadTrashOnly,
         blocks = { editor.blocks },
@@ -158,7 +164,25 @@ constructor(
     /** Ids of the link blocks the user is editing ([editLink]); they show URL entry. */
     val editingLinkIds: StateFlow<Set<String>> get() = _editingLinkIds
 
-    val fontSize: StateFlow<Int> = settingsRepository.fontSizeFlow.stateIn(
+    /**
+     * What this note sets for its own text size and line spacing; the rest follows the defaults.
+     * They are columns of the note in the vault, stored with it like the title.
+     */
+    val textOverride: StateFlow<NoteTextOverride> = persistence.state.map { state ->
+        NoteTextOverride(
+            size = state.note.textSize,
+            spacing = state.note.lineSpacing?.let { enumValues<NoteLineSpacing>().getOrNull(it) },
+        )
+    }.distinctUntilChanged().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+        NoteTextOverride(),
+    )
+
+    /** The text size in effect: the note's own, else the default from Settings → Appearance. */
+    val fontSize: StateFlow<Int> = combine(settingsRepository.fontSizeFlow, textOverride) { default, own ->
+        own.size ?: default
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = 16,
@@ -170,7 +194,9 @@ constructor(
         initialValue = FontStyleType.DEFAULT,
     )
 
-    val noteLineSpacing = settingsRepository.noteLineSpacingFlow.stateIn(
+    val noteLineSpacing = combine(settingsRepository.noteLineSpacingFlow, textOverride) { default, own ->
+        own.spacing ?: default
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = NoteLineSpacing.DEFAULT,
@@ -268,6 +294,14 @@ constructor(
     /** Moves the note to the trash; returns once the write completed. */
     suspend fun noteMoveToTrash(): Boolean = persistence.moveToTrash()
 
+    /** Moves the note to the archive, or back to the list; returns once the write completed. */
+    suspend fun noteSetArchived(archived: Boolean): Boolean = persistence.setArchived(archived)
+
+    /** Marks the note with [color]. Stored with the next save, like the title. */
+    fun updateColor(color: NoteColor) {
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(color = color.key) }
+    }
+
     /** Inserts a copy of the note, titled by [NoteCopyTitle]; returns its id, or -1 on failure. */
     suspend fun noteDuplicate(): Long = persistence.duplicate()
 
@@ -293,13 +327,19 @@ constructor(
         persistence.updateNote { it.copy(tagId = tagId.takeIf { id -> id > 0L }) }
     }
 
+    /** Sets this note's own text size; the default in Settings stays as it is. */
     fun updateFontSize(size: Int) {
-        // The app scope: closing the editor right after a change must not cancel the write.
-        appScope.launch { settingsRepository.setFontSize(size) }
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(textSize = size.coerceIn(MIN_TEXT_SIZE, MAX_TEXT_SIZE)) }
     }
 
+    /** Sets this note's own line spacing; the default in Settings stays as it is. */
     fun updateNoteLineSpacing(value: NoteLineSpacing) {
-        appScope.launch { settingsRepository.setNoteLineSpacing(value) }
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(lineSpacing = value.ordinal) }
+    }
+
+    /** "Use default": the note follows the text size and line spacing of Settings again. */
+    fun useDefaultText() {
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(textSize = null, lineSpacing = null) }
     }
 
     /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */
@@ -432,6 +472,10 @@ constructor(
     /** The cursor in [block]'s field moved to [offset]. */
     fun onCaretMoved(block: Block, offset: Int) = editor.selection.onCaret(block.id, offset)
 
+    /** The cursor in item [itemId] of list [block] moved to [offset]. */
+    fun onListItemCaret(block: Block, itemId: String, offset: Int) =
+        editor.selection.onItemCaret(block.id, itemId, offset)
+
     /** Sets the link of [block]; a link being edited ([editLink]) is committed with it. */
     fun onLinkChanged(block: Block.LinkBlock, newLink: LinkDataBlock) {
         if (!canEdit()) return
@@ -495,6 +539,11 @@ constructor(
         if (canEdit()) editor.removeInteracted()
     }
 
+    /** Locks or unlocks the checklist [block] (see toggleChecklistLock). */
+    fun toggleChecklistLock(block: Block) {
+        if (canEdit(block)) editor.toggleChecklistLock(block.id)
+    }
+
     /** Duplicates the block the user works on, right after it. */
     fun duplicateInteractedBlock() {
         if (canEdit()) editor.duplicateInteracted()
@@ -545,6 +594,9 @@ constructor(
 
 /** The find bar refreshes its matches this long after the text stops changing. */
 private const val FIND_REFRESH_MS = 100L
+
+private const val MIN_TEXT_SIZE = 10
+private const val MAX_TEXT_SIZE = 32
 
 /** How long state shared with the UI is kept after the last collector leaves. */
 private const val STOP_TIMEOUT_MS = 5_000L

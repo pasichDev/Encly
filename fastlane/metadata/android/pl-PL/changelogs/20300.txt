@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Kolory notatek, przypinanie i archiwum: ważne na górze, reszta uporządkowana.
+• Gesty przesuwania na kartach: przypnij, archiwizuj, pokoloruj lub usuń do kosza.
+• Eksport do Markdown po podaniu PIN-u. Pliki nie są szyfrowane, więc Encly ostrzeże Cię wcześniej.
+• Edytor: klawisze strzałek, przytrzymane usuwanie, cofanie z klawiatury i puste linie działają poprawnie; listy zadań można blokować.
+• Domyślny rozmiar tekstu i interlinia dla wszystkich notatek.

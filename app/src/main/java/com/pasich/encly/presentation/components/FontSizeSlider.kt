@@ -23,25 +23,51 @@ private const val SIZE_STEPS = 21
 /** The editor text size: a labelled slider with the value in the data style. */
 @Composable
 fun FontSizeSlider(currentSize: Int, onSizeChange: (Int) -> Unit, modifier: Modifier = Modifier) {
+    LabeledSlider(
+        label = stringResource(R.string.font_size_title),
+        valueText = stringResource(R.string.font_size_value, currentSize),
+        value = currentSize.toFloat(),
+        onValueChange = { onSizeChange(it.toInt()) },
+        scale = SliderScale(MIN_SIZE..MAX_SIZE, SIZE_STEPS),
+        modifier = modifier,
+    )
+}
+
+/** The span of a [LabeledSlider] and the number of stops between its ends. */
+internal class SliderScale(val range: ClosedFloatingPointRange<Float>, val steps: Int)
+
+/**
+ * A labelled slider: [label] on the left, [valueText] on the right in the data style, the slider
+ * below. Shared by the editor's text size and line spacing, so both rows look the same.
+ */
+@Composable
+internal fun LabeledSlider(
+    label: String,
+    valueText: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    scale: SliderScale,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.font_size_title),
+                text = label,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = stringResource(R.string.font_size_value, currentSize),
+                text = valueText,
                 style = EnclyTheme.typography.dataSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Slider(
-            value = currentSize.toFloat(),
-            onValueChange = { onSizeChange(it.toInt()) },
-            valueRange = MIN_SIZE..MAX_SIZE,
-            steps = SIZE_STEPS,
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = scale.range,
+            steps = scale.steps,
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary,

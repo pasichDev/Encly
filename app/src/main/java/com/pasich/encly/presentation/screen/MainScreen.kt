@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.presentation.components.HomeTaskWidget
 import com.pasich.encly.presentation.designsystem.EnclyFab
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -164,6 +165,7 @@ fun MainScreen(
                 listScrollState = listScrollState,
                 gridScrollState = gridScrollState,
                 search = NotesSearch(query, searchResults),
+                swipe = settingsViewModel.swipeSettings.collectAsState().value ?: SwipeSettings.Off,
                 onItemClick = { note -> navigation.editNote(note.id) },
                 onSecondActionClick = { note -> navigation.editNote(-1, "?copySource=${note.id}") },
                 header = {

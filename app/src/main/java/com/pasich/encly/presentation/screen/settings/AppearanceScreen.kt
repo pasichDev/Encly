@@ -26,9 +26,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
+import com.pasich.encly.presentation.components.FontSizeSlider
+import com.pasich.encly.presentation.components.NoteLineSpacingSlider
 import com.pasich.encly.presentation.designsystem.EnclyCard
 import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyGroup
@@ -57,8 +60,16 @@ fun AppearanceScreen(
     viewModel: AppearanceViewModel = enclyViewModel(),
 ) {
     val settings by viewModel.themeSettings.collectAsStateWithLifecycle()
+    val fontSize by viewModel.defaultFontSize.collectAsStateWithLifecycle()
+    val lineSpacing by viewModel.defaultLineSpacing.collectAsStateWithLifecycle()
     AppearanceContent(
         settings = settings,
+        textDefaults = TextDefaults(
+            fontSize,
+            lineSpacing,
+            viewModel::setDefaultFontSize,
+            viewModel::setDefaultLineSpacing,
+        ),
         supportsDynamicColor = viewModel.supportsDynamicColors(),
         actions = AppearanceActions(
             onBack = { navController.popBackStack() },
@@ -74,6 +85,7 @@ fun AppearanceScreen(
 @Composable
 private fun AppearanceContent(
     settings: ThemeSettings,
+    textDefaults: TextDefaults,
     supportsDynamicColor: Boolean,
     actions: AppearanceActions,
     modifier: Modifier = Modifier,
@@ -107,8 +119,32 @@ private fun AppearanceContent(
                 )
             }
             FontSection(selected = settings.fontStyle, onFontStyle = actions.onFontStyle)
+            TextDefaultsSection(textDefaults)
             PreviewCard()
         }
+    }
+}
+
+/** The default text size and line spacing of notes, and how to change them. */
+private class TextDefaults(
+    val fontSize: Int,
+    val lineSpacing: NoteLineSpacing,
+    val onFontSize: (Int) -> Unit,
+    val onLineSpacing: (NoteLineSpacing) -> Unit,
+)
+
+/** The size and spacing every note starts with; a note can set its own from its menu. */
+@Composable
+private fun TextDefaultsSection(defaults: TextDefaults, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
+        SectionOverline(stringResource(R.string.appearance_text_section))
+        FontSizeSlider(currentSize = defaults.fontSize, onSizeChange = defaults.onFontSize)
+        NoteLineSpacingSlider(selected = defaults.lineSpacing, onSelect = defaults.onLineSpacing)
+        Text(
+            text = stringResource(R.string.appearance_text_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

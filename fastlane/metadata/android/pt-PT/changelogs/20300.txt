@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Cores das notas, fixar e arquivo: o importante no topo, o resto arrumado.
+• Ações de deslizar nos cartões: fixar, arquivar, colorir ou enviar para o lixo.
+• Exportar para Markdown, com o seu PIN. Os ficheiros não são cifrados e o Encly avisa-o primeiro.
+• Editor: teclas de cursor, apagar contínuo, anular com o teclado e linhas vazias funcionam bem; as listas podem ser bloqueadas.
+• Tamanho do texto e espaçamento entre linhas predefinidos para todas as notas.

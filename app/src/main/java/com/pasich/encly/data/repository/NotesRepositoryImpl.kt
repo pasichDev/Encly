@@ -11,6 +11,7 @@ import javax.inject.Inject
 private const val TAG = "NotesRepository"
 
 /** Keeps the opening that created this repository; delayed calls cannot cross a re-lock. */
+@Suppress("TooManyFunctions") // One function per read and per single-column write.
 class NotesRepositoryImpl @Inject constructor(private val databaseProvider: DatabaseProvider) : NotesRepository {
     private val lease: DatabaseLease? = databaseProvider.captureLease()
 
@@ -19,6 +20,33 @@ class NotesRepositoryImpl @Inject constructor(private val databaseProvider: Data
     override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = daoFlow { dao().getAllNotesWithTags() }
 
     override fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> = daoFlow { dao().getNotesByTagId(tagId) }
+
+    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = daoFlow { dao().getArchivedNotesWithTags() }
+
+    override fun getArchivedNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> =
+        daoFlow { dao().getArchivedNotesByTagId(tagId) }
+
+    override fun observeNote(noteId: Long): Flow<NoteWithTag?> = daoFlow { dao().observeNoteWithTag(noteId) }
+
+    override suspend fun setColor(noteId: Long, color: String): Result<Unit> = storageWrite(TAG, "setColor") {
+        dao().updateColor(noteId, color).requireRows()
+    }
+
+    override suspend fun setTag(noteId: Long, tagId: Long?): Result<Unit> = storageWrite(TAG, "setTag") {
+        dao().updateTagId(noteId, tagId).requireRows()
+    }
+
+    override suspend fun setDescription(noteId: Long, description: String): Result<Unit> =
+        storageWrite(TAG, "setDescription") { dao().updateDescription(noteId, description).requireRows() }
+
+    override suspend fun setPinned(noteId: Long, pinned: Boolean): Result<Unit> = storageWrite(TAG, "setPinned") {
+        dao().updatePinned(noteId, pinned)
+        // An archived note refuses a pin without touching a row; that is not a failure.
+        Unit
+    }
+
+    override suspend fun setArchived(noteId: Long, archived: Boolean): Result<Unit> =
+        storageWrite(TAG, "setArchived") { dao().updateArchived(noteId, archived).requireRows() }
 
     override fun getTrashNotes(): Flow<List<Note>> = daoFlow { dao().getTrashNotes() }
 

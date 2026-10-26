@@ -7,6 +7,7 @@
     <string name="about_faq_title">Domande frequenti</string>
     <string name="about_feedback">Feedback</string>
     <string name="about_feedback_desc">Segnala un bug o suggerisci un miglioramento su GitHub</string>
+    <string name="about_support_dev_desc">Perché conta e come contribuire su Ko-fi</string>
     <string name="about_no_browser">Nessun browser trovato. Apri il link manualmente: %1$s</string>
     <string name="about_no_mail_client">Nessuna app di posta trovata</string>
     <string name="about_privacy_policy">Informativa sulla privacy</string>
@@ -42,13 +43,15 @@
     <string name="biometric_prompt_use_pin">Usa il PIN</string>
     <string name="biometric_unavailable">L\'autenticazione biometrica non è disponibile</string>
 
-    <string name="block_add">Aggiungi blocco</string>
+    <string name="block_more_tools">Altri strumenti di blocco</string>
     <string name="block_bulleted_list">Elenco puntato</string>
     <string name="block_checklist">Checklist</string>
     <string name="block_heading">Titolo</string>
     <string name="block_heading_level">Titolo %1$d</string>
     <string name="block_link">Link</string>
     <string name="block_list">Elenco</string>
+    <string name="checklist_lock">Blocca la lista di controllo</string>
+    <string name="checklist_unlock">Sblocca la lista di controllo</string>
     <string name="block_move_down">Sposta giù</string>
     <string name="block_move_up">Sposta su</string>
     <string name="block_numbered_list">Elenco numerato</string>
@@ -83,7 +86,7 @@
     <string name="dialog_message">Vuoi davvero eliminare definitivamente questa nota? L\'operazione non può essere annullata.</string>
     <string name="dialog_title">Eliminare la nota?</string>
 
-    <string name="donation_description">Il tuo supporto ci aiuta ad aggiungere funzioni, correggere bug e migliorare l\'app. Qualsiasi importo è molto apprezzato!</string>
+    <string name="donation_description">Encly è gratuito e open source, senza pubblicità, tracciamento né account. Le donazioni sono il suo unico introito.</string>
     <string name="donation_title">Sostieni lo sviluppo</string>
 
     <string name="done">Fine</string>
@@ -136,7 +139,7 @@
     <string name="faq_section_security">Sicurezza e recupero</string>
     <string name="faq_section_settings">Impostazioni</string>
     <string name="faq_section_troubleshooting">Risoluzione dei problemi</string>
-    <string name="faq_storage_a">Note, etichette e attività sono salvate solo nel database SQLCipher locale di Encly. Non c\'è sincronizzazione nel cloud né backup automatico: puoi esportare tu stesso un backup crittografato in Impostazioni → Backup.</string>
+    <string name="faq_storage_a">Note, etichette e attività sono salvate solo nel database SQLCipher locale di Encly. Non c\'è sincronizzazione nel cloud né backup automatico: puoi esportare tu stesso un backup crittografato in Impostazioni → Backup, oppure una copia Markdown leggibile, che non è crittografata.</string>
     <string name="faq_storage_q">Dove sono salvati i miei dati?</string>
     <string name="faq_tags_a">Le etichette raggruppano le note. Puoi crearle, rinominarle, nasconderle ed eliminarle, trascinarle nell’ordine che vuoi e filtrare la schermata principale per etichetta.</string>
     <string name="faq_tags_q">Come funzionano le etichette?</string>
@@ -340,7 +343,7 @@
         <item quantity="other">%1$d di %2$d attività completate</item>
     </plurals>
     <string name="settings_backup">Backup</string>
-    <string name="backup_settings_subtitle">Esportazione e importazione crittografate</string>
+    <string name="backup_settings_subtitle">Backup crittografato, importazione e Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Crittografato con la tua frase di recupero</string>
     <string name="backup_intro_body">Un backup contiene tutte le tue note, attività ed etichette, crittografate con la tua frase di recupero di 12 parole. Encly non lo carica da nessuna parte: scegli tu dove salvare il file. Su un nuovo telefono, le stesse 12 parole lo ripristinano.</string>
@@ -545,11 +548,11 @@
     <string name="support_fact_free_title">È già tutto tuo</string>
     <string name="support_fact_free_desc">Ogni funzione è disponibile per tutti. Niente è bloccato dietro un pagamento.</string>
     <string name="support_fact_private_title">Niente pubblicità né tracciamento</string>
-    <string name="support_fact_private_desc">Encly non vede mai le tue note e non guadagna dai dati. Il supporto è l’unico modo in cui si sostiene.</string>
-    <string name="support_fact_uses_title">A cosa serve</string>
-    <string name="support_fact_uses_desc">Nuove funzioni, revisione della sicurezza e test, design e correzioni.</string>
-    <string name="support_kofi_button">Sostieni su Ko-fi</string>
-    <string name="support_kofi_note">Apre ko-fi.com nel browser. Ogni importo aiuta.</string>
+    <string name="support_fact_private_desc">Encly non vede mai le tue note e non guadagna dai dati. Solo le donazioni lo sostengono.</string>
+    <string name="support_fact_uses_title">Dove vanno i fondi</string>
+    <string name="support_fact_uses_desc">Dispositivi di test (il prossimo obiettivo: un Mac mini per compilare e testare) e tempo per rilasci e correzioni.</string>
+    <string name="support_method_kofi_hint">Carta o PayPal, una tantum o mensile</string>
+    <string name="support_browser_note">Apre ko-fi.com nel browser. L\'app Encly non gestisce mai i pagamenti.</string>
     <string name="faq_note_actions_q">Cosa fa una pressione prolungata su una nota?</string>
     <string name="faq_note_actions_a">Apre le azioni della nota: cambiare l’etichetta, aggiungere una breve descrizione mostrata sulla scheda, duplicare la nota o spostarla nel cestino.</string>
     <string name="faq_trash_q">Come recupero una nota eliminata?</string>
@@ -607,4 +610,51 @@
     <string name="template_project_decisions">Decisioni</string>
     <string name="template_project_questions">Domande aperte</string>
     <string name="template_checklist_todo">Da fare</string>
+    <string name="note_pin">Fissa</string>
+    <string name="note_unpin">Non fissare più</string>
+    <string name="note_archive">Archivia</string>
+    <string name="note_unarchive">Rimuovi dall\'archivio</string>
+    <string name="notes_section_pinned">Fissate</string>
+    <string name="notes_section_other">Altre</string>
+    <string name="main_drawer_archive">Archivio</string>
+    <string name="archive_empty_title">L\'archivio è vuoto</string>
+    <string name="archive_empty_desc">Le note archiviate escono dall\'elenco e dalla ricerca ma restano nella cassaforte. Archivia una nota dal suo menu.</string>
+    <string name="note_archive_failed">Impossibile archiviare la nota</string>
+    <string name="note_unarchive_failed">Impossibile rimuovere la nota dall\'archivio</string>
+    <string name="note_color_title">Colore</string>
+    <string name="note_color_none">Nessun colore</string>
+    <string name="note_color_red">Rosso</string>
+    <string name="note_color_orange">Arancione</string>
+    <string name="note_color_yellow">Giallo</string>
+    <string name="note_color_green">Verde</string>
+    <string name="note_color_teal">Turchese</string>
+    <string name="note_color_blue">Blu</string>
+    <string name="note_color_purple">Viola</string>
+    <string name="note_color_pink">Rosa</string>
+    <string name="markdown_export">Esporta come Markdown</string>
+    <string name="backup_section_markdown">Esportazione leggibile</string>
+    <string name="markdown_export_desc">Salva tutte le note e le attività come file .md leggibili in uno .zip. Il file non è cifrato.</string>
+    <string name="markdown_export_warning_title">Esportare senza cifratura?</string>
+    <string name="markdown_export_warning_body">Il file esportato non è cifrato. Chiunque lo ottenga può leggere le tue note. Ovunque tu lo salvi, anche in una cartella cloud, ci sarà una copia leggibile che Encly non può proteggere né ritirare. Poi confermerai con il tuo PIN.</string>
+    <string name="markdown_export_done">Esportazione Markdown salvata</string>
+    <string name="faq_markdown_q">Posso esportare le note come Markdown?</string>
+    <string name="faq_markdown_a">Sì. Nel menu di una nota scegli «Esporta come Markdown» per un file .md, oppure vai su Impostazioni → Backup → «Esporta come Markdown» per uno .zip con tutte le note (quelle archiviate in una cartella archive, senza il cestino) e un file delle attività. Questi file non sono crittografati: Encly ti avvisa prima, chiede il PIN e salva solo dove scegli tu.</string>
+    <string name="settings_swipe_section">Azioni con scorrimento</string>
+    <string name="settings_swipe_enabled">Scorri le note</string>
+    <string name="settings_swipe_enabled_desc">Scorri una nota per agire su di essa</string>
+    <string name="settings_swipe_right">Scorri a destra</string>
+    <string name="settings_swipe_left">Scorri a sinistra</string>
+    <string name="swipe_choice_pin">Fissa o non fissare</string>
+    <string name="swipe_choice_color">Colore successivo</string>
+    <string name="swipe_choice_delete">Sposta nel cestino</string>
+    <string name="swipe_choice_none">Niente</string>
+    <string name="swipe_delete_title">Spostare nel cestino?</string>
+    <string name="swipe_delete_message">Potrai ripristinare la nota dal cestino.</string>
+    <string name="faq_swipe_q">A cosa servono gli scorrimenti su una nota?</string>
+    <string name="faq_swipe_a">Per impostazione predefinita, scorrere una nota a destra la fissa o la sblocca, a sinistra la archivia. In Impostazioni → Azioni con scorrimento puoi scegliere per ogni direzione: fissa, archivia, colore successivo, sposta nel cestino (chiede sempre conferma) o niente, oppure disattivare gli scorrimenti. TalkBack offre le stesse azioni nel menu delle azioni della nota.</string>
+    <string name="appearance_text_section">Testo delle note</string>
+    <string name="appearance_text_desc">Il valore predefinito di ogni nota. Una nota può impostare il proprio dal suo menu.</string>
+    <string name="note_text_use_default">Usa le impostazioni di testo predefinite</string>
+    <string name="about_source_code">Codice sorgente</string>
+    <string name="about_source_code_desc">Encly è open source: leggi il codice su GitHub</string>
 </resources>

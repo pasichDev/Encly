@@ -81,7 +81,7 @@ class ThemedScreensTest(private val palette: ThemePalette, private val dark: Boo
             date = 1L,
         ).also { app.withNotes(it) }
         setNavScreen(
-            viewModels(app.editor(noteId = 5), app.tagList()),
+            viewModels(app.editor(noteId = 5), app.tagList(), app.markdownExport()),
             route = TestRoutes.EDIT_NOTE,
             start = NavRoutes.HomeRoute.name,
             settings = settings,

@@ -6,6 +6,8 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
@@ -71,6 +73,7 @@ class EditNoteViewModelComfortTest {
         notesRepository = repository,
         savedStateHandle = SavedStateHandle(mapOf("idNote" to noteId)),
         updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
         settingsRepository = settings,
         appScope = CoroutineScope(dispatcher),
         ioDispatcher = dispatcher,
@@ -84,6 +87,109 @@ class EditNoteViewModelComfortTest {
     }
 
     private val enter = LineBreak("", listOf("", ""), "")
+
+    // --- text size and line spacing: the default, and a note's own ----------------------------------
+
+    private fun TestScope.collectingText(viewModel: EditNoteViewModel) {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.fontSize.collect {} }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.noteLineSpacing.collect {} }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.textOverride.collect {} }
+    }
+
+    @Test
+    fun aNoteFollowsTheDefaultTextSettingsUntilItSetsItsOwn() = runTest(dispatcher) {
+        settings.fontSizeFlow.value = 20
+        settings.noteLineSpacingFlow.value = NoteLineSpacing.COMPACT
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+
+        assertEquals(20, viewModel.fontSize.value)
+        assertEquals(NoteLineSpacing.COMPACT, viewModel.noteLineSpacing.value)
+        assertFalse(viewModel.textOverride.value.isSet)
+    }
+
+    @Test
+    fun theMenuSlidersSetTheNotesOwnValuesAndLeaveTheDefaultAlone() = runTest(dispatcher) {
+        settings.fontSizeFlow.value = 16
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+
+        viewModel.updateFontSize(26)
+        viewModel.updateNoteLineSpacing(NoteLineSpacing.COMFORTABLE)
+        advanceUntilIdle()
+
+        assertEquals(26, viewModel.fontSize.value)
+        assertEquals(NoteLineSpacing.COMFORTABLE, viewModel.noteLineSpacing.value)
+        assertEquals(16, settings.fontSizeFlow.value)
+        assertEquals(NoteLineSpacing.DEFAULT, settings.noteLineSpacingFlow.value)
+    }
+
+    @Test
+    fun theNotesOwnTextIsStoredOnTheNoteWithTheNextSave() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+        viewModel.updateFontSize(26)
+        viewModel.updateNoteLineSpacing(NoteLineSpacing.COMPACT)
+
+        assertTrue(viewModel.saveNote())
+
+        val stored = repository.updatedNotes.last()
+        assertEquals(26, stored.textSize)
+        assertEquals(NoteLineSpacing.COMPACT.ordinal, stored.lineSpacing)
+    }
+
+    @Test
+    fun aNoteStoredWithItsOwnTextOpensWithIt() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTag(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), null),
+        )
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+
+        assertEquals(30, viewModel.fontSize.value)
+        assertEquals(NoteLineSpacing.COMFORTABLE, viewModel.noteLineSpacing.value)
+        assertTrue(viewModel.textOverride.value.isSet)
+    }
+
+    @Test
+    fun useDefaultReturnsTheNoteToTheDefaults() = runTest(dispatcher) {
+        settings.fontSizeFlow.value = 18
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTag(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), null),
+        )
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+        assertEquals(30, viewModel.fontSize.value)
+
+        viewModel.useDefaultText()
+        advanceUntilIdle()
+
+        assertEquals(18, viewModel.fontSize.value)
+        assertFalse(viewModel.textOverride.value.isSet)
+        assertTrue(viewModel.saveNote())
+        assertNull(repository.updatedNotes.last().textSize)
+        assertNull(repository.updatedNotes.last().lineSpacing)
+    }
+
+    @Test
+    fun aNewNoteStoresItsOwnTextWhenFirstSaved() = runTest(dispatcher) {
+        val viewModel = viewModel(noteId = -1L)
+        collectingText(viewModel)
+        advanceUntilIdle()
+        viewModel.updateFontSize(28)
+        viewModel.updateTitle("Draft")
+
+        assertTrue(viewModel.saveNote())
+
+        advanceUntilIdle()
+        assertEquals(28, repository.insertedNotes.last().textSize)
+        assertEquals(28, viewModel.fontSize.value)
+    }
 
     // --- find ---------------------------------------------------------------------------------------
 

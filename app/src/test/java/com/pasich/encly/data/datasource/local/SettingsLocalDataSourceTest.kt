@@ -5,6 +5,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -43,6 +46,55 @@ class SettingsLocalDataSourceTest {
         assertEquals(ThemeSettings(), source.themeSettingsFlow.first())
         assertEquals(FontStyleType.DEFAULT, source.fontStyleFlow.first())
         assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
+    }
+
+    @Test
+    fun legacyPerNoteTextKeysAreRemovedAndOtherSettingsKept() = runTest {
+        dataStore.edit {
+            it[intPreferencesKey("note_text_size_7")] = 24
+            it[intPreferencesKey("note_line_spacing_7")] = 1
+            it[intPreferencesKey("note_text_size_1200")] = 12
+        }
+        source.setFontSize(20)
+
+        source.removeLegacyNoteTextKeys()
+
+        val keys = dataStore.data.first().asMap().keys.map { it.name }
+        assertEquals(listOf("font_size"), keys)
+        assertEquals(20, source.fontSizeFlow.first())
+    }
+
+    @Test
+    fun removingLegacyKeysWithNoneLeftChangesNothing() = runTest {
+        source.setFontSize(20)
+
+        source.removeLegacyNoteTextKeys()
+
+        assertEquals(20, source.fontSizeFlow.first())
+    }
+
+    @Test
+    fun swipeDefaultsPinRightArchiveLeft() = runTest {
+        assertEquals(
+            SwipeSettings(enabled = true, right = SwipeAction.PIN, left = SwipeAction.ARCHIVE),
+            source.swipeSettingsFlow.first(),
+        )
+    }
+
+    @Test
+    fun swipeSettingsRoundTrip() = runTest {
+        source.setSwipeEnabled(false)
+        source.setSwipeAction(SwipeSide.RIGHT, SwipeAction.NEXT_COLOR)
+        source.setSwipeAction(SwipeSide.LEFT, SwipeAction.DELETE)
+
+        assertEquals(SwipeSettings(false, SwipeAction.NEXT_COLOR, SwipeAction.DELETE), source.swipeSettingsFlow.first())
+    }
+
+    @Test
+    fun anUnknownStoredSwipeActionFallsBackToTheDefault() = runTest {
+        dataStore.edit { it[intPreferencesKey(SWIPE_RIGHT)] = 99 }
+
+        assertEquals(SwipeAction.PIN, source.swipeSettingsFlow.first().right)
     }
 
     @Test

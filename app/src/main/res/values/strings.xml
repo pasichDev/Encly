@@ -23,6 +23,7 @@
     <string name="about_faq_title">Frequently asked questions</string>
     <string name="about_feedback">Feedback</string>
     <string name="about_feedback_desc">Report a bug or suggest an improvement on GitHub</string>
+    <string name="about_support_dev_desc">Why it matters and how to chip in on Ko-fi</string>
     <string name="about_no_browser">No browser found. Open the link manually: %1$s</string>
     <string name="about_no_mail_client">No email app found</string>
     <string name="about_privacy_policy">Privacy policy</string>
@@ -58,13 +59,15 @@
     <string name="biometric_prompt_use_pin">Use PIN</string>
     <string name="biometric_unavailable">Biometric authentication is unavailable</string>
 
-    <string name="block_add">Add block</string>
+    <string name="block_more_tools">More block tools</string>
     <string name="block_bulleted_list">Bulleted list</string>
     <string name="block_checklist">Checklist</string>
     <string name="block_heading">Heading</string>
     <string name="block_heading_level">Heading %1$d</string>
     <string name="block_link">Link</string>
     <string name="block_list">List</string>
+    <string name="checklist_lock">Lock checklist</string>
+    <string name="checklist_unlock">Unlock checklist</string>
     <string name="block_move_down">Move down</string>
     <string name="block_move_up">Move up</string>
     <string name="block_numbered_list">Numbered list</string>
@@ -99,7 +102,7 @@
     <string name="dialog_message">Do you really want to delete this note permanently? This can\'t be undone.</string>
     <string name="dialog_title">Delete note?</string>
 
-    <string name="donation_description">Your support helps us add new features, fix bugs and improve the app. Any amount is greatly appreciated!</string>
+    <string name="donation_description">Encly is free and open source, with no ads, no tracking and no accounts. Donations are its only income.</string>
     <string name="donation_title">Support development</string>
 
     <string name="done">Done</string>
@@ -152,7 +155,7 @@
     <string name="faq_section_security">Security and recovery</string>
     <string name="faq_section_settings">Settings</string>
     <string name="faq_section_troubleshooting">Troubleshooting</string>
-    <string name="faq_storage_a">Notes, tags and tasks are stored only in Encly\'s local SQLCipher database. There is no cloud sync and no automatic backup: you can export an encrypted backup yourself in Settings → Backup.</string>
+    <string name="faq_storage_a">Notes, tags and tasks are stored only in Encly\'s local SQLCipher database. There is no cloud sync and no automatic backup: you can export an encrypted backup yourself in Settings → Backup, or a readable Markdown copy, which is not encrypted.</string>
     <string name="faq_storage_q">Where is my data stored?</string>
     <string name="faq_tags_a">Tags group your notes. You can create, rename, hide and delete them, drag them into any order, and filter the home screen by tag.</string>
     <string name="faq_tags_q">How do tags work?</string>
@@ -353,7 +356,7 @@
         <item quantity="other">%1$d of %2$d tasks completed</item>
     </plurals>
     <string name="settings_backup">Backup</string>
-    <string name="backup_settings_subtitle">Encrypted export and import</string>
+    <string name="backup_settings_subtitle">Encrypted backup, import and Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Encrypted with your recovery phrase</string>
     <string name="backup_intro_body">A backup holds all your notes, tasks and tags, encrypted with your 12-word recovery phrase. Encly never uploads it: you choose where the file is saved. On a new phone, the same 12 words restore it.</string>
@@ -557,11 +560,11 @@
     <string name="support_fact_free_title">Everything is already yours</string>
     <string name="support_fact_free_desc">Every feature is in the app for everyone. Nothing is locked behind a payment.</string>
     <string name="support_fact_private_title">No ads, no tracking</string>
-    <string name="support_fact_private_desc">Encly never sees your notes and earns nothing from data. Support is how it pays for itself.</string>
-    <string name="support_fact_uses_title">Where it goes</string>
-    <string name="support_fact_uses_desc">New features, security review and testing, design and fixes.</string>
-    <string name="support_kofi_button">Support on Ko-fi</string>
-    <string name="support_kofi_note">Opens ko-fi.com in your browser. Any amount helps.</string>
+    <string name="support_fact_private_desc">Encly never sees your notes and earns nothing from data. Donations are the only thing that pays for it.</string>
+    <string name="support_fact_uses_title">Where the money goes</string>
+    <string name="support_fact_uses_desc">Test devices (next up: a Mac mini for building and testing) and time for releases and fixes.</string>
+    <string name="support_method_kofi_hint">Card or PayPal, one-off or monthly</string>
+    <string name="support_browser_note">Opens ko-fi.com in your browser. Encly itself never handles payments.</string>
     <string name="faq_note_actions_q">What does a long press on a note do?</string>
     <string name="faq_note_actions_a">It opens the note\'s actions: change its tag, add a short description shown on the card, duplicate the note or move it to the trash.</string>
     <string name="faq_trash_q">How do I get a deleted note back?</string>
@@ -618,4 +621,51 @@
     <string name="template_project_decisions">Decisions</string>
     <string name="template_project_questions">Open questions</string>
     <string name="template_checklist_todo">To do</string>
+    <string name="note_pin">Pin</string>
+    <string name="note_unpin">Unpin</string>
+    <string name="note_archive">Archive</string>
+    <string name="note_unarchive">Unarchive</string>
+    <string name="notes_section_pinned">Pinned</string>
+    <string name="notes_section_other">Others</string>
+    <string name="main_drawer_archive">Archive</string>
+    <string name="archive_empty_title">Archive is empty</string>
+    <string name="archive_empty_desc">Archived notes leave your list and search but stay in the vault. Archive a note from its menu.</string>
+    <string name="note_archive_failed">Couldn\'t move the note to the archive</string>
+    <string name="note_unarchive_failed">Couldn\'t take the note out of the archive</string>
+    <string name="note_color_title">Color</string>
+    <string name="note_color_none">No color</string>
+    <string name="note_color_red">Red</string>
+    <string name="note_color_orange">Orange</string>
+    <string name="note_color_yellow">Yellow</string>
+    <string name="note_color_green">Green</string>
+    <string name="note_color_teal">Teal</string>
+    <string name="note_color_blue">Blue</string>
+    <string name="note_color_purple">Purple</string>
+    <string name="note_color_pink">Pink</string>
+    <string name="markdown_export">Export as Markdown</string>
+    <string name="backup_section_markdown">Readable export</string>
+    <string name="markdown_export_desc">Save all notes and tasks as readable .md files in a .zip. The file is not encrypted.</string>
+    <string name="markdown_export_warning_title">Export without encryption?</string>
+    <string name="markdown_export_warning_body">The exported file is not encrypted. Anyone who gets it can read your notes. Wherever you save it, including a cloud folder, will hold a readable copy that Encly can\'t protect or take back. You\'ll confirm with your PIN next.</string>
+    <string name="markdown_export_done">Markdown export saved</string>
+    <string name="faq_markdown_q">Can I export my notes as Markdown?</string>
+    <string name="faq_markdown_a">Yes. In a note\'s menu choose \"Export as Markdown\" for one .md file, or use Settings → Backup → \"Export as Markdown\" for a .zip of all notes (archived ones in an archive folder, the trash left out) and a tasks file. These files are not encrypted: Encly warns you first, asks for your PIN and saves only where you choose.</string>
+    <string name="settings_swipe_section">Swipe actions</string>
+    <string name="settings_swipe_enabled">Swipe on notes</string>
+    <string name="settings_swipe_enabled_desc">Swipe a note card to act on it</string>
+    <string name="settings_swipe_right">Swipe right</string>
+    <string name="settings_swipe_left">Swipe left</string>
+    <string name="swipe_choice_pin">Pin or unpin</string>
+    <string name="swipe_choice_color">Next color</string>
+    <string name="swipe_choice_delete">Move to trash</string>
+    <string name="swipe_choice_none">Nothing</string>
+    <string name="swipe_delete_title">Move to trash?</string>
+    <string name="swipe_delete_message">You can restore the note from the trash.</string>
+    <string name="faq_swipe_q">What do swipes on a note do?</string>
+    <string name="faq_swipe_a">By default, swiping a note right pins or unpins it and swiping left archives it. In Settings → Swipe actions you can choose pin, archive, next color, move to trash (always asks first) or nothing for each direction, or turn swipes off. TalkBack offers the same actions in the note\'s actions menu.</string>
+    <string name="appearance_text_section">Text in notes</string>
+    <string name="appearance_text_desc">The default for every note. A note can set its own from its menu.</string>
+    <string name="note_text_use_default">Use default text settings</string>
+    <string name="about_source_code">Source code</string>
+    <string name="about_source_code_desc">Encly is open source: read the code on GitHub</string>
 </resources>

@@ -31,15 +31,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.pasich.encly.R
+import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyNoteColorPicker
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -50,6 +54,9 @@ sealed class NoteAction {
     object Edit : NoteAction()
     object Duplicate : NoteAction()
     object Delete : NoteAction()
+    data class Pin(val pinned: Boolean) : NoteAction()
+    data class Archive(val archived: Boolean) : NoteAction()
+    data class ChangeColor(val color: NoteColor) : NoteAction()
     data class ChangeTag(val tagId: Long) : NoteAction()
     data class ChangeDescription(val description: String) : NoteAction()
 }
@@ -72,9 +79,18 @@ fun NoteCardBottomSheet(
     var isEditingDescription by remember(item.note.id, isVisible) { mutableStateOf(false) }
 
     if (isVisible) {
-        EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, modifier = modifier) {
+        EnclyBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            modifier = modifier,
+            scrollable = true,
+        ) {
             NoteActionHeader(item)
             TagChips(selectedTagId = item.note.tagId ?: 0L, onSelect = { onAction(NoteAction.ChangeTag(it)) })
+            ColorChoices(
+                selected = NoteColor.fromKey(item.note.color),
+                onSelect = { onAction(NoteAction.ChangeColor(it)) },
+            )
             EnclyGroupDivider()
             DescriptionEditor(
                 initial = item.note.description,
@@ -82,29 +98,59 @@ fun NoteCardBottomSheet(
                 onEditingChange = { isEditingDescription = it },
                 onSave = { onAction(NoteAction.ChangeDescription(it)) },
             )
-            AnimatedVisibility(!isEditingDescription) {
-                Column {
-                    EnclySheetRow(
-                        title = stringResource(id = R.string.edit),
-                        icon = EnclyIcons.Edit,
-                        onClick = { onAction(NoteAction.Edit) },
-                    )
-                    EnclySheetRow(
-                        title = stringResource(id = R.string.duplicate),
-                        icon = EnclyIcons.Duplicate,
-                        onClick = { onAction(NoteAction.Duplicate) },
-                    )
-                    EnclySheetRow(
-                        title = stringResource(id = R.string.delete),
-                        icon = EnclyIcons.Trash,
-                        destructive = true,
-                        confirmFirst = true,
-                        onClick = { onAction(NoteAction.Delete) },
-                    )
-                }
-            }
+            AnimatedVisibility(!isEditingDescription) { NoteActionRows(item.note, onAction) }
         }
     }
+}
+
+/** Edit, pin, archive, duplicate and delete; a pinned note offers Unpin, an archived one Unarchive and no pin. */
+@Composable
+private fun NoteActionRows(note: Note, onAction: (NoteAction) -> Unit) {
+    Column {
+        EnclySheetRow(
+            title = stringResource(id = R.string.edit),
+            icon = EnclyIcons.Edit,
+            onClick = { onAction(NoteAction.Edit) },
+        )
+        if (!note.isArchived) {
+            EnclySheetRow(
+                title = stringResource(if (note.isPinned) R.string.note_unpin else R.string.note_pin),
+                icon = if (note.isPinned) EnclyIcons.PinOff else EnclyIcons.Pin,
+                onClick = { onAction(NoteAction.Pin(!note.isPinned)) },
+            )
+        }
+        EnclySheetRow(
+            title = stringResource(
+                if (note.isArchived) R.string.note_unarchive else R.string.note_archive,
+            ),
+            icon = if (note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,
+            onClick = { onAction(NoteAction.Archive(!note.isArchived)) },
+        )
+        EnclySheetRow(
+            title = stringResource(id = R.string.duplicate),
+            icon = EnclyIcons.Duplicate,
+            onClick = { onAction(NoteAction.Duplicate) },
+        )
+        EnclySheetRow(
+            title = stringResource(id = R.string.delete),
+            icon = EnclyIcons.Trash,
+            destructive = true,
+            confirmFirst = true,
+            onClick = { onAction(NoteAction.Delete) },
+        )
+    }
+}
+
+/** The note's colour: a heading and a row of swatches, bleeding into the sheet's gutters like the tag chips. */
+@Composable
+private fun ColorChoices(selected: NoteColor, onSelect: (NoteColor) -> Unit) {
+    SectionOverline(stringResource(R.string.note_color_title))
+    EnclyNoteColorPicker(
+        selected = selected,
+        onSelect = onSelect,
+        modifier = Modifier.bleedHorizontally(EnclyTheme.spacing.gutter),
+        contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
+    )
 }
 
 /** Title and last edit: the sheet's heading. */

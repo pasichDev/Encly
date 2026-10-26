@@ -4,6 +4,7 @@ import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
+import com.pasich.encly.presentation.editor.state.CaretMove
 import com.pasich.encly.presentation.editor.state.FocusRequest
 import com.pasich.encly.presentation.editor.state.LineBreak
 import com.pasich.encly.presentation.editor.state.Shortcut
@@ -48,6 +49,23 @@ interface BlockActions {
     /** [onBackspaceAtStart] in item [itemId] of this list. */
     fun onListBackspaceAtStart(itemId: String): Boolean
 
+    /**
+     * A cursor key leaves this block's field ([move]): focuses the next or previous block that has a
+     * field, the cursor placed by the key. False when there is none (or it is not on screen), and the
+     * key is then left to the field. Nothing is ever added by it.
+     */
+    fun navigate(move: CaretMove): Boolean
+
+    /**
+     * Registers how to put the cursor of this block's field at a horizontal position (on its last
+     * line when it arrives from below, else its first).
+     * @return a function that removes the registration
+     */
+    fun registerCaretAtX(callback: (Float, Boolean) -> Unit): () -> Unit
+
+    /** The cursor in item [itemId] of this list moved to [offset]. */
+    fun onListItemCaret(itemId: String, offset: Int)
+
     /** The cursor in this block's field moved to [offset]. */
     fun onCaretMoved(offset: Int)
 
@@ -75,12 +93,6 @@ interface BlockActions {
      * otherwise it keeps an open slash picker in step with the text.
      */
     fun onSlashTyped(text: String, started: Boolean)
-
-    /** Focuses the next block; false when this is the last one. */
-    fun navigateToNext(): Boolean
-
-    /** Focuses the focusable block above; false when there is none. */
-    fun navigateToPrevious(): Boolean
 }
 
 /** What a paragraph's slash picker can do. The editor decides whether it may open (Simple Edit, read-only). */

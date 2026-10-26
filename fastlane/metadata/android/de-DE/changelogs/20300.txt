@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Notizfarben, Anheften und Archiv: Wichtiges bleibt oben, der Rest ist aufgeräumt.
+• Wischaktionen auf Notizkarten: anheften, archivieren, einfärben oder löschen.
+• Export als Markdown, geschützt durch deine PIN. Die Dateien sind unverschlüsselt, Encly warnt dich vorher.
+• Editor: Pfeiltasten, gehaltenes Löschen, Rückgängig per Tastatur und Leerzeilen funktionieren richtig; Checklisten lassen sich sperren.
+• Standard-Schriftgröße und Zeilenabstand für alle Notizen.

@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
@@ -24,19 +24,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import com.pasich.encly.R
@@ -44,29 +50,49 @@ import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.CheckboxSize
+import com.pasich.encly.presentation.designsystem.EDITOR_PLACEHOLDER_ALPHA
 import com.pasich.encly.presentation.designsystem.EnclyCheckbox
 import com.pasich.encly.presentation.designsystem.lineHeight
 import com.pasich.encly.presentation.designsystem.listItemGap
+import com.pasich.encly.presentation.designsystem.markerBoxSize
+import com.pasich.encly.presentation.designsystem.markerColumn
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.focus.KeyboardUtils
-import com.pasich.encly.presentation.editor.state.LineBreak
+import com.pasich.encly.presentation.editor.focus.caretLine
+import com.pasich.encly.presentation.editor.focus.caretOffsetFor
+import com.pasich.encly.presentation.editor.state.CaretMove
+import com.pasich.encly.presentation.editor.state.goesUp
 import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
+import kotlin.math.roundToInt
 
 /** From this many items numbers take two digits, and a wider hanging indent. */
 private const val WIDE_MARKER_FROM = 10
 
 private const val FOCUS_FRAMES = 5
 
+/** A two-digit number's extra width, in text sizes. */
+private const val WIDE_MARKER_EXTRA = 0.6f
+
 /** Which item takes focus next, and where its cursor goes (null: where it is; [Int.MAX_VALUE]: the end). */
-private data class ItemFocus(val itemId: String, val caret: Int?)
+private data class ItemFocus(
+    val itemId: String,
+    val caret: Int?,
+    /** A horizontal position to put the cursor at, on the item's last line when [fromBelow], else its first. */
+    val caretX: Float? = null,
+    val fromBelow: Boolean = false,
+)
 
 /** The list's item fields by item id, and the item to focus once it is composed. */
 private class ListFocus {
     val requesters = mutableMapOf<String, FocusRequester>()
     val fieldStates = mutableMapOf<String, TextFieldState>()
+    val highlights = mutableMapOf<String, FieldHighlight>()
     var pending by mutableStateOf<ItemFocus?>(null)
+
+    /** The item whose field has focus; its cursor is reported so undo can put it back. */
+    var focusedItem: String? = null
 }
 
 /**
@@ -81,8 +107,8 @@ private fun rememberListFocus(block: Block.ListBlock, blockActions: BlockActions
         val unregister = blockActions.registerFieldsFocusTarget { request ->
             val items = block.items.value
             val item = request.itemId?.let { id -> items.firstOrNull { it.id == id } }
-                ?: if (request.cursorToEnd) items.lastOrNull() else items.firstOrNull()
-            item?.let { focus.pending = ItemFocus(it.id, request.caretOffset) }
+                ?: if (request.cursorToEnd || request.fromBelow) items.lastOrNull() else items.firstOrNull()
+            item?.let { focus.pending = ItemFocus(it.id, request.caretOffset, request.caretX, request.fromBelow) }
         }
         onDispose { unregister() }
     }
@@ -94,8 +120,17 @@ private fun rememberListFocus(block: Block.ListBlock, blockActions: BlockActions
             if (requester != null) {
                 runCatching { requester.requestFocus() }
                 val stored = block.items.value.firstOrNull { it.id == request.itemId }?.value
-                if (request.caret != null && stored != null) {
-                    focus.fieldStates[request.itemId]?.placeCaret(stored, request.caret)
+                val state = focus.fieldStates[request.itemId]
+                if (stored != null && state != null) {
+                    if (request.caretX != null) {
+                        val geometry = focus.highlights[request.itemId]?.geometry()
+                        state.placeCaret(
+                            stored,
+                            caretOffsetFor(geometry, request.caretX, request.fromBelow, stored.length),
+                        )
+                    } else if (request.caret != null) {
+                        state.placeCaret(stored, request.caret)
+                    }
                 }
                 focus.pending = null
                 return@LaunchedEffect
@@ -121,15 +156,12 @@ fun ListBlock(
     isLocked: Boolean = false,
 ) {
     val items by block.items.collectAsState()
+    val textLocked by block.locked.collectAsState()
     val actions by rememberUpdatedState(blockActions)
     val focus = rememberListFocus(block, blockActions)
     val editor = remember(block) { ListEditor(block, { actions }) { focus.pending = it } }
     val checklist = block.blockType == BlockType.LIST_CHECK
-    val marker = ListMarker(
-        type = block.blockType,
-        // The hanging indent of bullets and numbers (spec §4.4); two-digit numbers need more.
-        width = if (items.size >= WIDE_MARKER_FROM) EnclyTheme.spacing.xl else EnclyTheme.spacing.l,
-    )
+    val marker = rememberListMarker(block.blockType, items.size)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(
@@ -144,10 +176,18 @@ fun ListBlock(
                     onEdit = { text -> editor.setText(item.id, text) },
                 )
                 val requester = remember { FocusRequester() }
+                val highlight = rememberFieldHighlight(blockActions.highlights, block.id, item.id)
+                LaunchedEffect(item.id, state) {
+                    snapshotFlow { state.selection.start }.collect { offset ->
+                        if (focus.focusedItem == item.id) actions.onListItemCaret(item.id, offset)
+                    }
+                }
                 DisposableEffect(item.id) {
                     focus.requesters[item.id] = requester
                     focus.fieldStates[item.id] = state
+                    focus.highlights[item.id] = highlight
                     onDispose {
+                        focus.highlights.remove(item.id)
                         focus.requesters.remove(item.id)
                         focus.fieldStates.remove(item.id)
                     }
@@ -155,15 +195,31 @@ fun ListBlock(
                 ListItemRow(
                     item = item,
                     marker = marker.forItem(itemIndex + 1),
-                    field = ItemField(state, rememberFieldHighlight(blockActions.highlights, block.id, item.id)),
+                    field = ItemField(state, highlight),
                     editor = editor,
-                    isLocked = isLocked,
-                    fieldModifier = fieldModifier.focusRequester(requester),
+                    locks = ItemLocks(editorLocked = isLocked, textLocked = textLocked),
+                    fieldModifier = fieldModifier.focusRequester(requester).onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            focus.focusedItem = item.id
+                            actions.onListItemCaret(item.id, state.selection.start)
+                        }
+                    },
                 )
             }
         }
     }
 }
+
+/** The marker of a list of [count] items: the checkbox's column, grown with the text (more for two digits). */
+@Composable
+private fun rememberListMarker(type: BlockType, count: Int): ListMarker {
+    val font = listFontDp()
+    val wide = font * (if (count >= WIDE_MARKER_FROM) WIDE_MARKER_EXTRA else 0f)
+    return ListMarker(type = type, width = markerColumn(font) + wide, box = markerBoxSize(font))
+}
+
+/** What keeps a list item from being edited: the whole editor ([editorLocked]) or this checklist's text. */
+private class ItemLocks(val editorLocked: Boolean, val textLocked: Boolean)
 
 /** A list item's text field state and what Find tints in it. */
 private class ItemField(val state: TextFieldState, val highlight: FieldHighlight)
@@ -172,7 +228,7 @@ private class ItemField(val state: TextFieldState, val highlight: FieldHighlight
  * How a list marks its items: checkboxes, bullets or numbers in a hanging-indent column of
  * [width]; [number] is the item's own.
  */
-private data class ListMarker(val type: BlockType, val width: Dp, val number: Int = 0) {
+private data class ListMarker(val type: BlockType, val width: Dp, val box: Dp, val number: Int = 0) {
     fun forItem(number: Int) = copy(number = number)
 }
 
@@ -182,7 +238,7 @@ private fun ListItemRow(
     marker: ListMarker,
     field: ItemField,
     editor: ListEditor,
-    isLocked: Boolean,
+    locks: ItemLocks,
     modifier: Modifier = Modifier,
     fieldModifier: Modifier = Modifier,
 ) {
@@ -194,11 +250,10 @@ private fun ListItemRow(
         verticalAlignment = if (checklist) Alignment.Top else Alignment.CenterVertically,
     ) {
         when (marker.type) {
-            BlockType.LIST_CHECK -> CheckMark(
-                checked = item.isCheck,
-                label = state.text.toString().ifBlank { placeholder },
-                enabled = !isLocked,
-                onToggle = { editor.setChecked(item.id, it) },
+            BlockType.LIST_CHECK -> RowCheckMark(
+                state = checkState(item, state.text.toString().ifBlank { placeholder }, locks, editor),
+                marker = marker,
+                field = field.highlight,
             )
 
             BlockType.LIST_NUMBER -> Marker("${marker.number}.", marker.width, EnclyTheme.typography.dataSmall)
@@ -211,20 +266,34 @@ private fun ListItemRow(
             input = editor.inputFor(item.id),
             checked = checklist && item.isCheck,
             placeholder = placeholder,
-            isLocked = isLocked,
+            locks = locks,
             modifier = Modifier
                 .weight(1f)
-                .then(if (checklist) Modifier.padding(vertical = EnclyTheme.spacing.xs) else Modifier.alignByBaseline())
+                .then(
+                    if (checklist) {
+                        Modifier.padding(vertical = EnclyTheme.spacing.textGap)
+                    } else {
+                        Modifier.alignByBaseline()
+                    },
+                )
                 .then(fieldModifier)
                 .onPreviewKeyEvent { event ->
                     val selection = state.selection
+                    val line = if (event.isArrow()) {
+                        caretLine(field.highlight.geometry(), state.text.length, selection.start)
+                    } else {
+                        null
+                    }
                     KeyboardUtils.handleKeyEvent(
                         event = event,
                         text = state.text,
                         cursorPosition = if (selection.collapsed) selection.start else -1,
                         onBackspaceAtStart = { editor.backspaceAtStart(item.id) },
-                        onNavigateUp = { editor.moveFocus(item.id, up = true) },
-                        onNavigateDown = { editor.moveFocus(item.id, up = false) },
+                        onNavigateUp = { editor.moveFocus(item.id, CaretMove.Up(line?.x)) },
+                        onNavigateDown = { editor.moveFocus(item.id, CaretMove.Down(line?.x)) },
+                        onNavigateLeft = { editor.moveFocus(item.id, CaretMove.Left) },
+                        onNavigateRight = { editor.moveFocus(item.id, CaretMove.Right) },
+                        line = line,
                     )
                 },
         )
@@ -262,30 +331,37 @@ private class ListEditor(
     /** Backspace at the start of an item (see listBackspaceAtStart). */
     fun backspaceAtStart(itemId: String): Boolean = actions().onListBackspaceAtStart(itemId)
 
-    /** Up/Down: the item above or below, then the block above or below the list. */
-    fun moveFocus(itemId: String, up: Boolean): Boolean {
+    /**
+     * A cursor key that leaves item [itemId]'s field: the item above or below takes the cursor (at the
+     * same column for Up and Down), and from the first or last item the block above or below does.
+     * False when there is nowhere to go; nothing is added.
+     */
+    fun moveFocus(itemId: String, move: CaretMove): Boolean {
         val at = items.indexOfFirst { it.id == itemId }
-        val neighbour = items.getOrNull(if (up) at - 1 else at + 1)
-        return when {
-            neighbour != null -> {
-                focusItem(ItemFocus(neighbour.id, caret = if (up) Int.MAX_VALUE else null))
-                true
-            }
-
-            up -> actions().navigateToPrevious()
-
-            else -> {
-                // The last item of the last block: a new item, as Enter at its end would add.
-                val text = items.getOrNull(at)?.value.orEmpty()
-                if (!actions().navigateToNext()) actions().onListLineBreak(itemId, LineBreak(text, listOf("", ""), ""))
-                true
-            }
+        val neighbour = items.getOrNull(if (move.goesUp) at - 1 else at + 1)
+        if (neighbour == null) return actions().navigate(move)
+        val focus = when (move) {
+            is CaretMove.Up -> ItemFocus(neighbour.id, null, move.x, fromBelow = true)
+            is CaretMove.Down -> ItemFocus(neighbour.id, null, move.x)
+            CaretMove.Left -> ItemFocus(neighbour.id, Int.MAX_VALUE)
+            CaretMove.Right -> ItemFocus(neighbour.id, 0)
         }
+        focusItem(
+            when {
+                // Without a known column, Up lands at the end of the item above and Down at the start of the one below.
+                focus.caretX == null && move is CaretMove.Up -> ItemFocus(neighbour.id, Int.MAX_VALUE)
+
+                focus.caretX == null && move is CaretMove.Down -> ItemFocus(neighbour.id, 0)
+
+                else -> focus
+            },
+        )
+        return true
     }
 }
 
 @Composable
-private fun listTextStyle(): TextStyle {
+internal fun listTextStyle(): TextStyle {
     val fontStyles = rememberFontStyles()
     val spacing = LocalNoteLineSpacing.current
     return MaterialTheme.typography.bodyLarge.copy(
@@ -293,6 +369,9 @@ private fun listTextStyle(): TextStyle {
         fontFamily = fontStyles.families.body,
         fontSize = fontStyles.sizes.list,
         lineHeight = spacing.lineHeight(fontStyles.sizes.list, MaterialTheme.typography.bodyLarge.lineHeight),
+        // The extra (or missing) line height is shared above and below the glyphs, so a line's text
+        // is centred in its line box at every spacing and size: the marker centres on that box.
+        lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None),
     )
 }
 
@@ -311,24 +390,57 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
 }
 
 /**
- * The checklist box, flush with the paragraphs above, and its toggle target: box and gap wide,
- * as tall as a one-line row (40, spec §3.3). Announced with the item's text, so TalkBack says
- * what is checked.
+ * The checklist box, flush with the paragraphs above, in the marker column. Its middle sits on the
+ * middle of the item's first line, read from the text's own layout ([firstLineCentre]), at every
+ * line spacing and size; its side and the gap after it grow with the text ([ListMarker]). Until the
+ * text is measured it stands where a line of the style's height would put it. The tap target is
+ * the column, widened to 48dp by Compose's minimum touch size. Announced with the item's text, so
+ * TalkBack says what is checked.
  */
 @Composable
-private fun CheckMark(checked: Boolean, label: String, enabled: Boolean, onToggle: (Boolean) -> Unit) {
-    val box = CheckboxSize.LARGE.size
-    Box(
-        contentAlignment = Alignment.CenterStart,
+private fun RowScope.RowCheckMark(state: CheckState, marker: ListMarker, field: FieldHighlight) {
+    val metrics = rememberLineMetrics()
+    val pad = with(LocalDensity.current) { EnclyTheme.spacing.textGap.toPx() }
+    val fallbackLine = with(LocalDensity.current) { listTextStyle().lineHeight.toPx() }
+    Layout(
+        content = {
+            EnclyCheckbox(
+                checked = state.checked,
+                onCheckedChange = null,
+                size = CheckboxSize.COMPACT,
+                boxSize = marker.box,
+                modifier = Modifier.testTag(CHECK_BOX_TAG),
+            )
+        },
         modifier = Modifier
-            .width(box + EnclyTheme.spacing.rowGap)
-            .heightIn(min = box + EnclyTheme.spacing.xs * 2)
-            .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onToggle)
-            .semantics { contentDescription = label },
-    ) {
-        EnclyCheckbox(checked = checked, onCheckedChange = null)
+            .toggleable(
+                value = state.checked,
+                enabled = state.enabled,
+                role = Role.Checkbox,
+                onValueChange = state.onToggle,
+            )
+            .semantics { contentDescription = state.label },
+    ) { measurables, constraints ->
+        val box = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val centre = firstLineCentre(field.layoutResult(), pad, metrics, fallbackLine)
+        val top = (centre - box.height / 2f).roundToInt().coerceAtLeast(0)
+        layout(marker.width.roundToPx(), top + box.height) { box.place(0, top) }
     }
 }
+
+private fun checkState(item: ItemListBlock, label: String, locks: ItemLocks, editor: ListEditor) =
+    CheckState(item.isCheck, label, enabled = !locks.editorLocked, onToggle = { editor.setChecked(item.id, it) })
+
+/** What a checklist box shows and does: ticked or not, the item's text for TalkBack, and its toggle. */
+private class CheckState(
+    val checked: Boolean,
+    val label: String,
+    val enabled: Boolean,
+    val onToggle: (Boolean) -> Unit,
+)
+
+/** The test tag of the drawn checkbox square. */
+internal const val CHECK_BOX_TAG = "checklist-box"
 
 @Composable
 private fun ListItemField(
@@ -336,12 +448,13 @@ private fun ListItemField(
     input: BlockInput,
     checked: Boolean,
     placeholder: String,
-    isLocked: Boolean,
+    locks: ItemLocks,
     modifier: Modifier = Modifier,
 ) {
     val state = field.state
     val highlight = field.highlight
     val base = listTextStyle()
+    var focused by remember { mutableStateOf(false) }
     // Checked items stay editable; they are only muted and struck through.
     val style = if (checked) {
         base.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, textDecoration = TextDecoration.LineThrough)
@@ -350,17 +463,24 @@ private fun ListItemField(
     }
     BasicTextField(
         state = state,
-        readOnly = isLocked,
+        // A locked checklist's text cannot take focus at all, so no cursor and no keyboard.
+        enabled = !locks.textLocked,
+        readOnly = locks.editorLocked,
         inputTransformation = input,
         textStyle = style,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = WritingKeyboard,
         onTextLayout = highlight.onTextLayout,
-        modifier = modifier.then(highlight.modifier),
+        modifier = modifier.onFocusChanged { focused = it.isFocused }.then(highlight.modifier),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
-                if (state.text.isEmpty() && !isLocked) {
-                    Text(text = placeholder, style = base.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+                if (state.text.isEmpty() && !locks.editorLocked && focused) {
+                    Text(
+                        text = placeholder,
+                        style = base.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = EDITOR_PLACEHOLDER_ALPHA),
+                        ),
+                    )
                 }
                 innerTextField()
             }

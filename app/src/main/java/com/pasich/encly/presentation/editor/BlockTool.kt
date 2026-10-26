@@ -30,17 +30,17 @@ val mainBlockTools = listOf(
     BlockTool(EnclyIcons.ListBullet, BlockType.LIST_BULLET, R.string.block_bulleted_list),
     BlockTool(EnclyIcons.ListNumbered, BlockType.LIST_NUMBER, R.string.block_numbered_list),
     BlockTool(EnclyIcons.Quote, BlockType.QUOTE, R.string.quote),
-    BlockTool(EnclyIcons.Link, BlockType.LINK, R.string.block_link),
-    BlockTool(EnclyIcons.Separator, BlockType.SEPARATOR, R.string.block_separator),
 )
 
-/** Behind "Add block": a plain paragraph and every heading level. */
+/** Behind "More block tools": a plain paragraph, every heading level, a link and a separator. */
 val moreBlockTools = listOf(
     BlockTool(EnclyIcons.Type, BlockType.TEXT, R.string.text),
     BlockTool(EnclyIcons.Heading1, BlockType.H1, R.string.block_heading_level, headingLevel = 1),
     BlockTool(EnclyIcons.Heading2, BlockType.H2, R.string.block_heading_level, headingLevel = 2),
     BlockTool(EnclyIcons.Heading3, BlockType.H3, R.string.block_heading_level, headingLevel = 3),
     BlockTool(EnclyIcons.Heading4, BlockType.H4, R.string.block_heading_level, headingLevel = 4),
+    BlockTool(EnclyIcons.Link, BlockType.LINK, R.string.block_link),
+    BlockTool(EnclyIcons.Separator, BlockType.SEPARATOR, R.string.block_separator),
 )
 
 /** A tool button; [active] marks the tool of the block the user works on. */

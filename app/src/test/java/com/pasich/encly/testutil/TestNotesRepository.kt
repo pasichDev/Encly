@@ -6,6 +6,8 @@ import com.pasich.encly.domain.repository.NotesRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 internal class TestNotesRepository : NotesRepository {
     val allNotesWithTags = MutableStateFlow<List<NoteWithTag>>(emptyList())
@@ -53,6 +55,40 @@ internal class TestNotesRepository : NotesRepository {
         updatedNotes += note
         return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
     }
+
+    val archivedNotesWithTags = MutableStateFlow<List<NoteWithTag>>(emptyList())
+
+    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = archivedNotesWithTags
+
+    override fun getArchivedNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> =
+        archivedNotesWithTags.map { list -> list.filter { it.note.tagId == tagId } }
+
+    override fun observeNote(noteId: Long): Flow<NoteWithTag?> = combine(allNotesWithTags, archivedNotesWithTags) {
+            a,
+            b,
+        ->
+        (a + b).firstOrNull { it.note.id == noteId }
+    }
+
+    /** Every single-column write, as "column:id=value", in call order. */
+    val columnWrites = mutableListOf<String>()
+
+    var columnWriteResult: Boolean = true
+
+    private fun column(write: String): Result<Unit> {
+        columnWrites += write
+        return if (columnWriteResult) Result.success(Unit) else Result.failure(IllegalStateException())
+    }
+
+    override suspend fun setColor(noteId: Long, color: String) = column("color:$noteId=$color")
+
+    override suspend fun setTag(noteId: Long, tagId: Long?) = column("tag:$noteId=$tagId")
+
+    override suspend fun setDescription(noteId: Long, description: String) = column("description:$noteId=$description")
+
+    override suspend fun setPinned(noteId: Long, pinned: Boolean) = column("pinned:$noteId=$pinned")
+
+    override suspend fun setArchived(noteId: Long, archived: Boolean) = column("archived:$noteId=$archived")
 
     val trashNotes = MutableStateFlow<List<Note>>(emptyList())
 

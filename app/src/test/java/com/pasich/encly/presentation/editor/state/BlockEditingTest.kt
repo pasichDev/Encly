@@ -198,6 +198,27 @@ class BlockEditingTest {
     }
 
     @Test
+    fun backspaceAtTheStartOfAParagraphMergesTheOneAboveIntoItSoTheFocusStaysPut() {
+        val first = text("One")
+        val second = text("Two")
+        val third = text("Three")
+        editor.load(listOf(first, second, third))
+
+        // Held down: each press finds the same block still focused, now one slot higher.
+        assertTrue(editor.backspaceAtStart(third.id))
+        assertEquals(listOf(first.id, third.id), editor.blocks.map { it.id })
+        assertTrue(editor.backspaceAtStart(third.id))
+
+        assertEquals(listOf(third.id), editor.blocks.map { it.id })
+        assertEquals(listOf("OneTwoThree"), contents())
+        assertFocus(0, caret = 3)
+        editor.undo()
+        assertEquals(listOf("One", "TwoThree"), contents())
+        editor.undo()
+        assertEquals(listOf("One", "Two", "Three"), contents())
+    }
+
+    @Test
     fun backspaceAtTheStartJoinsAParagraphToTheLastItemOfAList() {
         val list = list(BlockType.LIST_CHECK, "milk", "eggs")
         val paragraph = text(" and flour")

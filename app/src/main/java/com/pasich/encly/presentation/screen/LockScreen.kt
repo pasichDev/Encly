@@ -212,6 +212,7 @@ private fun PinLockContent(
     val shownError = form.pinError
     PinEntryScaffold(
         title = stringResource(R.string.lock_title),
+        bodyAtBottom = true,
         // The sub-heading slot carries the lockout countdown or the last error.
         subtitle = when {
             form.lockedOut -> pinLockoutText(form.lockoutSeconds)

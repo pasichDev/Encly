@@ -25,6 +25,7 @@ import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
 import com.pasich.encly.core.LINK_FEEDBACK
 import com.pasich.encly.core.LINK_PRIVACY_POLICY
+import com.pasich.encly.core.LINK_REPOSITORY
 import com.pasich.encly.core.MAIL_DEVELOPMENT
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyGroup
@@ -59,7 +60,7 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
                 text = stringResource(R.string.about_encryption_note),
                 icon = EnclyIcons.Lock,
             )
-            DeveloperActionsSection(context)
+            DeveloperActionsSection(context, onSupport = { navController.navigate(NavRoutes.SupportRoute.name) })
             EnclyGroup {
                 EnclyNavigationRow(
                     title = stringResource(R.string.licenses_title),
@@ -95,7 +96,7 @@ private fun HeroSection() {
 }
 
 @Composable
-private fun DeveloperActionsSection(context: Context) {
+private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
         SectionOverline(stringResource(R.string.about_support_title))
         EnclyGroup {
@@ -118,6 +119,26 @@ private fun DeveloperActionsSection(context: Context) {
                     modifier = rowModifier,
                 )
             }
+            // Support the developer: fdroid only, same page as the drawer entry.
+            if (BuildConfig.DONATIONS_ENABLED) {
+                EnclyGroupDivider()
+                EnclyNavigationRow(
+                    title = stringResource(R.string.main_drawer_support),
+                    supporting = stringResource(R.string.about_support_dev_desc),
+                    icon = EnclyIcons.Coffee,
+                    onClick = onSupport,
+                    modifier = rowModifier,
+                )
+            }
+            EnclyGroupDivider()
+            // The code is public: a plain link in every flavor, not a donation or store link.
+            EnclyNavigationRow(
+                title = stringResource(R.string.about_source_code),
+                supporting = stringResource(R.string.about_source_code_desc),
+                icon = EnclyIcons.External,
+                onClick = { openExternalLink(context, LINK_REPOSITORY) },
+                modifier = rowModifier,
+            )
             EnclyGroupDivider()
             // Feedback: public GitHub issue tracker, no third-party form service.
             EnclyNavigationRow(

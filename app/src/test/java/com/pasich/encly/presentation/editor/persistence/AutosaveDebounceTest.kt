@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.editor.persistence
 
 import com.pasich.encly.core.serialization.BlockConverter
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.testutil.TestNotesRepository
@@ -24,6 +25,7 @@ class AutosaveDebounceTest {
     private val persistence = NotePersistence(
         notesRepository = repository,
         updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
         ioDispatcher = dispatcher,
         readOnly = false,
         blocks = { listOf(Block.TextBlock(body)) },

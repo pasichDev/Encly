@@ -24,6 +24,7 @@ import com.pasich.encly.presentation.screen.MainRootScreen
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
 import com.pasich.encly.presentation.screen.SupportScreen
 import com.pasich.encly.presentation.screen.TasksScreen
+import com.pasich.encly.presentation.screen.archive.ArchiveScreen
 import com.pasich.encly.presentation.screen.backup.BackupScreen
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
 import com.pasich.encly.presentation.screen.importnotes.ImportNotesScreen
@@ -52,6 +53,9 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
             MainRootScreen(
                 navController,
             )
+        }
+        animationScreens(NavRoutes.ArchiveRoute.name) {
+            ArchiveScreen(navController)
         }
         animationScreens(NavRoutes.TrashRoute.name) {
             TrashScreen(

@@ -5,6 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
+import com.pasich.encly.presentation.components.swipe.choiceLabel
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
@@ -30,10 +34,12 @@ class SettingsBuilder {
         viewModel: SettingsViewModel,
         showTasks: Boolean,
         simpleEdit: Boolean,
+        swipe: SwipeSettings,
         navigation: SettingsNavigation,
     ): List<SettingsCategory> = listOf(
         general(viewModel, navigation),
         notesAndTasks(viewModel, showTasks, simpleEdit),
+        swipeActions(viewModel, swipe),
         single(R.string.settings_privacy, R.string.security_title, R.string.security_subtitle, EnclyIcons.Shield) {
             navigation.onSecurity()
         },
@@ -109,6 +115,35 @@ class SettingsBuilder {
                 onCheckedChange = { viewModel.onEvent(SettingsEvent.UpdateSimpleEdit(it)) },
             ),
         ),
+    )
+
+    /** The master switch for swipes on note cards and, while it is on, the action for each direction. */
+    @Composable
+    private fun swipeActions(viewModel: SettingsViewModel, swipe: SwipeSettings) = SettingsCategory(
+        titleRes = R.string.settings_swipe_section,
+        items = buildList {
+            add(
+                SettingsItem.Switch(
+                    titleRes = R.string.settings_swipe_enabled,
+                    subtitleRes = R.string.settings_swipe_enabled_desc,
+                    checked = swipe.enabled,
+                    icon = EnclyIcons.Sliders,
+                    onCheckedChange = { viewModel.onEvent(SettingsEvent.UpdateSwipeEnabled(it)) },
+                ),
+            )
+            if (swipe.enabled) {
+                add(swipeRow(viewModel, SwipeSide.RIGHT, swipe.right))
+                add(swipeRow(viewModel, SwipeSide.LEFT, swipe.left))
+            }
+        },
+    )
+
+    @Composable
+    private fun swipeRow(viewModel: SettingsViewModel, side: SwipeSide, action: SwipeAction) = SettingsItem.Selection(
+        titleRes = if (side == SwipeSide.RIGHT) R.string.settings_swipe_right else R.string.settings_swipe_left,
+        currentValue = stringResource(action.choiceLabel()),
+        action = { viewModel.chooseSwipeAction(side) },
+        icon = if (side == SwipeSide.RIGHT) EnclyIcons.Chevron else EnclyIcons.Back,
     )
 
     /** A section holding one navigation row. */

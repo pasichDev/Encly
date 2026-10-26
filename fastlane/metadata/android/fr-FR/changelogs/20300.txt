@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Couleurs de notes, épinglage et archives : l'essentiel en haut, le reste rangé.
+• Glissements sur les cartes : épingler, archiver, colorer ou mettre à la corbeille.
+• Export en Markdown, protégé par votre PIN. Les fichiers ne sont pas chiffrés, Encly vous prévient d'abord.
+• Éditeur : flèches, suppression maintenue, annulation au clavier et lignes vides corrigés ; listes verrouillables.
+• Taille de texte et interligne par défaut pour toutes les notes.

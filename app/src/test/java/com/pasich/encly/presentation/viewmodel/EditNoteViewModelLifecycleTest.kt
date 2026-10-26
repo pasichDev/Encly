@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelStore
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
@@ -110,7 +111,7 @@ class EditNoteViewModelLifecycleTest {
     }
 
     @Test
-    fun theFontSizeIsStoredAndFollowed() = runTest(dispatcher) {
+    fun theFontSizeOfTheMenuIsTheNotesOwnAndFollowed() = runTest(dispatcher) {
         val viewModel = viewModel(SavedStateHandle())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.fontSize.collect {} }
         advanceUntilIdle()
@@ -118,7 +119,8 @@ class EditNoteViewModelLifecycleTest {
         viewModel.updateFontSize(FONT_SIZE)
         advanceUntilIdle()
 
-        assertEquals(FONT_SIZE, settings.fontSizeFlow.value)
+        // The note's own size; the default in Settings is left as it was.
+        assertEquals(DEFAULT_FONT_SIZE, settings.fontSizeFlow.value)
         assertEquals(FONT_SIZE, viewModel.fontSize.value)
     }
 
@@ -226,6 +228,7 @@ class EditNoteViewModelLifecycleTest {
         notesRepository = repository,
         savedStateHandle = handle,
         updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
         settingsRepository = settings,
         appScope = CoroutineScope(dispatcher),
         ioDispatcher = dispatcher,
@@ -237,5 +240,6 @@ class EditNoteViewModelLifecycleTest {
         const val INSERTED_ID = 40L
         const val TAG_ID = 6L
         const val FONT_SIZE = 20
+        const val DEFAULT_FONT_SIZE = 16
     }
 }

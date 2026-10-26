@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.editor
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -25,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import com.pasich.encly.R
 import com.pasich.encly.domain.enums.BottomSheetsOpenType
 import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.editorBlockFrame
 import com.pasich.encly.presentation.designsystem.frameInset
 import com.pasich.encly.presentation.editor.blocks.HBlock
@@ -39,6 +44,7 @@ import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /** What the editor's blocks need from the screen that shows them. */
 class EditorBlocksHost(
@@ -73,6 +79,8 @@ fun LazyListScope.editorBlocks(
         val callbacks = remember(block, host) {
             EditorBlockCallbacks(
                 onFocus = { host.viewModel.onBlockFocused(block) },
+                onInteract = { host.viewModel.onBlockInteraction(block) },
+                onToggleLock = { host.viewModel.toggleChecklistLock(block) },
                 onFocusLost = { host.viewModel.onBlockFocusLost(block) },
                 onOpenSheet = { type ->
                     host.viewModel.onBlockInteraction(block)
@@ -118,8 +126,11 @@ private const val TAP_AREA_KEY = "editor-tap-area"
 private const val AFTER_BLOCKS_KEY = "editor-after-blocks"
 
 /** What a block reports back to the editor: it got or lost focus, or asked for one of its sheets. */
+@Suppress("LongParameterList") // One callback per thing a block reports or is asked to do.
 private class EditorBlockCallbacks(
     val onFocus: () -> Unit,
+    val onInteract: () -> Unit,
+    val onToggleLock: () -> Unit,
     val onFocusLost: () -> Unit,
     val onOpenSheet: (BottomSheetsOpenType) -> Unit,
     val onMove: (up: Boolean) -> Unit,
@@ -147,8 +158,14 @@ private fun EditorBlock(
     // Whether the block is being edited: its placeholder shows then.
     var hasFocus by remember { mutableStateOf(false) }
 
+    val checklist = (block as? Block.ListBlock)?.takeIf { it.blockType == BlockType.LIST_CHECK }
+    val lockedFlow = remember(checklist) { checklist?.locked ?: MutableStateFlow(false) }
+    val checklistLocked by lockedFlow.collectAsState()
     Box(
         modifier = Modifier
+            // A touch anywhere in a list makes it the block the toolbar acts on, even where its text
+            // cannot take focus (a locked checklist), so its lock can be undone from the toolbar.
+            .then(if (block is Block.ListBlock) Modifier.markInteractionOn(callbacks.onInteract) else Modifier)
             // Blocks carry an 8 dp frame of their own: they sit that much inside the gutter.
             .padding(horizontal = EnclyTheme.spacing.m)
             .onFocusChanged { focusState ->
@@ -177,7 +194,11 @@ private fun EditorBlock(
                 showPlaceholder = !isLocked && (hasFocus || isOnlyBlock),
             ),
             onOpenSheet = callbacks.onOpenSheet,
-            modifier = if (isLocked) Modifier else blockAccessibilityActions(callbacks, position, isOnlyBlock),
+            modifier = if (isLocked) {
+                Modifier
+            } else {
+                blockAccessibilityActions(callbacks, position, isOnlyBlock, checklist?.let { checklistLocked })
+            },
         )
     }
 }
@@ -191,16 +212,19 @@ private fun blockAccessibilityActions(
     callbacks: EditorBlockCallbacks,
     position: BlockPosition,
     isOnlyBlock: Boolean,
+    checklistLocked: Boolean?,
 ): Modifier {
     val moveUp = stringResource(R.string.block_move_up)
     val moveDown = stringResource(R.string.block_move_down)
     val duplicate = stringResource(R.string.block_duplicate)
     val delete = stringResource(R.string.delete_block)
+    val lock = stringResource(if (checklistLocked == true) R.string.checklist_unlock else R.string.checklist_lock)
     val actions = buildList {
         if (!position.first) add(CustomAccessibilityAction(moveUp) { true.also { callbacks.onMove(true) } })
         if (!position.last) add(CustomAccessibilityAction(moveDown) { true.also { callbacks.onMove(false) } })
         add(CustomAccessibilityAction(duplicate) { true.also { callbacks.onDuplicate() } })
         if (!isOnlyBlock) add(CustomAccessibilityAction(delete) { true.also { callbacks.onDelete() } })
+        if (checklistLocked != null) add(CustomAccessibilityAction(lock) { true.also { callbacks.onToggleLock() } })
     }
     return Modifier.semantics { customActions = actions }
 }
@@ -255,5 +279,15 @@ private fun BlockContent(
             modifier = fieldModifier,
             isLocked = isLocked,
         )
+    }
+}
+
+/** Calls [onTouch] on every touch that lands in the block, whether or not a child handles it. */
+private fun Modifier.markInteractionOn(onTouch: () -> Unit): Modifier = pointerInput(onTouch) {
+    awaitPointerEventScope {
+        while (true) {
+            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            onTouch()
+        }
     }
 }

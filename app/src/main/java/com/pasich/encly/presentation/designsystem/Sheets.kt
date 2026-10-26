@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -50,7 +52,8 @@ internal val ShadowElevation = 10.dp
 /**
  * A bottom sheet (design spec §3.3): top corners 16, `surfaceContainerLow`, no tonal elevation,
  * the shadow token, a 32×4 handle in `outlineVariant` and a 24 dp gutter. [title] is shown in
- * titleLarge above [content].
+ * titleLarge above [content]. A [scrollable] sheet scrolls its content instead of clipping it on a
+ * short or landscape screen; its content must then not use `weight` or a lazy column.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +63,7 @@ fun EnclyBottomSheet(
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     title: String? = null,
     showHandle: Boolean = true,
+    scrollable: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ModalBottomSheet(
@@ -83,6 +87,7 @@ fun EnclyBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
+                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                 .padding(
                     start = EnclyTheme.spacing.gutter,
                     end = EnclyTheme.spacing.gutter,

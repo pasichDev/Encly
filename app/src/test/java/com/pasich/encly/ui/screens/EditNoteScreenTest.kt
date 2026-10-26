@@ -1,19 +1,25 @@
 package com.pasich.encly.ui.screens
 
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.pressKey
 import com.pasich.encly.R
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
@@ -28,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.verifyNoInteractions
 
 class EditNoteScreenTest : ComposeScreenTest() {
     private val app by lazy { TestApp(context) }
@@ -37,7 +44,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
     private fun open(noteId: Long = -1L, readTrashOnly: Boolean = false) {
         editor = app.editor(noteId = noteId, readTrashOnly = readTrashOnly)
         setNavScreen(
-            viewModels(editor, app.tagList()),
+            viewModels(editor, app.tagList(), app.markdownExport()),
             route = TestRoutes.EDIT_NOTE,
             start = NavRoutes.HomeRoute.name,
         ) { nav -> EditNoteScreen(nav) }
@@ -61,6 +68,9 @@ class EditNoteScreenTest : ComposeScreenTest() {
     private fun hasTool(label: String) =
         rule.onAllNodes(hasContentDescription(label) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
 
+    private fun moreToolsToggles() =
+        rule.onAllNodes(hasContentDescription(str(R.string.block_more_tools))).fetchSemanticsNodes()
+
     private fun back() = rule.onNodeWithContentDescription(str(R.string.back)).performClick()
 
     @Test
@@ -69,14 +79,14 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(R.string.note_title_placeholder), useUnmergedTree = true).assertExists()
         listOf(
-            R.string.block_add,
+            R.string.block_more_tools,
             R.string.block_heading,
             R.string.block_checklist,
             R.string.block_bulleted_list,
             R.string.block_numbered_list,
             R.string.quote,
-            R.string.block_link,
-            R.string.block_separator,
+            R.string.undo,
+            R.string.redo,
         ).forEach { tool(it).assertExists() }
         assertTrue(rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size >= 2)
         rule.onNodeWithContentDescription(str(R.string.edit_tags)).assertExists()
@@ -173,6 +183,54 @@ class EditNoteScreenTest : ComposeScreenTest() {
     }
 
     @Test
+    fun aLockedChecklistStillTicksButItsTextTakesNoFocus() {
+        stored(
+            Block.ListBlock(MutableStateFlow(listOf(ItemListBlock("milk"))), blockType = BlockType.LIST_CHECK),
+        )
+        open(NOTE_ID)
+        field(1).performClick()
+        tool(R.string.block_more_tools).performClick()
+        waitFor { hasTool(str(R.string.checklist_lock)) }
+
+        // The submenu scrolls sideways; the lock is past the edge of a phone-wide row.
+        tool(R.string.checklist_lock).performScrollTo().performClick()
+
+        val list = editor.blocks.first() as Block.ListBlock
+        waitFor { list.locked.value }
+        waitFor { hasTool(str(R.string.checklist_unlock)) }
+        rule.onNode(isCheckbox and hasContentDescription("milk")).performClick()
+        waitFor { list.items.value.single().isCheck }
+        assertEquals(
+            0,
+            rule.onAllNodes(hasSetTextAction() and hasText("milk") and isEnabled()).fetchSemanticsNodes().size,
+        )
+    }
+
+    @Test
+    fun aLockedChecklistCanBeUnlockedAfterWorkingElsewhere() {
+        stored(
+            Block.ListBlock(MutableStateFlow(listOf(ItemListBlock("milk"))), blockType = BlockType.LIST_CHECK),
+            text("after"),
+        )
+        open(NOTE_ID)
+        field(1).performClick()
+        tool(R.string.block_more_tools).performClick()
+        waitFor { hasTool(str(R.string.checklist_lock)) }
+        tool(R.string.checklist_lock).performScrollTo().performClick()
+        val list = editor.blocks.first() as Block.ListBlock
+        waitFor { list.locked.value }
+        rule.onNode(hasText("after") and hasSetTextAction()).performClick()
+        waitFor { !hasTool(str(R.string.checklist_unlock)) }
+
+        // A tap on the locked list makes it the block the toolbar acts on again.
+        rule.onNode(isCheckbox and hasContentDescription("milk")).performClick()
+
+        waitFor { hasTool(str(R.string.checklist_unlock)) }
+        tool(R.string.checklist_unlock).performScrollTo().performClick()
+        waitFor { !list.locked.value }
+    }
+
+    @Test
     fun theHeadingToolTurnsTheParagraphIntoAHeading() {
         stored(text("Plan"))
         open(NOTE_ID)
@@ -188,13 +246,13 @@ class EditNoteScreenTest : ComposeScreenTest() {
     fun addBlockOpensTheSecondRowAndCloseReturns() {
         open()
 
-        tool(R.string.block_add).performClick()
+        tool(R.string.block_more_tools).performClick()
 
         val second = (1..4).map { str(R.string.block_heading_level, it) } +
             listOf(
                 R.string.text,
-                R.string.undo,
-                R.string.redo,
+                R.string.block_link,
+                R.string.block_separator,
                 R.string.block_move_up,
                 R.string.block_move_down,
             ).map(::str)
@@ -208,7 +266,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("Plan"))
         open(NOTE_ID)
         field(1).performClick()
-        tool(R.string.block_add).performClick()
+        tool(R.string.block_more_tools).performClick()
         waitFor { hasTool(str(R.string.block_heading_level, 3)) }
 
         rule.onNode(hasContentDescription(str(R.string.block_heading_level, 3)) and hasClickAction()).performClick()
@@ -221,6 +279,8 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("above"))
         open(NOTE_ID)
         field(1).performClick()
+        tool(R.string.block_more_tools).performClick()
+        waitFor { hasTool(str(R.string.block_separator)) }
 
         tool(R.string.block_separator).performClick()
 
@@ -234,7 +294,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithContentDescription(str(R.string.editor_lock)).performClick()
 
-        waitFor { rule.onAllNodes(hasContentDescription(str(R.string.block_add))).fetchSemanticsNodes().isEmpty() }
+        waitFor { moreToolsToggles().isEmpty() }
         rule.onNodeWithText("secret plan").assertExists()
         assertTrue(editor.lockEditor.value)
     }
@@ -246,7 +306,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(R.string.restore)).assertIsDisplayed()
         rule.onNodeWithText(str(R.string.delete_from_trash)).assertIsDisplayed()
-        assertEquals(0, rule.onAllNodes(hasContentDescription(str(R.string.block_add))).fetchSemanticsNodes().size)
+        assertEquals(0, moreToolsToggles().size)
         rule.onNodeWithText("old").assertExists()
     }
 
@@ -270,6 +330,112 @@ class EditNoteScreenTest : ComposeScreenTest() {
         waitForText(str(R.string.duplicate))
         rule.onNodeWithText(str(R.string.note_discard_all_changes)).assertExists()
         rule.onNodeWithText(str(R.string.delete)).assertExists()
+    }
+
+    @Test
+    fun theMoreMenuOffersArchiveColourAndMarkdownExportButNoPin() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+
+        waitForText(str(R.string.note_archive))
+        rule.onNodeWithText(str(R.string.markdown_export)).assertExists()
+        // Pinning orders the notes list, so it is offered there, not inside a note.
+        assertEquals(0, countText(str(R.string.note_pin)))
+        // Section headings are drawn in capitals.
+        rule.onNodeWithText(str(R.string.note_color_title).uppercase()).assertExists()
+        rule.onNodeWithContentDescription(str(R.string.note_color_teal)).assertExists()
+    }
+
+    @Test
+    fun useDefaultTextAppearsOnlyWhileTheNoteHasItsOwn() {
+        stored(text("body"))
+        open(NOTE_ID)
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.note_archive))
+        assertEquals(0, countText(str(R.string.note_text_use_default)))
+
+        rule.runOnIdle { editor.updateNoteLineSpacing(com.pasich.encly.domain.model.NoteLineSpacing.COMFORTABLE) }
+
+        waitForText(str(R.string.note_text_use_default))
+        rule.onNodeWithText(str(R.string.note_text_use_default)).performScrollTo().performClick()
+        waitFor { countText(str(R.string.note_text_use_default)) == 0 }
+    }
+
+    @Test
+    fun archivingFromTheMenuStoresTheNoteArchivedAndLeaves() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.note_archive))
+        rule.onNodeWithText(str(R.string.note_archive)).performScrollTo().performClick()
+
+        waitFor { currentRoute() == NavRoutes.HomeRoute.name }
+        assertEquals(listOf("archived:$NOTE_ID=true"), app.notes.columnWrites)
+    }
+
+    @Test
+    fun anArchivedNoteOffersUnarchive() {
+        Note(id = NOTE_ID, title = "Trip", value = "[]", date = 1L, isArchived = true).also { app.withNotes(it) }
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+
+        waitForText(str(R.string.note_unarchive))
+        rule.onNodeWithText(str(R.string.note_unarchive)).performScrollTo().performClick()
+        waitFor { currentRoute() == NavRoutes.HomeRoute.name }
+        assertEquals(listOf("archived:$NOTE_ID=false"), app.notes.columnWrites)
+    }
+
+    @Test
+    fun colouringIsSavedWithTheNote() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.note_archive))
+        rule.onNodeWithContentDescription(str(R.string.note_color_teal)).performScrollTo().performClick()
+        waitFor { editor.state.value.note.color == "teal" }
+        // Leaving the editor saves the note, with its colour.
+        rule.onNodeWithContentDescription(str(R.string.back)).performClick()
+        waitFor { currentRoute() == NavRoutes.HomeRoute.name }
+
+        assertEquals("teal", app.notes.updatedNotes.last().color)
+    }
+
+    @Test
+    fun exportingAsMarkdownSavesTheNoteThenWarnsAndTouchesNoFile() {
+        stored(text("body"))
+        open(NOTE_ID)
+
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.markdown_export))
+        rule.onNodeWithText(str(R.string.markdown_export)).performScrollTo().performClick()
+
+        waitForText(str(R.string.markdown_export_warning_title))
+        assertEquals(0, countText(str(R.string.backup_reauth_title)))
+        verifyNoInteractions(app.markdownDocuments)
+        // The editor stays open behind the warning.
+        assertEquals(NavRoutes.EditNoteRoute.name, currentRoute()?.substringBefore('/'))
+    }
+
+    @Test
+    @OptIn(ExperimentalTestApi::class)
+    fun controlZInTheTitleLeavesTheEditorHistoryAlone() {
+        stored(text("body"))
+        open(NOTE_ID)
+        field(1).performTextInput(" changed")
+        field(0).performClick()
+
+        field(0).performKeyInput {
+            keyDown(Key.CtrlLeft)
+            pressKey(Key.Z)
+            keyUp(Key.CtrlLeft)
+        }
+
+        assertEquals("body changed", (editor.blocks.first() as Block.TextBlock).text.value)
     }
 
     @Test

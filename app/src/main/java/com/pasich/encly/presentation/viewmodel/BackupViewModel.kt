@@ -62,13 +62,17 @@ class BackupViewModel @Inject constructor(
     fun start(action: BackupAction) {
         dropPending()
         this.action = action
-        val biometric = securityManager.isBiometricEnabled() && securityManager.biometricAvailable()
+        val biometric = securityManager.canReauthWithBiometric()
         state.go(BackupStep.Reauth(action, biometric))
     }
 
     private suspend fun proceed(action: BackupAction) {
         when {
             action == BackupAction.IMPORT -> state.go(BackupStep.PickImportFile)
+
+            // The plaintext export has its own ViewModel; it never asks for a recovery phrase or
+            // seals a backup, so nothing here may start it.
+            action == BackupAction.EXPORT_MARKDOWN -> state.go(BackupStep.Idle)
 
             // Held for five seconds on the security page, then re-authenticated: that is the
             // confirmation, so the erase runs straight away.

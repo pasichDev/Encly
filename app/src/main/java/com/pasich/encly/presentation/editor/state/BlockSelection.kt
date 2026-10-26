@@ -10,13 +10,18 @@ import kotlinx.coroutines.flow.receiveAsFlow
 
 /**
  * Asks the editor UI to focus the field of block [blockId]: the cursor at [caret] (clamped to the
- * text), else at the end when [cursorToEnd]. In a list, [itemId] names the item to focus.
+ * text), else at the end when [cursorToEnd]. In a list, [itemId] names the item to focus. With a
+ * [caretX] the cursor goes to that horizontal position instead, so Up and Down keep the column.
  */
 data class FocusRequest(
     val blockId: String,
     val cursorToEnd: Boolean = false,
     val caret: Int? = null,
     val itemId: String? = null,
+    /** Put the cursor at this horizontal position of the target's first line (last, [fromBelow]). */
+    val caretX: Float? = null,
+    /** The cursor comes up from below: a list takes its last item, a field its last line. */
+    val fromBelow: Boolean = false,
 ) {
     /** Where the cursor goes: an offset, [Int.MAX_VALUE] for the end, null to leave it. */
     val caretOffset: Int? get() = caret ?: if (cursorToEnd) Int.MAX_VALUE else null
@@ -87,6 +92,18 @@ class BlockSelection(private val blocks: List<Block>) {
     /** Where the cursor last was in the field of [blockId]; null if it never had one. */
     fun caretOf(blockId: String): Int? = carets[blockId]
 
+    // The item of each list the cursor was last in, so a list can be focused back in the same item.
+    private val listItems = mutableMapOf<String, String>()
+
+    /** The cursor in item [itemId] of the list [blockId] is at [offset]. */
+    fun onItemCaret(blockId: String, itemId: String, offset: Int) {
+        listItems[blockId] = itemId
+        carets[blockId] = offset
+    }
+
+    /** The item of list [blockId] the cursor was last in; null for a block that is not a list. */
+    fun itemOf(blockId: String): String? = listItems[blockId]
+
     /** The user works on [blockId] without its field taking focus (a block sheet). */
     fun onInteraction(blockId: String) {
         val index = blocks.indexOfFirst { it.id == blockId }
@@ -111,8 +128,8 @@ class BlockSelection(private val blocks: List<Block>) {
 fun Block.canTakeFocus(): Boolean = when (this) {
     is Block.TextBlock, is Block.HBlock, is Block.QuoteBlock -> true
 
-    // A list focuses its own items.
-    is Block.ListBlock -> true
+    // A list focuses its own items; a locked checklist has none to focus.
+    is Block.ListBlock -> !locked.value
 
     // A link has a field only while its URL is being entered.
     is Block.LinkBlock -> block.value.url.isBlank()

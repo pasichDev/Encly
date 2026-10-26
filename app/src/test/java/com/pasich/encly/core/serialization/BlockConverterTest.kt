@@ -83,7 +83,7 @@ class BlockConverterTest {
     }
 
     @Test
-    fun blocksWithoutContentAreNotStoredAndNoNullIsWritten() {
+    fun emptyNonParagraphBlocksAreNotStoredAndNoNullIsWritten() {
         val json = BlockConverter.blocksToJson(
             listOf(
                 Block.TextBlock(MutableStateFlow("kept")),
@@ -97,9 +97,11 @@ class BlockConverterTest {
 
         assertFalse(json.contains("null"))
         val restored = BlockConverter.jsonToBlocks(json)
-        assertEquals(2, restored.size)
+        // The blank paragraph between content is a blank line the user added: it stays.
+        assertEquals(3, restored.size)
         assertEquals("kept", (restored[0] as Block.TextBlock).text.value)
-        assertTrue(restored[1] is Block.SeparatorBlock)
+        assertTrue((restored[1] as Block.TextBlock).text.value.isBlank())
+        assertTrue(restored[2] is Block.SeparatorBlock)
     }
 
     @Test
@@ -153,5 +155,48 @@ class BlockConverterTest {
             ]
         """
         assertEquals(JsonParser.parseString(expected), JsonParser.parseString(json))
+    }
+
+    private fun text(value: String) = Block.TextBlock(MutableStateFlow(value))
+
+    private fun texts(blocks: List<Block>) = blocks.map { (it as Block.TextBlock).text.value }
+
+    @Test
+    fun blankLinesBetweenParagraphsSurviveSavingAndReopening() {
+        val saved = BlockConverter.blocksToJson(listOf(text("one"), text(""), text(""), text("two"), text("")))
+
+        // The two blank lines stay; the placeholder paragraph at the end does not.
+        assertEquals(listOf("one", "", "", "two"), texts(BlockConverter.jsonToBlocks(saved)))
+    }
+
+    @Test
+    fun aBlankLineBetweenAHeadingAndAListIsKept() {
+        val blocks = listOf(
+            Block.HBlock(MutableStateFlow("h"), BlockType.H1),
+            text(""),
+            Block.ListBlock(MutableStateFlow(listOf(ItemListBlock("a"))), BlockType.LIST_BULLET),
+        )
+
+        val reopened = BlockConverter.jsonToBlocks(BlockConverter.blocksToJson(blocks))
+
+        assertEquals(3, reopened.size)
+        assertTrue(reopened[1] is Block.TextBlock)
+    }
+
+    @Test
+    fun aNoteOfOnlyBlankParagraphsIsEmpty() {
+        assertEquals("[]", BlockConverter.blocksToJson(listOf(text(""), text("  "))).replace(Regex("\\s"), ""))
+    }
+
+    @Test
+    fun otherBlankBlocksBetweenContentAreStillLeftOut() {
+        val blocks = listOf(
+            text("a"),
+            Block.QuoteBlock(MutableStateFlow(" ")),
+            Block.ListBlock(MutableStateFlow(listOf(ItemListBlock(""))), BlockType.LIST_BULLET),
+            text("b"),
+        )
+
+        assertEquals(listOf("a", "b"), texts(BlockConverter.jsonToBlocks(BlockConverter.blocksToJson(blocks))))
     }
 }

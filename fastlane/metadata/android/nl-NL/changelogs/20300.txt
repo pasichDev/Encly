@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Notitiekleuren, vastzetten en archief: het belangrijke bovenaan, de rest opgeruimd.
+• Veegacties op notitiekaarten: vastzetten, archiveren, kleuren of weggooien.
+• Exporteren als Markdown, met je pincode. De bestanden zijn niet versleuteld; Encly waarschuwt je eerst.
+• Editor: pijltjestoetsen, ingedrukt wissen, ongedaan maken met het toetsenbord en lege regels werken goed; checklists kun je vergrendelen.
+• Standaard tekstgrootte en regelafstand voor alle notities.

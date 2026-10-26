@@ -28,9 +28,10 @@ import kotlinx.coroutines.withContext
 /**
  * What a re-authenticated flow goes on to do. [CREATE_PHRASE], [REPLACE_PHRASE] and [ERASE]
  * start from Settings → Security; they share the re-authentication and phrase steps with
- * backups.
+ * backups. [EXPORT_MARKDOWN] is the plaintext export, run by [MarkdownExportViewModel] (it needs
+ * no recovery phrase and writes no encrypted backup).
  */
-enum class BackupAction { EXPORT, IMPORT, CREATE_PHRASE, REPLACE_PHRASE, ERASE }
+enum class BackupAction { EXPORT, EXPORT_MARKDOWN, IMPORT, CREATE_PHRASE, REPLACE_PHRASE, ERASE }
 
 /** Where a backup or vault flow currently is. Each step is one dialog or system picker. */
 sealed interface BackupStep {
@@ -73,6 +74,13 @@ sealed interface BackupStep {
     data class ConfirmExistingPhrase(@param:StringRes val error: Int? = null) : BackupStep
 
     data object PickExportTarget : BackupStep
+
+    /** Before a plaintext (Markdown) export: the file will not be encrypted. Cancel or continue to the PIN. */
+    data object ConfirmPlainExport : BackupStep
+
+    /** The system "create document" picker for a Markdown export: a `.zip` of all notes, or one `.md`. */
+    data class PickMarkdownTarget(val name: String, val zip: Boolean) : BackupStep
+
     data object PickImportFile : BackupStep
 
     data class EnterImportPhrase(@param:StringRes val error: Int? = null) : BackupStep

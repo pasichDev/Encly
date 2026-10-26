@@ -1,25 +1,29 @@
 package com.pasich.encly.presentation.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.Role
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
-import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
@@ -30,8 +34,8 @@ import com.pasich.encly.ui.theme.EnclyTheme
 private const val KOFI_URL = "https://ko-fi.com/pasichdev"
 
 /**
- * Support the developer (F-Droid build only): laid out like the Welcome step (tile, heading,
- * three facts), with the one action pinned under the scrolling part.
+ * Support the developer (F-Droid build only): why donations matter, then one Ko-fi card that
+ * opens the page in the browser; the app never handles payments.
  */
 @Composable
 fun SupportScreen(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -47,25 +51,27 @@ fun SupportScreen(navController: NavHostController, modifier: Modifier = Modifie
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = spacing.gutter, vertical = spacing.l),
+            verticalArrangement = Arrangement.spacedBy(spacing.section),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = spacing.gutter, vertical = spacing.l),
-                verticalArrangement = Arrangement.spacedBy(spacing.section),
-            ) {
-                EnclyIconTile(icon = EnclyIcons.Heart)
-                StepHeading(
-                    title = stringResource(R.string.donation_title),
-                    body = stringResource(R.string.donation_description),
-                    large = true,
+            EnclyIconTile(icon = EnclyIcons.Heart)
+            StepHeading(
+                title = stringResource(R.string.donation_title),
+                body = stringResource(R.string.donation_description),
+                large = true,
+            )
+            SupportFacts()
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.s)) {
+                KofiCard(onClick = { openExternalLink(context, KOFI_URL) })
+                Text(
+                    text = stringResource(R.string.support_browser_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                SupportFacts()
             }
-            SupportAction(onSupport = { openExternalLink(context, KOFI_URL) })
         }
     }
 }
@@ -92,29 +98,46 @@ private fun SupportFacts() {
     }
 }
 
-/** The Ko-fi button and the note under it, pinned above the navigation bar. */
+/** The Ko-fi card, filled with `primaryContainer` so it reads as the screen's one action. */
 @Composable
-private fun SupportAction(onSupport: () -> Unit) {
+private fun KofiCard(onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
     val spacing = EnclyTheme.spacing
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.s),
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = colors.primaryContainer,
+        contentColor = colors.onPrimaryContainer,
         modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(start = spacing.gutter, end = spacing.gutter, top = spacing.s, bottom = spacing.l),
+            .clickable(role = Role.Button, onClick = onClick),
     ) {
-        EnclyButton(
-            text = stringResource(R.string.support_kofi_button),
-            onClick = onSupport,
-            trailingIcon = EnclyIcons.External,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            text = stringResource(R.string.support_kofi_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.m),
+            modifier = Modifier.padding(spacing.m),
+        ) {
+            Surface(shape = MaterialTheme.shapes.small, color = colors.primary) {
+                Icon(
+                    imageVector = EnclyIcons.Heart,
+                    contentDescription = null,
+                    tint = colors.onPrimary,
+                    modifier = Modifier
+                        .padding(spacing.s)
+                        .size(spacing.iconMedium),
+                )
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing.textGap)) {
+                Text(text = "Ko-fi", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = stringResource(R.string.support_method_kofi_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Icon(
+                imageVector = EnclyIcons.External,
+                contentDescription = null,
+                modifier = Modifier.size(spacing.iconSmall),
+            )
+        }
     }
 }

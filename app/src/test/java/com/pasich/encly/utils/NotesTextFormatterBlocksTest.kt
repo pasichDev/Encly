@@ -28,7 +28,7 @@ class NotesTextFormatterBlocksTest {
             Block.QuoteBlock(MutableStateFlow("Said")),
         )
 
-        assertEquals("Title\n\nBody\n\n«Said»", NotesTextFormatter.blocksToPlainText(blocks))
+        assertEquals("Title\nBody\n«Said»", NotesTextFormatter.blocksToPlainText(blocks))
     }
 
     @Test
@@ -36,7 +36,7 @@ class NotesTextFormatterBlocksTest {
         val blocks = listOf(link("Example", "https://example.com"), link("", "https://bare.example"))
 
         assertEquals(
-            "Example (https://example.com)\n\nhttps://bare.example",
+            "Example (https://example.com)\nhttps://bare.example",
             NotesTextFormatter.blocksToPlainText(blocks),
         )
     }
@@ -44,7 +44,7 @@ class NotesTextFormatterBlocksTest {
     @Test
     fun aSeparatorIsALineOfDashes() {
         assertEquals(
-            "a\n\n---------------------\n\nb",
+            "a\n---------------------\nb",
             NotesTextFormatter.blocksToPlainText(listOf(text("a"), Block.SeparatorBlock(), text("b"))),
         )
     }
@@ -56,7 +56,7 @@ class NotesTextFormatterBlocksTest {
         val bullets = list(BlockType.LIST_BULLET, ItemListBlock("x"), ItemListBlock("y"))
 
         assertEquals(
-            "[x] done\n[ ] open\n\n1. first\n2. second\n\n- x\n- y",
+            "[x] done\n[ ] open\n1. first\n2. second\n- x\n- y",
             NotesTextFormatter.blocksToPlainText(listOf(checked, numbered, bullets)),
         )
     }
@@ -113,5 +113,12 @@ class NotesTextFormatterBlocksTest {
         assertEquals(false, search.contains("[x]"))
         assertEquals(false, search.contains("-"))
         assertEquals(false, search.contains("«"))
+    }
+
+    @Test
+    fun blankParagraphsBetweenSectionsDoNotTakeLinesInThePreview() {
+        val blocks = listOf(text("first"), text(""), text("  "), text("second"))
+
+        assertEquals("first\nsecond", NotesTextFormatter.blocksToPlainText(blocks).trim())
     }
 }

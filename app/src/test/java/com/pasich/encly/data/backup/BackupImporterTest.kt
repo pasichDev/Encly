@@ -171,6 +171,48 @@ class BackupImporterTest {
     }
 
     @Test
+    fun pinArchiveColourAndOwnTextSurviveExportAndImport() = runTest {
+        val source = InMemoryVaultDataStore().apply {
+            insertNote(
+                Note(title = "Styled", uid = "n1", isPinned = true, color = "teal", textSize = 24, lineSpacing = 2),
+            )
+            insertNote(Note(title = "Old", uid = "n2", isArchived = true, color = "pink"))
+        }
+        val restored = InMemoryVaultDataStore()
+
+        BackupImporter.import(open(export(source)), ImportMode.REPLACE, restored)
+
+        val styled = restored.notes.single { it.uid == "n1" }
+        assertEquals(
+            listOf(true, "teal", 24, 2),
+            listOf(styled.isPinned, styled.color, styled.textSize, styled.lineSpacing),
+        )
+        val old = restored.notes.single { it.uid == "n2" }
+        assertEquals(listOf(true, "pink", null, null), listOf(old.isArchived, old.color, old.textSize, old.lineSpacing))
+    }
+
+    @Test
+    fun anArchivedNoteIsNeverImportedPinned() = runTest {
+        val payload = BackupPayload(
+            exportedAt = 1,
+            tags = emptyList(),
+            notes = listOf(
+                com.pasich.encly.core.backup.BackupNote(
+                    "n1", "t", "[]", "", 1, 1, null, false, isPinned = true, isArchived = true,
+                ),
+            ),
+            tasks = emptyList(),
+        )
+        val target = InMemoryVaultDataStore()
+
+        BackupImporter.import(payload, ImportMode.REPLACE, target)
+
+        val note = target.notes.single()
+        assertTrue(note.isArchived)
+        assertEquals(false, note.isPinned)
+    }
+
+    @Test
     fun emptyVaultRoundTrips() = runTest {
         val restored = InMemoryVaultDataStore()
 

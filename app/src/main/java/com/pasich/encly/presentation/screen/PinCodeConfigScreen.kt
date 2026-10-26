@@ -290,6 +290,7 @@ private fun MainPinContent(
         subtitle = message ?: stringResource(text.subtitle),
         subtitleIsError = message != null,
         compact = entry.compact,
+        bodyAtBottom = true,
     ) {
         PinEntry(
             entered = entered,

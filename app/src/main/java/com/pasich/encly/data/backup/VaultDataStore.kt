@@ -26,6 +26,12 @@ interface VaultDataStore {
 
     suspend fun snapshot(): VaultSnapshot
 
+    /** Only note [noteId] and its tag: for exporting one note without reading the whole vault. */
+    suspend fun snapshotOfNote(noteId: Long): VaultSnapshot = snapshot().let { all ->
+        val note = all.notes.firstOrNull { it.id == noteId }
+        VaultSnapshot(listOfNotNull(note), all.tags.filter { it.id == note?.tagId }, emptyList())
+    }
+
     /** Runs [block] atomically: if it throws, none of its writes are kept. */
     suspend fun <R> inTransaction(block: suspend () -> R): R
 
