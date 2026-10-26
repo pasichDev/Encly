@@ -3,12 +3,14 @@ package com.pasich.encly.presentation.designsystem
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pasich.encly.domain.model.NoteLineSpacing
 
 // What each reading density means in the editor. Presentation only: the stored note is the same
 // whatever is chosen. DEFAULT returns the exact values the editor always used.
 
 private const val COMFORTABLE_LINE_FACTOR = 1.25f
+private const val DEFAULT_LINE_FACTOR = 1.5f
 private val FRAME_INSET_DEFAULT = 4.dp
 private val FRAME_INSET_COMFORTABLE = 6.dp
 private val BLOCK_GAP_EXTRA_COMFORTABLE = 4.dp
@@ -19,12 +21,16 @@ internal val NoteLineSpacing.isCompact: Boolean get() = this == NoteLineSpacing.
 
 /**
  * Line height of a body text: the font size itself when compact, the theme's [normal] height by
- * default, and a quarter more when comfortable.
+ * default, and a quarter more when comfortable. A text larger than the theme's body grows its line
+ * with it (1.5× the size, the theme's own ratio at 16sp), so big text never overruns its line.
  */
-internal fun NoteLineSpacing.lineHeight(fontSize: TextUnit, normal: TextUnit): TextUnit = when (this) {
-    NoteLineSpacing.COMPACT -> fontSize
-    NoteLineSpacing.DEFAULT -> normal
-    NoteLineSpacing.COMFORTABLE -> normal * COMFORTABLE_LINE_FACTOR
+internal fun NoteLineSpacing.lineHeight(fontSize: TextUnit, normal: TextUnit): TextUnit {
+    val default = maxOf(normal.value, fontSize.value * DEFAULT_LINE_FACTOR).sp
+    return when (this) {
+        NoteLineSpacing.COMPACT -> fontSize
+        NoteLineSpacing.DEFAULT -> default
+        NoteLineSpacing.COMFORTABLE -> default * COMFORTABLE_LINE_FACTOR
+    }
 }
 
 /** Vertical padding inside the frame of a paragraph, list or quote. */
