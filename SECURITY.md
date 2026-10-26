@@ -364,7 +364,7 @@ copy behind.
   encrypted and that wherever it is saved (cloud folders included) holds a readable copy. Only
   then does the existing `ReauthFlow` run (the PIN, or the biometric confirmation when biometric
   unlock is on): the same path as backup export and import, with no auth code of its own.
-- **Read after authentication, through that session.** The vault is read only when the save
+- **Read after authentication, through that session.** Only the exported note (or, for all data, the vault) is read, and only when the save
   dialog returns, through the vault session that was authenticated (`bindToCurrentSession`). A
   vault that re-locked in between fails with a message instead of exporting. While the save dialog
   is in front, `SessionLockManager` keeps the vault open for the same short grace as for the
@@ -379,7 +379,11 @@ copy behind.
   note outside the trash (archived notes under `archive/`, notes under a hidden tag included)
   and `tasks.md`. It exports the vault that is open: the decoy vault exports what it contains,
   nothing more, and nothing is special-cased. No PIN, key, recovery phrase or setting is written.
-- **Safe content.** File names come from note titles and are treated as untrusted: NFC,
+- **No title in a name the system sees.** The save dialog is outside the app's screen protection and
+  keeps its recent files, so the suggested name is a date only (`encly-note-<date>.md`,
+  `encly-notes-<date>.zip`). A failed export deletes the empty document the dialog made, but never
+  one that holds data.
+- **Safe content.** File names inside the zip come from note titles and are treated as untrusted: NFC,
   control, format and bidi characters and `/ \ : * ? " < > |` removed, no leading dot, Windows
   device names avoided, cut by bytes, unique ignoring case (a title cannot escape the folder or
   collide with `tasks.md`). Text is escaped so it cannot become other Markdown; the header values

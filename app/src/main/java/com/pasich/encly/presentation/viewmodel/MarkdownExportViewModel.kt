@@ -33,8 +33,8 @@ sealed interface MarkdownExportTarget {
     /** Every note that is not in the trash, and the tasks, as a `.zip` of `.md` files. */
     data object AllData : MarkdownExportTarget
 
-    /** One note, as one `.md` file. [title] only names the file the save dialog suggests. */
-    data class SingleNote(val noteId: Long, val title: String) : MarkdownExportTarget
+    /** One note, as one `.md` file. */
+    data class SingleNote(val noteId: Long) : MarkdownExportTarget
 }
 
 /**
@@ -91,13 +91,16 @@ class MarkdownExportViewModel @Inject constructor(
     /** "Continue" on the warning: re-authenticate before anything is read. */
     fun confirmWarning() {
         if (state.step != BackupStep.ConfirmPlainExport) return
-        val biometric = securityManager.isBiometricEnabled() && securityManager.biometricAvailable()
+        val biometric = securityManager.canReauthWithBiometric()
         state.go(BackupStep.Reauth(BackupAction.EXPORT_MARKDOWN, biometric))
     }
 
     private fun proceed(action: BackupAction) {
         val target = target
-        if (action != BackupAction.EXPORT_MARKDOWN || target == null) return
+        // A PIN that verified after the flow was cancelled (or restarted) must not carry on: only the
+        // re-authentication of the export now waiting for it counts.
+        val waiting = (state.step as? BackupStep.Reauth)?.action == BackupAction.EXPORT_MARKDOWN
+        if (action != BackupAction.EXPORT_MARKDOWN || target == null || !waiting) return
         try {
             // Tied to this opening of the vault: after a re-lock it fails instead of reading.
             session = store.bindToCurrentSession()
@@ -107,10 +110,16 @@ class MarkdownExportViewModel @Inject constructor(
         }
         state.go(
             when (target) {
-                MarkdownExportTarget.AllData -> BackupStep.PickMarkdownTarget(allDataFileName(), zip = true)
+                MarkdownExportTarget.AllData -> BackupStep.PickMarkdownTarget(
+                    datedName("encly-notes", "zip"),
+                    zip = true,
+                )
 
-                is MarkdownExportTarget.SingleNote ->
-                    BackupStep.PickMarkdownTarget(MarkdownExport.noteFileName(target.title, labels()), zip = false)
+                // A date only, never the title: the name shows in the system file dialog and its Recents.
+                is MarkdownExportTarget.SingleNote -> BackupStep.PickMarkdownTarget(
+                    datedName("encly-note", "md"),
+                    zip = false,
+                )
             },
         )
     }
@@ -159,7 +168,12 @@ class MarkdownExportViewModel @Inject constructor(
     }
 
     private suspend fun export(bound: VaultDataStore, what: MarkdownExportTarget, uri: Uri) {
-        val snapshot = bound.snapshot()
+        val snapshot = when (what) {
+            MarkdownExportTarget.AllData -> bound.snapshot()
+
+            // Only that note and its tag are read, not the whole vault.
+            is MarkdownExportTarget.SingleNote -> bound.snapshotOfNote(what.noteId)
+        }
         val labels = labels()
         // A re-lock that landed after the read must not be followed by a write.
         bound.assertCurrentSession()
@@ -214,8 +228,8 @@ class MarkdownExportViewModel @Inject constructor(
     )
 
     /** "encly-notes-2026-10-25.zip": a date only, never a title. */
-    private fun allDataFileName(): String =
-        "encly-notes-${SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date())}.zip"
+    private fun datedName(prefix: String, extension: String): String =
+        "$prefix-${SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date())}.$extension"
 
     private companion object {
         const val TAG = "MarkdownExport"

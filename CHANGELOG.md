@@ -26,7 +26,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
   colours are tints of your theme, so they read well in all five themes, light and dark.
 - Export as Markdown: one note as a `.md` file from its menu, or every note outside the trash as
   a `.zip` (archived notes in `archive/`, plus `tasks.md` with sub-tasks and priorities) from
-  Settings → Backup. These files are **not encrypted**: Encly warns you first, asks for your PIN
+  Settings → Backup. The suggested file names carry a date, never a note title. These files are **not encrypted**: Encly warns you first, asks for your PIN
   (or biometrics) again, and writes only to the document you create in the save dialog.
 - Swipe actions on note cards, in the list, tag views and the Archive: swipe right to pin or
   unpin, left to archive (in the Archive: to take the note out of it). In Settings → Swipe

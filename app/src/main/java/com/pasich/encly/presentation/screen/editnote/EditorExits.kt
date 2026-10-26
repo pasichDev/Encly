@@ -44,16 +44,15 @@ internal class EditorExits(
     }
 
     /**
-     * Saves the note, then hands its id and title to [start], which begins the plaintext export
+     * Saves the note, then hands its id to [start], which begins the plaintext export
      * (warning, PIN, save dialog). The editor stays open. Nothing to export from a blank new note
      * or a note whose stored content could not be read.
      */
-    fun exportMarkdown(start: (id: Long, title: String) -> Unit) {
+    fun exportMarkdown(start: (id: Long) -> Unit) {
         if (viewModel.isBlankDraft || viewModel.contentLoadFailed.value) return
         scope.launch {
-            val note = viewModel.state.value.note
             if (viewModel.saveNote() && viewModel.state.value.note.id > 0L) {
-                start(viewModel.state.value.note.id, note.title)
+                start(viewModel.state.value.note.id)
             } else {
                 onFailure(R.string.note_save_failed)
             }

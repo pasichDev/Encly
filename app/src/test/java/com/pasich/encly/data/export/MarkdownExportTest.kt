@@ -198,12 +198,6 @@ class MarkdownExportTest {
     }
 
     @Test
-    fun theSuggestedFileNameComesFromTheTitle() {
-        assertEquals("Trip to Rome.md", MarkdownExport.noteFileName("Trip: to Rome?", labels))
-        assertEquals("Untitled.md", MarkdownExport.noteFileName("", labels))
-    }
-
-    @Test
     fun aManyNoteVaultKeepsEveryFileUnique() {
         val notes = (1L..200L).map { note(it, "Same title", text("n$it")) }
         val files = exportAll(VaultSnapshot(notes, emptyList(), emptyList()))

@@ -293,8 +293,8 @@ private fun EditorOverlays(
 
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
 
-                EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id, title ->
-                    markdownViewModel.start(MarkdownExportTarget.SingleNote(id, title))
+                EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id ->
+                    markdownViewModel.start(MarkdownExportTarget.SingleNote(id))
                 }
 
                 EditNoteBottomSheetAction.ARCHIVE -> exits.archive(archived = true)

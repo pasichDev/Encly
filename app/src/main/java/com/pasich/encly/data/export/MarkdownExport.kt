@@ -44,9 +44,6 @@ object MarkdownExport {
         return true
     }
 
-    /** The name the picker suggests for a single note: its title, made safe. */
-    fun noteFileName(title: String, labels: MarkdownLabels): String = MarkdownFileNames().next(title, labels.untitled)
-
     private fun ZipOutputStream.put(name: String, time: Long?, text: String) {
         val entry = ZipEntry(name)
         if (time != null && time >= ZIP_EPOCH_MILLIS) entry.time = time

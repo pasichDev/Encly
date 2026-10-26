@@ -62,7 +62,7 @@ class BackupViewModel @Inject constructor(
     fun start(action: BackupAction) {
         dropPending()
         this.action = action
-        val biometric = securityManager.isBiometricEnabled() && securityManager.biometricAvailable()
+        val biometric = securityManager.canReauthWithBiometric()
         state.go(BackupStep.Reauth(action, biometric))
     }
 

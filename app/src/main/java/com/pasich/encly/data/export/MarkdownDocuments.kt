@@ -38,9 +38,13 @@ class MarkdownDocuments @Inject constructor(@param:ApplicationContext private va
         }
     }
 
-    /** Best effort: removes the empty document the picker created when nothing could be written to it. */
+    /**
+     * Best effort: removes the empty document the picker created when nothing could be written to
+     * it. A document that holds data is never deleted: a provider may have handed back an existing
+     * file of the user's, and an unreadable one is left alone too.
+     */
     fun discard(uri: Uri) {
-        runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+        runCatching { if (!hasContent(uri)) DocumentsContract.deleteDocument(context.contentResolver, uri) }
     }
 
     private fun hasContent(uri: Uri): Boolean =

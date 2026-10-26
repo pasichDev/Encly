@@ -22,6 +22,9 @@ interface BackupDao {
     @Query("SELECT * FROM tags ORDER BY id")
     suspend fun allTags(): List<Tag>
 
+    @Query("SELECT * FROM tags WHERE id = :tagId")
+    suspend fun tagById(tagId: Long): Tag?
+
     @Query("SELECT * FROM tasks ORDER BY id")
     suspend fun allTasks(): List<Task>
 

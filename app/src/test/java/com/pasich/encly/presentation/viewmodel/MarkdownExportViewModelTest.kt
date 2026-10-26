@@ -155,7 +155,7 @@ class MarkdownExportViewModelTest {
     }
 
     @Test
-    fun theSaveDialogSuggestsADateOnlyZipForEverythingAndTheTitleForOneNote() {
+    fun theSaveDialogSuggestsADateOnlyNameNeverATitle() {
         viewModel.start(MarkdownExportTarget.AllData)
         authenticate()
         val all = step() as BackupStep.PickMarkdownTarget
@@ -163,11 +163,11 @@ class MarkdownExportViewModelTest {
         assertTrue(all.name.matches(Regex("""encly-notes-\d{4}-\d{2}-\d{2}\.zip""")))
 
         viewModel.cancel()
-        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1, title = "Trip: to Rome?"))
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1))
         authenticate()
         val one = step() as BackupStep.PickMarkdownTarget
         assertFalse(one.zip)
-        assertEquals("Trip to Rome.md", one.name)
+        assertTrue(one.name.matches(Regex("""encly-note-\d{4}-\d{2}-\d{2}\.md""")))
     }
 
     // --- writing ---------------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ class MarkdownExportViewModelTest {
 
     @Test
     fun oneNoteIsWrittenAsOneMarkdownDocument() {
-        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1, title = "Groceries"))
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1))
         authenticate()
         viewModel.onSystemPickerLaunched()
 
@@ -274,6 +274,60 @@ class MarkdownExportViewModelTest {
     }
 
     @Test
+    fun aPinThatVerifiesAfterTheFlowWasCancelledCannotSkipTheNextWarning() {
+        val release = java.util.concurrent.CountDownLatch(1)
+        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+            release.await(TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+            true
+        }
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        // The user backs out and starts again while the first PIN is still being checked.
+        viewModel.cancel()
+        viewModel.start(MarkdownExportTarget.AllData)
+        release.countDown()
+        waitUntil { true }
+
+        assertEquals(BackupStep.ConfirmPlainExport, step())
+        verify(documents, never()).write(any(Uri::class.java) ?: uri, anyBlock())
+    }
+
+    @Test
+    fun oneNoteIsReadWithoutReadingTheWholeVault() {
+        val noteOnly = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            override suspend fun snapshot(): VaultSnapshot = error("the whole vault must not be read")
+        }
+        viewModel = viewModelOver(noteOnly)
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1))
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(R.string.markdown_export_done), viewModel.uiState.value.message)
+        assertTrue(written.toString(Charsets.UTF_8).contains("Groceries"))
+    }
+
+    @Test
+    fun theFingerprintIsOfferedOnlyWhereTheSecurityLayerAllowsIt() {
+        `when`(security.canReauthWithBiometric()).thenReturn(true)
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        assertEquals(true, (step() as BackupStep.Reauth).biometric)
+
+        viewModel.cancel()
+        `when`(security.canReauthWithBiometric()).thenReturn(false)
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        assertEquals(false, (step() as BackupStep.Reauth).biometric)
+    }
+
+    @Test
     fun aVaultThatIsAlreadyLockedWhenTheExportIsAuthenticatedEndsWithAMessage() {
         val locked = object : VaultDataStore by store {
             override fun bindToCurrentSession(): VaultDataStore = error("Vault locked")
@@ -304,7 +358,7 @@ class MarkdownExportViewModelTest {
 
     @Test
     fun aNoteThatIsGoneMeanwhileFailsTheWholeWriteSoTheDocumentIsDiscardedByTheWriter() {
-        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 99, title = "Gone"))
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 99))
         authenticate()
         viewModel.onSystemPickerLaunched()
         // The real writer deletes the document when its block throws; the fake only runs the block.
