@@ -12,17 +12,18 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.presentation.components.FontSizeSlider
+import com.pasich.encly.presentation.components.LabeledSlider
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNoteColorPicker
-import com.pasich.encly.presentation.designsystem.EnclyRadioRow
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import kotlin.math.roundToInt
 
 enum class EditNoteBottomSheetAction {
     CLOSE_NO_SAVE,
@@ -58,8 +59,7 @@ fun EditNoteBottomSheet(
                 currentSize = fontSize,
                 onSizeChange = { newSize -> viewModel.updateFontSize(newSize) },
             )
-            SectionOverline(stringResource(R.string.note_line_spacing_title))
-            LineSpacingChoices(selected = lineSpacing, onSelect = viewModel::updateNoteLineSpacing)
+            LineSpacingSlider(selected = lineSpacing, onSelect = viewModel::updateNoteLineSpacing)
             EnclyGroupDivider()
             SectionOverline(stringResource(R.string.note_color_title))
             EnclyNoteColorPicker(
@@ -117,15 +117,18 @@ private val lineSpacingOrder = listOf(
     NoteLineSpacing.COMFORTABLE to R.string.note_line_spacing_comfortable,
 )
 
+/** The reading density as a three-step slider, in the same row style as the text size. */
 @Composable
-private fun LineSpacingChoices(selected: NoteLineSpacing, onSelect: (NoteLineSpacing) -> Unit) {
-    lineSpacingOrder.forEach { (spacing, label) ->
-        EnclyRadioRow(
-            title = stringResource(label),
-            selected = selected == spacing,
-            onClick = { onSelect(spacing) },
-        )
-    }
+private fun LineSpacingSlider(selected: NoteLineSpacing, onSelect: (NoteLineSpacing) -> Unit) {
+    val index = lineSpacingOrder.indexOfFirst { it.first == selected }.coerceAtLeast(0)
+    LabeledSlider(
+        label = stringResource(R.string.note_line_spacing_title),
+        valueText = stringResource(lineSpacingOrder[index].second),
+        value = index.toFloat(),
+        onValueChange = { onSelect(lineSpacingOrder[it.roundToInt().coerceIn(lineSpacingOrder.indices)].first) },
+        range = 0f..lineSpacingOrder.lastIndex.toFloat(),
+        steps = lineSpacingOrder.size - 2,
+    )
 }
 
 /** Pin (not for an archived note: it is never pinned) and archive, or unarchive. */
