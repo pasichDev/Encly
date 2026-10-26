@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
@@ -33,6 +33,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -41,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
@@ -235,6 +237,7 @@ private fun ListItemRow(
             BlockType.LIST_CHECK -> CheckMark(
                 checked = item.isCheck,
                 label = state.text.toString().ifBlank { placeholder },
+                line = with(LocalDensity.current) { listTextStyle().lineHeight.toDp() },
                 enabled = !isLocked,
                 onToggle = { editor.setChecked(item.id, it) },
             )
@@ -252,7 +255,7 @@ private fun ListItemRow(
             isLocked = isLocked,
             modifier = Modifier
                 .weight(1f)
-                .then(if (checklist) Modifier.padding(vertical = EnclyTheme.spacing.xs) else Modifier.alignByBaseline())
+                .then(if (checklist) Modifier.padding(vertical = ROW_PADDING) else Modifier.alignByBaseline())
                 .then(fieldModifier)
                 .onPreviewKeyEvent { event ->
                     val selection = state.selection
@@ -364,24 +367,31 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
 }
 
 /**
- * The checklist box, flush with the paragraphs above, and its toggle target: box and gap wide,
- * as tall as a one-line row (40, spec §3.3). Announced with the item's text, so TalkBack says
- * what is checked.
+ * The checklist box, flush with the paragraphs above, centred on the item's first line of text (so
+ * it sits at the middle of a one-line item and at the top of a long one, never above it), and its
+ * toggle target: [TOGGLE_WIDTH] wide and as tall as the first line plus the row's padding.
+ * Announced with the item's text, so TalkBack says what is checked.
  */
 @Composable
-private fun CheckMark(checked: Boolean, label: String, enabled: Boolean, onToggle: (Boolean) -> Unit) {
-    val box = CheckboxSize.LARGE.size
+private fun CheckMark(checked: Boolean, label: String, line: Dp, enabled: Boolean, onToggle: (Boolean) -> Unit) {
+    val box = minOf(CheckboxSize.COMPACT.size, line)
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
-            .width(box + EnclyTheme.spacing.rowGap)
-            .heightIn(min = box + EnclyTheme.spacing.xs * 2)
+            .width(TOGGLE_WIDTH)
+            .height(line + ROW_PADDING * 2)
             .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onToggle)
             .semantics { contentDescription = label },
     ) {
-        EnclyCheckbox(checked = checked, onCheckedChange = null)
+        EnclyCheckbox(checked = checked, onCheckedChange = null, size = CheckboxSize.COMPACT, boxSize = box)
     }
 }
+
+/** The checkbox's toggle target: the box and the gap after it, wide enough for a thumb. */
+private val TOGGLE_WIDTH = 48.dp
+
+/** Above and below a checklist item's text, so rows sit close but the first line stays centred on its box. */
+private val ROW_PADDING = 2.dp
 
 @Composable
 private fun ListItemField(
