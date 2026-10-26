@@ -331,6 +331,13 @@ object EnclyIcons {
         )
     }
 
+    val ChevronUp: ImageVector by lazy {
+        enclyIcon(
+            "ChevronUp",
+            "M6 14.5l6-6 6 6",
+        )
+    }
+
     val ChevronDown: ImageVector by lazy {
         enclyIcon(
             "ChevronDown",

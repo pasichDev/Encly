@@ -43,7 +43,7 @@
     <string name="biometric_prompt_use_pin">Usar PIN</string>
     <string name="biometric_unavailable">A autenticação biométrica não está disponível</string>
 
-    <string name="block_add">Adicionar bloco</string>
+    <string name="block_more_tools">Mais ferramentas de bloco</string>
     <string name="block_bulleted_list">Lista com marcadores</string>
     <string name="block_checklist">Lista de verificação</string>
     <string name="block_heading">Título</string>

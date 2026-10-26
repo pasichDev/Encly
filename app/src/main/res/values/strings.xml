@@ -59,7 +59,7 @@
     <string name="biometric_prompt_use_pin">Use PIN</string>
     <string name="biometric_unavailable">Biometric authentication is unavailable</string>
 
-    <string name="block_add">Add block</string>
+    <string name="block_more_tools">More block tools</string>
     <string name="block_bulleted_list">Bulleted list</string>
     <string name="block_checklist">Checklist</string>
     <string name="block_heading">Heading</string>

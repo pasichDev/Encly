@@ -43,7 +43,7 @@
     <string name="biometric_prompt_use_pin">Pincode gebruiken</string>
     <string name="biometric_unavailable">Biometrische verificatie is niet beschikbaar</string>
 
-    <string name="block_add">Blok toevoegen</string>
+    <string name="block_more_tools">Meer bloktools</string>
     <string name="block_bulleted_list">Lijst met opsommingstekens</string>
     <string name="block_checklist">Checklist</string>
     <string name="block_heading">Kop</string>

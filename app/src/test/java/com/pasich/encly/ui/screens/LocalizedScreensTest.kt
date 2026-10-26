@@ -91,7 +91,7 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
         navigateTo("${NavRoutes.EditNoteRoute.name}/-1")
         waitFor {
             rule.onAllNodes(
-                androidx.compose.ui.test.hasContentDescription(str(R.string.block_add)),
+                androidx.compose.ui.test.hasContentDescription(str(R.string.block_more_tools)),
             ).fetchSemanticsNodes().isNotEmpty()
         }
         val leaks = visibleTexts().map(::textOf).filter { it in untranslated }

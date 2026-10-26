@@ -43,7 +43,7 @@
     <string name="biometric_prompt_use_pin">Використати PIN</string>
     <string name="biometric_unavailable">Біометрична автентифікація недоступна</string>
 
-    <string name="block_add">Додати блок</string>
+    <string name="block_more_tools">Більше інструментів блоку</string>
     <string name="block_bulleted_list">Маркований список</string>
     <string name="block_checklist">Список завдань</string>
     <string name="block_heading">Заголовок</string>

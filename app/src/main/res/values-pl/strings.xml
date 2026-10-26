@@ -43,7 +43,7 @@
     <string name="biometric_prompt_use_pin">Użyj PIN-u</string>
     <string name="biometric_unavailable">Uwierzytelnianie biometryczne jest niedostępne</string>
 
-    <string name="block_add">Dodaj blok</string>
+    <string name="block_more_tools">Więcej narzędzi bloku</string>
     <string name="block_bulleted_list">Lista punktowana</string>
     <string name="block_checklist">Lista kontrolna</string>
     <string name="block_heading">Nagłówek</string>

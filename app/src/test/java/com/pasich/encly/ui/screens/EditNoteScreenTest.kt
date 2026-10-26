@@ -63,6 +63,9 @@ class EditNoteScreenTest : ComposeScreenTest() {
     private fun hasTool(label: String) =
         rule.onAllNodes(hasContentDescription(label) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
 
+    private fun moreToolsToggles() =
+        rule.onAllNodes(hasContentDescription(str(R.string.block_more_tools))).fetchSemanticsNodes()
+
     private fun back() = rule.onNodeWithContentDescription(str(R.string.back)).performClick()
 
     @Test
@@ -71,14 +74,14 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(R.string.note_title_placeholder), useUnmergedTree = true).assertExists()
         listOf(
-            R.string.block_add,
+            R.string.block_more_tools,
             R.string.block_heading,
             R.string.block_checklist,
             R.string.block_bulleted_list,
             R.string.block_numbered_list,
             R.string.quote,
-            R.string.block_link,
-            R.string.block_separator,
+            R.string.undo,
+            R.string.redo,
         ).forEach { tool(it).assertExists() }
         assertTrue(rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size >= 2)
         rule.onNodeWithContentDescription(str(R.string.edit_tags)).assertExists()
@@ -190,13 +193,13 @@ class EditNoteScreenTest : ComposeScreenTest() {
     fun addBlockOpensTheSecondRowAndCloseReturns() {
         open()
 
-        tool(R.string.block_add).performClick()
+        tool(R.string.block_more_tools).performClick()
 
         val second = (1..4).map { str(R.string.block_heading_level, it) } +
             listOf(
                 R.string.text,
-                R.string.undo,
-                R.string.redo,
+                R.string.block_link,
+                R.string.block_separator,
                 R.string.block_move_up,
                 R.string.block_move_down,
             ).map(::str)
@@ -210,7 +213,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("Plan"))
         open(NOTE_ID)
         field(1).performClick()
-        tool(R.string.block_add).performClick()
+        tool(R.string.block_more_tools).performClick()
         waitFor { hasTool(str(R.string.block_heading_level, 3)) }
 
         rule.onNode(hasContentDescription(str(R.string.block_heading_level, 3)) and hasClickAction()).performClick()
@@ -223,6 +226,8 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("above"))
         open(NOTE_ID)
         field(1).performClick()
+        tool(R.string.block_more_tools).performClick()
+        waitFor { hasTool(str(R.string.block_separator)) }
 
         tool(R.string.block_separator).performClick()
 
@@ -236,7 +241,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithContentDescription(str(R.string.editor_lock)).performClick()
 
-        waitFor { rule.onAllNodes(hasContentDescription(str(R.string.block_add))).fetchSemanticsNodes().isEmpty() }
+        waitFor { moreToolsToggles().isEmpty() }
         rule.onNodeWithText("secret plan").assertExists()
         assertTrue(editor.lockEditor.value)
     }
@@ -248,7 +253,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(R.string.restore)).assertIsDisplayed()
         rule.onNodeWithText(str(R.string.delete_from_trash)).assertIsDisplayed()
-        assertEquals(0, rule.onAllNodes(hasContentDescription(str(R.string.block_add))).fetchSemanticsNodes().size)
+        assertEquals(0, moreToolsToggles().size)
         rule.onNodeWithText("old").assertExists()
     }
 

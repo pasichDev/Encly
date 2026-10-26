@@ -58,8 +58,9 @@ import kotlinx.coroutines.launch
 /**
  * The editor's formatting toolbar, pinned to the bottom above the keyboard (design spec §3.3):
  * the filled "Add block", then the block tools, the one of the block the user works on marked
- * active. "Add block" swaps in a paragraph and every heading level, undo and redo, and moving
- * or deleting the block. In simple editing only undo and redo are offered.
+ * active, and undo and redo. The chevron at the start swaps in a paragraph, every heading level, a link
+ * and a separator, and moving, duplicating or deleting the block. In simple editing only undo and redo
+ * are offered.
  */
 @Composable
 fun NoteBottomBar(
@@ -106,7 +107,6 @@ fun NoteBottomBar(
             ) { more ->
                 if (more) {
                     MoreTools(
-                        history = history,
                         blockTools = BlockMoveTools(
                             onMoveUp = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
                             onMoveDown = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
@@ -119,6 +119,7 @@ fun NoteBottomBar(
                 } else {
                     MainTools(
                         activeTool = activeTool,
+                        history = history,
                         onApply = { viewModel.applyTool(it) },
                         onMore = { showMore = true },
                         keyboard = KeyboardToggleState(blockFocused, viewModel::focusWorkingBlock),
@@ -140,24 +141,27 @@ private class BlockMoveTools(
     val onDelete: (() -> Unit)?,
 )
 
-/** "Add block", then the block tools, the one of the block the user works on marked active. */
+/** The block-tools toggle, the block tools (the active one marked), then undo and redo. */
 @Composable
 private fun MainTools(
     activeTool: BlockType?,
+    history: HistoryTools,
     onApply: (BlockType) -> Unit,
     onMore: () -> Unit,
     keyboard: KeyboardToggleState,
 ) {
     ToolRow(spread = true) {
         EnclyToolButton(
-            icon = EnclyIcons.PlusBold,
-            contentDescription = stringResource(R.string.block_add),
+            icon = EnclyIcons.ChevronUp,
+            contentDescription = stringResource(R.string.block_more_tools),
             onClick = onMore,
             style = ToolStyle.FILLED,
         )
         mainBlockTools.forEach { tool ->
             BlockToolButton(tool = tool, active = tool.type == activeTool, onClick = { onApply(tool.type) })
         }
+        EnclyToolbarRule()
+        HistoryButtons(history)
         EnclyToolbarRule()
         KeyboardToggle(blockFocused = keyboard.blockFocused, onShow = keyboard.onShow)
     }
@@ -272,14 +276,9 @@ private fun HistoryButtons(history: HistoryTools) {
     )
 }
 
-/** Behind "Add block": close, paragraph and heading levels, undo and redo, move, duplicate and delete. */
+/** Behind the toggle: close, paragraph, heading levels, link and separator, move, duplicate and delete. */
 @Composable
-private fun MoreTools(
-    history: HistoryTools,
-    blockTools: BlockMoveTools,
-    onApply: (BlockType) -> Unit,
-    onClose: () -> Unit,
-) {
+private fun MoreTools(blockTools: BlockMoveTools, onApply: (BlockType) -> Unit, onClose: () -> Unit) {
     ToolRow(spread = false) {
         EnclyToolButton(icon = EnclyIcons.Close, contentDescription = stringResource(R.string.close), onClick = onClose)
         moreBlockTools.forEach { tool ->
@@ -292,8 +291,6 @@ private fun MoreTools(
                 },
             )
         }
-        EnclyToolbarRule()
-        HistoryButtons(history)
         EnclyToolbarRule()
         EnclyToolButton(
             icon = EnclyIcons.ArrowUp,
