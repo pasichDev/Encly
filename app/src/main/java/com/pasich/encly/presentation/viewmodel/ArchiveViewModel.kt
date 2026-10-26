@@ -18,6 +18,7 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -64,7 +65,10 @@ class ArchiveViewModel @Inject constructor(
     }
 
     /** Carries out [event]; false when its write failed or it does not apply in the archive. */
-    suspend fun perform(event: NoteListEvent): Boolean = when (event) {
+    suspend fun perform(event: NoteListEvent): Boolean = viewModelScope.async { execute(event) }.await()
+
+    // The write runs in the ViewModel's scope: a card that leaves the screen mid-write cannot cancel it.
+    private suspend fun execute(event: NoteListEvent): Boolean = when (event) {
         is NoteListEvent.ArchiveNote -> updateNoteArchiveStatusUseCase(event.note, event.archived).isSuccess
         is NoteListEvent.NoteToTrash -> updateNoteTrashStatusUseCase(event.note, true).isSuccess
         is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag).isSuccess

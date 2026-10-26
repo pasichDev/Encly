@@ -24,6 +24,7 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -131,7 +132,10 @@ constructor(
     }
 
     /** Carries out [event]; false when its write failed (a swipe then springs the card back). */
-    suspend fun perform(event: NoteListEvent): Boolean = when (event) {
+    suspend fun perform(event: NoteListEvent): Boolean = viewModelScope.async { execute(event) }.await()
+
+    // The write runs in the ViewModel's scope: a card that leaves the screen mid-write cannot cancel it.
+    private suspend fun execute(event: NoteListEvent): Boolean = when (event) {
         is NoteListEvent.SelectTag -> {
             selectedTagHolder.selectTag(event.tag)
             true
