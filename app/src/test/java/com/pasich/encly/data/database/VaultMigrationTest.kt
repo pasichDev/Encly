@@ -42,9 +42,12 @@ class VaultMigrationTest {
         context.deleteDatabase(name)
     }
 
-    /** The version-4 database as Room created it, with one note written the way 2.2.1 wrote it. */
-    private fun createVersion4() {
-        val schema = JsonParser.parseString(File(SCHEMA_4).readText()).asJsonObject.getAsJsonObject("database")
+    /**
+     * The database of [version] as Room created it from its exported [schemaPath], with one note
+     * written the way that version wrote it ([noteSql] inserts it).
+     */
+    private fun createVersion(version: Int, schemaPath: String, noteSql: String) {
+        val schema = JsonParser.parseString(File(schemaPath).readText()).asJsonObject.getAsJsonObject("database")
         val statements = buildList {
             schema.getAsJsonArray("entities").forEach { entity ->
                 val table = entity.asJsonObject.get("tableName").asString
@@ -59,15 +62,11 @@ class VaultMigrationTest {
             SupportSQLiteOpenHelper.Configuration.builder(context)
                 .name(name)
                 .callback(
-                    object : SupportSQLiteOpenHelper.Callback(OLD_VERSION) {
+                    object : SupportSQLiteOpenHelper.Callback(version) {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             statements.forEach(db::execSQL)
                             VaultSchema.createTriggers(db)
-                            db.execSQL(
-                                "INSERT INTO notes " +
-                                    "(id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
-                                    "VALUES (5, 'Old note', '[]', 'd', 20, 10, NULL, 1, 'old-uid')",
-                            )
+                            db.execSQL(noteSql)
                         }
 
                         override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
@@ -80,8 +79,37 @@ class VaultMigrationTest {
     }
 
     @Test
+    fun aVersion5VaultAsItWasPushedMigratesToTheCurrentVersion() = runBlocking {
+        createVersion(
+            5,
+            SCHEMA_5,
+            "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid, " +
+                "isPinned, isArchived, color) " +
+                "VALUES (5, 'Old note', '[]', 'd', 20, 10, NULL, 1, 'old-uid', 1, 0, 'red')",
+        )
+
+        val db = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name)).build()
+        try {
+            val old = checkNotNull(db.notesDao().getNoteById(5))
+            assertEquals("Old note", old.title)
+            assertEquals(true, old.isPinned)
+            assertEquals("red", old.color)
+            assertNull(old.textSize)
+            assertNull(old.lineSpacing)
+            assertEquals(DB_VERSION, db.openHelper.readableDatabase.version)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test
     fun aVersion4VaultOpensAtTheCurrentVersionAndKeepsItsNotes() = runBlocking {
-        createVersion4()
+        createVersion(
+            4,
+            SCHEMA_4,
+            "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                "VALUES (5, 'Old note', '[]', 'd', 20, 10, NULL, 1, 'old-uid')",
+        )
 
         val db = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name)).build()
         try {
@@ -111,7 +139,7 @@ class VaultMigrationTest {
     }
 
     private companion object {
-        const val OLD_VERSION = 4
+        const val SCHEMA_5 = "schemas/com.pasich.encly.data.database.AppDatabase/5.json"
         const val SCHEMA_4 = "schemas/com.pasich.encly.data.database.AppDatabase/4.json"
     }
 }

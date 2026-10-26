@@ -45,7 +45,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ### Changed
 
-- The database moves to version 5 (pin, archive and colour on notes, migrated in place).
+- The database moves to version 6 (pin, archive and colour on notes, then a note's own text size and spacing, migrated in place).
   Installing an older Encly over this version is not supported: Room refuses to open a newer
   database, so a downgrade fails to open the vault. Export a backup first if you might go back.
 - A backup made with this version is schema 4. Older Encly versions (2.2.1 and before) refuse it

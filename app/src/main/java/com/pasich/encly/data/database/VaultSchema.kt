@@ -34,6 +34,9 @@ object VaultSchema {
     /** Database version that added pin, archive and colour to notes. */
     private const val VERSION_WITH_NOTE_ORGANIZING = 5
 
+    /** Database version that added a note's own text size and line spacing. */
+    private const val VERSION_WITH_NOTE_TEXT_SETTINGS = 6
+
     private fun triggers(table: String) = listOf(
         "CREATE TRIGGER IF NOT EXISTS `${table}_uid_on_insert` AFTER INSERT ON `$table` " +
             "WHEN NEW.uid = '' BEGIN " +
@@ -108,7 +111,7 @@ object VaultSchema {
     }
 
     /**
-     * 4 -> 5: add `isPinned`, `isArchived`, `color`, `textSize` and `lineSpacing` to notes. Plain `ADD COLUMN` with a
+     * 4 -> 5: add `isPinned`, `isArchived` and `color` to notes. Plain `ADD COLUMN` with a
      * default, so every existing note stays as it was: unpinned, not archived, no colour. The
      * statements match Room's export of version 5 (app/schemas), which the schema test checks.
      */
@@ -117,7 +120,17 @@ object VaultSchema {
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `isPinned` INTEGER NOT NULL DEFAULT 0")
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0")
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `color` TEXT NOT NULL DEFAULT 'none'")
-            // Null: the note follows the default text size and line spacing of Settings.
+        }
+    }
+
+    /**
+     * 5 -> 6: add a note's own `textSize` and `lineSpacing`. Both are nullable (null: the note
+     * follows the defaults of Settings), so every existing note stays as it was. Version 5 was
+     * already out on dev installs without them, so they are a step of their own: editing 5 in
+     * place would fail Room's identity check there.
+     */
+    val MIGRATION_5_6 = object : Migration(VERSION_WITH_NOTE_ORGANIZING, VERSION_WITH_NOTE_TEXT_SETTINGS) {
+        override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `textSize` INTEGER")
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `lineSpacing` INTEGER")
         }
@@ -136,7 +149,8 @@ object VaultSchema {
      * new migration here explicitly.
      */
     fun <T : RoomDatabase> install(builder: RoomDatabase.Builder<T>): RoomDatabase.Builder<T> =
-        builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).addCallback(CALLBACK)
+        builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .addCallback(CALLBACK)
 
     /** Installs the triggers on a freshly created database. */
     val CALLBACK = object : RoomDatabase.Callback() {

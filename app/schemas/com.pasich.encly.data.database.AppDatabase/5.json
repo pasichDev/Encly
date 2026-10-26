@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "79897fb855258e6bd3db574add7e0049",
+    "identityHash": "6949a33cded5122087188404ec981cab",
     "entities": [
       {
         "tableName": "notes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `value` TEXT NOT NULL, `description` TEXT NOT NULL, `date` INTEGER NOT NULL, `dateCreate` INTEGER NOT NULL, `tagId` INTEGER, `isTrash` INTEGER NOT NULL, `uid` TEXT NOT NULL DEFAULT '', `isPinned` INTEGER NOT NULL DEFAULT 0, `isArchived` INTEGER NOT NULL DEFAULT 0, `color` TEXT NOT NULL DEFAULT 'none', `textSize` INTEGER, `lineSpacing` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `value` TEXT NOT NULL, `description` TEXT NOT NULL, `date` INTEGER NOT NULL, `dateCreate` INTEGER NOT NULL, `tagId` INTEGER, `isTrash` INTEGER NOT NULL, `uid` TEXT NOT NULL DEFAULT '', `isPinned` INTEGER NOT NULL DEFAULT 0, `isArchived` INTEGER NOT NULL DEFAULT 0, `color` TEXT NOT NULL DEFAULT 'none')",
         "fields": [
           {
             "fieldPath": "id",
@@ -82,16 +82,6 @@
             "affinity": "TEXT",
             "notNull": true,
             "defaultValue": "'none'"
-          },
-          {
-            "fieldPath": "textSize",
-            "columnName": "textSize",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "lineSpacing",
-            "columnName": "lineSpacing",
-            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -332,7 +322,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '79897fb855258e6bd3db574add7e0049')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6949a33cded5122087188404ec981cab')"
     ]
   }
 }
