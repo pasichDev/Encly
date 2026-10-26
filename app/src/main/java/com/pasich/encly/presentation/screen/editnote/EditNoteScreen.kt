@@ -51,6 +51,7 @@ import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
+import com.pasich.encly.presentation.designsystem.TintStatusBar
 import com.pasich.encly.presentation.designsystem.blockGap
 import com.pasich.encly.presentation.designsystem.isCompact
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
@@ -179,6 +180,8 @@ private fun EditorScaffold(
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val findOpen by rememberFindOpen()
     val pageColor = rememberPageColor()
+    // The tinted page runs up under the status bar too.
+    TintStatusBar(pageColor)
     Scaffold(
         modifier = modifier.onPreviewKeyEvent { event -> viewModel.handleFindKey(event) },
         containerColor = pageColor,
