@@ -211,7 +211,7 @@ class BlockEditingTest {
 
         assertEquals(listOf(third.id), editor.blocks.map { it.id })
         assertEquals(listOf("OneTwoThree"), contents())
-        assertFocus(0, caret = 6)
+        assertFocus(0, caret = 3)
         editor.undo()
         assertEquals(listOf("One", "TwoThree"), contents())
         editor.undo()
