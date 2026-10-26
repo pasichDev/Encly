@@ -100,8 +100,9 @@ object EnclyIcons {
     val More: ImageVector by lazy {
         enclyIcon(
             "More",
-            dots = "M10.9 5.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM10.9 12a1.1 1.1 0 1 0 2.2 0" +
-                "a1.1 1.1 0 1 0 -2.2 0zM10.9 18.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0z",
+            // Dots about as heavy as the other icons' strokes, so it doesn't read fainter in a bar.
+            dots = "M10.4 5a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0zM10.4 12a1.6 1.6 0 1 0 3.2 0" +
+                "a1.6 1.6 0 1 0 -3.2 0zM10.4 19a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0z",
         )
     }
 
