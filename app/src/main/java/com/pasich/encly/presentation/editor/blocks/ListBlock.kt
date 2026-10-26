@@ -42,7 +42,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
@@ -230,7 +229,6 @@ private fun ListItemRow(
     modifier: Modifier = Modifier,
     fieldModifier: Modifier = Modifier,
 ) {
-    val isLocked = locks.editorLocked
     val state = field.state
     val checklist = marker.type == BlockType.LIST_CHECK
     val placeholder = stringResource(R.string.list_item_placeholder)
