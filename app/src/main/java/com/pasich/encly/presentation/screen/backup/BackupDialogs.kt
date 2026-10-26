@@ -184,6 +184,7 @@ internal fun ReauthDialog(reauth: ReauthFlow, step: BackupStep.Reauth, onCancel:
                 else -> stringResource(R.string.backup_reauth_subtitle)
             },
             subtitleIsError = lockedOut || error != null,
+            bodyAtBottom = true,
             modifier = Modifier.fillMaxSize(),
         ) {
             PinEntry(

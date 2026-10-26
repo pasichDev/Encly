@@ -2,7 +2,9 @@ package com.pasich.encly.presentation.designsystem
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -106,7 +111,8 @@ enum class KeypadSize(val keyHeight: Dp, val gap: Dp) {
 
 /**
  * The PIN keypad: a 3-column grid of round `surfaceContainer` keys, bottom row
- * [biometric] [0] [backspace]. [onBiometric] null leaves the bottom-left slot empty.
+ * [biometric] [0] [backspace]. [onBiometric] null leaves the bottom-left slot empty. A long press on
+ * backspace clears every digit ([onClear]; by default delete repeated for a whole PIN) with a haptic tick.
  */
 @Composable
 fun PinKeypad(
@@ -116,7 +122,9 @@ fun PinKeypad(
     size: KeypadSize = KeypadSize.SETUP,
     enabled: Boolean = true,
     onBiometric: (() -> Unit)? = null,
+    onClear: (() -> Unit)? = null,
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(
         verticalArrangement = Arrangement.spacedBy(size.gap),
         modifier = modifier
@@ -156,6 +164,11 @@ fun PinKeypad(
                 enabled = enabled,
                 container = Color.Transparent,
                 modifier = Modifier.weight(1f),
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    // No clear handler: delete once per digit a PIN can hold.
+                    onClear?.invoke() ?: repeat(PIN_LENGTH) { onBackspace() }
+                },
             ) {
                 Icon(
                     imageVector = EnclyIcons.Backspace,
@@ -187,6 +200,7 @@ private fun DigitKey(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Key(
     onClick: () -> Unit,
@@ -194,16 +208,34 @@ private fun Key(
     enabled: Boolean,
     container: Color,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        shape = CircleShape,
-        color = if (enabled) container else container.copy(alpha = container.alpha * DISABLED_CONTENT_ALPHA),
-        contentColor = MaterialTheme.colorScheme.onSurface.let { if (enabled) it else it.disabled() },
-        modifier = modifier.height(size.keyHeight),
-    ) {
-        Box(contentAlignment = Alignment.Center) { content() }
+    val color = if (enabled) container else container.copy(alpha = container.alpha * DISABLED_CONTENT_ALPHA)
+    val contentColor = MaterialTheme.colorScheme.onSurface.let { if (enabled) it else it.disabled() }
+    val keyModifier = modifier.height(size.keyHeight)
+    if (onLongClick == null) {
+        Surface(
+            onClick = onClick,
+            enabled = enabled,
+            shape = CircleShape,
+            color = color,
+            contentColor = contentColor,
+            modifier = keyModifier,
+        ) {
+            Box(contentAlignment = Alignment.Center) { content() }
+        }
+    } else {
+        Surface(shape = CircleShape, color = color, contentColor = contentColor, modifier = keyModifier) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.combinedClickable(
+                    enabled = enabled,
+                    role = Role.Button,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
+            ) { content() }
+        }
     }
 }

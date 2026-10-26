@@ -11,8 +11,13 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Fixed
+
+- Blank lines you add between paragraphs are no longer erased when a note is closed and reopened (#76).
+
 ### Added
 
+- The PIN keypad sits at the bottom of the screen on the lock screen and the PIN checks, within reach of one hand, and a long press on delete clears every digit (#76).
 - Pin notes to the top of the list, archive them (a new Archive screen in the drawer; archived
   notes leave the list, search and tag counts) and mark them with one of eight colours. The
   colours are tints of your theme, so they read well in all five themes, light and dark.
