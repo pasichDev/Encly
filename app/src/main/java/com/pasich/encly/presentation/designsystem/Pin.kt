@@ -213,29 +213,20 @@ private fun Key(
 ) {
     val color = if (enabled) container else container.copy(alpha = container.alpha * DISABLED_CONTENT_ALPHA)
     val contentColor = MaterialTheme.colorScheme.onSurface.let { if (enabled) it else it.disabled() }
-    val keyModifier = modifier.height(size.keyHeight)
-    if (onLongClick == null) {
-        Surface(
-            onClick = onClick,
-            enabled = enabled,
-            shape = CircleShape,
-            color = color,
-            contentColor = contentColor,
-            modifier = keyModifier,
-        ) {
-            Box(contentAlignment = Alignment.Center) { content() }
-        }
-    } else {
-        Surface(shape = CircleShape, color = color, contentColor = contentColor, modifier = keyModifier) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.combinedClickable(
-                    enabled = enabled,
-                    role = Role.Button,
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                ),
-            ) { content() }
-        }
+    Surface(
+        shape = CircleShape,
+        color = color,
+        contentColor = contentColor,
+        modifier = modifier.height(size.keyHeight),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.combinedClickable(
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
+        ) { content() }
     }
 }
