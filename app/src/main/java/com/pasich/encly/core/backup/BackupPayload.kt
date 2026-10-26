@@ -31,8 +31,9 @@ import java.io.ByteArrayOutputStream
  * - 1: first format; tasks carried a `reminderDate`.
  * - 2: task reminders removed from the app, so tasks no longer carry `reminderDate`.
  * - 3: each task carries its `subtasks` (a list, empty for a task without any).
- * - 4: each note carries `isPinned`, `isArchived` and a `color` key. An app that reads only
- *   schema 3 reports such a file as [BackupError.UNSUPPORTED_VERSION], it does not fail on the keys.
+ * - 4: each note carries `isPinned`, `isArchived`, a `color` key and its own `textSize` and
+ *   `lineSpacing` (null: the default). An app that reads only schema 3 reports such a file as
+ *   [BackupError.UNSUPPORTED_VERSION], it does not fail on the keys.
  */
 @Serializable
 data class BackupPayload(
@@ -76,6 +77,10 @@ data class BackupNote(
     val isPinned: Boolean = false,
     val isArchived: Boolean = false,
     val color: String = "none",
+    /** The note's own text size, or null for the default. */
+    val textSize: Int? = null,
+    /** The note's own line spacing (an ordinal of NoteLineSpacing), or null for the default. */
+    val lineSpacing: Int? = null,
 )
 
 @Serializable
@@ -105,8 +110,13 @@ object BackupPayloadCodec {
     private const val TASKS_KEY = "tasks"
     private const val SUBTASKS_KEY = "subtasks"
     private const val NOTES_KEY = "notes"
-    private val NOTE_ORGANIZING_KEYS = listOf("isPinned", "isArchived", "color")
+    private val NOTE_ORGANIZING_KEYS = listOf("isPinned", "isArchived", "color", "textSize", "lineSpacing")
     private val PRIORITIES = 0..2
+    private const val MIN_TEXT_SIZE = 10
+    private const val MAX_TEXT_SIZE = 32
+    private const val LINE_SPACING_COUNT = 3
+    private val TEXT_SIZES = MIN_TEXT_SIZE..MAX_TEXT_SIZE
+    private val LINE_SPACINGS = 0 until LINE_SPACING_COUNT
 
     private val json = Json {
         encodeDefaults = true
@@ -197,12 +207,18 @@ object BackupPayloadCodec {
             uniqueValidUids(payload.tasks.map { it.uid }) &&
             uniqueValidUids(payload.tasks.flatMap { task -> task.subtasks.map { it.uid } }) &&
             payload.notes.all { it.tagUid == null || it.tagUid in tagUids } &&
-            payload.notes.all { it.color.isNotBlank() && it.color.length <= MAX_COLOR_LENGTH } &&
+            payload.notes.all(::validNoteStyle) &&
             payload.tasks.all {
                 it.priority in PRIORITIES && (it.categoryTagUid == null || it.categoryTagUid in tagUids)
             }
         if (!valid) throw BackupException(BackupError.INVALID_PAYLOAD)
     }
+
+    /** A note's colour key and its own text size and line spacing are within what the app can show. */
+    private fun validNoteStyle(note: BackupNote): Boolean =
+        note.color.isNotBlank() && note.color.length <= MAX_COLOR_LENGTH &&
+            (note.textSize == null || note.textSize in TEXT_SIZES) &&
+            (note.lineSpacing == null || note.lineSpacing in LINE_SPACINGS)
 
     private fun uniqueValidUids(uids: List<String>): Boolean =
         uids.all { it.isNotBlank() && it.length <= MAX_UID_LENGTH } && uids.toSet().size == uids.size

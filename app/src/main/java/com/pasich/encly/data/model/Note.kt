@@ -32,6 +32,10 @@ data class Note(
     /** A [com.pasich.encly.domain.model.NoteColor] key, never an ARGB value. */
     @ColumnInfo(defaultValue = "'none'")
     var color: String = NO_COLOR,
+    /** The note's own text size in sp, or null to follow the default from Settings. */
+    var textSize: Int? = null,
+    /** The note's own line spacing (a `NoteLineSpacing` ordinal), or null to follow the default. */
+    var lineSpacing: Int? = null,
 ) {
 
     /**

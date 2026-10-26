@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.FontStyleType
-import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
@@ -25,7 +24,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
@@ -121,7 +119,6 @@ class EditNoteViewModelTest {
         `when`(settingsRepository.fontSizeFlow).thenReturn(flowOf(DEFAULT_FONT_SIZE))
         `when`(settingsRepository.fontStyleFlow).thenReturn(flowOf(FontStyleType.MODERN_SIMPLE))
         `when`(settingsRepository.simpleEditFlow).thenReturn(flowOf(false))
-        `when`(settingsRepository.noteTextOverrideFlow(anyLong())).thenReturn(flowOf(NoteTextOverride()))
 
         return EditNoteViewModel(
             notesRepository = repository,

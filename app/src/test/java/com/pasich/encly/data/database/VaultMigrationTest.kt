@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -92,6 +93,8 @@ class VaultMigrationTest {
             assertEquals(false, old.isPinned)
             assertEquals(false, old.isArchived)
             assertEquals("none", old.color)
+            assertNull(old.textSize)
+            assertNull(old.lineSpacing)
             assertEquals(DB_VERSION, db.openHelper.readableDatabase.version)
 
             // The uid trigger survived the upgrade, and the new columns default for a new note.

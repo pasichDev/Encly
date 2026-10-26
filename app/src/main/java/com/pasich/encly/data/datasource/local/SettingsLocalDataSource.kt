@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
-import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -130,40 +129,19 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
         )
     }.distinctUntilChanged()
 
-    /** Per-note keys: the note id is part of the key, so a note without them follows the defaults. */
-    private fun noteSizeKey(noteId: Long) = intPreferencesKey("note_text_size_$noteId")
-
-    private fun noteSpacingKey(noteId: Long) = intPreferencesKey("note_line_spacing_$noteId")
-
-    fun noteTextOverrideFlow(noteId: Long): Flow<NoteTextOverride> = dataStore.data.map { preferences ->
-        NoteTextOverride(
-            size = preferences[noteSizeKey(noteId)]?.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE),
-            spacing = preferences[noteSpacingKey(noteId)]?.let { enumValues<NoteLineSpacing>().getOrNull(it) },
-        )
-    }.distinctUntilChanged()
-
-    suspend fun setNoteTextSize(noteId: Long, size: Int?) {
+    /**
+     * A development build kept a note's own text size and line spacing here, by note id. They live
+     * on the note in the vault now (the ids were also the same in the real and the decoy vault, and
+     * outlived an erase), so any such key is removed.
+     */
+    suspend fun removeLegacyNoteTextKeys() {
+        if (dataStore.data.first().asMap().keys.none { it.name.isLegacyNoteTextKey() }) return
         dataStore.edit { preferences ->
-            if (size == null) {
-                preferences.remove(noteSizeKey(noteId))
-            } else {
-                preferences[noteSizeKey(noteId)] = size.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE)
-            }
+            preferences.asMap().keys.filter { it.name.isLegacyNoteTextKey() }.forEach { preferences.remove(it) }
         }
     }
 
-    suspend fun setNoteTextSpacing(noteId: Long, spacing: NoteLineSpacing?) {
-        dataStore.edit { preferences ->
-            if (spacing ==
-                null
-            ) {
-                preferences.remove(noteSpacingKey(noteId))
-            } else {
-                preferences[noteSpacingKey(noteId)] =
-                    spacing.ordinal
-            }
-        }
-    }
+    private fun String.isLegacyNoteTextKey() = startsWith("note_text_size_") || startsWith("note_line_spacing_")
 
     suspend fun setSwipeEnabled(value: Boolean) {
         dataStore.edit { preferences ->

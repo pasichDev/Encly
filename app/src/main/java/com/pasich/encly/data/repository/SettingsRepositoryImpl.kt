@@ -4,7 +4,6 @@ import com.pasich.encly.data.datasource.local.SettingsLocalDataSource
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
-import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -38,6 +37,7 @@ class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSo
 
     override suspend fun loadThemeSettings(existingInstall: Boolean): ThemeSettings {
         settingsLocalDataSource.migrateAppearance(existingInstall)
+        settingsLocalDataSource.removeLegacyNoteTextKeys()
         return settingsLocalDataSource.themeSettingsFlow.first()
     }
 
@@ -60,15 +60,6 @@ class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSo
     override suspend fun setFontStyle(value: FontStyleType) = settingsLocalDataSource.setFontStyle(value)
 
     override suspend fun setNoteLineSpacing(value: NoteLineSpacing) = settingsLocalDataSource.setNoteLineSpacing(value)
-
-    override fun noteTextOverrideFlow(noteId: Long): Flow<NoteTextOverride> =
-        settingsLocalDataSource.noteTextOverrideFlow(noteId)
-
-    override suspend fun setNoteTextSize(noteId: Long, size: Int?) =
-        settingsLocalDataSource.setNoteTextSize(noteId, size)
-
-    override suspend fun setNoteTextSpacing(noteId: Long, spacing: NoteLineSpacing?) =
-        settingsLocalDataSource.setNoteTextSpacing(noteId, spacing)
 
     override suspend fun setSwipeEnabled(value: Boolean) = settingsLocalDataSource.setSwipeEnabled(value)
 

@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
-import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -50,33 +49,28 @@ class SettingsLocalDataSourceTest {
     }
 
     @Test
-    fun aNoteFollowsTheDefaultsUntilItSetsItsOwnText() = runTest {
-        assertEquals(NoteTextOverride(), source.noteTextOverrideFlow(7).first())
+    fun legacyPerNoteTextKeysAreRemovedAndOtherSettingsKept() = runTest {
+        dataStore.edit {
+            it[intPreferencesKey("note_text_size_7")] = 24
+            it[intPreferencesKey("note_line_spacing_7")] = 1
+            it[intPreferencesKey("note_text_size_1200")] = 12
+        }
+        source.setFontSize(20)
 
-        source.setNoteTextSize(7, 24)
-        source.setNoteTextSpacing(7, NoteLineSpacing.COMFORTABLE)
+        source.removeLegacyNoteTextKeys()
 
-        assertEquals(NoteTextOverride(24, NoteLineSpacing.COMFORTABLE), source.noteTextOverrideFlow(7).first())
-        assertEquals(NoteTextOverride(), source.noteTextOverrideFlow(8).first())
-        assertEquals(16, source.fontSizeFlow.first())
+        val keys = dataStore.data.first().asMap().keys.map { it.name }
+        assertEquals(listOf("font_size"), keys)
+        assertEquals(20, source.fontSizeFlow.first())
     }
 
     @Test
-    fun clearingANotesTextRemovesItsKeys() = runTest {
-        source.setNoteTextSize(7, 24)
-        source.setNoteTextSpacing(7, NoteLineSpacing.COMPACT)
+    fun removingLegacyKeysWithNoneLeftChangesNothing() = runTest {
+        source.setFontSize(20)
 
-        source.setNoteTextSize(7, null)
-        source.setNoteTextSpacing(7, null)
+        source.removeLegacyNoteTextKeys()
 
-        assertEquals(NoteTextOverride(), source.noteTextOverrideFlow(7).first())
-    }
-
-    @Test
-    fun aStoredNoteSizeOutOfRangeIsClamped() = runTest {
-        dataStore.edit { it[intPreferencesKey("note_text_size_7")] = 99 }
-
-        assertEquals(32, source.noteTextOverrideFlow(7).first().size)
+        assertEquals(20, source.fontSizeFlow.first())
     }
 
     @Test

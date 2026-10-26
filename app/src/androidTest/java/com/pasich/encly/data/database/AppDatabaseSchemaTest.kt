@@ -124,7 +124,9 @@ class AppDatabaseSchemaTest {
         }
 
         helper.runMigrationsAndValidate(TEST_DB, 5, true, VaultSchema.MIGRATION_4_5).use { db ->
-            db.query("SELECT title, isTrash, uid, isPinned, isArchived, color FROM notes WHERE id = 3").use { c ->
+            db.query(
+                "SELECT title, isTrash, uid, isPinned, isArchived, color, textSize, lineSpacing FROM notes WHERE id = 3",
+            ).use { c ->
                 assertTrue(c.moveToFirst())
                 assertEquals("Groceries", c.getString(0))
                 assertEquals(1, c.getInt(1))
@@ -132,6 +134,8 @@ class AppDatabaseSchemaTest {
                 assertEquals(0, c.getInt(3))
                 assertEquals(0, c.getInt(4))
                 assertEquals("none", c.getString(5))
+                assertTrue(c.isNull(6))
+                assertTrue(c.isNull(7))
             }
 
             // A note inserted by older-style code (no new columns) still gets the defaults.

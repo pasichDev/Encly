@@ -299,6 +299,7 @@ class NotePersistence(
         if (note.id != backup.id) return true
         return note.title != backup.title || note.tagId != backup.tagId ||
             note.isPinned != backup.isPinned || note.color != backup.color ||
+            note.textSize != backup.textSize || note.lineSpacing != backup.lineSpacing ||
             snapshotOf(note, contentJson()) != openedSnapshot
     }
 
@@ -309,7 +310,11 @@ class NotePersistence(
         withContext(ioDispatcher) {
             notesRepository.insertNote(
                 Note.new(title = copyTitle(currentNote.title), value = content, tagId = currentNote.tagId)
-                    .copy(color = currentNote.color),
+                    .copy(
+                        color = currentNote.color,
+                        textSize = currentNote.textSize,
+                        lineSpacing = currentNote.lineSpacing,
+                    ),
             )
         }.getOrNull()?.takeIf { it > 0L } ?: -1L
     }
@@ -334,12 +339,20 @@ class NotePersistence(
 }
 
 private fun snapshotOf(note: Note, blocksJson: String): String =
-    "${note.title}\u0000${note.tagId}\u0000${note.isPinned}\u0000${note.color}\u0000$blocksJson"
+    "${note.title}\u0000${note.tagId}\u0000${note.isPinned}\u0000${note.color}\u0000" +
+        "${note.textSize}\u0000${note.lineSpacing}\u0000$blocksJson"
 
 /** What besides the content makes the editor differ from the stored note; the autosave watches it. */
-private data class NoteMeta(val title: String, val tagId: Long?, val isPinned: Boolean, val color: String)
+private data class NoteMeta(
+    val title: String,
+    val tagId: Long?,
+    val isPinned: Boolean,
+    val color: String,
+    val textSize: Int?,
+    val lineSpacing: Int?,
+)
 
-private fun Note.metaKey() = NoteMeta(title, tagId, isPinned, color)
+private fun Note.metaKey() = NoteMeta(title, tagId, isPinned, color, textSize, lineSpacing)
 
 /**
  * Stores [note] with [blocksJson] as its content; returns the stored note, or null. Its date
@@ -371,7 +384,7 @@ private fun List<Block>.frozen(): List<Block> = map { block ->
 /** Inserts [note] as a new row with [blocksJson] as its content; returns its id, or null. */
 private suspend fun NotesRepository.insertDraft(note: Note, blocksJson: String): Long? = insertNote(
     Note.new(title = note.title, value = blocksJson, tagId = note.tagId)
-        .copy(isPinned = note.isPinned, color = note.color),
+        .copy(isPinned = note.isPinned, color = note.color, textSize = note.textSize, lineSpacing = note.lineSpacing),
 )
     .getOrNull()
     ?.takeIf { it > 0L }

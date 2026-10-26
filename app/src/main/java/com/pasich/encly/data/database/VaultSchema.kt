@@ -108,7 +108,7 @@ object VaultSchema {
     }
 
     /**
-     * 4 -> 5: add `isPinned`, `isArchived` and `color` to notes. Plain `ADD COLUMN` with a
+     * 4 -> 5: add `isPinned`, `isArchived`, `color`, `textSize` and `lineSpacing` to notes. Plain `ADD COLUMN` with a
      * default, so every existing note stays as it was: unpinned, not archived, no colour. The
      * statements match Room's export of version 5 (app/schemas), which the schema test checks.
      */
@@ -117,6 +117,9 @@ object VaultSchema {
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `isPinned` INTEGER NOT NULL DEFAULT 0")
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0")
             db.execSQL("ALTER TABLE `notes` ADD COLUMN `color` TEXT NOT NULL DEFAULT 'none'")
+            // Null: the note follows the default text size and line spacing of Settings.
+            db.execSQL("ALTER TABLE `notes` ADD COLUMN `textSize` INTEGER")
+            db.execSQL("ALTER TABLE `notes` ADD COLUMN `lineSpacing` INTEGER")
         }
     }
 

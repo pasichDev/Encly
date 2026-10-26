@@ -60,7 +60,6 @@ import com.pasich.encly.presentation.editor.state.removeInteracted
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,8 +69,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -166,25 +163,20 @@ constructor(
     /** Ids of the link blocks the user is editing ([editLink]); they show URL entry. */
     val editingLinkIds: StateFlow<Set<String>> get() = _editingLinkIds
 
-    // Text overrides of a note that is not stored yet (no id to key them by): written once it has one.
-    private val pendingText = MutableStateFlow(NoteTextOverride())
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val storedText: Flow<NoteTextOverride> = persistence.state.map { it.note.id }.distinctUntilChanged()
-        .flatMapLatest { id ->
-            if (id >
-                0L
-            ) {
-                settingsRepository.noteTextOverrideFlow(id)
-            } else {
-                flowOf(NoteTextOverride())
-            }
-        }
-
-    /** What this note sets for its own text size and line spacing; the rest follows the defaults. */
-    val textOverride: StateFlow<NoteTextOverride> = combine(storedText, pendingText) { stored, pending ->
-        NoteTextOverride(size = pending.size ?: stored.size, spacing = pending.spacing ?: stored.spacing)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), NoteTextOverride())
+    /**
+     * What this note sets for its own text size and line spacing; the rest follows the defaults.
+     * They are columns of the note in the vault, stored with it like the title.
+     */
+    val textOverride: StateFlow<NoteTextOverride> = persistence.state.map { state ->
+        NoteTextOverride(
+            size = state.note.textSize,
+            spacing = state.note.lineSpacing?.let { enumValues<NoteLineSpacing>().getOrNull(it) },
+        )
+    }.distinctUntilChanged().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+        NoteTextOverride(),
+    )
 
     /** The text size in effect: the note's own, else the default from Settings → Appearance. */
     val fontSize: StateFlow<Int> = combine(settingsRepository.fontSizeFlow, textOverride) { default, own ->
@@ -246,7 +238,6 @@ constructor(
                     savedStateHandle["idNote"] = id
                     savedStateHandle["copySource"] = -1L
                 }
-                if (id > 0L) storePendingText(id)
             }
         }
     }
@@ -336,47 +327,18 @@ constructor(
     }
 
     /** Sets this note's own text size; the default in Settings stays as it is. */
-    fun updateFontSize(size: Int) = writeText(NoteTextOverride(size = size)) { id ->
-        settingsRepository.setNoteTextSize(id, size)
+    fun updateFontSize(size: Int) {
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(textSize = size.coerceIn(MIN_TEXT_SIZE, MAX_TEXT_SIZE)) }
     }
 
     /** Sets this note's own line spacing; the default in Settings stays as it is. */
-    fun updateNoteLineSpacing(value: NoteLineSpacing) = writeText(NoteTextOverride(spacing = value)) { id ->
-        settingsRepository.setNoteTextSpacing(id, value)
+    fun updateNoteLineSpacing(value: NoteLineSpacing) {
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(lineSpacing = value.ordinal) }
     }
 
     /** "Use default": the note follows the text size and line spacing of Settings again. */
     fun useDefaultText() {
-        pendingText.value = NoteTextOverride()
-        val id = persistence.state.value.note.id
-        if (id > 0L) {
-            appScope.launch {
-                settingsRepository.setNoteTextSize(id, null)
-                settingsRepository.setNoteTextSpacing(id, null)
-            }
-        }
-    }
-
-    // A stored note keeps the choice in the preferences, by its id; a new one holds it until it has an id.
-    // The app scope: closing the editor right after a change must not cancel the write.
-    private fun writeText(change: NoteTextOverride, write: suspend (Long) -> Unit) {
-        val id = persistence.state.value.note.id
-        if (id > 0L) {
-            appScope.launch { write(id) }
-        } else {
-            pendingText.update { NoteTextOverride(change.size ?: it.size, change.spacing ?: it.spacing) }
-        }
-    }
-
-    /** Moves the choices a new note made before it had an id into the preferences. */
-    private fun storePendingText(id: Long) {
-        val pending = pendingText.value
-        if (!pending.isSet) return
-        appScope.launch {
-            pending.size?.let { settingsRepository.setNoteTextSize(id, it) }
-            pending.spacing?.let { settingsRepository.setNoteTextSpacing(id, it) }
-            pendingText.value = NoteTextOverride()
-        }
+        if (!isReadTrashOnly) persistence.updateNote { it.copy(textSize = null, lineSpacing = null) }
     }
 
     /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */
@@ -622,6 +584,9 @@ constructor(
 
 /** The find bar refreshes its matches this long after the text stops changing. */
 private const val FIND_REFRESH_MS = 100L
+
+private const val MIN_TEXT_SIZE = 10
+private const val MAX_TEXT_SIZE = 32
 
 /** How long state shared with the UI is kept after the last collector leaves. */
 private const val STOP_TIMEOUT_MS = 5_000L

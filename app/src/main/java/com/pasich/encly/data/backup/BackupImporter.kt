@@ -66,6 +66,8 @@ object BackupMapper {
                     isPinned = note.isPinned,
                     isArchived = note.isArchived,
                     color = note.color,
+                    textSize = note.textSize,
+                    lineSpacing = note.lineSpacing,
                 )
             },
             tasks = snapshot.tasks.map { task ->
@@ -225,9 +227,12 @@ object BackupImporter {
         tagId = tagUid?.let(tagIds::get),
         isTrash = isTrash,
         uid = uid,
-        isPinned = isPinned,
+        // An archived note is never pinned, whatever the file says.
+        isPinned = isPinned && !isArchived,
         isArchived = isArchived,
         color = color,
+        textSize = textSize,
+        lineSpacing = lineSpacing,
     )
 
     private fun BackupTask.toEntity(tagIds: Map<String, Long>) = Task(

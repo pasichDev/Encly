@@ -7,7 +7,6 @@ import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.NoteLineSpacing
-import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
@@ -125,52 +124,70 @@ class EditNoteViewModelComfortTest {
         assertEquals(NoteLineSpacing.COMFORTABLE, viewModel.noteLineSpacing.value)
         assertEquals(16, settings.fontSizeFlow.value)
         assertEquals(NoteLineSpacing.DEFAULT, settings.noteLineSpacingFlow.value)
-        assertEquals(NoteTextOverride(26, NoteLineSpacing.COMFORTABLE), settings.noteText.value[NOTE_ID])
     }
 
     @Test
-    fun anotherNoteIsNotAffectedByAnOverride() = runTest(dispatcher) {
-        settings.noteText.value = mapOf(OTHER_NOTE_ID to NoteTextOverride(30, NoteLineSpacing.COMFORTABLE))
+    fun theNotesOwnTextIsStoredOnTheNoteWithTheNextSave() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+        viewModel.updateFontSize(26)
+        viewModel.updateNoteLineSpacing(NoteLineSpacing.COMPACT)
+
+        assertTrue(viewModel.saveNote())
+
+        val stored = repository.updatedNotes.last()
+        assertEquals(26, stored.textSize)
+        assertEquals(NoteLineSpacing.COMPACT.ordinal, stored.lineSpacing)
+    }
+
+    @Test
+    fun aNoteStoredWithItsOwnTextOpensWithIt() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTag(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), null),
+        )
         val viewModel = viewModel()
         collectingText(viewModel)
         advanceUntilIdle()
 
-        assertEquals(16, viewModel.fontSize.value)
+        assertEquals(30, viewModel.fontSize.value)
+        assertEquals(NoteLineSpacing.COMFORTABLE, viewModel.noteLineSpacing.value)
+        assertTrue(viewModel.textOverride.value.isSet)
     }
 
     @Test
     fun useDefaultReturnsTheNoteToTheDefaults() = runTest(dispatcher) {
         settings.fontSizeFlow.value = 18
-        settings.noteText.value = mapOf(NOTE_ID to NoteTextOverride(30, NoteLineSpacing.COMFORTABLE))
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTag(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), null),
+        )
         val viewModel = viewModel()
         collectingText(viewModel)
         advanceUntilIdle()
         assertEquals(30, viewModel.fontSize.value)
-        assertTrue(viewModel.textOverride.value.isSet)
 
         viewModel.useDefaultText()
         advanceUntilIdle()
 
         assertEquals(18, viewModel.fontSize.value)
         assertFalse(viewModel.textOverride.value.isSet)
+        assertTrue(viewModel.saveNote())
+        assertNull(repository.updatedNotes.last().textSize)
+        assertNull(repository.updatedNotes.last().lineSpacing)
     }
 
     @Test
-    fun aNewNoteKeepsItsTextChoiceAndStoresItOnceSaved() = runTest(dispatcher) {
+    fun aNewNoteStoresItsOwnTextWhenFirstSaved() = runTest(dispatcher) {
         val viewModel = viewModel(noteId = -1L)
         collectingText(viewModel)
         advanceUntilIdle()
-
         viewModel.updateFontSize(28)
-        advanceUntilIdle()
-        assertEquals(28, viewModel.fontSize.value)
-        assertTrue(settings.noteText.value.isEmpty())
-
         viewModel.updateTitle("Draft")
-        assertTrue(viewModel.saveNote())
-        advanceUntilIdle()
 
-        assertEquals(28, settings.noteText.value[INSERTED_ID]?.size)
+        assertTrue(viewModel.saveNote())
+
+        advanceUntilIdle()
+        assertEquals(28, repository.insertedNotes.last().textSize)
         assertEquals(28, viewModel.fontSize.value)
     }
 
@@ -401,6 +418,5 @@ class EditNoteViewModelComfortTest {
     private companion object {
         const val NOTE_ID = 12L
         const val INSERTED_ID = 40L
-        const val OTHER_NOTE_ID = 99L
     }
 }

@@ -137,6 +137,24 @@ class BackupPayloadCodecTest {
     }
 
     @Test
+    fun aNotesOwnTextRoundTripsAndOnlyKnownValuesAreValid() {
+        val own = payload.copy(notes = payload.notes.map { it.copy(textSize = 24, lineSpacing = 2) })
+        assertEquals(own, BackupPayloadCodec.decode(BackupPayloadCodec.encode(own)))
+
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(textSize = 9) }))
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(textSize = 33) }))
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(lineSpacing = 3) }))
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(lineSpacing = -1) }))
+    }
+
+    @Test
+    fun schema3BackupWithATextSizeKeyIsInvalid() {
+        val json = schema3Json().replace("\"isTrash\":true}", "\"isTrash\":true,\"textSize\":20}")
+
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(json.toByteArray(Charsets.UTF_8)) }
+    }
+
+    @Test
     fun blankOrOverlongColorIsInvalid() {
         assertInvalid(payload.copy(notes = payload.notes.map { it.copy(color = "") }))
         assertInvalid(payload.copy(notes = payload.notes.map { it.copy(color = "x".repeat(33)) }))
@@ -174,7 +192,7 @@ class BackupPayloadCodecTest {
             """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
             """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
             """"dateCreate":1,"tagUid":"t1","isTrash":true,"isPinned":false,"isArchived":false,""" +
-            """"color":"none"}],""" +
+            """"color":"none","textSize":null,"lineSpacing":null}],""" +
             """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
             """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5,""" +
             """"subtasks":[{"uid":"s1","title":"Milk","isCompleted":true,"position":0},""" +
