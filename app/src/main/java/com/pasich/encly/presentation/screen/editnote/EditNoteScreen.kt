@@ -183,7 +183,9 @@ private fun EditorScaffold(
     // The tinted page runs up under the status bar too.
     TintStatusBar(pageColor)
     Scaffold(
-        modifier = modifier.onPreviewKeyEvent { event -> viewModel.handleFindKey(event) },
+        modifier = modifier.onPreviewKeyEvent { event ->
+            viewModel.handleHistoryKey(event) || viewModel.handleFindKey(event)
+        },
         containerColor = pageColor,
         // Status and navigation bars, a display cutout and the keyboard all stay clear of text.
         contentWindowInsets = WindowInsets.safeDrawing,
