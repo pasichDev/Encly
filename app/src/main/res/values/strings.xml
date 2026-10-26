@@ -664,4 +664,6 @@
     <string name="appearance_text_section">Text in notes</string>
     <string name="appearance_text_desc">The default for every note. A note can set its own from its menu.</string>
     <string name="note_text_use_default">Use default text settings</string>
+    <string name="about_source_code">Source code</string>
+    <string name="about_source_code_desc">Encly is open source: read the code on GitHub</string>
 </resources>

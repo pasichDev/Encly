@@ -659,4 +659,6 @@
     <string name="appearance_text_section">Текст у нотатках</string>
     <string name="appearance_text_desc">Типове значення для всіх нотаток. Нотатка може задати своє у власному меню.</string>
     <string name="note_text_use_default">Використати типові налаштування тексту</string>
+    <string name="about_source_code">Вихідний код</string>
+    <string name="about_source_code_desc">Encly має відкритий код: читайте його на GitHub</string>
 </resources>

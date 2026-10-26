@@ -6,6 +6,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
+import com.pasich.encly.core.LINK_REPOSITORY
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.FaqScreen
@@ -30,6 +31,15 @@ class InfoScreensTest : ComposeScreenTest() {
         scrollToText(str(R.string.licenses_title))
         assertTrue(visibleTexts().map(::textOf).any { it.contains(BuildConfig.VERSION_NAME) })
         assertBodyNotEmpty(minTexts = 6)
+    }
+
+    @Test
+    fun aboutLinksTheSourceCodeInEveryBuild() {
+        setNavScreen(route = NavRoutes.AboutRoute.name) { nav -> AboutScreen(nav) }
+
+        scrollToText(str(R.string.about_source_code))
+        scrollToText(str(R.string.about_source_code_desc))
+        assertEquals("https://github.com/pasichDev/Encly", LINK_REPOSITORY)
     }
 
     @Test

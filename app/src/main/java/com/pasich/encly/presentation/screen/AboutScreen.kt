@@ -25,6 +25,7 @@ import com.pasich.encly.BuildConfig
 import com.pasich.encly.R
 import com.pasich.encly.core.LINK_FEEDBACK
 import com.pasich.encly.core.LINK_PRIVACY_POLICY
+import com.pasich.encly.core.LINK_REPOSITORY
 import com.pasich.encly.core.MAIL_DEVELOPMENT
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyGroup
@@ -129,6 +130,15 @@ private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
                     modifier = rowModifier,
                 )
             }
+            EnclyGroupDivider()
+            // The code is public: a plain link in every flavor, not a donation or store link.
+            EnclyNavigationRow(
+                title = stringResource(R.string.about_source_code),
+                supporting = stringResource(R.string.about_source_code_desc),
+                icon = EnclyIcons.External,
+                onClick = { openExternalLink(context, LINK_REPOSITORY) },
+                modifier = rowModifier,
+            )
             EnclyGroupDivider()
             // Feedback: public GitHub issue tracker, no third-party form service.
             EnclyNavigationRow(

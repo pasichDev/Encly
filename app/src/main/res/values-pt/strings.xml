@@ -653,4 +653,6 @@
     <string name="appearance_text_section">Texto das notas</string>
     <string name="appearance_text_desc">O padrão de cada nota. Uma nota pode definir o seu no próprio menu.</string>
     <string name="note_text_use_default">Usar o texto padrão</string>
+    <string name="about_source_code">Código-fonte</string>
+    <string name="about_source_code_desc">O Encly é de código aberto: leia o código no GitHub</string>
 </resources>

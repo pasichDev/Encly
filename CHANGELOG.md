@@ -34,6 +34,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
   nothing for each direction, or turn swipes off. The action's colour and icon show behind the
   card, with a haptic tick when it is armed; with system animations off the card does not
   animate. TalkBack gets the same actions in the note's actions menu.
+- About links to the source code on GitHub, in every flavor.
 - Import notes now has its own entry in the drawer, above Settings.
 
 ### Changed
