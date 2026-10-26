@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Colores de notas, fijar y archivar: lo importante arriba y el resto ordenado.
+• Gestos de deslizar en las tarjetas: fijar, archivar, colorear o enviar a la papelera.
+• Exportar a Markdown con tu PIN. Los archivos no están cifrados, y Encly te avisa antes.
+• Editor: teclas de cursor, borrado continuo, deshacer con el teclado y líneas vacías funcionan bien; las listas se pueden bloquear.
+• Tamaño de texto e interlineado predeterminados para todas las notas.

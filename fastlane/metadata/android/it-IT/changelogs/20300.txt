@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Colori delle note, fissa e archivia: l'importante in alto, il resto in ordine.
+• Azioni con scorrimento sulle schede: fissa, archivia, colora o cestina.
+• Esporta in Markdown, protetto dal tuo PIN. I file non sono cifrati e Encly ti avvisa prima.
+• Editor: tasti freccia, cancellazione prolungata, annulla da tastiera e righe vuote funzionano bene; le liste si possono bloccare.
+• Dimensione del testo e interlinea predefinite per tutte le note.

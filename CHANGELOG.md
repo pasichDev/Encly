@@ -11,49 +11,70 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
-### Fixed
+## [2.3.0] - 2026-10-26
 
-- Blank lines you add between paragraphs are no longer erased when a note is closed and reopened (#76).
-- The hints in empty editor blocks ("Text", "List item", ...) show only on the block you are in and are much lighter, so they no longer look like typed text (#76).
-- A checklist can be locked from the block tools (the chevron): its text takes no focus and no keyboard while its boxes still tick (#76).
-- Undo and redo sit on the editor toolbar itself; the plus became a chevron ("More block tools") that opens link, separator, headings and block moves (#76).
-- Checklist boxes are smaller and sit centred on the first line of their item (at the top of a long one), with tighter rows and a wider tap area (#76).
-- Holding Backspace at the start of a paragraph keeps deleting through the paragraphs above without the cursor jumping between blocks (#82).
-- Arrow keys move through a note by line: Up and Down leave a block only from its first or last line and keep the column, Left and Right cross to the neighbouring block, and Down in the last block no longer adds a paragraph (#82).
-- Ctrl or Cmd+Z, Ctrl or Cmd+Shift+Z and Ctrl or Cmd+Y undo and redo in the whole note, with a hardware keyboard or a keyboard app's undo keys (#82).
-- Undo and redo no longer close the keyboard: the cursor stays in the block you were editing (#76).
+versionCode 20300.
 
 ### Added
 
-- The PIN keypad sits at the bottom of the screen on the lock screen and the PIN checks, within reach of one hand, and a long press on delete clears every digit (#76).
-- Default text size and line spacing for every note in Settings → Appearance. The sliders in a note's menu now set that note's own values, with "Use default text settings" to go back (#76).
 - Pin notes to the top of the list, archive them (a new Archive screen in the drawer; archived
   notes leave the list, search and tag counts) and mark them with one of eight colours. The
   colours are tints of your theme, so they read well in all five themes, light and dark.
-- Export as Markdown: one note as a `.md` file from its menu, or every note outside the trash as
-  a `.zip` (archived notes in `archive/`, plus `tasks.md` with sub-tasks and priorities) from
-  Settings → Backup. The suggested file names carry a date, never a note title. These files are **not encrypted**: Encly warns you first, asks for your PIN
-  (or biometrics) again, and writes only to the document you create in the save dialog.
 - Swipe actions on note cards, in the list, tag views and the Archive: swipe right to pin or
   unpin, left to archive (in the Archive: to take the note out of it). In Settings → Swipe
   actions you choose pin, archive, next colour, move to the trash (it always asks first) or
   nothing for each direction, or turn swipes off. The action's colour and icon show behind the
   card, with a haptic tick when it is armed; with system animations off the card does not
-  animate. TalkBack gets the same actions in the note's actions menu.
-- About links to the source code on GitHub, in every flavor.
-- Import notes now has its own entry in the drawer, above Settings.
+  animate. A failed write springs the card back. TalkBack gets the same actions in the note's
+  actions menu.
+- Export as Markdown: one note as a `.md` file from its menu, or every note outside the trash as
+  a `.zip` (archived notes in `archive/`, plus `tasks.md` with sub-tasks and priorities) from
+  Settings → Backup. The suggested file names carry a date, never a note title. These files are
+  **not encrypted**: Encly warns you first, asks for your PIN (or biometrics) again, and writes
+  only to the document you create in the save dialog.
+- Default text size and line spacing for every note in Settings → Appearance. The sliders in a
+  note's menu now set that note's own values, with "Use default text settings" to go back (#76).
+  Line height grows with large text instead of staying fixed.
+- A checklist can be locked from the block tools (the chevron): its text takes no focus and no
+  keyboard while its boxes still tick, and it can be unlocked again from the toolbar or with
+  TalkBack (#76).
+- Keyboard shortcuts in the editor: Ctrl or Cmd+Z, Ctrl or Cmd+Shift+Z and Ctrl or Cmd+Y undo and
+  redo across the whole note (the title and the find bar keep their own undo) (#82).
+- The PIN keypad sits at the bottom of the screen on the lock screen and the PIN checks, within
+  reach of one hand, and a long press on delete clears every digit (#76).
+- About links to the source code on GitHub, in every flavor, and Import notes has its own entry
+  in the drawer, above Settings.
 
 ### Changed
 
-- The database moves to version 6 (pin, archive and colour on notes, then a note's own text size and spacing, migrated in place).
-  Installing an older Encly over this version is not supported: Room refuses to open a newer
-  database, so a downgrade fails to open the vault. Export a backup first if you might go back.
+- Editor toolbar: undo and redo are on the toolbar itself, and the plus became a chevron ("More
+  block tools") that opens headings, link, separator and block moves (#76).
+- Checklist boxes are smaller, grow with the text size and sit centred on the first line of their
+  item, with a fixed gap and tighter rows (#76).
+- Support is a highlighted button in the drawer, and the Support page explains where donations
+  go and offers a single Ko-fi card (`fdroid` flavor only).
+- The database moves to version 6 (pin, archive and colour on notes, then a note's own text size
+  and spacing, migrated in place). Installing an older Encly over this version is not supported:
+  Room refuses to open a newer database, so a downgrade fails to open the vault. Export a backup
+  first if you might go back.
 - A backup made with this version is schema 4. Older Encly versions (2.2.1 and before) refuse it
   as "made by a newer version, update the app" instead of failing; backups made by older versions
   still restore, with their notes unpinned, unarchived and uncoloured.
-- Support is a highlighted button in the drawer (`fdroid` flavor only).
-- The Support page (`fdroid` flavor only) now explains where donations go and offers a single
-  Ko-fi card. About links to it as well.
+
+### Fixed
+
+- Blank lines you add between paragraphs are no longer erased when a note is closed and reopened
+  (#76), and note cards in the list show one block per line.
+- The hints in empty editor blocks ("Text", "List item", ...) show only on the block you are in
+  and are much lighter, so they no longer look like typed text (#76).
+- Undo and redo no longer close the keyboard: the cursor stays in the block you were editing and
+  returns to where it was (#76, #82).
+- Arrow keys move through a note by line: Up and Down leave a block only from its first or last
+  line and keep the column, Left and Right cross to the neighbouring block (also in right-to-left
+  text), and Down in the last block no longer adds a paragraph. Shift and Ctrl selections stay
+  inside the block (#82).
+- Holding Backspace at the start of a paragraph keeps deleting through the paragraphs above
+  without the cursor jumping between blocks, and undo puts the cursor back (#82).
 
 ## [2.2.1] - 2026-10-18
 
@@ -307,7 +328,8 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/pasichDev/Encly/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/pasichDev/Encly/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/pasichDev/Encly/releases/tag/v2.2.0
 [2.1.0]: https://github.com/pasichDev/Encly/releases/tag/v2.1.0

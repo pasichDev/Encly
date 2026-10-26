@@ -1,0 +1,6 @@
+Encly 2.3.0
+• Note colours, pin and archive: keep the notes that matter on top and tidy the rest away.
+• Swipe actions on note cards: pin, archive, colour or trash, as you choose.
+• Export as Markdown, behind your PIN. Files are not encrypted, so Encly warns you first.
+• Editor: cursor keys, held delete, keyboard undo and blank lines work properly; checklists can be locked.
+• Default text size and line spacing for all notes.
