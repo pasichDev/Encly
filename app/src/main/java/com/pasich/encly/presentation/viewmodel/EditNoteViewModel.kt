@@ -471,6 +471,10 @@ constructor(
     /** The cursor in [block]'s field moved to [offset]. */
     fun onCaretMoved(block: Block, offset: Int) = editor.selection.onCaret(block.id, offset)
 
+    /** The cursor in item [itemId] of list [block] moved to [offset]. */
+    fun onListItemCaret(block: Block, itemId: String, offset: Int) =
+        editor.selection.onItemCaret(block.id, itemId, offset)
+
     /** Sets the link of [block]; a link being edited ([editLink]) is committed with it. */
     fun onLinkChanged(block: Block.LinkBlock, newLink: LinkDataBlock) {
         if (!canEdit()) return

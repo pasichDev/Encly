@@ -71,6 +71,8 @@ internal class BlockActionsImpl(
 
     override fun onCaretMoved(offset: Int) = viewModel.onCaretMoved(block, offset)
 
+    override fun onListItemCaret(itemId: String, offset: Int) = viewModel.onListItemCaret(block, itemId, offset)
+
     override fun registerCaret(callback: (Int) -> Unit): () -> Unit = focusRegistry.registerCaret(block.id, callback)
 
     override fun registerFieldsFocusTarget(requestFocus: (FocusRequest) -> Unit): () -> Unit =

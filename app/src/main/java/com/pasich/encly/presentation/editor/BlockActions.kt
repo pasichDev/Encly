@@ -48,6 +48,9 @@ interface BlockActions {
     /** [onBackspaceAtStart] in item [itemId] of this list. */
     fun onListBackspaceAtStart(itemId: String): Boolean
 
+    /** The cursor in item [itemId] of this list moved to [offset]. */
+    fun onListItemCaret(itemId: String, offset: Int)
+
     /** The cursor in this block's field moved to [offset]. */
     fun onCaretMoved(offset: Int)
 

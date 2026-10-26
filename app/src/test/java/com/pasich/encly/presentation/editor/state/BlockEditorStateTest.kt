@@ -36,7 +36,36 @@ class BlockEditorStateTest {
 
         editor.undo()
 
+        // The cursor was at the start (never reported): the field takes it back to the end.
         assertEquals(FocusRequest(block.id, cursorToEnd = true), editor.selection.requests.first())
+    }
+
+    @Test
+    fun undoPutsTheCursorBackWhereItWasNotAtTheEnd() = runTest {
+        val block = editor.blocks[0] as Block.TextBlock
+        type(block, "hello world")
+        editor.selection.onFocused(block.id)
+        editor.selection.onCaret(block.id, 3)
+        type(block, "hello world!")
+
+        editor.undo()
+
+        assertEquals(FocusRequest(block.id, caret = 3), editor.selection.requests.first())
+    }
+
+    @Test
+    fun undoInAListFocusesTheSameItemWithTheSameCursor() = runTest {
+        val first = ItemListBlock("a")
+        val second = ItemListBlock("bcd")
+        val list = Block.ListBlock(MutableStateFlow(listOf(first, second)), BlockType.LIST_BULLET)
+        editor.load(listOf(text("t"), list))
+        editor.selection.onFocused(list.id)
+        editor.selection.onItemCaret(list.id, first.id, 1)
+        editor.changeValue(list.id, list.items, listOf(first, second.copy(value = "bcdx")), mergeable = false)
+
+        editor.undo()
+
+        assertEquals(FocusRequest(list.id, caret = 1, itemId = first.id), editor.selection.requests.first())
     }
 
     @Test

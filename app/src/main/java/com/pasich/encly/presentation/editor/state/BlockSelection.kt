@@ -87,6 +87,18 @@ class BlockSelection(private val blocks: List<Block>) {
     /** Where the cursor last was in the field of [blockId]; null if it never had one. */
     fun caretOf(blockId: String): Int? = carets[blockId]
 
+    // The item of each list the cursor was last in, so a list can be focused back in the same item.
+    private val listItems = mutableMapOf<String, String>()
+
+    /** The cursor in item [itemId] of the list [blockId] is at [offset]. */
+    fun onItemCaret(blockId: String, itemId: String, offset: Int) {
+        listItems[blockId] = itemId
+        carets[blockId] = offset
+    }
+
+    /** The item of list [blockId] the cursor was last in; null for a block that is not a list. */
+    fun itemOf(blockId: String): String? = listItems[blockId]
+
     /** The user works on [blockId] without its field taking focus (a block sheet). */
     fun onInteraction(blockId: String) {
         val index = blocks.indexOfFirst { it.id == blockId }

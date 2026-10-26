@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +70,9 @@ private class ListFocus {
     val requesters = mutableMapOf<String, FocusRequester>()
     val fieldStates = mutableMapOf<String, TextFieldState>()
     var pending by mutableStateOf<ItemFocus?>(null)
+
+    /** The item whose field has focus; its cursor is reported so undo can put it back. */
+    var focusedItem: String? = null
 }
 
 /**
@@ -146,6 +150,11 @@ fun ListBlock(
                     onEdit = { text -> editor.setText(item.id, text) },
                 )
                 val requester = remember { FocusRequester() }
+                LaunchedEffect(item.id, state) {
+                    snapshotFlow { state.selection.start }.collect { offset ->
+                        if (focus.focusedItem == item.id) actions.onListItemCaret(item.id, offset)
+                    }
+                }
                 DisposableEffect(item.id) {
                     focus.requesters[item.id] = requester
                     focus.fieldStates[item.id] = state
@@ -160,7 +169,12 @@ fun ListBlock(
                     field = ItemField(state, rememberFieldHighlight(blockActions.highlights, block.id, item.id)),
                     editor = editor,
                     isLocked = isLocked,
-                    fieldModifier = fieldModifier.focusRequester(requester),
+                    fieldModifier = fieldModifier.focusRequester(requester).onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            focus.focusedItem = item.id
+                            actions.onListItemCaret(item.id, state.selection.start)
+                        }
+                    },
                 )
             }
         }

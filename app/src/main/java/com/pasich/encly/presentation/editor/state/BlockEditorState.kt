@@ -198,10 +198,13 @@ private fun Block.contentFlow(): Flow<Any>? = when (this) {
 private fun BlockSelection.keepFocus(blocks: List<Block>, blockId: String?) {
     if (blockId == null) return
     val index = blocks.indexOfFirst { it.id == blockId }
-    val target = if (index >= 0 && blocks[index].canTakeFocus()) {
-        index
+    if (index >= 0 && blocks[index].canTakeFocus()) {
+        // Same block: the cursor goes back where it was (and into the same list item); the field
+        // clamps it if the undone text is shorter. Only a cursor never seen means "the end".
+        val caret = caretOf(blockId)
+        focusAt(index, cursorToEnd = caret == null, caret = caret, itemId = itemOf(blockId))
     } else {
-        blocks.previousFocusableIndex(interactedIndex + 1)
+        // The block is gone: the nearest one above, the cursor at its end.
+        focusAt(blocks.previousFocusableIndex(interactedIndex + 1), cursorToEnd = true)
     }
-    focusAt(target, cursorToEnd = true)
 }
