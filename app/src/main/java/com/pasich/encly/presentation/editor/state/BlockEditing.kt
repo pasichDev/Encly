@@ -93,7 +93,8 @@ private fun BlockEditorState.joinToPrevious(index: Int, text: String): Boolean {
 
         is Block.QuoteBlock -> joinText(index, previous.text, text)
 
-        is Block.ListBlock -> joinToList(index, previous, text)
+        // A locked checklist takes no edits: Backspace at the start of the block below it does nothing.
+        is Block.ListBlock -> if (!previous.locked.value) joinToList(index, previous, text)
 
         // The first block, or a link card, which has no text to join.
         is Block.LinkBlock, null -> return false
@@ -126,6 +127,7 @@ private fun BlockEditorState.mergeIntoCurrent(index: Int, previous: Block.TextBl
         setValue(current.id, current.text, previous.text.value + text)
         removeBlock(index - 1)
     }
+    attachCaretToLastStep(current.id, before = 0, after = join)
     selection.focusAt(index - 1, caret = join)
 }
 

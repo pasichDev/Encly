@@ -26,6 +26,7 @@ enum class BlockRemoveAction { REMOVE, REMOVE_BACKSPACE, REMOVE_BACKSPACE_LIST }
  *
  * Invariant: the note always has at least one block.
  */
+@Suppress("TooManyFunctions") // The editor's single entry point: one function per kind of edit.
 class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
     private val _blocks = SnapshotStateList<Block>().apply { add(emptyNoteBlock()) }
     val blocks: List<Block> get() = _blocks
@@ -147,23 +148,28 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         afterChange()
     }
 
-    fun undo() {
+    fun undo() = moveHistory(history::undo) { it.before }
+
+    fun redo() = moveHistory(history::redo) { it.after }
+
+    /** Undo or redo ([move]); a step that carries its own cursor ([caretOf]) puts it there. */
+    private fun moveHistory(move: () -> Boolean, caretOf: (BlockOperations.CaretStep) -> Int) {
         slash.dismiss()
         val focused = selection.focusedBlockId.value
-        if (history.undo()) {
-            afterChange()
+        if (!move()) return
+        afterChange()
+        val step = history.lastMovedCaret()
+        val index = step?.let { s -> blocks.indexOfFirst { it.id == s.blockId } } ?: -1
+        if (step != null && index >= 0 && focused != null) {
+            selection.focusAt(index, caret = caretOf(step))
+        } else {
             selection.keepFocus(blocks, focused)
         }
     }
 
-    fun redo() {
-        slash.dismiss()
-        val focused = selection.focusedBlockId.value
-        if (history.redo()) {
-            afterChange()
-            selection.keepFocus(blocks, focused)
-        }
-    }
+    /** The step recorded last puts the cursor of block [blockId] at [before] when undone and [after] when redone. */
+    internal fun attachCaretToLastStep(blockId: String, before: Int, after: Int) =
+        history.attachCaret(BlockOperations.CaretStep(blockId, before, after))
 
     private fun afterChange() {
         if (_blocks.isEmpty()) _blocks.add(emptyNoteBlock())
