@@ -643,4 +643,17 @@
     <string name="markdown_export_done">Eksport Markdown zapisany</string>
     <string name="faq_markdown_q">Czy mogę wyeksportować notatki jako Markdown?</string>
     <string name="faq_markdown_a">Tak. W menu notatki wybierz „Eksportuj jako Markdown”, aby dostać jeden plik .md, albo przejdź do Ustawienia → Kopia zapasowa → „Eksportuj jako Markdown”, aby dostać archiwum .zip ze wszystkimi notatkami (zarchiwizowane w folderze archive, bez kosza) i plikiem z zadaniami. Te pliki nie są zaszyfrowane: Encly najpierw ostrzeże, poprosi o PIN i zapisze tylko tam, gdzie wskażesz.</string>
+    <string name="settings_swipe_section">Gesty przesunięcia</string>
+    <string name="settings_swipe_enabled">Przesuwanie notatek</string>
+    <string name="settings_swipe_enabled_desc">Przesuń kartę notatki, aby wykonać akcję</string>
+    <string name="settings_swipe_right">Przesunięcie w prawo</string>
+    <string name="settings_swipe_left">Przesunięcie w lewo</string>
+    <string name="swipe_choice_pin">Przypnij lub odepnij</string>
+    <string name="swipe_choice_color">Następny kolor</string>
+    <string name="swipe_choice_delete">Przenieś do kosza</string>
+    <string name="swipe_choice_none">Nic</string>
+    <string name="swipe_delete_title">Przenieść do kosza?</string>
+    <string name="swipe_delete_message">Notatkę można przywrócić z kosza.</string>
+    <string name="faq_swipe_q">Do czego służą przesunięcia notatki?</string>
+    <string name="faq_swipe_a">Domyślnie przesunięcie notatki w prawo przypina ją lub odpina, a w lewo archiwizuje. W Ustawienia → Gesty przesunięcia możesz wybrać dla każdego kierunku: przypnij, archiwizuj, następny kolor, przenieś do kosza (zawsze z pytaniem) lub nic, a także wyłączyć przesuwanie. TalkBack oferuje te same akcje w menu akcji notatki.</string>
 </resources>

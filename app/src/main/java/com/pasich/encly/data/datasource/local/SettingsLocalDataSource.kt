@@ -8,6 +8,9 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -29,6 +32,9 @@ const val SIMPLE_EDIT = "simple_edit"
 const val FONT_SIZE = "font_size"
 const val FONT_STYLE = "font_style"
 const val NOTE_LINE_SPACING = "note_line_spacing"
+const val SWIPE_ENABLED = "swipe_enabled"
+const val SWIPE_RIGHT = "swipe_right"
+const val SWIPE_LEFT = "swipe_left"
 const val APPEARANCE_MIGRATED = "appearance_migrated_v1"
 
 @Singleton
@@ -46,6 +52,9 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
         val fontSize = intPreferencesKey(FONT_SIZE)
         val fontStyle = intPreferencesKey(FONT_STYLE)
         val noteLineSpacing = intPreferencesKey(NOTE_LINE_SPACING)
+        val swipeEnabled = booleanPreferencesKey(SWIPE_ENABLED)
+        val swipeRight = intPreferencesKey(SWIPE_RIGHT)
+        val swipeLeft = intPreferencesKey(SWIPE_LEFT)
         val appearanceMigrated = booleanPreferencesKey(APPEARANCE_MIGRATED)
     }
 
@@ -109,6 +118,26 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
     val noteLineSpacingFlow: Flow<NoteLineSpacing> = dataStore.data.map { preferences ->
         enumAtOrDefault(preferences[noteLineSpacing], NoteLineSpacing.DEFAULT)
     }.distinctUntilChanged()
+
+    val swipeSettingsFlow: Flow<SwipeSettings> = dataStore.data.map { preferences ->
+        SwipeSettings(
+            enabled = preferences[swipeEnabled] ?: true,
+            right = enumAtOrDefault(preferences[swipeRight], SwipeAction.PIN),
+            left = enumAtOrDefault(preferences[swipeLeft], SwipeAction.ARCHIVE),
+        )
+    }.distinctUntilChanged()
+
+    suspend fun setSwipeEnabled(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[swipeEnabled] = value
+        }
+    }
+
+    suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction) {
+        dataStore.edit { preferences ->
+            preferences[if (side == SwipeSide.RIGHT) swipeRight else swipeLeft] = action.ordinal
+        }
+    }
 
     suspend fun setSortNotes(option: NoteSortOption) {
         dataStore.edit { preferences ->

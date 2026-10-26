@@ -164,6 +164,7 @@ fun MainScreen(
                 listScrollState = listScrollState,
                 gridScrollState = gridScrollState,
                 search = NotesSearch(query, searchResults),
+                swipe = settingsViewModel.swipeSettings.collectAsState().value,
                 onItemClick = { note -> navigation.editNote(note.id) },
                 onSecondActionClick = { note -> navigation.editNote(-1, "?copySource=${note.id}") },
                 header = {

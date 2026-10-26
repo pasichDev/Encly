@@ -637,4 +637,17 @@
     <string name="markdown_export_done">Esportazione Markdown salvata</string>
     <string name="faq_markdown_q">Posso esportare le note come Markdown?</string>
     <string name="faq_markdown_a">Sì. Nel menu di una nota scegli «Esporta come Markdown» per un file .md, oppure vai su Impostazioni → Backup → «Esporta come Markdown» per uno .zip con tutte le note (quelle archiviate in una cartella archive, senza il cestino) e un file delle attività. Questi file non sono crittografati: Encly ti avvisa prima, chiede il PIN e salva solo dove scegli tu.</string>
+    <string name="settings_swipe_section">Azioni con scorrimento</string>
+    <string name="settings_swipe_enabled">Scorri le note</string>
+    <string name="settings_swipe_enabled_desc">Scorri una nota per agire su di essa</string>
+    <string name="settings_swipe_right">Scorri a destra</string>
+    <string name="settings_swipe_left">Scorri a sinistra</string>
+    <string name="swipe_choice_pin">Fissa o non fissare</string>
+    <string name="swipe_choice_color">Colore successivo</string>
+    <string name="swipe_choice_delete">Sposta nel cestino</string>
+    <string name="swipe_choice_none">Niente</string>
+    <string name="swipe_delete_title">Spostare nel cestino?</string>
+    <string name="swipe_delete_message">Potrai ripristinare la nota dal cestino.</string>
+    <string name="faq_swipe_q">A cosa servono gli scorrimenti su una nota?</string>
+    <string name="faq_swipe_a">Per impostazione predefinita, scorrere una nota a destra la fissa o la sblocca, a sinistra la archivia. In Impostazioni → Azioni con scorrimento puoi scegliere per ogni direzione: fissa, archivia, colore successivo, sposta nel cestino (chiede sempre conferma) o niente, oppure disattivare gli scorrimenti. TalkBack offre le stesse azioni nel menu delle azioni della nota.</string>
 </resources>

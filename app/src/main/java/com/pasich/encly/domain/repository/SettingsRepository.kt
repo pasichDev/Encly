@@ -3,6 +3,9 @@ package com.pasich.encly.domain.repository
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -18,6 +21,7 @@ interface SettingsRepository {
     val fontSizeFlow: Flow<Int>
     val fontStyleFlow: Flow<FontStyleType>
     val noteLineSpacingFlow: Flow<NoteLineSpacing>
+    val swipeSettingsFlow: Flow<SwipeSettings>
 
     /** The theme last read from the store, or null before the first read. */
     val latestThemeSettings: ThemeSettings?
@@ -38,4 +42,6 @@ interface SettingsRepository {
     suspend fun setFontSize(value: Int)
     suspend fun setFontStyle(value: FontStyleType)
     suspend fun setNoteLineSpacing(value: NoteLineSpacing)
+    suspend fun setSwipeEnabled(value: Boolean)
+    suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction)
 }

@@ -12,6 +12,7 @@ import com.pasich.encly.R
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.locale.AppLocales
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -108,6 +109,43 @@ class SettingsScreensTest : ComposeScreenTest() {
         rule.onNodeWithText(str(R.string.settings_show_tasks)).performClick()
 
         waitFor { !app.settings.showTasks.value }
+    }
+
+    @Test
+    fun theSwipeSectionListsTheMasterSwitchAndBothDirections() {
+        showSettings()
+
+        scrollToText(str(R.string.settings_swipe_section), ignoreCase = true)
+        scrollToText(str(R.string.settings_swipe_enabled))
+        scrollToText(str(R.string.settings_swipe_right))
+        scrollToText(str(R.string.settings_swipe_left))
+        // The defaults: pin on the right, archive on the left.
+        scrollToText(str(R.string.swipe_choice_pin))
+    }
+
+    @Test
+    fun theSwipeSwitchIsSavedAndHidesTheDirectionRows() {
+        showSettings()
+        scrollToText(str(R.string.settings_swipe_enabled))
+
+        rule.onNodeWithText(str(R.string.settings_swipe_enabled)).performClick()
+
+        waitFor { !app.settings.swipe.value.enabled }
+        waitFor { countText(str(R.string.settings_swipe_right)) == 0 }
+    }
+
+    @Test
+    fun theActionOfADirectionIsChosenInADialogAndSaved() {
+        showSettings()
+        scrollToText(str(R.string.settings_swipe_left))
+
+        rule.onNodeWithText(str(R.string.settings_swipe_left)).performClick()
+        waitForText(str(R.string.swipe_choice_color))
+        rule.onNodeWithText(str(R.string.swipe_choice_color)).performClick()
+        rule.onNodeWithText(str(R.string.done)).performClick()
+
+        waitFor { app.settings.swipe.value.left == SwipeAction.NEXT_COLOR }
+        assertEquals(SwipeAction.PIN, app.settings.swipe.value.right)
     }
 
     // Android 12L: AppCompat keeps the per-app language itself (13+ hands it to LocaleManager,

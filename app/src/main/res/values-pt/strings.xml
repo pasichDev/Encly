@@ -637,4 +637,17 @@
     <string name="markdown_export_done">Exportação Markdown salva</string>
     <string name="faq_markdown_q">Posso exportar minhas notas como Markdown?</string>
     <string name="faq_markdown_a">Sim. No menu de uma nota, escolha “Exportar como Markdown” para um arquivo .md, ou use Configurações → Backup → “Exportar como Markdown” para um .zip com todas as notas (as arquivadas em uma pasta archive, sem a lixeira) e um arquivo de tarefas. Esses arquivos não são criptografados: o Encly avisa antes, pede seu PIN e salva apenas onde você escolher.</string>
+    <string name="settings_swipe_section">Ações de deslizar</string>
+    <string name="settings_swipe_enabled">Deslizar notas</string>
+    <string name="settings_swipe_enabled_desc">Deslize uma nota para agir sobre ela</string>
+    <string name="settings_swipe_right">Deslizar para a direita</string>
+    <string name="settings_swipe_left">Deslizar para a esquerda</string>
+    <string name="swipe_choice_pin">Fixar ou desafixar</string>
+    <string name="swipe_choice_color">Próxima cor</string>
+    <string name="swipe_choice_delete">Mover para a lixeira</string>
+    <string name="swipe_choice_none">Nada</string>
+    <string name="swipe_delete_title">Mover para a lixeira?</string>
+    <string name="swipe_delete_message">Você poderá restaurar a nota da lixeira.</string>
+    <string name="faq_swipe_q">Para que servem os deslizes em uma nota?</string>
+    <string name="faq_swipe_a">Por padrão, deslizar uma nota para a direita a fixa ou desafixa, e para a esquerda a arquiva. Em Configurações → Ações de deslizar, você escolhe para cada direção: fixar, arquivar, próxima cor, mover para a lixeira (sempre pergunta) ou nada, ou desativa os deslizes. O TalkBack oferece as mesmas ações no menu de ações da nota.</string>
 </resources>

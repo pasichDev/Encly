@@ -4,6 +4,9 @@ import com.pasich.encly.data.datasource.local.SettingsLocalDataSource
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -26,6 +29,8 @@ class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSo
     override val fontSizeFlow: Flow<Int> = settingsLocalDataSource.fontSizeFlow
     override val fontStyleFlow: Flow<FontStyleType> = settingsLocalDataSource.fontStyleFlow
     override val noteLineSpacingFlow: Flow<NoteLineSpacing> = settingsLocalDataSource.noteLineSpacingFlow
+
+    override val swipeSettingsFlow: Flow<SwipeSettings> = settingsLocalDataSource.swipeSettingsFlow
 
     override val latestThemeSettings: ThemeSettings?
         get() = settingsLocalDataSource.latestThemeSettings
@@ -54,4 +59,9 @@ class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSo
     override suspend fun setFontStyle(value: FontStyleType) = settingsLocalDataSource.setFontStyle(value)
 
     override suspend fun setNoteLineSpacing(value: NoteLineSpacing) = settingsLocalDataSource.setNoteLineSpacing(value)
+
+    override suspend fun setSwipeEnabled(value: Boolean) = settingsLocalDataSource.setSwipeEnabled(value)
+
+    override suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction) =
+        settingsLocalDataSource.setSwipeAction(side, action)
 }

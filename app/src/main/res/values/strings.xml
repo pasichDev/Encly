@@ -648,4 +648,17 @@
     <string name="markdown_export_done">Markdown export saved</string>
     <string name="faq_markdown_q">Can I export my notes as Markdown?</string>
     <string name="faq_markdown_a">Yes. In a note\'s menu choose \"Export as Markdown\" for one .md file, or use Settings → Backup → \"Export as Markdown\" for a .zip of all notes (archived ones in an archive folder, the trash left out) and a tasks file. These files are not encrypted: Encly warns you first, asks for your PIN and saves only where you choose.</string>
+    <string name="settings_swipe_section">Swipe actions</string>
+    <string name="settings_swipe_enabled">Swipe on notes</string>
+    <string name="settings_swipe_enabled_desc">Swipe a note card to act on it</string>
+    <string name="settings_swipe_right">Swipe right</string>
+    <string name="settings_swipe_left">Swipe left</string>
+    <string name="swipe_choice_pin">Pin or unpin</string>
+    <string name="swipe_choice_color">Next color</string>
+    <string name="swipe_choice_delete">Move to trash</string>
+    <string name="swipe_choice_none">Nothing</string>
+    <string name="swipe_delete_title">Move to trash?</string>
+    <string name="swipe_delete_message">You can restore the note from the trash.</string>
+    <string name="faq_swipe_q">What do swipes on a note do?</string>
+    <string name="faq_swipe_a">By default, swiping a note right pins or unpins it and swiping left archives it. In Settings → Swipe actions you can choose pin, archive, next color, move to trash (always asks first) or nothing for each direction, or turn swipes off. TalkBack offers the same actions in the note\'s actions menu.</string>
 </resources>

@@ -16,13 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.presentation.components.settings.SettingsBuilder
 import com.pasich.encly.presentation.components.settings.SettingsCategory
 import com.pasich.encly.presentation.components.settings.SettingsCategoryRenderer
 import com.pasich.encly.presentation.components.settings.SettingsNavigation
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.dialogs.LanguageDialog
+import com.pasich.encly.presentation.dialogs.SwipeActionDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -37,6 +40,8 @@ fun SettingsScreen(
     val showTasks by settingViewState.showTasksFlow.collectAsState()
     val simpleEdit by settingViewState.simpleEditFlow.collectAsState()
 
+    val swipe by settingViewState.swipeSettings.collectAsState()
+    val swipeDialogSide by settingViewState.swipeDialogSide.collectAsState()
     val languageDialogVisible by settingViewState.languageDialogVisible.collectAsState()
 
     val settingsBuilder = remember { SettingsBuilder() }
@@ -44,6 +49,7 @@ fun SettingsScreen(
         viewModel = settingViewState,
         showTasks = showTasks,
         simpleEdit = simpleEdit,
+        swipe = swipe,
         navigation = SettingsNavigation(
             onAppearance = { navController?.navigate(NavRoutes.AppearanceRoute.name) },
             onSecurity = { navController?.navigate(NavRoutes.SecuritySettingsRoute.name) },
@@ -69,6 +75,18 @@ fun SettingsScreen(
                 current = settingViewState.currentLanguage(),
                 onDismiss = { settingViewState.setLanguageDialogVisibility(false) },
                 onConfirm = settingViewState::selectLanguage,
+            )
+        }
+
+        swipeDialogSide?.let { side ->
+            SwipeActionDialog(
+                side = side,
+                current = if (side == SwipeSide.RIGHT) swipe.right else swipe.left,
+                onDismiss = { settingViewState.chooseSwipeAction(null) },
+                onConfirm = { action ->
+                    settingViewState.onEvent(SettingsEvent.UpdateSwipeAction(side, action))
+                    settingViewState.chooseSwipeAction(null)
+                },
             )
         }
 

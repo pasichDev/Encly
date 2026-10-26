@@ -18,6 +18,8 @@ import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.domain.model.NoteListItem
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.presentation.components.swipe.SwipeableNote
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -28,6 +30,8 @@ import com.pasich.encly.presentation.screen.NoteActionsSheet
 import com.pasich.encly.presentation.screen.NoteSheetState
 import com.pasich.encly.presentation.viewmodel.ArchiveState
 import com.pasich.encly.presentation.viewmodel.ArchiveViewModel
+import com.pasich.encly.presentation.viewmodel.NoteListEvent
+import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -42,8 +46,10 @@ fun ArchiveScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     viewModel: ArchiveViewModel = enclyViewModel(),
+    settingsViewModel: SettingsViewModel = enclyViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val swipe by settingsViewModel.swipeSettings.collectAsStateWithLifecycle()
     val sheet = remember { NoteSheetState() }
     fun edit(noteId: Long) = navController.navigate("${NavRoutes.EditNoteRoute.name}/$noteId")
 
@@ -67,6 +73,8 @@ fun ArchiveScreen(
     ) { padding ->
         ArchivedNotes(
             state = state,
+            swipe = swipe,
+            onEvent = viewModel::onEvent,
             onOpen = ::edit,
             onActions = sheet::open,
             modifier = Modifier
@@ -80,6 +88,8 @@ fun ArchiveScreen(
 @Composable
 private fun ArchivedNotes(
     state: ArchiveState,
+    swipe: SwipeSettings,
+    onEvent: (NoteListEvent) -> Unit,
     onOpen: (Long) -> Unit,
     onActions: (NoteListItem) -> Unit,
     modifier: Modifier = Modifier,
@@ -115,14 +125,22 @@ private fun ArchivedNotes(
             }
 
             else -> items(items = state.notes, key = { it.note.id }) { item ->
-                NoteItem(
-                    item = item,
+                // Archive here means "take out of the archive"; a pin does not apply to archived notes.
+                SwipeableNote(
+                    note = item.note,
+                    settings = swipe,
+                    onEvent = onEvent,
                     modifier = Modifier
                         .padding(horizontal = spacing.listGutter)
                         .animateItem(),
-                    onItemClick = { onOpen(it.id) },
-                    onItemLongClick = { onActions(item) },
-                )
+                ) { cardModifier ->
+                    NoteItem(
+                        item = item,
+                        modifier = cardModifier,
+                        onItemClick = { onOpen(it.id) },
+                        onItemLongClick = { onActions(item) },
+                    )
+                }
             }
         }
     }

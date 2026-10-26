@@ -21,7 +21,7 @@ backup and, only when you ask for it, a readable Markdown export that is not enc
 - 💾 **Encrypted backups** — one file, sealed with the recovery phrase, saved wherever you choose.
 - 📝 **Markdown export** — one note as `.md`, or everything as a `.zip`, after a warning that the
   file is not encrypted and a PIN check. Saved through the system save dialog, never shared.
-- 📌 **Organize** — pin, archive and colour notes.
+- 📌 **Organize** — pin, archive and colour notes, with configurable swipe actions on the cards.
 - 🧩 **Block editor** — text, headings, quotes, checklists, bulleted / numbered lists, links,
   separators.
 - 🏷️ **Tags & tasks** — local organization: tags for notes, tasks with priorities.

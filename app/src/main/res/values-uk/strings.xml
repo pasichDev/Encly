@@ -643,4 +643,17 @@
     <string name="markdown_export_done">Експорт Markdown збережено</string>
     <string name="faq_markdown_q">Чи можна експортувати нотатки у форматі Markdown?</string>
     <string name="faq_markdown_a">Так. У меню нотатки виберіть «Експортувати як Markdown», щоб отримати один файл .md, або відкрийте Налаштування → Резервна копія → «Експортувати як Markdown», щоб отримати .zip з усіма нотатками (архівні лежать у теці archive, кошик не входить) і файлом із завданнями. Ці файли не зашифровані: Encly спершу попередить, попросить PIN-код і збереже їх лише туди, куди ви вкажете.</string>
+    <string name="settings_swipe_section">Дії свайпом</string>
+    <string name="settings_swipe_enabled">Свайп по нотатках</string>
+    <string name="settings_swipe_enabled_desc">Проведіть по картці нотатки, щоб виконати дію</string>
+    <string name="settings_swipe_right">Свайп праворуч</string>
+    <string name="settings_swipe_left">Свайп ліворуч</string>
+    <string name="swipe_choice_pin">Закріпити або відкріпити</string>
+    <string name="swipe_choice_color">Наступний колір</string>
+    <string name="swipe_choice_delete">Перемістити в кошик</string>
+    <string name="swipe_choice_none">Нічого</string>
+    <string name="swipe_delete_title">Перемістити в кошик?</string>
+    <string name="swipe_delete_message">Нотатку можна відновити з кошика.</string>
+    <string name="faq_swipe_q">Що роблять свайпи по нотатці?</string>
+    <string name="faq_swipe_a">За замовчуванням свайп нотатки праворуч закріплює або відкріплює її, а ліворуч — архівує. У Налаштування → Дії свайпом можна вибрати для кожного напрямку: закріпити, архівувати, наступний колір, перемістити в кошик (завжди з підтвердженням) або нічого, а також вимкнути свайпи. TalkBack пропонує ті самі дії в меню дій нотатки.</string>
 </resources>

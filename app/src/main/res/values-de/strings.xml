@@ -631,4 +631,17 @@
     <string name="markdown_export_done">Markdown-Export gespeichert</string>
     <string name="faq_markdown_q">Kann ich meine Notizen als Markdown exportieren?</string>
     <string name="faq_markdown_a">Ja. Wähle im Menü einer Notiz „Als Markdown exportieren“ für eine .md-Datei, oder nutze Einstellungen → Backup → „Als Markdown exportieren“ für eine .zip mit allen Notizen (archivierte im Ordner archive, ohne Papierkorb) und einer Aufgabendatei. Diese Dateien sind nicht verschlüsselt: Encly warnt dich vorher, fragt nach deiner PIN und speichert nur dort, wo du es festlegst.</string>
+    <string name="settings_swipe_section">Wischaktionen</string>
+    <string name="settings_swipe_enabled">Wischen auf Notizen</string>
+    <string name="settings_swipe_enabled_desc">Wische eine Notizkarte, um eine Aktion auszuführen</string>
+    <string name="settings_swipe_right">Nach rechts wischen</string>
+    <string name="settings_swipe_left">Nach links wischen</string>
+    <string name="swipe_choice_pin">Anheften oder lösen</string>
+    <string name="swipe_choice_color">Nächste Farbe</string>
+    <string name="swipe_choice_delete">In den Papierkorb</string>
+    <string name="swipe_choice_none">Nichts</string>
+    <string name="swipe_delete_title">In den Papierkorb legen?</string>
+    <string name="swipe_delete_message">Du kannst die Notiz aus dem Papierkorb wiederherstellen.</string>
+    <string name="faq_swipe_q">Was bewirken Wischgesten auf einer Notiz?</string>
+    <string name="faq_swipe_a">Standardmäßig heftet ein Wisch nach rechts eine Notiz an oder löst sie, ein Wisch nach links archiviert sie. Unter Einstellungen → Wischaktionen kannst du für jede Richtung Anheften, Archivieren, nächste Farbe, In den Papierkorb (fragt immer nach) oder nichts wählen oder das Wischen ausschalten. TalkBack bietet dieselben Aktionen im Aktionsmenü der Notiz an.</string>
 </resources>

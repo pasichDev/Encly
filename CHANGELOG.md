@@ -20,6 +20,12 @@ IzzyOnDroid) and used as the GitHub Release notes.
   a `.zip` (archived notes in `archive/`, plus `tasks.md` with sub-tasks and priorities) from
   Settings → Backup. These files are **not encrypted**: Encly warns you first, asks for your PIN
   (or biometrics) again, and writes only to the document you create in the save dialog.
+- Swipe actions on note cards, in the list, tag views and the Archive: swipe right to pin or
+  unpin, left to archive (in the Archive: to take the note out of it). In Settings → Swipe
+  actions you choose pin, archive, next colour, move to the trash (it always asks first) or
+  nothing for each direction, or turn swipes off. The action's colour and icon show behind the
+  card, with a haptic tick when it is armed; with system animations off the card does not
+  animate. TalkBack gets the same actions in the note's actions menu.
 - Import notes now has its own entry in the drawer, above Settings.
 
 ### Changed

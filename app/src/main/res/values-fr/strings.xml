@@ -637,4 +637,17 @@
     <string name="markdown_export_done">Export Markdown enregistré</string>
     <string name="faq_markdown_q">Puis-je exporter mes notes en Markdown ?</string>
     <string name="faq_markdown_a">Oui. Dans le menu d\'une note, choisissez « Exporter en Markdown » pour un fichier .md, ou allez dans Paramètres → Sauvegarde → « Exporter en Markdown » pour un .zip de toutes les notes (celles archivées dans un dossier archive, sans la corbeille) et un fichier de tâches. Ces fichiers ne sont pas chiffrés : Encly vous prévient d\'abord, demande votre PIN et n\'enregistre qu\'à l\'endroit que vous choisissez.</string>
+    <string name="settings_swipe_section">Actions par balayage</string>
+    <string name="settings_swipe_enabled">Balayer les notes</string>
+    <string name="settings_swipe_enabled_desc">Balayez une carte de note pour agir dessus</string>
+    <string name="settings_swipe_right">Balayer vers la droite</string>
+    <string name="settings_swipe_left">Balayer vers la gauche</string>
+    <string name="swipe_choice_pin">Épingler ou désépingler</string>
+    <string name="swipe_choice_color">Couleur suivante</string>
+    <string name="swipe_choice_delete">Mettre à la corbeille</string>
+    <string name="swipe_choice_none">Rien</string>
+    <string name="swipe_delete_title">Mettre à la corbeille ?</string>
+    <string name="swipe_delete_message">Vous pourrez restaurer la note depuis la corbeille.</string>
+    <string name="faq_swipe_q">À quoi servent les balayages sur une note ?</string>
+    <string name="faq_swipe_a">Par défaut, balayer une note vers la droite l\'épingle ou la désépingle, et vers la gauche l\'archive. Dans Paramètres → Actions par balayage, vous choisissez pour chaque direction : épingler, archiver, couleur suivante, mettre à la corbeille (avec confirmation) ou rien, ou vous désactivez les balayages. TalkBack propose les mêmes actions dans le menu d\'actions de la note.</string>
 </resources>

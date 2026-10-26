@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.locale.AppLocales
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +35,19 @@ class SettingsViewModel @Inject constructor(private val settingsRepository: Sett
         initialValue = false,
     )
 
+    val swipeSettings: StateFlow<SwipeSettings> = settingsRepository.swipeSettingsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = SwipeSettings(),
+    )
+
+    /** The direction whose action is being chosen, or null while no choice is open. */
+    val swipeDialogSide = MutableStateFlow<SwipeSide?>(null)
+
+    fun chooseSwipeAction(side: SwipeSide?) {
+        swipeDialogSide.value = side
+    }
+
     /** Read live, not cached: this ViewModel outlives the activity a language change recreates. */
     fun currentLanguage(): AppLanguage = AppLocales.current()
 
@@ -50,6 +66,8 @@ class SettingsViewModel @Inject constructor(private val settingsRepository: Sett
             when (event) {
                 is SettingsEvent.UpdateShowTasks -> settingsRepository.setShowTasks(event.value)
                 is SettingsEvent.UpdateSimpleEdit -> settingsRepository.setSimpleEdit(event.value)
+                is SettingsEvent.UpdateSwipeEnabled -> settingsRepository.setSwipeEnabled(event.value)
+                is SettingsEvent.UpdateSwipeAction -> settingsRepository.setSwipeAction(event.side, event.action)
             }
         }
     }
@@ -58,4 +76,6 @@ class SettingsViewModel @Inject constructor(private val settingsRepository: Sett
 sealed class SettingsEvent {
     data class UpdateShowTasks(val value: Boolean) : SettingsEvent()
     data class UpdateSimpleEdit(val value: Boolean) : SettingsEvent()
+    data class UpdateSwipeEnabled(val value: Boolean) : SettingsEvent()
+    data class UpdateSwipeAction(val side: SwipeSide, val action: SwipeAction) : SettingsEvent()
 }

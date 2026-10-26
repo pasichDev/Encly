@@ -631,4 +631,17 @@
     <string name="markdown_export_done">Markdown-export opgeslagen</string>
     <string name="faq_markdown_q">Kan ik mijn notities als Markdown exporteren?</string>
     <string name="faq_markdown_a">Ja. Kies in het menu van een notitie ‘Exporteren als Markdown’ voor één .md-bestand, of ga naar Instellingen → Back-up → ‘Exporteren als Markdown’ voor een .zip met alle notities (gearchiveerde in een map archive, zonder prullenbak) en een takenbestand. Deze bestanden zijn niet versleuteld: Encly waarschuwt eerst, vraagt om je pincode en slaat alleen op waar jij kiest.</string>
+    <string name="settings_swipe_section">Veegacties</string>
+    <string name="settings_swipe_enabled">Vegen op notities</string>
+    <string name="settings_swipe_enabled_desc">Veeg een notitiekaart om erop te handelen</string>
+    <string name="settings_swipe_right">Naar rechts vegen</string>
+    <string name="settings_swipe_left">Naar links vegen</string>
+    <string name="swipe_choice_pin">Vastmaken of losmaken</string>
+    <string name="swipe_choice_color">Volgende kleur</string>
+    <string name="swipe_choice_delete">Naar prullenbak</string>
+    <string name="swipe_choice_none">Niets</string>
+    <string name="swipe_delete_title">Naar de prullenbak verplaatsen?</string>
+    <string name="swipe_delete_message">Je kunt de notitie uit de prullenbak terugzetten.</string>
+    <string name="faq_swipe_q">Wat doen veegbewegingen op een notitie?</string>
+    <string name="faq_swipe_a">Standaard maakt naar rechts vegen een notitie vast of los, en naar links archiveert ze. Onder Instellingen → Veegacties kies je per richting: vastmaken, archiveren, volgende kleur, naar prullenbak (vraagt altijd eerst) of niets, of zet je vegen uit. TalkBack biedt dezelfde acties in het actiemenu van de notitie.</string>
 </resources>

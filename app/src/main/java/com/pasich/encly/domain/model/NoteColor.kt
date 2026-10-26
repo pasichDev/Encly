@@ -21,6 +21,9 @@ enum class NoteColor(val key: String, @get:StringRes val labelRes: Int) {
     PINK("pink", R.string.note_color_pink),
     ;
 
+    /** The next colour of the palette; the last one wraps to [NONE]. */
+    fun next(): NoteColor = entries[(ordinal + 1) % entries.size]
+
     companion object {
         fun fromKey(key: String?): NoteColor = entries.firstOrNull { it.key == key } ?: NONE
     }
