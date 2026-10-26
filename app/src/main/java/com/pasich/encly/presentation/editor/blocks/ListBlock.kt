@@ -260,7 +260,15 @@ private fun ListItemRow(
             locks = locks,
             modifier = Modifier
                 .weight(1f)
-                .then(if (checklist) Modifier.padding(vertical = ROW_PADDING) else Modifier.alignByBaseline())
+                .then(
+                    if (checklist) {
+                        Modifier.padding(
+                            vertical = EnclyTheme.spacing.textGap,
+                        )
+                    } else {
+                        Modifier.alignByBaseline()
+                    },
+                )
                 .then(fieldModifier)
                 .onPreviewKeyEvent { event ->
                     val selection = state.selection
@@ -374,7 +382,7 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
 /**
  * The checklist box, flush with the paragraphs above, centred on the item's first line of text (so
  * it sits at the middle of a one-line item and at the top of a long one, never above it), and its
- * toggle target: [TOGGLE_WIDTH] wide and as tall as the first line plus the row's padding.
+ * toggle target: a thumb wide (the xxl step) and as tall as the first line plus the row's padding.
  * Announced with the item's text, so TalkBack says what is checked.
  */
 @Composable
@@ -383,20 +391,14 @@ private fun CheckMark(checked: Boolean, label: String, line: Dp, enabled: Boolea
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
-            .width(TOGGLE_WIDTH)
-            .height(line + ROW_PADDING * 2)
+            .width(EnclyTheme.spacing.xxl)
+            .height(line + EnclyTheme.spacing.textGap * 2)
             .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onToggle)
             .semantics { contentDescription = label },
     ) {
         EnclyCheckbox(checked = checked, onCheckedChange = null, size = CheckboxSize.COMPACT, boxSize = box)
     }
 }
-
-/** The checkbox's toggle target: the box and the gap after it, wide enough for a thumb. */
-private val TOGGLE_WIDTH = 48.dp
-
-/** Above and below a checklist item's text, so rows sit close but the first line stays centred on its box. */
-private val ROW_PADDING = 2.dp
 
 @Composable
 private fun ListItemField(
