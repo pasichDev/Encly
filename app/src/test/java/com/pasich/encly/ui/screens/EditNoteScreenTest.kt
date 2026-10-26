@@ -207,6 +207,30 @@ class EditNoteScreenTest : ComposeScreenTest() {
     }
 
     @Test
+    fun aLockedChecklistCanBeUnlockedAfterWorkingElsewhere() {
+        stored(
+            Block.ListBlock(MutableStateFlow(listOf(ItemListBlock("milk"))), blockType = BlockType.LIST_CHECK),
+            text("after"),
+        )
+        open(NOTE_ID)
+        field(1).performClick()
+        tool(R.string.block_more_tools).performClick()
+        waitFor { hasTool(str(R.string.checklist_lock)) }
+        tool(R.string.checklist_lock).performScrollTo().performClick()
+        val list = editor.blocks.first() as Block.ListBlock
+        waitFor { list.locked.value }
+        rule.onNode(hasText("after") and hasSetTextAction()).performClick()
+        waitFor { !hasTool(str(R.string.checklist_unlock)) }
+
+        // A tap on the locked list makes it the block the toolbar acts on again.
+        rule.onNode(isCheckbox and hasContentDescription("milk")).performClick()
+
+        waitFor { hasTool(str(R.string.checklist_unlock)) }
+        tool(R.string.checklist_unlock).performScrollTo().performClick()
+        waitFor { !list.locked.value }
+    }
+
+    @Test
     fun theHeadingToolTurnsTheParagraphIntoAHeading() {
         stored(text("Plan"))
         open(NOTE_ID)
