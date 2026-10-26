@@ -13,6 +13,7 @@ import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.presentation.components.FontSizeSlider
 import com.pasich.encly.presentation.components.LabeledSlider
+import com.pasich.encly.presentation.components.SliderScale
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -126,8 +127,7 @@ private fun LineSpacingSlider(selected: NoteLineSpacing, onSelect: (NoteLineSpac
         valueText = stringResource(lineSpacingOrder[index].second),
         value = index.toFloat(),
         onValueChange = { onSelect(lineSpacingOrder[it.roundToInt().coerceIn(lineSpacingOrder.indices)].first) },
-        range = 0f..lineSpacingOrder.lastIndex.toFloat(),
-        steps = lineSpacingOrder.size - 2,
+        scale = SliderScale(0f..lineSpacingOrder.lastIndex.toFloat(), steps = lineSpacingOrder.size - 2),
     )
 }
 

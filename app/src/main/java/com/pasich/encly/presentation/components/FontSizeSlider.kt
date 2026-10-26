@@ -28,11 +28,13 @@ fun FontSizeSlider(currentSize: Int, onSizeChange: (Int) -> Unit, modifier: Modi
         valueText = stringResource(R.string.font_size_value, currentSize),
         value = currentSize.toFloat(),
         onValueChange = { onSizeChange(it.toInt()) },
-        range = MIN_SIZE..MAX_SIZE,
-        steps = SIZE_STEPS,
+        scale = SliderScale(MIN_SIZE..MAX_SIZE, SIZE_STEPS),
         modifier = modifier,
     )
 }
+
+/** The span of a [LabeledSlider] and the number of stops between its ends. */
+internal class SliderScale(val range: ClosedFloatingPointRange<Float>, val steps: Int)
 
 /**
  * A labelled slider: [label] on the left, [valueText] on the right in the data style, the slider
@@ -44,8 +46,7 @@ internal fun LabeledSlider(
     valueText: String,
     value: Float,
     onValueChange: (Float) -> Unit,
-    range: ClosedFloatingPointRange<Float>,
-    steps: Int,
+    scale: SliderScale,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -65,8 +66,8 @@ internal fun LabeledSlider(
         Slider(
             value = value,
             onValueChange = onValueChange,
-            valueRange = range,
-            steps = steps,
+            valueRange = scale.range,
+            steps = scale.steps,
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary,
