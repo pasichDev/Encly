@@ -241,7 +241,7 @@ private fun ListItemRow(
                 checked = item.isCheck,
                 label = state.text.toString().ifBlank { placeholder },
                 line = with(LocalDensity.current) { listTextStyle().lineHeight.toDp() },
-                enabled = !isLocked,
+                enabled = !locks.editorLocked,
                 onToggle = { editor.setChecked(item.id, it) },
             )
 
