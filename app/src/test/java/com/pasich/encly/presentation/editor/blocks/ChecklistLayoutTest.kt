@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
@@ -43,6 +44,7 @@ class ChecklistLayoutTest {
 
     private var spacing by mutableStateOf(NoteLineSpacing.DEFAULT)
     private var size by mutableIntStateOf(16)
+    private var halfCap = 0f
 
     private lateinit var block: Block.ListBlock
 
@@ -57,6 +59,8 @@ class ChecklistLayoutTest {
         rule.setContent {
             EnclyTheme(settings = ThemeSettings(), dark = false) {
                 EditNoteSettingsProvider(baseFontSize = size.sp, lineSpacing = spacing) {
+                    // The very value the row aligns by (Robolectric draws no real outlines to measure).
+                    halfCap = rememberHalfCapHeight()
                     ListBlock(block, actions)
                 }
             }
@@ -75,14 +79,21 @@ class ChecklistLayoutTest {
         return box to field
     }
 
+    private fun firstBaseline(): Float {
+        val node = rule.onNode(hasSetTextAction()).fetchSemanticsNode()
+        val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
+        return node.boundsInRoot.top + results.single().getLineBaseline(0)
+    }
+
     @Test
-    fun aOneLineItemSharesItsCentreWithTheBoxAtEveryLineSpacingAndSize() {
+    fun theBoxIsCentredOnTheFirstLinesCapitalsAtEveryLineSpacingAndSize() {
         start("milk")
         for (spacing in NoteLineSpacing.entries) {
             for (size in listOf(14, 24)) {
                 show(spacing, size)
-                val (box, field) = boxAndText()
-                assertEquals("$spacing $size", field.center.y, box.center.y, 1f)
+                val (box, _) = boxAndText()
+                assertEquals("$spacing $size", firstBaseline() - halfCap, box.center.y, 1f)
             }
         }
     }

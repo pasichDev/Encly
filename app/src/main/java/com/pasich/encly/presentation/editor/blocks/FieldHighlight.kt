@@ -34,6 +34,9 @@ internal class FieldHighlight(
     /** The field's lines as the cursor moves between fields need them; null until it is measured. */
     fun geometry(): CaretGeometry? = layout?.invoke()?.geometry()
 
+    /** The first line's baseline, from the top of the field's text; null until it is measured. */
+    fun firstBaseline(): Float? = layout?.invoke()?.getLineBaseline(0)
+
     val onTextLayout: Density.(() -> TextLayoutResult?) -> Unit = { getResult ->
         if (layout == null) layout = getResult
     }

@@ -61,6 +61,7 @@ import com.pasich.encly.presentation.editor.state.goesUp
 import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
+import kotlin.math.roundToInt
 
 /** From this many items numbers take two digits, and a wider hanging indent. */
 private const val WIDE_MARKER_FROM = 10
@@ -246,10 +247,11 @@ private fun ListItemRow(
     val placeholder = stringResource(R.string.list_item_placeholder)
     Row(
         modifier = modifier.fillMaxWidth(),
+        // A checklist row lines its box and its text up on the text's first baseline (alignBy), not on a line box.
         verticalAlignment = if (checklist) Alignment.Top else Alignment.CenterVertically,
     ) {
         when (marker.type) {
-            BlockType.LIST_CHECK -> CheckMark(
+            BlockType.LIST_CHECK -> RowCheckMark(
                 checked = item.isCheck,
                 label = state.text.toString().ifBlank { placeholder },
                 size = rememberCheckSize(marker.width),
@@ -272,9 +274,9 @@ private fun ListItemRow(
                 .weight(1f)
                 .then(
                     if (checklist) {
-                        Modifier.padding(
-                            vertical = EnclyTheme.spacing.textGap,
-                        )
+                        Modifier
+                            .then(checklistBaseline(field.highlight, EnclyTheme.spacing.textGap))
+                            .padding(vertical = EnclyTheme.spacing.textGap)
                     } else {
                         Modifier.alignByBaseline()
                     },
@@ -364,7 +366,7 @@ private class ListEditor(
 }
 
 @Composable
-private fun listTextStyle(): TextStyle {
+internal fun listTextStyle(): TextStyle {
     val fontStyles = rememberFontStyles()
     val spacing = LocalNoteLineSpacing.current
     return MaterialTheme.typography.bodyLarge.copy(
@@ -393,19 +395,30 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
 }
 
 /**
- * The checklist box, flush with the paragraphs above, centred on the item's first line of text (so
- * it sits at the middle of a one-line item and at the top of a long one, never above it), and its
- * toggle target: the marker column wide and as tall as the first line plus the row's padding.
- * Announced with the item's text, so TalkBack says what is checked.
+ * The checklist box, flush with the paragraphs above, in the marker column. Its middle sits on the
+ * middle of the first line's capital letters: the row lines the box up with the text's first
+ * baseline, [halfCap] above it, so the box stays centred whatever the line spacing or text size
+ * (a line box would not do: compact spacing makes it shorter than the font). The tap target is the
+ * drawn column, widened to 48dp by Compose's minimum touch size. Announced with the item's text, so
+ * TalkBack says what is checked.
  */
 @Composable
-private fun CheckMark(checked: Boolean, label: String, size: CheckSize, enabled: Boolean, onToggle: (Boolean) -> Unit) {
+private fun RowScope.RowCheckMark(
+    checked: Boolean,
+    label: String,
+    size: CheckSize,
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
     val box = minOf(CheckboxSize.COMPACT.size, size.line)
+    val halfCap = rememberHalfCapHeight()
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
             .width(size.column)
-            .height(size.line + EnclyTheme.spacing.textGap * 2)
+            .height(box)
+            // The baseline is half a capital below the box's middle.
+            .alignBy { measured -> (measured.measuredHeight / 2f + halfCap).roundToInt() }
             .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onToggle)
             .semantics { contentDescription = label },
     ) {
