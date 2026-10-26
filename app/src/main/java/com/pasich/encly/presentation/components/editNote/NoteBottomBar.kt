@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
@@ -189,6 +190,8 @@ private fun MainTools(
             onClick = onMore,
             style = ToolStyle.FILLED,
         )
+        // The filled toggle never touches a highlighted tool next to it, even when the row is tight.
+        Spacer(Modifier.width(EnclyTheme.spacing.xs))
         mainBlockTools.forEach { tool ->
             BlockToolButton(
                 tool = tool,
