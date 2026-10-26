@@ -36,6 +36,19 @@ class ChecklistLockTest {
     }
 
     @Test
+    fun aLockedChecklistIsNotConvertedByTheToolbar() {
+        val list = checklist()
+        editor.load(listOf(list))
+        editor.selection.onFocused(list.id)
+        editor.toggleChecklistLock(list.id)
+
+        editor.applyTool(BlockType.LIST_BULLET)
+
+        assertTrue(editor.blocks.single() === list)
+        assertTrue(list.locked.value)
+    }
+
+    @Test
     fun aLockedChecklistTakesNoFocusButKeepsItsItems() {
         val list = checklist()
         editor.load(listOf(list))

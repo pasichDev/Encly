@@ -112,14 +112,14 @@ fun NoteBottomBar(
                             onDelete = if (canDelete) viewModel::removeInteractedBlock else null,
                             lock = checklistLock,
                         ),
-                        onApply = { viewModel.applyTool(it, exact = true) },
+                        onApply = toolApplier(checklistLock) { viewModel.applyTool(it, exact = true) },
                         onClose = { showMore = false },
                     )
                 } else {
                     MainTools(
                         activeTool = activeTool,
                         history = history,
-                        onApply = { viewModel.applyTool(it) },
+                        onApply = toolApplier(checklistLock) { viewModel.applyTool(it) },
                         onMore = { showMore = true },
                         keyboard = KeyboardToggleState(blockFocused, viewModel::focusWorkingBlock),
                     )
@@ -138,6 +138,10 @@ private fun rememberHistoryTools(viewModel: EditNoteViewModel): HistoryTools {
         onRedo = if (canRedo) viewModel::redo else null,
     )
 }
+
+/** [apply] for the block tools, or null (they are disabled) while the checklist the user works on is locked. */
+private fun toolApplier(lock: ChecklistLock?, apply: (BlockType) -> Unit): ((BlockType) -> Unit)? =
+    apply.takeUnless { lock?.locked == true }
 
 /** The lock of the checklist the user works on; null while they work on anything else. */
 @Composable
@@ -174,7 +178,7 @@ private class ChecklistLock(val locked: Boolean, val onToggle: () -> Unit)
 private fun MainTools(
     activeTool: BlockType?,
     history: HistoryTools,
-    onApply: (BlockType) -> Unit,
+    onApply: ((BlockType) -> Unit)?,
     onMore: () -> Unit,
     keyboard: KeyboardToggleState,
 ) {
@@ -186,7 +190,11 @@ private fun MainTools(
             style = ToolStyle.FILLED,
         )
         mainBlockTools.forEach { tool ->
-            BlockToolButton(tool = tool, active = tool.type == activeTool, onClick = { onApply(tool.type) })
+            BlockToolButton(
+                tool = tool,
+                active = tool.type == activeTool,
+                onClick = onApply?.let { apply -> { apply(tool.type) } },
+            )
         }
         EnclyToolbarRule()
         HistoryButtons(history)
@@ -306,16 +314,18 @@ private fun HistoryButtons(history: HistoryTools) {
 
 /** Behind the toggle: close, paragraph, heading levels, link and separator, move, duplicate and delete. */
 @Composable
-private fun MoreTools(blockTools: BlockMoveTools, onApply: (BlockType) -> Unit, onClose: () -> Unit) {
+private fun MoreTools(blockTools: BlockMoveTools, onApply: ((BlockType) -> Unit)?, onClose: () -> Unit) {
     ToolRow(spread = false) {
         EnclyToolButton(icon = EnclyIcons.Close, contentDescription = stringResource(R.string.close), onClick = onClose)
         moreBlockTools.forEach { tool ->
             BlockToolButton(
                 tool = tool,
                 active = false,
-                onClick = {
-                    onApply(tool.type)
-                    onClose()
+                onClick = onApply?.let { apply ->
+                    {
+                        apply(tool.type)
+                        onClose()
+                    }
                 },
             )
         }

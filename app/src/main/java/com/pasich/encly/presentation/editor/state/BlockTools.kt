@@ -65,6 +65,8 @@ fun Block.toolType(): BlockType? = when (this) {
  */
 fun BlockEditorState.applyTool(tool: BlockType, exact: Boolean = false) {
     val index = selection.workingIndex
+    // A locked checklist keeps its kind: converting it would drop the lock the user set.
+    if ((blocks.getOrNull(index) as? Block.ListBlock)?.locked?.value == true) return
     val converted = blocks.getOrNull(index)?.let { convertBlock(it, tool, exact) }
     when {
         converted != null -> replaceBlock(index, converted)
