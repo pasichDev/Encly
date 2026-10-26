@@ -23,13 +23,16 @@ object BlockConverter {
 
     /**
      * Converts a list of blocks into a JSON representation. Blocks without content
-     * ([hasContent]) are left out.
+     * ([hasContent]) are left out, except an empty paragraph between other blocks: it is a blank
+     * line the user added on purpose and must survive closing and reopening the note. Blank
+     * blocks at the end (the placeholder paragraph a fresh note starts with) are dropped.
      * @param blocks the list of blocks to serialize
      * @return the JSON string
      */
     fun blocksToJson(blocks: List<Block>): String {
         val type = object : TypeToken<List<Block>>() {}.type
-        return gson.toJson(blocks.filter { it.hasContent() }, type)
+        val kept = blocks.dropLastWhile { !it.hasContent() }.filter { it.hasContent() || it is Block.TextBlock }
+        return gson.toJson(kept, type)
     }
 
     /**
