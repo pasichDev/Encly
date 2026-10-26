@@ -110,13 +110,15 @@ Every user-visible string lives in string resources. English is the default
 (most of the UI), a `strings_security.xml` (security settings), a `strings_handoff.xml` (the
 import from My Notes) and a `strings_import.xml` (Import notes from other apps).
 
+[![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
+
 **Translating on Weblate (recommended):** the project is on
 [Hosted Weblate](https://hosted.weblate.org/projects/encly/), one component per file (*App*,
 *Security*, *Handoff*). Sign in, pick a language and translate in the browser; no Git or Android
 Studio needed. English source strings can only be changed in this repository, not on Weblate.
 Weblate collects the changes and opens a pull request from its `weblate-translations` branch;
 it never pushes to `main`. That pull request runs the same CI as any other, so it is merged only
-when every check below passes.
+when every check below passes. Thank you to Weblate for libre hosting of Encly's translations.
 
 **Fixing a translation in Git:** edit the string in `values-<lang>/strings.xml` (or
 `strings_security.xml`, `strings_handoff.xml`, `strings_import.xml`) and open a PR. Keep the key;

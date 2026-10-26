@@ -47,8 +47,9 @@ it also appears in the system's per-app language settings.
 
 Translations are done on [Hosted Weblate](https://hosted.weblate.org/projects/encly/), which
 offers free hosting to open-source projects. Found a wrong or clumsy translation, or want to add
-a language? Fix it there, no Git needed, or see
-[CONTRIBUTING.md → Translations](CONTRIBUTING.md#translations).
+a language? Fix it there, no Git needed. A pull request that edits the `values-<lang>/` files
+still works as a fallback: see [CONTRIBUTING.md → Translations](CONTRIBUTING.md#translations).
+Many thanks to [Weblate](https://weblate.org) for hosting Encly's translations as libre software.
 
 [![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
 
