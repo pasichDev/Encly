@@ -2,6 +2,11 @@
 
 [![Android CI](https://github.com/pasichDev/Encly/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/pasichDev/Encly/actions/workflows/android.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/pasichDev/Encly?logo=github)](https://github.com/pasichDev/Encly/releases/latest)
+[![F-Droid](https://img.shields.io/f-droid/v/com.pasich.encly?logo=f-droid)](https://f-droid.org/packages/com.pasich.encly/)
+[![Google Play](https://img.shields.io/badge/Google%20Play-available-34A853?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.pasich.encly)
+[![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/pasichdev)
 
 **Offline encrypted notes and tasks for Android.**
 
@@ -83,6 +88,16 @@ so one can update another. If Android refuses such an update, do **not** uninsta
 exported backup: uninstalling deletes the vault.
 
 Requires Android 8.0 (API 26) or newer. Google Play Services are not needed.
+
+## 💛 Support Encly
+
+Encly is free and open source, with no ads, no tracking and no accounts; donations are its only
+income. They go to test devices and to time for releases and fixes.
+
+[![Support Encly on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/pasichdev)
+
+Card or PayPal, one-off or monthly. The `fdroid` build shows the same link on its Support screen;
+the `play` build has no in-app donation link, by Google Play policy.
 
 ## Verify a release
 
@@ -240,16 +255,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - [Security model](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
-
-## 💛 Support Encly
-
-Encly is free and open source, with no ads, no tracking and no accounts; donations are its only
-income. They go to test devices and to time for releases and fixes.
-
-- [Ko-fi](https://ko-fi.com/pasichdev) — card or PayPal, one-off or monthly.
-
-The `fdroid` build shows the same link on its Support screen. The `play` build has no in-app
-donation link, by Google Play policy.
 
 ## Contributing
 
