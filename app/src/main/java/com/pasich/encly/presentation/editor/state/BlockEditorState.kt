@@ -149,12 +149,20 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
 
     fun undo() {
         slash.dismiss()
-        if (history.undo()) afterChange()
+        val focused = selection.focusedBlockId.value
+        if (history.undo()) {
+            afterChange()
+            selection.keepFocus(blocks, focused)
+        }
     }
 
     fun redo() {
         slash.dismiss()
-        if (history.redo()) afterChange()
+        val focused = selection.focusedBlockId.value
+        if (history.redo()) {
+            afterChange()
+            selection.keepFocus(blocks, focused)
+        }
     }
 
     private fun afterChange() {
@@ -180,4 +188,20 @@ private fun Block.contentFlow(): Flow<Any>? = when (this) {
     is Block.LinkBlock -> block.map { it.url }
     is Block.ListBlock -> items
     is Block.SeparatorBlock -> null
+}
+
+/**
+ * Undo and redo may rebuild the field the cursor was in (a list item, a block that was replaced),
+ * and a field that leaves composition takes the keyboard with it. When a field had focus
+ * ([blockId]), it is asked for again: the same block if it is still there, else the nearest one above.
+ */
+private fun BlockSelection.keepFocus(blocks: List<Block>, blockId: String?) {
+    if (blockId == null) return
+    val index = blocks.indexOfFirst { it.id == blockId }
+    val target = if (index >= 0 && blocks[index].canTakeFocus()) {
+        index
+    } else {
+        blocks.previousFocusableIndex(interactedIndex + 1)
+    }
+    focusAt(target, cursorToEnd = true)
 }

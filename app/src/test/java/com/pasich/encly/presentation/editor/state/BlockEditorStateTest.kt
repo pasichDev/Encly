@@ -7,6 +7,7 @@ import com.pasich.encly.dynamicBlocks.BlockType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -25,6 +26,64 @@ class BlockEditorStateTest {
         assertTrue(editor.blocks.single() is Block.TextBlock)
         assertFalse(editor.canUndo.value)
         assertFalse(editor.canRedo.value)
+    }
+
+    @Test
+    fun undoKeepsTheFocusOnTheBlockTheCursorWasIn() = runTest {
+        val block = editor.blocks[0] as Block.TextBlock
+        editor.selection.onFocused(block.id)
+        type(block, "hello")
+
+        editor.undo()
+
+        assertEquals(FocusRequest(block.id, cursorToEnd = true), editor.selection.requests.first())
+    }
+
+    @Test
+    fun redoKeepsTheFocusToo() = runTest {
+        val block = editor.blocks[0] as Block.TextBlock
+        type(block, "hello")
+        editor.undo()
+        editor.selection.onFocused(block.id)
+
+        editor.redo()
+
+        assertEquals(FocusRequest(block.id, cursorToEnd = true), editor.selection.requests.first())
+    }
+
+    @Test
+    fun undoOfAListEditKeepsTheKeyboardOnTheList() = runTest {
+        val list = Block.ListBlock(MutableStateFlow(listOf(ItemListBlock("a"))), BlockType.LIST_BULLET)
+        editor.load(listOf(text("t"), list))
+        editor.selection.onFocused(list.id)
+        editor.changeValue(list.id, list.items, listOf(ItemListBlock("a"), ItemListBlock("b")), mergeable = false)
+
+        editor.undo()
+
+        assertEquals(list.id, editor.selection.requests.first().blockId)
+    }
+
+    @Test
+    fun undoWithNothingFocusedDoesNotOpenTheKeyboard() = runTest {
+        val block = editor.blocks[0] as Block.TextBlock
+        type(block, "hello")
+
+        editor.undo()
+
+        assertEquals(null, withTimeoutOrNull(NO_REQUEST_MS) { editor.selection.requests.first() })
+    }
+
+    @Test
+    fun undoThatRemovesTheFocusedBlockFocusesTheOneAbove() = runTest {
+        editor.load(listOf(text("a")))
+        val added = text("b")
+        editor.addBlock(added)
+        editor.selection.requests.first()
+        editor.selection.onFocused(added.id)
+
+        editor.undo()
+
+        assertEquals(FocusRequest(editor.blocks[0].id, cursorToEnd = true), editor.selection.requests.first())
     }
 
     @Test
@@ -306,7 +365,8 @@ class BlockEditorStateTest {
         editor.undo()
 
         assertEquals(0, editor.selection.interactedIndex)
-        assertEquals(-1, editor.selection.focusedIndex)
+        // The quote had focus: it moves to the block above, so the keyboard stays up.
+        assertEquals(0, editor.selection.focusedIndex)
     }
 
     @Test
@@ -392,4 +452,8 @@ class BlockEditorStateTest {
     private fun texts(): List<String> = editor.blocks.map { (it as Block.TextBlock).text.value }
 
     private fun text(value: String) = Block.TextBlock(MutableStateFlow(value))
+
+    private companion object {
+        const val NO_REQUEST_MS = 1_000L
+    }
 }

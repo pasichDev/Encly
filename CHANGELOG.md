@@ -15,6 +15,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 - Blank lines you add between paragraphs are no longer erased when a note is closed and reopened (#76).
 - The hints in empty editor blocks ("Text", "List item", ...) show only on the block you are in and are much lighter, so they no longer look like typed text (#76).
+- Undo and redo no longer close the keyboard: the cursor stays in the block you were editing (#76).
 
 ### Added
 
