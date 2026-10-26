@@ -28,16 +28,22 @@ internal fun historyShortcut(key: Key, ctrlOrMeta: Boolean, shift: Boolean): His
 /**
  * Hardware and keyboard-app undo and redo go to the editor's own history, which spans every block
  * (a text field's built-in undo knows only its own field). Seen before the field, so the field never
- * runs its own. The key-up is consumed too; a locked or read-only editor does nothing. True when the key was used.
+ * runs its own, but only while a text block has focus: the title, the find bar and a link's address
+ * field keep their own undo. The key-up is consumed too; a locked or read-only editor does
+ * nothing. True when the key was used.
  */
 internal fun EditNoteViewModel.handleHistoryKey(event: KeyEvent): Boolean {
     val shortcut = historyShortcut(event.key, event.isCtrlPressed || event.isMetaPressed, event.isShiftPressed)
-        ?: return false
-    if (event.type == KeyEventType.KeyDown) {
-        when (shortcut) {
-            HistoryShortcut.UNDO -> undo()
-            HistoryShortcut.REDO -> redo()
-        }
+        ?.takeIf { ownsHistoryKeys() }
+    if (shortcut != null && event.type == KeyEventType.KeyDown) {
+        if (shortcut == HistoryShortcut.UNDO) undo() else redo()
     }
-    return true
+    return shortcut != null
+}
+
+/** Whether the focus is in a text or list block (not the title, the find bar or a link's address field). */
+internal fun EditNoteViewModel.ownsHistoryKeys(): Boolean {
+    val id = focusedBlockId.value ?: return false
+    val block = blocks.firstOrNull { it.id == id }
+    return block != null && block !is com.pasich.encly.dynamicBlocks.Block.LinkBlock
 }

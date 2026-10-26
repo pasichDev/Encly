@@ -1,9 +1,11 @@
 package com.pasich.encly.ui.screens
 
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
@@ -14,8 +16,10 @@ import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.pressKey
 import com.pasich.encly.R
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
@@ -391,6 +395,23 @@ class EditNoteScreenTest : ComposeScreenTest() {
         verifyNoInteractions(app.markdownDocuments)
         // The editor stays open behind the warning.
         assertEquals(NavRoutes.EditNoteRoute.name, currentRoute()?.substringBefore('/'))
+    }
+
+    @Test
+    @OptIn(ExperimentalTestApi::class)
+    fun controlZInTheTitleLeavesTheEditorHistoryAlone() {
+        stored(text("body"))
+        open(NOTE_ID)
+        field(1).performTextInput(" changed")
+        field(0).performClick()
+
+        field(0).performKeyInput {
+            keyDown(Key.CtrlLeft)
+            pressKey(Key.Z)
+            keyUp(Key.CtrlLeft)
+        }
+
+        assertEquals("body changed", (editor.blocks.first() as Block.TextBlock).text.value)
     }
 
     @Test
