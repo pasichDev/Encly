@@ -134,6 +134,6 @@ class KeyboardUtilsTest {
         assertTrue(arrow(Key.DirectionLeft, cursor = 4, line = rtl))
         assertTrue(arrow(Key.DirectionRight, cursor = 0, line = rtl))
         // Right at the start of right-to-left text goes back, to the block above.
-        assertEquals(listOf("left", "right"), moves)
+        assertEquals(listOf("right", "left"), moves)
     }
 }
