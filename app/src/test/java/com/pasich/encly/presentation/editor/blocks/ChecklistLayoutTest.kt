@@ -1,0 +1,103 @@
+package com.pasich.encly.presentation.editor.blocks
+
+import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.sp
+import com.pasich.encly.domain.model.ItemListBlock
+import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.ThemeSettings
+import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.presentation.editor.BlockActions
+import com.pasich.encly.presentation.screen.editnote.EditNoteSettingsProvider
+import com.pasich.encly.ui.theme.EnclyTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Assert.assertEquals
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mockito
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/** Where a checklist box sits against its item's text, at every line spacing and text size. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35], application = Application::class, qualifiers = "w411dp-h891dp-xxhdpi")
+class ChecklistLayoutTest {
+    @get:Rule
+    val rule = createComposeRule()
+
+    private val isCheckbox = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox)
+
+    private var spacing by mutableStateOf(NoteLineSpacing.DEFAULT)
+    private var size by mutableIntStateOf(16)
+
+    private fun start(text: String) {
+        val block = Block.ListBlock(MutableStateFlow(listOf(ItemListBlock(text))), BlockType.LIST_CHECK)
+        val actions = Mockito.mock(BlockActions::class.java, Mockito.RETURNS_DEEP_STUBS)
+        rule.setContent {
+            EnclyTheme(settings = ThemeSettings(), dark = false) {
+                EditNoteSettingsProvider(baseFontSize = size.sp, lineSpacing = spacing) {
+                    ListBlock(block, actions)
+                }
+            }
+        }
+    }
+
+    private fun show(newSpacing: NoteLineSpacing, newSize: Int) {
+        spacing = newSpacing
+        size = newSize
+        rule.waitForIdle()
+    }
+
+    private fun boxAndText(): Pair<androidx.compose.ui.geometry.Rect, androidx.compose.ui.geometry.Rect> {
+        val box = rule.onNode(isCheckbox).fetchSemanticsNode().boundsInRoot
+        val field = rule.onNode(hasSetTextAction()).fetchSemanticsNode().boundsInRoot
+        return box to field
+    }
+
+    @Test
+    fun aOneLineItemSharesItsCentreWithTheBoxAtEveryLineSpacingAndSize() {
+        start("milk")
+        for (spacing in NoteLineSpacing.entries) {
+            for (size in listOf(14, 24)) {
+                show(spacing, size)
+                val (box, field) = boxAndText()
+                assertEquals("$spacing $size", field.center.y, box.center.y, 1f)
+            }
+        }
+    }
+
+    @Test
+    fun theGapToTheTextIsTheMarkerColumnAtEverySpacingAndSize() {
+        val widths = mutableSetOf<Float>()
+        start("milk")
+        for (spacing in NoteLineSpacing.entries) {
+            for (size in listOf(14, 24)) {
+                show(spacing, size)
+                val (box, field) = boxAndText()
+                widths += field.left - box.left
+            }
+        }
+        assertEquals(widths.toString(), 1, widths.size)
+    }
+
+    @Test
+    fun aLongItemKeepsTheBoxOnItsFirstLine() {
+        val long = "one\ntwo\nthree\nfour"
+        start(long)
+        show(NoteLineSpacing.COMPACT, 24)
+        val (box, field) = boxAndText()
+        assertEquals("$box $field", true, field.height > box.height * 2)
+        // The box column is one line tall and starts where the text field's padding does.
+        assertEquals(6f, field.top - box.top, 1f)
+    }
+}

@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import com.pasich.encly.R
@@ -205,6 +206,17 @@ fun ListBlock(
     }
 }
 
+/**
+ * What places a checklist box: the height of one line of the item's text, and the width of the box
+ * column, the same hanging indent bullets and numbers use, so the gap to the text never depends on
+ * line spacing or text size.
+ */
+private class CheckSize(val line: Dp, val column: Dp)
+
+@Composable
+private fun rememberCheckSize(column: Dp): CheckSize =
+    CheckSize(line = with(LocalDensity.current) { listTextStyle().lineHeight.toDp() }, column = column)
+
 /** What keeps a list item from being edited: the whole editor ([editorLocked]) or this checklist's text. */
 private class ItemLocks(val editorLocked: Boolean, val textLocked: Boolean)
 
@@ -240,7 +252,7 @@ private fun ListItemRow(
             BlockType.LIST_CHECK -> CheckMark(
                 checked = item.isCheck,
                 label = state.text.toString().ifBlank { placeholder },
-                line = with(LocalDensity.current) { listTextStyle().lineHeight.toDp() },
+                size = rememberCheckSize(marker.width),
                 enabled = !locks.editorLocked,
                 onToggle = { editor.setChecked(item.id, it) },
             )
@@ -360,6 +372,9 @@ private fun listTextStyle(): TextStyle {
         fontFamily = fontStyles.families.body,
         fontSize = fontStyles.sizes.list,
         lineHeight = spacing.lineHeight(fontStyles.sizes.list, MaterialTheme.typography.bodyLarge.lineHeight),
+        // The extra (or missing) line height is shared above and below the glyphs, so a line's text
+        // is centred in its line box at every spacing and size: the marker centres on that box.
+        lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None),
     )
 }
 
@@ -380,17 +395,17 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
 /**
  * The checklist box, flush with the paragraphs above, centred on the item's first line of text (so
  * it sits at the middle of a one-line item and at the top of a long one, never above it), and its
- * toggle target: a thumb wide (the xxl step) and as tall as the first line plus the row's padding.
+ * toggle target: the marker column wide and as tall as the first line plus the row's padding.
  * Announced with the item's text, so TalkBack says what is checked.
  */
 @Composable
-private fun CheckMark(checked: Boolean, label: String, line: Dp, enabled: Boolean, onToggle: (Boolean) -> Unit) {
-    val box = minOf(CheckboxSize.COMPACT.size, line)
+private fun CheckMark(checked: Boolean, label: String, size: CheckSize, enabled: Boolean, onToggle: (Boolean) -> Unit) {
+    val box = minOf(CheckboxSize.COMPACT.size, size.line)
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
-            .width(EnclyTheme.spacing.xxl)
-            .height(line + EnclyTheme.spacing.textGap * 2)
+            .width(size.column)
+            .height(size.line + EnclyTheme.spacing.textGap * 2)
             .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onToggle)
             .semantics { contentDescription = label },
     ) {
