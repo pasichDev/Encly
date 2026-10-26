@@ -3,6 +3,7 @@ package com.pasich.encly.utils
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.dynamicBlocks.hasContent
 
 /**
  * Utility class for formatting note text.
@@ -38,12 +39,14 @@ object NotesTextFormatter {
     }.filter { it.isNotBlank() }.joinToString("\n")
 
     /**
-     * Converts a list of blocks into plain text without Markdown formatting.
+     * Converts a list of blocks into plain text without Markdown formatting. Blank paragraphs
+     * (the blank lines a note keeps between its sections) are skipped, so a card's excerpt does not
+     * spend its lines on them.
      */
     fun blocksToPlainText(blocks: List<Block>): String {
         val text = StringBuilder()
 
-        blocks.forEach { block ->
+        blocks.filter { it.hasContent() }.forEach { block ->
             when (block) {
                 is Block.TextBlock -> {
                     text.append(block.text.value)

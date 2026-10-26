@@ -369,7 +369,8 @@ internal data class NoteRow(val item: NoteListItem) : NoteEntry {
  */
 internal fun noteEntries(notes: List<NoteListItem>, sections: Boolean): List<NoteEntry> {
     val rows = notes.map(::NoteRow)
-    val pinned = rows.filter { it.item.note.isPinned }
+    // An archived note is never pinned; should a stored one be both, it is listed once, as archived.
+    val pinned = rows.filter { it.item.note.isPinned && !it.item.note.isArchived }
     val archived = rows.filter { it.item.note.isArchived }
     val others = rows - pinned.toSet() - archived.toSet()
     // Plain notes alone need no heading; next to pinned or archived ones they are "Others".

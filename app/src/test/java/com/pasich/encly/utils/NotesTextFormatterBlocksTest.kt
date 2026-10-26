@@ -114,4 +114,11 @@ class NotesTextFormatterBlocksTest {
         assertEquals(false, search.contains("-"))
         assertEquals(false, search.contains("«"))
     }
+
+    @Test
+    fun blankParagraphsBetweenSectionsDoNotTakeLinesInThePreview() {
+        val blocks = listOf(text("first"), text(""), text("  "), text("second"))
+
+        assertEquals("first\n\nsecond", NotesTextFormatter.blocksToPlainText(blocks).trim())
+    }
 }

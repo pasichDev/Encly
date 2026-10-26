@@ -63,6 +63,14 @@ class NoteEntriesTest {
     }
 
     @Test
+    fun aNoteBothPinnedAndArchivedIsListedOnceNotTwice() {
+        val entries = noteEntries(listOf(item(1, pinned = true, archived = true), item(2)), sections = true)
+
+        assertEquals(listOf("Others", "2", "Archived", "1"), describe(entries))
+        assertEquals(entries.size, entries.map { it.key }.toSet().size)
+    }
+
+    @Test
     fun onlyArchivedNotesStillShowTheirHeading() {
         assertEquals(listOf("Archived", "1"), describe(noteEntries(listOf(item(1, archived = true)), true)))
     }
