@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -174,6 +175,30 @@ class EditNoteScreenTest : ComposeScreenTest() {
             rule.onNode(
                 isCheckbox and hasContentDescription("milk"),
             ).fetchSemanticsNode().config[SemanticsProperties.ToggleableState],
+        )
+    }
+
+    @Test
+    fun aLockedChecklistStillTicksButItsTextTakesNoFocus() {
+        stored(
+            Block.ListBlock(MutableStateFlow(listOf(ItemListBlock("milk"))), blockType = BlockType.LIST_CHECK),
+        )
+        open(NOTE_ID)
+        field(1).performClick()
+        tool(R.string.block_more_tools).performClick()
+        waitFor { hasTool(str(R.string.checklist_lock)) }
+
+        // The submenu scrolls sideways; the lock is past the edge of a phone-wide row.
+        tool(R.string.checklist_lock).performScrollTo().performClick()
+
+        val list = editor.blocks.first() as Block.ListBlock
+        waitFor { list.locked.value }
+        waitFor { hasTool(str(R.string.checklist_unlock)) }
+        rule.onNode(isCheckbox and hasContentDescription("milk")).performClick()
+        waitFor { list.items.value.single().isCheck }
+        assertEquals(
+            0,
+            rule.onAllNodes(hasSetTextAction() and hasText("milk") and isEnabled()).fetchSemanticsNodes().size,
         )
     }
 

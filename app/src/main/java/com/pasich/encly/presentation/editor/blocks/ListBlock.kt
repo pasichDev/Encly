@@ -148,6 +148,7 @@ fun ListBlock(
     isLocked: Boolean = false,
 ) {
     val items by block.items.collectAsState()
+    val textLocked by block.locked.collectAsState()
     val actions by rememberUpdatedState(blockActions)
     val focus = rememberListFocus(block, blockActions)
     val editor = remember(block) { ListEditor(block, { actions }) { focus.pending = it } }
@@ -192,7 +193,7 @@ fun ListBlock(
                     marker = marker.forItem(itemIndex + 1),
                     field = ItemField(state, highlight),
                     editor = editor,
-                    isLocked = isLocked,
+                    locks = ItemLocks(editorLocked = isLocked, textLocked = textLocked),
                     fieldModifier = fieldModifier.focusRequester(requester).onFocusChanged { focusState ->
                         if (focusState.isFocused) {
                             focus.focusedItem = item.id
@@ -204,6 +205,9 @@ fun ListBlock(
         }
     }
 }
+
+/** What keeps a list item from being edited: the whole editor ([editorLocked]) or this checklist's text. */
+private class ItemLocks(val editorLocked: Boolean, val textLocked: Boolean)
 
 /** A list item's text field state and what Find tints in it. */
 private class ItemField(val state: TextFieldState, val highlight: FieldHighlight)
@@ -222,10 +226,11 @@ private fun ListItemRow(
     marker: ListMarker,
     field: ItemField,
     editor: ListEditor,
-    isLocked: Boolean,
+    locks: ItemLocks,
     modifier: Modifier = Modifier,
     fieldModifier: Modifier = Modifier,
 ) {
+    val isLocked = locks.editorLocked
     val state = field.state
     val checklist = marker.type == BlockType.LIST_CHECK
     val placeholder = stringResource(R.string.list_item_placeholder)
@@ -252,7 +257,7 @@ private fun ListItemRow(
             input = editor.inputFor(item.id),
             checked = checklist && item.isCheck,
             placeholder = placeholder,
-            isLocked = isLocked,
+            locks = locks,
             modifier = Modifier
                 .weight(1f)
                 .then(if (checklist) Modifier.padding(vertical = ROW_PADDING) else Modifier.alignByBaseline())
@@ -399,7 +404,7 @@ private fun ListItemField(
     input: BlockInput,
     checked: Boolean,
     placeholder: String,
-    isLocked: Boolean,
+    locks: ItemLocks,
     modifier: Modifier = Modifier,
 ) {
     val state = field.state
@@ -414,7 +419,9 @@ private fun ListItemField(
     }
     BasicTextField(
         state = state,
-        readOnly = isLocked,
+        // A locked checklist's text cannot take focus at all, so no cursor and no keyboard.
+        enabled = !locks.textLocked,
+        readOnly = locks.editorLocked,
         inputTransformation = input,
         textStyle = style,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -423,7 +430,7 @@ private fun ListItemField(
         modifier = modifier.onFocusChanged { focused = it.isFocused }.then(highlight.modifier),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
-                if (state.text.isEmpty() && !isLocked && focused) {
+                if (state.text.isEmpty() && !locks.editorLocked && focused) {
                     Text(
                         text = placeholder,
                         style = base.copy(

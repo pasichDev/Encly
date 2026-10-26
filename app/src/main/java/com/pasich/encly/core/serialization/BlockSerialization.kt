@@ -66,6 +66,8 @@ class BlockDeserializer : JsonDeserializer<Block> {
                     "LIST_BULLET" -> BlockType.LIST_BULLET
                     else -> BlockType.LIST_CHECK
                 },
+                // Optional, absent in notes written before checklists could be locked.
+                locked = MutableStateFlow(jsonObject.get("isLocked")?.asBoolean ?: false),
             )
 
             else -> throw JsonParseException("Unknown block type: $blockType")
@@ -127,6 +129,10 @@ class BlockSerializer : JsonSerializer<Block> {
                     )
                 }
                 jsonObject.add("items", itemsArray)
+                // Written only when set, so a note without a locked list is stored as before. An older
+                // app reads the other keys and ignores this one: it opens the list unlocked and drops
+                // the lock the next time it saves the note.
+                if (src.locked.value) jsonObject.addProperty("isLocked", true)
             }
         }
 

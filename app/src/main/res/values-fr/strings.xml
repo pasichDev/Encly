@@ -50,6 +50,8 @@
     <string name="block_heading_level">Titre %1$d</string>
     <string name="block_link">Lien</string>
     <string name="block_list">Liste</string>
+    <string name="checklist_lock">Verrouiller la liste de tâches</string>
+    <string name="checklist_unlock">Déverrouiller la liste de tâches</string>
     <string name="block_move_down">Déplacer vers le bas</string>
     <string name="block_move_up">Déplacer vers le haut</string>
     <string name="block_numbered_list">Liste numérotée</string>

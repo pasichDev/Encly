@@ -128,8 +128,8 @@ class BlockSelection(private val blocks: List<Block>) {
 fun Block.canTakeFocus(): Boolean = when (this) {
     is Block.TextBlock, is Block.HBlock, is Block.QuoteBlock -> true
 
-    // A list focuses its own items.
-    is Block.ListBlock -> true
+    // A list focuses its own items; a locked checklist has none to focus.
+    is Block.ListBlock -> !locked.value
 
     // A link has a field only while its URL is being entered.
     is Block.LinkBlock -> block.value.url.isBlank()

@@ -373,10 +373,18 @@ private suspend fun NotesRepository.updateStored(note: Note, backup: Note, block
 private fun List<Block>.frozen(): List<Block> = map { block ->
     when (block) {
         is Block.TextBlock -> block.copy(text = MutableStateFlow(block.text.value))
+
         is Block.HBlock -> block.copy(text = MutableStateFlow(block.text.value))
+
         is Block.QuoteBlock -> block.copy(text = MutableStateFlow(block.text.value))
+
         is Block.LinkBlock -> block.copy(block = MutableStateFlow(block.block.value))
-        is Block.ListBlock -> block.copy(items = MutableStateFlow(block.items.value))
+
+        is Block.ListBlock -> block.copy(
+            items = MutableStateFlow(block.items.value),
+            locked = MutableStateFlow(block.locked.value),
+        )
+
         is Block.SeparatorBlock -> block
     }
 }

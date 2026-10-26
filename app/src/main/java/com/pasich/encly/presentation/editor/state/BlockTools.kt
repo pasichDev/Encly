@@ -33,6 +33,17 @@ fun BlockEditorState.focusWorkingBlock() {
     }
 }
 
+/**
+ * Locks or unlocks checklist [blockId]: its text can no longer be focused or edited while its boxes
+ * still toggle. One undo step. False when the block is not a checklist.
+ */
+fun BlockEditorState.toggleChecklistLock(blockId: String): Boolean {
+    val list = (blocks.firstOrNull { it.id == blockId } as? Block.ListBlock)
+        ?.takeIf { it.blockType == BlockType.LIST_CHECK }
+    list?.let { batch { setValue(it.id, it.locked, !it.locked.value) } }
+    return list != null
+}
+
 /** The Heading tool: headings of every level show it active, and it makes an H2. */
 val HEADING_TOOL = BlockType.H2
 

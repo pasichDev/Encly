@@ -57,6 +57,7 @@ import com.pasich.encly.presentation.editor.state.moveBlockOf
 import com.pasich.encly.presentation.editor.state.moveInteracted
 import com.pasich.encly.presentation.editor.state.pasteLink
 import com.pasich.encly.presentation.editor.state.removeInteracted
+import com.pasich.encly.presentation.editor.state.toggleChecklistLock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -536,6 +537,11 @@ constructor(
 
     fun removeInteractedBlock() {
         if (canEdit()) editor.removeInteracted()
+    }
+
+    /** Locks or unlocks the checklist [block] (see toggleChecklistLock). */
+    fun toggleChecklistLock(block: Block) {
+        if (canEdit(block)) editor.toggleChecklistLock(block.id)
     }
 
     /** Duplicates the block the user works on, right after it. */

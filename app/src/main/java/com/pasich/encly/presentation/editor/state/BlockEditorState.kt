@@ -183,10 +183,16 @@ private fun List<Block>.isEmptyFirstTextBlock(index: Int): Boolean {
 /** The content of [this] block, as a flow; null for a block without content (a separator). */
 private fun Block.contentFlow(): Flow<Any>? = when (this) {
     is Block.TextBlock -> text
+
     is Block.HBlock -> text
+
     is Block.QuoteBlock -> text
+
     is Block.LinkBlock -> block.map { it.url }
-    is Block.ListBlock -> items
+
+    // The lock is content too: locking a list must be saved like typing in it.
+    is Block.ListBlock -> combine(items, locked) { list, locked -> list to locked }
+
     is Block.SeparatorBlock -> null
 }
 

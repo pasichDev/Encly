@@ -50,6 +50,8 @@
     <string name="block_heading_level">Заголовок %1$d</string>
     <string name="block_link">Посилання</string>
     <string name="block_list">Список</string>
+    <string name="checklist_lock">Заблокувати чекліст</string>
+    <string name="checklist_unlock">Розблокувати чекліст</string>
     <string name="block_move_down">Перемістити вниз</string>
     <string name="block_move_up">Перемістити вгору</string>
     <string name="block_numbered_list">Нумерований список</string>

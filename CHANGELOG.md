@@ -15,6 +15,8 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 - Blank lines you add between paragraphs are no longer erased when a note is closed and reopened (#76).
 - The hints in empty editor blocks ("Text", "List item", ...) show only on the block you are in and are much lighter, so they no longer look like typed text (#76).
+- A checklist can be locked from the block tools (the chevron): its text takes no focus and no keyboard while its boxes still tick (#76).
+- Undo and redo sit on the editor toolbar itself; the plus became a chevron ("More block tools") that opens link, separator, headings and block moves (#76).
 - Checklist boxes are smaller and sit centred on the first line of their item (at the top of a long one), with tighter rows and a wider tap area (#76).
 - Holding Backspace at the start of a paragraph keeps deleting through the paragraphs above without the cursor jumping between blocks (#82).
 - Arrow keys move through a note by line: Up and Down leave a block only from its first or last line and keep the column, Left and Right cross to the neighbouring block, and Down in the last block no longer adds a paragraph (#82).

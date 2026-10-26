@@ -50,6 +50,8 @@
     <string name="block_heading_level">Kop %1$d</string>
     <string name="block_link">Link</string>
     <string name="block_list">Lijst</string>
+    <string name="checklist_lock">Checklist vergrendelen</string>
+    <string name="checklist_unlock">Checklist ontgrendelen</string>
     <string name="block_move_down">Omlaag verplaatsen</string>
     <string name="block_move_up">Omhoog verplaatsen</string>
     <string name="block_numbered_list">Genummerde lijst</string>
