@@ -40,7 +40,9 @@ import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.presentation.components.swipe.SwipeContext
 import com.pasich.encly.presentation.components.swipe.SwipeableNote
+import com.pasich.encly.presentation.components.swipe.rememberSwipeContext
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -81,7 +83,7 @@ fun NotesList(
     onItemClick: (Note) -> Unit,
     modifier: Modifier = Modifier,
     search: NotesSearch = NotesSearch("", NoteSearchViewModel.SearchResults()),
-    swipe: SwipeSettings = SwipeSettings(),
+    swipe: SwipeSettings = SwipeSettings.Off,
     onSecondActionClick: (Note) -> Unit = {},
     header: @Composable () -> Unit = {},
     noteListViewModel: NoteListViewModel = enclyViewModel(),
@@ -106,8 +108,7 @@ fun NotesList(
         highlight = if (searching) search.results.query else "",
         onItemClick = onItemClick,
         onItemLongClick = sheet::open,
-        swipe = swipe,
-        onEvent = noteListViewModel::onEvent,
+        swipe = rememberSwipeContext(swipe, noteListViewModel::perform),
     )
     val status: @Composable () -> Unit = {
         NotesStatus(
@@ -205,8 +206,7 @@ private class NotesContent(
     val highlight: String,
     val onItemClick: (Note) -> Unit,
     val onItemLongClick: (NoteListItem) -> Unit,
-    val swipe: SwipeSettings,
-    val onEvent: (NoteListEvent) -> Unit,
+    val swipe: SwipeContext,
 )
 
 /** Room for the last card above the FAB. */
@@ -239,8 +239,7 @@ private fun NotesColumn(content: NotesContent, state: LazyListState, top: NotesT
 
                 is NoteRow -> SwipeableNote(
                     note = entry.item.note,
-                    settings = content.swipe,
-                    onEvent = content.onEvent,
+                    swipe = content.swipe,
                     modifier = Modifier
                         .padding(horizontal = spacing.listGutter)
                         .animateItem(),
@@ -301,8 +300,7 @@ private fun NotesGrid(
 
                 is NoteRow -> SwipeableNote(
                     note = entry.item.note,
-                    settings = content.swipe,
-                    onEvent = content.onEvent,
+                    swipe = content.swipe,
                     modifier = Modifier.animateItem(),
                 ) { cardModifier ->
                     NoteItem(

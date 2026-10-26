@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
+import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.presentation.components.settings.SettingsBuilder
 import com.pasich.encly.presentation.components.settings.SettingsCategory
@@ -41,6 +42,7 @@ fun SettingsScreen(
     val simpleEdit by settingViewState.simpleEditFlow.collectAsState()
 
     val swipe by settingViewState.swipeSettings.collectAsState()
+    val swipeSettings = swipe ?: SwipeSettings()
     val swipeDialogSide by settingViewState.swipeDialogSide.collectAsState()
     val languageDialogVisible by settingViewState.languageDialogVisible.collectAsState()
 
@@ -49,7 +51,7 @@ fun SettingsScreen(
         viewModel = settingViewState,
         showTasks = showTasks,
         simpleEdit = simpleEdit,
-        swipe = swipe,
+        swipe = swipeSettings,
         navigation = SettingsNavigation(
             onAppearance = { navController?.navigate(NavRoutes.AppearanceRoute.name) },
             onSecurity = { navController?.navigate(NavRoutes.SecuritySettingsRoute.name) },
@@ -81,7 +83,7 @@ fun SettingsScreen(
         swipeDialogSide?.let { side ->
             SwipeActionDialog(
                 side = side,
-                current = if (side == SwipeSide.RIGHT) swipe.right else swipe.left,
+                current = if (side == SwipeSide.RIGHT) swipeSettings.right else swipeSettings.left,
                 onDismiss = { settingViewState.chooseSwipeAction(null) },
                 onConfirm = { action ->
                     settingViewState.onEvent(SettingsEvent.UpdateSwipeAction(side, action))

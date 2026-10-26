@@ -3,6 +3,9 @@ package com.pasich.encly.ui.screens
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
@@ -12,12 +15,14 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.R
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.presentation.components.swipe.SwipeContext
 import com.pasich.encly.presentation.components.swipe.SwipeableNote
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import org.junit.Assert.assertEquals
@@ -27,13 +32,27 @@ import org.junit.Test
 class SwipeableNoteTest : ComposeScreenTest() {
     private val events = mutableListOf<NoteListEvent>()
 
-    private fun show(note: Note = Note(id = 1, title = "Plan"), settings: SwipeSettings = SwipeSettings()) {
+    private var succeed = true
+
+    private fun show(
+        note: Note = Note(id = 1, title = "Plan"),
+        settings: SwipeSettings = SwipeSettings(),
+        direction: LayoutDirection = LayoutDirection.Ltr,
+    ) {
         setScreen {
-            SwipeableNote(note = note, settings = settings, onEvent = { events += it }) { cardModifier ->
-                Box(cardModifier.fillMaxWidth().height(CARD_HEIGHT).testTag(CARD))
+            CompositionLocalProvider(LocalLayoutDirection provides direction) {
+                val perform: suspend (NoteListEvent) -> Boolean = { event ->
+                    events += event
+                    succeed
+                }
+                SwipeableNote(note, SwipeContext(settings, perform, reducedMotion = true)) { cardModifier ->
+                    Box(cardModifier.fillMaxWidth().height(CARD_HEIGHT).testTag(CARD))
+                }
             }
         }
     }
+
+    private fun cardLeft() = rule.onNodeWithTag(CARD).fetchSemanticsNode().boundsInRoot.left
 
     private fun swipeRightOnCard() {
         rule.onNodeWithTag(CARD).performTouchInput { swipeRight() }
@@ -57,6 +76,39 @@ class SwipeableNoteTest : ComposeScreenTest() {
         swipeLeftOnCard()
 
         assertEquals(listOf(NoteListEvent.PinNote(note, true), NoteListEvent.ArchiveNote(note, true)), events)
+    }
+
+    @Test
+    fun aFailedWriteSpringsTheCardBackInsteadOfSlidingItOut() {
+        succeed = false
+        show()
+        val home = cardLeft()
+
+        swipeLeftOnCard()
+
+        waitFor { cardLeft() == home }
+        assertEquals(1, events.size)
+    }
+
+    @Test
+    fun aSuccessfulArchiveSlidesTheCardOut() {
+        show()
+        val home = cardLeft()
+
+        swipeLeftOnCard()
+
+        waitFor { cardLeft() != home }
+    }
+
+    @Test
+    fun inARightToLeftLayoutTheStartToEndSwipeIsTheOneToTheLeft() {
+        val note = Note(id = 1)
+        show(note, direction = LayoutDirection.Rtl)
+
+        // Physically to the right is end to start there: the "left" action.
+        swipeRightOnCard()
+
+        assertEquals(listOf(NoteListEvent.ArchiveNote(note, true)), events)
     }
 
     @Test

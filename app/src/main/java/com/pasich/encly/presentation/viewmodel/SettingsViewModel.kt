@@ -35,10 +35,11 @@ class SettingsViewModel @Inject constructor(private val settingsRepository: Sett
         initialValue = false,
     )
 
-    val swipeSettings: StateFlow<SwipeSettings> = settingsRepository.swipeSettingsFlow.stateIn(
+    /** The swipe settings; null until the stored ones are read, so no swipe works on a guess. */
+    val swipeSettings: StateFlow<SwipeSettings?> = settingsRepository.swipeSettingsFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = SwipeSettings(),
+        initialValue = null,
     )
 
     /** The direction whose action is being chosen, or null while no choice is open. */

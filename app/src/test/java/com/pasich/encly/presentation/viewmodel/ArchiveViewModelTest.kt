@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -68,6 +69,16 @@ class ArchiveViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf("archived:1=false"), repository.columnWrites)
+    }
+
+    @Test
+    fun performReportsAFailedWriteAndWhatDoesNotApplyHere() = runTest(dispatcher) {
+        val note = archived(1, 10).note
+
+        assertTrue(viewModel.perform(NoteListEvent.ArchiveNote(note, archived = false)))
+        assertFalse(viewModel.perform(NoteListEvent.PinNote(note, pinned = true)))
+        repository.columnWriteResult = false
+        assertFalse(viewModel.perform(NoteListEvent.ArchiveNote(note, archived = false)))
     }
 
     @Test

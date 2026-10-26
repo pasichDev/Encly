@@ -122,52 +122,36 @@ constructor(
     fun observeNote(noteId: Long) = observeNotesUseCase.observeNote(noteId)
 
     fun onEvent(event: NoteListEvent) {
-        when (event) {
-            is NoteListEvent.SelectTag -> {
-                selectedTagHolder.selectTag(event.tag)
-            }
+        // Picking a tag is not a write: it applies at once, before any coroutine runs.
+        if (event is NoteListEvent.SelectTag) {
+            selectedTagHolder.selectTag(event.tag)
+        } else {
+            viewModelScope.launch { perform(event) }
+        }
+    }
 
-            is NoteListEvent.NoteToTrash -> {
-                viewModelScope.launch {
-                    updateNoteTrashStatusUseCase.invoke(event.note, true)
-                }
-            }
+    /** Carries out [event]; false when its write failed (a swipe then springs the card back). */
+    suspend fun perform(event: NoteListEvent): Boolean = when (event) {
+        is NoteListEvent.SelectTag -> {
+            selectedTagHolder.selectTag(event.tag)
+            true
+        }
 
-            is NoteListEvent.PinNote -> {
-                viewModelScope.launch {
-                    updateNotePinStatusUseCase.invoke(event.note, event.pinned)
-                }
-            }
+        is NoteListEvent.NoteToTrash -> updateNoteTrashStatusUseCase(event.note, true).isSuccess
 
-            is NoteListEvent.ArchiveNote -> {
-                viewModelScope.launch {
-                    updateNoteArchiveStatusUseCase.invoke(event.note, event.archived)
-                }
-            }
+        is NoteListEvent.PinNote -> updateNotePinStatusUseCase(event.note, event.pinned).isSuccess
 
-            is NoteListEvent.ChangeColor -> {
-                viewModelScope.launch {
-                    updateNoteColorUseCase.invoke(event.note, event.color)
-                }
-            }
+        is NoteListEvent.ArchiveNote -> updateNoteArchiveStatusUseCase(event.note, event.archived).isSuccess
 
-            is NoteListEvent.ChangeTag -> {
-                viewModelScope.launch {
-                    updateNoteTagUseCase.invoke(event.note, event.idTag)
-                }
-            }
+        is NoteListEvent.ChangeColor -> updateNoteColorUseCase(event.note, event.color).isSuccess
 
-            is NoteListEvent.ToggleNoteSort -> {
-                viewModelScope.launch {
-                    settingsRepository.setSortNotes(event.option)
-                }
-            }
+        is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag).isSuccess
 
-            is NoteListEvent.ChangeDescription -> {
-                viewModelScope.launch {
-                    updateNoteDescriptionUseCase.invoke(event.note, event.description)
-                }
-            }
+        is NoteListEvent.ChangeDescription -> updateNoteDescriptionUseCase(event.note, event.description).isSuccess
+
+        is NoteListEvent.ToggleNoteSort -> {
+            settingsRepository.setSortNotes(event.option)
+            true
         }
     }
 

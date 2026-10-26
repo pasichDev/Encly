@@ -20,7 +20,7 @@ enum class SwipeAction {
     NONE,
 }
 
-/** Which way a card is swiped: [RIGHT] is start to end, [LEFT] end to start (in a left-to-right layout). */
+/** Which way a card is swiped: [RIGHT] is start to end and [LEFT] end to start, whatever the layout direction. */
 enum class SwipeSide { RIGHT, LEFT }
 
 /** The swipe settings: a master switch and one action per direction. */
@@ -34,5 +34,10 @@ data class SwipeSettings(
         !enabled -> SwipeAction.NONE
         side == SwipeSide.RIGHT -> right
         else -> left
+    }
+
+    companion object {
+        /** No swipe at all: what a list uses until the stored settings are read. */
+        val Off = SwipeSettings(enabled = false)
     }
 }

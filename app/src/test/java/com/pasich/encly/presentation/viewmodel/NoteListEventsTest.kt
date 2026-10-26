@@ -142,6 +142,17 @@ class NoteListEventsTest {
     }
 
     @Test
+    fun performTellsWhetherTheWriteSucceeded() = runTest(dispatcher) {
+        advanceUntilIdle()
+
+        assertTrue(viewModel.perform(NoteListEvent.PinNote(note(1), true)))
+
+        repository.columnWriteResult = false
+        assertFalse(viewModel.perform(NoteListEvent.PinNote(note(1), true)))
+        assertFalse(viewModel.perform(NoteListEvent.ArchiveNote(note(1), true)))
+    }
+
+    @Test
     fun movingANoteToTheTrashStoresItAsTrashed() = runTest(dispatcher) {
         advanceUntilIdle()
 

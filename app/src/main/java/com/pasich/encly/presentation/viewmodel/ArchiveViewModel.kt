@@ -60,16 +60,17 @@ class ArchiveViewModel @Inject constructor(
     fun observeNote(noteId: Long) = observeNotesUseCase.observeNote(noteId)
 
     fun onEvent(event: NoteListEvent) {
-        viewModelScope.launch {
-            when (event) {
-                is NoteListEvent.ArchiveNote -> updateNoteArchiveStatusUseCase(event.note, event.archived)
-                is NoteListEvent.NoteToTrash -> updateNoteTrashStatusUseCase(event.note, true)
-                is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag)
-                is NoteListEvent.ChangeDescription -> updateNoteDescriptionUseCase(event.note, event.description)
-                is NoteListEvent.ChangeColor -> updateNoteColorUseCase(event.note, event.color)
-                is NoteListEvent.SelectTag, is NoteListEvent.ToggleNoteSort, is NoteListEvent.PinNote -> Unit
-            }
-        }
+        viewModelScope.launch { perform(event) }
+    }
+
+    /** Carries out [event]; false when its write failed or it does not apply in the archive. */
+    suspend fun perform(event: NoteListEvent): Boolean = when (event) {
+        is NoteListEvent.ArchiveNote -> updateNoteArchiveStatusUseCase(event.note, event.archived).isSuccess
+        is NoteListEvent.NoteToTrash -> updateNoteTrashStatusUseCase(event.note, true).isSuccess
+        is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag).isSuccess
+        is NoteListEvent.ChangeDescription -> updateNoteDescriptionUseCase(event.note, event.description).isSuccess
+        is NoteListEvent.ChangeColor -> updateNoteColorUseCase(event.note, event.color).isSuccess
+        is NoteListEvent.SelectTag, is NoteListEvent.ToggleNoteSort, is NoteListEvent.PinNote -> false
     }
 }
 

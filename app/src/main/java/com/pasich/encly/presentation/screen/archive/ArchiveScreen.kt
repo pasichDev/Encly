@@ -19,7 +19,9 @@ import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.presentation.components.swipe.SwipeContext
 import com.pasich.encly.presentation.components.swipe.SwipeableNote
+import com.pasich.encly.presentation.components.swipe.rememberSwipeContext
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -30,7 +32,6 @@ import com.pasich.encly.presentation.screen.NoteActionsSheet
 import com.pasich.encly.presentation.screen.NoteSheetState
 import com.pasich.encly.presentation.viewmodel.ArchiveState
 import com.pasich.encly.presentation.viewmodel.ArchiveViewModel
-import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -73,8 +74,7 @@ fun ArchiveScreen(
     ) { padding ->
         ArchivedNotes(
             state = state,
-            swipe = swipe,
-            onEvent = viewModel::onEvent,
+            swipe = rememberSwipeContext(swipe ?: SwipeSettings.Off, viewModel::perform),
             onOpen = ::edit,
             onActions = sheet::open,
             modifier = Modifier
@@ -88,8 +88,7 @@ fun ArchiveScreen(
 @Composable
 private fun ArchivedNotes(
     state: ArchiveState,
-    swipe: SwipeSettings,
-    onEvent: (NoteListEvent) -> Unit,
+    swipe: SwipeContext,
     onOpen: (Long) -> Unit,
     onActions: (NoteListItem) -> Unit,
     modifier: Modifier = Modifier,
@@ -128,8 +127,7 @@ private fun ArchivedNotes(
                 // Archive here means "take out of the archive"; a pin does not apply to archived notes.
                 SwipeableNote(
                     note = item.note,
-                    settings = swipe,
-                    onEvent = onEvent,
+                    swipe = swipe,
                     modifier = Modifier
                         .padding(horizontal = spacing.listGutter)
                         .animateItem(),
