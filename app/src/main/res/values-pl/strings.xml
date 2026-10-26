@@ -656,4 +656,7 @@
     <string name="swipe_delete_message">Notatkę można przywrócić z kosza.</string>
     <string name="faq_swipe_q">Do czego służą przesunięcia notatki?</string>
     <string name="faq_swipe_a">Domyślnie przesunięcie notatki w prawo przypina ją lub odpina, a w lewo archiwizuje. W Ustawienia → Gesty przesunięcia możesz wybrać dla każdego kierunku: przypnij, archiwizuj, następny kolor, przenieś do kosza (zawsze z pytaniem) lub nic, a także wyłączyć przesuwanie. TalkBack oferuje te same akcje w menu akcji notatki.</string>
+    <string name="appearance_text_section">Tekst w notatkach</string>
+    <string name="appearance_text_desc">Wartość domyślna dla każdej notatki. Notatka może ustawić własną w swoim menu.</string>
+    <string name="note_text_use_default">Użyj domyślnych ustawień tekstu</string>
 </resources>

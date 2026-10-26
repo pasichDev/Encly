@@ -3,6 +3,7 @@ package com.pasich.encly.testutil
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -10,7 +11,9 @@ import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.domain.repository.SettingsRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 /** Settings in memory: every setter writes the flow the app observes. */
 internal class TestSettingsRepository(override var latestThemeSettings: ThemeSettings? = null) : SettingsRepository {
@@ -65,6 +68,19 @@ internal class TestSettingsRepository(override var latestThemeSettings: ThemeSet
 
     override suspend fun setNoteLineSpacing(value: NoteLineSpacing) {
         noteLineSpacingFlow.value = value
+    }
+
+    val noteText = MutableStateFlow(mapOf<Long, NoteTextOverride>())
+
+    override fun noteTextOverrideFlow(noteId: Long): Flow<NoteTextOverride> =
+        noteText.map { it[noteId] ?: NoteTextOverride() }
+
+    override suspend fun setNoteTextSize(noteId: Long, size: Int?) {
+        noteText.value += noteId to (noteText.value[noteId] ?: NoteTextOverride()).copy(size = size)
+    }
+
+    override suspend fun setNoteTextSpacing(noteId: Long, spacing: NoteLineSpacing?) {
+        noteText.value += noteId to (noteText.value[noteId] ?: NoteTextOverride()).copy(spacing = spacing)
     }
 
     override suspend fun setSwipeEnabled(value: Boolean) {

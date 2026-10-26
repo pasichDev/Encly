@@ -650,4 +650,7 @@
     <string name="swipe_delete_message">Vous pourrez restaurer la note depuis la corbeille.</string>
     <string name="faq_swipe_q">À quoi servent les balayages sur une note ?</string>
     <string name="faq_swipe_a">Par défaut, balayer une note vers la droite l\'épingle ou la désépingle, et vers la gauche l\'archive. Dans Paramètres → Actions par balayage, vous choisissez pour chaque direction : épingler, archiver, couleur suivante, mettre à la corbeille (avec confirmation) ou rien, ou vous désactivez les balayages. TalkBack propose les mêmes actions dans le menu d\'actions de la note.</string>
+    <string name="appearance_text_section">Texte des notes</string>
+    <string name="appearance_text_desc">La valeur par défaut de chaque note. Une note peut définir la sienne depuis son menu.</string>
+    <string name="note_text_use_default">Utiliser les réglages de texte par défaut</string>
 </resources>

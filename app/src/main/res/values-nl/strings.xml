@@ -644,4 +644,7 @@
     <string name="swipe_delete_message">Je kunt de notitie uit de prullenbak terugzetten.</string>
     <string name="faq_swipe_q">Wat doen veegbewegingen op een notitie?</string>
     <string name="faq_swipe_a">Standaard maakt naar rechts vegen een notitie vast of los, en naar links archiveert ze. Onder Instellingen → Veegacties kies je per richting: vastmaken, archiveren, volgende kleur, naar prullenbak (vraagt altijd eerst) of niets, of zet je vegen uit. TalkBack biedt dezelfde acties in het actiemenu van de notitie.</string>
+    <string name="appearance_text_section">Tekst in notities</string>
+    <string name="appearance_text_desc">De standaard voor elke notitie. Een notitie kan via haar menu een eigen waarde instellen.</string>
+    <string name="note_text_use_default">Standaardtekstinstellingen gebruiken</string>
 </resources>

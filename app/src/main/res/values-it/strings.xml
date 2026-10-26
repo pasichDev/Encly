@@ -650,4 +650,7 @@
     <string name="swipe_delete_message">Potrai ripristinare la nota dal cestino.</string>
     <string name="faq_swipe_q">A cosa servono gli scorrimenti su una nota?</string>
     <string name="faq_swipe_a">Per impostazione predefinita, scorrere una nota a destra la fissa o la sblocca, a sinistra la archivia. In Impostazioni → Azioni con scorrimento puoi scegliere per ogni direzione: fissa, archivia, colore successivo, sposta nel cestino (chiede sempre conferma) o niente, oppure disattivare gli scorrimenti. TalkBack offre le stesse azioni nel menu delle azioni della nota.</string>
+    <string name="appearance_text_section">Testo delle note</string>
+    <string name="appearance_text_desc">Il valore predefinito di ogni nota. Una nota può impostare il proprio dal suo menu.</string>
+    <string name="note_text_use_default">Usa le impostazioni di testo predefinite</string>
 </resources>

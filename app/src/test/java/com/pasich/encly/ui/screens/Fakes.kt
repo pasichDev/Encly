@@ -6,6 +6,7 @@ import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -59,6 +60,19 @@ internal class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setSimpleEdit(value: Boolean) {
         simpleEdit.value = value
+    }
+
+    val noteText = MutableStateFlow(mapOf<Long, NoteTextOverride>())
+
+    override fun noteTextOverrideFlow(noteId: Long): Flow<NoteTextOverride> =
+        noteText.map { it[noteId] ?: NoteTextOverride() }
+
+    override suspend fun setNoteTextSize(noteId: Long, size: Int?) {
+        noteText.update { it + (noteId to (it[noteId] ?: NoteTextOverride()).copy(size = size)) }
+    }
+
+    override suspend fun setNoteTextSpacing(noteId: Long, spacing: NoteLineSpacing?) {
+        noteText.update { it + (noteId to (it[noteId] ?: NoteTextOverride()).copy(spacing = spacing)) }
     }
 
     override suspend fun setSwipeEnabled(value: Boolean) {

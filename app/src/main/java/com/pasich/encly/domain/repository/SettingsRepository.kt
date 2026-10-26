@@ -3,6 +3,7 @@ package com.pasich.encly.domain.repository
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -42,6 +43,15 @@ interface SettingsRepository {
     suspend fun setFontSize(value: Int)
     suspend fun setFontStyle(value: FontStyleType)
     suspend fun setNoteLineSpacing(value: NoteLineSpacing)
+
+    /** The text size and line spacing note [noteId] sets for itself; none set means the defaults apply. */
+    fun noteTextOverrideFlow(noteId: Long): Flow<NoteTextOverride>
+
+    /** Sets (or, with null, clears) one note's own text size. */
+    suspend fun setNoteTextSize(noteId: Long, size: Int?)
+
+    /** Sets (or, with null, clears) one note's own line spacing. */
+    suspend fun setNoteTextSpacing(noteId: Long, spacing: NoteLineSpacing?)
     suspend fun setSwipeEnabled(value: Boolean)
     suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction)
 }

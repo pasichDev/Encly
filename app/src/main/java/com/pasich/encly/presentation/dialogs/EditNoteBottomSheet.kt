@@ -10,10 +10,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
-import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.presentation.components.FontSizeSlider
-import com.pasich.encly.presentation.components.LabeledSlider
-import com.pasich.encly.presentation.components.SliderScale
+import com.pasich.encly.presentation.components.NoteLineSpacingSlider
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -24,7 +22,6 @@ import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
-import kotlin.math.roundToInt
 
 enum class EditNoteBottomSheetAction {
     CLOSE_NO_SAVE,
@@ -52,6 +49,7 @@ fun EditNoteBottomSheet(
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val lineSpacing by viewModel.noteLineSpacing.collectAsStateWithLifecycle()
     val note by viewModel.state.collectAsStateWithLifecycle()
+    val override by viewModel.textOverride.collectAsStateWithLifecycle()
 
     if (isVisible) {
         EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier, scrollable = true) {
@@ -59,7 +57,8 @@ fun EditNoteBottomSheet(
                 currentSize = fontSize,
                 onSizeChange = { newSize -> viewModel.updateFontSize(newSize) },
             )
-            LineSpacingSlider(selected = lineSpacing, onSelect = viewModel::updateNoteLineSpacing)
+            NoteLineSpacingSlider(selected = lineSpacing, onSelect = viewModel::updateNoteLineSpacing)
+            UseDefaultRow(visible = override.isSet, onClick = viewModel::useDefaultText)
             EnclyGroupDivider()
             SectionOverline(stringResource(R.string.note_color_title))
             EnclyNoteColorPicker(
@@ -110,26 +109,6 @@ private fun EditorActionRows(onAction: (EditNoteBottomSheetAction) -> Unit, onDi
     )
 }
 
-/** The reading densities in display order; the enum's own order is fixed by what is stored. */
-private val lineSpacingOrder = listOf(
-    NoteLineSpacing.COMPACT to R.string.note_line_spacing_compact,
-    NoteLineSpacing.DEFAULT to R.string.note_line_spacing_default,
-    NoteLineSpacing.COMFORTABLE to R.string.note_line_spacing_comfortable,
-)
-
-/** The reading density as a three-step slider, in the same row style as the text size. */
-@Composable
-private fun LineSpacingSlider(selected: NoteLineSpacing, onSelect: (NoteLineSpacing) -> Unit) {
-    val index = lineSpacingOrder.indexOfFirst { it.first == selected }.coerceAtLeast(0)
-    LabeledSlider(
-        label = stringResource(R.string.note_line_spacing_title),
-        valueText = stringResource(lineSpacingOrder[index].second),
-        value = index.toFloat(),
-        onValueChange = { onSelect(lineSpacingOrder[it.roundToInt().coerceIn(lineSpacingOrder.indices)].first) },
-        scale = SliderScale(0f..lineSpacingOrder.lastIndex.toFloat(), steps = lineSpacingOrder.size - 2),
-    )
-}
-
 /** Archive, or unarchive. Pinning is a list matter: it lives in the notes list's sheet only. */
 @Composable
 private fun ArchiveRow(note: Note, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
@@ -143,4 +122,11 @@ private fun ArchiveRow(note: Note, onAction: (EditNoteBottomSheetAction) -> Unit
             onDismiss()
         },
     )
+}
+
+/** "Use default": shown while the note sets its own text size or line spacing. */
+@Composable
+private fun UseDefaultRow(visible: Boolean, onClick: () -> Unit) {
+    if (!visible) return
+    EnclySheetRow(title = stringResource(R.string.note_text_use_default), icon = EnclyIcons.Undo, onClick = onClick)
 }

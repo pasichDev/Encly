@@ -650,4 +650,7 @@
     <string name="swipe_delete_message">Você poderá restaurar a nota da lixeira.</string>
     <string name="faq_swipe_q">Para que servem os deslizes em uma nota?</string>
     <string name="faq_swipe_a">Por padrão, deslizar uma nota para a direita a fixa ou desafixa, e para a esquerda a arquiva. Em Configurações → Ações de deslizar, você escolhe para cada direção: fixar, arquivar, próxima cor, mover para a lixeira (sempre pergunta) ou nada, ou desativa os deslizes. O TalkBack oferece as mesmas ações no menu de ações da nota.</string>
+    <string name="appearance_text_section">Texto das notas</string>
+    <string name="appearance_text_desc">O padrão de cada nota. Uma nota pode definir o seu no próprio menu.</string>
+    <string name="note_text_use_default">Usar o texto padrão</string>
 </resources>

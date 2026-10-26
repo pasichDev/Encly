@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
@@ -34,6 +35,8 @@ class AppearanceViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         `when`(repository.themeSettingsFlow).thenReturn(stored)
+        `when`(repository.fontSizeFlow).thenReturn(MutableStateFlow(16))
+        `when`(repository.noteLineSpacingFlow).thenReturn(MutableStateFlow(NoteLineSpacing.DEFAULT))
     }
 
     @After
@@ -54,6 +57,15 @@ class AppearanceViewModelTest {
         verify(repository).setThemeType(ThemeType.DARK)
         verify(repository).setDynamicTheme(true)
         verify(repository).setFontStyle(FontStyleType.TECH_MINIMAL)
+    }
+
+    @Test
+    fun theDefaultTextSizeAndSpacingAreWrittenAsTheGlobalSettings() = runTest {
+        val vm = viewModel()
+        vm.setDefaultFontSize(22)
+        vm.setDefaultLineSpacing(NoteLineSpacing.COMFORTABLE)
+        verify(repository).setFontSize(22)
+        verify(repository).setNoteLineSpacing(NoteLineSpacing.COMFORTABLE)
     }
 
     @Test

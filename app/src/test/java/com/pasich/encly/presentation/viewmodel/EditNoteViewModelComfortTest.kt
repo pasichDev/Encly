@@ -6,6 +6,8 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.dynamicBlocks.Block
@@ -86,6 +88,91 @@ class EditNoteViewModelComfortTest {
     }
 
     private val enter = LineBreak("", listOf("", ""), "")
+
+    // --- text size and line spacing: the default, and a note's own ----------------------------------
+
+    private fun TestScope.collectingText(viewModel: EditNoteViewModel) {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.fontSize.collect {} }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.noteLineSpacing.collect {} }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.textOverride.collect {} }
+    }
+
+    @Test
+    fun aNoteFollowsTheDefaultTextSettingsUntilItSetsItsOwn() = runTest(dispatcher) {
+        settings.fontSizeFlow.value = 20
+        settings.noteLineSpacingFlow.value = NoteLineSpacing.COMPACT
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+
+        assertEquals(20, viewModel.fontSize.value)
+        assertEquals(NoteLineSpacing.COMPACT, viewModel.noteLineSpacing.value)
+        assertFalse(viewModel.textOverride.value.isSet)
+    }
+
+    @Test
+    fun theMenuSlidersSetTheNotesOwnValuesAndLeaveTheDefaultAlone() = runTest(dispatcher) {
+        settings.fontSizeFlow.value = 16
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+
+        viewModel.updateFontSize(26)
+        viewModel.updateNoteLineSpacing(NoteLineSpacing.COMFORTABLE)
+        advanceUntilIdle()
+
+        assertEquals(26, viewModel.fontSize.value)
+        assertEquals(NoteLineSpacing.COMFORTABLE, viewModel.noteLineSpacing.value)
+        assertEquals(16, settings.fontSizeFlow.value)
+        assertEquals(NoteLineSpacing.DEFAULT, settings.noteLineSpacingFlow.value)
+        assertEquals(NoteTextOverride(26, NoteLineSpacing.COMFORTABLE), settings.noteText.value[NOTE_ID])
+    }
+
+    @Test
+    fun anotherNoteIsNotAffectedByAnOverride() = runTest(dispatcher) {
+        settings.noteText.value = mapOf(OTHER_NOTE_ID to NoteTextOverride(30, NoteLineSpacing.COMFORTABLE))
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+
+        assertEquals(16, viewModel.fontSize.value)
+    }
+
+    @Test
+    fun useDefaultReturnsTheNoteToTheDefaults() = runTest(dispatcher) {
+        settings.fontSizeFlow.value = 18
+        settings.noteText.value = mapOf(NOTE_ID to NoteTextOverride(30, NoteLineSpacing.COMFORTABLE))
+        val viewModel = viewModel()
+        collectingText(viewModel)
+        advanceUntilIdle()
+        assertEquals(30, viewModel.fontSize.value)
+        assertTrue(viewModel.textOverride.value.isSet)
+
+        viewModel.useDefaultText()
+        advanceUntilIdle()
+
+        assertEquals(18, viewModel.fontSize.value)
+        assertFalse(viewModel.textOverride.value.isSet)
+    }
+
+    @Test
+    fun aNewNoteKeepsItsTextChoiceAndStoresItOnceSaved() = runTest(dispatcher) {
+        val viewModel = viewModel(noteId = -1L)
+        collectingText(viewModel)
+        advanceUntilIdle()
+
+        viewModel.updateFontSize(28)
+        advanceUntilIdle()
+        assertEquals(28, viewModel.fontSize.value)
+        assertTrue(settings.noteText.value.isEmpty())
+
+        viewModel.updateTitle("Draft")
+        assertTrue(viewModel.saveNote())
+        advanceUntilIdle()
+
+        assertEquals(28, settings.noteText.value[INSERTED_ID]?.size)
+        assertEquals(28, viewModel.fontSize.value)
+    }
 
     // --- find ---------------------------------------------------------------------------------------
 
@@ -314,5 +401,6 @@ class EditNoteViewModelComfortTest {
     private companion object {
         const val NOTE_ID = 12L
         const val INSERTED_ID = 40L
+        const val OTHER_NOTE_ID = 99L
     }
 }

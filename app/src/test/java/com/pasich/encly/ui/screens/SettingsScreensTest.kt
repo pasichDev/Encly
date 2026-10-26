@@ -180,6 +180,18 @@ class SettingsScreensTest : ComposeScreenTest() {
     }
 
     @Test
+    fun appearanceOffersTheDefaultTextSizeAndLineSpacingOfNotes() {
+        app.settings.fontSize.value = 22
+        showAppearance()
+
+        scrollToText(str(R.string.appearance_text_section), ignoreCase = true)
+        scrollToText(str(R.string.font_size_title))
+        scrollToText(str(R.string.note_line_spacing_title))
+        scrollToText(str(R.string.font_size_value, 22))
+        scrollToText(str(R.string.appearance_text_desc))
+    }
+
+    @Test
     fun appearanceShowsEveryThemeModeAndFont() {
         showAppearance()
 

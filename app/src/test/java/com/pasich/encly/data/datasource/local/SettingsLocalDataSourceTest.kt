@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -46,6 +47,36 @@ class SettingsLocalDataSourceTest {
         assertEquals(ThemeSettings(), source.themeSettingsFlow.first())
         assertEquals(FontStyleType.DEFAULT, source.fontStyleFlow.first())
         assertEquals(NoteLineSpacing.DEFAULT, source.noteLineSpacingFlow.first())
+    }
+
+    @Test
+    fun aNoteFollowsTheDefaultsUntilItSetsItsOwnText() = runTest {
+        assertEquals(NoteTextOverride(), source.noteTextOverrideFlow(7).first())
+
+        source.setNoteTextSize(7, 24)
+        source.setNoteTextSpacing(7, NoteLineSpacing.COMFORTABLE)
+
+        assertEquals(NoteTextOverride(24, NoteLineSpacing.COMFORTABLE), source.noteTextOverrideFlow(7).first())
+        assertEquals(NoteTextOverride(), source.noteTextOverrideFlow(8).first())
+        assertEquals(16, source.fontSizeFlow.first())
+    }
+
+    @Test
+    fun clearingANotesTextRemovesItsKeys() = runTest {
+        source.setNoteTextSize(7, 24)
+        source.setNoteTextSpacing(7, NoteLineSpacing.COMPACT)
+
+        source.setNoteTextSize(7, null)
+        source.setNoteTextSpacing(7, null)
+
+        assertEquals(NoteTextOverride(), source.noteTextOverrideFlow(7).first())
+    }
+
+    @Test
+    fun aStoredNoteSizeOutOfRangeIsClamped() = runTest {
+        dataStore.edit { it[intPreferencesKey("note_text_size_7")] = 99 }
+
+        assertEquals(32, source.noteTextOverrideFlow(7).first().size)
     }
 
     @Test

@@ -644,4 +644,7 @@
     <string name="swipe_delete_message">Du kannst die Notiz aus dem Papierkorb wiederherstellen.</string>
     <string name="faq_swipe_q">Was bewirken Wischgesten auf einer Notiz?</string>
     <string name="faq_swipe_a">Standardmäßig heftet ein Wisch nach rechts eine Notiz an oder löst sie, ein Wisch nach links archiviert sie. Unter Einstellungen → Wischaktionen kannst du für jede Richtung Anheften, Archivieren, nächste Farbe, In den Papierkorb (fragt immer nach) oder nichts wählen oder das Wischen ausschalten. TalkBack bietet dieselben Aktionen im Aktionsmenü der Notiz an.</string>
+    <string name="appearance_text_section">Text in Notizen</string>
+    <string name="appearance_text_desc">Der Standard für jede Notiz. Eine Notiz kann in ihrem Menü eigene Werte festlegen.</string>
+    <string name="note_text_use_default">Standard-Texteinstellungen verwenden</string>
 </resources>

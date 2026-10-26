@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.NoteTextOverride
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -32,6 +33,8 @@ const val SIMPLE_EDIT = "simple_edit"
 const val FONT_SIZE = "font_size"
 const val FONT_STYLE = "font_style"
 const val NOTE_LINE_SPACING = "note_line_spacing"
+const val MIN_FONT_SIZE = 10
+const val MAX_FONT_SIZE = 32
 const val SWIPE_ENABLED = "swipe_enabled"
 const val SWIPE_RIGHT = "swipe_right"
 const val SWIPE_LEFT = "swipe_left"
@@ -127,6 +130,41 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
         )
     }.distinctUntilChanged()
 
+    /** Per-note keys: the note id is part of the key, so a note without them follows the defaults. */
+    private fun noteSizeKey(noteId: Long) = intPreferencesKey("note_text_size_$noteId")
+
+    private fun noteSpacingKey(noteId: Long) = intPreferencesKey("note_line_spacing_$noteId")
+
+    fun noteTextOverrideFlow(noteId: Long): Flow<NoteTextOverride> = dataStore.data.map { preferences ->
+        NoteTextOverride(
+            size = preferences[noteSizeKey(noteId)]?.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE),
+            spacing = preferences[noteSpacingKey(noteId)]?.let { enumValues<NoteLineSpacing>().getOrNull(it) },
+        )
+    }.distinctUntilChanged()
+
+    suspend fun setNoteTextSize(noteId: Long, size: Int?) {
+        dataStore.edit { preferences ->
+            if (size == null) {
+                preferences.remove(noteSizeKey(noteId))
+            } else {
+                preferences[noteSizeKey(noteId)] = size.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE)
+            }
+        }
+    }
+
+    suspend fun setNoteTextSpacing(noteId: Long, spacing: NoteLineSpacing?) {
+        dataStore.edit { preferences ->
+            if (spacing ==
+                null
+            ) {
+                preferences.remove(noteSpacingKey(noteId))
+            } else {
+                preferences[noteSpacingKey(noteId)] =
+                    spacing.ordinal
+            }
+        }
+    }
+
     suspend fun setSwipeEnabled(value: Boolean) {
         dataStore.edit { preferences ->
             preferences[swipeEnabled] = value
@@ -183,7 +221,7 @@ class SettingsLocalDataSource @Inject constructor(private val dataStore: DataSto
 
     suspend fun setFontSize(value: Int) {
         dataStore.edit { preferences ->
-            preferences[fontSize] = value.coerceIn(10, 32) // clamp to the 10-32 range
+            preferences[fontSize] = value.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE)
         }
     }
 

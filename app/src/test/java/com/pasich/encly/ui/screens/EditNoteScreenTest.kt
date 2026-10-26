@@ -291,6 +291,21 @@ class EditNoteScreenTest : ComposeScreenTest() {
     }
 
     @Test
+    fun useDefaultTextAppearsOnlyWhileTheNoteHasItsOwn() {
+        stored(text("body"))
+        open(NOTE_ID)
+        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        waitForText(str(R.string.note_archive))
+        assertEquals(0, countText(str(R.string.note_text_use_default)))
+
+        rule.runOnIdle { editor.updateNoteLineSpacing(com.pasich.encly.domain.model.NoteLineSpacing.COMFORTABLE) }
+
+        waitForText(str(R.string.note_text_use_default))
+        rule.onNodeWithText(str(R.string.note_text_use_default)).performScrollTo().performClick()
+        waitFor { countText(str(R.string.note_text_use_default)) == 0 }
+    }
+
+    @Test
     fun archivingFromTheMenuStoresTheNoteArchivedAndLeaves() {
         stored(text("body"))
         open(NOTE_ID)

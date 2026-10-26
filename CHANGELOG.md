@@ -20,6 +20,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 ### Added
 
 - The PIN keypad sits at the bottom of the screen on the lock screen and the PIN checks, within reach of one hand, and a long press on delete clears every digit (#76).
+- Default text size and line spacing for every note in Settings → Appearance. The sliders in a note's menu now set that note's own values, with "Use default text settings" to go back (#76).
 - Pin notes to the top of the list, archive them (a new Archive screen in the drawer; archived
   notes leave the list, search and tag counts) and mark them with one of eight colours. The
   colours are tints of your theme, so they read well in all five themes, light and dark.

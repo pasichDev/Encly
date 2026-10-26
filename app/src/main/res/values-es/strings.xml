@@ -650,4 +650,7 @@
     <string name="swipe_delete_message">Podrás restaurar la nota desde la papelera.</string>
     <string name="faq_swipe_q">¿Qué hacen los deslizamientos en una nota?</string>
     <string name="faq_swipe_a">Por defecto, deslizar una nota a la derecha la fija o la desfija, y a la izquierda la archiva. En Ajustes → Acciones al deslizar puedes elegir para cada dirección: fijar, archivar, siguiente color, mover a la papelera (siempre pregunta) o nada, o desactivar los deslizamientos. TalkBack ofrece las mismas acciones en el menú de acciones de la nota.</string>
+    <string name="appearance_text_section">Texto de las notas</string>
+    <string name="appearance_text_desc">El valor predeterminado de cada nota. Una nota puede fijar el suyo desde su menú.</string>
+    <string name="note_text_use_default">Usar el texto predeterminado</string>
 </resources>
