@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -14,13 +15,18 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.presentation.designsystem.markerBoxSize
+import com.pasich.encly.presentation.designsystem.markerGap
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.screen.editnote.EditNoteSettingsProvider
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -44,7 +50,8 @@ class ChecklistLayoutTest {
 
     private var spacing by mutableStateOf(NoteLineSpacing.DEFAULT)
     private var size by mutableIntStateOf(16)
-    private var halfCap = 0f
+    private var metrics = LineMetrics(0f, 0f)
+    private var fontDp = 0.dp
 
     private lateinit var block: Block.ListBlock
 
@@ -59,8 +66,9 @@ class ChecklistLayoutTest {
         rule.setContent {
             EnclyTheme(settings = ThemeSettings(), dark = false) {
                 EditNoteSettingsProvider(baseFontSize = size.sp, lineSpacing = spacing) {
-                    // The very value the row aligns by (Robolectric draws no real outlines to measure).
-                    halfCap = rememberHalfCapHeight()
+                    // The very metrics the row works from (Robolectric draws no real outlines to measure).
+                    metrics = rememberLineMetrics()
+                    fontDp = listFontDp()
                     ListBlock(block, actions)
                 }
             }
@@ -73,54 +81,74 @@ class ChecklistLayoutTest {
         rule.waitForIdle()
     }
 
-    private fun boxAndText(): Pair<androidx.compose.ui.geometry.Rect, androidx.compose.ui.geometry.Rect> {
-        val box = rule.onNode(isCheckbox).fetchSemanticsNode().boundsInRoot
+    private fun boxAndText(): Pair<Rect, Rect> {
+        val box = rule.onNodeWithTag(CHECK_BOX_TAG, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         val field = rule.onNode(hasSetTextAction()).fetchSemanticsNode().boundsInRoot
         return box to field
     }
 
-    private fun firstBaseline(): Float {
+    /** The field's own text layout, as the semantics report it. */
+    private fun fieldLayout(): TextLayoutResult {
         val node = rule.onNode(hasSetTextAction()).fetchSemanticsNode()
-        val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        val results = mutableListOf<TextLayoutResult>()
         node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
-        return node.boundsInRoot.top + results.single().getLineBaseline(0)
+        return results.single()
     }
 
-    @Test
-    fun theBoxIsCentredOnTheFirstLinesCapitalsAtEveryLineSpacingAndSize() {
-        start("milk")
-        for (spacing in NoteLineSpacing.entries) {
-            for (size in listOf(14, 24)) {
-                show(spacing, size)
-                val (box, _) = boxAndText()
-                assertEquals("$spacing $size", firstBaseline() - halfCap, box.center.y, 1f)
-            }
+    /** Where the first line's glyphs are centred, from the field's top, by the rule the row follows. */
+    private fun glyphCentre(): Float {
+        val layout = fieldLayout()
+        val top = layout.getLineTop(0)
+        val bottom = layout.getLineBottom(0)
+        return if (bottom - top >=
+            metrics.naturalHeight
+        ) {
+            (top + bottom) / 2f
+        } else {
+            layout.getLineBaseline(0) - metrics.halfCap
         }
     }
 
+    private val spacings = NoteLineSpacing.entries
+    private val sizes = listOf(12, 16, 24, 32)
+
     @Test
-    fun theGapToTheTextIsTheMarkerColumnAtEverySpacingAndSize() {
-        val widths = mutableSetOf<Float>()
+    fun theBoxIsCentredOnTheFirstLineAtEveryLineSpacingAndSize() {
         start("milk")
-        for (spacing in NoteLineSpacing.entries) {
-            for (size in listOf(14, 24)) {
+        for (spacing in spacings) {
+            for (size in sizes) {
                 show(spacing, size)
                 val (box, field) = boxAndText()
-                widths += field.left - box.left
+                assertEquals("$spacing $size", field.top + glyphCentre(), box.center.y, 1f)
             }
         }
-        assertEquals(widths.toString(), 1, widths.size)
+    }
+
+    @Test
+    fun theBoxAndTheGapFollowTheTextSize() {
+        start("milk")
+        val density = rule.density.density
+        for (spacing in spacings) {
+            for (size in sizes) {
+                show(spacing, size)
+                val (box, field) = boxAndText()
+                val side = markerBoxSize(fontDp).value * density
+                assertEquals("$spacing $size box", side, box.width, 1f)
+                assertEquals("$spacing $size box", side, box.height, 1f)
+                assertEquals("$spacing $size gap", markerGap(fontDp).value * density, field.left - box.right, 1f)
+            }
+        }
     }
 
     @Test
     fun aLongItemKeepsTheBoxOnItsFirstLine() {
-        val long = "one\ntwo\nthree\nfour"
-        start(long)
-        show(NoteLineSpacing.COMPACT, 24)
-        val (box, field) = boxAndText()
-        assertEquals("$box $field", true, field.height > box.height * 2)
-        // The box column is one line tall and starts where the text field's padding does.
-        assertEquals(6f, field.top - box.top, 1f)
+        start("one\ntwo\nthree\nfour")
+        for (spacing in spacings) {
+            show(spacing, 24)
+            val (box, field) = boxAndText()
+            assertEquals("$spacing", true, field.height > box.height * 2)
+            assertEquals("$spacing", field.top + glyphCentre(), box.center.y, 1f)
+        }
     }
 
     @Test

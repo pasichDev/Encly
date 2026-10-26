@@ -48,3 +48,21 @@ internal fun NoteLineSpacing.listItemGap(checklist: Boolean, base: Dp): Dp = whe
     this == NoteLineSpacing.COMFORTABLE -> LIST_ITEM_GAP_COMFORTABLE
     else -> base
 }
+
+// A list's marker follows the text: the checkbox and the gap after it grow with the font size, and
+// bullets and numbers use the same column, so every kind of list lines its text up the same way.
+private const val MARKER_BOX_PER_FONT = 1.1f
+private const val MARKER_GAP_PER_FONT = 0.5f
+private val MARKER_BOX_MIN = 16.dp
+private val MARKER_BOX_MAX = 28.dp
+private val MARKER_GAP_MIN = 6.dp
+private val MARKER_GAP_MAX = 14.dp
+
+/** The checkbox side for list text of [font] size: 1.1 times it, from 16 to 28 dp. */
+internal fun markerBoxSize(font: Dp): Dp = (font * MARKER_BOX_PER_FONT).coerceIn(MARKER_BOX_MIN, MARKER_BOX_MAX)
+
+/** The gap between the marker and the text for list text of [font] size: half of it, from 6 to 14 dp. */
+internal fun markerGap(font: Dp): Dp = (font * MARKER_GAP_PER_FONT).coerceIn(MARKER_GAP_MIN, MARKER_GAP_MAX)
+
+/** The marker column of a list: the box and the gap after it. */
+internal fun markerColumn(font: Dp): Dp = markerBoxSize(font) + markerGap(font)
