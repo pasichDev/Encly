@@ -56,10 +56,24 @@ internal fun rememberSyncedTextFieldState(
     LaunchedEffect(modelChanges) {
         modelChanges.collect {
             val stored = currentModel() ?: return@collect
-            if (sync.isExternal(stored) && state.text.toString() != stored) state.setTextAndPlaceCursorAtEnd(stored)
+            if (sync.isExternal(stored) && state.text.toString() != stored) state.replaceWith(stored)
         }
     }
     return state
+}
+
+/**
+ * Makes the field read [stored]. Text put in front of what the field already holds (the paragraph
+ * above merged into it) is inserted as an edit, so the field keeps its focus and composition;
+ * anything else replaces the text, with the cursor at the end.
+ */
+internal fun TextFieldState.replaceWith(stored: String) {
+    val current = text.toString()
+    if (current.isNotEmpty() && stored.length > current.length && stored.endsWith(current)) {
+        edit { replace(0, 0, stored.substring(0, stored.length - current.length)) }
+    } else {
+        setTextAndPlaceCursorAtEnd(stored)
+    }
 }
 
 /**
