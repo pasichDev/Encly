@@ -58,6 +58,7 @@ fun QuoteBlock(
     // Enter ends the quote: the text after the cursor goes on as a paragraph (BlockInput).
     val input = remember { BlockInput(BlockField.Styled) { actions } }
     val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
+    RegisterCaretAtX(blockActions, state, highlight)
     var focused by remember { mutableStateOf(false) }
     val quoteStyle = EnclyTheme.typography.quote.copy(
         color = MaterialTheme.colorScheme.onSurface,
@@ -97,7 +98,7 @@ fun QuoteBlock(
                 .onFocusChanged { focused = it.isFocused }
                 .fillMaxWidth()
                 .then(highlight.modifier)
-                .textBlockKeys(state, blockActions),
+                .textBlockKeys(state, blockActions, highlight),
             decorator = { innerTextField ->
                 QuoteDecoration(state.text.isEmpty() && focused, quoteStyle, innerTextField)
             },

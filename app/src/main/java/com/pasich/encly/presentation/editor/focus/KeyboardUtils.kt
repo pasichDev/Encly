@@ -24,12 +24,24 @@ object KeyboardUtils {
         onNavigateDown: () -> Boolean = { false },
         onEnterPressed: () -> Boolean = { false },
         onBackspaceAtStart: () -> Boolean = { false },
+        onNavigateLeft: () -> Boolean = { false },
+        onNavigateRight: () -> Boolean = { false },
+        line: CaretLine? = null,
     ): Boolean = handleKey(
         key = event.key,
         type = event.type,
         text = text,
         cursorPosition = cursorPosition,
-        handlers = KeyHandlers(onBackspaceEmpty, onNavigateUp, onNavigateDown, onEnterPressed, onBackspaceAtStart),
+        handlers = KeyHandlers(
+            onBackspaceEmpty = onBackspaceEmpty,
+            onNavigateUp = onNavigateUp,
+            onNavigateDown = onNavigateDown,
+            onEnterPressed = onEnterPressed,
+            onBackspaceAtStart = onBackspaceAtStart,
+            onNavigateLeft = onNavigateLeft,
+            onNavigateRight = onNavigateRight,
+        ),
+        line = line,
     )
 
     /**
@@ -43,6 +55,8 @@ object KeyboardUtils {
         val onNavigateDown: () -> Boolean = { false },
         val onEnterPressed: () -> Boolean = { false },
         val onBackspaceAtStart: () -> Boolean = { false },
+        val onNavigateLeft: () -> Boolean = { false },
+        val onNavigateRight: () -> Boolean = { false },
     )
 
     /** Acts once per key press, on key-down; key-ups are left to the field, which ignores them. */
@@ -52,24 +66,50 @@ object KeyboardUtils {
         text: CharSequence,
         cursorPosition: Int,
         handlers: KeyHandlers,
+        line: CaretLine? = null,
     ): Boolean {
         if (type != KeyEventType.KeyDown) return false
         return when {
-            key == Key.DirectionUp -> {
-                if (text.isEmpty() || cursorPosition == 0) handlers.onNavigateUp() else false
-            }
-
-            key == Key.DirectionDown -> {
-                if (text.isEmpty() || cursorPosition == text.length) handlers.onNavigateDown() else false
-            }
-
+            key.isArrow() -> handleArrow(key, text, cursorPosition, handlers, line)
             key == Key.Enter -> handlers.onEnterPressed()
-
             key.keyCode == Key.Backspace.keyCode -> handleBackspace(text, cursorPosition, handlers)
-
             else -> false
         }
     }
+
+    /**
+     * Up and Down leave the field only from its first or last visual line (elsewhere the field moves
+     * the cursor a line), Left only from the start and Right only from the end. A selection
+     * (cursorPosition -1) is not a cursor: the field moves within it. An empty field is left by any of them.
+     */
+    private fun handleArrow(
+        key: Key,
+        text: CharSequence,
+        cursorPosition: Int,
+        handlers: KeyHandlers,
+        line: CaretLine?,
+    ): Boolean {
+        val vertical = key == Key.DirectionUp || key == Key.DirectionDown
+        val leaves = (cursorPosition >= 0 && atEdge(key, text.length, cursorPosition, line)) ||
+            (vertical && text.isEmpty())
+        return leaves && when (key) {
+            Key.DirectionUp -> handlers.onNavigateUp()
+            Key.DirectionDown -> handlers.onNavigateDown()
+            Key.DirectionLeft -> handlers.onNavigateLeft()
+            else -> handlers.onNavigateRight()
+        }
+    }
+
+    /** Whether the cursor stands where [key] would take it out of the field. */
+    private fun atEdge(key: Key, length: Int, cursor: Int, line: CaretLine?): Boolean = when (key) {
+        Key.DirectionUp -> line?.onFirst ?: (cursor == 0)
+        Key.DirectionDown -> line?.onLast ?: (cursor == length)
+        Key.DirectionLeft -> cursor == 0
+        else -> cursor == length
+    }
+
+    private fun Key.isArrow() =
+        this == Key.DirectionUp || this == Key.DirectionDown || this == Key.DirectionLeft || this == Key.DirectionRight
 
     private fun handleBackspace(text: CharSequence, cursorPosition: Int, handlers: KeyHandlers): Boolean = when {
         // Inside the text, or a selection to delete: the field's own Backspace.

@@ -80,4 +80,42 @@ class KeyboardUtilsTest {
     fun backspaceWithASelectionIsLeftToTheField() {
         assertFalse(KeyboardUtils.handleKey(Key.Backspace, KeyEventType.KeyDown, "milk", -1, handlers))
     }
+
+    private var moves = mutableListOf<String>()
+    private val navigating = KeyboardUtils.KeyHandlers(
+        onNavigateUp = { moves.add("up").let { true } },
+        onNavigateDown = { moves.add("down").let { true } },
+        onNavigateLeft = { moves.add("left").let { true } },
+        onNavigateRight = { moves.add("right").let { true } },
+    )
+
+    private fun arrow(key: Key, cursor: Int, text: String = "milk", line: CaretLine? = null) =
+        KeyboardUtils.handleKey(key, KeyEventType.KeyDown, text, cursor, navigating, line)
+
+    @Test
+    fun upAndDownLeaveTheFieldOnlyFromItsFirstAndLastLine() {
+        val middle = CaretLine(onFirst = false, onLast = false, x = 5f)
+        assertFalse(arrow(Key.DirectionUp, cursor = 2, line = middle))
+        assertFalse(arrow(Key.DirectionDown, cursor = 2, line = middle))
+        assertTrue(arrow(Key.DirectionUp, cursor = 2, line = CaretLine(true, false, 5f)))
+        assertTrue(arrow(Key.DirectionDown, cursor = 2, line = CaretLine(false, true, 5f)))
+        assertEquals(listOf("up", "down"), moves)
+    }
+
+    @Test
+    fun withoutALayoutOnlyTheEndsOfTheTextCount() {
+        assertFalse(arrow(Key.DirectionUp, cursor = 2))
+        assertTrue(arrow(Key.DirectionUp, cursor = 0))
+        assertTrue(arrow(Key.DirectionDown, cursor = 4))
+    }
+
+    @Test
+    fun leftAtTheStartAndRightAtTheEndMoveOnAndAnywhereElseStayInTheField() {
+        assertTrue(arrow(Key.DirectionLeft, cursor = 0))
+        assertTrue(arrow(Key.DirectionRight, cursor = 4))
+        assertFalse(arrow(Key.DirectionLeft, cursor = 1))
+        assertFalse(arrow(Key.DirectionRight, cursor = 3))
+        assertFalse(arrow(Key.DirectionLeft, cursor = -1))
+        assertEquals(listOf("left", "right"), moves)
+    }
 }

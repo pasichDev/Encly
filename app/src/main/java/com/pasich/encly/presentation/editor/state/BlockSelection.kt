@@ -10,13 +10,18 @@ import kotlinx.coroutines.flow.receiveAsFlow
 
 /**
  * Asks the editor UI to focus the field of block [blockId]: the cursor at [caret] (clamped to the
- * text), else at the end when [cursorToEnd]. In a list, [itemId] names the item to focus.
+ * text), else at the end when [cursorToEnd]. In a list, [itemId] names the item to focus. With a
+ * [caretX] the cursor goes to that horizontal position instead, so Up and Down keep the column.
  */
 data class FocusRequest(
     val blockId: String,
     val cursorToEnd: Boolean = false,
     val caret: Int? = null,
     val itemId: String? = null,
+    /** Put the cursor at this horizontal position of the target's first line (last, [fromBelow]). */
+    val caretX: Float? = null,
+    /** The cursor comes up from below: a list takes its last item, a field its last line. */
+    val fromBelow: Boolean = false,
 ) {
     /** Where the cursor goes: an offset, [Int.MAX_VALUE] for the end, null to leave it. */
     val caretOffset: Int? get() = caret ?: if (cursorToEnd) Int.MAX_VALUE else null

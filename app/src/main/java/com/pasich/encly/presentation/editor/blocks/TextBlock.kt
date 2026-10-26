@@ -53,6 +53,7 @@ fun TextBlock(
     val actions by rememberUpdatedState(blockActions)
     val input = remember { BlockInput(BlockField.Paragraph) { actions } }
     val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
+    RegisterCaretAtX(blockActions, state, highlight)
 
     BasicTextField(
         state = state,
@@ -66,7 +67,7 @@ fun TextBlock(
         modifier = modifier
             .fillMaxWidth()
             .then(highlight.modifier)
-            .textBlockKeys(state, blockActions),
+            .textBlockKeys(state, blockActions, highlight),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
                 SlashMenuPopup(field = state, slash = blockActions.slash)

@@ -7,7 +7,7 @@ import androidx.compose.ui.focus.FocusRequester
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.presentation.editor.state.FocusRequest
-import com.pasich.encly.presentation.editor.state.previousFocusableIndex
+import com.pasich.encly.presentation.editor.state.canTakeFocus
 import kotlinx.coroutines.delay
 
 /** How many frames' worth of retries a new block gets to compose before focusing it. */
@@ -30,6 +30,7 @@ private const val TAG = "BlockFocusRegistry"
 class BlockFocusRegistry(private val blocks: () -> List<Block>) {
     private val focusTargets = mutableMapOf<String, (FocusRequest) -> Unit>()
     private val caretCallbacks = mutableMapOf<String, (Int) -> Unit>()
+    private val caretXCallbacks = mutableMapOf<String, (Float, Boolean) -> Unit>()
 
     /**
      * Registers how to focus the field of block [blockId].
@@ -38,7 +39,12 @@ class BlockFocusRegistry(private val blocks: () -> List<Block>) {
     fun registerFocusTarget(blockId: String, requestFocus: () -> Unit): () -> Unit =
         focusTargets.register(blockId) { request ->
             requestFocus()
-            request.caretOffset?.let { caretCallbacks[blockId]?.invoke(it) }
+            val offset = request.caretOffset
+            val x = request.caretX
+            when {
+                x != null -> caretXCallbacks[blockId]?.invoke(x, request.fromBelow)
+                offset != null -> caretCallbacks[blockId]?.invoke(offset)
+            }
         }
 
     /**
@@ -55,6 +61,14 @@ class BlockFocusRegistry(private val blocks: () -> List<Block>) {
      * @return a function that removes this registration (not a newer one for the same block)
      */
     fun registerCaret(blockId: String, callback: (Int) -> Unit): () -> Unit = caretCallbacks.register(blockId, callback)
+
+    /**
+     * Registers how to put the cursor of block [blockId]'s field at a horizontal position, on its
+     * last line when it arrives from below (the callback's second argument), else on its first.
+     * @return a function that removes this registration (not a newer one for the same block)
+     */
+    fun registerCaretAtX(blockId: String, callback: (Float, Boolean) -> Unit): () -> Unit =
+        caretXCallbacks.register(blockId, callback)
 
     /** Focuses the field of [blockId] now, the cursor at its end with [cursorToEnd]; see [focus]. */
     fun focus(blockId: String, cursorToEnd: Boolean = false): Boolean = focus(FocusRequest(blockId, cursorToEnd))
@@ -94,19 +108,21 @@ class BlockFocusRegistry(private val blocks: () -> List<Block>) {
         return false
     }
 
-    /** The block after [blockId]; null when it is the last one. */
-    fun nextBlock(blockId: String): Block? {
+    /**
+     * The next block after [blockId] that has a field to put the cursor in (a separator or a saved
+     * link card has none); null when there is none.
+     */
+    fun nextFocusableBlock(blockId: String): Block? {
         val list = blocks()
         val index = list.indexOfFirst { it.id == blockId }
-        return if (index >= 0) list.getOrNull(index + 1) else null
+        return if (index >= 0) list.drop(index + 1).firstOrNull { it.canTakeFocus() } else null
     }
 
-    /** The focusable block above [blockId] (see [previousFocusableIndex]); null when there is none. */
+    /** The focusable block above [blockId] (the nearest one with a field); null when there is none. */
     fun previousFocusableBlock(blockId: String): Block? {
         val list = blocks()
         val index = list.indexOfFirst { it.id == blockId }
-        val previous = list.previousFocusableIndex(index)
-        return if (index >= 0 && previous != index) list.getOrNull(previous) else null
+        return if (index > 0) list.take(index).lastOrNull { it.canTakeFocus() } else null
     }
 }
 

@@ -33,6 +33,7 @@ fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier =
     // Enter splits the heading; the text after the cursor goes on as a paragraph (BlockInput).
     val input = remember { BlockInput(BlockField.Styled) { actions } }
     val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
+    RegisterCaretAtX(blockActions, state, highlight)
     var focused by remember { mutableStateOf(false) }
 
     BasicTextField(
@@ -48,7 +49,7 @@ fun HBlock(block: Block.HBlock, blockActions: BlockActions, modifier: Modifier =
             .fillMaxWidth()
             .padding(top = EnclyTheme.spacing.labelGap)
             .then(highlight.modifier)
-            .textBlockKeys(state, blockActions),
+            .textBlockKeys(state, blockActions, highlight),
         decorator = { innerTextField ->
             Box(modifier = Modifier.fillMaxWidth()) {
                 if (state.text.isEmpty() && focused) {

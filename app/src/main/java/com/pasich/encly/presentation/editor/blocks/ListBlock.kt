@@ -52,7 +52,10 @@ import com.pasich.encly.presentation.designsystem.lineHeight
 import com.pasich.encly.presentation.designsystem.listItemGap
 import com.pasich.encly.presentation.editor.BlockActions
 import com.pasich.encly.presentation.editor.focus.KeyboardUtils
-import com.pasich.encly.presentation.editor.state.LineBreak
+import com.pasich.encly.presentation.editor.focus.caretLine
+import com.pasich.encly.presentation.editor.focus.caretOffsetFor
+import com.pasich.encly.presentation.editor.state.CaretMove
+import com.pasich.encly.presentation.editor.state.goesUp
 import com.pasich.encly.presentation.screen.editnote.LocalNoteLineSpacing
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -63,12 +66,19 @@ private const val WIDE_MARKER_FROM = 10
 private const val FOCUS_FRAMES = 5
 
 /** Which item takes focus next, and where its cursor goes (null: where it is; [Int.MAX_VALUE]: the end). */
-private data class ItemFocus(val itemId: String, val caret: Int?)
+private data class ItemFocus(
+    val itemId: String,
+    val caret: Int?,
+    /** A horizontal position to put the cursor at, on the item's last line when [fromBelow], else its first. */
+    val caretX: Float? = null,
+    val fromBelow: Boolean = false,
+)
 
 /** The list's item fields by item id, and the item to focus once it is composed. */
 private class ListFocus {
     val requesters = mutableMapOf<String, FocusRequester>()
     val fieldStates = mutableMapOf<String, TextFieldState>()
+    val highlights = mutableMapOf<String, FieldHighlight>()
     var pending by mutableStateOf<ItemFocus?>(null)
 
     /** The item whose field has focus; its cursor is reported so undo can put it back. */
@@ -87,8 +97,8 @@ private fun rememberListFocus(block: Block.ListBlock, blockActions: BlockActions
         val unregister = blockActions.registerFieldsFocusTarget { request ->
             val items = block.items.value
             val item = request.itemId?.let { id -> items.firstOrNull { it.id == id } }
-                ?: if (request.cursorToEnd) items.lastOrNull() else items.firstOrNull()
-            item?.let { focus.pending = ItemFocus(it.id, request.caretOffset) }
+                ?: if (request.cursorToEnd || request.fromBelow) items.lastOrNull() else items.firstOrNull()
+            item?.let { focus.pending = ItemFocus(it.id, request.caretOffset, request.caretX, request.fromBelow) }
         }
         onDispose { unregister() }
     }
@@ -100,8 +110,17 @@ private fun rememberListFocus(block: Block.ListBlock, blockActions: BlockActions
             if (requester != null) {
                 runCatching { requester.requestFocus() }
                 val stored = block.items.value.firstOrNull { it.id == request.itemId }?.value
-                if (request.caret != null && stored != null) {
-                    focus.fieldStates[request.itemId]?.placeCaret(stored, request.caret)
+                val state = focus.fieldStates[request.itemId]
+                if (stored != null && state != null) {
+                    if (request.caretX != null) {
+                        val geometry = focus.highlights[request.itemId]?.geometry()
+                        state.placeCaret(
+                            stored,
+                            caretOffsetFor(geometry, request.caretX, request.fromBelow, stored.length),
+                        )
+                    } else if (request.caret != null) {
+                        state.placeCaret(stored, request.caret)
+                    }
                 }
                 focus.pending = null
                 return@LaunchedEffect
@@ -150,6 +169,7 @@ fun ListBlock(
                     onEdit = { text -> editor.setText(item.id, text) },
                 )
                 val requester = remember { FocusRequester() }
+                val highlight = rememberFieldHighlight(blockActions.highlights, block.id, item.id)
                 LaunchedEffect(item.id, state) {
                     snapshotFlow { state.selection.start }.collect { offset ->
                         if (focus.focusedItem == item.id) actions.onListItemCaret(item.id, offset)
@@ -158,7 +178,9 @@ fun ListBlock(
                 DisposableEffect(item.id) {
                     focus.requesters[item.id] = requester
                     focus.fieldStates[item.id] = state
+                    focus.highlights[item.id] = highlight
                     onDispose {
+                        focus.highlights.remove(item.id)
                         focus.requesters.remove(item.id)
                         focus.fieldStates.remove(item.id)
                     }
@@ -166,7 +188,7 @@ fun ListBlock(
                 ListItemRow(
                     item = item,
                     marker = marker.forItem(itemIndex + 1),
-                    field = ItemField(state, rememberFieldHighlight(blockActions.highlights, block.id, item.id)),
+                    field = ItemField(state, highlight),
                     editor = editor,
                     isLocked = isLocked,
                     fieldModifier = fieldModifier.focusRequester(requester).onFocusChanged { focusState ->
@@ -234,13 +256,21 @@ private fun ListItemRow(
                 .then(fieldModifier)
                 .onPreviewKeyEvent { event ->
                     val selection = state.selection
+                    val line = if (event.isArrow()) {
+                        caretLine(field.highlight.geometry(), state.text.length, selection.start)
+                    } else {
+                        null
+                    }
                     KeyboardUtils.handleKeyEvent(
                         event = event,
                         text = state.text,
                         cursorPosition = if (selection.collapsed) selection.start else -1,
                         onBackspaceAtStart = { editor.backspaceAtStart(item.id) },
-                        onNavigateUp = { editor.moveFocus(item.id, up = true) },
-                        onNavigateDown = { editor.moveFocus(item.id, up = false) },
+                        onNavigateUp = { editor.moveFocus(item.id, CaretMove.Up(line?.x)) },
+                        onNavigateDown = { editor.moveFocus(item.id, CaretMove.Down(line?.x)) },
+                        onNavigateLeft = { editor.moveFocus(item.id, CaretMove.Left) },
+                        onNavigateRight = { editor.moveFocus(item.id, CaretMove.Right) },
+                        line = line,
                     )
                 },
         )
@@ -278,25 +308,32 @@ private class ListEditor(
     /** Backspace at the start of an item (see listBackspaceAtStart). */
     fun backspaceAtStart(itemId: String): Boolean = actions().onListBackspaceAtStart(itemId)
 
-    /** Up/Down: the item above or below, then the block above or below the list. */
-    fun moveFocus(itemId: String, up: Boolean): Boolean {
+    /**
+     * A cursor key that leaves item [itemId]'s field: the item above or below takes the cursor (at the
+     * same column for Up and Down), and from the first or last item the block above or below does.
+     * False when there is nowhere to go; nothing is added.
+     */
+    fun moveFocus(itemId: String, move: CaretMove): Boolean {
         val at = items.indexOfFirst { it.id == itemId }
-        val neighbour = items.getOrNull(if (up) at - 1 else at + 1)
-        return when {
-            neighbour != null -> {
-                focusItem(ItemFocus(neighbour.id, caret = if (up) Int.MAX_VALUE else null))
-                true
-            }
-
-            up -> actions().navigateToPrevious()
-
-            else -> {
-                // The last item of the last block: a new item, as Enter at its end would add.
-                val text = items.getOrNull(at)?.value.orEmpty()
-                if (!actions().navigateToNext()) actions().onListLineBreak(itemId, LineBreak(text, listOf("", ""), ""))
-                true
-            }
+        val neighbour = items.getOrNull(if (move.goesUp) at - 1 else at + 1)
+        if (neighbour == null) return actions().navigate(move)
+        val focus = when (move) {
+            is CaretMove.Up -> ItemFocus(neighbour.id, null, move.x, fromBelow = true)
+            is CaretMove.Down -> ItemFocus(neighbour.id, null, move.x)
+            CaretMove.Left -> ItemFocus(neighbour.id, Int.MAX_VALUE)
+            CaretMove.Right -> ItemFocus(neighbour.id, 0)
         }
+        focusItem(
+            when {
+                // Without a known column, Up lands at the end of the item above and Down at the start of the one below.
+                focus.caretX == null && move is CaretMove.Up -> ItemFocus(neighbour.id, Int.MAX_VALUE)
+
+                focus.caretX == null && move is CaretMove.Down -> ItemFocus(neighbour.id, 0)
+
+                else -> focus
+            },
+        )
+        return true
     }
 }
 

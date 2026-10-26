@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import com.pasich.encly.presentation.editor.FindHighlights
+import com.pasich.encly.presentation.editor.focus.CaretGeometry
+import com.pasich.encly.presentation.editor.focus.geometry
 
 private const val MATCH_ALPHA = 0.18f
 private const val CURRENT_MATCH_ALPHA = 0.4f
@@ -28,6 +30,9 @@ internal class FieldHighlight(
     private val currentMatch: Color,
 ) {
     private var layout by mutableStateOf<(() -> TextLayoutResult?)?>(null)
+
+    /** The field's lines as the cursor moves between fields need them; null until it is measured. */
+    fun geometry(): CaretGeometry? = layout?.invoke()?.geometry()
 
     val onTextLayout: Density.(() -> TextLayoutResult?) -> Unit = { getResult ->
         if (layout == null) layout = getResult

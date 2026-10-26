@@ -6,11 +6,14 @@ import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
+import com.pasich.encly.presentation.editor.state.CaretMove
 import com.pasich.encly.presentation.editor.state.FocusRequest
 import com.pasich.encly.presentation.editor.state.LineBreak
 import com.pasich.encly.presentation.editor.state.Shortcut
 import com.pasich.encly.presentation.editor.state.SlashCommand
 import com.pasich.encly.presentation.editor.state.SlashMenu
+import com.pasich.encly.presentation.editor.state.goesUp
+import com.pasich.encly.presentation.editor.state.requestFor
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import kotlinx.coroutines.flow.StateFlow
 
@@ -98,21 +101,18 @@ internal class BlockActionsImpl(
 
     override fun onSlashTyped(text: String, started: Boolean) = viewModel.onSlashTyped(block, text, started)
 
-    override fun navigateToNext(): Boolean =
-        viewModel.moveFocusTo(focusRegistry.nextBlock(block.id), focusRegistry, cursorToEnd = false)
+    override fun navigate(move: CaretMove): Boolean {
+        val target = if (move.goesUp) {
+            focusRegistry.previousFocusableBlock(block.id)
+        } else {
+            focusRegistry.nextFocusableBlock(block.id)
+        }
+        // Only a field that is on screen can be focused; otherwise the key stays with the field.
+        val moved = target != null && focusRegistry.focus(move.requestFor(target.id))
+        if (moved) viewModel.onBlockFocused(target!!)
+        return moved
+    }
 
-    override fun navigateToPrevious(): Boolean =
-        viewModel.moveFocusTo(focusRegistry.previousFocusableBlock(block.id), focusRegistry, cursorToEnd = true)
-}
-
-/** Focuses [target] now (its field is on screen) and records it as the block the user works on. */
-private fun EditNoteViewModel.moveFocusTo(
-    target: Block?,
-    focusRegistry: BlockFocusRegistry,
-    cursorToEnd: Boolean,
-): Boolean {
-    if (target == null) return false
-    onBlockFocused(target)
-    focusRegistry.focus(target.id, cursorToEnd)
-    return true
+    override fun registerCaretAtX(callback: (Float, Boolean) -> Unit): () -> Unit =
+        focusRegistry.registerCaretAtX(block.id, callback)
 }

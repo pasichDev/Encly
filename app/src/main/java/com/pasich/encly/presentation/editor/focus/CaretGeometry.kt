@@ -1,0 +1,56 @@
+package com.pasich.encly.presentation.editor.focus
+
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.TextLayoutResult
+
+/**
+ * How a text field's lines are laid out, as far as moving the cursor between fields needs: which
+ * visual line an offset is on, how far from the field's start it stands, and which offset a
+ * horizontal position on a line points at. Abstract so the rules are testable without a layout.
+ */
+interface CaretGeometry {
+    val lineCount: Int
+    fun lineOf(offset: Int): Int
+    fun xOf(offset: Int): Float
+    fun offsetAt(line: Int, x: Float): Int
+}
+
+/** [this] layout as a [CaretGeometry]. */
+fun TextLayoutResult.geometry(): CaretGeometry = object : CaretGeometry {
+    override val lineCount: Int get() = this@geometry.lineCount
+    override fun lineOf(offset: Int): Int = getLineForOffset(offset)
+    override fun xOf(offset: Int): Float = getCursorRect(offset).left
+    override fun offsetAt(line: Int, x: Float): Int {
+        val middle = (getLineTop(line) + getLineBottom(line)) / 2f
+        return getOffsetForPosition(Offset(x, middle))
+    }
+}
+
+/**
+ * Where the cursor stands among a field's visual lines: [onFirst] and [onLast] say whether Up or
+ * Down would leave the field, [x] is its horizontal position (null when unknown).
+ */
+data class CaretLine(val onFirst: Boolean, val onLast: Boolean, val x: Float?)
+
+/**
+ * The [CaretLine] of the cursor at [cursor] in a text of [length] characters laid out as
+ * [geometry]. Without a layout (not measured yet) only the ends of the text count as the first and
+ * last line, as they did before layouts were consulted.
+ */
+fun caretLine(geometry: CaretGeometry?, length: Int, cursor: Int): CaretLine {
+    if (geometry == null || geometry.lineCount <= 0) return CaretLine(cursor <= 0, cursor >= length, null)
+    val at = cursor.coerceIn(0, length)
+    val line = geometry.lineOf(at)
+    return CaretLine(onFirst = line <= 0, onLast = line >= geometry.lineCount - 1, x = geometry.xOf(at))
+}
+
+/**
+ * The offset to put the cursor at when it arrives in a field at horizontal position [x]: on the
+ * field's last line when it comes from below ([fromBelow]), else on its first. Without a layout, the
+ * end or the start of the text.
+ */
+fun caretOffsetFor(geometry: CaretGeometry?, x: Float, fromBelow: Boolean, length: Int): Int {
+    if (geometry == null || geometry.lineCount <= 0) return if (fromBelow) length else 0
+    val line = if (fromBelow) geometry.lineCount - 1 else 0
+    return geometry.offsetAt(line, x).coerceIn(0, length)
+}
