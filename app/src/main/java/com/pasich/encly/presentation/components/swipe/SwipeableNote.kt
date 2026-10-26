@@ -10,7 +10,7 @@ import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -179,7 +179,10 @@ fun SwipeableNote(
     ) {
         SwipeBackground(drag, directions, note, reducedMotion, Modifier.matchParentSize())
         // The offset is read while placing, not while composing: a drag frame does not recompose the card.
-        Box(modifier = Modifier.offset { IntOffset(drag.offset.value.roundToInt(), 0) }) { content(cardModifier) }
+        // absoluteOffset: the drag is physical, so the card must not mirror in right-to-left layouts.
+        Box(modifier = Modifier.absoluteOffset { IntOffset(drag.offset.value.roundToInt(), 0) }) {
+            content(cardModifier)
+        }
     }
 }
 
