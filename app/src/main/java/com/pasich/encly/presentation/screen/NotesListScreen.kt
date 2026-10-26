@@ -23,8 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.presentation.components.tiles.NoteItem
@@ -56,6 +57,8 @@ import com.pasich.encly.presentation.viewmodel.NotesEmptyState
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
 private const val SHEET_CLEAR_DELAY_MS = 200L
@@ -85,7 +88,7 @@ fun NotesList(
 
     NoteActionsSheet(
         sheet = sheet,
-        notes = state.notes,
+        observeNote = noteListViewModel::observeNote,
         onEvent = noteListViewModel::onEvent,
         onEdit = onItemClick,
         onDuplicate = onSecondActionClick,
@@ -134,7 +137,7 @@ internal class NoteSheetState {
 @Composable
 internal fun NoteActionsSheet(
     sheet: NoteSheetState,
-    notes: List<NoteListItem>,
+    observeNote: (Long) -> Flow<NoteWithTag?>,
     onEvent: (NoteListEvent) -> Unit,
     onEdit: (Note) -> Unit,
     onDuplicate: (Note) -> Unit,
@@ -142,12 +145,10 @@ internal fun NoteActionsSheet(
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    LaunchedEffect(notes, sheet.active?.note?.id) {
-        sheet.active?.let { current ->
-            val updated = notes.find { it.note.id == current.note.id }
-            if (updated != null && updated != current) sheet.active = updated
-        }
-    }
+    // The sheet shows the note as stored now, not as the list held it when the sheet opened: a tag
+    // changed here moves the note out of this list, and the next action must still act on the right row.
+    val activeId = sheet.active?.note?.id
+    val live by remember(activeId) { activeId?.let(observeNote) ?: emptyFlow() }.collectAsState(initial = null)
 
     fun close() {
         sheet.visible = false
@@ -158,10 +159,10 @@ internal fun NoteActionsSheet(
         }
     }
 
-    val item = sheet.active ?: return
+    val item = live ?: sheet.active?.noteWithTag ?: return
     NoteCardBottomSheet(
         isVisible = sheet.visible,
-        item = item.noteWithTag,
+        item = item,
         sheetState = bottomSheetState,
         onAction = { action ->
             when (action) {
@@ -341,20 +342,29 @@ internal data class NoteRow(val item: NoteListItem) : NoteEntry {
 }
 
 /**
- * [notes] (already ordered: pinned first, then by the chosen sort) as list rows. With [sections],
- * pinned notes sit under a "Pinned" heading and, when there are unpinned ones too, the rest under
- * "Others"; with no pinned note there are no headings at all.
+ * [notes] (already ordered: pinned first, then by the chosen sort, archived last) as list rows. With
+ * [sections], pinned notes sit under "Pinned", the rest under "Others" and, in a hidden tag's view, its
+ * archived notes under "Archive"; with neither pinned nor archived notes there are no headings at all.
  */
 internal fun noteEntries(notes: List<NoteListItem>, sections: Boolean): List<NoteEntry> {
     val rows = notes.map(::NoteRow)
-    val (pinned, others) = rows.partition { it.item.note.isPinned }
-    if (!sections || pinned.isEmpty()) return rows
+    val pinned = rows.filter { it.item.note.isPinned }
+    val archived = rows.filter { it.item.note.isArchived }
+    val others = rows - pinned.toSet() - archived.toSet()
+    // Plain notes alone need no heading; next to pinned or archived ones they are "Others".
+    if (!sections || (pinned.isEmpty() && archived.isEmpty())) return rows
     return buildList {
-        add(NoteSection(R.string.notes_section_pinned))
-        addAll(pinned)
+        if (pinned.isNotEmpty()) {
+            add(NoteSection(R.string.notes_section_pinned))
+            addAll(pinned)
+        }
         if (others.isNotEmpty()) {
             add(NoteSection(R.string.notes_section_other))
             addAll(others)
+        }
+        if (archived.isNotEmpty()) {
+            add(NoteSection(R.string.main_drawer_archive))
+            addAll(archived)
         }
     }
 }

@@ -27,7 +27,6 @@ import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.verifyNoInteractions
@@ -299,8 +298,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         rule.onNodeWithText(str(R.string.note_archive)).performScrollTo().performClick()
 
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
-        assertTrue(app.notes.updatedNotes.last().isArchived)
-        assertFalse(app.notes.updatedNotes.last().isPinned)
+        assertEquals(listOf("archived:$NOTE_ID=true"), app.notes.columnWrites)
     }
 
     @Test
@@ -314,7 +312,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         assertEquals(0, countText(str(R.string.note_pin)))
         rule.onNodeWithText(str(R.string.note_unarchive)).performScrollTo().performClick()
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
-        assertFalse(app.notes.updatedNotes.last().isArchived)
+        assertEquals(listOf("archived:$NOTE_ID=false"), app.notes.columnWrites)
     }
 
     @Test

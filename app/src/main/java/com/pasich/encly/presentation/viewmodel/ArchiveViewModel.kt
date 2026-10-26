@@ -31,7 +31,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ArchiveViewModel @Inject constructor(
-    observeNotesUseCase: ObserveNotesUseCase,
+    private val observeNotesUseCase: ObserveNotesUseCase,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,
     private val updateNoteTagUseCase: UpdateNoteTagUseCase,
@@ -55,6 +55,9 @@ class ArchiveViewModel @Inject constructor(
             _state.value = ArchiveState()
         }
     }
+
+    /** The note as stored now, for the actions sheet: it must not show what an older read held. */
+    fun observeNote(noteId: Long) = observeNotesUseCase.observeNote(noteId)
 
     fun onEvent(event: NoteListEvent) {
         viewModelScope.launch {

@@ -67,7 +67,7 @@ class ArchiveViewModelTest {
         viewModel.onEvent(NoteListEvent.ArchiveNote(note, archived = false))
         advanceUntilIdle()
 
-        assertEquals(note.copy(isArchived = false), repository.updatedNotes.single())
+        assertEquals(listOf("archived:1=false"), repository.columnWrites)
     }
 
     @Test
@@ -88,6 +88,7 @@ class ArchiveViewModelTest {
         viewModel.onEvent(NoteListEvent.PinNote(note, pinned = true))
         advanceUntilIdle()
 
-        assertEquals(listOf(note.copy(color = "blue")), repository.updatedNotes)
+        assertEquals(listOf("color:1=blue"), repository.columnWrites)
+        assertEquals(0, repository.updateCalls)
     }
 }

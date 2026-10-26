@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.Tag
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -114,6 +115,88 @@ class NotesDaoTest {
 
         assertEquals(true, stored.isPinned)
         assertEquals("teal", stored.color)
+    }
+
+    @Test
+    fun aColourWrittenAfterATagChangeKeepsTheNewTag() = runBlocking {
+        db.tagsDao().addTags(listOf(Tag(id = TAG, nameTag = "X"), Tag(id = OTHER_TAG, nameTag = "Y")))
+        val id = insert("note", tagId = TAG)
+        // What a stale sheet holds: the note as read in tag X's view.
+        val stale = checkNotNull(dao.getNoteById(id))
+
+        dao.updateTagId(id, OTHER_TAG)
+        dao.updateColor(stale.id, "teal")
+
+        val stored = checkNotNull(dao.getNoteById(id))
+        assertEquals(OTHER_TAG, stored.tagId)
+        assertEquals("teal", stored.color)
+    }
+
+    @Test
+    fun everySingleColumnWriteLeavesTheOtherColumnsAlone() = runBlocking {
+        val id = insert("note", tagId = TAG) {
+            description = "d"
+            color = "red"
+            isPinned = true
+        }
+        val before = checkNotNull(dao.getNoteById(id))
+
+        dao.updateDescription(id, "new")
+        dao.updateColor(id, "blue")
+        assertEquals(before.copy(description = "new", color = "blue"), dao.getNoteById(id))
+        dao.updateTagId(id, null)
+        assertEquals(before.copy(description = "new", color = "blue", tagId = null), dao.getNoteById(id))
+    }
+
+    @Test
+    fun archivingUnpinsInTheSameWriteAndUnarchivingKeepsThePinState() = runBlocking {
+        val id = insert("note") { isPinned = true }
+
+        dao.updateArchived(id, true)
+        val archived = checkNotNull(dao.getNoteById(id))
+        assertEquals(true, archived.isArchived)
+        assertEquals(false, archived.isPinned)
+
+        dao.updateArchived(id, false)
+        assertEquals(false, checkNotNull(dao.getNoteById(id)).isPinned)
+    }
+
+    @Test
+    fun anArchivedNoteCannotBePinnedButCanBeUnpinned() = runBlocking {
+        val id = insert("note") { isArchived = true }
+
+        dao.updatePinned(id, true)
+        assertEquals(false, checkNotNull(dao.getNoteById(id)).isPinned)
+
+        dao.updateArchived(id, false)
+        dao.updatePinned(id, true)
+        assertEquals(true, checkNotNull(dao.getNoteById(id)).isPinned)
+        dao.updatePinned(id, false)
+        assertEquals(false, checkNotNull(dao.getNoteById(id)).isPinned)
+    }
+
+    @Test
+    fun aTagsArchivedNotesAreReadByTag() = runBlocking {
+        insert("live", tagId = TAG)
+        insert("old", tagId = TAG) { isArchived = true }
+        insert("trashed", tagId = TAG) {
+            isArchived = true
+            isTrash = true
+        }
+        insert("other", tagId = OTHER_TAG) { isArchived = true }
+
+        assertEquals(listOf("old"), titles(dao.getArchivedNotesByTagId(TAG)))
+    }
+
+    @Test
+    fun aNoteCanBeObservedByIdWithItsTag() = runBlocking {
+        db.tagsDao().addTags(listOf(Tag(id = TAG, nameTag = "X")))
+        val id = insert("note", tagId = TAG) { isArchived = true }
+
+        val live = checkNotNull(dao.observeNoteWithTag(id).first())
+
+        assertEquals("X", live.tag?.nameTag)
+        assertEquals(null, dao.observeNoteWithTag(999).first())
     }
 
     private companion object {

@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -71,11 +71,16 @@ class TagListViewModel @Inject constructor(
     private val _operationFailures = MutableSharedFlow<TagOperationFailure>(extraBufferCapacity = 1)
     val operationFailures: SharedFlow<TagOperationFailure> = _operationFailures.asSharedFlow()
 
-    /** How many notes (not in the trash) carry each tag, by tag id. Read only by the tags screen. */
-    val noteCounts: StateFlow<Map<Long, Int>> = notesRepository.getAllNotesWithTag()
-        .map { notes -> notes.mapNotNull { it.note.tagId }.groupingBy { it }.eachCount() }
-        .catch { emit(emptyMap()) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
+    /**
+     * How many notes (not in the trash, archived ones included) carry each tag, by tag id. Read
+     * only by the tags screen: deleting a tag untags its archived notes too.
+     */
+    val noteCounts: StateFlow<Map<Long, Int>> =
+        combine(notesRepository.getAllNotesWithTag(), notesRepository.getArchivedNotesWithTag()) { live, archived ->
+            (live + archived).mapNotNull { it.note.tagId }.groupingBy { it }.eachCount()
+        }
+            .catch { emit(emptyMap()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
 
     private var persistedTags: List<Tag> = emptyList()
     private var reorderJob: Job? = null

@@ -33,25 +33,23 @@ class NoteUseCasesTest {
     }
 
     @Test
-    fun pinningChangesOnlyThePinAndAnArchivedNoteCannotBePinned() = runTest {
-        val useCase = UpdateNotePinStatusUseCase(repository)
+    fun pinningWritesOnlyThePin() = runTest {
+        UpdateNotePinStatusUseCase(repository)(note, isPinned = true)
 
-        useCase(note, isPinned = true)
-        useCase(note.copy(isArchived = true), isPinned = true)
-
-        assertEquals(note.copy(isPinned = true), repository.updatedNotes[0])
-        assertEquals(note.copy(isArchived = true, isPinned = false), repository.updatedNotes[1])
+        assertEquals(listOf("pinned:4=true"), repository.columnWrites)
+        assertEquals(0, repository.updateCalls)
     }
 
     @Test
-    fun archivingUnpinsAndUnarchivingKeepsThePin() = runTest {
+    fun archivingAndUnarchivingWriteOnlyTheArchiveFlag() = runTest {
         val useCase = UpdateNoteArchiveStatusUseCase(repository)
 
-        useCase(note.copy(isPinned = true), isArchived = true)
-        useCase(note.copy(isArchived = true), isArchived = false)
+        useCase(note, isArchived = true)
+        useCase(note, isArchived = false)
 
-        assertEquals(note.copy(isPinned = false, isArchived = true), repository.updatedNotes[0])
-        assertEquals(note.copy(isPinned = false, isArchived = false), repository.updatedNotes[1])
+        // The unpin that archiving implies is part of the same statement (see NotesDaoTest).
+        assertEquals(listOf("archived:4=true", "archived:4=false"), repository.columnWrites)
+        assertEquals(0, repository.updateCalls)
     }
 
     @Test
@@ -67,24 +65,28 @@ class NoteUseCasesTest {
     }
 
     @Test
-    fun theColourIsStoredAsItsKey() = runTest {
+    fun theColourIsStoredAsItsKeyAlone() = runTest {
         UpdateNoteColorUseCase(repository)(note, NoteColor.TEAL)
 
-        assertEquals(note.copy(color = "teal"), repository.updatedNotes.single())
+        assertEquals(listOf("color:4=teal"), repository.columnWrites)
+        assertEquals(0, repository.updateCalls)
     }
 
     @Test
-    fun theTagAndTheDescriptionAreChangedAlone() = runTest {
+    fun theTagAndTheDescriptionAreWrittenAlone() = runTest {
         UpdateNoteTagUseCase(repository)(note, tagId = 9)
+        UpdateNoteTagUseCase(repository)(note, tagId = 0)
         UpdateNoteDescriptionUseCase(repository)(note, "new")
 
-        assertEquals(note.copy(tagId = 9), repository.updatedNotes[0])
-        assertEquals(note.copy(description = "new"), repository.updatedNotes[1])
+        // One column each: nothing else of the (possibly stale) note is written back.
+        assertEquals(listOf("tag:4=9", "tag:4=null", "description:4=new"), repository.columnWrites)
+        assertEquals(0, repository.updateCalls)
     }
 
     @Test
     fun aFailedWriteIsReturnedNotThrown() = runTest {
         repository.updateResult = false
+        repository.columnWriteResult = false
 
         assertTrue(UpdateNoteTrashStatusUseCase(repository)(note, true).isFailure)
         assertTrue(UpdateNoteTagUseCase(repository)(note, 2).isFailure)

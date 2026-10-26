@@ -430,7 +430,7 @@ class NotePersistenceTest {
     }
 
     @Test
-    fun archivingStoresTheContentUnpinsAndClosesTheEditor() = runTest(dispatcher) {
+    fun archivingUnpinsAndClosesTheEditor() = runTest(dispatcher) {
         storeNote(text("body"))
         val persistence = persistence(loading = true)
         persistence.load(NOTE_ID, isCopy = false) { }
@@ -438,12 +438,11 @@ class NotePersistenceTest {
 
         assertTrue(persistence.setArchived(true))
 
-        val stored = repository.updatedNotes.single()
-        assertTrue(stored.isArchived)
-        assertFalse(stored.isPinned)
+        assertEquals(listOf("archived:$NOTE_ID=true"), repository.columnWrites)
+        assertFalse(persistence.state.value.note.isPinned)
         // Closed: a later save cannot write the note again.
         assertTrue(persistence.save())
-        assertEquals(1, repository.updateCalls)
+        assertEquals(0, repository.updateCalls)
     }
 
     @Test

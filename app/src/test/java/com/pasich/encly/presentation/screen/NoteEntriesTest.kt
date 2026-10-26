@@ -9,12 +9,20 @@ import org.junit.Test
 
 class NoteEntriesTest {
 
-    private fun item(id: Long, pinned: Boolean = false) =
-        NoteListItem(NoteWithTag(Note(id = id, isPinned = pinned), null), preview = null, searchText = "")
+    private fun item(id: Long, pinned: Boolean = false, archived: Boolean = false) = NoteListItem(
+        NoteWithTag(Note(id = id, isPinned = pinned, isArchived = archived), null),
+        preview = null,
+        searchText = "",
+    )
 
     private fun describe(entries: List<NoteEntry>) = entries.map {
         when (it) {
-            is NoteSection -> if (it.title == R.string.notes_section_pinned) "Pinned" else "Others"
+            is NoteSection -> when (it.title) {
+                R.string.notes_section_pinned -> "Pinned"
+                R.string.main_drawer_archive -> "Archived"
+                else -> "Others"
+            }
+
             is NoteRow -> it.item.note.id.toString()
         }
     }
@@ -38,6 +46,25 @@ class NoteEntriesTest {
         val entries = noteEntries(listOf(item(1, pinned = true)), sections = true)
 
         assertEquals(listOf("Pinned", "1"), describe(entries))
+    }
+
+    @Test
+    fun archivedNotesOfAHiddenTagGetTheirOwnSectionAtTheEnd() {
+        val entries = noteEntries(listOf(item(1), item(2), item(3, archived = true)), sections = true)
+
+        assertEquals(listOf("Others", "1", "2", "Archived", "3"), describe(entries))
+    }
+
+    @Test
+    fun pinnedOthersAndArchivedAreThreeSections() {
+        val entries = noteEntries(listOf(item(1, pinned = true), item(2), item(3, archived = true)), true)
+
+        assertEquals(listOf("Pinned", "1", "Others", "2", "Archived", "3"), describe(entries))
+    }
+
+    @Test
+    fun onlyArchivedNotesStillShowTheirHeading() {
+        assertEquals(listOf("Archived", "1"), describe(noteEntries(listOf(item(1, archived = true)), true)))
     }
 
     @Test

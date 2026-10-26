@@ -45,6 +45,21 @@ class TagListViewModelTest {
     private fun viewModel() = TagListViewModel(repository, ReorderTagsUseCase(repository), SelectedTagHolder(), notes)
 
     @Test
+    fun theNoteCountOfATagIncludesItsArchivedNotes() = runTest(dispatcher) {
+        notes.allNotesWithTags.value = listOf(NoteWithTag(Note(id = 1, tagId = 1), null))
+        notes.archivedNotesWithTags.value = listOf(
+            NoteWithTag(Note(id = 2, tagId = 1, isArchived = true), null),
+            NoteWithTag(Note(id = 3, tagId = 2, isArchived = true), null),
+        )
+        val viewModel = viewModel()
+        val counts = backgroundScope.launch { viewModel.noteCounts.collect { } }
+        advanceUntilIdle()
+
+        assertEquals(mapOf(1L to 2, 2L to 1), viewModel.noteCounts.value)
+        counts.cancel()
+    }
+
+    @Test
     fun aNewTagNamedLikeAnExistingOneIsRefused() = runTest(dispatcher) {
         val viewModel = viewModel()
         advanceUntilIdle()

@@ -8,6 +8,7 @@ import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.repository.NotesRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -33,18 +34,28 @@ class ObserveNotesUseCase @Inject constructor(
     ): Flow<List<NoteListItem>> {
         val notes = when {
             archived -> repository.getArchivedNotesWithTag().map { all -> all.filter { it.isShown() } }
+
             tagId == null -> repository.getAllNotesWithTag().map { all -> all.filter { it.isShown() } }
-            else -> repository.getNotesByTagId(tagId)
+
+            else -> combine(repository.getNotesByTagId(tagId), repository.getArchivedNotesByTagId(tagId)) { live, old ->
+                // A hidden tag's archived notes are in no other list (the archive leaves hidden tags
+                // out too), so its own view is the way to unarchive them. A visible tag's are in the archive.
+                live + old.filter { it.tag?.isVisible == false }
+            }
         }
         return notes.map { list -> list.toSortedItems(sortOption) }.flowOn(dispatcher)
     }
+
+    /** The note as stored now, following every change to it; null once it is gone. */
+    fun observeNote(noteId: Long): Flow<NoteWithTag?> = repository.observeNote(noteId)
 
     /** A note whose tag is hidden stays out of the lists that show every note. */
     private fun NoteWithTag.isShown(): Boolean = tag == null || tag.isVisible
 
     private fun List<NoteWithTag>.toSortedItems(sortOption: NoteSortOption): List<NoteListItem> {
-        // Pinned first whatever the sort; the sort orders within each group.
-        val comparator = compareByDescending<Note> { it.isPinned }.then(sortOption.comparator())
+        // Pinned first whatever the sort, archived notes (a hidden tag's view) last; the sort orders within.
+        val comparator = compareBy<Note> { it.isArchived }.thenByDescending { it.isPinned }
+            .then(sortOption.comparator())
         return sortedWith { a, b -> comparator.compare(a.note, b.note) }.map(NoteListItem::of)
     }
 }

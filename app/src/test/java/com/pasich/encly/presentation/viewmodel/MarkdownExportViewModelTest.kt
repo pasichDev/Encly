@@ -252,6 +252,28 @@ class MarkdownExportViewModelTest {
     }
 
     @Test
+    fun aReLockAfterTheReadStopsTheWriteBeforeTheDocumentIsOpened() {
+        val closing = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            // The read succeeds; the vault closes right after it.
+            override fun assertCurrentSession() = error("Vault locked")
+        }
+        viewModel = viewModelOver(closing)
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(R.string.backup_error_locked), viewModel.uiState.value.message)
+        verify(documents, never()).write(any(Uri::class.java) ?: uri, anyBlock())
+        verify(documents).discard(uri)
+        assertEquals(0, written.size())
+    }
+
+    @Test
     fun aVaultThatIsAlreadyLockedWhenTheExportIsAuthenticatedEndsWithAMessage() {
         val locked = object : VaultDataStore by store {
             override fun bindToCurrentSession(): VaultDataStore = error("Vault locked")

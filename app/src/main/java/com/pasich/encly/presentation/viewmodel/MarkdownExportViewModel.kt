@@ -161,6 +161,8 @@ class MarkdownExportViewModel @Inject constructor(
     private suspend fun export(bound: VaultDataStore, what: MarkdownExportTarget, uri: Uri) {
         val snapshot = bound.snapshot()
         val labels = labels()
+        // A re-lock that landed after the read must not be followed by a write.
+        bound.assertCurrentSession()
         // Not cancelled by a re-lock clearing this screen: a half-written document would look like
         // a complete export.
         withContext(NonCancellable + Dispatchers.IO) {

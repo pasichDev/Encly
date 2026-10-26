@@ -49,7 +49,7 @@ fun ArchiveScreen(
 
     NoteActionsSheet(
         sheet = sheet,
-        notes = state.notes,
+        observeNote = viewModel::observeNote,
         onEvent = viewModel::onEvent,
         onEdit = { edit(it.id) },
         onDuplicate = { navController.navigate("${NavRoutes.EditNoteRoute.name}/-1?copySource=${it.id}") },

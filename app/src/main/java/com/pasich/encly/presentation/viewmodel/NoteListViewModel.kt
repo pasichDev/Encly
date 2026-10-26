@@ -118,6 +118,9 @@ constructor(
         _scrollToTopRequest.compareAndSet(request, null)
     }
 
+    /** The note as stored now, for the actions sheet: it must not show what an older read held. */
+    fun observeNote(noteId: Long) = observeNotesUseCase.observeNote(noteId)
+
     fun onEvent(event: NoteListEvent) {
         when (event) {
             is NoteListEvent.SelectTag -> {

@@ -97,6 +97,45 @@ class ObserveNotesUseCaseTest {
         assertEquals(listOf(3L, 2L), archived.map { it.note.id })
     }
 
+    private fun archivedWithTag(id: Long, tag: Tag) = NoteWithTag(
+        Note(id = id, title = "a$id", date = id, tagId = tag.id, isArchived = true),
+        tag,
+    )
+
+    @Test
+    fun aHiddenTagsViewListsItsArchivedNotesAfterTheOthers() = runTest {
+        val hidden = Tag(id = 5, nameTag = "Private", isVisible = false)
+        val repository = TestNotesRepository().apply {
+            tagFlow(5).value =
+                listOf(noteWithTag(id = 1, date = 10, tag = hidden), noteWithTag(id = 2, date = 1, tag = hidden))
+            archivedNotesWithTags.value =
+                listOf(archivedWithTag(3, hidden), archivedWithTag(4, Tag(id = 6, isVisible = true)))
+        }
+
+        val items = ObserveNotesUseCase(repository, StandardTestDispatcher(testScheduler))(
+            tagId = 5,
+            sortOption = NoteSortOption.UPDATED_DESC,
+        ).first()
+
+        assertEquals(listOf(1L, 2L, 3L), items.map { it.note.id })
+    }
+
+    @Test
+    fun aVisibleTagsViewLeavesItsArchivedNotesToTheArchive() = runTest {
+        val visible = Tag(id = 5, nameTag = "Work", isVisible = true)
+        val repository = TestNotesRepository().apply {
+            tagFlow(5).value = listOf(noteWithTag(id = 1, date = 10, tag = visible))
+            archivedNotesWithTags.value = listOf(archivedWithTag(3, visible))
+        }
+
+        val items = ObserveNotesUseCase(repository, StandardTestDispatcher(testScheduler))(
+            tagId = 5,
+            sortOption = NoteSortOption.UPDATED_DESC,
+        ).first()
+
+        assertEquals(listOf(1L), items.map { it.note.id })
+    }
+
     @Test
     fun oneUnreadableNoteDoesNotTakeTheListDown() = runTest {
         val repository = TestNotesRepository().apply {
