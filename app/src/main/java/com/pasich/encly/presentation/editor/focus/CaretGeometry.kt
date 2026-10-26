@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.editor.focus
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.ResolvedTextDirection
 
 /**
  * How a text field's lines are laid out, as far as moving the cursor between fields needs: which
@@ -10,14 +11,23 @@ import androidx.compose.ui.text.TextLayoutResult
  */
 interface CaretGeometry {
     val lineCount: Int
+
+    /** The length of the text this layout was measured for, which can lag a moment behind the field. */
+    val textLength: Int
     fun lineOf(offset: Int): Int
     fun xOf(offset: Int): Float
     fun offsetAt(line: Int, x: Float): Int
+
+    /** Whether the paragraph at [offset] runs right to left. */
+    fun isRtl(offset: Int): Boolean
 }
 
 /** [this] layout as a [CaretGeometry]. */
 fun TextLayoutResult.geometry(): CaretGeometry = object : CaretGeometry {
     override val lineCount: Int get() = this@geometry.lineCount
+    override val textLength: Int get() = layoutInput.text.length
+    override fun isRtl(offset: Int): Boolean =
+        getParagraphDirection(offset.coerceIn(0, textLength)) == ResolvedTextDirection.Rtl
     override fun lineOf(offset: Int): Int = getLineForOffset(offset)
     override fun xOf(offset: Int): Float = getCursorRect(offset).left
     override fun offsetAt(line: Int, x: Float): Int {
@@ -30,18 +40,21 @@ fun TextLayoutResult.geometry(): CaretGeometry = object : CaretGeometry {
  * Where the cursor stands among a field's visual lines: [onFirst] and [onLast] say whether Up or
  * Down would leave the field, [x] is its horizontal position (null when unknown).
  */
-data class CaretLine(val onFirst: Boolean, val onLast: Boolean, val x: Float?)
+data class CaretLine(val onFirst: Boolean, val onLast: Boolean, val x: Float?, val rtl: Boolean = false)
 
 /**
  * The [CaretLine] of the cursor at [cursor] in a text of [length] characters laid out as
- * [geometry]. Without a layout (not measured yet) only the ends of the text count as the first and
- * last line, as they did before layouts were consulted.
+ * [geometry]. Without a layout (not measured yet, or measured for other text) only the ends of the
+ * text count as the first and last line, as they did before layouts were consulted.
  */
 fun caretLine(geometry: CaretGeometry?, length: Int, cursor: Int): CaretLine {
-    if (geometry == null || geometry.lineCount <= 0) return CaretLine(cursor <= 0, cursor >= length, null)
+    // A layout measured for other text than the field holds now is stale: its lines say nothing.
+    if (geometry == null || geometry.lineCount <= 0 || geometry.textLength != length) {
+        return CaretLine(cursor <= 0, cursor >= length, null)
+    }
     val at = cursor.coerceIn(0, length)
     val line = geometry.lineOf(at)
-    return CaretLine(onFirst = line <= 0, onLast = line >= geometry.lineCount - 1, x = geometry.xOf(at))
+    return CaretLine(line <= 0, line >= geometry.lineCount - 1, geometry.xOf(at), geometry.isRtl(at))
 }
 
 /**

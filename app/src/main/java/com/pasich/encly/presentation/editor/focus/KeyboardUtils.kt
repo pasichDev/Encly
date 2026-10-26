@@ -3,6 +3,10 @@ package com.pasich.encly.presentation.editor.focus
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 
@@ -27,7 +31,7 @@ object KeyboardUtils {
         onNavigateLeft: () -> Boolean = { false },
         onNavigateRight: () -> Boolean = { false },
         line: CaretLine? = null,
-    ): Boolean = handleKey(
+    ): Boolean = !keepsArrow(event.key, event.hasModifier()) && handleKey(
         key = event.key,
         type = event.type,
         text = text,
@@ -90,23 +94,30 @@ object KeyboardUtils {
         line: CaretLine?,
     ): Boolean {
         val vertical = key == Key.DirectionUp || key == Key.DirectionDown
-        val leaves = (cursorPosition >= 0 && atEdge(key, text.length, cursorPosition, line)) ||
+        // In right-to-left text Left moves toward the end and Right toward the start.
+        val towardStart = (key == Key.DirectionLeft) != (line?.rtl == true)
+        val leaves = (cursorPosition >= 0 && atEdge(key, towardStart, text.length, cursorPosition, line)) ||
             (vertical && text.isEmpty())
-        return leaves && when (key) {
-            Key.DirectionUp -> handlers.onNavigateUp()
-            Key.DirectionDown -> handlers.onNavigateDown()
-            Key.DirectionLeft -> handlers.onNavigateLeft()
+        return leaves && when {
+            key == Key.DirectionUp -> handlers.onNavigateUp()
+            key == Key.DirectionDown -> handlers.onNavigateDown()
+            towardStart -> handlers.onNavigateLeft()
             else -> handlers.onNavigateRight()
         }
     }
 
     /** Whether the cursor stands where [key] would take it out of the field. */
-    private fun atEdge(key: Key, length: Int, cursor: Int, line: CaretLine?): Boolean = when (key) {
-        Key.DirectionUp -> line?.onFirst ?: (cursor == 0)
-        Key.DirectionDown -> line?.onLast ?: (cursor == length)
-        Key.DirectionLeft -> cursor == 0
+    private fun atEdge(key: Key, towardStart: Boolean, length: Int, cursor: Int, line: CaretLine?): Boolean = when {
+        key == Key.DirectionUp -> line?.onFirst ?: (cursor == 0)
+        key == Key.DirectionDown -> line?.onLast ?: (cursor == length)
+        towardStart -> cursor == 0
         else -> cursor == length
     }
+
+    /** An arrow with Shift, Ctrl, Alt or Meta held selects or jumps within the field: it never leaves it. */
+    internal fun keepsArrow(key: Key, modified: Boolean) = modified && key.isArrow()
+
+    private fun KeyEvent.hasModifier() = isShiftPressed || isCtrlPressed || isAltPressed || isMetaPressed
 
     private fun Key.isArrow() =
         this == Key.DirectionUp || this == Key.DirectionDown || this == Key.DirectionLeft || this == Key.DirectionRight

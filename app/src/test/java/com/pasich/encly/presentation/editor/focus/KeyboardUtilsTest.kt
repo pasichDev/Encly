@@ -118,4 +118,22 @@ class KeyboardUtilsTest {
         assertFalse(arrow(Key.DirectionLeft, cursor = -1))
         assertEquals(listOf("left", "right"), moves)
     }
+
+    @Test
+    fun anArrowWithAModifierNeverLeavesTheField() {
+        assertTrue(KeyboardUtils.keepsArrow(Key.DirectionDown, modified = true))
+        assertFalse(KeyboardUtils.keepsArrow(Key.DirectionDown, modified = false))
+        assertFalse(KeyboardUtils.keepsArrow(Key.Backspace, modified = true))
+    }
+
+    @Test
+    fun inRightToLeftTextLeftLeavesAtTheEndAndRightAtTheStart() {
+        val rtl = CaretLine(onFirst = true, onLast = true, x = 0f, rtl = true)
+
+        assertFalse(arrow(Key.DirectionLeft, cursor = 0, line = rtl))
+        assertTrue(arrow(Key.DirectionLeft, cursor = 4, line = rtl))
+        assertTrue(arrow(Key.DirectionRight, cursor = 0, line = rtl))
+        // Right at the start of right-to-left text goes back, to the block above.
+        assertEquals(listOf("left", "right"), moves)
+    }
 }

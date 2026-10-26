@@ -13,6 +13,8 @@ class CaretGeometryTest {
     /** Lines of [width] characters, [charWidth] pixels each. */
     private class Grid(val length: Int, val width: Int, val charWidth: Float = 10f) : CaretGeometry {
         override val lineCount: Int get() = (length + width - 1) / width
+        override val textLength: Int get() = length
+        override fun isRtl(offset: Int) = false
         override fun lineOf(offset: Int): Int = minOf(offset / width, lineCount - 1)
         override fun xOf(offset: Int): Float = (offset - lineOf(offset) * width) * charWidth
         override fun offsetAt(line: Int, x: Float): Int =
@@ -26,6 +28,13 @@ class CaretGeometryTest {
         assertEquals(CaretLine(onFirst = true, onLast = false, x = 30f), caretLine(grid, 25, 3))
         assertEquals(CaretLine(onFirst = false, onLast = false, x = 40f), caretLine(grid, 25, 14))
         assertEquals(CaretLine(onFirst = false, onLast = true, x = 50f), caretLine(grid, 25, 25))
+    }
+
+    @Test
+    fun aLayoutOfOtherTextIsIgnoredInsteadOfBeingAskedAboutAnOffsetItDoesNotHave() {
+        val stale = Grid(length = 5, width = 10)
+
+        assertEquals(CaretLine(onFirst = false, onLast = true, x = null), caretLine(stale, length = 9, cursor = 9))
     }
 
     @Test
