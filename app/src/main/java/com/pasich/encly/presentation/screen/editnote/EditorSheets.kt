@@ -201,7 +201,11 @@ private fun EditorBarButtons(state: EditorBarState, actions: EditorBarActions, m
     val colors = MaterialTheme.colorScheme
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
         if (state.canToggleLock) {
-            IconButton(onClick = actions.onTags, enabled = !state.lockEditor) {
+            IconButton(
+                onClick = actions.onTags,
+                enabled = !state.lockEditor,
+                colors = IconButtonDefaults.iconButtonColors(contentColor = colors.onSurface),
+            ) {
                 Icon(EnclyIcons.Tag, contentDescription = stringResource(R.string.edit_tags))
             }
             // A toggle, so TalkBack announces whether editing is locked.
