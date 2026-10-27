@@ -19,8 +19,14 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.createFontFamilyResolver
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemeSettings
@@ -199,5 +205,33 @@ class ChecklistLayoutTest {
         val fields = rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().map { it.boundsInRoot }
         val offsets = boxes.indices.map { boxes[it].center.y - fields[it].top }
         assertEquals(offsets.toString(), 1, offsets.map { Math.round(it) }.toSet().size)
+    }
+
+    @Test
+    fun aCheckedItemIsStruckByTheFieldNotByATextDecorationAComposingWordCouldReplace() {
+        start("done")
+        block.items.value = listOf(block.items.value.single().copy(isCheck = true))
+        show(NoteLineSpacing.DEFAULT, 16)
+
+        val decoration = fieldLayout().layoutInput.style.textDecoration
+
+        assertEquals(false, decoration?.contains(TextDecoration.LineThrough) == true)
+    }
+
+    @Test
+    fun theStrikeRunsAcrossEveryNonEmptyLineAboveItsBaseline() {
+        val resolver = createFontFamilyResolver(ApplicationProvider.getApplicationContext())
+        val measurer = TextMeasurer(resolver, rule.density, LayoutDirection.Ltr)
+        val layout = measurer.measure("first\n\nthird line", TextStyle(fontSize = 20.sp))
+
+        val segments = strikeSegments(layout, fontSizePx = 60f)
+
+        // The empty middle line has nothing to strike.
+        assertEquals(2, segments.size)
+        segments.forEachIndexed { i, s ->
+            val line = if (i == 0) 0 else 2
+            assertEquals(true, s.right > s.left)
+            assertEquals(layout.getLineBaseline(line) - 18f, s.y, 0.5f)
+        }
     }
 }

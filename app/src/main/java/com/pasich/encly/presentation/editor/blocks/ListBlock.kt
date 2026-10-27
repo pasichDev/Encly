@@ -45,7 +45,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import com.pasich.encly.R
@@ -464,11 +463,9 @@ private fun ListItemField(
     val lineHeightDp = with(LocalDensity.current) { metrics.lineHeight.toDp() }
     var focused by remember { mutableStateOf(false) }
     // Checked items stay editable; they are only muted and struck through.
-    val style = if (checked) {
-        base.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, textDecoration = TextDecoration.LineThrough)
-    } else {
-        base
-    }
+    val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val style = if (checked) base.copy(color = mutedColor) else base
+    val fontPx = with(LocalDensity.current) { base.fontSize.toPx() }
     BasicTextField(
         state = state,
         // A locked checklist's text cannot take focus at all, so no cursor and no keyboard.
@@ -479,7 +476,10 @@ private fun ListItemField(
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = WritingKeyboard,
         onTextLayout = highlight.onTextLayout,
-        modifier = modifier.onFocusChanged { focused = it.isFocused }.then(highlight.modifier),
+        modifier = modifier
+            .onFocusChanged { focused = it.isFocused }
+            .then(highlight.modifier)
+            .strikeThrough(highlight, checked, mutedColor, fontPx),
         decorator = { innerTextField ->
             // An empty field is laid out without the line height; it is lowered and given the height of
             // a typed line so a new item looks, and has its caret, where it will once typing starts.

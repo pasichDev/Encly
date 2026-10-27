@@ -34,6 +34,9 @@ internal class FieldHighlight(
     /** The field's lines as the cursor moves between fields need them; null until it is measured. */
     fun geometry(): CaretGeometry? = layout?.invoke()?.geometry()
 
+    /** The field's measured text; null until it has been measured. */
+    fun layoutResult(): TextLayoutResult? = layout?.invoke()
+
     val onTextLayout: Density.(() -> TextLayoutResult?) -> Unit = { getResult ->
         if (layout == null) layout = getResult
     }
