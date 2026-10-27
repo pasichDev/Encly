@@ -4,8 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -22,6 +20,7 @@ import com.pasich.encly.R
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyOverflowMenu
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.designsystem.OverflowAction
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -115,14 +114,10 @@ private fun TrashTopBar(checkedCount: Int?, hasNotes: Boolean, actions: TrashBar
         onClose = actions.onClearSelection.takeIf { selecting },
         actions = {
             AnimatedVisibility(selecting) {
-                IconButton(onClick = actions.onRestore) {
-                    Icon(EnclyIcons.Restore, contentDescription = stringResource(R.string.restore))
-                }
+                IconWithTooltip(EnclyIcons.Restore, stringResource(R.string.restore), actions.onRestore)
             }
             AnimatedVisibility(selecting) {
-                IconButton(onClick = actions.onDeleteSelected) {
-                    Icon(EnclyIcons.Trash, contentDescription = stringResource(R.string.delete_forever))
-                }
+                IconWithTooltip(EnclyIcons.Trash, stringResource(R.string.delete_forever), actions.onDeleteSelected)
             }
             if (!selecting && hasNotes) {
                 EnclyOverflowMenu(

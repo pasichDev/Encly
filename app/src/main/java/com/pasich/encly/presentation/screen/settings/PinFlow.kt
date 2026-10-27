@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.screen.settings
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -201,7 +202,7 @@ internal fun PinFlowScaffold(
             PinFlowEntry(
                 text = pinFlowStepText(state, texts),
                 state = state,
-                modifier = Modifier.padding(paddingValues),
+                modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues),
             )
         }
     }

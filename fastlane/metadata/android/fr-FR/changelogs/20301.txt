@@ -1,0 +1,7 @@
+Encly 2.3.1
+Corrections de l'éditeur, grâce à vous :
+• Les cases restent alignées sur les éléments longs ; les nouveaux ne sautent plus.
+• Annuler et rétablir replacent le curseur là où était la modification.
+• Maintenir effacer traverse les lignes vides ; le clavier reste ouvert avec les boutons de liste, annuler et rétablir.
+• Les éléments cochés restent barrés ; touchez sous la note pour écrire à la fin.
+• Nouveau : copier en Markdown ; appui long sur un bouton pour voir son rôle.

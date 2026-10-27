@@ -174,7 +174,10 @@ private fun NavHostController.leaveLockScreen(
                 popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
             }
             // Checked after the unlock: an erase is what changes the epoch.
-            if (returnRoute != null && canReopenNote(returnEpoch)) navigate(returnRoute)
+            if (returnRoute != null && canReopenNote(returnEpoch)) {
+                navigate(returnRoute)
+                currentBackStackEntry?.savedStateHandle?.set(RelockReturn.PLAIN_ENTRY, true)
+            }
         }
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -51,7 +52,6 @@ import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
-import com.pasich.encly.presentation.designsystem.TintStatusBar
 import com.pasich.encly.presentation.designsystem.blockGap
 import com.pasich.encly.presentation.designsystem.isCompact
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
@@ -62,7 +62,10 @@ import com.pasich.encly.presentation.editor.FindHighlights
 import com.pasich.encly.presentation.editor.editorBlocks
 import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
+import com.pasich.encly.presentation.effects.ContainerEnd
+import com.pasich.encly.presentation.effects.rememberNoteContainerModifier
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
@@ -89,11 +92,17 @@ fun EditNoteScreen(
     val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val entry = lifecycleOwner as? NavBackStackEntry
+    // The route's argument, not the ViewModel's id: a new note gets its id on the first save, and
+    // only an existing, editable note has a card to grow from.
+    val plain = viewModel.isReadTrashOnly || entry?.savedStateHandle?.contains(RelockReturn.PLAIN_ENTRY) == true
+    val cardNoteId = if (plain) -1L else entry?.arguments?.getLong("idNote", -1L) ?: -1L
+    val container = rememberNoteContainerModifier(cardNoteId, ContainerEnd.EDITOR)
     val exits = remember(viewModel, navController, resources) {
         EditorExits(
             viewModel = viewModel,
             navController = navController,
-            entry = lifecycleOwner as? NavBackStackEntry,
+            entry = entry,
             scope = scope,
             onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(resources.getString(message)) } },
             beforeLeaving = {
@@ -150,7 +159,7 @@ fun EditNoteScreen(
             ),
             listState = listState,
             snackbarHostState = snackbarHostState,
-            modifier = modifier,
+            modifier = modifier.then(container),
         ) { padding ->
             EditorContent(
                 host = host,
@@ -180,8 +189,6 @@ private fun EditorScaffold(
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val findOpen by rememberFindOpen()
     val pageColor = rememberPageColor()
-    // The tinted page runs up under the status bar too.
-    TintStatusBar(pageColor)
     Scaffold(
         modifier = modifier.onPreviewKeyEvent { event ->
             viewModel.handleHistoryKey(event) || viewModel.handleFindKey(event)
@@ -257,6 +264,7 @@ private fun EditorOverlays(
     viewModel: EditNoteViewModel = enclyViewModel(),
     markdownViewModel: MarkdownExportViewModel = enclyViewModel(),
 ) {
+    val context = LocalContext.current
     val lockEditor by viewModel.lockEditor.collectAsState()
     EditorConfirmDialogs(
         isDeleteVisible = overlays.isDeleteDialogVisible,
@@ -299,6 +307,8 @@ private fun EditorOverlays(
                     markdownViewModel.start(MarkdownExportTarget.SingleNote(id))
                 }
 
+                EditNoteBottomSheetAction.COPY_MARKDOWN -> copyNoteAsMarkdown(context, viewModel)?.let(onMessage)
+
                 EditNoteBottomSheetAction.ARCHIVE -> exits.archive(archived = true)
 
                 EditNoteBottomSheetAction.UNARCHIVE -> exits.archive(archived = false)
@@ -332,7 +342,10 @@ private fun EditorContent(
             // Default block frames and this gap give 14 dp between blocks (spec §4.4).
             verticalArrangement = Arrangement.spacedBy(spacing.blockGap(EnclyTheme.spacing.labelGap)),
             contentPadding = PaddingValues(top = EnclyTheme.spacing.xxs),
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier
+                .fillMaxSize()
+                // The empty page under a short note is part of the note: a tap there writes at its end, keyboard up.
+                .tapBelowBlocks(listState, enabled = !lockEditor, onTap = rememberWriteAtEnd(viewModel)),
         ) {
             if (loading) {
                 item(key = "skeleton") {

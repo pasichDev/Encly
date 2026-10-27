@@ -22,6 +22,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -107,6 +108,7 @@ fun LazyListScope.editorBlocks(
     if (afterBlocks != null) item(key = AFTER_BLOCKS_KEY) { afterBlocks() }
 
     item(key = TAP_AREA_KEY) {
+        val keyboardController = LocalSoftwareKeyboardController.current
         Spacer(
             Modifier
                 .height(EnclyTheme.spacing.editorTapArea)
@@ -117,6 +119,8 @@ fun LazyListScope.editorBlocks(
                     interactionSource = remember { MutableInteractionSource() },
                 ) {
                     host.viewModel.addBlockToEnd()
+                    // The last field may still hold focus with the keyboard hidden: focusing it again shows nothing.
+                    keyboardController?.show()
                 },
         )
     }

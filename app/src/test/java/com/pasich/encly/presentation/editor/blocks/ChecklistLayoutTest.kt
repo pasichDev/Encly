@@ -15,11 +15,19 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.createFontFamilyResolver
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemeSettings
@@ -50,7 +58,7 @@ class ChecklistLayoutTest {
 
     private var spacing by mutableStateOf(NoteLineSpacing.DEFAULT)
     private var size by mutableIntStateOf(16)
-    private var metrics = LineMetrics(0f, 0f)
+    private var metrics = LineMetrics(0f, 0f, 0f)
     private var fontDp = 0.dp
 
     private lateinit var block: Block.ListBlock
@@ -95,18 +103,10 @@ class ChecklistLayoutTest {
         return results.single()
     }
 
-    /** Where the first line's glyphs are centred, from the field's top, by the rule the row follows. */
-    private fun glyphCentre(): Float {
+    /** The middle of the field's first line by its real layout, where the line box holds the glyphs (not compact). */
+    private fun layoutCentre(): Float {
         val layout = fieldLayout()
-        val top = layout.getLineTop(0)
-        val bottom = layout.getLineBottom(0)
-        return if (bottom - top >=
-            metrics.naturalHeight
-        ) {
-            (top + bottom) / 2f
-        } else {
-            layout.getLineBaseline(0) - metrics.halfCap
-        }
+        return (layout.getLineTop(0) + layout.getLineBottom(0)) / 2f
     }
 
     private val spacings = NoteLineSpacing.entries
@@ -119,7 +119,11 @@ class ChecklistLayoutTest {
             for (size in sizes) {
                 show(spacing, size)
                 val (box, field) = boxAndText()
-                assertEquals("$spacing $size", field.top + glyphCentre(), box.center.y, 1f)
+                assertEquals("$spacing $size", field.top + metrics.centre, box.center.y, 1f)
+                // The style's middle is the real layout's wherever the line box is as tall as the font.
+                if (spacing != NoteLineSpacing.COMPACT) {
+                    assertEquals("$spacing $size layout", field.top + layoutCentre(), box.center.y, 1f)
+                }
             }
         }
     }
@@ -147,7 +151,7 @@ class ChecklistLayoutTest {
             show(spacing, 24)
             val (box, field) = boxAndText()
             assertEquals("$spacing", true, field.height > box.height * 2)
-            assertEquals("$spacing", field.top + glyphCentre(), box.center.y, 1f)
+            assertEquals("$spacing", field.top + metrics.centre, box.center.y, 1f)
         }
     }
 
@@ -169,5 +173,79 @@ class ChecklistLayoutTest {
         rule.onNode(isCheckbox).performTouchInput { click(Offset(field.left + 4 * dp, field.center.y)) }
         rule.waitForIdle()
         assertEquals(true, block.items.value.single().isCheck)
+    }
+
+    @Test
+    fun anEmptyItemSitsWhereTheSameItemWillSitOnceTyped() {
+        start("")
+        for (spacing in spacings) {
+            for (size in sizes) {
+                show(spacing, size)
+                val (emptyBox, emptyField) = boxAndText()
+                // Where the empty line's glyphs are drawn: its layout line, lowered by the shift.
+                val emptyLine = emptyField.top + layoutCentre() + metrics.emptyShift
+                block.items.value = listOf(block.items.value.single().copy(value = "x"))
+                rule.waitForIdle()
+                val (typedBox, typedField) = boxAndText()
+                assertEquals("$spacing $size box", typedBox.center.y, emptyBox.center.y, 1f)
+                assertEquals("$spacing $size line", typedField.top + layoutCentre(), emptyLine, 1f)
+                block.items.value = listOf(block.items.value.single().copy(value = ""))
+                rule.waitForIdle()
+            }
+        }
+    }
+
+    @Test
+    fun everyRowOfSeveralMultiLineItemsKeepsItsBoxOnItsOwnFirstLine() {
+        start("a\nb\nc")
+        block.items.value = List(5) { ItemListBlock("item $it\nsecond\nthird") }
+        show(NoteLineSpacing.DEFAULT, 16)
+        val boxes = rule.onAllNodesWithTag(CHECK_BOX_TAG, useUnmergedTree = true).fetchSemanticsNodes().map {
+            it.boundsInRoot
+        }
+        val fields = rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().map { it.boundsInRoot }
+        val offsets = boxes.indices.map { boxes[it].center.y - fields[it].top }
+        assertEquals(offsets.toString(), 1, offsets.map { Math.round(it) }.toSet().size)
+    }
+
+    @Test
+    fun aCheckedItemIsStruckByTheFieldNotByATextDecorationAComposingWordCouldReplace() {
+        start("done")
+        block.items.value = listOf(block.items.value.single().copy(isCheck = true))
+        show(NoteLineSpacing.DEFAULT, 16)
+
+        val decoration = fieldLayout().layoutInput.style.textDecoration
+
+        assertEquals(false, decoration?.contains(TextDecoration.LineThrough) == true)
+    }
+
+    @Test
+    fun theStrikeRunsAcrossEveryNonEmptyLineAboveItsBaseline() {
+        val resolver = createFontFamilyResolver(ApplicationProvider.getApplicationContext())
+        val measurer = TextMeasurer(resolver, rule.density, LayoutDirection.Ltr)
+        val layout = measurer.measure("first\n\nthird line", TextStyle(fontSize = 20.sp))
+
+        val segments = strikeSegments(layout, fontSizePx = 60f)
+
+        // The empty middle line has nothing to strike.
+        assertEquals(2, segments.size)
+        segments.forEachIndexed { i, s ->
+            val line = if (i == 0) 0 else 2
+            assertEquals(true, s.right > s.left)
+            assertEquals(layout.getLineBaseline(line) - 18f, s.y, 0.5f)
+        }
+    }
+
+    @Test
+    fun aRightToLeftLineIsStruckAsWideAsItsText() {
+        val resolver = createFontFamilyResolver(ApplicationProvider.getApplicationContext())
+        val measurer = TextMeasurer(resolver, rule.density, LayoutDirection.Ltr)
+        // A right-to-left paragraph ends on the left (Latin letters, which the test fonts have).
+        val layout = measurer.measure("done item", TextStyle(fontSize = 20.sp, textDirection = TextDirection.Rtl))
+
+        val segment = strikeSegments(layout, fontSizePx = 60f).single()
+
+        assertEquals(layout.getLineRight(0) - layout.getLineLeft(0), segment.right - segment.left, 0.5f)
+        assertEquals(true, segment.right > segment.left)
     }
 }

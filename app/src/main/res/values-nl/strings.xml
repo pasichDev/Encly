@@ -52,8 +52,8 @@
     <string name="block_list">Lijst</string>
     <string name="checklist_lock">Checklist vergrendelen</string>
     <string name="checklist_unlock">Checklist ontgrendelen</string>
-    <string name="block_move_down">Omlaag verplaatsen</string>
-    <string name="block_move_up">Omhoog verplaatsen</string>
+    <string name="block_move_down">Blok omlaag verplaatsen</string>
+    <string name="block_move_up">Blok omhoog verplaatsen</string>
     <string name="block_numbered_list">Genummerde lijst</string>
     <string name="block_separator">Scheidingslijn</string>
 
@@ -626,6 +626,8 @@
     <string name="note_color_purple">Paars</string>
     <string name="note_color_pink">Roze</string>
     <string name="markdown_export">Exporteren als Markdown</string>
+    <string name="markdown_copy">Kopiëren als Markdown</string>
+    <string name="markdown_copied">Gekopieerd als Markdown</string>
     <string name="backup_section_markdown">Leesbare export</string>
     <string name="markdown_export_desc">Sla alle notities en taken op als leesbare .md-bestanden in een .zip. Het bestand is niet versleuteld.</string>
     <string name="markdown_export_warning_title">Exporteren zonder versleuteling?</string>

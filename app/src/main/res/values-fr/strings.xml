@@ -52,8 +52,8 @@
     <string name="block_list">Liste</string>
     <string name="checklist_lock">Verrouiller la liste de tâches</string>
     <string name="checklist_unlock">Déverrouiller la liste de tâches</string>
-    <string name="block_move_down">Déplacer vers le bas</string>
-    <string name="block_move_up">Déplacer vers le haut</string>
+    <string name="block_move_down">Déplacer le bloc vers le bas</string>
+    <string name="block_move_up">Déplacer le bloc vers le haut</string>
     <string name="block_numbered_list">Liste numérotée</string>
     <string name="block_separator">Séparateur</string>
 
@@ -632,6 +632,8 @@
     <string name="note_color_purple">Violet</string>
     <string name="note_color_pink">Rose</string>
     <string name="markdown_export">Exporter en Markdown</string>
+    <string name="markdown_copy">Copier en Markdown</string>
+    <string name="markdown_copied">Copié en Markdown</string>
     <string name="backup_section_markdown">Export lisible</string>
     <string name="markdown_export_desc">Enregistrer toutes les notes et tâches en fichiers .md lisibles dans un .zip. Le fichier n\'est pas chiffré.</string>
     <string name="markdown_export_warning_title">Exporter sans chiffrement ?</string>

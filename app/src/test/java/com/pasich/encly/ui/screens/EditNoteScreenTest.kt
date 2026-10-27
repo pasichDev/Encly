@@ -13,13 +13,16 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.text.TextRange
 import com.pasich.encly.R
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
@@ -421,6 +424,79 @@ class EditNoteScreenTest : ComposeScreenTest() {
         assertEquals(NavRoutes.EditNoteRoute.name, currentRoute()?.substringBefore('/'))
     }
 
+    private fun anyTextFieldFocused() =
+        rule.onAllNodes(hasSetTextAction() and isFocused()).fetchSemanticsNodes().isNotEmpty()
+
+    /** Waits until block [type] is the note's first and its field really has the focus (not just been asked to). */
+    private fun settleOn(isList: Boolean) {
+        waitFor { (editor.blocks.first() is Block.ListBlock) == isList }
+        rule.mainClock.advanceTimeBy(SETTLE_MS)
+        waitFor { editor.focusedBlockId.value == editor.blocks.first().id }
+    }
+
+    /** Runs [action] a frame at a time and says whether a text field (so the keyboard) had focus in every frame. */
+    private fun focusNeverLapsesDuring(action: () -> Unit): Boolean {
+        rule.mainClock.autoAdvance = false
+        action()
+        var always = true
+        repeat(FRAMES_TO_WATCH) {
+            rule.mainClock.advanceTimeByFrame()
+            always = always && anyTextFieldFocused()
+        }
+        rule.mainClock.autoAdvance = true
+        return always
+    }
+
+    @Test
+    fun convertingTheFocusedParagraphToAListNeverLeavesNothingFocused() {
+        stored(text("milk"))
+        open(NOTE_ID)
+        field(1).performClick()
+        waitFor { anyTextFieldFocused() }
+
+        val kept = focusNeverLapsesDuring { tool(R.string.block_checklist).performClick() }
+
+        assertTrue("a frame had no focused text field", kept)
+        // The list's own field has the focus in the end, the anchor has let go.
+        settleOn(isList = true)
+    }
+
+    @Test
+    @OptIn(ExperimentalTestApi::class)
+    fun deletingTheLastListItemWithBackspaceNeverLeavesNothingFocused() {
+        stored(
+            Block.ListBlock(
+                MutableStateFlow(listOf(ItemListBlock("one"), ItemListBlock("two"))),
+                blockType = BlockType.LIST_BULLET,
+            ),
+        )
+        open(NOTE_ID)
+        rule.onNode(hasSetTextAction() and hasText("two")).performClick()
+        rule.onNode(hasSetTextAction() and hasText("two")).performTextInputSelection(TextRange(0))
+        waitFor { editor.focusedBlockId.value == editor.blocks.first().id }
+
+        val kept = focusNeverLapsesDuring {
+            rule.onNode(hasSetTextAction() and hasText("two")).performKeyInput { pressKey(Key.Backspace) }
+        }
+
+        assertTrue("a frame had no focused text field", kept)
+        waitFor { (editor.blocks.first() as Block.ListBlock).items.value.size == 1 }
+    }
+
+    @Test
+    fun undoingTheConversionAndRedoingItNeverLeavesNothingFocusedEither() {
+        stored(text("milk"))
+        open(NOTE_ID)
+        field(1).performClick()
+        tool(R.string.block_checklist).performClick()
+        settleOn(isList = true)
+
+        assertTrue(focusNeverLapsesDuring { tool(R.string.undo).performClick() })
+        settleOn(isList = false)
+        assertTrue(focusNeverLapsesDuring { tool(R.string.redo).performClick() })
+        settleOn(isList = true)
+    }
+
     @Test
     @OptIn(ExperimentalTestApi::class)
     fun controlZInTheTitleLeavesTheEditorHistoryAlone() {
@@ -501,6 +577,8 @@ class EditNoteScreenTest : ComposeScreenTest() {
     private companion object {
         const val NOTE_ID = 91L
         const val LEAVE_MS = 1_000L
+        const val FRAMES_TO_WATCH = 40
+        const val SETTLE_MS = 1_000L
         val isCheckbox = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox)
     }
 }

@@ -11,12 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -47,8 +42,6 @@ import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.presentation.components.SecureTextInputBoundary
 import com.pasich.encly.presentation.components.SensitiveClipboardBoundary
-import com.pasich.encly.presentation.designsystem.LocalStatusBarTint
-import com.pasich.encly.presentation.designsystem.StatusBarTint
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
@@ -321,18 +314,16 @@ fun App(
     AppTheme {
         SecureTextInputBoundary(strict = strictKeyboard) {
             SensitiveClipboardBoundary {
-                // Edge-to-edge is forced on Android 15+/targetSdk 36. Paint the whole window
-                // (including behind the transparent status bar) with the same Compose
-                // background the screens use, then inset the content by the status bar so
-                // content sits below the bar with no colour seam. windowInsetsPadding also
-                // consumes the inset so Scaffold screens don't double-pad.
+                // Edge-to-edge is forced on Android 15+/targetSdk 36. The window is painted with
+                // the same Compose background the screens use; every screen draws under the
+                // transparent status bar and pads its own top inset (its top bar does), so it
+                // paints that band itself and the band moves with the screen in a transition.
                 Box(
                     modifier = modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
                 ) {
                     val unlockReveal = remember { UnlockRevealState() }
-                    val statusBarTint = remember { StatusBarTint() }
                     // A re-lock during the reveal ends it: no deferred navigation into the vault,
                     // no reveal left covering the lock screen.
                     LaunchedEffect(locked) { if (locked) unlockReveal.cancel() }
@@ -345,28 +336,11 @@ fun App(
                                 .graphicsLayer { translationX = unlockReveal.contentOffset * size.width }
                                 .background(MaterialTheme.colorScheme.background),
                         ) {
-                            // Behind the status bar: the background, or the colour the shown
-                            // screen asks for (the editor's tinted page).
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .windowInsetsTopHeight(WindowInsets.statusBars)
-                                    .background(statusBarTint.color ?: MaterialTheme.colorScheme.background),
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .windowInsetsPadding(WindowInsets.statusBars),
-                            ) {
-                                CompositionLocalProvider(
-                                    LocalEraseEpoch provides eraseEpoch,
-                                    LocalStatusBarTint provides statusBarTint,
-                                ) {
-                                    AppNavHost(
-                                        navController = navController,
-                                        startDestination = startDestination,
-                                    )
-                                }
+                            CompositionLocalProvider(LocalEraseEpoch provides eraseEpoch) {
+                                AppNavHost(
+                                    navController = navController,
+                                    startDestination = startDestination,
+                                )
                             }
                         }
                     }

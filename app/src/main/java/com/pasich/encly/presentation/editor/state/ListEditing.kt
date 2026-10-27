@@ -51,13 +51,14 @@ private fun BlockEditorState.listEnter(where: ListItemAt, head: String, tail: St
     val item = items[at]
     return when {
         head.isEmpty() && tail.isEmpty() -> {
-            exitList(index, list, at)
+            exitList(index, list, at, from = CaretTarget(list.id, item.id, 0))
             ""
         }
 
         // At the start of an item: an empty item opens above it.
         head.isEmpty() -> {
             batch { setValue(list.id, list.items, items.toMutableList().apply { add(at, ItemListBlock("")) }) }
+            CaretTarget(list.id, item.id, 0).let { attachCaretToLastStep(it, it) }
             selection.focusAt(index, caret = 0, itemId = item.id)
             tail
         }
@@ -69,6 +70,7 @@ private fun BlockEditorState.listEnter(where: ListItemAt, head: String, tail: St
                 add(at + 1, next)
             }
             batch { setValue(list.id, list.items, newItems) }
+            attachCaretToLastStep(CaretTarget(list.id, item.id, head.length), CaretTarget(list.id, next.id, 0))
             selection.focusAt(index, caret = 0, itemId = next.id)
             head
         }
@@ -79,7 +81,7 @@ private fun BlockEditorState.listEnter(where: ListItemAt, head: String, tail: St
  * The empty item [at] leaves the list: a paragraph takes its place, after the list for its last
  * item, before it for its first, and in the middle it splits the list in two around it.
  */
-private fun BlockEditorState.exitList(index: Int, list: Block.ListBlock, at: Int) {
+private fun BlockEditorState.exitList(index: Int, list: Block.ListBlock, at: Int, from: CaretTarget) {
     val items = list.items.value
     val before = items.take(at)
     val after = items.drop(at + 1)
@@ -100,6 +102,7 @@ private fun BlockEditorState.exitList(index: Int, list: Block.ListBlock, at: Int
             }
         }
     }
+    attachCaretToLastStep(from, CaretTarget(paragraph.id, null, 0))
     selection.focusAt(indexOf(paragraph.id), caret = 0)
 }
 
@@ -124,10 +127,16 @@ fun BlockEditorState.listBackspaceAtStart(listId: String, itemId: String): Boole
                     addBlock(index, paragraph)
                 }
             }
+            attachCaretToLastStep(CaretTarget(list.id, item.id, 0), CaretTarget(paragraph.id, null, 0))
             selection.focusAt(indexOf(paragraph.id), caret = 0)
         }
 
-        item.value.isEmpty() && at == items.lastIndex -> exitList(index, list, at)
+        item.value.isEmpty() && at == items.lastIndex -> exitList(
+            index,
+            list,
+            at,
+            from = CaretTarget(list.id, item.id, 0),
+        )
 
         else -> {
             val previous = items[at - 1]
@@ -136,6 +145,10 @@ fun BlockEditorState.listBackspaceAtStart(listId: String, itemId: String): Boole
                 removeAt(at)
             }
             batch { setValue(list.id, list.items, newItems) }
+            attachCaretToLastStep(
+                CaretTarget(list.id, item.id, 0),
+                CaretTarget(list.id, previous.id, previous.value.length),
+            )
             selection.focusAt(index, caret = previous.value.length, itemId = previous.id)
         }
     }

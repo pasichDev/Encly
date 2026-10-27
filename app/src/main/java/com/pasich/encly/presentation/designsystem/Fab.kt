@@ -29,15 +29,18 @@ fun EnclyFab(
     val colors = MaterialTheme.colorScheme
     val shape = MaterialTheme.shapes.large
     val shadow = EnclyTheme.colors.shadow
-    ExtendedFloatingActionButton(
-        text = { Text(text = text, style = MaterialTheme.typography.labelLarge) },
-        icon = { Icon(icon, contentDescription = if (expanded) null else text) },
-        onClick = onClick,
-        expanded = expanded,
-        shape = shape,
-        containerColor = if (destructive) colors.error else colors.primary,
-        contentColor = if (destructive) colors.onError else colors.onPrimary,
-        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-        modifier = modifier.shadow(ShadowElevation, shape, ambientColor = shadow, spotColor = shadow),
-    )
+    // Collapsed to its icon, the FAB names itself on a long press; expanded, its text does.
+    EnclyTooltip(if (expanded) "" else text) {
+        ExtendedFloatingActionButton(
+            text = { Text(text = text, style = MaterialTheme.typography.labelLarge) },
+            icon = { Icon(icon, contentDescription = if (expanded) null else text) },
+            onClick = onClick,
+            expanded = expanded,
+            shape = shape,
+            containerColor = if (destructive) colors.error else colors.primary,
+            contentColor = if (destructive) colors.onError else colors.onPrimary,
+            elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+            modifier = modifier.shadow(ShadowElevation, shape, ambientColor = shadow, spotColor = shadow),
+        )
+    }
 }

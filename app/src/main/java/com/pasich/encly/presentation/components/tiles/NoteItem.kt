@@ -13,6 +13,8 @@ import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.presentation.designsystem.EnclyNoteCard
 import com.pasich.encly.presentation.designsystem.NoteCardMeta
+import com.pasich.encly.presentation.effects.ContainerEnd
+import com.pasich.encly.presentation.effects.rememberNoteContainerModifier
 import com.pasich.encly.utils.NotesTextFormatter
 import com.pasich.encly.utils.formatCardDate
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +58,8 @@ fun NoteItem(
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
             onItemLongClick(note)
         },
-        modifier = modifier,
+        // The trash opens its notes read-only, with the plain screen motion: no card to grow.
+        modifier = modifier.then(rememberNoteContainerModifier(if (dimmed) 0L else note.id, ContainerEnd.CARD)),
     )
 }
 

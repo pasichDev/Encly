@@ -81,21 +81,27 @@ fun EnclyToolButton(
         ToolStyle.ACTIVE -> colors.primaryContainer to colors.onPrimaryContainer
         ToolStyle.PLAIN -> Color.Transparent to colors.onSurface
     }
-    Surface(
-        onClick = { onClick?.invoke() },
-        enabled = enabled,
-        shape = ToolShape,
-        color = container,
-        contentColor = if (enabled) content else content.disabled(),
-        modifier = modifier
-            .size(ToolSize)
-            .semantics {
-                role = Role.Button
-                selected = style == ToolStyle.ACTIVE
-            },
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = contentDescription, modifier = Modifier.size(EnclyTheme.spacing.iconMedium))
+    EnclyTooltip(contentDescription, modifier = modifier) {
+        Surface(
+            onClick = { onClick?.invoke() },
+            enabled = enabled,
+            shape = ToolShape,
+            color = container,
+            contentColor = if (enabled) content else content.disabled(),
+            modifier = Modifier
+                .size(ToolSize)
+                .semantics {
+                    role = Role.Button
+                    selected = style == ToolStyle.ACTIVE
+                },
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    icon,
+                    contentDescription = contentDescription,
+                    modifier = Modifier.size(EnclyTheme.spacing.iconMedium),
+                )
+            }
         }
     }
 }

@@ -47,7 +47,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 @Composable
 fun AuthLoading(message: String, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.factGap),
@@ -92,7 +92,9 @@ fun PinEntryScaffold(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (compact) Modifier.statusBarsPadding() else Modifier)
+                // Below the status bar unless a parent (a top bar's Scaffold, a Column that
+                // pads it) already consumed that inset.
+                .statusBarsPadding()
                 .imePadding()
                 .navigationBarsPadding(),
         ) {

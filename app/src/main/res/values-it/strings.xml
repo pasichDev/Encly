@@ -52,8 +52,8 @@
     <string name="block_list">Elenco</string>
     <string name="checklist_lock">Blocca la lista di controllo</string>
     <string name="checklist_unlock">Sblocca la lista di controllo</string>
-    <string name="block_move_down">Sposta giù</string>
-    <string name="block_move_up">Sposta su</string>
+    <string name="block_move_down">Sposta blocco giù</string>
+    <string name="block_move_up">Sposta blocco su</string>
     <string name="block_numbered_list">Elenco numerato</string>
     <string name="block_separator">Separatore</string>
 
@@ -632,6 +632,8 @@
     <string name="note_color_purple">Viola</string>
     <string name="note_color_pink">Rosa</string>
     <string name="markdown_export">Esporta come Markdown</string>
+    <string name="markdown_copy">Copia come Markdown</string>
+    <string name="markdown_copied">Copiato come Markdown</string>
     <string name="backup_section_markdown">Esportazione leggibile</string>
     <string name="markdown_export_desc">Salva tutte le note e le attività come file .md leggibili in uno .zip. Il file non è cifrato.</string>
     <string name="markdown_export_warning_title">Esportare senza cifratura?</string>

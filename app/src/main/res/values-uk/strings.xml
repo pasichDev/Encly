@@ -52,8 +52,8 @@
     <string name="block_list">Список</string>
     <string name="checklist_lock">Заблокувати чекліст</string>
     <string name="checklist_unlock">Розблокувати чекліст</string>
-    <string name="block_move_down">Перемістити вниз</string>
-    <string name="block_move_up">Перемістити вгору</string>
+    <string name="block_move_down">Перемістити блок вниз</string>
+    <string name="block_move_up">Перемістити блок вгору</string>
     <string name="block_numbered_list">Нумерований список</string>
     <string name="block_separator">Роздільник</string>
 
@@ -638,6 +638,8 @@
     <string name="note_color_purple">Фіолетовий</string>
     <string name="note_color_pink">Рожевий</string>
     <string name="markdown_export">Експортувати як Markdown</string>
+    <string name="markdown_copy">Копіювати як Markdown</string>
+    <string name="markdown_copied">Скопійовано як Markdown</string>
     <string name="backup_section_markdown">Читабельний експорт</string>
     <string name="markdown_export_desc">Зберегти всі нотатки й завдання як читабельні файли .md в архіві .zip. Файл не зашифрований.</string>
     <string name="markdown_export_warning_title">Експорт без шифрування?</string>

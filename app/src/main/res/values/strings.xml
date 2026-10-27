@@ -68,8 +68,8 @@
     <string name="block_list">List</string>
     <string name="checklist_lock">Lock checklist</string>
     <string name="checklist_unlock">Unlock checklist</string>
-    <string name="block_move_down">Move down</string>
-    <string name="block_move_up">Move up</string>
+    <string name="block_move_down">Move block down</string>
+    <string name="block_move_up">Move block up</string>
     <string name="block_numbered_list">Numbered list</string>
     <string name="block_separator">Separator</string>
 
@@ -643,6 +643,8 @@
     <string name="note_color_purple">Purple</string>
     <string name="note_color_pink">Pink</string>
     <string name="markdown_export">Export as Markdown</string>
+    <string name="markdown_copy">Copy as Markdown</string>
+    <string name="markdown_copied">Copied as Markdown</string>
     <string name="backup_section_markdown">Readable export</string>
     <string name="markdown_export_desc">Save all notes and tasks as readable .md files in a .zip. The file is not encrypted.</string>
     <string name="markdown_export_warning_title">Export without encryption?</string>

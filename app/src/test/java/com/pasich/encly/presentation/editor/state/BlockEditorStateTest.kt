@@ -36,8 +36,8 @@ class BlockEditorStateTest {
 
         editor.undo()
 
-        // The cursor was at the start (never reported): the field takes it back to the end.
-        assertEquals(FocusRequest(block.id, cursorToEnd = true), editor.selection.requests.first())
+        // The typing began at the start: that is where the cursor goes back to.
+        assertEquals(FocusRequest(block.id, caret = 0), editor.selection.requests.first())
     }
 
     @Test
@@ -46,11 +46,13 @@ class BlockEditorStateTest {
         type(block, "hello world")
         editor.selection.onFocused(block.id)
         editor.selection.onCaret(block.id, 3)
+        now += BlockOperations.MERGE_WINDOW_MS + 1
         type(block, "hello world!")
 
         editor.undo()
 
-        assertEquals(FocusRequest(block.id, caret = 3), editor.selection.requests.first())
+        // The "!" was typed at the end, so undoing it leaves the cursor at the end of "hello world".
+        assertEquals(FocusRequest(block.id, caret = 11), editor.selection.requests.first())
     }
 
     @Test
@@ -65,7 +67,8 @@ class BlockEditorStateTest {
 
         editor.undo()
 
-        assertEquals(FocusRequest(list.id, caret = 1, itemId = first.id), editor.selection.requests.first())
+        // The edit was in the second item ("bcdx"): the cursor goes back to its end, not to the first item.
+        assertEquals(FocusRequest(list.id, caret = 3, itemId = second.id), editor.selection.requests.first())
     }
 
     @Test
@@ -77,7 +80,7 @@ class BlockEditorStateTest {
 
         editor.redo()
 
-        assertEquals(FocusRequest(block.id, cursorToEnd = true), editor.selection.requests.first())
+        assertEquals(FocusRequest(block.id, caret = 5), editor.selection.requests.first())
     }
 
     @Test

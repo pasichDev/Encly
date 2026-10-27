@@ -1,0 +1,7 @@
+Encly 2.3.1
+Poprawki edytora dzięki Waszym opiniom:
+• Pola wyboru pozostają wyrównane przy długich pozycjach; nowe pozycje już nie skaczą.
+• Cofnij i ponów ustawiają kursor tam, gdzie była zmiana.
+• Przytrzymane usuwanie przechodzi przez puste wiersze; klawiatura zostaje otwarta przy przyciskach list, cofnij i ponów.
+• Odhaczone pozycje pozostają przekreślone podczas pisania; stuknij pod notatką, by pisać na końcu.
+• Nowość: kopiowanie jako Markdown; przytrzymaj przycisk, by zobaczyć nazwę.

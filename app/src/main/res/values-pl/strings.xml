@@ -52,8 +52,8 @@
     <string name="block_list">Lista</string>
     <string name="checklist_lock">Zablokuj listę kontrolną</string>
     <string name="checklist_unlock">Odblokuj listę kontrolną</string>
-    <string name="block_move_down">Przenieś w dół</string>
-    <string name="block_move_up">Przenieś w górę</string>
+    <string name="block_move_down">Przenieś blok w dół</string>
+    <string name="block_move_up">Przenieś blok w górę</string>
     <string name="block_numbered_list">Lista numerowana</string>
     <string name="block_separator">Separator</string>
 
@@ -638,6 +638,8 @@
     <string name="note_color_purple">Fioletowy</string>
     <string name="note_color_pink">Różowy</string>
     <string name="markdown_export">Eksportuj jako Markdown</string>
+    <string name="markdown_copy">Kopiuj jako Markdown</string>
+    <string name="markdown_copied">Skopiowano jako Markdown</string>
     <string name="backup_section_markdown">Czytelny eksport</string>
     <string name="markdown_export_desc">Zapisz wszystkie notatki i zadania jako czytelne pliki .md w archiwum .zip. Plik nie jest zaszyfrowany.</string>
     <string name="markdown_export_warning_title">Eksportować bez szyfrowania?</string>

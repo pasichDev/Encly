@@ -29,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -42,7 +41,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.pasich.encly.R
-import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -56,7 +54,6 @@ import com.pasich.encly.presentation.editor.state.toolType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -78,19 +75,17 @@ fun NoteBottomBar(
     val activeTool by remember(viewModel) {
         derivedStateOf { viewModel.blocks.firstOrNull { it.id == interactedBlockId }?.toolType() }
     }
-    val canMoveUp by remember(viewModel) {
-        derivedStateOf { interactedBlockId.let { viewModel.canMoveBlock(up = true) } }
-    }
-    val canMoveDown by remember(viewModel) {
-        derivedStateOf { interactedBlockId.let { viewModel.canMoveBlock(up = false) } }
-    }
-    val canDelete by remember(viewModel) {
-        derivedStateOf { interactedBlockId.let { viewModel.canRemoveInteractedBlock() } }
-    }
     val checklistLock = rememberChecklistLock(viewModel, interactedBlockId)
     val blockFocused = viewModel.focusedBlockId.collectAsState().value != null
-    val history = rememberHistoryTools(viewModel)
+    val anchor = rememberKeyboardAnchor()
+    // A change that replaces the focused field runs inside the anchor, so the keyboard stays up.
+    val keepingKeyboard: (() -> Unit) -> Unit = { change ->
+        anchor.around(viewModel.focusedBlockId.value, { id -> viewModel.blocks.any { it.id == id } }, change)
+    }
+    val history = rememberHistoryTools(viewModel, keepingKeyboard)
+    val blockTools = rememberBlockMoveTools(viewModel, interactedBlockId, checklistLock, keepingKeyboard)
     EnclyEditorToolbar(modifier = modifier.imePadding()) {
+        KeyboardAnchorField(anchor)
         when {
             simpleEdit -> ToolRow(spread = false) {
                 HistoryButtons(history)
@@ -106,21 +101,17 @@ fun NoteBottomBar(
             ) { more ->
                 if (more) {
                     MoreTools(
-                        blockTools = BlockMoveTools(
-                            onMoveUp = if (canMoveUp) ({ viewModel.moveBlock(up = true) }) else null,
-                            onMoveDown = if (canMoveDown) ({ viewModel.moveBlock(up = false) }) else null,
-                            onDuplicate = viewModel::duplicateInteractedBlock,
-                            onDelete = if (canDelete) viewModel::removeInteractedBlock else null,
-                            lock = checklistLock,
-                        ),
-                        onApply = toolApplier(checklistLock) { viewModel.applyTool(it, exact = true) },
+                        blockTools = blockTools,
+                        onApply = toolApplier(checklistLock) { type ->
+                            keepingKeyboard { viewModel.applyTool(type, exact = true) }
+                        },
                         onClose = { showMore = false },
                     )
                 } else {
                     MainTools(
                         activeTool = activeTool,
                         history = history,
-                        onApply = toolApplier(checklistLock) { viewModel.applyTool(it) },
+                        onApply = toolApplier(checklistLock) { type -> keepingKeyboard { viewModel.applyTool(type) } },
                         onMore = { showMore = true },
                         keyboard = KeyboardToggleState(blockFocused, viewModel::focusWorkingBlock),
                     )
@@ -129,50 +120,6 @@ fun NoteBottomBar(
         }
     }
 }
-
-@Composable
-private fun rememberHistoryTools(viewModel: EditNoteViewModel): HistoryTools {
-    val canUndo by viewModel.canUndo.collectAsState()
-    val canRedo by viewModel.canRedo.collectAsState()
-    return HistoryTools(
-        onUndo = if (canUndo) viewModel::undo else null,
-        onRedo = if (canRedo) viewModel::redo else null,
-    )
-}
-
-/** [apply] for the block tools, or null (they are disabled) while the checklist the user works on is locked. */
-private fun toolApplier(lock: ChecklistLock?, apply: (BlockType) -> Unit): ((BlockType) -> Unit)? =
-    apply.takeUnless { lock?.locked == true }
-
-/** The lock of the checklist the user works on; null while they work on anything else. */
-@Composable
-private fun rememberChecklistLock(viewModel: EditNoteViewModel, interactedBlockId: String?): ChecklistLock? {
-    val currentId by rememberUpdatedState(interactedBlockId)
-    val checklist by remember(viewModel) {
-        derivedStateOf {
-            (viewModel.blocks.firstOrNull { it.id == currentId } as? Block.ListBlock)
-                ?.takeIf { it.blockType == BlockType.LIST_CHECK }
-        }
-    }
-    val lockState = remember(checklist) { checklist?.locked ?: MutableStateFlow(false) }
-    val locked by lockState.collectAsState()
-    return checklist?.let { list -> ChecklistLock(locked) { viewModel.toggleChecklistLock(list) } }
-}
-
-/** Undo and redo; a null action shows its button disabled. */
-private class HistoryTools(val onUndo: (() -> Unit)?, val onRedo: (() -> Unit)?)
-
-/** Moving, duplicating and deleting the block the user works on; a null action shows its button disabled. */
-private class BlockMoveTools(
-    val onMoveUp: (() -> Unit)?,
-    val onMoveDown: (() -> Unit)?,
-    val onDuplicate: (() -> Unit)?,
-    val onDelete: (() -> Unit)?,
-    val lock: ChecklistLock?,
-)
-
-/** Locking the checklist the user works on: whether it is [locked], and how to flip that. */
-private class ChecklistLock(val locked: Boolean, val onToggle: () -> Unit)
 
 /** The block-tools toggle, the block tools (the active one marked), then undo and redo. */
 @Composable

@@ -4,7 +4,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.TextualBlock
 import com.pasich.encly.dynamicBlocks.utils.BlockUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -104,16 +103,21 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
     }
 
     /**
-     * Replaces the block at [index] with [newBlock] and focuses the new field. A paragraph turned
-     * into a heading or quote keeps its text, so its cursor stays where it was.
+     * Replaces the block at [index] with [newBlock] and focuses the new field. A converted block keeps
+     * its text, so its cursor stays where it was: in the same list item, or on the same line.
      */
     fun replaceBlock(index: Int, newBlock: Block): Boolean {
         if (index !in _blocks.indices) return false
         slash.dismiss()
-        val caret = selection.caretOf(_blocks[index].id)?.takeIf { newBlock is TextualBlock }
+        val old = _blocks[index]
+        val caret = selection.caretOf(old.id)
+        val item = selection.itemOf(old.id)
+        val target = carriedCaret(old, newBlock, caret, item)
         history.replaceBlock(index, newBlock)
+        // Undone, the old block comes back with the cursor where it was; redone, where it was carried.
+        if (target != null && caret != null) attachCaretToLastStep(CaretTarget(old.id, item, caret), target)
         afterChange()
-        selection.focusAt(index, caret = caret)
+        selection.focusAt(index, caret = target?.caret, itemId = target?.itemId)
         return true
     }
 
@@ -148,28 +152,40 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         afterChange()
     }
 
-    fun undo() = moveHistory(history::undo) { it.before }
+    fun undo() = moveHistory(undo = true)
 
-    fun redo() = moveHistory(history::redo) { it.after }
+    fun redo() = moveHistory(undo = false)
 
-    /** Undo or redo ([move]); a step that carries its own cursor ([caretOf]) puts it there. */
-    private fun moveHistory(move: () -> Boolean, caretOf: (BlockOperations.CaretStep) -> Int) {
+    /**
+     * Undo or redo. The cursor goes where the step itself says ([CaretTarget], from what its fields
+     * held before and after, or the merge's own record); a step with no text in it leaves the cursor
+     * alone, and a block that is gone sends it to the nearest one above.
+     */
+    private fun moveHistory(undo: Boolean) {
         slash.dismiss()
         val focused = selection.focusedBlockId.value
-        if (!move()) return
+        val fields = history.fieldsOfNext(undo)
+        val before = fields.map { it.second.value }
+        if (!(if (undo) history.undo() else history.redo())) return
         afterChange()
+        if (focused == null) return
         val step = history.lastMovedCaret()
-        val index = step?.let { s -> blocks.indexOfFirst { it.id == s.blockId } } ?: -1
-        if (step != null && index >= 0 && focused != null) {
-            selection.focusAt(index, caret = caretOf(step))
+        val target = if (step != null) {
+            if (undo) step.before else step.after
+        } else {
+            fields.indices.firstNotNullOfOrNull { caretTargetOf(fields[it].first, before[it], fields[it].second.value) }
+        }
+        val index = target?.let { t -> blocks.indexOfFirst { it.id == t.blockId } } ?: -1
+        if (target != null && index >= 0 && blocks[index].canTakeFocus()) {
+            selection.focusAt(index, caret = target.caret, itemId = target.itemId)
         } else {
             selection.keepFocus(blocks, focused)
         }
     }
 
-    /** The step recorded last puts the cursor of block [blockId] at [before] when undone and [after] when redone. */
-    internal fun attachCaretToLastStep(blockId: String, before: Int, after: Int) =
-        history.attachCaret(BlockOperations.CaretStep(blockId, before, after))
+    /** The step recorded last puts the cursor at [before] when undone and at [after] when redone. */
+    internal fun attachCaretToLastStep(before: CaretTarget, after: CaretTarget) =
+        history.attachCaret(BlockOperations.CaretStep(before, after))
 
     private fun afterChange() {
         if (_blocks.isEmpty()) _blocks.add(emptyNoteBlock())
@@ -213,8 +229,11 @@ private fun BlockSelection.keepFocus(blocks: List<Block>, blockId: String?) {
     if (index >= 0 && blocks[index].canTakeFocus()) {
         // Same block: the cursor goes back where it was (and into the same list item); the field
         // clamps it if the undone text is shorter. Only a cursor never seen means "the end".
-        val caret = caretOf(blockId)
-        focusAt(index, cursorToEnd = caret == null, caret = caret, itemId = itemOf(blockId))
+        // An item that has gone (undone away) is not asked for: the list falls back to its last item.
+        val list = blocks[index] as? Block.ListBlock
+        val item = itemOf(blockId)?.takeIf { id -> list == null || list.items.value.any { it.id == id } }
+        val caret = caretOf(blockId)?.takeIf { list == null || item != null }
+        focusAt(index, cursorToEnd = caret == null, caret = caret, itemId = item)
     } else {
         // The block is gone: the nearest one above, the cursor at its end.
         focusAt(blocks.previousFocusableIndex(interactedIndex + 1), cursorToEnd = true)

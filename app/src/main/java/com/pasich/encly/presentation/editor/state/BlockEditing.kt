@@ -30,10 +30,13 @@ fun BlockEditorState.breakLine(blockId: String, lineBreak: LineBreak): String? {
 
 private fun BlockEditorState.enter(index: Int, block: TextualBlock, head: String, tail: String): String {
     val styled = block !is Block.TextBlock
+    val id = blocks[index].id
     return when {
         // An empty heading or quote: Enter turns it back into a paragraph.
         styled && head.isEmpty() && tail.isEmpty() -> {
-            batch { replaceBlock(index, Block.TextBlock()) }
+            val paragraph = Block.TextBlock()
+            batch { replaceBlock(index, paragraph) }
+            attachCaretToLastStep(CaretTarget(id, null, 0), CaretTarget(paragraph.id, null, 0))
             selection.focusAt(index, caret = 0)
             ""
         }
@@ -41,6 +44,7 @@ private fun BlockEditorState.enter(index: Int, block: TextualBlock, head: String
         // At the start of a heading or quote: a paragraph opens above, the block stays as it is.
         styled && head.isEmpty() -> {
             batch { addBlock(index, Block.TextBlock()) }
+            attachCaretToLastStep(CaretTarget(id, null, 0), CaretTarget(id, null, 0))
             selection.focusAt(index + 1, caret = 0)
             tail
         }
@@ -51,6 +55,7 @@ private fun BlockEditorState.enter(index: Int, block: TextualBlock, head: String
                 setValue(blocks[index].id, block.text, head)
                 addBlock(index + 1, next)
             }
+            attachCaretToLastStep(CaretTarget(id, null, head.length), CaretTarget(next.id, null, 0))
             selection.focusAt(index + 1, caret = 0)
             head
         }
@@ -60,17 +65,24 @@ private fun BlockEditorState.enter(index: Int, block: TextualBlock, head: String
 /**
  * Backspace with the cursor at the start of block [blockId]. A heading or quote first turns
  * into a paragraph; a paragraph joins the block above (a heading, quote, paragraph or the last
- * item of a list), its text appended there, and a separator above it is removed. Returns false
+ * item of a list), its text appended there, and a separator above it is removed. An empty paragraph
+ * under a paragraph takes the text of the one above instead (see mergeIntoCurrent). Returns false
  * when there is nothing to do (the first block, or an empty paragraph, which the caller removes).
  */
 fun BlockEditorState.backspaceAtStart(blockId: String): Boolean {
     val index = indexOf(blockId)
     return when (val block = blocks.getOrNull(index)) {
-        is Block.TextBlock -> block.text.value.isNotEmpty() && joinToPrevious(index, block.text.value)
+        // An empty paragraph under a paragraph merges the upper one into itself too (see mergeIntoCurrent),
+        // so Backspace held down crosses empty lines without the focus leaving the field.
+        is Block.TextBlock ->
+            (block.text.value.isNotEmpty() || blocks.getOrNull(index - 1) is Block.TextBlock) &&
+                joinToPrevious(index, block.text.value)
 
         is Block.HBlock, is Block.QuoteBlock -> {
             val text = (block as TextualBlock).text.value
-            batch { replaceBlock(index, Block.TextBlock(MutableStateFlow(text))) }
+            val paragraph = Block.TextBlock(MutableStateFlow(text))
+            batch { replaceBlock(index, paragraph) }
+            attachCaretToLastStep(CaretTarget(block.id, null, 0), CaretTarget(paragraph.id, null, 0))
             selection.focusAt(index, caret = 0)
             true
         }
@@ -83,7 +95,9 @@ fun BlockEditorState.backspaceAtStart(blockId: String): Boolean {
 private fun BlockEditorState.joinToPrevious(index: Int, text: String): Boolean {
     when (val previous = blocks.getOrNull(index - 1)) {
         is Block.SeparatorBlock -> {
+            val paragraph = CaretTarget(blocks[index].id, null, 0)
             batch { removeBlock(index - 1) }
+            attachCaretToLastStep(paragraph, paragraph)
             selection.focusAt(index - 1, caret = 0)
         }
 
@@ -106,13 +120,16 @@ private fun BlockEditorState.joinToPrevious(index: Int, text: String): Boolean {
 private fun BlockEditorState.joinToList(index: Int, list: Block.ListBlock, text: String) {
     val items = list.items.value
     val last = items.lastOrNull()
+    val paragraph = blocks[index].id
     batch {
         val joined = last?.let { items.dropLast(1) + it.copy(value = it.value + text) } ?: listOf(ItemListBlock(text))
         setValue(list.id, list.items, joined)
         removeBlock(index)
     }
     val item = list.items.value.last()
-    selection.focusAt(index - 1, caret = last?.value?.length ?: 0, itemId = item.id)
+    val join = last?.value?.length ?: 0
+    attachCaretToLastStep(CaretTarget(paragraph, null, 0), CaretTarget(list.id, item.id, join))
+    selection.focusAt(index - 1, caret = join, itemId = item.id)
 }
 
 /**
@@ -127,17 +144,20 @@ private fun BlockEditorState.mergeIntoCurrent(index: Int, previous: Block.TextBl
         setValue(current.id, current.text, previous.text.value + text)
         removeBlock(index - 1)
     }
-    attachCaretToLastStep(current.id, before = 0, after = join)
+    attachCaretToLastStep(CaretTarget(current.id, null, 0), CaretTarget(current.id, null, join))
     selection.focusAt(index - 1, caret = join)
 }
 
 /** Appends [text], the paragraph at [index], to [previousText], the block above's, and removes the paragraph. */
 private fun BlockEditorState.joinText(index: Int, previousText: MutableStateFlow<String>, text: String) {
     val join = previousText.value.length
+    val paragraph = blocks[index].id
+    val previous = blocks[index - 1].id
     batch {
-        setValue(blocks[index - 1].id, previousText, previousText.value + text)
+        setValue(previous, previousText, previousText.value + text)
         removeBlock(index)
     }
+    attachCaretToLastStep(CaretTarget(paragraph, null, 0), CaretTarget(previous, null, join))
     selection.focusAt(index - 1, caret = join)
 }
 
