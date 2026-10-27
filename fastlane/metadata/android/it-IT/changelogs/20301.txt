@@ -1,0 +1,6 @@
+Encly 2.3.1
+Correzioni dell'editor grazie ai vostri commenti:
+• Le caselle restano allineate sugli elementi lunghi; i nuovi non saltano più.
+• Annulla e ripristina riportano il cursore dove c'era la modifica.
+• Tenere premuto cancella attraversa le righe vuote; la tastiera resta aperta con i pulsanti elenco, annulla e ripristina.
+• Gli elementi spuntati restano barrati mentre scrivi; tocca sotto la nota per scrivere in fondo.

@@ -1,0 +1,6 @@
+Encly 2.3.1
+Correções do editor graças ao vosso feedback:
+• As caixas ficam alinhadas em itens longos; os novos já não saltam.
+• Anular e refazer põem o cursor onde foi a alteração.
+• Manter apagar atravessa linhas vazias; o teclado fica aberto com os botões de lista, anular e refazer.
+• Itens marcados ficam riscados enquanto escreve; toque abaixo da nota para escrever no fim.
