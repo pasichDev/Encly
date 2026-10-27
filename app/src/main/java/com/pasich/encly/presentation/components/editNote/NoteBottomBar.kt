@@ -80,12 +80,12 @@ fun NoteBottomBar(
     val anchor = rememberKeyboardAnchor()
     // A change that replaces the focused field runs inside the anchor, so the keyboard stays up.
     val keepingKeyboard: (() -> Unit) -> Unit = { change ->
-        anchor.around(viewModel.focusedBlockId.value != null, change)
+        anchor.around(viewModel.focusedBlockId.value, { id -> viewModel.blocks.any { it.id == id } }, change)
     }
     val history = rememberHistoryTools(viewModel, keepingKeyboard)
     val blockTools = rememberBlockMoveTools(viewModel, interactedBlockId, checklistLock, keepingKeyboard)
     EnclyEditorToolbar(modifier = modifier.imePadding()) {
-        KeyboardAnchorField(anchor, viewModel.focusedBlockId)
+        KeyboardAnchorField(anchor)
         when {
             simpleEdit -> ToolRow(spread = false) {
                 HistoryButtons(history)
