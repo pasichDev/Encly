@@ -334,8 +334,8 @@ private fun EditorContent(
             contentPadding = PaddingValues(top = EnclyTheme.spacing.xxs),
             modifier = modifier
                 .fillMaxSize()
-                // The empty page under a short note is part of the note: a tap there starts writing at its end.
-                .tapBelowBlocks(listState, enabled = !lockEditor) { viewModel.addBlockToEnd() },
+                // The empty page under a short note is part of the note: a tap there writes at its end, keyboard up.
+                .tapBelowBlocks(listState, enabled = !lockEditor, onTap = rememberWriteAtEnd(viewModel)),
         ) {
             if (loading) {
                 item(key = "skeleton") {
