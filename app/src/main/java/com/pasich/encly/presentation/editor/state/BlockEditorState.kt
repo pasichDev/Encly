@@ -4,7 +4,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.pasich.encly.R
 import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.TextualBlock
 import com.pasich.encly.dynamicBlocks.utils.BlockUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -104,16 +103,21 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
     }
 
     /**
-     * Replaces the block at [index] with [newBlock] and focuses the new field. A paragraph turned
-     * into a heading or quote keeps its text, so its cursor stays where it was.
+     * Replaces the block at [index] with [newBlock] and focuses the new field. A converted block keeps
+     * its text, so its cursor stays where it was: in the same list item, or on the same line.
      */
     fun replaceBlock(index: Int, newBlock: Block): Boolean {
         if (index !in _blocks.indices) return false
         slash.dismiss()
-        val caret = selection.caretOf(_blocks[index].id)?.takeIf { newBlock is TextualBlock }
+        val old = _blocks[index]
+        val caret = selection.caretOf(old.id)
+        val item = selection.itemOf(old.id)
+        val target = carriedCaret(old, newBlock, caret, item)
         history.replaceBlock(index, newBlock)
+        // Undone, the old block comes back with the cursor where it was; redone, where it was carried.
+        if (target != null && caret != null) attachCaretToLastStep(CaretTarget(old.id, item, caret), target)
         afterChange()
-        selection.focusAt(index, caret = caret)
+        selection.focusAt(index, caret = target?.caret, itemId = target?.itemId)
         return true
     }
 
@@ -165,9 +169,9 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         if (!(if (undo) history.undo() else history.redo())) return
         afterChange()
         if (focused == null) return
-        val merge = history.lastMovedCaret()
-        val target = if (merge != null) {
-            CaretTarget(merge.blockId, null, if (undo) merge.before else merge.after)
+        val step = history.lastMovedCaret()
+        val target = if (step != null) {
+            if (undo) step.before else step.after
         } else {
             fields.indices.firstNotNullOfOrNull { caretTargetOf(fields[it].first, before[it], fields[it].second.value) }
         }
@@ -179,9 +183,9 @@ class BlockEditorState(clock: () -> Long = System::currentTimeMillis) {
         }
     }
 
-    /** The step recorded last puts the cursor of block [blockId] at [before] when undone and [after] when redone. */
-    internal fun attachCaretToLastStep(blockId: String, before: Int, after: Int) =
-        history.attachCaret(BlockOperations.CaretStep(blockId, before, after))
+    /** The step recorded last puts the cursor at [before] when undone and at [after] when redone. */
+    internal fun attachCaretToLastStep(before: CaretTarget, after: CaretTarget) =
+        history.attachCaret(BlockOperations.CaretStep(before, after))
 
     private fun afterChange() {
         if (_blocks.isEmpty()) _blocks.add(emptyNoteBlock())

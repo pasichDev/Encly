@@ -1,6 +1,8 @@
 package com.pasich.encly.presentation.editor.state
 
 import com.pasich.encly.domain.model.ItemListBlock
+import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.dynamicBlocks.TextualBlock
 
 /** Where the cursor goes after an undo or a redo: block [blockId], in a list its item [itemId], at [caret]. */
 internal data class CaretTarget(val blockId: String, val itemId: String?, val caret: Int)
@@ -73,3 +75,40 @@ private fun mergedOrRemoved(
 /** The cursor in [now], an item that took the text of the one below onto [was]: at the join. */
 private fun joinCaret(was: String, now: String): Int =
     if (now.startsWith(was)) was.length else changedCaret(was, now) ?: now.length
+
+/**
+ * Where the cursor goes when block [old] is converted into [new] with the same text: [caret] (in a
+ * list, inside its item [itemId]) moved to the same character. Lines of a paragraph are the items of
+ * a list, so the cursor keeps its line and column. Null when there is no cursor to carry.
+ */
+internal fun carriedCaret(old: Block, new: Block, caret: Int?, itemId: String?): CaretTarget? {
+    caret ?: return null
+    val oldItems = (old as? Block.ListBlock)?.items?.value
+    val newItems = (new as? Block.ListBlock)?.items?.value
+    return when {
+        oldItems != null && newItems != null ->
+            itemId?.takeIf { id -> newItems.any { it.id == id } }?.let { CaretTarget(new.id, it, caret) }
+
+        oldItems != null && new is TextualBlock ->
+            oldItems.indexOfFirst { it.id == itemId }.takeIf { it >= 0 }?.let { at ->
+                val before = oldItems.take(at).sumOf { it.value.length + 1 }
+                CaretTarget(new.id, null, before + caret.coerceAtMost(oldItems[at].value.length))
+            }
+
+        old is TextualBlock && newItems != null -> lineCaret(new.id, newItems, caret)
+
+        old is TextualBlock && new is TextualBlock -> CaretTarget(new.id, null, caret)
+
+        else -> null
+    }
+}
+
+/** [caret], an offset in the lines of [items] joined by line breaks, as an item and an offset in it. */
+private fun lineCaret(blockId: String, items: List<ItemListBlock>, caret: Int): CaretTarget? {
+    var left = caret
+    items.forEach { item ->
+        if (left <= item.value.length) return CaretTarget(blockId, item.id, left)
+        left -= item.value.length + 1
+    }
+    return items.lastOrNull()?.let { CaretTarget(blockId, it.id, it.value.length) }
+}

@@ -154,8 +154,11 @@ class BlockOperations(
         }
     }
 
-    /** Where the cursor goes when a step is undone or redone, for steps whose cursor is not the field's own. */
-    class CaretStep(val blockId: String, val before: Int, val after: Int)
+    /**
+     * Where the cursor goes when a step is undone ([before]) or redone ([after]), for steps whose
+     * cursor is not the one their fields' change implies: a split, a join, a block leaving a list.
+     */
+    internal class CaretStep(val before: CaretTarget, val after: CaretTarget)
 
     private val caretSteps = java.util.IdentityHashMap<Operation, CaretStep>()
     private var lastMoved: Operation? = null
@@ -174,12 +177,12 @@ class BlockOperations(
     }
 
     /** Attaches [step] to the step recorded last. */
-    fun attachCaret(step: CaretStep) {
+    internal fun attachCaret(step: CaretStep) {
         undoStack.lastOrNull()?.let { caretSteps[it] = step }
     }
 
     /** The [CaretStep] of the step the last undo or redo moved, if it had one. */
-    fun lastMovedCaret(): CaretStep? = lastMoved?.let { caretSteps[it] }
+    internal fun lastMovedCaret(): CaretStep? = lastMoved?.let { caretSteps[it] }
 
     /**
      * Undoes the last operation.

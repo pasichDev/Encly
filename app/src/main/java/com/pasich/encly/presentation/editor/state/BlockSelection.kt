@@ -127,6 +127,8 @@ class BlockSelection(private val blocks: List<Block>) {
         val blockId = blocks.getOrNull(index)?.id ?: return
         onFocused(blockId)
         caret?.let { carets[blockId] = it }
+        // The item asked for is where the cursor now is, before its field reports it back.
+        itemId?.let { listItems[blockId] = it }
         val request = FocusRequest(blockId, cursorToEnd, caret, itemId)
         immediateFocus?.invoke(request)
         focusRequests.trySend(request)

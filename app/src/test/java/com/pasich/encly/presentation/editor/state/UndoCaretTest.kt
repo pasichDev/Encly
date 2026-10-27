@@ -138,4 +138,53 @@ class UndoCaretTest {
 
         assertEquals(null, request.itemId)
     }
+
+    private fun enter(text: String, at: Int) = LineBreak(text.take(at), listOf("", ""), text.drop(at))
+
+    @Test
+    fun anEnterInAParagraphUndoesToTheBreakAndRedoesIntoTheNewParagraph() = runTest {
+        val block = Block.TextBlock(MutableStateFlow("abcdef"))
+        editor.load(listOf(block))
+        editor.selection.onFocused(block.id)
+        step()
+        editor.breakLine(block.id, enter("abcdef", 3))
+        val next = editor.blocks[1]
+
+        repeat(2) {
+            assertEquals(FocusRequest(block.id, caret = 3), undone())
+            assertEquals(FocusRequest(next.id, caret = 0), redone())
+        }
+    }
+
+    @Test
+    fun aParagraphJoinedToAHeadingRedoesToTheJoinNotTheEnd() = runTest {
+        val heading = Block.HBlock(MutableStateFlow("Title"), blockType = BlockType.H2)
+        val body = Block.TextBlock(MutableStateFlow("body"))
+        editor.load(listOf(heading, body))
+        editor.selection.onFocused(body.id)
+        step()
+        editor.backspaceAtStart(body.id)
+
+        repeat(2) {
+            assertEquals(FocusRequest(body.id, caret = 0), undone())
+            assertEquals(FocusRequest(heading.id, caret = 5), redone())
+        }
+    }
+
+    @Test
+    fun anItemThatLeftTheListRedoesIntoTheParagraphItBecame() = runTest {
+        val a = ItemListBlock("one")
+        val b = ItemListBlock("two")
+        val list = Block.ListBlock(MutableStateFlow(listOf(a, b)), BlockType.LIST_BULLET)
+        editor.load(listOf(list))
+        editor.selection.onFocused(list.id)
+        step()
+        editor.listBackspaceAtStart(list.id, a.id)
+        val paragraph = editor.blocks[0]
+
+        repeat(2) {
+            assertEquals(FocusRequest(list.id, caret = 0, itemId = a.id), undone())
+            assertEquals(FocusRequest(paragraph.id, caret = 0), redone())
+        }
+    }
 }
