@@ -20,9 +20,10 @@ internal fun strikeSegments(
     fontSizePx: Float,
     heightRatio: Float = STRIKE_HEIGHT,
 ): List<StrikeSegment> = (0 until layout.lineCount).mapNotNull { line ->
+    // The line's own edges, so a right-to-left line (which ends on the left) is struck as wide as an LTR one.
     val left = layout.getLineLeft(line)
-    val right = layout.getHorizontalPosition(layout.getLineEnd(line, visibleEnd = true), usePrimaryDirection = true)
-    StrikeSegment(minOf(left, right), maxOf(left, right), layout.getLineBaseline(line) - fontSizePx * heightRatio)
+    val right = layout.getLineRight(line)
+    StrikeSegment(left, right, layout.getLineBaseline(line) - fontSizePx * heightRatio)
         .takeIf { it.right > it.left }
 }
 

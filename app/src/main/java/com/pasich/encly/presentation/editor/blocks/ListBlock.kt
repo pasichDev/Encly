@@ -202,7 +202,7 @@ fun ListBlock(
                 ListItemRow(
                     item = item,
                     marker = marker.forItem(itemIndex + 1),
-                    field = ItemField(state, highlight),
+                    field = ItemField(state, highlight, marker.metrics),
                     editor = editor,
                     locks = ItemLocks(editorLocked = isLocked, textLocked = textLocked),
                     fieldModifier = fieldModifier.focusRequester(requester).onFocusChanged { focusState ->
@@ -222,20 +222,27 @@ fun ListBlock(
 private fun rememberListMarker(type: BlockType, count: Int): ListMarker {
     val font = listFontDp()
     val wide = font * (if (count >= WIDE_MARKER_FROM) WIDE_MARKER_EXTRA else 0f)
-    return ListMarker(type = type, width = markerColumn(font) + wide, box = markerBoxSize(font))
+    val metrics = rememberLineMetrics()
+    return ListMarker(type = type, width = markerColumn(font) + wide, box = markerBoxSize(font), metrics = metrics)
 }
 
 /** What keeps a list item from being edited: the whole editor ([editorLocked]) or this checklist's text. */
 private class ItemLocks(val editorLocked: Boolean, val textLocked: Boolean)
 
-/** A list item's text field state and what Find tints in it. */
-private class ItemField(val state: TextFieldState, val highlight: FieldHighlight)
+/** A list item's text field state, what Find tints in it, and its list's [metrics]. */
+private class ItemField(val state: TextFieldState, val highlight: FieldHighlight, val metrics: LineMetrics)
 
 /**
  * How a list marks its items: checkboxes, bullets or numbers in a hanging-indent column of
- * [width]; [number] is the item's own.
+ * [width]; [number] is the item's own. [metrics] are measured once per list, not per item.
  */
-private data class ListMarker(val type: BlockType, val width: Dp, val box: Dp, val number: Int = 0) {
+private data class ListMarker(
+    val type: BlockType,
+    val width: Dp,
+    val box: Dp,
+    val metrics: LineMetrics,
+    val number: Int = 0,
+) {
     fun forItem(number: Int) = copy(number = number)
 }
 
@@ -404,7 +411,7 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
  */
 @Composable
 private fun RowScope.RowCheckMark(state: CheckState, marker: ListMarker) {
-    val metrics = rememberLineMetrics()
+    val metrics = marker.metrics
     val pad = with(LocalDensity.current) { EnclyTheme.spacing.textGap.toPx() }
     Layout(
         content = {
@@ -457,8 +464,8 @@ private fun ListItemField(
 ) {
     val state = field.state
     val highlight = field.highlight
+    val metrics = field.metrics
     val base = listTextStyle()
-    val metrics = rememberLineMetrics()
     val emptyShift = metrics.emptyShift.roundToInt()
     val lineHeightDp = with(LocalDensity.current) { metrics.lineHeight.toDp() }
     var focused by remember { mutableStateOf(false) }

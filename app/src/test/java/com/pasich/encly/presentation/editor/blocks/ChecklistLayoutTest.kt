@@ -23,6 +23,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -233,5 +234,18 @@ class ChecklistLayoutTest {
             assertEquals(true, s.right > s.left)
             assertEquals(layout.getLineBaseline(line) - 18f, s.y, 0.5f)
         }
+    }
+
+    @Test
+    fun aRightToLeftLineIsStruckAsWideAsItsText() {
+        val resolver = createFontFamilyResolver(ApplicationProvider.getApplicationContext())
+        val measurer = TextMeasurer(resolver, rule.density, LayoutDirection.Ltr)
+        // A right-to-left paragraph ends on the left (Latin letters, which the test fonts have).
+        val layout = measurer.measure("done item", TextStyle(fontSize = 20.sp, textDirection = TextDirection.Rtl))
+
+        val segment = strikeSegments(layout, fontSizePx = 60f).single()
+
+        assertEquals(layout.getLineRight(0) - layout.getLineLeft(0), segment.right - segment.left, 0.5f)
+        assertEquals(true, segment.right > segment.left)
     }
 }
