@@ -11,6 +11,16 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Fixed
+
+- Checklist boxes stay on the first line of their item however many multi-line items come before, and a new empty list item no longer sits squeezed against the one above until you type (#76).
+- Undo and redo put the cursor where the step changed things, also after several rounds, in lists and paragraphs, instead of jumping to the first item or drifting along the text (#76).
+- Holding Backspace now also crosses empty lines without stopping (#76).
+- A checked item stays struck through while the keyboard is working on its last word (#76).
+- Tapping the empty page below a short note starts writing at its end, however far down (#76).
+- The separator's tap target is smaller, so it is harder to hit by accident (#76).
+- The keyboard no longer closes and reopens when you use the list buttons, undo or redo them, or delete a list's last item (#76).
+
 ## [2.3.0] - 2026-10-26
 
 versionCode 20300.
