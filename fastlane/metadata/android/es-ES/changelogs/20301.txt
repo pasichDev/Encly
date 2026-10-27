@@ -4,3 +4,4 @@ Correcciones del editor gracias a vuestros comentarios:
 • Deshacer y rehacer devuelven el cursor al lugar del cambio.
 • Mantener borrar cruza líneas vacías; el teclado sigue abierto con los botones de lista, deshacer y rehacer.
 • Los elementos marcados siguen tachados al escribir; toca bajo la nota para escribir al final.
+• Nuevo: copiar como Markdown; mantén pulsado un botón para ver qué hace.

@@ -3,4 +3,5 @@ Editor-Korrekturen nach eurem Feedback:
 • Checkboxen bleiben bei langen Einträgen ausgerichtet; neue Einträge springen nicht mehr.
 • Rückgängig und Wiederholen setzen den Cursor an die geänderte Stelle.
 • Gedrückte Löschtaste überspringt leere Zeilen; die Tastatur bleibt bei Listen-Buttons, Rückgängig und Wiederholen offen.
-• Erledigte Einträge bleiben beim Tippen durchgestrichen; Tippen unter die Notiz schreibt am Ende weiter.
+• Erledigtes bleibt beim Tippen durchgestrichen; Tippen unter die Notiz schreibt am Ende.
+• Neu: als Markdown kopieren; langes Drücken zeigt Button-Namen.

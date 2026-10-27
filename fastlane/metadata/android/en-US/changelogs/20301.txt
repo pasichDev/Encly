@@ -4,3 +4,4 @@ Fixes from your feedback on the editor:
 • Undo and redo put the cursor back where the change was.
 • Holding delete crosses empty lines; the keyboard stays open for list buttons, undo and redo.
 • Checked items stay struck through while typing; tap below a note to write at its end.
+• New: copy a note as Markdown; long-press any button to see what it does.

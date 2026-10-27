@@ -52,8 +52,8 @@
     <string name="block_list">Elenco</string>
     <string name="checklist_lock">Blocca la lista di controllo</string>
     <string name="checklist_unlock">Sblocca la lista di controllo</string>
-    <string name="block_move_down">Sposta giù</string>
-    <string name="block_move_up">Sposta su</string>
+    <string name="block_move_down">Sposta blocco giù</string>
+    <string name="block_move_up">Sposta blocco su</string>
     <string name="block_numbered_list">Elenco numerato</string>
     <string name="block_separator">Separatore</string>
 

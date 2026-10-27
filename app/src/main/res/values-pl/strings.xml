@@ -52,8 +52,8 @@
     <string name="block_list">Lista</string>
     <string name="checklist_lock">Zablokuj listę kontrolną</string>
     <string name="checklist_unlock">Odblokuj listę kontrolną</string>
-    <string name="block_move_down">Przenieś w dół</string>
-    <string name="block_move_up">Przenieś w górę</string>
+    <string name="block_move_down">Przenieś blok w dół</string>
+    <string name="block_move_up">Przenieś blok w górę</string>
     <string name="block_numbered_list">Lista numerowana</string>
     <string name="block_separator">Separator</string>
 

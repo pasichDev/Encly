@@ -4,3 +4,4 @@ Poprawki edytora dzięki Waszym opiniom:
 • Cofnij i ponów ustawiają kursor tam, gdzie była zmiana.
 • Przytrzymane usuwanie przechodzi przez puste wiersze; klawiatura zostaje otwarta przy przyciskach list, cofnij i ponów.
 • Odhaczone pozycje pozostają przekreślone podczas pisania; stuknij pod notatką, by pisać na końcu.
+• Nowość: kopiowanie jako Markdown; przytrzymaj przycisk, by zobaczyć nazwę.

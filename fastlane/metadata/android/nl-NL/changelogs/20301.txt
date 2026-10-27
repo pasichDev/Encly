@@ -4,3 +4,4 @@ Editorfixes dankzij jullie feedback:
 • Ongedaan maken en opnieuw zetten de cursor waar de wijziging was.
 • Ingedrukt wissen gaat door lege regels; het toetsenbord blijft open bij lijstknoppen, ongedaan maken en opnieuw.
 • Afgevinkte items blijven doorgestreept tijdens het typen; tik onder de notitie om aan het eind te schrijven.
+• Nieuw: kopiëren als Markdown; houd een knop ingedrukt voor de naam.
