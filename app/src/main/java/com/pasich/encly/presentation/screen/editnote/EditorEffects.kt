@@ -67,6 +67,10 @@ internal fun CarryOutFocusRequests(
     viewModel: EditNoteViewModel = enclyViewModel(),
 ) {
     val currentBlocksStart by rememberUpdatedState(blocksStart)
+    DisposableEffect(viewModel, registry) {
+        viewModel.immediateFocus = { request -> registry.focus(request) }
+        onDispose { viewModel.immediateFocus = null }
+    }
     LaunchedEffect(viewModel, registry) {
         viewModel.focusRequests.collectLatest { request ->
             registry.focusWhenComposed(request) { blockId ->

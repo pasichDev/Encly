@@ -54,6 +54,13 @@ class BlockSelection(private val blocks: List<Block>) {
 
     private val focusRequests = Channel<FocusRequest>(Channel.CONFLATED)
 
+    /**
+     * Carries out a focus request at once where its field is already composed (set by the editor
+     * screen). Focus then moves before the field being left is disposed, so the keyboard never sees a
+     * moment with nothing focused; fields not composed yet still get [requests].
+     */
+    var immediateFocus: ((FocusRequest) -> Unit)? = null
+
     /** Focus requests for the editor UI; only the latest one matters. Collect from one place. */
     val requests: Flow<FocusRequest> = focusRequests.receiveAsFlow()
 
@@ -120,7 +127,9 @@ class BlockSelection(private val blocks: List<Block>) {
         val blockId = blocks.getOrNull(index)?.id ?: return
         onFocused(blockId)
         caret?.let { carets[blockId] = it }
-        focusRequests.trySend(FocusRequest(blockId, cursorToEnd, caret, itemId))
+        val request = FocusRequest(blockId, cursorToEnd, caret, itemId)
+        immediateFocus?.invoke(request)
+        focusRequests.trySend(request)
     }
 }
 

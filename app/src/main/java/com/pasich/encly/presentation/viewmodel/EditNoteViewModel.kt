@@ -148,6 +148,13 @@ constructor(
     /** Which block the editor UI should focus next. */
     val focusRequests: Flow<FocusRequest> get() = editor.selection.requests
 
+    /** Carries out a focus request at once where its field exists; set by the editor screen while composed. */
+    var immediateFocus: ((FocusRequest) -> Unit)?
+        get() = editor.selection.immediateFocus
+        set(value) {
+            editor.selection.immediateFocus = value
+        }
+
     /** The slash picker (UI state; the paragraph it belongs to is named in its menu). */
     val slashPicker: SlashPicker get() = editor.slash
 
