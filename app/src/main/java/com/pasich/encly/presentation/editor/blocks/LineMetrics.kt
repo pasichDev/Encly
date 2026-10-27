@@ -11,11 +11,19 @@ import androidx.compose.ui.unit.TextUnit
 // Where a checklist box goes: on the middle of its item's real first line, read from the text layout.
 
 /**
- * What it takes to find the middle of a first line: the height the font needs ([naturalHeight]; a
- * line box shorter than it is compact spacing) and half the height of a capital letter, both in
- * pixels, measured once per text style.
+ * Where the middle of a list item's first line is, from the text STYLE alone (measured once on a
+ * sample letter): the text style fixes the line height and centres the glyphs in it, so every
+ * non-empty first line is laid out the same way and nothing per item (no layout that lags, no
+ * state that changes with the text) can move a checklist box.
+ *
+ * [centre] is that middle, from the top of the text, in pixels: the middle of a line box as tall
+ * as the font needs, or, where the line is shorter (compact spacing) and the glyphs overflow it,
+ * the middle of the capitals. [emptyShift] is how far an EMPTY field's line sits above where a
+ * typed line does (Compose lays an empty field out without the line height): it lowers the empty
+ * line so a new item does not jump when its first character is typed. [lineHeight] is the style's
+ * line height.
  */
-internal class LineMetrics(val naturalHeight: Float, val halfCap: Float)
+internal class LineMetrics(val centre: Float, val emptyShift: Float, val lineHeight: Float)
 
 @Composable
 internal fun rememberLineMetrics(): LineMetrics {
@@ -23,39 +31,22 @@ internal fun rememberLineMetrics(): LineMetrics {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     return remember(style, density) {
-        val plain = measurer.measure("H", style.copy(lineHeight = TextUnit.Unspecified, lineHeightStyle = null))
-        val sized = measurer.measure("H", style)
-        LineMetrics(
-            naturalHeight = plain.size.height.toFloat(),
-            halfCap = capHeightPx(sized, with(density) { style.fontSize.toPx() }) / 2f,
-        )
+        val natural = measurer.measure("H", style.copy(lineHeight = TextUnit.Unspecified, lineHeightStyle = null))
+            .size.height.toFloat()
+        val typed = measurer.measure("H", style)
+        val empty = measurer.measure("", style)
+        val fontPx = with(density) { style.fontSize.toPx() }
+        val top = typed.getLineTop(0)
+        val bottom = typed.getLineBottom(0)
+        val centre = if (bottom - top >= natural) {
+            (top + bottom) / 2f
+        } else {
+            typed.getLineBaseline(0) - capHeightPx(typed, fontPx) / 2f
+        }
+        val emptyCentre = (empty.getLineTop(0) + empty.getLineBottom(0)) / 2f
+        val lineHeight = bottom - top
+        LineMetrics(centre = centre, emptyShift = (centre - emptyCentre), lineHeight = lineHeight)
     }
-}
-
-/**
- * The middle of the first line of text, in the field's own pixels (from its top, [paddingPx] of
- * padding included). A line box as tall as the font needs holds the glyphs centred (the text style
- * centres them), so its middle is the answer; a compact one is shorter, the glyphs overflow it, and
- * the middle of the capitals, [LineMetrics.halfCap] above the baseline, is. Before the text is
- * measured: [fallbackLine], a line height's worth, halved.
- */
-internal fun firstLineCentre(
-    layout: TextLayoutResult?,
-    paddingPx: Float,
-    metrics: LineMetrics,
-    fallbackLine: Float,
-): Float {
-    if (layout == null || layout.lineCount == 0) return paddingPx + fallbackLine / 2f
-    val top = layout.getLineTop(0)
-    val bottom = layout.getLineBottom(0)
-    val centre = if (bottom - top >=
-        metrics.naturalHeight
-    ) {
-        (top + bottom) / 2f
-    } else {
-        layout.getLineBaseline(0) - metrics.halfCap
-    }
-    return paddingPx + centre
 }
 
 /** The height of the capital in [layout] (an "H"), or a typical share of [fontSizePx] where no outline exists. */

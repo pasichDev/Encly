@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
@@ -45,6 +47,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
@@ -253,7 +256,6 @@ private fun ListItemRow(
             BlockType.LIST_CHECK -> RowCheckMark(
                 state = checkState(item, state.text.toString().ifBlank { placeholder }, locks, editor),
                 marker = marker,
-                field = field.highlight,
             )
 
             BlockType.LIST_NUMBER -> Marker("${marker.number}.", marker.width, EnclyTheme.typography.dataSmall)
@@ -391,17 +393,15 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
 
 /**
  * The checklist box, flush with the paragraphs above, in the marker column. Its middle sits on the
- * middle of the item's first line, read from the text's own layout ([firstLineCentre]), at every
- * line spacing and size; its side and the gap after it grow with the text ([ListMarker]). Until the
- * text is measured it stands where a line of the style's height would put it. The tap target is
- * the column, widened to 48dp by Compose's minimum touch size. Announced with the item's text, so
- * TalkBack says what is checked.
+ * middle of the item's first line at every line spacing and size ([LineMetrics], taken from the
+ * text style, not from any item's layout, so it cannot lag or drift between rows); its side and the
+ * gap after it grow with the text ([ListMarker]). The tap target is the column, widened to 48dp by
+ * Compose's minimum touch size. Announced with the item's text, so TalkBack says what is checked.
  */
 @Composable
-private fun RowScope.RowCheckMark(state: CheckState, marker: ListMarker, field: FieldHighlight) {
+private fun RowScope.RowCheckMark(state: CheckState, marker: ListMarker) {
     val metrics = rememberLineMetrics()
     val pad = with(LocalDensity.current) { EnclyTheme.spacing.textGap.toPx() }
-    val fallbackLine = with(LocalDensity.current) { listTextStyle().lineHeight.toPx() }
     Layout(
         content = {
             EnclyCheckbox(
@@ -422,7 +422,7 @@ private fun RowScope.RowCheckMark(state: CheckState, marker: ListMarker, field: 
             .semantics { contentDescription = state.label },
     ) { measurables, constraints ->
         val box = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
-        val centre = firstLineCentre(field.layoutResult(), pad, metrics, fallbackLine)
+        val centre = pad + metrics.centre
         val top = (centre - box.height / 2f).roundToInt().coerceAtLeast(0)
         layout(marker.width.roundToPx(), top + box.height) { box.place(0, top) }
     }
@@ -454,6 +454,9 @@ private fun ListItemField(
     val state = field.state
     val highlight = field.highlight
     val base = listTextStyle()
+    val metrics = rememberLineMetrics()
+    val emptyShift = metrics.emptyShift.roundToInt()
+    val lineHeightDp = with(LocalDensity.current) { metrics.lineHeight.toDp() }
     var focused by remember { mutableStateOf(false) }
     // Checked items stay editable; they are only muted and struck through.
     val style = if (checked) {
@@ -473,7 +476,9 @@ private fun ListItemField(
         onTextLayout = highlight.onTextLayout,
         modifier = modifier.onFocusChanged { focused = it.isFocused }.then(highlight.modifier),
         decorator = { innerTextField ->
-            Box(modifier = Modifier.fillMaxWidth()) {
+            // An empty field is laid out without the line height; it is lowered and given the height of
+            // a typed line so a new item looks, and has its caret, where it will once typing starts.
+            Box(modifier = Modifier.fillMaxWidth().heightIn(min = lineHeightDp)) {
                 if (state.text.isEmpty() && !locks.editorLocked && focused) {
                     Text(
                         text = placeholder,
@@ -482,7 +487,9 @@ private fun ListItemField(
                         ),
                     )
                 }
-                innerTextField()
+                Box(modifier = Modifier.offset { IntOffset(0, if (state.text.isEmpty()) emptyShift else 0) }) {
+                    innerTextField()
+                }
             }
         },
     )
