@@ -110,7 +110,12 @@ private fun rememberListFocus(block: Block.ListBlock, blockActions: BlockActions
         val unregister = blockActions.registerFieldsFocusTarget { request ->
             val items = block.items.value
             val item = request.itemId?.let { id -> items.firstOrNull { it.id == id } }
-                ?: if (request.cursorToEnd || request.fromBelow) items.lastOrNull() else items.firstOrNull()
+                // An item that is not there (undone away) is never "the first one": the nearest end is.
+                ?: if (request.itemId != null || request.cursorToEnd || request.fromBelow) {
+                    items.lastOrNull()
+                } else {
+                    items.firstOrNull()
+                }
             item?.let { focus.pending = ItemFocus(it.id, request.caretOffset, request.caretX, request.fromBelow) }
         }
         onDispose { unregister() }

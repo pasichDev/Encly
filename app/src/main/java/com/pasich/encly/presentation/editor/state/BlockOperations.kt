@@ -160,6 +160,19 @@ class BlockOperations(
     private val caretSteps = java.util.IdentityHashMap<Operation, CaretStep>()
     private var lastMoved: Operation? = null
 
+    /**
+     * The block fields the next undo ([undo]) or redo would change, with their ids: what a caller reads
+     * before and after the move to see what the step did.
+     */
+    fun fieldsOfNext(undo: Boolean): List<Pair<String, MutableStateFlow<*>>> =
+        (if (undo) undoStack else redoStack).lastOrNull()?.let { fieldsOf(it) }.orEmpty()
+
+    private fun fieldsOf(operation: Operation): List<Pair<String, MutableStateFlow<*>>> = when (operation) {
+        is ValueChangeOperation -> listOf(operation.blockId to operation.state)
+        is CompositeOperation -> operation.operations.flatMap(::fieldsOf)
+        else -> emptyList()
+    }
+
     /** Attaches [step] to the step recorded last. */
     fun attachCaret(step: CaretStep) {
         undoStack.lastOrNull()?.let { caretSteps[it] = step }
