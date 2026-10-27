@@ -38,24 +38,22 @@ private const val PROGRESS_ANIMATION_MS = 250
 /** The back icon button every bar uses. */
 @Composable
 fun EnclyBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(
-            EnclyIcons.Back,
-            contentDescription = stringResource(R.string.back),
-            tint = MaterialTheme.colorScheme.onSurface,
-        )
+    val label = stringResource(R.string.back)
+    EnclyTooltip(label) {
+        IconButton(onClick = onClick, modifier = modifier) {
+            Icon(EnclyIcons.Back, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
+        }
     }
 }
 
 /** A close (×) icon button: leaves a mode (a selection) rather than the screen. */
 @Composable
 fun EnclyCloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(
-            EnclyIcons.Close,
-            contentDescription = stringResource(R.string.close),
-            tint = MaterialTheme.colorScheme.onSurface,
-        )
+    val label = stringResource(R.string.close)
+    EnclyTooltip(label) {
+        IconButton(onClick = onClick, modifier = modifier) {
+            Icon(EnclyIcons.Close, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
+        }
     }
 }
 
@@ -71,12 +69,11 @@ fun EnclyOverflowMenu(items: List<OverflowAction>, modifier: Modifier = Modifier
     if (items.isEmpty()) return
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                EnclyIcons.More,
-                contentDescription = stringResource(R.string.more_options),
-                tint = MaterialTheme.colorScheme.onSurface,
-            )
+        val label = stringResource(R.string.more_options)
+        EnclyTooltip(label) {
+            IconButton(onClick = { expanded = true }) {
+                Icon(EnclyIcons.More, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
+            }
         }
         DropdownMenu(
             expanded = expanded,

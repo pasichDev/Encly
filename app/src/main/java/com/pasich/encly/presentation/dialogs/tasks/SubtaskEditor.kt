@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +38,7 @@ import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.presentation.designsystem.CheckboxSize
 import com.pasich.encly.presentation.designsystem.EnclyCheckbox
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.SubtaskDraft
 import com.pasich.encly.presentation.viewmodel.SubtaskDrafts
@@ -191,14 +191,13 @@ private fun ReorderableListItemScope.SubtaskRow(
             done = subtask.isCompleted,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = { state.remove(subtask.key) }) {
-            Icon(
-                EnclyIcons.Close,
-                contentDescription = stringResource(R.string.subtask_delete),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
-            )
-        }
+        IconWithTooltip(
+            EnclyIcons.Close,
+            stringResource(R.string.subtask_delete),
+            onClick = { state.remove(subtask.key) },
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            iconSize = EnclyTheme.spacing.iconSmall,
+        )
         DragHandle(moves = moves, modifier = Modifier.draggableHandle())
     }
 }
@@ -232,14 +231,14 @@ private fun DragHandle(moves: List<CustomAccessibilityAction>, modifier: Modifie
 @Composable
 private fun NewSubtaskRow(title: String, onTitleChange: (String) -> Unit, onAdd: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        IconButton(onClick = onAdd, enabled = title.isNotBlank()) {
-            Icon(
-                EnclyIcons.Plus,
-                contentDescription = stringResource(R.string.subtask_add),
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
-            )
-        }
+        IconWithTooltip(
+            EnclyIcons.Plus,
+            stringResource(R.string.subtask_add),
+            onClick = onAdd,
+            enabled = title.isNotBlank(),
+            tint = MaterialTheme.colorScheme.primary,
+            iconSize = EnclyTheme.spacing.iconSmall,
+        )
         SubtaskTextField(
             value = title,
             onValueChange = onTitleChange,

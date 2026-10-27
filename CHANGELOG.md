@@ -18,6 +18,7 @@ versionCode 20301.
 ### Added
 
 - "Copy as Markdown" in a note's menu puts the note as it is on screen (title and blocks, unsaved edits included) on the clipboard, with no front matter. Like every Encly clip it is marked sensitive and cleared after a minute (#76).
+- Long-pressing any icon-only button shows what it does, in your language (#76).
 
 ### Fixed
 

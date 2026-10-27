@@ -263,15 +263,17 @@ fun EnclyExpandButton(
         label = "chevron",
     )
     val tint = MaterialTheme.colorScheme.onSurfaceVariant
-    IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
-        Icon(
-            EnclyIcons.ChevronDown,
-            contentDescription = contentDescription,
-            tint = if (enabled) tint else tint.disabled(),
-            modifier = Modifier
-                .size(EnclyTheme.spacing.iconSmall)
-                .rotate(turn),
-        )
+    EnclyTooltip(contentDescription) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+            Icon(
+                EnclyIcons.ChevronDown,
+                contentDescription = contentDescription,
+                tint = if (enabled) tint else tint.disabled(),
+                modifier = Modifier
+                    .size(EnclyTheme.spacing.iconSmall)
+                    .rotate(turn),
+            )
+        }
     }
 }
 
@@ -285,13 +287,15 @@ fun EnclyRowIconButton(
     enabled: Boolean = true,
 ) {
     val tint = MaterialTheme.colorScheme.onSurfaceVariant
-    IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
-        Icon(
-            icon,
-            contentDescription = contentDescription,
-            tint = if (enabled) tint else tint.disabled(),
-            modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
-        )
+    EnclyTooltip(contentDescription) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+            Icon(
+                icon,
+                contentDescription = contentDescription,
+                tint = if (enabled) tint else tint.disabled(),
+                modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+            )
+        }
     }
 }
 

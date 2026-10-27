@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import com.pasich.encly.R
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySearchField
+import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.editor.state.FindState
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
@@ -69,15 +68,19 @@ internal fun EditorFindBar(modifier: Modifier = Modifier, viewModel: EditNoteVie
             trailing = { MatchCount(state) },
         )
         val hasMatches = state.matches.isNotEmpty()
-        IconButton(onClick = viewModel::findPrevious, enabled = hasMatches) {
-            Icon(EnclyIcons.ArrowUp, contentDescription = stringResource(R.string.find_previous))
-        }
-        IconButton(onClick = viewModel::findNext, enabled = hasMatches) {
-            Icon(EnclyIcons.ArrowDown, contentDescription = stringResource(R.string.find_next))
-        }
-        IconButton(onClick = viewModel::closeFind) {
-            Icon(EnclyIcons.Close, contentDescription = stringResource(R.string.find_close))
-        }
+        IconWithTooltip(
+            EnclyIcons.ArrowUp,
+            stringResource(R.string.find_previous),
+            viewModel::findPrevious,
+            enabled = hasMatches,
+        )
+        IconWithTooltip(
+            EnclyIcons.ArrowDown,
+            stringResource(R.string.find_next),
+            viewModel::findNext,
+            enabled = hasMatches,
+        )
+        IconWithTooltip(EnclyIcons.Close, stringResource(R.string.find_close), viewModel::closeFind)
     }
 }
 

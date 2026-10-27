@@ -40,6 +40,8 @@ import com.pasich.encly.presentation.components.editNote.NoteTagSheet
 import com.pasich.encly.presentation.designsystem.EnclyBackButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.EnclyTooltip
+import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.dialogs.blocks.ActionBlockDialog
 import com.pasich.encly.presentation.dialogs.blocks.ActionLinkBottomSheet
 import com.pasich.encly.presentation.dialogs.blocks.ActionOtherBottomSheet
@@ -201,30 +203,34 @@ private fun EditorBarButtons(state: EditorBarState, actions: EditorBarActions, m
     val colors = MaterialTheme.colorScheme
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
         if (state.canToggleLock) {
-            IconButton(
-                onClick = actions.onTags,
-                enabled = !state.lockEditor,
-                colors = IconButtonDefaults.iconButtonColors(contentColor = colors.onSurface),
-            ) {
-                Icon(EnclyIcons.Tag, contentDescription = stringResource(R.string.edit_tags))
+            val tagsLabel = stringResource(R.string.edit_tags)
+            EnclyTooltip(tagsLabel) {
+                IconButton(
+                    onClick = actions.onTags,
+                    enabled = !state.lockEditor,
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = colors.onSurface),
+                ) {
+                    Icon(EnclyIcons.Tag, contentDescription = tagsLabel)
+                }
             }
             // A toggle, so TalkBack announces whether editing is locked.
-            IconToggleButton(
-                checked = state.lockEditor,
-                onCheckedChange = { actions.onLockToggle() },
-                colors = IconButtonDefaults.iconToggleButtonColors(
-                    contentColor = colors.onSurface,
-                    checkedContentColor = colors.primary,
-                ),
-            ) {
-                Icon(
-                    if (state.lockEditor) EnclyIcons.Lock else EnclyIcons.LockOpen,
-                    contentDescription = stringResource(R.string.editor_lock),
-                )
+            val lockLabel = stringResource(R.string.editor_lock)
+            EnclyTooltip(lockLabel) {
+                IconToggleButton(
+                    checked = state.lockEditor,
+                    onCheckedChange = { actions.onLockToggle() },
+                    colors = IconButtonDefaults.iconToggleButtonColors(
+                        contentColor = colors.onSurface,
+                        checkedContentColor = colors.primary,
+                    ),
+                ) {
+                    Icon(
+                        if (state.lockEditor) EnclyIcons.Lock else EnclyIcons.LockOpen,
+                        contentDescription = lockLabel,
+                    )
+                }
             }
         }
-        IconButton(onClick = actions.onMenu) {
-            Icon(EnclyIcons.More, contentDescription = stringResource(R.string.more_options), tint = colors.onSurface)
-        }
+        IconWithTooltip(EnclyIcons.More, stringResource(R.string.more_options), actions.onMenu, tint = colors.onSurface)
     }
 }

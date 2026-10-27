@@ -13,8 +13,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -45,6 +43,7 @@ import com.pasich.encly.presentation.designsystem.EnclyFab
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySearchField
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.dialogs.NotesSortBottomSheet
 import com.pasich.encly.presentation.drawer.MainDrawer
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -264,17 +263,11 @@ private fun NotesTopBar(onMenu: () -> Unit, onLockNow: () -> Unit, onSettings: (
     EnclyTopBar(
         title = stringResource(R.string.notes_title),
         navigation = {
-            IconButton(onClick = onMenu) {
-                Icon(EnclyIcons.Menu, contentDescription = stringResource(R.string.open_menu))
-            }
+            IconWithTooltip(EnclyIcons.Menu, stringResource(R.string.open_menu), onMenu)
         },
         actions = {
-            IconButton(onClick = onLockNow) {
-                Icon(EnclyIcons.Lock, contentDescription = stringResource(R.string.lock_now))
-            }
-            IconButton(onClick = onSettings) {
-                Icon(EnclyIcons.Sliders, contentDescription = stringResource(R.string.main_drawer_settings))
-            }
+            IconWithTooltip(EnclyIcons.Lock, stringResource(R.string.lock_now), onLockNow)
+            IconWithTooltip(EnclyIcons.Sliders, stringResource(R.string.main_drawer_settings), onSettings)
         },
     )
 }
@@ -294,13 +287,11 @@ private fun NotesHeader(query: String, onQueryChange: (String) -> Unit, onViewOp
             modifier = Modifier.padding(horizontal = gutter),
             trailing = {
                 if (query.isNotEmpty()) {
-                    IconButton(onClick = { onQueryChange("") }) {
-                        Icon(EnclyIcons.Close, contentDescription = stringResource(R.string.search_clear))
-                    }
+                    IconWithTooltip(EnclyIcons.Close, stringResource(R.string.search_clear), onClick = {
+                        onQueryChange("")
+                    })
                 } else {
-                    IconButton(onClick = onViewOptions) {
-                        Icon(EnclyIcons.Filter, contentDescription = stringResource(R.string.view_options))
-                    }
+                    IconWithTooltip(EnclyIcons.Filter, stringResource(R.string.view_options), onViewOptions)
                 }
             },
         )
