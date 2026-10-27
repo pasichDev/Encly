@@ -3,7 +3,7 @@ package com.pasich.encly.presentation.editor.blocks
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -16,7 +16,10 @@ import androidx.compose.ui.semantics.semantics
 import com.pasich.encly.R
 import com.pasich.encly.ui.theme.EnclyTheme
 
-/** A 1 dp rule in a full-height (48 dp) tap target that opens the block's sheet. */
+/**
+ * A 1 dp rule in a 24 dp tap target that opens the block's sheet. Taller than the rule is only so a
+ * finger can find it; much taller made it easy to hit by accident when placing the cursor nearby.
+ */
 @Composable
 fun SeparatorBlock(onClick: () -> Unit, modifier: Modifier = Modifier, isLocked: Boolean = false) {
     val label = stringResource(R.string.block_separator)
@@ -24,7 +27,7 @@ fun SeparatorBlock(onClick: () -> Unit, modifier: Modifier = Modifier, isLocked:
         contentAlignment = Alignment.Center,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = EnclyTheme.spacing.minTouchTarget)
+            .height(EnclyTheme.spacing.l)
             // Its sheet only moves or deletes it: nothing to offer in a locked editor.
             .clickable(
                 enabled = !isLocked,
