@@ -48,10 +48,22 @@ object MarkdownNotes {
             if (note.isArchived) append("archived: true\n")
             if (note.color != Note.NO_COLOR) append("color: ").append(quoted(note.color)).append('\n')
             append("---\n\n")
-            val heading = if (title.isEmpty()) "" else MarkdownBlocks.render(listOf(headingOf(title)))
-            append(listOf(heading, body).filter { it.isNotEmpty() }.joinToString("\n\n"))
-            if (heading.isNotEmpty() || body.isNotEmpty()) append('\n')
+            append(titledBody(title, body))
         }
+    }
+
+    /**
+     * A note as it stands in the editor, without the front matter: [title] as a heading (none when
+     * blank), then [blocks]. This is what "Copy as Markdown" puts on the clipboard, and it is the
+     * body [render] writes after its front matter.
+     */
+    fun renderBody(title: String, blocks: List<Block>): String = titledBody(title.trim(), MarkdownBlocks.render(blocks))
+
+    /** The heading and [body] as paragraphs of one text, ending in a line break unless both are empty. */
+    private fun titledBody(title: String, body: String): String {
+        val heading = if (title.isEmpty()) "" else MarkdownBlocks.render(listOf(headingOf(title)))
+        val text = listOf(heading, body).filter { it.isNotEmpty() }.joinToString("\n\n")
+        return if (text.isEmpty()) text else text + '\n'
     }
 
     private fun headingOf(title: String) = Block.HBlock(text = MutableStateFlow(title), blockType = BlockType.H1)

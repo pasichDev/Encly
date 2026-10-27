@@ -29,6 +29,7 @@ enum class EditNoteBottomSheetAction {
     FIND,
     TRASH,
     EXPORT_MARKDOWN,
+    COPY_MARKDOWN,
     ARCHIVE,
     UNARCHIVE,
 }
@@ -50,6 +51,7 @@ fun EditNoteBottomSheet(
     val lineSpacing by viewModel.noteLineSpacing.collectAsStateWithLifecycle()
     val note by viewModel.state.collectAsStateWithLifecycle()
     val override by viewModel.textOverride.collectAsStateWithLifecycle()
+    val loadFailed by viewModel.contentLoadFailed.collectAsStateWithLifecycle()
 
     if (isVisible) {
         EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier, scrollable = true) {
@@ -68,14 +70,17 @@ fun EditNoteBottomSheet(
                 contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
             )
             ArchiveRow(note = note.note, onAction = onAction, onDismiss = onDismiss)
-            EditorActionRows(onAction = onAction, onDismiss = onDismiss)
+            EditorActionRows(canCopy = !loadFailed, onAction = onAction, onDismiss = onDismiss)
         }
     }
 }
 
-/** Find, export, duplicate, discard and delete: each runs its action and closes the sheet. */
+/**
+ * Find, copy, export, duplicate, discard and delete: each runs its action and closes the sheet.
+ * Copy as Markdown is hidden for a note whose content could not be read, like the export's no-op.
+ */
 @Composable
-private fun EditorActionRows(onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
+private fun EditorActionRows(canCopy: Boolean, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
     fun run(action: EditNoteBottomSheetAction) {
         onAction(action)
         onDismiss()
@@ -90,6 +95,13 @@ private fun EditorActionRows(onAction: (EditNoteBottomSheetAction) -> Unit, onDi
         icon = EnclyIcons.Upload,
         onClick = { run(EditNoteBottomSheetAction.EXPORT_MARKDOWN) },
     )
+    if (canCopy) {
+        EnclySheetRow(
+            title = stringResource(R.string.markdown_copy),
+            icon = EnclyIcons.Copy,
+            onClick = { run(EditNoteBottomSheetAction.COPY_MARKDOWN) },
+        )
+    }
     EnclySheetRow(
         title = stringResource(id = R.string.duplicate),
         icon = EnclyIcons.Duplicate,

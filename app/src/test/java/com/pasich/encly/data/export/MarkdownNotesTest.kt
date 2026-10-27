@@ -2,6 +2,10 @@ package com.pasich.encly.data.export
 
 import com.pasich.encly.data.importer.Frontmatter
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.domain.model.ItemListBlock
+import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.dynamicBlocks.BlockType
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -87,5 +91,47 @@ class MarkdownNotesTest {
         val markdown = render(Note(title = "Broken", value = "[{\"blockType\":\"FUTURE\"}]"))
 
         assertTrue(markdown.endsWith("# Broken\n\nCannot read\n"))
+    }
+
+    // --- the body alone, for "Copy as Markdown" ---------------------------------------------------
+
+    private fun text(value: String) = Block.TextBlock(MutableStateFlow(value))
+
+    @Test
+    fun theBodyIsTheTitleAsAHeadingThenTheBlocks() {
+        val blocks = listOf(
+            Block.HBlock(MutableStateFlow("Part"), BlockType.H2),
+            text("Hello"),
+            Block.ListBlock(
+                MutableStateFlow(listOf(ItemListBlock("done", isCheck = true), ItemListBlock("todo"))),
+                BlockType.LIST_CHECK,
+            ),
+        )
+
+        assertEquals(
+            "# Plan\n\n## Part\n\nHello\n\n- [x] done\n- [ ] todo\n",
+            MarkdownNotes.renderBody("  Plan ", blocks),
+        )
+    }
+
+    @Test
+    fun anEmptyTitleLeavesOnlyTheBlocks() {
+        assertEquals("Hello\n", MarkdownNotes.renderBody("  ", listOf(text("Hello"))))
+    }
+
+    @Test
+    fun aTitleWithoutBlocksIsJustTheHeadingAndNothingAtAllIsEmpty() {
+        assertEquals("# Plan\n", MarkdownNotes.renderBody("Plan", emptyList()))
+        assertEquals("", MarkdownNotes.renderBody("", emptyList()))
+    }
+
+    @Test
+    fun theBodyIsWhatTheFileHoldsAfterItsFrontMatter() {
+        val note = Note(title = "Plan", value = "[]")
+        assertEquals(
+            "# Plan\n",
+            MarkdownNotes.render(note, null, labels).substringAfter("---\n\n"),
+        )
+        assertEquals("# Plan\n", MarkdownNotes.renderBody(note.title, emptyList()))
     }
 }

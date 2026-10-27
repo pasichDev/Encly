@@ -632,6 +632,8 @@
     <string name="note_color_purple">Viola</string>
     <string name="note_color_pink">Rosa</string>
     <string name="markdown_export">Esporta come Markdown</string>
+    <string name="markdown_copy">Copia come Markdown</string>
+    <string name="markdown_copied">Copiato come Markdown</string>
     <string name="backup_section_markdown">Esportazione leggibile</string>
     <string name="markdown_export_desc">Salva tutte le note e le attività come file .md leggibili in uno .zip. Il file non è cifrato.</string>
     <string name="markdown_export_warning_title">Esportare senza cifratura?</string>

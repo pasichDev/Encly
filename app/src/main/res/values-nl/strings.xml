@@ -626,6 +626,8 @@
     <string name="note_color_purple">Paars</string>
     <string name="note_color_pink">Roze</string>
     <string name="markdown_export">Exporteren als Markdown</string>
+    <string name="markdown_copy">Kopiëren als Markdown</string>
+    <string name="markdown_copied">Gekopieerd als Markdown</string>
     <string name="backup_section_markdown">Leesbare export</string>
     <string name="markdown_export_desc">Sla alle notities en taken op als leesbare .md-bestanden in een .zip. Het bestand is niet versleuteld.</string>
     <string name="markdown_export_warning_title">Exporteren zonder versleuteling?</string>

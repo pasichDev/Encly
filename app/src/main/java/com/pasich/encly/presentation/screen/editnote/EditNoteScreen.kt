@@ -32,6 +32,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -257,6 +258,7 @@ private fun EditorOverlays(
     viewModel: EditNoteViewModel = enclyViewModel(),
     markdownViewModel: MarkdownExportViewModel = enclyViewModel(),
 ) {
+    val context = LocalContext.current
     val lockEditor by viewModel.lockEditor.collectAsState()
     EditorConfirmDialogs(
         isDeleteVisible = overlays.isDeleteDialogVisible,
@@ -298,6 +300,8 @@ private fun EditorOverlays(
                 EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id ->
                     markdownViewModel.start(MarkdownExportTarget.SingleNote(id))
                 }
+
+                EditNoteBottomSheetAction.COPY_MARKDOWN -> copyNoteAsMarkdown(context, viewModel)?.let(onMessage)
 
                 EditNoteBottomSheetAction.ARCHIVE -> exits.archive(archived = true)
 

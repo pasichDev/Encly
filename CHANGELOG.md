@@ -15,6 +15,10 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 versionCode 20301.
 
+### Added
+
+- "Copy as Markdown" in a note's menu puts the note as it is on screen (title and blocks, unsaved edits included) on the clipboard, with no front matter. Like every Encly clip it is marked sensitive and cleared after a minute (#76).
+
 ### Fixed
 
 - Checklist boxes stay on the first line of their item however many multi-line items come before, and a new empty list item no longer sits squeezed against the one above until you type (#76).

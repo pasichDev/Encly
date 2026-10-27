@@ -626,6 +626,8 @@
     <string name="note_color_purple">Violett</string>
     <string name="note_color_pink">Rosa</string>
     <string name="markdown_export">Als Markdown exportieren</string>
+    <string name="markdown_copy">Als Markdown kopieren</string>
+    <string name="markdown_copied">Als Markdown kopiert</string>
     <string name="backup_section_markdown">Lesbarer Export</string>
     <string name="markdown_export_desc">Alle Notizen und Aufgaben als lesbare .md-Dateien in einer .zip speichern. Die Datei ist nicht verschlüsselt.</string>
     <string name="markdown_export_warning_title">Ohne Verschlüsselung exportieren?</string>
