@@ -332,7 +332,10 @@ private fun EditorContent(
             // Default block frames and this gap give 14 dp between blocks (spec §4.4).
             verticalArrangement = Arrangement.spacedBy(spacing.blockGap(EnclyTheme.spacing.labelGap)),
             contentPadding = PaddingValues(top = EnclyTheme.spacing.xxs),
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier
+                .fillMaxSize()
+                // The empty page under a short note is part of the note: a tap there starts writing at its end.
+                .tapBelowBlocks(listState, enabled = !lockEditor) { viewModel.addBlockToEnd() },
         ) {
             if (loading) {
                 item(key = "skeleton") {
