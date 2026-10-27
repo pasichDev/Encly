@@ -60,13 +60,18 @@ private fun BlockEditorState.enter(index: Int, block: TextualBlock, head: String
 /**
  * Backspace with the cursor at the start of block [blockId]. A heading or quote first turns
  * into a paragraph; a paragraph joins the block above (a heading, quote, paragraph or the last
- * item of a list), its text appended there, and a separator above it is removed. Returns false
+ * item of a list), its text appended there, and a separator above it is removed. An empty paragraph
+ * under a paragraph takes the text of the one above instead (see mergeIntoCurrent). Returns false
  * when there is nothing to do (the first block, or an empty paragraph, which the caller removes).
  */
 fun BlockEditorState.backspaceAtStart(blockId: String): Boolean {
     val index = indexOf(blockId)
     return when (val block = blocks.getOrNull(index)) {
-        is Block.TextBlock -> block.text.value.isNotEmpty() && joinToPrevious(index, block.text.value)
+        // An empty paragraph under a paragraph merges the upper one into itself too (see mergeIntoCurrent),
+        // so Backspace held down crosses empty lines without the focus leaving the field.
+        is Block.TextBlock ->
+            (block.text.value.isNotEmpty() || blocks.getOrNull(index - 1) is Block.TextBlock) &&
+                joinToPrevious(index, block.text.value)
 
         is Block.HBlock, is Block.QuoteBlock -> {
             val text = (block as TextualBlock).text.value

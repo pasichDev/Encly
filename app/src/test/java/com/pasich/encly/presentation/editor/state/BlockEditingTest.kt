@@ -254,14 +254,48 @@ class BlockEditingTest {
     }
 
     @Test
-    fun backspaceInTheFirstBlockOrAnEmptyParagraphIsLeftToTheCaller() {
+    fun backspaceInTheFirstBlockIsLeftToTheCaller() {
+        val first = text("One")
+        val empty = Block.TextBlock()
+        editor.load(listOf(empty, first))
+
+        assertFalse(editor.backspaceAtStart(empty.id))
+        assertEquals(2, editor.blocks.size)
+    }
+
+    @Test
+    fun backspaceHeldDownCrossesEmptyParagraphsInTheSameFieldWithoutMovingFocus() {
+        val first = text("One")
+        val gap1 = Block.TextBlock()
+        val gap2 = Block.TextBlock()
+        val last = text("Two")
+        editor.load(listOf(first, gap1, gap2, last))
+
+        // The field being deleted in is `last`'s: every press merges the paragraph above it into it.
+        val focused = mutableListOf<String>()
+        repeat(3) {
+            assertTrue(editor.backspaceAtStart(last.id))
+            focused += editor.lastFocus().blockId
+        }
+
+        assertEquals(listOf(last.id, last.id, last.id), focused)
+        assertEquals(listOf(last.id), editor.blocks.map { it.id })
+        assertEquals("OneTwo", last.text.value)
+    }
+
+    @Test
+    fun backspaceInAnEmptyParagraphUnderAParagraphMergesTheOneAboveIntoIt() {
         val first = text("One")
         val empty = Block.TextBlock()
         editor.load(listOf(first, empty))
 
-        assertFalse(editor.backspaceAtStart(first.id))
-        assertFalse(editor.backspaceAtStart(empty.id))
-        assertEquals(2, editor.blocks.size)
+        assertTrue(editor.backspaceAtStart(empty.id))
+
+        assertEquals(listOf(empty.id), editor.blocks.map { it.id })
+        assertEquals("One", empty.text.value)
+        assertFocus(0, caret = 3)
+        editor.undo()
+        assertEquals(listOf("One", ""), contents())
     }
 
     // --- lists ----------------------------------------------------------------------------------
