@@ -52,7 +52,6 @@ import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
-import com.pasich.encly.presentation.designsystem.TintStatusBar
 import com.pasich.encly.presentation.designsystem.blockGap
 import com.pasich.encly.presentation.designsystem.isCompact
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
@@ -63,7 +62,10 @@ import com.pasich.encly.presentation.editor.FindHighlights
 import com.pasich.encly.presentation.editor.editorBlocks
 import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
+import com.pasich.encly.presentation.effects.ContainerEnd
+import com.pasich.encly.presentation.effects.rememberNoteContainerModifier
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
@@ -90,11 +92,17 @@ fun EditNoteScreen(
     val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val entry = lifecycleOwner as? NavBackStackEntry
+    // The route's argument, not the ViewModel's id: a new note gets its id on the first save, and
+    // only an existing, editable note has a card to grow from.
+    val plain = viewModel.isReadTrashOnly || entry?.savedStateHandle?.contains(RelockReturn.PLAIN_ENTRY) == true
+    val cardNoteId = if (plain) -1L else entry?.arguments?.getLong("idNote", -1L) ?: -1L
+    val container = rememberNoteContainerModifier(cardNoteId, ContainerEnd.EDITOR)
     val exits = remember(viewModel, navController, resources) {
         EditorExits(
             viewModel = viewModel,
             navController = navController,
-            entry = lifecycleOwner as? NavBackStackEntry,
+            entry = entry,
             scope = scope,
             onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(resources.getString(message)) } },
             beforeLeaving = {
@@ -151,7 +159,7 @@ fun EditNoteScreen(
             ),
             listState = listState,
             snackbarHostState = snackbarHostState,
-            modifier = modifier,
+            modifier = modifier.then(container),
         ) { padding ->
             EditorContent(
                 host = host,
@@ -181,8 +189,6 @@ private fun EditorScaffold(
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val findOpen by rememberFindOpen()
     val pageColor = rememberPageColor()
-    // The tinted page runs up under the status bar too.
-    TintStatusBar(pageColor)
     Scaffold(
         modifier = modifier.onPreviewKeyEvent { event ->
             viewModel.handleHistoryKey(event) || viewModel.handleFindKey(event)

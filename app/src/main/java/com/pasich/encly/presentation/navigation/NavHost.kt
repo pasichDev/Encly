@@ -1,6 +1,8 @@
 package com.pasich.encly.presentation.navigation
 
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,9 +12,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
 import com.pasich.encly.BuildConfig
+import com.pasich.encly.presentation.effects.LocalSharedTransitionScope
 import com.pasich.encly.presentation.effects.animationScreens
-import com.pasich.encly.presentation.effects.axisEnter
-import com.pasich.encly.presentation.effects.axisExit
+import com.pasich.encly.presentation.effects.enterFor
+import com.pasich.encly.presentation.effects.exitFor
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
@@ -41,147 +44,157 @@ import com.pasich.encly.presentation.viewmodel.enclyViewModel
 
 @Composable
 fun AppNavHost(navController: NavHostController, startDestination: String = NavRoutes.HomeRoute.name) {
-    NavHost(
-        navController,
-        startDestination = startDestination,
-        // The back gesture plays the same shared-axis motion as a tap on Back. Navigation's own
-        // default for the gesture (since 2.10) shrinks the leaving screen into the middle of the window.
-        predictivePopEnterTransition = { axisEnter(forward = false) },
-        predictivePopExitTransition = { axisExit(forward = false) },
-    ) {
-        animationScreens(NavRoutes.HomeRoute.name) {
-            MainRootScreen(
+    // The scope lets a note card and the editor share their bounds (see rememberNoteContainerModifier).
+    SharedTransitionLayout {
+        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+            NavHost(
                 navController,
-            )
-        }
-        animationScreens(NavRoutes.ArchiveRoute.name) {
-            ArchiveScreen(navController)
-        }
-        animationScreens(NavRoutes.TrashRoute.name) {
-            TrashScreen(
-                navController,
-            )
-        }
-
-        animationScreens(NavRoutes.SettingsRoute.name) {
-            SettingsScreen(
-                navController,
-            )
-        }
-        animationScreens(NavRoutes.EditTagRoute.name) {
-            EditTagScreen(
-                navController,
-            )
-        }
-
-        // Donations are an F-Droid build feature; the Play build has no route to them.
-        if (BuildConfig.DONATIONS_ENABLED) {
-            animationScreens(NavRoutes.SupportRoute.name) {
-                SupportScreen(navController)
-            }
-        }
-
-        animationScreens(
-            route = "${NavRoutes.TasksRoute.name}?$TASKS_ADD_ARG={$TASKS_ADD_ARG}",
-            arguments = listOf(
-                navArgument(TASKS_ADD_ARG) {
-                    type = NavType.BoolType
-                    defaultValue = false
+                startDestination = startDestination,
+                // The back gesture plays the same motion as a tap on Back (shared axis, a fade for the
+                // editor, none for the lock screen). Navigation's own default for the gesture (since 2.10)
+                // shrinks the leaving screen into the middle of the window.
+                predictivePopEnterTransition = {
+                    enterFor(initialState.destination.route, targetState.destination.route, forward = false)
                 },
-            ),
-        ) { entry ->
-            TasksScreen(navController, openNewTask = entry.arguments?.getBoolean(TASKS_ADD_ARG) == true)
-        }
-
-        animationScreens(NavRoutes.AboutRoute.name) {
-            AboutScreen(
-                navController,
-            )
-        }
-
-        animationScreens(NavRoutes.LicensesRoute.name) {
-            LicensesScreen(navController)
-        }
-
-        animationScreens(NavRoutes.FaqRoute.name) {
-            FaqScreen(
-                navController,
-            )
-        }
-
-        animationScreens(NavRoutes.SecuritySettingsRoute.name) {
-            SecuritySettingsScreen(
-                navController,
-            )
-        }
-
-        animationScreens(NavRoutes.AppearanceRoute.name) {
-            AppearanceScreen(navController)
-        }
-
-        animationScreens(NavRoutes.BackupRoute.name) {
-            BackupScreen(navController)
-        }
-
-        animationScreens(NavRoutes.ImportNotesRoute.name) {
-            ImportNotesScreen(navController)
-        }
-
-        animationScreens(NavRoutes.OnboardingRoute.name) {
-            // Onboarding includes the mandatory PIN setup; it completes only once the vault
-            // is committed and open.
-            OnboardingScreen(onComplete = {
-                navController.navigate(NavRoutes.HomeRoute.name) {
-                    popUpTo(NavRoutes.OnboardingRoute.name) { inclusive = true }
+                predictivePopExitTransition = {
+                    exitFor(initialState.destination.route, targetState.destination.route, forward = false)
+                },
+            ) {
+                animationScreens(NavRoutes.HomeRoute.name) {
+                    MainRootScreen(
+                        navController,
+                    )
                 }
-            })
-        }
+                animationScreens(NavRoutes.ArchiveRoute.name) {
+                    ArchiveScreen(navController)
+                }
+                animationScreens(NavRoutes.TrashRoute.name) {
+                    TrashScreen(
+                        navController,
+                    )
+                }
 
-        animationScreens(NavRoutes.LossDataRoute.name) {
-            LossRoute(navController, NavRoutes.LossDataRoute, LossReason.DAMAGED)
-        }
-        animationScreens(NavRoutes.LegacyVaultRoute.name) {
-            LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION)
-        }
-        animationScreens(NavRoutes.PinCodeConfig.name) {
-            PinCodeConfigScreen(navController)
-        }
+                animationScreens(NavRoutes.SettingsRoute.name) {
+                    SettingsScreen(
+                        navController,
+                    )
+                }
+                animationScreens(NavRoutes.EditTagRoute.name) {
+                    EditTagScreen(
+                        navController,
+                    )
+                }
 
-        animationScreens(NavRoutes.WipePinRoute.name) {
-            WipePinScreen(navController)
-        }
+                // Donations are an F-Droid build feature; the Play build has no route to them.
+                if (BuildConfig.DONATIONS_ENABLED) {
+                    animationScreens(NavRoutes.SupportRoute.name) {
+                        SupportScreen(navController)
+                    }
+                }
 
-        animationScreens(NavRoutes.DuressPinRoute.name) {
-            DuressPinScreen(navController)
-        }
+                animationScreens(
+                    route = "${NavRoutes.TasksRoute.name}?$TASKS_ADD_ARG={$TASKS_ADD_ARG}",
+                    arguments = listOf(
+                        navArgument(TASKS_ADD_ARG) {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        },
+                    ),
+                ) { entry ->
+                    TasksScreen(navController, openNewTask = entry.arguments?.getBoolean(TASKS_ADD_ARG) == true)
+                }
 
-        animationScreens(NavRoutes.LockRoute.name) {
-            LockScreen(navController)
-        }
+                animationScreens(NavRoutes.AboutRoute.name) {
+                    AboutScreen(
+                        navController,
+                    )
+                }
 
-        animationScreens(
-            route = "${NavRoutes.EditNoteRoute.name}/{idNote}" +
-                "?isReadTrashOnly={isReadTrashOnly}&copySource={copySource}&addTag={addTag}",
-            arguments = listOf(
-                navArgument("idNote") {
-                    type = NavType.LongType
-                    defaultValue = -1L
-                },
-                navArgument("isReadTrashOnly") {
-                    type = NavType.BoolType
-                    defaultValue = false
-                },
-                navArgument("copySource") {
-                    type = NavType.LongType
-                    defaultValue = -1L
-                },
-                navArgument("addTag") {
-                    type = NavType.LongType
-                    defaultValue = 0L
-                },
-            ),
-        ) { entry ->
-            EditNoteDestination(navController, entry)
+                animationScreens(NavRoutes.LicensesRoute.name) {
+                    LicensesScreen(navController)
+                }
+
+                animationScreens(NavRoutes.FaqRoute.name) {
+                    FaqScreen(
+                        navController,
+                    )
+                }
+
+                animationScreens(NavRoutes.SecuritySettingsRoute.name) {
+                    SecuritySettingsScreen(
+                        navController,
+                    )
+                }
+
+                animationScreens(NavRoutes.AppearanceRoute.name) {
+                    AppearanceScreen(navController)
+                }
+
+                animationScreens(NavRoutes.BackupRoute.name) {
+                    BackupScreen(navController)
+                }
+
+                animationScreens(NavRoutes.ImportNotesRoute.name) {
+                    ImportNotesScreen(navController)
+                }
+
+                animationScreens(NavRoutes.OnboardingRoute.name) {
+                    // Onboarding includes the mandatory PIN setup; it completes only once the vault
+                    // is committed and open.
+                    OnboardingScreen(onComplete = {
+                        navController.navigate(NavRoutes.HomeRoute.name) {
+                            popUpTo(NavRoutes.OnboardingRoute.name) { inclusive = true }
+                        }
+                    })
+                }
+
+                animationScreens(NavRoutes.LossDataRoute.name) {
+                    LossRoute(navController, NavRoutes.LossDataRoute, LossReason.DAMAGED)
+                }
+                animationScreens(NavRoutes.LegacyVaultRoute.name) {
+                    LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION)
+                }
+                animationScreens(NavRoutes.PinCodeConfig.name) {
+                    PinCodeConfigScreen(navController)
+                }
+
+                animationScreens(NavRoutes.WipePinRoute.name) {
+                    WipePinScreen(navController)
+                }
+
+                animationScreens(NavRoutes.DuressPinRoute.name) {
+                    DuressPinScreen(navController)
+                }
+
+                animationScreens(NavRoutes.LockRoute.name) {
+                    LockScreen(navController)
+                }
+
+                animationScreens(
+                    route = "${NavRoutes.EditNoteRoute.name}/{idNote}" +
+                        "?isReadTrashOnly={isReadTrashOnly}&copySource={copySource}&addTag={addTag}",
+                    arguments = listOf(
+                        navArgument("idNote") {
+                            type = NavType.LongType
+                            defaultValue = -1L
+                        },
+                        navArgument("isReadTrashOnly") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        },
+                        navArgument("copySource") {
+                            type = NavType.LongType
+                            defaultValue = -1L
+                        },
+                        navArgument("addTag") {
+                            type = NavType.LongType
+                            defaultValue = 0L
+                        },
+                    ),
+                ) { entry ->
+                    EditNoteDestination(navController, entry)
+                }
+            }
         }
     }
 }

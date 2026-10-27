@@ -25,6 +25,9 @@ object RelockReturn {
     const val RETURN_ROUTE = "relock_return_route"
     const val RETURN_EPOCH = "relock_return_epoch"
 
+    /** Set on the reopened editor's entry: it opens over a Home that has no cards yet, so it has none to grow from. */
+    const val PLAIN_ENTRY = "relock_plain_entry"
+
     /**
      * The route that reopens the note shown by the destination [destinationRoute], or null when
      * that is not the editor or its note was never stored ([openNoteId] missing or not > 0).

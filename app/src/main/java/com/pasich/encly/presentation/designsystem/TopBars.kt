@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -106,10 +107,12 @@ fun EnclyOverflowMenu(items: List<OverflowAction>, modifier: Modifier = Modifier
 }
 
 /**
- * The top bar (design spec §3.3), 64 dp. With [onBack] it is a sub-screen bar (back, title at
- * 26 sp); without it, a root bar where [navigation] (e.g. the menu button) leads and the title is
- * headlineSmall. [actions] sit at the end. [onClose] replaces back with a close button, for a
- * mode such as a selection, and keeps the sub-screen title.
+ * The top bar (design spec §3.3), 64 dp, below the status bar: the screen draws edge to edge, so
+ * the bar pads its own top inset and the screen's background shows behind the status bar. With
+ * [onBack] it is a sub-screen bar (back, title at 26 sp); without it, a root bar where
+ * [navigation] (e.g. the menu button) leads and the title is headlineSmall. [actions] sit at the
+ * end. [onClose] replaces back with a close button, for a mode such as a selection, and keeps the
+ * sub-screen title.
  */
 @Composable
 fun EnclyTopBar(
@@ -126,6 +129,7 @@ fun EnclyTopBar(
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
         modifier = modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(EnclyTheme.spacing.topBarHeight)
             .padding(horizontal = EnclyTheme.spacing.xs),
     ) {
@@ -159,6 +163,7 @@ fun EnclyProgressHeader(step: Int, totalSteps: Int, modifier: Modifier = Modifie
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
         modifier = modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(EnclyTheme.spacing.topBarHeight)
             .padding(start = EnclyTheme.spacing.xs, top = EnclyTheme.spacing.xs, end = EnclyTheme.spacing.m),
     ) {

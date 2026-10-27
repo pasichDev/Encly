@@ -58,8 +58,10 @@ Compose:
       - LocalSpacing
       # The vault's erase epoch, provided once by App for the note editor (presentation/navigation/RelockReturn.kt).
       - LocalEraseEpoch
-      # The status bar's colour, provided once by App for screens with a tinted top edge (presentation/designsystem/StatusBarTint.kt).
-      - LocalStatusBarTint
+      # The navigation host's shared-transition scope and the current destination's visibility scope, provided
+      # once for the card-to-editor transform (presentation/effects/ContainerTransform.kt).
+      - LocalSharedTransitionScope
+      - LocalNavAnimatedVisibilityScope
       # Whether the open vault is the decoy one, provided once by App (presentation/navigation/DecoySession.kt).
       - LocalDecoySession
   CompositionLocalNaming:

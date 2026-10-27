@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -30,7 +31,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,13 +65,12 @@ fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifi
     // Not saved: coming back from a page opened in the drawer shows the notes with it closed.
     val drawerState = remember { DrawerState(DrawerValue.Closed) }
     val scope = rememberCoroutineScope()
-    // App pads every screen below the status bar; the drawer and its scrim reach up under it, so
-    // the scrim dims the whole window instead of leaving a light band over the top bar.
-    val statusBar = WindowInsets.statusBars.getTop(LocalDensity.current)
-    val statusBarDp = with(LocalDensity.current) { statusBar.toDp() }
+    // The screen draws under the status bar: the scrim dims the whole window, and the drawer
+    // pads its own content below the bar.
+    val statusBarDp = with(LocalDensity.current) { WindowInsets.statusBars.getTop(this).toDp() }
 
     ModalNavigationDrawer(
-        modifier = modifier.extendUp(statusBar),
+        modifier = modifier,
         drawerState = drawerState,
         gesturesEnabled = true,
         scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = DRAWER_SCRIM_ALPHA),
@@ -94,17 +93,8 @@ fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifi
         MainScreen(
             drawerState = drawerState,
             navController = navController,
-            modifier = Modifier.padding(top = statusBarDp),
         )
     }
-}
-
-/** Grows the element [px] upward, past its parent's top padding. */
-private fun Modifier.extendUp(px: Int) = layout { measurable, constraints ->
-    val placeable = measurable.measure(
-        constraints.copy(minHeight = constraints.minHeight + px, maxHeight = constraints.maxHeight + px),
-    )
-    layout(placeable.width, placeable.height - px) { placeable.place(0, -px) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -153,7 +143,9 @@ fun MainScreen(
             NewNoteFab(expanded = atTop, onClick = { navigation.newNote(noteListViewModel.state.value.selectedTag) })
         },
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        // The Scaffold has no top bar slot, so `padding` carries the status bar; consuming it
+        // keeps the notes bar below from padding the same inset again.
+        Column(modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             NotesTopBar(
                 onMenu = { scope.launch { drawerState.open() } },
                 onLockNow = lockNowViewModel::lockNow,

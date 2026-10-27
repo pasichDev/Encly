@@ -19,9 +19,11 @@ versionCode 20301.
 
 - "Copy as Markdown" in a note's menu puts the note as it is on screen (title and blocks, unsaved edits included) on the clipboard, with no front matter. Like every Encly clip it is marked sensitive and cleared after a minute (#76).
 - Long-pressing any icon-only button shows what it does, in your language (#76).
+- Opening a note grows it from its card, and closing it shrinks it back.
 
 ### Fixed
 
+- Coloured notes no longer show a seam at the status bar when opening or closing.
 - Checklist boxes stay on the first line of their item however many multi-line items come before, and a new empty list item no longer sits squeezed against the one above until you type (#76).
 - Undo and redo put the cursor where the step changed things, also after several rounds, in lists and paragraphs, instead of jumping to the first item or drifting along the text (#76).
 - Holding Backspace now also crosses empty lines without stopping (#76).

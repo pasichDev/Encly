@@ -4,15 +4,32 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.pasich.encly.presentation.navigation.NavRoutes
 
-private val LOCK_ROUTE = NavRoutes.LockRoute.name
+/** The enter transition for a swap of the destinations whose routes are [from] and [to]. */
+fun enterFor(from: String?, to: String?, forward: Boolean): EnterTransition = when (screenMotion(from, to)) {
+    ScreenMotion.NONE -> EnterTransition.None
+    ScreenMotion.FADE -> fadeScreenEnter()
+    ScreenMotion.AXIS -> axisEnter(forward)
+}
 
+/** The exit transition for a swap of the destinations whose routes are [from] and [to]. */
+fun exitFor(from: String?, to: String?, forward: Boolean): ExitTransition = when (screenMotion(from, to)) {
+    ScreenMotion.NONE -> ExitTransition.None
+    ScreenMotion.FADE -> fadeScreenExit()
+    ScreenMotion.AXIS -> axisExit(forward)
+}
+
+/**
+ * A destination with the app's screen motion (see [screenMotion]). Its [content] also gets the
+ * destination's [AnimatedVisibilityScope] through [LocalNavAnimatedVisibilityScope], for shared
+ * elements.
+ */
 fun NavGraphBuilder.animationScreens(
     route: String,
     arguments: List<NamedNavArgument> = emptyList(),
@@ -25,21 +42,11 @@ fun NavGraphBuilder.animationScreens(
     // Re-lock swaps straight to the lock screen: no cross-fade that would keep the previous,
     // decrypted screen on display (MainActivity's shield covers it until then). Unlock swaps
     // straight away too: it happens under the reveal overlay (see UnlockRevealOverlay).
-    enterTransition = {
-        if (targetState.destination.route == LOCK_ROUTE || initialState.destination.route == LOCK_ROUTE) {
-            EnterTransition.None
-        } else {
-            axisEnter(forward = true)
-        }
+    enterTransition = { enterFor(initialState.destination.route, targetState.destination.route, forward = true) },
+    exitTransition = { exitFor(initialState.destination.route, targetState.destination.route, forward = true) },
+    popEnterTransition = { enterFor(initialState.destination.route, targetState.destination.route, forward = false) },
+    popExitTransition = { exitFor(initialState.destination.route, targetState.destination.route, forward = false) },
+    content = { entry ->
+        CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) { content(entry) }
     },
-    exitTransition = {
-        if (targetState.destination.route == LOCK_ROUTE || initialState.destination.route == LOCK_ROUTE) {
-            ExitTransition.None
-        } else {
-            axisExit(forward = true)
-        }
-    },
-    popEnterTransition = { axisEnter(forward = false) },
-    popExitTransition = { axisExit(forward = false) },
-    content = content,
 )
