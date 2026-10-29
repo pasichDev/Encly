@@ -108,7 +108,7 @@ fun EnclySwitchRow(
         supporting = supporting,
         icon = icon,
         enabled = enabled,
-        modifier = modifier.toggleable(
+        modifier = modifier.enclyInteractive(MaterialTheme.shapes.medium, enabled).toggleable(
             value = checked,
             enabled = enabled,
             role = Role.Switch,
@@ -133,7 +133,9 @@ fun EnclyNavigationRow(
         supporting = supporting,
         icon = icon,
         enabled = true,
-        modifier = modifier.clickable(role = Role.Button, onClick = onClick),
+        modifier = modifier.enclyInteractive(
+            MaterialTheme.shapes.medium,
+        ).clickable(role = Role.Button, onClick = onClick),
     ) {
         Icon(
             imageVector = EnclyIcons.Chevron,
@@ -167,7 +169,9 @@ fun EnclyListRow(
         modifier = if (onClick !=
             null
         ) {
-            Modifier.clickable(role = Role.Button, onClick = onClick).then(modifier)
+            Modifier.enclyInteractive(
+                MaterialTheme.shapes.medium,
+            ).clickable(role = Role.Button, onClick = onClick).then(modifier)
         } else {
             modifier
         },
@@ -204,6 +208,7 @@ fun EnclyRadioRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 60.dp)
+            .enclyInteractive(MaterialTheme.shapes.medium)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = EnclyTheme.spacing.m, vertical = EnclyTheme.spacing.xs),
     ) {
@@ -295,6 +300,7 @@ private fun SegmentButton(
         modifier = modifier
             .heightIn(min = EnclyTheme.spacing.textButtonHeight)
             .clip(CircleShape)
+            .enclyInteractiveRound(enabled)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick),
     ) {
         Surface(shape = CircleShape, color = container, contentColor = content, modifier = Modifier.fillMaxWidth()) {

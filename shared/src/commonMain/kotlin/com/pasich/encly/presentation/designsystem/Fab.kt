@@ -40,7 +40,9 @@ fun EnclyFab(
             containerColor = if (destructive) colors.error else colors.primary,
             contentColor = if (destructive) colors.onError else colors.onPrimary,
             elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-            modifier = modifier.shadow(ShadowElevation, shape, ambientColor = shadow, spotColor = shadow),
+            modifier = modifier
+                .shadow(ShadowElevation, shape, ambientColor = shadow, spotColor = shadow)
+                .enclyInteractive(shape),
         )
     }
 }

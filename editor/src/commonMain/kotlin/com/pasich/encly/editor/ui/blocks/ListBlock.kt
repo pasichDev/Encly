@@ -64,6 +64,7 @@ import com.pasich.encly.editor.theme.markerBoxSize
 import com.pasich.encly.editor.theme.markerColumn
 import com.pasich.encly.editor.ui.BlockActions
 import com.pasich.encly.editor.ui.components.EditorCheckbox
+import com.pasich.encly.editor.ui.components.editorInteractive
 import kotlin.math.roundToInt
 
 /** From this many items numbers take two digits, and a wider hanging indent. */
@@ -420,6 +421,7 @@ private fun RowScope.RowCheckMark(state: CheckState, marker: ListMarker) {
             )
         },
         modifier = Modifier
+            .editorInteractive(enabled = state.enabled)
             .toggleable(
                 value = state.checked,
                 enabled = state.enabled,

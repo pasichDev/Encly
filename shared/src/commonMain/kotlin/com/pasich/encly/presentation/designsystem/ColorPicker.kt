@@ -65,6 +65,7 @@ private fun ColorSwatch(color: NoteColor, selected: Boolean, onClick: () -> Unit
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(EnclyTheme.spacing.minTouchTarget)
+            .enclyInteractiveRound()
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .semantics { contentDescription = label },
     ) {

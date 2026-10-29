@@ -59,6 +59,7 @@ private fun DialogButton(action: DialogAction) {
     TextButton(
         onClick = action.onClick,
         enabled = action.enabled,
+        modifier = Modifier.enclyInteractiveRound(action.enabled),
         colors = ButtonDefaults.textButtonColors(
             contentColor = if (action.destructive) colors.error else colors.primary,
         ),

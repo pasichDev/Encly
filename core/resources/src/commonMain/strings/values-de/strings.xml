@@ -653,4 +653,6 @@
     <string name="note_text_use_default">Standard-Texteinstellungen verwenden</string>
     <string name="about_source_code">Quellcode</string>
     <string name="about_source_code_desc">Encly ist Open Source: Lies den Code auf GitHub</string>
+    <string name="note_open">Öffnen</string>
+    <string name="note_open_in_new_tab">In neuem Tab öffnen</string>
 </resources>

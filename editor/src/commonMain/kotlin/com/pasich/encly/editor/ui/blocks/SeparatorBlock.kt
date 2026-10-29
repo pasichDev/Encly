@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.semantics
 import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.LocalEditorStrings
 import com.pasich.encly.editor.theme.LocalEditorTheme
+import com.pasich.encly.editor.ui.components.editorInteractive
 
 /**
  * A 1 dp rule in a 24 dp tap target that opens the block's sheet. Taller than the rule is only so a
@@ -30,6 +31,7 @@ internal fun SeparatorBlock(onClick: () -> Unit, modifier: Modifier = Modifier, 
         modifier = modifier
             .fillMaxWidth()
             .height(spacing.l)
+            .editorInteractive(enabled = !isLocked)
             // Its sheet only moves or deletes it: nothing to offer in a locked editor.
             .clickable(
                 enabled = !isLocked,

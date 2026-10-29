@@ -88,6 +88,7 @@ fun EnclyToolButton(
             color = container,
             contentColor = if (enabled) content else content.disabled(),
             modifier = Modifier
+                .enclyInteractive(ToolShape, enabled)
                 .size(ToolSize)
                 .semantics {
                     role = Role.Button

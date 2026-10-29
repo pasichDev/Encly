@@ -224,7 +224,7 @@ private fun Key(
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.combinedClickable(
+            modifier = Modifier.enclyInteractive(CircleShape, enabled).combinedClickable(
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,

@@ -83,28 +83,32 @@ fun EnclyBottomSheet(
         // animation and cut the whole content away, leaving an empty sheet.
         modifier = modifier,
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                .padding(
-                    start = EnclyTheme.spacing.gutter,
-                    end = EnclyTheme.spacing.gutter,
-                    top = if (showHandle) 0.dp else EnclyTheme.spacing.l,
-                    bottom = EnclyTheme.spacing.l,
-                ),
-        ) {
-            if (title != null) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = EnclyTheme.spacing.xs),
-                )
+        val scroll = rememberScrollState()
+        Box {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .then(if (scrollable) Modifier.verticalScroll(scroll) else Modifier)
+                    .padding(
+                        start = EnclyTheme.spacing.gutter,
+                        end = EnclyTheme.spacing.gutter,
+                        top = if (showHandle) 0.dp else EnclyTheme.spacing.l,
+                        bottom = EnclyTheme.spacing.l,
+                    ),
+            ) {
+                if (title != null) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = EnclyTheme.spacing.xs),
+                    )
+                }
+                content()
             }
-            content()
+            if (scrollable) EnclyScrollbar(scroll)
         }
     }
 }
@@ -155,6 +159,7 @@ fun EnclySheetRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = EnclyTheme.spacing.rowHeight)
+            .enclyInteractive(MaterialTheme.shapes.medium, enabled)
             .clickable(enabled = enabled, role = Role.Button) {
                 if (confirmFirst && !armed) {
                     armed = true

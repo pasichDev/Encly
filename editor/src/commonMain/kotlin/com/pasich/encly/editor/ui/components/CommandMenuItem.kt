@@ -72,6 +72,7 @@ internal fun EditorCommandMenu(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(if (active) colors.primaryContainer else colors.surfaceContainerHigh)
+                        .editorInteractive()
                         .clickable(role = Role.Button) { onSelect(index) }
                         .heightIn(min = spacing.minTouchTarget)
                         .padding(horizontal = spacing.m)

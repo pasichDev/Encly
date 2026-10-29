@@ -143,6 +143,7 @@ internal fun EditorSheetRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = spacing.rowHeight)
+            .editorInteractive(MaterialTheme.shapes.medium, enabled)
             .clickable(enabled = enabled, role = Role.Button) {
                 if (confirmFirst && !armed) {
                     armed = true

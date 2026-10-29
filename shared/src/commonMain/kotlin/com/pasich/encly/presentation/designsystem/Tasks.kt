@@ -98,6 +98,7 @@ fun EnclyCheckbox(
     } else {
         Modifier
             .minimumInteractiveComponentSize()
+            .enclyInteractive(shape, enabled)
             .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onCheckedChange)
     }
     Box(contentAlignment = Alignment.Center, modifier = modifier.then(toggle)) {
@@ -171,7 +172,9 @@ fun EnclyTaskRow(
             )
             .then(
                 if (onClick != null) {
-                    Modifier.clickable(enabled = enabled, onClickLabel = onClickLabel, onClick = onClick)
+                    Modifier
+                        .enclyInteractive(MaterialTheme.shapes.small, enabled)
+                        .clickable(enabled = enabled, onClickLabel = onClickLabel, onClick = onClick)
                 } else {
                     Modifier
                 },
@@ -264,7 +267,7 @@ fun EnclyExpandButton(
     )
     val tint = MaterialTheme.colorScheme.onSurfaceVariant
     EnclyTooltip(contentDescription) {
-        IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = modifier.enclyInteractiveRound(enabled)) {
             Icon(
                 EnclyIcons.ChevronDown,
                 contentDescription = contentDescription,
@@ -288,7 +291,7 @@ fun EnclyRowIconButton(
 ) {
     val tint = MaterialTheme.colorScheme.onSurfaceVariant
     EnclyTooltip(contentDescription) {
-        IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = modifier.enclyInteractiveRound(enabled)) {
             Icon(
                 icon,
                 contentDescription = contentDescription,

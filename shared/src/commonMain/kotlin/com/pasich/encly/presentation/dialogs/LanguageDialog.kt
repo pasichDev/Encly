@@ -1,7 +1,9 @@
 package com.pasich.encly.presentation.dialogs
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +19,7 @@ import com.pasich.encly.core.resources.language_dialog_title
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyRadioRow
+import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -39,14 +42,18 @@ fun LanguageDialog(
         confirm = DialogAction(stringResource(Res.string.done), { onConfirm(selected) }),
         dismiss = DialogAction(stringResource(Res.string.cancel), onDismiss),
     ) {
-        LazyColumn(modifier = Modifier.selectableGroup()) {
-            items(AppLanguage.entries) { language ->
-                EnclyRadioRow(
-                    title = stringResource(language.nativeName),
-                    selected = language == selected,
-                    onClick = { selected = language },
-                )
+        val listState = rememberLazyListState()
+        Box {
+            LazyColumn(state = listState, modifier = Modifier.selectableGroup()) {
+                items(AppLanguage.entries) { language ->
+                    EnclyRadioRow(
+                        title = stringResource(language.nativeName),
+                        selected = language == selected,
+                        onClick = { selected = language },
+                    )
+                }
             }
+            EnclyScrollbar(listState)
         }
     }
 }

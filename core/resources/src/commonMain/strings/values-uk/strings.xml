@@ -665,4 +665,6 @@
     <string name="note_text_use_default">Використати типові налаштування тексту</string>
     <string name="about_source_code">Вихідний код</string>
     <string name="about_source_code_desc">Encly має відкритий код: читайте його на GitHub</string>
+    <string name="note_open">Відкрити</string>
+    <string name="note_open_in_new_tab">Відкрити в новій вкладці</string>
 </resources>

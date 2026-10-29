@@ -112,6 +112,7 @@ internal fun EditorFilledToolButton(
             color = colors.primary,
             contentColor = if (enabled) colors.onPrimary else colors.onPrimary.copy(alpha = DISABLED_ALPHA),
             modifier = Modifier
+                .editorInteractive(ToolShape, enabled)
                 .size(ToolSize)
                 .semantics { role = Role.Button },
         ) {

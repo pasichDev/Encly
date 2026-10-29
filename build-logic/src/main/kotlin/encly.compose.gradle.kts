@@ -20,6 +20,9 @@ kotlin {
         // which the desktop tests need.
         getByName("desktopTest").dependencies {
             implementation(compose.desktop.currentOs)
+            // runComposeUiTest: Compose UI tests with a mouse and a keyboard on the desktop JVM.
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
         }
     }
 }

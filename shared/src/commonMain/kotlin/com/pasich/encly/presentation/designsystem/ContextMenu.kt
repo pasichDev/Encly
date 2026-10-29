@@ -1,0 +1,142 @@
+package com.pasich.encly.presentation.designsystem
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntSize
+
+/**
+ * A menu that opens at the pointer on a right click (the secondary mouse button) on [content], or on the
+ * Menu key / Shift+F10 while [content] holds keyboard focus, listing the [entries] built at that moment.
+ * It is a Material menu, so it is themed, closes on Esc or a click outside, and its rows take the arrow
+ * keys, Enter and hover. A finger never opens it: touch keeps the long-press sheets. The menu takes the
+ * right click before its children, so a card or a button inside does not act on it; with [claimPress]
+ * false it takes only a right click that no child used (around a text field, whose own cut / copy / paste
+ * menu is then left alone). With [enabled] false the content is shown as is.
+ */
+@Composable
+fun EnclyContextMenu(
+    entries: () -> List<MenuEntry>,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    claimPress: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    var anchor by remember { mutableStateOf<Offset?>(null) }
+    // One lambda for the life of the menu, so the pointer loop below is never restarted.
+    val open = remember { { position: Offset -> anchor = position } }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
+    Box(
+        modifier = modifier
+            .onSizeChanged { size = it }
+            .contextMenuTriggers(enabled, claimPress, open),
+    ) {
+        content()
+        anchor?.let { position ->
+            ContextMenuPopup(
+                entries = remember(position) { entries() },
+                // A menu is placed from the bottom start of its anchor.
+                offset = with(density) { DpOffset(position.x.toDp(), (position.y - size.height).toDp()) },
+                onDismiss = { anchor = null },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ContextMenuPopup(entries: List<MenuEntry>, offset: DpOffset, onDismiss: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    DropdownMenu(
+        expanded = true,
+        onDismissRequest = onDismiss,
+        offset = offset,
+        // Esc closes the menu from any row, also where the platform's popup does not do it itself.
+        modifier = Modifier.onKeyEvent { event ->
+            (event.key == Key.Escape && event.type == KeyEventType.KeyDown).also { if (it) onDismiss() }
+        },
+    ) {
+        entries.forEach { entry ->
+            DropdownMenuItem(
+                text = { Text(entry.label, style = MaterialTheme.typography.labelLarge) },
+                onClick = {
+                    onDismiss()
+                    entry.onClick()
+                },
+                enabled = entry.enabled,
+                leadingIcon = entry.icon?.let { icon -> { Icon(icon, contentDescription = null) } },
+                colors = if (entry.destructive) {
+                    MenuDefaults.itemColors(
+                        textColor = colors.error,
+                        leadingIconColor = colors.error,
+                    )
+                } else {
+                    MenuDefaults.itemColors()
+                },
+                modifier = Modifier.enclyInteractive(enabled = entry.enabled),
+            )
+        }
+    }
+}
+
+/** Opens at the pointer on a secondary press that nothing below used, and at the corner on the Menu key. */
+private fun Modifier.contextMenuTriggers(enabled: Boolean, claimPress: Boolean, open: (Offset) -> Unit): Modifier =
+    if (enabled) {
+        this
+            .secondaryPress(if (claimPress) PointerEventPass.Initial else PointerEventPass.Final, open)
+            .onKeyEvent { event ->
+                val menuKey = event.key == Key.Menu || (event.key == Key.F10 && event.isShiftPressed)
+                (menuKey && event.type == KeyEventType.KeyDown).also { if (it) open(KeyboardMenuAnchor) }
+            }
+    } else {
+        this
+    }
+
+/** Where the menu opens for the keyboard: just inside the top start corner of the content, in pixels. */
+private val KeyboardMenuAnchor = Offset(x = 24f, y = 24f)
+
+/**
+ * Calls [open] with the position of a secondary-button press, seen in [pass] (the initial pass is before
+ * the children, the final one after them); a press that is used here is consumed, so it starts nothing else.
+ */
+private fun Modifier.secondaryPress(pass: PointerEventPass, open: (Offset) -> Unit): Modifier =
+    pointerInput(pass, open) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent(pass)
+                val press = event.changes.firstOrNull()
+                if (press != null && event.isSecondaryPress() && press.changedToDown()) {
+                    press.consume()
+                    open(press.position)
+                }
+            }
+        }
+    }
+
+private fun PointerEvent.isSecondaryPress() = type == PointerEventType.Press && buttons.isSecondaryPressed

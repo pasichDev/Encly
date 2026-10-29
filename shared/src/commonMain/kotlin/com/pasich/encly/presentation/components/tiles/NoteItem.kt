@@ -7,12 +7,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.duplicate
+import com.pasich.encly.core.resources.note_archive
+import com.pasich.encly.core.resources.note_color_title
+import com.pasich.encly.core.resources.note_open
+import com.pasich.encly.core.resources.note_open_in_new_tab
+import com.pasich.encly.core.resources.note_pin
 import com.pasich.encly.core.resources.note_preview_unreadable
+import com.pasich.encly.core.resources.note_unarchive
+import com.pasich.encly.core.resources.note_unpin
+import com.pasich.encly.core.resources.swipe_choice_delete
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteListItem
+import com.pasich.encly.presentation.designsystem.EnclyContextMenu
+import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNoteCard
+import com.pasich.encly.presentation.designsystem.MenuEntry
 import com.pasich.encly.presentation.designsystem.NoteCardMeta
+import com.pasich.encly.presentation.dialogs.NoteAction
 import com.pasich.encly.presentation.effects.ContainerEnd
 import com.pasich.encly.presentation.effects.rememberNoteContainerModifier
 import com.pasich.encly.utils.NotesTextFormatter
@@ -25,6 +38,8 @@ import kotlin.time.Instant
 /**
  * A note in a list: the design-system note card with its tag and date. Long-press opens the
  * note's actions. [dimmed] is the trash look; a checked note ([Note.isChecked]) is shown selected.
+ * With [contextActions] a right click (or the Menu key) on the card opens a menu of the same actions;
+ * a finger never opens it, and the trash ([dimmed]) has none.
  */
 @Composable
 fun NoteItem(
@@ -36,32 +51,73 @@ fun NoteItem(
     excerptLines: Int = 2,
     highlight: String = "",
     dimmed: Boolean = false,
+    contextActions: NoteContextActions? = null,
 ) {
     val note: Note = item?.note ?: itemNote ?: Note()
     val preview = rememberNotePreview(item, note) ?: stringResource(Res.string.note_preview_unreadable)
     val hapticFeedback = LocalHapticFeedback.current
 
-    EnclyNoteCard(
-        title = note.title,
-        excerpt = preview,
-        meta = NoteCardMeta(
-            tag = item?.tag?.nameTag,
-            date = note.date.takeIf { it > 0L }?.let { formatCardDate(Instant.fromEpochMilliseconds(it)) },
-        ),
-        excerptLines = excerptLines,
-        highlight = highlight,
-        selected = note.isChecked,
-        dimmed = dimmed,
-        pinned = note.isPinned && !dimmed,
-        noteColor = if (dimmed) NoteColor.NONE else NoteColor.fromKey(note.color),
-        onClick = { onItemClick(note) },
-        onLongClick = {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-            onItemLongClick(note)
-        },
-        // The trash opens its notes read-only, with the plain screen motion: no card to grow.
-        modifier = modifier.then(rememberNoteContainerModifier(if (dimmed) 0L else note.id, ContainerEnd.CARD)),
-    )
+    val menu = noteMenuEntries(note, contextActions)
+    EnclyContextMenu(entries = { menu }, enabled = contextActions != null && !dimmed) {
+        EnclyNoteCard(
+            title = note.title,
+            excerpt = preview,
+            meta = NoteCardMeta(
+                tag = item?.tag?.nameTag,
+                date = note.date.takeIf { it > 0L }?.let { formatCardDate(Instant.fromEpochMilliseconds(it)) },
+            ),
+            excerptLines = excerptLines,
+            highlight = highlight,
+            selected = note.isChecked,
+            dimmed = dimmed,
+            pinned = note.isPinned && !dimmed,
+            noteColor = if (dimmed) NoteColor.NONE else NoteColor.fromKey(note.color),
+            onClick = { onItemClick(note) },
+            onLongClick = {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                onItemLongClick(note)
+            },
+            // The trash opens its notes read-only, with the plain screen motion: no card to grow.
+            modifier = modifier.then(rememberNoteContainerModifier(if (dimmed) 0L else note.id, ContainerEnd.CARD)),
+        )
+    }
+}
+
+/** Open, open in a new tab, pin, archive, the next colour, duplicate and move to trash, as the sheet offers them. */
+@Composable
+private fun noteMenuEntries(note: Note, actions: NoteContextActions?): List<MenuEntry> {
+    if (actions == null) return emptyList()
+    val nextColor = NoteColor.fromKey(note.color).next()
+    val open = stringResource(Res.string.note_open)
+    val newTab = stringResource(Res.string.note_open_in_new_tab)
+    val pin = stringResource(if (note.isPinned) Res.string.note_unpin else Res.string.note_pin)
+    val archive = stringResource(if (note.isArchived) Res.string.note_unarchive else Res.string.note_archive)
+    val color = "${stringResource(Res.string.note_color_title)}: ${stringResource(nextColor.labelRes)}"
+    val duplicate = stringResource(Res.string.duplicate)
+    val trash = stringResource(Res.string.swipe_choice_delete)
+    return buildList {
+        add(MenuEntry(open, { actions.onAction(NoteAction.Edit) }, EnclyIcons.Edit))
+        actions.onOpenInNewTab?.let { add(MenuEntry(newTab, it, EnclyIcons.Plus)) }
+        if (!note.isArchived) {
+            add(
+                MenuEntry(
+                    pin,
+                    { actions.onAction(NoteAction.Pin(!note.isPinned)) },
+                    if (note.isPinned) EnclyIcons.PinOff else EnclyIcons.Pin,
+                ),
+            )
+        }
+        add(
+            MenuEntry(
+                archive,
+                { actions.onAction(NoteAction.Archive(!note.isArchived)) },
+                if (note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,
+            ),
+        )
+        add(MenuEntry(color, { actions.onAction(NoteAction.ChangeColor(nextColor)) }, EnclyIcons.Palette))
+        add(MenuEntry(duplicate, { actions.onAction(NoteAction.Duplicate) }, EnclyIcons.Duplicate))
+        add(MenuEntry(trash, { actions.onAction(NoteAction.Delete) }, EnclyIcons.Trash, destructive = true))
+    }
 }
 
 /**

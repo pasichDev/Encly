@@ -81,7 +81,7 @@ fun LanguagePill(label: String, description: String, onClick: () -> Unit, modifi
         border = BorderStroke(EnclyTheme.spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
         color = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier.heightIn(min = EnclyTheme.spacing.minTouchTarget),
+        modifier = modifier.enclyInteractiveRound().heightIn(min = EnclyTheme.spacing.minTouchTarget),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

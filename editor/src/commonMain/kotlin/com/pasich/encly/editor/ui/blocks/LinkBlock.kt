@@ -44,6 +44,7 @@ import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.ui.BlockActions
 import com.pasich.encly.editor.ui.components.EditorFilledToolButton
 import com.pasich.encly.editor.ui.components.EditorTextField
+import com.pasich.encly.editor.ui.components.editorInteractive
 
 /**
  * A link: its address entry until one is saved (or while [isEditing] it), then the link as
@@ -174,7 +175,7 @@ private fun LinkText(urlModel: LinkDataBlock, onClick: () -> Unit, modifier: Mod
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(spacing.s),
             modifier = Modifier
-                .clickable(
+                .editorInteractive(MaterialTheme.shapes.medium).clickable(
                     role = Role.Button,
                     onClickLabel = strings.text(EditorString.MORE_OPTIONS),
                     onClick = onClick,

@@ -65,6 +65,7 @@ fun EnclyButton(
             },
         ),
         modifier = modifier
+            .enclyInteractiveRound(enabled && !loading)
             .fillMaxWidth()
             .heightIn(min = EnclyTheme.spacing.buttonHeight),
     ) {
@@ -105,6 +106,7 @@ fun EnclyTonalButton(text: String, onClick: () -> Unit, modifier: Modifier = Mod
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ),
         modifier = modifier
+            .enclyInteractiveRound(enabled)
             .fillMaxWidth()
             .heightIn(min = EnclyTheme.spacing.buttonHeight),
     ) {
@@ -138,7 +140,7 @@ fun EnclyTextButton(
                 else -> colors.primary
             },
         ),
-        modifier = modifier.heightIn(min = EnclyTheme.spacing.textButtonHeight),
+        modifier = modifier.enclyInteractiveRound(enabled).heightIn(min = EnclyTheme.spacing.textButtonHeight),
     ) {
         if (icon != null) {
             Icon(
@@ -169,7 +171,7 @@ fun EnclyPillButton(
         border = BorderStroke(EnclyTheme.spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
         contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.m),
-        modifier = modifier.heightIn(min = EnclyTheme.spacing.textButtonHeight),
+        modifier = modifier.enclyInteractiveRound(enabled).heightIn(min = EnclyTheme.spacing.textButtonHeight),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

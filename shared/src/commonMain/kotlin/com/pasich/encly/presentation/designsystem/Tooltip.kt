@@ -56,7 +56,7 @@ fun IconWithTooltip(
     iconSize: Dp = Dp.Unspecified,
 ) {
     EnclyTooltip(label) {
-        IconButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = modifier.enclyInteractiveRound(enabled)) {
             val iconModifier = if (iconSize.isSpecified) Modifier.size(iconSize) else Modifier
             if (tint == null) {
                 Icon(icon, contentDescription = label, modifier = iconModifier)

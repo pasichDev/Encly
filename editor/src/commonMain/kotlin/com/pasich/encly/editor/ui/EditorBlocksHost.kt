@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -41,6 +44,8 @@ import com.pasich.encly.editor.ui.blocks.ListBlock
 import com.pasich.encly.editor.ui.blocks.QuoteBlock
 import com.pasich.encly.editor.ui.blocks.SeparatorBlock
 import com.pasich.encly.editor.ui.blocks.TextBlock
+import com.pasich.encly.editor.ui.components.ContextEntry
+import com.pasich.encly.editor.ui.components.EditorContextMenu
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -163,73 +168,118 @@ private fun EditorBlock(
     val checklist = (block as? Block.ListBlock)?.takeIf { it.blockType == BlockType.LIST_CHECK }
     val lockedFlow = remember(checklist) { checklist?.locked ?: MutableStateFlow(false) }
     val checklistLocked by lockedFlow.collectAsState()
-    Box(
-        modifier = Modifier
-            // A touch anywhere in a list makes it the block the toolbar acts on, even where its text
-            // cannot take focus (a locked checklist), so its lock can be undone from the toolbar.
-            .then(if (block is Block.ListBlock) Modifier.markInteractionOn(callbacks.onInteract) else Modifier)
-            // Blocks carry an 8 dp frame of their own: they sit that much inside the gutter.
-            .padding(horizontal = theme.spacing.m)
-            .onFocusChanged { focusState ->
-                hasFocus = focusState.hasFocus
-                // A list has one field per item: any of them focused counts as the list focused,
-                // so a new block goes after the list and not after the block focused before it.
-                val focused = if (block is Block.ListBlock) focusState.hasFocus else focusState.isFocused
-                when {
-                    focused -> callbacks.onFocus()
-                    !focusState.hasFocus -> callbacks.onFocusLost()
-                }
-            }
-            .editorBlockFrame(
-                theme.lineSpacing.frameInset.takeIf {
-                    block is Block.TextBlock || block is Block.ListBlock || block is Block.QuoteBlock
-                },
-            ),
+    val commands = blockCommands(callbacks, position, isOnlyBlock, checklist?.let { checklistLocked })
+    // The block's actions for TalkBack, for the keyboard (Ctrl / Cmd+Shift+Up and Down move it) and for a
+    // right click on a desktop.
+    EditorContextMenu(
+        entries = { commands.map { ContextEntry(it.label, it.icon, it.destructive, it.run) } },
+        enabled = !isLocked,
+        // A separator and a link card have no text to select: the menu takes their right click. A text
+        // field keeps its own (cut, copy, paste).
+        claimPress = block.hasNoText(),
     ) {
-        BlockContent(
-            block = block,
-            blockActions = blockActions,
-            focusRequester = focusRequester,
-            state = BlockContentState(
-                isLocked = isLocked,
-                isEditingLink = isEditingLink,
-                showPlaceholder = !isLocked && (hasFocus || isOnlyBlock),
-            ),
-            onOpenSheet = callbacks.onOpenSheet,
-            modifier = if (isLocked) {
-                Modifier
-            } else {
-                blockAccessibilityActions(callbacks, position, isOnlyBlock, checklist?.let { checklistLocked })
-            },
-        )
+        Box(
+            modifier = Modifier
+                .onPreviewKeyEvent { event -> moveBlockByKey(event, callbacks, position, isLocked) }
+                // A touch anywhere in a list makes it the block the toolbar acts on, even where its text
+                // cannot take focus (a locked checklist), so its lock can be undone from the toolbar.
+                .then(if (block is Block.ListBlock) Modifier.markInteractionOn(callbacks.onInteract) else Modifier)
+                // Blocks carry an 8 dp frame of their own: they sit that much inside the gutter.
+                .padding(horizontal = theme.spacing.m)
+                .onFocusChanged { focusState ->
+                    hasFocus = focusState.hasFocus
+                    // A list has one field per item: any of them focused counts as the list focused,
+                    // so a new block goes after the list and not after the block focused before it.
+                    val focused = if (block is Block.ListBlock) focusState.hasFocus else focusState.isFocused
+                    when {
+                        focused -> callbacks.onFocus()
+                        !focusState.hasFocus -> callbacks.onFocusLost()
+                    }
+                }
+                .editorBlockFrame(
+                    theme.lineSpacing.frameInset.takeIf {
+                        block is Block.TextBlock || block is Block.ListBlock || block is Block.QuoteBlock
+                    },
+                ),
+        ) {
+            BlockContent(
+                block = block,
+                blockActions = blockActions,
+                focusRequester = focusRequester,
+                state = BlockContentState(
+                    isLocked = isLocked,
+                    isEditingLink = isEditingLink,
+                    showPlaceholder = !isLocked && (hasFocus || isOnlyBlock),
+                ),
+                onOpenSheet = callbacks.onOpenSheet,
+                modifier = if (isLocked) Modifier else blockAccessibilityActions(commands),
+            )
+        }
     }
 }
 
+/** A separator and a link card have no text field of their own to keep a right click for. */
+private fun Block.hasNoText() = this is Block.SeparatorBlock || this is Block.LinkBlock
+
+/** Moves the focused block when [event] is the move chord and the block can go that way; true when it did. */
+private fun moveBlockByKey(
+    event: KeyEvent,
+    callbacks: EditorBlockCallbacks,
+    position: BlockPosition,
+    isLocked: Boolean,
+): Boolean {
+    val up = blockMoveDirection(event)?.takeIf { !isLocked } ?: return false
+    val canMove = if (up) !position.first else !position.last
+    if (canMove) callbacks.onMove(up)
+    return canMove
+}
+
+/** One thing to do with a block: what TalkBack offers and the context menu lists. */
+private class BlockCommand(val label: String, val icon: ImageVector, val destructive: Boolean, val run: () -> Unit)
+
 /**
- * TalkBack's actions on a block's field: move it up or down, duplicate it, delete it. Without them a TalkBack
- * user could only reach these through the toolbar's "Add block" row.
+ * The block's commands: move it up or down (only where it can go), duplicate it, delete it (not the only
+ * block) and, for a checklist, lock or unlock it. Without them a TalkBack user could only reach these
+ * through the toolbar's "Add block" row.
  */
 @Composable
-private fun blockAccessibilityActions(
+private fun blockCommands(
     callbacks: EditorBlockCallbacks,
     position: BlockPosition,
     isOnlyBlock: Boolean,
     checklistLocked: Boolean?,
-): Modifier {
+): List<BlockCommand> {
     val strings = LocalEditorStrings.current
-    val moveUp = strings.text(EditorString.BLOCK_MOVE_UP)
-    val moveDown = strings.text(EditorString.BLOCK_MOVE_DOWN)
-    val duplicate = strings.text(EditorString.BLOCK_DUPLICATE)
-    val delete = strings.text(EditorString.BLOCK_DELETE)
-    val lock = strings.text(if (checklistLocked == true) EditorString.CHECKLIST_UNLOCK else EditorString.CHECKLIST_LOCK)
-    val actions = buildList {
-        if (!position.first) add(CustomAccessibilityAction(moveUp) { true.also { callbacks.onMove(true) } })
-        if (!position.last) add(CustomAccessibilityAction(moveDown) { true.also { callbacks.onMove(false) } })
-        add(CustomAccessibilityAction(duplicate) { true.also { callbacks.onDuplicate() } })
-        if (!isOnlyBlock) add(CustomAccessibilityAction(delete) { true.also { callbacks.onDelete() } })
-        if (checklistLocked != null) add(CustomAccessibilityAction(lock) { true.also { callbacks.onToggleLock() } })
+    val icons = LocalEditorTheme.current.icons
+    return buildList {
+        if (!position.first) {
+            add(BlockCommand(strings.text(EditorString.BLOCK_MOVE_UP), icons.arrowUp, false) { callbacks.onMove(true) })
+        }
+        if (!position.last) {
+            add(
+                BlockCommand(strings.text(EditorString.BLOCK_MOVE_DOWN), icons.arrowDown, false) {
+                    callbacks.onMove(false)
+                },
+            )
+        }
+        add(
+            BlockCommand(strings.text(EditorString.BLOCK_DUPLICATE), icons.duplicate, false) {
+                callbacks.onDuplicate()
+            },
+        )
+        if (!isOnlyBlock) {
+            add(BlockCommand(strings.text(EditorString.BLOCK_DELETE), icons.trash, true) { callbacks.onDelete() })
+        }
+        if (checklistLocked != null) {
+            val lock = if (checklistLocked) EditorString.CHECKLIST_UNLOCK else EditorString.CHECKLIST_LOCK
+            add(BlockCommand(strings.text(lock), icons.checklist, false) { callbacks.onToggleLock() })
+        }
     }
-    return Modifier.semantics { customActions = actions }
+}
+
+/** TalkBack's actions on a block's field: its [commands]. */
+private fun blockAccessibilityActions(commands: List<BlockCommand>): Modifier = Modifier.semantics {
+    customActions = commands.map { command -> CustomAccessibilityAction(command.label) { true.also { command.run() } } }
 }
 
 /** How a block shows: read-only, its link being edited, its placeholder. */

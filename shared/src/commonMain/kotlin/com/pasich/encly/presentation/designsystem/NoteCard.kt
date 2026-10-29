@@ -82,6 +82,7 @@ fun EnclyNoteCard(
         modifier = modifier
             .fillMaxWidth()
             .semantics { this.selected = selected }
+            .enclyInteractive(MaterialTheme.shapes.medium)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Column(

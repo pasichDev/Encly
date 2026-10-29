@@ -135,7 +135,7 @@ fun FilePickerButton(
         color = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
         border = BorderStroke(EnclyTheme.spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.enclyInteractive(MaterialTheme.shapes.medium, enabled).fillMaxWidth(),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

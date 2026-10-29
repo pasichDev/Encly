@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.dialogs.tasks
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +43,7 @@ import com.pasich.encly.presentation.components.tasks.PriorityValues
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyChip
+import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.SectionOverline
@@ -171,35 +173,39 @@ private fun TaskEditorContent(
     checklist: SubtaskListState,
 ) {
     val descriptionFocus = remember { FocusRequester() }
-    Column(
-        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap),
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
-    ) {
-        EnclyTextField(
-            value = state.title,
-            onValueChange = actions.onTitleChange,
-            label = stringResource(
-                if (state.isEditMode) Res.string.task_edit_placeholder else Res.string.task_new_placeholder,
-            ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { descriptionFocus.requestFocus() }),
-            fieldModifier = Modifier.focusRequester(titleFocusRequester),
-        )
-        EnclyTextField(
-            value = state.description,
-            onValueChange = actions.onDescriptionChange,
-            label = stringResource(Res.string.task_description_placeholder),
-            textStyle = MaterialTheme.typography.bodyMedium,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { actions.onSubmit() }),
-            fieldModifier = Modifier.focusRequester(descriptionFocus),
-        )
-        // Right under the description, so it stays in view above the keyboard.
-        SubtaskEditor(checklist)
-        PriorityChips(selected = state.priority, onSelect = actions.onPrioritySelect)
-        TaskEditorFooter(state, actions)
+    val scroll = rememberScrollState()
+    Box {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap),
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scroll),
+        ) {
+            EnclyTextField(
+                value = state.title,
+                onValueChange = actions.onTitleChange,
+                label = stringResource(
+                    if (state.isEditMode) Res.string.task_edit_placeholder else Res.string.task_new_placeholder,
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { descriptionFocus.requestFocus() }),
+                fieldModifier = Modifier.focusRequester(titleFocusRequester),
+            )
+            EnclyTextField(
+                value = state.description,
+                onValueChange = actions.onDescriptionChange,
+                label = stringResource(Res.string.task_description_placeholder),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { actions.onSubmit() }),
+                fieldModifier = Modifier.focusRequester(descriptionFocus),
+            )
+            // Right under the description, so it stays in view above the keyboard.
+            SubtaskEditor(checklist)
+            PriorityChips(selected = state.priority, onSelect = actions.onPrioritySelect)
+            TaskEditorFooter(state, actions)
+        }
+        EnclyScrollbar(scroll)
     }
 }
 

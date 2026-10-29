@@ -45,7 +45,7 @@ private const val PROGRESS_ANIMATION_MS = 250
 fun EnclyBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val label = stringResource(Res.string.back)
     EnclyTooltip(label) {
-        IconButton(onClick = onClick, modifier = modifier) {
+        IconButton(onClick = onClick, modifier = modifier.enclyInteractiveRound()) {
             Icon(EnclyIcons.Back, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
         }
     }
@@ -56,7 +56,7 @@ fun EnclyBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 fun EnclyCloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val label = stringResource(Res.string.close)
     EnclyTooltip(label) {
-        IconButton(onClick = onClick, modifier = modifier) {
+        IconButton(onClick = onClick, modifier = modifier.enclyInteractiveRound()) {
             Icon(EnclyIcons.Close, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
         }
     }
@@ -76,7 +76,7 @@ fun EnclyOverflowMenu(items: List<OverflowAction>, modifier: Modifier = Modifier
     Box(modifier = modifier) {
         val label = stringResource(Res.string.more_options)
         EnclyTooltip(label) {
-            IconButton(onClick = { expanded = true }) {
+            IconButton(onClick = { expanded = true }, modifier = Modifier.enclyInteractiveRound()) {
                 Icon(EnclyIcons.More, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
             }
         }
@@ -104,6 +104,7 @@ fun EnclyOverflowMenu(items: List<OverflowAction>, modifier: Modifier = Modifier
                         expanded = false
                         item.onClick()
                     },
+                    modifier = Modifier.enclyInteractive(),
                 )
             }
         }

@@ -7,6 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
@@ -59,6 +63,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val HOLD_TO_CONFIRM_MS = 4_000
 private const val HALF = 0.5f
+private const val HOVER_LAYER_ALPHA = 0.08f
 private const val CHEVRON_TURN = 180f
 private const val SKELETON_TITLE_FRACTION = 0.6f
 private const val SKELETON_LINE_FRACTION = 0.9f
@@ -132,6 +137,9 @@ fun EnclyHoldToConfirmButton(
         finishedListener = { if (it >= 1f) onConfirm() },
     )
     val colors = MaterialTheme.colorScheme
+    // This button has no ripple, so the pointer's hover is shown with the Material state layer by hand.
+    val hoverSource = remember { MutableInteractionSource() }
+    val hovered by hoverSource.collectIsHoveredAsState()
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -139,6 +147,9 @@ fun EnclyHoldToConfirmButton(
             .height(EnclyTheme.spacing.buttonHeight)
             .clip(CircleShape)
             .background(colors.errorContainer)
+            .background(if (hovered) colors.onErrorContainer.copy(alpha = HOVER_LAYER_ALPHA) else Color.Transparent)
+            .enclyInteractive(CircleShape)
+            .hoverable(hoverSource)
             .semantics {
                 role = Role.Button
                 onLongClick {
@@ -182,6 +193,7 @@ fun EnclyExpandableRow(question: String, answer: String, modifier: Modifier = Mo
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .enclyInteractive(MaterialTheme.shapes.medium)
             .clickable(role = Role.Button) { expanded = !expanded }
             .padding(horizontal = EnclyTheme.spacing.m, vertical = EnclyTheme.spacing.rowGap),
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
@@ -239,7 +251,9 @@ fun ThemeSwatch(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.labelGap),
-        modifier = modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+        modifier = modifier
+            .enclyInteractive(SwatchShape)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
@@ -324,6 +338,7 @@ fun EnclyDrawerItem(
             unselectedBadgeColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
         modifier = modifier
+            .enclyInteractiveRound()
             .heightIn(min = EnclyTheme.spacing.rowHeight)
             .padding(NavigationDrawerItemDefaults.ItemPadding),
     )
@@ -343,6 +358,7 @@ fun EnclyDrawerHighlight(label: String, icon: ImageVector, onClick: () -> Unit, 
         modifier = modifier
             .padding(NavigationDrawerItemDefaults.ItemPadding)
             .padding(vertical = EnclyTheme.spacing.xxs)
+            .enclyInteractiveRound()
             .fillMaxWidth()
             .heightIn(min = EnclyTheme.spacing.rowHeight),
     ) {
@@ -366,6 +382,7 @@ fun EnclyInlineLink(text: String, onClick: () -> Unit, modifier: Modifier = Modi
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
             .clip(CircleShape)
+            .enclyInteractiveRound()
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = EnclyTheme.spacing.xs, vertical = EnclyTheme.spacing.xxs),
     )

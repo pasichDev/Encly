@@ -183,6 +183,10 @@ class SharedBoundaryTest {
                 "the system animator duration scale",
             "com/pasich/encly/presentation/effects/WindowMetrics.android.kt" to
                 "the IME inset and the configuration width",
+            "com/pasich/encly/presentation/designsystem/Scrollbars.android.kt" to
+                "no scrollbar: touch scrolling is the way",
+            "com/pasich/encly/presentation/designsystem/PlatformKeys.android.kt" to
+                "a hardware keyboard uses Ctrl as the command key",
         )
 
         /** The desktop actuals. */
@@ -193,6 +197,10 @@ class SharedBoundaryTest {
                 "no animation setting on the desktop",
             "com/pasich/encly/presentation/effects/WindowMetrics.desktop.kt" to
                 "the IME inset and the window size on the desktop",
+            "com/pasich/encly/presentation/designsystem/Scrollbars.desktop.kt" to
+                "VerticalScrollbar, a desktop-only Compose API",
+            "com/pasich/encly/presentation/designsystem/PlatformKeys.desktop.kt" to
+                "os.name decides whether the command key is Meta (macOS) or Ctrl",
         )
     }
 }

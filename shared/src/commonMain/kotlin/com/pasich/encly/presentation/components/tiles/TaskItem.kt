@@ -34,10 +34,12 @@ import com.pasich.encly.presentation.components.tasks.NextStepLeaf
 import com.pasich.encly.presentation.components.tasks.PriorityValues
 import com.pasich.encly.presentation.components.tasks.SubtaskTree
 import com.pasich.encly.presentation.components.tasks.SubtaskTreeActions
+import com.pasich.encly.presentation.designsystem.EnclyContextMenu
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyRowIconButton
 import com.pasich.encly.presentation.designsystem.EnclySubtaskTree
 import com.pasich.encly.presentation.designsystem.EnclyTaskRow
+import com.pasich.encly.presentation.designsystem.MenuEntry
 import com.pasich.encly.presentation.viewmodel.InlineSubtaskEdit
 import com.pasich.encly.utils.formatDateTime
 import kotlinx.coroutines.delay
@@ -194,51 +196,63 @@ private fun TaskRow(
     val editLabel = stringResource(Res.string.task_edit_placeholder)
     val addLabel = stringResource(Res.string.subtask_add)
     val toggle = { actions.tree.onToggleTree(task.id) }
-    EnclyTaskRow(
-        title = task.title,
-        checked = task.isCompleted,
-        onCheckedChange = { checked ->
-            // Saves and closes an inline sub-task field first, as any other tap on the list does.
-            focusManager.clearFocus()
-            when {
-                checked && !task.isCompleted -> onComplete()
-                !checked && task.isCompleted -> actions.onToggleTask(task.id, false)
-            }
-        },
-        description = task.description,
-        meta = completedAt,
-        priority = stringResource(priority.label).takeIf { !task.isCompleted },
-        priorityEmphasis = priority.emphasis,
-        large = true,
-        enabled = enabled,
-        // Done tasks open too: their sub-tasks can still be ticked, renamed and added.
-        onClick = toggle,
-        onClickLabel = toggleLabel,
-        connectorBelow = connectorBelow,
-        progress = subtasks.map { it.isCompleted }.takeIf { it.isNotEmpty() },
-        modifier = Modifier.semantics {
-            stateDescription = listOfNotNull(summary, stateLabel).joinToString(", ")
-            customActions = listOf(
-                CustomAccessibilityAction(toggleLabel) {
-                    toggle()
-                    true
-                },
-                CustomAccessibilityAction(editLabel) {
-                    actions.onEdit(task)
-                    true
-                },
-                CustomAccessibilityAction(addLabel) {
-                    actions.tree.onStartAdding(task.id)
-                    true
-                },
+    // The same actions TalkBack gets, on a right click (or the Menu key) for a mouse and a keyboard.
+    EnclyContextMenu(
+        entries = {
+            listOf(
+                MenuEntry(toggleLabel, toggle, EnclyIcons.ChevronDown),
+                MenuEntry(editLabel, { actions.onEdit(task) }, EnclyIcons.Edit),
+                MenuEntry(addLabel, { actions.tree.onStartAdding(task.id) }, EnclyIcons.Plus),
             )
         },
+        enabled = enabled,
     ) {
-        EnclyRowIconButton(
-            icon = EnclyIcons.Edit,
-            contentDescription = editLabel,
-            onClick = { actions.onEdit(task) },
+        EnclyTaskRow(
+            title = task.title,
+            checked = task.isCompleted,
+            onCheckedChange = { checked ->
+                // Saves and closes an inline sub-task field first, as any other tap on the list does.
+                focusManager.clearFocus()
+                when {
+                    checked && !task.isCompleted -> onComplete()
+                    !checked && task.isCompleted -> actions.onToggleTask(task.id, false)
+                }
+            },
+            description = task.description,
+            meta = completedAt,
+            priority = stringResource(priority.label).takeIf { !task.isCompleted },
+            priorityEmphasis = priority.emphasis,
+            large = true,
             enabled = enabled,
-        )
+            // Done tasks open too: their sub-tasks can still be ticked, renamed and added.
+            onClick = toggle,
+            onClickLabel = toggleLabel,
+            connectorBelow = connectorBelow,
+            progress = subtasks.map { it.isCompleted }.takeIf { it.isNotEmpty() },
+            modifier = Modifier.semantics {
+                stateDescription = listOfNotNull(summary, stateLabel).joinToString(", ")
+                customActions = listOf(
+                    CustomAccessibilityAction(toggleLabel) {
+                        toggle()
+                        true
+                    },
+                    CustomAccessibilityAction(editLabel) {
+                        actions.onEdit(task)
+                        true
+                    },
+                    CustomAccessibilityAction(addLabel) {
+                        actions.tree.onStartAdding(task.id)
+                        true
+                    },
+                )
+            },
+        ) {
+            EnclyRowIconButton(
+                icon = EnclyIcons.Edit,
+                contentDescription = editLabel,
+                onClick = { actions.onEdit(task) },
+                enabled = enabled,
+            )
+        }
     }
 }

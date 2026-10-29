@@ -653,4 +653,6 @@
     <string name="note_text_use_default">Standaardtekstinstellingen gebruiken</string>
     <string name="about_source_code">Broncode</string>
     <string name="about_source_code_desc">Encly is open source: lees de code op GitHub</string>
+    <string name="note_open">Openen</string>
+    <string name="note_open_in_new_tab">Openen in nieuw tabblad</string>
 </resources>

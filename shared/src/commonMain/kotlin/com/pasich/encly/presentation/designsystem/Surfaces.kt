@@ -58,7 +58,7 @@ fun EnclyCard(
             color = container,
             contentColor = colors.onSurface,
             border = border,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier.enclyInteractive(MaterialTheme.shapes.medium).fillMaxWidth(),
             content = inner,
         )
     } else {
@@ -144,6 +144,7 @@ fun EnclyChip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier
+                .enclyInteractive(CircleShape)
                 .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
                 .heightIn(min = 36.dp)
                 .padding(horizontal = 14.dp, vertical = EnclyTheme.spacing.xs),

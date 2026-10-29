@@ -153,7 +153,9 @@ fun EnclySubtaskRow(
                 .heightIn(min = spacing.minTouchTarget)
                 .then(
                     if (onClick != null) {
-                        Modifier.clickable(onClickLabel = onClickLabel, onClick = onClick)
+                        Modifier
+                            .enclyInteractive(MaterialTheme.shapes.small)
+                            .clickable(onClickLabel = onClickLabel, onClick = onClick)
                     } else {
                         Modifier
                     },
@@ -217,6 +219,7 @@ fun EnclyAddSubtaskButton(
             modifier = Modifier
                 .weight(1f)
                 .heightIn(min = EnclyTheme.spacing.minTouchTarget)
+                .enclyInteractiveRound(enabled)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .semantics(mergeDescendants = true) { contentDescription = description },
         ) {
