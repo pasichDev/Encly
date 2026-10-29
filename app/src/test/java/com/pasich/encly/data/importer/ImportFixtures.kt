@@ -2,7 +2,8 @@ package com.pasich.encly.data.importer
 
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
-import java.io.ByteArrayInputStream
+import kotlinx.io.Buffer
+import kotlinx.io.asSource
 import java.io.ByteArrayOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -15,7 +16,7 @@ internal object ImportFixtures {
     fun entry(path: String, text: String) = ImportEntry(path, text.toByteArray(Charsets.UTF_8))
 
     fun source(vararg files: Pair<String, ByteArray>): ImportFileSource = ImportFileSource {
-        files.asSequence().map { (path, bytes) -> SourceFile(path) { ByteArrayInputStream(bytes) } }
+        files.asSequence().map { (path, bytes) -> SourceFile(path) { Buffer().apply { write(bytes) } } }
     }
 
     fun textSource(vararg files: Pair<String, String>): ImportFileSource =
@@ -98,7 +99,7 @@ internal object ImportFixtures {
                 TreeNode(it.relativeTo(dir).invariantSeparatorsPath, it.name, it.isDirectory)
             }
 
-        override fun open(id: String) = java.io.File(dir, id).inputStream()
+        override fun open(id: String) = java.io.File(dir, id).inputStream().asSource()
     }
 
     /** A real fixture folder, walked by the same [TreeWalker] the Storage Access Framework tree uses. */

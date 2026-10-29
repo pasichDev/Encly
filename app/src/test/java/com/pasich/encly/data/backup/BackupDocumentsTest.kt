@@ -8,6 +8,7 @@ import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupFormat
 import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.backup.assertError
+import kotlinx.io.asSource
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -33,14 +34,14 @@ class BackupDocumentsTest {
     fun readsABackupSizedFromItsHeader() {
         val input = CountingInputStream(backup)
 
-        assertArrayEquals(backup, BackupDocuments.readCapped(input, limit = backup.size))
+        assertArrayEquals(backup, BackupDocuments.readCapped(input.asSource(), limit = backup.size))
     }
 
     @Test
     fun rejectsAFileDeclaringMoreThanTheLimitWithoutReadingIt() {
         val input = CountingInputStream(backup)
 
-        assertError(BackupError.TOO_LARGE) { BackupDocuments.readCapped(input, limit = backup.size - 1) }
+        assertError(BackupError.TOO_LARGE) { BackupDocuments.readCapped(input.asSource(), limit = backup.size - 1) }
         assertEquals(BackupFormat.HEADER_LENGTH, input.consumed)
     }
 
@@ -49,19 +50,19 @@ class BackupDocumentsTest {
         val header = backup.copyOf(BackupFormat.HEADER_LENGTH)
         ByteBuffer.wrap(header).putInt(LENGTH_OFFSET, -1) // 0xFFFFFFFF
 
-        assertError(BackupError.TOO_LARGE) { BackupDocuments.readCapped(ByteArrayInputStream(header)) }
+        assertError(BackupError.TOO_LARGE) { BackupDocuments.readCapped(ByteArrayInputStream(header).asSource()) }
     }
 
     @Test
     fun rejectsDataPastTheDeclaredEnd() {
         assertError(BackupError.CORRUPTED) {
-            BackupDocuments.readCapped(ByteArrayInputStream(backup + byteArrayOf(0)))
+            BackupDocuments.readCapped(ByteArrayInputStream(backup + byteArrayOf(0)).asSource())
         }
     }
 
     @Test
     fun aShortFileIsLeftForParseToReportTruncated() {
-        val short = BackupDocuments.readCapped(ByteArrayInputStream(backup.copyOf(backup.size - 1)))
+        val short = BackupDocuments.readCapped(ByteArrayInputStream(backup.copyOf(backup.size - 1)).asSource())
 
         assertEquals(backup.size - 1, short.size)
         assertError(BackupError.TRUNCATED) { BackupFormat.parse(short) }
@@ -71,7 +72,7 @@ class BackupDocumentsTest {
     fun otherFilesAreRejectedAfterTheirFirstBytes() {
         val input = CountingInputStream(ByteArray(1_000_000))
 
-        assertError(BackupError.NOT_A_BACKUP) { BackupDocuments.readCapped(input) }
+        assertError(BackupError.NOT_A_BACKUP) { BackupDocuments.readCapped(input.asSource()) }
         assertEquals(BackupFormat.HEADER_LENGTH, input.consumed)
     }
 

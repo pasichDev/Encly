@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.io.asSource
 import javax.inject.Inject
 
 /**
@@ -23,7 +24,8 @@ class SafImportFiles @Inject constructor(@param:ApplicationContext private val c
     fun tree(tree: Uri, limits: ImportLimits = ImportLimits()): ImportFileSource =
         TreeWalker(SafTree(tree, limits), limits).source()
 
-    private fun open(uri: Uri) = context.contentResolver.openInputStream(uri)
+    /** The platform stream as a kotlinx-io source: the import logic never sees an [java.io.InputStream]. */
+    private fun open(uri: Uri) = context.contentResolver.openInputStream(uri)?.asSource()
 
     private fun displayName(uri: Uri): String? = try {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {

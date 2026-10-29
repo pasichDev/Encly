@@ -1,17 +1,16 @@
 package com.pasich.encly.data.importer
 
-import java.io.IOException
-import java.io.InputStream
-import java.nio.ByteBuffer
-import java.nio.charset.CharacterCodingException
-import java.nio.charset.Charset
-import java.nio.charset.CodingErrorAction
-import java.util.zip.CRC32
-import java.util.zip.DataFormatException
-import java.util.zip.Inflater
+import com.pasich.encly.data.zip.RawInflater
+import com.pasich.encly.data.zip.decodeCp437
+import com.pasich.encly.data.zip.newCrc32
+import com.pasich.encly.data.zip.newRawInflater
+import kotlinx.io.Buffer
+import kotlinx.io.IOException
+import kotlinx.io.RawSource
+import kotlinx.io.Source
 
 /**
- * A sequential ZIP reader, because [java.util.zip.ZipInputStream] cannot read what streaming
+ * A sequential ZIP reader, because the platform's ZIP stream cannot read what streaming
  * writers produce: ZIP64 archives with a data descriptor (Notesnook's export, among others) fail
  * there with "invalid entry size". This reads local headers and entry data only, never the
  * central directory, so it needs no seeking and works on any stream.
@@ -24,20 +23,21 @@ import java.util.zip.Inflater
  */
 // One small format (header, ZIP64 extra, descriptor layouts, buffer); every corrupt archive is an IOException.
 @Suppress("TooManyFunctions", "ThrowsCount")
-internal class ZipStreamReader(private val input: InputStream) {
+internal class ZipStreamReader(private val input: Source) {
     class Entry(val name: String) {
         val isDirectory: Boolean get() = name.endsWith("/")
     }
 
     private class State(val flags: Int, val method: Int, val expectedCrc: Long, var compressed: Long, var size: Long) {
-        val crc = CRC32()
-        val inflater = if (method == DEFLATED) Inflater(true) else null
+        val crc = newCrc32()
+        val inflater = if (method == DEFLATED) newRawInflater() else null
         var fed = 0
         var storedLeft = size
         var done = false
     }
 
     private val buf = ByteArray(BUFFER)
+    private val chunk = ByteArray(BUFFER)
     private var pos = 0
     private var lim = 0
     private var state: State? = null
@@ -60,13 +60,16 @@ internal class ZipStreamReader(private val input: InputStream) {
     }
 
     /** The uncompressed data of the current entry. */
-    fun data(): InputStream = object : InputStream() {
-        override fun read(): Int {
-            val one = ByteArray(1)
-            return if (read(one, 0, 1) < 0) -1 else one[0].toInt() and BYTE_MASK
+    fun data(): RawSource = object : RawSource {
+        override fun readAtMostTo(sink: Buffer, byteCount: Long): Long {
+            if (byteCount == 0L) return 0
+            val length = minOf(byteCount, chunk.size.toLong()).toInt()
+            val n = state?.let { readData(it, chunk, 0, length) } ?: -1
+            if (n > 0) sink.write(chunk, 0, n)
+            return n.toLong()
         }
 
-        override fun read(b: ByteArray, off: Int, len: Int): Int = state?.let { readData(it, b, off, len) } ?: -1
+        override fun close() = Unit
     }
 
     private fun open(header: ByteArray): Entry {
@@ -96,14 +99,11 @@ internal class ZipStreamReader(private val input: InputStream) {
      */
     private fun decodeName(bytes: ByteArray): String {
         val utf8 = try {
-            Charsets.UTF_8.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(ByteBuffer.wrap(bytes)).toString()
+            bytes.decodeToString(throwOnInvalidSequence = true)
         } catch (_: CharacterCodingException) {
             null
         }
-        return utf8 ?: String(bytes, cp437)
+        return utf8 ?: decodeCp437(bytes)
     }
 
     /** The (size, compressed size) of the ZIP64 extra field, if present. */
@@ -141,13 +141,13 @@ internal class ZipStreamReader(private val input: InputStream) {
         if (entry.storedLeft <= 0) return finish(entry)
         if (!fill()) throw IOException("truncated zip")
         val n = minOf(len.toLong(), entry.storedLeft, (lim - pos).toLong()).toInt()
-        System.arraycopy(buf, pos, b, off, n)
+        buf.copyInto(b, off, pos, pos + n)
         pos += n
         entry.storedLeft -= n
         return n
     }
 
-    private fun inflate(entry: State, inflater: Inflater, b: ByteArray, off: Int, len: Int): Int {
+    private fun inflate(entry: State, inflater: RawInflater, b: ByteArray, off: Int, len: Int): Int {
         while (true) {
             if (inflater.needsInput()) {
                 sync(entry, inflater)
@@ -155,11 +155,7 @@ internal class ZipStreamReader(private val input: InputStream) {
                 inflater.setInput(buf, pos, lim - pos)
                 entry.fed = lim - pos
             }
-            val n = try {
-                inflater.inflate(b, off, len)
-            } catch (_: DataFormatException) {
-                throw IOException("bad zip data")
-            }
+            val n = inflater.inflate(b, off, len)
             when {
                 n > 0 -> return n
 
@@ -176,7 +172,7 @@ internal class ZipStreamReader(private val input: InputStream) {
     }
 
     /** Moves the read position past the input the inflater has used. */
-    private fun sync(entry: State, inflater: Inflater) {
+    private fun sync(entry: State, inflater: RawInflater) {
         pos += entry.fed - inflater.remaining
         entry.fed = 0
     }
@@ -220,7 +216,7 @@ internal class ZipStreamReader(private val input: InputStream) {
 
     private fun fill(): Boolean {
         if (pos >= lim) {
-            lim = input.read(buf, 0, buf.size).coerceAtLeast(0)
+            lim = input.readAtMostTo(buf, 0, buf.size).coerceAtLeast(0)
             pos = 0
         }
         return pos < lim
@@ -229,11 +225,11 @@ internal class ZipStreamReader(private val input: InputStream) {
     /** Up to [count] upcoming bytes, not consumed (fewer at the end of the stream). */
     private fun peek(count: Int): ByteArray {
         if (lim - pos < count) {
-            System.arraycopy(buf, pos, buf, 0, lim - pos)
+            buf.copyInto(buf, 0, pos, lim)
             lim -= pos
             pos = 0
             while (lim < count) {
-                val n = input.read(buf, lim, buf.size - lim)
+                val n = input.readAtMostTo(buf, lim, buf.size)
                 if (n < 0) break
                 lim += n
             }
@@ -247,7 +243,7 @@ internal class ZipStreamReader(private val input: InputStream) {
         while (done < count) {
             if (!fill()) throw IOException("truncated zip")
             val n = minOf(count - done, lim - pos)
-            System.arraycopy(buf, pos, out, done, n)
+            buf.copyInto(out, done, pos, pos + n)
             pos += n
             done += n
         }
@@ -269,11 +265,6 @@ internal class ZipStreamReader(private val input: InputStream) {
     }
 
     private companion object {
-        val cp437: Charset = try {
-            Charset.forName("IBM437")
-        } catch (_: IllegalArgumentException) {
-            Charsets.ISO_8859_1
-        }
         const val BUFFER = 16 * 1024
         const val MAX_DRAIN = 1024 * 1024
         const val LOCAL_HEADER = 0x04034b50L

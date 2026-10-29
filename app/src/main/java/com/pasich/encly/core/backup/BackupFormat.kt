@@ -1,6 +1,7 @@
 package com.pasich.encly.core.backup
 
-import java.nio.ByteBuffer
+import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 
 /** Why a backup could not be written or read. Never carries secrets or plaintext. */
 enum class BackupError {
@@ -93,7 +94,7 @@ class ParsedBackup(val header: BackupHeader, val file: ByteArray) {
  * follow the ciphertext.
  */
 object BackupFormat {
-    val MAGIC = "ENCLYBAK".toByteArray(Charsets.US_ASCII)
+    val MAGIC = "ENCLYBAK".encodeToByteArray()
     const val VERSION = 1
     const val SALT_LENGTH = 32
     const val NONCE_LENGTH = 12
@@ -110,16 +111,16 @@ object BackupFormat {
 
     fun encodeHeader(kdf: BackupKdf, salt: ByteArray, nonce: ByteArray, ciphertextLength: Int): ByteArray {
         require(salt.size == SALT_LENGTH && nonce.size == NONCE_LENGTH)
-        return ByteBuffer.allocate(HEADER_LENGTH)
-            .put(MAGIC)
-            .putShort(VERSION.toShort())
-            .put(kdf.id.toByte())
-            .put(SALT_LENGTH.toByte())
-            .put(salt)
-            .put(NONCE_LENGTH.toByte())
-            .put(nonce)
-            .putInt(ciphertextLength)
-            .array()
+        val header = Buffer()
+        header.write(MAGIC)
+        header.writeShort(VERSION.toShort())
+        header.writeByte(kdf.id.toByte())
+        header.writeByte(SALT_LENGTH.toByte())
+        header.write(salt)
+        header.writeByte(NONCE_LENGTH.toByte())
+        header.write(nonce)
+        header.writeInt(ciphertextLength)
+        return header.readByteArray()
     }
 
     /**
@@ -150,19 +151,21 @@ object BackupFormat {
             BackupError.NOT_A_BACKUP,
         )
         ensure(bytes.size >= VERSION_END, BackupError.TRUNCATED)
-        val buffer = ByteBuffer.wrap(bytes)
-        buffer.position(MAGIC.size)
-        val version = buffer.short.toInt() and U16_MASK
+        // Only the header is copied: [bytes] may be the whole file.
+        val buffer = Buffer()
+        buffer.write(bytes, 0, minOf(bytes.size, HEADER_LENGTH))
+        buffer.skip(MAGIC.size.toLong())
+        val version = buffer.readShort().toInt() and U16_MASK
         ensure(version == VERSION, BackupError.UNSUPPORTED_VERSION)
         ensure(bytes.size >= HEADER_LENGTH, BackupError.TRUNCATED)
 
-        val kdf = BackupKdf.fromId(buffer.get().toInt() and U8_MASK)
-        ensure(kdf != null && (buffer.get().toInt() and U8_MASK) == SALT_LENGTH, BackupError.CORRUPTED)
-        val salt = ByteArray(SALT_LENGTH).also { buffer.get(it) }
-        ensure((buffer.get().toInt() and U8_MASK) == NONCE_LENGTH, BackupError.CORRUPTED)
-        val nonce = ByteArray(NONCE_LENGTH).also { buffer.get(it) }
+        val kdf = BackupKdf.fromId(buffer.readByte().toInt() and U8_MASK)
+        ensure(kdf != null && (buffer.readByte().toInt() and U8_MASK) == SALT_LENGTH, BackupError.CORRUPTED)
+        val salt = buffer.readByteArray(SALT_LENGTH)
+        ensure((buffer.readByte().toInt() and U8_MASK) == NONCE_LENGTH, BackupError.CORRUPTED)
+        val nonce = buffer.readByteArray(NONCE_LENGTH)
         // Unsigned: a length above Int.MAX_VALUE reads as negative and is simply too large.
-        val ciphertextLength = buffer.int.toLong() and U32_MASK
+        val ciphertextLength = buffer.readInt().toLong() and U32_MASK
         ensure(HEADER_LENGTH + ciphertextLength <= limit, BackupError.TOO_LARGE)
         ensure(ciphertextLength >= TAG_LENGTH, BackupError.CORRUPTED)
         return BackupHeader(version, checkNotNull(kdf), salt, nonce, ciphertextLength.toInt())

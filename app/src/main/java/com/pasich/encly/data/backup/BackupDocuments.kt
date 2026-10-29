@@ -8,9 +8,11 @@ import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupFormat
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.Closeable
-import java.io.IOException
-import java.io.InputStream
+import kotlinx.io.Buffer
+import kotlinx.io.IOException
+import kotlinx.io.RawSource
+import kotlinx.io.asSource
+import kotlinx.io.readTo
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,7 +24,7 @@ import javax.inject.Singleton
 @Singleton
 class BackupDocuments @Inject constructor(@param:ApplicationContext private val context: Context) {
     fun read(uri: Uri): ByteArray = io {
-        context.contentResolver.openInputStream(uri).orFail().use { readCapped(it) }
+        context.contentResolver.openInputStream(uri).orFail().use { readCapped(it.asSource()) }
     }
 
     /** The document's display name, for showing which file was picked; null when unknown. */
@@ -47,7 +49,7 @@ class BackupDocuments @Inject constructor(@param:ApplicationContext private val 
         try {
             // "wt": the document is empty, but some providers need an explicit truncate mode.
             resolver.openOutputStream(uri, "wt").orFail().use { it.write(file) }
-            val written = resolver.openInputStream(uri).orFail().use { readCapped(it) }
+            val written = resolver.openInputStream(uri).orFail().use { readCapped(it.asSource()) }
             if (!written.contentEquals(file)) throw BackupException(BackupError.IO)
             complete = true
         } finally {
@@ -63,7 +65,7 @@ class BackupDocuments @Inject constructor(@param:ApplicationContext private val 
         runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
     }
 
-    private fun <T : Closeable> T?.orFail(): T = this ?: throw BackupException(BackupError.IO)
+    private fun <T : AutoCloseable> T?.orFail(): T = this ?: throw BackupException(BackupError.IO)
 
     /**
      * Maps every provider failure to [BackupError.IO]. Third-party DocumentsProviders also throw
@@ -89,9 +91,10 @@ class BackupDocuments @Inject constructor(@param:ApplicationContext private val 
          * ciphertext length, so the file is held in memory exactly once. Anything that is not a
          * backup, declares more than [limit] bytes, or runs past its declared end is rejected
          * without reading the rest; a file shorter than declared is returned for
-         * [BackupFormat.parse] to report as truncated.
+         * [BackupFormat.parse] to report as truncated. [input] is read unbuffered, so nothing
+         * past what was needed is taken from the provider.
          */
-        fun readCapped(input: InputStream, limit: Int = BackupFormat.MAX_FILE_BYTES): ByteArray {
+        fun readCapped(input: RawSource, limit: Int = BackupFormat.MAX_FILE_BYTES): ByteArray {
             val head = ByteArray(BackupFormat.HEADER_LENGTH)
             val headRead = fill(input, head, 0)
             val file = if (headRead < head.size) {
@@ -103,17 +106,19 @@ class BackupDocuments @Inject constructor(@param:ApplicationContext private val 
             val filled = fill(input, file, headRead)
             return when {
                 filled < file.size -> file.copyOf(filled)
-                input.read() >= 0 -> throw BackupException(BackupError.CORRUPTED)
+                input.readAtMostTo(Buffer(), 1) >= 0 -> throw BackupException(BackupError.CORRUPTED)
                 else -> file
             }
         }
 
         /** Reads into [target] from [from] until it is full or the stream ends; returns the end. */
-        private fun fill(input: InputStream, target: ByteArray, from: Int): Int {
+        private fun fill(input: RawSource, target: ByteArray, from: Int): Int {
+            val chunk = Buffer()
             var position = from
             while (position < target.size) {
-                val read = input.read(target, position, minOf(BUFFER_BYTES, target.size - position))
+                val read = input.readAtMostTo(chunk, minOf(BUFFER_BYTES, target.size - position).toLong()).toInt()
                 if (read < 0) break
+                chunk.readTo(target, position, position + read)
                 position += read
             }
             return position

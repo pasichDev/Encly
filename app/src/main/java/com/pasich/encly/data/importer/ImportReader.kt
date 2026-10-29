@@ -1,16 +1,17 @@
 package com.pasich.encly.data.importer
 
-import java.io.ByteArrayInputStream
-import java.io.FilterInputStream
-import java.io.IOException
-import java.io.InputStream
-import java.io.SequenceInputStream
+import kotlinx.io.Buffer
+import kotlinx.io.IOException
+import kotlinx.io.RawSource
+import kotlinx.io.Source
+import kotlinx.io.buffered
+import kotlinx.io.readByteArray
 
 /**
  * One file the user picked, or one found while walking a picked folder. [open] is null if
  * unreadable. An [unsafe] file (a folder too deep to walk) is counted as an unsafe path and never opened.
  */
-class SourceFile(val path: String, val unsafe: Boolean = false, val open: () -> InputStream?)
+class SourceFile(val path: String, val unsafe: Boolean = false, val open: () -> RawSource?)
 
 /** Where the files of a selection come from; the Storage Access Framework implementation is [SafImportFiles]. */
 fun interface ImportFileSource {
@@ -51,7 +52,7 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
         private var seen = 0
         private var attachments = 0
         private var skippedBytes = 0L
-        private val scratch = ByteArray(BUFFER)
+        private val scratch = Buffer()
         private var inputBytes = 0L
         private var totalBytes = 0L
         private var unsafe = 0
@@ -90,7 +91,7 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
                 return
             }
             try {
-                stream.use { process(file.path, Counting(it)) }
+                Counting(stream).buffered().use { process(file.path, it) }
             } catch (_: IOException) {
                 unreadable++
             } catch (_: IllegalArgumentException) {
@@ -99,17 +100,16 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
             }
         }
 
-        private fun process(path: String, input: InputStream) {
+        private fun process(path: String, input: Source) {
             val head = readHead(input)
-            val whole = SequenceInputStream(ByteArrayInputStream(head), input)
             when {
-                isZip(head) -> readZip(whole)
+                isZip(head) -> readZip(input)
 
-                TarReader.looksLikeTar(head) -> readTar(whole)
+                TarReader.looksLikeTar(head) -> readTar(input)
 
                 else -> {
                     countEntry()
-                    accept(path, whole)
+                    accept(path, input)
                 }
             }
         }
@@ -128,18 +128,20 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
         }
 
         /** Up to [TarReader.BLOCK] bytes of [input]: enough to tell a ZIP or TAR from a plain file. */
-        private fun readHead(input: InputStream): ByteArray {
+        private fun readHead(input: Source): ByteArray {
             val head = ByteArray(TarReader.BLOCK)
+            // Peeked, not consumed: the archive readers below start at the first byte.
+            val peek = input.peek()
             var read = 0
             while (read < head.size) {
-                val n = input.read(head, read, head.size - read)
+                val n = peek.readAtMostTo(head, read, head.size)
                 if (n < 0) break
                 read += n
             }
             return head.copyOf(read)
         }
 
-        private fun readZip(input: InputStream) {
+        private fun readZip(input: Source) {
             val zip = ZipStreamReader(input)
             while (true) {
                 checkCancelled()
@@ -158,7 +160,7 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
             }
         }
 
-        private fun readTar(input: InputStream) {
+        private fun readTar(input: Source) {
             val tar = TarReader(input)
             while (true) {
                 checkCancelled()
@@ -180,7 +182,7 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
         }
 
         /** Reads [input] (always to its end, so the counters see everything) and keeps it if it is usable. */
-        private fun accept(rawPath: String, input: InputStream) {
+        private fun accept(rawPath: String, input: RawSource) {
             val path = safePath(rawPath, limits.maxPathDepth)
             val cap = if (path != null && isContainerName(path)) limits.maxContainerBytes else limits.maxEntryBytes
             val bytes = readBounded(input, cap)
@@ -196,16 +198,17 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
          * A ZIP directory entry: it counts as an entry and whatever data it carries is inflated
          * against the total, so many directories with data cannot inflate past the limits.
          */
-        private fun skipDirectory(input: InputStream) {
+        private fun skipDirectory(input: RawSource) {
             // A directory carries no data; one that does is not a file to import.
             if (readBounded(input, 0) == null) unsafe++
         }
 
         /** Reads [input] to its end and throws it away, counting what it inflates against the skipped-data cap. */
-        private fun drain(input: InputStream) {
+        private fun drain(input: RawSource) {
             while (true) {
-                val n = input.read(scratch)
+                val n = input.readAtMostTo(scratch, BUFFER.toLong())
                 if (n < 0) return
+                scratch.clear()
                 skippedBytes += n
                 if (skippedBytes > limits.maxSkippedBytes) throw ImportException(ImportError.TOO_LARGE)
                 checkCancelled()
@@ -213,42 +216,36 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
         }
 
         /** The bytes of [input], or null if it is longer than [cap]; the rest is still read and counted. */
-        private fun readBounded(input: InputStream, cap: Int): ByteArray? {
-            val out = java.io.ByteArrayOutputStream()
-            val buffer = ByteArray(BUFFER)
+        private fun readBounded(input: RawSource, cap: Int): ByteArray? {
+            val out = Buffer()
+            val chunk = Buffer()
             var over = false
             while (true) {
-                val n = input.read(buffer)
+                val n = input.readAtMostTo(chunk, BUFFER.toLong())
                 if (n < 0) break
                 totalBytes += n
                 if (totalBytes > limits.maxTotalBytes) throw ImportException(ImportError.TOO_LARGE)
                 if (!over) {
-                    if (out.size() + n > cap) over = true else out.write(buffer, 0, n)
+                    if (out.size + n > cap) over = true else chunk.transferTo(out)
                 }
+                chunk.clear()
                 checkCancelled()
             }
-            return if (over) null else out.toByteArray()
+            return if (over) null else out.readByteArray()
         }
 
-        private inner class Counting(input: InputStream) : FilterInputStream(input) {
-            override fun read(): Int {
-                val b = super.read()
-                if (b >= 0) count(1)
-                return b
-            }
-
-            override fun read(b: ByteArray, off: Int, len: Int): Int {
-                val n = super.read(b, off, len)
-                if (n > 0) count(n.toLong())
+        /** Counts the bytes taken from the file itself against [ImportLimits.maxInputBytes]. */
+        private inner class Counting(private val upstream: RawSource) : RawSource {
+            override fun readAtMostTo(sink: Buffer, byteCount: Long): Long {
+                val n = upstream.readAtMostTo(sink, byteCount)
+                if (n > 0) {
+                    inputBytes += n
+                    if (inputBytes > limits.maxInputBytes) throw ImportException(ImportError.TOO_LARGE)
+                }
                 return n
             }
 
-            override fun markSupported(): Boolean = false
-
-            private fun count(n: Long) {
-                inputBytes += n
-                if (inputBytes > limits.maxInputBytes) throw ImportException(ImportError.TOO_LARGE)
-            }
+            override fun close() = upstream.close()
         }
     }
 

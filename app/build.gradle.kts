@@ -327,6 +327,10 @@ dependencies {
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.json.io)
+
+    // Bytes and streams (Source / Sink), so import, export and hand-off do not depend on java.io
+    implementation(libs.kotlinx.io.core)
 
     // Date and time
     implementation(libs.kotlinx.datetime)

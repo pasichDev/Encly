@@ -1,17 +1,18 @@
 package com.pasich.encly.data.handoff
 
+import com.pasich.encly.data.zip.ZipEntrySource
+import kotlinx.io.Buffer
+import kotlinx.io.IOException
+import kotlinx.io.RawSource
+import kotlinx.io.Sink
+import kotlinx.io.Source
+import kotlinx.io.buffered
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
-import java.io.File
-import java.io.FilterInputStream
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
-import java.util.zip.ZipFile
+import kotlinx.serialization.json.io.decodeFromSource
 
 /**
  * Size limits of a hand-off. Every one is enforced on the bytes actually read, never on a
@@ -58,24 +59,32 @@ object MyNotesHandoffReader {
      * Copies [input] (the content URI's stream) to [target], stopping with [HandoffError.TOO_LARGE]
      * past [HandoffLimits.maxZipBytes]. The caller deletes [target] whatever the outcome.
      */
-    fun copyLimited(input: InputStream, target: OutputStream, limits: HandoffLimits = HandoffLimits()) {
+    fun copyLimited(input: RawSource, target: Sink, limits: HandoffLimits = HandoffLimits()) {
         try {
-            LimitedInputStream(input, limits.maxZipBytes).copyTo(target)
+            LimitedSource(input, limits.maxZipBytes).buffered().transferTo(target)
         } catch (_: LimitExceededException) {
             throw HandoffException(HandoffError.TOO_LARGE)
         }
     }
 
-    fun read(zip: File, limits: HandoffLimits = HandoffLimits()): MyNotesHandoff {
-        ensure(zip.length() <= limits.maxZipBytes, HandoffError.TOO_LARGE)
+    /**
+     * Reads the archive [openArchive] returns, which is [zipBytes] long (the length of the file it
+     * was opened from, checked before anything is opened).
+     */
+    internal fun read(
+        zipBytes: Long,
+        limits: HandoffLimits = HandoffLimits(),
+        openArchive: () -> ZipEntrySource,
+    ): MyNotesHandoff {
+        ensure(zipBytes <= limits.maxZipBytes, HandoffError.TOO_LARGE)
         val handoff = guarded {
-            ZipFile(zip).use { archive ->
-                ensure(archive.size() == 1, HandoffError.INVALID_PAYLOAD)
-                val entry = archive.getEntry(ENTRY_NAME)?.takeUnless { it.isDirectory }
+            openArchive().use { archive ->
+                ensure(archive.entryCount == 1, HandoffError.INVALID_PAYLOAD)
+                val entry = archive.find(ENTRY_NAME)?.takeUnless { it.isDirectory }
                     ?: throw HandoffException(HandoffError.INVALID_PAYLOAD)
                 // A declared size is only a hint (it can lie); the stream limit below is the check.
-                ensure(entry.size <= limits.maxJsonBytes, HandoffError.TOO_LARGE)
-                val open = { LimitedInputStream(archive.getInputStream(entry), limits.maxJsonBytes) }
+                ensure(entry.declaredSize <= limits.maxJsonBytes, HandoffError.TOO_LARGE)
+                val open = { LimitedSource(entry.open(), limits.maxJsonBytes).buffered() }
                 val probe = open().use { decode(Probe.serializer(), it) }
                 val schema = probe.schema?.takeIf { probe.format == MyNotesHandoff.FORMAT }
                 ensure(schema != null && schema >= MyNotesHandoff.SCHEMA, HandoffError.INVALID_PAYLOAD)
@@ -87,8 +96,8 @@ object MyNotesHandoffReader {
         return handoff
     }
 
-    private fun <T> decode(deserializer: DeserializationStrategy<T>, input: InputStream): T =
-        json.decodeFromStream(deserializer, input)
+    private fun <T> decode(deserializer: DeserializationStrategy<T>, input: Source): T =
+        json.decodeFromSource(deserializer, input)
 
     /** Maps every parse failure to a [HandoffError]; a [HandoffException] passes through. */
     private inline fun <T> guarded(block: () -> T): T = try {
@@ -103,7 +112,11 @@ object MyNotesHandoffReader {
 
     /** The cause is dropped on purpose: a parser message can quote note content. */
     private fun rejected(e: Exception): Nothing = throw HandoffException(
-        if (e is LimitExceededException) HandoffError.TOO_LARGE else HandoffError.INVALID_PAYLOAD,
+        if (generateSequence<Throwable>(e) { it.cause }.any { it is LimitExceededException }) {
+            HandoffError.TOO_LARGE
+        } else {
+            HandoffError.INVALID_PAYLOAD
+        },
     )
 
     private fun validate(handoff: MyNotesHandoff, limits: HandoffLimits) {
@@ -138,28 +151,18 @@ object MyNotesHandoffReader {
     private class LimitExceededException : IOException("limit exceeded")
 
     /** Fails with [LimitExceededException] once more than [limit] bytes were read. */
-    private class LimitedInputStream(input: InputStream, private val limit: Long) : FilterInputStream(input) {
+    private class LimitedSource(private val upstream: RawSource, private val limit: Long) : RawSource {
         private var count = 0L
 
-        override fun read(): Int {
-            val b = super.read()
-            if (b >= 0) count(1)
-            return b
-        }
-
-        override fun read(b: ByteArray, off: Int, len: Int): Int {
-            val n = super.read(b, off, len)
-            if (n > 0) count(n.toLong())
+        override fun readAtMostTo(sink: Buffer, byteCount: Long): Long {
+            val n = upstream.readAtMostTo(sink, byteCount)
+            if (n > 0) {
+                count += n
+                if (count > limit) throw LimitExceededException()
+            }
             return n
         }
 
-        override fun skip(n: Long): Long = super.skip(n).also(::count)
-
-        override fun markSupported(): Boolean = false
-
-        private fun count(n: Long) {
-            count += n
-            if (count > limit) throw LimitExceededException()
-        }
+        override fun close() = upstream.close()
     }
 }

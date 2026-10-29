@@ -90,3 +90,7 @@ internal object HandoffFixtures {
 
     fun read(dir: File, json: JsonElement): MyNotesHandoff = MyNotesHandoffReader.read(handoffZip(dir, json))
 }
+
+/** The hand-off in the ZIP file [zip], opened with the platform's ZIP support (what the app does after staging it). */
+internal fun MyNotesHandoffReader.read(zip: File, limits: HandoffLimits = HandoffLimits()): MyNotesHandoff =
+    HandoffStaging.read(zip, limits)

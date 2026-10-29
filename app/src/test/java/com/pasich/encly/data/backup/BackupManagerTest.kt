@@ -9,6 +9,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.testutil.InMemorySharedPreferences
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.test.runTest
+import kotlinx.io.asSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.fail
@@ -43,7 +44,7 @@ class BackupManagerTest {
         val file = manager.createBackup()
 
         assertEquals(size, file.size)
-        val read = BackupDocuments.readCapped(ByteArrayInputStream(file), limit = size)
+        val read = BackupDocuments.readCapped(ByteArrayInputStream(file).asSource(), limit = size)
         assertEquals(size, BackupFormat.parse(read).file.size)
     }
 

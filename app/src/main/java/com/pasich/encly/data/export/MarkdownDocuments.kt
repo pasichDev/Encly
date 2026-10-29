@@ -6,8 +6,10 @@ import android.provider.DocumentsContract
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.IOException
-import java.io.OutputStream
+import kotlinx.io.IOException
+import kotlinx.io.Sink
+import kotlinx.io.asSink
+import kotlinx.io.buffered
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,13 +27,13 @@ class MarkdownDocuments @Inject constructor(@param:ApplicationContext private va
      * incomplete document is deleted where the provider allows it. Provider failures become
      * [BackupError.IO] without their message, which can quote the document's path.
      */
-    fun write(uri: Uri, block: (OutputStream) -> Unit) = io {
+    fun write(uri: Uri, block: (Sink) -> Unit) = io {
         if (hasContent(uri)) throw BackupException(BackupError.TARGET_EXISTS)
         var complete = false
         try {
             // "wt": the document is empty, but some providers need an explicit truncate mode.
             val stream = context.contentResolver.openOutputStream(uri, "wt") ?: throw BackupException(BackupError.IO)
-            stream.use(block)
+            stream.asSink().buffered().use(block)
             complete = true
         } finally {
             if (!complete) discard(uri)

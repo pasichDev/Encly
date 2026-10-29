@@ -1,7 +1,9 @@
 package com.pasich.encly.data.importer
 
-import java.io.IOException
-import java.io.InputStream
+import kotlinx.io.Buffer
+import kotlinx.io.IOException
+import kotlinx.io.RawSource
+import kotlinx.io.Source
 
 /**
  * A minimal sequential reader for POSIX ustar / GNU tar (Joplin's JEX export). It never seeks and
@@ -14,7 +16,7 @@ import java.io.InputStream
  */
 // One small format (header fields, padding, long names); a malformed header exits early.
 @Suppress("TooManyFunctions", "ReturnCount")
-internal class TarReader(private val input: InputStream) {
+internal class TarReader(private val input: Source) {
     class Header(val path: String, val type: Char)
 
     private var remaining = 0L
@@ -52,19 +54,17 @@ internal class TarReader(private val input: InputStream) {
     }
 
     /** The data of the current entry; reading past its size is end of stream. */
-    fun data(): InputStream = object : InputStream() {
-        override fun read(): Int {
-            val one = ByteArray(1)
-            return if (read(one, 0, 1) < 0) -1 else one[0].toInt() and BYTE_MASK
-        }
-
-        override fun read(b: ByteArray, off: Int, len: Int): Int {
+    fun data(): RawSource = object : RawSource {
+        override fun readAtMostTo(sink: Buffer, byteCount: Long): Long {
             if (remaining <= 0) return -1
-            val n = input.read(b, off, minOf(len.toLong(), remaining).toInt())
+            if (byteCount == 0L) return 0
+            val n = input.readAtMostTo(sink, minOf(byteCount, remaining))
             if (n < 0) throw IOException("truncated tar")
             remaining -= n
             return n
         }
+
+        override fun close() = Unit
     }
 
     private fun end(): Header? {
@@ -76,7 +76,7 @@ internal class TarReader(private val input: InputStream) {
         val block = ByteArray(BLOCK)
         var read = 0
         while (read < BLOCK) {
-            val n = input.read(block, read, BLOCK - read)
+            val n = input.readAtMostTo(block, read, BLOCK)
             if (n < 0) {
                 if (read == 0) return null
                 throw IOException("truncated tar")
@@ -91,7 +91,7 @@ internal class TarReader(private val input: InputStream) {
         val data = ByteArray(size.toInt())
         var read = 0
         while (read < data.size) {
-            val n = input.read(data, read, data.size - read)
+            val n = input.readAtMostTo(data, read, data.size)
             if (n < 0) throw IOException("truncated tar")
             read += n
         }
@@ -103,7 +103,7 @@ internal class TarReader(private val input: InputStream) {
         var left = count
         val sink = ByteArray(BLOCK)
         while (left > 0) {
-            val n = input.read(sink, 0, minOf(left, sink.size.toLong()).toInt())
+            val n = input.readAtMostTo(sink, 0, minOf(left, sink.size.toLong()).toInt())
             if (n < 0) throw IOException("truncated tar")
             left -= n
         }
@@ -113,7 +113,7 @@ internal class TarReader(private val input: InputStream) {
 
     private fun name(block: ByteArray): String {
         val base = cString(block, 0, NAME_LENGTH)
-        val ustar = String(block, MAGIC_OFFSET, USTAR.length, Charsets.ISO_8859_1) == USTAR
+        val ustar = block.decodeToString(MAGIC_OFFSET, MAGIC_OFFSET + USTAR.length) == USTAR
         val prefix = if (ustar) cString(block, PREFIX_OFFSET, PREFIX_LENGTH) else ""
         return if (prefix.isEmpty()) base else "$prefix/$base"
     }
@@ -121,7 +121,7 @@ internal class TarReader(private val input: InputStream) {
     private fun cString(bytes: ByteArray, offset: Int, length: Int): String {
         var end = offset
         while (end < offset + length && bytes[end] != ZERO) end++
-        return String(bytes, offset, end - offset, Charsets.UTF_8)
+        return bytes.decodeToString(offset, end)
     }
 
     private fun octal(block: ByteArray, offset: Int, length: Int): Long {
@@ -158,9 +158,9 @@ internal class TarReader(private val input: InputStream) {
         while (pos < data.size) {
             val space = data.indexOf(' '.code.toByte(), pos)
             if (space < 0) return null
-            val length = String(data, pos, space - pos, Charsets.US_ASCII).toIntOrNull() ?: return null
+            val length = data.decodeToString(pos, space).toIntOrNull() ?: return null
             if (length <= space - pos + 1 || pos + length > data.size) return null
-            val record = String(data, space + 1, pos + length - space - 2, Charsets.UTF_8)
+            val record = data.decodeToString(space + 1, pos + length - 1)
             if (record.startsWith("path=")) return record.removePrefix("path=")
             pos += length
         }
@@ -200,8 +200,8 @@ internal class TarReader(private val input: InputStream) {
         /** Whether [head] (the first bytes of a file) is a valid tar header: a magic plus a checksum. */
         fun looksLikeTar(head: ByteArray): Boolean {
             if (head.size < BLOCK) return false
-            if (String(head, MAGIC_OFFSET, USTAR.length, Charsets.ISO_8859_1) != USTAR) return false
-            return runCatching { TarReader(head.inputStream()).checksumOk(head.copyOf(BLOCK)) }.getOrDefault(false)
+            if (head.decodeToString(MAGIC_OFFSET, MAGIC_OFFSET + USTAR.length) != USTAR) return false
+            return runCatching { TarReader(Buffer()).checksumOk(head.copyOf(BLOCK)) }.getOrDefault(false)
         }
     }
 }

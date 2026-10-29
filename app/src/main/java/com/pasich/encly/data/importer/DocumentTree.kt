@@ -1,6 +1,6 @@
 package com.pasich.encly.data.importer
 
-import java.io.InputStream
+import kotlinx.io.RawSource
 
 /** One entry of a [DocumentTree]; [id] is what the tree needs to list or open it. */
 class TreeNode(val id: String, val name: String, val isDirectory: Boolean)
@@ -14,7 +14,7 @@ interface DocumentTree {
 
     fun children(parentId: String): List<TreeNode>
 
-    fun open(id: String): InputStream?
+    fun open(id: String): RawSource?
 }
 
 /**

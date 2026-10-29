@@ -1,9 +1,9 @@
 package com.pasich.encly.data.export
 
 import com.pasich.encly.data.backup.VaultSnapshot
-import java.io.OutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
+import com.pasich.encly.data.zip.ZipEntrySink
+import com.pasich.encly.data.zip.zipWriter
+import kotlinx.io.Sink
 
 /**
  * The Markdown export of what a vault holds, written straight to a stream (a document the user
@@ -23,32 +23,30 @@ object MarkdownExport {
     private const val ZIP_EPOCH_MILLIS = 315_532_800_000L
 
     /** Every note that is not in the trash and the tasks, as a zip of `.md` files. Closing [out] is the caller's. */
-    fun writeAll(snapshot: VaultSnapshot, labels: MarkdownLabels, out: OutputStream) {
-        val zip = ZipOutputStream(out)
+    fun writeAll(snapshot: VaultSnapshot, labels: MarkdownLabels, out: Sink) {
+        writeAll(snapshot, labels, zipWriter(out))
+    }
+
+    internal fun writeAll(snapshot: VaultSnapshot, labels: MarkdownLabels, zip: ZipEntrySink) {
         val tagNames = snapshot.tags.associate { it.id to it.nameTag }
         val names = MarkdownFileNames(reserved = listOf(TASKS_FILE))
-        zip.put(TASKS_FILE, null, MarkdownTasks.render(snapshot.tasks, snapshot.subtasks, snapshot.tags, labels))
+        zip.putText(TASKS_FILE, null, MarkdownTasks.render(snapshot.tasks, snapshot.subtasks, snapshot.tags, labels))
         snapshot.notes.filterNot { it.isTrash }.forEach { note ->
             val folder = if (note.isArchived) ARCHIVE_FOLDER else ""
             val name = names.next(note.title, labels.untitled, folder)
-            zip.put(name, note.date, MarkdownNotes.render(note, tagNames[note.tagId], labels))
+            zip.putText(name, note.date, MarkdownNotes.render(note, tagNames[note.tagId], labels))
         }
         zip.finish()
     }
 
     /** The note [noteId] as one `.md` document; false when the vault has no such note (or it is in the trash). */
-    fun writeNote(snapshot: VaultSnapshot, noteId: Long, labels: MarkdownLabels, out: OutputStream): Boolean {
+    fun writeNote(snapshot: VaultSnapshot, noteId: Long, labels: MarkdownLabels, out: Sink): Boolean {
         val note = snapshot.notes.firstOrNull { it.id == noteId && !it.isTrash } ?: return false
         val tagName = snapshot.tags.firstOrNull { it.id == note.tagId }?.nameTag
-        out.write(MarkdownNotes.render(note, tagName, labels).toByteArray(Charsets.UTF_8))
+        out.write(MarkdownNotes.render(note, tagName, labels).encodeToByteArray())
         return true
     }
 
-    private fun ZipOutputStream.put(name: String, time: Long?, text: String) {
-        val entry = ZipEntry(name)
-        if (time != null && time >= ZIP_EPOCH_MILLIS) entry.time = time
-        putNextEntry(entry)
-        write(text.toByteArray(Charsets.UTF_8))
-        closeEntry()
-    }
+    private fun ZipEntrySink.putText(name: String, time: Long?, text: String) =
+        put(name, time?.takeIf { it >= ZIP_EPOCH_MILLIS }, text.encodeToByteArray())
 }

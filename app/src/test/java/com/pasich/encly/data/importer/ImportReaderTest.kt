@@ -6,14 +6,13 @@ import com.pasich.encly.data.importer.ImportFixtures.tar
 import com.pasich.encly.data.importer.ImportFixtures.textSource
 import com.pasich.encly.data.importer.ImportFixtures.zip
 import com.pasich.encly.data.importer.ImportFixtures.zipText
+import kotlinx.io.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
 
 class ImportReaderTest {
 
@@ -139,7 +138,7 @@ class ImportReaderTest {
                 SourceFile("gone.md") { null },
                 SourceFile("io.md") { throw IOException("x") },
                 SourceFile("denied.md") { throw SecurityException("x") },
-                SourceFile("ok.md") { ByteArrayInputStream("ok".toByteArray()) },
+                SourceFile("ok.md") { Buffer().apply { write("ok".toByteArray()) } },
             )
         }
         val result = read(broken)
@@ -306,7 +305,7 @@ class ImportReaderTest {
             sequenceOf(
                 SourceFile("Vault/pics/Photo.JPG") { throw AssertionError("a photo must not be opened") },
                 SourceFile("doc.pdf") { throw AssertionError("a PDF must not be opened") },
-                SourceFile("note.md") { ByteArrayInputStream("hi".toByteArray()) },
+                SourceFile("note.md") { Buffer().apply { write("hi".toByteArray()) } },
             )
         }
         val result = read(source)
@@ -327,9 +326,9 @@ class ImportReaderTest {
 
             override fun children(parentId: String) = kids[parentId].orEmpty()
 
-            override fun open(id: String): InputStream {
+            override fun open(id: String): Buffer {
                 opened += id
-                return ByteArrayInputStream(id.toByteArray())
+                return Buffer().apply { write(id.toByteArray()) }
             }
         }
         val result = ImportReader().read(TreeWalker(tree).source())

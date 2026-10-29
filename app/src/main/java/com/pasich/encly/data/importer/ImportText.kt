@@ -7,9 +7,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import java.nio.ByteBuffer
-import java.nio.charset.CharacterCodingException
-import java.nio.charset.CodingErrorAction
 
 /** Small readers shared by the parsers. Nothing here keeps or logs content. */
 internal object ImportText {
@@ -19,10 +16,8 @@ internal object ImportText {
 
     /** UTF-8 text of [bytes] without a byte order mark and with `\n` line ends; null if it is not valid UTF-8. */
     fun utf8(bytes: ByteArray): String? = try {
-        val decoder = Charsets.UTF_8.newDecoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT)
-        decoder.decode(ByteBuffer.wrap(bytes)).toString().removePrefix(Char(BOM_CODE).toString()).replace("\r\n", "\n")
+        bytes.decodeToString(throwOnInvalidSequence = true).removePrefix(Char(BOM_CODE).toString())
+            .replace("\r\n", "\n")
             .replace('\r', '\n')
     } catch (_: CharacterCodingException) {
         null

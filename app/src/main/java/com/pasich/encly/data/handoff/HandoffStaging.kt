@@ -1,5 +1,9 @@
 package com.pasich.encly.data.handoff
 
+import com.pasich.encly.data.zip.openZipFile
+import kotlinx.io.asSink
+import kotlinx.io.asSource
+import kotlinx.io.buffered
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -25,8 +29,12 @@ class HandoffStaging(private val dir: File, private val limits: HandoffLimits = 
         val zip = createStagingFile(dir)
         try {
             val input = open() ?: throw HandoffException(HandoffError.INVALID_PAYLOAD)
-            input.use { source -> zip.outputStream().use { MyNotesHandoffReader.copyLimited(source, it, limits) } }
-            return MyNotesHandoffMapper.map(MyNotesHandoffReader.read(zip, limits))
+            input.use { stream ->
+                zip.outputStream().asSink().buffered().use {
+                    MyNotesHandoffReader.copyLimited(stream.asSource(), it, limits)
+                }
+            }
+            return MyNotesHandoffMapper.map(read(zip, limits))
         } finally {
             release(dir, zip)
         }
@@ -36,6 +44,10 @@ class HandoffStaging(private val dir: File, private val limits: HandoffLimits = 
         const val DIR_NAME = "mynotes-handoff"
         private const val ZIP_PREFIX = "handoff-"
         private const val ZIP_SUFFIX = ".zip"
+
+        /** The hand-off in the ZIP file [zip], which is opened with the platform's ZIP support. */
+        internal fun read(zip: File, limits: HandoffLimits = HandoffLimits()): MyNotesHandoff =
+            MyNotesHandoffReader.read(zip.length(), limits) { openZipFile(zip) }
 
         /** Paths of the files loads in this process are using; also the lock of the directory. */
         private val inUse = mutableSetOf<String>()

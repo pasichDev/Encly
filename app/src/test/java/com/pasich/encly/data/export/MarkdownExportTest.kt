@@ -6,18 +6,30 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
+import com.pasich.encly.data.zip.zipWriter
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.io.Buffer
+import kotlinx.io.asSink
+import kotlinx.io.buffered
+import kotlinx.io.readByteArray
+import kotlinx.io.readString
+import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.util.TimeZone
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 class MarkdownExportTest {
 
@@ -48,9 +60,9 @@ class MarkdownExportTest {
     }
 
     private fun exportAll(snapshot: VaultSnapshot): Map<String, String> {
-        val out = ByteArrayOutputStream()
+        val out = Buffer()
         MarkdownExport.writeAll(snapshot, labels, out)
-        return unzip(out.toByteArray())
+        return unzip(out.readByteArray())
     }
 
     @Test
@@ -185,16 +197,16 @@ class MarkdownExportTest {
             tags = emptyList(),
             tasks = emptyList(),
         )
-        val out = ByteArrayOutputStream()
+        val out = Buffer()
 
         assertTrue(MarkdownExport.writeNote(snapshot, 2, labels, out))
-        val markdown = out.toString(Charsets.UTF_8)
+        val markdown = out.readString()
 
         assertTrue(markdown.startsWith("---\ntitle: \"Two\"\n"))
         assertTrue(markdown.endsWith("# Two\n\nsecond\n"))
         assertFalse(markdown.contains("first"))
-        assertFalse(MarkdownExport.writeNote(snapshot, 3, labels, ByteArrayOutputStream()))
-        assertFalse(MarkdownExport.writeNote(snapshot, 99, labels, ByteArrayOutputStream()))
+        assertFalse(MarkdownExport.writeNote(snapshot, 3, labels, Buffer()))
+        assertFalse(MarkdownExport.writeNote(snapshot, 99, labels, Buffer()))
     }
 
     @Test
@@ -216,5 +228,94 @@ class MarkdownExportTest {
         )
 
         assertTrue(markdown.endsWith("# All\n\nt\n\n- [x] x\n\n---\n"))
+    }
+
+    // The zip's bytes: the same entries written with plain java.util.zip, at a fixed clock and time zone.
+
+    private val zone = TimeZone.getDefault()
+
+    @Before
+    fun fixTimeZone() = TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
+    @After
+    fun restoreTimeZone() = TimeZone.setDefault(zone)
+
+    private fun goldenSnapshot(): VaultSnapshot {
+        val notes = listOf(
+            note(1, "Groceries", text("milk")),
+            note(2, "\u041f\u0440\u0438\u0432\u0456\u0442", text("emoji \uD83D lone surrogate")) { tagId = 7 },
+            note(3, "Old", text("b")) { isArchived = true },
+            note(4, "Same", text("1")) { date = EPOCH_1980 },
+            note(5, "Same", text("2")) { date = EPOCH_1980 - 1 },
+            note(6, "Gone", text("c")) { isTrash = true },
+        )
+        val tags = listOf(Tag(id = 7, nameTag = "Home"))
+        val tasks = listOf(Task(id = 1, title = "Buy milk", priority = 1, position = 0))
+        return VaultSnapshot(notes, tags, tasks)
+    }
+
+    private fun goldenZip(snapshot: VaultSnapshot): ByteArray {
+        val out = ByteArrayOutputStream()
+        ZipOutputStream(out).use { zip ->
+            fun put(name: String, time: Long?, text: String) {
+                zip.putNextEntry(ZipEntry(name).apply { this.time = time ?: CLOCK })
+                zip.write(text.toByteArray(Charsets.UTF_8))
+                zip.closeEntry()
+            }
+            fun render(id: Long): String {
+                val note = snapshot.notes.first { it.id == id }
+                return MarkdownNotes.render(note, snapshot.tags.firstOrNull { it.id == note.tagId }?.nameTag, labels)
+            }
+            put("tasks.md", null, MarkdownTasks.render(snapshot.tasks, snapshot.subtasks, snapshot.tags, labels))
+            put("Groceries.md", 1_700_000_000_000, render(1))
+            put("$CYRILLIC.md", 1_700_000_000_000, render(2))
+            put("archive/Old.md", 1_700_000_000_000, render(3))
+            put("Same.md", EPOCH_1980, render(4))
+            // Before 1980 a zip entry has no usable time: it gets the clock's.
+            put("Same (2).md", null, render(5))
+        }
+        return out.toByteArray()
+    }
+
+    @Test
+    fun theZipIsByteForByteWhatPlainJavaUtilZipWrites() {
+        val snapshot = goldenSnapshot()
+        val out = Buffer()
+
+        MarkdownExport.writeAll(snapshot, labels, zipWriter(out) { CLOCK })
+
+        assertArrayEquals(goldenZip(snapshot), out.readByteArray())
+    }
+
+    @Test
+    fun theZipIsCompleteOnceWriteAllReturnsWithoutClosingTheSink() {
+        val bytes = ByteArrayOutputStream()
+        val sink = bytes.asSink().buffered()
+
+        MarkdownExport.writeAll(goldenSnapshot(), labels, sink)
+
+        assertEquals(
+            setOf("tasks.md", "Groceries.md", "$CYRILLIC.md", "archive/Old.md", "Same.md", "Same (2).md"),
+            unzip(bytes.toByteArray()).keys,
+        )
+    }
+
+    @Test
+    fun aSingleNoteIsItsUtf8BytesWithALoneSurrogateAsQuestionMark() {
+        val snapshot = VaultSnapshot(listOf(note(1, "One", text("a \uD83D b"))), emptyList(), emptyList())
+        val out = Buffer()
+
+        MarkdownExport.writeNote(snapshot, 1, labels, out)
+
+        assertArrayEquals(
+            MarkdownNotes.render(snapshot.notes.single(), null, labels).toByteArray(Charsets.UTF_8),
+            out.readByteArray(),
+        )
+    }
+
+    private companion object {
+        const val EPOCH_1980 = 315_532_800_000L
+        const val CLOCK = 1_800_000_000_000L
+        const val CYRILLIC = "\u041f\u0440\u0438\u0432\u0456\u0442"
     }
 }

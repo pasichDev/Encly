@@ -18,6 +18,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.io.Sink
+import kotlinx.io.asSink
+import kotlinx.io.buffered
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,7 +35,6 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.OutputStream
 import java.util.zip.ZipInputStream
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,7 +56,7 @@ class MarkdownExportViewModelTest {
         documents = mock(MarkdownDocuments::class.java)
         doAnswer { invocation ->
             @Suppress("UNCHECKED_CAST")
-            (invocation.getArgument<Any>(1) as (OutputStream) -> Unit)(written)
+            writeTo(invocation.getArgument<Any>(1) as (Sink) -> Unit)
         }.`when`(documents).write(any(Uri::class.java) ?: uri, anyBlock())
         store = InMemoryVaultDataStore().apply {
             notes += Note(id = 1, title = "Groceries", value = "[]", uid = "n1", date = 5L)
@@ -77,7 +79,17 @@ class MarkdownExportViewModelTest {
         strings = mock(AppStrings::class.java) { "label" },
     )
 
-    private fun anyBlock(): (OutputStream) -> Unit = any() ?: {}
+    private fun anyBlock(): (Sink) -> Unit = any() ?: {}
+
+    /** What the real writer does: the block writes to a buffered sink over the document, which is flushed after it. */
+    private fun writeTo(block: (Sink) -> Unit) {
+        val sink = written.asSink().buffered()
+        try {
+            block(sink)
+        } finally {
+            sink.flush()
+        }
+    }
 
     private fun step() = viewModel.uiState.value.step
 
@@ -364,7 +376,7 @@ class MarkdownExportViewModelTest {
         // The real writer deletes the document when its block throws; the fake only runs the block.
         doAnswer { invocation ->
             @Suppress("UNCHECKED_CAST")
-            runCatching { (invocation.getArgument<Any>(1) as (OutputStream) -> Unit)(written) }
+            runCatching { writeTo(invocation.getArgument<Any>(1) as (Sink) -> Unit) }
                 .getOrElse { throw it }
         }.`when`(documents).write(any(Uri::class.java) ?: uri, anyBlock())
 
