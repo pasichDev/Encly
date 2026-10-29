@@ -1,19 +1,21 @@
 package com.pasich.encly.desktop
 
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyShortcut
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.desktop.storage.DesktopOs
 import com.pasich.encly.desktop.storage.FileKeyValueStore
+import com.pasich.encly.desktop.window.Accelerator
 import com.pasich.encly.desktop.window.DesktopShortcuts
 import com.pasich.encly.desktop.window.SavedWindow
 import com.pasich.encly.desktop.window.WindowBounds
 import com.pasich.encly.desktop.window.WindowStateStore
+import com.pasich.encly.presentation.designsystem.AppCommand
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.Executor
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -96,10 +98,10 @@ class WindowStateStoreTest {
 class DesktopCommandsAndShortcutsTest {
     @Test
     fun `the primary modifier is Cmd on macOS and Ctrl elsewhere`() {
-        assertEquals(KeyShortcut(Key.N, ctrl = false, meta = true), DesktopShortcuts.primary(DesktopOs.MACOS, Key.N))
+        assertEquals(Accelerator(Key.N, ctrl = false, meta = true), DesktopShortcuts.primary(DesktopOs.MACOS, Key.N))
         for (os in listOf(DesktopOs.WINDOWS, DesktopOs.LINUX)) {
             assertEquals(
-                KeyShortcut(Key.N, ctrl = true, meta = false, shift = true),
+                Accelerator(Key.N, ctrl = true, meta = false, shift = true),
                 DesktopShortcuts.primary(os, Key.N, shift = true),
             )
         }
@@ -108,25 +110,42 @@ class DesktopCommandsAndShortcutsTest {
     @Test
     fun `every menu command has its own shortcut`() {
         for (os in DesktopOs.entries) {
+            val keys = DesktopShortcuts.map(os)
             val shortcuts = listOf(
-                DesktopShortcuts.newNote(os),
+                DesktopShortcuts.of(keys, AppCommand.NewNote),
                 DesktopShortcuts.importNotes(os),
                 DesktopShortcuts.backup(os),
-                DesktopShortcuts.lock(os),
+                DesktopShortcuts.of(keys, AppCommand.LockApp),
                 DesktopShortcuts.settings(os),
                 DesktopShortcuts.minimise(os),
                 DesktopShortcuts.quit(os),
             )
             assertEquals(shortcuts.size, shortcuts.toSet().size)
         }
-        assertEquals(DesktopShortcuts.primary(DesktopOs.LINUX, Key.L), DesktopShortcuts.lock(DesktopOs.LINUX))
+        val linux = DesktopShortcuts.map(DesktopOs.LINUX)
+        assertEquals(DesktopShortcuts.primary(DesktopOs.LINUX, Key.L), DesktopShortcuts.of(linux, AppCommand.LockApp))
+        val mac = DesktopShortcuts.map(DesktopOs.MACOS)
+        assertEquals(DesktopShortcuts.primary(DesktopOs.MACOS, Key.N), DesktopShortcuts.of(mac, AppCommand.NewNote))
+    }
+
+    @Test
+    fun `a command that is not a letter chord has no menu accelerator`() {
+        assertFailsWith<IllegalArgumentException> {
+            DesktopShortcuts.of(DesktopShortcuts.map(DesktopOs.LINUX), AppCommand.NextTab)
+        }
+    }
+
+    @Test
+    fun `the window key map follows the os`() {
+        assertTrue(DesktopShortcuts.map(DesktopOs.MACOS).usesMetaKey)
+        assertFalse(DesktopShortcuts.map(DesktopOs.LINUX).usesMetaKey)
+        assertFalse(DesktopShortcuts.map(DesktopOs.WINDOWS).usesMetaKey)
     }
 
     @Test
     fun `commands ask for the screens and the session`() {
         val rig = CommandsRig()
         with(rig.commands) {
-            newNote()
             importNotes()
             backup()
             settings()
@@ -136,7 +155,6 @@ class DesktopCommandsAndShortcutsTest {
         }
         assertEquals(
             listOf(
-                "EditNoteRoute/-1",
                 "ImportNotesRoute",
                 "BackupRoute",
                 "SettingsRoute",
@@ -146,6 +164,16 @@ class DesktopCommandsAndShortcutsTest {
             ),
             rig.requested(),
         )
+    }
+
+    @Test
+    fun `a new note is asked for as a command so it opens like the button does`() {
+        val rig = CommandsRig()
+
+        rig.commands.newNote()
+
+        assertEquals(emptyList(), rig.requested())
+        assertEquals(listOf(AppCommand.NewNote), drainCommands(rig.navigation))
     }
 
     @Test

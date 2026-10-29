@@ -7,6 +7,8 @@ import com.pasich.encly.desktop.storage.DesktopOs
 import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.platform.AppLocaleController
 import com.pasich.encly.platform.NavigationRequests
+import com.pasich.encly.presentation.designsystem.AppCommand
+import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.navigation.NavRoutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -17,7 +19,8 @@ import kotlinx.coroutines.launch
  * the session ([lockNow]), a setting, or asks the UI to open a screen through [NavigationRequests].
  *
  * Commands that open a screen are ignored while the vault is locked (see `HostNavigationRequests`): no menu
- * item skips the lock screen.
+ * item skips the lock screen. A new note is asked for as the [AppCommand] it is, so it opens the way the
+ * keyboard shortcut and the button open it (as a tab, in a wide window).
  */
 interface DesktopCommands {
     fun newNote()
@@ -56,7 +59,9 @@ class DefaultDesktopCommands(
     private val onMinimise: () -> Unit,
     private val onQuit: () -> Unit,
 ) : DesktopCommands {
-    override fun newNote() = open("${NavRoutes.EditNoteRoute.name}/-1")
+    override fun newNote() {
+        navigation.request(AppCommand.NewNote)
+    }
 
     override fun importNotes() = open(NavRoutes.ImportNotesRoute.name)
 
@@ -87,22 +92,53 @@ class DefaultDesktopCommands(
     }
 }
 
-/** The keyboard shortcuts of the menu: the primary modifier is Cmd on macOS and Ctrl everywhere else. */
-object DesktopShortcuts {
-    fun primary(os: DesktopOs, key: Key, shift: Boolean = false): KeyShortcut =
-        KeyShortcut(key = key, ctrl = os != DesktopOs.MACOS, meta = os == DesktopOs.MACOS, shift = shift)
+/** A key chord of the menu bar. Compose's own `KeyShortcut` hides its fields, so the map is kept in this. */
+data class Accelerator(
+    val key: Key,
+    val ctrl: Boolean = false,
+    val meta: Boolean = false,
+    val shift: Boolean = false,
+    val alt: Boolean = false,
+) {
+    /** The shortcut a menu item takes. */
+    fun toKeyShortcut(): KeyShortcut = KeyShortcut(key = key, ctrl = ctrl, meta = meta, shift = shift, alt = alt)
+}
 
-    fun newNote(os: DesktopOs) = primary(os, Key.N)
+/**
+ * The accelerators the menu bar registers, and who owns which chord. The key map of the window is
+ * [EnclyShortcuts] (one instance, [map], shared by the menu and the keyboard host). A command that map knows is
+ * either the menu's ([menuOwned]: the menu registers its chord, built from the map's own key, and the host
+ * declines it) or the host's (the menu registers nothing for it), never both: on a Mac the menu bar is native and
+ * takes its chords before any key reaches the window, so a chord both sides took would run twice or not at all.
+ * The chords below that are not in the map (import, backup, settings, minimise, quit) are the menu's alone.
+ */
+object DesktopShortcuts {
+    /** The commands whose accelerators the menu registers; the keyboard host declines them. */
+    val menuOwned: Set<AppCommand> = setOf(AppCommand.NewNote, AppCommand.LockApp)
+
+    /** The key map of a window on [os]: Cmd is the command key on macOS, Ctrl everywhere else. */
+    fun map(os: DesktopOs): EnclyShortcuts = EnclyShortcuts(commandKeyIsMeta = os == DesktopOs.MACOS)
+
+    fun primary(os: DesktopOs, key: Key, shift: Boolean = false): Accelerator =
+        Accelerator(key = key, ctrl = os != DesktopOs.MACOS, meta = os == DesktopOs.MACOS, shift = shift)
+
+    /** The accelerator of [command] from the window's key map; the command must be one of its letter chords. */
+    fun of(shortcuts: EnclyShortcuts, command: AppCommand): Accelerator {
+        val key = requireNotNull(shortcuts.keyOf(command)) { "$command has no letter chord" }
+        return Accelerator(key = key, ctrl = !shortcuts.usesMetaKey, meta = shortcuts.usesMetaKey)
+    }
 
     fun importNotes(os: DesktopOs) = primary(os, Key.I)
 
     fun backup(os: DesktopOs) = primary(os, Key.B)
-
-    fun lock(os: DesktopOs) = primary(os, Key.L)
 
     fun settings(os: DesktopOs) = primary(os, Key.Comma)
 
     fun minimise(os: DesktopOs) = primary(os, Key.M)
 
     fun quit(os: DesktopOs) = primary(os, Key.Q)
+
+    /** The chords only the menu has, which the key map does not know. */
+    fun menuOnly(os: DesktopOs): List<Accelerator> =
+        listOf(importNotes(os), backup(os), settings(os), minimise(os), quit(os))
 }

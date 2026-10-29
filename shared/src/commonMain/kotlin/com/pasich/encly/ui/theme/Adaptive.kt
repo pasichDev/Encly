@@ -66,6 +66,9 @@ val LocalDensityProfile = staticCompositionLocalOf { DensityProfile.Touch }
 /** Whether the device is driven by a mouse and keyboard first (a desktop), as the platform says. */
 internal expect fun isPointerFirstDevice(): Boolean
 
+/** Whether the UI is driven by a mouse and keyboard first; the platform says, tests provide it directly. */
+val LocalPointerFirst = staticCompositionLocalOf { isPointerFirstDevice() }
+
 /** The spacing tokens for a [profile]; [DensityProfile.Touch] is the default [EnclySpacing]. */
 fun enclySpacingFor(profile: DensityProfile): EnclySpacing = when (profile) {
     DensityProfile.Touch -> EnclySpacing()

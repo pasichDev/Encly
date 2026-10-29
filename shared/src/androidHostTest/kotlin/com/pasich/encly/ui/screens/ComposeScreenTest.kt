@@ -215,6 +215,28 @@ abstract class ComposeScreenTest {
         }
     }
 
+    /**
+     * [content] under the app's keyboard host, with a command router that only runs the screens' own commands (a
+     * lock is counted in [locks]); what `EnclyApp` gives the screens, without the navigation around them.
+     */
+    @Composable
+    protected fun WithShortcuts(content: @Composable () -> Unit) {
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        val router = androidx.compose.runtime.remember {
+            com.pasich.encly.presentation.navigation.AppCommandRouter(scope, lockApp = { locks++ }) { false }
+        }
+        CompositionLocalProvider(com.pasich.encly.presentation.navigation.LocalAppCommands provides router) {
+            com.pasich.encly.presentation.designsystem.EnclyShortcutHost(
+                onCommand = router::run,
+                shortcuts = com.pasich.encly.presentation.designsystem.EnclyShortcuts(commandKeyIsMeta = false),
+                content = content,
+            )
+        }
+    }
+
+    /** How many times the shortcut host asked to lock the app. */
+    protected var locks = 0
+
     /** The recovery phrase cell [number] (1-based) of 12. */
     protected fun phraseCell(number: Int) = rule.onNodeWithContentDescription(
         str(Res.string.recovery_word_cell, number, PHRASE_WORDS),

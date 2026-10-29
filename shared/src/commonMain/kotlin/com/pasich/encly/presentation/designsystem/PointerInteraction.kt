@@ -2,6 +2,9 @@ package com.pasich.encly.presentation.designsystem
 
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusEventModifierNode
 import androidx.compose.ui.focus.FocusState
@@ -13,11 +16,19 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.isCtrlPressed
+import androidx.compose.ui.input.pointer.isMetaPressed
+import androidx.compose.ui.input.pointer.isPrimaryPressed
+import androidx.compose.ui.input.pointer.isTertiaryPressed
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
@@ -55,6 +66,72 @@ fun Modifier.enclyInteractive(shape: Shape = RectangleShape, enabled: Boolean = 
 
 /** [enclyInteractive] for a fully round target (a pill button, an icon button, a chip). */
 fun Modifier.enclyInteractiveRound(enabled: Boolean = true): Modifier = enclyInteractive(CircleShape, enabled)
+
+/**
+ * Calls [onClick] when the middle mouse button is pressed and let go over this: a browser's way to close a tab.
+ * The press is used up here, so nothing under it starts a click. A finger and the other buttons do nothing.
+ */
+@Composable
+fun Modifier.enclyMiddleClick(onClick: () -> Unit): Modifier {
+    val current by rememberUpdatedState(onClick)
+    return pointerInput(Unit) {
+        val bounds = size
+        awaitPointerEventScope {
+            while (true) {
+                if (awaitClickOf(bounds) { it.buttons.isTertiaryPressed }) current()
+            }
+        }
+    }
+}
+
+/**
+ * Calls [onClick] instead of the click below when the primary mouse button is pressed with the command key held
+ * (⌘ on a Mac, Ctrl elsewhere, as [LocalEnclyShortcuts] says) and let go over this: the "open in a new tab" click
+ * of a browser. An ordinary click, a touch and the other buttons pass through to the click below.
+ */
+@Composable
+fun Modifier.enclyCommandClick(onClick: () -> Unit): Modifier {
+    val current by rememberUpdatedState(onClick)
+    val meta = LocalEnclyShortcuts.current.usesMetaKey
+    return pointerInput(meta) {
+        val bounds = size
+        awaitPointerEventScope {
+            while (true) {
+                val clicked = awaitClickOf(bounds) { press ->
+                    val modifiers = press.keyboardModifiers
+                    press.buttons.isPrimaryPressed && if (meta) modifiers.isMetaPressed else modifiers.isCtrlPressed
+                }
+                if (clicked) current()
+            }
+        }
+    }
+}
+
+/**
+ * Waits for a press that [accepts] and uses it up, then for the release that ends it. True when the pointer was
+ * let go inside [bounds]; any other press is passed over without being used.
+ */
+private suspend fun AwaitPointerEventScope.awaitClickOf(bounds: IntSize, accepts: (PointerEvent) -> Boolean): Boolean {
+    var press: PointerInputChange?
+    do {
+        press = awaitPointerEvent(PointerEventPass.Initial).acceptedPress(accepts)
+    } while (press == null)
+    press.consume()
+    while (true) {
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        val up = event.changes.firstOrNull()
+        if (up != null && event.type == PointerEventType.Release) {
+            up.consume()
+            return up.position.x in 0f..bounds.width.toFloat() && up.position.y in 0f..bounds.height.toFloat()
+        }
+    }
+}
+
+/** The change of a press that [accepts], or null for any other event. */
+private fun PointerEvent.acceptedPress(accepts: (PointerEvent) -> Boolean): PointerInputChange? {
+    val change = changes.firstOrNull() ?: return null
+    return change.takeIf { type == PointerEventType.Press && it.changedToDown() && accepts(this) }
+}
 
 private data class KeyboardFocusRingElement(val shape: Shape) : ModifierNodeElement<KeyboardFocusRingNode>() {
     override fun create() = KeyboardFocusRingNode(shape)

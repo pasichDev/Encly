@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,12 +49,11 @@ import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.model.SwipeSettings
-import com.pasich.encly.presentation.components.swipe.SwipeContext
 import com.pasich.encly.presentation.components.swipe.SwipeableNote
 import com.pasich.encly.presentation.components.swipe.rememberSwipeContext
-import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.bleed
@@ -61,7 +61,6 @@ import com.pasich.encly.presentation.dialogs.NoteAction
 import com.pasich.encly.presentation.dialogs.NoteCardBottomSheet
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.ChangeTag
-import com.pasich.encly.presentation.viewmodel.NoteListEvent.NoteToTrash
 import com.pasich.encly.presentation.viewmodel.NoteListState
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
@@ -86,6 +85,13 @@ private const val GRID_EXCERPT_LINES = 4
 /** What the search field of the notes screen holds, and the matches for it. */
 class NotesSearch(val query: String, val results: NoteSearchViewModel.SearchResults)
 
+/**
+ * The tabs beside a notes list, where there are any (the expanded layout): the stored note that is shown
+ * ([activeNoteId], read where the cards are drawn) is marked in the list, and a note can be opened as a tab of
+ * its own ([onOpenInNewTab]) by the right-click menu or by a click with the command key held.
+ */
+class NotesTabs(val activeNoteId: () -> Long?, val onOpenInNewTab: (Note) -> Unit)
+
 @Composable
 fun NotesList(
     isGrid: Boolean,
@@ -96,6 +102,7 @@ fun NotesList(
     search: NotesSearch = NotesSearch("", NoteSearchViewModel.SearchResults()),
     swipe: SwipeSettings = SwipeSettings.Off,
     onSecondActionClick: (Note) -> Unit = {},
+    tabs: NotesTabs? = null,
     header: @Composable () -> Unit = {},
     noteListViewModel: NoteListViewModel = metroViewModel(),
 ) {
@@ -120,6 +127,14 @@ fun NotesList(
         onItemClick = onItemClick,
         onItemLongClick = sheet::open,
         swipe = rememberSwipeContext(swipe, noteListViewModel::perform),
+        pointer = rememberNotesPointer(
+            tabs = tabs,
+            handlers = NoteMenuHandlers(
+                onOpen = onItemClick,
+                onDuplicate = onSecondActionClick,
+                onEvent = noteListViewModel::onEvent,
+            ),
+        ),
     )
     val status: @Composable () -> Unit = {
         NotesStatus(
@@ -199,28 +214,8 @@ internal fun NoteActionsSheet(
 private fun NoteAction.closesSheet(): Boolean =
     this !is NoteAction.ChangeTag && this !is NoteAction.ChangeColor && this !is NoteAction.ChangeDescription
 
-/** The list event a sheet [NoteAction] on [note] stands for; null for the ones that open another screen. */
-private fun NoteAction.toEvent(note: Note): NoteListEvent? = when (this) {
-    NoteAction.Edit, NoteAction.Duplicate -> null
-    NoteAction.Delete -> NoteToTrash(note)
-    is NoteAction.Pin -> NoteListEvent.PinNote(note, pinned)
-    is NoteAction.Archive -> NoteListEvent.ArchiveNote(note, archived)
-    is NoteAction.ChangeColor -> NoteListEvent.ChangeColor(note, color)
-    is NoteAction.ChangeTag -> ChangeTag(note = note, idTag = tagId)
-    is NoteAction.ChangeDescription -> NoteListEvent.ChangeDescription(note = note, description = description)
-}
-
 /** What sits above the cards: the caller's header, then the loading, empty or search status. */
 private class NotesTop(val header: @Composable () -> Unit, val status: @Composable () -> Unit)
-
-/** The cards to show and what a tap or long-press on one does. */
-private class NotesContent(
-    val entries: List<NoteEntry>,
-    val highlight: String,
-    val onItemClick: (Note) -> Unit,
-    val onItemLongClick: (NoteListItem) -> Unit,
-    val swipe: SwipeContext,
-)
 
 /** Room for the last card above the FAB. */
 @Composable
@@ -229,44 +224,39 @@ private fun notesBottomPadding() = EnclyTheme.spacing.fabHeight + EnclyTheme.spa
 @Composable
 private fun NotesColumn(content: NotesContent, state: LazyListState, top: NotesTop, modifier: Modifier = Modifier) {
     val spacing = EnclyTheme.spacing
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        state = state,
-        contentPadding = PaddingValues(top = spacing.xs, bottom = notesBottomPadding()),
-        verticalArrangement = Arrangement.spacedBy(spacing.cardGap),
-    ) {
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(spacing.cardGap)) {
-                top.header()
-                top.status()
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = state,
+            contentPadding = PaddingValues(top = spacing.xs, bottom = notesBottomPadding()),
+            verticalArrangement = Arrangement.spacedBy(spacing.cardGap),
+        ) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.cardGap)) {
+                    top.header()
+                    top.status()
+                }
             }
-        }
-        items(items = content.entries, key = { it.key }) { entry ->
-            when (entry) {
-                is NoteSection -> SectionOverline(
-                    text = stringResource(entry.title),
-                    modifier = Modifier
-                        .padding(horizontal = spacing.listGutter)
-                        .animateItem(),
-                )
-
-                is NoteRow -> SwipeableNote(
-                    note = entry.item.note,
-                    swipe = content.swipe,
-                    modifier = Modifier
-                        .padding(horizontal = spacing.listGutter)
-                        .animateItem(),
-                ) { cardModifier ->
-                    NoteItem(
-                        item = entry.item,
-                        highlight = content.highlight,
-                        modifier = cardModifier,
-                        onItemClick = content.onItemClick,
-                        onItemLongClick = { content.onItemLongClick(entry.item) },
+            items(items = content.entries, key = { it.key }) { entry ->
+                when (entry) {
+                    is NoteSection -> SectionOverline(
+                        text = stringResource(entry.title),
+                        modifier = Modifier
+                            .padding(horizontal = spacing.listGutter)
+                            .animateItem(),
                     )
+
+                    is NoteRow -> SwipeableNote(
+                        note = entry.item.note,
+                        swipe = content.swipe,
+                        modifier = Modifier
+                            .padding(horizontal = spacing.listGutter)
+                            .animateItem(),
+                    ) { cardModifier -> NotesCard(entry, content, excerptLines = 2, modifier = cardModifier) }
                 }
             }
         }
+        EnclyScrollbar(state)
     }
 }
 
@@ -278,54 +268,50 @@ private fun NotesGrid(
     modifier: Modifier = Modifier,
 ) {
     val spacing = EnclyTheme.spacing
-    LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Fixed(2),
-        modifier = modifier.fillMaxSize(),
-        state = state,
-        contentPadding = PaddingValues(
-            start = spacing.listGutter,
-            end = spacing.listGutter,
-            top = spacing.xs,
-            bottom = notesBottomPadding(),
-        ),
-        verticalItemSpacing = spacing.cardGap,
-        horizontalArrangement = Arrangement.spacedBy(spacing.cardGap),
-    ) {
-        // Full-width rows lay themselves out on the gutter, as in the list.
-        item(span = StaggeredGridItemSpan.FullLine) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(spacing.cardGap),
-                modifier = Modifier.bleed(spacing.listGutter),
-            ) {
-                top.header()
-                top.status()
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            state = state,
+            contentPadding = PaddingValues(
+                start = spacing.listGutter,
+                end = spacing.listGutter,
+                top = spacing.xs,
+                bottom = notesBottomPadding(),
+            ),
+            verticalItemSpacing = spacing.cardGap,
+            horizontalArrangement = Arrangement.spacedBy(spacing.cardGap),
+        ) {
+            // Full-width rows lay themselves out on the gutter, as in the list.
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(spacing.cardGap),
+                    modifier = Modifier.bleed(spacing.listGutter),
+                ) {
+                    top.header()
+                    top.status()
+                }
             }
-        }
-        items(
-            items = content.entries,
-            key = { it.key },
-            span = { entry ->
-                if (entry is NoteSection) StaggeredGridItemSpan.FullLine else StaggeredGridItemSpan.SingleLane
-            },
-        ) { entry ->
-            when (entry) {
-                is NoteSection -> SectionOverline(text = stringResource(entry.title), modifier = Modifier.animateItem())
+            items(
+                items = content.entries,
+                key = { it.key },
+                span = { entry ->
+                    if (entry is NoteSection) StaggeredGridItemSpan.FullLine else StaggeredGridItemSpan.SingleLane
+                },
+            ) { entry ->
+                when (entry) {
+                    is NoteSection ->
+                        SectionOverline(text = stringResource(entry.title), modifier = Modifier.animateItem())
 
-                is NoteRow -> SwipeableNote(
-                    note = entry.item.note,
-                    swipe = content.swipe,
-                    modifier = Modifier.animateItem(),
-                ) { cardModifier ->
-                    NoteItem(
-                        item = entry.item,
-                        excerptLines = GRID_EXCERPT_LINES,
-                        modifier = cardModifier,
-                        onItemClick = content.onItemClick,
-                        onItemLongClick = { content.onItemLongClick(entry.item) },
-                    )
+                    is NoteRow -> SwipeableNote(
+                        note = entry.item.note,
+                        swipe = content.swipe,
+                        modifier = Modifier.animateItem(),
+                    ) { cardModifier -> NotesCard(entry, content, GRID_EXCERPT_LINES, modifier = cardModifier) }
                 }
             }
         }
+        EnclyScrollbar(state)
     }
 }
 

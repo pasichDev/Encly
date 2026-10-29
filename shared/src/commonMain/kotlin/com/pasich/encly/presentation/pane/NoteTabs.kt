@@ -62,15 +62,31 @@ class NoteTabs {
     /**
      * Shows note [noteId] (-1: a new note, with [params] such as a tag to start with): the tab it already
      * has, or a new one. The tab shown until now is saved first; false when that failed, in which case
-     * nothing changed.
+     * nothing changed. With [background] the tab is only added, called [title] until its editor reports its
+     * own name, and the one shown stays (a browser's background tab); with nothing shown there is nothing to
+     * stay with, so it is shown.
      */
-    suspend fun open(noteId: Long, params: String = "", epoch: Long? = null): Boolean {
+    suspend fun open(
+        noteId: Long,
+        params: String = "",
+        epoch: Long? = null,
+        title: String = "",
+        background: Boolean = false,
+    ): Boolean {
         val existing = if (noteId > 0L) openTabs.firstOrNull { it.noteId == noteId } else null
-        if (existing != null) return activate(existing.key)
-        return switchWith {
-            val tab = NoteTab(key = nextKey++, noteId = noteId, params = params, epoch = epoch)
-            openTabs.add(tab)
-            activeKey = tab.key
+        return when {
+            existing != null -> background || activate(existing.key)
+
+            background && activeKey != null -> {
+                openTabs.add(NoteTab(key = nextKey++, noteId = noteId, params = params, title = title, epoch = epoch))
+                true
+            }
+
+            else -> switchWith {
+                val tab = NoteTab(key = nextKey++, noteId = noteId, params = params, title = title, epoch = epoch)
+                openTabs.add(tab)
+                activeKey = tab.key
+            }
         }
     }
 
@@ -141,4 +157,19 @@ class NoteTabs {
             switching = false
         }
     }
+}
+
+/**
+ * Adds a tab for the stored note [noteId] without leaving the tab shown; a note that has a tab, or is not
+ * stored yet, gets none. See [NoteTabs.open].
+ */
+suspend fun NoteTabs.openInBackground(noteId: Long, title: String, epoch: Long? = null): Boolean =
+    noteId <= 0L || open(noteId, epoch = epoch, title = title, background = true)
+
+/** Shows the next tab ([forward]) or the previous one, wrapping round; false with fewer than two tabs. */
+suspend fun NoteTabs.cycle(forward: Boolean): Boolean {
+    val index = tabs.indexOfFirst { it.key == activeKey }
+    if (tabs.size < 2 || index < 0) return false
+    val step = if (forward) 1 else -1
+    return activate(tabs[(index + step + tabs.size) % tabs.size].key)
 }

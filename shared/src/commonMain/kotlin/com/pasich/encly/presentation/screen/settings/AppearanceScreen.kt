@@ -3,14 +3,13 @@ package com.pasich.encly.presentation.screen.settings
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -67,6 +66,7 @@ import com.pasich.encly.presentation.designsystem.EnclyCard
 import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyRadioRow
+import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclySegmentedControl
 import com.pasich.encly.presentation.designsystem.EnclySwitchRow
 import com.pasich.encly.presentation.designsystem.EnclyTagPill
@@ -129,13 +129,17 @@ private fun AppearanceContent(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = { EnclyTopBar(title = stringResource(Res.string.settings_appearance), onBack = actions.onBack) },
     ) { padding ->
-        Column(
+        EnclyScrollColumn(
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(start = spacing.gutter, end = spacing.gutter, top = spacing.s, bottom = spacing.l),
+                .padding(padding),
+            contentPadding = PaddingValues(
+                start = spacing.gutter,
+                end = spacing.gutter,
+                top = spacing.s,
+                bottom = spacing.l,
+            ),
         ) {
             ThemeSection(
                 settings = settings,

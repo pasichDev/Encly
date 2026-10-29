@@ -42,6 +42,7 @@ import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
+import com.pasich.encly.presentation.viewmodel.NoteTabsViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
@@ -149,10 +150,10 @@ class AppGraphTest {
     }
 
     @Test
-    fun theViewModelsAreTheTwentyTwoOfTheApp() {
+    fun theViewModelsAreTheTwentyThreeOfTheApp() {
         assertEquals(PLAIN_VIEW_MODELS, graph.viewModelProviders.keys)
         assertEquals(ASSISTED_VIEW_MODELS, graph.assistedFactoryProviders.keys)
-        assertEquals(22, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
+        assertEquals(23, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
         assertTrue(graph.manualAssistedFactoryProviders.isEmpty())
     }
 
@@ -234,6 +235,7 @@ class AppGraphTest {
             MarkdownExportViewModel::class,
             NoteListViewModel::class,
             NoteSearchViewModel::class,
+            NoteTabsViewModel::class,
             OnboardingViewModel::class,
             SecuritySettingsViewModel::class,
             SettingsViewModel::class,

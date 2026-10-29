@@ -17,13 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -182,16 +175,6 @@ internal fun CloseFindOrSlashOnBack(viewModel: EditNoteViewModel = metroViewMode
     val slashShown = slashMenu?.isShown == true
     BackHandler(enabled = findOpen || slashShown) {
         if (findOpen) viewModel.closeFind() else viewModel.slashPicker.dismiss()
-    }
-}
-
-/** Hardware keyboard: Ctrl or Cmd+F opens Find, Escape closes it. True when the key was used. */
-internal fun EditNoteViewModel.handleFindKey(event: KeyEvent): Boolean {
-    if (event.type != KeyEventType.KeyDown) return false
-    return when {
-        event.key == Key.F && (event.isCtrlPressed || event.isMetaPressed) -> true.also { openFind() }
-        event.key == Key.Escape && find.value.isOpen -> true.also { closeFind() }
-        else -> false
     }
 }
 

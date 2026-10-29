@@ -132,6 +132,13 @@ fun drainRoutes(navigation: NavigationRequests): List<String> {
     return out
 }
 
+/** The commands requested through [navigation] and not yet taken, in order. */
+fun drainCommands(navigation: NavigationRequests): List<com.pasich.encly.presentation.designsystem.AppCommand> {
+    val out = mutableListOf<com.pasich.encly.presentation.designsystem.AppCommand>()
+    runBlocking { withTimeoutOrNull(WAIT_MS) { navigation.commands.collect { out += it } } }
+    return out
+}
+
 private const val WAIT_MS = 200L
 
 /** A timer that runs nothing by itself: the test fires what was scheduled. */

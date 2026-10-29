@@ -1,12 +1,9 @@
 package com.pasich.encly.presentation.drawer
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +20,7 @@ import com.pasich.encly.platform.LocalAppInfo
 import com.pasich.encly.presentation.designsystem.EnclyDrawerHighlight
 import com.pasich.encly.presentation.designsystem.EnclyDrawerItem
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclyWordmark
 import com.pasich.encly.presentation.effects.windowWidth
 import com.pasich.encly.presentation.navigation.DrawerNavItem
@@ -67,11 +65,10 @@ fun MainDrawer(
         windowInsets = WindowInsets(0),
         modifier = modifier.width(getDrawerWidth()),
     ) {
-        Column(
+        EnclyScrollColumn(
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(top = topInset)
-                .verticalScroll(rememberScrollState()),
+                .padding(top = topInset),
         ) {
             EnclyWordmark(
                 appName = appInfo.appName,

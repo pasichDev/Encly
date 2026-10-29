@@ -2,11 +2,10 @@ package com.pasich.encly.presentation.screen.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,6 +49,7 @@ import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyDialog
+import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -141,12 +141,10 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
             onDismiss = { confirmingRemove = false },
         )
     }
-    Column(
+    EnclyScrollColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.m),
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = spacing.gutter, vertical = spacing.s),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = spacing.gutter, vertical = spacing.s),
     ) {
         if (info.turnedOff) {
             EnclyCallout(text = stringResource(Res.string.duress_pin_turned_off), tone = CalloutTone.WARNING)

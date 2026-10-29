@@ -5,9 +5,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -18,18 +24,26 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.rightClick
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.close
+import com.pasich.encly.core.resources.dialog_dismiss
 import com.pasich.encly.core.resources.main_drawer_settings
 import com.pasich.encly.core.resources.main_drawer_tasks
+import com.pasich.encly.core.resources.note_open
+import com.pasich.encly.core.resources.note_open_in_new_tab
 import com.pasich.encly.core.resources.open_menu
 import com.pasich.encly.core.resources.pane_select_note
 import com.pasich.encly.core.resources.sort_by
+import com.pasich.encly.core.resources.swipe_choice_delete
+import com.pasich.encly.core.resources.swipe_delete_title
 import com.pasich.encly.core.resources.view_options
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.editor.codec.BlockConverter
@@ -45,6 +59,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.NoteTabsViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.ui.theme.LocalPointerFirst
 import com.pasich.encly.ui.theme.LocalWidthClass
 import com.pasich.encly.ui.theme.WidthClass
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
@@ -98,15 +113,22 @@ class AdaptiveLayoutTest : ComposeScreenTest() {
         date = 1_700_000_000_000 + id,
     )
 
+    /** Whether the window is driven by a mouse first, as the desktop is; a phone or tablet is not. */
+    private var pointerFirst = false
+
     private fun showHome(widthClass: WidthClass, vararg notes: Note) {
         app.withNotes(*notes)
         setNavScreen(viewModels(*app.home(), NoteTabsViewModel()), route = NavRoutes.HomeRoute.name) { nav ->
             CompositionLocalProvider(
                 LocalWidthClass provides widthClass,
+                LocalPointerFirst provides pointerFirst,
                 LocalMetroViewModelFactory provides PaneFactory(),
-            ) { MainRootScreen(nav) }
+            ) { WithShortcuts { MainRootScreen(nav) } }
         }
     }
+
+    private fun listCard(title: String) =
+        rule.onNode(hasText(title) and hasClickAction() and !isTab and !hasSetTextAction())
 
     private val isTab = hasTestTag(NOTE_TAB_TAG)
 
@@ -349,4 +371,93 @@ class AdaptiveLayoutTest : ComposeScreenTest() {
         assertTrue(count(str(Res.string.main_drawer_settings)) > 0)
         rule.onNodeWithText("the page").assertExists()
     }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun aRightClickOnANoteOffersOpenInNewTabAndItAddsABackgroundTab() {
+        pointerFirst = true
+        showHome(WidthClass.Expanded, note(1, "Trip"), note(2, "Plan"))
+        openFromList("Trip")
+
+        listCard("Plan").performMouseInput { rightClick() }
+        waitForText(str(Res.string.note_open_in_new_tab))
+        rule.onNodeWithText(str(Res.string.note_open_in_new_tab)).performClick()
+
+        waitFor { tabs("Plan").isNotEmpty() }
+        assertEquals(2, tabs().size)
+        // The note being read stays on screen.
+        waitFor { rule.onAllNodes(hasText("Trip") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun aClickWithTheCommandKeyAddsABackgroundTabInsteadOfOpeningTheNote() {
+        pointerFirst = true
+        showHome(WidthClass.Expanded, note(1, "Trip"), note(2, "Plan"))
+        openFromList("Trip")
+
+        listCard("Plan").performKeyInput { keyDown(Key.CtrlLeft) }
+        listCard("Plan").performMouseInput { click() }
+        listCard("Plan").performKeyInput { keyUp(Key.CtrlLeft) }
+
+        waitFor { tabs("Plan").isNotEmpty() }
+        assertEquals(2, tabs().size)
+        assertEquals(0, rule.onAllNodes(hasText("Plan") and hasSetTextAction()).fetchSemanticsNodes().size)
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun moveToTrashInTheRightClickMenuAsksFirst() {
+        pointerFirst = true
+        showHome(WidthClass.Expanded, note(1, "Trip"))
+        waitFor { listCard("Trip").isDisplayedSafely() }
+
+        listCard("Trip").performMouseInput { rightClick() }
+        waitForText(str(Res.string.swipe_choice_delete))
+        rule.onNodeWithText(str(Res.string.swipe_choice_delete)).performClick()
+
+        waitForText(str(Res.string.swipe_delete_title))
+        rule.onNodeWithText(str(Res.string.dialog_dismiss)).performClick()
+        waitFor { countText(str(Res.string.swipe_delete_title)) == 0 }
+        assertTrue(app.notes.updatedNotes.none { it.isTrash })
+    }
+
+    @Test
+    fun theNoteShownInThePaneIsMarkedInTheList() {
+        showHome(WidthClass.Expanded, note(1, "Trip"), note(2, "Plan"))
+
+        openFromList("Trip")
+
+        waitFor { listCard("Trip").fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true }
+        assertEquals(false, listCard("Plan").fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected))
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun withoutAPointerARightClickOpensNoMenuAndTheListHasNoNewTabEntry() {
+        showHome(WidthClass.Expanded, note(1, "Trip"))
+        waitFor { listCard("Trip").isDisplayedSafely() }
+
+        listCard("Trip").performMouseInput { rightClick() }
+        rule.waitForIdle()
+
+        assertEquals(0, countText(str(Res.string.note_open_in_new_tab)))
+        assertEquals(0, countText(str(Res.string.note_open)))
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun aCompactWindowWithAMouseHasTheMenuButNoTabs() {
+        pointerFirst = true
+        showHome(WidthClass.Compact, note(1, "Trip"))
+        waitFor { listCard("Trip").isDisplayedSafely() }
+
+        listCard("Trip").performMouseInput { rightClick() }
+        waitForText(str(Res.string.note_open))
+
+        assertEquals(0, countText(str(Res.string.note_open_in_new_tab)))
+        assertEquals(false, listCard("Trip").fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected))
+    }
+
+    private fun SemanticsNodeInteraction.isDisplayedSafely() = runCatching { assertExists() }.isSuccess
 }

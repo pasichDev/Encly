@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.platform.LocalAppInfo
+import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclyWordmark
 import com.pasich.encly.presentation.navigation.DrawerNavItem
 import com.pasich.encly.presentation.navigation.drawerNavItems
@@ -48,13 +49,12 @@ internal fun rememberNavItems(statisticViewModel: StatisticViewModel = metroView
 fun MainPermanentDrawer(selectedRoute: String, onItemClick: (DrawerNavItem) -> Unit, modifier: Modifier = Modifier) {
     val items = rememberNavItems()
     val appInfo = LocalAppInfo.current
-    Column(
+    EnclyScrollColumn(
         modifier = modifier
             .width(EnclyTheme.spacing.drawerWidth)
             .fillMaxHeight()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState()),
+            .statusBarsPadding(),
     ) {
         EnclyWordmark(
             appName = appInfo.appName,

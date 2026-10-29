@@ -51,7 +51,14 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.close
 import com.pasich.encly.core.resources.pane_select_note
 import com.pasich.encly.core.resources.untitled
+import com.pasich.encly.presentation.designsystem.AppCommand
+import com.pasich.encly.presentation.designsystem.EnclyHorizontalScrollbar
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyTooltip
+import com.pasich.encly.presentation.designsystem.LocalEnclyShortcuts
+import com.pasich.encly.presentation.designsystem.enclyInteractive
+import com.pasich.encly.presentation.designsystem.enclyInteractiveRound
+import com.pasich.encly.presentation.designsystem.enclyMiddleClick
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.launch
@@ -175,34 +182,45 @@ private fun EmptyPane(modifier: Modifier = Modifier) {
     }
 }
 
-/** The strip of open notes: one tab each, the shown one marked, a close button on every tab. */
+/**
+ * The strip of open notes: one tab each, the shown one marked, a close button on every tab. A tab takes the
+ * pointer like any control (a hand cursor, a focus ring), closes on a middle click, and the strip shows a
+ * scrollbar while the tabs do not fit.
+ */
 @Composable
-private fun NoteTabStrip(
+internal fun NoteTabStrip(
     tabs: List<NoteTab>,
     activeKey: Long?,
     onSelect: (Long) -> Unit,
     onClose: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
-        verticalAlignment = Alignment.Bottom,
+    val scroll = rememberScrollState()
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .statusBarsPadding()
-            .height(EnclyTheme.spacing.tabHeight)
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = EnclyTheme.spacing.xs),
+            .height(EnclyTheme.spacing.tabHeight),
     ) {
-        tabs.forEach { tab ->
-            NoteTabItem(
-                tab = tab,
-                selected = tab.key == activeKey,
-                onSelect = { onSelect(tab.key) },
-                onClose = { onClose(tab.key) },
-            )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier
+                .fillMaxSize()
+                .horizontalScroll(scroll)
+                .padding(horizontal = EnclyTheme.spacing.xs),
+        ) {
+            tabs.forEach { tab ->
+                NoteTabItem(
+                    tab = tab,
+                    selected = tab.key == activeKey,
+                    onSelect = { onSelect(tab.key) },
+                    onClose = { onClose(tab.key) },
+                )
+            }
         }
+        EnclyHorizontalScrollbar(scroll)
     }
 }
 
@@ -210,7 +228,10 @@ private fun NoteTabStrip(
 private fun NoteTabItem(tab: NoteTab, selected: Boolean, onSelect: () -> Unit, onClose: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val title = tab.title.ifBlank { stringResource(Res.string.untitled) }
-    val closeLabel = stringResource(Res.string.close)
+    val closeLabel = "${stringResource(Res.string.close)} $title"
+    // The shown tab is the one Ctrl+W / ⌘W closes, so its hint names the key.
+    val closeKey = LocalEnclyShortcuts.current.label(AppCommand.CloseTab)
+    val closeHint = if (selected) "$closeLabel ($closeKey)" else closeLabel
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
@@ -222,6 +243,8 @@ private fun NoteTabItem(tab: NoteTab, selected: Boolean, onSelect: () -> Unit, o
                 shape = MaterialTheme.shapes.small,
             )
             .testTag(NOTE_TAB_TAG)
+            .enclyInteractive(MaterialTheme.shapes.small)
+            .enclyMiddleClick(onClose)
             .clickable(onClick = onSelect)
             .semantics(mergeDescendants = true) {
                 role = Role.Tab
@@ -241,16 +264,25 @@ private fun NoteTabItem(tab: NoteTab, selected: Boolean, onSelect: () -> Unit, o
                     EnclyTheme.spacing.s - EnclyTheme.spacing.xxs * 2,
             ),
         )
+        TabCloseButton(label = closeLabel, hint = closeHint, onClose = onClose)
+    }
+}
+
+/** The close button of a tab: its [label] for assistive technology, its [hint] (with the key) on hover. */
+@Composable
+private fun TabCloseButton(label: String, hint: String, onClose: () -> Unit) {
+    EnclyTooltip(label = hint) {
         Icon(
             imageVector = EnclyIcons.Close,
             contentDescription = null,
-            tint = colors.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .size(EnclyTheme.spacing.icon + EnclyTheme.spacing.xs)
+                .enclyInteractiveRound()
                 .clickable(onClick = onClose)
                 .padding(EnclyTheme.spacing.xs)
                 .semantics {
-                    contentDescription = "$closeLabel $title"
+                    contentDescription = label
                     role = Role.Button
                 },
         )

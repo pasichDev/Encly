@@ -3,8 +3,10 @@ package com.pasich.encly.presentation.designsystem
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -67,6 +69,9 @@ enum class AppCommand {
  * the line start / the previous word), and the app confirms before it trashes a note anyway.
  *
  * Wire it once at the app root with [enclyShortcuts] or [EnclyShortcutHost]; the commands are the app's to run.
+ * A host that has its own menu with accelerators (the desktop menu bar) must not register a chord of this map
+ * as well as the host: [keyOf] gives the menu the key of a command it owns, and the host is told to decline that
+ * command, so a chord has exactly one owner.
  */
 class EnclyShortcuts(private val commandKeyIsMeta: Boolean = platformUsesCommandKey()) {
     /**
@@ -84,17 +89,28 @@ class EnclyShortcuts(private val commandKeyIsMeta: Boolean = platformUsesCommand
         }
     }
 
+    /**
+     * The key of [command] when it is the command key plus one letter (New, Find, Lock, Close tab), else null.
+     * A menu that registers the accelerator itself builds it from this, so the map stays the one source.
+     */
+    fun keyOf(command: AppCommand): Key? = LETTER_COMMANDS[command]?.key
+
+    /** Whether the command key is Meta (⌘) rather than Ctrl, as this map was made for. */
+    val usesMetaKey: Boolean get() = commandKeyIsMeta
+
     /** The shortcut of [command] as the user reads it: "⌘N" on macOS, "Ctrl+N" elsewhere. */
     fun label(command: AppCommand): String {
         val mod = if (commandKeyIsMeta) "⌘" else "Ctrl+"
         return when (command) {
-            AppCommand.NewNote -> "${mod}N"
-            AppCommand.FindInNote -> "${mod}F"
-            AppCommand.LockApp -> "${mod}L"
-            AppCommand.CloseTab -> "${mod}W"
+            AppCommand.NewNote, AppCommand.FindInNote, AppCommand.LockApp, AppCommand.CloseTab ->
+                "$mod${LETTER_COMMANDS.getValue(command).label}"
+
             AppCommand.NextTab -> if (commandKeyIsMeta) "⌃Tab" else "Ctrl+Tab"
+
             AppCommand.PreviousTab -> if (commandKeyIsMeta) "⌃⇧Tab" else "Ctrl+Shift+Tab"
+
             AppCommand.DeleteNote -> if (commandKeyIsMeta) "⌘⇧⌫" else "Ctrl+Shift+Backspace"
+
             AppCommand.Dismiss -> "Esc"
         }
     }
@@ -128,13 +144,24 @@ class EnclyShortcuts(private val commandKeyIsMeta: Boolean = platformUsesCommand
         event.key == Key.Backspace -> AppCommand.DeleteNote.takeIf { event.isShiftPressed }
         tabChord(event) != null -> tabChord(event)
         event.isShiftPressed -> null
-        event.key == Key.N -> AppCommand.NewNote
-        event.key == Key.F -> AppCommand.FindInNote
-        event.key == Key.L -> AppCommand.LockApp
-        event.key == Key.W -> AppCommand.CloseTab
-        else -> null
+        else -> LETTER_COMMANDS.entries.firstOrNull { it.value.key == event.key }?.key
+    }
+
+    private class Letter(val key: Key, val label: String)
+
+    private companion object {
+        /** The commands that are the command key plus a letter: the one table both the keys and the labels read. */
+        val LETTER_COMMANDS: Map<AppCommand, Letter> = mapOf(
+            AppCommand.NewNote to Letter(Key.N, "N"),
+            AppCommand.FindInNote to Letter(Key.F, "F"),
+            AppCommand.LockApp to Letter(Key.L, "L"),
+            AppCommand.CloseTab to Letter(Key.W, "W"),
+        )
     }
 }
+
+/** The shortcut map of the window: the host provides its own, so every label under it reads the same keys. */
+val LocalEnclyShortcuts = staticCompositionLocalOf { EnclyShortcuts() }
 
 /**
  * Handles the app's shortcuts for everything below this modifier: [onCommand] gets the command and
@@ -175,6 +202,6 @@ fun EnclyShortcutHost(
             .focusRequester(focus)
             .focusable(),
     ) {
-        content()
+        CompositionLocalProvider(LocalEnclyShortcuts provides shortcuts, content = content)
     }
 }

@@ -668,4 +668,10 @@
     <string name="note_open">Відкрити</string>
     <string name="note_open_in_new_tab">Відкрити в новій вкладці</string>
     <string name="pane_select_note">Оберіть нотатку або створіть нову</string>
+    <string name="menu_file">Файл</string>
+    <string name="menu_view">Вигляд</string>
+    <string name="menu_window">Вікно</string>
+    <string name="menu_help">Довідка</string>
+    <string name="menu_exit">Вийти</string>
+    <string name="menu_minimize">Згорнути</string>
 </resources>

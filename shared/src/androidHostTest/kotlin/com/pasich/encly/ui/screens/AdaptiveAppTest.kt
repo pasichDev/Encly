@@ -1,11 +1,15 @@
 package com.pasich.encly.ui.screens
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -18,6 +22,8 @@ import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
+import com.pasich.encly.presentation.designsystem.AppCommand
+import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.navigation.EnclyApp
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
@@ -31,6 +37,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.annotation.Config
 import kotlin.reflect.KClass
@@ -69,16 +77,37 @@ class AdaptiveAppTest : ComposeScreenTest() {
 
     private val tabs = NoteTabsViewModel()
 
-    private fun show() {
-        app.withNotes(note(1, "Trip"))
+    private fun show(declined: Set<AppCommand> = emptySet()) {
+        app.withNotes(note(1, "Trip"), note(2, "Plan"))
         `when`(app.security.isDatabaseUnlocked()).thenReturn(true)
         `when`(app.security.hasRecoverySeed()).thenReturn(true)
         rule.setContent {
             CompositionLocalProvider(LocalMetroViewModelFactory provides AppFactory(tabs)) {
-                EnclyApp(InitialStatus.MAIN, app.security, app.sessionLock)
+                EnclyApp(
+                    InitialStatus.MAIN,
+                    app.security,
+                    app.sessionLock,
+                    shortcuts = EnclyShortcuts(commandKeyIsMeta = false),
+                    declinedCommands = declined,
+                )
             }
         }
         rule.waitForIdle()
+    }
+
+    private fun chord(keys: List<Key>) {
+        rule.onRoot().performKeyInput {
+            keys.dropLast(1).forEach { keyDown(it) }
+            pressKey(keys.last())
+            keys.dropLast(1).reversed().forEach { keyUp(it) }
+        }
+        rule.waitForIdle()
+    }
+
+    private fun openTrip() {
+        waitFor { rule.onAllNodes(hasText("Trip") and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
+        rule.onAllNodes(hasText("Trip") and hasClickAction())[0].performClick()
+        waitFor { tabs.tabs.tabs.isNotEmpty() }
     }
 
     @Test
@@ -115,5 +144,117 @@ class AdaptiveAppTest : ComposeScreenTest() {
         assertEquals(0, countText(str(Res.string.empty_notes)))
         assertEquals(0, countText(str(Res.string.pane_select_note)))
         assertTrue(tabs.tabs.tabs.isEmpty())
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun theNewNoteShortcutOpensABlankTabInAnExpandedWindow() {
+        show()
+        waitForText(str(Res.string.pane_select_note))
+
+        chord(listOf(Key.CtrlLeft, Key.N))
+
+        waitFor { tabs.tabs.tabs.size == 1 }
+        assertEquals(-1L, tabs.tabs.tabs.single().noteId)
+        waitFor { countText(str(Res.string.pane_select_note)) == 0 }
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun theCloseTabShortcutClosesTheShownTab() {
+        show()
+        openTrip()
+
+        chord(listOf(Key.CtrlLeft, Key.W))
+
+        waitFor { tabs.tabs.tabs.isEmpty() }
+        waitForText(str(Res.string.pane_select_note))
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun theTabShortcutsStepThroughTheTabs() {
+        show()
+        openTrip()
+        waitFor { rule.onAllNodes(hasText("Plan") and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
+        rule.onAllNodes(hasText("Plan") and hasClickAction())[0].performClick()
+        waitFor { tabs.tabs.tabs.size == 2 && tabs.tabs.active?.noteId == 2L }
+        waitFor { rule.onAllNodes(hasText("Plan") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+
+        chord(listOf(Key.CtrlLeft, Key.Tab))
+        waitFor { tabs.tabs.active?.noteId == 1L }
+        waitFor { rule.onAllNodes(hasText("Trip") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+
+        chord(listOf(Key.CtrlLeft, Key.ShiftLeft, Key.Tab))
+        waitFor { tabs.tabs.active?.noteId == 2L }
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun aCommandTheHostDeclinesIsLeftToTheMenu() {
+        show(declined = setOf(AppCommand.NewNote))
+        waitForText(str(Res.string.pane_select_note))
+
+        chord(listOf(Key.CtrlLeft, Key.N))
+
+        assertTrue(tabs.tabs.tabs.isEmpty())
+        // Only the declined command is: the others still run.
+        openTrip()
+        chord(listOf(Key.CtrlLeft, Key.W))
+        waitFor { tabs.tabs.tabs.isEmpty() }
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun theLockShortcutLocksTheApp() {
+        `when`(app.security.isLockable()).thenReturn(true)
+        show()
+        waitForText(str(Res.string.pane_select_note))
+
+        chord(listOf(Key.CtrlLeft, Key.L))
+
+        waitFor { app.sessionLock.locked.value }
+        verify(app.security).lock()
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun noShortcutRunsWhileTheVaultIsLocked() {
+        `when`(app.security.isLockable()).thenReturn(true)
+        show()
+        waitForText(str(Res.string.pane_select_note))
+        rule.runOnIdle { app.sessionLock.requireUnlock() }
+        waitFor { countText(str(Res.string.lock_title)) > 0 }
+
+        chord(listOf(Key.CtrlLeft, Key.N))
+        chord(listOf(Key.CtrlLeft, Key.L))
+
+        assertTrue(tabs.tabs.tabs.isEmpty())
+        verify(app.security, never()).lock()
+        assertTrue(countText(str(Res.string.lock_title)) > 0)
+    }
+
+    @Test
+    fun onAPhoneTheNewNoteShortcutOpensTheFullScreenEditorLikeTheButton() {
+        show()
+        waitFor { rule.onAllNodes(hasText("Trip")).fetchSemanticsNodes().isNotEmpty() }
+
+        chord(listOf(Key.CtrlLeft, Key.N))
+
+        waitFor { rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+        assertTrue(tabs.tabs.tabs.isEmpty())
+        assertEquals(0, countText(str(Res.string.pane_select_note)))
+    }
+
+    @Test
+    fun onAPhoneTheTabShortcutsDoNothing() {
+        show()
+        waitFor { rule.onAllNodes(hasText("Trip")).fetchSemanticsNodes().isNotEmpty() }
+
+        chord(listOf(Key.CtrlLeft, Key.W))
+        chord(listOf(Key.CtrlLeft, Key.Tab))
+
+        assertTrue(tabs.tabs.tabs.isEmpty())
+        assertTrue(countText("Trip") > 0)
     }
 }

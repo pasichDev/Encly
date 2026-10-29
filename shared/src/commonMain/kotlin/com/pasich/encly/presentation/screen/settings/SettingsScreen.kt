@@ -1,11 +1,14 @@
 package com.pasich.encly.presentation.screen.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -24,6 +27,7 @@ import com.pasich.encly.presentation.components.settings.SettingsBuilder
 import com.pasich.encly.presentation.components.settings.SettingsCategory
 import com.pasich.encly.presentation.components.settings.SettingsCategoryRenderer
 import com.pasich.encly.presentation.components.settings.SettingsNavigation
+import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.dialogs.SwipeActionDialog
@@ -105,8 +109,18 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsList(categories: List<SettingsCategory>, securityDisable: Boolean, modifier: Modifier = Modifier) {
+    val listState = rememberLazyListState()
+    Box(modifier = modifier.fillMaxSize()) {
+        SettingsItems(categories, securityDisable, listState)
+        EnclyScrollbar(listState)
+    }
+}
+
+@Composable
+private fun SettingsItems(categories: List<SettingsCategory>, securityDisable: Boolean, state: LazyListState) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
+        state = state,
         contentPadding = PaddingValues(
             start = EnclyTheme.spacing.gutter,
             end = EnclyTheme.spacing.gutter,

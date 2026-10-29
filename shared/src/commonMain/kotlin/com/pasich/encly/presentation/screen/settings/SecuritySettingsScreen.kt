@@ -2,11 +2,9 @@ package com.pasich.encly.presentation.screen.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +40,7 @@ import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
+import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclySwitchRow
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
@@ -144,12 +143,10 @@ private fun SecurityContent(
     actions: SecurityActions,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    EnclyScrollColumn(
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
     ) {
         SecurityRows(securityState, options, vaultBusy, actions)
     }

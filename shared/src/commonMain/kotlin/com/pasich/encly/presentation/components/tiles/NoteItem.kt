@@ -39,7 +39,8 @@ import kotlin.time.Instant
  * A note in a list: the design-system note card with its tag and date. Long-press opens the
  * note's actions. [dimmed] is the trash look; a checked note ([Note.isChecked]) is shown selected.
  * With [contextActions] a right click (or the Menu key) on the card opens a menu of the same actions;
- * a finger never opens it, and the trash ([dimmed]) has none.
+ * a finger never opens it, and the trash ([dimmed]) has none. [current] marks the note open beside the list,
+ * and [onCommandClick] is a click with the command key held (open in a new tab).
  */
 @Composable
 fun NoteItem(
@@ -52,6 +53,8 @@ fun NoteItem(
     highlight: String = "",
     dimmed: Boolean = false,
     contextActions: NoteContextActions? = null,
+    current: Boolean = false,
+    onCommandClick: ((Note) -> Unit)? = null,
 ) {
     val note: Note = item?.note ?: itemNote ?: Note()
     val preview = rememberNotePreview(item, note) ?: stringResource(Res.string.note_preview_unreadable)
@@ -72,6 +75,8 @@ fun NoteItem(
             dimmed = dimmed,
             pinned = note.isPinned && !dimmed,
             noteColor = if (dimmed) NoteColor.NONE else NoteColor.fromKey(note.color),
+            current = current,
+            onCommandClick = onCommandClick?.let { { it(note) } },
             onClick = { onItemClick(note) },
             onLongClick = {
                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)

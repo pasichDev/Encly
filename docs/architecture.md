@@ -90,7 +90,7 @@ The shared core is three Kotlin Multiplatform modules, checked by a source-scan 
 Their sources import nothing of Android and nothing of the JVM. What they need from the platform is an interface
 they declare, implemented in `:app` and bound in `core/di`: `KeyValueStore` (flags), `VaultFileIo` (the vault
 file's fsync and atomic replace, `JvmVaultFileIo` in the module), `VaultDatabase` (the encrypted database,
-`SecureDatabaseVault`), `BiometricManager` and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`,
+`SecureDatabaseVault`, in `:shared` for both apps), `BiometricManager` and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`,
 `DeviceLockWatcher`, `MainThreadTimer`, `HandoffStagingSweeper`, `AppStrings`.
 
 The rest of the domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`) and the whole

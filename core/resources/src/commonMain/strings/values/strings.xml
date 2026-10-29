@@ -673,4 +673,10 @@
     <string name="note_open">Open</string>
     <string name="note_open_in_new_tab">Open in new tab</string>
     <string name="pane_select_note">Select a note, or start a new one</string>
+    <string name="menu_file">File</string>
+    <string name="menu_view">View</string>
+    <string name="menu_window">Window</string>
+    <string name="menu_help">Help</string>
+    <string name="menu_exit">Exit</string>
+    <string name="menu_minimize">Minimize</string>
 </resources>

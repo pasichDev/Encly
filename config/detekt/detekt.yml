@@ -96,6 +96,12 @@ Compose:
       - LocalBiometricHost
       - LocalAppLocales
       - LocalAppInfo
+      - LocalNavigationRequests
+      # The window's pointer-first flag, key map and command router, provided once around the app
+      # (ui/theme/Adaptive.kt, presentation/designsystem/EnclyShortcuts.kt, presentation/navigation/AppCommandRouter.kt).
+      - LocalPointerFirst
+      - LocalEnclyShortcuts
+      - LocalAppCommands
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

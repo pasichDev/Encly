@@ -24,6 +24,7 @@ import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.desktop.di.DesktopAppGraph
 import com.pasich.encly.desktop.platform.SensitiveClipboardBoundary
 import com.pasich.encly.desktop.platform.ToastHost
+import com.pasich.encly.desktop.window.DesktopShortcuts
 import com.pasich.encly.platform.AppWindow
 import com.pasich.encly.platform.LocalAppInfo
 import com.pasich.encly.platform.LocalAppLocales
@@ -33,6 +34,7 @@ import com.pasich.encly.platform.LocalExternalLinks
 import com.pasich.encly.platform.LocalNavigationRequests
 import com.pasich.encly.platform.LocalSensitiveClipboard
 import com.pasich.encly.platform.LocalToaster
+import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.navigation.EnclyApp
 import com.pasich.encly.ui.theme.AppTheme
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
@@ -43,10 +45,16 @@ import java.io.IOException
 /**
  * The whole app inside a window: what `MainActivity` does on Android. It resolves the vault's start state off
  * the UI thread, gives the shared UI its platform services, and draws [EnclyApp] and the in-window messages.
- * It needs no real window ([appWindow] says what the window can do), so tests compose it headless.
+ * It needs no real window ([appWindow] says what the window can do), so tests compose it headless. [shortcuts] is
+ * the window's one key map, the same the menu bar's accelerators are built from.
  */
 @Composable
-fun DesktopApp(graph: DesktopAppGraph, appWindow: AppWindow, modifier: Modifier = Modifier) {
+fun DesktopApp(
+    graph: DesktopAppGraph,
+    appWindow: AppWindow,
+    modifier: Modifier = Modifier,
+    shortcuts: EnclyShortcuts = remember(graph) { DesktopShortcuts.map(graph.environment.os) },
+) {
     var startStatus by remember(graph) { mutableStateOf<InitialStatus?>(null) }
     LaunchedEffect(graph) {
         val status = withContext(Dispatchers.IO) {
@@ -74,6 +82,9 @@ fun DesktopApp(graph: DesktopAppGraph, appWindow: AppWindow, modifier: Modifier 
                     startStatus = startStatus,
                     securityManager = graph.securityManager,
                     sessionLockManager = graph.sessionLockManager,
+                    shortcuts = shortcuts,
+                    // The menu bar registers these accelerators itself, so the keyboard host leaves them to it.
+                    declinedCommands = DesktopShortcuts.menuOwned,
                 )
             }
             AppTheme {

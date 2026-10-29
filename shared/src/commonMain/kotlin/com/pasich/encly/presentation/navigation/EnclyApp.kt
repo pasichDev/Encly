@@ -28,15 +28,18 @@ import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.platform.HostNavigationRequests
+import com.pasich.encly.presentation.designsystem.AppCommand
+import com.pasich.encly.presentation.designsystem.EnclyShortcutHost
+import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
 import com.pasich.encly.ui.theme.AppTheme
 import com.pasich.encly.ui.theme.DensityProfile
 import com.pasich.encly.ui.theme.LocalDensityProfile
+import com.pasich.encly.ui.theme.LocalPointerFirst
 import com.pasich.encly.ui.theme.LocalWidthClass
 import com.pasich.encly.ui.theme.WidthClass
-import com.pasich.encly.ui.theme.isPointerFirstDevice
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 
@@ -45,6 +48,11 @@ import kotlinx.coroutines.yield
  * a locked vault. The host (an Activity on Android) resolves the vault's [startStatus] first and draws
  * nothing, or its own splash, while it is null; it also wraps this in whatever the platform needs around
  * every text field (the keyboard and clipboard policy) and provides the `Local...` services.
+ *
+ * The keyboard shortcuts ([EnclyShortcuts]) are handled around the whole app and run by an [AppCommandRouter],
+ * which the host's menu bar reaches through `NavigationRequests` too. A host whose menu registers the
+ * accelerator of a command itself passes it in [declinedCommands], so the chord has one owner. [shortcuts] is
+ * the one key map of the window; commands are ignored while the vault is locked.
  */
 @Composable
 fun EnclyApp(
@@ -52,6 +60,8 @@ fun EnclyApp(
     securityManager: SecurityManager,
     sessionLockManager: SessionLockManager,
     modifier: Modifier = Modifier,
+    shortcuts: EnclyShortcuts = remember { EnclyShortcuts() },
+    declinedCommands: Set<AppCommand> = emptySet(),
 ) {
     val destination = startStatus?.let(::startRoute) ?: return
     val navController = rememberNavController()
@@ -62,8 +72,15 @@ fun EnclyApp(
     // NavHost until the lock screen is the only visible entry. Navigation itself runs
     // after the frame, from this effect.
     val locked by sessionLockManager.locked.collectAsState()
+    val scope = rememberCoroutineScope()
+    val currentLocked by rememberUpdatedState(locked)
+    val router = remember(navController, scope, sessionLockManager) {
+        AppCommandRouter(scope, sessionLockManager::lockNow) { navController.startNewNote() }
+    }
+    // A command is run only with the vault open: never from the lock screen, never in the shielded frame.
+    val commandsAllowed = remember(securityManager) { { !currentLocked && securityManager.isDatabaseUnlocked() } }
     LockRouteGuard(navController, securityManager::isDatabaseUnlocked)
-    HostNavigationRequests(navController, securityManager::isDatabaseUnlocked)
+    HostNavigationRequests(navController, router, commandsAllowed)
     SessionResumeGuard(navController, sessionLockManager)
     val visibleEntries by navController.visibleEntries.collectAsState()
     val shielded = locked && visibleEntries.any {
@@ -73,14 +90,31 @@ fun EnclyApp(
         if (locked) navController.showLockScreen()
     }
 
-    App(
-        navController = navController,
-        startDestination = destination.name,
-        eraseEpoch = securityManager::eraseEpoch,
-        modifier = modifier,
-        shielded = shielded,
-        locked = locked,
-    )
+    CompositionLocalProvider(LocalAppCommands provides router) {
+        EnclyShortcutHost(
+            onCommand = { command -> command !in declinedCommands && commandsAllowed() && router.run(command) },
+            modifier = modifier.fillMaxSize(),
+            shortcuts = shortcuts,
+        ) {
+            App(
+                navController = navController,
+                startDestination = destination.name,
+                eraseEpoch = securityManager::eraseEpoch,
+                shielded = shielded,
+                locked = locked,
+            )
+        }
+    }
+}
+
+/**
+ * A new note from where no screen has its own way of starting one (a page of the drawer): the editor, over
+ * the page. Not from inside an editor, which would swap the note being written.
+ */
+private fun NavHostController.startNewNote(): Boolean {
+    if (currentDestination?.route?.startsWith(NavRoutes.EditNoteRoute.name) == true) return false
+    navigate("${NavRoutes.EditNoteRoute.name}/-1") { launchSingleTop = true }
+    return true
 }
 
 /** Where the app starts for [status]; null while there is nothing to show yet. */
@@ -226,7 +260,7 @@ fun App(
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val widthClass = WidthClass.of(maxWidth, maxHeight)
-        val density = DensityProfile.of(widthClass, isPointerFirstDevice())
+        val density = DensityProfile.of(widthClass, LocalPointerFirst.current)
         CompositionLocalProvider(LocalWidthClass provides widthClass, LocalDensityProfile provides density) {
             AppContent(navController, startDestination, eraseEpoch, shielded, locked)
         }

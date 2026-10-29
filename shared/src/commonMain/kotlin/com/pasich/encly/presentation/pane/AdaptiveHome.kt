@@ -15,10 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import com.pasich.encly.data.model.Note
 import com.pasich.encly.presentation.drawer.MainPermanentDrawer
 import com.pasich.encly.presentation.navigation.LocalEraseEpoch
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
+import com.pasich.encly.presentation.navigation.TabCommands
 import com.pasich.encly.presentation.screen.MainScreen
 import com.pasich.encly.presentation.screen.NoteOpener
 import com.pasich.encly.presentation.viewmodel.NoteTabsViewModel
@@ -54,6 +56,7 @@ fun ExpandedMainRoot(
     val eraseEpoch = LocalEraseEpoch.current
     val opener = remember(tabs, scope, eraseEpoch) { PaneNoteOpener(tabs, scope) { eraseEpoch?.invoke() } }
     RememberOpenNoteForRelock(tabs)
+    TabCommands(tabs)
 
     Row(modifier = modifier.fillMaxSize()) {
         MainPermanentDrawer(
@@ -76,6 +79,14 @@ private class PaneNoteOpener(
 ) : NoteOpener {
     override fun editNote(noteId: Long, params: String) {
         scope.launch { tabs.open(noteId, params, eraseEpoch()) }
+    }
+
+    override val supportsTabs: Boolean get() = true
+
+    override val activeNoteId: Long? get() = tabs.active?.noteId?.takeIf { it > 0L }
+
+    override fun openInNewTab(note: Note) {
+        scope.launch { tabs.openInBackground(note.id, note.title, eraseEpoch()) }
     }
 }
 

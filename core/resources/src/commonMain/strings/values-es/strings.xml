@@ -662,4 +662,10 @@
     <string name="note_open">Abrir</string>
     <string name="note_open_in_new_tab">Abrir en una pestaña nueva</string>
     <string name="pane_select_note">Elige una nota o empieza una nueva</string>
+    <string name="menu_file">Archivo</string>
+    <string name="menu_view">Ver</string>
+    <string name="menu_window">Ventana</string>
+    <string name="menu_help">Ayuda</string>
+    <string name="menu_exit">Salir</string>
+    <string name="menu_minimize">Minimizar</string>
 </resources>

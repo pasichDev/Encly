@@ -44,6 +44,7 @@ import com.pasich.encly.core.resources.open_menu
 import com.pasich.encly.core.resources.search_clear
 import com.pasich.encly.core.resources.search_placeholder
 import com.pasich.encly.core.resources.view_options
+import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.presentation.components.HomeTaskWidget
 import com.pasich.encly.presentation.designsystem.EnclyFab
@@ -55,6 +56,7 @@ import com.pasich.encly.presentation.dialogs.NotesSortBottomSheet
 import com.pasich.encly.presentation.dialogs.rememberSheetDismisser
 import com.pasich.encly.presentation.drawer.MainDrawer
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.NewNoteCommand
 import com.pasich.encly.presentation.navigation.TASKS_ADD_ARG
 import com.pasich.encly.presentation.pane.ExpandedMainRoot
 import com.pasich.encly.presentation.pane.MediumMainRoot
@@ -152,6 +154,8 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val navigation = remember(navController) { MainNavigation(navController) }
     val notes = noteOpener ?: navigation
+    // The keyboard and the menu bar start a note the way the button below does.
+    NewNoteCommand { notes.newNote(noteListViewModel.state.value.selectedTag) }
 
     if (viewOptionsVisible) {
         ViewOptionsSheet(isGrid, mainListStateViewModel::updateGridNoteList) { viewOptionsVisible = false }
@@ -180,6 +184,7 @@ fun MainScreen(
                 swipe = settingsViewModel.swipeSettings.collectAsState().value ?: SwipeSettings.Off,
                 onItemClick = { note -> notes.editNote(note.id) },
                 onSecondActionClick = { note -> notes.editNote(-1, "?copySource=${note.id}") },
+                tabs = notes.tabs(),
                 header = {
                     NotesHeader(
                         query = query,
@@ -260,6 +265,20 @@ interface NoteOpener {
 
     /** A new note, tagged with the chip selected in the list (0: none). */
     fun newNote(selectedTag: Long) = editNote(-1, if (selectedTag != 0L) "?addTag=$selectedTag" else "")
+
+    /** Whether notes open as tabs beside the list: the list then marks the shown one and can open another. */
+    val supportsTabs: Boolean get() = false
+
+    /** The stored note shown beside the list, or null. */
+    val activeNoteId: Long? get() = null
+
+    /** Opens [note] as a tab of its own without leaving the one shown; only where [supportsTabs]. */
+    fun openInNewTab(note: Note) = editNote(note.id)
+}
+
+/** What the notes list shows of the tabs beside it, or null where the opener has none. */
+private fun NoteOpener.tabs(): NotesTabs? = takeIf { it.supportsTabs }?.let { opener ->
+    NotesTabs(activeNoteId = { opener.activeNoteId }, onOpenInNewTab = opener::openInNewTab)
 }
 
 /** Where the notes screen goes: a note (new, existing or a copy) or another screen. */

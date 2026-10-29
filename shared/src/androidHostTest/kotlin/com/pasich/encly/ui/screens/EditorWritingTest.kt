@@ -17,11 +17,14 @@ import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.text.TextRange
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.block_heading_level
+import com.pasich.encly.core.resources.dialog_confirm
+import com.pasich.encly.core.resources.dialog_dismiss
 import com.pasich.encly.core.resources.find_close
 import com.pasich.encly.core.resources.find_count
 import com.pasich.encly.core.resources.find_next
 import com.pasich.encly.core.resources.keyboard_show
 import com.pasich.encly.core.resources.search_notes
+import com.pasich.encly.core.resources.swipe_delete_title
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
@@ -48,12 +51,16 @@ class EditorWritingTest : ComposeScreenTest() {
             viewModels(editor, app.tagList(), app.markdownExport()),
             route = TestRoutes.EDIT_NOTE,
             start = NavRoutes.HomeRoute.name,
-        ) { nav -> EditNoteScreen(nav) }
+        ) { nav -> WithShortcuts { EditNoteScreen(nav) } }
         navigateTo("${NavRoutes.EditNoteRoute.name}/$NOTE_ID?isReadTrashOnly=false")
         waitFor { editor.status.value != SaveStatusNote.LOADING }
     }
 
     private fun text(value: String) = Block.TextBlock(MutableStateFlow(value))
+
+    private fun deleteChord(node: androidx.compose.ui.test.SemanticsNodeInteraction) = node.performKeyInput {
+        withKeyDown(Key.CtrlLeft) { withKeyDown(Key.ShiftLeft) { pressKey(Key.Backspace) } }
+    }
 
     private fun paragraph(value: String) = rule.onNode(hasSetTextAction() and hasText(value))
 
@@ -170,6 +177,48 @@ class EditorWritingTest : ComposeScreenTest() {
         rule.onNode(hasSetTextAction() and hasContentDescription(str(Res.string.search_notes)))
             .performKeyInput { pressKey(Key.Escape) }
         waitFor { !editor.find.value.isOpen }
+    }
+
+    @Test
+    fun theDeleteShortcutAsksBeforeMovingTheNoteToTheTrash() {
+        open(text("body"))
+        paragraph("body").performClick()
+
+        deleteChord(paragraph("body"))
+
+        waitForText(str(Res.string.swipe_delete_title))
+        rule.onNodeWithText(str(Res.string.dialog_dismiss)).performClick()
+        waitFor { countText(str(Res.string.swipe_delete_title)) == 0 }
+        assertEquals(NavRoutes.EditNoteRoute.name, currentRouteName())
+    }
+
+    @Test
+    fun confirmingTheDeleteShortcutLeavesTheNote() {
+        open(text("body"))
+        paragraph("body").performClick()
+        deleteChord(paragraph("body"))
+        waitForText(str(Res.string.swipe_delete_title))
+
+        rule.onNodeWithText(str(Res.string.dialog_confirm)).performClick()
+
+        waitFor { currentRouteName() == NavRoutes.HomeRoute.name }
+    }
+
+    @Test
+    fun theDeleteShortcutIsLeftAloneOnABlankNewNote() {
+        editor = app.editor(noteId = -1L)
+        setNavScreen(
+            viewModels(editor, app.tagList(), app.markdownExport()),
+            route = TestRoutes.EDIT_NOTE,
+            start = NavRoutes.HomeRoute.name,
+        ) { nav -> WithShortcuts { EditNoteScreen(nav) } }
+        navigateTo("${NavRoutes.EditNoteRoute.name}/-1?isReadTrashOnly=false")
+        waitFor { editor.status.value != SaveStatusNote.LOADING }
+
+        deleteChord(rule.onAllNodes(hasSetTextAction())[0])
+        rule.waitForIdle()
+
+        assertEquals(0, countText(str(Res.string.swipe_delete_title)))
     }
 
     @Test

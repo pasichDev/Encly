@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.screen
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import com.pasich.encly.presentation.components.tiles.TaskItemActions
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyInlineLink
+import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.RowSkeleton
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.InlineSubtaskEdit
@@ -90,22 +92,25 @@ internal fun TasksList(
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
-    LazyColumn(
-        state = state,
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .pointerInput(focusManager) { detectTapGestures { focusManager.clearFocus() } },
-        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
-        contentPadding = tasksListPadding(),
-    ) {
-        tasksContent(
-            state = list,
-            actions = actions,
-            onFilter = callbacks.onFilter,
-            onNewTask = callbacks.onNewTask,
-            onClearCompleted = callbacks.onClearCompleted,
-        )
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            state = state,
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .pointerInput(focusManager) { detectTapGestures { focusManager.clearFocus() } },
+            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+            contentPadding = tasksListPadding(),
+        ) {
+            tasksContent(
+                state = list,
+                actions = actions,
+                onFilter = callbacks.onFilter,
+                onNewTask = callbacks.onNewTask,
+                onClearCompleted = callbacks.onClearCompleted,
+            )
+        }
+        EnclyScrollbar(state)
     }
 }
 

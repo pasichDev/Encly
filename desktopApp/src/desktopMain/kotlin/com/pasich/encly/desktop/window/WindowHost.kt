@@ -35,6 +35,12 @@ import com.pasich.encly.core.resources.licenses_title
 import com.pasich.encly.core.resources.lock_now
 import com.pasich.encly.core.resources.main_drawer_faq
 import com.pasich.encly.core.resources.main_drawer_settings
+import com.pasich.encly.core.resources.menu_exit
+import com.pasich.encly.core.resources.menu_file
+import com.pasich.encly.core.resources.menu_help
+import com.pasich.encly.core.resources.menu_minimize
+import com.pasich.encly.core.resources.menu_view
+import com.pasich.encly.core.resources.menu_window
 import com.pasich.encly.core.resources.note_add
 import com.pasich.encly.core.resources.settings_language
 import com.pasich.encly.core.resources.theme
@@ -47,6 +53,8 @@ import com.pasich.encly.desktop.platform.DesktopAppWindow
 import com.pasich.encly.desktop.security.IdleLock
 import com.pasich.encly.desktop.storage.DesktopOs
 import com.pasich.encly.domain.model.ThemeType
+import com.pasich.encly.presentation.designsystem.AppCommand
+import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
@@ -104,6 +112,8 @@ fun ApplicationScope.EnclyWindow(graph: DesktopAppGraph, launchFiles: List<Path>
         )
     }
     val icon = remember { loadWindowIcon() }
+    // The one key map of the window: the menu's accelerators and the keyboard host read the same.
+    val shortcuts = remember(os) { DesktopShortcuts.map(os) }
 
     Window(
         onCloseRequest = onExit,
@@ -170,13 +180,13 @@ fun ApplicationScope.EnclyWindow(graph: DesktopAppGraph, launchFiles: List<Path>
             }
         }
 
-        EnclyMenuBar(os, commands)
+        EnclyMenuBar(os, shortcuts, commands)
 
         val appWindow = remember(composeWindow) {
             DesktopAppWindow(environment.captureExclusion, windowProvider = { composeWindow })
         }
         Box(Modifier.fillMaxSize().dropFiles(graph.dropRouter::drop)) {
-            DesktopApp(graph, appWindow)
+            DesktopApp(graph, appWindow, shortcuts = shortcuts)
         }
     }
 }
@@ -234,14 +244,18 @@ private fun screenBounds(): List<WindowBounds> = runCatching {
  * key from them on macOS.
  */
 @Composable
-private fun FrameWindowScope.EnclyMenuBar(os: DesktopOs, commands: DesktopCommands) {
+private fun FrameWindowScope.EnclyMenuBar(os: DesktopOs, shortcuts: EnclyShortcuts, commands: DesktopCommands) {
     MenuBar {
-        FileMenu(os, commands)
+        FileMenu(os, shortcuts, commands)
         ViewMenu(commands)
-        Menu("Window") {
-            Item("Minimize", shortcut = DesktopShortcuts.minimise(os), onClick = commands::minimise)
+        Menu(stringResource(Res.string.menu_window)) {
+            Item(
+                stringResource(Res.string.menu_minimize),
+                shortcut = DesktopShortcuts.minimise(os).toKeyShortcut(),
+                onClick = commands::minimise,
+            )
         }
-        Menu("Help") {
+        Menu(stringResource(Res.string.menu_help)) {
             Item(stringResource(Res.string.about), onClick = commands::about)
             Item(stringResource(Res.string.licenses_title), onClick = commands::licences)
             Item(stringResource(Res.string.main_drawer_faq), onClick = commands::faq)
@@ -250,41 +264,49 @@ private fun FrameWindowScope.EnclyMenuBar(os: DesktopOs, commands: DesktopComman
 }
 
 @Composable
-private fun MenuBarScope.FileMenu(os: DesktopOs, commands: DesktopCommands) {
-    Menu("File") {
+private fun MenuBarScope.FileMenu(os: DesktopOs, shortcuts: EnclyShortcuts, commands: DesktopCommands) {
+    Menu(stringResource(Res.string.menu_file)) {
         Item(
             stringResource(Res.string.note_add),
-            shortcut = DesktopShortcuts.newNote(os),
+            shortcut = DesktopShortcuts.of(shortcuts, AppCommand.NewNote).toKeyShortcut(),
             onClick = commands::newNote,
         )
         Item(
             stringResource(Res.string.import_title),
-            shortcut = DesktopShortcuts.importNotes(os),
+            shortcut = DesktopShortcuts.importNotes(os).toKeyShortcut(),
             onClick = commands::importNotes,
         )
         Item(
             stringResource(Res.string.backup_title),
-            shortcut = DesktopShortcuts.backup(os),
+            shortcut = DesktopShortcuts.backup(os).toKeyShortcut(),
             onClick = commands::backup,
         )
         Separator()
-        Item(stringResource(Res.string.lock_now), shortcut = DesktopShortcuts.lock(os), onClick = commands::lockNow)
+        Item(
+            stringResource(Res.string.lock_now),
+            shortcut = DesktopShortcuts.of(shortcuts, AppCommand.LockApp).toKeyShortcut(),
+            onClick = commands::lockNow,
+        )
         Item(
             stringResource(Res.string.main_drawer_settings),
-            shortcut = DesktopShortcuts.settings(os),
+            shortcut = DesktopShortcuts.settings(os).toKeyShortcut(),
             onClick = commands::settings,
         )
         // macOS has Quit in the application menu (Cmd+Q); the other systems have it here.
         if (os != DesktopOs.MACOS) {
             Separator()
-            Item("Exit", shortcut = DesktopShortcuts.quit(os), onClick = commands::quit)
+            Item(
+                stringResource(Res.string.menu_exit),
+                shortcut = DesktopShortcuts.quit(os).toKeyShortcut(),
+                onClick = commands::quit,
+            )
         }
     }
 }
 
 @Composable
 private fun MenuBarScope.ViewMenu(commands: DesktopCommands) {
-    Menu("View") {
+    Menu(stringResource(Res.string.menu_view)) {
         Menu(stringResource(Res.string.theme)) {
             Item(stringResource(Res.string.theme_type_system)) { commands.setTheme(ThemeType.SYSTEM) }
             Item(stringResource(Res.string.theme_type_light)) { commands.setTheme(ThemeType.LIGHT) }

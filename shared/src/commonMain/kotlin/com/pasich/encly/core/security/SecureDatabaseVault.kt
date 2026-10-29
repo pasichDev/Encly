@@ -2,13 +2,17 @@ package com.pasich.encly.core.security
 
 import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.data.database.VaultFile
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 
 /**
  * [VaultDatabase] on the app's [SecureDatabaseManager]: the security core opens, closes and deletes the
- * encrypted database through this port and never sees Room or the cipher.
+ * encrypted database through this port and never sees Room or the cipher. Shared by the Android and desktop
+ * apps, which both get the [VaultDatabase] binding from it.
  */
 @Inject
+@ContributesBinding(AppScope::class)
 class SecureDatabaseVault(private val manager: SecureDatabaseManager) : VaultDatabase {
     override fun isDatabaseUnlocked(): Boolean = manager.isDatabaseUnlocked()
 

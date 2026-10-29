@@ -656,4 +656,10 @@
     <string name="note_open">Openen</string>
     <string name="note_open_in_new_tab">Openen in nieuw tabblad</string>
     <string name="pane_select_note">Kies een notitie of begin een nieuwe</string>
+    <string name="menu_file">Bestand</string>
+    <string name="menu_view">Weergave</string>
+    <string name="menu_window">Venster</string>
+    <string name="menu_help">Help</string>
+    <string name="menu_exit">Afsluiten</string>
+    <string name="menu_minimize">Minimaliseren</string>
 </resources>

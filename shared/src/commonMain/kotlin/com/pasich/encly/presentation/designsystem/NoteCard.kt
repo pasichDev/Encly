@@ -53,7 +53,10 @@ data class NoteCardMeta(val tag: String? = null, val date: String? = null, val p
  * Title in titleMedium, excerpt in bodyMedium `onSurfaceVariant` cut at [excerptLines], then the
  * meta line. [highlight] marks search matches. A [noteColor] tints the card and adds an accent edge.
  * [selected] draws a 2 dp `primary` ring and a check; [dimmed] fades the title (trash), keeping every
- * text at 4.5:1 or more. A [pinned] note shows a small pin after its title.
+ * text at 4.5:1 or more. A [pinned] note shows a small pin after its title. [current] marks the note that is
+ * open beside the list (the shown tab of the desktop layout): a raised container and an `outline` edge, so it
+ * reads apart from a [selected] (checked) card, which it can also be. With [onCommandClick] a click with the
+ * command key held calls it instead of [onClick] (see [enclyCommandClick]).
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -70,19 +73,22 @@ fun EnclyNoteCard(
     dimmed: Boolean = false,
     pinned: Boolean = false,
     noteColor: NoteColor = NoteColor.NONE,
+    current: Boolean = false,
+    onCommandClick: (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val tint = remember(noteColor, colors) { noteColorStyle(noteColor, colors) }
     val muted = tint?.onCardVariant ?: colors.onSurfaceVariant
     Surface(
         shape = MaterialTheme.shapes.medium,
-        color = tint?.card ?: colors.surfaceContainer,
+        color = tint?.card ?: untintedCardColor(current),
         contentColor = colors.onSurface,
-        border = if (selected) BorderStroke(EnclyTheme.spacing.stroke, colors.primary) else null,
+        border = cardBorder(selected, current),
         modifier = modifier
             .fillMaxWidth()
-            .semantics { this.selected = selected }
+            .semantics { this.selected = selected || current }
             .enclyInteractive(MaterialTheme.shapes.medium)
+            .then(if (onCommandClick != null) Modifier.enclyCommandClick(onCommandClick) else Modifier)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Column(
@@ -109,6 +115,22 @@ fun EnclyNoteCard(
             }
             if (meta != NoteCardMeta()) NoteMetaLine(meta, muted)
         }
+    }
+}
+
+/** The container of a card without a note colour: raised when it is the note open beside the list. */
+@Composable
+private fun untintedCardColor(current: Boolean): Color =
+    if (current) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainer
+
+/** The edge of a card: the `primary` ring of a checked one, else the `outline` edge of the open one. */
+@Composable
+private fun cardBorder(selected: Boolean, current: Boolean): BorderStroke? {
+    val colors = MaterialTheme.colorScheme
+    return when {
+        selected -> BorderStroke(EnclyTheme.spacing.stroke, colors.primary)
+        current -> BorderStroke(EnclyTheme.spacing.stroke, colors.outline)
+        else -> null
     }
 }
 

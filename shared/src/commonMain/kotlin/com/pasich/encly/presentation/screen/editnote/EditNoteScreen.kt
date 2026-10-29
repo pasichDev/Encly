@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.screen.editnote
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -49,6 +50,8 @@ import com.pasich.encly.core.resources.markdown_copy
 import com.pasich.encly.core.resources.note_discard_confirm_message
 import com.pasich.encly.core.resources.note_discard_confirm_title
 import com.pasich.encly.core.resources.note_load_failed
+import com.pasich.encly.core.resources.swipe_delete_message
+import com.pasich.encly.core.resources.swipe_delete_title
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.theme.blockGap
@@ -65,6 +68,7 @@ import com.pasich.encly.presentation.components.editNote.NoteOverline
 import com.pasich.encly.presentation.components.editNote.TitleField
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
+import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
@@ -147,6 +151,7 @@ fun EditNoteScreen(
 
     SaveWhenPaused()
     if (pane != null) PaneTabBinding(pane, exits)
+    EditorShortcutCommands(overlays)
     val blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0
     CarryOutFocusRequests(focusRegistry, listState, blocksStart = blocksStart)
     ScrollToFindMatch(listState, blocksStart)
@@ -209,7 +214,7 @@ private fun EditorScaffold(
     val pageColor = rememberPageColor()
     Scaffold(
         modifier = modifier.onPreviewKeyEvent { event ->
-            viewModel.handleHistoryKey(event) || viewModel.handleFindKey(event)
+            viewModel.handleHistoryKey(event)
         },
         containerColor = pageColor,
         // Status and navigation bars, a display cutout and the keyboard all stay clear of text.
@@ -262,6 +267,7 @@ internal class EditorOverlaysState(
     var isTagSheetVisible by tagSheet
     var isDeleteDialogVisible by mutableStateOf(false)
     var isDiscardDialogVisible by mutableStateOf(false)
+    var isTrashDialogVisible by mutableStateOf(false)
 }
 
 @Composable
@@ -287,13 +293,18 @@ private fun EditorOverlays(
     val copyConfirmation = stringResource(Res.string.markdown_copied)
     val lockEditor by viewModel.lockEditor.collectAsState()
     EditorConfirmDialogs(
-        isDeleteVisible = overlays.isDeleteDialogVisible,
-        isDiscardVisible = overlays.isDiscardDialogVisible,
+        visible = ConfirmationsVisible(
+            delete = overlays.isDeleteDialogVisible,
+            discard = overlays.isDiscardDialogVisible,
+            trash = overlays.isTrashDialogVisible,
+        ),
         onDelete = exits::delete,
         onDiscard = exits::discard,
+        onTrash = exits::trash,
         onDismiss = {
             overlays.isDeleteDialogVisible = false
             overlays.isDiscardDialogVisible = false
+            overlays.isTrashDialogVisible = false
         },
     )
     EditorBlockSheets(overlays.blockSheet, canEdit = !lockEditor && !viewModel.isReadTrashOnly)
@@ -342,9 +353,23 @@ private fun EditorOverlays(
     )
 }
 
-/** The editor's list: overline, title, a notice when the content is unreadable, then the blocks. */
+/** The editor's list and, on a desktop, its scrollbar. */
 @Composable
 private fun EditorContent(
+    host: EditorBlocksHost,
+    listState: LazyListState,
+    titleFocus: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier) {
+        EditorBlocks(host, listState, titleFocus)
+        EnclyScrollbar(listState)
+    }
+}
+
+/** The editor's list: overline, title, a notice when the content is unreadable, then the blocks. */
+@Composable
+private fun EditorBlocks(
     host: EditorBlocksHost,
     listState: LazyListState,
     titleFocus: FocusRequester,
@@ -456,17 +481,20 @@ private fun EditorOverline(
     )
 }
 
-/** Delete (from the trash) and discard both ask first. */
+/** Which of the editor's confirmations are open. */
+private class ConfirmationsVisible(val delete: Boolean, val discard: Boolean, val trash: Boolean)
+
+/** Delete (from the trash), discard, and moving to the trash from the keyboard all ask first. */
 @Composable
 private fun EditorConfirmDialogs(
-    isDeleteVisible: Boolean,
-    isDiscardVisible: Boolean,
+    visible: ConfirmationsVisible,
     onDelete: () -> Unit,
     onDiscard: () -> Unit,
+    onTrash: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     ConfirmDialog(
-        isVisible = isDeleteVisible,
+        isVisible = visible.delete,
         titleText = stringResource(Res.string.dialog_title),
         messageText = stringResource(Res.string.dialog_message),
         onConfirm = {
@@ -477,12 +505,23 @@ private fun EditorConfirmDialogs(
         destructive = true,
     )
     ConfirmDialog(
-        isVisible = isDiscardVisible,
+        isVisible = visible.discard,
         titleText = stringResource(Res.string.note_discard_confirm_title),
         messageText = stringResource(Res.string.note_discard_confirm_message),
         onConfirm = {
             onDismiss()
             onDiscard()
+        },
+        onDismiss = onDismiss,
+        destructive = true,
+    )
+    ConfirmDialog(
+        isVisible = visible.trash,
+        titleText = stringResource(Res.string.swipe_delete_title),
+        messageText = stringResource(Res.string.swipe_delete_message),
+        onConfirm = {
+            onDismiss()
+            onTrash()
         },
         onDismiss = onDismiss,
         destructive = true,

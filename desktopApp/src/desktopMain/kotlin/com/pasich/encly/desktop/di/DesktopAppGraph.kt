@@ -1,6 +1,5 @@
 package com.pasich.encly.desktop.di
 
-import androidx.lifecycle.ViewModel
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.AutoLockPolicy
@@ -21,17 +20,10 @@ import com.pasich.encly.platform.ExternalLinks
 import com.pasich.encly.platform.NavigationRequests
 import com.pasich.encly.platform.SensitiveClipboard
 import dev.zacsweers.metro.AppScope
-import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Provides
-import dev.zacsweers.metro.SingleIn
-import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
-import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
-import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import kotlinx.coroutines.CoroutineScope
-import kotlin.reflect.KClass
 
 /**
  * The one dependency graph of the desktop process: the counterpart of the Android `AppGraph`. The bindings of
@@ -71,14 +63,3 @@ interface DesktopAppGraph : ViewModelGraph {
         fun create(@Provides environment: DesktopEnvironment): DesktopAppGraph
     }
 }
-
-/** Creates the app's ViewModels from the graph's multibindings (see `MetroViewModelFactory`). */
-@Inject
-@SingleIn(AppScope::class)
-@ContributesBinding(AppScope::class)
-class DesktopViewModelFactory(
-    override val viewModelProviders: Map<KClass<out ViewModel>, () -> ViewModel>,
-    override val assistedFactoryProviders: Map<KClass<out ViewModel>, () -> ViewModelAssistedFactory>,
-    override val manualAssistedFactoryProviders:
-    Map<KClass<out ManualViewModelAssistedFactory>, () -> ManualViewModelAssistedFactory>,
-) : MetroViewModelFactory()

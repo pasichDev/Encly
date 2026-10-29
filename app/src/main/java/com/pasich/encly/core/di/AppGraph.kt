@@ -2,22 +2,14 @@ package com.pasich.encly.core.di
 
 import android.app.Activity
 import android.content.Context
-import androidx.lifecycle.ViewModel
 import com.pasich.encly.ImportFromMyNotesActivity
 import com.pasich.encly.MainActivity
 import com.pasich.encly.MyApplication
 import dev.zacsweers.metro.AppScope
-import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.Qualifier
-import dev.zacsweers.metro.SingleIn
-import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
-import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
-import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
-import kotlin.reflect.KClass
 
 /** Qualifier for the application [Context]: the only Context the graph provides. */
 @Qualifier
@@ -47,17 +39,6 @@ interface AppGraph : ViewModelGraph {
         fun create(@Provides @ApplicationContext context: Context): AppGraph
     }
 }
-
-/** Creates the app's ViewModels from the graph's multibindings (see `MetroViewModelFactory`). */
-@Inject
-@SingleIn(AppScope::class)
-@ContributesBinding(AppScope::class)
-class AppViewModelFactory(
-    override val viewModelProviders: Map<KClass<out ViewModel>, () -> ViewModel>,
-    override val assistedFactoryProviders: Map<KClass<out ViewModel>, () -> ViewModelAssistedFactory>,
-    override val manualAssistedFactoryProviders:
-    Map<KClass<out ManualViewModelAssistedFactory>, () -> ManualViewModelAssistedFactory>,
-) : MetroViewModelFactory()
 
 /** Implemented by the Application: the only way to reach the graph from the UI layer. */
 interface AppGraphOwner {

@@ -668,4 +668,10 @@
     <string name="note_open">Otwórz</string>
     <string name="note_open_in_new_tab">Otwórz w nowej karcie</string>
     <string name="pane_select_note">Wybierz notatkę lub zacznij nową</string>
+    <string name="menu_file">Plik</string>
+    <string name="menu_view">Widok</string>
+    <string name="menu_window">Okno</string>
+    <string name="menu_help">Pomoc</string>
+    <string name="menu_exit">Zakończ</string>
+    <string name="menu_minimize">Minimalizuj</string>
 </resources>

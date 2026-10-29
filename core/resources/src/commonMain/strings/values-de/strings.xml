@@ -656,4 +656,10 @@
     <string name="note_open">Öffnen</string>
     <string name="note_open_in_new_tab">In neuem Tab öffnen</string>
     <string name="pane_select_note">Wähle eine Notiz oder beginne eine neue</string>
+    <string name="menu_file">Datei</string>
+    <string name="menu_view">Ansicht</string>
+    <string name="menu_window">Fenster</string>
+    <string name="menu_help">Hilfe</string>
+    <string name="menu_exit">Beenden</string>
+    <string name="menu_minimize">Minimieren</string>
 </resources>

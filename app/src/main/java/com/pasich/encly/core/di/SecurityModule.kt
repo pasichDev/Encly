@@ -14,11 +14,9 @@ import com.pasich.encly.core.security.KeystoreBiometricManager
 import com.pasich.encly.core.security.KeystorePinFactor
 import com.pasich.encly.core.security.LockoutClock
 import com.pasich.encly.core.security.PinHardwareFactor
-import com.pasich.encly.core.security.SecureDatabaseVault
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.core.security.SystemDeviceLockWatcher
 import com.pasich.encly.core.security.SystemLockoutClock
-import com.pasich.encly.core.security.VaultDatabase
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.security.VaultStore
 import com.pasich.encly.data.handoff.CacheHandoffStagingSweeper
@@ -61,9 +59,6 @@ object SecurityModule {
 @ContributesTo(AppScope::class)
 @BindingContainer
 interface SecurityBindingsModule {
-    @Binds
-    fun bindVaultDatabase(database: SecureDatabaseVault): VaultDatabase
-
     @Binds
     fun bindPinHardwareFactor(factor: KeystorePinFactor): PinHardwareFactor
 

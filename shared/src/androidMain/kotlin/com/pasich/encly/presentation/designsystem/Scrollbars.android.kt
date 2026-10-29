@@ -17,3 +17,6 @@ actual fun BoxScope.EnclyScrollbar(state: ScrollState, modifier: Modifier) = Uni
 
 @Composable
 actual fun BoxScope.EnclyScrollbar(state: LazyStaggeredGridState, modifier: Modifier) = Unit
+
+@Composable
+actual fun BoxScope.EnclyHorizontalScrollbar(state: ScrollState, modifier: Modifier) = Unit

@@ -1,10 +1,12 @@
 package com.pasich.encly.presentation.designsystem
 
+import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollbarAdapter
@@ -59,6 +61,18 @@ private fun BoxScope.Scrollbar(adapter: ScrollbarAdapter, visible: Boolean, modi
         modifier = modifier
             .align(Alignment.CenterEnd)
             .fillMaxHeight(),
+        style = enclyScrollbarStyle(),
+    )
+}
+
+@Composable
+actual fun BoxScope.EnclyHorizontalScrollbar(state: ScrollState, modifier: Modifier) {
+    if (state.maxValue <= 0) return
+    HorizontalScrollbar(
+        adapter = rememberScrollbarAdapter(state),
+        modifier = modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth(),
         style = enclyScrollbarStyle(),
     )
 }
