@@ -4,7 +4,7 @@ import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.testutil.FakeLockoutClock
 import com.pasich.encly.testutil.FakePinFactor
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.anyByteArray
 import com.pasich.encly.testutil.tempVaultFile
 import com.pasich.encly.testutil.tempVaultStore
@@ -672,7 +672,7 @@ class WipePinTest {
         val store = this@WipePinTest.store
         val factor = this@WipePinTest.factor
         val auth = this@WipePinTest.auth
-        val prefs = InMemorySharedPreferences()
+        val prefs = InMemoryKeyValueStore()
         val seed = SeedPhraseManager(store)
         val database: SecureDatabaseManager = mock(SecureDatabaseManager::class.java)
         val biometric: BiometricManager = mock(BiometricManager::class.java)
@@ -686,10 +686,10 @@ class WipePinTest {
             val bootstrap = seed.copyBootstrapKey()!!
             assertTrue(auth.configurePin(pin(PIN), bootstrap))
             if (withWipePin) assertEquals(WipePinChange.SET, auth.configureWipePin(pin(WIPE_PIN)))
-            prefs.edit()
-                .putBoolean("onboarding_shown_v3", true)
-                .putLong(BackupManager.LAST_EXPORT_KEY, 1L)
-                .commit()
+            prefs.commit {
+                putBoolean("onboarding_shown_v3", true)
+                putLong(BackupManager.LAST_EXPORT_KEY, 1L)
+            }
         }
 
         /** The same files read by a new process. */

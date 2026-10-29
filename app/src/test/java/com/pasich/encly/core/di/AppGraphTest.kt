@@ -1,7 +1,6 @@
 package com.pasich.encly.core.di
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.DEFAULT_ARGS_KEY
@@ -13,6 +12,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.ImportFromMyNotesActivity
 import com.pasich.encly.MainActivity
 import com.pasich.encly.MyApplication
+import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.AuthenticationManager
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricManager
@@ -90,7 +90,7 @@ interface ContributionsGraph : ViewModelGraph {
     val backupManager: BackupManager
     val notesRepository: NotesRepository
     val settingsRepository: SettingsRepository
-    val appFlags: SharedPreferences
+    val appFlags: KeyValueStore
 
     @ApplicationScope
     val applicationScope: CoroutineScope

@@ -3,7 +3,7 @@ package com.pasich.encly.core.security
 import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.testutil.FakeLockoutClock
 import com.pasich.encly.testutil.FakePinFactor
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.MockActivity
 import com.pasich.encly.testutil.anyByteArray
 import com.pasich.encly.testutil.tempVaultFile
@@ -30,7 +30,7 @@ import java.io.File
 class SecurityManagerLifecycleTest {
     private lateinit var file: File
     private lateinit var store: VaultStore
-    private lateinit var prefs: InMemorySharedPreferences
+    private lateinit var prefs: InMemoryKeyValueStore
     private lateinit var seed: SeedPhraseManager
     private lateinit var auth: AuthenticationManager
     private lateinit var database: SecureDatabaseManager
@@ -46,7 +46,7 @@ class SecurityManagerLifecycleTest {
     fun setUp() {
         file = tempVaultFile()
         store = VaultStore(file)
-        prefs = InMemorySharedPreferences()
+        prefs = InMemoryKeyValueStore()
         seed = SeedPhraseManager(store)
         auth = AuthenticationManager(store, FakePinFactor(), FakeLockoutClock())
         database = mock(SecureDatabaseManager::class.java)
@@ -194,7 +194,7 @@ class SecurityManagerLifecycleTest {
         committedVault()
         var enrolled: Boolean? = null
 
-        manager.enrollBiometric(MockActivity().activity) { enrolled = it }
+        manager.enrollBiometric(ActivityBiometricHost(MockActivity().activity)) { enrolled = it }
 
         assertEquals(false, enrolled)
         assertEquals(0, enrollCalls)
@@ -304,7 +304,7 @@ class SecurityManagerLifecycleTest {
         slotPresent = true
         var result: Boolean? = null
 
-        manager.enrollBiometric(MockActivity().activity) { result = it }
+        manager.enrollBiometric(ActivityBiometricHost(MockActivity().activity)) { result = it }
 
         assertEquals(true, result)
         assertTrue(manager.isBiometricEnabled())
@@ -319,7 +319,7 @@ class SecurityManagerLifecycleTest {
         enrollResult = false
         var result: Boolean? = null
 
-        manager.enrollBiometric(MockActivity().activity) { result = it }
+        manager.enrollBiometric(ActivityBiometricHost(MockActivity().activity)) { result = it }
 
         assertEquals(false, result)
         assertFalse(manager.isBiometricEnabled())
@@ -355,7 +355,7 @@ class SecurityManagerLifecycleTest {
         manager.unlockWithPin(PIN.toCharArray())
         val results = mutableListOf<Boolean>()
 
-        manager.confirmBiometric(MockActivity().activity) { results += it }
+        manager.confirmBiometric(ActivityBiometricHost(MockActivity().activity)) { results += it }
         val callback = checkNotNull(prompt)
         callback.onFailed()
         assertEquals("a single bad scan is not an answer", emptyList<Boolean>(), results)

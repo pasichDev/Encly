@@ -8,6 +8,7 @@ import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupPayload
+import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupDocuments
@@ -203,7 +204,7 @@ class ReauthFlow(
 
     fun withBiometric(activity: FragmentActivity) {
         val step = state.step as? BackupStep.Reauth ?: return
-        securityManager.confirmBiometric(activity) { ok ->
+        securityManager.confirmBiometric(ActivityBiometricHost(activity)) { ok ->
             if (ok) {
                 state.launch { onAuthenticated(step.action) }
             } else {

@@ -1,7 +1,5 @@
 package com.pasich.encly.data.backup
 
-import android.content.SharedPreferences
-import androidx.core.content.edit
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
@@ -12,6 +10,8 @@ import com.pasich.encly.core.backup.BackupKeys
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
+import com.pasich.encly.core.common.currentTimeMillis
+import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import dev.zacsweers.metro.AppScope
@@ -29,9 +29,9 @@ import kotlinx.coroutines.CancellationException
 class BackupManager(
     private val securityManager: SecurityManager,
     private val store: VaultDataStore,
-    private val secureStoragePrefs: SharedPreferences,
+    private val secureStoragePrefs: KeyValueStore,
 ) {
-    internal var clock: () -> Long = System::currentTimeMillis
+    internal var clock: () -> Long = ::currentTimeMillis
 
     /** The import limit, which export enforces too; replaceable in tests. */
     internal var maxFileBytes: Int = BackupFormat.MAX_FILE_BYTES

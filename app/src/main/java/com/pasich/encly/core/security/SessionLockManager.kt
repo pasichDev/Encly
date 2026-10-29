@@ -1,10 +1,9 @@
 package com.pasich.encly.core.security
 
-import android.os.Handler
-import android.os.Looper
 import androidx.annotation.MainThread
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.pasich.encly.core.platform.MainThreadTimer
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -52,6 +51,7 @@ class SessionLockManager(
     private val deviceLock: DeviceLockWatcher = DeviceLockWatcher.None,
     systemClock: LockoutClock = JvmMonotonicClock,
     private val autoLock: AutoLockPolicy = AutoLockPolicy.Immediately,
+    private val mainThread: MainThreadTimer = MainThreadTimer.None,
 ) : DefaultLifecycleObserver,
     VaultLockEvents {
 
@@ -94,13 +94,7 @@ class SessionLockManager(
     private var lockedWhileAway = false
 
     /** Schedules [action] on the main thread after a delay; returns a cancel function. */
-    internal var timer: (delayMs: Long, action: () -> Unit) -> () -> Unit = { delayMs, action ->
-        val handler = Handler(Looper.getMainLooper())
-        val runnable = Runnable(action)
-        handler.postDelayed(runnable, delayMs)
-        val cancel: () -> Unit = { handler.removeCallbacks(runnable) }
-        cancel
-    }
+    internal var timer: (delayMs: Long, action: () -> Unit) -> () -> Unit = mainThread::schedule
 
     private var cancelPickerTimeout: (() -> Unit)? = null
     private var stopScreenOffWatch: (() -> Unit)? = null

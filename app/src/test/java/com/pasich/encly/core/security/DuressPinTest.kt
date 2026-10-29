@@ -5,7 +5,7 @@ import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.data.database.VaultFile
 import com.pasich.encly.testutil.FakeLockoutClock
 import com.pasich.encly.testutil.FakePinFactor
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.anyByteArray
 import com.pasich.encly.testutil.eqValue
 import com.pasich.encly.testutil.tempVaultStore
@@ -563,7 +563,7 @@ class DuressPinTest {
     private inner class Vault(withDuressPin: Boolean = true) {
         val store = this@DuressPinTest.store
         val auth = this@DuressPinTest.auth
-        val prefs = InMemorySharedPreferences()
+        val prefs = InMemoryKeyValueStore()
         val seed = SeedPhraseManager(store)
         val database: SecureDatabaseManager = mock(SecureDatabaseManager::class.java)
         val biometric: BiometricManager = mock(BiometricManager::class.java)
@@ -581,10 +581,10 @@ class DuressPinTest {
                     },
                 )
             }
-            prefs.edit()
-                .putBoolean("onboarding_shown_v3", true)
-                .putLong(BackupManager.LAST_EXPORT_KEY, 1L)
-                .commit()
+            prefs.commit {
+                putBoolean("onboarding_shown_v3", true)
+                putLong(BackupManager.LAST_EXPORT_KEY, 1L)
+            }
         }
     }
 

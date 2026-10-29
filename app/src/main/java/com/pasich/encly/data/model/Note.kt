@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.pasich.encly.core.common.currentTimeMillis
 
 /**
  * [uid] is the note's stable, device-independent identity used by encrypted backups (merge
@@ -61,8 +62,8 @@ data class Note(
         fun new(title: String, value: String, tagId: Long? = null): Note = Note(
             title = title,
             value = value,
-            date = System.currentTimeMillis(),
-            dateCreate = System.currentTimeMillis(),
+            date = currentTimeMillis(),
+            dateCreate = currentTimeMillis(),
             tagId = tagId,
         )
     }

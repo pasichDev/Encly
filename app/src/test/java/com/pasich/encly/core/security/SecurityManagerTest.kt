@@ -1,7 +1,7 @@
 package com.pasich.encly.core.security
 
 import com.pasich.encly.data.database.SecureDatabaseManager
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.anyByteArray
 import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.testutil.tempVaultFile
@@ -21,7 +21,7 @@ import java.io.File
 
 class SecurityManagerTest {
 
-    private lateinit var prefs: InMemorySharedPreferences
+    private lateinit var prefs: InMemoryKeyValueStore
     private lateinit var seed: SeedPhraseManager
     private lateinit var database: SecureDatabaseManager
     private lateinit var auth: AuthenticationManager
@@ -32,7 +32,7 @@ class SecurityManagerTest {
 
     @Before
     fun setUp() {
-        prefs = InMemorySharedPreferences()
+        prefs = InMemoryKeyValueStore()
         seed = mock(SeedPhraseManager::class.java)
         database = mock(SecureDatabaseManager::class.java)
         auth = mock(AuthenticationManager::class.java)
@@ -298,7 +298,7 @@ class SecurityManagerTest {
     fun wipingADamagedVaultStartsOverWithAClearStore() {
         file.writeBytes(ByteArray(64) { 3 })
         val onDamagedFile = SecurityManager(prefs, VaultStore(file), seed, database, auth, biometric)
-        prefs.edit().putBoolean(ONBOARDING_KEY, true).commit()
+        prefs.commit { putBoolean(ONBOARDING_KEY, true) }
 
         assertTrue(onDamagedFile.wipeAndReset())
 
@@ -345,7 +345,7 @@ class SecurityManagerTest {
         org.mockito.AdditionalMatchers.aryEq(value.toCharArray()) ?: CharArray(0)
 
     private fun commitVault() {
-        prefs.edit().putBoolean(ONBOARDING_KEY, true).commit()
+        prefs.commit { putBoolean(ONBOARDING_KEY, true) }
         `when`(seed.verificationKeyData()).thenReturn(true)
         `when`(seed.hasStoredSeed()).thenReturn(true)
         `when`(database.hasEncryptedDatabase()).thenReturn(true)

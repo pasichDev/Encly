@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
+import com.pasich.encly.core.common.asString
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.locale.AppLocales
 import com.pasich.encly.presentation.designsystem.DialogAction

@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.pasich.encly.core.common.currentTimeMillis
 
 /** [uid]: stable backup identity, see [Note.uid]. */
 @Entity(tableName = "tasks", indices = [Index(value = ["uid"], unique = true)])
@@ -13,7 +14,7 @@ data class Task(
     val title: String,
     val description: String? = null,
     val isCompleted: Boolean = false,
-    val createdDate: Long = System.currentTimeMillis(),
+    val createdDate: Long = currentTimeMillis(),
     val completedDate: Long? = null,
     val priority: Int = 0, // 0 - Low, 1 - Medium, 2 - High
     val categoryId: Long? = null,

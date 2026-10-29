@@ -5,8 +5,8 @@ import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupTag
 import com.pasich.encly.core.backup.BackupTask
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.data.backup.BackupImporter
-import java.security.MessageDigest
 
 /** What the user confirms before the import: counts only, never content. */
 data class HandoffPreview(
@@ -99,7 +99,7 @@ object MyNotesHandoffMapper {
         if (id.isNotBlank() && id.length <= BackupPayloadCodec.MAX_UID_LENGTH) id else sha256Hex("$kind:$id")
 
     private fun sha256Hex(text: String): String {
-        val digest = MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8))
+        val digest = Crypto.sha256(text.toByteArray(Charsets.UTF_8))
         return buildString(digest.size * 2) {
             digest.forEach { byte ->
                 val b = byte.toInt()

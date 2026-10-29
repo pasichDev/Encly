@@ -13,7 +13,7 @@ import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -50,7 +50,7 @@ class RestoreFromBackupTest {
             true
         }
         store = InMemoryVaultDataStore()
-        val backupManager = BackupManager(security, store, InMemorySharedPreferences())
+        val backupManager = BackupManager(security, store, InMemoryKeyValueStore())
         pending = PendingRestore(backupManager)
         useCase = OnboardingUseCase(security, backupManager, pending)
     }

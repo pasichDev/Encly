@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.AutoLockDelay
@@ -182,7 +183,7 @@ class SecuritySettingsViewModel(
     }
 
     private fun enrollBiometric(activity: FragmentActivity, release: () -> Boolean) {
-        securityManager.enrollBiometric(activity) { ok ->
+        securityManager.enrollBiometric(ActivityBiometricHost(activity)) { ok ->
             release()
             _uiState.value = _uiState.value.copy(
                 biometricEnable = ok && securityManager.isBiometricEnabled(),
@@ -192,7 +193,7 @@ class SecuritySettingsViewModel(
     }
 
     private fun disableBiometric(activity: FragmentActivity, release: () -> Boolean) {
-        securityManager.confirmBiometric(activity) { confirmed ->
+        securityManager.confirmBiometric(ActivityBiometricHost(activity)) { confirmed ->
             release()
             if (confirmed) {
                 securityManager.disableBiometric()

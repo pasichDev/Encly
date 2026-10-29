@@ -1,6 +1,5 @@
 package com.pasich.encly.core.backup
 
-import com.pasich.encly.core.security.SensitiveDataCleaner
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -10,12 +9,8 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.json.encodeToStream
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 
 /**
  * The decrypted backup content. Records reference each other by their stable `uid`, never by
@@ -131,15 +126,7 @@ object BackupPayloadCodec {
     private class SchemaProbe(val schema: Int = BackupPayload.SCHEMA_VERSION)
 
     /** The returned buffer is plaintext: the caller must wipe it once it has been sealed. */
-    fun encode(payload: BackupPayload): ByteArray {
-        val out = WipeableByteArrayOutputStream()
-        return try {
-            json.encodeToStream(BackupPayload.serializer(), payload, out)
-            out.toByteArray()
-        } finally {
-            out.wipe()
-        }
-    }
+    fun encode(payload: BackupPayload): ByteArray = json.encodeToWipedBytes(BackupPayload.serializer(), payload)
 
     /**
      * A payload from a newer schema is [BackupError.UNSUPPORTED_VERSION]: it authenticated, so
@@ -189,7 +176,7 @@ object BackupPayloadCodec {
     }
 
     private fun <T> decodeStream(format: Json, deserializer: DeserializationStrategy<T>, bytes: ByteArray): T =
-        format.decodeFromStream(deserializer, ByteArrayInputStream(bytes))
+        format.decodeFromBytes(deserializer, bytes)
 
     private inline fun <T> invalidPayloadOn(block: () -> T): T = try {
         block()
@@ -222,12 +209,4 @@ object BackupPayloadCodec {
 
     private fun uniqueValidUids(uids: List<String>): Boolean =
         uids.all { it.isNotBlank() && it.length <= MAX_UID_LENGTH } && uids.toSet().size == uids.size
-
-    /** Lets the serializer's internal buffer be zeroized instead of left for the GC. */
-    private class WipeableByteArrayOutputStream : ByteArrayOutputStream() {
-        fun wipe() {
-            SensitiveDataCleaner.clear(buf)
-            reset()
-        }
-    }
 }

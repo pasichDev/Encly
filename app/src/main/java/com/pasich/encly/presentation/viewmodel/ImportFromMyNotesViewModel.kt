@@ -36,7 +36,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
+import kotlinx.io.asSource
+import kotlinx.io.files.Path
 import java.io.IOException
 
 /** Where a My Notes hand-off is. */
@@ -74,7 +75,7 @@ class ImportFromMyNotesViewModel(
     @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val staging = HandoffStaging(File(context.cacheDir, HandoffStaging.DIR_NAME))
+    private val staging = HandoffStaging(Path(context.cacheDir.path, HandoffStaging.DIR_NAME))
 
     private val _step = MutableStateFlow<HandoffStep>(HandoffStep.Waiting)
     val step: StateFlow<HandoffStep> = _step.asStateFlow()
@@ -178,7 +179,8 @@ class ImportFromMyNotesViewModel(
     }
 
     private suspend fun read(uri: Uri): HandoffStep = try {
-        val loaded = withContext(ioDispatcher) { staging.load { context.contentResolver.openInputStream(uri) } }
+        val loaded =
+            withContext(ioDispatcher) { staging.load { context.contentResolver.openInputStream(uri)?.asSource() } }
         handoff = loaded
         HandoffStep.Preview(loaded.preview)
     } catch (e: HandoffException) {

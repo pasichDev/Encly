@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
@@ -195,7 +196,9 @@ class LockViewModelTest {
     @Test
     fun aBiometricKeyUnlocksAndIsWiped() = runTest {
         val key = ByteArray(KEY_LENGTH) { 7 }
-        answerCallback<ByteArray?>(key).`when`(security).requestBiometricKey(eqValue(activity), anyCallback())
+        answerCallback<ByteArray?>(
+            key,
+        ).`when`(security).requestBiometricKey(eqValue(ActivityBiometricHost(activity)), anyCallback())
         `when`(security.unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())).thenReturn(true)
 
         assertTrue(biometric())
@@ -204,12 +207,14 @@ class LockViewModelTest {
 
     @Test
     fun aCancelledPromptOrARejectedKeyDoesNotUnlock() = runTest {
-        answerCallback<ByteArray?>(null).`when`(security).requestBiometricKey(eqValue(activity), anyCallback())
+        answerCallback<ByteArray?>(
+            null,
+        ).`when`(security).requestBiometricKey(eqValue(ActivityBiometricHost(activity)), anyCallback())
         assertFalse(biometric())
         verify(security, never()).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
 
         answerCallback<ByteArray?>(ByteArray(KEY_LENGTH)).`when`(security)
-            .requestBiometricKey(eqValue(activity), anyCallback())
+            .requestBiometricKey(eqValue(ActivityBiometricHost(activity)), anyCallback())
         `when`(security.unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())).thenReturn(false)
         assertFalse(biometric())
     }
@@ -220,7 +225,7 @@ class LockViewModelTest {
         viewModel.authenticateBiometric(activity) {}
         viewModel.authenticateBiometric(activity) {}
 
-        verify(security, times(1)).requestBiometricKey(eqValue(activity), anyCallback())
+        verify(security, times(1)).requestBiometricKey(eqValue(ActivityBiometricHost(activity)), anyCallback())
         assertTrue(viewModel.biometricInFlight)
     }
 
@@ -236,7 +241,7 @@ class LockViewModelTest {
         assertFalse(viewModel.biometricInFlight)
         val recreated = MockActivity().activity
         viewModel.authenticateBiometric(recreated) {}
-        verify(security).requestBiometricKey(eqValue(recreated), anyCallback())
+        verify(security).requestBiometricKey(eqValue(ActivityBiometricHost(recreated)), anyCallback())
     }
 
     @Test
@@ -246,7 +251,7 @@ class LockViewModelTest {
             @Suppress("UNCHECKED_CAST")
             answer[0] = invocation.arguments.last() as (ByteArray?) -> Unit
             null
-        }.`when`(security).requestBiometricKey(eqValue(activity), anyCallback())
+        }.`when`(security).requestBiometricKey(eqValue(ActivityBiometricHost(activity)), anyCallback())
         val results = mutableListOf<Boolean>()
         viewModel.authenticateBiometric(activity) { results += it }
         host.destroy()
@@ -265,7 +270,7 @@ class LockViewModelTest {
 
         viewModel.authenticateBiometric(activity) {}
 
-        verify(security, never()).requestBiometricKey(eqValue(activity), anyCallback())
+        verify(security, never()).requestBiometricKey(eqValue(ActivityBiometricHost(activity)), anyCallback())
         assertFalse(viewModel.biometricInFlight)
     }
 

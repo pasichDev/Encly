@@ -4,6 +4,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.di.ApplicationScope
+import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
@@ -117,7 +118,7 @@ class LockViewModel(
      */
     fun authenticateBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
         biometricPrompt.launch(activity) { release ->
-            securityManager.requestBiometricKey(activity) { dek ->
+            securityManager.requestBiometricKey(ActivityBiometricHost(activity)) { dek ->
                 if (!release()) {
                     dek?.let(SensitiveDataCleaner::clear)
                     return@requestBiometricKey

@@ -83,8 +83,6 @@ class ImportReader(private val limits: ImportLimits = ImportLimits()) {
                 file.open()
             } catch (_: IOException) {
                 null
-            } catch (_: SecurityException) {
-                null
             }
             if (stream == null) {
                 unreadable++

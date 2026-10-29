@@ -17,7 +17,7 @@ import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.screen.backup.backupErrorMessage
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.anyByteArray
 import com.pasich.encly.testutil.anyCharArray
@@ -57,7 +57,7 @@ class BackupFlowsTest {
     private lateinit var security: SecurityManager
     private lateinit var documents: BackupDocuments
     private lateinit var source: InMemoryVaultDataStore
-    private lateinit var prefs: InMemorySharedPreferences
+    private lateinit var prefs: InMemoryKeyValueStore
     private lateinit var viewModel: BackupViewModel
 
     @Before
@@ -86,7 +86,7 @@ class BackupFlowsTest {
             source.insertNote(Note(title = "Ideas", value = "[]", uid = "n-ideas"))
             source.insertTask(Task(title = "Call", uid = "k-call"))
         }
-        prefs = InMemorySharedPreferences()
+        prefs = InMemoryKeyValueStore()
         viewModel = viewModelFor(source, prefs)
     }
 
@@ -422,16 +422,14 @@ class BackupFlowsTest {
 
     // --- helpers ------------------------------------------------------------------------------
 
-    private fun viewModelFor(
-        store: InMemoryVaultDataStore,
-        prefs: InMemorySharedPreferences = InMemorySharedPreferences(),
-    ) = BackupViewModel(
-        backupManager = BackupManager(security, store, prefs),
-        phraseSetup = BackupPhraseSetup(security),
-        securityManager = security,
-        sessionLockManager = SessionLockManager(security),
-        documents = documents,
-    )
+    private fun viewModelFor(store: InMemoryVaultDataStore, prefs: InMemoryKeyValueStore = InMemoryKeyValueStore()) =
+        BackupViewModel(
+            backupManager = BackupManager(security, store, prefs),
+            phraseSetup = BackupPhraseSetup(security),
+            securityManager = security,
+            sessionLockManager = SessionLockManager(security),
+            documents = documents,
+        )
 
     private fun state() = viewModel.uiState.value
 

@@ -6,7 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
-import com.pasich.encly.core.common.AppStrings
+import com.pasich.encly.core.common.AndroidAppStrings
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
@@ -58,7 +58,7 @@ import com.pasich.encly.presentation.viewmodel.StatisticViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.TestNotesRepository
 import com.pasich.encly.testutil.anyCharArray
@@ -83,7 +83,7 @@ internal class TestApp(context: Context) {
     val documents: BackupDocuments = mock(BackupDocuments::class.java)
     val markdownDocuments: MarkdownDocuments = mock(MarkdownDocuments::class.java)
     val store = InMemoryVaultDataStore()
-    val backupManager = BackupManager(security, store, InMemorySharedPreferences())
+    val backupManager = BackupManager(security, store, InMemoryKeyValueStore())
     val sessionLock = SessionLockManager(security)
     val selectedTag = SelectedTagHolder()
     init {
@@ -202,8 +202,8 @@ internal class TestApp(context: Context) {
 
     fun securitySettings() = SecuritySettingsViewModel(
         security,
-        KeyboardPrivacy(InMemorySharedPreferences()),
-        AutoLock(InMemorySharedPreferences()),
+        KeyboardPrivacy(InMemoryKeyValueStore()),
+        AutoLock(InMemoryKeyValueStore()),
     )
 
     fun backup() = BackupViewModel(
@@ -219,7 +219,7 @@ internal class TestApp(context: Context) {
         sessionLockManager = sessionLock,
         store = store,
         documents = markdownDocuments,
-        strings = AppStrings(appContext),
+        strings = AndroidAppStrings(appContext),
     )
 
     private val pendingRestore by lazy { PendingRestore(backupManager) }

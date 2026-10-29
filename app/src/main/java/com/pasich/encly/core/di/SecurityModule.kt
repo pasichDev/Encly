@@ -1,10 +1,15 @@
 package com.pasich.encly.core.di
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.pasich.encly.core.platform.HandlerMainThreadTimer
+import com.pasich.encly.core.platform.KeyValueStore
+import com.pasich.encly.core.platform.MainThreadTimer
+import com.pasich.encly.core.platform.SharedPreferencesKeyValueStore
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.AutoLockPolicy
+import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.DeviceLockWatcher
+import com.pasich.encly.core.security.KeystoreBiometricManager
 import com.pasich.encly.core.security.KeystorePinFactor
 import com.pasich.encly.core.security.LockoutClock
 import com.pasich.encly.core.security.PinHardwareFactor
@@ -44,8 +49,8 @@ object SecurityModule {
      */
     @Provides
     @SingleIn(AppScope::class)
-    fun provideAppFlags(@ApplicationContext context: Context): SharedPreferences =
-        context.getSharedPreferences(FLAGS_FILE, Context.MODE_PRIVATE)
+    fun provideAppFlags(@ApplicationContext context: Context): KeyValueStore =
+        SharedPreferencesKeyValueStore(context.getSharedPreferences(FLAGS_FILE, Context.MODE_PRIVATE))
 
     private const val VAULT_FILE = "vault_state_v3.bin"
     private const val FLAGS_FILE = "encly_flags_v3"
@@ -56,6 +61,12 @@ object SecurityModule {
 interface SecurityBindingsModule {
     @Binds
     fun bindPinHardwareFactor(factor: KeystorePinFactor): PinHardwareFactor
+
+    @Binds
+    fun bindBiometricManager(manager: KeystoreBiometricManager): BiometricManager
+
+    @Binds
+    fun bindMainThreadTimer(timer: HandlerMainThreadTimer): MainThreadTimer
 
     @Binds
     fun bindLockoutClock(clock: SystemLockoutClock): LockoutClock

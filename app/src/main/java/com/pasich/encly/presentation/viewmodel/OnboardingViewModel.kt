@@ -9,6 +9,7 @@ import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupDocuments
@@ -354,7 +355,7 @@ class OnboardingViewModel(
     fun enrollBiometric(activity: FragmentActivity) {
         if (!_uiState.value.biometricPending) return
         _uiState.update { it.copy(biometricPending = false) }
-        onboardingUseCase.enrollBiometric(activity) { ok ->
+        onboardingUseCase.enrollBiometric(ActivityBiometricHost(activity)) { ok ->
             _uiState.update { it.copy(biometricEnabled = ok) }
         }
     }

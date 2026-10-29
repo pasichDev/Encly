@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
@@ -12,7 +13,7 @@ import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.WipePinChange
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.MockActivity
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyCallback
@@ -61,8 +62,8 @@ class SecuritySettingsViewModelTest {
         viewModel =
             SecuritySettingsViewModel(
                 security,
-                KeyboardPrivacy(InMemorySharedPreferences()),
-                AutoLock(InMemorySharedPreferences()),
+                KeyboardPrivacy(InMemoryKeyValueStore()),
+                AutoLock(InMemoryKeyValueStore()),
             )
         // The first load reads the mock on an IO thread; stubbing it meanwhile would race.
         runBlocking { viewModel.uiState.first { it.loaded } }
@@ -247,7 +248,7 @@ class SecuritySettingsViewModelTest {
     @Test
     fun enablingBiometricsEnrollsAndShowsTheResult() = runTest {
         viewModel.uiState.first { it.loaded }
-        answerCallback(true).`when`(security).enrollBiometric(eqValue(activity), anyCallback())
+        answerCallback(true).`when`(security).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
         `when`(security.isBiometricEnabled()).thenReturn(true)
 
         viewModel.toggleBiometric(activity, enable = true)
@@ -259,7 +260,7 @@ class SecuritySettingsViewModelTest {
     @Test
     fun aFailedEnrollmentLeavesBiometricsOffWithAMessage() = runTest {
         viewModel.uiState.first { it.loaded }
-        answerCallback(false).`when`(security).enrollBiometric(eqValue(activity), anyCallback())
+        answerCallback(false).`when`(security).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
 
         viewModel.toggleBiometric(activity, enable = true)
 
@@ -270,7 +271,7 @@ class SecuritySettingsViewModelTest {
     @Test
     fun disablingBiometricsNeedsAConfirmedPrompt() = runTest {
         viewModel.uiState.first { it.loaded }
-        answerCallback(true).`when`(security).confirmBiometric(eqValue(activity), anyCallback())
+        answerCallback(true).`when`(security).confirmBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
 
         viewModel.toggleBiometric(activity, enable = false)
 
@@ -281,7 +282,7 @@ class SecuritySettingsViewModelTest {
     @Test
     fun anUnconfirmedDisableKeepsBiometricsOn() = runTest {
         viewModel.uiState.first { it.loaded }
-        answerCallback(false).`when`(security).confirmBiometric(eqValue(activity), anyCallback())
+        answerCallback(false).`when`(security).confirmBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
         `when`(security.isBiometricEnabled()).thenReturn(true)
 
         viewModel.toggleBiometric(activity, enable = false)
@@ -300,8 +301,8 @@ class SecuritySettingsViewModelTest {
         viewModel.toggleBiometric(activity, enable = false)
 
         assertTrue(viewModel.biometricInFlight)
-        verify(security, times(1)).enrollBiometric(eqValue(activity), anyCallback())
-        verify(security, never()).confirmBiometric(eqValue(activity), anyCallback())
+        verify(security, times(1)).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
+        verify(security, never()).confirmBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
     }
 
     @Test
@@ -311,8 +312,8 @@ class SecuritySettingsViewModelTest {
         viewModel.toggleBiometric(activity, enable = false)
         viewModel.toggleBiometric(activity, enable = true)
 
-        verify(security, times(1)).confirmBiometric(eqValue(activity), anyCallback())
-        verify(security, never()).enrollBiometric(eqValue(activity), anyCallback())
+        verify(security, times(1)).confirmBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
+        verify(security, never()).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
         verify(security, never()).disableBiometric()
     }
 
@@ -324,7 +325,7 @@ class SecuritySettingsViewModelTest {
             @Suppress("UNCHECKED_CAST")
             answer[0] = invocation.arguments.last() as (Boolean) -> Unit
             null
-        }.`when`(security).enrollBiometric(eqValue(activity), anyCallback())
+        }.`when`(security).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
 
         viewModel.toggleBiometric(activity, enable = true)
         viewModel.toggleBiometric(activity, enable = true)
@@ -332,7 +333,7 @@ class SecuritySettingsViewModelTest {
 
         assertFalse(viewModel.biometricInFlight)
         viewModel.toggleBiometric(activity, enable = true)
-        verify(security, times(2)).enrollBiometric(eqValue(activity), anyCallback())
+        verify(security, times(2)).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
     }
 
     @Test
@@ -347,7 +348,7 @@ class SecuritySettingsViewModelTest {
         assertFalse(viewModel.biometricInFlight)
         val recreated = MockActivity().activity
         viewModel.toggleBiometric(recreated, enable = true)
-        verify(security).enrollBiometric(eqValue(recreated), anyCallback())
+        verify(security).enrollBiometric(eqValue(ActivityBiometricHost(recreated)), anyCallback())
     }
 
     private suspend fun checkCurrent(pin: String): Boolean = checkCurrent(pin.toCharArray())

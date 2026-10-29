@@ -15,7 +15,7 @@ import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.usecase.OnboardingUseCase
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.anyCharArray
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +78,7 @@ class OnboardingViewModelTest {
 
     private fun viewModel(biometric: Boolean = false): OnboardingViewModel {
         `when`(security.biometricAvailable()).thenReturn(biometric)
-        val backupManager = BackupManager(security, store, InMemorySharedPreferences())
+        val backupManager = BackupManager(security, store, InMemoryKeyValueStore())
         pending = PendingRestore(backupManager)
         return OnboardingViewModel(OnboardingUseCase(security, backupManager, pending), documents)
     }

@@ -6,7 +6,7 @@ import com.pasich.encly.core.backup.BackupFormat
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.asSource
@@ -21,7 +21,7 @@ import java.io.ByteArrayInputStream
 
 class BackupManagerTest {
 
-    private lateinit var prefs: InMemorySharedPreferences
+    private lateinit var prefs: InMemoryKeyValueStore
     private lateinit var manager: BackupManager
 
     @Before
@@ -32,7 +32,7 @@ class BackupManagerTest {
         val store = InMemoryVaultDataStore().apply {
             insertNote(Note(title = "Plan", value = "[]", uid = "n-plan"))
         }
-        prefs = InMemorySharedPreferences()
+        prefs = InMemoryKeyValueStore()
         manager = BackupManager(security, store, prefs).apply { clock = { 1L } }
     }
 
@@ -86,7 +86,7 @@ class BackupManagerTest {
         }
 
         try {
-            BackupManager(security, store, InMemorySharedPreferences()).createBackup()
+            BackupManager(security, store, InMemoryKeyValueStore()).createBackup()
             fail("expected a closed-session failure")
         } catch (e: BackupException) {
             assertEquals(BackupError.IO, e.error)
@@ -97,7 +97,7 @@ class BackupManagerTest {
     fun theDecoyVaultRefusesEveryBackupStepAsAStorageError() = runTest {
         val security = mock(SecurityManager::class.java)
         `when`(security.isDecoySession()).thenReturn(true)
-        val decoy = BackupManager(security, InMemoryVaultDataStore(), InMemorySharedPreferences())
+        val decoy = BackupManager(security, InMemoryVaultDataStore(), InMemoryKeyValueStore())
         val empty = BackupPayload(exportedAt = 0, tags = emptyList(), notes = emptyList(), tasks = emptyList())
 
         val errors = listOf(

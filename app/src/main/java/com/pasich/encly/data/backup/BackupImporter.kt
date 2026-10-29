@@ -10,7 +10,6 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
-import java.util.Locale
 
 enum class ImportMode {
     /**
@@ -216,7 +215,7 @@ object BackupImporter {
     )
 
     /** Two tag names are the same tag for [TagMatch.UID_OR_NAME] when their keys are equal. */
-    fun tagNameKey(name: String): String = name.trim().lowercase(Locale.ROOT)
+    fun tagNameKey(name: String): String = name.trim().lowercase()
 
     private fun BackupNote.toEntity(tagIds: Map<String, Long>) = Note(
         title = title,

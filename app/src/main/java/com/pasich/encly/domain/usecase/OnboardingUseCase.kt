@@ -1,9 +1,9 @@
 package com.pasich.encly.domain.usecase
 
-import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.suspendRunCatching
+import com.pasich.encly.core.security.BiometricHost
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupManager
@@ -77,6 +77,6 @@ class OnboardingUseCase(
     fun biometricAvailable(): Boolean = securityManager.biometricAvailable()
 
     /** Adds the biometric slot to the vault just created; shows the system prompt. */
-    fun enrollBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) =
-        securityManager.enrollBiometric(activity, onResult)
+    fun enrollBiometric(host: BiometricHost, onResult: (Boolean) -> Unit) =
+        securityManager.enrollBiometric(host, onResult)
 }

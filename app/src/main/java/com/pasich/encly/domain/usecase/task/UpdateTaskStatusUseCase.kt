@@ -1,5 +1,6 @@
 package com.pasich.encly.domain.usecase.task
 
+import com.pasich.encly.core.common.currentTimeMillis
 import com.pasich.encly.domain.repository.TasksRepository
 import dev.zacsweers.metro.Inject
 
@@ -9,6 +10,6 @@ class UpdateTaskStatusUseCase(private val tasksRepository: TasksRepository) {
     suspend operator fun invoke(
         id: Long,
         isCompleted: Boolean,
-        completedDate: Long? = if (isCompleted) System.currentTimeMillis() else null,
+        completedDate: Long? = if (isCompleted) currentTimeMillis() else null,
     ): Result<Unit> = tasksRepository.updateTaskStatus(id, isCompleted, completedDate)
 }

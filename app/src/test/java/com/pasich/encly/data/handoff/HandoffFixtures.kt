@@ -1,5 +1,6 @@
 package com.pasich.encly.data.handoff
 
+import kotlinx.io.files.Path
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -93,4 +94,4 @@ internal object HandoffFixtures {
 
 /** The hand-off in the ZIP file [zip], opened with the platform's ZIP support (what the app does after staging it). */
 internal fun MyNotesHandoffReader.read(zip: File, limits: HandoffLimits = HandoffLimits()): MyNotesHandoff =
-    HandoffStaging.read(zip, limits)
+    HandoffStaging.read(Path(zip.path), limits)

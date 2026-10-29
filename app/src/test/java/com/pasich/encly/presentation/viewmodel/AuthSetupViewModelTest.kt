@@ -7,7 +7,7 @@ import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +48,7 @@ class AuthSetupViewModelTest {
             true
         }
         store = InMemoryVaultDataStore()
-        pending = PendingRestore(BackupManager(security, store, InMemorySharedPreferences()))
+        pending = PendingRestore(BackupManager(security, store, InMemoryKeyValueStore()))
         val source = InMemoryVaultDataStore().apply { insertNote(Note(title = "Plan", value = "[]", uid = "n-plan")) }
         pending.stage(BackupMapper.toPayload(source.snapshot(), exportedAt = 1))
 

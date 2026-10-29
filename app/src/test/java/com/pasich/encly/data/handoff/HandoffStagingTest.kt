@@ -3,6 +3,8 @@ package com.pasich.encly.data.handoff
 import com.pasich.encly.data.handoff.HandoffFixtures.handoff
 import com.pasich.encly.data.handoff.HandoffFixtures.handoffZip
 import com.pasich.encly.data.handoff.HandoffFixtures.note
+import kotlinx.io.asSource
+import kotlinx.io.files.Path
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,10 +22,12 @@ class HandoffStagingTest {
 
     private val stagingDir: File get() = File(temp.root, HandoffStaging.DIR_NAME)
 
+    private fun staging(limits: HandoffLimits = HandoffLimits()) = HandoffStaging(Path(stagingDir.path), limits)
+
     @Test
     fun loadsAndLeavesNothingBehind() {
         val zip = handoffZip(temp.newFolder("source"), handoff(notes = listOf(note("n1"))))
-        val loaded = HandoffStaging(stagingDir).load { zip.inputStream() }
+        val loaded = staging().load { zip.inputStream().asSource() }
         assertEquals(1, loaded.preview.notes)
         assertFalse(stagingDir.exists())
     }
@@ -31,11 +35,11 @@ class HandoffStagingTest {
     @Test
     fun aFailedReadLeavesNothingBehind() {
         assertError(HandoffError.INVALID_PAYLOAD) {
-            HandoffStaging(stagingDir).load { "not a zip".byteInputStream() }
+            staging().load { "not a zip".byteInputStream().asSource() }
         }
         assertFalse(stagingDir.exists())
         assertError(HandoffError.TOO_LARGE) {
-            HandoffStaging(stagingDir, HandoffLimits(maxZipBytes = 8)).load { ByteArray(64).inputStream() }
+            staging(HandoffLimits(maxZipBytes = 8)).load { ByteArray(64).inputStream().asSource() }
         }
         assertFalse(stagingDir.exists())
     }
@@ -44,21 +48,21 @@ class HandoffStagingTest {
     fun anUnreadableUriLeavesNothingBehind() {
         val failing = object : InputStream() {
             override fun read(): Int = throw IOException("revoked")
-        }
+        }.asSource()
         try {
-            HandoffStaging(stagingDir).load { failing }
+            staging().load { failing }
         } catch (_: IOException) {
             // Expected: the ViewModel reports it as "failed".
         }
         assertFalse(stagingDir.exists())
-        assertError(HandoffError.INVALID_PAYLOAD) { HandoffStaging(stagingDir).load { null } }
+        assertError(HandoffError.INVALID_PAYLOAD) { staging().load { null } }
     }
 
     @Test
     fun leftoversOfAKilledRunAreSwept() {
         stagingDir.mkdirs()
         File(stagingDir, "handoff-123.zip").writeText("plaintext from a run that died")
-        HandoffStaging.sweep(stagingDir)
+        HandoffStaging.sweep(Path(stagingDir.path))
         assertFalse(stagingDir.exists())
     }
 
@@ -68,11 +72,11 @@ class HandoffStagingTest {
         File(stagingDir.apply { mkdirs() }, "handoff-old.zip").writeText("left by a killed run")
         var during: List<String> = emptyList()
 
-        val loaded = HandoffStaging(stagingDir).load {
+        val loaded = staging().load {
             // Another hand-off, or the app's start, sweeps while this one is copying.
-            HandoffStaging.sweep(stagingDir)
+            HandoffStaging.sweep(Path(stagingDir.path))
             during = stagingDir.list().orEmpty().toList()
-            zip.inputStream()
+            zip.inputStream().asSource()
         }
 
         assertEquals(1, loaded.preview.notes)
@@ -87,13 +91,13 @@ class HandoffStagingTest {
         var inner: HandoffImport? = null
         var filesDuringInner = 0
 
-        val outer = HandoffStaging(stagingDir).load {
-            inner = HandoffStaging(stagingDir).load {
+        val outer = staging().load {
+            inner = staging().load {
                 filesDuringInner = stagingDir.list().orEmpty().size
-                zip.inputStream()
+                zip.inputStream().asSource()
             }
             // The inner load deleted its own file only, so this one still copies into its file.
-            zip.inputStream()
+            zip.inputStream().asSource()
         }
 
         assertEquals(2, filesDuringInner)

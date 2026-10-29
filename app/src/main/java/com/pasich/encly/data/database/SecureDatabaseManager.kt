@@ -6,6 +6,7 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.di.ApplicationContext
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
+import com.pasich.encly.core.security.cipher.getDatabaseState
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn

@@ -31,18 +31,18 @@ class UiTextAndStringsTest {
 
     @Test
     fun withoutAnAppLanguageStoredTextUsesTheSystemOne() {
-        assertEquals("Cancel", AppStrings(context).get(R.string.cancel))
+        assertEquals("Cancel", AndroidAppStrings(context).get(R.string.cancel))
     }
 
     @Test
     fun storedTextFollowsTheLanguagePickedInTheApp() {
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("uk"))
 
-        assertEquals("Скасувати", AppStrings(context).get(R.string.cancel))
+        assertEquals("Скасувати", AndroidAppStrings(context).get(R.string.cancel))
     }
 
     @Test
     fun storedTextTakesFormatArguments() {
-        assertEquals("Today 10:15", AppStrings(context).get(R.string.date_today_at, "10:15"))
+        assertEquals("Today 10:15", AndroidAppStrings(context).get(R.string.date_today_at, "10:15"))
     }
 }

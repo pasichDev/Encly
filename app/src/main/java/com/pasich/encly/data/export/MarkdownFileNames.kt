@@ -1,8 +1,5 @@
 package com.pasich.encly.data.export
 
-import java.text.Normalizer
-import java.util.Locale
-
 /**
  * File names for the exported notes: safe on every file system and in a zip, and unique.
  *
@@ -41,57 +38,21 @@ class MarkdownFileNames(reserved: Collection<String> = emptyList(), private val 
         return cutBytes(base, room.coerceAtLeast(1)).trimEnd('.', ' ') + suffix
     }
 
-    private fun key(path: String) = Normalizer.normalize(path, Normalizer.Form.NFC).lowercase(Locale.ROOT)
+    private fun key(path: String) = normalizeNfc(path).lowercase()
 
     companion object {
         const val EXTENSION = ".md"
         const val MAX_NAME_BYTES = 100
-        private const val TAB = 0x09
-        private const val LINE_FEED = 0x0A
-        private const val CARRIAGE_RETURN = 0x0D
-        private val FORBIDDEN = setOf('/', '\\', ':', '*', '?', '"', '<', '>', '|')
         private val RESERVED = Regex("""^(?:CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$""", RegexOption.IGNORE_CASE)
 
         /** [title] reduced to characters that are safe in a file name; may be empty. */
         fun sanitize(title: String): String {
-            val text = Normalizer.normalize(title, Normalizer.Form.NFC)
-            val kept = StringBuilder(text.length)
-            var index = 0
-            while (index < text.length) {
-                val cp = text.codePointAt(index)
-                index += Character.charCount(cp)
-                when {
-                    Character.isISOControl(cp) && cp != TAB && cp != LINE_FEED && cp != CARRIAGE_RETURN -> Unit
-                    Character.isSpaceChar(cp) || Character.isWhitespace(cp) -> kept.append(' ')
-                    cp.toChar() in FORBIDDEN && cp < Character.MIN_SUPPLEMENTARY_CODE_POINT -> Unit
-                    isPlain(cp) -> kept.appendCodePoint(cp)
-                }
-            }
-            val spaced = kept.toString().replace(Regex(" {2,}"), " ").trim().trimStart('.', ' ').trimEnd('.', ' ')
+            val kept = keepFileNameCharacters(normalizeNfc(title))
+            val spaced = kept.replace(Regex(" {2,}"), " ").trim().trimStart('.', ' ').trimEnd('.', ' ')
             return if (RESERVED.matches(spaced.substringBefore('.').trim())) "_$spaced" else spaced
         }
 
-        /** Not a control, format, separator, private-use, unassigned or lone surrogate character. */
-        private fun isPlain(cp: Int): Boolean = when (Character.getType(cp).toByte()) {
-            Character.CONTROL, Character.FORMAT, Character.LINE_SEPARATOR, Character.PARAGRAPH_SEPARATOR,
-            Character.PRIVATE_USE, Character.UNASSIGNED, Character.SURROGATE,
-            -> false
-
-            else -> true
-        }
-
         /** The longest prefix of [text] that is at most [bytes] bytes of UTF-8, ending on a character. */
-        fun cutBytes(text: String, bytes: Int): String {
-            var used = 0
-            var end = 0
-            while (end < text.length) {
-                val cp = text.codePointAt(end)
-                val size = String(Character.toChars(cp)).toByteArray().size
-                if (used + size > bytes) break
-                used += size
-                end += Character.charCount(cp)
-            }
-            return text.substring(0, end)
-        }
+        fun cutBytes(text: String, bytes: Int): String = utf8Prefix(text, bytes)
     }
 }

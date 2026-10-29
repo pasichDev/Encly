@@ -1,9 +1,8 @@
 package com.pasich.encly.core.security
 
-import android.content.SharedPreferences
-import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.crypto.Crypto
+import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.data.database.VaultFile
@@ -11,8 +10,9 @@ import com.pasich.encly.data.handoff.HandoffStagingSweeper
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 enum class InitialStatus {
     NO,
@@ -51,10 +51,11 @@ enum class VaultUnlockResult {
  * The database key is never re-derived from locally stored seed material. Each unlock factor
  * must unwrap the same random DEK, after which the DEK opens SQLCipher.
  */
+@OptIn(ExperimentalAtomicApi::class)
 @SingleIn(AppScope::class)
 @Inject
 class SecurityManager(
-    private val appFlags: SharedPreferences,
+    private val appFlags: KeyValueStore,
     private val vaultStore: VaultStore,
     private val seedPhraseManager: SeedPhraseManager,
     private val secureDatabaseManager: SecureDatabaseManager,
@@ -274,11 +275,11 @@ class SecurityManager(
         return if (opened) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
     }
 
-    fun requestBiometricKey(activity: FragmentActivity, onResult: (ByteArray?) -> Unit) {
-        biometricManager.unlock(activity, onResult)
+    fun requestBiometricKey(host: BiometricHost, onResult: (ByteArray?) -> Unit) {
+        biometricManager.unlock(host, onResult)
     }
 
-    fun enrollBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
+    fun enrollBiometric(host: BiometricHost, onResult: (Boolean) -> Unit) {
         // The biometric slot opens the real vault only.
         val dek = if (isDecoySession()) null else currentKeyCopy()
         if (dek == null) {
@@ -286,7 +287,7 @@ class SecurityManager(
             return
         }
 
-        biometricManager.enroll(activity, dek) { ok ->
+        biometricManager.enroll(host, dek) { ok ->
             authenticationManager.markBiometricEnabled(ok)
             onResult(ok)
         }
@@ -299,14 +300,14 @@ class SecurityManager(
         authenticationManager.markBiometricEnabled(false)
     }
 
-    fun confirmBiometric(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
+    fun confirmBiometric(host: BiometricHost, onResult: (Boolean) -> Unit) {
         // A fingerprint belongs to the real vault; it never confirms anything in the decoy one.
         if (isDecoySession()) {
             onResult(false)
             return
         }
         biometricManager.authenticate(
-            activity,
+            host,
             BiometricManager.BiometricType.SETTINGS_TOGGLE,
             object : BiometricManager.BiometricCallback {
                 override fun onSuccess() = onResult(true)
@@ -445,7 +446,7 @@ class SecurityManager(
             secureDatabaseManager.reset()
             return false
         }
-        eraseEpoch.incrementAndGet()
+        eraseEpoch.addAndFetch(1L)
         return true
     }
 
@@ -463,7 +464,7 @@ class SecurityManager(
             authenticationManager.deleteRetiredPinKey()
             // Its slot went with the erase; this deletes the Keystore key behind it.
             biometricManager.disable()
-            appFlags.edit().remove(BackupManager.LAST_EXPORT_KEY).commit()
+            appFlags.commit { remove(BackupManager.LAST_EXPORT_KEY) }
             // A My Notes hand-off a killed process left in the cache is plaintext of the old vault's time.
             handoffStaging.sweep()
             if (stage == WipeStage.CLEANUP) authenticationManager.clearPendingWipe()
@@ -475,7 +476,7 @@ class SecurityManager(
      * is opened, never on a lock and unlock of the same vault: what was remembered under another
      * value belongs to a vault that is gone or not open.
      */
-    fun eraseEpoch(): Long = eraseEpoch.get()
+    fun eraseEpoch(): Long = eraseEpoch.load()
 
     // --- wipe PIN -----------------------------------------------------------------------
 
@@ -603,9 +604,7 @@ class SecurityManager(
         if (!seedPhraseManager.verificationKeyData() || !authenticationManager.hasPinSlot()) {
             return false
         }
-        return appFlags.edit()
-            .putBoolean(ONBOARDING_SHOWN_KEY, true)
-            .commit()
+        return appFlags.commit { putBoolean(ONBOARDING_SHOWN_KEY, true) }
     }
 
     fun generateMnemonicCode(): CharArray = seedPhraseManager.generateMnemonic()
@@ -623,7 +622,7 @@ class SecurityManager(
         biometricManager.disable()
         authenticationManager.wipe()
         seedPhraseManager.wipe()
-        appFlags.edit().remove(ONBOARDING_SHOWN_KEY).commit()
+        appFlags.commit { remove(ONBOARDING_SHOWN_KEY) }
         // A damaged state file cannot be edited slot by slot; a new vault starts from none.
         if (vaultStore.isCorrupt()) vaultStore.clear()
         securityStatus = InitialStatus.ONBOARDING
@@ -646,7 +645,7 @@ class SecurityManager(
     private fun setSessionKey(dek: ByteArray, vault: VaultFile) {
         clearSessionKey()
         // What a screen remembered in the other vault must not come back in this one.
-        if (lastVault != null && lastVault != vault) eraseEpoch.incrementAndGet()
+        if (lastVault != null && lastVault != vault) eraseEpoch.addAndFetch(1L)
         lastVault = vault
         sessionDek = dek.copyOf()
         sessionVault = vault
@@ -672,7 +671,7 @@ class SecurityManager(
         seedPhraseManager.wipe()
         // Also the way out of a damaged state file, which the per-slot wipes above cannot edit.
         vaultStore.clear()
-        appFlags.edit().clear().commit()
+        appFlags.commit { clear() }
         securityStatus = InitialStatus.ONBOARDING
         return true
     }

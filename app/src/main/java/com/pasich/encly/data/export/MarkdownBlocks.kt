@@ -5,7 +5,6 @@ import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
 import com.pasich.encly.editor.model.hasContent
-import java.util.Locale
 
 /**
  * A note's blocks as Markdown (CommonMark with GFM task lists), for the plaintext export.
@@ -69,7 +68,7 @@ object MarkdownBlocks {
 
     /** [url] ready for `( … )`, or null for an address that must not become a link. */
     private fun safeTarget(url: String): String? {
-        val scheme = url.substringBefore(':', "").lowercase(Locale.ROOT)
+        val scheme = url.substringBefore(':', "").lowercase()
         val clean = url.filterNot { it.isISOControl() || it == NO_BREAK_SPACE }
         return if (clean.isEmpty() || ':' !in clean || scheme !in LINK_SCHEMES) {
             null

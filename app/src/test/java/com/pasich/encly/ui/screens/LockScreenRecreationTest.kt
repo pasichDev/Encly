@@ -13,6 +13,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.pasich.encly.core.security.ActivityBiometricHost
+import com.pasich.encly.core.security.BiometricHost
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.LockScreen
@@ -81,7 +83,7 @@ class LockScreenRecreationTest {
     fun aRecreationDuringTheBiometricPromptPromptsAgain() {
         rule.waitUntil(WAIT_MS) { lock.biometricInFlight }
         val first = currentActivity()
-        verify(app.security).requestBiometricKey(eqValue<FragmentActivity>(first), anyCallback())
+        verify(app.security).requestBiometricKey(eqValue<BiometricHost>(ActivityBiometricHost(first)), anyCallback())
 
         checkNotNull(scenario).recreate()
         val second = currentActivity()
@@ -90,7 +92,7 @@ class LockScreenRecreationTest {
         // The recreated screen asks again, from the new activity, instead of waiting forever for
         // an answer the destroyed one can no longer deliver.
         rule.waitUntil(WAIT_MS) { promptsShown() == 2 }
-        verify(app.security).requestBiometricKey(eqValue<FragmentActivity>(second), anyCallback())
+        verify(app.security).requestBiometricKey(eqValue<BiometricHost>(ActivityBiometricHost(second)), anyCallback())
         assertTrue(lock.biometricInFlight)
     }
 

@@ -4,11 +4,12 @@ import com.pasich.encly.core.backup.BackupNote
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupTag
+import com.pasich.encly.core.common.currentTimeMillis
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.data.backup.BackupImporter
 import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
-import java.security.MessageDigest
 
 /** What the user confirms before anything is written: counts only, never content. */
 data class ImportPreview(
@@ -157,7 +158,7 @@ object ImportMapper {
     }
 
     private fun sha256Hex(text: String): String {
-        val digest = MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8))
+        val digest = Crypto.sha256(text.toByteArray(Charsets.UTF_8))
         return buildString(digest.size * 2) {
             digest.forEach { byte ->
                 val b = byte.toInt()
@@ -187,7 +188,7 @@ object ImportAnalyzer {
         read: ReadResult,
         forced: ImportSource? = null,
         limits: ImportLimits = ImportLimits(),
-        now: Long = System.currentTimeMillis(),
+        now: Long = currentTimeMillis(),
     ): Analysis {
         val kinds = FormatDetector.classify(read.entries, limits)
         val detection = if (forced == null) FormatDetector.detect(kinds) else FormatDetector.validate(forced, kinds)

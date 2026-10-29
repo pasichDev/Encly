@@ -137,13 +137,12 @@ class ImportReaderTest {
             sequenceOf(
                 SourceFile("gone.md") { null },
                 SourceFile("io.md") { throw IOException("x") },
-                SourceFile("denied.md") { throw SecurityException("x") },
                 SourceFile("ok.md") { Buffer().apply { write("ok".toByteArray()) } },
             )
         }
         val result = read(broken)
         assertEquals(listOf("ok.md"), result.entries.map { it.path })
-        assertEquals(3, result.skips.unreadable)
+        assertEquals(2, result.skips.unreadable)
     }
 
     @Test

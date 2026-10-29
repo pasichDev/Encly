@@ -877,7 +877,7 @@ class AuthenticationManager(
     /** HMAC of `salt ‖ pin` under the key in [keySlot]; the caller wipes the result. */
     private fun hardwareHalf(pin: CharArray, salt: ByteArray, keySlot: PinKeySlot): ByteArray {
         val macInput = ByteArray(salt.size + pin.size)
-        System.arraycopy(salt, 0, macInput, 0, salt.size)
+        salt.copyInto(macInput)
         pin.forEachIndexed { index, c -> macInput[salt.size + index] = c.code.toByte() }
         return try {
             factor.mac(keySlot, macInput)

@@ -25,8 +25,15 @@ class SafImportFiles(@param:ApplicationContext private val context: Context) {
     fun tree(tree: Uri, limits: ImportLimits = ImportLimits()): ImportFileSource =
         TreeWalker(SafTree(tree, limits), limits).source()
 
-    /** The platform stream as a kotlinx-io source: the import logic never sees an [java.io.InputStream]. */
-    private fun open(uri: Uri) = context.contentResolver.openInputStream(uri)?.asSource()
+    /**
+     * The platform stream as a kotlinx-io source: the import logic never sees an [java.io.InputStream]
+     * or a [SecurityException]. A provider that refuses access is an unreadable file, like a missing one.
+     */
+    private fun open(uri: Uri) = try {
+        context.contentResolver.openInputStream(uri)?.asSource()
+    } catch (_: SecurityException) {
+        null
+    }
 
     private fun displayName(uri: Uri): String? = try {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {

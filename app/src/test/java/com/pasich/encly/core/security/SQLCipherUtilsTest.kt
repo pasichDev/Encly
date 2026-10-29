@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
 import com.pasich.encly.core.security.cipher.SQLCipherUtils.State
+import com.pasich.encly.core.security.cipher.getDatabaseState
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith

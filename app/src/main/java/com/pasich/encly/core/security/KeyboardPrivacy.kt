@@ -1,6 +1,6 @@
 package com.pasich.encly.core.security
 
-import android.content.SharedPreferences
+import com.pasich.encly.core.platform.KeyValueStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -17,12 +17,12 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 @SingleIn(AppScope::class)
 @Inject
-class KeyboardPrivacy(private val flags: SharedPreferences) {
+class KeyboardPrivacy(private val flags: KeyValueStore) {
     private val _strict = MutableStateFlow(flags.getBoolean(STRICT_KEY, false))
     val strict: StateFlow<Boolean> = _strict.asStateFlow()
 
     fun setStrict(enabled: Boolean) {
-        flags.edit().putBoolean(STRICT_KEY, enabled).apply()
+        flags.edit { putBoolean(STRICT_KEY, enabled) }
         _strict.value = enabled
     }
 

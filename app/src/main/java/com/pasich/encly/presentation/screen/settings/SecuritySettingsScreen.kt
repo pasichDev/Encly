@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.common.asString
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus

@@ -12,7 +12,7 @@ import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.handoff.HandoffFixtures.handoff
 import com.pasich.encly.data.handoff.HandoffFixtures.handoffZip
 import com.pasich.encly.data.handoff.HandoffFixtures.note
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,7 +72,7 @@ class ImportFromMyNotesViewModelTest {
         context = context,
         securityManager = security,
         sessionLockManager = sessionLock,
-        backupManager = BackupManager(security, store, InMemorySharedPreferences()),
+        backupManager = BackupManager(security, store, InMemoryKeyValueStore()),
         ioDispatcher = dispatcher,
         savedStateHandle = savedState,
     )

@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
+import com.pasich.encly.core.common.asString
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.presentation.components.swipe.SwipeContext

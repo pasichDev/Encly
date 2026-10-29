@@ -1,6 +1,6 @@
 package com.pasich.encly.core.security
 
-import android.content.SharedPreferences
+import com.pasich.encly.core.platform.KeyValueStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -41,14 +41,14 @@ interface AutoLockPolicy {
  */
 @SingleIn(AppScope::class)
 @Inject
-class AutoLock(private val flags: SharedPreferences) : AutoLockPolicy {
+class AutoLock(private val flags: KeyValueStore) : AutoLockPolicy {
     private val _delay = MutableStateFlow(read())
     val delay: StateFlow<AutoLockDelay> = _delay.asStateFlow()
 
     override val delayMillis: Long get() = _delay.value.millis
 
     fun setDelay(delay: AutoLockDelay) {
-        flags.edit().putString(DELAY_KEY, delay.name).apply()
+        flags.edit { putString(DELAY_KEY, delay.name) }
         _delay.value = delay
     }
 

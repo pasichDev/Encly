@@ -3,13 +3,14 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.domain.usecase.OnboardingUseCase
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyCallback
@@ -145,19 +146,19 @@ class OnboardingFailuresTest {
 
         assertFalse(vm.uiState.value.biometricPending)
         assertFalse(vm.uiState.value.biometricEnabled)
-        verify(security, never()).enrollBiometric(eqValue(activity), anyCallback())
+        verify(security, never()).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
     }
 
     @Test
     fun theFingerprintPromptIsShownOnceAndItsResultKept() = runTest {
-        answerCallback(true).`when`(security).enrollBiometric(eqValue(activity), anyCallback())
+        answerCallback(true).`when`(security).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
         val vm = readyWithBiometricPending()
 
         vm.enrollBiometric(activity)
         vm.enrollBiometric(activity)
 
         assertTrue(vm.uiState.value.biometricEnabled)
-        verify(security).enrollBiometric(eqValue(activity), anyCallback())
+        verify(security).enrollBiometric(eqValue(ActivityBiometricHost(activity)), anyCallback())
     }
 
     @Test
@@ -194,7 +195,7 @@ class OnboardingFailuresTest {
 
     private fun viewModel(biometric: Boolean = false): OnboardingViewModel {
         `when`(security.biometricAvailable()).thenReturn(biometric)
-        val backupManager = BackupManager(security, InMemoryVaultDataStore(), InMemorySharedPreferences())
+        val backupManager = BackupManager(security, InMemoryVaultDataStore(), InMemoryKeyValueStore())
         return OnboardingViewModel(
             OnboardingUseCase(security, backupManager, PendingRestore(backupManager)),
             mock(BackupDocuments::class.java),

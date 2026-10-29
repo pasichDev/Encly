@@ -67,6 +67,16 @@ a note is saved only when the user edits it. Smart Paste reads pasted plain text
 editor's `MarkdownBlockMapper` (shared with the importers) in its paste mode (nothing rewritten); the reading density
 (`NoteLineSpacing`) is presentation only.
 
+## Platform boundary
+
+The domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`, `core/backup`,
+`core/crypto`, `core/security`, `core/common`, `core/platform`) imports nothing of Android and nothing of the
+JVM, so it can move into Kotlin Multiplatform modules (`PlatformBoundaryTest`). What it needs from the
+platform is an interface it declares, implemented in one adapter file listed with its reason in that
+test: `KeyValueStore` (flags), `VaultFileIo` (the vault file's fsync and atomic replace), `BiometricManager`
+and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`, `DeviceLockWatcher`, `MainThreadTimer`, `AppStrings`.
+The adapters are bound in `core/di`.
+
 ## Navigation
 
 Startup resolves vault state before rendering the main graph. Locked sessions route to the lock

@@ -5,6 +5,7 @@ import kotlinx.io.RawSource
 import kotlinx.io.Sink
 import kotlinx.io.asOutputStream
 import kotlinx.io.asSource
+import kotlinx.io.files.Path
 import java.io.File
 import java.nio.charset.Charset
 import java.util.zip.CRC32
@@ -60,9 +61,9 @@ private val cp437: Charset = try {
 /** [bytes] as CP437, the ZIP format's default name encoding (ISO-8859-1 where the JVM has no CP437). */
 internal fun decodeCp437(bytes: ByteArray): String = String(bytes, cp437)
 
-/** The ZIP at [file], opened with [ZipFile]; throws an [IOException] if it is not one. */
-internal fun openZipFile(file: File): ZipEntrySource = object : ZipEntrySource {
-    private val archive = ZipFile(file)
+/** The ZIP at [path], opened with [ZipFile]; throws an [IOException] if it is not one. */
+internal fun openZipFile(path: Path): ZipEntrySource = object : ZipEntrySource {
+    private val archive = ZipFile(File(path.toString()))
 
     override val entryCount: Int get() = archive.size()
 
