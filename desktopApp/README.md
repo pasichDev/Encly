@@ -13,7 +13,8 @@ counterpart of `:app`: its own dependency graph, its own implementations of the 
 ```
 
 The version is the one in `version.properties`, shared with the Android app. A package can only be built on its own
-OS (`jpackage` does not cross-build); CI builds all three, unsigned, in the `desktop-package` job.
+OS (`jpackage` does not cross-build); CI builds all three, and a Linux Flatpak, in the `desktop-package` job: signed when
+the signing secrets exist, unsigned otherwise (see "Signing the desktop installers").
 
 ## Where the data is
 
@@ -82,16 +83,83 @@ handed to the first one; drop it on the open window.
 bundle id `com.pasich.encly`, a fixed Windows upgrade UUID, per-user MSI install, and the `.enclybak` file
 association with its own type `application/vnd.encly.backup` (never `application/octet-stream`).
 
-Signing and notarization are not done by this repository's CI. The hooks are environment variables that turn them
-on in a local or release build; no secret is in the repository:
+### Signing the desktop installers
 
-| Variable | Used for |
+The `desktop-package` job (`.github/workflows/android.yml`) signs the installers when the repository has the
+secrets below, and builds them unsigned when it has none. No certificate, password or identity is in the repository;
+the secrets are read from GitHub Actions secrets only in the steps that need them.
+
+| Secret | Value |
 |---|---|
-| `ENCLY_MACOS_SIGN_IDENTITY` | the Developer ID Application identity; when set, the DMG is signed |
-| `ENCLY_MACOS_NOTARY_APPLE_ID`, `ENCLY_MACOS_NOTARY_PASSWORD`, `ENCLY_MACOS_NOTARY_TEAM_ID` | notarization |
+| `ENCLY_MACOS_CERT_P12_BASE64` | the "Developer ID Application" certificate with its private key, exported as `.p12` and base64-encoded (`base64 -i cert.p12`) |
+| `ENCLY_MACOS_CERT_PASSWORD` | the password of that `.p12` |
+| `ENCLY_MACOS_SIGN_IDENTITY` | the identity's full name, as `security find-identity -v -p codesigning` prints it: `Developer ID Application: Name (TEAMID)` |
+| `ENCLY_MACOS_NOTARY_APPLE_ID` | the Apple ID that submits to the notary service |
+| `ENCLY_MACOS_NOTARY_PASSWORD` | an app-specific password of that Apple ID (appleid.apple.com), not the account password |
+| `ENCLY_MACOS_NOTARY_TEAM_ID` | the 10-character Apple team ID |
+| `ENCLY_WINDOWS_CERT_PFX_BASE64` | a code-signing certificate with its private key as `.pfx`, base64-encoded |
+| `ENCLY_WINDOWS_CERT_PASSWORD` | the password of that `.pfx` |
 
-Windows signing (signtool on the MSI) is a TODO for the release workflow. A Flatpak manifest (Flathub) is a follow-up;
-the portal file dialogs are already the ones a Flatpak needs.
+Optional repository variable (not a secret): `ENCLY_WINDOWS_TIMESTAMP_URL`, an RFC 3161 timestamp server;
+the default is `http://timestamp.digicert.com`.
+
+How a run decides:
+
+- **Per OS, and per group.** macOS has two groups: the certificate (`ENCLY_MACOS_CERT_*`, `ENCLY_MACOS_SIGN_IDENTITY`)
+  and the notarization (`ENCLY_MACOS_NOTARY_*`). No secrets of an OS: that installer is built unsigned, with a notice.
+  Some secrets of a group set and others not, or notarization without the certificate: the job fails. A half-signed
+  release is never built silently.
+- **Pull requests never sign**, so the code of a pull request does not run next to a certificate. Pushes to `main`
+  and manual runs (`workflow_dispatch`) do.
+- **Artifact names.** A signed installer is uploaded as `encly-desktop-<os>`, an unsigned one as
+  `encly-desktop-<os>-unsigned`. The Linux packages (`.deb`, Flatpak) are never code-signed here and always say
+  `-unsigned`.
+
+macOS. The certificate is imported into a temporary keychain with a random, masked password, which the job deletes
+at its end (also when it fails). Gradle (`nativeDistributions.macOS` in `build.gradle.kts`, switched on by
+`ENCLY_MACOS_SIGN_IDENTITY` and `ENCLY_MACOS_KEYCHAIN`) signs the app image with the hardened runtime and the
+entitlements of `packaging/macos/entitlements.plist` (`allow-jit`, `allow-unsigned-executable-memory` and
+`disable-library-validation`: the JVM generates code, and loads native libraries it extracts at run time). Then
+`notarizeDmg` submits the DMG with `notarytool`, waits for the verdict, and staples the ticket. The job then mounts
+the DMG and checks the signature with `codesign --verify`, and the stapled ticket and Gatekeeper's verdict
+(`stapler validate`, `spctl`) when it was notarized.
+
+Windows. `signtool` (from the Windows SDK on the runner) signs the MSI with the PFX, SHA-256 and a timestamp, and
+`signtool verify /pa` checks it. Only the MSI is signed, not the executables inside it. To sign with Azure Trusted
+Signing instead of a PFX, replace the "Sign the MSI (Windows)" step with the
+Azure sign action and an OIDC login; the rest of the job does not change.
+
+To sign a build on your own Mac, set the same variables for Gradle:
+`ENCLY_MACOS_SIGN_IDENTITY` (and `ENCLY_MACOS_KEYCHAIN` for a keychain other than the login one), and, for
+notarization, `ENCLY_MACOS_NOTARY_APPLE_ID`, `ENCLY_MACOS_NOTARY_PASSWORD`, `ENCLY_MACOS_NOTARY_TEAM_ID`; then run
+`./gradlew :desktopApp:packageDmg :desktopApp:notarizeDmg`.
+
+### Flatpak (Linux)
+
+`packaging/flatpak/` holds the manifest `io.github.pasichdev.Encly.yml`, the desktop entry, the AppStream metainfo,
+the MIME type of `.enclybak` and `build.sh`, which stages the jpackage app image
+(`:desktopApp:createDistributable`: the same launcher, JVM arguments and bundled Java runtime as the `.deb`), checks
+the metainfo with `appstreamcli validate` and the desktop entry with `desktop-file-validate`, runs `flatpak-builder`
+against the freedesktop `Platform`/`Sdk` 25.08 and writes `build/flatpak/encly-<version>-<arch>.flatpak`. CI builds
+it on Ubuntu and uploads it as `encly-desktop-flatpak-unsigned`. Locally (on Linux with `flatpak` and
+`flatpak-builder`): `desktopApp/packaging/flatpak/build.sh`, then
+`flatpak install --user build/flatpak/encly-*.flatpak` and `flatpak run io.github.pasichdev.Encly`.
+
+The sandbox permissions are the minimum the app needs, and there is no network:
+
+| Permission | Why |
+|---|---|
+| (none for network) | the app makes no network connection |
+| (none for files) | files are chosen with the FileChooser portal and arrive through the document portal; there is no `--filesystem` |
+| `--socket=x11`, `--share=ipc` | the bundled Java runtime draws through X11 only (XWayland on a Wayland session) |
+| `--device=dri` | OpenGL rendering of Compose (Skiko) |
+| `--talk-name=org.freedesktop.secrets` | the device-bound half of the PIN key lives in the Secret Service |
+| `--talk-name=org.freedesktop.ScreenSaver`, `org.gnome.ScreenSaver`, `org.cinnamon.ScreenSaver`, `org.mate.ScreenSaver` | lock when the desktop's screen saver locks the session |
+| `--system-talk-name=org.freedesktop.login1` | lock on logind's `Lock` and on suspend |
+
+The Flatpak keeps its data in `~/.var/app/io.github.pasichdev.Encly/data/encly`, not in `~/.local/share/encly`: a vault
+of a `.deb` or tarball install is a different vault there. The bundle is not signed and is not on Flathub; a Flathub
+submission needs a build from source (Gradle offline with pinned dependencies) and screenshots in the metainfo.
 
 ## No network
 

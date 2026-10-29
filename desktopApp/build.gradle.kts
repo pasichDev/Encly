@@ -128,12 +128,20 @@ compose.desktop {
                 iconFile.set(file("packaging/icons/icon.icns"))
                 bundleID = "com.pasich.encly"
                 dockName = "Encly"
-                // Signing and notarization are off unless the CI sets these (see README.md, "Signing").
+                // Hardened-runtime exceptions of the JVM, for the app and for its bundled runtime.
+                entitlementsFile.set(file("packaging/macos/entitlements.plist"))
+                runtimeEntitlementsFile.set(file("packaging/macos/entitlements.plist"))
+                // Signing and notarization are off unless the environment sets these (the CI does it from
+                // secrets; see README.md, "Signing the desktop installers"). The identity is the full name, e.g.
+                // "Developer ID Application: Name (TEAMID)". Without ENCLY_MACOS_KEYCHAIN the login keychain is used.
                 val identity = providers.environmentVariable("ENCLY_MACOS_SIGN_IDENTITY").orNull
                 if (!identity.isNullOrBlank()) {
                     signing {
                         sign.set(true)
                         this.identity.set(identity)
+                        providers.environmentVariable("ENCLY_MACOS_KEYCHAIN").orNull
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { keychain.set(it) }
                     }
                     notarization {
                         appleID.set(providers.environmentVariable("ENCLY_MACOS_NOTARY_APPLE_ID"))

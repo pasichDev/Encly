@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Encly
+Comment=Offline encrypted notes and tasks
+Exec=encly %f
+Icon=io.github.pasichdev.Encly
+Terminal=false
+Categories=Office;
+Keywords=notes;tasks;encrypted;private;vault;
+MimeType=application/vnd.encly.backup;
+StartupNotify=true
+StartupWMClass=com-pasich-encly-desktop-MainKt
