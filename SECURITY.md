@@ -57,6 +57,34 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
 - Changing the PIN keeps the slot's salt (slots written before keep their own), so a wipe PIN
   set earlier keeps working.
 
+#### Desktop
+
+The desktop build (in development) computes the same device-bound half, `HMAC-SHA256(deviceSecret, salt ‖ PIN)`,
+with a different key store. The `deviceSecret` is 32 random bytes from `SecureRandom`, created once per OS user
+(and once per PIN key slot) and kept **only** in the operating system's secret store of that user. Encly's own
+files never hold it unprotected, and it is never logged.
+
+| OS | Where the secret lives |
+|---|---|
+| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%APPDATA%\Encly\`; only the same Windows user can decrypt it. |
+| macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
+| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. |
+
+The second PIN key slot (used after a wipe-PIN unlock) keeps its own secret under the same names with a `-b` suffix.
+
+A secret that is missing or can no longer be read is the same state as a lost Keystore key above: the PIN no
+longer unlocks and the recovery phrase is needed. A store that is only locked or not running is a temporary
+failure, not a lost key.
+
+Difference from Android: this key is **software-bound to the OS user account, not hardware-bound**. It does not
+sit in a StrongBox or TEE, and the secret store releases it to any process running as the same user (macOS may
+ask the user on the first read by another program; DPAPI and the Secret Service do not). A copied vault slot is
+still useless on its own, since the secret never leaves the user's account, but malware running as the user, or
+anyone who has the user's OS login (a DPAPI master key follows the Windows password, the login keyring the
+session password), can obtain it and then guess PINs off the machine against PBKDF2 alone. Full-disk
+encryption and a strong OS login are part of the desktop trust boundary. Secure Enclave and TPM-bound keys are
+not used yet; they would need a signed app (Apple) or extra platform work.
+
 ### Wipe PIN
 
 An optional second PIN (Settings → Security → Wipe PIN; set, replace or turn off, each after

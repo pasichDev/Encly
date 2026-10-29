@@ -147,6 +147,10 @@ jobs:
           :core:security:koverVerify
           :core:security:detekt
           :core:security:checkKotlinAbi
+          :core:keystore:desktopTest
+          :core:keystore:detekt
+          :core:keystore:koverVerify
+          :core:keystore:checkKotlinAbi
           :core:database:desktopTest
           :core:database:testAndroidHostTest
           :core:database:koverVerify
@@ -274,6 +278,73 @@ jobs:
       # are really checked.
       - name: Public API dump
         run: ./gradlew :editor:checkKotlinAbi :core:common:checkKotlinAbi :core:database:checkKotlinAbi
+
+  # The desktop PIN factor against the real secret store of each OS: DPAPI on Windows, the login Keychain on
+  # macOS, the freedesktop Secret Service (GNOME Keyring) on Linux. The unit tests of :core:keystore run in
+  # the `build` job; here ENCLY_KEYSTORE_IT=1 turns on the one test per OS that creates, reads, uses and
+  # deletes a secret in the real store (under a test namespace). --rerun: the test result must not come
+  # from the build cache of a run without the variable.
+  keystore-it:
+    if: github.actor != 'dependabot[bot]'
+    name: keystore (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15, ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # A headless Secret Service: a private session bus, GNOME Keyring started on it with the login keyring
+      # created and unlocked with a throw-away password (read from stdin), then the Gradle run inside that
+      # same bus session. The probe fails the job early, and readably, if no Secret Service answers.
+      - name: Keystore tests (Linux, Secret Service)
+        if: runner.os == 'Linux'
+        env:
+          ENCLY_KEYSTORE_IT: '1'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnome-keyring dbus-x11 libsecret-tools
+          dbus-run-session -- bash -euo pipefail -c '
+            printf "%s" "ci-throwaway-keyring-password" | gnome-keyring-daemon --replace --daemonize --unlock --components=secrets > /dev/null
+            printf "probe" | secret-tool store --label="probe" application encly-ci-probe
+            secret-tool lookup application encly-ci-probe
+            secret-tool clear application encly-ci-probe
+            ./gradlew :core:keystore:desktopTest --rerun
+          '
+
+      - name: Keystore tests (Windows, macOS)
+        if: runner.os != 'Linux'
+        env:
+          ENCLY_KEYSTORE_IT: '1'
+        run: ./gradlew :core:keystore:desktopTest --rerun
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: keystore-reports-${{ matrix.os }}
+          path: core/keystore/build/reports/tests/
+          retention-days: 7
+          if-no-files-found: ignore
 
   # The tests that need the real native SQLCipher and Room on Android: opening a vault written by
   # earlier releases, the lock/unlock lifecycle, every schema migration. They live in the

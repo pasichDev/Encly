@@ -14,6 +14,7 @@ include(":core:database")
 include(":core:common")
 include(":core:crypto")
 include(":core:security")
+include(":core:keystore")
 include(":core:resources")
 
 dependencyResolutionManagement {

@@ -40,6 +40,11 @@ sqlcipher = "4.19.1"
 sealite = "1.0.0"
 sqliteKtx = "2.7.1"
 iconsLucide = "1.1.0"
+# The OS secret stores behind :core:keystore on the desktop: DPAPI and the Keychain through JNA, the freedesktop
+# Secret Service through D-Bus.
+jna = "5.19.1"
+dbusJava = "5.1.1"
+slf4j = "2.0.17"
 
 junit = "4.13.2"
 androidxTestCore = "1.7.0"
@@ -94,6 +99,11 @@ metrox-viewmodel-compose = { module = "dev.zacsweers.metro:metrox-viewmodel-comp
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 sealite = { module = "io.github.pasichdev:sealite", version.ref = "sealite" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
+dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbusJava" }
+dbus-java-transport = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbusJava" }
+slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 icons-lucide = { module = "com.composables:icons-lucide", version.ref = "iconsLucide" }
 compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "composeRulesDetekt" }
 
