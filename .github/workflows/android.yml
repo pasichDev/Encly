@@ -337,6 +337,21 @@ jobs:
           ENCLY_KEYSTORE_IT: '1'
         run: ./gradlew :core:keystore:desktopTest --rerun
 
+      # RealBackendTest skips every OS but the runner's own: exactly one of its tests must have run here,
+      # so a backend that silently skipped (wrong OS detection, variable not passed) fails the job.
+      - name: The real secret store was exercised
+        run: |
+          report=core/keystore/build/test-results/desktopTest/TEST-com.pasich.encly.core.keystore.RealBackendTest.xml
+          test -f "$report"
+          tests=$(grep -o 'tests="[0-9]*"' "$report" | head -1 | tr -dc 0-9)
+          skipped=$(grep -o 'skipped="[0-9]*"' "$report" | head -1 | tr -dc 0-9)
+          failures=$(grep -o 'failures="[0-9]*"' "$report" | head -1 | tr -dc 0-9)
+          echo "RealBackendTest: tests=$tests skipped=$skipped failures=$failures"
+          if [ $((tests - skipped)) -lt 1 ] || [ "$failures" != "0" ]; then
+            echo "::error::RealBackendTest did not run against the ${{ runner.os }} secret store"
+            exit 1
+          fi
+
       - name: Upload test reports on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
