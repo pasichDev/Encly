@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
@@ -139,7 +141,7 @@ class EditorDrawTest {
                         state.blocks[0],
                         controller,
                         registry,
-                        FindHighlights(androidx.compose.runtime.mutableStateOf(FindState())),
+                        FindHighlights(remember { mutableStateOf(FindState()) }),
                     )
                     HBlock(state.blocks[0] as Block.HBlock, actions)
                 }
