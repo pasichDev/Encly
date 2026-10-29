@@ -1,7 +1,7 @@
 package com.pasich.encly.core.keystore
 
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.PinKeySlot
-import java.security.SecureRandom
 
 /** A [SecretStore] in memory, with failures to inject and a record of every array it handed out. */
 internal class InMemorySecretStore : SecretStore {
@@ -28,7 +28,7 @@ internal class InMemorySecretStore : SecretStore {
 
     override fun create(slot: PinKeySlot): ByteArray {
         createFailure?.let { throw it }
-        val secret = ByteArray(SecretStore.SECRET_SIZE).also(SecureRandom()::nextBytes)
+        val secret = Crypto.randomBytes(SecretStore.SECRET_SIZE)
         secrets[slot] = secret
         return secret.copyOf().also { handedOut += it }
     }

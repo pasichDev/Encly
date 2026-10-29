@@ -21,4 +21,4 @@ atomicfu `SynchronizedObject`s (the same critical sections as the `synchronized`
 | Android | `commonMain`, `jvmAndAndroidMain` | `androidHostTest` |
 | Desktop JVM | `commonMain`, `jvmAndAndroidMain` | `desktopTest` (also `SecurityBoundaryTest`) |
 
-No iOS targets while `:core:crypto` has none. Line coverage is gated at 85 %.
+iOS targets (device and simulator) with the golden tests of every format running on the simulator. Line coverage is gated at 85 %.

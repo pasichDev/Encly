@@ -59,7 +59,7 @@ class CryptoBoundaryTest {
     @Test
     fun onlyTheJvmSourceSetHoldsPlatformCode() {
         val platformSets = File(moduleRoot, "src").listFiles().orEmpty().map { it.name }.filter { it.endsWith("Main") }
-        assertEquals(listOf("commonMain", "jvmAndAndroidMain"), platformSets.sorted())
+        assertEquals(listOf("commonMain", "iosMain", "jvmAndAndroidMain"), platformSets.sorted())
     }
 
     @Test
@@ -70,9 +70,17 @@ class CryptoBoundaryTest {
     }
 
     @Test
-    fun theModuleHasNoIosTargetsUntilAesGcmExistsThere() {
-        val build = File(moduleRoot, "build.gradle.kts").readText()
-        assertFalse(Regex("""id\("encly\.kmp-ios"\)""").containsMatchIn(build), "iOS needs a real AES-GCM first")
+    fun theIosSourcesImportOnlyAppleLibrariesAndTheModulesOwnCode() {
+        val iosSources = File(moduleRoot, "src/iosMain/kotlin").walkTopDown().filter {
+            it.isFile && it.extension == "kt"
+        }
+        val offenders = iosSources.flatMap { file ->
+            file.codeLines().mapNotNull { (number, line) ->
+                val import = IMPORT.matchEntire(line.trim())?.groupValues?.get(1) ?: return@mapNotNull null
+                "${file.name}:$number import $import".takeUnless { IOS_ALLOWED_PREFIXES.any(import::startsWith) }
+            }
+        }.toList()
+        assertEquals(emptyList(), offenders, "the iOS sources may import Apple libraries and the module itself")
     }
 
     @Test
@@ -99,6 +107,8 @@ class CryptoBoundaryTest {
             "kotlin.",
             "kotlinx.",
         )
+
+        val IOS_ALLOWED_PREFIXES = ALLOWED_PREFIXES + listOf("platform.", "kotlinx.cinterop.")
 
         // Direct uses of the platform that need no import: java.*, android.*, System, javaClass.
         val PLATFORM_USE = Regex(

@@ -3,9 +3,10 @@ package com.pasich.encly.core.keystore
 import com.pasich.encly.core.security.PinKeySlot
 
 /**
- * The operating system's secret store, as far as [DesktopPinFactor] needs it: one 32-byte secret per
- * [PinKeySlot], which only the signed-in OS user can read back. Implementations never write the secret
- * anywhere unprotected, never log it, and wipe every copy they hold once they have handed it over.
+ * The operating system's secret store, as far as the PIN factors need it ([DesktopPinFactor] on the desktop, the iOS
+ * factor on iOS): one 32-byte secret per [PinKeySlot], which only the signed-in OS user can read back.
+ * Implementations never write the secret anywhere unprotected, never log it, and wipe every copy they hold once they
+ * have handed it over.
  */
 internal interface SecretStore {
     /** The secret of [slot], or null when there is none. The caller wipes the result. */
@@ -13,7 +14,7 @@ internal interface SecretStore {
     fun read(slot: PinKeySlot): ByteArray?
 
     /**
-     * Generates [SECRET_SIZE] random bytes from SecureRandom, stores them as the secret of [slot] (replacing
+     * Generates [SECRET_SIZE] random bytes from the platform CSPRNG, stores them as the secret of [slot] (replacing
      * any earlier one) and returns them. The caller wipes the result.
      */
     @Throws(SecretStoreException::class)
@@ -45,9 +46,3 @@ internal const val APPLICATION_ID = "com.pasich.encly"
  */
 internal class SecretStoreException(val lost: Boolean, message: String, cause: Throwable? = null) :
     Exception(message, cause)
-
-/**
- * There is no usable secret store: the operating system has none Encly supports, or (on Linux) no Secret
- * Service is running. Encly never falls back to keeping the secret in a file.
- */
-public class SecretStoreUnavailableException(message: String, cause: Throwable? = null) : Exception(message, cause)

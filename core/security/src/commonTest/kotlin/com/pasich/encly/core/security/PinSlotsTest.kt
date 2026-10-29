@@ -154,10 +154,10 @@ class PinSlotsTest {
 
     @Test
     fun differentInfoGivesIndependentKeys() {
-        val a = Hkdf.sha256(dek, salt, "a".toByteArray(), 32)
-        val b = Hkdf.sha256(dek, salt, "b".toByteArray(), 32)
+        val a = Hkdf.sha256(dek, salt, "a".encodeToByteArray(), 32)
+        val b = Hkdf.sha256(dek, salt, "b".encodeToByteArray(), 32)
 
         assertFalse(a.contentEquals(b))
-        assertEquals(16, Hkdf.sha256(dek, salt, "a".toByteArray(), 16).size)
+        assertEquals(16, Hkdf.sha256(dek, salt, "a".encodeToByteArray(), 16).size)
     }
 }

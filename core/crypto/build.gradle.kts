@@ -1,15 +1,17 @@
 import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 // The one door to cryptographic primitives (Crypto: AES-256-GCM, HKDF, PBKDF2, SHA-256, the CSPRNG) and
-// BIP-39 mnemonics. The API is common code; the implementation is JCA, shared by the Android and the
-// desktop target (jvmAndAndroidMain).
-//
-// There are no iOS targets: Apple's public CommonCrypto has no AES-GCM (CCCryptorGCM is private API) and
-// CryptoKit cannot be called from Kotlin/Native without a Swift bridge, so a correct AES-GCM for iOS needs
-// a decision about that bridge first. A placeholder with weaker crypto is not an option, so the targets
-// are added together with the real implementation.
+// BIP-39 mnemonics. The API is common code; the implementation is JCA on the JVM and Android
+// (jvmAndAndroidMain) and Apple's own libraries on iOS (iosMain): CommonCrypto for SHA-256, HMAC and PBKDF2,
+// SecRandomCopyBytes for randomness, and CryptoKit for AES-GCM, which CommonCrypto has no public API for.
+// CryptoKit is Swift-only, so src/iosMain/swift/EnclyAesGcm.swift exports two C functions over it; the
+// SwiftStaticLibrary tasks below compile that file for each SDK and cinterop links it into the klib
+// (src/nativeInterop/cinterop/enclyaesgcm.def). Nothing is implemented by hand.
 plugins {
     id("encly.kmp-library")
+    id("encly.kmp-ios")
     id("encly.quality")
 }
 
@@ -28,6 +30,35 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+        }
+    }
+}
+
+// The Swift bridge exists only where Xcode does; on other hosts Kotlin does not build the Apple targets.
+if (OperatingSystem.current().isMacOsX) {
+    val swiftTargets = mapOf(
+        "iosArm64" to ("iphoneos" to "arm64-apple-ios15.0"),
+        "iosSimulatorArm64" to ("iphonesimulator" to "arm64-apple-ios15.0-simulator"),
+    )
+    val cinteropDir = layout.projectDirectory.dir("src/nativeInterop/cinterop")
+    kotlin.targets.withType<KotlinNativeTarget>().configureEach {
+        val (sdkName, tripleName) = swiftTargets[name] ?: return@configureEach
+        val swiftLibrary = tasks.register<SwiftStaticLibrary>("compileSwift${name.replaceFirstChar(Char::uppercase)}") {
+            source.set(layout.projectDirectory.file("src/iosMain/swift/EnclyAesGcm.swift"))
+            sdk.set(sdkName)
+            triple.set(tripleName)
+            libraryName.set("enclyaesgcm")
+            outputDir.set(layout.buildDirectory.dir("swift/$name"))
+        }
+        compilations.getByName("main").cinterops.create("enclyaesgcm") {
+            definitionFile.set(cinteropDir.file("enclyaesgcm.def"))
+            includeDirs(cinteropDir)
+            extraOpts("-libraryPath", swiftLibrary.flatMap { it.outputDir }.get().asFile.path)
+            // The library is copied into the klib, so a change to it must run cinterop again.
+            tasks.named(interopProcessingTaskName) {
+                dependsOn(swiftLibrary)
+                inputs.dir(swiftLibrary.flatMap { it.outputDir }).withPropertyName("swiftLibrary")
+            }
         }
     }
 }

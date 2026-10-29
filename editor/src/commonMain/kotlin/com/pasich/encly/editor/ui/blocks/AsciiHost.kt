@@ -7,7 +7,9 @@ package com.pasich.encly.editor.ui.blocks
  * never name a different site than the one the link opens.
  *
  * Android and the desktop JVM use java.net.IDN, which also normalizes and rejects invalid names.
- * iOS has no such call in Kotlin/Native's Foundation, so it uses the pure-Kotlin [Punycode] encoder.
+ * iOS has no such call in Kotlin/Native's Foundation, so it prepares the name the way Nameprep does (NFKC from
+ * Foundation, the mapping and the prohibited characters of IDNA 2003) and encodes it with the pure-Kotlin [Punycode]
+ * encoder; AsciiHostTest pins both to the JVM answers.
  */
 
 /** [host] (lower case, with a non-ASCII character) in its ASCII form; null when it is not a valid name. */

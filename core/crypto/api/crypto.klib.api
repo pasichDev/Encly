@@ -1,0 +1,47 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <Encly.core:crypto>
+final class com.pasich.encly.core.crypto/CryptoException : kotlin/RuntimeException { // com.pasich.encly.core.crypto/CryptoException|null[0]
+    constructor <init>(kotlin/Throwable) // com.pasich.encly.core.crypto/CryptoException.<init>|<init>(kotlin.Throwable){}[0]
+}
+
+final class com.pasich.encly.core.security.bip39/Bip39 { // com.pasich.encly.core.security.bip39/Bip39|null[0]
+    constructor <init>() // com.pasich.encly.core.security.bip39/Bip39.<init>|<init>(){}[0]
+
+    final fun decode(kotlin/CharArray): kotlin/ByteArray? // com.pasich.encly.core.security.bip39/Bip39.decode|decode(kotlin.CharArray){}[0]
+    final fun encode(kotlin/ByteArray): kotlin/CharArray // com.pasich.encly.core.security.bip39/Bip39.encode|encode(kotlin.ByteArray){}[0]
+    final fun isValid(kotlin/CharArray): kotlin/Boolean // com.pasich.encly.core.security.bip39/Bip39.isValid|isValid(kotlin.CharArray){}[0]
+}
+
+final object com.pasich.encly.core.crypto/Crypto { // com.pasich.encly.core.crypto/Crypto|null[0]
+    final const val KEY_BYTES // com.pasich.encly.core.crypto/Crypto.KEY_BYTES|{}KEY_BYTES[0]
+        final fun <get-KEY_BYTES>(): kotlin/Int // com.pasich.encly.core.crypto/Crypto.KEY_BYTES.<get-KEY_BYTES>|<get-KEY_BYTES>(){}[0]
+    final const val NONCE_BYTES // com.pasich.encly.core.crypto/Crypto.NONCE_BYTES|{}NONCE_BYTES[0]
+        final fun <get-NONCE_BYTES>(): kotlin/Int // com.pasich.encly.core.crypto/Crypto.NONCE_BYTES.<get-NONCE_BYTES>|<get-NONCE_BYTES>(){}[0]
+    final const val SHA256_BYTES // com.pasich.encly.core.crypto/Crypto.SHA256_BYTES|{}SHA256_BYTES[0]
+        final fun <get-SHA256_BYTES>(): kotlin/Int // com.pasich.encly.core.crypto/Crypto.SHA256_BYTES.<get-SHA256_BYTES>|<get-SHA256_BYTES>(){}[0]
+    final const val TAG_BYTES // com.pasich.encly.core.crypto/Crypto.TAG_BYTES|{}TAG_BYTES[0]
+        final fun <get-TAG_BYTES>(): kotlin/Int // com.pasich.encly.core.crypto/Crypto.TAG_BYTES.<get-TAG_BYTES>|<get-TAG_BYTES>(){}[0]
+
+    final fun aesGcmOpen(kotlin/ByteArray, kotlin/ByteArray, kotlin/ByteArray, kotlin/ByteArray): kotlin/ByteArray? // com.pasich.encly.core.crypto/Crypto.aesGcmOpen|aesGcmOpen(kotlin.ByteArray;kotlin.ByteArray;kotlin.ByteArray;kotlin.ByteArray){}[0]
+    final fun aesGcmSeal(kotlin/ByteArray, kotlin/ByteArray, kotlin/ByteArray, kotlin/ByteArray): kotlin/ByteArray // com.pasich.encly.core.crypto/Crypto.aesGcmSeal|aesGcmSeal(kotlin.ByteArray;kotlin.ByteArray;kotlin.ByteArray;kotlin.ByteArray){}[0]
+    final fun constantTimeEquals(kotlin/ByteArray, kotlin/ByteArray): kotlin/Boolean // com.pasich.encly.core.crypto/Crypto.constantTimeEquals|constantTimeEquals(kotlin.ByteArray;kotlin.ByteArray){}[0]
+    final fun hkdfSha256(kotlin/ByteArray, kotlin/ByteArray, kotlin/ByteArray, kotlin/Int): kotlin/ByteArray // com.pasich.encly.core.crypto/Crypto.hkdfSha256|hkdfSha256(kotlin.ByteArray;kotlin.ByteArray;kotlin.ByteArray;kotlin.Int){}[0]
+    final fun pbkdf2HmacSha256(kotlin/ByteArray, kotlin/ByteArray, kotlin/Int, kotlin/Int): kotlin/ByteArray // com.pasich.encly.core.crypto/Crypto.pbkdf2HmacSha256|pbkdf2HmacSha256(kotlin.ByteArray;kotlin.ByteArray;kotlin.Int;kotlin.Int){}[0]
+    final fun pbkdf2HmacSha256(kotlin/CharArray, kotlin/ByteArray, kotlin/Int, kotlin/Int): kotlin/ByteArray // com.pasich.encly.core.crypto/Crypto.pbkdf2HmacSha256|pbkdf2HmacSha256(kotlin.CharArray;kotlin.ByteArray;kotlin.Int;kotlin.Int){}[0]
+    final fun randomBytes(kotlin/Int): kotlin/ByteArray // com.pasich.encly.core.crypto/Crypto.randomBytes|randomBytes(kotlin.Int){}[0]
+    final fun randomLong(): kotlin/Long // com.pasich.encly.core.crypto/Crypto.randomLong|randomLong(){}[0]
+    final fun sha256(kotlin/ByteArray, kotlin/Int = ..., kotlin/Int = ...): kotlin/ByteArray // com.pasich.encly.core.crypto/Crypto.sha256|sha256(kotlin.ByteArray;kotlin.Int;kotlin.Int){}[0]
+}
+
+final object com.pasich.encly.core.security.bip39/Bip39Wordlist { // com.pasich.encly.core.security.bip39/Bip39Wordlist|null[0]
+    final val words // com.pasich.encly.core.security.bip39/Bip39Wordlist.words|{}words[0]
+        final fun <get-words>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.security.bip39/Bip39Wordlist.words.<get-words>|<get-words>(){}[0]
+
+    final fun indexOf(kotlin/CharArray, kotlin/Int, kotlin/Int): kotlin/Int // com.pasich.encly.core.security.bip39/Bip39Wordlist.indexOf|indexOf(kotlin.CharArray;kotlin.Int;kotlin.Int){}[0]
+}

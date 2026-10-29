@@ -10,7 +10,7 @@ import kotlin.test.fail
 class BackupCipherTest {
 
     private val words = Mnemonic.generate()
-    private val plaintext = "{\"notes\":[\"secret note body\"]}".toByteArray()
+    private val plaintext = "{\"notes\":[\"secret note body\"]}".encodeToByteArray()
 
     private fun phrase(chars: CharArray = words) = BackupSecret.RecoveryPhrase(chars.copyOf())
 
@@ -33,7 +33,7 @@ class BackupCipherTest {
     @Test
     fun wordsAreMatchedRegardlessOfCaseAndSpacing() {
         val file = BackupCipher.seal(plaintext, phrase())
-        val sloppy = ("  " + String(words).uppercase().replace(" ", "   \n") + " ").toCharArray()
+        val sloppy = ("  " + words.concatToString().uppercase().replace(" ", "   \n") + " ").toCharArray()
 
         assertContentEquals(plaintext, BackupCipher.open(file, phrase(sloppy)))
     }
@@ -60,7 +60,7 @@ class BackupCipherTest {
     fun theFileNeverContainsThePlaintext() {
         val file = BackupCipher.seal(plaintext, phrase())
 
-        assertFalse(String(file, Charsets.ISO_8859_1).contains("secret note body"))
+        assertFalse(file.decodeToString().contains("secret note body"))
     }
 
     @Test
@@ -129,7 +129,7 @@ class BackupCipherTest {
     @Test
     fun otherFilesAreNotBackups() {
         assertError(BackupError.NOT_A_BACKUP) { BackupCipher.inspect(ByteArray(0)) }
-        assertError(BackupError.NOT_A_BACKUP) { BackupCipher.inspect("%PDF-1.7 not a backup".toByteArray()) }
+        assertError(BackupError.NOT_A_BACKUP) { BackupCipher.inspect("%PDF-1.7 not a backup".encodeToByteArray()) }
     }
 
     @Test

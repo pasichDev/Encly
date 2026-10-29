@@ -11,15 +11,20 @@ The one door to cryptographic primitives, and BIP-39.
 |---|---|---|
 | Android | `commonMain`, `jvmAndAndroidMain` | `androidHostTest` |
 | Desktop JVM | `commonMain`, `jvmAndAndroidMain` | `desktopTest` (also `CryptoBoundaryTest`) |
+| iOS (device, simulator) | `commonMain`, `iosMain` | `iosSimulatorArm64Test` (`CryptoTest` and the BIP-39 tests run there too) |
 
 `jvmAndAndroidMain` holds the JCA implementation (`JcaCrypto`) both JVM targets share.
 
 ## iOS
 
-There are no iOS targets yet, on purpose. Apple's public CommonCrypto gives SHA-256, HMAC, PBKDF2
-(`CCKeyDerivationPBKDF`) and `SecRandomCopyBytes`, but no AES-GCM (`CCCryptorGCM` is private API), and CryptoKit
-cannot be called from Kotlin/Native without a Swift bridge. A placeholder that does weaker crypto is not an option,
-so the targets are added (`id("encly.kmp-ios")`) together with a real AES-GCM implementation. Until then
-`:core:security` has no iOS target either.
+`iosMain` uses only Apple's own libraries, no cryptography is written by hand: CommonCrypto for SHA-256, HMAC (HKDF is
+RFC 5869 over it, as on the JVM) and PBKDF2 (`CCKeyDerivationPBKDF`), `SecRandomCopyBytes` for randomness,
+`timingsafe_bcmp` for the comparison and CryptoKit's `AES.GCM`. CommonCrypto has no public AES-GCM and CryptoKit is
+Swift-only, so `src/iosMain/swift/EnclyAesGcm.swift` exports two C functions over it (`@_cdecl`, declared in
+`src/nativeInterop/cinterop/enclyaesgcm.h`). Gradle compiles it per SDK with `SwiftStaticLibrary` (`build-logic`; needs
+Xcode) and cinterop links the static library into the klib. Keys and data cross as raw pointers into the Kotlin arrays,
+so they can be wiped like on the JVM. The golden vectors of `CryptoTest` and `:core:security` pin the bytes: they are
+the same on every platform.
 
-Line and branch coverage are gated at 100 %.
+Line and branch coverage are gated at 100 % (Kover measures the JVM targets; the iOS code is covered by
+`iosSimulatorArm64Test`).

@@ -52,8 +52,8 @@ class BackupPayloadCodecTest {
 
     @Test
     fun malformedJsonIsInvalid() {
-        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode("{not json".toByteArray()) }
-        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode("{}".toByteArray()) }
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode("{not json".encodeToByteArray()) }
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode("{}".encodeToByteArray()) }
     }
 
     @Test

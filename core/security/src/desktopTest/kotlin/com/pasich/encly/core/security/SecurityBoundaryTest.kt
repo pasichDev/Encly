@@ -61,7 +61,7 @@ class SecurityBoundaryTest {
     @Test
     fun onlyTwoJvmFilesTouchTheJvm() {
         val platformSets = File(moduleRoot, "src").listFiles().orEmpty().map { it.name }.filter { it.endsWith("Main") }
-        assertEquals(listOf("commonMain", "jvmAndAndroidMain"), platformSets.sorted())
+        assertEquals(listOf("commonMain", "iosMain", "jvmAndAndroidMain"), platformSets.sorted())
         val jvmFiles = File(moduleRoot, "src/jvmAndAndroidMain/kotlin").walkTopDown()
             .filter { it.isFile && it.extension == "kt" }.map { it.name }.toSet()
         assertEquals(JVM_FILES.keys, jvmFiles)

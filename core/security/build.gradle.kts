@@ -7,9 +7,12 @@ import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 // factor, the biometric prompt, the lockout clock, the device lock watcher, the vault file's fsync, the
 // encrypted database); :app implements them with Android types and binds them in its graph.
 //
-// There are no iOS targets because :core:crypto has none yet (see its build file).
+// iOS (device and simulator): the same common code over :core:crypto's Apple implementation; iosMain adds the
+// POSIX vault file (IosVaultFileIo) and the backup JSON as wiped bytes. The golden tests of every persisted
+// format are in commonTest, so they run on the simulator too.
 plugins {
     id("encly.kmp-library")
+    id("encly.kmp-ios")
     id("encly.quality")
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.metro)
@@ -52,6 +55,10 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+        }
+        getByName("iosMain").dependencies {
+            // The backup payload goes through a kotlinx-io Buffer on iOS (see IosJsonBytes).
+            implementation(libs.kotlinx.serialization.json.io)
         }
         // JUnit and Mockito run on both JVM targets: the tests that need java.io, threads or mocks.
         getByName("jvmAndAndroidTest").dependencies {

@@ -6,20 +6,17 @@ import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupFormat
 import com.pasich.encly.core.backup.BackupKeys
 import com.pasich.encly.core.backup.BackupSecret
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.testutil.FakeLockoutClock
-import com.pasich.encly.testutil.tempVaultFile
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import java.security.MessageDigest
-import javax.crypto.Cipher
-import javax.crypto.Mac
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
+import com.pasich.encly.testutil.InMemoryVaultFileIo
+import com.pasich.encly.testutil.hmacSha256
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Byte-for-byte pins of every cryptographic format the app persists: the PIN, wipe, duress and
@@ -38,7 +35,7 @@ class CryptoGoldenTest {
     private val decoyKek = seq(32, 200, 1)
     private val backupSalt = seq(32, 0x10, 1)
     private val hardwareKey = seq(32, 0x70, 1)
-    private val payload = "{\"notes\":[\"secret note body\"]}".toByteArray()
+    private val payload = "{\"notes\":[\"secret note body\"]}".encodeToByteArray()
 
     // --- HKDF -----------------------------------------------------------------------------
 
@@ -58,44 +55,44 @@ class CryptoGoldenTest {
             length = 32,
         )
 
-        assertArrayEquals(GoldenVectors.rfc5869Tc1Okm32, tc1)
-        assertArrayEquals(GoldenVectors.rfc5869Tc2Okm32, tc2)
+        assertContentEquals(GoldenVectors.rfc5869Tc1Okm32, tc1)
+        assertContentEquals(GoldenVectors.rfc5869Tc2Okm32, tc2)
     }
 
     @Test
     fun hkdfShorterOutputIsThePrefixOfTheLongerOne() {
-        val full = Hkdf.sha256(dek, salt, "info".toByteArray(), 32)
-        val short = Hkdf.sha256(dek, salt, "info".toByteArray(), 16)
+        val full = Hkdf.sha256(dek, salt, "info".encodeToByteArray(), 32)
+        val short = Hkdf.sha256(dek, salt, "info".encodeToByteArray(), 16)
 
-        assertArrayEquals(full.copyOf(16), short)
+        assertContentEquals(full.copyOf(16), short)
     }
 
     @Test
     fun hkdfRefusesAnEmptySaltAndAnOutputLongerThanOneBlock() {
-        assertThrows(IllegalArgumentException::class.java) { Hkdf.sha256(dek, ByteArray(0), ByteArray(1), 32) }
-        assertThrows(IllegalArgumentException::class.java) { Hkdf.sha256(dek, salt, ByteArray(1), 33) }
-        assertThrows(IllegalArgumentException::class.java) { Hkdf.sha256(dek, salt, ByteArray(1), 0) }
+        assertFailsWith<IllegalArgumentException> { Hkdf.sha256(dek, ByteArray(0), ByteArray(1), 32) }
+        assertFailsWith<IllegalArgumentException> { Hkdf.sha256(dek, salt, ByteArray(1), 33) }
+        assertFailsWith<IllegalArgumentException> { Hkdf.sha256(dek, salt, ByteArray(1), 0) }
     }
 
     @Test
     fun theKeyHierarchyDerivesTheGoldenKeys() {
         val stretchedAndHardware = GoldenVectors.pinSw + GoldenVectors.pinHw
 
-        assertArrayEquals(GoldenVectors.decoyKeyKek, DuressSlots.decoyKeyKek(dek))
-        assertArrayEquals(GoldenVectors.pinKek, pinKey(stretchedAndHardware, "encly/pin/kek/v3"))
-        assertArrayEquals(GoldenVectors.pinWipeKek, pinKey(stretchedAndHardware, "encly/pin/wipe/v3"))
-        assertArrayEquals(GoldenVectors.pinDecoyKek, pinKey(stretchedAndHardware, "encly/pin/decoy/v3"))
+        assertContentEquals(GoldenVectors.decoyKeyKek, DuressSlots.decoyKeyKek(dek))
+        assertContentEquals(GoldenVectors.pinKek, pinKey(stretchedAndHardware, "encly/pin/kek/v3"))
+        assertContentEquals(GoldenVectors.pinWipeKek, pinKey(stretchedAndHardware, "encly/pin/wipe/v3"))
+        assertContentEquals(GoldenVectors.pinDecoyKek, pinKey(stretchedAndHardware, "encly/pin/decoy/v3"))
     }
 
-    private fun pinKey(ikm: ByteArray, info: String) = Hkdf.sha256(ikm, salt, info.toByteArray(), 32)
+    private fun pinKey(ikm: ByteArray, info: String) = Hkdf.sha256(ikm, salt, info.encodeToByteArray(), 32)
 
     // --- Recovery phrase, SHA-256 ---------------------------------------------------------
 
     @Test
     fun seedHashIsSha256OfTheNormalizedWords() {
         // FIPS 180-2 "abc".
-        assertArrayEquals(GoldenVectors.sha256Abc, Mnemonic.seedHash("abc".toCharArray()))
-        assertArrayEquals(GoldenVectors.seedHash, Mnemonic.seedHash(PHRASE.toCharArray()))
+        assertContentEquals(GoldenVectors.sha256Abc, Mnemonic.seedHash("abc".toCharArray()))
+        assertContentEquals(GoldenVectors.seedHash, Mnemonic.seedHash(PHRASE.toCharArray()))
     }
 
     @Test
@@ -103,15 +100,15 @@ class CryptoGoldenTest {
         val messy = "  Abandon\tabandon   ABANDON abandon abandon abandon abandon abandon abandon abandon" +
             " abandon\n\nAbout \n"
 
-        assertArrayEquals(GoldenVectors.seedHash, Mnemonic.seedHash(messy.toCharArray()))
+        assertContentEquals(GoldenVectors.seedHash, Mnemonic.seedHash(messy.toCharArray()))
     }
 
     @Test
     fun seedHashOfNonAsciiWordsIsSha256OfTheirUtf8() {
         val words = "café über"
 
-        assertArrayEquals(
-            MessageDigest.getInstance("SHA-256").digest(words.toByteArray(Charsets.UTF_8)),
+        assertContentEquals(
+            Crypto.sha256(words.encodeToByteArray()),
             Mnemonic.seedHash(words.toCharArray()),
         )
     }
@@ -120,8 +117,8 @@ class CryptoGoldenTest {
     fun backupKeysDeriveTheGoldenRootAndFileKey() {
         val root = BackupKeys.rootFromMnemonic(PHRASE.toCharArray())
 
-        assertArrayEquals(GoldenVectors.backupRoot, root)
-        assertArrayEquals(GoldenVectors.backupFileKey, BackupKeys.fileKeyFromRoot(root, backupSalt))
+        assertContentEquals(GoldenVectors.backupRoot, root)
+        assertContentEquals(GoldenVectors.backupFileKey, BackupKeys.fileKeyFromRoot(root, backupSalt))
     }
 
     // --- PIN, wipe, duress and decoy-key slots --------------------------------------------
@@ -130,8 +127,8 @@ class CryptoGoldenTest {
     fun theGoldenPinSlotOpensWithItsKek() {
         val parsed = PinSlots.parseSlot(GoldenVectors.pinSlot)!!
 
-        assertArrayEquals(salt, parsed.salt)
-        assertArrayEquals(dek, PinSlots.openSlotOrNull(parsed, kek))
+        assertContentEquals(salt, parsed.salt)
+        assertContentEquals(dek, PinSlots.openSlotOrNull(parsed, kek))
         assertNull(PinSlots.openSlotOrNull(parsed, wipeKek))
     }
 
@@ -141,9 +138,9 @@ class CryptoGoldenTest {
 
         assertEquals(1 + 16 + 12 + 32 + 16, slot.size)
         assertEquals(3, slot[0].toInt())
-        assertArrayEquals(salt, slot.copyOfRange(1, 17))
-        val aad = "encly/pin/slot/v3".toByteArray() + byteArrayOf(3) + salt
-        assertArrayEquals(dek, Reference.gcmOpen(kek, slot.copyOfRange(17, 29), aad, slot.copyOfRange(29, slot.size)))
+        assertContentEquals(salt, slot.copyOfRange(1, 17))
+        val aad = "encly/pin/slot/v3".encodeToByteArray() + byteArrayOf(3) + salt
+        assertContentEquals(dek, Reference.gcmOpen(kek, slot.copyOfRange(17, 29), aad, slot.copyOfRange(29, slot.size)))
         assertFalse(slot.contentEquals(PinSlots.sealSlot(dek, kek, salt)))
     }
 
@@ -161,7 +158,7 @@ class CryptoGoldenTest {
 
         assertEquals(1 + 12 + 32 + 16, slot.size)
         assertEquals(3, slot[0].toInt())
-        val aad = "encly/pin/wipe-slot/v3".toByteArray() + byteArrayOf(3) + salt
+        val aad = "encly/pin/wipe-slot/v3".encodeToByteArray() + byteArrayOf(3) + salt
         val marker = Reference.gcmOpen(wipeKek, slot.copyOfRange(1, 13), aad, slot.copyOfRange(13, slot.size))
         assertEquals(32, marker.size)
         assertTrue(PinSlots.opensWipeSlot(slot, wipeKek, salt))
@@ -182,8 +179,8 @@ class CryptoGoldenTest {
     fun theGoldenDuressSlotOpensWithItsKekAndSalt() {
         val aad = DuressSlots.decoySlotAad(salt)
 
-        assertArrayEquals("encly/pin/decoy-slot/v3".toByteArray() + byteArrayOf(3) + salt, aad)
-        assertArrayEquals(decoyDek, DuressSlots.openDecoy(GoldenVectors.duressSlot, decoyKek, aad))
+        assertContentEquals("encly/pin/decoy-slot/v3".encodeToByteArray() + byteArrayOf(3) + salt, aad)
+        assertContentEquals(decoyDek, DuressSlots.openDecoy(GoldenVectors.duressSlot, decoyKek, aad))
         assertNull(DuressSlots.openDecoy(GoldenVectors.duressSlot, kek, aad))
         assertNull(DuressSlots.openDecoy(GoldenVectors.duressSlot, decoyKek, DuressSlots.decoySlotAad(seq(16, 1, 3))))
     }
@@ -192,15 +189,21 @@ class CryptoGoldenTest {
     fun theGoldenDecoyKeyOpensOnlyUnderItsOwnAad() {
         val kek = GoldenVectors.decoyKeyKek
 
-        assertArrayEquals(decoyDek, DuressSlots.openDecoy(GoldenVectors.decoyKeyActive, kek, DuressSlots.DECOY_KEY_AAD))
+        assertContentEquals(
+            decoyDek,
+            DuressSlots.openDecoy(GoldenVectors.decoyKeyActive, kek, DuressSlots.DECOY_KEY_AAD),
+        )
         assertNull(DuressSlots.openDecoy(GoldenVectors.decoyKeyActive, kek, DuressSlots.DECOY_KEY_OFF_AAD))
-        assertArrayEquals(
+        assertContentEquals(
             decoyDek,
             DuressSlots.openDecoy(GoldenVectors.decoyKeyOff, kek, DuressSlots.DECOY_KEY_OFF_AAD),
         )
         assertNull(DuressSlots.openDecoy(GoldenVectors.decoyKeyOff, kek, DuressSlots.DECOY_KEY_AAD))
-        assertArrayEquals("encly/decoy/key/v1".toByteArray() + byteArrayOf(3), DuressSlots.DECOY_KEY_AAD)
-        assertArrayEquals("encly/decoy/key/off/v1".toByteArray() + byteArrayOf(3), DuressSlots.DECOY_KEY_OFF_AAD)
+        assertContentEquals("encly/decoy/key/v1".encodeToByteArray() + byteArrayOf(3), DuressSlots.DECOY_KEY_AAD)
+        assertContentEquals(
+            "encly/decoy/key/off/v1".encodeToByteArray() + byteArrayOf(3),
+            DuressSlots.DECOY_KEY_OFF_AAD,
+        )
     }
 
     @Test
@@ -210,7 +213,10 @@ class CryptoGoldenTest {
 
         assertEquals(1 + 12 + 32 + 16, slot.size)
         assertEquals(3, slot[0].toInt())
-        assertArrayEquals(decoyDek, Reference.gcmOpen(decoyKek, slot.copyOfRange(1, 13), aad, slot.copyOfRange(13, 61)))
+        assertContentEquals(
+            decoyDek,
+            Reference.gcmOpen(decoyKek, slot.copyOfRange(1, 13), aad, slot.copyOfRange(13, 61)),
+        )
         assertEquals(slot.size, DuressSlots.randomSlot().size)
         assertEquals(3, DuressSlots.randomSlot()[0].toInt())
     }
@@ -234,16 +240,16 @@ class CryptoGoldenTest {
             "backup.slot" to GoldenVectors.backupSlot,
         )
 
-        assertArrayEquals(dek, manager.unlockWithSeed(PHRASE.toCharArray()))
-        assertArrayEquals(dek, manager.unlockWithSeed(MESSY_PHRASE.toCharArray()))
+        assertContentEquals(dek, manager.unlockWithSeed(PHRASE.toCharArray()))
+        assertContentEquals(dek, manager.unlockWithSeed(MESSY_PHRASE.toCharArray()))
         assertNull(manager.unlockWithSeed(OTHER_PHRASE.toCharArray()))
-        assertArrayEquals(GoldenVectors.backupRoot, manager.unwrapBackupRoot(dek))
+        assertContentEquals(GoldenVectors.backupRoot, manager.unwrapBackupRoot(dek))
         assertNull(manager.unwrapBackupRoot(seq(32, 1, 1)))
     }
 
     @Test
     fun theSlotsAVaultWritesOpenWithAnIndependentImplementation() {
-        val store = VaultStore(tempVaultFile())
+        val store = VaultStore(InMemoryVaultFileIo())
         val manager = SeedPhraseManager(store)
         assertTrue(manager.initializeVault(PHRASE.toCharArray()))
         val bootstrap = manager.copyBootstrapKey()!!
@@ -253,22 +259,22 @@ class CryptoGoldenTest {
 
         assertEquals(12 + 32 + 16, recovery.size)
         assertEquals(12 + 32 + 16, backup.size)
-        assertArrayEquals(
+        assertContentEquals(
             bootstrap,
             Reference.gcmOpen(
                 GoldenVectors.recoveryKek,
                 recovery.copyOf(12),
-                "encly/recovery/slot/v3".toByteArray(),
+                "encly/recovery/slot/v3".encodeToByteArray(),
                 recovery.copyOfRange(12, recovery.size),
             ),
         )
         val slotKek = Reference.hkdf(bootstrap, "encly/backup/slot/salt/v1", "encly/backup/slot/kek/v1")
-        assertArrayEquals(
+        assertContentEquals(
             GoldenVectors.backupRoot,
             Reference.gcmOpen(
                 slotKek,
                 backup.copyOf(12),
-                "encly/backup/slot/v1".toByteArray(),
+                "encly/backup/slot/v1".encodeToByteArray(),
                 backup.copyOfRange(12, backup.size),
             ),
         )
@@ -276,30 +282,30 @@ class CryptoGoldenTest {
 
     @Test
     fun aVaultOpensItsOwnBackupKeyAndAddsOneForTheRightPhraseOnly() {
-        val store = VaultStore(tempVaultFile())
+        val store = VaultStore(InMemoryVaultFileIo())
         val manager = SeedPhraseManager(store)
         assertTrue(manager.initializeVault(PHRASE.toCharArray()))
         val bootstrap = manager.copyBootstrapKey()!!
 
-        assertArrayEquals(GoldenVectors.backupRoot, manager.unwrapBackupRoot(bootstrap))
+        assertContentEquals(GoldenVectors.backupRoot, manager.unwrapBackupRoot(bootstrap))
         assertFalse(manager.createBackupKey(OTHER_PHRASE.toCharArray(), bootstrap))
         assertTrue(manager.createBackupKey(PHRASE.toCharArray(), bootstrap))
-        assertArrayEquals(GoldenVectors.backupRoot, manager.unwrapBackupRoot(bootstrap))
+        assertContentEquals(GoldenVectors.backupRoot, manager.unwrapBackupRoot(bootstrap))
     }
 
     // --- Backup file ----------------------------------------------------------------------
 
     @Test
     fun theGoldenBackupFileOpensWithThePhraseAndWithTheRoot() {
-        assertArrayEquals(
+        assertContentEquals(
             payload,
             BackupCipher.open(GoldenVectors.backupFile.copyOf(), BackupSecret.RecoveryPhrase(PHRASE.toCharArray())),
         )
-        assertArrayEquals(
+        assertContentEquals(
             payload,
             BackupCipher.open(goldenFile(), BackupSecret.RecoveryPhrase(MESSY_PHRASE.toCharArray())),
         )
-        assertArrayEquals(
+        assertContentEquals(
             payload,
             BackupCipher.open(goldenFile(), BackupSecret.RecoveryRoot(GoldenVectors.backupRoot.copyOf())),
         )
@@ -322,7 +328,7 @@ class CryptoGoldenTest {
         val file = BackupCipher.seal(payload, BackupSecret.RecoveryPhrase(PHRASE.toCharArray()))
 
         assertEquals(BackupFormat.HEADER_LENGTH + payload.size + 16, file.size)
-        assertArrayEquals("ENCLYBAK".toByteArray(), file.copyOf(8))
+        assertContentEquals("ENCLYBAK".encodeToByteArray(), file.copyOf(8))
         assertEquals(1, file[9].toInt())
         assertEquals(1, file[10].toInt())
         assertEquals(32, file[11].toInt())
@@ -330,9 +336,9 @@ class CryptoGoldenTest {
         val header = file.copyOf(61)
         val fileKey = Reference.hkdfBytes(GoldenVectors.backupRoot, file.copyOfRange(12, 44), "encly/backup/file/v1")
         val opened = Reference.gcmOpen(fileKey, file.copyOfRange(45, 57), header, file.copyOfRange(61, file.size))
-        assertArrayEquals(payload, opened)
+        assertContentEquals(payload, opened)
         val root = BackupSecret.RecoveryRoot(GoldenVectors.backupRoot.copyOf())
-        assertArrayEquals(payload, BackupCipher.open(file, root))
+        assertContentEquals(payload, BackupCipher.open(file, root))
     }
 
     @Test
@@ -348,8 +354,8 @@ class CryptoGoldenTest {
 
     @Test
     fun theSlotFileIsTheGoldenBytes() {
-        val file = tempVaultFile()
-        val store = VaultStore(file)
+        val io = InMemoryVaultFileIo()
+        val store = VaultStore(io)
 
         assertTrue(
             store.edit {
@@ -358,23 +364,20 @@ class CryptoGoldenTest {
             },
         )
 
-        assertArrayEquals(GoldenVectors.storeFile, file.readBytes())
+        assertContentEquals(GoldenVectors.storeFile, io.bytes)
     }
 
     @Test
     fun theGoldenSlotFileIsReadBackAndAChangedByteMakesItCorrupt() {
-        val intact = tempVaultFile().also { it.writeBytes(GoldenVectors.storeFile) }
-        val store = VaultStore(intact)
+        val store = VaultStore(InMemoryVaultFileIo(GoldenVectors.storeFile))
 
         assertFalse(store.isCorrupt())
-        assertArrayEquals(byteArrayOf(1, 2, 3), store.getBytes("a"))
-        assertArrayEquals(ByteArray(0), store.getBytes("bc"))
+        assertContentEquals(byteArrayOf(1, 2, 3), store.getBytes("a"))
+        assertContentEquals(ByteArray(0), store.getBytes("bc"))
 
         for (index in intArrayOf(10, GoldenVectors.storeFile.size - 1)) {
-            val damaged = tempVaultFile().also {
-                it.writeBytes(GoldenVectors.storeFile.copyOf().also { bytes -> bytes[index] = flipped(bytes[index]) })
-            }
-            assertTrue(VaultStore(damaged).isCorrupt())
+            val damaged = GoldenVectors.storeFile.copyOf().also { it[index] = flipped(it[index]) }
+            assertTrue(VaultStore(InMemoryVaultFileIo(damaged)).isCorrupt())
         }
     }
 
@@ -382,7 +385,7 @@ class CryptoGoldenTest {
 
     @Test
     fun theGoldenPinAndDuressSlotsUnlockThroughTheFullKdfChain() {
-        val store = VaultStore(tempVaultFile())
+        val store = VaultStore(InMemoryVaultFileIo())
         store.edit {
             putBytes("pin.slot", GoldenVectors.chainPinSlot)
             putBytes("pin.decoy.slot", GoldenVectors.chainDuressSlot)
@@ -393,8 +396,8 @@ class CryptoGoldenTest {
         val duress = manager.unlockWithPin("654321".toCharArray())
         val wrong = manager.unlockWithPin("000000".toCharArray())
 
-        assertArrayEquals(dek, (real as PinUnlock.Success).dek)
-        assertArrayEquals(decoyDek, (duress as PinUnlock.Decoy).dek)
+        assertContentEquals(dek, (real as PinUnlock.Success).dek)
+        assertContentEquals(decoyDek, (duress as PinUnlock.Decoy).dek)
         assertEquals(PinUnlock.WrongPin, wrong)
     }
 
@@ -403,10 +406,7 @@ class CryptoGoldenTest {
 
         override fun reset(slot: PinKeySlot) = Unit
 
-        override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray = Mac.getInstance("HmacSHA256").run {
-            init(SecretKeySpec(key, "HmacSHA256"))
-            doFinal(data)
-        }
+        override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray = hmacSha256(key, data)
 
         override fun delete(slot: PinKeySlot) = Unit
     }
@@ -414,7 +414,7 @@ class CryptoGoldenTest {
     // --- Helpers --------------------------------------------------------------------------
 
     private fun vaultWith(vararg slots: Pair<String, ByteArray>): SeedPhraseManager {
-        val store = VaultStore(tempVaultFile())
+        val store = VaultStore(InMemoryVaultFileIo())
         store.edit {
             putInt("vault.version", 3)
             putBoolean("recovery.enabled", true)
@@ -424,29 +424,23 @@ class CryptoGoldenTest {
     }
 
     private fun assertWrongSecret(block: () -> Unit) {
-        val e = assertThrows(BackupException::class.java) { block() }
+        val e = assertFailsWith<BackupException> { block() }
         assertEquals(BackupError.WRONG_SECRET, e.error)
     }
 
-    /** Plain JCA, to open what the code under test sealed. */
+    /**
+     * Opens what the code under test sealed without going through its classes: the AES-GCM of [Crypto] (pinned by
+     * the published vectors in :core:crypto), and an HMAC written out from SHA-256 in the test helpers.
+     */
     private object Reference {
-        fun gcmOpen(key: ByteArray, iv: ByteArray, aad: ByteArray, ciphertext: ByteArray): ByteArray {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, iv))
-            cipher.updateAAD(aad)
-            return cipher.doFinal(ciphertext)
-        }
+        fun gcmOpen(key: ByteArray, iv: ByteArray, aad: ByteArray, ciphertext: ByteArray): ByteArray =
+            checkNotNull(Crypto.aesGcmOpen(key, iv, aad, ciphertext))
 
-        fun hkdf(ikm: ByteArray, salt: String, info: String): ByteArray = hkdfBytes(ikm, salt.toByteArray(), info)
+        fun hkdf(ikm: ByteArray, salt: String, info: String): ByteArray = hkdfBytes(ikm, salt.encodeToByteArray(), info)
 
         fun hkdfBytes(ikm: ByteArray, salt: ByteArray, info: String): ByteArray {
-            val prk = hmac(salt, ikm)
-            return hmac(prk, info.toByteArray() + byteArrayOf(1))
-        }
-
-        private fun hmac(key: ByteArray, data: ByteArray): ByteArray = Mac.getInstance("HmacSHA256").run {
-            init(SecretKeySpec(key, "HmacSHA256"))
-            doFinal(data)
+            val prk = hmacSha256(salt, ikm)
+            return hmacSha256(prk, info.encodeToByteArray() + byteArrayOf(1))
         }
     }
 

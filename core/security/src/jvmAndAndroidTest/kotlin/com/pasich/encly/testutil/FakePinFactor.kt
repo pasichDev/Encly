@@ -1,6 +1,5 @@
 package com.pasich.encly.testutil
 
-import com.pasich.encly.core.security.LockoutClock
 import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.core.security.PinKeySlot
@@ -61,12 +60,6 @@ internal class FakePinFactor : PinHardwareFactor {
     override fun delete(slot: PinKeySlot) {
         keys.remove(slot)
     }
-}
-
-/** A [LockoutClock] the test moves by hand. */
-internal class FakeLockoutClock(var elapsed: Long = 1_000_000L, var boot: Int = 1) : LockoutClock {
-    override fun elapsedRealtime(): Long = elapsed
-    override fun bootCount(): Int = boot
 }
 
 /** A [VaultStore] on a fresh temp file (deleted when the JVM exits). */

@@ -8,6 +8,7 @@ import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 // every module (the app has its own Keystore implementation); it compiles nothing.
 plugins {
     id("encly.kmp-library")
+    id("encly.kmp-ios")
     id("encly.quality")
 }
 
@@ -22,10 +23,15 @@ kotlin {
     }
 
     sourceSets {
-        getByName("desktopMain").dependencies {
-            // PinHardwareFactor and PinFactorException are part of the public contract of DesktopPinFactor.
+        commonMain.dependencies {
+            // PinHardwareFactor and PinFactorException are part of the public contract of the PIN factors.
             api(project(":core:security"))
             implementation(project(":core:common"))
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+        getByName("desktopMain").dependencies {
             implementation(libs.jna)
             implementation(libs.jna.platform)
             implementation(libs.dbus.java.core)
@@ -38,6 +44,11 @@ kotlin {
             runtimeOnly(libs.slf4j.nop)
         }
     }
+}
+
+// The shared test fixture (InMemorySecretStore) is compiled for the Android target too, which has no tests of its own.
+tasks.withType<Test>().configureEach {
+    failOnNoDiscoveredTests = false
 }
 
 kover {

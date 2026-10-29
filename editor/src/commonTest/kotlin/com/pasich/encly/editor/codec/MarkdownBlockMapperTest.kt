@@ -5,6 +5,8 @@ import com.pasich.encly.editor.model.BlockType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 class MarkdownBlockMapperTest {
     /** Blocks as short strings for exact assertions. */
@@ -144,10 +146,10 @@ class MarkdownBlockMapperTest {
 
     @Test
     fun aLongRunOfBracketsDoesNotHangTheWikiLinkMatch() {
-        val started = System.nanoTime()
+        val started = TimeSource.Monotonic.markNow()
         MarkdownBlockMapper.toBlocks("[".repeat(200_000))
         MarkdownBlockMapper.toBlocks("[[a|".repeat(50_000))
-        assertTrue(System.nanoTime() - started < 1_000_000_000L, "took ${(System.nanoTime() - started) / 1_000_000} ms")
+        assertTrue(started.elapsedNow() < 1.seconds, "took ${started.elapsedNow()}")
     }
 
     @Test

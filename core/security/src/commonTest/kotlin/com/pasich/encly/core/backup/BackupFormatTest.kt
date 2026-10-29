@@ -23,7 +23,7 @@ class BackupFormatTest {
         val bytes = header(ciphertextLength = 0x01020304)
 
         assertEquals(BackupFormat.HEADER_LENGTH, bytes.size)
-        assertContentEquals("ENCLYBAK".toByteArray(Charsets.US_ASCII), bytes.copyOfRange(0, 8))
+        assertContentEquals("ENCLYBAK".encodeToByteArray(), bytes.copyOfRange(0, 8))
         assertContentEquals(byteArrayOf(0, 1), bytes.copyOfRange(8, 10))
         assertEquals(1, bytes[10].toInt())
         assertEquals(BackupFormat.SALT_LENGTH, bytes[11].toInt())

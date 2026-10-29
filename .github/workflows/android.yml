@@ -509,10 +509,11 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # The KMP libraries with iOS targets (:editor, :core:common, :core:database) compile for iOS here.
-  # Kotlin/Native compiles for Apple targets only on macOS, so this job builds the iOS klibs there (for
-  # the database, Room's KSP runs for the iOS targets too); it runs no iOS tests (the logic is covered on
-  # the JVM). The job keeps its name so that the name of the check does not change.
+  # The KMP libraries with iOS targets compile for iOS here. Kotlin/Native compiles for Apple targets only on
+  # macOS, so this job builds the iOS klibs there (for the database, Room's KSP runs for the iOS targets too).
+  # The crypto, security and key store tests run on the iOS simulator: the AES-GCM bridge to CryptoKit and
+  # the golden vectors of every vault and backup format must give the JVM's bytes. The job keeps its name so
+  # that the name of the check does not change.
   editor-ios:
     if: github.actor != 'dependabot[bot]'
     name: editor (iOS compile)
@@ -544,12 +545,24 @@ jobs:
           :core:database:compileKotlinIosArm64
           :core:resources:compileKotlinIosSimulatorArm64
           :core:resources:compileKotlinIosArm64
+          :core:crypto:compileKotlinIosArm64
+          :core:security:compileKotlinIosArm64
+          :core:keystore:compileKotlinIosArm64
+
+      - name: iOS tests (crypto, security, key store)
+        run: >-
+          ./gradlew
+          :core:crypto:iosSimulatorArm64Test
+          :core:security:iosSimulatorArm64Test
+          :core:keystore:iosSimulatorArm64Test
 
       # On a Mac the klib dump of the public API is made from the real iOS klibs (elsewhere it is
       # inferred), so this is where editor/api/editor.klib.api and core/common/api/common.klib.api
       # are really checked.
       - name: Public API dump
-        run: ./gradlew :editor:checkKotlinAbi :core:common:checkKotlinAbi :core:database:checkKotlinAbi
+        run: >-
+          ./gradlew :editor:checkKotlinAbi :core:common:checkKotlinAbi :core:database:checkKotlinAbi
+          :core:crypto:checkKotlinAbi :core:security:checkKotlinAbi :core:keystore:checkKotlinAbi
 
   # The desktop PIN factor against the real secret store of each OS: DPAPI on Windows, the login Keychain on
   # macOS, the freedesktop Secret Service (GNOME Keyring) on Linux. The unit tests of :core:keystore run in
