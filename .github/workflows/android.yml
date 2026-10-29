@@ -164,6 +164,9 @@ jobs:
           :shared:testAndroidHostTest
           :shared:koverVerify
           :shared:detekt
+          :desktopApp:desktopTest
+          :desktopApp:koverVerify
+          :desktopApp:detekt
 
       - name: Upload reports on failure
         if: failure()
@@ -177,8 +180,61 @@ jobs:
             core/*/build/test-results/
             shared/build/reports/
             shared/build/test-results/
+            desktopApp/build/reports/
+            desktopApp/build/test-results/
           retention-days: 7
           if-no-files-found: ignore
+
+  # The desktop installers, unsigned: MSI (Windows), DMG (macOS) and DEB (Linux), each built on its own OS since
+  # jpackage cannot cross-build. Signing and notarization are off here (no secrets in this job); see
+  # desktopApp/README.md. The artifacts are for testing a build; a release attaches signed ones.
+  desktop-package:
+    name: desktop installer (${{ matrix.os }})
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, task: packageDeb, pattern: 'desktopApp/build/compose/binaries/main/deb/*.deb' }
+          - { os: windows-latest, task: packageMsi, pattern: 'desktopApp/build/compose/binaries/main/msi/*.msi' }
+          - { os: macos-15, task: packageDmg, pattern: 'desktopApp/build/compose/binaries/main/dmg/*.dmg' }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # jpackage builds a .deb with dpkg-deb and fakeroot.
+      - name: Linux packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y fakeroot
+
+      - name: Package
+        run: ./gradlew :desktopApp:${{ matrix.task }}
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: encly-desktop-${{ matrix.os }}-unsigned
+          path: ${{ matrix.pattern }}
+          retention-days: 14
+          if-no-files-found: error
 
   release:
     name: release build (R8, lint, manifest)

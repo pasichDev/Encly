@@ -26,6 +26,7 @@ import androidx.savedstate.read
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.platform.HostNavigationRequests
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
@@ -56,6 +57,7 @@ fun EnclyApp(
     // after the frame, from this effect.
     val locked by sessionLockManager.locked.collectAsState()
     LockRouteGuard(navController, securityManager::isDatabaseUnlocked)
+    HostNavigationRequests(navController, securityManager::isDatabaseUnlocked)
     SessionResumeGuard(navController, sessionLockManager)
     val visibleEntries by navController.visibleEntries.collectAsState()
     val shielded = locked && visibleEntries.any {

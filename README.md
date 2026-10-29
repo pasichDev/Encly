@@ -258,6 +258,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - [Security model](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
+- [Desktop app](desktopApp/README.md) (Windows, macOS, Linux: run, package, data location, security notes; in development)
 
 ## Contributing
 

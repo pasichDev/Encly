@@ -29,6 +29,8 @@ By taking part you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
    `local.properties` (see [README → Build](README.md#build)).
 3. Open the project in Android Studio or use `./gradlew`. Pick the `fdroidDebug` variant for
    day-to-day work.
+4. The desktop app (Windows, macOS, Linux) is the `:desktopApp` module: `./gradlew :desktopApp:run`, and
+   `:desktopApp:desktopTest` for its headless tests. See [desktopApp/README.md](desktopApp/README.md).
 
 ## Before you open a pull request
 
