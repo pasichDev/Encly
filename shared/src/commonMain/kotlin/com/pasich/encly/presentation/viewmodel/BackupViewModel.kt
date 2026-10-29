@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.backup_phrase_exists
@@ -16,7 +17,6 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -120,7 +120,7 @@ class BackupViewModel(
         if (state.step != BackupStep.ConfirmErase) return
         dropPending()
         state.launchBusy {
-            val erased = withContext(Dispatchers.IO) { securityManager.wipeAndReset() }
+            val erased = withContext(platformIoDispatcher) { securityManager.wipeAndReset() }
             // A refused erase (see SecurityManager.wipeAndReset) must not be announced as done.
             if (erased) {
                 state.ui.update { it.copy(step = BackupStep.Idle, erased = true) }

@@ -6,6 +6,7 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.AppStrings
+import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.main_drawer_tasks
@@ -35,7 +36,6 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -221,7 +221,7 @@ class MarkdownExportViewModel(
         bound.assertCurrentSession()
         // Not cancelled by a re-lock clearing this screen: a half-written document would look like
         // a complete export.
-        withContext(NonCancellable + Dispatchers.IO) {
+        withContext(NonCancellable + platformIoDispatcher) {
             documents.write(uri) { out ->
                 when (what) {
                     MarkdownExportTarget.AllData -> MarkdownExport.writeAll(snapshot, labels, out)
@@ -279,7 +279,7 @@ class MarkdownExportViewModel(
 
     /** Removes the empty document the save dialog created, off the main thread. */
     private suspend fun discard(uri: DocumentRef) =
-        withContext(NonCancellable + Dispatchers.IO) { documents.discard(uri) }
+        withContext(NonCancellable + platformIoDispatcher) { documents.discard(uri) }
 
     fun cancel() {
         sessionLockManager.endSystemPicker()

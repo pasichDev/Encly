@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
 import com.pasich.encly.core.resources.biometric_enroll_failed
@@ -67,7 +68,7 @@ class SecuritySettingsViewModel(
     /** Reloads the vault's security state, e.g. after a recovery phrase was added. */
     fun refresh() {
         viewModelScope.launch {
-            val authSettings = withContext(Dispatchers.IO) { securityManager.getSettingsAuth() }
+            val authSettings = withContext(platformIoDispatcher) { securityManager.getSettingsAuth() }
             _uiState.value = _uiState.value.copy(
                 isUserCreatedSeedKey = authSettings.isUserCreatedSeedKey,
                 authType = authSettings.authType,
@@ -146,7 +147,7 @@ class SecuritySettingsViewModel(
     /** Turns the wipe PIN off (whether one was set is never known). */
     fun removeWipePin(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val ok = withContext(Dispatchers.IO) { securityManager.removeWipePin() }
+            val ok = withContext(platformIoDispatcher) { securityManager.removeWipePin() }
             if (ok) _uiState.value = _uiState.value.copy(wipePinTurnedOff = false)
             onResult(ok)
         }
@@ -169,7 +170,7 @@ class SecuritySettingsViewModel(
     /** Turns the duress PIN off and deletes the decoy vault with its notes. */
     fun removeDuressPin(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val ok = withContext(Dispatchers.IO) { securityManager.removeDuressPin() }
+            val ok = withContext(platformIoDispatcher) { securityManager.removeDuressPin() }
             if (ok) _uiState.value = _uiState.value.copy(hasDuressPin = false, duressPinTurnedOff = false)
             onResult(ok)
         }

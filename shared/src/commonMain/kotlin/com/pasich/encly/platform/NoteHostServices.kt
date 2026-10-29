@@ -2,6 +2,8 @@ package com.pasich.encly.platform
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.pasich.encly.data.export.NoteDocument
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.io.Sink
 
 /** What came of a print request that was not an error. */
@@ -45,6 +47,7 @@ val LocalNoteWindows = staticCompositionLocalOf<NoteWindows?> { null }
  * (an editor replaced by another of the same note), and a claim of another window refuses.
  */
 class NoteEditRegistry {
+    private val lock = SynchronizedObject()
     private val holders = HashMap<Long, Holder>()
 
     private class Holder(val window: Any, var count: Int)
@@ -53,10 +56,9 @@ class NoteEditRegistry {
     fun forWindow(window: Any): NoteEditClaims = NoteEditClaims(this, window)
 
     /** Claims [noteId] for [window]; false when another window holds it. */
-    @Synchronized
-    internal fun claim(window: Any, noteId: Long): Boolean {
+    internal fun claim(window: Any, noteId: Long): Boolean = synchronized(lock) {
         val holder = holders[noteId]
-        return when {
+        when {
             holder == null -> {
                 holders[noteId] = Holder(window, 1)
                 true
@@ -72,16 +74,16 @@ class NoteEditRegistry {
     }
 
     /** Gives back one claim of [window] on [noteId]. */
-    @Synchronized
     internal fun release(window: Any, noteId: Long) {
-        val holder = holders[noteId] ?: return
-        if (holder.window != window) return
-        if (--holder.count <= 0) holders.remove(noteId)
+        synchronized(lock) {
+            val holder = holders[noteId] ?: return
+            if (holder.window != window) return
+            if (--holder.count <= 0) holders.remove(noteId)
+        }
     }
 
     /** Whether any window edits [noteId]. */
-    @Synchronized
-    fun isClaimed(noteId: Long): Boolean = holders.containsKey(noteId)
+    fun isClaimed(noteId: Long): Boolean = synchronized(lock) { holders.containsKey(noteId) }
 }
 
 /** The claims of one window of a [NoteEditRegistry]. */

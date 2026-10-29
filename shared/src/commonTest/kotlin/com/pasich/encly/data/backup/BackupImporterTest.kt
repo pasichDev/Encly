@@ -19,10 +19,10 @@ import com.pasich.encly.editor.model.LinkDataBlock
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.fail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class BackupImporterTest {
 

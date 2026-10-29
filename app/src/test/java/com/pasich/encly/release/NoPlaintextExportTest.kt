@@ -84,6 +84,8 @@ class NoPlaintextExportTest {
     private companion object {
         val SCANNED = setOf("kt", "java", "xml")
         const val SENSITIVE_CLIP = "app/src/main/java/com/pasich/encly/platform/SensitiveClip.kt"
+        const val IOS_CLIP = "shared/src/iosMain/kotlin/com/pasich/encly/ios/platform/IosClipboard.kt"
+        const val IOS_PICKERS = "shared/src/iosMain/kotlin/com/pasich/encly/ios/platform/IosDocumentPickers.kt"
         const val PICKERS = "app/src/main/java/com/pasich/encly/platform/AndroidDocumentPickers.kt"
         const val PICKER_API = "shared/src/commonMain/kotlin/com/pasich/encly/platform/Documents.kt"
         const val BACKUP_SCREEN =
@@ -100,13 +102,13 @@ class NoPlaintextExportTest {
             "alarm" to Rule(Regex("""\bAlarmManager\b""")),
             "clipboard write" to Rule(
                 Regex("""\bsetPrimaryClip\b|\bsetClipEntry\b|\bLocalClipboardManager\b"""),
-                allowedIn = setOf(SENSITIVE_CLIP),
+                allowedIn = setOf(SENSITIVE_CLIP, IOS_CLIP),
             ),
             // Creating a document is how a file leaves the app: only the two export hosts may ask the platform
             // for one, and only the picker adapter (and its interface) names the system dialog.
             "document creation" to Rule(
                 Regex("""\bCreateDocument\b|ACTION_CREATE_DOCUMENT|\brememberCreateDocument\b"""),
-                allowedIn = setOf(BACKUP_SCREEN, MARKDOWN_HOST, PICKERS, PICKER_API),
+                allowedIn = setOf(BACKUP_SCREEN, MARKDOWN_HOST, PICKERS, PICKER_API, IOS_PICKERS),
             ),
         )
 

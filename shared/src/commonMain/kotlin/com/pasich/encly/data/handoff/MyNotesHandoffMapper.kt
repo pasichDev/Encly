@@ -99,7 +99,7 @@ object MyNotesHandoffMapper {
         if (id.isNotBlank() && id.length <= BackupPayloadCodec.MAX_UID_LENGTH) id else sha256Hex("$kind:$id")
 
     private fun sha256Hex(text: String): String {
-        val digest = Crypto.sha256(text.toByteArray(Charsets.UTF_8))
+        val digest = Crypto.sha256(text.encodeToByteArray())
         return buildString(digest.size * 2) {
             digest.forEach { byte ->
                 val b = byte.toInt()

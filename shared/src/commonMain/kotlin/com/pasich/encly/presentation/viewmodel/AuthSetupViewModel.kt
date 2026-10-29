@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.PendingRestore
@@ -10,7 +11,6 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,7 +67,7 @@ class AuthSetupViewModel(
             // Runs to its end even if this ViewModel is cleared meanwhile: a vault opened for
             // a screen that no longer exists is closed again instead of staying open.
             val (outcome, published) = withContext(NonCancellable) {
-                val outcome = withContext(Dispatchers.IO) { openRestoreAndCommit() }
+                val outcome = withContext(platformIoDispatcher) { openRestoreAndCommit() }
                 val committed = outcome == SetupOutcome.COMMITTED
                 val published = when {
                     !committed -> false

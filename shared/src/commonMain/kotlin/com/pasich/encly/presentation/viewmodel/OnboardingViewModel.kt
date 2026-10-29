@@ -6,6 +6,7 @@ import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.onboarding_error_initialization
@@ -260,7 +261,7 @@ class OnboardingViewModel(
             wipeRecoverySeed()
             recoverySeed = seed
             // The words must be shown to be written down, so the UI gets them as text.
-            _uiState.update { it.copy(words = String(seed).split(" ").filter(String::isNotBlank)) }
+            _uiState.update { it.copy(words = seed.concatToString().split(" ").filter(String::isNotBlank)) }
         }.onFailure {
             _uiState.update { it.copy(error = UiText.of(Res.string.onboarding_error_seed_generation)) }
         }
@@ -382,7 +383,7 @@ class OnboardingViewModel(
         if (uri == null) return
         _uiState.update { it.copy(isLoading = true, restoreFileError = null, restorePhraseError = null) }
         viewModelScope.launch {
-            val picked = withContext(Dispatchers.IO) { readBackup(uri) }
+            val picked = withContext(platformIoDispatcher) { readBackup(uri) }
             _uiState.update {
                 it.copy(
                     isLoading = false,

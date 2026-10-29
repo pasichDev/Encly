@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.di.ApplicationScope
+import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
@@ -130,7 +131,7 @@ class LockViewModel(
                     return@requestBiometricKey
                 }
                 launchUnlock(onResult) {
-                    val ok = withContext(Dispatchers.IO) {
+                    val ok = withContext(platformIoDispatcher) {
                         try {
                             securityManager.unlockWithRawKey(dek)
                         } finally {

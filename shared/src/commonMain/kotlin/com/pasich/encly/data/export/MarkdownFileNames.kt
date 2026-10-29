@@ -34,7 +34,7 @@ class MarkdownFileNames(reserved: Collection<String> = emptyList(), private val 
 
     /** [base] cut so that it, [suffix] and the extension fit the byte budget. */
     private fun fit(base: String, suffix: String): String {
-        val room = maxBytes - EXTENSION.length - suffix.toByteArray().size
+        val room = maxBytes - EXTENSION.length - suffix.encodeToByteArray().size
         return cutBytes(base, room.coerceAtLeast(1)).trimEnd('.', ' ') + suffix
     }
 

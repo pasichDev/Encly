@@ -8,7 +8,6 @@ import dev.zacsweers.metro.Qualifier
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 /**
@@ -25,7 +24,7 @@ annotation class ApplicationScope
 /**
  * Qualifier for the dispatcher that blocking I/O (Room/SQLCipher) runs on.
  *
- * Injected instead of referencing [Dispatchers.IO] directly so unit tests can run that work on
+ * Injected instead of referencing [platformIoDispatcher] directly so unit tests can run that work on
  * their test dispatcher: a real I/O thread outlives the test and resumes onto a
  * Dispatchers.Main that was already reset.
  */
@@ -39,16 +38,16 @@ annotation class IoDispatcher
 object CoroutineModule {
 
     /**
-     * A [SupervisorJob]-backed scope on [Dispatchers.IO]. A failure in one child does
+     * A [SupervisorJob]-backed scope on [platformIoDispatcher]. A failure in one child does
      * not cancel the others, and the scope is never cancelled (it is tied to the
      * application process), so work launched here survives ViewModel teardown.
      */
     @Provides
     @SingleIn(AppScope::class)
     @ApplicationScope
-    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + platformIoDispatcher)
 
     @Provides
     @IoDispatcher
-    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+    fun provideIoDispatcher(): CoroutineDispatcher = platformIoDispatcher
 }

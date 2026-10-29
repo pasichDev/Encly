@@ -94,9 +94,9 @@ jobs:
   # The Kotlin Multiplatform libraries on their desktop JVM and Android host targets: unit tests, the
   # Kover gates, detekt and the public API dump (and Dokka for :editor). The database's desktop tests
   # open and migrate an encrypted vault through Sealite's native library. Their iOS targets compile in
-  # the `editor-ios` job below; :core:crypto and :core:security have none yet (no AES-GCM for iOS), and
-  # :shared (the domain, the data logic and the whole UI) depends on both, so it has none either. Its
-  # Compose UI tests run under Robolectric in testAndroidHostTest; it has no public API to dump.
+  # the `editor-ios` job below, which also builds the iOS app around :shared (the domain, the data logic and
+  # the whole UI). Its Compose UI tests run under Robolectric in testAndroidHostTest; it has no public API to
+  # dump.
   modules:
     name: libraries (tests, coverage, detekt, API)
     # Dependabot bumps (build(deps) / ci(deps)) don't run CI on their own PR: they are merged in
@@ -512,13 +512,15 @@ jobs:
   # The KMP libraries with iOS targets compile for iOS here. Kotlin/Native compiles for Apple targets only on
   # macOS, so this job builds the iOS klibs there (for the database, Room's KSP runs for the iOS targets too).
   # The crypto, security and key store tests run on the iOS simulator: the AES-GCM bridge to CryptoKit and
-  # the golden vectors of every vault and backup format must give the JVM's bytes. The job keeps its name so
-  # that the name of the check does not change.
+  # the golden vectors of every vault and backup format must give the JVM's bytes. So do the common tests of
+  # :shared (the ViewModels, the formatters), which also exercise the iOS actuals of dates and Unicode. The
+  # last step builds the iOS app (iosApp/) for the Simulator, unsigned: the Xcode project links the static
+  # framework that Gradle builds from :shared. The job keeps its name so that the name of the check does not change.
   editor-ios:
     if: github.actor != 'dependabot[bot]'
     name: editor (iOS compile)
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -548,13 +550,16 @@ jobs:
           :core:crypto:compileKotlinIosArm64
           :core:security:compileKotlinIosArm64
           :core:keystore:compileKotlinIosArm64
+          :shared:compileKotlinIosSimulatorArm64
+          :shared:compileKotlinIosArm64
 
-      - name: iOS tests (crypto, security, key store)
+      - name: iOS tests (crypto, security, key store, shared)
         run: >-
           ./gradlew
           :core:crypto:iosSimulatorArm64Test
           :core:security:iosSimulatorArm64Test
           :core:keystore:iosSimulatorArm64Test
+          :shared:iosSimulatorArm64Test
 
       # On a Mac the klib dump of the public API is made from the real iOS klibs (elsewhere it is
       # inferred), so this is where editor/api/editor.klib.api and core/common/api/common.klib.api
@@ -563,6 +568,18 @@ jobs:
         run: >-
           ./gradlew :editor:checkKotlinAbi :core:common:checkKotlinAbi :core:database:checkKotlinAbi
           :core:crypto:checkKotlinAbi :core:security:checkKotlinAbi :core:keystore:checkKotlinAbi
+
+      # The app itself, for the Simulator and without signing. The first build phase of the project runs
+      # Gradle (`:shared:embedAndSignAppleFrameworkForXcode`), which links the framework.
+      - name: Build the iOS app (Simulator, unsigned)
+        run: >-
+          xcodebuild
+          -project iosApp/iosApp.xcodeproj
+          -scheme iosApp
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
 
   # The desktop PIN factor against the real secret store of each OS: DPAPI on Windows, the login Keychain on
   # macOS, the freedesktop Secret Service (GNOME Keyring) on Linux. The unit tests of :core:keystore run in

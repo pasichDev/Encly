@@ -4,6 +4,7 @@ import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupPayload
+import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_phrase_mismatch
 import com.pasich.encly.core.resources.backup_error_phrase_setup
@@ -255,7 +256,7 @@ class ExportFlow(
             try {
                 // Not cancelled by a re-lock clearing this screen: a half-written document
                 // would look like a backup and never restore. The file is ciphertext.
-                withContext(NonCancellable + Dispatchers.IO) { documents.write(uri, file) }
+                withContext(NonCancellable + platformIoDispatcher) { documents.write(uri, file) }
                 backupManager.recordExport()
                 state.ui.update { it.copy(lastExportAt = backupManager.lastExportAt()) }
                 state.finish(BackupMessage.Text(Res.string.backup_export_done))
@@ -298,7 +299,7 @@ class RecoveryPhraseFlow(
         val phrase = phraseSetup.generate()
         newPhrase = phrase
         replacing = replace
-        state.go(BackupStep.ShowNewPhrase(String(phrase).split(' '), replacing))
+        state.go(BackupStep.ShowNewPhrase(phrase.concatToString().split(' '), replacing))
     }
 
     fun writtenDown() {
@@ -311,7 +312,7 @@ class RecoveryPhraseFlow(
     fun showAgain() {
         val phrase = newPhrase ?: return
         if (state.step is BackupStep.CheckNewPhrase) {
-            state.go(BackupStep.ShowNewPhrase(String(phrase).split(' '), replacing))
+            state.go(BackupStep.ShowNewPhrase(phrase.concatToString().split(' '), replacing))
         }
     }
 
@@ -378,7 +379,7 @@ class RecoveryPhraseFlow(
     }
 
     private fun matches(phrase: CharArray, positions: List<Int>, answers: List<String>): Boolean {
-        val words = String(phrase).split(' ')
+        val words = phrase.concatToString().split(' ')
         return answers.size == positions.size &&
             positions.zip(answers).all { (index, answer) -> words[index] == answer.trim().lowercase() }
     }
@@ -410,7 +411,7 @@ class ImportFlow(
         if (uri == null) return
         state.launchBusy {
             try {
-                file = withContext(Dispatchers.IO) { documents.read(uri).also(BackupCipher::inspect) }
+                file = withContext(platformIoDispatcher) { documents.read(uri).also(BackupCipher::inspect) }
                 state.go(BackupStep.EnterImportPhrase())
             } catch (e: BackupException) {
                 state.fail(e.error)
@@ -480,7 +481,7 @@ class ImportFlow(
         decrypted = null
         state.launchBusy {
             try {
-                val summary = withContext(Dispatchers.IO) { backupManager.import(payload, mode) }
+                val summary = withContext(platformIoDispatcher) { backupManager.import(payload, mode) }
                 state.finish(BackupMessage.Imported(summary))
             } catch (e: BackupException) {
                 state.fail(e.error)

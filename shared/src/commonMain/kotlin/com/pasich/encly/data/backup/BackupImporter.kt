@@ -157,7 +157,7 @@ object BackupImporter {
         // Name -> local id; the first tag with a name wins, also for tags added below.
         val idsByName = HashMap<String, Long>()
         if (target.match == TagMatch.UID_OR_NAME) {
-            existing.tags.forEach { idsByName.putIfAbsent(tagNameKey(it.nameTag), it.id) }
+            existing.tags.forEach { idsByName.getOrPut(tagNameKey(it.nameTag)) { it.id } }
         }
         var added = 0
         tags.sortedBy { it.position }.forEach { tag ->
@@ -172,7 +172,7 @@ object BackupImporter {
                 Tag(nameTag = tag.name, isVisible = tag.visible, position = position, uid = tag.uid),
             )
             target.tagIds[tag.uid] = id
-            if (target.match == TagMatch.UID_OR_NAME) idsByName.putIfAbsent(tagNameKey(tag.name), id)
+            if (target.match == TagMatch.UID_OR_NAME) idsByName.getOrPut(tagNameKey(tag.name)) { id }
             added++
         }
         return added

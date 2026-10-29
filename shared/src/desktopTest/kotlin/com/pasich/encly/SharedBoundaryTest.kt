@@ -171,6 +171,7 @@ class SharedBoundaryTest {
                 "java.text.Normalizer and Character categories for file names",
             "com/pasich/encly/utils/LocalizedDateJvm.kt" to "java.text date formats, the same on both JVM targets",
             "com/pasich/encly/data/importer/OutOfMemory.kt" to "OutOfMemoryError, a JVM class with no common name",
+            "com/pasich/encly/core/di/PlatformIoDispatcher.kt" to "Dispatchers.IO, which common code cannot name",
         )
 
         /** The Android actuals. */

@@ -75,12 +75,12 @@ class MarkdownFileNamesTest {
     @Test
     fun aLongTitleIsCutOnACharacterBoundary() {
         val name = names().next("я".repeat(200), "Untitled")
-        assertTrue(name.toByteArray().size <= MarkdownFileNames.MAX_NAME_BYTES)
+        assertTrue(name.encodeToByteArray().size <= MarkdownFileNames.MAX_NAME_BYTES)
         assertTrue(name.endsWith(".md"))
         // Two bytes per letter: no half character at the cut.
         assertEquals(name.removeSuffix(".md"), "я".repeat(name.length - 3))
         val emoji = names().next("😀".repeat(100), "Untitled")
-        assertTrue(emoji.toByteArray().size <= MarkdownFileNames.MAX_NAME_BYTES)
+        assertTrue(emoji.encodeToByteArray().size <= MarkdownFileNames.MAX_NAME_BYTES)
         assertEquals(emoji.removeSuffix(".md"), "😀".repeat(emoji.removeSuffix(".md").length / 2))
     }
 
@@ -111,7 +111,9 @@ class MarkdownFileNamesTest {
     fun theSuffixStillFitsTheByteBudget() {
         val names = names()
         val long = "я".repeat(200)
-        repeat(12) { assertTrue(names.next(long, "Untitled").toByteArray().size <= MarkdownFileNames.MAX_NAME_BYTES) }
+        repeat(12) {
+            assertTrue(names.next(long, "Untitled").encodeToByteArray().size <= MarkdownFileNames.MAX_NAME_BYTES)
+        }
     }
 
     @Test

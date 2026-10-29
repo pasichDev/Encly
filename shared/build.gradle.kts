@@ -1,6 +1,7 @@
 import dev.zacsweers.metro.gradle.OptionalBindingBehavior
 import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 // Everything of the app that is not Android-specific, as a Kotlin Multiplatform library (Android and desktop
 // JVM): the domain, the repositories and the backup, import, export and hand-off logic, and the whole UI
@@ -8,11 +9,12 @@ import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 // the platform is an interface in `com.pasich.encly.platform` that the host app implements (document
 // pickers, links, toasts, the sensitive clipboard, the window, the biometric host, the in-app language).
 //
-// There are no iOS targets because :core:crypto and :core:security have none yet (no AES-GCM for iOS), and
-// this module depends on both. Everything else it uses (Compose, Navigation, Lifecycle, Metro, DataStore,
-// Room, kotlinx-io, Lucide, Reorderable) already has them, so iOS comes with the key store.
+// iOS (iosArm64, iosSimulatorArm64) is a target too: its host (the Metro graph, the platform services, the
+// biometric slot, the privacy cover, MainViewController) is in `iosMain` and is built into the static framework
+// `Shared` that the Xcode project in `iosApp/` embeds. The Android and desktop hosts are in :app and :desktopApp.
 plugins {
     id("encly.kmp-library")
+    id("encly.kmp-ios")
     id("encly.compose")
     id("encly.quality")
     alias(libs.plugins.kotlin.serialization)
@@ -99,6 +101,10 @@ kotlin {
             api(libs.androidx.navigation.compose)
             implementation(libs.androidx.core.ktx)
         }
+        // The Keychain behind the PIN's device secret and the biometric slot (the iOS host's).
+        getByName("iosMain").dependencies {
+            implementation(project(":core:keystore"))
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
@@ -123,6 +129,15 @@ kotlin {
             implementation(libs.androidx.compose.ui.test.junit4)
             implementation(libs.androidx.compose.ui.test.manifest)
         }
+    }
+}
+
+// The one framework of the iOS app: static, so the Xcode project links a single binary and needs no embedding
+// step beyond the Compose resources. `./gradlew :shared:embedAndSignAppleFrameworkForXcode` builds it for Xcode.
+kotlin.targets.withType<KotlinNativeTarget>().configureEach {
+    binaries.framework {
+        baseName = "Shared"
+        isStatic = true
     }
 }
 
