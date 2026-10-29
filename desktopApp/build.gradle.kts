@@ -104,7 +104,14 @@ compose.desktop {
 
             // The JDK modules the app needs beyond the defaults; `suggestRuntimeModules` lists what is missing.
             // java.desktop (AWT, Swing), java.prefs and java.naming come with the defaults of Compose.
-            modules("java.instrument", "jdk.unsupported", "java.management", "java.sql", "java.logging", "jdk.security.auth")
+            modules(
+                "java.instrument",
+                "jdk.unsupported",
+                "java.management",
+                "java.sql",
+                "java.logging",
+                "jdk.security.auth",
+            )
 
             // Encly backup files open Encly (a double click starts the restore flow). The type is Encly's own,
             // never application/octet-stream, which would claim every binary file.
