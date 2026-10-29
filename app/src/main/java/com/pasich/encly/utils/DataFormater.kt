@@ -1,43 +1,33 @@
 package com.pasich.encly.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
+import kotlin.time.Instant
 
-/**
- * The locale of the current (per-app) configuration. Unlike [Locale.getDefault] it always
- * follows the language picked in Settings, on every API level.
- */
-@Composable
-fun currentLocale(): Locale = LocalResources.current.configuration.locales[0] ?: Locale.ENGLISH
+/** A stored note time as an [Instant]; 0 means "never saved" and reads as now. */
+fun noteInstant(millis: Long): Instant = if (millis == 0L) Clock.System.now() else Instant.fromEpochMilliseconds(millis)
 
-/** A short date-and-time format in the in-app language (e.g. "5/14/26, 3:04 PM"). */
+/** A short date-and-time in the in-app language (e.g. "5/14/26, 3:04 PM"). */
 @Composable
-fun rememberDateTimeFormat(): DateFormat {
-    val locale = currentLocale()
-    return remember(locale) {
-        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale)
-    }
-}
+fun formatDateTime(date: Instant): String =
+    formatLocalized(date, LocalizedDate.DATE_TIME_SHORT, currentLanguageTag(), TimeZone.currentSystemDefault())
 
 /** "Today 15:04", "Yesterday 15:04", or a localized medium date with time. */
 @Composable
-fun formatNoteDate(date: Date = Date()): String {
-    val locale = currentLocale()
-    val timeFormat = remember(locale) { DateFormat.getTimeInstance(DateFormat.SHORT, locale) }
-    val dateTimeFormat = remember(locale) {
-        DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale)
-    }
-    return when (relativeDay(date)) {
-        RelativeDay.TODAY -> stringResource(R.string.date_today_at, timeFormat.format(date))
-        RelativeDay.YESTERDAY -> stringResource(R.string.date_yesterday_at, timeFormat.format(date))
-        RelativeDay.OTHER -> dateTimeFormat.format(date)
+fun formatNoteDate(date: Instant = Clock.System.now()): String {
+    val tag = currentLanguageTag()
+    val zone = TimeZone.currentSystemDefault()
+    return when (relativeDay(date, zone = zone)) {
+        RelativeDay.TODAY ->
+            stringResource(R.string.date_today_at, formatLocalized(date, LocalizedDate.TIME, tag, zone))
+
+        RelativeDay.YESTERDAY ->
+            stringResource(R.string.date_yesterday_at, formatLocalized(date, LocalizedDate.TIME, tag, zone))
+
+        RelativeDay.OTHER -> formatLocalized(date, LocalizedDate.DATE_TIME_MEDIUM, tag, zone)
     }
 }
 
@@ -46,17 +36,16 @@ fun formatNoteDate(date: Date = Date()): String {
  * only when it is not this year (design spec §4.3).
  */
 @Composable
-fun formatCardDate(date: Date): String {
-    val locale = currentLocale()
-    val dayMonth = remember(locale) { SimpleDateFormat(bestPattern(locale, "dMMM"), locale) }
-    val dayMonthYear = remember(locale) { SimpleDateFormat(bestPattern(locale, "dMMMy"), locale) }
-    return when (relativeDay(date)) {
+fun formatCardDate(date: Instant): String {
+    val zone = TimeZone.currentSystemDefault()
+    return when (relativeDay(date, zone = zone)) {
         RelativeDay.TODAY -> stringResource(R.string.date_today)
+
         RelativeDay.YESTERDAY -> stringResource(R.string.date_yesterday)
-        RelativeDay.OTHER -> if (isSameYear(date)) dayMonth.format(date) else dayMonthYear.format(date)
+
+        RelativeDay.OTHER -> {
+            val style = if (isSameYear(date, zone = zone)) LocalizedDate.DAY_MONTH else LocalizedDate.DAY_MONTH_YEAR
+            formatLocalized(date, style, currentLanguageTag(), zone)
+        }
     }
 }
-
-/** The locale's own order for a date [skeleton] ("18 Sep" in English, "Sep 18" in some locales). */
-private fun bestPattern(locale: Locale, skeleton: String): String =
-    android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton)

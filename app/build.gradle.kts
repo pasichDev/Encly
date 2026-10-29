@@ -329,6 +329,9 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    // Date and time
+    implementation(libs.kotlinx.datetime)
+
     // Cipher: SQLCipher through the androidx.sqlite driver API
     implementation(libs.sealite)
     implementation(libs.kotlin.bip39)

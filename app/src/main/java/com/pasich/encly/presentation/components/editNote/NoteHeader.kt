@@ -23,7 +23,7 @@ import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.utils.formatNoteDate
-import java.util.Date
+import com.pasich.encly.utils.noteInstant
 
 /**
  * The note's overline (design spec §4.4): "PERSONAL · TODAY 9:40 AM", the tag and when the note
@@ -32,7 +32,7 @@ import java.util.Date
  */
 @Composable
 fun NoteOverline(tagName: String?, date: Long, notSaved: Boolean, modifier: Modifier = Modifier) {
-    val edited = formatNoteDate(if (date == 0L) Date() else Date(date))
+    val edited = formatNoteDate(noteInstant(date))
     val style = MaterialTheme.typography.labelSmall
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(

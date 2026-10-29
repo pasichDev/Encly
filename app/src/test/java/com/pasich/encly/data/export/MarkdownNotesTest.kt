@@ -18,6 +18,16 @@ class MarkdownNotesTest {
     private fun render(note: Note, tag: String? = null) = MarkdownNotes.render(note, tag, labels)
 
     @Test
+    fun timesKeepTheirMillisecondsAndDropNothingElse() {
+        val markdown = render(
+            Note(title = "Plan", value = "[]", date = 1_700_000_000_120, dateCreate = 1_700_000_000_500),
+        )
+
+        assertTrue(markdown, markdown.contains("created: 2023-11-14T22:13:20.500Z\n"))
+        assertTrue(markdown, markdown.contains("updated: 2023-11-14T22:13:20.120Z\n"))
+    }
+
+    @Test
     fun theFrontMatterCarriesTheNoteDetails() {
         val markdown = render(
             Note(

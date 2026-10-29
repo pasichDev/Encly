@@ -34,7 +34,7 @@ import com.pasich.encly.presentation.viewmodel.ReviewFilter
 import com.pasich.encly.presentation.viewmodel.ReviewState
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
-import java.util.Date
+import kotlin.time.Instant
 
 /**
  * The review step before an import: the detected source with its counts and losses, then every
@@ -208,5 +208,5 @@ private fun badges(note: ReviewNote): String = buildList {
     note.tag?.let { add("#$it") }
     if (note.trashed) add(stringResource(R.string.import_badge_trash))
     if (note.existing) add(stringResource(R.string.import_badge_in_vault))
-    add(formatNoteDate(Date(note.date)))
+    add(formatNoteDate(Instant.fromEpochMilliseconds(note.date)))
 }.joinToString(" · ")

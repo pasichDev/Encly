@@ -1,25 +1,36 @@
 package com.pasich.encly.utils
 
-import java.util.Calendar
-import java.util.Date
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 /** Where a timestamp falls relative to the current day, in the device time zone. */
 enum class RelativeDay { TODAY, YESTERDAY, OTHER }
 
-fun relativeDay(date: Date, now: Date = Date()): RelativeDay {
-    val target = Calendar.getInstance().apply { time = date }
-    val day = Calendar.getInstance().apply { time = now }
-    if (target.isSameDay(day)) return RelativeDay.TODAY
-    day.add(Calendar.DAY_OF_YEAR, -1)
-    return if (target.isSameDay(day)) RelativeDay.YESTERDAY else RelativeDay.OTHER
+fun relativeDay(
+    date: Instant,
+    now: Instant = Clock.System.now(),
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+): RelativeDay {
+    val target = date.toLocalDateTime(zone).date
+    val today = now.toLocalDateTime(zone).date
+    return when (target) {
+        today -> RelativeDay.TODAY
+        today.minus(DatePeriod(days = 1)) -> RelativeDay.YESTERDAY
+        else -> RelativeDay.OTHER
+    }
 }
-
-private fun Calendar.isSameDay(other: Calendar): Boolean = get(Calendar.YEAR) == other.get(Calendar.YEAR) &&
-    get(Calendar.DAY_OF_YEAR) == other.get(Calendar.DAY_OF_YEAR)
 
 /** Whether [date] falls in the same calendar year as [now]; a card date then leaves the year out. */
-fun isSameYear(date: Date, now: Date = Date()): Boolean {
-    val target = Calendar.getInstance().apply { time = date }
-    val current = Calendar.getInstance().apply { time = now }
-    return target.get(Calendar.YEAR) == current.get(Calendar.YEAR)
-}
+fun isSameYear(
+    date: Instant,
+    now: Instant = Clock.System.now(),
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+): Boolean = date.toLocalDateTime(zone).year == now.toLocalDateTime(zone).year
+
+/** Today's date as "2026-10-25" in the device time zone, for a file name. */
+fun todayStamp(now: Instant = Clock.System.now(), zone: TimeZone = TimeZone.currentSystemDefault()): String =
+    now.toLocalDateTime(zone).date.toString()

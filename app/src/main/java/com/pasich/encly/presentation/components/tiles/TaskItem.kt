@@ -33,9 +33,9 @@ import com.pasich.encly.presentation.designsystem.EnclyRowIconButton
 import com.pasich.encly.presentation.designsystem.EnclySubtaskTree
 import com.pasich.encly.presentation.designsystem.EnclyTaskRow
 import com.pasich.encly.presentation.viewmodel.InlineSubtaskEdit
-import com.pasich.encly.utils.rememberDateTimeFormat
+import com.pasich.encly.utils.formatDateTime
 import kotlinx.coroutines.delay
-import java.util.Date
+import kotlin.time.Instant
 
 private const val TASK_REMOVAL_ANIMATION_MS = 400
 private const val TASK_TRANSLATION_X = 100f
@@ -173,11 +173,10 @@ private fun TaskRow(
     actions: TaskItemActions,
     onComplete: () -> Unit,
 ) {
-    val dateFormat = rememberDateTimeFormat()
     val focusManager = LocalFocusManager.current
     val priority = PriorityValues.getById(task.priority)
     val completedAt = task.completedDate?.takeIf { task.isCompleted }?.let {
-        stringResource(R.string.task_completed_at, dateFormat.format(Date(it)))
+        stringResource(R.string.task_completed_at, formatDateTime(Instant.fromEpochMilliseconds(it)))
     }
     val done = subtasks.count { it.isCompleted }
     val summary = pluralStringResource(R.plurals.subtasks_done_summary, subtasks.size, done, subtasks.size)

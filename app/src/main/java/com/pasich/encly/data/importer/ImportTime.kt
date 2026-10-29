@@ -1,12 +1,13 @@
 package com.pasich.encly.data.importer
 
-import java.time.DateTimeException
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeParseException
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlin.time.Instant
 
 /**
  * Timestamps of other apps as Encly milliseconds; anything missing, zero, negative, absurd,
@@ -37,11 +38,15 @@ internal object ImportTime {
     private val DAY_FIRST = Regex("""^(\d{1,2})[-./](\d{1,2})[-./](\d{4})$CLOCK?$""")
     private val YEAR_FIRST = Regex("""^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$CLOCK$""")
 
+    private val END_OF_DAY = Regex("""^(\d{4}-\d{2}-\d{2})T24:00(?::00(?:\.0*)?)?Z$""")
+    private val LEAP_SECOND = Regex("""T23:59:60((?:\.\d*)?Z)$""")
+    private val MISSING_SECONDS = Regex("""(T\d{2}:\d{2})(?=Z|[+-]\d)""")
+    private val EMPTY_FRACTION = Regex("""(:\d{2})\.(?=Z|[+-]\d|$)""")
+
     private val ISO_FORMS: List<(String) -> Long> = listOf(
-        { Instant.parse(it).toEpochMilli() },
-        { OffsetDateTime.parse(it).toInstant().toEpochMilli() },
-        { LocalDateTime.parse(it).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() },
-        { LocalDate.parse(it).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() },
+        { Instant.parse(it).toEpochMilliseconds() },
+        { LocalDateTime.parse(it).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds() },
+        { LocalDate.parse(it).atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds() },
     )
 
     /** Microseconds since the epoch as milliseconds; null if missing, not positive or absurdly large. */
@@ -60,11 +65,35 @@ internal object ImportTime {
         return millis?.takeIf { it in 1..MAX_MILLIS }
     }
 
-    private fun iso(text: String): Long? = ISO_FORMS.firstNotNullOfOrNull { form ->
-        try {
-            form(text)
-        } catch (_: DateTimeParseException) {
-            null
+    /**
+     * The forms java.time took that kotlinx-datetime does not, rewritten to ones it does: the
+     * letters T and Z in either case, no seconds before an offset (`19:32Z`), an empty fraction
+     * (`19:32:53.Z`), and with `Z` the end of the day as `24:00:00` and a leap second `23:59:60`.
+     */
+    private fun lenient(text: String): String {
+        val upper = text.uppercase()
+        val endOfDay = END_OF_DAY.matchEntire(upper)
+        return if (endOfDay != null) {
+            LocalDate.parse(endOfDay.groupValues[1]).plus(1, DateTimeUnit.DAY).toString() + "T00:00:00Z"
+        } else {
+            upper.replace(LEAP_SECOND, "T23:59:59$1")
+                .replace(MISSING_SECONDS, "$1:00")
+                .replace(EMPTY_FRACTION, "$1")
+        }
+    }
+
+    private fun iso(text: String): Long? {
+        val prepared = try {
+            lenient(text)
+        } catch (_: IllegalArgumentException) {
+            return null
+        }
+        return ISO_FORMS.firstNotNullOfOrNull { form ->
+            try {
+                form(prepared)
+            } catch (_: IllegalArgumentException) {
+                null
+            }
         }
     }
 
@@ -98,9 +127,9 @@ internal object ImportTime {
             "pm" -> hour % HALF_DAY + HALF_DAY
             else -> hour
         }
-        LocalDateTime.of(year, month, day, hour24, clock[MINUTE].toIntOrNull() ?: 0, clock[SECOND].toIntOrNull() ?: 0)
-            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    } catch (_: DateTimeException) {
+        LocalDateTime(year, month, day, hour24, clock[MINUTE].toIntOrNull() ?: 0, clock[SECOND].toIntOrNull() ?: 0)
+            .toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+    } catch (_: IllegalArgumentException) {
         null
     }
 

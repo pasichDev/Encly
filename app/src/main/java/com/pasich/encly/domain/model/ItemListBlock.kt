@@ -1,6 +1,6 @@
 package com.pasich.encly.domain.model
 
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 /**
  * One list/checklist row. [id] keys the row's field state in Compose, so deleting or inserting
@@ -10,5 +10,5 @@ import java.util.UUID
 data class ItemListBlock(
     val value: String = "",
     val isCheck: Boolean = false,
-    @Transient val id: String = UUID.randomUUID().toString(),
+    @Transient val id: String = Uuid.random().toString(),
 )

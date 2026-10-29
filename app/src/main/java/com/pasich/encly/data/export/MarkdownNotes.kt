@@ -6,7 +6,7 @@ import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.JsonPrimitive
-import java.time.Instant
+import kotlin.time.Instant
 
 /**
  * The words the exported files contain besides the user's own text, in the in-app language
@@ -74,5 +74,5 @@ object MarkdownNotes {
         },
     ).toString()
 
-    private fun iso(millis: Long): String = Instant.ofEpochMilli(millis).toString()
+    private fun iso(millis: Long): String = Instant.fromEpochMilliseconds(millis).toString()
 }

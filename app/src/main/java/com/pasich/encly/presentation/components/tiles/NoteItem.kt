@@ -19,7 +19,7 @@ import com.pasich.encly.utils.NotesTextFormatter
 import com.pasich.encly.utils.formatCardDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Date
+import kotlin.time.Instant
 
 /**
  * A note in a list: the design-system note card with its tag and date. Long-press opens the
@@ -45,7 +45,7 @@ fun NoteItem(
         excerpt = preview,
         meta = NoteCardMeta(
             tag = item?.tag?.nameTag,
-            date = note.date.takeIf { it > 0L }?.let { formatCardDate(Date(it)) },
+            date = note.date.takeIf { it > 0L }?.let { formatCardDate(Instant.fromEpochMilliseconds(it)) },
         ),
         excerptLines = excerptLines,
         highlight = highlight,

@@ -14,6 +14,7 @@ import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.export.MarkdownDocuments
 import com.pasich.encly.data.export.MarkdownExport
 import com.pasich.encly.data.export.MarkdownLabels
+import com.pasich.encly.utils.todayStamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -23,9 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 /** What a Markdown export writes. */
@@ -228,8 +226,7 @@ class MarkdownExportViewModel @Inject constructor(
     )
 
     /** "encly-notes-2026-10-25.zip": a date only, never a title. */
-    private fun datedName(prefix: String, extension: String): String =
-        "$prefix-${SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date())}.$extension"
+    private fun datedName(prefix: String, extension: String): String = "$prefix-${todayStamp()}.$extension"
 
     private companion object {
         const val TAG = "MarkdownExport"

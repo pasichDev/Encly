@@ -31,6 +31,7 @@ reorderable = "3.1.0"
 gson = "2.14.0"
 datastore = "1.2.1"
 serializationJson = "1.11.0"
+datetime = "0.8.0"
 sqlcipher = "4.19.1"
 sealite = "1.0.0"
 sqliteKtx = "2.7.1"
@@ -69,6 +70,7 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationJson" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }

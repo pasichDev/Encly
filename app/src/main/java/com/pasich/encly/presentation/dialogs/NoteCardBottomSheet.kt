@@ -48,7 +48,7 @@ import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
-import java.util.Date
+import com.pasich.encly.utils.noteInstant
 
 sealed class NoteAction {
     object Edit : NoteAction()
@@ -168,7 +168,7 @@ private fun NoteActionHeader(item: NoteWithTag) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = formatNoteDate(if (item.note.date == 0L) Date() else Date(item.note.date)),
+            text = formatNoteDate(noteInstant(item.note.date)),
             style = EnclyTheme.typography.meta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

@@ -49,10 +49,9 @@ import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
+import com.pasich.encly.utils.todayStamp
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import kotlin.time.Instant
 
 /**
  * Settings → Backup: encrypted export and import. Files go through the Storage Access
@@ -161,7 +160,7 @@ private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit,
 @Composable
 private fun ExportAction(lastExportAt: Long?, enabled: Boolean, onExport: () -> Unit) {
     val lastExport = lastExportAt?.let {
-        stringResource(R.string.backup_last_export, formatNoteDate(Date(it)))
+        stringResource(R.string.backup_last_export, formatNoteDate(Instant.fromEpochMilliseconds(it)))
     } ?: stringResource(R.string.backup_never_exported)
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
         EnclyTonalButton(text = stringResource(R.string.backup_export), onClick = onExport, enabled = enabled)
@@ -258,7 +257,7 @@ private fun launchPicker(onLaunched: () -> Unit, onUnavailable: () -> Unit, laun
 
 /** "encly-backup-2026-09-23.enclybak": a date only, never a title or other content. */
 private fun defaultFileName(): String {
-    val date = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date())
+    val date = todayStamp()
     return "encly-backup-$date.${BackupFormat.FILE_EXTENSION}"
 }
 

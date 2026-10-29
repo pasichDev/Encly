@@ -5,7 +5,7 @@ import com.pasich.encly.R
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 enum class BlockType {
     TEXT,
@@ -22,7 +22,7 @@ enum class BlockType {
 }
 
 /** A fresh editor-session identity for a block or list item. Never persisted. */
-fun newBlockId(): String = UUID.randomUUID().toString()
+fun newBlockId(): String = Uuid.random().toString()
 
 /**
  * Every block carries [id], a stable identity for the editor session: Compose keys its
