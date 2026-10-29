@@ -329,9 +329,8 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
-    // Cipher
-    implementation(libs.sqlcipher.android)
-    implementation(libs.androidx.sqlite.ktx)
+    // Cipher: SQLCipher through the androidx.sqlite driver API
+    implementation(libs.sealite)
     implementation(libs.kotlin.bip39)
 
     implementation(libs.icons.lucide)
@@ -346,6 +345,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     // Compose UI tests run on the JVM under Robolectric (src/test/**/ui), no emulator needed.
     testImplementation(libs.robolectric)
+    // Room's migrations run against the platform SQLite under Robolectric.
+    testImplementation(libs.androidx.sqlite.framework)
     testImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
@@ -354,4 +355,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.sqlite.framework)
+    // Writes a vault the way earlier releases did, to check that the current driver opens it.
+    androidTestImplementation(libs.sqlcipher.android)
 }

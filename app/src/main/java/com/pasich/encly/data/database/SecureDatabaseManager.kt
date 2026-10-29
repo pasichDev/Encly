@@ -1,15 +1,15 @@
 package com.pasich.encly.data.database
 
 import android.content.Context
+import androidx.room.useWriterConnection
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import net.zetetic.database.Logger
-import net.zetetic.database.NoopTarget
-import net.zetetic.database.sqlcipher.SQLiteConnection
-import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
-import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
+import io.github.pasichdev.sealite.SealiteDriver
+import io.github.pasichdev.sealite.SealiteKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -39,12 +39,14 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
     private var openFile: VaultFile? = null
 
     /**
-     * The passphrase buffer handed to Room's [SupportOpenHelperFactory]. SQLCipher keeps this
-     * exact array (no copy) in its open-helper configuration and re-keys every new pool
-     * connection from it (WAL readers, reopen after a pool reset), so it must stay intact for
-     * as long as [database] is open and is zeroed only after [reset] closes it.
+     * The driver of the open [database]. It holds its own copy of the key and keys every new
+     * pool connection from it (WAL readers, reopen after a pool reset); closing it after the
+     * database wipes that copy.
      */
-    private var roomPassphrase: ByteArray? = null
+    private var driver: SealiteDriver? = null
+
+    /** A copy of the open database's key, only to check a repeated [unlockDatabase]; wiped in [reset]. */
+    private var openKey: ByteArray? = null
 
     fun isDatabaseUnlocked(): Boolean = isUnlocked
 
@@ -62,9 +64,10 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
     /**
      * Opens the vault with the raw 32-byte [dek]; the caller keeps (and wipes) [dek].
      *
-     * The key reaches SQLCipher in its raw-key form (`x'<64 hex>'`), so SQLCipher uses it as
-     * the page key directly instead of running its own PBKDF2 over it on every connection: the
-     * DEK is already a uniformly random 256-bit key.
+     * The key reaches SQLCipher as a raw key ([SealiteKey.raw]), so SQLCipher uses it as the page
+     * key directly instead of running its own PBKDF2 over it on every connection: the DEK is
+     * already a uniformly random 256-bit key. It is the same key derivation the files were
+     * written with before (`x'<64 hex>'` through sqlcipher-android), so existing vaults open.
      *
      * While open, a second call succeeds only with the same key (compared in constant time) and
      * the same [file]; any other key or file is refused, never silently accepted.
@@ -78,17 +81,12 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
     @Synchronized
     fun unlockDatabase(dek: ByteArray, allowCreate: Boolean, file: VaultFile): Boolean {
         if (dek.size != DEK_LENGTH) return false
-        val passphrase = rawKeyPassphrase(dek)
         if (isUnlocked) {
-            return try {
-                openFile == file && roomPassphrase?.let { MessageDigest.isEqual(it, passphrase) } == true
-            } finally {
-                SensitiveDataCleaner.clear(passphrase)
-            }
+            return openFile == file && openKey?.let { MessageDigest.isEqual(it, dek) } == true
         }
-        ensureNativeLoaded()
 
         var openedDatabase: AppDatabase? = null
+        var openedDriver: SealiteDriver? = null
         return try {
             when (SQLCipherUtils.getDatabaseState(context, file.fileName)) {
                 SQLCipherUtils.State.DOES_NOT_EXIST -> if (!allowCreate) return false
@@ -101,33 +99,40 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
 
             // No destructive fallback: a schema change without a migration must fail to open
             // (and be caught in tests), never drop the user's notes.
+            // The driver keeps its own copy of the key; this one is wiped at once.
+            val key = SealiteKey.raw(dek)
+            val newDriver = try {
+                SealiteDriver(key)
+            } finally {
+                key.close()
+            }
+            openedDriver = newDriver
             val opened = VaultSchema.databaseBuilder(context.applicationContext, file.fileName)
-                .openHelperFactory(SupportOpenHelperFactory(passphrase, VaultConnectionHook, false))
+                .setDriver(newDriver)
+                .setQueryCoroutineContext(Dispatchers.IO)
                 .build()
             openedDatabase = opened
 
             // One open, which is also the key check: a wrong key, a damaged file or a failed
             // migration throws here, before the database is published as unlocked.
-            opened.openHelper.writableDatabase
+            runBlocking { opened.useWriterConnection { } }
 
             database = opened
-            roomPassphrase = passphrase
+            driver = newDriver
+            openKey = dek.copyOf()
             isUnlocked = true
             openFile = file
             lease = DatabaseLease()
             true
         } catch (e: Exception) {
             openedDatabase?.close()
+            openedDriver?.close()
             database = null
             isUnlocked = false
             openFile = null
             lease = null
             AppLogger.e(TAG, "Failed to unlock the database", e)
             false
-        } finally {
-            // Only a failed open may wipe the buffer here; on success it is owned by the
-            // live factory until reset().
-            if (roomPassphrase !== passphrase) SensitiveDataCleaner.clear(passphrase)
         }
     }
 
@@ -148,10 +153,13 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
         lease = null
         database?.close()
         database = null
+        // After the database: closing the driver wipes its copy of the key.
+        driver?.close()
+        driver = null
         isUnlocked = false
         openFile = null
-        roomPassphrase?.let(SensitiveDataCleaner::clear)
-        roomPassphrase = null
+        openKey?.let(SensitiveDataCleaner::clear)
+        openKey = null
     }
 
     /** Closes and deletes both databases: the real vault's and the decoy vault's. */
@@ -179,75 +187,5 @@ class SecureDatabaseManager @Inject constructor(@param:ApplicationContext privat
     companion object {
         private const val TAG = "SecureDatabaseManager"
         private const val DEK_LENGTH = 32
-        private val HEX = "0123456789abcdef".toCharArray()
-
-        /**
-         * `x'<hex>'` as ASCII bytes: SQLCipher's raw-key syntax. The caller wipes the result.
-         * Built byte by byte so no String copy of the key exists.
-         */
-        internal fun rawKeyPassphrase(dek: ByteArray): ByteArray {
-            val out = ByteArray(dek.size * 2 + RAW_KEY_OVERHEAD)
-            out[0] = 'x'.code.toByte()
-            out[1] = '\''.code.toByte()
-            dek.forEachIndexed { index, byte ->
-                val value = byte.toInt() and BYTE_MASK
-                out[RAW_KEY_PREFIX + index * 2] = HEX[value ushr NIBBLE_BITS].code.toByte()
-                out[RAW_KEY_PREFIX + index * 2 + 1] = HEX[value and NIBBLE_MASK].code.toByte()
-            }
-            out[out.size - 1] = '\''.code.toByte()
-            return out
-        }
-
-        private const val RAW_KEY_OVERHEAD = 3
-        private const val RAW_KEY_PREFIX = 2
-        private const val BYTE_MASK = 0xFF
-        private const val NIBBLE_BITS = 4
-        private const val NIBBLE_MASK = 0x0F
-
-        // Loaded on first use rather than in a static initializer, so the class can be
-        // constructed (and mocked in JVM tests) without the native library.
-        private val nativeLoaded by lazy {
-            System.loadLibrary("sqlcipher")
-            // SQLCipher's Java client logs to Logcat by default. Encly's vault layer
-            // keeps third-party database diagnostics out of system-visible logs too.
-            Logger.setTarget(NoopTarget())
-            true
-        }
-
-        private fun ensureNativeLoaded() {
-            check(nativeLoaded)
-        }
-    }
-}
-
-/**
- * Per-connection SQLCipher settings, both best effort (a build without them must still open
- * the vault):
- * - before keying, native logging off (`cipher_log_level = NONE`): SQLCipher's own log lines
- *   can name the database and describe key or page errors, and must not reach logcat. The Java
- *   logger is already a no-op (see [SecureDatabaseManager]).
- * - after keying, memory security on (`cipher_memory_security`): freed memory is zeroed.
- */
-@Suppress("TooGenericExceptionCaught") // Best effort: never fail the open over a pragma.
-private object VaultConnectionHook : SQLiteDatabaseHook {
-    override fun preKey(connection: SQLiteConnection) {
-        pragma(connection, "PRAGMA cipher_log_level = NONE")
-    }
-
-    override fun postKey(connection: SQLiteConnection) {
-        pragma(connection, "PRAGMA cipher_memory_security = ON")
-    }
-
-    /** Some pragmas answer with a row, some with none; either is fine. */
-    private fun pragma(connection: SQLiteConnection, sql: String) {
-        try {
-            connection.executeForString(sql, null, null)
-        } catch (_: Exception) {
-            try {
-                connection.execute(sql, null, null)
-            } catch (e: Exception) {
-                AppLogger.w("SecureDatabaseManager", "SQLCipher pragma not applied", e)
-            }
-        }
     }
 }

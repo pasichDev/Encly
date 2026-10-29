@@ -67,7 +67,7 @@ class SecureDatabaseManagerInstrumentedTest {
         assertFalse(manager.isDatabaseUnlocked())
         assertTrue(manager.unlockDatabase(KEY_A))
         assertTrue(runCatching { manager.getDatabase(oldLease) }.isFailure)
-        assertTrue(manager.getDatabase(requireNotNull(manager.captureLease())).isOpen)
+        assertTrue(manager.isDatabaseUnlocked())
 
         assertEquals(NOTE_COUNT, manager.getDatabase(manager.captureLease()!!).notesDao().getAllNotes().first().size)
     }

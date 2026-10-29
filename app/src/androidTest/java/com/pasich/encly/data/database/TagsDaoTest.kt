@@ -1,6 +1,7 @@
 package com.pasich.encly.data.database
 
 import androidx.room.Room
+import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pasich.encly.data.model.Note
@@ -25,7 +26,7 @@ class TagsDaoTest {
                 InstrumentationRegistry.getInstrumentation().targetContext,
                 AppDatabase::class.java,
             ),
-        ).build()
+        ).setDriver(AndroidSQLiteDriver()).build()
     }
 
     @After

@@ -2,7 +2,6 @@ package com.pasich.encly.data.database
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -16,8 +15,8 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * The parts of the database owner that do not need the native SQLCipher library: the raw-key
- * syntax, the refusals before any file is touched, and which files a wipe removes.
+ * The parts of the database owner that do not need the native SQLCipher library: the refusals
+ * before any file is touched, and which files a wipe removes.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -40,24 +39,6 @@ class SecureDatabaseManagerTest {
     private fun createFiles(vault: VaultFile) = files(vault).forEach {
         it.parentFile?.mkdirs()
         it.writeBytes(ByteArray(64) { 7 })
-    }
-
-    @Test
-    fun theRawKeyIsHexInsideSqlcipherRawKeySyntax() {
-        val dek = ByteArray(32) { (it * 8 + 1).toByte() }
-
-        val passphrase = SecureDatabaseManager.rawKeyPassphrase(dek)
-
-        val expected = "x'" + dek.joinToString("") { "%02x".format(it) } + "'"
-        assertEquals(67, passphrase.size)
-        assertArrayEquals(expected.toByteArray(Charsets.US_ASCII), passphrase)
-    }
-
-    @Test
-    fun theRawKeyUsesLowercaseHexForHighBytes() {
-        val passphrase = SecureDatabaseManager.rawKeyPassphrase(ByteArray(32) { 0xAB.toByte() })
-
-        assertEquals("x'" + "ab".repeat(32) + "'", String(passphrase, Charsets.US_ASCII))
     }
 
     @Test

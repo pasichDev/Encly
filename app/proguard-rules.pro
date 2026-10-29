@@ -2,7 +2,7 @@
 #
 # Deliberately almost empty: everything the app needs kept at runtime is already covered by the
 # consumer rules the libraries ship, and the app has no reflective code paths of its own.
-#   - SQLCipher (JNI classes and native methods): sqlcipher-android's proguard.txt.
+#   - SQLCipher (JNI classes and native methods): Sealite's consumer rules.
 #   - Room: the KSP-generated *_Impl classes, instantiated reflectively by class name, are
 #     kept by room-runtime's rules.
 #   - Hilt / Dagger, Lifecycle ViewModels, Navigation, Compose, DataStore: their own

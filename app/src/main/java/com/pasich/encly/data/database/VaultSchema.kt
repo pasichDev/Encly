@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 
 /**
  * Schema pieces Room cannot express in entity annotations.
@@ -46,21 +47,24 @@ object VaultSchema {
             "UPDATE `$table` SET uid = OLD.uid WHERE id = NEW.id; END",
     )
 
-    fun createTriggers(db: SupportSQLiteDatabase) {
-        TABLES.flatMap(::triggers).forEach(db::execSQL)
+    /** The uid triggers of every table in the current schema. */
+    internal fun triggerStatements(): List<String> = TABLES.flatMap(::triggers)
+
+    fun createTriggers(connection: SQLiteConnection) {
+        triggerStatements().forEach(connection::execSQL)
     }
 
     /** 1 -> 2: add the stable `uid` to notes, tags and tasks and back-fill existing rows. */
     val MIGRATION_1_2 = object : Migration(1, 2) {
-        override fun migrate(db: SupportSQLiteDatabase) {
+        override fun migrate(connection: SQLiteConnection) {
             V2_UID_TABLES.forEach { table ->
-                db.execSQL("ALTER TABLE `$table` ADD COLUMN `uid` TEXT NOT NULL DEFAULT ''")
-                db.execSQL("UPDATE `$table` SET uid = $RANDOM_UID WHERE uid = ''")
-                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_${table}_uid` ON `$table` (`uid`)")
+                connection.execSQL("ALTER TABLE `$table` ADD COLUMN `uid` TEXT NOT NULL DEFAULT ''")
+                connection.execSQL("UPDATE `$table` SET uid = $RANDOM_UID WHERE uid = ''")
+                connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_${table}_uid` ON `$table` (`uid`)")
             }
             // Only these tables exist at version 2; later tables get their triggers in their
             // own migration.
-            V2_UID_TABLES.flatMap(::triggers).forEach(db::execSQL)
+            V2_UID_TABLES.flatMap(::triggers).forEach(connection::execSQL)
         }
     }
 
@@ -72,21 +76,21 @@ object VaultSchema {
      * and index; both are recreated on the new one.
      */
     val MIGRATION_2_3 = object : Migration(2, VERSION_WITHOUT_TASK_REMINDERS) {
-        override fun migrate(db: SupportSQLiteDatabase) {
+        override fun migrate(connection: SQLiteConnection) {
             val columns = "`id`, `title`, `description`, `isCompleted`, `createdDate`, " +
                 "`completedDate`, `priority`, `categoryId`, `position`, `uid`"
-            db.execSQL(
+            connection.execSQL(
                 "CREATE TABLE IF NOT EXISTS `tasks_new` (" +
                     "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, " +
                     "`description` TEXT, `isCompleted` INTEGER NOT NULL, `createdDate` INTEGER NOT NULL, " +
                     "`completedDate` INTEGER, `priority` INTEGER NOT NULL, `categoryId` INTEGER, " +
                     "`position` INTEGER NOT NULL, `uid` TEXT NOT NULL DEFAULT '')",
             )
-            db.execSQL("INSERT INTO `tasks_new` ($columns) SELECT $columns FROM `tasks`")
-            db.execSQL("DROP TABLE `tasks`")
-            db.execSQL("ALTER TABLE `tasks_new` RENAME TO `tasks`")
-            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_tasks_uid` ON `tasks` (`uid`)")
-            triggers("tasks").forEach(db::execSQL)
+            connection.execSQL("INSERT INTO `tasks_new` ($columns) SELECT $columns FROM `tasks`")
+            connection.execSQL("DROP TABLE `tasks`")
+            connection.execSQL("ALTER TABLE `tasks_new` RENAME TO `tasks`")
+            connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_tasks_uid` ON `tasks` (`uid`)")
+            triggers("tasks").forEach(connection::execSQL)
         }
     }
 
@@ -96,17 +100,17 @@ object VaultSchema {
      * statements match Room's export of version 4 (app/schemas), which the schema test checks.
      */
     val MIGRATION_3_4 = object : Migration(VERSION_WITHOUT_TASK_REMINDERS, VERSION_WITH_SUBTASKS) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL(
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL(
                 "CREATE TABLE IF NOT EXISTS `$SUBTASKS` (" +
                     "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `taskId` INTEGER NOT NULL, " +
                     "`title` TEXT NOT NULL, `isCompleted` INTEGER NOT NULL, `position` INTEGER NOT NULL, " +
                     "`uid` TEXT NOT NULL DEFAULT '', " +
                     "FOREIGN KEY(`taskId`) REFERENCES `tasks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
             )
-            db.execSQL("CREATE INDEX IF NOT EXISTS `index_subtasks_taskId` ON `$SUBTASKS` (`taskId`)")
-            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_subtasks_uid` ON `$SUBTASKS` (`uid`)")
-            triggers(SUBTASKS).forEach(db::execSQL)
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_subtasks_taskId` ON `$SUBTASKS` (`taskId`)")
+            connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_subtasks_uid` ON `$SUBTASKS` (`uid`)")
+            triggers(SUBTASKS).forEach(connection::execSQL)
         }
     }
 
@@ -116,10 +120,10 @@ object VaultSchema {
      * statements match Room's export of version 5 (app/schemas), which the schema test checks.
      */
     val MIGRATION_4_5 = object : Migration(VERSION_WITH_SUBTASKS, VERSION_WITH_NOTE_ORGANIZING) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL("ALTER TABLE `notes` ADD COLUMN `isPinned` INTEGER NOT NULL DEFAULT 0")
-            db.execSQL("ALTER TABLE `notes` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0")
-            db.execSQL("ALTER TABLE `notes` ADD COLUMN `color` TEXT NOT NULL DEFAULT 'none'")
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `notes` ADD COLUMN `isPinned` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL("ALTER TABLE `notes` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL("ALTER TABLE `notes` ADD COLUMN `color` TEXT NOT NULL DEFAULT 'none'")
         }
     }
 
@@ -130,9 +134,9 @@ object VaultSchema {
      * place would fail Room's identity check there.
      */
     val MIGRATION_5_6 = object : Migration(VERSION_WITH_NOTE_ORGANIZING, VERSION_WITH_NOTE_TEXT_SETTINGS) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL("ALTER TABLE `notes` ADD COLUMN `textSize` INTEGER")
-            db.execSQL("ALTER TABLE `notes` ADD COLUMN `lineSpacing` INTEGER")
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `notes` ADD COLUMN `textSize` INTEGER")
+            connection.execSQL("ALTER TABLE `notes` ADD COLUMN `lineSpacing` INTEGER")
         }
     }
 
@@ -154,8 +158,8 @@ object VaultSchema {
 
     /** Installs the triggers on a freshly created database. */
     val CALLBACK = object : RoomDatabase.Callback() {
-        override fun onCreate(db: SupportSQLiteDatabase) {
-            createTriggers(db)
+        override fun onCreate(connection: SQLiteConnection) {
+            createTriggers(connection)
         }
     }
 }

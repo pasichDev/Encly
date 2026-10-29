@@ -3,9 +3,11 @@ package com.pasich.encly.data.database
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
+import androidx.room.useReaderConnection
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
+import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import com.google.gson.JsonParser
 import kotlinx.coroutines.flow.first
@@ -65,7 +67,7 @@ class VaultMigrationTest {
                     object : SupportSQLiteOpenHelper.Callback(version) {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             statements.forEach(db::execSQL)
-                            VaultSchema.createTriggers(db)
+                            VaultSchema.triggerStatements().forEach(db::execSQL)
                             db.execSQL(noteSql)
                         }
 
@@ -88,7 +90,9 @@ class VaultMigrationTest {
                 "VALUES (5, 'Old note', '[]', 'd', 20, 10, NULL, 1, 'old-uid', 1, 0, 'red')",
         )
 
-        val db = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name)).build()
+        val db = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name))
+            .setDriver(AndroidSQLiteDriver())
+            .build()
         try {
             val old = checkNotNull(db.notesDao().getNoteById(5))
             assertEquals("Old note", old.title)
@@ -96,7 +100,7 @@ class VaultMigrationTest {
             assertEquals("red", old.color)
             assertNull(old.textSize)
             assertNull(old.lineSpacing)
-            assertEquals(DB_VERSION, db.openHelper.readableDatabase.version)
+            assertEquals(DB_VERSION, db.userVersion())
         } finally {
             db.close()
         }
@@ -111,7 +115,9 @@ class VaultMigrationTest {
                 "VALUES (5, 'Old note', '[]', 'd', 20, 10, NULL, 1, 'old-uid')",
         )
 
-        val db = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name)).build()
+        val db = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name))
+            .setDriver(AndroidSQLiteDriver())
+            .build()
         try {
             // Room validates the migrated tables against the entities when the first query opens it.
             val old = checkNotNull(db.notesDao().getNoteById(5))
@@ -123,7 +129,7 @@ class VaultMigrationTest {
             assertEquals("none", old.color)
             assertNull(old.textSize)
             assertNull(old.lineSpacing)
-            assertEquals(DB_VERSION, db.openHelper.readableDatabase.version)
+            assertEquals(DB_VERSION, db.userVersion())
 
             // The uid trigger survived the upgrade, and the new columns default for a new note.
             val id = db.notesDao().insertNote(com.pasich.encly.data.model.Note(title = "New"))
@@ -135,6 +141,13 @@ class VaultMigrationTest {
             assertEquals(listOf("Old note"), db.notesDao().getTrashNotes().first().map { it.title })
         } finally {
             db.close()
+        }
+    }
+
+    private suspend fun AppDatabase.userVersion(): Int = useReaderConnection { connection ->
+        connection.usePrepared("PRAGMA user_version") {
+            it.step()
+            it.getLong(0).toInt()
         }
     }
 

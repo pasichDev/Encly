@@ -1,6 +1,9 @@
 package com.pasich.encly.data.backup
 
-import androidx.room.withTransaction
+import androidx.room.deferredTransaction
+import androidx.room.immediateTransaction
+import androidx.room.useReaderConnection
+import androidx.room.useWriterConnection
 import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Note
@@ -26,26 +29,32 @@ class RoomVaultDataStore private constructor(
 
     private fun database() = databaseProvider.getDatabase(lease ?: error("Vault data store is not bound"))
 
+    // One read transaction: every table is read from the same state of the database.
     override suspend fun snapshot(): VaultSnapshot = database().let { db ->
-        db.withTransaction {
-            VaultSnapshot(
-                notes = db.backupDao().allNotes(),
-                tags = db.backupDao().allTags(),
-                tasks = db.backupDao().allTasks(),
-                subtasks = db.backupDao().allSubtasks(),
-            )
+        db.useReaderConnection {
+            it.deferredTransaction {
+                VaultSnapshot(
+                    notes = db.backupDao().allNotes(),
+                    tags = db.backupDao().allTags(),
+                    tasks = db.backupDao().allTasks(),
+                    subtasks = db.backupDao().allSubtasks(),
+                )
+            }
         }
     }
 
     override suspend fun snapshotOfNote(noteId: Long): VaultSnapshot = database().let { db ->
-        db.withTransaction {
-            val note = db.notesDao().getNoteById(noteId)
-            val tag = note?.tagId?.let { db.backupDao().tagById(it) }
-            VaultSnapshot(listOfNotNull(note), listOfNotNull(tag), emptyList())
+        db.useReaderConnection {
+            it.deferredTransaction {
+                val note = db.notesDao().getNoteById(noteId)
+                val tag = note?.tagId?.let { db.backupDao().tagById(it) }
+                VaultSnapshot(listOfNotNull(note), listOfNotNull(tag), emptyList())
+            }
         }
     }
 
-    override suspend fun <R> inTransaction(block: suspend () -> R): R = database().withTransaction { block() }
+    override suspend fun <R> inTransaction(block: suspend () -> R): R =
+        database().useWriterConnection { it.immediateTransaction { block() } }
 
     override suspend fun deleteAll() {
         val dao = database().backupDao()
