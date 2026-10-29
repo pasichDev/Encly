@@ -16,10 +16,17 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_back_to_pin
+import com.pasich.encly.core.resources.lock_recover_access
+import com.pasich.encly.core.resources.lock_recovery_subtitle
+import com.pasich.encly.core.resources.lock_recovery_title
+import com.pasich.encly.core.resources.lock_subtitle
+import com.pasich.encly.core.resources.lock_title
+import com.pasich.encly.core.resources.lock_unlocking
+import com.pasich.encly.core.resources.lock_use_recovery_phrase
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.EnclyButton
@@ -42,6 +49,7 @@ import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 /** The app's lock screen: unlocking opens Home (or the note that was open), see [leaveLockScreen]. */
 @Composable
@@ -113,7 +121,7 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
             )
             // Drawn over the phrase form rather than instead of it, so it keeps its state. The PIN
             // form shows the check in place (full dots, breathing logo) and hands over to the reveal.
-            if (busy) AuthLoading(stringResource(R.string.lock_unlocking))
+            if (busy) AuthLoading(stringResource(Res.string.lock_unlocking))
         } else {
             PinLockContent(
                 form = form,
@@ -214,13 +222,13 @@ private fun PinLockContent(
 
     val shownError = form.pinError
     PinEntryScaffold(
-        title = stringResource(R.string.lock_title),
+        title = stringResource(Res.string.lock_title),
         bodyAtBottom = true,
         // The sub-heading slot carries the lockout countdown or the last error.
         subtitle = when {
             form.lockedOut -> pinLockoutText(form.lockoutSeconds)
             shownError != null -> stringResource(shownError)
-            else -> stringResource(R.string.lock_subtitle)
+            else -> stringResource(Res.string.lock_subtitle)
         },
         subtitleIsError = form.lockedOut || shownError != null,
         busy = busy,
@@ -296,20 +304,20 @@ private fun SeedLockContent(
         }
     }
     PinEntryScaffold(
-        title = stringResource(R.string.lock_recovery_title),
-        subtitle = stringResource(R.string.lock_recovery_subtitle),
+        title = stringResource(Res.string.lock_recovery_title),
+        subtitle = stringResource(Res.string.lock_recovery_subtitle),
         icon = EnclyIcons.Key,
         // The 12 cells need the room: no 96 dp top, so they stay above the keyboard.
         compact = true,
         // Pinned above the keyboard: typing the phrase must never hide the button.
         footer = {
             EnclyButton(
-                text = stringResource(R.string.lock_recover_access),
+                text = stringResource(Res.string.lock_recover_access),
                 onClick = submit,
                 enabled = form.phrase.canSubmit && !busy,
             )
             EnclyTextButton(
-                text = stringResource(R.string.lock_back_to_pin),
+                text = stringResource(Res.string.lock_back_to_pin),
                 onClick = form::leaveRecovery,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !busy,
@@ -333,7 +341,7 @@ private fun SeedLockContent(
 @Composable
 private fun RecoveryLink(onUseRecovery: () -> Unit) {
     EnclyTextButton(
-        text = stringResource(R.string.lock_use_recovery_phrase),
+        text = stringResource(Res.string.lock_use_recovery_phrase),
         onClick = onUseRecovery,
         modifier = Modifier.padding(
             top = EnclyTheme.spacing.l,

@@ -43,7 +43,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
@@ -51,9 +50,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.collapse
+import com.pasich.encly.core.resources.expand
 import com.pasich.encly.presentation.effects.shimmerEffect
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 private const val HOLD_TO_CONFIRM_MS = 4_000
 private const val HALF = 0.5f
@@ -196,7 +198,7 @@ fun EnclyExpandableRow(question: String, answer: String, modifier: Modifier = Mo
             )
             Icon(
                 EnclyIcons.ChevronDown,
-                contentDescription = stringResource(if (expanded) R.string.collapse else R.string.expand),
+                contentDescription = stringResource(if (expanded) Res.string.collapse else Res.string.expand),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(EnclyTheme.spacing.iconSmall)

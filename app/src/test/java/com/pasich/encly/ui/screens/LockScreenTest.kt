@@ -18,7 +18,18 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_back_to_pin
+import com.pasich.encly.core.resources.lock_recover_access
+import com.pasich.encly.core.resources.lock_recovery_title
+import com.pasich.encly.core.resources.lock_subtitle
+import com.pasich.encly.core.resources.lock_title
+import com.pasich.encly.core.resources.lock_use_recovery_phrase
+import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
+import com.pasich.encly.core.resources.pin_delete_digit
+import com.pasich.encly.core.resources.pin_digits_entered
+import com.pasich.encly.core.resources.recovery_word_unknown
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.LockScreen
@@ -34,7 +45,7 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalTestApi::class)
 class LockScreenTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
 
     private fun show(recovery: Boolean = true) {
         `when`(app.security.hasRecoverySeed()).thenReturn(recovery)
@@ -85,11 +96,11 @@ class LockScreenTest : ComposeScreenTest() {
     fun showsThePinPad() {
         show()
 
-        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.lock_subtitle)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_subtitle)).assertIsDisplayed()
         (0..9).forEach { rule.onNodeWithText(it.toString()).assertIsDisplayed() }
-        rule.onNodeWithContentDescription(str(R.string.pin_delete_digit)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(str(Res.string.pin_delete_digit)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 10)
     }
 
@@ -97,7 +108,7 @@ class LockScreenTest : ComposeScreenTest() {
     fun withoutARecoveryPhraseThereIsNoRecoveryLink() {
         show(recovery = false)
 
-        assertEquals(0, countText(str(R.string.lock_use_recovery_phrase)))
+        assertEquals(0, countText(str(Res.string.lock_use_recovery_phrase)))
     }
 
     @Test
@@ -105,9 +116,9 @@ class LockScreenTest : ComposeScreenTest() {
         show()
 
         typePin("12")
-        rule.onNodeWithContentDescription(str(R.string.pin_digits_entered, 2, 6)).assertExists()
-        rule.onNodeWithContentDescription(str(R.string.pin_delete_digit)).performClick()
-        rule.onNodeWithContentDescription(str(R.string.pin_digits_entered, 1, 6)).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 2, 6)).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.pin_delete_digit)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 1, 6)).assertExists()
     }
 
     @Test
@@ -117,8 +128,8 @@ class LockScreenTest : ComposeScreenTest() {
 
         typePin("000000")
 
-        waitForText(str(R.string.lock_wrong_pin))
-        rule.onNodeWithContentDescription(str(R.string.pin_digits_entered, 0, 6)).assertExists()
+        waitForText(str(Res.string.lock_wrong_pin))
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 0, 6)).assertExists()
         assertEquals(NavRoutes.LockRoute.name, currentRoute())
     }
 
@@ -135,22 +146,22 @@ class LockScreenTest : ComposeScreenTest() {
     @Test
     fun theRecoveryFormHasTwelveCellsAndWaitsForAValidPhrase() {
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
 
-        rule.onNodeWithText(str(R.string.lock_recovery_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_recovery_title)).assertIsDisplayed()
         (1..12).forEach { phraseCell(it).assertExists() }
-        rule.onNodeWithText(str(R.string.lock_recover_access)).assertIsNotEnabled()
+        rule.onNodeWithText(str(Res.string.lock_recover_access)).assertIsNotEnabled()
 
         phraseCell(1).performTextReplacement(PHRASE)
 
         assertEquals(PHRASE.split(' '), phraseCells())
-        rule.onNodeWithText(str(R.string.lock_recover_access)).assertIsEnabled()
+        rule.onNodeWithText(str(Res.string.lock_recover_access)).assertIsEnabled()
     }
 
     @Test
     fun spaceMovesOnAndBackspaceInAnEmptyCellGoesBack() {
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
         phraseCell(1).performClick()
 
         phraseCell(1).performTextInput("abandon ")
@@ -164,7 +175,7 @@ class LockScreenTest : ComposeScreenTest() {
     @Test
     fun nextOnTheKeyboardMovesToTheNextCell() {
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
         phraseCell(4).performTextInput("zoo")
 
         phraseCell(4).performImeAction()
@@ -175,7 +186,7 @@ class LockScreenTest : ComposeScreenTest() {
     @Test
     fun capitalsAndDigitsAreCleanedFromAWord() {
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
 
         phraseCell(1).performTextInput("Zoo1")
 
@@ -185,24 +196,24 @@ class LockScreenTest : ComposeScreenTest() {
     @Test
     fun aWordOutsideTheWordlistIsFlagged() {
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
 
         phraseCell(3).performTextInput("qqq")
 
-        rule.onNodeWithText(str(R.string.recovery_word_unknown, 3)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.lock_recover_access)).assertIsNotEnabled()
+        rule.onNodeWithText(str(Res.string.recovery_word_unknown, 3)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_recover_access)).assertIsNotEnabled()
     }
 
     @Test
     fun aWrongPhraseSaysSoAndKeepsTheWords() {
         `when`(app.security.unlockWithSeed(anyChars())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
         phraseCell(1).performTextReplacement(PHRASE)
 
-        rule.onNodeWithText(str(R.string.lock_recover_access)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_recover_access)).performClick()
 
-        waitForText(str(R.string.lock_wrong_recovery_phrase))
+        waitForText(str(Res.string.lock_wrong_recovery_phrase))
         assertEquals(PHRASE.split(' '), phraseCells())
     }
 
@@ -210,10 +221,10 @@ class LockScreenTest : ComposeScreenTest() {
     fun theRightPhraseAsksForANewPin() {
         `when`(app.security.unlockWithSeed(anyChars())).thenReturn(VaultUnlockResult.SUCCESS)
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
         phraseCell(1).performTextReplacement(PHRASE)
 
-        rule.onNodeWithText(str(R.string.lock_recover_access)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_recover_access)).performClick()
 
         waitFor { currentRoute() == NavRoutes.PinCodeConfig.name }
     }
@@ -227,7 +238,7 @@ class LockScreenTest : ComposeScreenTest() {
             pressBack()
             assertStillLocked()
         }
-        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_title)).assertIsDisplayed()
     }
 
     @Test
@@ -237,20 +248,20 @@ class LockScreenTest : ComposeScreenTest() {
         pressBack()
 
         assertStillLocked()
-        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_title)).assertIsDisplayed()
     }
 
     @Test
     fun backFromTheRecoveryFormReturnsToThePinPadNotTheVault() {
         showOverTheVault()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
-        rule.onNodeWithText(str(R.string.lock_recovery_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_recovery_title)).assertIsDisplayed()
 
         pressBack()
 
         assertStillLocked()
-        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
-        assertEquals(0, countText(str(R.string.lock_recovery_title)))
+        rule.onNodeWithText(str(Res.string.lock_title)).assertIsDisplayed()
+        assertEquals(0, countText(str(Res.string.lock_recovery_title)))
 
         pressBack()
         assertStillLocked()
@@ -273,19 +284,19 @@ class LockScreenTest : ComposeScreenTest() {
         assertStillLocked()
 
         release.countDown()
-        waitForText(str(R.string.lock_wrong_pin))
+        waitForText(str(Res.string.lock_wrong_pin))
         assertStillLocked()
     }
 
     @Test
     fun backToPinDropsTheWords() {
         show()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
         phraseCell(1).performTextReplacement(PHRASE)
 
-        rule.onNodeWithText(str(R.string.lock_back_to_pin)).performClick()
-        rule.onNodeWithText(str(R.string.lock_title)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_back_to_pin)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
 
         assertTrue(phraseCells().all(String::isEmpty))
     }

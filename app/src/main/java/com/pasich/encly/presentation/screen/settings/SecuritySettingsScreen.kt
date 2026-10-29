@@ -19,14 +19,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
-import com.pasich.encly.core.common.asString
+import com.pasich.encly.core.common.resolve
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.auth_method_pin_desc
+import com.pasich.encly.core.resources.auth_method_pin_title
+import com.pasich.encly.core.resources.auth_title
+import com.pasich.encly.core.resources.security_biometric_available
+import com.pasich.encly.core.resources.security_biometric_not_enrolled
+import com.pasich.encly.core.resources.security_biometric_title
+import com.pasich.encly.core.resources.security_biometric_unavailable
+import com.pasich.encly.core.resources.security_encryption_active
+import com.pasich.encly.core.resources.security_encryption_pin_plain
+import com.pasich.encly.core.resources.security_encryption_seed_plain
+import com.pasich.encly.core.resources.security_title
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
@@ -48,6 +57,7 @@ import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SecuritySettingsScreen(
@@ -84,7 +94,9 @@ fun SecuritySettingsScreen(
         Scaffold(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
-                EnclyTopBar(title = stringResource(R.string.security_title), onBack = { navController.popBackStack() })
+                EnclyTopBar(title = stringResource(Res.string.security_title), onBack = {
+                    navController.popBackStack()
+                })
             },
             snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         ) { paddingValues ->
@@ -152,23 +164,23 @@ private fun SecurityRows(
     actions: SecurityActions,
 ) {
     EncryptionStatusCard(
-        title = stringResource(R.string.security_encryption_active),
+        title = stringResource(Res.string.security_encryption_active),
         text = stringResource(
             if (securityState.isUserCreatedSeedKey) {
-                R.string.security_encryption_seed_plain
+                Res.string.security_encryption_seed_plain
             } else {
-                R.string.security_encryption_pin_plain
+                Res.string.security_encryption_pin_plain
             },
         ),
     )
     SectionOverline(
-        text = stringResource(R.string.auth_title),
+        text = stringResource(Res.string.auth_title),
         modifier = Modifier.padding(top = EnclyTheme.spacing.s),
     )
     EnclyGroup {
         EnclyNavigationRow(
-            title = stringResource(R.string.auth_method_pin_title),
-            supporting = stringResource(R.string.auth_method_pin_desc),
+            title = stringResource(Res.string.auth_method_pin_title),
+            supporting = stringResource(Res.string.auth_method_pin_desc),
             icon = EnclyIcons.Key,
             onClick = { actions.onOpen(NavRoutes.PinCodeConfig) },
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
@@ -218,7 +230,6 @@ private fun SecurityScreenEffects(
     snackbarHostState: SnackbarHostState,
     actions: SecurityEffectActions,
 ) {
-    val context = LocalContext.current
     val vaultMessageText = (vaultMessage as? BackupMessage.Text)?.let { stringResource(it.id) }
     // Clearing a message restarts its effect, which must not cancel the snackbar it just opened.
     val snackbarScope = rememberCoroutineScope()
@@ -236,7 +247,7 @@ private fun SecurityScreenEffects(
     LaunchedEffect(securityError) {
         val errorMessage = securityError ?: return@LaunchedEffect
         actions.onErrorShown()
-        snackbarScope.launch { snackbarHostState.showSnackbar(errorMessage.asString(context)) }
+        snackbarScope.launch { snackbarHostState.showSnackbar(errorMessage.resolve()) }
     }
 }
 
@@ -246,15 +257,15 @@ private fun BiometricSetting(
     onToggle: (Boolean) -> Unit,
 ) {
     EnclySwitchRow(
-        title = stringResource(R.string.security_biometric_title),
+        title = stringResource(Res.string.security_biometric_title),
         supporting = stringResource(
             when (securityState.biometricStatus) {
-                BiometricStatus.AVAILABLE -> R.string.security_biometric_available
+                BiometricStatus.AVAILABLE -> Res.string.security_biometric_available
 
                 // The sensor is there: say what is missing, not that the device cannot do it.
-                BiometricStatus.NOT_ENROLLED -> R.string.security_biometric_not_enrolled
+                BiometricStatus.NOT_ENROLLED -> Res.string.security_biometric_not_enrolled
 
-                BiometricStatus.UNAVAILABLE -> R.string.security_biometric_unavailable
+                BiometricStatus.UNAVAILABLE -> Res.string.security_biometric_unavailable
             },
         ),
         icon = EnclyIcons.Fingerprint,

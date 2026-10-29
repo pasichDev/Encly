@@ -1,7 +1,17 @@
 package com.pasich.encly.core.locale
 
-import androidx.annotation.StringRes
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.language_name_de
+import com.pasich.encly.core.resources.language_name_en
+import com.pasich.encly.core.resources.language_name_es
+import com.pasich.encly.core.resources.language_name_fr
+import com.pasich.encly.core.resources.language_name_it
+import com.pasich.encly.core.resources.language_name_nl
+import com.pasich.encly.core.resources.language_name_pl
+import com.pasich.encly.core.resources.language_name_pt
+import com.pasich.encly.core.resources.language_name_uk
+import com.pasich.encly.core.resources.language_system_default
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Languages the UI is translated into. [tag] matches the `values-<tag>` resource folder and
@@ -10,17 +20,17 @@ import com.pasich.encly.R
  *
  * [SYSTEM] clears the per-app override and follows the device language.
  */
-enum class AppLanguage(val tag: String?, @param:StringRes val nativeName: Int) {
-    SYSTEM(null, R.string.language_system_default),
-    ENGLISH("en", R.string.language_name_en),
-    UKRAINIAN("uk", R.string.language_name_uk),
-    GERMAN("de", R.string.language_name_de),
-    FRENCH("fr", R.string.language_name_fr),
-    SPANISH("es", R.string.language_name_es),
-    ITALIAN("it", R.string.language_name_it),
-    POLISH("pl", R.string.language_name_pl),
-    PORTUGUESE("pt", R.string.language_name_pt),
-    DUTCH("nl", R.string.language_name_nl),
+enum class AppLanguage(val tag: String?, val nativeName: StringResource) {
+    SYSTEM(null, Res.string.language_system_default),
+    ENGLISH("en", Res.string.language_name_en),
+    UKRAINIAN("uk", Res.string.language_name_uk),
+    GERMAN("de", Res.string.language_name_de),
+    FRENCH("fr", Res.string.language_name_fr),
+    SPANISH("es", Res.string.language_name_es),
+    ITALIAN("it", Res.string.language_name_it),
+    POLISH("pl", Res.string.language_name_pl),
+    PORTUGUESE("pt", Res.string.language_name_pt),
+    DUTCH("nl", Res.string.language_name_nl),
     ;
 
     companion object {

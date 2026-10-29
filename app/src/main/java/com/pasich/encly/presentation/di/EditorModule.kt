@@ -1,7 +1,9 @@
 package com.pasich.encly.presentation.di
 
-import com.pasich.encly.R
 import com.pasich.encly.core.common.AppStrings
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.note_copy_title
+import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.presentation.editor.persistence.NoteCopyTitle
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -14,6 +16,6 @@ object EditorModule {
 
     @Provides
     fun provideNoteCopyTitle(strings: AppStrings): NoteCopyTitle = NoteCopyTitle { title ->
-        strings.get(R.string.note_copy_title, title.ifBlank { strings.get(R.string.untitled) })
+        strings.get(Res.string.note_copy_title, title.ifBlank { strings.get(Res.string.untitled) })
     }
 }

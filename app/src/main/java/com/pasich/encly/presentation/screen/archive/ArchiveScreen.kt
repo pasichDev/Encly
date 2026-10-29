@@ -12,12 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asString
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.archive_empty_desc
+import com.pasich.encly.core.resources.archive_empty_title
+import com.pasich.encly.core.resources.main_drawer_archive
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.presentation.components.swipe.SwipeContext
@@ -36,6 +38,7 @@ import com.pasich.encly.presentation.viewmodel.ArchiveViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 private const val SKELETON_CARDS = 3
 
@@ -68,7 +71,7 @@ fun ArchiveScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             EnclyTopBar(
-                title = stringResource(R.string.main_drawer_archive),
+                title = stringResource(Res.string.main_drawer_archive),
                 onBack = { navController.popBackStack() },
             )
         },
@@ -119,8 +122,8 @@ private fun ArchivedNotes(
             state.notes.isEmpty() -> item {
                 EnclyEmptyState(
                     icon = EnclyIcons.Archive,
-                    title = stringResource(R.string.archive_empty_title),
-                    body = stringResource(R.string.archive_empty_desc),
+                    title = stringResource(Res.string.archive_empty_title),
+                    body = stringResource(Res.string.archive_empty_desc),
                 )
             }
 

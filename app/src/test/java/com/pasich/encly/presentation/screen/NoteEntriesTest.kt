@@ -1,6 +1,9 @@
 package com.pasich.encly.presentation.screen
 
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.main_drawer_archive
+import com.pasich.encly.core.resources.notes_section_other
+import com.pasich.encly.core.resources.notes_section_pinned
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.NoteListItem
@@ -18,8 +21,8 @@ class NoteEntriesTest {
     private fun describe(entries: List<NoteEntry>) = entries.map {
         when (it) {
             is NoteSection -> when (it.title) {
-                R.string.notes_section_pinned -> "Pinned"
-                R.string.main_drawer_archive -> "Archived"
+                Res.string.notes_section_pinned -> "Pinned"
+                Res.string.main_drawer_archive -> "Archived"
                 else -> "Others"
             }
 
@@ -87,7 +90,12 @@ class NoteEntriesTest {
         val entries = noteEntries(listOf(item(7, pinned = true), item(8)), sections = true)
 
         assertEquals(
-            listOf<Any>("section-${R.string.notes_section_pinned}", 7L, "section-${R.string.notes_section_other}", 8L),
+            listOf<Any>(
+                "section-${Res.string.notes_section_pinned.key}",
+                7L,
+                "section-${Res.string.notes_section_other.key}",
+                8L,
+            ),
             entries.map {
                 it.key
             },

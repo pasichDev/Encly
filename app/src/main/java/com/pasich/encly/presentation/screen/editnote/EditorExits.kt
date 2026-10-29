@@ -1,13 +1,21 @@
 package com.pasich.encly.presentation.screen.editnote
 
-import androidx.annotation.StringRes
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.note_archive_failed
+import com.pasich.encly.core.resources.note_delete_failed
+import com.pasich.encly.core.resources.note_discard_failed
+import com.pasich.encly.core.resources.note_duplicate_failed
+import com.pasich.encly.core.resources.note_restore_failed
+import com.pasich.encly.core.resources.note_save_failed
+import com.pasich.encly.core.resources.note_trash_failed
+import com.pasich.encly.core.resources.note_unarchive_failed
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Every way out of the editor: back (saves), restore, delete, discard, trash, archive and duplicate. Each
@@ -21,24 +29,24 @@ internal class EditorExits(
     private val navController: NavHostController,
     private val entry: NavBackStackEntry?,
     private val scope: CoroutineScope,
-    private val onFailure: (Int) -> Unit,
+    private val onFailure: (StringResource) -> Unit,
     private val beforeLeaving: () -> Unit,
 ) {
     private var leaving = false
 
-    fun back() = leave(R.string.note_save_failed, viewModel::saveNote)
+    fun back() = leave(Res.string.note_save_failed, viewModel::saveNote)
 
-    fun restore() = leave(R.string.note_restore_failed, viewModel::noteRestore)
+    fun restore() = leave(Res.string.note_restore_failed, viewModel::noteRestore)
 
-    fun delete() = leave(R.string.note_delete_failed, viewModel::noteDelete)
+    fun delete() = leave(Res.string.note_delete_failed, viewModel::noteDelete)
 
-    fun trash() = leave(R.string.note_trash_failed, viewModel::noteMoveToTrash)
+    fun trash() = leave(Res.string.note_trash_failed, viewModel::noteMoveToTrash)
 
     /** Moves the note to the archive (or, when it is archived, back to the list) and leaves. */
     fun archive(archived: Boolean) {
         if (viewModel.isBlankDraft) return
         leave(
-            failure = if (archived) R.string.note_archive_failed else R.string.note_unarchive_failed,
+            failure = if (archived) Res.string.note_archive_failed else Res.string.note_unarchive_failed,
             action = { viewModel.saveNote() && viewModel.noteSetArchived(archived) },
         )
     }
@@ -54,12 +62,12 @@ internal class EditorExits(
             if (viewModel.saveNote() && viewModel.state.value.note.id > 0L) {
                 start(viewModel.state.value.note.id)
             } else {
-                onFailure(R.string.note_save_failed)
+                onFailure(Res.string.note_save_failed)
             }
         }
     }
 
-    fun discard() = leave(R.string.note_discard_failed, viewModel::discardChanges)
+    fun discard() = leave(Res.string.note_discard_failed, viewModel::discardChanges)
 
     /** Discards at once when nothing would be lost; otherwise asks first ([confirm]). */
     fun discardOrConfirm(confirm: () -> Unit) {
@@ -71,7 +79,7 @@ internal class EditorExits(
         if (viewModel.isBlankDraft) return
         var copyId = -1L
         leave(
-            failure = R.string.note_duplicate_failed,
+            failure = Res.string.note_duplicate_failed,
             action = {
                 copyId = if (viewModel.saveNote()) viewModel.noteDuplicate() else -1L
                 copyId > 0L
@@ -80,7 +88,7 @@ internal class EditorExits(
         )
     }
 
-    private fun leave(@StringRes failure: Int, action: suspend () -> Boolean, onDone: () -> Unit = ::pop) {
+    private fun leave(failure: StringResource, action: suspend () -> Boolean, onDone: () -> Unit = ::pop) {
         if (leaving) return
         leaving = true
         scope.launch {

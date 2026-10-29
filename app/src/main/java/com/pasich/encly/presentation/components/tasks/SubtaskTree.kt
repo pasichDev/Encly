@@ -31,11 +31,20 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.edit
+import com.pasich.encly.core.resources.subtask_add
+import com.pasich.encly.core.resources.subtask_delete
+import com.pasich.encly.core.resources.subtask_first_step
+import com.pasich.encly.core.resources.subtask_next_step
+import com.pasich.encly.core.resources.subtask_placeholder
+import com.pasich.encly.core.resources.subtasks_hide
+import com.pasich.encly.core.resources.subtasks_show
+import com.pasich.encly.core.resources.tag_move_down
+import com.pasich.encly.core.resources.tag_move_up
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.presentation.designsystem.CheckboxSize
 import com.pasich.encly.presentation.designsystem.EnclyAddSubtaskButton
@@ -50,6 +59,7 @@ import com.pasich.encly.presentation.designsystem.EnclySubtaskRow
 import com.pasich.encly.presentation.viewmodel.InlineSubtaskEdit
 import com.pasich.encly.presentation.viewmodel.InlineSubtaskTarget
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableColumn
 
 /** What the list's inline sub-task field reports back (see TasksViewModel). */
@@ -111,7 +121,7 @@ internal fun NextStepLeaf(
     }
     val step = updateTransition(targetState = shownId, label = "nextStep")
     val moving = shownId != targetId || step.currentState != step.targetState
-    val expand = stringResource(R.string.subtasks_show)
+    val expand = stringResource(Res.string.subtasks_show)
     EnclyStepTransition(step = step, animate = animate, modifier = modifier) { id ->
         val subtask = subtasks.find { it.id == id }
         if (subtask != null) {
@@ -124,7 +134,7 @@ internal fun NextStepLeaf(
                 enabled = enabled && !moving,
                 onClick = { actions.onToggleTree(taskId) },
                 onClickLabel = expand,
-                checkboxDescription = stringResource(R.string.subtask_next_step, subtask.title),
+                checkboxDescription = stringResource(Res.string.subtask_next_step, subtask.title),
                 trailing = {
                     EnclyExpandButton(expanded = false, contentDescription = expand, onClick = {
                         actions.onToggleTree(taskId)
@@ -166,7 +176,7 @@ internal fun SubtaskTree(
     // Shows a dropped row in its new place until the stored order comes back (see moveRow).
     val rows = remember(subtasks) { mutableStateOf(subtasks) }
     val currentSubtasks by rememberUpdatedState(subtasks)
-    val collapse = stringResource(R.string.subtasks_hide)
+    val collapse = stringResource(Res.string.subtasks_hide)
     val chevron: @Composable () -> Unit = {
         EnclyExpandButton(expanded = true, contentDescription = collapse, onClick = { actions.onToggleTree(taskId) })
     }
@@ -206,7 +216,7 @@ internal fun SubtaskTree(
                             dimmed = dimmed,
                             enabled = enabled,
                             onClick = { actions.onStartRenaming(subtask) },
-                            onClickLabel = stringResource(R.string.edit),
+                            onClickLabel = stringResource(Res.string.edit),
                             customActions = moves,
                             dragging = dragging,
                             trailing = chevron.takeIf { index == 0 },
@@ -240,8 +250,8 @@ private fun MutableState<List<Subtask>>.moveRow(from: Int, to: Int, store: (move
 /** "Move up" and "Move down" for TalkBack, where the row can move that way. */
 @Composable
 private fun moveActions(moveUp: (() -> Unit)?, moveDown: (() -> Unit)?): List<CustomAccessibilityAction> {
-    val up = stringResource(R.string.tag_move_up)
-    val down = stringResource(R.string.tag_move_down)
+    val up = stringResource(Res.string.tag_move_up)
+    val down = stringResource(Res.string.tag_move_down)
     return listOfNotNull(
         moveUp?.let { action ->
             CustomAccessibilityAction(up) {
@@ -269,14 +279,14 @@ private fun AddLeaf(
     first: Boolean,
     trailing: (@Composable () -> Unit)?,
 ) {
-    val label = stringResource(if (first) R.string.subtask_first_step else R.string.subtask_placeholder)
+    val label = stringResource(if (first) Res.string.subtask_first_step else Res.string.subtask_placeholder)
     if (edit != null && edit.target == InlineSubtaskTarget.Add(taskId)) {
         InlineSubtaskField(edit = edit, label = label, actions = actions.inline)
     } else {
         EnclyAddSubtaskButton(
             text = label,
             onClick = { actions.onStartAdding(taskId) },
-            description = stringResource(R.string.subtask_add),
+            description = stringResource(Res.string.subtask_add),
             enabled = enabled,
             trailing = trailing,
         )
@@ -288,7 +298,7 @@ private fun AddLeaf(
 private fun RenameField(subtask: Subtask, edit: InlineSubtaskEdit, actions: SubtaskTreeActions, enabled: Boolean) {
     InlineSubtaskField(
         edit = edit,
-        label = stringResource(R.string.subtask_placeholder),
+        label = stringResource(Res.string.subtask_placeholder),
         actions = actions.inline,
         isLast = false,
         done = subtask.isCompleted,
@@ -304,7 +314,7 @@ private fun RenameField(subtask: Subtask, edit: InlineSubtaskEdit, actions: Subt
         trailing = {
             EnclyRowIconButton(
                 icon = EnclyIcons.Close,
-                contentDescription = stringResource(R.string.subtask_delete),
+                contentDescription = stringResource(Res.string.subtask_delete),
                 onClick = actions.inline.onDelete,
             )
         },

@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.navigation
 
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.import_title
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -55,7 +56,7 @@ class DrawerNavItemsTest {
     fun importIsLabelledLikeTheImportScreen() {
         val import = drawerNavItems(tagCount = 0, openTasks = 0, donations = false)
             .single { it.route == NavRoutes.ImportNotesRoute.name }
-        assertEquals(R.string.import_title, import.titleRes)
+        assertEquals(Res.string.import_title, import.titleRes)
     }
 
     @Test

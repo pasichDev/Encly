@@ -1,9 +1,13 @@
 package com.pasich.encly.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.date_today
+import com.pasich.encly.core.resources.date_today_at
+import com.pasich.encly.core.resources.date_yesterday
+import com.pasich.encly.core.resources.date_yesterday_at
 import kotlinx.datetime.TimeZone
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -22,10 +26,10 @@ fun formatNoteDate(date: Instant = Clock.System.now()): String {
     val zone = TimeZone.currentSystemDefault()
     return when (relativeDay(date, zone = zone)) {
         RelativeDay.TODAY ->
-            stringResource(R.string.date_today_at, formatLocalized(date, LocalizedDate.TIME, tag, zone))
+            stringResource(Res.string.date_today_at, formatLocalized(date, LocalizedDate.TIME, tag, zone))
 
         RelativeDay.YESTERDAY ->
-            stringResource(R.string.date_yesterday_at, formatLocalized(date, LocalizedDate.TIME, tag, zone))
+            stringResource(Res.string.date_yesterday_at, formatLocalized(date, LocalizedDate.TIME, tag, zone))
 
         RelativeDay.OTHER -> formatLocalized(date, LocalizedDate.DATE_TIME_MEDIUM, tag, zone)
     }
@@ -39,9 +43,9 @@ fun formatNoteDate(date: Instant = Clock.System.now()): String {
 fun formatCardDate(date: Instant): String {
     val zone = TimeZone.currentSystemDefault()
     return when (relativeDay(date, zone = zone)) {
-        RelativeDay.TODAY -> stringResource(R.string.date_today)
+        RelativeDay.TODAY -> stringResource(Res.string.date_today)
 
-        RelativeDay.YESTERDAY -> stringResource(R.string.date_yesterday)
+        RelativeDay.YESTERDAY -> stringResource(Res.string.date_yesterday)
 
         RelativeDay.OTHER -> {
             val style = if (isSameYear(date, zone = zone)) LocalizedDate.DAY_MONTH else LocalizedDate.DAY_MONTH_YEAR

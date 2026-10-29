@@ -17,8 +17,37 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_needs_phrase_title
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.duress_pin_row_desc
+import com.pasich.encly.core.resources.duress_pin_row_turned_off
+import com.pasich.encly.core.resources.duress_pin_title
+import com.pasich.encly.core.resources.security_danger_section
+import com.pasich.encly.core.resources.security_erase_confirm
+import com.pasich.encly.core.resources.security_erase_confirm_body
+import com.pasich.encly.core.resources.security_erase_confirm_title
+import com.pasich.encly.core.resources.security_erase_desc
+import com.pasich.encly.core.resources.security_erase_hold
+import com.pasich.encly.core.resources.security_erase_title
+import com.pasich.encly.core.resources.security_keyboard_strict_desc
+import com.pasich.encly.core.resources.security_keyboard_strict_title
+import com.pasich.encly.core.resources.security_privacy_section
+import com.pasich.encly.core.resources.security_protection_key_desc
+import com.pasich.encly.core.resources.security_protection_key_title
+import com.pasich.encly.core.resources.security_protection_pin_desc
+import com.pasich.encly.core.resources.security_protection_pin_title
+import com.pasich.encly.core.resources.security_protection_section
+import com.pasich.encly.core.resources.security_protection_slots_desc
+import com.pasich.encly.core.resources.security_protection_slots_title
+import com.pasich.encly.core.resources.security_recovery_missing
+import com.pasich.encly.core.resources.security_recovery_replace_desc
+import com.pasich.encly.core.resources.security_recovery_replace_title
+import com.pasich.encly.core.resources.security_recovery_set_desc
+import com.pasich.encly.core.resources.security_recovery_status_set
+import com.pasich.encly.core.resources.wipe_pin_row_desc
+import com.pasich.encly.core.resources.wipe_pin_row_turned_off
+import com.pasich.encly.core.resources.wipe_pin_title
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyGroup
@@ -31,6 +60,7 @@ import com.pasich.encly.presentation.designsystem.EnclySwitchRow
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /** Erasing everything is held for five seconds, then re-authenticated. */
 private const val ERASE_HOLD_MS = 5_000
@@ -40,27 +70,27 @@ private const val ERASE_HOLD_MS = 5_000
 internal fun ProtectionSection(modifier: Modifier = Modifier) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s), modifier = modifier) {
         SectionOverline(
-            text = stringResource(R.string.security_protection_section),
+            text = stringResource(Res.string.security_protection_section),
             modifier = Modifier.padding(top = EnclyTheme.spacing.s),
         )
         EnclyGroup {
             EnclyListRow(
-                title = stringResource(R.string.security_protection_key_title),
-                supporting = stringResource(R.string.security_protection_key_desc),
+                title = stringResource(Res.string.security_protection_key_title),
+                supporting = stringResource(Res.string.security_protection_key_desc),
                 icon = EnclyIcons.Key,
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
             )
             EnclyGroupDivider()
             EnclyListRow(
-                title = stringResource(R.string.security_protection_pin_title),
-                supporting = stringResource(R.string.security_protection_pin_desc),
+                title = stringResource(Res.string.security_protection_pin_title),
+                supporting = stringResource(Res.string.security_protection_pin_desc),
                 icon = EnclyIcons.Shield,
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
             )
             EnclyGroupDivider()
             EnclyListRow(
-                title = stringResource(R.string.security_protection_slots_title),
-                supporting = stringResource(R.string.security_protection_slots_desc),
+                title = stringResource(Res.string.security_protection_slots_title),
+                supporting = stringResource(Res.string.security_protection_slots_desc),
                 icon = EnclyIcons.Fingerprint,
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
             )
@@ -79,23 +109,23 @@ internal fun EraseSection(busy: Boolean, onErase: () -> Unit, modifier: Modifier
     var confirming by rememberSaveable { mutableStateOf(false) }
     if (confirming) {
         EnclyDialog(
-            title = stringResource(R.string.security_erase_confirm_title),
-            text = stringResource(R.string.security_erase_confirm_body),
+            title = stringResource(Res.string.security_erase_confirm_title),
+            text = stringResource(Res.string.security_erase_confirm_body),
             onDismissRequest = { confirming = false },
             confirm = DialogAction(
-                stringResource(R.string.security_erase_confirm),
+                stringResource(Res.string.security_erase_confirm),
                 {
                     confirming = false
                     onErase()
                 },
                 destructive = true,
             ),
-            dismiss = DialogAction(stringResource(R.string.cancel), { confirming = false }),
+            dismiss = DialogAction(stringResource(Res.string.cancel), { confirming = false }),
         )
     }
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s), modifier = modifier) {
         SectionOverline(
-            text = stringResource(R.string.security_danger_section),
+            text = stringResource(Res.string.security_danger_section),
             modifier = Modifier.padding(top = EnclyTheme.spacing.s),
         )
         Surface(
@@ -108,17 +138,17 @@ internal fun EraseSection(busy: Boolean, onErase: () -> Unit, modifier: Modifier
                 modifier = Modifier.padding(EnclyTheme.spacing.m),
             ) {
                 Text(
-                    text = stringResource(R.string.security_erase_title),
+                    text = stringResource(Res.string.security_erase_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.error,
                 )
                 Text(
-                    text = stringResource(R.string.security_erase_desc),
+                    text = stringResource(Res.string.security_erase_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
                 EnclyHoldToConfirmButton(
-                    text = stringResource(R.string.security_erase_hold),
+                    text = stringResource(Res.string.security_erase_hold),
                     onConfirm = { if (!busy) confirming = true },
                     holdMillis = ERASE_HOLD_MS,
                 )
@@ -134,8 +164,10 @@ internal fun EraseSection(busy: Boolean, onErase: () -> Unit, modifier: Modifier
 @Composable
 internal fun WipePinRow(turnedOff: Boolean, onClick: () -> Unit) {
     EnclyNavigationRow(
-        title = stringResource(R.string.wipe_pin_title),
-        supporting = stringResource(if (turnedOff) R.string.wipe_pin_row_turned_off else R.string.wipe_pin_row_desc),
+        title = stringResource(Res.string.wipe_pin_title),
+        supporting = stringResource(
+            if (turnedOff) Res.string.wipe_pin_row_turned_off else Res.string.wipe_pin_row_desc,
+        ),
         icon = EnclyIcons.Trash,
         onClick = onClick,
         modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
@@ -146,9 +178,9 @@ internal fun WipePinRow(turnedOff: Boolean, onClick: () -> Unit) {
 @Composable
 internal fun DuressPinRow(turnedOff: Boolean, onClick: () -> Unit) {
     EnclyNavigationRow(
-        title = stringResource(R.string.duress_pin_title),
+        title = stringResource(Res.string.duress_pin_title),
         supporting = stringResource(
-            if (turnedOff) R.string.duress_pin_row_turned_off else R.string.duress_pin_row_desc,
+            if (turnedOff) Res.string.duress_pin_row_turned_off else Res.string.duress_pin_row_desc,
         ),
         icon = EnclyIcons.Shield,
         onClick = onClick,
@@ -164,12 +196,12 @@ internal fun DuressPinRow(turnedOff: Boolean, onClick: () -> Unit) {
  */
 @Composable
 internal fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStart: (BackupAction) -> Unit) {
-    val title = stringResource(R.string.backup_needs_phrase_title)
+    val title = stringResource(Res.string.backup_needs_phrase_title)
     val modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s)
     if (hasRecoveryPhrase) {
         EnclyListRow(
             title = title,
-            supporting = stringResource(R.string.security_recovery_set_desc),
+            supporting = stringResource(Res.string.security_recovery_set_desc),
             icon = EnclyIcons.File,
             modifier = modifier,
         ) {
@@ -184,7 +216,7 @@ internal fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStar
                     modifier = Modifier.size(EnclyTheme.spacing.iconXSmall),
                 )
                 Text(
-                    text = stringResource(R.string.security_recovery_status_set),
+                    text = stringResource(Res.string.security_recovery_status_set),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -193,7 +225,7 @@ internal fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStar
     } else {
         EnclyNavigationRow(
             title = title,
-            supporting = stringResource(R.string.security_recovery_missing),
+            supporting = stringResource(Res.string.security_recovery_missing),
             icon = EnclyIcons.File,
             onClick = { if (!busy) onStart(BackupAction.CREATE_PHRASE) },
             modifier = modifier,
@@ -208,8 +240,8 @@ internal fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStar
 @Composable
 internal fun ReplacePhraseRow(busy: Boolean, onStart: (BackupAction) -> Unit) {
     EnclyNavigationRow(
-        title = stringResource(R.string.security_recovery_replace_title),
-        supporting = stringResource(R.string.security_recovery_replace_desc),
+        title = stringResource(Res.string.security_recovery_replace_title),
+        supporting = stringResource(Res.string.security_recovery_replace_desc),
         icon = EnclyIcons.Restore,
         onClick = { if (!busy) onStart(BackupAction.REPLACE_PHRASE) },
         modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
@@ -220,13 +252,13 @@ internal fun ReplacePhraseRow(busy: Boolean, onStart: (BackupAction) -> Unit) {
 @Composable
 internal fun PrivacySection(strictKeyboard: Boolean, onStrictKeyboard: (Boolean) -> Unit) {
     SectionOverline(
-        text = stringResource(R.string.security_privacy_section),
+        text = stringResource(Res.string.security_privacy_section),
         modifier = Modifier.padding(top = EnclyTheme.spacing.s),
     )
     EnclyGroup {
         EnclySwitchRow(
-            title = stringResource(R.string.security_keyboard_strict_title),
-            supporting = stringResource(R.string.security_keyboard_strict_desc),
+            title = stringResource(Res.string.security_keyboard_strict_title),
+            supporting = stringResource(Res.string.security_keyboard_strict_desc),
             icon = EnclyIcons.Keyboard,
             checked = strictKeyboard,
             onCheckedChange = onStrictKeyboard,

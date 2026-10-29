@@ -14,7 +14,32 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import com.pasich.encly.BuildConfig
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.about
+import com.pasich.encly.core.resources.delete
+import com.pasich.encly.core.resources.duplicate
+import com.pasich.encly.core.resources.edit
+import com.pasich.encly.core.resources.empty_notes
+import com.pasich.encly.core.resources.empty_notes_desc
+import com.pasich.encly.core.resources.empty_notes_tagged
+import com.pasich.encly.core.resources.home_tasks_none_open
+import com.pasich.encly.core.resources.import_title
+import com.pasich.encly.core.resources.main_drawer_archive
+import com.pasich.encly.core.resources.main_drawer_faq
+import com.pasich.encly.core.resources.main_drawer_settings
+import com.pasich.encly.core.resources.main_drawer_support
+import com.pasich.encly.core.resources.main_drawer_tags
+import com.pasich.encly.core.resources.main_drawer_tasks
+import com.pasich.encly.core.resources.main_drawer_trash
+import com.pasich.encly.core.resources.note_add
+import com.pasich.encly.core.resources.open_menu
+import com.pasich.encly.core.resources.search_clear
+import com.pasich.encly.core.resources.search_nothing_matches
+import com.pasich.encly.core.resources.search_placeholder
+import com.pasich.encly.core.resources.show_all_notes
+import com.pasich.encly.core.resources.tap_again_to_delete
+import com.pasich.encly.core.resources.task_add
+import com.pasich.encly.core.resources.task_filter_all
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
@@ -38,7 +63,7 @@ class MainScreenTest : ComposeScreenTest() {
         const val FADE_MS = 1_000L
     }
 
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
 
     private fun show(notesRepository: NotesRepository = app.notes) {
         setNavScreen(viewModels(*app.home(app.noteList(notesRepository))), route = NavRoutes.HomeRoute.name) { nav ->
@@ -57,11 +82,11 @@ class MainScreenTest : ComposeScreenTest() {
     fun noNotesShowsTheEmptyStateUnderTheHeader() {
         show()
 
-        waitForText(str(R.string.empty_notes))
+        waitForText(str(Res.string.empty_notes))
         rule.mainClock.advanceTimeBy(FADE_MS)
-        rule.onNodeWithText(str(R.string.empty_notes_desc)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.search_placeholder)).assertExists()
-        rule.onNodeWithText(str(R.string.note_add), useUnmergedTree = true).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.empty_notes_desc)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.search_placeholder)).assertExists()
+        rule.onNodeWithText(str(Res.string.note_add), useUnmergedTree = true).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 4)
     }
 
@@ -71,7 +96,7 @@ class MainScreenTest : ComposeScreenTest() {
         show()
 
         waitForText("Groceries")
-        assertEquals(0, countText(str(R.string.empty_notes)))
+        assertEquals(0, countText(str(Res.string.empty_notes)))
     }
 
     @Test
@@ -91,7 +116,7 @@ class MainScreenTest : ComposeScreenTest() {
         show(failing)
 
         waitFor { visibleTexts().size > 3 }
-        assertEquals(0, countText(str(R.string.empty_notes)))
+        assertEquals(0, countText(str(Res.string.empty_notes)))
         assertBodyNotEmpty(minTexts = 4)
     }
 
@@ -102,8 +127,8 @@ class MainScreenTest : ComposeScreenTest() {
         }
         show(slow)
 
-        rule.onNodeWithText(str(R.string.search_placeholder)).assertExists()
-        assertEquals(0, countText(str(R.string.empty_notes)))
+        rule.onNodeWithText(str(Res.string.search_placeholder)).assertExists()
+        assertEquals(0, countText(str(Res.string.empty_notes)))
     }
 
     @Test
@@ -114,9 +139,9 @@ class MainScreenTest : ComposeScreenTest() {
 
         rule.onNode(hasText("Groceries") and hasClickAction()).performTouchInput { longClick() }
 
-        waitForText(str(R.string.duplicate))
-        rule.onNodeWithText(str(R.string.edit)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.delete)).assertIsDisplayed()
+        waitForText(str(Res.string.duplicate))
+        rule.onNodeWithText(str(Res.string.edit)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.delete)).assertIsDisplayed()
     }
 
     @Test
@@ -125,12 +150,12 @@ class MainScreenTest : ComposeScreenTest() {
         show()
         waitForText("Groceries")
         rule.onNode(hasText("Groceries") and hasClickAction()).performTouchInput { longClick() }
-        waitForText(str(R.string.delete))
+        waitForText(str(Res.string.delete))
 
-        rule.onNodeWithText(str(R.string.delete)).performClick()
-        rule.onNodeWithText(str(R.string.tap_again_to_delete)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.delete)).performClick()
+        rule.onNodeWithText(str(Res.string.tap_again_to_delete)).assertIsDisplayed()
         assertEquals(emptyList<Note>(), app.notes.updatedNotes)
-        rule.onNodeWithText(str(R.string.tap_again_to_delete)).performClick()
+        rule.onNodeWithText(str(Res.string.tap_again_to_delete)).performClick()
 
         waitFor(describe = { "${visibleTexts().map(::textOf)} ${app.notes.updatedNotes}" }) {
             app.notes.updatedNotes.any { it.id == 1L && it.isTrash }
@@ -143,9 +168,9 @@ class MainScreenTest : ComposeScreenTest() {
         show()
         waitForText("Groceries")
         rule.onNode(hasText("Groceries") and hasClickAction()).performTouchInput { longClick() }
-        waitForText(str(R.string.edit))
+        waitForText(str(Res.string.edit))
 
-        rule.onNodeWithText(str(R.string.edit)).performClick()
+        rule.onNodeWithText(str(Res.string.edit)).performClick()
 
         waitFor { currentRoute() == TestRoutes.EDIT_NOTE }
         assertEquals(7L, rule.runOnIdle { nav.currentBackStackEntry?.arguments?.getLong("idNote") })
@@ -166,9 +191,9 @@ class MainScreenTest : ComposeScreenTest() {
     @Test
     fun theFabStartsANewNote() {
         show()
-        waitForText(str(R.string.empty_notes))
+        waitForText(str(Res.string.empty_notes))
 
-        rule.onNodeWithText(str(R.string.note_add), useUnmergedTree = true).performClick()
+        rule.onNodeWithText(str(Res.string.note_add), useUnmergedTree = true).performClick()
 
         waitFor { currentRoute() == TestRoutes.EDIT_NOTE }
         assertEquals(-1L, rule.runOnIdle { nav.currentBackStackEntry?.arguments?.getLong("idNote") })
@@ -182,8 +207,8 @@ class MainScreenTest : ComposeScreenTest() {
 
         rule.onNode(hasSetTextAction()).performTextInput("zzz")
 
-        waitForText(str(R.string.search_nothing_matches, "zzz"))
-        rule.onNodeWithContentDescription(str(R.string.search_clear)).performClick()
+        waitForText(str(Res.string.search_nothing_matches, "zzz"))
+        rule.onNodeWithContentDescription(str(Res.string.search_clear)).performClick()
         rule.onNode(hasSetTextAction()).performTextInput("tick")
         waitFor(describe = {
             "${visibleTexts().map(::textOf)}"
@@ -194,8 +219,8 @@ class MainScreenTest : ComposeScreenTest() {
     fun withNoOpenTasksTheCardOffersANewOne() {
         show()
 
-        waitForText(str(R.string.home_tasks_none_open), ignoreCase = true)
-        rule.onNodeWithText(str(R.string.task_add)).performClick()
+        waitForText(str(Res.string.home_tasks_none_open), ignoreCase = true)
+        rule.onNodeWithText(str(Res.string.task_add)).performClick()
 
         waitFor { currentRoute() == TestRoutes.TASKS }
         assertEquals(true, rule.runOnIdle { nav.currentBackStackEntry?.arguments?.getBoolean(TASKS_ADD_ARG) })
@@ -207,7 +232,7 @@ class MainScreenTest : ComposeScreenTest() {
         show()
 
         waitForText("Pay rent")
-        rule.onNodeWithText(str(R.string.task_filter_all)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.task_filter_all)).assertIsDisplayed()
     }
 
     @Test
@@ -220,34 +245,34 @@ class MainScreenTest : ComposeScreenTest() {
 
         rule.onNode(hasText("Work") and hasClickAction()).performClick()
 
-        waitForText(str(R.string.empty_notes_tagged, "Work"))
-        rule.onNodeWithText(str(R.string.show_all_notes)).performClick()
+        waitForText(str(Res.string.empty_notes_tagged, "Work"))
+        rule.onNodeWithText(str(Res.string.show_all_notes)).performClick()
         waitForText("Groceries")
     }
 
     @Test
     fun theDrawerLeadsToEverySection() {
         show()
-        waitForText(str(R.string.empty_notes))
+        waitForText(str(Res.string.empty_notes))
 
-        rule.onNodeWithContentDescription(str(R.string.open_menu)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.open_menu)).performClick()
 
-        waitForText(str(R.string.main_drawer_trash))
-        listOf(R.string.main_drawer_tasks, R.string.main_drawer_tags, R.string.main_drawer_faq, R.string.about)
+        waitForText(str(Res.string.main_drawer_trash))
+        listOf(Res.string.main_drawer_tasks, Res.string.main_drawer_tags, Res.string.main_drawer_faq, Res.string.about)
             .forEach { rule.onNodeWithText(str(it)).assertExists() }
-        rule.onNodeWithText(str(R.string.main_drawer_trash)).performClick()
+        rule.onNodeWithText(str(Res.string.main_drawer_trash)).performClick()
         waitFor { currentRoute() == NavRoutes.TrashRoute.name }
     }
 
     @Test
     fun theDrawerOffersArchiveAndImportAndLeadsToThem() {
         show()
-        waitForText(str(R.string.empty_notes))
+        waitForText(str(Res.string.empty_notes))
 
-        rule.onNodeWithContentDescription(str(R.string.open_menu)).performClick()
-        waitForText(str(R.string.main_drawer_archive))
-        rule.onNodeWithText(str(R.string.import_title)).assertExists()
-        rule.onNodeWithText(str(R.string.main_drawer_archive)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.open_menu)).performClick()
+        waitForText(str(Res.string.main_drawer_archive))
+        rule.onNodeWithText(str(Res.string.import_title)).assertExists()
+        rule.onNodeWithText(str(Res.string.main_drawer_archive)).performClick()
 
         waitFor { currentRoute() == NavRoutes.ArchiveRoute.name }
     }
@@ -255,11 +280,11 @@ class MainScreenTest : ComposeScreenTest() {
     @Test
     fun theDrawerImportOpensTheImportScreen() {
         show()
-        waitForText(str(R.string.empty_notes))
+        waitForText(str(Res.string.empty_notes))
 
-        rule.onNodeWithContentDescription(str(R.string.open_menu)).performClick()
-        waitForText(str(R.string.import_title))
-        rule.onNodeWithText(str(R.string.import_title)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.open_menu)).performClick()
+        waitForText(str(Res.string.import_title))
+        rule.onNodeWithText(str(Res.string.import_title)).performClick()
 
         waitFor { currentRoute() == NavRoutes.ImportNotesRoute.name }
     }
@@ -267,12 +292,12 @@ class MainScreenTest : ComposeScreenTest() {
     @Test
     fun theDrawerShowsSupportAsAButtonOnlyWhereDonationsAreAllowed() {
         show()
-        waitForText(str(R.string.empty_notes))
+        waitForText(str(Res.string.empty_notes))
 
-        rule.onNodeWithContentDescription(str(R.string.open_menu)).performClick()
-        waitForText(str(R.string.main_drawer_faq))
+        rule.onNodeWithContentDescription(str(Res.string.open_menu)).performClick()
+        waitForText(str(Res.string.main_drawer_faq))
 
-        val support = rule.onAllNodesWithText(str(R.string.main_drawer_support))
+        val support = rule.onAllNodesWithText(str(Res.string.main_drawer_support))
         if (BuildConfig.DONATIONS_ENABLED) {
             support.assertCountEquals(1)[0].assertHasClickAction()
         } else {
@@ -284,7 +309,7 @@ class MainScreenTest : ComposeScreenTest() {
     fun theSettingsButtonOpensSettings() {
         show()
 
-        rule.onNodeWithContentDescription(str(R.string.main_drawer_settings)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.main_drawer_settings)).performClick()
 
         waitFor { currentRoute() == NavRoutes.SettingsRoute.name }
     }

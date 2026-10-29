@@ -39,7 +39,7 @@ class StoreMetadataTest {
 
     @Test
     fun storeLocalesCoverExactlyTheShippedAppLanguages() {
-        val resDir = File(root, "app/src/main/res")
+        val resDir = File(root, "core/resources/src/commonMain/strings")
         val appLanguages = resDir.listFiles().orEmpty()
             .filter { it.isDirectory && APP_LOCALE_DIR.matches(it.name) }
             .map { it.name.removePrefix("values-").substringBefore('-') }

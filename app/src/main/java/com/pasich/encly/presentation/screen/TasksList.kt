@@ -18,8 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.clear
+import com.pasich.encly.core.resources.task_add
+import com.pasich.encly.core.resources.task_all_done_title
+import com.pasich.encly.core.resources.task_done_section
+import com.pasich.encly.core.resources.task_empty_active
+import com.pasich.encly.core.resources.task_empty_desc
+import com.pasich.encly.core.resources.task_empty_filtered
+import com.pasich.encly.core.resources.task_empty_title
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.InlineSubtaskActions
 import com.pasich.encly.presentation.components.tasks.SubtaskTreeActions
@@ -37,6 +44,7 @@ import com.pasich.encly.presentation.viewmodel.TaskFilter
 import com.pasich.encly.presentation.viewmodel.TasksUiState
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 private const val SKELETON_ROWS = 4
 
@@ -137,9 +145,9 @@ private fun LazyListScope.tasksContent(
         item {
             EnclyEmptyState(
                 icon = EnclyIcons.Checklist,
-                title = stringResource(R.string.task_empty_title),
-                body = stringResource(R.string.task_empty_desc),
-                actionLabel = stringResource(R.string.task_add),
+                title = stringResource(Res.string.task_empty_title),
+                body = stringResource(Res.string.task_empty_desc),
+                actionLabel = stringResource(Res.string.task_add),
                 onAction = onNewTask,
             )
         }
@@ -152,14 +160,14 @@ private fun LazyListScope.tasksContent(
         item(key = "empty") {
             EnclyEmptyState(
                 icon = EnclyIcons.Checklist,
-                title = stringResource(R.string.task_all_done_title).takeIf { ui.selectedPriorityFilter == null },
+                title = stringResource(Res.string.task_all_done_title).takeIf { ui.selectedPriorityFilter == null },
                 body = stringResource(
                     if (ui.selectedPriorityFilter !=
                         null
                     ) {
-                        R.string.task_empty_filtered
+                        Res.string.task_empty_filtered
                     } else {
-                        R.string.task_empty_active
+                        Res.string.task_empty_active
                     },
                 ),
             )
@@ -231,7 +239,7 @@ private fun DoneHeader(count: Int, onClear: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(top = EnclyTheme.spacing.m),
     ) {
-        SectionOverline(stringResource(R.string.task_done_section, count), modifier = Modifier.weight(1f))
-        EnclyInlineLink(text = stringResource(R.string.clear), onClick = onClear)
+        SectionOverline(stringResource(Res.string.task_done_section, count), modifier = Modifier.weight(1f))
+        EnclyInlineLink(text = stringResource(Res.string.clear), onClick = onClear)
     }
 }

@@ -32,11 +32,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_now
+import com.pasich.encly.core.resources.main_drawer_settings
+import com.pasich.encly.core.resources.note_add
+import com.pasich.encly.core.resources.notes_title
+import com.pasich.encly.core.resources.open_menu
+import com.pasich.encly.core.resources.search_clear
+import com.pasich.encly.core.resources.search_placeholder
+import com.pasich.encly.core.resources.view_options
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.presentation.components.HomeTaskWidget
 import com.pasich.encly.presentation.designsystem.EnclyFab
@@ -56,6 +63,7 @@ import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 /** The scrim over the notes while the drawer is open. */
 private const val DRAWER_SCRIM_ALPHA = 0.32f
@@ -211,7 +219,7 @@ private fun ScrollToTopOnRequest(
 @Composable
 private fun NewNoteFab(expanded: Boolean, onClick: () -> Unit) {
     EnclyFab(
-        text = stringResource(R.string.note_add),
+        text = stringResource(Res.string.note_add),
         icon = EnclyIcons.PlusBold,
         expanded = expanded,
         onClick = onClick,
@@ -253,13 +261,13 @@ private class MainNavigation(private val navController: NavHostController) {
 @Composable
 private fun NotesTopBar(onMenu: () -> Unit, onLockNow: () -> Unit, onSettings: () -> Unit) {
     EnclyTopBar(
-        title = stringResource(R.string.notes_title),
+        title = stringResource(Res.string.notes_title),
         navigation = {
-            IconWithTooltip(EnclyIcons.Menu, stringResource(R.string.open_menu), onMenu)
+            IconWithTooltip(EnclyIcons.Menu, stringResource(Res.string.open_menu), onMenu)
         },
         actions = {
-            IconWithTooltip(EnclyIcons.Lock, stringResource(R.string.lock_now), onLockNow)
-            IconWithTooltip(EnclyIcons.Sliders, stringResource(R.string.main_drawer_settings), onSettings)
+            IconWithTooltip(EnclyIcons.Lock, stringResource(Res.string.lock_now), onLockNow)
+            IconWithTooltip(EnclyIcons.Sliders, stringResource(Res.string.main_drawer_settings), onSettings)
         },
     )
 }
@@ -275,15 +283,15 @@ private fun NotesHeader(query: String, onQueryChange: (String) -> Unit, onViewOp
         EnclySearchField(
             value = query,
             onValueChange = onQueryChange,
-            placeholder = stringResource(R.string.search_placeholder),
+            placeholder = stringResource(Res.string.search_placeholder),
             modifier = Modifier.padding(horizontal = gutter),
             trailing = {
                 if (query.isNotEmpty()) {
-                    IconWithTooltip(EnclyIcons.Close, stringResource(R.string.search_clear), onClick = {
+                    IconWithTooltip(EnclyIcons.Close, stringResource(Res.string.search_clear), onClick = {
                         onQueryChange("")
                     })
                 } else {
-                    IconWithTooltip(EnclyIcons.Filter, stringResource(R.string.view_options), onViewOptions)
+                    IconWithTooltip(EnclyIcons.Filter, stringResource(Res.string.view_options), onViewOptions)
                 }
             },
         )

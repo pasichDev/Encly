@@ -26,11 +26,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.delete
+import com.pasich.encly.core.resources.duplicate
+import com.pasich.encly.core.resources.edit
+import com.pasich.encly.core.resources.no_tag
+import com.pasich.encly.core.resources.note_archive
+import com.pasich.encly.core.resources.note_color_title
+import com.pasich.encly.core.resources.note_description_placeholder
+import com.pasich.encly.core.resources.note_pin
+import com.pasich.encly.core.resources.note_unarchive
+import com.pasich.encly.core.resources.note_unpin
+import com.pasich.encly.core.resources.save
+import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.NoteColor
@@ -49,6 +61,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.noteInstant
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 sealed class NoteAction {
     object Edit : NoteAction()
@@ -108,31 +121,31 @@ fun NoteCardBottomSheet(
 private fun NoteActionRows(note: Note, onAction: (NoteAction) -> Unit) {
     Column {
         EnclySheetRow(
-            title = stringResource(id = R.string.edit),
+            title = stringResource(Res.string.edit),
             icon = EnclyIcons.Edit,
             onClick = { onAction(NoteAction.Edit) },
         )
         if (!note.isArchived) {
             EnclySheetRow(
-                title = stringResource(if (note.isPinned) R.string.note_unpin else R.string.note_pin),
+                title = stringResource(if (note.isPinned) Res.string.note_unpin else Res.string.note_pin),
                 icon = if (note.isPinned) EnclyIcons.PinOff else EnclyIcons.Pin,
                 onClick = { onAction(NoteAction.Pin(!note.isPinned)) },
             )
         }
         EnclySheetRow(
             title = stringResource(
-                if (note.isArchived) R.string.note_unarchive else R.string.note_archive,
+                if (note.isArchived) Res.string.note_unarchive else Res.string.note_archive,
             ),
             icon = if (note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,
             onClick = { onAction(NoteAction.Archive(!note.isArchived)) },
         )
         EnclySheetRow(
-            title = stringResource(id = R.string.duplicate),
+            title = stringResource(Res.string.duplicate),
             icon = EnclyIcons.Duplicate,
             onClick = { onAction(NoteAction.Duplicate) },
         )
         EnclySheetRow(
-            title = stringResource(id = R.string.delete),
+            title = stringResource(Res.string.delete),
             icon = EnclyIcons.Trash,
             destructive = true,
             confirmFirst = true,
@@ -144,7 +157,7 @@ private fun NoteActionRows(note: Note, onAction: (NoteAction) -> Unit) {
 /** The note's colour: a heading and a row of swatches, bleeding into the sheet's gutters like the tag chips. */
 @Composable
 private fun ColorChoices(selected: NoteColor, onSelect: (NoteColor) -> Unit) {
-    SectionOverline(stringResource(R.string.note_color_title))
+    SectionOverline(stringResource(Res.string.note_color_title))
     EnclyNoteColorPicker(
         selected = selected,
         onSelect = onSelect,
@@ -161,7 +174,7 @@ private fun NoteActionHeader(item: NoteWithTag) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
-            text = item.note.title.ifEmpty { stringResource(R.string.untitled) },
+            text = item.note.title.ifEmpty { stringResource(Res.string.untitled) },
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
@@ -193,7 +206,7 @@ private fun TagChips(
     ) {
         item {
             EnclyChip(
-                label = stringResource(R.string.no_tag),
+                label = stringResource(Res.string.no_tag),
                 selected = selectedTagId == 0L,
                 onClick = { onSelect(0L) },
             )
@@ -214,7 +227,7 @@ private fun DescriptionEditor(
 ) {
     if (!editing) {
         EnclySheetRow(
-            title = initial.ifBlank { stringResource(R.string.note_description_placeholder) },
+            title = initial.ifBlank { stringResource(Res.string.note_description_placeholder) },
             muted = initial.isBlank(),
             icon = EnclyIcons.Comment,
             onClick = { onEditingChange(true) },
@@ -228,7 +241,7 @@ private fun DescriptionEditor(
         EnclyTextField(
             value = text,
             onValueChange = { text = it },
-            label = stringResource(R.string.note_description_placeholder),
+            label = stringResource(Res.string.note_description_placeholder),
             fieldModifier = Modifier.focusRequester(focus),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = false,
@@ -238,9 +251,11 @@ private fun DescriptionEditor(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            EnclyTextButton(text = stringResource(R.string.cancel), onClick = { onEditingChange(false) }, muted = true)
+            EnclyTextButton(text = stringResource(Res.string.cancel), onClick = {
+                onEditingChange(false)
+            }, muted = true)
             EnclyButton(
-                text = stringResource(R.string.save),
+                text = stringResource(Res.string.save),
                 onClick = {
                     onSave(text.trim())
                     onEditingChange(false)

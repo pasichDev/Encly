@@ -2,7 +2,10 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_no_picker
+import com.pasich.encly.core.resources.backup_phrase_exists
+import com.pasich.encly.core.resources.security_erase_failed
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
@@ -88,7 +91,7 @@ class BackupViewModel(
 
             action == BackupAction.CREATE_PHRASE ->
                 if (phraseSetup.hasRecoveryPhrase()) {
-                    state.finish(BackupMessage.Text(R.string.backup_phrase_exists))
+                    state.finish(BackupMessage.Text(Res.string.backup_phrase_exists))
                 } else {
                     phraseFlow.create()
                 }
@@ -122,7 +125,7 @@ class BackupViewModel(
             if (erased) {
                 state.ui.update { it.copy(step = BackupStep.Idle, erased = true) }
             } else {
-                state.finish(BackupMessage.Text(R.string.security_erase_failed))
+                state.finish(BackupMessage.Text(Res.string.security_erase_failed))
             }
         }
     }
@@ -141,7 +144,7 @@ class BackupViewModel(
     /** No app on this device handles the Storage Access Framework picker. */
     fun onSystemPickerUnavailable() {
         sessionLockManager.endSystemPicker()
-        state.finish(BackupMessage.Text(R.string.backup_error_no_picker))
+        state.finish(BackupMessage.Text(Res.string.backup_error_no_picker))
     }
 
     fun cancel() {

@@ -1,18 +1,22 @@
 package com.pasich.encly.presentation.screen
 
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.error_database_open
+import com.pasich.encly.core.resources.lock_pin_key_lost
+import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * What the lock screen's forms show: the PIN typed so far, the recovery phrase, and the last
@@ -31,8 +35,7 @@ internal class LockFormState {
     /** How many PIN digits are typed. */
     val pinLength: Int get() = pinDigits.length
 
-    @get:StringRes
-    var pinError by mutableStateOf<Int?>(null)
+    var pinError by mutableStateOf<StringResource?>(null)
         private set
 
     /** Changes on every wrong PIN, so the dots shake again. */
@@ -44,8 +47,7 @@ internal class LockFormState {
     /** The recovery words typed so far. */
     val phrase = RecoveryPhraseState()
 
-    @get:StringRes
-    var phraseError by mutableStateOf<Int?>(null)
+    var phraseError by mutableStateOf<StringResource?>(null)
         private set
 
     val lockedOut: Boolean get() = lockoutSeconds > 0L
@@ -68,19 +70,19 @@ internal class LockFormState {
     fun onPinResult(result: PinUnlockResult, lockoutRemainingMillis: Long) {
         when (result) {
             PinUnlockResult.WRONG_PIN -> {
-                pinError = R.string.lock_wrong_pin
+                pinError = Res.string.lock_wrong_pin
                 shakeKey++
                 lockoutSeconds = lockoutSecondsLeft(lockoutRemainingMillis)
             }
 
-            PinUnlockResult.DB_ERROR -> pinError = R.string.error_database_open
+            PinUnlockResult.DB_ERROR -> pinError = Res.string.error_database_open
 
             PinUnlockResult.LOCKED_OUT -> lockoutSeconds = lockoutSecondsLeft(lockoutRemainingMillis)
 
             // The PIN can no longer unlock here: the recovery form says why, when there is one.
             PinUnlockResult.KEY_LOST -> {
-                pinError = R.string.lock_pin_key_lost
-                phraseError = R.string.lock_pin_key_lost
+                pinError = Res.string.lock_pin_key_lost
+                phraseError = Res.string.lock_pin_key_lost
             }
 
             PinUnlockResult.SUCCESS, PinUnlockResult.BACKGROUNDED -> Unit
@@ -107,8 +109,8 @@ internal class LockFormState {
     /** A wrong phrase stays in the field, with the error under it, so it can be corrected. */
     fun onSeedResult(result: SeedUnlockResult) {
         when (result) {
-            SeedUnlockResult.WRONG_SEED -> phraseError = R.string.lock_wrong_recovery_phrase
-            SeedUnlockResult.DB_ERROR -> phraseError = R.string.error_database_open
+            SeedUnlockResult.WRONG_SEED -> phraseError = Res.string.lock_wrong_recovery_phrase
+            SeedUnlockResult.DB_ERROR -> phraseError = Res.string.error_database_open
             SeedUnlockResult.SUCCESS, SeedUnlockResult.BACKGROUNDED -> Unit
         }
     }

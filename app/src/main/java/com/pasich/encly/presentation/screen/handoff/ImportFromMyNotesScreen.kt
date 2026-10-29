@@ -17,9 +17,30 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_count_notes
+import com.pasich.encly.core.resources.backup_count_tags
+import com.pasich.encly.core.resources.backup_count_tasks
+import com.pasich.encly.core.resources.backup_import_done
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.close
+import com.pasich.encly.core.resources.done
+import com.pasich.encly.core.resources.handoff_done_hint
+import com.pasich.encly.core.resources.handoff_done_title
+import com.pasich.encly.core.resources.handoff_error_failed
+import com.pasich.encly.core.resources.handoff_error_invalid
+import com.pasich.encly.core.resources.handoff_error_title
+import com.pasich.encly.core.resources.handoff_error_too_large
+import com.pasich.encly.core.resources.handoff_error_unsupported
+import com.pasich.encly.core.resources.handoff_error_vault
+import com.pasich.encly.core.resources.handoff_import
+import com.pasich.encly.core.resources.handoff_importing
+import com.pasich.encly.core.resources.handoff_preview_attachments
+import com.pasich.encly.core.resources.handoff_preview_body
+import com.pasich.encly.core.resources.handoff_preview_pinned
+import com.pasich.encly.core.resources.handoff_preview_title
+import com.pasich.encly.core.resources.handoff_reading
+import com.pasich.encly.core.resources.handoff_title
 import com.pasich.encly.data.handoff.HandoffError
 import com.pasich.encly.data.handoff.HandoffPreview
 import com.pasich.encly.presentation.designsystem.CalloutTone
@@ -35,6 +56,9 @@ import com.pasich.encly.presentation.viewmodel.HandoffStep
 import com.pasich.encly.presentation.viewmodel.ImportFromMyNotesViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Import from My Notes: the lock screen while the vault is closed, then the hand-off's steps.
@@ -76,17 +100,17 @@ private fun HandoffContent(
     // The import is one transaction; leaving in the middle would only roll it back.
     BackHandler(enabled = step == HandoffStep.Importing) {}
     when (step) {
-        HandoffStep.Waiting -> AuthLoading(stringResource(R.string.handoff_title), modifier)
+        HandoffStep.Waiting -> AuthLoading(stringResource(Res.string.handoff_title), modifier)
 
-        HandoffStep.Reading -> AuthLoading(stringResource(R.string.handoff_reading), modifier)
+        HandoffStep.Reading -> AuthLoading(stringResource(Res.string.handoff_reading), modifier)
 
-        HandoffStep.Importing -> AuthLoading(stringResource(R.string.handoff_importing), modifier)
+        HandoffStep.Importing -> AuthLoading(stringResource(Res.string.handoff_importing), modifier)
 
         is HandoffStep.Preview -> HandoffPage(onClose = onClose, modifier = modifier) {
             PreviewBody(step.preview)
-            EnclyButton(text = stringResource(R.string.handoff_import), onClick = onConfirm)
+            EnclyButton(text = stringResource(Res.string.handoff_import), onClick = onConfirm)
             EnclyTextButton(
-                text = stringResource(R.string.cancel),
+                text = stringResource(Res.string.cancel),
                 onClick = onClose,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -95,22 +119,22 @@ private fun HandoffContent(
         is HandoffStep.Done -> HandoffPage(onClose = onClose, modifier = modifier) {
             val summary = step.summary
             StepHeading(
-                title = stringResource(R.string.handoff_done_title),
+                title = stringResource(Res.string.handoff_done_title),
                 body = stringResource(
-                    R.string.backup_import_done,
+                    Res.string.backup_import_done,
                     summary.notesAdded,
                     summary.tasksAdded,
                     summary.tagsAdded,
                     step.skipped,
                 ),
             )
-            EnclyCallout(text = stringResource(R.string.handoff_done_hint))
-            EnclyButton(text = stringResource(R.string.done), onClick = onClose)
+            EnclyCallout(text = stringResource(Res.string.handoff_done_hint))
+            EnclyButton(text = stringResource(Res.string.done), onClick = onClose)
         }
 
         is HandoffStep.Failed -> HandoffPage(onClose = onClose, modifier = modifier) {
-            StepHeading(title = stringResource(R.string.handoff_error_title), body = stringResource(errorText(step)))
-            EnclyButton(text = stringResource(R.string.close), onClick = onClose)
+            StepHeading(title = stringResource(Res.string.handoff_error_title), body = stringResource(errorText(step)))
+            EnclyButton(text = stringResource(Res.string.close), onClick = onClose)
         }
     }
 }
@@ -120,22 +144,22 @@ private fun HandoffContent(
 private fun PreviewBody(preview: HandoffPreview, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section)) {
         StepHeading(
-            title = stringResource(R.string.handoff_preview_title),
+            title = stringResource(Res.string.handoff_preview_title),
             body = stringResource(
-                R.string.handoff_preview_body,
-                pluralStringResource(R.plurals.backup_count_notes, preview.notes, preview.notes),
-                pluralStringResource(R.plurals.backup_count_tasks, preview.tasks, preview.tasks),
-                pluralStringResource(R.plurals.backup_count_tags, preview.tags, preview.tags),
+                Res.string.handoff_preview_body,
+                pluralStringResource(Res.plurals.backup_count_notes, preview.notes, preview.notes),
+                pluralStringResource(Res.plurals.backup_count_tasks, preview.tasks, preview.tasks),
+                pluralStringResource(Res.plurals.backup_count_tags, preview.tags, preview.tags),
             ),
         )
         if (preview.attachments > 0) {
             EnclyCallout(
-                text = stringResource(R.string.handoff_preview_attachments, preview.attachments),
+                text = stringResource(Res.string.handoff_preview_attachments, preview.attachments),
                 tone = CalloutTone.WARNING,
             )
         }
         if (preview.pinned > 0) {
-            EnclyCallout(text = stringResource(R.string.handoff_preview_pinned, preview.pinned))
+            EnclyCallout(text = stringResource(Res.string.handoff_preview_pinned, preview.pinned))
         }
     }
 }
@@ -149,7 +173,7 @@ private fun HandoffPage(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column {
-            EnclyTopBar(title = stringResource(R.string.handoff_title), onClose = onClose)
+            EnclyTopBar(title = stringResource(Res.string.handoff_title), onClose = onClose)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -163,10 +187,10 @@ private fun HandoffPage(
     }
 }
 
-private fun errorText(step: HandoffStep.Failed): Int = when {
-    step.vaultUnavailable -> R.string.handoff_error_vault
-    step.error == HandoffError.UNSUPPORTED_SCHEMA -> R.string.handoff_error_unsupported
-    step.error == HandoffError.TOO_LARGE -> R.string.handoff_error_too_large
-    step.error == HandoffError.INVALID_PAYLOAD -> R.string.handoff_error_invalid
-    else -> R.string.handoff_error_failed
+private fun errorText(step: HandoffStep.Failed): StringResource = when {
+    step.vaultUnavailable -> Res.string.handoff_error_vault
+    step.error == HandoffError.UNSUPPORTED_SCHEMA -> Res.string.handoff_error_unsupported
+    step.error == HandoffError.TOO_LARGE -> Res.string.handoff_error_too_large
+    step.error == HandoffError.INVALID_PAYLOAD -> Res.string.handoff_error_invalid
+    else -> Res.string.handoff_error_failed
 }

@@ -27,15 +27,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.pin_delete_digit
+import com.pasich.encly.core.resources.pin_digits_entered
+import com.pasich.encly.core.resources.pin_unlock_with_fingerprint
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /** PIN length of the vault. */
 const val PIN_LENGTH = 6
@@ -62,7 +65,7 @@ fun PinDots(
     shakeKey: Int = 0,
 ) {
     val colors = MaterialTheme.colorScheme
-    val description = stringResource(R.string.pin_digits_entered, entered, length)
+    val description = stringResource(Res.string.pin_digits_entered, entered, length)
     val shake = remember { Animatable(0f) }
     LaunchedEffect(shakeKey) {
         if (shakeKey == 0) return@LaunchedEffect
@@ -149,7 +152,7 @@ fun PinKeypad(
                 ) {
                     Icon(
                         imageVector = EnclyIcons.Fingerprint,
-                        contentDescription = stringResource(R.string.pin_unlock_with_fingerprint),
+                        contentDescription = stringResource(Res.string.pin_unlock_with_fingerprint),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(28.dp),
                     )
@@ -172,7 +175,7 @@ fun PinKeypad(
             ) {
                 Icon(
                     imageVector = EnclyIcons.Backspace,
-                    contentDescription = stringResource(R.string.pin_delete_digit),
+                    contentDescription = stringResource(Res.string.pin_delete_digit),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(26.dp),
                 )

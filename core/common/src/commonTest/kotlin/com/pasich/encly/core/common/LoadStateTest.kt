@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 class LoadStateTest {
-    private val error = LoadError(UiText.of(TITLE_ID), UiText.of(MESSAGE_ID))
+    private val error = LoadError(UiText.of(resource("title")), UiText.of(resource("message")))
 
     @Test
     fun loadingComesFirstThenEveryValue() = runTest {
@@ -65,10 +65,5 @@ class LoadStateTest {
 
         assertSame(cancellation, thrown)
         assertEquals(true, suspendRunCatching { throw IllegalStateException() }.isFailure)
-    }
-
-    private companion object {
-        const val TITLE_ID = 1
-        const val MESSAGE_ID = 2
     }
 }

@@ -70,6 +70,7 @@ class CommonBoundaryTest {
         assertTrue(ALLOWED_PREFIXES.none { "javax.crypto.Cipher".startsWith(it) })
         assertTrue(ALLOWED_PREFIXES.none { "androidx.fragment.app.FragmentActivity".startsWith(it) })
         assertTrue(ALLOWED_PREFIXES.none { "com.pasich.encly.R".startsWith(it) })
+        assertTrue(ALLOWED_PREFIXES.none { "androidx.compose.ui.res.stringResource".startsWith(it) })
         assertTrue(ALLOWED_PREFIXES.none { "com.pasich.encly.core.security.Crypto".startsWith(it) })
         assertTrue(PLATFORM_USE.containsMatchIn("val x = java.util.UUID.randomUUID()"))
         assertTrue(PLATFORM_USE.containsMatchIn("val t = System.currentTimeMillis()"))
@@ -93,6 +94,8 @@ class CommonBoundaryTest {
             "com.pasich.encly.core.security.SensitiveDataCleaner",
             "kotlin.",
             "kotlinx.",
+            // The type of a string resource, which UiText and AppStrings carry; the strings are not here.
+            "org.jetbrains.compose.resources.",
         )
 
         // Direct uses of the platform that need no import: java.*, android.*, System, javaClass, R.

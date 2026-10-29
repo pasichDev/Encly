@@ -37,10 +37,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.block_duplicate
+import com.pasich.encly.core.resources.block_more_tools
+import com.pasich.encly.core.resources.block_move_down
+import com.pasich.encly.core.resources.block_move_up
+import com.pasich.encly.core.resources.checklist_lock
+import com.pasich.encly.core.resources.checklist_unlock
+import com.pasich.encly.core.resources.close
+import com.pasich.encly.core.resources.delete_block
+import com.pasich.encly.core.resources.keyboard_hide
+import com.pasich.encly.core.resources.keyboard_show
+import com.pasich.encly.core.resources.redo
+import com.pasich.encly.core.resources.undo
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.state.toolType
 import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
@@ -52,6 +63,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The editor's formatting toolbar, pinned to the bottom above the keyboard (design spec §3.3):
@@ -130,7 +142,7 @@ private fun MainTools(
     ToolRow(spread = true) {
         EnclyToolButton(
             icon = EnclyIcons.ChevronUp,
-            contentDescription = stringResource(R.string.block_more_tools),
+            contentDescription = stringResource(Res.string.block_more_tools),
             onClick = onMore,
             style = ToolStyle.FILLED,
         )
@@ -191,7 +203,7 @@ private fun KeyboardToggle(blockFocused: Boolean, onShow: () -> Unit) {
     val shown = imeVisible || (blockFocused && !dismissedWhileFocused)
     EnclyToolButton(
         icon = if (shown) EnclyIcons.KeyboardHide else EnclyIcons.Keyboard,
-        contentDescription = stringResource(if (shown) R.string.keyboard_hide else R.string.keyboard_show),
+        contentDescription = stringResource(if (shown) Res.string.keyboard_hide else Res.string.keyboard_show),
         onClick = {
             if (shown) {
                 keyboard?.hide()
@@ -249,12 +261,12 @@ private fun ToolRow(spread: Boolean, content: @Composable RowScope.() -> Unit) {
 private fun HistoryButtons(history: HistoryTools) {
     EnclyToolButton(
         icon = EnclyIcons.Undo,
-        contentDescription = stringResource(R.string.undo),
+        contentDescription = stringResource(Res.string.undo),
         onClick = history.onUndo,
     )
     EnclyToolButton(
         icon = EnclyIcons.Redo,
-        contentDescription = stringResource(R.string.redo),
+        contentDescription = stringResource(Res.string.redo),
         onClick = history.onRedo,
     )
 }
@@ -263,7 +275,11 @@ private fun HistoryButtons(history: HistoryTools) {
 @Composable
 private fun MoreTools(blockTools: BlockMoveTools, onApply: ((BlockType) -> Unit)?, onClose: () -> Unit) {
     ToolRow(spread = false) {
-        EnclyToolButton(icon = EnclyIcons.Close, contentDescription = stringResource(R.string.close), onClick = onClose)
+        EnclyToolButton(
+            icon = EnclyIcons.Close,
+            contentDescription = stringResource(Res.string.close),
+            onClick = onClose,
+        )
         moreBlockTools.forEach { tool ->
             BlockToolButton(
                 tool = tool,
@@ -279,31 +295,31 @@ private fun MoreTools(blockTools: BlockMoveTools, onApply: ((BlockType) -> Unit)
         EnclyToolbarRule()
         EnclyToolButton(
             icon = EnclyIcons.ArrowUp,
-            contentDescription = stringResource(R.string.block_move_up),
+            contentDescription = stringResource(Res.string.block_move_up),
             onClick = blockTools.onMoveUp,
         )
         EnclyToolButton(
             icon = EnclyIcons.ArrowDown,
-            contentDescription = stringResource(R.string.block_move_down),
+            contentDescription = stringResource(Res.string.block_move_down),
             onClick = blockTools.onMoveDown,
         )
         EnclyToolButton(
             icon = EnclyIcons.Duplicate,
-            contentDescription = stringResource(R.string.block_duplicate),
+            contentDescription = stringResource(Res.string.block_duplicate),
             onClick = blockTools.onDuplicate,
         )
         blockTools.lock?.let { lock ->
             EnclyToolButton(
                 icon = if (lock.locked) EnclyIcons.LockOpen else EnclyIcons.Lock,
                 contentDescription = stringResource(
-                    if (lock.locked) R.string.checklist_unlock else R.string.checklist_lock,
+                    if (lock.locked) Res.string.checklist_unlock else Res.string.checklist_lock,
                 ),
                 onClick = lock.onToggle,
             )
         }
         EnclyToolButton(
             icon = EnclyIcons.Trash,
-            contentDescription = stringResource(R.string.delete_block),
+            contentDescription = stringResource(Res.string.delete_block),
             onClick = blockTools.onDelete,
         )
     }

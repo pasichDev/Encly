@@ -1,9 +1,20 @@
 package com.pasich.encly.ui.screens
 
-import android.content.res.Configuration
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.allStringResources
+import com.pasich.encly.core.resources.backup_intro_short
+import com.pasich.encly.core.resources.block_more_tools
+import com.pasich.encly.core.resources.empty_notes
+import com.pasich.encly.core.resources.lock_recover_access
+import com.pasich.encly.core.resources.lock_title
+import com.pasich.encly.core.resources.lock_use_recovery_phrase
+import com.pasich.encly.core.resources.onboarding_welcome_headline
+import com.pasich.encly.core.resources.palette_midnight
+import com.pasich.encly.core.resources.security_encryption_active
+import com.pasich.encly.core.resources.settings_appearance
+import com.pasich.encly.core.resources.task_empty_title
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.LockScreen
 import com.pasich.encly.presentation.screen.MainRootScreen
@@ -14,6 +25,11 @@ import com.pasich.encly.presentation.screen.onboarding.OnboardingScreen
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.screen.settings.SettingsScreen
+import com.pasich.encly.testutil.TestLocale
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -30,30 +46,33 @@ import java.util.Locale
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
 
     /** English texts that [language] translates differently: none of them may be shown. */
     private val untranslated: Set<String> by lazy {
-        val english = context.createConfigurationContext(
-            Configuration(context.resources.configuration).apply {
-                setLocale(Locale.ENGLISH)
-            },
-        ).resources
-        R.string::class.java.fields.mapNotNull { field ->
-            val id = field.getInt(null)
-            val en = english.getString(id)
-            en.takeIf { language != "en" && it.length > 3 && it != context.getString(id) }
+        val english = TestLocale.within("en") { everyString() }
+        val translated = everyString()
+        english.mapNotNull { (key, en) ->
+            en.takeIf { language != "en" && it.length > 3 && it != translated[key] }
         }.flatMap { listOf(it, it.uppercase()) }.toSet()
     }
+
+    /** Every string resource in the current locale, by key. */
+    private fun everyString(): Map<String, String> =
+        runBlocking { Res.allStringResources.mapValues { getString(it.value) } }
+
+    @After
+    fun restoreLanguage() = TestLocale.set(Locale.US.toLanguageTag())
 
     @Before
     fun useLanguage() {
         RuntimeEnvironment.setQualifiers("+$language")
+        TestLocale.set(language)
         assertEquals(language, context.resources.configuration.locales[0].language)
         if (language != "en") assertTrue("nothing is translated into $language", untranslated.size > MIN_TRANSLATED)
     }
 
-    private fun assertInLanguage(expected: Int) {
+    private fun assertInLanguage(expected: StringResource) {
         waitForText(str(expected), ignoreCase = true)
         val leaks = visibleTexts().map(::textOf).filter { it in untranslated }
         assertTrue("[$language] English text on screen: $leaks", leaks.isEmpty())
@@ -63,19 +82,19 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
     @Test
     fun welcome() {
         setScreen(viewModels(app.onboarding(), app.authSetup())) { OnboardingScreen(onComplete = {}) }
-        assertInLanguage(R.string.onboarding_welcome_headline)
+        assertInLanguage(Res.string.onboarding_welcome_headline)
     }
 
     @Test
     fun notes() {
         setNavScreen(viewModels(*app.home()), route = NavRoutes.HomeRoute.name) { nav -> MainRootScreen(nav) }
-        assertInLanguage(R.string.empty_notes)
+        assertInLanguage(Res.string.empty_notes)
     }
 
     @Test
     fun tasks() {
         setNavScreen(viewModels(app.tasksVm()), route = TestRoutes.TASKS) { nav -> TasksScreen(nav) }
-        assertInLanguage(R.string.task_empty_title)
+        assertInLanguage(Res.string.task_empty_title)
     }
 
     @Test
@@ -91,7 +110,7 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
         navigateTo("${NavRoutes.EditNoteRoute.name}/-1")
         waitFor {
             rule.onAllNodes(
-                androidx.compose.ui.test.hasContentDescription(str(R.string.block_more_tools)),
+                androidx.compose.ui.test.hasContentDescription(str(Res.string.block_more_tools)),
             ).fetchSemanticsNodes().isNotEmpty()
         }
         val leaks = visibleTexts().map(::textOf).filter { it in untranslated }
@@ -101,7 +120,7 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
     @Test
     fun settings() {
         setNavScreen(viewModels(app.settingsVm()), route = NavRoutes.SettingsRoute.name) { nav -> SettingsScreen(nav) }
-        assertInLanguage(R.string.settings_appearance)
+        assertInLanguage(Res.string.settings_appearance)
     }
 
     @Test
@@ -109,7 +128,7 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
         setNavScreen(viewModels(app.appearance()), route = NavRoutes.AppearanceRoute.name) { nav ->
             AppearanceScreen(nav)
         }
-        assertInLanguage(R.string.palette_midnight)
+        assertInLanguage(Res.string.palette_midnight)
     }
 
     @Test
@@ -120,7 +139,7 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
         ) { nav ->
             SecuritySettingsScreen(nav)
         }
-        assertInLanguage(R.string.security_encryption_active)
+        assertInLanguage(Res.string.security_encryption_active)
     }
 
     @Test
@@ -128,18 +147,18 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
         setNavScreen(viewModels(app.backup(), app.markdownExport()), route = NavRoutes.BackupRoute.name) { nav ->
             BackupScreen(nav)
         }
-        assertInLanguage(R.string.backup_intro_short)
+        assertInLanguage(Res.string.backup_intro_short)
     }
 
     @Test
     fun lockAndRecovery() {
         `when`(app.security.hasRecoverySeed()).thenReturn(true)
         setNavScreen(viewModels(app.lock()), route = NavRoutes.LockRoute.name) { nav -> LockScreen(nav) }
-        assertInLanguage(R.string.lock_title)
+        assertInLanguage(Res.string.lock_title)
 
-        rule.onNodeWithText(str(R.string.lock_use_recovery_phrase)).performClick()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
 
-        assertInLanguage(R.string.lock_recover_access)
+        assertInLanguage(Res.string.lock_recover_access)
         (1..PHRASE_WORDS).forEach { phraseCell(it).assertExists() }
     }
 

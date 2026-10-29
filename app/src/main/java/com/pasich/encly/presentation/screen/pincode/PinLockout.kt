@@ -4,9 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.res.pluralStringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_lockout_hours
+import com.pasich.encly.core.resources.lock_lockout_minutes
+import com.pasich.encly.core.resources.lock_lockout_seconds
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.PluralStringResource
+import org.jetbrains.compose.resources.pluralStringResource
 
 private const val MILLIS_PER_SECOND = 1_000L
 private const val LOCKOUT_ROUNDING_MILLIS = MILLIS_PER_SECOND - 1L
@@ -26,13 +30,13 @@ fun pinLockoutText(seconds: Long): String {
 }
 
 /** The plural and count [pinLockoutText] shows for [seconds]. */
-internal fun lockoutUnit(seconds: Long): Pair<Int, Int> = when {
-    seconds < 2 * SECONDS_PER_MINUTE -> R.plurals.lock_lockout_seconds to seconds.toInt()
+internal fun lockoutUnit(seconds: Long): Pair<PluralStringResource, Int> = when {
+    seconds < 2 * SECONDS_PER_MINUTE -> Res.plurals.lock_lockout_seconds to seconds.toInt()
 
     seconds < 2 * SECONDS_PER_HOUR ->
-        R.plurals.lock_lockout_minutes to ((seconds + SECONDS_PER_MINUTE - 1) / SECONDS_PER_MINUTE).toInt()
+        Res.plurals.lock_lockout_minutes to ((seconds + SECONDS_PER_MINUTE - 1) / SECONDS_PER_MINUTE).toInt()
 
-    else -> R.plurals.lock_lockout_hours to ((seconds + SECONDS_PER_HOUR - 1) / SECONDS_PER_HOUR).toInt()
+    else -> Res.plurals.lock_lockout_hours to ((seconds + SECONDS_PER_HOUR - 1) / SECONDS_PER_HOUR).toInt()
 }
 
 private const val SECONDS_PER_MINUTE = 60L

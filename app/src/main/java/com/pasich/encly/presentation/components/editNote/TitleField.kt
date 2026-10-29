@@ -19,15 +19,16 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.note_title_placeholder
 import com.pasich.encly.editor.state.textDiff
 import com.pasich.encly.editor.ui.blocks.WritingKeyboard
 import com.pasich.encly.editor.ui.blocks.rememberSyncedTextFieldState
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A title is one paragraph. Enter alone (a keyboard that commits "\n" instead of sending the key,
@@ -100,7 +101,7 @@ fun TitleField(
             ) {
                 if (state.text.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.note_title_placeholder),
+                        text = stringResource(Res.string.note_title_placeholder),
                         style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     )
                 }

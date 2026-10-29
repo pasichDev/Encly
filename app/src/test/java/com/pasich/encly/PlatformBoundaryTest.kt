@@ -12,8 +12,7 @@ import java.io.File
  * [LOGIC_PACKAGES] may use nothing of
  * Android and nothing of the JVM: no `android.` or `javax.` or `java.` import, no `androidx.`
  * beyond Room, sqlite, DataStore, lifecycle and annotations, no `System`, `javaClass` or
- * `SecurityException` in code (`R.string` ids in domain enums stay until Compose
- * resources replace them). What the platform has to do is behind an interface the
+ * `SecurityException` in code. What the platform has to do is behind an interface the
  * logic declares (KeyValueStore, VaultFileIo, BiometricManager, MainThreadTimer, AppStrings,
  * LockoutClock, ...) and implemented in one adapter file. Each adapter file is listed in
  * [ADAPTER_FILES] with the reason, and nothing else may be: the check also fails when a listed
@@ -215,8 +214,7 @@ class PlatformBoundaryTest {
             // The Android implementations of the platform interfaces.
             "core/platform/SharedPreferencesKeyValueStore.kt" to "SharedPreferences behind KeyValueStore",
             "core/platform/HandlerMainThreadTimer.kt" to "Handler and Looper behind MainThreadTimer",
-            "core/common/AndroidAppStrings.kt" to "Android resources and AppCompat locales behind AppStrings",
-            "core/common/AndroidUiText.kt" to "Android and Compose resource lookup of UiText",
+            "core/common/AndroidUiText.kt" to "the composable lookup of UiText (androidx.compose.runtime)",
             "core/security/SystemLockoutClock.kt" to "SystemClock and Settings.Global behind LockoutClock",
             "core/security/SystemDeviceLockWatcher.kt" to "KeyguardManager and the screen-off receiver",
             "core/security/KeystorePinFactor.kt" to "AndroidKeyStore HMAC key behind PinHardwareFactor",

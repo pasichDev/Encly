@@ -1,48 +1,68 @@
 package com.pasich.encly.data.importer
 
-import androidx.annotation.StringRes
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.import_joplin_formats
+import com.pasich.encly.core.resources.import_joplin_howto
+import com.pasich.encly.core.resources.import_joplin_losses
+import com.pasich.encly.core.resources.import_joplin_name
+import com.pasich.encly.core.resources.import_keep_formats
+import com.pasich.encly.core.resources.import_keep_howto
+import com.pasich.encly.core.resources.import_keep_losses
+import com.pasich.encly.core.resources.import_keep_name
+import com.pasich.encly.core.resources.import_md_formats
+import com.pasich.encly.core.resources.import_md_howto
+import com.pasich.encly.core.resources.import_md_losses
+import com.pasich.encly.core.resources.import_md_name
+import com.pasich.encly.core.resources.import_nn_formats
+import com.pasich.encly.core.resources.import_nn_howto
+import com.pasich.encly.core.resources.import_nn_losses
+import com.pasich.encly.core.resources.import_nn_name
+import com.pasich.encly.core.resources.import_sn_formats
+import com.pasich.encly.core.resources.import_sn_howto
+import com.pasich.encly.core.resources.import_sn_losses
+import com.pasich.encly.core.resources.import_sn_name
 import com.pasich.encly.editor.model.Block
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * The apps Encly can import from. [formats], [howTo] and [losses] are string resources shown on
  * the Import notes page; a source is listed only once its parser and tests exist.
  */
 enum class ImportSource(
-    @get:StringRes val title: Int,
-    @get:StringRes val formats: Int,
-    @get:StringRes val howTo: Int,
-    @get:StringRes val losses: Int,
+    val title: StringResource,
+    val formats: StringResource,
+    val howTo: StringResource,
+    val losses: StringResource,
 ) {
     GOOGLE_KEEP(
-        R.string.import_keep_name,
-        R.string.import_keep_formats,
-        R.string.import_keep_howto,
-        R.string.import_keep_losses,
+        Res.string.import_keep_name,
+        Res.string.import_keep_formats,
+        Res.string.import_keep_howto,
+        Res.string.import_keep_losses,
     ),
     STANDARD_NOTES(
-        R.string.import_sn_name,
-        R.string.import_sn_formats,
-        R.string.import_sn_howto,
-        R.string.import_sn_losses,
+        Res.string.import_sn_name,
+        Res.string.import_sn_formats,
+        Res.string.import_sn_howto,
+        Res.string.import_sn_losses,
     ),
     JOPLIN(
-        R.string.import_joplin_name,
-        R.string.import_joplin_formats,
-        R.string.import_joplin_howto,
-        R.string.import_joplin_losses,
+        Res.string.import_joplin_name,
+        Res.string.import_joplin_formats,
+        Res.string.import_joplin_howto,
+        Res.string.import_joplin_losses,
     ),
     NOTESNOOK(
-        R.string.import_nn_name,
-        R.string.import_nn_formats,
-        R.string.import_nn_howto,
-        R.string.import_nn_losses,
+        Res.string.import_nn_name,
+        Res.string.import_nn_formats,
+        Res.string.import_nn_howto,
+        Res.string.import_nn_losses,
     ),
     MARKDOWN(
-        R.string.import_md_name,
-        R.string.import_md_formats,
-        R.string.import_md_howto,
-        R.string.import_md_losses,
+        Res.string.import_md_name,
+        Res.string.import_md_formats,
+        Res.string.import_md_howto,
+        Res.string.import_md_losses,
     ),
 }
 

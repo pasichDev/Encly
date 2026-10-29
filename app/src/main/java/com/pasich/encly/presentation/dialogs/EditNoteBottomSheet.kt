@@ -5,9 +5,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.delete
+import com.pasich.encly.core.resources.duplicate
+import com.pasich.encly.core.resources.find_in_note
+import com.pasich.encly.core.resources.markdown_copy
+import com.pasich.encly.core.resources.markdown_export
+import com.pasich.encly.core.resources.note_archive
+import com.pasich.encly.core.resources.note_color_title
+import com.pasich.encly.core.resources.note_discard_all_changes
+import com.pasich.encly.core.resources.note_text_use_default
+import com.pasich.encly.core.resources.note_unarchive
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.components.FontSizeSlider
@@ -22,6 +31,7 @@ import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 enum class EditNoteBottomSheetAction {
     CLOSE_NO_SAVE,
@@ -62,7 +72,7 @@ fun EditNoteBottomSheet(
             NoteLineSpacingSlider(selected = lineSpacing, onSelect = viewModel::updateNoteLineSpacing)
             UseDefaultRow(visible = override.isSet, onClick = viewModel::useDefaultText)
             EnclyGroupDivider()
-            SectionOverline(stringResource(R.string.note_color_title))
+            SectionOverline(stringResource(Res.string.note_color_title))
             EnclyNoteColorPicker(
                 selected = NoteColor.fromKey(note.note.color),
                 onSelect = viewModel::updateColor,
@@ -86,34 +96,34 @@ private fun EditorActionRows(canCopy: Boolean, onAction: (EditNoteBottomSheetAct
         onDismiss()
     }
     EnclySheetRow(
-        title = stringResource(R.string.find_in_note),
+        title = stringResource(Res.string.find_in_note),
         icon = EnclyIcons.Search,
         onClick = { run(EditNoteBottomSheetAction.FIND) },
     )
     EnclySheetRow(
-        title = stringResource(R.string.markdown_export),
+        title = stringResource(Res.string.markdown_export),
         icon = EnclyIcons.Upload,
         onClick = { run(EditNoteBottomSheetAction.EXPORT_MARKDOWN) },
     )
     if (canCopy) {
         EnclySheetRow(
-            title = stringResource(R.string.markdown_copy),
+            title = stringResource(Res.string.markdown_copy),
             icon = EnclyIcons.Copy,
             onClick = { run(EditNoteBottomSheetAction.COPY_MARKDOWN) },
         )
     }
     EnclySheetRow(
-        title = stringResource(id = R.string.duplicate),
+        title = stringResource(Res.string.duplicate),
         icon = EnclyIcons.Duplicate,
         onClick = { run(EditNoteBottomSheetAction.DUPLICATE) },
     )
     EnclySheetRow(
-        title = stringResource(R.string.note_discard_all_changes),
+        title = stringResource(Res.string.note_discard_all_changes),
         icon = EnclyIcons.Undo,
         onClick = { run(EditNoteBottomSheetAction.CLOSE_NO_SAVE) },
     )
     EnclySheetRow(
-        title = stringResource(id = R.string.delete),
+        title = stringResource(Res.string.delete),
         icon = EnclyIcons.Trash,
         destructive = true,
         confirmFirst = true,
@@ -125,7 +135,7 @@ private fun EditorActionRows(canCopy: Boolean, onAction: (EditNoteBottomSheetAct
 @Composable
 private fun ArchiveRow(note: Note, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
     EnclySheetRow(
-        title = stringResource(if (note.isArchived) R.string.note_unarchive else R.string.note_archive),
+        title = stringResource(if (note.isArchived) Res.string.note_unarchive else Res.string.note_archive),
         icon = if (note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,
         onClick = {
             onAction(
@@ -140,5 +150,5 @@ private fun ArchiveRow(note: Note, onAction: (EditNoteBottomSheetAction) -> Unit
 @Composable
 private fun UseDefaultRow(visible: Boolean, onClick: () -> Unit) {
     if (!visible) return
-    EnclySheetRow(title = stringResource(R.string.note_text_use_default), icon = EnclyIcons.Undo, onClick = onClick)
+    EnclySheetRow(title = stringResource(Res.string.note_text_use_default), icon = EnclyIcons.Undo, onClick = onClick)
 }

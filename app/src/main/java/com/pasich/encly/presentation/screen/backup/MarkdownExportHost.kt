@@ -7,10 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.action_continue
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.markdown_export_warning_body
+import com.pasich.encly.core.resources.markdown_export_warning_title
 import com.pasich.encly.data.export.MarkdownExport
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
@@ -18,6 +20,8 @@ import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The screen side of the Markdown export, drawn by the Backup screen and by the editor: the
@@ -28,7 +32,6 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 @Composable
 internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: MarkdownExportViewModel = metroViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val resources = LocalResources.current
     val noteLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(MarkdownExport.MIME_NOTE),
         viewModel::onTarget,
@@ -52,7 +55,7 @@ internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: Markdown
     LaunchedEffect(state.message) {
         val message = state.message as? BackupMessage.Text ?: return@LaunchedEffect
         viewModel.clearMessage()
-        currentOnMessage(resources.getString(message.id))
+        currentOnMessage(getString(message.id))
     }
 
     when (val step = state.step) {
@@ -71,10 +74,10 @@ internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: Markdown
 @Composable
 private fun PlainExportWarning(onContinue: () -> Unit, onCancel: () -> Unit) {
     EnclyDialog(
-        title = stringResource(R.string.markdown_export_warning_title),
-        text = stringResource(R.string.markdown_export_warning_body),
+        title = stringResource(Res.string.markdown_export_warning_title),
+        text = stringResource(Res.string.markdown_export_warning_body),
         onDismissRequest = onCancel,
-        confirm = DialogAction(stringResource(R.string.action_continue), onContinue),
-        dismiss = DialogAction(stringResource(R.string.cancel), onCancel),
+        confirm = DialogAction(stringResource(Res.string.action_continue), onContinue),
+        dismiss = DialogAction(stringResource(Res.string.cancel), onCancel),
     )
 }

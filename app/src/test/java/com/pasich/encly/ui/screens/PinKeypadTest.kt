@@ -5,7 +5,9 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.pin_delete_digit
+import com.pasich.encly.core.resources.pin_digits_entered
 import com.pasich.encly.presentation.designsystem.PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.PinKeypad
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -16,7 +18,7 @@ import org.mockito.Mockito.`when`
 
 class PinKeypadTest : ComposeScreenTest() {
 
-    private fun delete() = rule.onNodeWithContentDescription(str(R.string.pin_delete_digit))
+    private fun delete() = rule.onNodeWithContentDescription(str(Res.string.pin_delete_digit))
 
     @Test
     fun aTapOnDeleteRemovesOneDigit() {
@@ -62,15 +64,15 @@ class PinKeypadTest : ComposeScreenTest() {
 
     @Test
     fun onTheLockScreenALongPressOnDeleteEmptiesTheDots() {
-        val app = TestApp(context)
+        val app = TestApp()
         `when`(app.security.hasRecoverySeed()).thenReturn(true)
         setNavScreen(viewModels(app.lock()), route = NavRoutes.LockRoute.name) { nav -> LockScreen(nav) }
         typePin("123")
-        rule.onNodeWithContentDescription(str(R.string.pin_digits_entered, 3, PIN_LENGTH)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 3, PIN_LENGTH)).assertIsDisplayed()
 
         delete().performTouchInput { longClick() }
 
         rule.waitForIdle()
-        rule.onNodeWithContentDescription(str(R.string.pin_digits_entered, 0, PIN_LENGTH)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 0, PIN_LENGTH)).assertIsDisplayed()
     }
 }

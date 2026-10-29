@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.screen
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -31,11 +30,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asString
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.empty_notes
+import com.pasich.encly.core.resources.empty_notes_desc
+import com.pasich.encly.core.resources.empty_notes_tagged
+import com.pasich.encly.core.resources.empty_notes_tagged_desc
+import com.pasich.encly.core.resources.main_drawer_archive
+import com.pasich.encly.core.resources.notes_section_other
+import com.pasich.encly.core.resources.notes_section_pinned
+import com.pasich.encly.core.resources.search_nothing_matches
+import com.pasich.encly.core.resources.show_all_notes
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
@@ -65,6 +72,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private const val SHEET_CLEAR_DELAY_MS = 200L
 private const val FADE_MS = 300
@@ -327,7 +336,7 @@ private fun NotesStatus(state: NoteListState, searching: Boolean, search: NotesS
             val resultsAreCurrent = search.results.query == search.query.trim()
             if (resultsAreCurrent && search.results.notes.isEmpty()) {
                 Text(
-                    text = stringResource(R.string.search_nothing_matches, search.results.query),
+                    text = stringResource(Res.string.search_nothing_matches, search.results.query),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = spacing.listGutter, vertical = spacing.l),
@@ -352,8 +361,8 @@ internal sealed interface NoteEntry {
 }
 
 /** The "Pinned" / "Others" heading above a group of notes. */
-internal data class NoteSection(@StringRes val title: Int) : NoteEntry {
-    override val key: Any get() = "section-$title"
+internal data class NoteSection(val title: StringResource) : NoteEntry {
+    override val key: Any get() = "section-${title.key}"
 }
 
 @Stable
@@ -376,15 +385,15 @@ internal fun noteEntries(notes: List<NoteListItem>, sections: Boolean): List<Not
     if (!sections || (pinned.isEmpty() && archived.isEmpty())) return rows
     return buildList {
         if (pinned.isNotEmpty()) {
-            add(NoteSection(R.string.notes_section_pinned))
+            add(NoteSection(Res.string.notes_section_pinned))
             addAll(pinned)
         }
         if (others.isNotEmpty()) {
-            add(NoteSection(R.string.notes_section_other))
+            add(NoteSection(Res.string.notes_section_other))
             addAll(others)
         }
         if (archived.isNotEmpty()) {
-            add(NoteSection(R.string.main_drawer_archive))
+            add(NoteSection(Res.string.main_drawer_archive))
             addAll(archived)
         }
     }
@@ -414,16 +423,16 @@ private fun NotesEmptyOrFailed(state: NoteListState, onShowAll: () -> Unit) {
 
             empty is NotesEmptyState.NoneTagged -> EnclyEmptyState(
                 icon = EnclyIcons.Tag,
-                title = stringResource(R.string.empty_notes_tagged, empty.tagName),
-                body = stringResource(R.string.empty_notes_tagged_desc),
-                actionLabel = stringResource(R.string.show_all_notes),
+                title = stringResource(Res.string.empty_notes_tagged, empty.tagName),
+                body = stringResource(Res.string.empty_notes_tagged_desc),
+                actionLabel = stringResource(Res.string.show_all_notes),
                 onAction = onShowAll,
             )
 
             else -> EnclyEmptyState(
                 icon = EnclyIcons.Paper,
-                title = stringResource(R.string.empty_notes),
-                body = stringResource(R.string.empty_notes_desc),
+                title = stringResource(Res.string.empty_notes),
+                body = stringResource(Res.string.empty_notes_desc),
             )
         }
     }

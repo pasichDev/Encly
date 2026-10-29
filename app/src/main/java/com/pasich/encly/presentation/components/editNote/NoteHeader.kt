@@ -11,12 +11,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.create_new_tag
+import com.pasich.encly.core.resources.edit_tags
+import com.pasich.encly.core.resources.no_tag
+import com.pasich.encly.core.resources.note_not_saved
+import com.pasich.encly.core.resources.tags_manage
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -24,6 +28,7 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.noteInstant
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The note's overline (design spec §4.4): "PERSONAL · TODAY 9:40 AM", the tag and when the note
@@ -45,7 +50,7 @@ fun NoteOverline(tagName: String?, date: Long, notSaved: Boolean, modifier: Modi
         )
         if (notSaved) {
             Text(
-                text = (OVERLINE_SEPARATOR + stringResource(R.string.note_not_saved)).uppercase(),
+                text = (OVERLINE_SEPARATOR + stringResource(Res.string.note_not_saved)).uppercase(),
                 style = style,
                 color = MaterialTheme.colorScheme.error,
                 maxLines = 1,
@@ -71,11 +76,11 @@ fun NoteTagSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier, title = stringResource(R.string.edit_tags)) {
+    EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier, title = stringResource(Res.string.edit_tags)) {
         // Many tags scroll; the manage row below stays in view.
         Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
             EnclySheetRow(
-                title = stringResource(R.string.no_tag),
+                title = stringResource(Res.string.no_tag),
                 onClick = { onSelect(0L) },
                 selected = selectedTagId == null || selectedTagId == 0L,
                 muted = true,
@@ -91,7 +96,7 @@ fun NoteTagSheet(
         }
         EnclyGroupDivider()
         EnclySheetRow(
-            title = stringResource(if (tags.isEmpty()) R.string.create_new_tag else R.string.tags_manage),
+            title = stringResource(if (tags.isEmpty()) Res.string.create_new_tag else Res.string.tags_manage),
             icon = if (tags.isEmpty()) EnclyIcons.Plus else EnclyIcons.Edit,
             onClick = onManageTags,
         )

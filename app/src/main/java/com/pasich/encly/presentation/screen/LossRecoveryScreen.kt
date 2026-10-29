@@ -16,14 +16,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.vault_reset_restore_hint
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyHoldToConfirmButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The vault can no longer be opened: explains why ([reason]), and wipes everything only after
@@ -64,7 +65,7 @@ fun LossRecoveryScreen(
             )
             // The one way back after the wipe: a backup file and its 12 words.
             EnclyCallout(
-                text = stringResource(R.string.vault_reset_restore_hint),
+                text = stringResource(Res.string.vault_reset_restore_hint),
                 icon = EnclyIcons.Restore,
                 modifier = Modifier.padding(top = spacing.s),
             )

@@ -37,13 +37,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.swipe_delete_message
+import com.pasich.encly.core.resources.swipe_delete_title
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.SwipeAction
@@ -59,6 +60,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sign
@@ -157,8 +159,8 @@ fun SwipeableNote(
 
     ConfirmDialog(
         isVisible = confirmDelete,
-        titleText = stringResource(R.string.swipe_delete_title),
-        messageText = stringResource(R.string.swipe_delete_message),
+        titleText = stringResource(Res.string.swipe_delete_title),
+        messageText = stringResource(Res.string.swipe_delete_message),
         onConfirm = {
             confirmDelete = false
             scope.launch { perform(NoteListEvent.NoteToTrash(note)) }

@@ -1,12 +1,13 @@
 package com.pasich.encly.ui.screens
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
-import com.pasich.encly.core.common.AndroidAppStrings
+import com.pasich.encly.core.common.ComposeAppStrings
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
@@ -66,6 +67,7 @@ import com.pasich.encly.utils.DeviceCapabilities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import org.jetbrains.compose.resources.getString
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -74,7 +76,7 @@ import org.mockito.Mockito.`when`
  * The app's data layer as fakes, and every ViewModel built on it the way the graph would. The
  * vault's key handling is a Mockito [SecurityManager]; tests stub what they need.
  */
-internal class TestApp(context: Context) {
+internal class TestApp {
     val notes = TestNotesRepository()
     val tags = FakeTagsRepository()
     val tasks = FakeTasksRepository()
@@ -94,7 +96,6 @@ internal class TestApp(context: Context) {
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val appContext = context
 
     fun withNotes(vararg notes: Note, tag: Tag? = null) = apply {
         this.notes.allNotesWithTags.value = notes.map { NoteWithTag(note = it, tag = tag) }
@@ -219,7 +220,7 @@ internal class TestApp(context: Context) {
         sessionLockManager = sessionLock,
         store = store,
         documents = markdownDocuments,
-        strings = AndroidAppStrings(appContext),
+        strings = ComposeAppStrings(),
     )
 
     private val pendingRestore by lazy { PendingRestore(backupManager) }
@@ -240,7 +241,7 @@ internal class TestApp(context: Context) {
         // Main, not a worker: Compose tests run effects on an unconfined dispatcher, so an exit
         // (save, then pop) would otherwise resume on the worker and navigate from it.
         ioDispatcher = Dispatchers.Main,
-        copyTitle = { appContext.getString(com.pasich.encly.R.string.untitled) + " (Copy)" },
+        copyTitle = { getString(Res.string.untitled) + " (Copy)" },
     )
 
     /** The ViewModels the home screen and its drawer, chips and task card ask for. */

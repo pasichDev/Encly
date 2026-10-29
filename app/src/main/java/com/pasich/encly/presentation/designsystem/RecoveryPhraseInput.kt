@@ -37,7 +37,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -49,12 +48,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.recovery_phrase_checksum
+import com.pasich.encly.core.resources.recovery_word_cell
+import com.pasich.encly.core.resources.recovery_word_unknown
 import com.pasich.encly.core.security.RecoveryWords
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.components.SensitiveClip
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 /** How long the keyboard takes to slide in; the focused cell is brought into view again after it. */
 private const val IME_SETTLE_MS = 350L
@@ -206,8 +209,8 @@ fun RecoveryPhraseInput(
             measurer.measure(it, style, softWrap = false).size.width
         }
     }
-    val message = error ?: state.firstInvalid?.let { stringResource(R.string.recovery_word_unknown, it + 1) }
-        ?: stringResource(R.string.recovery_phrase_checksum).takeIf { state.checksumFailed }
+    val message = error ?: state.firstInvalid?.let { stringResource(Res.string.recovery_word_unknown, it + 1) }
+        ?: stringResource(Res.string.recovery_phrase_checksum).takeIf { state.checksumFailed }
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
         WordGridLayout(longestWordPx = longest) {
@@ -293,7 +296,7 @@ private fun PhraseField(
     val clipboard = LocalClipboard.current
     val focused by interactionSource.collectIsFocusedAsState()
     val word = state.words[index]
-    val description = stringResource(R.string.recovery_word_cell, index + 1, state.count)
+    val description = stringResource(Res.string.recovery_word_cell, index + 1, state.count)
     // Holds the cursor; the word itself lives in [state], which pastes into other cells also change.
     var field by remember { mutableStateOf(TextFieldValue(word, TextRange(word.length))) }
     // Moved here by Next, space or backspace: type on at the end of the word.

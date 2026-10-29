@@ -5,7 +5,16 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.delete
+import com.pasich.encly.core.resources.duplicate
+import com.pasich.encly.core.resources.edit
+import com.pasich.encly.core.resources.no_tag
+import com.pasich.encly.core.resources.note_description_placeholder
+import com.pasich.encly.core.resources.save
+import com.pasich.encly.core.resources.tap_again_to_delete
+import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
@@ -17,7 +26,7 @@ import org.junit.Test
 /** The long-press sheet of a note: what it shows, which action each row reports, and the description editor. */
 @OptIn(ExperimentalMaterial3Api::class)
 class NoteCardBottomSheetTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private val actions = mutableListOf<NoteAction>()
     private var dismissed = 0
 
@@ -49,7 +58,7 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
 
         assertEquals(1, countText("Groceries"))
         waitForText("Work")
-        listOf("Home", str(R.string.no_tag), str(R.string.edit), str(R.string.duplicate), str(R.string.delete))
+        listOf("Home", str(Res.string.no_tag), str(Res.string.edit), str(Res.string.duplicate), str(Res.string.delete))
             .forEach { assertEquals(it, 1, countText(it)) }
     }
 
@@ -57,15 +66,15 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     fun aNoteWithoutATitleIsCalledUntitled() {
         show(Note(id = 5, title = "", date = 1L))
 
-        assertEquals(1, countText(str(R.string.untitled)))
+        assertEquals(1, countText(str(Res.string.untitled)))
     }
 
     @Test
     fun editAndDuplicateReportTheirActions() {
         show()
 
-        rule.onNodeWithText(str(R.string.edit)).performClick()
-        rule.onNodeWithText(str(R.string.duplicate)).performClick()
+        rule.onNodeWithText(str(Res.string.edit)).performClick()
+        rule.onNodeWithText(str(Res.string.duplicate)).performClick()
 
         assertEquals(listOf(NoteAction.Edit, NoteAction.Duplicate), actions)
     }
@@ -74,11 +83,11 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     fun deletingTakesASecondTap() {
         show()
 
-        rule.onNodeWithText(str(R.string.delete)).performClick()
+        rule.onNodeWithText(str(Res.string.delete)).performClick()
         rule.waitForIdle()
         assertEquals(emptyList<NoteAction>(), actions)
 
-        rule.onNodeWithText(str(R.string.tap_again_to_delete)).performClick()
+        rule.onNodeWithText(str(Res.string.tap_again_to_delete)).performClick()
         assertEquals(listOf<NoteAction>(NoteAction.Delete), actions)
     }
 
@@ -88,7 +97,7 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
         waitForText("Work")
 
         rule.onNodeWithText("Work").performClick()
-        rule.onNodeWithText(str(R.string.no_tag)).performClick()
+        rule.onNodeWithText(str(Res.string.no_tag)).performClick()
 
         assertEquals(listOf(NoteAction.ChangeTag(1), NoteAction.ChangeTag(0)), actions)
     }
@@ -97,29 +106,29 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     fun theDescriptionRowShowsItsPlaceholderWhenEmptyAndTheTextWhenNot() {
         show(Note(id = 5, title = "Groceries", description = "Weekly shop"))
         assertEquals(1, countText("Weekly shop"))
-        assertEquals(0, countText(str(R.string.note_description_placeholder)))
+        assertEquals(0, countText(str(Res.string.note_description_placeholder)))
     }
 
     @Test
     fun anEmptyDescriptionShowsThePlaceholder() {
         show()
 
-        assertEquals(1, countText(str(R.string.note_description_placeholder)))
+        assertEquals(1, countText(str(Res.string.note_description_placeholder)))
     }
 
     @Test
     fun savingADescriptionReportsItTrimmedAndLeavesEditing() {
         show()
 
-        rule.onNodeWithText(str(R.string.note_description_placeholder)).performClick()
+        rule.onNodeWithText(str(Res.string.note_description_placeholder)).performClick()
         rule.waitForIdle()
-        assertEquals("the other rows make way for the field", 0, countText(str(R.string.duplicate)))
+        assertEquals("the other rows make way for the field", 0, countText(str(Res.string.duplicate)))
         rule.onNode(hasSetTextAction()).performTextInput("  Buy milk  ")
-        rule.onNodeWithText(str(R.string.save)).performClick()
+        rule.onNodeWithText(str(Res.string.save)).performClick()
         rule.waitForIdle()
 
         assertEquals(listOf<NoteAction>(NoteAction.ChangeDescription("Buy milk")), actions)
-        assertEquals("the rows are back", 1, countText(str(R.string.duplicate)))
+        assertEquals("the rows are back", 1, countText(str(Res.string.duplicate)))
     }
 
     @Test
@@ -129,11 +138,11 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
         rule.onNodeWithText("Weekly shop").performClick()
         rule.waitForIdle()
         rule.onNode(hasSetTextAction()).performTextInput(" and more")
-        rule.onNodeWithText(str(R.string.cancel)).performClick()
+        rule.onNodeWithText(str(Res.string.cancel)).performClick()
         rule.waitForIdle()
 
         assertEquals(emptyList<NoteAction>(), actions)
         assertEquals(1, countText("Weekly shop"))
-        assertEquals(1, countText(str(R.string.duplicate)))
+        assertEquals(1, countText(str(Res.string.duplicate)))
     }
 }

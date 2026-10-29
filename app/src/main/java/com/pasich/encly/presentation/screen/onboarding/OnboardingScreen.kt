@@ -37,13 +37,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.R
 import com.pasich.encly.core.common.asString
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.locale.AppLocales
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.auth_setup_restore_failed
+import com.pasich.encly.core.resources.auth_setup_restore_failed_title
+import com.pasich.encly.core.resources.auth_setup_restore_retry
+import com.pasich.encly.core.resources.auth_setup_restore_skip
+import com.pasich.encly.core.resources.error_database_open
+import com.pasich.encly.core.resources.language_dialog_title
+import com.pasich.encly.core.resources.onboarding_restore_label
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyProgressHeader
@@ -58,6 +65,7 @@ import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 private const val SLIDE_MS = 500
 private const val FADE_IN_MS = 300
@@ -133,7 +141,7 @@ fun OnboardingScreen(
         actions = actions,
         restorePhrase = restorePhrase,
         finishing = finishing,
-        error = if (finishFailed) stringResource(R.string.error_database_open) else state.error?.asString(),
+        error = if (finishFailed) stringResource(Res.string.error_database_open) else state.error?.asString(),
         modifier = modifier,
     )
 }
@@ -191,13 +199,13 @@ private fun OnboardingHeader(state: OnboardingUiState, onBack: () -> Unit, onLan
     val progress = state.progress
     when {
         state.step == OnboardingStep.WELCOME -> WelcomeHeader(
-            appName = stringResource(R.string.app_name),
+            appName = androidx.compose.ui.res.stringResource(R.string.app_name),
             language = stringResource(shownLanguage().nativeName),
-            languageDescription = stringResource(R.string.language_dialog_title),
+            languageDescription = stringResource(Res.string.language_dialog_title),
             onLanguage = onLanguage,
         )
 
-        progress == null -> LabelHeader(label = stringResource(R.string.onboarding_restore_label), onBack = onBack)
+        progress == null -> LabelHeader(label = stringResource(Res.string.onboarding_restore_label), onBack = onBack)
 
         else -> EnclyProgressHeader(
             step = progress.step,
@@ -258,11 +266,11 @@ private fun StepContent(
 @Composable
 private fun RestoreFailedDialog(onRetry: () -> Unit, onSkip: () -> Unit) {
     EnclyDialog(
-        title = stringResource(R.string.auth_setup_restore_failed_title),
-        text = stringResource(R.string.auth_setup_restore_failed),
+        title = stringResource(Res.string.auth_setup_restore_failed_title),
+        text = stringResource(Res.string.auth_setup_restore_failed),
         onDismissRequest = {},
-        confirm = DialogAction(stringResource(R.string.auth_setup_restore_retry), onRetry),
-        dismiss = DialogAction(stringResource(R.string.auth_setup_restore_skip), onSkip),
+        confirm = DialogAction(stringResource(Res.string.auth_setup_restore_retry), onRetry),
+        dismiss = DialogAction(stringResource(Res.string.auth_setup_restore_skip), onSkip),
     )
 }
 

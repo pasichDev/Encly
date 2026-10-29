@@ -2,16 +2,20 @@ package com.pasich.encly.presentation.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.note_line_spacing_comfortable
+import com.pasich.encly.core.resources.note_line_spacing_compact
+import com.pasich.encly.core.resources.note_line_spacing_default
+import com.pasich.encly.core.resources.note_line_spacing_title
 import com.pasich.encly.domain.model.NoteLineSpacing
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 /** The reading densities in display order; the enum's own order is fixed by what is stored. */
 internal val lineSpacingOrder = listOf(
-    NoteLineSpacing.COMPACT to R.string.note_line_spacing_compact,
-    NoteLineSpacing.DEFAULT to R.string.note_line_spacing_default,
-    NoteLineSpacing.COMFORTABLE to R.string.note_line_spacing_comfortable,
+    NoteLineSpacing.COMPACT to Res.string.note_line_spacing_compact,
+    NoteLineSpacing.DEFAULT to Res.string.note_line_spacing_default,
+    NoteLineSpacing.COMFORTABLE to Res.string.note_line_spacing_comfortable,
 )
 
 /** The reading density as a three-step slider, in the same row style as the text size. */
@@ -24,7 +28,7 @@ fun NoteLineSpacingSlider(
     val index = lineSpacingOrder.indexOfFirst { it.first == selected }.coerceAtLeast(0)
     LabeledSlider(
         modifier = modifier,
-        label = stringResource(R.string.note_line_spacing_title),
+        label = stringResource(Res.string.note_line_spacing_title),
         valueText = stringResource(lineSpacingOrder[index].second),
         value = index.toFloat(),
         onValueChange = { onSelect(lineSpacingOrder[it.roundToInt().coerceIn(lineSpacingOrder.indices)].first) },

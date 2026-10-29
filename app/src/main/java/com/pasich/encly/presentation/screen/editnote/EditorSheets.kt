@@ -28,8 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.delete_from_trash
+import com.pasich.encly.core.resources.edit_tags
+import com.pasich.encly.core.resources.editor_lock
+import com.pasich.encly.core.resources.more_options
+import com.pasich.encly.core.resources.restore
 import com.pasich.encly.editor.ui.sheets.EditorBlockSheet
 import com.pasich.encly.presentation.components.editNote.NoteTagSheet
 import com.pasich.encly.presentation.designsystem.EnclyBackButton
@@ -41,6 +45,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The sheet of one block (a link's, or a separator's); the editor shows it (`EditorBlockSheet`),
@@ -128,9 +133,9 @@ internal fun EditorTopBar(
                 EnclyBackButton(onClick = actions.onBack)
                 Spacer(modifier = Modifier.weight(1f))
                 if (state.isReadTrashOnly) {
-                    EnclyTextButton(text = stringResource(R.string.restore), onClick = actions.onRestore)
+                    EnclyTextButton(text = stringResource(Res.string.restore), onClick = actions.onRestore)
                     EnclyTextButton(
-                        text = stringResource(R.string.delete_from_trash),
+                        text = stringResource(Res.string.delete_from_trash),
                         onClick = actions.onDelete,
                         destructive = true,
                     )
@@ -151,7 +156,7 @@ private fun EditorBarButtons(state: EditorBarState, actions: EditorBarActions, m
     val colors = MaterialTheme.colorScheme
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
         if (state.canToggleLock) {
-            val tagsLabel = stringResource(R.string.edit_tags)
+            val tagsLabel = stringResource(Res.string.edit_tags)
             EnclyTooltip(tagsLabel) {
                 IconButton(
                     onClick = actions.onTags,
@@ -162,7 +167,7 @@ private fun EditorBarButtons(state: EditorBarState, actions: EditorBarActions, m
                 }
             }
             // A toggle, so TalkBack announces whether editing is locked.
-            val lockLabel = stringResource(R.string.editor_lock)
+            val lockLabel = stringResource(Res.string.editor_lock)
             EnclyTooltip(lockLabel) {
                 IconToggleButton(
                     checked = state.lockEditor,
@@ -179,6 +184,11 @@ private fun EditorBarButtons(state: EditorBarState, actions: EditorBarActions, m
                 }
             }
         }
-        IconWithTooltip(EnclyIcons.More, stringResource(R.string.more_options), actions.onMenu, tint = colors.onSurface)
+        IconWithTooltip(
+            EnclyIcons.More,
+            stringResource(Res.string.more_options),
+            actions.onMenu,
+            tint = colors.onSurface,
+        )
     }
 }

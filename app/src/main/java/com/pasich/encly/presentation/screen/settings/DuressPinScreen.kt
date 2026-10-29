@@ -16,10 +16,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.duress_pin_change
+import com.pasich.encly.core.resources.duress_pin_confirm_subtitle
+import com.pasich.encly.core.resources.duress_pin_confirm_title
+import com.pasich.encly.core.resources.duress_pin_current_subtitle
+import com.pasich.encly.core.resources.duress_pin_failed
+import com.pasich.encly.core.resources.duress_pin_intro
+import com.pasich.encly.core.resources.duress_pin_limits
+import com.pasich.encly.core.resources.duress_pin_new_subtitle
+import com.pasich.encly.core.resources.duress_pin_new_title
+import com.pasich.encly.core.resources.duress_pin_real_vault
+import com.pasich.encly.core.resources.duress_pin_remove
+import com.pasich.encly.core.resources.duress_pin_remove_confirm
+import com.pasich.encly.core.resources.duress_pin_remove_confirm_body
+import com.pasich.encly.core.resources.duress_pin_remove_confirm_title
+import com.pasich.encly.core.resources.duress_pin_removed
+import com.pasich.encly.core.resources.duress_pin_same_as_pin
+import com.pasich.encly.core.resources.duress_pin_saved
+import com.pasich.encly.core.resources.duress_pin_saved_kept
+import com.pasich.encly.core.resources.duress_pin_set
+import com.pasich.encly.core.resources.duress_pin_status_off
+import com.pasich.encly.core.resources.duress_pin_status_on
+import com.pasich.encly.core.resources.duress_pin_title
+import com.pasich.encly.core.resources.duress_pin_turned_off
+import com.pasich.encly.core.resources.pin_in_use
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DialogAction
@@ -30,14 +54,15 @@ import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 private val DuressPinTexts = PinFlowTexts(
-    title = R.string.duress_pin_title,
-    currentSubtitle = R.string.duress_pin_current_subtitle,
-    newTitle = R.string.duress_pin_new_title,
-    newSubtitle = R.string.duress_pin_new_subtitle,
-    confirmTitle = R.string.duress_pin_confirm_title,
-    confirmSubtitle = R.string.duress_pin_confirm_subtitle,
+    title = Res.string.duress_pin_title,
+    currentSubtitle = Res.string.duress_pin_current_subtitle,
+    newTitle = Res.string.duress_pin_new_title,
+    newSubtitle = Res.string.duress_pin_new_subtitle,
+    confirmTitle = Res.string.duress_pin_confirm_title,
+    confirmSubtitle = Res.string.duress_pin_confirm_subtitle,
 )
 
 /**
@@ -74,7 +99,7 @@ fun DuressPinScreen(
                 onSet = state::startNew,
                 onRemove = {
                     securityViewModel.removeDuressPin { ok ->
-                        state.message = if (ok) R.string.duress_pin_removed else R.string.duress_pin_failed
+                        state.message = if (ok) Res.string.duress_pin_removed else Res.string.duress_pin_failed
                     }
                 },
             ),
@@ -85,11 +110,11 @@ fun DuressPinScreen(
 
 private fun PinFlowState.onDuressPinResult(result: DuressPinChange) {
     when (result) {
-        DuressPinChange.SET -> saved(R.string.duress_pin_saved_kept)
-        DuressPinChange.SET_NEW_VAULT -> saved(R.string.duress_pin_saved)
-        DuressPinChange.SAME_AS_PIN -> restartNew(R.string.duress_pin_same_as_pin)
-        DuressPinChange.IN_USE -> restartNew(R.string.pin_in_use)
-        DuressPinChange.FAILED -> restartNew(R.string.duress_pin_failed)
+        DuressPinChange.SET -> saved(Res.string.duress_pin_saved_kept)
+        DuressPinChange.SET_NEW_VAULT -> saved(Res.string.duress_pin_saved)
+        DuressPinChange.SAME_AS_PIN -> restartNew(Res.string.duress_pin_same_as_pin)
+        DuressPinChange.IN_USE -> restartNew(Res.string.pin_in_use)
+        DuressPinChange.FAILED -> restartNew(Res.string.duress_pin_failed)
     }
 }
 
@@ -97,6 +122,11 @@ private fun PinFlowState.onDuressPinResult(result: DuressPinChange) {
 private class DuressPinInfo(val turnedOff: Boolean, val isSet: Boolean)
 
 private class DuressPinActions(val onSet: () -> Unit, val onRemove: () -> Unit)
+
+@Composable
+private fun DuressPinInfo.statusText(): String = stringResource(
+    if (isSet && !turnedOff) Res.string.duress_pin_status_on else Res.string.duress_pin_status_off,
+)
 
 @Composable
 private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, modifier: Modifier = Modifier) {
@@ -119,23 +149,21 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
             .padding(horizontal = spacing.gutter, vertical = spacing.s),
     ) {
         if (info.turnedOff) {
-            EnclyCallout(text = stringResource(R.string.duress_pin_turned_off), tone = CalloutTone.WARNING)
+            EnclyCallout(text = stringResource(Res.string.duress_pin_turned_off), tone = CalloutTone.WARNING)
         }
         Text(
-            text = stringResource(R.string.duress_pin_intro),
+            text = stringResource(Res.string.duress_pin_intro),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        EnclyCallout(text = stringResource(R.string.duress_pin_real_vault))
+        EnclyCallout(text = stringResource(Res.string.duress_pin_real_vault))
         Text(
-            text = stringResource(R.string.duress_pin_limits),
+            text = stringResource(Res.string.duress_pin_limits),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = stringResource(
-                if (info.isSet && !info.turnedOff) R.string.duress_pin_status_on else R.string.duress_pin_status_off,
-            ),
+            text = info.statusText(),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -144,12 +172,12 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
             modifier = Modifier.fillMaxWidth().padding(top = spacing.s),
         ) {
             EnclyButton(
-                text = stringResource(if (info.isSet) R.string.duress_pin_change else R.string.duress_pin_set),
+                text = stringResource(if (info.isSet) Res.string.duress_pin_change else Res.string.duress_pin_set),
                 onClick = actions.onSet,
             )
             if (info.isSet) {
                 EnclyTextButton(
-                    text = stringResource(R.string.duress_pin_remove),
+                    text = stringResource(Res.string.duress_pin_remove),
                     onClick = { confirmingRemove = true },
                     destructive = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -163,10 +191,10 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
 @Composable
 private fun RemoveDuressPinDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     EnclyDialog(
-        title = stringResource(R.string.duress_pin_remove_confirm_title),
-        text = stringResource(R.string.duress_pin_remove_confirm_body),
+        title = stringResource(Res.string.duress_pin_remove_confirm_title),
+        text = stringResource(Res.string.duress_pin_remove_confirm_body),
         onDismissRequest = onDismiss,
-        confirm = DialogAction(stringResource(R.string.duress_pin_remove_confirm), onConfirm, destructive = true),
-        dismiss = DialogAction(stringResource(R.string.cancel), onDismiss),
+        confirm = DialogAction(stringResource(Res.string.duress_pin_remove_confirm), onConfirm, destructive = true),
+        dismiss = DialogAction(stringResource(Res.string.cancel), onDismiss),
     )
 }

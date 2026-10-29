@@ -8,7 +8,68 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.auth_method_pin_title
+import com.pasich.encly.core.resources.auto_lock_title
+import com.pasich.encly.core.resources.backup_error_phrase_setup
+import com.pasich.encly.core.resources.backup_needs_phrase_title
+import com.pasich.encly.core.resources.backup_phrase_exists
+import com.pasich.encly.core.resources.backup_phrase_written
+import com.pasich.encly.core.resources.backup_reauth_title
+import com.pasich.encly.core.resources.duress_pin_confirm_title
+import com.pasich.encly.core.resources.duress_pin_current_subtitle
+import com.pasich.encly.core.resources.duress_pin_failed
+import com.pasich.encly.core.resources.duress_pin_intro
+import com.pasich.encly.core.resources.duress_pin_new_title
+import com.pasich.encly.core.resources.duress_pin_remove
+import com.pasich.encly.core.resources.duress_pin_remove_confirm
+import com.pasich.encly.core.resources.duress_pin_remove_confirm_body
+import com.pasich.encly.core.resources.duress_pin_removed
+import com.pasich.encly.core.resources.duress_pin_row_desc
+import com.pasich.encly.core.resources.duress_pin_same_as_pin
+import com.pasich.encly.core.resources.duress_pin_saved
+import com.pasich.encly.core.resources.duress_pin_saved_kept
+import com.pasich.encly.core.resources.duress_pin_set
+import com.pasich.encly.core.resources.duress_pin_title
+import com.pasich.encly.core.resources.onboarding_verify_label
+import com.pasich.encly.core.resources.onboarding_verify_title
+import com.pasich.encly.core.resources.pin_change_bar_title
+import com.pasich.encly.core.resources.pin_change_confirm_title
+import com.pasich.encly.core.resources.pin_change_current_title
+import com.pasich.encly.core.resources.pin_changed
+import com.pasich.encly.core.resources.pin_create_title
+import com.pasich.encly.core.resources.pin_current_wrong
+import com.pasich.encly.core.resources.pin_in_use
+import com.pasich.encly.core.resources.pin_mismatch_retry
+import com.pasich.encly.core.resources.pin_reset_subtitle
+import com.pasich.encly.core.resources.pin_update_failed
+import com.pasich.encly.core.resources.security_biometric_not_enrolled
+import com.pasich.encly.core.resources.security_biometric_title
+import com.pasich.encly.core.resources.security_biometric_unavailable
+import com.pasich.encly.core.resources.security_encryption_active
+import com.pasich.encly.core.resources.security_encryption_pin_plain
+import com.pasich.encly.core.resources.security_encryption_seed_plain
+import com.pasich.encly.core.resources.security_erase_desc
+import com.pasich.encly.core.resources.security_erase_failed
+import com.pasich.encly.core.resources.security_erase_title
+import com.pasich.encly.core.resources.security_keyboard_strict_title
+import com.pasich.encly.core.resources.security_protection_section
+import com.pasich.encly.core.resources.security_recovery_missing
+import com.pasich.encly.core.resources.security_recovery_replace_title
+import com.pasich.encly.core.resources.security_recovery_status_set
+import com.pasich.encly.core.resources.wipe_pin_backups
+import com.pasich.encly.core.resources.wipe_pin_confirm_title
+import com.pasich.encly.core.resources.wipe_pin_current_subtitle
+import com.pasich.encly.core.resources.wipe_pin_failed
+import com.pasich.encly.core.resources.wipe_pin_intro
+import com.pasich.encly.core.resources.wipe_pin_new_title
+import com.pasich.encly.core.resources.wipe_pin_remove
+import com.pasich.encly.core.resources.wipe_pin_removed
+import com.pasich.encly.core.resources.wipe_pin_row_desc
+import com.pasich.encly.core.resources.wipe_pin_same_as_pin
+import com.pasich.encly.core.resources.wipe_pin_saved
+import com.pasich.encly.core.resources.wipe_pin_set
+import com.pasich.encly.core.resources.wipe_pin_title
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.BiometricStatus
@@ -34,7 +95,7 @@ import org.mockito.Mockito.`when`
 
 class SecurityScreensTest : ComposeScreenTest() {
     private val words = String(Mnemonic.generate())
-    private val app by lazy { TestApp(context).withWorkingVault(words) }
+    private val app by lazy { TestApp().withWorkingVault(words) }
     private lateinit var vault: BackupViewModel
 
     private fun showSecurity(recoveryPhrase: Boolean, biometric: BiometricStatus = BiometricStatus.UNAVAILABLE) {
@@ -43,7 +104,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         setNavScreen(viewModels(app.securitySettings(), vault), route = NavRoutes.SecuritySettingsRoute.name) { nav ->
             SecuritySettingsScreen(nav)
         }
-        waitForText(str(R.string.security_encryption_active))
+        waitForText(str(Res.string.security_encryption_active))
     }
 
     private fun showPinChange(requiresCurrent: Boolean = true) {
@@ -60,9 +121,9 @@ class SecurityScreensTest : ComposeScreenTest() {
     fun withoutAPhraseSecurityOffersToSetOneUp() {
         showSecurity(recoveryPhrase = false)
 
-        rule.onNodeWithText(str(R.string.auth_method_pin_title)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.security_recovery_missing)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.security_encryption_pin_plain)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.auth_method_pin_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.security_recovery_missing)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.security_encryption_pin_plain)).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 8)
     }
 
@@ -70,16 +131,16 @@ class SecurityScreensTest : ComposeScreenTest() {
     fun withAPhraseSecurityShowsItIsSetUp() {
         showSecurity(recoveryPhrase = true)
 
-        rule.onNodeWithText(str(R.string.security_recovery_status_set)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.security_encryption_seed_plain)).assertIsDisplayed()
-        assertEquals(0, countText(str(R.string.security_recovery_missing)))
+        rule.onNodeWithText(str(Res.string.security_recovery_status_set)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.security_encryption_seed_plain)).assertIsDisplayed()
+        assertEquals(0, countText(str(Res.string.security_recovery_missing)))
     }
 
     @Test
     fun thePinRowOpensThePinChange() {
         showSecurity(recoveryPhrase = true)
 
-        rule.onNodeWithText(str(R.string.auth_method_pin_title)).performClick()
+        rule.onNodeWithText(str(Res.string.auth_method_pin_title)).performClick()
 
         waitFor { currentRoute() == NavRoutes.PinCodeConfig.name }
     }
@@ -88,17 +149,17 @@ class SecurityScreensTest : ComposeScreenTest() {
     fun settingUpAPhraseShowsTwelveWordsThenAsksForThree() {
         showSecurity(recoveryPhrase = false)
 
-        rule.onNodeWithText(str(R.string.security_recovery_missing)).performClick()
-        waitForText(str(R.string.backup_reauth_title))
+        rule.onNodeWithText(str(Res.string.security_recovery_missing)).performClick()
+        waitForText(str(Res.string.backup_reauth_title))
         typePin("123456")
 
         waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.ShowNewPhrase }
         words.split(' ').forEach { word -> waitForText(word) }
-        rule.onNodeWithText(str(R.string.backup_phrase_written)).performClick()
+        rule.onNodeWithText(str(Res.string.backup_phrase_written)).performClick()
 
-        waitForText(str(R.string.onboarding_verify_title))
+        waitForText(str(Res.string.onboarding_verify_title))
         val step = vault.uiState.value.step as BackupStep.CheckNewPhrase
-        step.positions.forEach { rule.onNodeWithText(str(R.string.onboarding_verify_label, it + 1)).assertExists() }
+        step.positions.forEach { rule.onNodeWithText(str(Res.string.onboarding_verify_label, it + 1)).assertExists() }
     }
 
     @Test
@@ -106,27 +167,27 @@ class SecurityScreensTest : ComposeScreenTest() {
         showSecurity(recoveryPhrase = false)
         `when`(app.security.hasRecoverySeed()).thenReturn(true)
 
-        rule.onNodeWithText(str(R.string.security_recovery_missing)).performClick()
-        waitForText(str(R.string.backup_reauth_title))
+        rule.onNodeWithText(str(Res.string.security_recovery_missing)).performClick()
+        waitForText(str(Res.string.backup_reauth_title))
         typePin("123456")
 
-        waitForText(str(R.string.backup_phrase_exists))
+        waitForText(str(Res.string.backup_phrase_exists))
     }
 
     @Test
     fun theEraseRowNeedsThePinFirst() {
         showSecurity(recoveryPhrase = true)
 
-        scrollToText(str(R.string.security_erase_desc))
-        rule.onNodeWithText(str(R.string.security_erase_desc)).assertIsDisplayed()
+        scrollToText(str(Res.string.security_erase_desc))
+        rule.onNodeWithText(str(Res.string.security_erase_desc)).assertIsDisplayed()
     }
 
     @Test
     fun changingThePinStartsWithTheCurrentOne() {
         showPinChange()
 
-        rule.onNodeWithText(str(R.string.pin_change_current_title)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.pin_change_bar_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.pin_change_current_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.pin_change_bar_title)).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 10)
     }
 
@@ -137,8 +198,8 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         typePin("000000")
 
-        waitForText(str(R.string.pin_current_wrong))
-        rule.onNodeWithText(str(R.string.pin_change_current_title)).assertIsDisplayed()
+        waitForText(str(Res.string.pin_current_wrong))
+        rule.onNodeWithText(str(Res.string.pin_change_current_title)).assertIsDisplayed()
     }
 
     @Test
@@ -154,12 +215,14 @@ class SecurityScreensTest : ComposeScreenTest() {
         showPinChange()
 
         typePin("123456")
-        waitForText(str(R.string.pin_create_title))
+        waitForText(str(Res.string.pin_create_title))
         typePin("654321")
-        waitForText(str(R.string.pin_change_confirm_title))
+        waitForText(str(Res.string.pin_change_confirm_title))
         typePin("654321")
 
-        waitFor { rule.onAllNodesWithContentDescription(str(R.string.pin_changed)).fetchSemanticsNodes().isNotEmpty() }
+        waitFor {
+            rule.onAllNodesWithContentDescription(str(Res.string.pin_changed)).fetchSemanticsNodes().isNotEmpty()
+        }
         assertEquals(listOf("654321"), saved)
         waitFor { currentRoute() == NavRoutes.SecuritySettingsRoute.name }
         // The PIN handed over was wiped once stored.
@@ -171,7 +234,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         showSecurity(recoveryPhrase = true, biometric = BiometricStatus.UNAVAILABLE)
 
         biometricSwitch().assertIsNotEnabled()
-        rule.onNodeWithText(str(R.string.security_biometric_unavailable)).assertExists()
+        rule.onNodeWithText(str(Res.string.security_biometric_unavailable)).assertExists()
     }
 
     @Test
@@ -179,7 +242,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         showSecurity(recoveryPhrase = true, biometric = BiometricStatus.NOT_ENROLLED)
 
         biometricSwitch().assertIsNotEnabled()
-        rule.onNodeWithText(str(R.string.security_biometric_not_enrolled)).assertExists()
+        rule.onNodeWithText(str(Res.string.security_biometric_not_enrolled)).assertExists()
     }
 
     @Test
@@ -189,29 +252,29 @@ class SecurityScreensTest : ComposeScreenTest() {
         biometricSwitch().assertIsEnabled()
     }
 
-    private fun biometricSwitch() = rule.onNode(isToggleable() and hasText(str(R.string.security_biometric_title)))
+    private fun biometricSwitch() = rule.onNode(isToggleable() and hasText(str(Res.string.security_biometric_title)))
 
     @Test
     fun aMismatchedConfirmationStartsTheNewPinAgain() {
         showPinChange()
 
         typePin("123456")
-        waitForText(str(R.string.pin_create_title))
+        waitForText(str(Res.string.pin_create_title))
         typePin("111111")
-        waitForText(str(R.string.pin_change_confirm_title))
+        waitForText(str(Res.string.pin_change_confirm_title))
         typePin("222222")
 
-        waitForText(str(R.string.pin_mismatch_retry))
-        rule.onNodeWithText(str(R.string.pin_create_title)).assertIsDisplayed()
+        waitForText(str(Res.string.pin_mismatch_retry))
+        rule.onNodeWithText(str(Res.string.pin_create_title)).assertIsDisplayed()
     }
 
     @Test
     fun afterARecoveryUnlockTheNewPinComesFirstWithNoWayBack() {
         showPinChange(requiresCurrent = false)
 
-        rule.onNodeWithText(str(R.string.pin_create_title)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.pin_reset_subtitle)).assertIsDisplayed()
-        assertEquals(0, countText(str(R.string.pin_change_bar_title)))
+        rule.onNodeWithText(str(Res.string.pin_create_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.pin_reset_subtitle)).assertIsDisplayed()
+        assertEquals(0, countText(str(Res.string.pin_change_bar_title)))
     }
 
     // --- wipe PIN -------------------------------------------------------------------------
@@ -230,8 +293,8 @@ class SecurityScreensTest : ComposeScreenTest() {
     fun theWipePinRowOpensTheWipePinPage() {
         showSecurity(recoveryPhrase = true)
 
-        scrollToText(str(R.string.wipe_pin_row_desc))
-        rule.onNodeWithText(str(R.string.wipe_pin_row_desc)).performClick()
+        scrollToText(str(Res.string.wipe_pin_row_desc))
+        rule.onNodeWithText(str(Res.string.wipe_pin_row_desc)).performClick()
 
         waitFor { currentRoute() == NavRoutes.WipePinRoute.name }
     }
@@ -240,11 +303,11 @@ class SecurityScreensTest : ComposeScreenTest() {
     fun theWipePinPageAsksForThePinFirst() {
         showWipePin(pinIsRight = false)
 
-        rule.onNodeWithText(str(R.string.wipe_pin_current_subtitle)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.wipe_pin_current_subtitle)).assertIsDisplayed()
         typePin("000000")
 
-        waitForText(str(R.string.pin_current_wrong))
-        assertEquals(0, countText(str(R.string.wipe_pin_set)))
+        waitForText(str(Res.string.pin_current_wrong))
+        assertEquals(0, countText(str(Res.string.wipe_pin_set)))
     }
 
     @Test
@@ -261,16 +324,16 @@ class SecurityScreensTest : ComposeScreenTest() {
         }
 
         typePin("123456")
-        waitForText(str(R.string.wipe_pin_intro))
-        rule.onNodeWithText(str(R.string.wipe_pin_backups)).assertIsDisplayed()
-        scrollToText(str(R.string.wipe_pin_set))
-        rule.onNodeWithText(str(R.string.wipe_pin_set)).performClick()
-        waitForText(str(R.string.wipe_pin_new_title))
+        waitForText(str(Res.string.wipe_pin_intro))
+        rule.onNodeWithText(str(Res.string.wipe_pin_backups)).assertIsDisplayed()
+        scrollToText(str(Res.string.wipe_pin_set))
+        rule.onNodeWithText(str(Res.string.wipe_pin_set)).performClick()
+        waitForText(str(Res.string.wipe_pin_new_title))
         typePin("864200")
-        waitForText(str(R.string.wipe_pin_confirm_title))
+        waitForText(str(Res.string.wipe_pin_confirm_title))
         typePin("864200")
 
-        waitForText(str(R.string.wipe_pin_saved))
+        waitForText(str(Res.string.wipe_pin_saved))
         assertEquals(listOf("864200"), saved)
         assertTrue(passed.single().all { it == '\u0000' })
     }
@@ -281,15 +344,15 @@ class SecurityScreensTest : ComposeScreenTest() {
         `when`(app.security.configureWipePin(anyCharArray())).thenReturn(WipePinChange.SAME_AS_PIN)
 
         typePin("123456")
-        waitForText(str(R.string.wipe_pin_intro))
-        scrollToText(str(R.string.wipe_pin_set))
-        rule.onNodeWithText(str(R.string.wipe_pin_set)).performClick()
+        waitForText(str(Res.string.wipe_pin_intro))
+        scrollToText(str(Res.string.wipe_pin_set))
+        rule.onNodeWithText(str(Res.string.wipe_pin_set)).performClick()
         typePin("123456")
-        waitForText(str(R.string.wipe_pin_confirm_title))
+        waitForText(str(Res.string.wipe_pin_confirm_title))
         typePin("123456")
 
-        waitForText(str(R.string.wipe_pin_same_as_pin))
-        rule.onNodeWithText(str(R.string.wipe_pin_new_title)).assertIsDisplayed()
+        waitForText(str(Res.string.wipe_pin_same_as_pin))
+        rule.onNodeWithText(str(Res.string.wipe_pin_new_title)).assertIsDisplayed()
     }
 
     @Test
@@ -298,11 +361,11 @@ class SecurityScreensTest : ComposeScreenTest() {
         `when`(app.security.removeWipePin()).thenReturn(true)
 
         typePin("123456")
-        waitForText(str(R.string.wipe_pin_intro))
-        scrollToText(str(R.string.wipe_pin_remove))
-        rule.onNodeWithText(str(R.string.wipe_pin_remove)).performClick()
+        waitForText(str(Res.string.wipe_pin_intro))
+        scrollToText(str(Res.string.wipe_pin_remove))
+        rule.onNodeWithText(str(Res.string.wipe_pin_remove)).performClick()
 
-        waitForText(str(R.string.wipe_pin_removed))
+        waitForText(str(Res.string.wipe_pin_removed))
         verify(app.security, never()).configureWipePin(anyCharArray())
     }
 
@@ -322,12 +385,12 @@ class SecurityScreensTest : ComposeScreenTest() {
     private fun enterDuressPin(result: DuressPinChange) {
         `when`(app.security.configureDuressPin(anyCharArray())).thenReturn(result)
         typePin("123456")
-        waitForText(str(R.string.duress_pin_intro))
-        scrollToText(str(R.string.duress_pin_set))
-        rule.onNodeWithText(str(R.string.duress_pin_set)).performClick()
-        waitForText(str(R.string.duress_pin_new_title))
+        waitForText(str(Res.string.duress_pin_intro))
+        scrollToText(str(Res.string.duress_pin_set))
+        rule.onNodeWithText(str(Res.string.duress_pin_set)).performClick()
+        waitForText(str(Res.string.duress_pin_new_title))
         typePin("864200")
-        waitForText(str(R.string.duress_pin_confirm_title))
+        waitForText(str(Res.string.duress_pin_confirm_title))
         typePin("864200")
     }
 
@@ -335,8 +398,8 @@ class SecurityScreensTest : ComposeScreenTest() {
     fun theDuressPinRowOpensTheDuressPinPage() {
         showSecurity(recoveryPhrase = true)
 
-        scrollToText(str(R.string.duress_pin_row_desc))
-        rule.onNodeWithText(str(R.string.duress_pin_row_desc)).performClick()
+        scrollToText(str(Res.string.duress_pin_row_desc))
+        rule.onNodeWithText(str(Res.string.duress_pin_row_desc)).performClick()
 
         waitFor { currentRoute() == NavRoutes.DuressPinRoute.name }
     }
@@ -346,11 +409,11 @@ class SecurityScreensTest : ComposeScreenTest() {
         showDuressPin()
         `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
 
-        rule.onNodeWithText(str(R.string.duress_pin_current_subtitle)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.duress_pin_current_subtitle)).assertIsDisplayed()
         typePin("000000")
 
-        waitForText(str(R.string.pin_current_wrong))
-        assertEquals(0, countText(str(R.string.duress_pin_set)))
+        waitForText(str(Res.string.pin_current_wrong))
+        assertEquals(0, countText(str(Res.string.duress_pin_set)))
     }
 
     @Test
@@ -359,7 +422,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         enterDuressPin(DuressPinChange.SET_NEW_VAULT)
 
-        waitForText(str(R.string.duress_pin_saved))
+        waitForText(str(Res.string.duress_pin_saved))
     }
 
     @Test
@@ -368,7 +431,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         enterDuressPin(DuressPinChange.SET)
 
-        waitForText(str(R.string.duress_pin_saved_kept))
+        waitForText(str(Res.string.duress_pin_saved_kept))
     }
 
     @Test
@@ -377,8 +440,8 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         enterDuressPin(DuressPinChange.SAME_AS_PIN)
 
-        waitForText(str(R.string.duress_pin_same_as_pin))
-        rule.onNodeWithText(str(R.string.duress_pin_new_title)).assertIsDisplayed()
+        waitForText(str(Res.string.duress_pin_same_as_pin))
+        rule.onNodeWithText(str(Res.string.duress_pin_new_title)).assertIsDisplayed()
     }
 
     @Test
@@ -387,7 +450,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         enterDuressPin(DuressPinChange.IN_USE)
 
-        waitForText(str(R.string.pin_in_use))
+        waitForText(str(Res.string.pin_in_use))
     }
 
     @Test
@@ -396,14 +459,14 @@ class SecurityScreensTest : ComposeScreenTest() {
         `when`(app.security.removeDuressPin()).thenReturn(true)
 
         typePin("123456")
-        waitForText(str(R.string.duress_pin_intro))
-        scrollToText(str(R.string.duress_pin_remove))
-        rule.onNodeWithText(str(R.string.duress_pin_remove)).performClick()
-        waitForText(str(R.string.duress_pin_remove_confirm_body))
+        waitForText(str(Res.string.duress_pin_intro))
+        scrollToText(str(Res.string.duress_pin_remove))
+        rule.onNodeWithText(str(Res.string.duress_pin_remove)).performClick()
+        waitForText(str(Res.string.duress_pin_remove_confirm_body))
         verify(app.security, never()).removeDuressPin()
-        rule.onNodeWithText(str(R.string.duress_pin_remove_confirm)).performClick()
+        rule.onNodeWithText(str(Res.string.duress_pin_remove_confirm)).performClick()
 
-        waitForText(str(R.string.duress_pin_removed))
+        waitForText(str(Res.string.duress_pin_removed))
     }
 
     @Test
@@ -412,29 +475,29 @@ class SecurityScreensTest : ComposeScreenTest() {
         showPinChange()
 
         typePin("123456")
-        waitForText(str(R.string.pin_create_title))
+        waitForText(str(Res.string.pin_create_title))
         typePin("654321")
-        waitForText(str(R.string.pin_change_confirm_title))
+        waitForText(str(Res.string.pin_change_confirm_title))
         typePin("654321")
 
-        waitForText(str(R.string.pin_in_use))
+        waitForText(str(Res.string.pin_in_use))
     }
 
     // --- decoy session --------------------------------------------------------------------
 
     /** What Security lists for a PIN vault with a recovery phrase, in the real vault and the decoy one alike. */
     private val securityRows = listOf(
-        R.string.security_encryption_active,
-        R.string.auth_method_pin_title,
-        R.string.security_biometric_title,
-        R.string.wipe_pin_title,
-        R.string.duress_pin_title,
-        R.string.auto_lock_title,
-        R.string.backup_needs_phrase_title,
-        R.string.security_recovery_replace_title,
-        R.string.security_keyboard_strict_title,
-        R.string.security_protection_section,
-        R.string.security_erase_title,
+        Res.string.security_encryption_active,
+        Res.string.auth_method_pin_title,
+        Res.string.security_biometric_title,
+        Res.string.wipe_pin_title,
+        Res.string.duress_pin_title,
+        Res.string.auto_lock_title,
+        Res.string.backup_needs_phrase_title,
+        Res.string.security_recovery_replace_title,
+        Res.string.security_keyboard_strict_title,
+        Res.string.security_protection_section,
+        Res.string.security_erase_title,
     )
 
     private fun assertSecurityRowsListed() = securityRows.forEach {
@@ -464,12 +527,12 @@ class SecurityScreensTest : ComposeScreenTest() {
         showPinChange()
 
         typePin("123456")
-        waitForText(str(R.string.pin_create_title))
+        waitForText(str(Res.string.pin_create_title))
         typePin("654321")
-        waitForText(str(R.string.pin_change_confirm_title))
+        waitForText(str(Res.string.pin_change_confirm_title))
         typePin("654321")
 
-        waitForText(str(R.string.pin_update_failed))
+        waitForText(str(Res.string.pin_update_failed))
         assertEquals(NavRoutes.PinCodeConfig.name, currentRoute())
     }
 
@@ -479,14 +542,14 @@ class SecurityScreensTest : ComposeScreenTest() {
         showWipePin()
 
         typePin("123456")
-        waitForText(str(R.string.wipe_pin_intro))
-        scrollToText(str(R.string.wipe_pin_set))
-        rule.onNodeWithText(str(R.string.wipe_pin_set)).performClick()
+        waitForText(str(Res.string.wipe_pin_intro))
+        scrollToText(str(Res.string.wipe_pin_set))
+        rule.onNodeWithText(str(Res.string.wipe_pin_set)).performClick()
         typePin("864200")
-        waitForText(str(R.string.wipe_pin_confirm_title))
+        waitForText(str(Res.string.wipe_pin_confirm_title))
         typePin("864200")
 
-        waitForText(str(R.string.wipe_pin_failed))
+        waitForText(str(Res.string.wipe_pin_failed))
     }
 
     @Test
@@ -495,11 +558,11 @@ class SecurityScreensTest : ComposeScreenTest() {
         showWipePin()
 
         typePin("123456")
-        waitForText(str(R.string.wipe_pin_intro))
-        scrollToText(str(R.string.wipe_pin_remove))
-        rule.onNodeWithText(str(R.string.wipe_pin_remove)).performClick()
+        waitForText(str(Res.string.wipe_pin_intro))
+        scrollToText(str(Res.string.wipe_pin_remove))
+        rule.onNodeWithText(str(Res.string.wipe_pin_remove)).performClick()
 
-        waitForText(str(R.string.wipe_pin_failed))
+        waitForText(str(Res.string.wipe_pin_failed))
     }
 
     @Test
@@ -509,7 +572,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         enterDuressPin(DuressPinChange.FAILED)
 
-        waitForText(str(R.string.duress_pin_failed))
+        waitForText(str(Res.string.duress_pin_failed))
     }
 
     @Test
@@ -518,13 +581,13 @@ class SecurityScreensTest : ComposeScreenTest() {
         showSecurity(recoveryPhrase = true)
 
         rule.runOnIdle { vault.start(BackupAction.ERASE) }
-        waitForText(str(R.string.backup_reauth_title))
+        waitForText(str(Res.string.backup_reauth_title))
         typePin("123456")
 
-        waitForText(str(R.string.security_erase_failed))
+        waitForText(str(Res.string.security_erase_failed))
         assertEquals(false, vault.uiState.value.erased)
         assertEquals(NavRoutes.SecuritySettingsRoute.name, currentRoute())
-        assertTrue(countText(str(R.string.security_erase_title)) > 0)
+        assertTrue(countText(str(Res.string.security_erase_title)) > 0)
     }
 
     @Test
@@ -532,15 +595,15 @@ class SecurityScreensTest : ComposeScreenTest() {
         app.inDecoySession(recoveryPhrase = false)
         showSecurity(recoveryPhrase = false)
 
-        rule.onNodeWithText(str(R.string.security_recovery_missing)).performClick()
-        waitForText(str(R.string.backup_reauth_title))
+        rule.onNodeWithText(str(Res.string.security_recovery_missing)).performClick()
+        waitForText(str(Res.string.backup_reauth_title))
         typePin("123456")
         waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.ShowNewPhrase }
-        rule.onNodeWithText(str(R.string.backup_phrase_written)).performClick()
+        rule.onNodeWithText(str(Res.string.backup_phrase_written)).performClick()
         waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.CheckNewPhrase }
         val step = vault.uiState.value.step as BackupStep.CheckNewPhrase
         rule.runOnIdle { vault.phraseFlow.submitCheck(step.expected) }
 
-        waitForText(str(R.string.backup_error_phrase_setup))
+        waitForText(str(Res.string.backup_error_phrase_setup))
     }
 }

@@ -20,16 +20,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.donation_description
+import com.pasich.encly.core.resources.donation_title
+import com.pasich.encly.core.resources.support_browser_note
+import com.pasich.encly.core.resources.support_fact_free_desc
+import com.pasich.encly.core.resources.support_fact_free_title
+import com.pasich.encly.core.resources.support_fact_private_desc
+import com.pasich.encly.core.resources.support_fact_private_title
+import com.pasich.encly.core.resources.support_fact_uses_desc
+import com.pasich.encly.core.resources.support_fact_uses_title
+import com.pasich.encly.core.resources.support_method_kofi_hint
+import com.pasich.encly.core.resources.support_title
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.FactRow
 import com.pasich.encly.presentation.designsystem.StepHeading
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 private const val KOFI_URL = "https://ko-fi.com/pasichdev"
 
@@ -45,7 +56,7 @@ fun SupportScreen(navController: NavHostController, modifier: Modifier = Modifie
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            EnclyTopBar(title = stringResource(R.string.support_title), onBack = { navController.popBackStack() })
+            EnclyTopBar(title = stringResource(Res.string.support_title), onBack = { navController.popBackStack() })
         },
     ) { padding ->
         Column(
@@ -59,15 +70,15 @@ fun SupportScreen(navController: NavHostController, modifier: Modifier = Modifie
         ) {
             EnclyIconTile(icon = EnclyIcons.Heart)
             StepHeading(
-                title = stringResource(R.string.donation_title),
-                body = stringResource(R.string.donation_description),
+                title = stringResource(Res.string.donation_title),
+                body = stringResource(Res.string.donation_description),
                 large = true,
             )
             SupportFacts()
             Column(verticalArrangement = Arrangement.spacedBy(spacing.s)) {
                 KofiCard(onClick = { openExternalLink(context, KOFI_URL) })
                 Text(
-                    text = stringResource(R.string.support_browser_note),
+                    text = stringResource(Res.string.support_browser_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -82,18 +93,18 @@ private fun SupportFacts() {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.factGap)) {
         FactRow(
             icon = EnclyIcons.Star,
-            title = stringResource(R.string.support_fact_free_title),
-            description = stringResource(R.string.support_fact_free_desc),
+            title = stringResource(Res.string.support_fact_free_title),
+            description = stringResource(Res.string.support_fact_free_desc),
         )
         FactRow(
             icon = EnclyIcons.Privacy,
-            title = stringResource(R.string.support_fact_private_title),
-            description = stringResource(R.string.support_fact_private_desc),
+            title = stringResource(Res.string.support_fact_private_title),
+            description = stringResource(Res.string.support_fact_private_desc),
         )
         FactRow(
             icon = EnclyIcons.Heart,
-            title = stringResource(R.string.support_fact_uses_title),
-            description = stringResource(R.string.support_fact_uses_desc),
+            title = stringResource(Res.string.support_fact_uses_title),
+            description = stringResource(Res.string.support_fact_uses_desc),
         )
     }
 }
@@ -129,7 +140,7 @@ private fun KofiCard(onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing.textGap)) {
                 Text(text = "Ko-fi", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = stringResource(R.string.support_method_kofi_hint),
+                    text = stringResource(Res.string.support_method_kofi_hint),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

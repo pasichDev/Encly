@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.screen.settings
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,11 +19,43 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.appearance_dynamic_on_note
+import com.pasich.encly.core.resources.appearance_font
+import com.pasich.encly.core.resources.appearance_mode
+import com.pasich.encly.core.resources.appearance_mode_note_dark
+import com.pasich.encly.core.resources.appearance_mode_note_light
+import com.pasich.encly.core.resources.appearance_mode_note_midnight
+import com.pasich.encly.core.resources.appearance_mode_note_system_dark
+import com.pasich.encly.core.resources.appearance_mode_note_system_light
+import com.pasich.encly.core.resources.appearance_preview_body
+import com.pasich.encly.core.resources.appearance_preview_label
+import com.pasich.encly.core.resources.appearance_preview_tag
+import com.pasich.encly.core.resources.appearance_preview_title
+import com.pasich.encly.core.resources.appearance_text_desc
+import com.pasich.encly.core.resources.appearance_text_section
+import com.pasich.encly.core.resources.dynamic_color
+import com.pasich.encly.core.resources.dynamic_color_desc
+import com.pasich.encly.core.resources.font_sample
+import com.pasich.encly.core.resources.font_style_cozy
+import com.pasich.encly.core.resources.font_style_cozy_desc
+import com.pasich.encly.core.resources.font_style_modern
+import com.pasich.encly.core.resources.font_style_modern_desc
+import com.pasich.encly.core.resources.font_style_tech
+import com.pasich.encly.core.resources.font_style_tech_desc
+import com.pasich.encly.core.resources.palette_forest
+import com.pasich.encly.core.resources.palette_graphite
+import com.pasich.encly.core.resources.palette_midnight
+import com.pasich.encly.core.resources.palette_ocean
+import com.pasich.encly.core.resources.palette_paper
+import com.pasich.encly.core.resources.settings_appearance
+import com.pasich.encly.core.resources.theme
+import com.pasich.encly.core.resources.theme_type_dark
+import com.pasich.encly.core.resources.theme_type_light
+import com.pasich.encly.core.resources.theme_type_system
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.ThemePalette
@@ -49,6 +80,8 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.colorSchemeFor
 import com.pasich.encly.ui.theme.fontSet
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** Swatches render at this opacity while dynamic colour overrides the palette accent. */
 private const val DYNAMIC_SWATCH_ALPHA = 0.38f
@@ -94,7 +127,7 @@ private fun AppearanceContent(
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { EnclyTopBar(title = stringResource(R.string.settings_appearance), onBack = actions.onBack) },
+        topBar = { EnclyTopBar(title = stringResource(Res.string.settings_appearance), onBack = actions.onBack) },
     ) { padding ->
         Column(
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
@@ -112,8 +145,8 @@ private fun AppearanceContent(
             ModeSection(settings = settings, onMode = actions.onMode)
             if (supportsDynamicColor) {
                 EnclySwitchRow(
-                    title = stringResource(R.string.dynamic_color),
-                    supporting = stringResource(R.string.dynamic_color_desc),
+                    title = stringResource(Res.string.dynamic_color),
+                    supporting = stringResource(Res.string.dynamic_color_desc),
                     checked = settings.dynamic,
                     onCheckedChange = actions.onDynamicColor,
                 )
@@ -137,11 +170,11 @@ private class TextDefaults(
 @Composable
 private fun TextDefaultsSection(defaults: TextDefaults, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-        SectionOverline(stringResource(R.string.appearance_text_section))
+        SectionOverline(stringResource(Res.string.appearance_text_section))
         FontSizeSlider(currentSize = defaults.fontSize, onSizeChange = defaults.onFontSize)
         NoteLineSpacingSlider(selected = defaults.lineSpacing, onSelect = defaults.onLineSpacing)
         Text(
-            text = stringResource(R.string.appearance_text_desc),
+            text = stringResource(Res.string.appearance_text_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -157,13 +190,12 @@ private class AppearanceActions(
     val onFontStyle: (FontStyleType) -> Unit,
 )
 
-@StringRes
-private fun ThemePalette.labelRes(): Int = when (this) {
-    ThemePalette.PAPER -> R.string.palette_paper
-    ThemePalette.FOREST -> R.string.palette_forest
-    ThemePalette.OCEAN -> R.string.palette_ocean
-    ThemePalette.GRAPHITE -> R.string.palette_graphite
-    ThemePalette.MIDNIGHT -> R.string.palette_midnight
+private fun ThemePalette.labelRes(): StringResource = when (this) {
+    ThemePalette.PAPER -> Res.string.palette_paper
+    ThemePalette.FOREST -> Res.string.palette_forest
+    ThemePalette.OCEAN -> Res.string.palette_ocean
+    ThemePalette.GRAPHITE -> Res.string.palette_graphite
+    ThemePalette.MIDNIGHT -> Res.string.palette_midnight
 }
 
 @Composable
@@ -175,7 +207,7 @@ private fun ThemeSection(
 ) {
     val dark = settings.isDark(isSystemInDarkTheme())
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-        SectionOverline(stringResource(R.string.theme))
+        SectionOverline(stringResource(Res.string.theme))
         Row(
             horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
             modifier = Modifier
@@ -197,7 +229,7 @@ private fun ThemeSection(
         }
         if (dynamicActive) {
             Text(
-                text = stringResource(R.string.appearance_dynamic_on_note),
+                text = stringResource(Res.string.appearance_dynamic_on_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -209,20 +241,20 @@ private fun ThemeSection(
 private fun ModeSection(settings: ThemeSettings, onMode: (ThemeType) -> Unit, modifier: Modifier = Modifier) {
     val selectable = AppearanceViewModel.isModeSelectable(settings.palette)
     val note = when (AppearanceViewModel.modeNote(settings, isSystemInDarkTheme())) {
-        ModeNote.SYSTEM_SHOWING_LIGHT -> R.string.appearance_mode_note_system_light
-        ModeNote.SYSTEM_SHOWING_DARK -> R.string.appearance_mode_note_system_dark
-        ModeNote.ALWAYS_LIGHT -> R.string.appearance_mode_note_light
-        ModeNote.ALWAYS_DARK -> R.string.appearance_mode_note_dark
-        ModeNote.ALWAYS_DARK_PALETTE -> R.string.appearance_mode_note_midnight
+        ModeNote.SYSTEM_SHOWING_LIGHT -> Res.string.appearance_mode_note_system_light
+        ModeNote.SYSTEM_SHOWING_DARK -> Res.string.appearance_mode_note_system_dark
+        ModeNote.ALWAYS_LIGHT -> Res.string.appearance_mode_note_light
+        ModeNote.ALWAYS_DARK -> Res.string.appearance_mode_note_dark
+        ModeNote.ALWAYS_DARK_PALETTE -> Res.string.appearance_mode_note_midnight
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-        SectionOverline(stringResource(R.string.appearance_mode))
+        SectionOverline(stringResource(Res.string.appearance_mode))
         EnclySegmentedControl(
             segments = listOf(
-                Segment(ThemeType.SYSTEM, stringResource(R.string.theme_type_system), enabled = selectable),
-                Segment(ThemeType.LIGHT, stringResource(R.string.theme_type_light), enabled = selectable),
+                Segment(ThemeType.SYSTEM, stringResource(Res.string.theme_type_system), enabled = selectable),
+                Segment(ThemeType.LIGHT, stringResource(Res.string.theme_type_light), enabled = selectable),
                 // Dark stays tappable-looking for Midnight: it is the mode actually shown.
-                Segment(ThemeType.DARK, stringResource(R.string.theme_type_dark)),
+                Segment(ThemeType.DARK, stringResource(Res.string.theme_type_dark)),
             ),
             selected = if (selectable) settings.type else ThemeType.DARK,
             onSelect = onMode,
@@ -235,22 +267,18 @@ private fun ModeSection(settings: ThemeSettings, onMode: (ThemeType) -> Unit, mo
     }
 }
 
-private data class FontOption(
-    val style: FontStyleType,
-    @param:StringRes val title: Int,
-    @param:StringRes val description: Int,
-)
+private data class FontOption(val style: FontStyleType, val title: StringResource, val description: StringResource)
 
 private val fontOptions = listOf(
-    FontOption(FontStyleType.COZY_EDITOR, R.string.font_style_cozy, R.string.font_style_cozy_desc),
-    FontOption(FontStyleType.MODERN_SIMPLE, R.string.font_style_modern, R.string.font_style_modern_desc),
-    FontOption(FontStyleType.TECH_MINIMAL, R.string.font_style_tech, R.string.font_style_tech_desc),
+    FontOption(FontStyleType.COZY_EDITOR, Res.string.font_style_cozy, Res.string.font_style_cozy_desc),
+    FontOption(FontStyleType.MODERN_SIMPLE, Res.string.font_style_modern, Res.string.font_style_modern_desc),
+    FontOption(FontStyleType.TECH_MINIMAL, Res.string.font_style_tech, Res.string.font_style_tech_desc),
 )
 
 @Composable
 private fun FontSection(selected: FontStyleType, onFontStyle: (FontStyleType) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-        SectionOverline(stringResource(R.string.appearance_font))
+        SectionOverline(stringResource(Res.string.appearance_font))
         EnclyGroup(modifier = Modifier.selectableGroup()) {
             fontOptions.forEach { option ->
                 FontRow(option = option, selected = option.style == selected, onClick = { onFontStyle(option.style) })
@@ -269,7 +297,7 @@ private fun FontRow(option: FontOption, selected: Boolean, onClick: () -> Unit, 
         modifier = modifier,
         leading = {
             Text(
-                text = stringResource(R.string.font_sample),
+                text = stringResource(Res.string.font_sample),
                 style = EnclyTheme.typography.fontSample.copy(fontFamily = option.style.fontSet().display),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.widthIn(min = EnclyTheme.spacing.xxl),
@@ -281,9 +309,9 @@ private fun FontRow(option: FontOption, selected: Boolean, onClick: () -> Unit, 
 @Composable
 private fun PreviewCard(modifier: Modifier = Modifier) {
     EnclyCard(modifier = modifier, style = EnclyCardStyle.OUTLINED) {
-        Text(stringResource(R.string.appearance_preview_title), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.appearance_preview_title), style = MaterialTheme.typography.titleMedium)
         Text(
-            text = stringResource(R.string.appearance_preview_body),
+            text = stringResource(Res.string.appearance_preview_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -292,9 +320,9 @@ private fun PreviewCard(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
         ) {
             val meta = EnclyTheme.typography.meta.copy(fontWeight = FontWeight.SemiBold)
-            EnclyTagPill(text = stringResource(R.string.appearance_preview_tag))
+            EnclyTagPill(text = stringResource(Res.string.appearance_preview_tag))
             Text(
-                stringResource(R.string.appearance_preview_label),
+                stringResource(Res.string.appearance_preview_label),
                 style = meta,
                 color = MaterialTheme.colorScheme.primary,
             )

@@ -3,8 +3,12 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.biometric_change_not_confirmed
+import com.pasich.encly.core.resources.biometric_enroll_failed
+import com.pasich.encly.core.resources.pin_current_wrong
+import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
@@ -98,7 +102,7 @@ class SecuritySettingsViewModel(
                 }
             }
             if (!ok) {
-                _uiState.value = _uiState.value.copy(error = UiText.of(R.string.pin_current_wrong))
+                _uiState.value = _uiState.value.copy(error = UiText.of(Res.string.pin_current_wrong))
             }
             onResult(ok)
         }
@@ -120,7 +124,9 @@ class SecuritySettingsViewModel(
                 // The screen says why, next to the keypad.
                 PinChange.IN_USE -> Unit
 
-                PinChange.FAILED -> _uiState.value = _uiState.value.copy(error = UiText.of(R.string.pin_update_failed))
+                PinChange.FAILED ->
+                    _uiState.value =
+                        _uiState.value.copy(error = UiText.of(Res.string.pin_update_failed))
             }
             onResult(result)
         }
@@ -187,7 +193,7 @@ class SecuritySettingsViewModel(
             release()
             _uiState.value = _uiState.value.copy(
                 biometricEnable = ok && securityManager.isBiometricEnabled(),
-                error = if (ok) null else UiText.of(R.string.biometric_enroll_failed),
+                error = if (ok) null else UiText.of(Res.string.biometric_enroll_failed),
             )
         }
     }
@@ -201,7 +207,7 @@ class SecuritySettingsViewModel(
             } else {
                 _uiState.value = _uiState.value.copy(
                     biometricEnable = securityManager.isBiometricEnabled(),
-                    error = UiText.of(R.string.biometric_change_not_confirmed),
+                    error = UiText.of(Res.string.biometric_change_not_confirmed),
                 )
             }
         }

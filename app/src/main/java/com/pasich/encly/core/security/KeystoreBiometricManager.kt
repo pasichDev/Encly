@@ -8,7 +8,6 @@ import android.security.keystore.KeyProperties
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import com.pasich.encly.R
 import com.pasich.encly.core.di.ApplicationContext
 import com.pasich.encly.core.security.BiometricManager.BiometricType
 import com.pasich.encly.core.security.BiometricManager.PromptConfig
@@ -32,8 +31,11 @@ import androidx.biometric.BiometricManager as AndroidBiometricManager
 @SingleIn(AppScope::class)
 @Suppress("TooManyFunctions") // Centralizes the complete auth-bound biometric slot lifecycle.
 @Inject
-class KeystoreBiometricManager(@param:ApplicationContext private val context: Context, private val store: VaultStore) :
-    BiometricManager {
+class KeystoreBiometricManager(
+    @param:ApplicationContext private val context: Context,
+    private val store: VaultStore,
+    private val texts: BiometricTextSource,
+) : BiometricManager {
     companion object {
         private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
         private const val KEY_ALIAS = "encly_biometric_wrap_v2"
@@ -193,11 +195,11 @@ class KeystoreBiometricManager(@param:ApplicationContext private val context: Co
     ) {
         val activity = host.activityOrNull()
         if (activity == null) {
-            callback.onError(-1, context.getString(R.string.biometric_unavailable))
+            callback.onError(-1, texts.current().unavailable)
             return
         }
         if (!isStrongBiometricAvailable()) {
-            callback.onError(-1, activity.getString(R.string.biometric_unavailable))
+            callback.onError(-1, texts.current().unavailable)
             return
         }
         val executor = ContextCompat.getMainExecutor(activity)
@@ -225,7 +227,7 @@ class KeystoreBiometricManager(@param:ApplicationContext private val context: Co
                 }
             },
         )
-        prompt.authenticate(createPromptInfo(activity, type, customConfig))
+        prompt.authenticate(createPromptInfo(type, customConfig))
     }
 
     private fun promptWithCipher(
@@ -255,48 +257,28 @@ class KeystoreBiometricManager(@param:ApplicationContext private val context: Co
             },
         )
         prompt.authenticate(
-            createPromptInfo(activity, type),
+            createPromptInfo(type),
             BiometricPrompt.CryptoObject(cipher),
         )
     }
 
     /**
-     * Prompt text is resolved from the activity (not the application context) so it follows the
-     * in-app language chosen through AppCompatDelegate.setApplicationLocales.
+     * The prompt texts are finished strings from [texts] (in the in-app language), so this class never
+     * resolves a resource.
      */
-    private fun createPromptInfo(
-        activity: FragmentActivity,
-        type: BiometricType,
-        customConfig: PromptConfig? = null,
-    ): BiometricPrompt.PromptInfo {
+    private fun createPromptInfo(type: BiometricType, customConfig: PromptConfig? = null): BiometricPrompt.PromptInfo {
         val config = customConfig ?: when (type) {
-            BiometricType.APP_UNLOCK -> PromptConfig(
-                title = activity.getString(R.string.biometric_prompt_unlock_title),
-                subtitle = activity.getString(R.string.biometric_prompt_unlock_subtitle),
-                negativeButtonText = activity.getString(R.string.biometric_prompt_use_pin),
-            )
-
-            BiometricType.MASTER_KEY_ACCESS -> PromptConfig(
-                title = activity.getString(R.string.biometric_prompt_key_title),
-                subtitle = activity.getString(R.string.biometric_prompt_key_subtitle),
-            )
-
-            BiometricType.SETTINGS_TOGGLE -> PromptConfig(
-                title = activity.getString(R.string.biometric_prompt_settings_title),
-                subtitle = activity.getString(R.string.biometric_prompt_settings_subtitle),
-            )
-
-            BiometricType.GENERAL -> PromptConfig(
-                title = activity.getString(R.string.biometric_prompt_general_title),
-                subtitle = activity.getString(R.string.biometric_prompt_general_subtitle),
-            )
+            BiometricType.APP_UNLOCK -> texts.current().unlock
+            BiometricType.MASTER_KEY_ACCESS -> texts.current().masterKey
+            BiometricType.SETTINGS_TOGGLE -> texts.current().settings
+            BiometricType.GENERAL -> texts.current().general
         }
 
         val builder = BiometricPrompt.PromptInfo.Builder()
             .setTitle(config.title)
             .setSubtitle(config.subtitle)
             .setNegativeButtonText(
-                config.negativeButtonText ?: activity.getString(R.string.cancel),
+                config.negativeButtonText ?: texts.current().cancel,
             )
             .setAllowedAuthenticators(AndroidBiometricManager.Authenticators.BIOMETRIC_STRONG)
 

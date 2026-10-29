@@ -36,14 +36,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.dialog_message
+import com.pasich.encly.core.resources.dialog_title
+import com.pasich.encly.core.resources.markdown_copied
+import com.pasich.encly.core.resources.markdown_copy
+import com.pasich.encly.core.resources.note_discard_confirm_message
+import com.pasich.encly.core.resources.note_discard_confirm_title
+import com.pasich.encly.core.resources.note_load_failed
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.theme.blockGap
@@ -78,6 +84,8 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.noteColorStyle
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 /** Items above the blocks: the overline and the title. */
 private const val HEADER_ITEMS = 2
@@ -107,7 +115,7 @@ fun EditNoteScreen(
             navController = navController,
             entry = entry,
             scope = scope,
-            onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(resources.getString(message)) } },
+            onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(getString(message)) } },
             beforeLeaving = {
                 keyboardController?.hide()
                 focusManager.clearFocus()
@@ -269,6 +277,8 @@ private fun EditorOverlays(
     markdownViewModel: MarkdownExportViewModel = metroViewModel(),
 ) {
     val context = LocalContext.current
+    val copyLabel = stringResource(Res.string.markdown_copy)
+    val copyConfirmation = stringResource(Res.string.markdown_copied)
     val lockEditor by viewModel.lockEditor.collectAsState()
     EditorConfirmDialogs(
         isDeleteVisible = overlays.isDeleteDialogVisible,
@@ -311,7 +321,12 @@ private fun EditorOverlays(
                     markdownViewModel.start(MarkdownExportTarget.SingleNote(id))
                 }
 
-                EditNoteBottomSheetAction.COPY_MARKDOWN -> copyNoteAsMarkdown(context, viewModel)?.let(onMessage)
+                EditNoteBottomSheetAction.COPY_MARKDOWN -> copyNoteAsMarkdown(
+                    context,
+                    viewModel,
+                    copyLabel,
+                    copyConfirmation,
+                )?.let(onMessage)
 
                 EditNoteBottomSheetAction.ARCHIVE -> exits.archive(archived = true)
 
@@ -372,7 +387,7 @@ private fun EditorContent(
             if (contentLoadFailed) {
                 item(key = "unreadable") {
                     EnclyCallout(
-                        text = stringResource(R.string.note_load_failed),
+                        text = stringResource(Res.string.note_load_failed),
                         tone = CalloutTone.WARNING,
                         modifier = Modifier.padding(
                             horizontal = EnclyTheme.spacing.gutter,
@@ -446,8 +461,8 @@ private fun EditorConfirmDialogs(
 ) {
     ConfirmDialog(
         isVisible = isDeleteVisible,
-        titleText = stringResource(R.string.dialog_title),
-        messageText = stringResource(R.string.dialog_message),
+        titleText = stringResource(Res.string.dialog_title),
+        messageText = stringResource(Res.string.dialog_message),
         onConfirm = {
             onDismiss()
             onDelete()
@@ -457,8 +472,8 @@ private fun EditorConfirmDialogs(
     )
     ConfirmDialog(
         isVisible = isDiscardVisible,
-        titleText = stringResource(R.string.note_discard_confirm_title),
-        messageText = stringResource(R.string.note_discard_confirm_message),
+        titleText = stringResource(Res.string.note_discard_confirm_title),
+        messageText = stringResource(Res.string.note_discard_confirm_message),
         onConfirm = {
             onDismiss()
             onDiscard()

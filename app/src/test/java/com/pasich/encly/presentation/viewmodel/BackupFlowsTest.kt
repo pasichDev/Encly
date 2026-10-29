@@ -1,9 +1,14 @@
 package com.pasich.encly.presentation.viewmodel
 
 import android.net.Uri
-import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupKeys
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_phrase_mismatch
+import com.pasich.encly.core.resources.backup_error_phrase_setup
+import com.pasich.encly.core.resources.backup_export_done
+import com.pasich.encly.core.resources.backup_phrase_added
+import com.pasich.encly.core.resources.backup_phrase_check_wrong
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.RecoveryWords
 import com.pasich.encly.core.security.SecurityManager
@@ -105,7 +110,7 @@ class BackupFlowsTest {
 
         assertNotNull(written)
         assertEquals(BackupStep.Idle, state().step)
-        assertEquals(BackupMessage.Text(R.string.backup_export_done), state().message)
+        assertEquals(BackupMessage.Text(Res.string.backup_export_done), state().message)
         assertNotNull(state().lastExportAt)
         assertEquals(
             "remembered across screens",
@@ -330,7 +335,7 @@ class BackupFlowsTest {
         assertEquals(check.positions.sorted(), check.positions)
 
         viewModel.phraseFlow.submitCheck(listOf("wrong", "words", "here"))
-        assertEquals(R.string.backup_phrase_check_wrong, (state().step as BackupStep.CheckNewPhrase).error)
+        assertEquals(Res.string.backup_phrase_check_wrong, (state().step as BackupStep.CheckNewPhrase).error)
         viewModel.phraseFlow.clearError()
         assertNull((state().step as BackupStep.CheckNewPhrase).error)
 
@@ -338,7 +343,7 @@ class BackupFlowsTest {
 
         waitFor { it == BackupStep.PickExportTarget }
         verify(security).addRecoverySeed(anyChars())
-        assertEquals(BackupMessage.Text(R.string.backup_phrase_added), state().message)
+        assertEquals(BackupMessage.Text(Res.string.backup_phrase_added), state().message)
     }
 
     @Test
@@ -350,7 +355,7 @@ class BackupFlowsTest {
 
         viewModel.phraseFlow.submitCheck(check.expected.take(2))
 
-        assertEquals(R.string.backup_phrase_check_wrong, (state().step as BackupStep.CheckNewPhrase).error)
+        assertEquals(Res.string.backup_phrase_check_wrong, (state().step as BackupStep.CheckNewPhrase).error)
         verify(security, never()).addRecoverySeed(anyChars())
     }
 
@@ -365,7 +370,7 @@ class BackupFlowsTest {
         viewModel.phraseFlow.submitCheck(check.expected)
 
         waitFor { it == BackupStep.Idle }
-        assertEquals(BackupMessage.Text(R.string.backup_error_phrase_setup), state().message)
+        assertEquals(BackupMessage.Text(Res.string.backup_error_phrase_setup), state().message)
     }
 
     @Test
@@ -376,7 +381,7 @@ class BackupFlowsTest {
         waitFor { it == BackupStep.ConfirmExistingPhrase() }
 
         viewModel.phraseFlow.submitExisting(typedIntoCells(otherPhrase))
-        waitFor { it == BackupStep.ConfirmExistingPhrase(R.string.backup_error_phrase_mismatch) }
+        waitFor { it == BackupStep.ConfirmExistingPhrase(Res.string.backup_error_phrase_mismatch) }
         viewModel.phraseFlow.clearError()
         assertEquals(BackupStep.ConfirmExistingPhrase(), state().step)
 
@@ -444,7 +449,7 @@ class BackupFlowsTest {
         viewModel.onSystemPickerLaunched()
         viewModel.exportFlow.onTarget(uri)
         waitFor { it == BackupStep.Idle }
-        assertTrue(state().message == BackupMessage.Text(R.string.backup_export_done))
+        assertTrue(state().message == BackupMessage.Text(Res.string.backup_export_done))
     }
 
     private fun pickBackup() {

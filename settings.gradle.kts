@@ -14,6 +14,7 @@ include(":core:database")
 include(":core:common")
 include(":core:crypto")
 include(":core:security")
+include(":core:resources")
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)

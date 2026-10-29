@@ -1,13 +1,20 @@
 package com.pasich.encly.presentation.viewmodel
 
 import android.net.Uri
-import androidx.annotation.StringRes
 import androidx.fragment.app.FragmentActivity
-import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupPayload
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_phrase_mismatch
+import com.pasich.encly.core.resources.backup_error_phrase_setup
+import com.pasich.encly.core.resources.backup_export_done
+import com.pasich.encly.core.resources.backup_phrase_added
+import com.pasich.encly.core.resources.backup_phrase_check_wrong
+import com.pasich.encly.core.resources.biometric_change_not_confirmed
+import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.resources.security_recovery_replaced
 import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
@@ -25,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * What a re-authenticated flow goes on to do. [CREATE_PHRASE], [REPLACE_PHRASE] and [ERASE]
@@ -45,7 +53,7 @@ sealed interface BackupStep {
     data class Reauth(
         val action: BackupAction,
         val biometric: Boolean,
-        @param:StringRes val error: Int? = null,
+        val error: StringResource? = null,
         val failures: Int = 0,
     ) : BackupStep
 
@@ -68,11 +76,11 @@ sealed interface BackupStep {
     data class CheckNewPhrase(
         val positions: List<Int>,
         val expected: List<String>,
-        @param:StringRes val error: Int? = null,
+        val error: StringResource? = null,
     ) : BackupStep
 
     /** A recovery-seed vault without a backup key must type its words once. */
-    data class ConfirmExistingPhrase(@param:StringRes val error: Int? = null) : BackupStep
+    data class ConfirmExistingPhrase(val error: StringResource? = null) : BackupStep
 
     data object PickExportTarget : BackupStep
 
@@ -84,7 +92,7 @@ sealed interface BackupStep {
 
     data object PickImportFile : BackupStep
 
-    data class EnterImportPhrase(@param:StringRes val error: Int? = null) : BackupStep
+    data class EnterImportPhrase(val error: StringResource? = null) : BackupStep
 
     data class ChooseImportMode(val notes: Int, val tasks: Int, val tags: Int) : BackupStep
     data object ConfirmReplace : BackupStep
@@ -95,7 +103,7 @@ sealed interface BackupStep {
 
 /** A one-shot result line. Carries counts at most, never content. */
 sealed interface BackupMessage {
-    data class Text(@param:StringRes val id: Int) : BackupMessage
+    data class Text(val id: StringResource) : BackupMessage
     data class Imported(val summary: ImportSummary) : BackupMessage
 }
 
@@ -116,7 +124,7 @@ class BackupFlowState(private val scope: CoroutineScope, lastExportAt: Long?, pr
 
     fun go(step: BackupStep) = ui.update { it.copy(step = step) }
 
-    fun message(@StringRes id: Int) = ui.update { it.copy(message = BackupMessage.Text(id)) }
+    fun message(id: StringResource) = ui.update { it.copy(message = BackupMessage.Text(id)) }
 
     /** Ends the flow: drops every pending buffer and shows [message]. */
     fun finish(message: BackupMessage) {
@@ -197,7 +205,7 @@ class ReauthFlow(
             if (ok) {
                 onAuthenticated(step.action)
             } else {
-                state.go(step.copy(error = R.string.lock_wrong_pin, failures = step.failures + 1))
+                state.go(step.copy(error = Res.string.lock_wrong_pin, failures = step.failures + 1))
             }
         }
     }
@@ -208,7 +216,7 @@ class ReauthFlow(
             if (ok) {
                 state.launch { onAuthenticated(step.action) }
             } else {
-                state.go(step.copy(error = R.string.biometric_change_not_confirmed))
+                state.go(step.copy(error = Res.string.biometric_change_not_confirmed))
             }
         }
     }
@@ -245,7 +253,7 @@ class ExportFlow(
                 withContext(NonCancellable + Dispatchers.IO) { documents.write(uri, file) }
                 backupManager.recordExport()
                 state.ui.update { it.copy(lastExportAt = backupManager.lastExportAt()) }
-                state.finish(BackupMessage.Text(R.string.backup_export_done))
+                state.finish(BackupMessage.Text(Res.string.backup_export_done))
             } catch (e: BackupException) {
                 state.fail(e.error)
             }
@@ -309,7 +317,7 @@ class RecoveryPhraseFlow(
             step == null || phrase == null -> Unit
 
             !matches(phrase, step.positions, answers) ->
-                state.go(step.copy(error = R.string.backup_phrase_check_wrong))
+                state.go(step.copy(error = Res.string.backup_phrase_check_wrong))
 
             else -> add(phrase)
         }
@@ -323,12 +331,12 @@ class RecoveryPhraseFlow(
             }
             drop()
             when {
-                !saved -> state.finish(BackupMessage.Text(R.string.backup_error_phrase_setup))
+                !saved -> state.finish(BackupMessage.Text(Res.string.backup_error_phrase_setup))
 
-                replace -> state.finish(BackupMessage.Text(R.string.security_recovery_replaced))
+                replace -> state.finish(BackupMessage.Text(Res.string.security_recovery_replaced))
 
                 else -> {
-                    state.message(R.string.backup_phrase_added)
+                    state.message(Res.string.backup_phrase_added)
                     onReady()
                 }
             }
@@ -345,7 +353,7 @@ class RecoveryPhraseFlow(
             val ok = withContext(Dispatchers.Default) {
                 withNormalizedPhrase(backupManager, input) { phraseSetup.confirm(it) }
             }
-            if (ok) onReady() else state.go(BackupStep.ConfirmExistingPhrase(R.string.backup_error_phrase_mismatch))
+            if (ok) onReady() else state.go(BackupStep.ConfirmExistingPhrase(Res.string.backup_error_phrase_mismatch))
         }
     }
 

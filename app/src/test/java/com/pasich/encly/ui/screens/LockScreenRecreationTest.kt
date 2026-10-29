@@ -51,7 +51,7 @@ class LockScreenRecreationTest {
     val rule = createEmptyComposeRule()
 
     private val context: Context get() = ApplicationProvider.getApplicationContext()
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private lateinit var lock: LockViewModel
     private var scenario: ActivityScenario<LockHostActivity>? = null
 

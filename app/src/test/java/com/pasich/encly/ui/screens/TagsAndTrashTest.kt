@@ -13,7 +13,23 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.delete_forever
+import com.pasich.encly.core.resources.delete_tag
+import com.pasich.encly.core.resources.empty_trash_desc
+import com.pasich.encly.core.resources.empty_trash_title
+import com.pasich.encly.core.resources.restore
+import com.pasich.encly.core.resources.tag_add
+import com.pasich.encly.core.resources.tag_edit
+import com.pasich.encly.core.resources.tag_hidden
+import com.pasich.encly.core.resources.tag_move_down
+import com.pasich.encly.core.resources.tag_name_taken
+import com.pasich.encly.core.resources.tag_show_in_list
+import com.pasich.encly.core.resources.tags_empty_desc
+import com.pasich.encly.core.resources.tags_empty_title
+import com.pasich.encly.core.resources.tags_hint
+import com.pasich.encly.core.resources.trash_hint
+import com.pasich.encly.core.resources.trash_selected
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
@@ -24,7 +40,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class TagsAndTrashTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
 
     private fun showTags() {
         setNavScreen(viewModels(app.tagList()), route = NavRoutes.EditTagRoute.name) { nav -> EditTagScreen(nav) }
@@ -44,8 +60,8 @@ class TagsAndTrashTest : ComposeScreenTest() {
     fun noTagsShowsTheFieldAndTheEmptyState() {
         showTags()
 
-        waitForText(str(R.string.tags_empty_title))
-        rule.onNodeWithText(str(R.string.tags_empty_desc)).assertIsDisplayed()
+        waitForText(str(Res.string.tags_empty_title))
+        rule.onNodeWithText(str(Res.string.tags_empty_desc)).assertIsDisplayed()
         rule.onNode(hasSetTextAction()).assertExists()
         assertBodyNotEmpty(minTexts = 3)
     }
@@ -62,18 +78,18 @@ class TagsAndTrashTest : ComposeScreenTest() {
 
         waitForText("Work")
         rule.onNodeWithText("Home").assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.tag_hidden)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.tag_hidden)).assertIsDisplayed()
         waitForText("2")
-        rule.onNodeWithText(str(R.string.tags_hint)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.tags_hint)).assertIsDisplayed()
     }
 
     @Test
     fun aNewTagIsCreatedFromTheField() {
         showTags()
-        waitForText(str(R.string.tags_empty_title))
+        waitForText(str(Res.string.tags_empty_title))
 
         rule.onNode(hasSetTextAction()).performTextInput("Travel")
-        rule.onNodeWithText(str(R.string.tag_add)).assertIsEnabled().performClick()
+        rule.onNodeWithText(str(Res.string.tag_add)).assertIsEnabled().performClick()
 
         waitFor { app.tags.tags.value.any { it.nameTag == "Travel" } }
         waitForText("Travel")
@@ -87,8 +103,8 @@ class TagsAndTrashTest : ComposeScreenTest() {
 
         rule.onNode(hasSetTextAction()).performTextInput("work")
 
-        waitForText(str(R.string.tag_name_taken))
-        rule.onNodeWithText(str(R.string.tag_add)).assertIsNotEnabled()
+        waitForText(str(Res.string.tag_name_taken))
+        rule.onNodeWithText(str(Res.string.tag_add)).assertIsNotEnabled()
     }
 
     @Test
@@ -99,9 +115,9 @@ class TagsAndTrashTest : ComposeScreenTest() {
 
         rule.onNode(hasText("Work") and hasClickAction()).performClick()
 
-        waitForText(str(R.string.tag_edit))
-        rule.onNodeWithText(str(R.string.tag_show_in_list)).assertExists()
-        rule.onNodeWithText(str(R.string.delete_tag)).assertExists()
+        waitForText(str(Res.string.tag_edit))
+        rule.onNodeWithText(str(Res.string.tag_show_in_list)).assertExists()
+        rule.onNodeWithText(str(Res.string.delete_tag)).assertExists()
     }
 
     @Test
@@ -112,7 +128,7 @@ class TagsAndTrashTest : ComposeScreenTest() {
 
         val actions = rule.onNode(hasText("Work") and hasClickAction()).fetchSemanticsNode()
             .config[SemanticsActions.CustomActions]
-        rule.runOnUiThread { actions.single { it.label == str(R.string.tag_move_down) }.action() }
+        rule.runOnUiThread { actions.single { it.label == str(Res.string.tag_move_down) }.action() }
 
         waitFor { app.tags.tags.value.map { it.nameTag } == listOf("Home", "Work") }
     }
@@ -121,8 +137,8 @@ class TagsAndTrashTest : ComposeScreenTest() {
     fun anEmptyTrashSaysSo() {
         showTrash()
 
-        waitForText(str(R.string.empty_trash_title))
-        rule.onNodeWithText(str(R.string.empty_trash_desc)).assertIsDisplayed()
+        waitForText(str(Res.string.empty_trash_title))
+        rule.onNodeWithText(str(Res.string.empty_trash_desc)).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 2)
     }
 
@@ -133,7 +149,7 @@ class TagsAndTrashTest : ComposeScreenTest() {
 
         waitForText("Old plan")
         rule.onNodeWithText("Draft").assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.trash_hint)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.trash_hint)).assertIsDisplayed()
     }
 
     @Test
@@ -144,9 +160,9 @@ class TagsAndTrashTest : ComposeScreenTest() {
 
         rule.onNode(hasText("Old plan") and hasClickAction()).performTouchInput { longClick() }
 
-        waitForText(plural(R.plurals.trash_selected, 1, 1))
-        rule.onNodeWithContentDescription(str(R.string.restore)).assertIsDisplayed()
-        rule.onNodeWithContentDescription(str(R.string.delete_forever)).assertIsDisplayed()
+        waitForText(plural(Res.plurals.trash_selected, 1, 1))
+        rule.onNodeWithContentDescription(str(Res.string.restore)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(str(Res.string.delete_forever)).assertIsDisplayed()
     }
 
     @Test
@@ -155,9 +171,9 @@ class TagsAndTrashTest : ComposeScreenTest() {
         showTrash()
         waitForText("Old plan")
         rule.onNode(hasText("Old plan") and hasClickAction()).performTouchInput { longClick() }
-        waitForText(plural(R.plurals.trash_selected, 1, 1))
+        waitForText(plural(Res.plurals.trash_selected, 1, 1))
 
-        rule.onNodeWithContentDescription(str(R.string.restore)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.restore)).performClick()
 
         waitFor { app.notes.updatedNotes.any { it.id == 1L && !it.isTrash } }
     }

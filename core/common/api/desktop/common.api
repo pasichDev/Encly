@@ -7,7 +7,12 @@ public final class com/pasich/encly/core/AppLogger {
 }
 
 public abstract interface class com/pasich/encly/core/common/AppStrings {
-	public abstract fun get (I[Ljava/lang/Object;)Ljava/lang/String;
+	public abstract fun get (Lorg/jetbrains/compose/resources/StringResource;[Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/core/common/ComposeAppStrings : com/pasich/encly/core/common/AppStrings {
+	public fun <init> ()V
+	public fun get (Lorg/jetbrains/compose/resources/StringResource;[Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/pasich/encly/core/common/LoadError {
@@ -70,16 +75,16 @@ public abstract interface class com/pasich/encly/core/common/UiText {
 }
 
 public final class com/pasich/encly/core/common/UiText$Companion {
-	public final fun of (I)Lcom/pasich/encly/core/common/UiText;
+	public final fun of (Lorg/jetbrains/compose/resources/StringResource;)Lcom/pasich/encly/core/common/UiText;
 }
 
 public final class com/pasich/encly/core/common/UiText$Resource : com/pasich/encly/core/common/UiText {
-	public fun <init> (I)V
-	public final fun component1 ()I
-	public final fun copy (I)Lcom/pasich/encly/core/common/UiText$Resource;
-	public static synthetic fun copy$default (Lcom/pasich/encly/core/common/UiText$Resource;IILjava/lang/Object;)Lcom/pasich/encly/core/common/UiText$Resource;
+	public fun <init> (Lorg/jetbrains/compose/resources/StringResource;)V
+	public final fun component1 ()Lorg/jetbrains/compose/resources/StringResource;
+	public final fun copy (Lorg/jetbrains/compose/resources/StringResource;)Lcom/pasich/encly/core/common/UiText$Resource;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/common/UiText$Resource;Lorg/jetbrains/compose/resources/StringResource;ILjava/lang/Object;)Lcom/pasich/encly/core/common/UiText$Resource;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getId ()I
+	public final fun getId ()Lorg/jetbrains/compose/resources/StringResource;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

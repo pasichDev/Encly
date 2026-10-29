@@ -1,11 +1,14 @@
 package com.pasich.encly.presentation.viewmodel
 
 import android.net.Uri
-import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_wrong_phrase
+import com.pasich.encly.core.resources.pin_mismatch_retry
+import com.pasich.encly.core.resources.pin_save_failed
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.bip39.Bip39
@@ -169,7 +172,7 @@ class OnboardingViewModelTest {
         assertEquals(OnboardingStep.PIN, vm.state.step)
         assertFalse(vm.state.isConfirmingPin)
         assertEquals(0, vm.state.pinLength)
-        assertEquals(UiText.of(R.string.pin_mismatch_retry), vm.state.pinError)
+        assertEquals(UiText.of(Res.string.pin_mismatch_retry), vm.state.pinError)
     }
 
     @Test
@@ -275,7 +278,7 @@ class OnboardingViewModelTest {
         vm.completeVerification()
         vm.settled()
         assertEquals(OnboardingStep.VERIFY, vm.state.step)
-        assertEquals(UiText.of(R.string.pin_save_failed), vm.state.error)
+        assertEquals(UiText.of(Res.string.pin_save_failed), vm.state.error)
 
         `when`(security.configurePin(anyCharArray())).thenReturn(true)
         vm.completeVerification()
@@ -364,7 +367,7 @@ class OnboardingViewModelTest {
         vm.settled()
 
         assertEquals(OnboardingStep.RESTORE, vm.state.step)
-        assertEquals(UiText.of(R.string.backup_error_wrong_phrase), vm.state.restorePhraseError)
+        assertEquals(UiText.of(Res.string.backup_error_wrong_phrase), vm.state.restorePhraseError)
         assertNull(vm.state.restoreFileError)
         verify(security, never()).initializeNewVault(anyChars())
     }

@@ -1,6 +1,9 @@
 package com.pasich.encly.presentation.screen
 
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_pin_key_lost
+import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import org.junit.Assert.assertEquals
@@ -21,7 +24,7 @@ class LockFormStateTest {
 
         form.onPinResult(PinUnlockResult.WRONG_PIN, lockoutRemainingMillis = 0L)
 
-        assertEquals(R.string.lock_wrong_pin, form.pinError)
+        assertEquals(Res.string.lock_wrong_pin, form.pinError)
         assertEquals(1, form.shakeKey)
         assertEquals(0, form.pinLength)
         assertEquals(0L, form.lockoutSeconds)
@@ -52,7 +55,7 @@ class LockFormStateTest {
         form.onSeedResult(SeedUnlockResult.WRONG_SEED)
 
         assertEquals(listOf("orbit", "cactus", "velvet"), form.phrase.words.take(3))
-        assertEquals(R.string.lock_wrong_recovery_phrase, form.phraseError)
+        assertEquals(Res.string.lock_wrong_recovery_phrase, form.phraseError)
         form.onPhraseEdited()
         assertNull(form.phraseError)
     }
@@ -102,7 +105,7 @@ class LockFormStateTest {
     fun aLostPinKeyExplainsItOnBothForms() {
         form.onPinResult(PinUnlockResult.KEY_LOST, lockoutRemainingMillis = 0L)
 
-        assertEquals(R.string.lock_pin_key_lost, form.pinError)
-        assertEquals(R.string.lock_pin_key_lost, form.phraseError)
+        assertEquals(Res.string.lock_pin_key_lost, form.pinError)
+        assertEquals(Res.string.lock_pin_key_lost, form.phraseError)
     }
 }

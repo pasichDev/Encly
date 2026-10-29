@@ -7,10 +7,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.viewmodel.TaskFilter
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /** [selectedFilterIds]: ids of the selected chips; filter ids are unique across filter types. */
 @Composable

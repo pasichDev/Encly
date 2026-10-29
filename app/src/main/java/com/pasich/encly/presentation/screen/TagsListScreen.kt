@@ -12,17 +12,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asString
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.all
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.presentation.components.tiles.TagItem
 import com.pasich.encly.presentation.viewmodel.TagListEvent.SelectTag
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The tag filter chips of the notes list: "All", then one chip per tag, in one horizontally
@@ -56,7 +57,7 @@ fun TagsList(modifier: Modifier = Modifier, tagListViewModel: TagListViewModel =
     ) {
         item {
             TagItem(
-                item = Tag(nameTag = stringResource(R.string.all), id = 0),
+                item = Tag(nameTag = stringResource(Res.string.all), id = 0),
                 isSelected = state.selectedTagId.toInt() == 0,
                 onItemClick = { tagListViewModel.onEvent(SelectTag(Tag(nameTag = "All", id = 0))) },
             )

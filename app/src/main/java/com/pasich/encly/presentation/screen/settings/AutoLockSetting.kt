@@ -11,8 +11,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.auto_lock_15m
+import com.pasich.encly.core.resources.auto_lock_15s
+import com.pasich.encly.core.resources.auto_lock_1m
+import com.pasich.encly.core.resources.auto_lock_2m
+import com.pasich.encly.core.resources.auto_lock_30m
+import com.pasich.encly.core.resources.auto_lock_30s
+import com.pasich.encly.core.resources.auto_lock_desc
+import com.pasich.encly.core.resources.auto_lock_immediately
+import com.pasich.encly.core.resources.auto_lock_long_delay_warning
+import com.pasich.encly.core.resources.auto_lock_title
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.done
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
@@ -20,13 +31,15 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
 import com.pasich.encly.presentation.designsystem.EnclyRadioRow
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** "Lock after leaving": the current delay; a tap opens the choice. */
 @Composable
 internal fun AutoLockRow(current: AutoLockDelay, onSelect: (AutoLockDelay) -> Unit) {
     var choosing by rememberSaveable { mutableStateOf(false) }
     EnclyNavigationRow(
-        title = stringResource(R.string.auto_lock_title),
+        title = stringResource(Res.string.auto_lock_title),
         supporting = stringResource(current.label()),
         icon = EnclyIcons.Lock,
         onClick = { choosing = true },
@@ -48,14 +61,14 @@ internal fun AutoLockRow(current: AutoLockDelay, onSelect: (AutoLockDelay) -> Un
 private fun AutoLockDialog(current: AutoLockDelay, onDismiss: () -> Unit, onConfirm: (AutoLockDelay) -> Unit) {
     var selected by rememberSaveable { mutableStateOf(current) }
     EnclyDialog(
-        title = stringResource(R.string.auto_lock_title),
+        title = stringResource(Res.string.auto_lock_title),
         onDismissRequest = onDismiss,
-        confirm = DialogAction(stringResource(R.string.done), { onConfirm(selected) }),
-        dismiss = DialogAction(stringResource(R.string.cancel), onDismiss),
+        confirm = DialogAction(stringResource(Res.string.done), { onConfirm(selected) }),
+        dismiss = DialogAction(stringResource(Res.string.cancel), onDismiss),
     ) {
         Column(modifier = Modifier.selectableGroup()) {
             Text(
-                text = stringResource(R.string.auto_lock_desc),
+                text = stringResource(Res.string.auto_lock_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = EnclyTheme.spacing.xs),
@@ -69,7 +82,7 @@ private fun AutoLockDialog(current: AutoLockDelay, onDismiss: () -> Unit, onConf
             }
             if (selected == AutoLockDelay.MINUTES_15 || selected == AutoLockDelay.MINUTES_30) {
                 Text(
-                    text = stringResource(R.string.auto_lock_long_delay_warning),
+                    text = stringResource(Res.string.auto_lock_long_delay_warning),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = EnclyTheme.spacing.xs),
@@ -79,12 +92,12 @@ private fun AutoLockDialog(current: AutoLockDelay, onDismiss: () -> Unit, onConf
     }
 }
 
-private fun AutoLockDelay.label(): Int = when (this) {
-    AutoLockDelay.IMMEDIATELY -> R.string.auto_lock_immediately
-    AutoLockDelay.SECONDS_15 -> R.string.auto_lock_15s
-    AutoLockDelay.SECONDS_30 -> R.string.auto_lock_30s
-    AutoLockDelay.MINUTE_1 -> R.string.auto_lock_1m
-    AutoLockDelay.MINUTES_2 -> R.string.auto_lock_2m
-    AutoLockDelay.MINUTES_15 -> R.string.auto_lock_15m
-    AutoLockDelay.MINUTES_30 -> R.string.auto_lock_30m
+private fun AutoLockDelay.label(): StringResource = when (this) {
+    AutoLockDelay.IMMEDIATELY -> Res.string.auto_lock_immediately
+    AutoLockDelay.SECONDS_15 -> Res.string.auto_lock_15s
+    AutoLockDelay.SECONDS_30 -> Res.string.auto_lock_30s
+    AutoLockDelay.MINUTE_1 -> Res.string.auto_lock_1m
+    AutoLockDelay.MINUTES_2 -> Res.string.auto_lock_2m
+    AutoLockDelay.MINUTES_15 -> Res.string.auto_lock_15m
+    AutoLockDelay.MINUTES_30 -> Res.string.auto_lock_30m
 }

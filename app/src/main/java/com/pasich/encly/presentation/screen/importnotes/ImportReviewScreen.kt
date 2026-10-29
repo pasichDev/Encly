@@ -16,9 +16,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_count_notes
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.import_action_import_count
+import com.pasich.encly.core.resources.import_badge_checklist
+import com.pasich.encly.core.resources.import_badge_in_vault
+import com.pasich.encly.core.resources.import_badge_trash
+import com.pasich.encly.core.resources.import_detected
+import com.pasich.encly.core.resources.import_filter_all
+import com.pasich.encly.core.resources.import_filter_new
+import com.pasich.encly.core.resources.import_filter_trash
+import com.pasich.encly.core.resources.import_label_losses
+import com.pasich.encly.core.resources.import_preview_body
+import com.pasich.encly.core.resources.import_preview_title
+import com.pasich.encly.core.resources.import_review_selected
+import com.pasich.encly.core.resources.import_select_all
+import com.pasich.encly.core.resources.import_select_none
+import com.pasich.encly.core.resources.import_stat_destination
+import com.pasich.encly.core.resources.import_title
+import com.pasich.encly.core.resources.import_untitled
 import com.pasich.encly.data.importer.ImportPreview
 import com.pasich.encly.data.importer.ReviewNote
 import com.pasich.encly.presentation.designsystem.CalloutTone
@@ -34,6 +51,9 @@ import com.pasich.encly.presentation.viewmodel.ReviewFilter
 import com.pasich.encly.presentation.viewmodel.ReviewState
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 /**
@@ -52,7 +72,7 @@ fun ImportReviewScreen(
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { EnclyTopBar(title = stringResource(R.string.import_title), onBack = actions.onCancel) },
+        topBar = { EnclyTopBar(title = stringResource(Res.string.import_title), onBack = actions.onCancel) },
         bottomBar = {
             Column(
                 modifier = Modifier
@@ -61,12 +81,12 @@ fun ImportReviewScreen(
                 verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
             ) {
                 EnclyButton(
-                    text = stringResource(R.string.import_action_import_count, review.selected.size),
+                    text = stringResource(Res.string.import_action_import_count, review.selected.size),
                     onClick = actions.onImport,
                     enabled = review.selected.isNotEmpty(),
                 )
                 EnclyTextButton(
-                    text = stringResource(R.string.cancel),
+                    text = stringResource(Res.string.cancel),
                     onClick = actions.onCancel,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -96,17 +116,17 @@ fun ImportReviewScreen(
 private fun Summary(preview: ImportPreview) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section)) {
         StepHeading(
-            title = stringResource(R.string.import_preview_title),
+            title = stringResource(Res.string.import_preview_title),
             body = stringResource(
-                R.string.import_detected,
+                Res.string.import_detected,
                 stringResource(preview.source.title),
-                pluralStringResource(R.plurals.backup_count_notes, preview.notes, preview.notes),
+                pluralStringResource(Res.plurals.backup_count_notes, preview.notes, preview.notes),
             ),
         )
         EnclyCard {
             previewLines(preview).forEach { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
             Text(
-                text = stringResource(R.string.import_stat_destination),
+                text = stringResource(Res.string.import_stat_destination),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -114,13 +134,13 @@ private fun Summary(preview: ImportPreview) {
         val losses = lossLines(preview)
         if (losses.isNotEmpty()) {
             EnclyCallout(
-                title = stringResource(R.string.import_label_losses),
+                title = stringResource(Res.string.import_label_losses),
                 text = losses.joinToString("\n"),
                 tone = CalloutTone.WARNING,
             )
         }
         Text(
-            text = stringResource(R.string.import_preview_body),
+            text = stringResource(Res.string.import_preview_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -133,7 +153,7 @@ private fun Controls(review: ReviewState, actions: ImportNotesActions) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                text = stringResource(R.string.import_review_selected, review.selected.size, review.newCount),
+                text = stringResource(Res.string.import_review_selected, review.selected.size, review.newCount),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.weight(1f),
             )
@@ -141,21 +161,21 @@ private fun Controls(review: ReviewState, actions: ImportNotesActions) {
             if (review.newCount > 0) {
                 val all = review.selected.size == review.newCount
                 EnclyTextButton(
-                    text = stringResource(if (all) R.string.import_select_none else R.string.import_select_all),
+                    text = stringResource(if (all) Res.string.import_select_none else Res.string.import_select_all),
                     onClick = actions.onToggleAll,
                 )
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
-            FilterChip(ReviewFilter.ALL, R.string.import_filter_all, review, actions)
-            FilterChip(ReviewFilter.NEW, R.string.import_filter_new, review, actions)
-            FilterChip(ReviewFilter.TRASH, R.string.import_filter_trash, review, actions)
+            FilterChip(ReviewFilter.ALL, Res.string.import_filter_all, review, actions)
+            FilterChip(ReviewFilter.NEW, Res.string.import_filter_new, review, actions)
+            FilterChip(ReviewFilter.TRASH, Res.string.import_filter_trash, review, actions)
         }
     }
 }
 
 @Composable
-private fun FilterChip(filter: ReviewFilter, label: Int, review: ReviewState, actions: ImportNotesActions) {
+private fun FilterChip(filter: ReviewFilter, label: StringResource, review: ReviewState, actions: ImportNotesActions) {
     EnclyChip(
         label = stringResource(label),
         selected = review.filter == filter,
@@ -177,7 +197,7 @@ private fun NoteRow(note: ReviewNote, checked: Boolean, expandedText: String?, a
                 verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.textGap),
             ) {
                 Text(
-                    text = note.title.ifBlank { stringResource(R.string.import_untitled) },
+                    text = note.title.ifBlank { stringResource(Res.string.import_untitled) },
                     style = MaterialTheme.typography.titleSmall,
                 )
                 if (note.snippet.isNotEmpty()) {
@@ -204,9 +224,9 @@ private fun NoteRow(note: ReviewNote, checked: Boolean, expandedText: String?, a
 /** Badges and date on one line: checklist, tag, in trash, already in the vault, then the date. */
 @Composable
 private fun badges(note: ReviewNote): String = buildList {
-    if (note.hasChecklist) add(stringResource(R.string.import_badge_checklist))
+    if (note.hasChecklist) add(stringResource(Res.string.import_badge_checklist))
     note.tag?.let { add("#$it") }
-    if (note.trashed) add(stringResource(R.string.import_badge_trash))
-    if (note.existing) add(stringResource(R.string.import_badge_in_vault))
+    if (note.trashed) add(stringResource(Res.string.import_badge_trash))
+    if (note.existing) add(stringResource(Res.string.import_badge_in_vault))
     add(formatNoteDate(Instant.fromEpochMilliseconds(note.date)))
 }.joinToString(" · ")

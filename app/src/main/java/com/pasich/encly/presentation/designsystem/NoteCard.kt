@@ -23,17 +23,18 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.notes_section_pinned
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.noteColorStyle
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Title opacity of a card in the trash (design spec §4.6). Only the title fades: the excerpt and
@@ -129,7 +130,7 @@ private fun NoteTitleRow(title: String, highlight: String, state: TitleState) {
         if (state.pinned) {
             Icon(
                 EnclyIcons.Pin,
-                contentDescription = stringResource(R.string.notes_section_pinned),
+                contentDescription = stringResource(Res.string.notes_section_pinned),
                 tint = state.muted,
                 modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
             )

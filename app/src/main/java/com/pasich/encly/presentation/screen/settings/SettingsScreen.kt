@@ -13,9 +13,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.main_drawer_settings
+import com.pasich.encly.core.resources.settings_backup
+import com.pasich.encly.core.resources.settings_privacy
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.presentation.components.settings.SettingsBuilder
@@ -30,6 +32,7 @@ import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsScreen(
@@ -67,7 +70,7 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             EnclyTopBar(
-                title = stringResource(R.string.main_drawer_settings),
+                title = stringResource(Res.string.main_drawer_settings),
                 onBack = { navController?.popBackStack() },
             )
         },
@@ -113,8 +116,8 @@ private fun SettingsList(categories: List<SettingsCategory>, securityDisable: Bo
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
     ) {
         items(categories) { category ->
-            val securityCategory = category.titleRes == R.string.settings_privacy ||
-                category.titleRes == R.string.settings_backup
+            val securityCategory = category.titleRes == Res.string.settings_privacy ||
+                category.titleRes == Res.string.settings_backup
             if (!(securityCategory && securityDisable)) SettingsCategoryRenderer(category = category)
         }
     }

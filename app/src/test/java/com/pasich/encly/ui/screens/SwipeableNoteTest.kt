@@ -17,7 +17,13 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.dialog_confirm
+import com.pasich.encly.core.resources.dialog_dismiss
+import com.pasich.encly.core.resources.note_archive
+import com.pasich.encly.core.resources.note_unarchive
+import com.pasich.encly.core.resources.note_unpin
+import com.pasich.encly.core.resources.swipe_delete_title
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.SwipeAction
@@ -138,9 +144,9 @@ class SwipeableNoteTest : ComposeScreenTest() {
 
         swipeLeftOnCard()
 
-        waitForText(str(R.string.swipe_delete_title))
+        waitForText(str(Res.string.swipe_delete_title))
         assertTrue(events.isEmpty())
-        rule.onNodeWithText(str(R.string.dialog_confirm)).performClick()
+        rule.onNodeWithText(str(Res.string.dialog_confirm)).performClick()
         waitFor { events.isNotEmpty() }
         assertEquals(listOf(NoteListEvent.NoteToTrash(note)), events)
     }
@@ -150,10 +156,10 @@ class SwipeableNoteTest : ComposeScreenTest() {
         show(settings = SwipeSettings(left = SwipeAction.DELETE))
 
         swipeLeftOnCard()
-        waitForText(str(R.string.swipe_delete_title))
-        rule.onNodeWithText(str(R.string.dialog_dismiss)).performClick()
+        waitForText(str(Res.string.swipe_delete_title))
+        rule.onNodeWithText(str(Res.string.dialog_dismiss)).performClick()
 
-        waitFor { countText(str(R.string.swipe_delete_title)) == 0 }
+        waitFor { countText(str(Res.string.swipe_delete_title)) == 0 }
         assertTrue(events.isEmpty())
     }
 
@@ -175,14 +181,14 @@ class SwipeableNoteTest : ComposeScreenTest() {
         swipeRightOnCard()
 
         assertTrue(events.isEmpty())
-        assertEquals(listOf(str(R.string.note_archive)), customActionLabels())
+        assertEquals(listOf(str(Res.string.note_archive)), customActionLabels())
     }
 
     @Test
     fun theConfiguredActionsAreOfferedToTalkBack() {
         show(Note(id = 1, isPinned = true))
 
-        assertEquals(listOf(str(R.string.note_unpin), str(R.string.note_archive)), customActionLabels())
+        assertEquals(listOf(str(Res.string.note_unpin), str(Res.string.note_archive)), customActionLabels())
     }
 
     @Test
@@ -205,7 +211,7 @@ class SwipeableNoteTest : ComposeScreenTest() {
         swipeLeftOnCard()
 
         assertEquals(listOf(NoteListEvent.ArchiveNote(archived, false)), events)
-        assertEquals(listOf(str(R.string.note_unarchive)), customActionLabels())
+        assertEquals(listOf(str(Res.string.note_unarchive)), customActionLabels())
     }
 
     private companion object {

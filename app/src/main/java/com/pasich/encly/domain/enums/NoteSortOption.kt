@@ -1,32 +1,36 @@
 package com.pasich.encly.domain.enums
 
-import androidx.annotation.StringRes
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.sort_created_asc
+import com.pasich.encly.core.resources.sort_created_asc_short
+import com.pasich.encly.core.resources.sort_created_desc
+import com.pasich.encly.core.resources.sort_created_desc_short
+import com.pasich.encly.core.resources.sort_updated_asc
+import com.pasich.encly.core.resources.sort_updated_asc_short
+import com.pasich.encly.core.resources.sort_updated_desc
+import com.pasich.encly.core.resources.sort_updated_desc_short
 import com.pasich.encly.data.model.Note
+import org.jetbrains.compose.resources.StringResource
 
-enum class NoteSortOption(
-    @param:StringRes val labelRes: Int,
-    @param:StringRes val shortLabelRes: Int,
-    val index: Int,
-) {
+enum class NoteSortOption(val labelRes: StringResource, val shortLabelRes: StringResource, val index: Int) {
     UPDATED_ASC(
-        labelRes = R.string.sort_updated_asc,
-        shortLabelRes = R.string.sort_updated_asc_short,
+        labelRes = Res.string.sort_updated_asc,
+        shortLabelRes = Res.string.sort_updated_asc_short,
         index = 0,
     ),
     UPDATED_DESC(
-        labelRes = R.string.sort_updated_desc,
-        shortLabelRes = R.string.sort_updated_desc_short,
+        labelRes = Res.string.sort_updated_desc,
+        shortLabelRes = Res.string.sort_updated_desc_short,
         index = 1,
     ), // DEFAULT
     CREATED_ASC(
-        labelRes = R.string.sort_created_asc,
-        shortLabelRes = R.string.sort_created_asc_short,
+        labelRes = Res.string.sort_created_asc,
+        shortLabelRes = Res.string.sort_created_asc_short,
         index = 2,
     ),
     CREATED_DESC(
-        labelRes = R.string.sort_created_desc,
-        shortLabelRes = R.string.sort_created_desc_short,
+        labelRes = Res.string.sort_created_desc,
+        shortLabelRes = Res.string.sort_created_desc_short,
         index = 3,
     ),
     ;

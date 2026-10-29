@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.screen.backup
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,12 +25,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupFormat
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_export
+import com.pasich.encly.core.resources.backup_import
+import com.pasich.encly.core.resources.backup_import_desc
+import com.pasich.encly.core.resources.backup_import_done
+import com.pasich.encly.core.resources.backup_intro_body
+import com.pasich.encly.core.resources.backup_intro_short
+import com.pasich.encly.core.resources.backup_intro_title
+import com.pasich.encly.core.resources.backup_last_export
+import com.pasich.encly.core.resources.backup_never_exported
+import com.pasich.encly.core.resources.backup_section_export
+import com.pasich.encly.core.resources.backup_section_import
+import com.pasich.encly.core.resources.backup_section_markdown
+import com.pasich.encly.core.resources.backup_title
+import com.pasich.encly.core.resources.markdown_export
+import com.pasich.encly.core.resources.markdown_export_desc
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyPillButton
@@ -51,6 +63,8 @@ import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.todayStamp
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 /**
@@ -67,7 +81,6 @@ fun BackupScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
 
     BackupPickers(
         step = state.step,
@@ -84,14 +97,14 @@ fun BackupScreen(
     LaunchedEffect(state.message) {
         val message = state.message ?: return@LaunchedEffect
         viewModel.clearMessage()
-        snackbarScope.launch { snackbarHostState.showSnackbar(message.resolve(context)) }
+        snackbarScope.launch { snackbarHostState.showSnackbar(message.resolve()) }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
-                EnclyTopBar(title = stringResource(R.string.backup_title), onBack = { navController.popBackStack() })
+                EnclyTopBar(title = stringResource(Res.string.backup_title), onBack = { navController.popBackStack() })
             },
             snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         ) { padding ->
@@ -129,12 +142,12 @@ private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit,
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
     ) {
         Text(
-            text = stringResource(R.string.backup_intro_short),
+            text = stringResource(Res.string.backup_intro_short),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-            SectionOverline(text = stringResource(R.string.backup_section_export))
+            SectionOverline(text = stringResource(Res.string.backup_section_export))
             ExportAction(
                 lastExportAt = state.lastExportAt,
                 enabled = !state.busy,
@@ -142,16 +155,16 @@ private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit,
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-            SectionOverline(text = stringResource(R.string.backup_section_import))
+            SectionOverline(text = stringResource(Res.string.backup_section_import))
             ImportAction(enabled = !state.busy, onImport = { onStart(BackupAction.IMPORT) })
         }
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-            SectionOverline(text = stringResource(R.string.backup_section_markdown))
+            SectionOverline(text = stringResource(Res.string.backup_section_markdown))
             MarkdownAction(enabled = !state.busy, onExport = onMarkdown)
         }
         EnclyCallout(
-            title = stringResource(R.string.backup_intro_title),
-            text = stringResource(R.string.backup_intro_body),
+            title = stringResource(Res.string.backup_intro_title),
+            text = stringResource(Res.string.backup_intro_body),
             icon = EnclyIcons.Shield,
         )
     }
@@ -160,10 +173,10 @@ private fun BackupContent(state: BackupUiState, onStart: (BackupAction) -> Unit,
 @Composable
 private fun ExportAction(lastExportAt: Long?, enabled: Boolean, onExport: () -> Unit) {
     val lastExport = lastExportAt?.let {
-        stringResource(R.string.backup_last_export, formatNoteDate(Instant.fromEpochMilliseconds(it)))
-    } ?: stringResource(R.string.backup_never_exported)
+        stringResource(Res.string.backup_last_export, formatNoteDate(Instant.fromEpochMilliseconds(it)))
+    } ?: stringResource(Res.string.backup_never_exported)
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
-        EnclyTonalButton(text = stringResource(R.string.backup_export), onClick = onExport, enabled = enabled)
+        EnclyTonalButton(text = stringResource(Res.string.backup_export), onClick = onExport, enabled = enabled)
         Text(text = lastExport, style = EnclyTheme.typography.meta, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -173,13 +186,13 @@ private fun ExportAction(lastExportAt: Long?, enabled: Boolean, onExport: () -> 
 private fun MarkdownAction(enabled: Boolean, onExport: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
         EnclyPillButton(
-            text = stringResource(R.string.markdown_export),
+            text = stringResource(Res.string.markdown_export),
             onClick = onExport,
             enabled = enabled,
             leadingIcon = EnclyIcons.Upload,
         )
         Text(
-            text = stringResource(R.string.markdown_export_desc),
+            text = stringResource(Res.string.markdown_export_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -190,13 +203,13 @@ private fun MarkdownAction(enabled: Boolean, onExport: () -> Unit) {
 private fun ImportAction(enabled: Boolean, onImport: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
         EnclyPillButton(
-            text = stringResource(R.string.backup_import),
+            text = stringResource(Res.string.backup_import),
             onClick = onImport,
             enabled = enabled,
             leadingIcon = EnclyIcons.Restore,
         )
         Text(
-            text = stringResource(R.string.backup_import_desc),
+            text = stringResource(Res.string.backup_import_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -261,11 +274,11 @@ private fun defaultFileName(): String {
     return "encly-backup-$date.${BackupFormat.FILE_EXTENSION}"
 }
 
-private fun BackupMessage.resolve(context: Context): String = when (this) {
-    is BackupMessage.Text -> context.getString(id)
+private suspend fun BackupMessage.resolve(): String = when (this) {
+    is BackupMessage.Text -> getString(id)
 
-    is BackupMessage.Imported -> context.getString(
-        R.string.backup_import_done,
+    is BackupMessage.Imported -> getString(
+        Res.string.backup_import_done,
         summary.notesAdded,
         summary.tasksAdded,
         summary.tagsAdded,

@@ -4,7 +4,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.sort_by
+import com.pasich.encly.core.resources.view_switch_to_grid
+import com.pasich.encly.core.resources.view_switch_to_list
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.ui.screens.ComposeScreenTest
 import com.pasich.encly.ui.screens.TestApp
@@ -14,7 +17,7 @@ import org.junit.Test
 /** The list's view options: every sort order, the list/grid switch, and closing after a choice. */
 @OptIn(ExperimentalMaterial3Api::class)
 class NotesSortBottomSheetTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private var dismissed = 0
     private var toggled = 0
 
@@ -36,14 +39,14 @@ class NotesSortBottomSheetTest : ComposeScreenTest() {
     fun aHiddenSheetShowsNothing() {
         show(visible = false)
 
-        assertEquals(0, countText(str(R.string.sort_by)))
+        assertEquals(0, countText(str(Res.string.sort_by)))
     }
 
     @Test
     fun theSheetListsEverySortOrder() {
         show()
 
-        assertEquals(1, countText(str(R.string.sort_by)))
+        assertEquals(1, countText(str(Res.string.sort_by)))
         NoteSortOption.entries.forEach { assertEquals(it.name, 1, countText(str(it.labelRes))) }
     }
 
@@ -61,10 +64,10 @@ class NotesSortBottomSheetTest : ComposeScreenTest() {
     @Test
     fun aListOffersTheSwitchToTheGridAndTheOtherWayAround() {
         show(grid = false)
-        assertEquals(1, countText(str(R.string.view_switch_to_grid)))
-        assertEquals(0, countText(str(R.string.view_switch_to_list)))
+        assertEquals(1, countText(str(Res.string.view_switch_to_grid)))
+        assertEquals(0, countText(str(Res.string.view_switch_to_list)))
 
-        rule.onNodeWithText(str(R.string.view_switch_to_grid)).performClick()
+        rule.onNodeWithText(str(Res.string.view_switch_to_grid)).performClick()
 
         assertEquals(1, toggled)
         assertEquals(1, dismissed)
@@ -74,7 +77,7 @@ class NotesSortBottomSheetTest : ComposeScreenTest() {
     fun aGridOffersTheSwitchBackToTheList() {
         show(grid = true)
 
-        assertEquals(1, countText(str(R.string.view_switch_to_list)))
-        assertEquals(0, countText(str(R.string.view_switch_to_grid)))
+        assertEquals(1, countText(str(Res.string.view_switch_to_list)))
+        assertEquals(0, countText(str(Res.string.view_switch_to_grid)))
     }
 }

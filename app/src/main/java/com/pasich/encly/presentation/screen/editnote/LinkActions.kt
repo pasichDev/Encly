@@ -7,10 +7,14 @@ import android.content.Intent
 import android.os.Build
 import android.widget.Toast
 import androidx.core.net.toUri
-import com.pasich.encly.R
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.link_blocked
+import com.pasich.encly.core.resources.link_copied
+import com.pasich.encly.core.resources.link_open_failed
 import com.pasich.encly.editor.ui.blocks.isOpenableLink
 import com.pasich.encly.presentation.components.SensitiveClip
+import com.pasich.encly.presentation.components.showToast
 
 /**
  * Opens a note's link in an app the user picks. The link leaves Encly: nothing is fetched by
@@ -20,18 +24,18 @@ import com.pasich.encly.presentation.components.SensitiveClip
 @Suppress("TooGenericExceptionCaught") // Another app's failure to take the link must never crash Encly.
 fun openNoteLink(context: Context, url: String) {
     if (!isOpenableLink(url)) {
-        Toast.makeText(context, R.string.link_blocked, Toast.LENGTH_LONG).show()
+        showToast(context, Res.string.link_blocked, Toast.LENGTH_LONG)
         return
     }
     val view = Intent(Intent.ACTION_VIEW, url.toUri())
     try {
         context.startActivity(Intent.createChooser(view, null))
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, R.string.link_open_failed, Toast.LENGTH_LONG).show()
+        showToast(context, Res.string.link_open_failed, Toast.LENGTH_LONG)
     } catch (e: RuntimeException) {
         // FileUriExposedException, SecurityException: the address cannot leave the app safely.
         AppLogger.w(TAG, "Link not opened: ${e.javaClass.simpleName}")
-        Toast.makeText(context, R.string.link_open_failed, Toast.LENGTH_LONG).show()
+        showToast(context, Res.string.link_open_failed, Toast.LENGTH_LONG)
     }
 }
 
@@ -45,6 +49,6 @@ fun copyNoteLink(context: Context, label: String, text: String) {
     val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
     SensitiveClip.copy(clipboard, label, text)
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        Toast.makeText(context, R.string.link_copied, Toast.LENGTH_SHORT).show()
+        showToast(context, Res.string.link_copied, Toast.LENGTH_SHORT)
     }
 }

@@ -9,13 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.percent_value
+import com.pasich.encly.core.resources.task_progress_summary
+import com.pasich.encly.core.resources.task_progress_title
 import com.pasich.encly.presentation.designsystem.EnclyCard
 import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyProgressTrack
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 private const val PERCENT = 100f
 private const val PROGRESS_ANIMATION_MS = 250
@@ -36,13 +39,13 @@ fun TaskProgressCard(
     EnclyCard(modifier = modifier, style = EnclyCardStyle.OUTLINED) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.task_progress_title),
+                text = stringResource(Res.string.task_progress_title),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = stringResource(R.string.percent_value, completionPercentage),
+                text = stringResource(Res.string.percent_value, completionPercentage),
                 style = EnclyTheme.typography.dataSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -50,7 +53,7 @@ fun TaskProgressCard(
         EnclyProgressTrack(progress = animatedProgress)
         Text(
             text = pluralStringResource(
-                R.plurals.task_progress_summary,
+                Res.plurals.task_progress_summary,
                 totalTasksCount,
                 completedTasksCount,
                 totalTasksCount,

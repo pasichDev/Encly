@@ -26,9 +26,58 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
 import com.pasich.encly.core.common.asString
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.onboarding_biometric_desc
+import com.pasich.encly.core.resources.onboarding_fact_account_desc
+import com.pasich.encly.core.resources.onboarding_fact_account_title
+import com.pasich.encly.core.resources.onboarding_fact_encrypted_desc
+import com.pasich.encly.core.resources.onboarding_fact_encrypted_title
+import com.pasich.encly.core.resources.onboarding_fact_offline_desc
+import com.pasich.encly.core.resources.onboarding_fact_offline_title
+import com.pasich.encly.core.resources.onboarding_phrase_body
+import com.pasich.encly.core.resources.onboarding_phrase_hide
+import com.pasich.encly.core.resources.onboarding_phrase_show
+import com.pasich.encly.core.resources.onboarding_phrase_title
+import com.pasich.encly.core.resources.onboarding_pin_again_body
+import com.pasich.encly.core.resources.onboarding_pin_again_title
+import com.pasich.encly.core.resources.onboarding_pin_body
+import com.pasich.encly.core.resources.onboarding_pin_title
+import com.pasich.encly.core.resources.onboarding_ready_biometric_desc
+import com.pasich.encly.core.resources.onboarding_ready_biometric_title
+import com.pasich.encly.core.resources.onboarding_ready_body
+import com.pasich.encly.core.resources.onboarding_ready_no_phrase_desc
+import com.pasich.encly.core.resources.onboarding_ready_no_phrase_title
+import com.pasich.encly.core.resources.onboarding_ready_phrase_desc
+import com.pasich.encly.core.resources.onboarding_ready_phrase_title
+import com.pasich.encly.core.resources.onboarding_ready_pin_desc
+import com.pasich.encly.core.resources.onboarding_ready_pin_title
+import com.pasich.encly.core.resources.onboarding_ready_restored_desc
+import com.pasich.encly.core.resources.onboarding_ready_restored_title
+import com.pasich.encly.core.resources.onboarding_ready_tip
+import com.pasich.encly.core.resources.onboarding_ready_title
+import com.pasich.encly.core.resources.onboarding_recovery_backups_desc
+import com.pasich.encly.core.resources.onboarding_recovery_backups_title
+import com.pasich.encly.core.resources.onboarding_recovery_body
+import com.pasich.encly.core.resources.onboarding_recovery_phone_desc
+import com.pasich.encly.core.resources.onboarding_recovery_phone_title
+import com.pasich.encly.core.resources.onboarding_recovery_pin_desc
+import com.pasich.encly.core.resources.onboarding_recovery_pin_title
+import com.pasich.encly.core.resources.onboarding_recovery_title
+import com.pasich.encly.core.resources.onboarding_recovery_warning
+import com.pasich.encly.core.resources.onboarding_restore_file_section
+import com.pasich.encly.core.resources.onboarding_restore_intro
+import com.pasich.encly.core.resources.onboarding_restore_phrase_helper
+import com.pasich.encly.core.resources.onboarding_restore_phrase_section
+import com.pasich.encly.core.resources.onboarding_restore_pick
+import com.pasich.encly.core.resources.onboarding_restore_tap_other
+import com.pasich.encly.core.resources.onboarding_restore_title
+import com.pasich.encly.core.resources.onboarding_verify_body
+import com.pasich.encly.core.resources.onboarding_verify_title
+import com.pasich.encly.core.resources.onboarding_welcome_headline
+import com.pasich.encly.core.resources.onboarding_welcome_sub
+import com.pasich.encly.core.resources.pin_unlock_with_fingerprint
+import com.pasich.encly.core.resources.recovery_phrase_entry_label
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DoneRow
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -51,6 +100,7 @@ import com.pasich.encly.presentation.viewmodel.OnboardingPath
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import com.pasich.encly.presentation.viewmodel.SecurityType
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /** Step 0: what Encly is, in three facts. */
 @Composable
@@ -63,12 +113,12 @@ internal fun WelcomeStep(modifier: Modifier = Modifier) {
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m)) {
             Text(
-                text = stringResource(R.string.onboarding_welcome_headline),
+                text = stringResource(Res.string.onboarding_welcome_headline),
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = stringResource(R.string.onboarding_welcome_sub),
+                text = stringResource(Res.string.onboarding_welcome_sub),
                 style = EnclyTheme.typography.heroSub,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -76,18 +126,18 @@ internal fun WelcomeStep(modifier: Modifier = Modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.factGap)) {
             FactRow(
                 EnclyIcons.UserOff,
-                stringResource(R.string.onboarding_fact_account_title),
-                stringResource(R.string.onboarding_fact_account_desc),
+                stringResource(Res.string.onboarding_fact_account_title),
+                stringResource(Res.string.onboarding_fact_account_desc),
             )
             FactRow(
                 EnclyIcons.CloudOff,
-                stringResource(R.string.onboarding_fact_offline_title),
-                stringResource(R.string.onboarding_fact_offline_desc),
+                stringResource(Res.string.onboarding_fact_offline_title),
+                stringResource(Res.string.onboarding_fact_offline_desc),
             )
             FactRow(
                 EnclyIcons.Shield,
-                stringResource(R.string.onboarding_fact_encrypted_title),
-                stringResource(R.string.onboarding_fact_encrypted_desc),
+                stringResource(Res.string.onboarding_fact_encrypted_title),
+                stringResource(Res.string.onboarding_fact_encrypted_desc),
             )
         }
     }
@@ -123,10 +173,14 @@ internal fun PinStep(state: OnboardingUiState, actions: PinActions, modifier: Mo
         ) {
             StepHeading(
                 title = stringResource(
-                    if (state.isConfirmingPin) R.string.onboarding_pin_again_title else R.string.onboarding_pin_title,
+                    if (state.isConfirmingPin) {
+                        Res.string.onboarding_pin_again_title
+                    } else {
+                        Res.string.onboarding_pin_title
+                    },
                 ),
                 body = stringResource(
-                    if (state.isConfirmingPin) R.string.onboarding_pin_again_body else R.string.onboarding_pin_body,
+                    if (state.isConfirmingPin) Res.string.onboarding_pin_again_body else Res.string.onboarding_pin_body,
                 ),
             )
             Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
@@ -195,8 +249,8 @@ private fun BiometricCallout(checked: Boolean, onCheckedChange: (Boolean) -> Uni
         modifier = modifier.fillMaxWidth(),
     ) {
         EnclySwitchRow(
-            title = stringResource(R.string.pin_unlock_with_fingerprint),
-            supporting = stringResource(R.string.onboarding_biometric_desc),
+            title = stringResource(Res.string.pin_unlock_with_fingerprint),
+            supporting = stringResource(Res.string.onboarding_biometric_desc),
             icon = EnclyIcons.Fingerprint,
             checked = checked,
             onCheckedChange = onCheckedChange,
@@ -215,27 +269,27 @@ internal fun RecoveryInfoStep(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.l),
     ) {
         StepHeading(
-            title = stringResource(R.string.onboarding_recovery_title),
-            body = stringResource(R.string.onboarding_recovery_body),
+            title = stringResource(Res.string.onboarding_recovery_title),
+            body = stringResource(Res.string.onboarding_recovery_body),
         )
         Column {
             UseRow(
                 EnclyIcons.Key,
-                stringResource(R.string.onboarding_recovery_pin_title),
-                stringResource(R.string.onboarding_recovery_pin_desc),
+                stringResource(Res.string.onboarding_recovery_pin_title),
+                stringResource(Res.string.onboarding_recovery_pin_desc),
             )
             UseRow(
                 EnclyIcons.File,
-                stringResource(R.string.onboarding_recovery_backups_title),
-                stringResource(R.string.onboarding_recovery_backups_desc),
+                stringResource(Res.string.onboarding_recovery_backups_title),
+                stringResource(Res.string.onboarding_recovery_backups_desc),
             )
             UseRow(
                 EnclyIcons.Phone,
-                stringResource(R.string.onboarding_recovery_phone_title),
-                stringResource(R.string.onboarding_recovery_phone_desc),
+                stringResource(Res.string.onboarding_recovery_phone_title),
+                stringResource(Res.string.onboarding_recovery_phone_desc),
             )
         }
-        EnclyCallout(text = stringResource(R.string.onboarding_recovery_warning), tone = CalloutTone.WARNING)
+        EnclyCallout(text = stringResource(Res.string.onboarding_recovery_warning), tone = CalloutTone.WARNING)
     }
 }
 
@@ -249,8 +303,8 @@ internal fun PhraseStep(state: OnboardingUiState, onToggleWords: () -> Unit, mod
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.l),
     ) {
         StepHeading(
-            title = stringResource(R.string.onboarding_phrase_title),
-            body = stringResource(R.string.onboarding_phrase_body),
+            title = stringResource(Res.string.onboarding_phrase_title),
+            body = stringResource(Res.string.onboarding_phrase_body),
         )
         if (state.words.isEmpty()) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
@@ -260,7 +314,7 @@ internal fun PhraseStep(state: OnboardingUiState, onToggleWords: () -> Unit, mod
             WordGrid(words = state.words, hidden = state.wordsHidden)
             EnclyPillButton(
                 text = stringResource(
-                    if (state.wordsHidden) R.string.onboarding_phrase_show else R.string.onboarding_phrase_hide,
+                    if (state.wordsHidden) Res.string.onboarding_phrase_show else Res.string.onboarding_phrase_hide,
                 ),
                 leadingIcon = if (state.wordsHidden) EnclyIcons.Eye else EnclyIcons.EyeOff,
                 onClick = onToggleWords,
@@ -280,8 +334,8 @@ internal fun VerifyStep(state: OnboardingUiState, onAnswer: (Int, String) -> Uni
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.stepGap),
     ) {
         StepHeading(
-            title = stringResource(R.string.onboarding_verify_title),
-            body = stringResource(R.string.onboarding_verify_body),
+            title = stringResource(Res.string.onboarding_verify_title),
+            body = stringResource(Res.string.onboarding_verify_body),
         )
         PhraseCheckFields(
             checks = state.verificationWords,
@@ -302,37 +356,37 @@ internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) 
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xl),
     ) {
         StepHeading(
-            title = stringResource(R.string.onboarding_ready_title),
-            body = stringResource(R.string.onboarding_ready_body),
+            title = stringResource(Res.string.onboarding_ready_title),
+            body = stringResource(Res.string.onboarding_ready_body),
             large = true,
         )
         EnclyCard(contentPadding = PaddingValues(EnclyTheme.spacing.factGap)) {
             Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap)) {
                 DoneRow(
-                    stringResource(R.string.onboarding_ready_pin_title),
-                    stringResource(R.string.onboarding_ready_pin_desc),
+                    stringResource(Res.string.onboarding_ready_pin_title),
+                    stringResource(Res.string.onboarding_ready_pin_desc),
                 )
                 if (state.biometricEnabled) {
                     DoneRow(
-                        stringResource(R.string.onboarding_ready_biometric_title),
-                        stringResource(R.string.onboarding_ready_biometric_desc),
+                        stringResource(Res.string.onboarding_ready_biometric_title),
+                        stringResource(Res.string.onboarding_ready_biometric_desc),
                     )
                 }
                 when {
                     state.path == OnboardingPath.RESTORE -> DoneRow(
-                        stringResource(R.string.onboarding_ready_restored_title),
-                        stringResource(R.string.onboarding_ready_restored_desc),
+                        stringResource(Res.string.onboarding_ready_restored_title),
+                        stringResource(Res.string.onboarding_ready_restored_desc),
                     )
 
                     state.securityType == SecurityType.AUTO_MANAGED -> DoneRow(
-                        stringResource(R.string.onboarding_ready_no_phrase_title),
-                        stringResource(R.string.onboarding_ready_no_phrase_desc),
+                        stringResource(Res.string.onboarding_ready_no_phrase_title),
+                        stringResource(Res.string.onboarding_ready_no_phrase_desc),
                         done = false,
                     )
 
                     else -> DoneRow(
-                        stringResource(R.string.onboarding_ready_phrase_title),
-                        stringResource(R.string.onboarding_ready_phrase_desc),
+                        stringResource(Res.string.onboarding_ready_phrase_title),
+                        stringResource(Res.string.onboarding_ready_phrase_desc),
                     )
                 }
             }
@@ -346,7 +400,7 @@ internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) 
                     modifier = Modifier.size(EnclyTheme.spacing.iconMedium),
                 )
                 Text(
-                    text = stringResource(R.string.onboarding_ready_tip),
+                    text = stringResource(Res.string.onboarding_ready_tip),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -373,22 +427,22 @@ internal fun RestoreStep(
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.l),
     ) {
         StepHeading(
-            title = stringResource(R.string.onboarding_restore_title),
-            body = stringResource(R.string.onboarding_restore_intro),
+            title = stringResource(Res.string.onboarding_restore_title),
+            body = stringResource(Res.string.onboarding_restore_intro),
         )
-        FormSection(title = stringResource(R.string.onboarding_restore_file_section)) {
+        FormSection(title = stringResource(Res.string.onboarding_restore_file_section)) {
             FilePickerButton(
                 title = state.restoreFileName.takeIf { state.restoreFileReady }
-                    ?: stringResource(R.string.onboarding_restore_pick),
-                hint = if (state.restoreFileReady) stringResource(R.string.onboarding_restore_tap_other) else null,
+                    ?: stringResource(Res.string.onboarding_restore_pick),
+                hint = if (state.restoreFileReady) stringResource(Res.string.onboarding_restore_tap_other) else null,
                 enabled = !state.isLoading,
                 onClick = actions.onPickFile,
             )
             state.restoreFileError?.let { ErrorText(it.asString()) }
         }
-        FormSection(title = stringResource(R.string.onboarding_restore_phrase_section)) {
+        FormSection(title = stringResource(Res.string.onboarding_restore_phrase_section)) {
             Text(
-                text = stringResource(R.string.recovery_phrase_entry_label),
+                text = stringResource(Res.string.recovery_phrase_entry_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = EnclyTheme.spacing.xxs),
@@ -401,7 +455,7 @@ internal fun RestoreStep(
                 onDone = actions.onSubmit,
             )
             Text(
-                text = stringResource(R.string.onboarding_restore_phrase_helper),
+                text = stringResource(Res.string.onboarding_restore_phrase_helper),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -18,15 +18,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.pasich.encly.BuildConfig
-import com.pasich.encly.R
 import com.pasich.encly.core.LINK_FEEDBACK
 import com.pasich.encly.core.LINK_PRIVACY_POLICY
 import com.pasich.encly.core.LINK_REPOSITORY
 import com.pasich.encly.core.MAIL_DEVELOPMENT
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.about
+import com.pasich.encly.core.resources.about_app_description
+import com.pasich.encly.core.resources.about_app_title
+import com.pasich.encly.core.resources.about_data_protection
+import com.pasich.encly.core.resources.about_encryption_note
+import com.pasich.encly.core.resources.about_feedback
+import com.pasich.encly.core.resources.about_feedback_desc
+import com.pasich.encly.core.resources.about_no_browser
+import com.pasich.encly.core.resources.about_no_mail_client
+import com.pasich.encly.core.resources.about_privacy_policy
+import com.pasich.encly.core.resources.about_privacy_policy_desc
+import com.pasich.encly.core.resources.about_rate_app
+import com.pasich.encly.core.resources.about_rate_app_desc
+import com.pasich.encly.core.resources.about_source_code
+import com.pasich.encly.core.resources.about_source_code_desc
+import com.pasich.encly.core.resources.about_support_dev_desc
+import com.pasich.encly.core.resources.about_support_title
+import com.pasich.encly.core.resources.about_write_developer
+import com.pasich.encly.core.resources.about_write_developer_desc
+import com.pasich.encly.core.resources.licenses_row_desc
+import com.pasich.encly.core.resources.licenses_title
+import com.pasich.encly.core.resources.main_drawer_support
+import com.pasich.encly.presentation.components.showToast
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -37,6 +59,7 @@ import com.pasich.encly.presentation.designsystem.EnclyWordmark
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -44,7 +67,7 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { EnclyTopBar(title = stringResource(R.string.about), onBack = { navController.popBackStack() }) },
+        topBar = { EnclyTopBar(title = stringResource(Res.string.about), onBack = { navController.popBackStack() }) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -56,15 +79,15 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
         ) {
             HeroSection()
             EnclyCallout(
-                title = stringResource(R.string.about_data_protection),
-                text = stringResource(R.string.about_encryption_note),
+                title = stringResource(Res.string.about_data_protection),
+                text = stringResource(Res.string.about_encryption_note),
                 icon = EnclyIcons.Lock,
             )
             DeveloperActionsSection(context, onSupport = { navController.navigate(NavRoutes.SupportRoute.name) })
             EnclyGroup {
                 EnclyNavigationRow(
-                    title = stringResource(R.string.licenses_title),
-                    supporting = stringResource(R.string.licenses_row_desc),
+                    title = stringResource(Res.string.licenses_title),
+                    supporting = stringResource(Res.string.licenses_row_desc),
                     icon = EnclyIcons.File,
                     onClick = { navController.navigate(NavRoutes.LicensesRoute.name) },
                     modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
@@ -80,7 +103,7 @@ private fun HeroSection() {
 
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            EnclyWordmark(appName = stringResource(R.string.about_app_title), modifier = Modifier.weight(1f))
+            EnclyWordmark(appName = stringResource(Res.string.about_app_title), modifier = Modifier.weight(1f))
             Text(
                 text = "v$versionName",
                 style = EnclyTheme.typography.dataSmall,
@@ -88,7 +111,7 @@ private fun HeroSection() {
             )
         }
         Text(
-            text = stringResource(R.string.about_app_description),
+            text = stringResource(Res.string.about_app_description),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -98,12 +121,12 @@ private fun HeroSection() {
 @Composable
 private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
-        SectionOverline(stringResource(R.string.about_support_title))
+        SectionOverline(stringResource(Res.string.about_support_title))
         EnclyGroup {
             val rowModifier = Modifier.padding(horizontal = EnclyTheme.spacing.s)
             EnclyNavigationRow(
-                title = stringResource(R.string.about_privacy_policy),
-                supporting = stringResource(R.string.about_privacy_policy_desc),
+                title = stringResource(Res.string.about_privacy_policy),
+                supporting = stringResource(Res.string.about_privacy_policy_desc),
                 icon = EnclyIcons.Privacy,
                 onClick = { openExternalLink(context, LINK_PRIVACY_POLICY) },
                 modifier = rowModifier,
@@ -112,8 +135,8 @@ private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
             if (BuildConfig.STORE_RATING_ENABLED) {
                 EnclyGroupDivider()
                 EnclyNavigationRow(
-                    title = stringResource(R.string.about_rate_app),
-                    supporting = stringResource(R.string.about_rate_app_desc),
+                    title = stringResource(Res.string.about_rate_app),
+                    supporting = stringResource(Res.string.about_rate_app_desc),
                     icon = EnclyIcons.Star,
                     onClick = { openStorePage(context) },
                     modifier = rowModifier,
@@ -123,8 +146,8 @@ private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
             if (BuildConfig.DONATIONS_ENABLED) {
                 EnclyGroupDivider()
                 EnclyNavigationRow(
-                    title = stringResource(R.string.main_drawer_support),
-                    supporting = stringResource(R.string.about_support_dev_desc),
+                    title = stringResource(Res.string.main_drawer_support),
+                    supporting = stringResource(Res.string.about_support_dev_desc),
                     icon = EnclyIcons.Coffee,
                     onClick = onSupport,
                     modifier = rowModifier,
@@ -133,8 +156,8 @@ private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
             EnclyGroupDivider()
             // The code is public: a plain link in every flavor, not a donation or store link.
             EnclyNavigationRow(
-                title = stringResource(R.string.about_source_code),
-                supporting = stringResource(R.string.about_source_code_desc),
+                title = stringResource(Res.string.about_source_code),
+                supporting = stringResource(Res.string.about_source_code_desc),
                 icon = EnclyIcons.External,
                 onClick = { openExternalLink(context, LINK_REPOSITORY) },
                 modifier = rowModifier,
@@ -142,16 +165,16 @@ private fun DeveloperActionsSection(context: Context, onSupport: () -> Unit) {
             EnclyGroupDivider()
             // Feedback: public GitHub issue tracker, no third-party form service.
             EnclyNavigationRow(
-                title = stringResource(R.string.about_feedback),
-                supporting = stringResource(R.string.about_feedback_desc),
+                title = stringResource(Res.string.about_feedback),
+                supporting = stringResource(Res.string.about_feedback_desc),
                 icon = EnclyIcons.Send,
                 onClick = { openExternalLink(context, LINK_FEEDBACK) },
                 modifier = rowModifier,
             )
             EnclyGroupDivider()
             EnclyNavigationRow(
-                title = stringResource(R.string.about_write_developer),
-                supporting = stringResource(R.string.about_write_developer_desc),
+                title = stringResource(Res.string.about_write_developer),
+                supporting = stringResource(Res.string.about_write_developer_desc),
                 icon = EnclyIcons.Mail,
                 onClick = { writeToDeveloper(context) },
                 modifier = rowModifier,
@@ -177,7 +200,7 @@ private fun writeToDeveloper(context: Context) {
     try {
         context.startActivity(intent)
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, context.getString(R.string.about_no_mail_client), Toast.LENGTH_SHORT).show()
+        showToast(context, Res.string.about_no_mail_client, Toast.LENGTH_SHORT)
     }
 }
 
@@ -186,10 +209,6 @@ internal fun openExternalLink(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(
-            context,
-            context.getString(R.string.about_no_browser, url),
-            Toast.LENGTH_LONG,
-        ).show()
+        showToast(context, Res.string.about_no_browser, Toast.LENGTH_LONG, url)
     }
 }

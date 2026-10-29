@@ -24,13 +24,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.add
+import com.pasich.encly.core.resources.priority_select_title
+import com.pasich.encly.core.resources.save
+import com.pasich.encly.core.resources.task_delete
+import com.pasich.encly.core.resources.task_description_placeholder
+import com.pasich.encly.core.resources.task_edit_placeholder
+import com.pasich.encly.core.resources.task_new_placeholder
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.PriorityValues
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
@@ -43,6 +49,7 @@ import com.pasich.encly.presentation.viewmodel.SubtaskDraft
 import com.pasich.encly.presentation.viewmodel.TaskDraft
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 private const val TASK_TITLE_MAX_LENGTH = 100
 private const val TASK_DESCRIPTION_MAX_LENGTH = 150
@@ -174,7 +181,7 @@ private fun TaskEditorContent(
             value = state.title,
             onValueChange = actions.onTitleChange,
             label = stringResource(
-                if (state.isEditMode) R.string.task_edit_placeholder else R.string.task_new_placeholder,
+                if (state.isEditMode) Res.string.task_edit_placeholder else Res.string.task_new_placeholder,
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(onNext = { descriptionFocus.requestFocus() }),
@@ -183,7 +190,7 @@ private fun TaskEditorContent(
         EnclyTextField(
             value = state.description,
             onValueChange = actions.onDescriptionChange,
-            label = stringResource(R.string.task_description_placeholder),
+            label = stringResource(Res.string.task_description_placeholder),
             textStyle = MaterialTheme.typography.bodyMedium,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { actions.onSubmit() }),
@@ -200,7 +207,7 @@ private fun TaskEditorContent(
 @Composable
 private fun PriorityChips(selected: Int, onSelect: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
-        SectionOverline(stringResource(R.string.priority_select_title))
+        SectionOverline(stringResource(Res.string.priority_select_title))
         Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
             PriorityValues.priorities.forEach { priority ->
                 EnclyChip(
@@ -221,10 +228,10 @@ private fun TaskEditorFooter(state: TaskEditorState, actions: TaskEditorActions)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         actions.onDelete?.let { onDelete ->
-            EnclyTextButton(text = stringResource(R.string.task_delete), onClick = onDelete, destructive = true)
+            EnclyTextButton(text = stringResource(Res.string.task_delete), onClick = onDelete, destructive = true)
         }
         EnclyButton(
-            text = stringResource(if (state.isEditMode) R.string.save else R.string.add),
+            text = stringResource(if (state.isEditMode) Res.string.save else Res.string.add),
             onClick = actions.onSubmit,
             enabled = state.title.isNotBlank(),
             modifier = Modifier.weight(1f),

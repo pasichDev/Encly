@@ -10,9 +10,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.font_size_title
+import com.pasich.encly.core.resources.font_size_value
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 private const val MIN_SIZE = 10f
 private const val MAX_SIZE = 32f
@@ -24,8 +26,8 @@ private const val SIZE_STEPS = 21
 @Composable
 fun FontSizeSlider(currentSize: Int, onSizeChange: (Int) -> Unit, modifier: Modifier = Modifier) {
     LabeledSlider(
-        label = stringResource(R.string.font_size_title),
-        valueText = stringResource(R.string.font_size_value, currentSize),
+        label = stringResource(Res.string.font_size_title),
+        valueText = stringResource(Res.string.font_size_value, currentSize),
         value = currentSize.toFloat(),
         onValueChange = { onSizeChange(it.toInt()) },
         scale = SliderScale(MIN_SIZE..MAX_SIZE, SIZE_STEPS),

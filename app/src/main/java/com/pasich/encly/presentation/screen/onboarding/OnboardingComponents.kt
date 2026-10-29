@@ -1,9 +1,9 @@
 package com.pasich.encly.presentation.screen.onboarding
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.StringResource
 
 /** Content padding of a step body: the 24 dp gutter. */
 internal val StepPadding: PaddingValues
@@ -11,11 +11,11 @@ internal val StepPadding: PaddingValues
 
 /** The footer of one step: the primary action and an optional text action under it. */
 internal class FooterSpec(
-    @param:StringRes val primary: Int,
+    val primary: StringResource,
     val onPrimary: () -> Unit,
     val enabled: Boolean = true,
     val loading: Boolean = false,
-    @param:StringRes val secondary: Int? = null,
+    val secondary: StringResource? = null,
     val onSecondary: () -> Unit = {},
     val secondaryMuted: Boolean = false,
 )

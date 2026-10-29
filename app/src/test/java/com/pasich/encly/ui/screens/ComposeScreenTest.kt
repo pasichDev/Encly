@@ -2,8 +2,6 @@ package com.pasich.encly.ui.screens
 
 import android.app.Application
 import android.content.Context
-import androidx.annotation.PluralsRes
-import androidx.annotation.StringRes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,11 +30,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.recovery_word_cell
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.compose.resources.PluralStringResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getPluralString
+import org.jetbrains.compose.resources.getString
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -65,10 +70,11 @@ abstract class ComposeScreenTest {
         owners.forEach { it.viewModelStore.clear() }
     }
 
-    protected fun str(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
+    /** The string in the default locale, which is the language of the test (see LocalizedScreensTest). */
+    protected fun str(id: StringResource, vararg args: Any): String = runBlocking { getString(id, *args) }
 
-    protected fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String =
-        context.resources.getQuantityString(id, count, *args)
+    protected fun plural(id: PluralStringResource, count: Int, vararg args: Any): String =
+        runBlocking { getPluralString(id, count, *args) }
 
     protected fun viewModels(vararg viewModels: ViewModel): FakeViewModels =
         FakeViewModels(*viewModels).also(owners::add)
@@ -202,7 +208,7 @@ abstract class ComposeScreenTest {
 
     /** The recovery phrase cell [number] (1-based) of 12. */
     protected fun phraseCell(number: Int) = rule.onNodeWithContentDescription(
-        str(com.pasich.encly.R.string.recovery_word_cell, number, PHRASE_WORDS),
+        str(Res.string.recovery_word_cell, number, PHRASE_WORDS),
     )
 
     /** What the 12 cells hold, in order. */

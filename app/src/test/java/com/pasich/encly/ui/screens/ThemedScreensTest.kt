@@ -3,7 +3,8 @@ package com.pasich.encly.ui.screens
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_title
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.model.ThemePalette
@@ -27,7 +28,7 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 /** The busiest screens in each of the five themes, light and dark: they render in that theme. */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 class ThemedScreensTest(private val palette: ThemePalette, private val dark: Boolean) : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private val settings get() = ThemeSettings(palette = palette)
     private var surface: Color = Color.Unspecified
 
@@ -117,7 +118,7 @@ class ThemedScreensTest(private val palette: ThemePalette, private val dark: Boo
             probe()
             LockScreen(nav)
         }
-        waitForText(str(R.string.lock_title))
+        waitForText(str(Res.string.lock_title))
         assertThemed()
     }
 

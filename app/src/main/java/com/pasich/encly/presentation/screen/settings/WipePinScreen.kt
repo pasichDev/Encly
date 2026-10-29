@@ -14,11 +14,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.pin_in_use
+import com.pasich.encly.core.resources.wipe_pin_after_erase
+import com.pasich.encly.core.resources.wipe_pin_backups
+import com.pasich.encly.core.resources.wipe_pin_biometric_off
+import com.pasich.encly.core.resources.wipe_pin_biometric_warning
+import com.pasich.encly.core.resources.wipe_pin_confirm_subtitle
+import com.pasich.encly.core.resources.wipe_pin_confirm_title
+import com.pasich.encly.core.resources.wipe_pin_current_subtitle
+import com.pasich.encly.core.resources.wipe_pin_failed
+import com.pasich.encly.core.resources.wipe_pin_intro
+import com.pasich.encly.core.resources.wipe_pin_limits
+import com.pasich.encly.core.resources.wipe_pin_new_subtitle
+import com.pasich.encly.core.resources.wipe_pin_new_title
+import com.pasich.encly.core.resources.wipe_pin_remove
+import com.pasich.encly.core.resources.wipe_pin_removed
+import com.pasich.encly.core.resources.wipe_pin_same_as_pin
+import com.pasich.encly.core.resources.wipe_pin_saved
+import com.pasich.encly.core.resources.wipe_pin_set
+import com.pasich.encly.core.resources.wipe_pin_title
+import com.pasich.encly.core.resources.wipe_pin_turned_off
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyButton
@@ -27,14 +46,15 @@ import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 private val WipePinTexts = PinFlowTexts(
-    title = R.string.wipe_pin_title,
-    currentSubtitle = R.string.wipe_pin_current_subtitle,
-    newTitle = R.string.wipe_pin_new_title,
-    newSubtitle = R.string.wipe_pin_new_subtitle,
-    confirmTitle = R.string.wipe_pin_confirm_title,
-    confirmSubtitle = R.string.wipe_pin_confirm_subtitle,
+    title = Res.string.wipe_pin_title,
+    currentSubtitle = Res.string.wipe_pin_current_subtitle,
+    newTitle = Res.string.wipe_pin_new_title,
+    newSubtitle = Res.string.wipe_pin_new_subtitle,
+    confirmTitle = Res.string.wipe_pin_confirm_title,
+    confirmSubtitle = Res.string.wipe_pin_confirm_subtitle,
 )
 
 /**
@@ -75,7 +95,7 @@ fun WipePinScreen(
                 onSet = state::startNew,
                 onRemove = {
                     securityViewModel.removeWipePin { ok ->
-                        state.message = if (ok) R.string.wipe_pin_removed else R.string.wipe_pin_failed
+                        state.message = if (ok) Res.string.wipe_pin_removed else Res.string.wipe_pin_failed
                     }
                 },
                 onBiometricOff = {
@@ -89,10 +109,10 @@ fun WipePinScreen(
 
 private fun PinFlowState.onWipePinResult(result: WipePinChange) {
     when (result) {
-        WipePinChange.SET -> saved(R.string.wipe_pin_saved)
-        WipePinChange.SAME_AS_PIN -> restartNew(R.string.wipe_pin_same_as_pin)
-        WipePinChange.IN_USE -> restartNew(R.string.pin_in_use)
-        WipePinChange.FAILED -> restartNew(R.string.wipe_pin_failed)
+        WipePinChange.SET -> saved(Res.string.wipe_pin_saved)
+        WipePinChange.SAME_AS_PIN -> restartNew(Res.string.wipe_pin_same_as_pin)
+        WipePinChange.IN_USE -> restartNew(Res.string.pin_in_use)
+        WipePinChange.FAILED -> restartNew(Res.string.wipe_pin_failed)
     }
 }
 
@@ -112,26 +132,26 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
             .padding(horizontal = spacing.gutter, vertical = spacing.s),
     ) {
         if (info.turnedOff) {
-            EnclyCallout(text = stringResource(R.string.wipe_pin_turned_off), tone = CalloutTone.WARNING)
+            EnclyCallout(text = stringResource(Res.string.wipe_pin_turned_off), tone = CalloutTone.WARNING)
         }
         Text(
-            text = stringResource(R.string.wipe_pin_intro),
+            text = stringResource(Res.string.wipe_pin_intro),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        EnclyCallout(text = stringResource(R.string.wipe_pin_after_erase), tone = CalloutTone.WARNING)
-        EnclyCallout(text = stringResource(R.string.wipe_pin_backups))
+        EnclyCallout(text = stringResource(Res.string.wipe_pin_after_erase), tone = CalloutTone.WARNING)
+        EnclyCallout(text = stringResource(Res.string.wipe_pin_backups))
         if (info.biometricOn) {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
-                EnclyCallout(text = stringResource(R.string.wipe_pin_biometric_warning), tone = CalloutTone.WARNING)
+                EnclyCallout(text = stringResource(Res.string.wipe_pin_biometric_warning), tone = CalloutTone.WARNING)
                 EnclyTextButton(
-                    text = stringResource(R.string.wipe_pin_biometric_off),
+                    text = stringResource(Res.string.wipe_pin_biometric_off),
                     onClick = actions.onBiometricOff,
                 )
             }
         }
         Text(
-            text = stringResource(R.string.wipe_pin_limits),
+            text = stringResource(Res.string.wipe_pin_limits),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -139,9 +159,9 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
             verticalArrangement = Arrangement.spacedBy(spacing.xxs),
             modifier = Modifier.fillMaxWidth().padding(top = spacing.s),
         ) {
-            EnclyButton(text = stringResource(R.string.wipe_pin_set), onClick = actions.onSet)
+            EnclyButton(text = stringResource(Res.string.wipe_pin_set), onClick = actions.onSet)
             EnclyTextButton(
-                text = stringResource(R.string.wipe_pin_remove),
+                text = stringResource(Res.string.wipe_pin_remove),
                 onClick = actions.onRemove,
                 destructive = true,
                 modifier = Modifier.fillMaxWidth(),

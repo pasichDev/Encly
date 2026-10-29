@@ -18,7 +18,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,6 +35,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 private const val TABLET_MIN_WIDTH_DP = 600
 private const val PHONE_DRAWER_FRACTION = 0.8f
@@ -75,7 +75,7 @@ fun MainDrawer(
                 .verticalScroll(rememberScrollState()),
         ) {
             EnclyWordmark(
-                appName = stringResource(R.string.app_name),
+                appName = androidx.compose.ui.res.stringResource(R.string.app_name),
                 modifier = Modifier.padding(
                     start = EnclyTheme.spacing.gutter,
                     top = EnclyTheme.spacing.m,

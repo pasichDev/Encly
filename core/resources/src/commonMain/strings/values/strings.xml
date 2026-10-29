@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Default (English) strings. Every key here must exist in every values-<lang>/strings.xml;
-     TranslationCompletenessTest and lint (MissingTranslation) enforce it. See README → Languages. -->
+     TranslationCompletenessTest enforces it. See README → Languages. The launcher label (app_name)
+     is in the app's res/values/manifest_strings.xml. -->
 <resources>
     <!-- Not translated: brand names, pure formats and each language's own name (the language picker shows them as-is). -->
-    <string name="app_name" translatable="false">Encly</string>
     <string name="about_app_title" translatable="false">Encly</string>
     <string name="font_size_value" translatable="false">%1$d sp</string>
     <string name="language_name_en" translatable="false">English</string>

@@ -14,7 +14,43 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_count_notes
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.done
+import com.pasich.encly.core.resources.import_action_import_count
+import com.pasich.encly.core.resources.import_badge_in_vault
+import com.pasich.encly.core.resources.import_choose_again
+import com.pasich.encly.core.resources.import_choose_files
+import com.pasich.encly.core.resources.import_choose_folder
+import com.pasich.encly.core.resources.import_choose_source_title
+import com.pasich.encly.core.resources.import_detected
+import com.pasich.encly.core.resources.import_done_body
+import com.pasich.encly.core.resources.import_done_hint
+import com.pasich.encly.core.resources.import_done_title
+import com.pasich.encly.core.resources.import_error_encrypted_nn
+import com.pasich.encly.core.resources.import_error_encrypted_sn
+import com.pasich.encly.core.resources.import_error_failed
+import com.pasich.encly.core.resources.import_error_no_picker
+import com.pasich.encly.core.resources.import_error_nothing
+import com.pasich.encly.core.resources.import_error_title
+import com.pasich.encly.core.resources.import_error_too_large
+import com.pasich.encly.core.resources.import_error_unreadable
+import com.pasich.encly.core.resources.import_error_unsupported
+import com.pasich.encly.core.resources.import_error_vault
+import com.pasich.encly.core.resources.import_filter_new
+import com.pasich.encly.core.resources.import_intro
+import com.pasich.encly.core.resources.import_joplin_name
+import com.pasich.encly.core.resources.import_keep_name
+import com.pasich.encly.core.resources.import_loss_pinned
+import com.pasich.encly.core.resources.import_loss_unsupported
+import com.pasich.encly.core.resources.import_preview_title
+import com.pasich.encly.core.resources.import_review_selected
+import com.pasich.encly.core.resources.import_select_all
+import com.pasich.encly.core.resources.import_select_none
+import com.pasich.encly.core.resources.import_stat_checklists
+import com.pasich.encly.core.resources.import_stat_destination
+import com.pasich.encly.core.resources.import_untitled
 import com.pasich.encly.data.importer.ImportLosses
 import com.pasich.encly.data.importer.ImportPreview
 import com.pasich.encly.data.importer.ImportSource
@@ -101,9 +137,9 @@ class ImportNotesScreenTest : ComposeScreenTest() {
     fun startListsTheSupportedAppsAndTheTwoPickers() {
         show(ImportStep.Start)
 
-        rule.onNodeWithText(str(R.string.import_intro)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.import_choose_files)).assertIsEnabled().performClick()
-        rule.onNodeWithText(str(R.string.import_choose_folder)).performClick()
+        rule.onNodeWithText(str(Res.string.import_intro)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_choose_files)).assertIsEnabled().performClick()
+        rule.onNodeWithText(str(Res.string.import_choose_folder)).performClick()
         assertEquals(listOf("files", "folder"), calls)
         ImportSource.entries.forEach { source ->
             rule.onNodeWithText(str(source.title)).performScrollTo().assertIsDisplayed()
@@ -121,15 +157,19 @@ class ImportNotesScreenTest : ComposeScreenTest() {
     fun reviewShowsTheDetectedSourceCountsLossesAndEveryNote() {
         show(review(header = preview))
 
-        rule.onNodeWithText(str(R.string.import_preview_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_preview_title)).assertIsDisplayed()
         rule.onNodeWithText(
-            str(R.string.import_detected, str(R.string.import_keep_name), plural(R.plurals.backup_count_notes, 4, 4)),
+            str(
+                Res.string.import_detected,
+                str(Res.string.import_keep_name),
+                plural(Res.plurals.backup_count_notes, 4, 4),
+            ),
         ).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.import_stat_checklists, 1)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.import_stat_destination)).assertExists()
-        rule.onNode(hasText(str(R.string.import_loss_pinned, 2), substring = true)).assertExists()
-        rule.onNode(hasText(str(R.string.import_loss_unsupported, 1), substring = true)).assertExists()
-        rule.onNodeWithText(str(R.string.import_review_selected, 3, 3)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_stat_checklists, 1)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_stat_destination)).assertExists()
+        rule.onNode(hasText(str(Res.string.import_loss_pinned, 2), substring = true)).assertExists()
+        rule.onNode(hasText(str(Res.string.import_loss_unsupported, 1), substring = true)).assertExists()
+        rule.onNodeWithText(str(Res.string.import_review_selected, 3, 3)).assertIsDisplayed()
         scrollTo("Groceries")
         rule.onNodeWithText("Groceries").assertIsDisplayed()
     }
@@ -138,15 +178,15 @@ class ImportNotesScreenTest : ComposeScreenTest() {
     fun newNotesAreTickedAndAnExistingOneIsNotAndCannotBe() {
         show(review())
 
-        scrollTo(str(R.string.import_untitled))
+        scrollTo(str(Res.string.import_untitled))
         val boxes = rule.onAllNodes(isToggleable(), useUnmergedTree = true)
         val shown = boxes.fetchSemanticsNodes().size
         // The last rows are on screen: Old draft, Seen before, Untitled, in that order.
         boxes[shown - 3].assertIsOn()
         boxes[shown - 2].assertIsOff().assertIsNotEnabled()
         boxes[shown - 1].assertIsOn()
-        rule.onNode(hasText(str(R.string.import_badge_in_vault), substring = true)).assertExists()
-        rule.onNodeWithText(str(R.string.import_untitled)).assertExists()
+        rule.onNode(hasText(str(Res.string.import_badge_in_vault), substring = true)).assertExists()
+        rule.onNodeWithText(str(Res.string.import_untitled)).assertExists()
     }
 
     @Test
@@ -164,8 +204,8 @@ class ImportNotesScreenTest : ComposeScreenTest() {
     fun selectNoneDisablesImportAndSelectAllEnablesIt() {
         show(review(selected = emptySet()))
 
-        rule.onNodeWithText(str(R.string.import_action_import_count, 0)).assertIsNotEnabled()
-        rule.onNodeWithText(str(R.string.import_select_all)).performClick()
+        rule.onNodeWithText(str(Res.string.import_action_import_count, 0)).assertIsNotEnabled()
+        rule.onNodeWithText(str(Res.string.import_select_all)).performClick()
         assertEquals(listOf("all"), calls)
     }
 
@@ -174,19 +214,19 @@ class ImportNotesScreenTest : ComposeScreenTest() {
         val seen = listOf(row("c", "Seen before", existing = true))
         show(ImportStep.Preview(plain, ReviewState(seen, emptySet(), ReviewFilter.ALL)))
 
-        rule.onNodeWithText(str(R.string.import_review_selected, 0, 0)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.import_select_all)).assertDoesNotExist()
-        rule.onNodeWithText(str(R.string.import_select_none)).assertDoesNotExist()
-        rule.onNodeWithText(str(R.string.import_action_import_count, 0)).assertIsNotEnabled()
+        rule.onNodeWithText(str(Res.string.import_review_selected, 0, 0)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_select_all)).assertDoesNotExist()
+        rule.onNodeWithText(str(Res.string.import_select_none)).assertDoesNotExist()
+        rule.onNodeWithText(str(Res.string.import_action_import_count, 0)).assertIsNotEnabled()
     }
 
     @Test
     fun withASelectionImportIsEnabledAndCountsIt() {
         show(review())
 
-        rule.onNodeWithText(str(R.string.import_select_none)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.import_action_import_count, 3)).assertIsEnabled().performClick()
-        rule.onNodeWithText(str(R.string.cancel)).performClick()
+        rule.onNodeWithText(str(Res.string.import_select_none)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_action_import_count, 3)).assertIsEnabled().performClick()
+        rule.onNodeWithText(str(Res.string.cancel)).performClick()
         assertEquals(listOf("import", "cancel"), calls)
     }
 
@@ -196,7 +236,7 @@ class ImportNotesScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithText("Old draft").assertIsDisplayed()
         rule.onNodeWithText("Groceries").assertDoesNotExist()
-        rule.onNodeWithText(str(R.string.import_filter_new)).performClick()
+        rule.onNodeWithText(str(Res.string.import_filter_new)).performClick()
         assertEquals(listOf("filter:NEW"), calls)
     }
 
@@ -213,9 +253,9 @@ class ImportNotesScreenTest : ComposeScreenTest() {
     fun ambiguousSelectionsOfferEverySourceAndReportTheChoice() {
         show(ImportStep.ChooseSource)
 
-        rule.onNodeWithText(str(R.string.import_choose_source_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_choose_source_title)).assertIsDisplayed()
         ImportSource.entries.forEach { rule.onNodeWithText(str(it.title)).assertExists() }
-        rule.onNodeWithText(str(R.string.import_joplin_name)).performClick()
+        rule.onNodeWithText(str(Res.string.import_joplin_name)).performClick()
         assertEquals(listOf("source:JOPLIN"), calls)
     }
 
@@ -223,33 +263,33 @@ class ImportNotesScreenTest : ComposeScreenTest() {
     fun theSummaryShowsTheCountsAndTheOriginalsStayUntouched() {
         show(ImportStep.Done(ImportResult(imported = 3, duplicates = 1, notImported = 2, tagsAdded = 1)))
 
-        rule.onNodeWithText(str(R.string.import_done_title)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.import_done_body, 3, 1, 2)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.import_done_hint)).assertIsDisplayed()
-        rule.onNode(hasText(str(R.string.done)) and hasClickAction()).performClick()
+        rule.onNodeWithText(str(Res.string.import_done_title)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_done_body, 3, 1, 2)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.import_done_hint)).assertIsDisplayed()
+        rule.onNode(hasText(str(Res.string.done)) and hasClickAction()).performClick()
         assertEquals(listOf("cancel"), calls)
     }
 
     @Test
     fun everyErrorHasItsOwnMessageAndWayBack() {
         val messages = mapOf(
-            ImportFailure.ENCRYPTED_STANDARD_NOTES to R.string.import_error_encrypted_sn,
-            ImportFailure.ENCRYPTED_NOTESNOOK to R.string.import_error_encrypted_nn,
-            ImportFailure.UNSUPPORTED to R.string.import_error_unsupported,
-            ImportFailure.TOO_LARGE to R.string.import_error_too_large,
-            ImportFailure.NOTHING_FOUND to R.string.import_error_nothing,
-            ImportFailure.UNREADABLE to R.string.import_error_unreadable,
-            ImportFailure.NO_PICKER to R.string.import_error_no_picker,
-            ImportFailure.VAULT to R.string.import_error_vault,
-            ImportFailure.IMPORT to R.string.import_error_failed,
+            ImportFailure.ENCRYPTED_STANDARD_NOTES to Res.string.import_error_encrypted_sn,
+            ImportFailure.ENCRYPTED_NOTESNOOK to Res.string.import_error_encrypted_nn,
+            ImportFailure.UNSUPPORTED to Res.string.import_error_unsupported,
+            ImportFailure.TOO_LARGE to Res.string.import_error_too_large,
+            ImportFailure.NOTHING_FOUND to Res.string.import_error_nothing,
+            ImportFailure.UNREADABLE to Res.string.import_error_unreadable,
+            ImportFailure.NO_PICKER to Res.string.import_error_no_picker,
+            ImportFailure.VAULT to Res.string.import_error_vault,
+            ImportFailure.IMPORT to Res.string.import_error_failed,
         )
         assertEquals(ImportFailure.entries.toSet(), messages.keys)
         messages.forEach { (failure, message) ->
             calls.clear()
             show(ImportStep.Failed(failure))
             rule.onNodeWithText(str(message)).assertIsDisplayed()
-            rule.onNodeWithText(str(R.string.import_error_title)).assertIsDisplayed()
-            rule.onNodeWithText(str(R.string.import_choose_again)).performClick()
+            rule.onNodeWithText(str(Res.string.import_error_title)).assertIsDisplayed()
+            rule.onNodeWithText(str(Res.string.import_choose_again)).performClick()
             assertEquals(listOf("cancel"), calls)
         }
     }

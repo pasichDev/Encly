@@ -1,8 +1,6 @@
 package com.pasich.encly.presentation.screen
 
-import android.content.Context
 import androidx.activity.compose.LocalActivity
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -26,13 +24,23 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.main_drawer_tasks
+import com.pasich.encly.core.resources.subtask_deleted
+import com.pasich.encly.core.resources.subtasks_all_done
+import com.pasich.encly.core.resources.subtasks_complete_task
+import com.pasich.encly.core.resources.task_add
+import com.pasich.encly.core.resources.task_clear_completed_failed
+import com.pasich.encly.core.resources.task_create_failed
+import com.pasich.encly.core.resources.task_delete_failed
+import com.pasich.encly.core.resources.task_deleted
+import com.pasich.encly.core.resources.task_status_update_failed
+import com.pasich.encly.core.resources.task_update_failed
+import com.pasich.encly.core.resources.undo
 import com.pasich.encly.presentation.designsystem.EnclyFab
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
@@ -45,6 +53,9 @@ import com.pasich.encly.presentation.viewmodel.TasksViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The tasks screen: progress, filter chips, the open tasks and, below them, a "Done" section
@@ -64,8 +75,7 @@ fun TasksScreen(
     var confirmClear by remember { mutableStateOf(false) }
 
     OpenOnArrival(openNewTask, viewModel::showAddTaskDialog)
-    val context = LocalContext.current
-    LaunchedEffect(viewModel) { showTaskMessages(viewModel, snackbarHostState, context) }
+    LaunchedEffect(viewModel) { showTaskMessages(viewModel, snackbarHostState) }
     val listState = rememberTasksListState(uiState)
     val list = TasksListState(uiState, viewModel.expandedTaskIds.collectAsState().value, viewModel.inlineEdit)
     val itemActions = remember(viewModel) { taskItemActions(viewModel) }
@@ -79,7 +89,7 @@ fun TasksScreen(
         snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         topBar = {
             EnclyTopBar(
-                title = stringResource(R.string.main_drawer_tasks),
+                title = stringResource(Res.string.main_drawer_tasks),
                 onBack = {
                     viewModel.commitInlineEdit()
                     navController.popBackStack()
@@ -127,7 +137,7 @@ fun TasksScreen(
 @Composable
 private fun TasksFab(listState: LazyListState, onClick: () -> Unit) {
     val expanded by remember(listState) { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
-    EnclyFab(text = stringResource(R.string.task_add), icon = EnclyIcons.Plus, expanded = expanded, onClick = onClick)
+    EnclyFab(text = stringResource(Res.string.task_add), icon = EnclyIcons.Plus, expanded = expanded, onClick = onClick)
 }
 
 /**
@@ -178,21 +188,17 @@ private fun rememberTasksListState(state: TasksUiState): LazyListState {
  * Failures, "Task deleted" and "Sub-task deleted" with Undo, and "All sub-tasks done" with
  * Complete task, as snackbars, until the calling effect ends.
  */
-private suspend fun showTaskMessages(
-    viewModel: TasksViewModel,
-    snackbarHostState: SnackbarHostState,
-    context: Context,
-) = coroutineScope {
+private suspend fun showTaskMessages(viewModel: TasksViewModel, snackbarHostState: SnackbarHostState) = coroutineScope {
     launch {
         viewModel.operationFailures.collect { failure ->
-            snackbarHostState.showSnackbar(context.getString(failure.message()), duration = SnackbarDuration.Long)
+            snackbarHostState.showSnackbar(getString(failure.message()), duration = SnackbarDuration.Long)
         }
     }
     launch {
         viewModel.deletedTasks.collect { task ->
             val result = snackbarHostState.showSnackbar(
-                message = context.getString(R.string.task_deleted),
-                actionLabel = context.getString(R.string.undo),
+                message = getString(Res.string.task_deleted),
+                actionLabel = getString(Res.string.undo),
                 duration = SnackbarDuration.Short,
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.restoreTask(task)
@@ -201,8 +207,8 @@ private suspend fun showTaskMessages(
     launch {
         viewModel.subtaskDeletions.collect { subtask ->
             val result = snackbarHostState.showSnackbar(
-                message = context.getString(R.string.subtask_deleted),
-                actionLabel = context.getString(R.string.undo),
+                message = getString(Res.string.subtask_deleted),
+                actionLabel = getString(Res.string.undo),
                 duration = SnackbarDuration.Short,
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.restoreSubtask(subtask)
@@ -211,8 +217,8 @@ private suspend fun showTaskMessages(
     launch {
         viewModel.completionOffers.collect { taskId ->
             val result = snackbarHostState.showSnackbar(
-                message = context.getString(R.string.subtasks_all_done),
-                actionLabel = context.getString(R.string.subtasks_complete_task),
+                message = getString(Res.string.subtasks_all_done),
+                actionLabel = getString(Res.string.subtasks_complete_task),
                 duration = SnackbarDuration.Long,
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.toggleTaskCompletion(taskId, true)
@@ -221,11 +227,10 @@ private suspend fun showTaskMessages(
 }
 
 /** What the user is told when a task operation fails. */
-@StringRes
-private fun TaskOperationFailure.message(): Int = when (this) {
-    TaskOperationFailure.CREATE -> R.string.task_create_failed
-    TaskOperationFailure.UPDATE -> R.string.task_update_failed
-    TaskOperationFailure.STATUS_UPDATE -> R.string.task_status_update_failed
-    TaskOperationFailure.CLEAR_COMPLETED -> R.string.task_clear_completed_failed
-    TaskOperationFailure.DELETE -> R.string.task_delete_failed
+private fun TaskOperationFailure.message(): StringResource = when (this) {
+    TaskOperationFailure.CREATE -> Res.string.task_create_failed
+    TaskOperationFailure.UPDATE -> Res.string.task_update_failed
+    TaskOperationFailure.STATUS_UPDATE -> Res.string.task_status_update_failed
+    TaskOperationFailure.CLEAR_COMPLETED -> Res.string.task_clear_completed_failed
+    TaskOperationFailure.DELETE -> Res.string.task_delete_failed
 }

@@ -5,8 +5,10 @@ import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.sort_by
+import com.pasich.encly.core.resources.view_switch_to_grid
+import com.pasich.encly.core.resources.view_switch_to_list
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -16,6 +18,7 @@ import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 /** View options of the notes list: the sort order, and the switch between list and grid. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,7 +37,7 @@ fun NotesSortBottomSheet(
         EnclyBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
-            title = stringResource(R.string.sort_by),
+            title = stringResource(Res.string.sort_by),
         ) {
             NoteSortOption.entries.forEach { option ->
                 EnclySheetRow(
@@ -48,7 +51,7 @@ fun NotesSortBottomSheet(
             }
             EnclyGroupDivider()
             EnclySheetRow(
-                title = stringResource(if (isGrid) R.string.view_switch_to_list else R.string.view_switch_to_grid),
+                title = stringResource(if (isGrid) Res.string.view_switch_to_list else Res.string.view_switch_to_grid),
                 icon = if (isGrid) EnclyIcons.ListView else EnclyIcons.Grid,
                 onClick = {
                     onToggleView()

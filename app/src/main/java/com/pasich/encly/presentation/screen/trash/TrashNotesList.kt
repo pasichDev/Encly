@@ -16,11 +16,13 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asString
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.empty_trash_desc
+import com.pasich.encly.core.resources.empty_trash_title
+import com.pasich.encly.core.resources.trash_hint
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
@@ -30,6 +32,7 @@ import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 private const val SKELETON_CARDS = 3
 
@@ -76,8 +79,8 @@ fun TrashNotesList(
             stableNotes.isEmpty() -> item {
                 EnclyEmptyState(
                     icon = EnclyIcons.Trash,
-                    title = stringResource(R.string.empty_trash_title),
-                    body = stringResource(R.string.empty_trash_desc),
+                    title = stringResource(Res.string.empty_trash_title),
+                    body = stringResource(Res.string.empty_trash_desc),
                 )
             }
 
@@ -97,7 +100,7 @@ private fun LazyListScope.trashCards(
 ) {
     item(key = "hint") {
         Text(
-            text = stringResource(R.string.trash_hint),
+            text = stringResource(Res.string.trash_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.listGutter),

@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.viewmodel
 
-import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,6 +36,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.compose.resources.StringResource
 
 private const val TAG = "TasksViewModel"
 
@@ -44,7 +44,7 @@ private const val TAG = "TasksViewModel"
 data class TaskFilter(
     val id: String,
     /** Resolved in the UI so the chip follows the in-app language. */
-    @param:StringRes val label: Int,
+    val label: StringResource,
     val count: Int = 0,
     val type: Type,
 ) {

@@ -42,7 +42,7 @@ class TasksScreenRecreationTest {
     val rule = createEmptyComposeRule()
 
     private val context: Context get() = ApplicationProvider.getApplicationContext()
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private lateinit var tasks: TasksViewModel
     private var scenario: ActivityScenario<TasksHostActivity>? = null
 

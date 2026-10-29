@@ -15,13 +15,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.subtask_add
+import com.pasich.encly.core.resources.subtasks_done_summary
+import com.pasich.encly.core.resources.subtasks_hide
+import com.pasich.encly.core.resources.subtasks_show
+import com.pasich.encly.core.resources.subtasks_state_hidden
+import com.pasich.encly.core.resources.subtasks_state_shown
+import com.pasich.encly.core.resources.task_completed_at
+import com.pasich.encly.core.resources.task_edit_placeholder
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.NextStepLeaf
@@ -35,6 +41,8 @@ import com.pasich.encly.presentation.designsystem.EnclyTaskRow
 import com.pasich.encly.presentation.viewmodel.InlineSubtaskEdit
 import com.pasich.encly.utils.formatDateTime
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 private const val TASK_REMOVAL_ANIMATION_MS = 400
@@ -176,15 +184,15 @@ private fun TaskRow(
     val focusManager = LocalFocusManager.current
     val priority = PriorityValues.getById(task.priority)
     val completedAt = task.completedDate?.takeIf { task.isCompleted }?.let {
-        stringResource(R.string.task_completed_at, formatDateTime(Instant.fromEpochMilliseconds(it)))
+        stringResource(Res.string.task_completed_at, formatDateTime(Instant.fromEpochMilliseconds(it)))
     }
     val done = subtasks.count { it.isCompleted }
-    val summary = pluralStringResource(R.plurals.subtasks_done_summary, subtasks.size, done, subtasks.size)
+    val summary = pluralStringResource(Res.plurals.subtasks_done_summary, subtasks.size, done, subtasks.size)
         .takeIf { subtasks.isNotEmpty() }
-    val toggleLabel = stringResource(if (expanded) R.string.subtasks_hide else R.string.subtasks_show)
-    val stateLabel = stringResource(if (expanded) R.string.subtasks_state_shown else R.string.subtasks_state_hidden)
-    val editLabel = stringResource(R.string.task_edit_placeholder)
-    val addLabel = stringResource(R.string.subtask_add)
+    val toggleLabel = stringResource(if (expanded) Res.string.subtasks_hide else Res.string.subtasks_show)
+    val stateLabel = stringResource(if (expanded) Res.string.subtasks_state_shown else Res.string.subtasks_state_hidden)
+    val editLabel = stringResource(Res.string.task_edit_placeholder)
+    val addLabel = stringResource(Res.string.subtask_add)
     val toggle = { actions.tree.onToggleTree(task.id) }
     EnclyTaskRow(
         title = task.title,

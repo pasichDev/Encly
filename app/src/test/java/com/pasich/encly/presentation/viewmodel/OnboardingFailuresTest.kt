@@ -1,8 +1,12 @@
 package com.pasich.encly.presentation.viewmodel
 
 import androidx.fragment.app.FragmentActivity
-import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_no_picker
+import com.pasich.encly.core.resources.onboarding_error_initialization
+import com.pasich.encly.core.resources.onboarding_error_seed_generation
+import com.pasich.encly.core.resources.onboarding_error_vault_creation
 import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SecurityManager
@@ -65,7 +69,7 @@ class OnboardingFailuresTest {
         val state = vm.uiState.first { !it.isLoading }
 
         assertEquals(OnboardingStep.RECOVERY_INFO, state.step)
-        assertEquals(UiText.of(R.string.onboarding_error_initialization), state.error)
+        assertEquals(UiText.of(Res.string.onboarding_error_initialization), state.error)
         verify(security, never()).configurePin(anyCharArray())
     }
 
@@ -79,7 +83,7 @@ class OnboardingFailuresTest {
 
         vm.completeVerification()
         val failed = vm.uiState.first { !it.isLoading }
-        assertEquals(UiText.of(R.string.onboarding_error_vault_creation), failed.error)
+        assertEquals(UiText.of(Res.string.onboarding_error_vault_creation), failed.error)
         assertEquals(OnboardingStep.VERIFY, failed.step)
 
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
@@ -96,7 +100,7 @@ class OnboardingFailuresTest {
         vm.createPhrase()
 
         assertTrue(vm.uiState.value.words.isEmpty())
-        assertEquals(UiText.of(R.string.onboarding_error_seed_generation), vm.uiState.value.error)
+        assertEquals(UiText.of(Res.string.onboarding_error_seed_generation), vm.uiState.value.error)
     }
 
     @Test
@@ -168,7 +172,7 @@ class OnboardingFailuresTest {
 
         vm.onRestorePickerUnavailable()
 
-        assertEquals(UiText.of(R.string.backup_error_no_picker), vm.uiState.value.restoreFileError)
+        assertEquals(UiText.of(Res.string.backup_error_no_picker), vm.uiState.value.restoreFileError)
     }
 
     @Test

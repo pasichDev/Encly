@@ -2,7 +2,10 @@ package com.pasich.encly.ui.screens
 
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.performClick
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.block_heading_level
+import com.pasich.encly.core.resources.list_item_placeholder
+import com.pasich.encly.core.resources.quote
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -12,7 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class EditorPlaceholdersTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private lateinit var editor: EditNoteViewModel
 
     private fun open(json: String) {
@@ -30,10 +33,10 @@ class EditorPlaceholdersTest : ComposeScreenTest() {
     private fun field(index: Int) = rule.onAllNodes(hasSetTextAction())[index]
 
     private fun hints() = listOf(
-        R.string.list_item_placeholder,
-        R.string.quote,
-        R.string.block_heading_level,
-    ).map { id -> if (id == R.string.block_heading_level) str(id, 1) else str(id) }
+        Res.string.list_item_placeholder,
+        Res.string.quote,
+        Res.string.block_heading_level,
+    ).map { id -> if (id == Res.string.block_heading_level) str(id, 1) else str(id) }
 
     @Test
     fun emptyBlocksShowNoHintUntilTheyAreFocused() {
@@ -48,9 +51,9 @@ class EditorPlaceholdersTest : ComposeScreenTest() {
 
         field(2).performClick()
 
-        waitForText(str(R.string.list_item_placeholder))
-        assertEquals(0, countText(str(R.string.quote)))
-        assertEquals(0, countText(str(R.string.block_heading_level, 1)))
+        waitForText(str(Res.string.list_item_placeholder))
+        assertEquals(0, countText(str(Res.string.quote)))
+        assertEquals(0, countText(str(Res.string.block_heading_level, 1)))
     }
 
     @Test
@@ -58,12 +61,12 @@ class EditorPlaceholdersTest : ComposeScreenTest() {
         open(EMPTY_BLOCKS)
 
         field(3).performClick()
-        waitForText(str(R.string.quote))
-        assertEquals(0, countText(str(R.string.list_item_placeholder)))
+        waitForText(str(Res.string.quote))
+        assertEquals(0, countText(str(Res.string.list_item_placeholder)))
 
         field(4).performClick()
-        waitForText(str(R.string.block_heading_level, 1))
-        waitFor { countText(str(R.string.quote)) == 0 }
+        waitForText(str(Res.string.block_heading_level, 1))
+        waitFor { countText(str(Res.string.quote)) == 0 }
     }
 
     private companion object {

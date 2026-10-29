@@ -1,27 +1,31 @@
 package com.pasich.encly.presentation.dialogs
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.delete
+import com.pasich.encly.core.resources.delete_tag
+import com.pasich.encly.core.resources.delete_tag_desrpt
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RequestDeleteTagsDialog(showDialog: Boolean, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     if (showDialog) {
         EnclyDialog(
-            title = stringResource(R.string.delete_tag),
-            text = stringResource(R.string.delete_tag_desrpt),
+            title = stringResource(Res.string.delete_tag),
+            text = stringResource(Res.string.delete_tag_desrpt),
             onDismissRequest = onDismiss,
             confirm = DialogAction(
-                text = stringResource(R.string.delete),
+                text = stringResource(Res.string.delete),
                 onClick = {
                     onConfirm()
                     onDismiss()
                 },
                 destructive = true,
             ),
-            dismiss = DialogAction(stringResource(R.string.cancel), onDismiss),
+            dismiss = DialogAction(stringResource(Res.string.cancel), onDismiss),
         )
     }
 }

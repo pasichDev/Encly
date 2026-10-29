@@ -8,9 +8,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.home_tasks_none_open
+import com.pasich.encly.core.resources.home_tasks_open
+import com.pasich.encly.core.resources.task_add
+import com.pasich.encly.core.resources.task_filter_all
 import com.pasich.encly.presentation.components.tasks.PriorityValues
 import com.pasich.encly.presentation.designsystem.EnclyCard
 import com.pasich.encly.presentation.designsystem.EnclyCardStyle
@@ -21,6 +23,8 @@ import com.pasich.encly.presentation.viewmodel.TasksViewModel
 import com.pasich.encly.presentation.viewmodel.widgetTasks
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The tasks card on the notes screen (design spec §4.3): "TASKS · N OPEN", a link to all tasks
@@ -53,16 +57,20 @@ fun HomeTaskWidget(
         Row(verticalAlignment = Alignment.CenterVertically) {
             SectionOverline(
                 text = if (noneOpen) {
-                    stringResource(R.string.home_tasks_none_open)
+                    stringResource(Res.string.home_tasks_none_open)
                 } else {
-                    pluralStringResource(R.plurals.home_tasks_open, uiState.activeTasksCount, uiState.activeTasksCount)
+                    pluralStringResource(
+                        Res.plurals.home_tasks_open,
+                        uiState.activeTasksCount,
+                        uiState.activeTasksCount,
+                    )
                 },
                 modifier = Modifier.weight(1f),
             )
             if (noneOpen) {
-                EnclyInlineLink(text = stringResource(R.string.task_add), onClick = onNewTask)
+                EnclyInlineLink(text = stringResource(Res.string.task_add), onClick = onNewTask)
             } else {
-                EnclyInlineLink(text = stringResource(R.string.task_filter_all), onClick = onTasksClick)
+                EnclyInlineLink(text = stringResource(Res.string.task_filter_all), onClick = onTasksClick)
             }
         }
         if (!noneOpen) {

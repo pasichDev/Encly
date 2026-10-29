@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.screen
 
 import androidx.activity.compose.BackHandler
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Animatable
@@ -34,11 +33,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.pin_change_bar_title
+import com.pasich.encly.core.resources.pin_change_confirm_subtitle
+import com.pasich.encly.core.resources.pin_change_confirm_title
+import com.pasich.encly.core.resources.pin_change_current_subtitle
+import com.pasich.encly.core.resources.pin_change_current_title
+import com.pasich.encly.core.resources.pin_change_new_subtitle
+import com.pasich.encly.core.resources.pin_changed
+import com.pasich.encly.core.resources.pin_create_title
+import com.pasich.encly.core.resources.pin_current_wrong
+import com.pasich.encly.core.resources.pin_in_use
+import com.pasich.encly.core.resources.pin_mismatch_retry
+import com.pasich.encly.core.resources.pin_reset_subtitle
+import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
@@ -56,6 +67,8 @@ import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private const val PIN_SUCCESS_DELAY_MS = 1_000L
 private const val SUCCESS_SCALE_MS = 500
@@ -78,7 +91,7 @@ private class PinChangeState(val isReset: Boolean) {
 
     /** The digits of the current step. */
     val input = PinBuffer()
-    var errorText by mutableStateOf<Int?>(null)
+    var errorText by mutableStateOf<StringResource?>(null)
     var animationState by mutableStateOf(PinAnimationState.Entering)
     var lockoutSeconds by mutableLongStateOf(0L)
 
@@ -120,13 +133,13 @@ private class PinChangeState(val isReset: Boolean) {
             viewModel.activationPinAuth(pin) { result ->
                 when (result) {
                     PinChange.SET -> animationState = PinAnimationState.SuccessAnimation
-                    PinChange.IN_USE -> restartNewPin(R.string.pin_in_use)
-                    PinChange.FAILED -> restartNewPin(R.string.pin_update_failed)
+                    PinChange.IN_USE -> restartNewPin(Res.string.pin_in_use)
+                    PinChange.FAILED -> restartNewPin(Res.string.pin_update_failed)
                 }
             }
         } else {
             SensitiveDataCleaner.clear(pin)
-            restartNewPin(R.string.pin_mismatch_retry)
+            restartNewPin(Res.string.pin_mismatch_retry)
         }
     }
 
@@ -150,13 +163,13 @@ private class PinChangeState(val isReset: Boolean) {
             }
 
             else -> {
-                errorText = R.string.pin_current_wrong
+                errorText = Res.string.pin_current_wrong
                 shakeKey++
             }
         }
     }
 
-    private fun restartNewPin(@StringRes error: Int) {
+    private fun restartNewPin(error: StringResource) {
         errorText = error
         shakeKey++
         firstPin?.let(SensitiveDataCleaner::clear)
@@ -200,7 +213,7 @@ fun PinCodeConfigScreen(
             // From Settings there is a way back; a forgotten-PIN reset must end with a new PIN.
             if (!pinState.isReset) {
                 EnclyTopBar(
-                    title = stringResource(R.string.pin_change_bar_title),
+                    title = stringResource(Res.string.pin_change_bar_title),
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -250,27 +263,25 @@ private fun pinStepText(step: Int, state: PinChangeState): PinStepText {
     val lockout = state.lockoutSeconds.takeIf { it > 0L && step == 0 }?.let { pinLockoutText(it) }
     return PinStepText(
         title = pinStepTitle(step),
-        subtitle = if (state.isReset && step == 1) R.string.pin_reset_subtitle else pinStepSubtitle(step),
+        subtitle = if (state.isReset && step == 1) Res.string.pin_reset_subtitle else pinStepSubtitle(step),
         message = lockout ?: state.errorText?.let { stringResource(it) },
     )
 }
 
-@StringRes
-private fun pinStepTitle(step: Int): Int = when (step) {
-    0 -> R.string.pin_change_current_title
-    1 -> R.string.pin_create_title
-    else -> R.string.pin_change_confirm_title
+private fun pinStepTitle(step: Int): StringResource = when (step) {
+    0 -> Res.string.pin_change_current_title
+    1 -> Res.string.pin_create_title
+    else -> Res.string.pin_change_confirm_title
 }
 
-@StringRes
-private fun pinStepSubtitle(step: Int): Int = when (step) {
-    0 -> R.string.pin_change_current_subtitle
-    1 -> R.string.pin_change_new_subtitle
-    else -> R.string.pin_change_confirm_subtitle
+private fun pinStepSubtitle(step: Int): StringResource = when (step) {
+    0 -> Res.string.pin_change_current_subtitle
+    1 -> Res.string.pin_change_new_subtitle
+    else -> Res.string.pin_change_confirm_subtitle
 }
 
 /** What a PIN step shows: its title and subtitle, and an error or lockout message. */
-data class PinStepText(@param:StringRes val title: Int, @param:StringRes val subtitle: Int, val message: String?)
+data class PinStepText(val title: StringResource, val subtitle: StringResource, val message: String?)
 
 /** How the keypad of a PIN step behaves: off during a lockout, the shake, a compact top. */
 private class PinEntryState(val enabled: Boolean, val shakeKey: Int, val compact: Boolean)
@@ -308,7 +319,7 @@ private fun MainPinContent(
 @Composable
 private fun SuccessAnimation() {
     val scale = remember { Animatable(0f) }
-    val description = stringResource(R.string.pin_changed)
+    val description = stringResource(Res.string.pin_changed)
 
     LaunchedEffect(Unit) {
         scale.animateTo(

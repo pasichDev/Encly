@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.screen.settings
 
 import androidx.activity.compose.BackHandler
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,8 +19,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.pin_change_current_title
+import com.pasich.encly.core.resources.pin_current_wrong
+import com.pasich.encly.core.resources.pin_mismatch_retry
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
@@ -33,6 +34,8 @@ import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 internal enum class PinStep { VERIFY, OPTIONS, NEW, CONFIRM }
 
@@ -48,7 +51,7 @@ internal class PinFlowState {
     private var firstPin: CharArray? = null
 
     val input = PinBuffer()
-    var errorText by mutableStateOf<Int?>(null)
+    var errorText by mutableStateOf<StringResource?>(null)
     var lockoutSeconds by mutableLongStateOf(0L)
 
     /** Changes on every wrong entry, so the dots shake again. */
@@ -57,7 +60,7 @@ internal class PinFlowState {
     val snackbarHostState = SnackbarHostState()
 
     /** A finished action to announce on the options page. */
-    var message by mutableStateOf<Int?>(null)
+    var message by mutableStateOf<StringResource?>(null)
 
     val keysEnabled: Boolean get() = !(step == PinStep.VERIFY && lockoutSeconds > 0L)
 
@@ -91,13 +94,13 @@ internal class PinFlowState {
     }
 
     /** The new PIN was saved: announce [text] on the options page. */
-    fun saved(@StringRes text: Int) {
+    fun saved(text: StringResource) {
         message = text
         step = PinStep.OPTIONS
     }
 
     /** The new PIN was refused: ask for another, with [error]. */
-    fun restartNew(@StringRes error: Int) {
+    fun restartNew(error: StringResource) {
         errorText = error
         shakeKey++
         step = PinStep.NEW
@@ -132,7 +135,7 @@ internal class PinFlowState {
             }
 
             else -> {
-                errorText = R.string.pin_current_wrong
+                errorText = Res.string.pin_current_wrong
                 shakeKey++
             }
         }
@@ -145,7 +148,7 @@ internal class PinFlowState {
         first?.let(SensitiveDataCleaner::clear)
         if (!matches) {
             SensitiveDataCleaner.clear(pin)
-            restartNew(R.string.pin_mismatch_retry)
+            restartNew(Res.string.pin_mismatch_retry)
             return
         }
         save(pin)
@@ -162,12 +165,12 @@ internal class PinFlowActions(
 
 /** The strings of a PIN flow's steps. */
 internal class PinFlowTexts(
-    @param:StringRes val title: Int,
-    @param:StringRes val currentSubtitle: Int,
-    @param:StringRes val newTitle: Int,
-    @param:StringRes val newSubtitle: Int,
-    @param:StringRes val confirmTitle: Int,
-    @param:StringRes val confirmSubtitle: Int,
+    val title: StringResource,
+    val currentSubtitle: StringResource,
+    val newTitle: StringResource,
+    val newSubtitle: StringResource,
+    val confirmTitle: StringResource,
+    val confirmSubtitle: StringResource,
 )
 
 /**
@@ -210,7 +213,7 @@ internal fun PinFlowScaffold(
 
 /** Shows [message] once as a snackbar; [onShow] clears it. */
 @Composable
-private fun PinFlowMessageEffect(@StringRes message: Int?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
+private fun PinFlowMessageEffect(message: StringResource?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
     val messageText = message?.let { stringResource(it) }
     val currentOnShow by rememberUpdatedState(onShow)
     // Clearing the message restarts this effect, which must not cancel the snackbar it opened.
@@ -223,7 +226,7 @@ private fun PinFlowMessageEffect(@StringRes message: Int?, snackbarHostState: Sn
 }
 
 /** A PIN step's title and subtitle, and an error or lockout message. */
-private class PinStepText(@param:StringRes val title: Int, @param:StringRes val subtitle: Int, val message: String?)
+private class PinStepText(val title: StringResource, val subtitle: StringResource, val message: String?)
 
 @Composable
 private fun pinFlowStepText(state: PinFlowState, texts: PinFlowTexts): PinStepText {
@@ -232,7 +235,7 @@ private fun pinFlowStepText(state: PinFlowState, texts: PinFlowTexts): PinStepTe
         ?.let { pinLockoutText(it) }
     val error = state.errorText?.let { stringResource(it) }
     return when (state.step) {
-        PinStep.VERIFY -> PinStepText(R.string.pin_change_current_title, texts.currentSubtitle, lockout ?: error)
+        PinStep.VERIFY -> PinStepText(Res.string.pin_change_current_title, texts.currentSubtitle, lockout ?: error)
         PinStep.CONFIRM -> PinStepText(texts.confirmTitle, texts.confirmSubtitle, error)
         else -> PinStepText(texts.newTitle, texts.newSubtitle, error)
     }

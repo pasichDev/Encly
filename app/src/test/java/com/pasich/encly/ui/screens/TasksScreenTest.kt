@@ -23,7 +23,32 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.add
+import com.pasich.encly.core.resources.priority_high
+import com.pasich.encly.core.resources.priority_select_title
+import com.pasich.encly.core.resources.save
+import com.pasich.encly.core.resources.subtask_add
+import com.pasich.encly.core.resources.subtask_first_step
+import com.pasich.encly.core.resources.subtask_next_step
+import com.pasich.encly.core.resources.subtask_placeholder
+import com.pasich.encly.core.resources.subtasks_all_done
+import com.pasich.encly.core.resources.subtasks_done_summary
+import com.pasich.encly.core.resources.subtasks_hide
+import com.pasich.encly.core.resources.subtasks_show
+import com.pasich.encly.core.resources.subtasks_state_shown
+import com.pasich.encly.core.resources.tag_drag_handle
+import com.pasich.encly.core.resources.tag_move_down
+import com.pasich.encly.core.resources.tag_move_up
+import com.pasich.encly.core.resources.task_add
+import com.pasich.encly.core.resources.task_all_done_title
+import com.pasich.encly.core.resources.task_delete
+import com.pasich.encly.core.resources.task_deleted
+import com.pasich.encly.core.resources.task_done_section
+import com.pasich.encly.core.resources.task_edit_placeholder
+import com.pasich.encly.core.resources.task_empty_desc
+import com.pasich.encly.core.resources.task_empty_title
+import com.pasich.encly.core.resources.undo
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.screen.TasksScreen
@@ -32,7 +57,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TasksScreenTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
 
     private lateinit var back: OnBackPressedDispatcher
 
@@ -52,8 +77,8 @@ class TasksScreenTest : ComposeScreenTest() {
     fun noTasksShowsTheEmptyStateWithAnAction() {
         show()
 
-        waitForText(str(R.string.task_empty_title))
-        rule.onNodeWithText(str(R.string.task_empty_desc)).assertIsDisplayed()
+        waitForText(str(Res.string.task_empty_title))
+        rule.onNodeWithText(str(Res.string.task_empty_desc)).assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 3)
     }
 
@@ -63,7 +88,7 @@ class TasksScreenTest : ComposeScreenTest() {
         show()
 
         waitForText("Buy milk")
-        assertTrue(countText(str(R.string.priority_high)) >= 1)
+        assertTrue(countText(str(Res.string.priority_high)) >= 1)
         assertBodyNotEmpty()
     }
 
@@ -76,7 +101,7 @@ class TasksScreenTest : ComposeScreenTest() {
         show()
 
         waitForText("Open 0")
-        scrollToText(str(R.string.task_done_section, 1), ignoreCase = true)
+        scrollToText(str(Res.string.task_done_section, 1), ignoreCase = true)
         rule.onNodeWithText("Finished").assertIsDisplayed()
         assertBodyNotEmpty(minTexts = 6)
     }
@@ -86,31 +111,31 @@ class TasksScreenTest : ComposeScreenTest() {
         app.withTasks(Task(id = 1, title = "Finished", isCompleted = true, completedDate = 1L))
         show()
 
-        waitForText(str(R.string.task_all_done_title))
+        waitForText(str(Res.string.task_all_done_title))
         rule.onNodeWithText("Finished").assertIsDisplayed()
     }
 
     @Test
     fun aNewTaskIsAddedFromTheSheet() {
         show()
-        waitForText(str(R.string.task_empty_title))
+        waitForText(str(Res.string.task_empty_title))
 
-        rule.onAllNodesWithText(str(R.string.task_add)).onFirst().performClick()
+        rule.onAllNodesWithText(str(Res.string.task_add)).onFirst().performClick()
         rule.waitForIdle()
-        rule.onNodeWithText(str(R.string.add)).assertIsNotEnabled()
+        rule.onNodeWithText(str(Res.string.add)).assertIsNotEnabled()
         rule.onAllNodes(hasSetTextAction())[0].performTextInput("Water the plants")
-        rule.onNodeWithText(str(R.string.add)).performClick()
+        rule.onNodeWithText(str(Res.string.add)).performClick()
 
         waitFor { app.tasks.tasks.value.any { it.title == "Water the plants" } }
         waitForText("Water the plants")
-        assertTrue(rule.onAllNodesWithText(str(R.string.add)).fetchSemanticsNodes().isEmpty())
+        assertTrue(rule.onAllNodesWithText(str(Res.string.add)).fetchSemanticsNodes().isEmpty())
     }
 
     @Test
     fun theHomeCardsNewTaskLinkOpensTheSheetOnArrival() {
         show(openNewTask = true)
 
-        waitForText(str(R.string.priority_select_title), ignoreCase = true)
+        waitForText(str(Res.string.priority_select_title), ignoreCase = true)
         assertTrue(rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isNotEmpty())
     }
 
@@ -123,7 +148,7 @@ class TasksScreenTest : ComposeScreenTest() {
         rule.onNode(isTaskCheckbox).performClick()
 
         waitFor { app.tasks.tasks.value.single().isCompleted }
-        waitForText(str(R.string.task_done_section, 1), ignoreCase = true)
+        waitForText(str(Res.string.task_done_section, 1), ignoreCase = true)
         assertEquals(
             ToggleableState.On,
             rule.onNode(isTaskCheckbox).fetchSemanticsNode().config[SemanticsProperties.ToggleableState],
@@ -136,13 +161,13 @@ class TasksScreenTest : ComposeScreenTest() {
         show()
         waitForText("Call mum")
 
-        rule.onNodeWithContentDescription(str(R.string.task_edit_placeholder)).performClick()
-        waitForText(str(R.string.task_delete))
-        rule.onNodeWithText(str(R.string.task_delete)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.task_edit_placeholder)).performClick()
+        waitForText(str(Res.string.task_delete))
+        rule.onNodeWithText(str(Res.string.task_delete)).performClick()
 
-        waitForText(str(R.string.task_deleted))
+        waitForText(str(Res.string.task_deleted))
         assertTrue(app.tasks.tasks.value.isEmpty())
-        rule.onNodeWithText(str(R.string.undo)).performClick()
+        rule.onNodeWithText(str(Res.string.undo)).performClick()
         waitFor { app.tasks.tasks.value.singleOrNull()?.title == "Call mum" }
     }
 
@@ -157,16 +182,16 @@ class TasksScreenTest : ComposeScreenTest() {
         assertEquals(0, countText("Milk"))
         assertEquals(0, countText("Bread"))
         assertEquals(0, countText("/3", substring = true))
-        assertEquals(0, countText(str(R.string.subtask_placeholder)))
+        assertEquals(0, countText(str(Res.string.subtask_placeholder)))
 
-        rule.onNodeWithContentDescription(str(R.string.subtask_next_step, "Eggs")).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.subtask_next_step, "Eggs")).performClick()
 
         waitFor { app.tasks.subtasks.value.single { it.id == 11L }.isCompleted }
         waitForText("Bread")
         waitFor { countText("Eggs") == 0 }
         // Saved in place: no sheet opened, and no completion offer while one is still open.
-        assertTrue(rule.onAllNodesWithText(str(R.string.save)).fetchSemanticsNodes().isEmpty())
-        assertEquals(0, countText(str(R.string.subtasks_all_done)))
+        assertTrue(rule.onAllNodesWithText(str(Res.string.save)).fetchSemanticsNodes().isEmpty())
+        assertEquals(0, countText(str(Res.string.subtasks_all_done)))
     }
 
     @Test
@@ -175,10 +200,10 @@ class TasksScreenTest : ComposeScreenTest() {
         show()
         waitForText("Eggs")
 
-        rule.onNodeWithContentDescription(str(R.string.subtask_next_step, "Eggs")).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.subtask_next_step, "Eggs")).performClick()
 
         waitFor { app.tasks.subtasks.value.all { it.isCompleted } }
-        waitForText(str(R.string.subtasks_all_done))
+        waitForText(str(Res.string.subtasks_all_done))
         rule.onNodeWithText("Eggs").assertIsDisplayed()
         assertEquals(0, countText("Milk"))
         assertTrue(!app.tasks.tasks.value.single().isCompleted)
@@ -189,12 +214,12 @@ class TasksScreenTest : ComposeScreenTest() {
         app.withTasks(Task(id = 1, title = "Call mum"))
         show()
         waitForText("Call mum")
-        assertEquals(0, countText(str(R.string.subtask_first_step)))
+        assertEquals(0, countText(str(Res.string.subtask_first_step)))
         assertEquals(1, rule.onAllNodes(isTaskCheckbox).fetchSemanticsNodes().size)
 
         rule.onNodeWithText("Call mum").performClick()
 
-        waitForText(str(R.string.subtask_first_step))
+        waitForText(str(Res.string.subtask_first_step))
         // The task row and the add leaf: no sub-task checkboxes.
         assertEquals(1, rule.onAllNodes(isTaskCheckbox).fetchSemanticsNodes().size)
     }
@@ -209,7 +234,7 @@ class TasksScreenTest : ComposeScreenTest() {
 
         waitForText("Milk")
         rule.onNodeWithText("Bread").assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.subtask_placeholder)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.subtask_placeholder)).assertIsDisplayed()
 
         pressBack()
 
@@ -225,10 +250,10 @@ class TasksScreenTest : ComposeScreenTest() {
         show()
         waitForText("Eggs")
 
-        rule.onNodeWithContentDescription(str(R.string.subtasks_show)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.subtasks_show)).performClick()
 
         waitForText("Milk")
-        rule.onNodeWithContentDescription(str(R.string.subtasks_hide)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.subtasks_hide)).performClick()
         waitFor { countText("Milk") == 0 }
     }
 
@@ -240,19 +265,19 @@ class TasksScreenTest : ComposeScreenTest() {
         val row = rule.onNodeWithText("Shop")
         val config = row.fetchSemanticsNode().config
 
-        val summary = context.resources.getQuantityString(R.plurals.subtasks_done_summary, 2, 1, 2)
+        val summary = plural(Res.plurals.subtasks_done_summary, 2, 1, 2)
         assertTrue(config[SemanticsProperties.StateDescription].startsWith(summary))
-        assertEquals(str(R.string.subtasks_show), config[SemanticsActions.OnClick].label)
+        assertEquals(str(Res.string.subtasks_show), config[SemanticsActions.OnClick].label)
         assertEquals(
-            listOf(str(R.string.subtasks_show), str(R.string.task_edit_placeholder), str(R.string.subtask_add)),
+            listOf(str(Res.string.subtasks_show), str(Res.string.task_edit_placeholder), str(Res.string.subtask_add)),
             config[SemanticsActions.CustomActions].map { it.label },
         )
         row.performClick()
         waitFor {
             row.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription)
-                ?.endsWith(str(R.string.subtasks_state_shown)) == true
+                ?.endsWith(str(Res.string.subtasks_state_shown)) == true
         }
-        assertEquals(str(R.string.subtasks_hide), row.fetchSemanticsNode().config[SemanticsActions.OnClick].label)
+        assertEquals(str(Res.string.subtasks_hide), row.fetchSemanticsNode().config[SemanticsActions.OnClick].label)
     }
 
     @Test
@@ -261,9 +286,9 @@ class TasksScreenTest : ComposeScreenTest() {
         show()
         waitForText("Call mum")
         rule.onNodeWithText("Call mum").performClick()
-        waitForText(str(R.string.subtask_first_step))
+        waitForText(str(Res.string.subtask_first_step))
 
-        rule.onNodeWithText(str(R.string.subtask_first_step)).performClick()
+        rule.onNodeWithText(str(Res.string.subtask_first_step)).performClick()
         rule.waitForIdle()
         val field = rule.onNode(hasSetTextAction())
         field.assertIsFocused()
@@ -274,14 +299,14 @@ class TasksScreenTest : ComposeScreenTest() {
         waitForText("Birthday")
         // Still open, empty and focused, for the next one; the FAB is out of the way meanwhile.
         rule.onNode(hasSetTextAction()).assertIsFocused()
-        assertEquals(0, countText(str(R.string.task_add)))
+        assertEquals(0, countText(str(Res.string.task_add)))
 
         // Back closes the field first, and only then folds the tree.
         pressBack()
         waitFor { rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isEmpty() }
-        rule.onNodeWithText(str(R.string.subtask_placeholder)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.subtask_placeholder)).assertIsDisplayed()
         pressBack()
-        waitFor { countText(str(R.string.subtask_placeholder)) == 0 }
+        waitFor { countText(str(Res.string.subtask_placeholder)) == 0 }
         // Folded, it now shows its next step like any task with sub-tasks.
         rule.onNodeWithText("Birthday").assertIsDisplayed()
     }
@@ -307,9 +332,9 @@ class TasksScreenTest : ComposeScreenTest() {
         show()
         waitForText("Shop")
 
-        rule.onNodeWithContentDescription(str(R.string.task_edit_placeholder)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.task_edit_placeholder)).performClick()
 
-        waitForText(str(R.string.task_delete))
+        waitForText(str(Res.string.task_delete))
         // The sheet with the task's checklist.
         waitForText("Milk")
     }
@@ -324,8 +349,8 @@ class TasksScreenTest : ComposeScreenTest() {
 
         val milk = rule.onNode(hasText("Milk") and hasClickAction())
         val eggs = rule.onNode(hasText("Eggs") and hasClickAction())
-        assertEquals(listOf(str(R.string.tag_move_down)), customActions(milk))
-        assertEquals(listOf(str(R.string.tag_move_up)), customActions(eggs))
+        assertEquals(listOf(str(Res.string.tag_move_down)), customActions(milk))
+        assertEquals(listOf(str(Res.string.tag_move_up)), customActions(eggs))
 
         // And they move the row.
         rule.runOnIdle {
@@ -339,13 +364,13 @@ class TasksScreenTest : ComposeScreenTest() {
         withShoppingList()
         show()
         waitForText("Shop")
-        rule.onNodeWithContentDescription(str(R.string.task_edit_placeholder)).performClick()
-        waitForText(str(R.string.task_delete))
+        rule.onNodeWithContentDescription(str(Res.string.task_edit_placeholder)).performClick()
+        waitForText(str(Res.string.task_delete))
         waitForText("Milk")
 
-        val handles = rule.onAllNodesWithContentDescription(str(R.string.tag_drag_handle))
-        assertEquals(listOf(str(R.string.tag_move_down)), customActions(handles[0]))
-        assertEquals(listOf(str(R.string.tag_move_up)), customActions(handles[1]))
+        val handles = rule.onAllNodesWithContentDescription(str(Res.string.tag_drag_handle))
+        assertEquals(listOf(str(Res.string.tag_move_down)), customActions(handles[0]))
+        assertEquals(listOf(str(Res.string.tag_move_up)), customActions(handles[1]))
     }
 
     private fun customActions(node: SemanticsNodeInteraction): List<String> =

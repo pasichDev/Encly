@@ -27,19 +27,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.back
+import com.pasich.encly.core.resources.close
+import com.pasich.encly.core.resources.more_options
+import com.pasich.encly.core.resources.onboarding_step_of
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 private const val PROGRESS_ANIMATION_MS = 250
 
 /** The back icon button every bar uses. */
 @Composable
 fun EnclyBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val label = stringResource(R.string.back)
+    val label = stringResource(Res.string.back)
     EnclyTooltip(label) {
         IconButton(onClick = onClick, modifier = modifier) {
             Icon(EnclyIcons.Back, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
@@ -50,7 +54,7 @@ fun EnclyBackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 /** A close (×) icon button: leaves a mode (a selection) rather than the screen. */
 @Composable
 fun EnclyCloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val label = stringResource(R.string.close)
+    val label = stringResource(Res.string.close)
     EnclyTooltip(label) {
         IconButton(onClick = onClick, modifier = modifier) {
             Icon(EnclyIcons.Close, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
@@ -70,7 +74,7 @@ fun EnclyOverflowMenu(items: List<OverflowAction>, modifier: Modifier = Modifier
     if (items.isEmpty()) return
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
-        val label = stringResource(R.string.more_options)
+        val label = stringResource(Res.string.more_options)
         EnclyTooltip(label) {
             IconButton(onClick = { expanded = true }) {
                 Icon(EnclyIcons.More, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
@@ -174,7 +178,7 @@ fun EnclyProgressHeader(step: Int, totalSteps: Int, modifier: Modifier = Modifie
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = stringResource(R.string.onboarding_step_of, step, totalSteps).uppercase(),
+                text = stringResource(Res.string.onboarding_step_of, step, totalSteps).uppercase(),
                 style = EnclyTheme.typography.stepLabel,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

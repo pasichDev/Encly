@@ -23,7 +23,49 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.text.TextRange
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.back
+import com.pasich.encly.core.resources.backup_reauth_title
+import com.pasich.encly.core.resources.block_bulleted_list
+import com.pasich.encly.core.resources.block_checklist
+import com.pasich.encly.core.resources.block_heading
+import com.pasich.encly.core.resources.block_heading_level
+import com.pasich.encly.core.resources.block_link
+import com.pasich.encly.core.resources.block_more_tools
+import com.pasich.encly.core.resources.block_move_down
+import com.pasich.encly.core.resources.block_move_up
+import com.pasich.encly.core.resources.block_numbered_list
+import com.pasich.encly.core.resources.block_separator
+import com.pasich.encly.core.resources.checklist_lock
+import com.pasich.encly.core.resources.checklist_unlock
+import com.pasich.encly.core.resources.close
+import com.pasich.encly.core.resources.create_new_tag
+import com.pasich.encly.core.resources.delete
+import com.pasich.encly.core.resources.delete_from_trash
+import com.pasich.encly.core.resources.dialog_title
+import com.pasich.encly.core.resources.duplicate
+import com.pasich.encly.core.resources.edit_tags
+import com.pasich.encly.core.resources.editor_lock
+import com.pasich.encly.core.resources.markdown_export
+import com.pasich.encly.core.resources.markdown_export_warning_title
+import com.pasich.encly.core.resources.more_options
+import com.pasich.encly.core.resources.note_archive
+import com.pasich.encly.core.resources.note_color_teal
+import com.pasich.encly.core.resources.note_color_title
+import com.pasich.encly.core.resources.note_discard_all_changes
+import com.pasich.encly.core.resources.note_discard_confirm_message
+import com.pasich.encly.core.resources.note_discard_confirm_title
+import com.pasich.encly.core.resources.note_load_failed
+import com.pasich.encly.core.resources.note_pin
+import com.pasich.encly.core.resources.note_text_use_default
+import com.pasich.encly.core.resources.note_title_placeholder
+import com.pasich.encly.core.resources.note_unarchive
+import com.pasich.encly.core.resources.quote
+import com.pasich.encly.core.resources.redo
+import com.pasich.encly.core.resources.restore
+import com.pasich.encly.core.resources.tags_manage
+import com.pasich.encly.core.resources.text
+import com.pasich.encly.core.resources.undo
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
@@ -34,13 +76,14 @@ import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.compose.resources.StringResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.verifyNoInteractions
 
 class EditNoteScreenTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private lateinit var editor: EditNoteViewModel
 
     /** The notes list with the editor opened on top of it, as from a tap on a card. */
@@ -66,34 +109,34 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
     private fun field(index: Int) = rule.onAllNodes(hasSetTextAction())[index]
 
-    private fun tool(id: Int) = rule.onNode(hasContentDescription(str(id)) and hasClickAction())
+    private fun tool(id: StringResource) = rule.onNode(hasContentDescription(str(id)) and hasClickAction())
 
     private fun hasTool(label: String) =
         rule.onAllNodes(hasContentDescription(label) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
 
     private fun moreToolsToggles() =
-        rule.onAllNodes(hasContentDescription(str(R.string.block_more_tools))).fetchSemanticsNodes()
+        rule.onAllNodes(hasContentDescription(str(Res.string.block_more_tools))).fetchSemanticsNodes()
 
-    private fun back() = rule.onNodeWithContentDescription(str(R.string.back)).performClick()
+    private fun back() = rule.onNodeWithContentDescription(str(Res.string.back)).performClick()
 
     @Test
     fun aNewNoteShowsTheTitleAParagraphAndTheToolbar() {
         open()
 
-        rule.onNodeWithText(str(R.string.note_title_placeholder), useUnmergedTree = true).assertExists()
+        rule.onNodeWithText(str(Res.string.note_title_placeholder), useUnmergedTree = true).assertExists()
         listOf(
-            R.string.block_more_tools,
-            R.string.block_heading,
-            R.string.block_checklist,
-            R.string.block_bulleted_list,
-            R.string.block_numbered_list,
-            R.string.quote,
-            R.string.undo,
-            R.string.redo,
+            Res.string.block_more_tools,
+            Res.string.block_heading,
+            Res.string.block_checklist,
+            Res.string.block_bulleted_list,
+            Res.string.block_numbered_list,
+            Res.string.quote,
+            Res.string.undo,
+            Res.string.redo,
         ).forEach { tool(it).assertExists() }
         assertTrue(rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size >= 2)
-        rule.onNodeWithContentDescription(str(R.string.edit_tags)).assertExists()
-        rule.onNodeWithContentDescription(str(R.string.editor_lock)).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.edit_tags)).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.editor_lock)).assertExists()
     }
 
     @Test
@@ -126,7 +169,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         open(NOTE_ID)
 
         // Both taps land before the first save finishes, as a fast double tap does.
-        val tap = rule.onNodeWithContentDescription(str(R.string.back)).fetchSemanticsNode()
+        val tap = rule.onNodeWithContentDescription(str(Res.string.back)).fetchSemanticsNode()
             .config[SemanticsActions.OnClick].action
         rule.runOnUiThread {
             tap?.invoke()
@@ -157,7 +200,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         open(NOTE_ID)
         field(1).performClick()
 
-        tool(R.string.block_checklist).performClick()
+        tool(Res.string.block_checklist).performClick()
 
         waitFor { editor.blocks.first() is Block.ListBlock }
         assertEquals(BlockType.LIST_CHECK, (editor.blocks.first() as Block.ListBlock).blockType)
@@ -192,15 +235,15 @@ class EditNoteScreenTest : ComposeScreenTest() {
         )
         open(NOTE_ID)
         field(1).performClick()
-        tool(R.string.block_more_tools).performClick()
-        waitFor { hasTool(str(R.string.checklist_lock)) }
+        tool(Res.string.block_more_tools).performClick()
+        waitFor { hasTool(str(Res.string.checklist_lock)) }
 
         // The submenu scrolls sideways; the lock is past the edge of a phone-wide row.
-        tool(R.string.checklist_lock).performScrollTo().performClick()
+        tool(Res.string.checklist_lock).performScrollTo().performClick()
 
         val list = editor.blocks.first() as Block.ListBlock
         waitFor { list.locked.value }
-        waitFor { hasTool(str(R.string.checklist_unlock)) }
+        waitFor { hasTool(str(Res.string.checklist_unlock)) }
         rule.onNode(isCheckbox and hasContentDescription("milk")).performClick()
         waitFor { list.items.value.single().isCheck }
         assertEquals(
@@ -217,19 +260,19 @@ class EditNoteScreenTest : ComposeScreenTest() {
         )
         open(NOTE_ID)
         field(1).performClick()
-        tool(R.string.block_more_tools).performClick()
-        waitFor { hasTool(str(R.string.checklist_lock)) }
-        tool(R.string.checklist_lock).performScrollTo().performClick()
+        tool(Res.string.block_more_tools).performClick()
+        waitFor { hasTool(str(Res.string.checklist_lock)) }
+        tool(Res.string.checklist_lock).performScrollTo().performClick()
         val list = editor.blocks.first() as Block.ListBlock
         waitFor { list.locked.value }
         rule.onNode(hasText("after") and hasSetTextAction()).performClick()
-        waitFor { !hasTool(str(R.string.checklist_unlock)) }
+        waitFor { !hasTool(str(Res.string.checklist_unlock)) }
 
         // A tap on the locked list makes it the block the toolbar acts on again.
         rule.onNode(isCheckbox and hasContentDescription("milk")).performClick()
 
-        waitFor { hasTool(str(R.string.checklist_unlock)) }
-        tool(R.string.checklist_unlock).performScrollTo().performClick()
+        waitFor { hasTool(str(Res.string.checklist_unlock)) }
+        tool(Res.string.checklist_unlock).performScrollTo().performClick()
         waitFor { !list.locked.value }
     }
 
@@ -239,7 +282,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         open(NOTE_ID)
         field(1).performClick()
 
-        tool(R.string.block_heading).performClick()
+        tool(Res.string.block_heading).performClick()
 
         waitFor { editor.blocks.first() is Block.HBlock }
         rule.onNodeWithText("Plan").assertExists()
@@ -249,19 +292,19 @@ class EditNoteScreenTest : ComposeScreenTest() {
     fun addBlockOpensTheSecondRowAndCloseReturns() {
         open()
 
-        tool(R.string.block_more_tools).performClick()
+        tool(Res.string.block_more_tools).performClick()
 
-        val second = (1..4).map { str(R.string.block_heading_level, it) } +
+        val second = (1..4).map { str(Res.string.block_heading_level, it) } +
             listOf(
-                R.string.text,
-                R.string.block_link,
-                R.string.block_separator,
-                R.string.block_move_up,
-                R.string.block_move_down,
+                Res.string.text,
+                Res.string.block_link,
+                Res.string.block_separator,
+                Res.string.block_move_up,
+                Res.string.block_move_down,
             ).map(::str)
         second.forEach { label -> waitFor { hasTool(label) } }
-        tool(R.string.close).performClick()
-        waitFor { hasTool(str(R.string.block_checklist)) }
+        tool(Res.string.close).performClick()
+        waitFor { hasTool(str(Res.string.block_checklist)) }
     }
 
     @Test
@@ -269,10 +312,10 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("Plan"))
         open(NOTE_ID)
         field(1).performClick()
-        tool(R.string.block_more_tools).performClick()
-        waitFor { hasTool(str(R.string.block_heading_level, 3)) }
+        tool(Res.string.block_more_tools).performClick()
+        waitFor { hasTool(str(Res.string.block_heading_level, 3)) }
 
-        rule.onNode(hasContentDescription(str(R.string.block_heading_level, 3)) and hasClickAction()).performClick()
+        rule.onNode(hasContentDescription(str(Res.string.block_heading_level, 3)) and hasClickAction()).performClick()
 
         waitFor { (editor.blocks.first() as? Block.HBlock)?.blockType == BlockType.H3 }
     }
@@ -282,10 +325,10 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("above"))
         open(NOTE_ID)
         field(1).performClick()
-        tool(R.string.block_more_tools).performClick()
-        waitFor { hasTool(str(R.string.block_separator)) }
+        tool(Res.string.block_more_tools).performClick()
+        waitFor { hasTool(str(Res.string.block_separator)) }
 
-        tool(R.string.block_separator).performClick()
+        tool(Res.string.block_separator).performClick()
 
         waitFor { editor.blocks.any { it is Block.SeparatorBlock } }
     }
@@ -295,7 +338,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("secret plan"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.editor_lock)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.editor_lock)).performClick()
 
         waitFor { moreToolsToggles().isEmpty() }
         rule.onNodeWithText("secret plan").assertExists()
@@ -307,8 +350,8 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("old"))
         open(NOTE_ID, readTrashOnly = true)
 
-        rule.onNodeWithText(str(R.string.restore)).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.delete_from_trash)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.restore)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.delete_from_trash)).assertIsDisplayed()
         assertEquals(0, moreToolsToggles().size)
         rule.onNodeWithText("old").assertExists()
     }
@@ -318,9 +361,9 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("old"))
         open(NOTE_ID, readTrashOnly = true)
 
-        rule.onNodeWithText(str(R.string.delete_from_trash)).performClick()
+        rule.onNodeWithText(str(Res.string.delete_from_trash)).performClick()
 
-        waitForText(str(R.string.dialog_title))
+        waitForText(str(Res.string.dialog_title))
     }
 
     @Test
@@ -328,11 +371,11 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
 
-        waitForText(str(R.string.duplicate))
-        rule.onNodeWithText(str(R.string.note_discard_all_changes)).assertExists()
-        rule.onNodeWithText(str(R.string.delete)).assertExists()
+        waitForText(str(Res.string.duplicate))
+        rule.onNodeWithText(str(Res.string.note_discard_all_changes)).assertExists()
+        rule.onNodeWithText(str(Res.string.delete)).assertExists()
     }
 
     @Test
@@ -340,30 +383,30 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
 
-        waitForText(str(R.string.note_archive))
-        rule.onNodeWithText(str(R.string.markdown_export)).assertExists()
+        waitForText(str(Res.string.note_archive))
+        rule.onNodeWithText(str(Res.string.markdown_export)).assertExists()
         // Pinning orders the notes list, so it is offered there, not inside a note.
-        assertEquals(0, countText(str(R.string.note_pin)))
+        assertEquals(0, countText(str(Res.string.note_pin)))
         // Section headings are drawn in capitals.
-        rule.onNodeWithText(str(R.string.note_color_title).uppercase()).assertExists()
-        rule.onNodeWithContentDescription(str(R.string.note_color_teal)).assertExists()
+        rule.onNodeWithText(str(Res.string.note_color_title).uppercase()).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.note_color_teal)).assertExists()
     }
 
     @Test
     fun useDefaultTextAppearsOnlyWhileTheNoteHasItsOwn() {
         stored(text("body"))
         open(NOTE_ID)
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
-        waitForText(str(R.string.note_archive))
-        assertEquals(0, countText(str(R.string.note_text_use_default)))
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+        waitForText(str(Res.string.note_archive))
+        assertEquals(0, countText(str(Res.string.note_text_use_default)))
 
         rule.runOnIdle { editor.updateNoteLineSpacing(com.pasich.encly.domain.model.NoteLineSpacing.COMFORTABLE) }
 
-        waitForText(str(R.string.note_text_use_default))
-        rule.onNodeWithText(str(R.string.note_text_use_default)).performScrollTo().performClick()
-        waitFor { countText(str(R.string.note_text_use_default)) == 0 }
+        waitForText(str(Res.string.note_text_use_default))
+        rule.onNodeWithText(str(Res.string.note_text_use_default)).performScrollTo().performClick()
+        waitFor { countText(str(Res.string.note_text_use_default)) == 0 }
     }
 
     @Test
@@ -371,9 +414,9 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
-        waitForText(str(R.string.note_archive))
-        rule.onNodeWithText(str(R.string.note_archive)).performScrollTo().performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+        waitForText(str(Res.string.note_archive))
+        rule.onNodeWithText(str(Res.string.note_archive)).performScrollTo().performClick()
 
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
         assertEquals(listOf("archived:$NOTE_ID=true"), app.notes.columnWrites)
@@ -384,10 +427,10 @@ class EditNoteScreenTest : ComposeScreenTest() {
         Note(id = NOTE_ID, title = "Trip", value = "[]", date = 1L, isArchived = true).also { app.withNotes(it) }
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
 
-        waitForText(str(R.string.note_unarchive))
-        rule.onNodeWithText(str(R.string.note_unarchive)).performScrollTo().performClick()
+        waitForText(str(Res.string.note_unarchive))
+        rule.onNodeWithText(str(Res.string.note_unarchive)).performScrollTo().performClick()
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
         assertEquals(listOf("archived:$NOTE_ID=false"), app.notes.columnWrites)
     }
@@ -397,12 +440,12 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
-        waitForText(str(R.string.note_archive))
-        rule.onNodeWithContentDescription(str(R.string.note_color_teal)).performScrollTo().performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+        waitForText(str(Res.string.note_archive))
+        rule.onNodeWithContentDescription(str(Res.string.note_color_teal)).performScrollTo().performClick()
         waitFor { editor.state.value.note.color == "teal" }
         // Leaving the editor saves the note, with its colour.
-        rule.onNodeWithContentDescription(str(R.string.back)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.back)).performClick()
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
 
         assertEquals("teal", app.notes.updatedNotes.last().color)
@@ -413,12 +456,12 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
-        waitForText(str(R.string.markdown_export))
-        rule.onNodeWithText(str(R.string.markdown_export)).performScrollTo().performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+        waitForText(str(Res.string.markdown_export))
+        rule.onNodeWithText(str(Res.string.markdown_export)).performScrollTo().performClick()
 
-        waitForText(str(R.string.markdown_export_warning_title))
-        assertEquals(0, countText(str(R.string.backup_reauth_title)))
+        waitForText(str(Res.string.markdown_export_warning_title))
+        assertEquals(0, countText(str(Res.string.backup_reauth_title)))
         verifyNoInteractions(app.markdownDocuments)
         // The editor stays open behind the warning.
         assertEquals(NavRoutes.EditNoteRoute.name, currentRoute()?.substringBefore('/'))
@@ -454,7 +497,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         field(1).performClick()
         waitFor { anyTextFieldFocused() }
 
-        val kept = focusNeverLapsesDuring { tool(R.string.block_checklist).performClick() }
+        val kept = focusNeverLapsesDuring { tool(Res.string.block_checklist).performClick() }
 
         assertTrue("a frame had no focused text field", kept)
         // The list's own field has the focus in the end, the anchor has let go.
@@ -488,12 +531,12 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("milk"))
         open(NOTE_ID)
         field(1).performClick()
-        tool(R.string.block_checklist).performClick()
+        tool(Res.string.block_checklist).performClick()
         settleOn(isList = true)
 
-        assertTrue(focusNeverLapsesDuring { tool(R.string.undo).performClick() })
+        assertTrue(focusNeverLapsesDuring { tool(Res.string.undo).performClick() })
         settleOn(isList = false)
-        assertTrue(focusNeverLapsesDuring { tool(R.string.redo).performClick() })
+        assertTrue(focusNeverLapsesDuring { tool(Res.string.redo).performClick() })
         settleOn(isList = true)
     }
 
@@ -520,12 +563,12 @@ class EditNoteScreenTest : ComposeScreenTest() {
         open(NOTE_ID)
         field(1).performTextInput(" changed")
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
-        waitForText(str(R.string.note_discard_all_changes))
-        rule.onNodeWithText(str(R.string.note_discard_all_changes)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+        waitForText(str(Res.string.note_discard_all_changes))
+        rule.onNodeWithText(str(Res.string.note_discard_all_changes)).performClick()
 
-        waitForText(str(R.string.note_discard_confirm_title))
-        rule.onNodeWithText(str(R.string.note_discard_confirm_message)).assertIsDisplayed()
+        waitForText(str(Res.string.note_discard_confirm_title))
+        rule.onNodeWithText(str(Res.string.note_discard_confirm_message)).assertIsDisplayed()
     }
 
     @Test
@@ -533,12 +576,12 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.more_options)).performClick()
-        waitForText(str(R.string.note_discard_all_changes))
-        rule.onNodeWithText(str(R.string.note_discard_all_changes)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+        waitForText(str(Res.string.note_discard_all_changes))
+        rule.onNodeWithText(str(Res.string.note_discard_all_changes)).performClick()
 
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
-        assertEquals(0, countText(str(R.string.note_discard_confirm_title)))
+        assertEquals(0, countText(str(Res.string.note_discard_confirm_title)))
     }
 
     @Test
@@ -546,8 +589,8 @@ class EditNoteScreenTest : ComposeScreenTest() {
         Note(id = NOTE_ID, title = "Broken", value = "{not json", date = 1L).also { app.withNotes(it) }
         open(NOTE_ID)
 
-        waitForText(str(R.string.note_load_failed))
-        assertEquals(0, rule.onAllNodes(hasContentDescription(str(R.string.editor_lock))).fetchSemanticsNodes().size)
+        waitForText(str(Res.string.note_load_failed))
+        assertEquals(0, rule.onAllNodes(hasContentDescription(str(Res.string.editor_lock))).fetchSemanticsNodes().size)
     }
 
     @Test
@@ -555,9 +598,9 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.edit_tags)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.edit_tags)).performClick()
 
-        waitFor { countText(str(R.string.create_new_tag)) + countText(str(R.string.tags_manage)) > 0 }
+        waitFor { countText(str(Res.string.create_new_tag)) + countText(str(Res.string.tags_manage)) > 0 }
     }
 
     @Test
@@ -566,7 +609,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         stored(text("body"))
         open(NOTE_ID)
 
-        rule.onNodeWithContentDescription(str(R.string.edit_tags)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.edit_tags)).performClick()
         waitForText("Travel")
         rule.onNode(hasText("Travel") and hasClickAction()).performClick()
 

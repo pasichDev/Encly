@@ -1,6 +1,9 @@
 package com.pasich.encly.presentation.screen
 
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_lockout_hours
+import com.pasich.encly.core.resources.lock_lockout_minutes
+import com.pasich.encly.core.resources.lock_lockout_seconds
 import com.pasich.encly.presentation.screen.pincode.lockoutUnit
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -9,11 +12,11 @@ import org.junit.Test
 class PinLockoutTextTest {
     @Test
     fun shortLockoutsCountSecondsLongOnesMinutesThenHours() {
-        assertEquals(R.plurals.lock_lockout_seconds to 30, lockoutUnit(30))
-        assertEquals(R.plurals.lock_lockout_seconds to 119, lockoutUnit(119))
-        assertEquals(R.plurals.lock_lockout_minutes to 2, lockoutUnit(120))
-        assertEquals(R.plurals.lock_lockout_minutes to 16, lockoutUnit(15 * 60 + 1))
-        assertEquals(R.plurals.lock_lockout_hours to 2, lockoutUnit(2 * 3600))
-        assertEquals(R.plurals.lock_lockout_hours to 24, lockoutUnit(24 * 3600))
+        assertEquals(Res.plurals.lock_lockout_seconds to 30, lockoutUnit(30))
+        assertEquals(Res.plurals.lock_lockout_seconds to 119, lockoutUnit(119))
+        assertEquals(Res.plurals.lock_lockout_minutes to 2, lockoutUnit(120))
+        assertEquals(Res.plurals.lock_lockout_minutes to 16, lockoutUnit(15 * 60 + 1))
+        assertEquals(Res.plurals.lock_lockout_hours to 2, lockoutUnit(2 * 3600))
+        assertEquals(Res.plurals.lock_lockout_hours to 24, lockoutUnit(24 * 3600))
     }
 }

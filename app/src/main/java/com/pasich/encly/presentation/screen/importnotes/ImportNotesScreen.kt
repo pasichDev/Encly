@@ -17,16 +17,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.import_importing
+import com.pasich.encly.core.resources.import_reading
+import com.pasich.encly.core.resources.import_title
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.viewmodel.ImportNotesViewModel
 import com.pasich.encly.presentation.viewmodel.ImportStep
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Settings → Import notes. Works in a decoy session too: it imports into whichever vault is
@@ -89,9 +92,9 @@ fun ImportNotesContent(
     modifier: Modifier = Modifier,
 ) {
     when (step) {
-        ImportStep.Reading -> AuthLoading(stringResource(R.string.import_reading), modifier)
+        ImportStep.Reading -> AuthLoading(stringResource(Res.string.import_reading), modifier)
 
-        ImportStep.Importing -> AuthLoading(stringResource(R.string.import_importing), modifier)
+        ImportStep.Importing -> AuthLoading(stringResource(Res.string.import_importing), modifier)
 
         is ImportStep.Preview -> ImportReviewScreen(step.preview, step.review, actions, modifier)
 
@@ -100,7 +103,7 @@ fun ImportNotesContent(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
                 EnclyTopBar(
-                    title = stringResource(R.string.import_title),
+                    title = stringResource(Res.string.import_title),
                     onBack = if (step == ImportStep.Start) onBack else actions.onCancel,
                 )
             },

@@ -8,14 +8,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.done
+import com.pasich.encly.core.resources.settings_swipe_left
+import com.pasich.encly.core.resources.settings_swipe_right
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.presentation.components.swipe.choiceLabel
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyRadioRow
+import org.jetbrains.compose.resources.stringResource
 
 /** Picks what swiping a note card to [side] does. */
 @Composable
@@ -33,15 +37,15 @@ fun SwipeActionDialog(
             if (side ==
                 SwipeSide.RIGHT
             ) {
-                R.string.settings_swipe_right
+                Res.string.settings_swipe_right
             } else {
-                R.string.settings_swipe_left
+                Res.string.settings_swipe_left
             },
         ),
         onDismissRequest = onDismiss,
         modifier = modifier,
-        confirm = DialogAction(stringResource(R.string.done), { onConfirm(selected) }),
-        dismiss = DialogAction(stringResource(R.string.cancel), onDismiss),
+        confirm = DialogAction(stringResource(Res.string.done), { onConfirm(selected) }),
+        dismiss = DialogAction(stringResource(Res.string.cancel), onDismiss),
     ) {
         Column(modifier = Modifier.selectableGroup()) {
             SwipeAction.entries.forEach { action ->

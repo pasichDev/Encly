@@ -33,14 +33,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.tap_again_to_delete
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.SheetShape
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 /** How long a destructive row waits for the confirming second tap. */
 private const val CONFIRM_WINDOW_MS = 5_000L
@@ -171,7 +172,7 @@ fun EnclySheetRow(
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.textGap)) {
             Text(
-                text = if (armed) stringResource(R.string.tap_again_to_delete) else title,
+                text = if (armed) stringResource(Res.string.tap_again_to_delete) else title,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (muted) colors.onSurfaceVariant else titleColor,
                 maxLines = TITLE_MAX_LINES,

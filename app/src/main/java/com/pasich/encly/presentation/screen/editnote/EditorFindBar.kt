@@ -21,11 +21,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.find_close
+import com.pasich.encly.core.resources.find_count
+import com.pasich.encly.core.resources.find_next
+import com.pasich.encly.core.resources.find_no_matches
+import com.pasich.encly.core.resources.find_placeholder
+import com.pasich.encly.core.resources.find_previous
 import com.pasich.encly.editor.state.FindState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySearchField
@@ -33,6 +38,7 @@ import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.stringResource
 
 private const val FOCUS_FRAMES = 3
 
@@ -61,7 +67,7 @@ internal fun EditorFindBar(modifier: Modifier = Modifier, viewModel: EditNoteVie
         EnclySearchField(
             value = state.query,
             onValueChange = viewModel::onFindQueryChanged,
-            placeholder = stringResource(R.string.find_placeholder),
+            placeholder = stringResource(Res.string.find_placeholder),
             modifier = Modifier.weight(1f),
             fieldModifier = Modifier.focusRequester(focus),
             onSubmit = viewModel::findNext,
@@ -70,17 +76,17 @@ internal fun EditorFindBar(modifier: Modifier = Modifier, viewModel: EditNoteVie
         val hasMatches = state.matches.isNotEmpty()
         IconWithTooltip(
             EnclyIcons.ArrowUp,
-            stringResource(R.string.find_previous),
+            stringResource(Res.string.find_previous),
             viewModel::findPrevious,
             enabled = hasMatches,
         )
         IconWithTooltip(
             EnclyIcons.ArrowDown,
-            stringResource(R.string.find_next),
+            stringResource(Res.string.find_next),
             viewModel::findNext,
             enabled = hasMatches,
         )
-        IconWithTooltip(EnclyIcons.Close, stringResource(R.string.find_close), viewModel::closeFind)
+        IconWithTooltip(EnclyIcons.Close, stringResource(Res.string.find_close), viewModel::closeFind)
     }
 }
 
@@ -89,8 +95,8 @@ internal fun EditorFindBar(modifier: Modifier = Modifier, viewModel: EditNoteVie
 private fun MatchCount(state: FindState, modifier: Modifier = Modifier) {
     val text = when {
         state.query.isBlank() -> return
-        state.matches.isEmpty() -> stringResource(R.string.find_no_matches)
-        else -> stringResource(R.string.find_count, state.current + 1, state.matches.size)
+        state.matches.isEmpty() -> stringResource(Res.string.find_no_matches)
+        else -> stringResource(Res.string.find_count, state.current + 1, state.matches.size)
     }
     Text(
         text = text,

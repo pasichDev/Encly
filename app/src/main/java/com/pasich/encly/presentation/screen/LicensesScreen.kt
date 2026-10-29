@@ -1,6 +1,5 @@
 package com.pasich.encly.presentation.screen
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,9 +13,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.licenses_fonts
+import com.pasich.encly.core.resources.licenses_heading
+import com.pasich.encly.core.resources.licenses_intro
+import com.pasich.encly.core.resources.licenses_libraries
+import com.pasich.encly.core.resources.licenses_title
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -25,6 +28,8 @@ import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.StepHeading
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** A third-party work Encly ships: its name, its licence and where to read both. */
 private class OpenSourceWork(val name: String, val license: String, val url: String)
@@ -32,7 +37,7 @@ private class OpenSourceWork(val name: String, val license: String, val url: Str
 private const val APACHE_2 = "Apache License 2.0"
 private const val OFL = "SIL Open Font License 1.1"
 
-private class LicenseSection(@param:StringRes val title: Int, val works: List<OpenSourceWork>)
+private class LicenseSection(val title: StringResource, val works: List<OpenSourceWork>)
 
 private val bundledFonts = listOf(
     OpenSourceWork("Playfair Display", OFL, "https://github.com/clauseggers/Playfair"),
@@ -64,14 +69,14 @@ private val bundledLibraries = listOf(
 fun LicensesScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val sections = listOf(
-        LicenseSection(R.string.licenses_libraries, bundledLibraries),
-        LicenseSection(R.string.licenses_fonts, bundledFonts),
+        LicenseSection(Res.string.licenses_libraries, bundledLibraries),
+        LicenseSection(Res.string.licenses_fonts, bundledFonts),
     )
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            EnclyTopBar(title = stringResource(R.string.licenses_title), onBack = { navController.popBackStack() })
+            EnclyTopBar(title = stringResource(Res.string.licenses_title), onBack = { navController.popBackStack() })
         },
     ) { padding ->
         Column(
@@ -83,8 +88,8 @@ fun LicensesScreen(navController: NavHostController, modifier: Modifier = Modifi
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
         ) {
             StepHeading(
-                title = stringResource(R.string.licenses_heading),
-                body = stringResource(R.string.licenses_intro),
+                title = stringResource(Res.string.licenses_heading),
+                body = stringResource(Res.string.licenses_intro),
             )
             sections.forEach { section ->
                 Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {

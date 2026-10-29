@@ -20,13 +20,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.collapse
+import com.pasich.encly.core.resources.expand
+import com.pasich.encly.core.resources.import_label_how_to
+import com.pasich.encly.core.resources.import_label_losses
 import com.pasich.encly.data.importer.ImportSource
 import com.pasich.encly.presentation.designsystem.EnclyCard
 import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * One supported app on the Import notes page: its mark, its name and what to pick. A tap anywhere
@@ -56,7 +60,7 @@ internal fun SourceCard(source: ImportSource, modifier: Modifier = Modifier) {
             }
             Icon(
                 EnclyIcons.ChevronDown,
-                contentDescription = stringResource(if (expanded) R.string.collapse else R.string.expand),
+                contentDescription = stringResource(if (expanded) Res.string.collapse else Res.string.expand),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(EnclyTheme.spacing.iconSmall)
@@ -71,8 +75,8 @@ internal fun SourceCard(source: ImportSource, modifier: Modifier = Modifier) {
                 ),
                 verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
             ) {
-                Labelled(stringResource(R.string.import_label_how_to), stringResource(source.howTo))
-                Labelled(stringResource(R.string.import_label_losses), stringResource(source.losses))
+                Labelled(stringResource(Res.string.import_label_how_to), stringResource(source.howTo))
+                Labelled(stringResource(Res.string.import_label_losses), stringResource(source.losses))
             }
         }
     }

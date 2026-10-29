@@ -3,11 +3,19 @@ package com.pasich.encly.presentation.viewmodel
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.R
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.AppStrings
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_no_picker
+import com.pasich.encly.core.resources.main_drawer_tasks
+import com.pasich.encly.core.resources.markdown_export_done
+import com.pasich.encly.core.resources.note_preview_unreadable
+import com.pasich.encly.core.resources.priority_high
+import com.pasich.encly.core.resources.priority_low
+import com.pasich.encly.core.resources.priority_medium
+import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.VaultDataStore
@@ -139,7 +147,7 @@ class MarkdownExportViewModel(
     /** No app on this device handles the save dialog. */
     fun onSystemPickerUnavailable() {
         sessionLockManager.endSystemPicker()
-        state.finish(BackupMessage.Text(R.string.backup_error_no_picker))
+        state.finish(BackupMessage.Text(Res.string.backup_error_no_picker))
     }
 
     /** The save dialog returned: [uri] is the new, empty document, or null when it was cancelled. */
@@ -156,7 +164,7 @@ class MarkdownExportViewModel(
         state.launchBusy {
             try {
                 export(bound, what, uri)
-                state.finish(BackupMessage.Text(R.string.markdown_export_done))
+                state.finish(BackupMessage.Text(Res.string.markdown_export_done))
             } catch (e: BackupException) {
                 state.fail(e.error)
             } catch (e: CancellationException) {
@@ -219,14 +227,14 @@ class MarkdownExportViewModel(
         session = null
     }
 
-    private fun labels() = MarkdownLabels(
-        untitled = strings.get(R.string.untitled),
-        unreadable = strings.get(R.string.note_preview_unreadable),
-        tasks = strings.get(R.string.main_drawer_tasks),
+    private suspend fun labels() = MarkdownLabels(
+        untitled = strings.get(Res.string.untitled),
+        unreadable = strings.get(Res.string.note_preview_unreadable),
+        tasks = strings.get(Res.string.main_drawer_tasks),
         priorities = mapOf(
-            HIGH to strings.get(R.string.priority_high),
-            MEDIUM to strings.get(R.string.priority_medium),
-            LOW to strings.get(R.string.priority_low),
+            HIGH to strings.get(Res.string.priority_high),
+            MEDIUM to strings.get(Res.string.priority_medium),
+            LOW to strings.get(Res.string.priority_low),
         ),
     )
 

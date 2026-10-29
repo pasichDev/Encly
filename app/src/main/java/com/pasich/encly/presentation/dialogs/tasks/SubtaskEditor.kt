@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
@@ -33,7 +32,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.subtask_add
+import com.pasich.encly.core.resources.subtask_delete
+import com.pasich.encly.core.resources.subtask_placeholder
+import com.pasich.encly.core.resources.subtasks_title
+import com.pasich.encly.core.resources.tag_drag_handle
+import com.pasich.encly.core.resources.tag_move_down
+import com.pasich.encly.core.resources.tag_move_up
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.presentation.designsystem.CheckboxSize
 import com.pasich.encly.presentation.designsystem.EnclyCheckbox
@@ -43,6 +49,7 @@ import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.SubtaskDraft
 import com.pasich.encly.presentation.viewmodel.SubtaskDrafts
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableColumn
 import sh.calvin.reorderable.ReorderableListItemScope
 
@@ -130,7 +137,7 @@ internal fun SubtaskEditor(state: SubtaskListState) {
     val subtasks = state.subtasks ?: return
     val haptics = LocalHapticFeedback.current
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs)) {
-        SectionOverline(stringResource(R.string.subtasks_title))
+        SectionOverline(stringResource(Res.string.subtasks_title))
         ReorderableColumn(
             list = subtasks,
             onSettle = state::move,
@@ -158,8 +165,8 @@ private fun ReorderableListItemScope.SubtaskRow(
     moveUp: (() -> Unit)?,
     moveDown: (() -> Unit)?,
 ) {
-    val moveUpLabel = stringResource(R.string.tag_move_up)
-    val moveDownLabel = stringResource(R.string.tag_move_down)
+    val moveUpLabel = stringResource(Res.string.tag_move_up)
+    val moveDownLabel = stringResource(Res.string.tag_move_down)
     // On the drag handle, a node TalkBack focuses (the row itself is not one).
     val moves = listOfNotNull(
         moveUp?.let { up ->
@@ -187,13 +194,13 @@ private fun ReorderableListItemScope.SubtaskRow(
         SubtaskTextField(
             value = subtask.title,
             onValueChange = { state.setTitle(subtask.key, it) },
-            placeholder = stringResource(R.string.subtask_placeholder),
+            placeholder = stringResource(Res.string.subtask_placeholder),
             done = subtask.isCompleted,
             modifier = Modifier.weight(1f),
         )
         IconWithTooltip(
             EnclyIcons.Close,
-            stringResource(R.string.subtask_delete),
+            stringResource(Res.string.subtask_delete),
             onClick = { state.remove(subtask.key) },
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             iconSize = EnclyTheme.spacing.iconSmall,
@@ -208,7 +215,7 @@ private fun ReorderableListItemScope.SubtaskRow(
  */
 @Composable
 private fun DragHandle(moves: List<CustomAccessibilityAction>, modifier: Modifier = Modifier) {
-    val description = stringResource(R.string.tag_drag_handle)
+    val description = stringResource(Res.string.tag_drag_handle)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -233,7 +240,7 @@ private fun NewSubtaskRow(title: String, onTitleChange: (String) -> Unit, onAdd:
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         IconWithTooltip(
             EnclyIcons.Plus,
-            stringResource(R.string.subtask_add),
+            stringResource(Res.string.subtask_add),
             onClick = onAdd,
             enabled = title.isNotBlank(),
             tint = MaterialTheme.colorScheme.primary,
@@ -242,7 +249,7 @@ private fun NewSubtaskRow(title: String, onTitleChange: (String) -> Unit, onAdd:
         SubtaskTextField(
             value = title,
             onValueChange = onTitleChange,
-            placeholder = stringResource(R.string.subtask_add),
+            placeholder = stringResource(Res.string.subtask_add),
             onImeAction = onAdd,
             modifier = Modifier.weight(1f),
         )

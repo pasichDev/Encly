@@ -1,7 +1,11 @@
 package com.pasich.encly.presentation.viewmodel
 
 import android.content.Context
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_no_picker
+import com.pasich.encly.core.resources.backup_phrase_exists
+import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.resources.security_erase_failed
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
@@ -86,7 +90,7 @@ class BackupViewModelTest {
         viewModel.reauthFlow.submitPin("000000".toCharArray())
 
         waitForStep { (it as? BackupStep.Reauth)?.error != null }
-        assertEquals(R.string.lock_wrong_pin, (viewModel.uiState.value.step as BackupStep.Reauth).error)
+        assertEquals(Res.string.lock_wrong_pin, (viewModel.uiState.value.step as BackupStep.Reauth).error)
     }
 
     @Test
@@ -131,7 +135,7 @@ class BackupViewModelTest {
         viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it == BackupStep.Idle }
-        assertEquals(BackupMessage.Text(R.string.backup_phrase_exists), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.backup_phrase_exists), viewModel.uiState.value.message)
     }
 
     @Test
@@ -177,7 +181,7 @@ class BackupViewModelTest {
         viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it == BackupStep.Idle && viewModel.uiState.value.message != null }
-        assertEquals(BackupMessage.Text(R.string.security_erase_failed), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.security_erase_failed), viewModel.uiState.value.message)
         assertEquals(false, viewModel.uiState.value.erased)
     }
 
@@ -187,7 +191,7 @@ class BackupViewModelTest {
 
         assertEquals(BackupStep.Idle, viewModel.uiState.value.step)
         assertEquals(
-            BackupMessage.Text(R.string.backup_error_no_picker),
+            BackupMessage.Text(Res.string.backup_error_no_picker),
             viewModel.uiState.value.message,
         )
     }

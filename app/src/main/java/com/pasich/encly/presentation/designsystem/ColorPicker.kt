@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.noteColorStyle
+import org.jetbrains.compose.resources.stringResource
 
 private val SwatchSize = 36.dp
 private const val SLASH_INSET = 0.28f

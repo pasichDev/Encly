@@ -15,7 +15,13 @@ import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.text.TextRange
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.block_heading_level
+import com.pasich.encly.core.resources.find_close
+import com.pasich.encly.core.resources.find_count
+import com.pasich.encly.core.resources.find_next
+import com.pasich.encly.core.resources.keyboard_show
+import com.pasich.encly.core.resources.search_notes
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
@@ -31,7 +37,7 @@ import org.junit.Test
 /** Writing in the editor as a user does: Enter, a typed mark, a paste, Backspace, undo. */
 @OptIn(ExperimentalTestApi::class)
 class EditorWritingTest : ComposeScreenTest() {
-    private val app by lazy { TestApp(context) }
+    private val app by lazy { TestApp() }
     private lateinit var editor: EditNoteViewModel
 
     private fun open(vararg blocks: Block) {
@@ -116,7 +122,7 @@ class EditorWritingTest : ComposeScreenTest() {
         field.performTextInput("/")
 
         waitFor { editor.slashPicker.menu.value?.isShown == true }
-        rule.onNodeWithText(str(R.string.block_heading_level, 2)).performClick()
+        rule.onNodeWithText(str(Res.string.block_heading_level, 2)).performClick()
         waitFor { editor.blocks.first() is Block.HBlock }
         assertEquals(BlockType.H2, (editor.blocks.first() as Block.HBlock).blockType)
         rule.runOnUiThread { editor.undo() }
@@ -140,15 +146,15 @@ class EditorWritingTest : ComposeScreenTest() {
     fun findShowsTheCountStepsThroughMatchesAndLeavesTheNoteAlone() {
         open(text("the cat sat"), text("another cat"))
         rule.runOnUiThread { editor.openFind() }
-        val query = rule.onNode(hasSetTextAction() and hasContentDescription(str(R.string.search_notes)))
+        val query = rule.onNode(hasSetTextAction() and hasContentDescription(str(Res.string.search_notes)))
 
         query.performTextInput("cat")
 
-        rule.onNodeWithText(str(R.string.find_count, 1, 2)).assertExists()
-        rule.onNode(hasContentDescription(str(R.string.find_next)) and hasClickAction()).performClick()
-        rule.onNodeWithText(str(R.string.find_count, 2, 2)).assertExists()
+        rule.onNodeWithText(str(Res.string.find_count, 1, 2)).assertExists()
+        rule.onNode(hasContentDescription(str(Res.string.find_next)) and hasClickAction()).performClick()
+        rule.onNodeWithText(str(Res.string.find_count, 2, 2)).assertExists()
         assertEquals(listOf("the cat sat", "another cat"), texts())
-        rule.onNode(hasContentDescription(str(R.string.find_close)) and hasClickAction()).performClick()
+        rule.onNode(hasContentDescription(str(Res.string.find_close)) and hasClickAction()).performClick()
         waitFor { !editor.find.value.isOpen }
         assertEquals("", editor.find.value.query)
     }
@@ -161,7 +167,7 @@ class EditorWritingTest : ComposeScreenTest() {
         paragraph("body").performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.F) } }
         waitFor { editor.find.value.isOpen }
 
-        rule.onNode(hasSetTextAction() and hasContentDescription(str(R.string.search_notes)))
+        rule.onNode(hasSetTextAction() and hasContentDescription(str(Res.string.search_notes)))
             .performKeyInput { pressKey(Key.Escape) }
         waitFor { !editor.find.value.isOpen }
     }
@@ -170,7 +176,7 @@ class EditorWritingTest : ComposeScreenTest() {
     fun theKeyboardToggleFocusesTheWorkingBlock() {
         open(text("body"))
 
-        rule.onNode(hasContentDescription(str(R.string.keyboard_show)) and hasClickAction()).performClick()
+        rule.onNode(hasContentDescription(str(Res.string.keyboard_show)) and hasClickAction()).performClick()
 
         waitFor { editor.focusedBlockId.value == editor.blocks.first().id }
         paragraph("body").assertIsFocused()

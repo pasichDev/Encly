@@ -22,6 +22,8 @@ kotlin {
         commonMain.dependencies {
             // LoadState is built on Flow; the other interfaces name no library.
             api(libs.kotlinx.coroutines.core)
+            // UiText and AppStrings name StringResource; the strings themselves are in :core:resources.
+            api(libs.compose.components.resources)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

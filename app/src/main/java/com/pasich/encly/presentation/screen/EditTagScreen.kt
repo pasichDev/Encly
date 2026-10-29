@@ -1,7 +1,5 @@
 package com.pasich.encly.presentation.screen
 
-import android.content.Context
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,10 +38,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
@@ -56,9 +52,30 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asString
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.create_new_tag
+import com.pasich.encly.core.resources.delete_tag
+import com.pasich.encly.core.resources.main_drawer_tags
+import com.pasich.encly.core.resources.save
+import com.pasich.encly.core.resources.tag_add
+import com.pasich.encly.core.resources.tag_create_failed
+import com.pasich.encly.core.resources.tag_delete_failed
+import com.pasich.encly.core.resources.tag_drag_handle
+import com.pasich.encly.core.resources.tag_edit
+import com.pasich.encly.core.resources.tag_hidden
+import com.pasich.encly.core.resources.tag_move_down
+import com.pasich.encly.core.resources.tag_move_up
+import com.pasich.encly.core.resources.tag_name_label
+import com.pasich.encly.core.resources.tag_name_taken
+import com.pasich.encly.core.resources.tag_reorder_failed
+import com.pasich.encly.core.resources.tag_show_in_list
+import com.pasich.encly.core.resources.tag_show_in_list_desc
+import com.pasich.encly.core.resources.tag_update_failed
+import com.pasich.encly.core.resources.tags_empty_desc
+import com.pasich.encly.core.resources.tags_empty_title
+import com.pasich.encly.core.resources.tags_hint
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyButton
@@ -85,6 +102,9 @@ import com.pasich.encly.presentation.viewmodel.normalizeTagName
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
@@ -111,15 +131,14 @@ fun EditTagScreen(
     var editingId by rememberSaveable { mutableStateOf<Long?>(null) }
     var deleting by remember { mutableStateOf<Tag?>(null) }
 
-    val context = LocalContext.current
-    LaunchedEffect(viewModel) { showTagFailures(viewModel, snackbarHostState, context) }
+    LaunchedEffect(viewModel) { showTagFailures(viewModel, snackbarHostState) }
 
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         topBar = {
-            EnclyTopBar(title = stringResource(R.string.main_drawer_tags), onBack = navController::popBackStack)
+            EnclyTopBar(title = stringResource(Res.string.main_drawer_tags), onBack = navController::popBackStack)
         },
     ) { padding ->
         TagsContent(
@@ -164,16 +183,12 @@ fun EditTagScreen(
 }
 
 /** Failed tag operations as snackbars; a taken name is shown under the field that typed it. */
-private suspend fun showTagFailures(
-    viewModel: TagListViewModel,
-    snackbarHostState: SnackbarHostState,
-    context: Context,
-) {
+private suspend fun showTagFailures(viewModel: TagListViewModel, snackbarHostState: SnackbarHostState) {
     viewModel.operationFailures.collect { failure ->
         if (failure !=
             TagOperationFailure.NAME_TAKEN
         ) {
-            snackbarHostState.showSnackbar(context.getString(failure.message()))
+            snackbarHostState.showSnackbar(getString(failure.message()))
         }
     }
 }
@@ -233,8 +248,8 @@ private fun TagsContent(state: TagsScreenState, actions: TagsActions, modifier: 
                 item(key = "empty") {
                     EnclyEmptyState(
                         icon = EnclyIcons.Tag,
-                        title = stringResource(R.string.tags_empty_title),
-                        body = stringResource(R.string.tags_empty_desc),
+                        title = stringResource(Res.string.tags_empty_title),
+                        body = stringResource(Res.string.tags_empty_desc),
                     )
                 }
             } else {
@@ -256,9 +271,9 @@ private fun LazyListScope.tagRows(
             verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
             modifier = Modifier.padding(top = EnclyTheme.spacing.l, bottom = EnclyTheme.spacing.s),
         ) {
-            SectionOverline(stringResource(R.string.main_drawer_tags))
+            SectionOverline(stringResource(Res.string.main_drawer_tags))
             Text(
-                text = stringResource(R.string.tags_hint),
+                text = stringResource(Res.string.tags_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -305,12 +320,12 @@ private class TagMove(val up: (() -> Unit)?, val down: (() -> Unit)?, val onDrag
 /** A tag: its icon, name ("Hidden tag" under it when hidden), note count and the drag handle. */
 @Composable
 private fun ReorderableCollectionItemScope.TagRow(tag: Tag, count: Int, onOpen: () -> Unit, move: TagMove) {
-    val moveUp = stringResource(R.string.tag_move_up)
-    val moveDown = stringResource(R.string.tag_move_down)
-    val handleDescription = stringResource(R.string.tag_drag_handle)
+    val moveUp = stringResource(Res.string.tag_move_up)
+    val moveDown = stringResource(Res.string.tag_move_down)
+    val handleDescription = stringResource(Res.string.tag_drag_handle)
     EnclyListRow(
         title = tag.nameTag,
-        supporting = stringResource(R.string.tag_hidden).takeUnless { tag.isVisible },
+        supporting = stringResource(Res.string.tag_hidden).takeUnless { tag.isVisible },
         icon = EnclyIcons.Tag,
         onClick = onOpen,
         modifier = Modifier
@@ -380,14 +395,14 @@ private fun NewTagField(taken: (String) -> Boolean, onCreate: (String, (Boolean)
         EnclyTextField(
             value = text,
             onValueChange = { text = it.take(TAG_NAME_MAX_LENGTH) },
-            label = stringResource(R.string.create_new_tag),
-            state = if (isTaken) FieldState.Error(stringResource(R.string.tag_name_taken)) else FieldState.Default,
+            label = stringResource(Res.string.create_new_tag),
+            state = if (isTaken) FieldState.Error(stringResource(Res.string.tag_name_taken)) else FieldState.Default,
             keyboardOptions = TagNameKeyboard,
             keyboardActions = KeyboardActions(onDone = { create() }),
         )
         AnimatedVisibility(visible = name.isNotEmpty()) {
             EnclyButton(
-                text = stringResource(R.string.tag_add),
+                text = stringResource(Res.string.tag_add),
                 onClick = ::create,
                 enabled = !isTaken,
                 modifier = Modifier.fillMaxWidth(),
@@ -427,30 +442,30 @@ private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActi
     EnclyBottomSheet(
         onDismissRequest = actions.onDismiss,
         sheetState = sheetState,
-        title = stringResource(R.string.tag_edit),
+        title = stringResource(Res.string.tag_edit),
     ) {
         EnclyTextField(
             value = text,
             onValueChange = { text = it.take(TAG_NAME_MAX_LENGTH) },
-            label = stringResource(R.string.tag_name_label),
-            state = if (isTaken) FieldState.Error(stringResource(R.string.tag_name_taken)) else FieldState.Default,
+            label = stringResource(Res.string.tag_name_label),
+            state = if (isTaken) FieldState.Error(stringResource(Res.string.tag_name_taken)) else FieldState.Default,
             keyboardOptions = TagNameKeyboard,
             keyboardActions = KeyboardActions(onDone = { save() }),
         )
         EnclySwitchRow(
-            title = stringResource(R.string.tag_show_in_list),
-            supporting = stringResource(R.string.tag_show_in_list_desc),
+            title = stringResource(Res.string.tag_show_in_list),
+            supporting = stringResource(Res.string.tag_show_in_list_desc),
             checked = tag.isVisible,
             onCheckedChange = { actions.onToggleVisible() },
         )
         EnclySheetRow(
-            title = stringResource(R.string.delete_tag),
+            title = stringResource(Res.string.delete_tag),
             icon = EnclyIcons.Trash,
             destructive = true,
             onClick = actions.onDelete,
         )
         EnclyButton(
-            text = stringResource(R.string.save),
+            text = stringResource(Res.string.save),
             onClick = ::save,
             enabled = canSave,
             modifier = Modifier
@@ -461,13 +476,12 @@ private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActi
 }
 
 /** What the user is told when a tag operation fails. */
-@StringRes
-private fun TagOperationFailure.message(): Int = when (this) {
-    TagOperationFailure.CREATE -> R.string.tag_create_failed
-    TagOperationFailure.UPDATE -> R.string.tag_update_failed
-    TagOperationFailure.DELETE -> R.string.tag_delete_failed
-    TagOperationFailure.REORDER -> R.string.tag_reorder_failed
-    TagOperationFailure.NAME_TAKEN -> R.string.tag_name_taken
+private fun TagOperationFailure.message(): StringResource = when (this) {
+    TagOperationFailure.CREATE -> Res.string.tag_create_failed
+    TagOperationFailure.UPDATE -> Res.string.tag_update_failed
+    TagOperationFailure.DELETE -> Res.string.tag_delete_failed
+    TagOperationFailure.REORDER -> Res.string.tag_reorder_failed
+    TagOperationFailure.NAME_TAKEN -> Res.string.tag_name_taken
 }
 
 /**

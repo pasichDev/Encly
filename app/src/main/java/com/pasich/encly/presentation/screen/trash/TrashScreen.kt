@@ -12,11 +12,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.clean_permanent_message
+import com.pasich.encly.core.resources.clean_trash_message
+import com.pasich.encly.core.resources.clean_trash_title
+import com.pasich.encly.core.resources.delete_forever
+import com.pasich.encly.core.resources.delete_notes_confirm
+import com.pasich.encly.core.resources.empty_trash_action
+import com.pasich.encly.core.resources.main_drawer_trash
+import com.pasich.encly.core.resources.restore
+import com.pasich.encly.core.resources.trash_selected
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyOverflowMenu
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
@@ -27,6 +34,8 @@ import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 enum class DialogTrashAction {
     DELETE_PERMANENTLY,
@@ -106,24 +115,24 @@ private fun TrashTopBar(checkedCount: Int?, hasNotes: Boolean, actions: TrashBar
     val selecting = checkedCount != null
     EnclyTopBar(
         title = if (checkedCount != null) {
-            pluralStringResource(R.plurals.trash_selected, checkedCount, checkedCount)
+            pluralStringResource(Res.plurals.trash_selected, checkedCount, checkedCount)
         } else {
-            stringResource(R.string.main_drawer_trash)
+            stringResource(Res.string.main_drawer_trash)
         },
         onBack = actions.onBack.takeUnless { selecting },
         onClose = actions.onClearSelection.takeIf { selecting },
         actions = {
             AnimatedVisibility(selecting) {
-                IconWithTooltip(EnclyIcons.Restore, stringResource(R.string.restore), actions.onRestore)
+                IconWithTooltip(EnclyIcons.Restore, stringResource(Res.string.restore), actions.onRestore)
             }
             AnimatedVisibility(selecting) {
-                IconWithTooltip(EnclyIcons.Trash, stringResource(R.string.delete_forever), actions.onDeleteSelected)
+                IconWithTooltip(EnclyIcons.Trash, stringResource(Res.string.delete_forever), actions.onDeleteSelected)
             }
             if (!selecting && hasNotes) {
                 EnclyOverflowMenu(
                     items = listOf(
                         OverflowAction(
-                            text = stringResource(R.string.empty_trash_action),
+                            text = stringResource(Res.string.empty_trash_action),
                             onClick = actions.onEmptyTrash,
                             destructive = true,
                         ),
@@ -146,11 +155,13 @@ private fun TrashConfirmDialog(
     ConfirmDialog(
         isVisible = action != DialogTrashAction.DISABLE,
         titleText = if (cleanAll) {
-            stringResource(R.string.clean_trash_title)
+            stringResource(Res.string.clean_trash_title)
         } else {
-            pluralStringResource(R.plurals.delete_notes_confirm, checkedCount, checkedCount)
+            pluralStringResource(Res.plurals.delete_notes_confirm, checkedCount, checkedCount)
         },
-        messageText = stringResource(if (cleanAll) R.string.clean_trash_message else R.string.clean_permanent_message),
+        messageText = stringResource(
+            if (cleanAll) Res.string.clean_trash_message else Res.string.clean_permanent_message,
+        ),
         onConfirm = { onConfirm(action) },
         onDismiss = onDismiss,
         destructive = true,

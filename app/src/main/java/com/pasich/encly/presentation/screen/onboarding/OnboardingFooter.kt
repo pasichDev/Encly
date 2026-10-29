@@ -8,8 +8,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.action_continue
+import com.pasich.encly.core.resources.onboarding_get_started
+import com.pasich.encly.core.resources.onboarding_have_backup
+import com.pasich.encly.core.resources.onboarding_phrase_done
+import com.pasich.encly.core.resources.onboarding_ready_open
+import com.pasich.encly.core.resources.onboarding_recovery_create
+import com.pasich.encly.core.resources.onboarding_recovery_skip
+import com.pasich.encly.core.resources.onboarding_verify_confirm
+import com.pasich.encly.core.resources.onboarding_verify_show_again
+import com.pasich.encly.core.resources.restore
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
@@ -17,6 +26,7 @@ import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 internal fun footerSpec(
     state: OnboardingUiState,
@@ -27,41 +37,41 @@ internal fun footerSpec(
     val busy = state.isLoading
     return when (state.step) {
         OnboardingStep.WELCOME -> FooterSpec(
-            R.string.onboarding_get_started,
+            Res.string.onboarding_get_started,
             actions.onGetStarted,
-            secondary = R.string.onboarding_have_backup,
+            secondary = Res.string.onboarding_have_backup,
             onSecondary = actions.onStartRestore,
         )
 
         OnboardingStep.PIN ->
-            FooterSpec(R.string.action_continue, actions.pin.onSubmit, state.pinLength == PIN_LENGTH, busy)
+            FooterSpec(Res.string.action_continue, actions.pin.onSubmit, state.pinLength == PIN_LENGTH, busy)
 
         OnboardingStep.RECOVERY_INFO -> FooterSpec(
-            R.string.onboarding_recovery_create,
+            Res.string.onboarding_recovery_create,
             actions.onCreatePhrase,
             loading = busy,
-            secondary = R.string.onboarding_recovery_skip,
+            secondary = Res.string.onboarding_recovery_skip,
             onSecondary = actions.onSkipPhrase,
             secondaryMuted = true,
         )
 
         OnboardingStep.PHRASE ->
-            FooterSpec(R.string.onboarding_phrase_done, actions.onWroteWords, state.words.isNotEmpty())
+            FooterSpec(Res.string.onboarding_phrase_done, actions.onWroteWords, state.words.isNotEmpty())
 
         OnboardingStep.VERIFY -> FooterSpec(
-            R.string.onboarding_verify_confirm,
+            Res.string.onboarding_verify_confirm,
             actions.onConfirmWords,
             state.isVerificationComplete,
             busy,
-            secondary = R.string.onboarding_verify_show_again,
+            secondary = Res.string.onboarding_verify_show_again,
             onSecondary = actions.onShowWordsAgain,
         )
 
         OnboardingStep.READY ->
-            FooterSpec(R.string.onboarding_ready_open, actions.onOpenNotebook, !state.biometricPending, finishing)
+            FooterSpec(Res.string.onboarding_ready_open, actions.onOpenNotebook, !state.biometricPending, finishing)
 
         OnboardingStep.RESTORE -> FooterSpec(
-            R.string.restore,
+            Res.string.restore,
             actions.onRestore,
             state.restoreFileReady && restorePhrase.canSubmit,
             busy,

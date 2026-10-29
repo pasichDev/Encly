@@ -6,8 +6,8 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.note_preview_unreadable
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteListItem
@@ -19,6 +19,7 @@ import com.pasich.encly.utils.NotesTextFormatter
 import com.pasich.encly.utils.formatCardDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 /**
@@ -37,7 +38,7 @@ fun NoteItem(
     dimmed: Boolean = false,
 ) {
     val note: Note = item?.note ?: itemNote ?: Note()
-    val preview = rememberNotePreview(item, note) ?: stringResource(R.string.note_preview_unreadable)
+    val preview = rememberNotePreview(item, note) ?: stringResource(Res.string.note_preview_unreadable)
     val hapticFeedback = LocalHapticFeedback.current
 
     EnclyNoteCard(

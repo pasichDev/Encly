@@ -1,10 +1,35 @@
 package com.pasich.encly.presentation.components.settings
 
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.about
+import com.pasich.encly.core.resources.appearance_settings_subtitle
+import com.pasich.encly.core.resources.backup_settings_subtitle
+import com.pasich.encly.core.resources.backup_title
+import com.pasich.encly.core.resources.import_settings_subtitle
+import com.pasich.encly.core.resources.import_title
+import com.pasich.encly.core.resources.main_drawer_faq
+import com.pasich.encly.core.resources.security_subtitle
+import com.pasich.encly.core.resources.security_title
+import com.pasich.encly.core.resources.settings_about_desc
+import com.pasich.encly.core.resources.settings_appearance
+import com.pasich.encly.core.resources.settings_backup
+import com.pasich.encly.core.resources.settings_faq_desc
+import com.pasich.encly.core.resources.settings_general
+import com.pasich.encly.core.resources.settings_import
+import com.pasich.encly.core.resources.settings_language
+import com.pasich.encly.core.resources.settings_notes_and_tasks
+import com.pasich.encly.core.resources.settings_privacy
+import com.pasich.encly.core.resources.settings_show_tasks
+import com.pasich.encly.core.resources.settings_show_tasks_desc
+import com.pasich.encly.core.resources.settings_simple_edit
+import com.pasich.encly.core.resources.settings_simple_edit_desc
+import com.pasich.encly.core.resources.settings_swipe_enabled
+import com.pasich.encly.core.resources.settings_swipe_enabled_desc
+import com.pasich.encly.core.resources.settings_swipe_left
+import com.pasich.encly.core.resources.settings_swipe_right
+import com.pasich.encly.core.resources.settings_swipe_section
 import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSettings
 import com.pasich.encly.domain.model.SwipeSide
@@ -12,6 +37,8 @@ import com.pasich.encly.presentation.components.swipe.choiceLabel
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** Destinations the settings list links to. */
 data class SettingsNavigation(
@@ -40,37 +67,42 @@ class SettingsBuilder {
         general(viewModel, navigation),
         notesAndTasks(viewModel, showTasks, simpleEdit),
         swipeActions(viewModel, swipe),
-        single(R.string.settings_privacy, R.string.security_title, R.string.security_subtitle, EnclyIcons.Shield) {
+        single(
+            Res.string.settings_privacy,
+            Res.string.security_title,
+            Res.string.security_subtitle,
+            EnclyIcons.Shield,
+        ) {
             navigation.onSecurity()
         },
         single(
-            R.string.settings_backup,
-            R.string.backup_title,
-            R.string.backup_settings_subtitle,
+            Res.string.settings_backup,
+            Res.string.backup_title,
+            Res.string.backup_settings_subtitle,
             EnclyIcons.Download,
         ) {
             navigation.onBackup()
         },
         single(
-            R.string.settings_import,
-            R.string.import_title,
-            R.string.import_settings_subtitle,
+            Res.string.settings_import,
+            Res.string.import_title,
+            Res.string.import_settings_subtitle,
             EnclyIcons.File,
         ) {
             navigation.onImportNotes()
         },
         SettingsCategory(
-            titleRes = R.string.about,
+            titleRes = Res.string.about,
             items = listOf(
                 SettingsItem.Navigation(
-                    titleRes = R.string.about,
-                    subtitleRes = R.string.settings_about_desc,
+                    titleRes = Res.string.about,
+                    subtitleRes = Res.string.settings_about_desc,
                     action = navigation.onAbout,
                     icon = EnclyIcons.Info,
                 ),
                 SettingsItem.Navigation(
-                    titleRes = R.string.main_drawer_faq,
-                    subtitleRes = R.string.settings_faq_desc,
+                    titleRes = Res.string.main_drawer_faq,
+                    subtitleRes = Res.string.settings_faq_desc,
                     action = navigation.onFaq,
                     icon = EnclyIcons.Help,
                 ),
@@ -80,16 +112,16 @@ class SettingsBuilder {
 
     @Composable
     private fun general(viewModel: SettingsViewModel, navigation: SettingsNavigation) = SettingsCategory(
-        titleRes = R.string.settings_general,
+        titleRes = Res.string.settings_general,
         items = listOf(
             SettingsItem.Navigation(
-                titleRes = R.string.settings_appearance,
-                subtitleRes = R.string.appearance_settings_subtitle,
+                titleRes = Res.string.settings_appearance,
+                subtitleRes = Res.string.appearance_settings_subtitle,
                 action = navigation.onAppearance,
                 icon = EnclyIcons.Palette,
             ),
             SettingsItem.Selection(
-                titleRes = R.string.settings_language,
+                titleRes = Res.string.settings_language,
                 currentValue = stringResource(viewModel.currentLanguage().nativeName),
                 action = { viewModel.setLanguageDialogVisibility(true) },
                 icon = EnclyIcons.Globe,
@@ -98,18 +130,18 @@ class SettingsBuilder {
     )
 
     private fun notesAndTasks(viewModel: SettingsViewModel, showTasks: Boolean, simpleEdit: Boolean) = SettingsCategory(
-        titleRes = R.string.settings_notes_and_tasks,
+        titleRes = Res.string.settings_notes_and_tasks,
         items = listOf(
             SettingsItem.Switch(
-                titleRes = R.string.settings_show_tasks,
-                subtitleRes = R.string.settings_show_tasks_desc,
+                titleRes = Res.string.settings_show_tasks,
+                subtitleRes = Res.string.settings_show_tasks_desc,
                 checked = showTasks,
                 icon = EnclyIcons.Checklist,
                 onCheckedChange = { viewModel.onEvent(SettingsEvent.UpdateShowTasks(it)) },
             ),
             SettingsItem.Switch(
-                titleRes = R.string.settings_simple_edit,
-                subtitleRes = R.string.settings_simple_edit_desc,
+                titleRes = Res.string.settings_simple_edit,
+                subtitleRes = Res.string.settings_simple_edit_desc,
                 checked = simpleEdit,
                 icon = EnclyIcons.Type,
                 onCheckedChange = { viewModel.onEvent(SettingsEvent.UpdateSimpleEdit(it)) },
@@ -120,12 +152,12 @@ class SettingsBuilder {
     /** The master switch for swipes on note cards and, while it is on, the action for each direction. */
     @Composable
     private fun swipeActions(viewModel: SettingsViewModel, swipe: SwipeSettings) = SettingsCategory(
-        titleRes = R.string.settings_swipe_section,
+        titleRes = Res.string.settings_swipe_section,
         items = buildList {
             add(
                 SettingsItem.Switch(
-                    titleRes = R.string.settings_swipe_enabled,
-                    subtitleRes = R.string.settings_swipe_enabled_desc,
+                    titleRes = Res.string.settings_swipe_enabled,
+                    subtitleRes = Res.string.settings_swipe_enabled_desc,
                     checked = swipe.enabled,
                     icon = EnclyIcons.Sliders,
                     onCheckedChange = { viewModel.onEvent(SettingsEvent.UpdateSwipeEnabled(it)) },
@@ -140,7 +172,7 @@ class SettingsBuilder {
 
     @Composable
     private fun swipeRow(viewModel: SettingsViewModel, side: SwipeSide, action: SwipeAction) = SettingsItem.Selection(
-        titleRes = if (side == SwipeSide.RIGHT) R.string.settings_swipe_right else R.string.settings_swipe_left,
+        titleRes = if (side == SwipeSide.RIGHT) Res.string.settings_swipe_right else Res.string.settings_swipe_left,
         currentValue = stringResource(action.choiceLabel()),
         action = { viewModel.chooseSwipeAction(side) },
         icon = if (side == SwipeSide.RIGHT) EnclyIcons.Chevron else EnclyIcons.Back,
@@ -148,9 +180,9 @@ class SettingsBuilder {
 
     /** A section holding one navigation row. */
     private fun single(
-        @StringRes section: Int,
-        @StringRes title: Int,
-        @StringRes subtitle: Int,
+        section: StringResource,
+        title: StringResource,
+        subtitle: StringResource,
         icon: ImageVector,
         action: () -> Unit,
     ) = SettingsCategory(

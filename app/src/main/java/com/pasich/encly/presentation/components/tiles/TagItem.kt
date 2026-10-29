@@ -3,12 +3,13 @@ package com.pasich.encly.presentation.components.tiles
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.tag_hidden
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.presentation.designsystem.EnclyChip
+import org.jetbrains.compose.resources.stringResource
 
 /** Opacity of a hidden tag's chip. */
 private const val HIDDEN_TAG_ALPHA = 0.6f
@@ -22,7 +23,7 @@ fun TagItem(
     count: Int? = null,
     onItemClick: () -> Unit = {},
 ) {
-    val hiddenLabel = stringResource(R.string.tag_hidden)
+    val hiddenLabel = stringResource(Res.string.tag_hidden)
     EnclyChip(
         label = item.nameTag,
         selected = isSelected,

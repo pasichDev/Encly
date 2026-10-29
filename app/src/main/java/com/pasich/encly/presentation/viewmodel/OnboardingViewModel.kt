@@ -4,11 +4,17 @@ import android.net.Uri
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_no_picker
+import com.pasich.encly.core.resources.onboarding_error_initialization
+import com.pasich.encly.core.resources.onboarding_error_seed_generation
+import com.pasich.encly.core.resources.onboarding_error_vault_creation
+import com.pasich.encly.core.resources.pin_mismatch_retry
+import com.pasich.encly.core.resources.pin_save_failed
 import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.core.security.SensitiveDataCleaner
@@ -205,7 +211,7 @@ class OnboardingViewModel(
         SensitiveDataCleaner.clear(entered)
         if (!matches) {
             resetPin()
-            _uiState.update { it.copy(pinError = UiText.of(R.string.pin_mismatch_retry)) }
+            _uiState.update { it.copy(pinError = UiText.of(Res.string.pin_mismatch_retry)) }
             return
         }
         firstPin = null
@@ -244,7 +250,7 @@ class OnboardingViewModel(
                 reachReady()
             } else {
                 _uiState.update {
-                    it.copy(isLoading = false, error = UiText.of(R.string.onboarding_error_initialization))
+                    it.copy(isLoading = false, error = UiText.of(Res.string.onboarding_error_initialization))
                 }
             }
         }
@@ -257,7 +263,7 @@ class OnboardingViewModel(
             // The words must be shown to be written down, so the UI gets them as text.
             _uiState.update { it.copy(words = String(seed).split(" ").filter(String::isNotBlank)) }
         }.onFailure {
-            _uiState.update { it.copy(error = UiText.of(R.string.onboarding_error_seed_generation)) }
+            _uiState.update { it.copy(error = UiText.of(Res.string.onboarding_error_seed_generation)) }
         }
     }
 
@@ -302,7 +308,7 @@ class OnboardingViewModel(
                 reachReady()
             } else {
                 _uiState.update {
-                    it.copy(isLoading = false, error = UiText.of(R.string.onboarding_error_vault_creation))
+                    it.copy(isLoading = false, error = UiText.of(Res.string.onboarding_error_vault_creation))
                 }
             }
         }
@@ -332,7 +338,7 @@ class OnboardingViewModel(
         val configured = pin != null &&
             withContext(Dispatchers.Default) { onboardingUseCase.configurePin(pin.copyOf()) }
         if (!configured) {
-            _uiState.update { it.copy(isLoading = false, error = UiText.of(R.string.pin_save_failed)) }
+            _uiState.update { it.copy(isLoading = false, error = UiText.of(Res.string.pin_save_failed)) }
             return
         }
         chosenPin?.let(SensitiveDataCleaner::clear)
@@ -369,7 +375,7 @@ class OnboardingViewModel(
 
     /** No app on this device can open documents: say so instead of crashing. */
     fun onRestorePickerUnavailable() {
-        _uiState.update { it.copy(restoreFileError = UiText.of(R.string.backup_error_no_picker)) }
+        _uiState.update { it.copy(restoreFileError = UiText.of(Res.string.backup_error_no_picker)) }
     }
 
     /** Reads the picked file and checks its header; the phrase is asked for only if it fits. */

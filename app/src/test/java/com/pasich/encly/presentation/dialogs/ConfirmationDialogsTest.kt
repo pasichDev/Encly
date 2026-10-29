@@ -2,8 +2,16 @@ package com.pasich.encly.presentation.dialogs
 
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.clear
+import com.pasich.encly.core.resources.delete
+import com.pasich.encly.core.resources.delete_tag
+import com.pasich.encly.core.resources.dialog_confirm
+import com.pasich.encly.core.resources.dialog_dismiss
+import com.pasich.encly.core.resources.task_clear_completed_title
 import com.pasich.encly.ui.screens.ComposeScreenTest
+import org.jetbrains.compose.resources.StringResource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -11,13 +19,13 @@ import org.junit.Test
 class ConfirmationDialogsTest : ComposeScreenTest() {
     private val calls = mutableListOf<String>()
 
-    private fun shown(id: Int) = countText(str(id)) > 0
+    private fun shown(id: StringResource) = countText(str(id)) > 0
 
     @Test
     fun aHiddenDeleteTagDialogShowsNothing() {
         setScreen { RequestDeleteTagsDialog(showDialog = false, onDismiss = { calls += "dismiss" }, onConfirm = {}) }
 
-        assertEquals(0, countText(str(R.string.delete_tag)))
+        assertEquals(0, countText(str(Res.string.delete_tag)))
     }
 
     @Test
@@ -29,9 +37,9 @@ class ConfirmationDialogsTest : ComposeScreenTest() {
                 onConfirm = { calls += "confirm" },
             )
         }
-        assertEquals(1, countText(str(R.string.delete_tag)))
+        assertEquals(1, countText(str(Res.string.delete_tag)))
 
-        rule.onNodeWithText(str(R.string.delete)).performClick()
+        rule.onNodeWithText(str(Res.string.delete)).performClick()
 
         assertEquals(listOf("confirm", "dismiss"), calls)
     }
@@ -46,7 +54,7 @@ class ConfirmationDialogsTest : ComposeScreenTest() {
             )
         }
 
-        rule.onNodeWithText(str(R.string.cancel)).performClick()
+        rule.onNodeWithText(str(Res.string.cancel)).performClick()
 
         assertEquals(listOf("dismiss"), calls)
     }
@@ -55,7 +63,7 @@ class ConfirmationDialogsTest : ComposeScreenTest() {
     fun aHiddenClearCompletedDialogShowsNothing() {
         setScreen { RequestCleanCompleteTaskDialog(showDialog = false, onDismiss = {}, onConfirm = {}) }
 
-        assertEquals(0, countText(str(R.string.task_clear_completed_title)))
+        assertEquals(0, countText(str(Res.string.task_clear_completed_title)))
     }
 
     @Test
@@ -67,9 +75,9 @@ class ConfirmationDialogsTest : ComposeScreenTest() {
                 onConfirm = { calls += "confirm" },
             )
         }
-        assertEquals(1, countText(str(R.string.task_clear_completed_title)))
+        assertEquals(1, countText(str(Res.string.task_clear_completed_title)))
 
-        rule.onNodeWithText(str(R.string.clear)).performClick()
+        rule.onNodeWithText(str(Res.string.clear)).performClick()
 
         assertEquals(listOf("confirm", "dismiss"), calls)
     }
@@ -84,7 +92,7 @@ class ConfirmationDialogsTest : ComposeScreenTest() {
             )
         }
 
-        rule.onNodeWithText(str(R.string.cancel)).performClick()
+        rule.onNodeWithText(str(Res.string.cancel)).performClick()
 
         assertEquals(listOf("dismiss"), calls)
     }
@@ -104,8 +112,8 @@ class ConfirmationDialogsTest : ComposeScreenTest() {
         assertEquals(1, countText("Erase?"))
         assertEquals(1, countText("This cannot be undone."))
 
-        rule.onNodeWithText(str(R.string.dialog_dismiss)).performClick()
-        rule.onNodeWithText(str(R.string.dialog_confirm)).performClick()
+        rule.onNodeWithText(str(Res.string.dialog_dismiss)).performClick()
+        rule.onNodeWithText(str(Res.string.dialog_confirm)).performClick()
 
         assertEquals(listOf("dismiss", "confirm"), calls)
     }
@@ -117,6 +125,6 @@ class ConfirmationDialogsTest : ComposeScreenTest() {
         }
 
         assertEquals(0, countText("Erase?"))
-        assertEquals(false, shown(R.string.dialog_confirm))
+        assertEquals(false, shown(Res.string.dialog_confirm))
     }
 }

@@ -36,6 +36,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.pasich.encly.core.di.appGraph
+import com.pasich.encly.core.locale.AppLocales
+import com.pasich.encly.core.security.BiometricTextSource
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
@@ -80,6 +82,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var keyboardPrivacy: KeyboardPrivacy
 
     @Inject
+    lateinit var biometricTexts: BiometricTextSource
+
+    @Inject
     lateinit var viewModelFactory: MetroViewModelFactory
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,6 +97,8 @@ class MainActivity : AppCompatActivity() {
         stripNavigationExtras(intent)
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // The strings follow the process's default locale: put the in-app language there before composing.
+        AppLocales.syncDefaultLocale()
         // After super.onCreate: touching decorView earlier builds the window with the splash
         // theme, which has an action bar, instead of Theme.Encly.
         protectWindow()
@@ -118,6 +125,8 @@ class MainActivity : AppCompatActivity() {
             // A committed vault that is not open starts locked, before the first frame, so a back
             // stack restored after process death is replaced by the lock screen, never shown.
             if (status == InitialStatus.AUTH) sessionLockManager.requireUnlock()
+            // The system biometric prompt is built outside any coroutine: give it finished texts first.
+            biometricTexts.refresh()
             initialStatus = status
         }
 

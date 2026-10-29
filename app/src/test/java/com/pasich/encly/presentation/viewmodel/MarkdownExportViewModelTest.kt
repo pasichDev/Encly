@@ -1,10 +1,15 @@
 package com.pasich.encly.presentation.viewmodel
 
 import android.net.Uri
-import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.AppStrings
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_io
+import com.pasich.encly.core.resources.backup_error_locked
+import com.pasich.encly.core.resources.backup_error_target_exists
+import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.resources.markdown_export_done
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.VaultDataStore
@@ -151,7 +156,7 @@ class MarkdownExportViewModelTest {
         viewModel.reauthFlow.submitPin("000000".toCharArray())
         waitUntil { (step() as? BackupStep.Reauth)?.error != null }
 
-        assertEquals(R.string.lock_wrong_pin, (step() as BackupStep.Reauth).error)
+        assertEquals(Res.string.lock_wrong_pin, (step() as BackupStep.Reauth).error)
         verify(documents, never()).write(any(Uri::class.java) ?: uri, anyBlock())
     }
 
@@ -193,7 +198,7 @@ class MarkdownExportViewModelTest {
         viewModel.onTarget(uri)
         waitUntil { viewModel.uiState.value.message != null }
 
-        assertEquals(BackupMessage.Text(R.string.markdown_export_done), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.markdown_export_done), viewModel.uiState.value.message)
         assertEquals(listOf("tasks.md", "Groceries.md"), zipNames())
         assertEquals(BackupStep.Idle, step())
     }
@@ -258,7 +263,7 @@ class MarkdownExportViewModelTest {
         viewModel.onTarget(uri)
         waitUntil { viewModel.uiState.value.message != null }
 
-        assertEquals(BackupMessage.Text(R.string.backup_error_locked), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
         verify(documents).discard(uri)
         assertEquals(0, written.size())
     }
@@ -279,7 +284,7 @@ class MarkdownExportViewModelTest {
         viewModel.onTarget(uri)
         waitUntil { viewModel.uiState.value.message != null }
 
-        assertEquals(BackupMessage.Text(R.string.backup_error_locked), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
         verify(documents, never()).write(any(Uri::class.java) ?: uri, anyBlock())
         verify(documents).discard(uri)
         assertEquals(0, written.size())
@@ -321,7 +326,7 @@ class MarkdownExportViewModelTest {
         viewModel.onTarget(uri)
         waitUntil { viewModel.uiState.value.message != null }
 
-        assertEquals(BackupMessage.Text(R.string.markdown_export_done), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.markdown_export_done), viewModel.uiState.value.message)
         assertTrue(written.toString(Charsets.UTF_8).contains("Groceries"))
     }
 
@@ -350,7 +355,7 @@ class MarkdownExportViewModelTest {
         viewModel.reauthFlow.submitPin("123456".toCharArray())
         waitUntil { viewModel.uiState.value.message != null }
 
-        assertEquals(BackupMessage.Text(R.string.backup_error_locked), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
         assertEquals(BackupStep.Idle, step())
     }
 
@@ -365,7 +370,7 @@ class MarkdownExportViewModelTest {
         viewModel.onTarget(uri)
         waitUntil { viewModel.uiState.value.message != null }
 
-        assertEquals(BackupMessage.Text(R.string.backup_error_target_exists), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.backup_error_target_exists), viewModel.uiState.value.message)
     }
 
     @Test
@@ -383,7 +388,7 @@ class MarkdownExportViewModelTest {
         viewModel.onTarget(uri)
         waitUntil { viewModel.uiState.value.message != null }
 
-        assertEquals(BackupMessage.Text(R.string.backup_error_io), viewModel.uiState.value.message)
+        assertEquals(BackupMessage.Text(Res.string.backup_error_io), viewModel.uiState.value.message)
     }
 
     @Test

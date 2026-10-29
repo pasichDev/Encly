@@ -115,7 +115,8 @@ android {
 
     // Keep only the app's own 9 languages in the APK and bundle, so the store listing does not
     // advertise the ~85 languages AndroidX libraries ship strings for. Keep in sync with the
-    // values-* folders, res/xml/locales_config.xml and AppLanguage (TranslationCompletenessTest).
+    // values-* folders of :core:resources (src/commonMain/strings), res/xml/locales_config.xml and AppLanguage
+    // (TranslationCompletenessTest).
     androidResources {
         localeFilters += listOf("en", "uk", "de", "fr", "es", "it", "pl", "pt", "nl")
     }
@@ -213,12 +214,15 @@ tasks.configureEach {
     }
 }
 
-// StoreMetadataTest and CodeQualityToolingTest read files outside the module; declare them as
-// inputs so an edited store text, changelog, workflow or tool config re-runs the unit tests
-// instead of leaving them UP-TO-DATE.
+// StoreMetadataTest, TranslationCompletenessTest and CodeQualityToolingTest read files outside the
+// module; declare them as inputs so an edited store text, translation, changelog, workflow or tool
+// config re-runs the unit tests instead of leaving them UP-TO-DATE.
 tasks.withType<Test>().configureEach {
     inputs.dir(rootProject.file("fastlane/metadata/android"))
         .withPropertyName("storeMetadata")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.file("core/resources/src/commonMain/strings"))
+        .withPropertyName("translations")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         rootProject.file("CHANGELOG.md"),
@@ -278,6 +282,8 @@ dependencies {
     implementation(project(":editor"))
     // The encrypted vault database (Room + Sealite): entities, DAOs, migrations, SecureDatabaseManager.
     implementation(project(":core:database"))
+    // Every string and plural the UI shows (Compose Multiplatform resources, generated Res class).
+    implementation(project(":core:resources"))
 
     // Jetpack Compose: every androidx.compose module takes its version from the BOM.
     val composeBom = platform(libs.androidx.compose.bom)

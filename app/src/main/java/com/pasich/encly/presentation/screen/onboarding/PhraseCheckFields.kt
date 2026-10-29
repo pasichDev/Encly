@@ -8,16 +8,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.onboarding_verify_label
+import com.pasich.encly.core.resources.onboarding_verify_placeholder
+import com.pasich.encly.core.resources.onboarding_verify_wrong
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.FieldState
 import com.pasich.encly.presentation.viewmodel.AnswerState
 import com.pasich.encly.presentation.viewmodel.phraseAnswerState
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * "Word #n" fields for typing back words of a new phrase ([checks]: 0-based position and the
@@ -40,14 +43,14 @@ internal fun PhraseCheckFields(
             val answer = answers[index].orEmpty()
             val fieldState = when (phraseAnswerState(word, answer)) {
                 AnswerState.CORRECT -> FieldState.Valid
-                AnswerState.WRONG -> FieldState.Error(stringResource(R.string.onboarding_verify_wrong, number))
+                AnswerState.WRONG -> FieldState.Error(stringResource(Res.string.onboarding_verify_wrong, number))
                 AnswerState.EMPTY, AnswerState.TYPING -> FieldState.Default
             }
             EnclyTextField(
                 value = answer,
                 onValueChange = { onAnswer(index, it) },
-                label = stringResource(R.string.onboarding_verify_label, number),
-                placeholder = stringResource(R.string.onboarding_verify_placeholder),
+                label = stringResource(Res.string.onboarding_verify_label, number),
+                placeholder = stringResource(Res.string.onboarding_verify_placeholder),
                 state = fieldState,
                 enabled = enabled,
                 textStyle = EnclyTheme.typography.dataLarge,

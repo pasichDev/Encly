@@ -1,8 +1,12 @@
 package com.pasich.encly.presentation.viewmodel
 
 import androidx.fragment.app.FragmentActivity
-import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.biometric_change_not_confirmed
+import com.pasich.encly.core.resources.biometric_enroll_failed
+import com.pasich.encly.core.resources.pin_current_wrong
+import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
@@ -107,7 +111,7 @@ class SecuritySettingsViewModelTest {
         `when`(security.verifyPin("222222".toCharArray())).thenReturn(true)
 
         assertFalse(checkCurrent("111111"))
-        assertEquals(UiText.of(R.string.pin_current_wrong), viewModel.uiState.value.error)
+        assertEquals(UiText.of(Res.string.pin_current_wrong), viewModel.uiState.value.error)
 
         viewModel.clearError()
         assertTrue(checkCurrent("222222"))
@@ -125,7 +129,7 @@ class SecuritySettingsViewModelTest {
         assertNull(viewModel.uiState.value.error)
 
         assertFalse(activate("444444"))
-        assertEquals(UiText.of(R.string.pin_update_failed), viewModel.uiState.value.error)
+        assertEquals(UiText.of(Res.string.pin_update_failed), viewModel.uiState.value.error)
     }
 
     @Test
@@ -265,7 +269,7 @@ class SecuritySettingsViewModelTest {
         viewModel.toggleBiometric(activity, enable = true)
 
         assertFalse(viewModel.uiState.value.biometricEnable)
-        assertEquals(UiText.of(R.string.biometric_enroll_failed), viewModel.uiState.value.error)
+        assertEquals(UiText.of(Res.string.biometric_enroll_failed), viewModel.uiState.value.error)
     }
 
     @Test
@@ -289,7 +293,7 @@ class SecuritySettingsViewModelTest {
 
         verify(security, never()).disableBiometric()
         assertTrue(viewModel.uiState.value.biometricEnable)
-        assertEquals(UiText.of(R.string.biometric_change_not_confirmed), viewModel.uiState.value.error)
+        assertEquals(UiText.of(Res.string.biometric_change_not_confirmed), viewModel.uiState.value.error)
     }
 
     @Test

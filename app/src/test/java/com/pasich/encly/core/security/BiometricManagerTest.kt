@@ -28,11 +28,15 @@ import android.hardware.biometrics.BiometricManager as PlatformBiometricManager
 class BiometricManagerTest {
     private val context: Application get() = ApplicationProvider.getApplicationContext()
     private val store = tempVaultStore()
+    private val texts = BiometricTextSource().apply {
+        val prompt = BiometricManager.PromptConfig("title", "subtitle")
+        set(BiometricTexts("unavailable", "cancel", prompt, prompt, prompt, prompt))
+    }
     private lateinit var manager: KeystoreBiometricManager
 
     @Before
     fun setUp() {
-        manager = KeystoreBiometricManager(context, store)
+        manager = KeystoreBiometricManager(context, store, texts)
     }
 
     private fun sensor(available: Boolean) {

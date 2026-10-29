@@ -1,10 +1,12 @@
 package com.pasich.encly.core.common
 
+import org.jetbrains.compose.resources.StringResource
+
 /**
  * Resolves text that is stored rather than shown (for example a duplicated note's title), in
- * the in-app language. [id] is the platform's string resource id. Text that is only shown is
- * [UiText]. The Android implementation is [AndroidAppStrings].
+ * the in-app language. Text that is only shown is [UiText]. The implementation is
+ * [ComposeAppStrings].
  */
 public interface AppStrings {
-    public fun get(id: Int, vararg args: Any): String
+    public suspend fun get(id: StringResource, vararg args: Any): String
 }

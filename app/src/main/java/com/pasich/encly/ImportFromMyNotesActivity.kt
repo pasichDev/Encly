@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.pasich.encly.core.di.appGraph
+import com.pasich.encly.core.locale.AppLocales
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.handoff.AndroidPackageSignatures
@@ -84,6 +85,7 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
         // As in MainActivity: protected before the first frame.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         super.onCreate(savedInstanceState)
+        AppLocales.syncDefaultLocale()
         protectWindow()
 
         val refused = HandoffRequest.check(launch()) { authority ->

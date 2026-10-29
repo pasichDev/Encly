@@ -1,7 +1,13 @@
 package com.pasich.encly.presentation.viewmodel
 
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.priority_high
+import com.pasich.encly.core.resources.priority_low
+import com.pasich.encly.core.resources.priority_medium
+import com.pasich.encly.core.resources.task_filter_all
+import com.pasich.encly.core.resources.task_filter_completed
 import com.pasich.encly.data.model.Task
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * The task list's filtering and counting, as pure functions of the stored tasks and the
@@ -12,10 +18,10 @@ internal object TaskFilterEngine {
     private const val COMPLETED_FILTER_ID = "completed"
     private const val PERCENT = 100
 
-    private enum class PriorityChip(val id: String, val priority: Int, val label: Int) {
-        HIGH("priority_high", 2, R.string.priority_high),
-        MEDIUM("priority_medium", 1, R.string.priority_medium),
-        LOW("priority_low", 0, R.string.priority_low),
+    private enum class PriorityChip(val id: String, val priority: Int, val label: StringResource) {
+        HIGH("priority_high", 2, Res.string.priority_high),
+        MEDIUM("priority_medium", 1, Res.string.priority_medium),
+        LOW("priority_low", 0, Res.string.priority_low),
     }
 
     /**
@@ -147,8 +153,12 @@ internal object TaskFilterEngine {
     }
 
     private fun allFilter(tasks: List<Task>): TaskFilter =
-        TaskFilter(ALL_FILTER_ID, R.string.task_filter_all, tasks.size, TaskFilter.Type.ACTIVE)
+        TaskFilter(ALL_FILTER_ID, Res.string.task_filter_all, tasks.size, TaskFilter.Type.ACTIVE)
 
-    private fun completedFilter(completedTasks: List<Task>): TaskFilter =
-        TaskFilter(COMPLETED_FILTER_ID, R.string.task_filter_completed, completedTasks.size, TaskFilter.Type.COMPLETED)
+    private fun completedFilter(completedTasks: List<Task>): TaskFilter = TaskFilter(
+        COMPLETED_FILTER_ID,
+        Res.string.task_filter_completed,
+        completedTasks.size,
+        TaskFilter.Type.COMPLETED,
+    )
 }

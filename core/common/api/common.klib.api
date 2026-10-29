@@ -15,7 +15,7 @@ abstract fun interface com.pasich.encly.core.platform/MainThreadTimer { // com.p
 }
 
 abstract interface com.pasich.encly.core.common/AppStrings { // com.pasich.encly.core.common/AppStrings|null[0]
-    abstract fun get(kotlin/Int, kotlin/Array<out kotlin/Any>...): kotlin/String // com.pasich.encly.core.common/AppStrings.get|get(kotlin.Int;kotlin.Array<out|kotlin.Any>...){}[0]
+    abstract suspend fun get(org.jetbrains.compose.resources/StringResource, kotlin/Array<out kotlin/Any>...): kotlin/String // com.pasich.encly.core.common/AppStrings.get|get(org.jetbrains.compose.resources.StringResource;kotlin.Array<out|kotlin.Any>...){}[0]
 }
 
 abstract interface com.pasich.encly.core.platform/KeyValueStore { // com.pasich.encly.core.platform/KeyValueStore|null[0]
@@ -71,21 +71,27 @@ sealed interface <#A: out kotlin/Any?> com.pasich.encly.core.common/LoadState { 
 
 sealed interface com.pasich.encly.core.common/UiText { // com.pasich.encly.core.common/UiText|null[0]
     final class Resource : com.pasich.encly.core.common/UiText { // com.pasich.encly.core.common/UiText.Resource|null[0]
-        constructor <init>(kotlin/Int) // com.pasich.encly.core.common/UiText.Resource.<init>|<init>(kotlin.Int){}[0]
+        constructor <init>(org.jetbrains.compose.resources/StringResource) // com.pasich.encly.core.common/UiText.Resource.<init>|<init>(org.jetbrains.compose.resources.StringResource){}[0]
 
         final val id // com.pasich.encly.core.common/UiText.Resource.id|{}id[0]
-            final fun <get-id>(): kotlin/Int // com.pasich.encly.core.common/UiText.Resource.id.<get-id>|<get-id>(){}[0]
+            final fun <get-id>(): org.jetbrains.compose.resources/StringResource // com.pasich.encly.core.common/UiText.Resource.id.<get-id>|<get-id>(){}[0]
 
-        final fun component1(): kotlin/Int // com.pasich.encly.core.common/UiText.Resource.component1|component1(){}[0]
-        final fun copy(kotlin/Int = ...): com.pasich.encly.core.common/UiText.Resource // com.pasich.encly.core.common/UiText.Resource.copy|copy(kotlin.Int){}[0]
+        final fun component1(): org.jetbrains.compose.resources/StringResource // com.pasich.encly.core.common/UiText.Resource.component1|component1(){}[0]
+        final fun copy(org.jetbrains.compose.resources/StringResource = ...): com.pasich.encly.core.common/UiText.Resource // com.pasich.encly.core.common/UiText.Resource.copy|copy(org.jetbrains.compose.resources.StringResource){}[0]
         final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.common/UiText.Resource.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // com.pasich.encly.core.common/UiText.Resource.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // com.pasich.encly.core.common/UiText.Resource.toString|toString(){}[0]
     }
 
     final object Companion { // com.pasich.encly.core.common/UiText.Companion|null[0]
-        final fun of(kotlin/Int): com.pasich.encly.core.common/UiText // com.pasich.encly.core.common/UiText.Companion.of|of(kotlin.Int){}[0]
+        final fun of(org.jetbrains.compose.resources/StringResource): com.pasich.encly.core.common/UiText // com.pasich.encly.core.common/UiText.Companion.of|of(org.jetbrains.compose.resources.StringResource){}[0]
     }
+}
+
+final class com.pasich.encly.core.common/ComposeAppStrings : com.pasich.encly.core.common/AppStrings { // com.pasich.encly.core.common/ComposeAppStrings|null[0]
+    constructor <init>() // com.pasich.encly.core.common/ComposeAppStrings.<init>|<init>(){}[0]
+
+    final suspend fun get(org.jetbrains.compose.resources/StringResource, kotlin/Array<out kotlin/Any>...): kotlin/String // com.pasich.encly.core.common/ComposeAppStrings.get|get(org.jetbrains.compose.resources.StringResource;kotlin.Array<out|kotlin.Any>...){}[0]
 }
 
 final class com.pasich.encly.core.common/LoadError { // com.pasich.encly.core.common/LoadError|null[0]

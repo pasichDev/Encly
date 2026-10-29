@@ -27,14 +27,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.pasich.encly.R
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.field_correct
+import com.pasich.encly.core.resources.search_notes
 import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.stringResource
 
 /** Placeholder text is the field's text colour at this opacity. */
 const val PLACEHOLDER_ALPHA = 0.72f
@@ -131,7 +133,7 @@ private fun ValidMark() {
             modifier = Modifier.size(18.dp),
         )
         Text(
-            text = stringResource(R.string.field_correct),
+            text = stringResource(Res.string.field_correct),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -155,7 +157,7 @@ fun EnclySearchField(
 ) {
     val colors = MaterialTheme.colorScheme
     val keyboard = LocalSoftwareKeyboardController.current
-    val searchDescription = stringResource(R.string.search_notes)
+    val searchDescription = stringResource(Res.string.search_notes)
     Surface(
         shape = CircleShape,
         color = colors.surfaceContainer,

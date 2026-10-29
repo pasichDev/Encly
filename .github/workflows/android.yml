@@ -94,6 +94,8 @@ jobs:
           :core:database:koverVerify
           :core:database:detekt
           :core:database:checkKotlinAbi
+          :core:resources:desktopTest
+          :core:resources:testAndroidHostTest
           :app:testFdroidDebugUnitTest
           :app:koverXmlReportFdroidDebug
           :app:koverVerifyFdroidDebug
@@ -187,6 +189,8 @@ jobs:
           :core:common:compileKotlinIosArm64
           :core:database:compileKotlinIosSimulatorArm64
           :core:database:compileKotlinIosArm64
+          :core:resources:compileKotlinIosSimulatorArm64
+          :core:resources:compileKotlinIosArm64
 
       # On a Mac the klib dump of the public API is made from the real iOS klibs (elsewhere it is
       # inferred), so this is where editor/api/editor.klib.api and core/common/api/common.klib.api
