@@ -19,12 +19,12 @@ spotless {
     val editorConfig = rootProject.file(".editorconfig")
     kotlin {
         target("**/*.kt")
-        targetExclude("**/build/**", "**/.gradle/**", "**/.kotlin/**")
+        targetExclude("**/build/**", "**/.gradle/**", "**/.kotlin/**", ".claude/**")
         ktlint(ktlintVersion).setEditorConfigPath(editorConfig)
     }
     kotlinGradle {
         target("**/*.gradle.kts")
-        targetExclude("**/build/**", "**/.gradle/**", "**/.kotlin/**")
+        targetExclude("**/build/**", "**/.gradle/**", "**/.kotlin/**", ".claude/**")
         ktlint(ktlintVersion).setEditorConfigPath(editorConfig)
     }
 }

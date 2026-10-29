@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.awt.GraphicsEnvironment
 import java.awt.Taskbar
 import java.io.IOException
+import java.nio.file.Path
 import javax.imageio.ImageIO
 import javax.swing.JOptionPane
 import javax.swing.UIManager
@@ -39,7 +40,7 @@ fun main(args: Array<String>) {
     val instance = SingleInstanceLock.tryAcquire(dataDirectory)
         ?: fail("Encly is already running.", exitCode = 0)
 
-    val pinFactor = createPinFactor()
+    val pinFactor = createPinFactor(dataDirectory)
     val environment = DesktopEnvironment.system(os, dataDirectory, pinFactor)
     val graph = createGraphFactory<DesktopAppGraph.Factory>().create(environment)
     startServices(graph)
@@ -56,8 +57,8 @@ fun main(args: Array<String>) {
 }
 
 /** The PIN's device-bound key lives in the OS secret store; without one there is no PIN, so the app cannot run. */
-private fun createPinFactor(): PinHardwareFactor = try {
-    DesktopPinFactor.create()
+private fun createPinFactor(dataDirectory: Path): PinHardwareFactor = try {
+    DesktopPinFactor.create(dataDirectory)
 } catch (e: SecretStoreUnavailableException) {
     fail("Encly needs the operating system's secret store, which is not available: ${e.message}")
 }

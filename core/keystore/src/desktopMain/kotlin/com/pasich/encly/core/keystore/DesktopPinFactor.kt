@@ -4,6 +4,7 @@ import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.core.security.PinKeySlot
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import java.nio.file.Path
 import java.security.GeneralSecurityException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -12,10 +13,11 @@ import javax.crypto.spec.SecretKeySpec
  * [PinHardwareFactor] for the desktop. The contract is the one of the Android Keystore factor:
  * `hw = HMAC-SHA256(deviceSecret, data)`, where the caller passes `data = salt ‖ pin`.
  *
- * The `deviceSecret` is 32 random bytes from SecureRandom, created once per OS user and slot and kept ONLY
- * in the operating system's secret store of that user (Windows DPAPI, the macOS login Keychain, the
- * freedesktop Secret Service); it never touches Encly's own files unprotected. Unlike Android StrongBox or
- * TEE the secret is not hardware-bound: it is as safe as the OS user account (see SECURITY.md).
+ * The `deviceSecret` is 32 random bytes from SecureRandom, created once per OS user and slot (on Linux also per
+ * data directory) and kept ONLY in the operating system's secret store of that user (Windows DPAPI, the macOS
+ * login Keychain, the freedesktop Secret Service); it never touches Encly's own files unprotected. Unlike
+ * Android StrongBox or TEE the secret is not hardware-bound: it is as safe as the OS user account (see
+ * SECURITY.md).
  *
  * States, mirroring the Android factor:
  * - [ensureKey] creates the secret when there is none and returns true then. A secret that is there but
@@ -97,15 +99,17 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
          * The factor for the operating system this JVM runs on. Throws [SecretStoreUnavailableException] when
          * the system has no supported secret store. On Linux, a missing Secret Service (a headless session) shows
          * up later, on the first operation, as a [PinFactorException] with a [SecretStoreUnavailableException]
-         * cause: it can start later, so it is not a permanent state.
+         * cause: it can start later, so it is not a permanent state. [dataDirectory] is where this install keeps
+         * its vault; on Linux it scopes the secret, so two installs of one user keep their own (see
+         * [LinuxSecretServiceStore]).
          */
         @Throws(SecretStoreUnavailableException::class)
-        public fun create(): DesktopPinFactor = DesktopPinFactor(
+        public fun create(dataDirectory: Path): DesktopPinFactor = DesktopPinFactor(
             selectSecretStore(
                 osName = System.getProperty("os.name").orEmpty(),
                 windows = { WindowsDpapiSecretStore() },
                 macos = { MacKeychainSecretStore() },
-                linux = { LinuxSecretServiceStore() },
+                linux = { LinuxSecretServiceStore(vault = dataDirectory.toAbsolutePath().normalize().toString()) },
             ),
         )
     }

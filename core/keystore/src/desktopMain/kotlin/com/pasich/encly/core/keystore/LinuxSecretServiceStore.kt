@@ -12,7 +12,10 @@ import java.security.SecureRandom
  * Linux: the freedesktop Secret Service (`org.freedesktop.secrets`, served by GNOME Keyring, KWallet's
  * Secret Service bridge, KeePassXC and others) over the D-Bus session bus. The secret is an item of the
  * default collection (the alias `default`, which is the `login` keyring on GNOME) with the attributes
- * `application = com.pasich.encly` and `purpose = pin-factor-v1` (`pin-factor-v1-b` for slot B).
+ * `application = com.pasich.encly`, `purpose = pin-factor-v1` (`pin-factor-v1-b` for slot B) and `vault` = the
+ * absolute data directory of the install. The keyring is one per OS user while a user can have several
+ * installs with their own vaults (a Flatpak keeps its data under `~/.var/app`, a `.deb` under `~/.local/share`);
+ * without [vault] they would share one secret, and a PIN change or a wipe in one would cut the other off its PIN.
  *
  * The D-Bus client is dbus-java (pure JVM, over the JDK's own Unix domain sockets), chosen over JNA to
  * libsecret because it needs no native library on the system and no GLib structures through JNA. The session
@@ -26,6 +29,7 @@ import java.security.SecureRandom
  */
 @Suppress("TooGenericExceptionCaught") // dbus-java reports remote errors as various runtime exceptions.
 internal class LinuxSecretServiceStore(
+    private val vault: String,
     private val application: String = APPLICATION_ID,
     private val random: SecureRandom = SecureRandom(),
 ) : SecretStore {
@@ -133,7 +137,7 @@ internal class LinuxSecretServiceStore(
     )
 
     private fun attributesOf(slot: PinKeySlot): Map<String, String> =
-        mapOf(ATTRIBUTE_APPLICATION to application, ATTRIBUTE_PURPOSE to slot.entryName())
+        mapOf(ATTRIBUTE_APPLICATION to application, ATTRIBUTE_PURPOSE to slot.entryName(), ATTRIBUTE_VAULT to vault)
 
     private companion object {
         const val DEFAULT_ALIAS = "default"
@@ -144,5 +148,6 @@ internal class LinuxSecretServiceStore(
         const val ITEM_ATTRIBUTES = "org.freedesktop.Secret.Item.Attributes"
         const val ATTRIBUTE_APPLICATION = "application"
         const val ATTRIBUTE_PURPOSE = "purpose"
+        const val ATTRIBUTE_VAULT = "vault"
     }
 }

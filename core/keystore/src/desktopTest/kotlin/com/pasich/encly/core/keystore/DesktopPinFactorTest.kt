@@ -3,6 +3,7 @@ package com.pasich.encly.core.keystore
 import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinKeySlot
 import org.junit.Assume.assumeTrue
+import java.nio.file.Path
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.test.Test
@@ -209,7 +210,7 @@ class DesktopPinFactorTest {
         val os = System.getProperty("os.name").lowercase()
         assumeTrue(listOf("windows", "mac", "linux").any { os.startsWith(it) })
 
-        DesktopPinFactor.create()
+        DesktopPinFactor.create(Path.of("build", "encly-test-data"))
     }
 
     @Test

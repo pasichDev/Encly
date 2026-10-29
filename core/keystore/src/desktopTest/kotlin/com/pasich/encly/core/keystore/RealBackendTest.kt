@@ -40,7 +40,24 @@ class RealBackendTest {
     @Test
     fun linuxSecretServiceRoundTrip() {
         assumeBackend("linux")
-        roundTrip(LinuxSecretServiceStore(application = TEST_NAMESPACE))
+        roundTrip(LinuxSecretServiceStore(vault = "/vault/one", application = TEST_NAMESPACE))
+        installsKeepTheirOwnSecret(
+            LinuxSecretServiceStore(vault = "/vault/one", application = TEST_NAMESPACE),
+            LinuxSecretServiceStore(vault = "/vault/two", application = TEST_NAMESPACE),
+        )
+    }
+
+    /** Two installs of one user (a Flatpak and a .deb): a PIN change in one leaves the other's secret alone. */
+    private fun installsKeepTheirOwnSecret(one: SecretStore, two: SecretStore) {
+        try {
+            val first = one.create(PinKeySlot.A)
+            assertTrue(DesktopPinFactor(two).ensureKey(PinKeySlot.A))
+            two.delete(PinKeySlot.A)
+            assertContentEquals(first, one.read(PinKeySlot.A))
+        } finally {
+            runCatching { one.delete(PinKeySlot.A) }
+            runCatching { two.delete(PinKeySlot.A) }
+        }
     }
 
     /** A damaged DPAPI blob must be "lost" (so that the lock screen offers the recovery phrase). */
