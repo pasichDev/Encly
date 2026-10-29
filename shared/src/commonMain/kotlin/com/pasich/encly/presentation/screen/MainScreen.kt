@@ -52,15 +52,20 @@ import com.pasich.encly.presentation.designsystem.EnclySearchField
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.dialogs.NotesSortBottomSheet
+import com.pasich.encly.presentation.dialogs.rememberSheetDismisser
 import com.pasich.encly.presentation.drawer.MainDrawer
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.TASKS_ADD_ARG
+import com.pasich.encly.presentation.pane.ExpandedMainRoot
+import com.pasich.encly.presentation.pane.MediumMainRoot
 import com.pasich.encly.presentation.viewmodel.LockNowViewModel
 import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.ui.theme.LocalWidthClass
+import com.pasich.encly.ui.theme.WidthClass
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -70,6 +75,16 @@ private const val DRAWER_SCRIM_ALPHA = 0.32f
 
 @Composable
 fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+    when (LocalWidthClass.current) {
+        WidthClass.Compact -> CompactMainRoot(navController, modifier)
+        WidthClass.Medium -> MediumMainRoot(navController, modifier)
+        WidthClass.Expanded -> ExpandedMainRoot(navController, modifier)
+    }
+}
+
+/** The phone layout: the notes, with the navigation drawer sliding over them. */
+@Composable
+private fun CompactMainRoot(navController: NavHostController, modifier: Modifier = Modifier) {
     // Not saved: coming back from a page opened in the drawer shows the notes with it closed.
     val drawerState = remember { DrawerState(DrawerValue.Closed) }
     val scope = rememberCoroutineScope()
@@ -109,8 +124,9 @@ fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifi
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    drawerState: DrawerState,
+    drawerState: DrawerState?,
     modifier: Modifier = Modifier,
+    noteOpener: NoteOpener? = null,
     mainListStateViewModel: MainListStateViewModel = metroViewModel(),
     settingsViewModel: SettingsViewModel = metroViewModel(),
     noteListViewModel: NoteListViewModel = metroViewModel(),
@@ -135,27 +151,24 @@ fun MainScreen(
     var viewOptionsVisible by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val navigation = remember(navController) { MainNavigation(navController) }
+    val notes = noteOpener ?: navigation
 
     if (viewOptionsVisible) {
-        ViewOptionsSheet(
-            isGrid = isGrid,
-            onToggleView = mainListStateViewModel::updateGridNoteList,
-            onClose = { viewOptionsVisible = false },
-        )
+        ViewOptionsSheet(isGrid, mainListStateViewModel::updateGridNoteList) { viewOptionsVisible = false }
     }
 
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         floatingActionButton = {
-            NewNoteFab(expanded = atTop, onClick = { navigation.newNote(noteListViewModel.state.value.selectedTag) })
+            NewNoteFab(expanded = atTop, onClick = { notes.newNote(noteListViewModel.state.value.selectedTag) })
         },
     ) { padding ->
         // The Scaffold has no top bar slot, so `padding` carries the status bar; consuming it
         // keeps the notes bar below from padding the same inset again.
         Column(modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             NotesTopBar(
-                onMenu = { scope.launch { drawerState.open() } },
+                onMenu = drawerState?.let { drawer -> { scope.launch { drawer.open() } } },
                 onLockNow = lockNowViewModel::lockNow,
                 onSettings = { navigation.open(NavRoutes.SettingsRoute.name) },
             )
@@ -165,8 +178,8 @@ fun MainScreen(
                 gridScrollState = gridScrollState,
                 search = NotesSearch(query, searchResults),
                 swipe = settingsViewModel.swipeSettings.collectAsState().value ?: SwipeSettings.Off,
-                onItemClick = { note -> navigation.editNote(note.id) },
-                onSecondActionClick = { note -> navigation.editNote(-1, "?copySource=${note.id}") },
+                onItemClick = { note -> notes.editNote(note.id) },
+                onSecondActionClick = { note -> notes.editNote(-1, "?copySource=${note.id}") },
                 header = {
                     NotesHeader(
                         query = query,
@@ -231,25 +244,30 @@ private fun NewNoteFab(expanded: Boolean, onClick: () -> Unit) {
 @Composable
 private fun ViewOptionsSheet(isGrid: Boolean, onToggleView: () -> Unit, onClose: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
     NotesSortBottomSheet(
         isBottomSheetVisible = true,
         sheetState = sheetState,
         isGrid = isGrid,
         onToggleView = onToggleView,
-        onDismiss = { scope.launch { sheetState.hide() }.invokeOnCompletion { onClose() } },
+        onDismiss = rememberSheetDismisser(sheetState, onClose),
     )
 }
 
-/** Where the notes screen goes: a note (new, existing or a copy) or another screen. */
-private class MainNavigation(private val navController: NavHostController) {
-    fun editNote(noteId: Long, params: String = "") {
-        val navOptions = NavOptions.Builder().setLaunchSingleTop(true).build()
-        navController.navigate("${NavRoutes.EditNoteRoute.name}/$noteId$params", navOptions)
-    }
+/** Where a note from the notes list opens: a full screen on a phone, the detail pane in an expanded window. */
+interface NoteOpener {
+    /** Opens note [noteId] (-1: a new one), with the editor route's query [params] such as a copy source. */
+    fun editNote(noteId: Long, params: String = "")
 
     /** A new note, tagged with the chip selected in the list (0: none). */
     fun newNote(selectedTag: Long) = editNote(-1, if (selectedTag != 0L) "?addTag=$selectedTag" else "")
+}
+
+/** Where the notes screen goes: a note (new, existing or a copy) or another screen. */
+private class MainNavigation(private val navController: NavHostController) : NoteOpener {
+    override fun editNote(noteId: Long, params: String) {
+        val navOptions = NavOptions.Builder().setLaunchSingleTop(true).build()
+        navController.navigate("${NavRoutes.EditNoteRoute.name}/$noteId$params", navOptions)
+    }
 
     fun open(route: String) {
         val navOptions = NavOptions.Builder().setLaunchSingleTop(true).setRestoreState(true).build()
@@ -259,11 +277,11 @@ private class MainNavigation(private val navController: NavHostController) {
 
 /** The root bar of the notes screen: menu, "Notes", Lock now and Settings. */
 @Composable
-private fun NotesTopBar(onMenu: () -> Unit, onLockNow: () -> Unit, onSettings: () -> Unit) {
+private fun NotesTopBar(onMenu: (() -> Unit)?, onLockNow: () -> Unit, onSettings: () -> Unit) {
     EnclyTopBar(
         title = stringResource(Res.string.notes_title),
-        navigation = {
-            IconWithTooltip(EnclyIcons.Menu, stringResource(Res.string.open_menu), onMenu)
+        navigation = onMenu?.let { menu ->
+            { IconWithTooltip(EnclyIcons.Menu, stringResource(Res.string.open_menu), menu) }
         },
         actions = {
             IconWithTooltip(EnclyIcons.Lock, stringResource(Res.string.lock_now), onLockNow)

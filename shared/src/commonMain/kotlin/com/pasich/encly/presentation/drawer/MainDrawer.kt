@@ -105,9 +105,9 @@ fun MainDrawer(
     }
 }
 
-/** One destination: a row (Notes is the current one), or the highlighted Support button; a hairline may follow. */
+/** One destination: a row ([isHome]: the current one), or the highlighted Support button; a hairline may follow. */
 @Composable
-private fun DrawerEntry(item: DrawerNavItem, isHome: Boolean, onClick: () -> Unit) {
+internal fun DrawerEntry(item: DrawerNavItem, isHome: Boolean, onClick: () -> Unit) {
     if (item.highlighted) {
         EnclyDrawerHighlight(label = stringResource(item.titleRes), icon = item.icon, onClick = onClick)
     } else {
@@ -116,7 +116,7 @@ private fun DrawerEntry(item: DrawerNavItem, isHome: Boolean, onClick: () -> Uni
             icon = item.icon,
             // Zero reads as noise next to a destination; the badge shows only a real count.
             badge = item.badgeCount?.takeIf { it > 0 },
-            // The drawer opens over the notes, so Notes is the current destination.
+            // The modal drawer opens over the notes, so Notes is its current destination.
             selected = isHome,
             onClick = onClick,
         )

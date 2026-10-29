@@ -21,7 +21,6 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.components.FontSizeSlider
 import com.pasich.encly.presentation.components.NoteLineSpacingSlider
-import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNoteColorPicker
@@ -64,7 +63,7 @@ fun EditNoteBottomSheet(
     val loadFailed by viewModel.contentLoadFailed.collectAsStateWithLifecycle()
 
     if (isVisible) {
-        EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier, scrollable = true) {
+        AdaptiveSheet(onDismissRequest = onDismiss, modifier = modifier, scrollable = true) {
             FontSizeSlider(
                 currentSize = fontSize,
                 onSizeChange = { newSize -> viewModel.updateFontSize(newSize) },

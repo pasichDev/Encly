@@ -73,6 +73,18 @@ data class EnclySpacing(
     val drawerWidth: Dp = 320.dp,
     /** The empty area under the last editor block; a tap there adds a block. */
     val editorTapArea: Dp = 200.dp,
+    /** Widest a page of text, forms or lists grows in a medium or expanded window; it is centred beyond. */
+    val contentMaxWidth: Dp = 720.dp,
+    /** Width of the notes list beside the open note in the expanded layout. */
+    val listPaneWidth: Dp = 380.dp,
+    /** Width of the navigation rail of the medium layout. */
+    val railWidth: Dp = 80.dp,
+    /** Height of the open notes' tab strip. */
+    val tabHeight: Dp = 40.dp,
+    /** Widest a tab of the strip grows. */
+    val tabMaxWidth: Dp = 200.dp,
+    /** Width of a dialog that stands in for a bottom sheet in a wide window. */
+    val dialogWidth: Dp = 480.dp,
 )
 
 val LocalSpacing = staticCompositionLocalOf { EnclySpacing() }

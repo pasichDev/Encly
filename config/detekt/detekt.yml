@@ -71,6 +71,9 @@ Compose:
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors
       - LocalEnclyTypography
+      # The window size class and the spacing density, provided once by App (ui/theme/Adaptive.kt).
+      - LocalWidthClass
+      - LocalDensityProfile
       # The unlock reveal, provided once by App (presentation/effects/UnlockReveal.kt).
       - LocalUnlockReveal
       - LocalSpacing

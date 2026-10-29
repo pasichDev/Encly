@@ -12,6 +12,7 @@ import com.pasich.encly.core.resources.note_save_failed
 import com.pasich.encly.core.resources.note_trash_failed
 import com.pasich.encly.core.resources.note_unarchive_failed
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.pane.EditorPane
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -26,8 +27,7 @@ import org.jetbrains.compose.resources.StringResource
 @Suppress("TooManyFunctions") // One function per way out.
 internal class EditorExits(
     private val viewModel: EditNoteViewModel,
-    private val navController: NavHostController,
-    private val entry: NavBackStackEntry?,
+    private val where: EditorPlace,
     private val scope: CoroutineScope,
     private val onFailure: (StringResource) -> Unit,
     private val beforeLeaving: () -> Unit,
@@ -101,18 +101,46 @@ internal class EditorExits(
         }
     }
 
-    // Pops only this editor, and only while it is on top.
     private fun pop() {
         viewModel.markExitHandled()
         beforeLeaving()
-        if (entry == null || navController.currentBackStackEntry == entry) navController.popBackStack()
+        where.close()
     }
 
     private fun openCopy(copyId: Long) {
         viewModel.markExitHandled()
         beforeLeaving()
+        where.openCopy(copyId)
+    }
+}
+
+/** Where an editor lives, and so what leaving it does: popping its screen, or closing its tab. */
+internal interface EditorPlace {
+    /** Leaves the editor. */
+    fun close()
+
+    /** Opens the stored copy [copyId] in place of the editor. */
+    fun openCopy(copyId: Long)
+}
+
+/** An editor that is a full screen of [navController]'s back stack ([entry]: its destination). */
+internal class ScreenEditorPlace(private val navController: NavHostController, private val entry: NavBackStackEntry?) :
+    EditorPlace {
+    // Pops only this editor, and only while it is on top.
+    override fun close() {
+        if (entry == null || navController.currentBackStackEntry == entry) navController.popBackStack()
+    }
+
+    override fun openCopy(copyId: Long) {
         navController.navigate("${NavRoutes.EditNoteRoute.name}/$copyId") {
             entry?.let { popUpTo(it.destination.id) { inclusive = true } }
         }
     }
+}
+
+/** An editor in the detail pane: leaving closes its tab, and a copy takes the tab's place. */
+internal class PaneEditorPlace(private val pane: EditorPane) : EditorPlace {
+    override fun close() = pane.tabs.remove(pane.tabKey)
+
+    override fun openCopy(copyId: Long) = pane.tabs.replace(pane.tabKey, copyId)
 }

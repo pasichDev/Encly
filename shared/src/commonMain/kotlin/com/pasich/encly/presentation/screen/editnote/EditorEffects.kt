@@ -30,6 +30,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pasich.encly.editor.focus.BlockFocusRegistry
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
+import com.pasich.encly.presentation.pane.ActiveEditor
+import com.pasich.encly.presentation.pane.EditorPane
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -190,5 +192,32 @@ internal fun EditNoteViewModel.handleFindKey(event: KeyEvent): Boolean {
         event.key == Key.F && (event.isCtrlPressed || event.isMetaPressed) -> true.also { openFind() }
         event.key == Key.Escape && find.value.isOpen -> true.also { closeFind() }
         else -> false
+    }
+}
+
+/**
+ * Ties an editor in the detail pane to its tab: the tab shows the note's title and, once the note is
+ * stored, its id; and the tabs can save the editor before showing another note, or close it the way its
+ * Back does.
+ */
+@Composable
+internal fun PaneTabBinding(pane: EditorPane, exits: EditorExits, viewModel: EditNoteViewModel = metroViewModel()) {
+    val noteState by viewModel.state.collectAsState()
+    val note = noteState.note
+    LaunchedEffect(pane, note.id, note.title) { pane.tabs.report(pane.tabKey, note.id, note.title) }
+    val currentExits by rememberUpdatedState(exits)
+    DisposableEffect(pane, viewModel) {
+        val editor = ActiveEditor(
+            save = {
+                val saved = viewModel.saveNote()
+                // The stored id (a new note gets one now) before the tabs decide whether this one is blank.
+                val stored = viewModel.state.value.note
+                if (saved) pane.tabs.report(pane.tabKey, stored.id, stored.title)
+                saved
+            },
+            requestClose = { currentExits.back() },
+        )
+        pane.tabs.attach(editor)
+        onDispose { pane.tabs.detach(editor) }
     }
 }

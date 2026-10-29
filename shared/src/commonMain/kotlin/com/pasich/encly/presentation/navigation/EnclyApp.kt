@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -31,6 +32,11 @@ import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
 import com.pasich.encly.ui.theme.AppTheme
+import com.pasich.encly.ui.theme.DensityProfile
+import com.pasich.encly.ui.theme.LocalDensityProfile
+import com.pasich.encly.ui.theme.LocalWidthClass
+import com.pasich.encly.ui.theme.WidthClass
+import com.pasich.encly.ui.theme.isPointerFirstDevice
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 
@@ -179,11 +185,12 @@ private const val EDIT_NOTE_READ_ONLY_ARG = "isReadTrashOnly"
 private fun NavHostController.showLockScreen(keepNote: Boolean = true) {
     val editor = currentBackStackEntry?.takeIf { keepNote }
     val returnRoute = editor?.let { entry ->
+        val openNoteId = entry.savedStateHandle.get<Long>(RelockReturn.OPEN_NOTE_ID)
         RelockReturn.routeFor(
             destinationRoute = entry.destination.route,
-            openNoteId = entry.savedStateHandle.get<Long>(RelockReturn.OPEN_NOTE_ID),
+            openNoteId = openNoteId,
             readOnly = entry.arguments?.read { getBooleanOrNull(EDIT_NOTE_READ_ONLY_ARG) } == true,
-        )
+        ) ?: RelockReturn.paneRouteFor(entry.destination.route, openNoteId)
     }
     val returnEpoch = editor?.savedStateHandle?.get<Long>(RelockReturn.OPEN_NOTE_EPOCH)
     navigate(NavRoutes.LockRoute.name) {
@@ -204,6 +211,10 @@ private fun NavHostController.showLockScreen(keepNote: Boolean = true) {
     }
 }
 
+/**
+ * The window's content. The size the host gives it decides the layout ([WidthClass]) and the density of the
+ * spacing; both are provided around the theme, which turns the density into its spacing tokens.
+ */
 @Composable
 fun App(
     navController: NavHostController,
@@ -213,13 +224,30 @@ fun App(
     shielded: Boolean = false,
     locked: Boolean = false,
 ) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val widthClass = WidthClass.of(maxWidth, maxHeight)
+        val density = DensityProfile.of(widthClass, isPointerFirstDevice())
+        CompositionLocalProvider(LocalWidthClass provides widthClass, LocalDensityProfile provides density) {
+            AppContent(navController, startDestination, eraseEpoch, shielded, locked)
+        }
+    }
+}
+
+@Composable
+private fun AppContent(
+    navController: NavHostController,
+    startDestination: String,
+    eraseEpoch: () -> Long,
+    shielded: Boolean,
+    locked: Boolean,
+) {
     AppTheme {
         // Edge-to-edge is forced on Android 15+/targetSdk 36. The window is painted with
         // the same Compose background the screens use; every screen draws under the
         // transparent status bar and pads its own top inset (its top bar does), so it
         // paints that band itself and the band moves with the screen in a transition.
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
         ) {

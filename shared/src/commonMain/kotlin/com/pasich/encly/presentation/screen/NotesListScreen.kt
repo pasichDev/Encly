@@ -67,6 +67,7 @@ import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.NotesEmptyState
 import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.ui.theme.LocalWidthClass
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -160,6 +161,8 @@ internal fun NoteActionsSheet(
 ) {
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // A wide window shows the actions as a dialog: there is no sheet to slide away.
+    val wide = LocalWidthClass.current.isWide
 
     // The sheet shows the note as stored now, not as the list held it when the sheet opened: a tag
     // changed here moves the note out of this list, and the next action must still act on the right row.
@@ -169,7 +172,7 @@ internal fun NoteActionsSheet(
     fun close() {
         sheet.visible = false
         scope.launch {
-            bottomSheetState.hide()
+            if (!wide) bottomSheetState.hide()
             delay(SHEET_CLEAR_DELAY_MS)
             sheet.active = null
         }

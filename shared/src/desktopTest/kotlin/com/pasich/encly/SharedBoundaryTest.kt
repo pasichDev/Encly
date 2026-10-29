@@ -187,6 +187,7 @@ class SharedBoundaryTest {
                 "no scrollbar: touch scrolling is the way",
             "com/pasich/encly/presentation/designsystem/PlatformKeys.android.kt" to
                 "a hardware keyboard uses Ctrl as the command key",
+            "com/pasich/encly/ui/theme/PointerFirst.android.kt" to "touch first: no mouse and keyboard density",
         )
 
         /** The desktop actuals. */
@@ -201,6 +202,7 @@ class SharedBoundaryTest {
                 "VerticalScrollbar, a desktop-only Compose API",
             "com/pasich/encly/presentation/designsystem/PlatformKeys.desktop.kt" to
                 "os.name decides whether the command key is Meta (macOS) or Ctrl",
+            "com/pasich/encly/ui/theme/PointerFirst.desktop.kt" to "mouse and keyboard first: the desktop density",
         )
     }
 }

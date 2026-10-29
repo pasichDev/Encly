@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,6 +18,8 @@ import com.pasich.encly.presentation.effects.LocalSharedTransitionScope
 import com.pasich.encly.presentation.effects.animationScreens
 import com.pasich.encly.presentation.effects.enterFor
 import com.pasich.encly.presentation.effects.exitFor
+import com.pasich.encly.presentation.pane.CenteredContent
+import com.pasich.encly.presentation.pane.NavigationPage
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.FaqScreen
@@ -41,6 +44,9 @@ import com.pasich.encly.presentation.screen.settings.WipePinScreen
 import com.pasich.encly.presentation.screen.trash.TrashScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
+import com.pasich.encly.presentation.viewmodel.NoteTabsViewModel
+import com.pasich.encly.ui.theme.LocalWidthClass
+import com.pasich.encly.ui.theme.WidthClass
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable
@@ -68,29 +74,35 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                     )
                 }
                 animationScreens(NavRoutes.ArchiveRoute.name) {
-                    ArchiveScreen(navController)
+                    NavigationPage(navController, NavRoutes.ArchiveRoute) { ArchiveScreen(navController) }
                 }
                 animationScreens(NavRoutes.TrashRoute.name) {
-                    TrashScreen(
-                        navController,
-                    )
+                    NavigationPage(navController, NavRoutes.TrashRoute) {
+                        TrashScreen(
+                            navController,
+                        )
+                    }
                 }
 
                 animationScreens(NavRoutes.SettingsRoute.name) {
-                    SettingsScreen(
-                        navController,
-                    )
+                    NavigationPage(navController, NavRoutes.SettingsRoute) {
+                        SettingsScreen(
+                            navController,
+                        )
+                    }
                 }
                 animationScreens(NavRoutes.EditTagRoute.name) {
-                    EditTagScreen(
-                        navController,
-                    )
+                    NavigationPage(navController, NavRoutes.EditTagRoute) {
+                        EditTagScreen(
+                            navController,
+                        )
+                    }
                 }
 
                 // Donations are an F-Droid build feature; the Play build has no route to them.
                 if (donationsEnabled) {
                     animationScreens(NavRoutes.SupportRoute.name) {
-                        SupportScreen(navController)
+                        NavigationPage(navController, NavRoutes.SupportRoute) { SupportScreen(navController) }
                     }
                 }
 
@@ -103,77 +115,87 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                         },
                     ),
                 ) { entry ->
-                    TasksScreen(
-                        navController,
-                        openNewTask =
-                        entry.arguments?.read { getBooleanOrNull(TASKS_ADD_ARG) } == true,
-                    )
+                    NavigationPage(navController, NavRoutes.TasksRoute) {
+                        TasksScreen(
+                            navController,
+                            openNewTask =
+                            entry.arguments?.read { getBooleanOrNull(TASKS_ADD_ARG) } == true,
+                        )
+                    }
                 }
 
                 animationScreens(NavRoutes.AboutRoute.name) {
-                    AboutScreen(
-                        navController,
-                    )
+                    NavigationPage(navController, NavRoutes.AboutRoute) {
+                        AboutScreen(
+                            navController,
+                        )
+                    }
                 }
 
                 animationScreens(NavRoutes.LicensesRoute.name) {
-                    LicensesScreen(navController)
+                    NavigationPage(navController, NavRoutes.AboutRoute) { LicensesScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.FaqRoute.name) {
-                    FaqScreen(
-                        navController,
-                    )
+                    NavigationPage(navController, NavRoutes.FaqRoute) {
+                        FaqScreen(
+                            navController,
+                        )
+                    }
                 }
 
                 animationScreens(NavRoutes.SecuritySettingsRoute.name) {
-                    SecuritySettingsScreen(
-                        navController,
-                    )
+                    NavigationPage(navController, NavRoutes.SettingsRoute) {
+                        SecuritySettingsScreen(
+                            navController,
+                        )
+                    }
                 }
 
                 animationScreens(NavRoutes.AppearanceRoute.name) {
-                    AppearanceScreen(navController)
+                    NavigationPage(navController, NavRoutes.SettingsRoute) { AppearanceScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.BackupRoute.name) {
-                    BackupScreen(navController)
+                    NavigationPage(navController, NavRoutes.SettingsRoute) { BackupScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.ImportNotesRoute.name) {
-                    ImportNotesScreen(navController)
+                    NavigationPage(navController, NavRoutes.ImportNotesRoute) { ImportNotesScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.OnboardingRoute.name) {
                     // Onboarding includes the mandatory PIN setup; it completes only once the vault
                     // is committed and open.
-                    OnboardingScreen(onComplete = {
-                        navController.navigate(NavRoutes.HomeRoute.name) {
-                            popUpTo(NavRoutes.OnboardingRoute.name) { inclusive = true }
-                        }
-                    })
+                    CenteredContent {
+                        OnboardingScreen(onComplete = {
+                            navController.navigate(NavRoutes.HomeRoute.name) {
+                                popUpTo(NavRoutes.OnboardingRoute.name) { inclusive = true }
+                            }
+                        })
+                    }
                 }
 
                 animationScreens(NavRoutes.LossDataRoute.name) {
-                    LossRoute(navController, NavRoutes.LossDataRoute, LossReason.DAMAGED)
+                    CenteredContent { LossRoute(navController, NavRoutes.LossDataRoute, LossReason.DAMAGED) }
                 }
                 animationScreens(NavRoutes.LegacyVaultRoute.name) {
-                    LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION)
+                    CenteredContent { LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION) }
                 }
                 animationScreens(NavRoutes.PinCodeConfig.name) {
-                    PinCodeConfigScreen(navController)
+                    NavigationPage(navController, NavRoutes.SettingsRoute) { PinCodeConfigScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.WipePinRoute.name) {
-                    WipePinScreen(navController)
+                    NavigationPage(navController, NavRoutes.SettingsRoute) { WipePinScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.DuressPinRoute.name) {
-                    DuressPinScreen(navController)
+                    NavigationPage(navController, NavRoutes.SettingsRoute) { DuressPinScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.LockRoute.name) {
-                    LockScreen(navController)
+                    CenteredContent { LockScreen(navController) }
                 }
 
                 animationScreens(
@@ -198,10 +220,48 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                         },
                     ),
                 ) { entry ->
-                    EditNoteDestination(navController, entry)
+                    if (opensInPane(navController, entry)) {
+                        OpenInPane(navController, entry)
+                    } else {
+                        EditNoteDestination(navController, entry)
+                    }
                 }
             }
         }
+    }
+}
+
+/**
+ * Whether the editor route [entry] belongs in the home screen's detail pane instead of the full screen: the
+ * window is expanded, the note is editable and home is right under it (the notes list opens notes in the pane
+ * itself; this catches the one that comes from the lock screen, which reopens the note that was open).
+ */
+@Composable
+private fun opensInPane(navController: NavHostController, entry: NavBackStackEntry): Boolean {
+    if (LocalWidthClass.current != WidthClass.Expanded) return false
+    val readOnly = entry.arguments?.read { getBooleanOrNull("isReadTrashOnly") } == true
+    return !readOnly && navController.previousBackStackEntry?.destination?.route == NavRoutes.HomeRoute.name
+}
+
+/** Hands the note of [entry] to the detail pane's tabs and takes the editor route off the back stack again. */
+@Composable
+private fun OpenInPane(navController: NavHostController, entry: NavBackStackEntry) {
+    val eraseEpoch = LocalEraseEpoch.current
+    // The tabs live in the home entry's ViewModel store, which is the entry right under the editor's.
+    val home = remember(entry) { checkNotNull(navController.previousBackStackEntry) }
+    val tabsViewModel: NoteTabsViewModel = metroViewModel(home)
+    LaunchedEffect(entry) {
+        val arguments = entry.arguments
+        val noteId = arguments?.read { getLongOrNull("idNote") } ?: -1L
+        val copySource = arguments?.read { getLongOrNull("copySource") } ?: -1L
+        val addTag = arguments?.read { getLongOrNull("addTag") } ?: 0L
+        val params = when {
+            copySource > 0L -> "?copySource=$copySource"
+            addTag > 0L -> "?addTag=$addTag"
+            else -> ""
+        }
+        navController.popBackStack()
+        tabsViewModel.tabs.open(noteId, params, eraseEpoch?.invoke())
     }
 }
 

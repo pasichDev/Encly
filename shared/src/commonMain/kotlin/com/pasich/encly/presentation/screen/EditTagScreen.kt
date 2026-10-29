@@ -31,7 +31,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -77,7 +76,6 @@ import com.pasich.encly.core.resources.tags_empty_desc
 import com.pasich.encly.core.resources.tags_empty_title
 import com.pasich.encly.core.resources.tags_hint
 import com.pasich.encly.data.model.Tag
-import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -92,7 +90,9 @@ import com.pasich.encly.presentation.designsystem.FieldState
 import com.pasich.encly.presentation.designsystem.RowSkeleton
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.groupRowShape
+import com.pasich.encly.presentation.dialogs.AdaptiveSheet
 import com.pasich.encly.presentation.dialogs.RequestDeleteTagsDialog
+import com.pasich.encly.presentation.dialogs.rememberSheetDismisser
 import com.pasich.encly.presentation.viewmodel.TAG_NAME_MAX_LENGTH
 import com.pasich.encly.presentation.viewmodel.TagListEvent
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
@@ -101,7 +101,6 @@ import com.pasich.encly.presentation.viewmodel.hasTagNamed
 import com.pasich.encly.presentation.viewmodel.normalizeTagName
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -424,7 +423,7 @@ private class TagSheetActions(
 @Composable
 private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActions) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
+    val dismiss = rememberSheetDismisser(sheetState, actions.onDismiss)
     var text by remember(tag.id) { mutableStateOf(tag.nameTag) }
     val name = normalizeTagName(text)
     val isTaken = name.isNotEmpty() && taken(name)
@@ -433,13 +432,13 @@ private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActi
     fun save() {
         if (!canSave) return
         actions.onRename(tag.copy(nameTag = name)) { saved ->
-            if (saved) scope.launch { sheetState.hide() }.invokeOnCompletion { actions.onDismiss() }
+            if (saved) dismiss()
         }
     }
 
     SaveOnPause { save() }
 
-    EnclyBottomSheet(
+    AdaptiveSheet(
         onDismissRequest = actions.onDismiss,
         sheetState = sheetState,
         title = stringResource(Res.string.tag_edit),

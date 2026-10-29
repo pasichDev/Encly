@@ -40,13 +40,13 @@ import com.pasich.encly.core.resources.task_edit_placeholder
 import com.pasich.encly.core.resources.task_new_placeholder
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.PriorityValues
-import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.SectionOverline
+import com.pasich.encly.presentation.dialogs.AdaptiveSheet
 import com.pasich.encly.presentation.viewmodel.SubtaskDraft
 import com.pasich.encly.presentation.viewmodel.TaskDraft
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -150,7 +150,7 @@ fun AddTaskDialog(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    EnclyBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    AdaptiveSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         TaskEditorContent(state, titleFocusRequester, actions, checklist)
     }
 

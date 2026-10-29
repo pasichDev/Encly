@@ -672,4 +672,5 @@
     <string name="about_source_code_desc">Encly is open source: read the code on GitHub</string>
     <string name="note_open">Open</string>
     <string name="note_open_in_new_tab">Open in new tab</string>
+    <string name="pane_select_note">Select a note, or start a new one</string>
 </resources>

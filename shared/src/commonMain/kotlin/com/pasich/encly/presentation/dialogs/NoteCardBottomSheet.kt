@@ -46,7 +46,6 @@ import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.NoteColor
-import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -92,7 +91,7 @@ fun NoteCardBottomSheet(
     var isEditingDescription by remember(item.note.id, isVisible) { mutableStateOf(false) }
 
     if (isVisible) {
-        EnclyBottomSheet(
+        AdaptiveSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
             modifier = modifier,

@@ -25,6 +25,20 @@ object RelockReturn {
     const val RETURN_ROUTE = "relock_return_route"
     const val RETURN_EPOCH = "relock_return_epoch"
 
+    /**
+     * The route that reopens the note shown in the home screen's detail pane (the expanded layout), which
+     * records its id on the home entry the way a full-screen editor records it on its own. Null when the
+     * destination is not home or no stored note is shown.
+     */
+    fun paneRouteFor(destinationRoute: String?, openNoteId: Long?): String? {
+        val id = openNoteId?.takeIf { it > 0L }
+        return if (destinationRoute == NavRoutes.HomeRoute.name && id != null) {
+            "${NavRoutes.EditNoteRoute.name}/$id"
+        } else {
+            null
+        }
+    }
+
     /** Set on the reopened editor's entry: it opens over a Home that has no cards yet, so it has none to grow from. */
     const val PLAIN_ENTRY = "relock_plain_entry"
 

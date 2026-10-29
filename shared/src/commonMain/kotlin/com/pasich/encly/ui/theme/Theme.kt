@@ -55,11 +55,13 @@ fun EnclyTheme(settings: ThemeSettings, dark: Boolean, content: @Composable () -
     val fonts = settings.fontStyle.fontSet()
     val typography = remember(fonts) { appTypography(fonts) }
     val enclyTypography = remember(fonts) { enclyTypography(fonts) }
+    val profile = LocalDensityProfile.current
+    val spacing = remember(profile) { enclySpacingFor(profile) }
 
     CompositionLocalProvider(
         LocalEnclyColors provides enclyColorsFor(settings.palette, dark),
         LocalEnclyTypography provides enclyTypography,
-        LocalSpacing provides EnclySpacing(),
+        LocalSpacing provides spacing,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

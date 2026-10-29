@@ -10,7 +10,6 @@ import com.pasich.encly.core.resources.sort_by
 import com.pasich.encly.core.resources.view_switch_to_grid
 import com.pasich.encly.core.resources.view_switch_to_list
 import com.pasich.encly.domain.enums.NoteSortOption
-import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyRadio
@@ -34,7 +33,7 @@ fun NotesSortBottomSheet(
     val state by noteListViewModel.state.collectAsState()
 
     if (isBottomSheetVisible) {
-        EnclyBottomSheet(
+        AdaptiveSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
             title = stringResource(Res.string.sort_by),

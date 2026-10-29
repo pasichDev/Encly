@@ -75,6 +75,7 @@ import com.pasich.encly.presentation.effects.ContainerEnd
 import com.pasich.encly.presentation.effects.rememberNoteContainerModifier
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
+import com.pasich.encly.presentation.pane.EditorPane
 import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
@@ -96,6 +97,7 @@ private const val HEADER_ITEMS = 2
 fun EditNoteScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    pane: EditorPane? = null,
     viewModel: EditNoteViewModel = metroViewModel(),
 ) {
     val scope = rememberCoroutineScope()
@@ -108,14 +110,15 @@ fun EditNoteScreen(
     val entry = lifecycleOwner as? NavBackStackEntry
     // The route's argument, not the ViewModel's id: a new note gets its id on the first save, and
     // only an existing, editable note has a card to grow from.
-    val plain = viewModel.isReadTrashOnly || entry?.savedStateHandle?.contains(RelockReturn.PLAIN_ENTRY) == true
+    // An editor in the detail pane sits beside its card, so there is nothing to grow from either.
+    val plain = pane != null || viewModel.isReadTrashOnly ||
+        entry?.savedStateHandle?.contains(RelockReturn.PLAIN_ENTRY) == true
     val cardNoteId = if (plain) -1L else entry?.arguments?.read { getLongOrNull("idNote") } ?: -1L
     val container = rememberNoteContainerModifier(cardNoteId, ContainerEnd.EDITOR)
-    val exits = remember(viewModel, navController, language) {
+    val exits = remember(viewModel, navController, language, pane) {
         EditorExits(
             viewModel = viewModel,
-            navController = navController,
-            entry = entry,
+            where = if (pane != null) PaneEditorPlace(pane) else ScreenEditorPlace(navController, entry),
             scope = scope,
             onFailure = { message -> scope.launch { snackbarHostState.showSnackbar(getString(message)) } },
             beforeLeaving = {
@@ -143,6 +146,7 @@ fun EditNoteScreen(
     val titleFocus = remember { FocusRequester() }
 
     SaveWhenPaused()
+    if (pane != null) PaneTabBinding(pane, exits)
     val blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0
     CarryOutFocusRequests(focusRegistry, listState, blocksStart = blocksStart)
     ScrollToFindMatch(listState, blocksStart)
