@@ -6,8 +6,8 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.di.AppGraph
 import com.pasich.encly.core.di.AppGraphOwner
 import com.pasich.encly.core.di.ApplicationScope
+import com.pasich.encly.core.security.HandoffStagingSweeper
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.data.handoff.HandoffStagingSweeper
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope

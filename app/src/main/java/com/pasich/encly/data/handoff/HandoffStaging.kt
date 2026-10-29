@@ -121,8 +121,3 @@ class HandoffStaging(private val dir: Path, private val limits: HandoffLimits = 
             bytes.joinToString("") { (it.toInt() and BYTE_MASK).toString(HEX_RADIX).padStart(2, '0') }
     }
 }
-
-/** Deletes what hand-offs of killed processes left in the app's cache (see [HandoffStaging.sweep]). */
-fun interface HandoffStagingSweeper {
-    fun sweep()
-}

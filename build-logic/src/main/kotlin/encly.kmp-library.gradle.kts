@@ -1,8 +1,16 @@
 // Convention plugin `encly.kmp-library`: a Kotlin Multiplatform library module. Targets are Android
-// (the AGP KMP library plugin), a desktop JVM and the two iOS ones. Explicit API mode is on, so every
-// public declaration is written out on purpose. The module sets its own `namespace`.
+// (the AGP KMP library plugin) and a desktop JVM; the two iOS ones come from `encly.kmp-ios`. Explicit
+// API mode is on, so every public declaration is written out on purpose. The module sets its own
+// `namespace`.
+//
+// Source sets: besides the default hierarchy (commonMain, iosMain, ...) the group `jvmAndAndroid` holds
+// what the Android and the desktop target share because both run on the JVM (`jvmAndAndroidMain`,
+// `jvmAndAndroidTest`): the JCA crypto, java.io, JUnit and Mockito tests. A module with no code for
+// the group simply leaves the directory out.
 
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -27,8 +35,18 @@ kotlin {
         }
     }
     jvm("desktop")
-    iosArm64()
-    iosSimulatorArm64()
+
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmAndAndroid") {
+                withJvm()
+                // withAndroidTarget() matches only the legacy androidTarget(); the AGP KMP library target
+                // is a plain androidJvm target.
+                withCompilations { it.target.platformType == KotlinPlatformType.androidJvm }
+            }
+        }
+    }
 
     // The public binary API is tracked in <module>/api/: `updateKotlinAbi` rewrites the dump and
     // `checkKotlinAbi` (part of `check`) fails when the code and the dump differ.

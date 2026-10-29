@@ -1,0 +1,122 @@
+public final class com/pasich/encly/core/AppLogger {
+	public static final field INSTANCE Lcom/pasich/encly/core/AppLogger;
+	public final fun e (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public static synthetic fun e$default (Lcom/pasich/encly/core/AppLogger;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public final fun w (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public static synthetic fun w$default (Lcom/pasich/encly/core/AppLogger;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+}
+
+public abstract interface class com/pasich/encly/core/common/AppStrings {
+	public abstract fun get (I[Ljava/lang/Object;)Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/common/LoadError {
+	public fun <init> (Lcom/pasich/encly/core/common/UiText;Lcom/pasich/encly/core/common/UiText;)V
+	public final fun component1 ()Lcom/pasich/encly/core/common/UiText;
+	public final fun component2 ()Lcom/pasich/encly/core/common/UiText;
+	public final fun copy (Lcom/pasich/encly/core/common/UiText;Lcom/pasich/encly/core/common/UiText;)Lcom/pasich/encly/core/common/LoadError;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/common/LoadError;Lcom/pasich/encly/core/common/UiText;Lcom/pasich/encly/core/common/UiText;ILjava/lang/Object;)Lcom/pasich/encly/core/common/LoadError;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Lcom/pasich/encly/core/common/UiText;
+	public final fun getTitle ()Lcom/pasich/encly/core/common/UiText;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/pasich/encly/core/common/LoadState {
+}
+
+public final class com/pasich/encly/core/common/LoadState$Failed : com/pasich/encly/core/common/LoadState {
+	public fun <init> (Lcom/pasich/encly/core/common/LoadError;)V
+	public final fun component1 ()Lcom/pasich/encly/core/common/LoadError;
+	public final fun copy (Lcom/pasich/encly/core/common/LoadError;)Lcom/pasich/encly/core/common/LoadState$Failed;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/common/LoadState$Failed;Lcom/pasich/encly/core/common/LoadError;ILjava/lang/Object;)Lcom/pasich/encly/core/common/LoadState$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Lcom/pasich/encly/core/common/LoadError;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/common/LoadState$Loading : com/pasich/encly/core/common/LoadState {
+	public static final field INSTANCE Lcom/pasich/encly/core/common/LoadState$Loading;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/common/LoadState$Ready : com/pasich/encly/core/common/LoadState {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lcom/pasich/encly/core/common/LoadState$Ready;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/common/LoadState$Ready;Ljava/lang/Object;ILjava/lang/Object;)Lcom/pasich/encly/core/common/LoadState$Ready;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/common/LoadStateKt {
+	public static final fun asLoadState (Lkotlinx/coroutines/flow/Flow;Lcom/pasich/encly/core/common/LoadError;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun reloadWith (Lcom/pasich/encly/core/common/LoadState;Lcom/pasich/encly/core/common/LoadState;)Lcom/pasich/encly/core/common/LoadState;
+	public static final fun valueOrNull (Lcom/pasich/encly/core/common/LoadState;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/core/common/SuspendRunCatchingKt {
+	public static final fun suspendRunCatching (Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public abstract interface class com/pasich/encly/core/common/UiText {
+	public static final field Companion Lcom/pasich/encly/core/common/UiText$Companion;
+}
+
+public final class com/pasich/encly/core/common/UiText$Companion {
+	public final fun of (I)Lcom/pasich/encly/core/common/UiText;
+}
+
+public final class com/pasich/encly/core/common/UiText$Resource : com/pasich/encly/core/common/UiText {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lcom/pasich/encly/core/common/UiText$Resource;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/common/UiText$Resource;IILjava/lang/Object;)Lcom/pasich/encly/core/common/UiText$Resource;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/common/WallClockKt {
+	public static final fun currentTimeMillis ()J
+}
+
+public abstract interface class com/pasich/encly/core/platform/KeyValueStore {
+	public abstract fun commit (Lkotlin/jvm/functions/Function1;)Z
+	public abstract fun contains (Ljava/lang/String;)Z
+	public abstract fun edit (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun getBoolean (Ljava/lang/String;Z)Z
+	public abstract fun getLong (Ljava/lang/String;J)J
+	public abstract fun getString (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public abstract interface class com/pasich/encly/core/platform/KeyValueStore$Editor {
+	public abstract fun clear ()V
+	public abstract fun putBoolean (Ljava/lang/String;Z)V
+	public abstract fun putLong (Ljava/lang/String;J)V
+	public abstract fun putString (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun remove (Ljava/lang/String;)V
+}
+
+public abstract interface class com/pasich/encly/core/platform/MainThreadTimer {
+	public abstract fun schedule (JLkotlin/jvm/functions/Function0;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/core/platform/MainThreadTimer$None : com/pasich/encly/core/platform/MainThreadTimer {
+	public static final field INSTANCE Lcom/pasich/encly/core/platform/MainThreadTimer$None;
+	public fun schedule (JLkotlin/jvm/functions/Function0;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/core/security/SensitiveDataCleaner {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/SensitiveDataCleaner;
+	public final fun clear ([B)V
+	public final fun clear ([C)V
+}
+

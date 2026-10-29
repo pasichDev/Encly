@@ -5,13 +5,25 @@ naming:
     # Jetpack Compose @Composable functions are PascalCase by convention.
     ignoreAnnotated: ['Composable']
 
+# Tests are scenarios, not production code: the complexity and style rules (magic numbers in test data,
+# one class with many test functions, long lines of expected bytes) do not apply to them. The Kotlin
+# Multiplatform modules keep tests in these source sets, which detekt's own defaults do not know.
 complexity:
+  excludes: &tests
+    - '**/test/**'
+    - '**/commonTest/**'
+    - '**/jvmAndAndroidTest/**'
+    - '**/desktopTest/**'
+    - '**/androidHostTest/**'
+    - '**/androidUnitTest/**'
+    - '**/iosTest/**'
   LongParameterList:
     # Parameters with defaults (Compose `modifier`, injected ViewModels, optional flags) cost
     # callers nothing; count only the ones every call has to pass.
     ignoreDefaultParameters: true
 
 style:
+  excludes: *tests
   # Unused code. Stricter than the defaults: unused imports are reported too, and nothing is
   # whitelisted by name except the conventional `_`. Private @Preview functions are only used by
   # the IDE, so they are exempt.

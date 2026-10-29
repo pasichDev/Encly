@@ -31,11 +31,6 @@
     <ID>LongMethod:TrashScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TrashScreen( navController: NavHostController, modifier: Modifier = Modifier, trashViewModel: TrashViewModel = metroViewModel(), )</ID>
     <ID>LongParameterList:EditNoteScreen.kt$( isReadTrashOnly: Boolean, lockEditor: Boolean, onBackClick: () -&gt; Unit, onRestoreClick: () -&gt; Unit, onDeleteClick: () -&gt; Unit, onMenuClick: () -&gt; Unit, onLockToggle: () -&gt; Unit, onDoneClick: () -&gt; Unit, )</ID>
     <ID>LongParameterList:EditTagScreen.kt$( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
-    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$15</ID>
-    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$256</ID>
-    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$30_000L</ID>
-    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$5</ID>
-    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$60_000L</ID>
     <ID>MagicNumber:Color.kt$0xFF000000</ID>
     <ID>MagicNumber:Color.kt$0xFF00201E</ID>
     <ID>MagicNumber:Color.kt$0xFF003735</ID>
@@ -124,13 +119,9 @@
     <ID>MatchingDeclarationName:ThemeItems.kt$RadioItem</ID>
     <ID>MatchingDeclarationName:TrashScreen.kt$DialogTrashAction</ID>
     <ID>NestedBlockDepth:NotesTextFormatter.kt$NotesTextFormatter$fun blocksToPlainText(blocks: List&lt;Block&gt;): String</ID>
-    <ID>ReturnCount:SecurityManager.kt$SecurityManager$private fun initializeSecurity(): InitialStatus</ID>
     <ID>TooGenericExceptionCaught:MyApplication.kt$MyApplication$e: Exception</ID>
-    <ID>TooManyFunctions:AuthenticationManager.kt$AuthenticationManager</ID>
     <ID>TooManyFunctions:EditNoteViewModel.kt$EditNoteViewModel : ViewModel</ID>
     <ID>TooManyFunctions:OnboardingViewModel.kt$OnboardingViewModel : ViewModel</ID>
-    <ID>TooManyFunctions:SecurityManager.kt$SecurityManager</ID>
-    <ID>TooManyFunctions:SeedPhraseManager.kt$SeedPhraseManager</ID>
     <ID>TooManyFunctions:TasksRepositoryImpl.kt$TasksRepositoryImpl : TasksRepository</ID>
     <ID>TooManyFunctions:TasksViewModel.kt$TasksViewModel : ViewModel</ID>
     <ID>UnusedPrivateProperty:DeviceCapabilities.kt$DeviceCapabilities$@param:ApplicationContext private val context: Context</ID>

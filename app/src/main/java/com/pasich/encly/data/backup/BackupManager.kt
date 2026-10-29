@@ -4,6 +4,7 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
+import com.pasich.encly.core.backup.BackupFlags
 import com.pasich.encly.core.backup.BackupFormat
 import com.pasich.encly.core.backup.BackupHeader
 import com.pasich.encly.core.backup.BackupKeys
@@ -125,6 +126,6 @@ class BackupManager(
         private const val TAG = "BackupManager"
 
         /** In the app flags; a wipe-PIN erase removes it with the vault it described. */
-        internal const val LAST_EXPORT_KEY = "backup_last_export_at"
+        internal const val LAST_EXPORT_KEY = BackupFlags.LAST_EXPORT_KEY
     }
 }

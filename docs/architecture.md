@@ -74,13 +74,27 @@ editor's `MarkdownBlockMapper` (shared with the importers) in its paste mode (no
 
 ## Platform boundary
 
-The domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`, `core/backup`,
-`core/crypto`, `core/security`, `core/common`, `core/platform`) imports nothing of Android and nothing of the
-JVM, so it can move into Kotlin Multiplatform modules (`PlatformBoundaryTest`). What it needs from the
-platform is an interface it declares, implemented in one adapter file listed with its reason in that
-test: `KeyValueStore` (flags), `VaultFileIo` (the vault file's fsync and atomic replace), `BiometricManager`
-and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`, `DeviceLockWatcher`, `MainThreadTimer`, `AppStrings`.
-The adapters are bound in `core/di`.
+The shared core is three Kotlin Multiplatform modules, checked by a source-scan test each
+(`CommonBoundaryTest`, `CryptoBoundaryTest`, `SecurityBoundaryTest` in the module's `desktopTest`):
+
+- `:core:common` (Android, desktop, iOS): `UiText`, `AppStrings`, `LoadState`, `KeyValueStore`,
+  `MainThreadTimer`, `SensitiveDataCleaner`, `AppLogger`. No dependency on another module.
+- `:core:crypto` (Android, desktop): `Crypto` (AES-256-GCM, HKDF, PBKDF2, SHA-256, the CSPRNG) and BIP-39. The API
+  is common code; the implementation is JCA in `jvmAndAndroidMain`, shared by both targets. There is no iOS
+  target until AES-GCM exists there (Apple's public CommonCrypto has none).
+- `:core:security` (Android, desktop): the vault store, the PIN, wipe-PIN, duress and recovery slots, the
+  lockout, `SecurityManager`, `SessionLockManager`, `AutoLock`, and the backup file format and cipher. Locks are
+  atomicfu `SynchronizedObject`s. Only the vault file I/O and the backup JSON bytes are JVM code
+  (`jvmAndAndroidMain`).
+
+Their sources import nothing of Android and nothing of the JVM. What they need from the platform is an interface
+they declare, implemented in `:app` and bound in `core/di`: `KeyValueStore` (flags), `VaultFileIo` (the vault
+file's fsync and atomic replace, `JvmVaultFileIo` in the module), `VaultDatabase` (the encrypted database,
+`SecureDatabaseVault`), `BiometricManager` and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`,
+`DeviceLockWatcher`, `MainThreadTimer`, `HandoffStagingSweeper`, `AppStrings`.
+
+The rest of the domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`) still lives in
+the app and is held to the same rule by `PlatformBoundaryTest`, with each adapter file listed with its reason.
 
 ## Navigation
 

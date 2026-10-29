@@ -8,7 +8,8 @@ import java.io.File
 
 /**
  * The domain and data logic is written to move into Kotlin Multiplatform modules (`:core:data`,
- * `:core:security`, `:core:database`), so the packages in [LOGIC_PACKAGES] may use nothing of
+ * `:core:database`; `:core:common`, `:core:crypto` and `:core:security` already are), so the packages in
+ * [LOGIC_PACKAGES] may use nothing of
  * Android and nothing of the JVM: no `android.` or `javax.` or `java.` import, no `androidx.`
  * beyond Room, sqlite, DataStore, lifecycle and annotations, no `System`, `javaClass` or
  * `SecurityException` in code (`R.string` ids in domain enums stay until Compose
@@ -82,8 +83,7 @@ class PlatformBoundaryTest {
             .flatMap { declaredNames(it, typesOnly = true) }.toSet()
         val adapterOnly = adapterNames - logicNames
         assertTrue("the adapters declare nothing?", adapterOnly.size > 10)
-        // Crypto is the facade over the JCA seam that was isolated before this check existed.
-        val offenders = checkedFiles.filter { it.relative() != "core/crypto/Crypto.kt" }.flatMap { file ->
+        val offenders = checkedFiles.flatMap { file ->
             file.codeLines().flatMap { (number, line) ->
                 adapterOnly.filter { Regex("""\b$it\b""").containsMatchIn(line) }
                     .map { "${file.relative()}:$number names $it (declared by an adapter)" }
@@ -150,7 +150,11 @@ class PlatformBoundaryTest {
                 """|^(?:internal\s+)?fun\s+(?:<[^>]+>\s+)?(?:[\w.]+\.)?(\w+)\(""",
         )
 
-        // The packages, below `com.pasich.encly`, whose logic moves to common code.
+        // The packages, below `com.pasich.encly`, whose logic moves to common code. core/backup, core/crypto,
+        // core/common, core/platform and the logic of core/security already did: they are the modules
+        // :core:common, :core:crypto and :core:security, each with a boundary test of its own. What is left
+        // of core/security, core/common and core/platform here are the Android implementations of their
+        // interfaces (listed as adapters below) and the database port.
         val LOGIC_PACKAGES = listOf(
             "domain",
             "data/repository",
@@ -160,8 +164,6 @@ class PlatformBoundaryTest {
             "data/handoff",
             "data/zip",
             "data/datasource",
-            "core/backup",
-            "core/crypto",
             "core/security",
             "core/common",
             "core/platform",
@@ -210,9 +212,6 @@ class PlatformBoundaryTest {
             // java.* isolated by design.
             "data/zip/JvmZip.kt" to "java.util.zip: CRC-32, inflater, ZipFile, ZipOutputStream",
             "data/export/JvmUnicode.kt" to "java.text.Normalizer and Character categories for file names",
-            "core/crypto/JcaCrypto.kt" to "javax.crypto and java.security: the JCA behind Crypto",
-            "core/backup/JvmJsonBytes.kt" to "java.io byte-array streams so the plaintext payload can be wiped",
-            "core/security/JvmVaultFileIo.kt" to "java.io and java.nio: the vault file's fsync and atomic replace",
             // The Android implementations of the platform interfaces.
             "core/platform/SharedPreferencesKeyValueStore.kt" to "SharedPreferences behind KeyValueStore",
             "core/platform/HandlerMainThreadTimer.kt" to "Handler and Looper behind MainThreadTimer",

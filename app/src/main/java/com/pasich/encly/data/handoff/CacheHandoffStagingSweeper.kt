@@ -2,6 +2,7 @@ package com.pasich.encly.data.handoff
 
 import android.content.Context
 import com.pasich.encly.core.di.ApplicationContext
+import com.pasich.encly.core.security.HandoffStagingSweeper
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn

@@ -1,0 +1,121 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <Encly.core:common>
+abstract fun interface com.pasich.encly.core.platform/MainThreadTimer { // com.pasich.encly.core.platform/MainThreadTimer|null[0]
+    abstract fun schedule(kotlin/Long, kotlin/Function0<kotlin/Unit>): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.platform/MainThreadTimer.schedule|schedule(kotlin.Long;kotlin.Function0<kotlin.Unit>){}[0]
+
+    final object None : com.pasich.encly.core.platform/MainThreadTimer { // com.pasich.encly.core.platform/MainThreadTimer.None|null[0]
+        final fun schedule(kotlin/Long, kotlin/Function0<kotlin/Unit>): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.platform/MainThreadTimer.None.schedule|schedule(kotlin.Long;kotlin.Function0<kotlin.Unit>){}[0]
+    }
+}
+
+abstract interface com.pasich.encly.core.common/AppStrings { // com.pasich.encly.core.common/AppStrings|null[0]
+    abstract fun get(kotlin/Int, kotlin/Array<out kotlin/Any>...): kotlin/String // com.pasich.encly.core.common/AppStrings.get|get(kotlin.Int;kotlin.Array<out|kotlin.Any>...){}[0]
+}
+
+abstract interface com.pasich.encly.core.platform/KeyValueStore { // com.pasich.encly.core.platform/KeyValueStore|null[0]
+    abstract fun commit(kotlin/Function1<com.pasich.encly.core.platform/KeyValueStore.Editor, kotlin/Unit>): kotlin/Boolean // com.pasich.encly.core.platform/KeyValueStore.commit|commit(kotlin.Function1<com.pasich.encly.core.platform.KeyValueStore.Editor,kotlin.Unit>){}[0]
+    abstract fun contains(kotlin/String): kotlin/Boolean // com.pasich.encly.core.platform/KeyValueStore.contains|contains(kotlin.String){}[0]
+    abstract fun edit(kotlin/Function1<com.pasich.encly.core.platform/KeyValueStore.Editor, kotlin/Unit>) // com.pasich.encly.core.platform/KeyValueStore.edit|edit(kotlin.Function1<com.pasich.encly.core.platform.KeyValueStore.Editor,kotlin.Unit>){}[0]
+    abstract fun getBoolean(kotlin/String, kotlin/Boolean): kotlin/Boolean // com.pasich.encly.core.platform/KeyValueStore.getBoolean|getBoolean(kotlin.String;kotlin.Boolean){}[0]
+    abstract fun getLong(kotlin/String, kotlin/Long): kotlin/Long // com.pasich.encly.core.platform/KeyValueStore.getLong|getLong(kotlin.String;kotlin.Long){}[0]
+    abstract fun getString(kotlin/String, kotlin/String?): kotlin/String? // com.pasich.encly.core.platform/KeyValueStore.getString|getString(kotlin.String;kotlin.String?){}[0]
+
+    abstract interface Editor { // com.pasich.encly.core.platform/KeyValueStore.Editor|null[0]
+        abstract fun clear() // com.pasich.encly.core.platform/KeyValueStore.Editor.clear|clear(){}[0]
+        abstract fun putBoolean(kotlin/String, kotlin/Boolean) // com.pasich.encly.core.platform/KeyValueStore.Editor.putBoolean|putBoolean(kotlin.String;kotlin.Boolean){}[0]
+        abstract fun putLong(kotlin/String, kotlin/Long) // com.pasich.encly.core.platform/KeyValueStore.Editor.putLong|putLong(kotlin.String;kotlin.Long){}[0]
+        abstract fun putString(kotlin/String, kotlin/String) // com.pasich.encly.core.platform/KeyValueStore.Editor.putString|putString(kotlin.String;kotlin.String){}[0]
+        abstract fun remove(kotlin/String) // com.pasich.encly.core.platform/KeyValueStore.Editor.remove|remove(kotlin.String){}[0]
+    }
+}
+
+sealed interface <#A: out kotlin/Any?> com.pasich.encly.core.common/LoadState { // com.pasich.encly.core.common/LoadState|null[0]
+    final class <#A1: kotlin/Any?> Ready : com.pasich.encly.core.common/LoadState<#A1> { // com.pasich.encly.core.common/LoadState.Ready|null[0]
+        constructor <init>(#A1) // com.pasich.encly.core.common/LoadState.Ready.<init>|<init>(1:0){}[0]
+
+        final val value // com.pasich.encly.core.common/LoadState.Ready.value|{}value[0]
+            final fun <get-value>(): #A1 // com.pasich.encly.core.common/LoadState.Ready.value.<get-value>|<get-value>(){}[0]
+
+        final fun component1(): #A1 // com.pasich.encly.core.common/LoadState.Ready.component1|component1(){}[0]
+        final fun copy(#A1 = ...): com.pasich.encly.core.common/LoadState.Ready<#A1> // com.pasich.encly.core.common/LoadState.Ready.copy|copy(1:0){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.common/LoadState.Ready.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.core.common/LoadState.Ready.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.core.common/LoadState.Ready.toString|toString(){}[0]
+    }
+
+    final class Failed : com.pasich.encly.core.common/LoadState<kotlin/Nothing> { // com.pasich.encly.core.common/LoadState.Failed|null[0]
+        constructor <init>(com.pasich.encly.core.common/LoadError) // com.pasich.encly.core.common/LoadState.Failed.<init>|<init>(com.pasich.encly.core.common.LoadError){}[0]
+
+        final val error // com.pasich.encly.core.common/LoadState.Failed.error|{}error[0]
+            final fun <get-error>(): com.pasich.encly.core.common/LoadError // com.pasich.encly.core.common/LoadState.Failed.error.<get-error>|<get-error>(){}[0]
+
+        final fun component1(): com.pasich.encly.core.common/LoadError // com.pasich.encly.core.common/LoadState.Failed.component1|component1(){}[0]
+        final fun copy(com.pasich.encly.core.common/LoadError = ...): com.pasich.encly.core.common/LoadState.Failed // com.pasich.encly.core.common/LoadState.Failed.copy|copy(com.pasich.encly.core.common.LoadError){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.common/LoadState.Failed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.core.common/LoadState.Failed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.core.common/LoadState.Failed.toString|toString(){}[0]
+    }
+
+    final object Loading : com.pasich.encly.core.common/LoadState<kotlin/Nothing> { // com.pasich.encly.core.common/LoadState.Loading|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.common/LoadState.Loading.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.core.common/LoadState.Loading.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.core.common/LoadState.Loading.toString|toString(){}[0]
+    }
+}
+
+sealed interface com.pasich.encly.core.common/UiText { // com.pasich.encly.core.common/UiText|null[0]
+    final class Resource : com.pasich.encly.core.common/UiText { // com.pasich.encly.core.common/UiText.Resource|null[0]
+        constructor <init>(kotlin/Int) // com.pasich.encly.core.common/UiText.Resource.<init>|<init>(kotlin.Int){}[0]
+
+        final val id // com.pasich.encly.core.common/UiText.Resource.id|{}id[0]
+            final fun <get-id>(): kotlin/Int // com.pasich.encly.core.common/UiText.Resource.id.<get-id>|<get-id>(){}[0]
+
+        final fun component1(): kotlin/Int // com.pasich.encly.core.common/UiText.Resource.component1|component1(){}[0]
+        final fun copy(kotlin/Int = ...): com.pasich.encly.core.common/UiText.Resource // com.pasich.encly.core.common/UiText.Resource.copy|copy(kotlin.Int){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.common/UiText.Resource.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.core.common/UiText.Resource.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.core.common/UiText.Resource.toString|toString(){}[0]
+    }
+
+    final object Companion { // com.pasich.encly.core.common/UiText.Companion|null[0]
+        final fun of(kotlin/Int): com.pasich.encly.core.common/UiText // com.pasich.encly.core.common/UiText.Companion.of|of(kotlin.Int){}[0]
+    }
+}
+
+final class com.pasich.encly.core.common/LoadError { // com.pasich.encly.core.common/LoadError|null[0]
+    constructor <init>(com.pasich.encly.core.common/UiText, com.pasich.encly.core.common/UiText) // com.pasich.encly.core.common/LoadError.<init>|<init>(com.pasich.encly.core.common.UiText;com.pasich.encly.core.common.UiText){}[0]
+
+    final val message // com.pasich.encly.core.common/LoadError.message|{}message[0]
+        final fun <get-message>(): com.pasich.encly.core.common/UiText // com.pasich.encly.core.common/LoadError.message.<get-message>|<get-message>(){}[0]
+    final val title // com.pasich.encly.core.common/LoadError.title|{}title[0]
+        final fun <get-title>(): com.pasich.encly.core.common/UiText // com.pasich.encly.core.common/LoadError.title.<get-title>|<get-title>(){}[0]
+
+    final fun component1(): com.pasich.encly.core.common/UiText // com.pasich.encly.core.common/LoadError.component1|component1(){}[0]
+    final fun component2(): com.pasich.encly.core.common/UiText // com.pasich.encly.core.common/LoadError.component2|component2(){}[0]
+    final fun copy(com.pasich.encly.core.common/UiText = ..., com.pasich.encly.core.common/UiText = ...): com.pasich.encly.core.common/LoadError // com.pasich.encly.core.common/LoadError.copy|copy(com.pasich.encly.core.common.UiText;com.pasich.encly.core.common.UiText){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.common/LoadError.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.core.common/LoadError.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.core.common/LoadError.toString|toString(){}[0]
+}
+
+final object com.pasich.encly.core.security/SensitiveDataCleaner { // com.pasich.encly.core.security/SensitiveDataCleaner|null[0]
+    final fun clear(kotlin/ByteArray) // com.pasich.encly.core.security/SensitiveDataCleaner.clear|clear(kotlin.ByteArray){}[0]
+    final fun clear(kotlin/CharArray) // com.pasich.encly.core.security/SensitiveDataCleaner.clear|clear(kotlin.CharArray){}[0]
+}
+
+final object com.pasich.encly.core/AppLogger { // com.pasich.encly.core/AppLogger|null[0]
+    final fun e(kotlin/String, kotlin/String, kotlin/Throwable? = ...) // com.pasich.encly.core/AppLogger.e|e(kotlin.String;kotlin.String;kotlin.Throwable?){}[0]
+    final fun w(kotlin/String, kotlin/String, kotlin/Throwable? = ...) // com.pasich.encly.core/AppLogger.w|w(kotlin.String;kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final fun <#A: kotlin/Any?> (com.pasich.encly.core.common/LoadState<#A>).com.pasich.encly.core.common/reloadWith(com.pasich.encly.core.common/LoadState<#A>): com.pasich.encly.core.common/LoadState<#A> // com.pasich.encly.core.common/reloadWith|reloadWith@com.pasich.encly.core.common.LoadState<0:0>(com.pasich.encly.core.common.LoadState<0:0>){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (com.pasich.encly.core.common/LoadState<#A>).com.pasich.encly.core.common/valueOrNull(): #A? // com.pasich.encly.core.common/valueOrNull|valueOrNull@com.pasich.encly.core.common.LoadState<0:0>(){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).com.pasich.encly.core.common/asLoadState(com.pasich.encly.core.common/LoadError): kotlinx.coroutines.flow/Flow<com.pasich.encly.core.common/LoadState<#A>> // com.pasich.encly.core.common/asLoadState|asLoadState@kotlinx.coroutines.flow.Flow<0:0>(com.pasich.encly.core.common.LoadError){0§<kotlin.Any?>}[0]
+final fun com.pasich.encly.core.common/currentTimeMillis(): kotlin/Long // com.pasich.encly.core.common/currentTimeMillis|currentTimeMillis(){}[0]
+final inline fun <#A: kotlin/Any?> com.pasich.encly.core.common/suspendRunCatching(kotlin/Function0<#A>): kotlin/Result<#A> // com.pasich.encly.core.common/suspendRunCatching|suspendRunCatching(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]

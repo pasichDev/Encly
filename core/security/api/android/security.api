@@ -1,0 +1,955 @@
+public final class com/pasich/encly/core/backup/BackupCipher {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupCipher;
+	public final fun inspect ([B)Lcom/pasich/encly/core/backup/BackupHeader;
+	public final fun open ([BLcom/pasich/encly/core/backup/BackupSecret;)[B
+	public final fun seal ([BLcom/pasich/encly/core/backup/BackupSecret;)[B
+}
+
+public final class com/pasich/encly/core/backup/BackupError : java/lang/Enum {
+	public static final field CORRUPTED Lcom/pasich/encly/core/backup/BackupError;
+	public static final field INVALID_PAYLOAD Lcom/pasich/encly/core/backup/BackupError;
+	public static final field INVALID_PHRASE Lcom/pasich/encly/core/backup/BackupError;
+	public static final field IO Lcom/pasich/encly/core/backup/BackupError;
+	public static final field NOT_A_BACKUP Lcom/pasich/encly/core/backup/BackupError;
+	public static final field TARGET_EXISTS Lcom/pasich/encly/core/backup/BackupError;
+	public static final field TOO_LARGE Lcom/pasich/encly/core/backup/BackupError;
+	public static final field TRUNCATED Lcom/pasich/encly/core/backup/BackupError;
+	public static final field UNSUPPORTED_VERSION Lcom/pasich/encly/core/backup/BackupError;
+	public static final field VAULT_UNAVAILABLE Lcom/pasich/encly/core/backup/BackupError;
+	public static final field WRONG_SECRET Lcom/pasich/encly/core/backup/BackupError;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/backup/BackupError;
+	public static fun values ()[Lcom/pasich/encly/core/backup/BackupError;
+}
+
+public final class com/pasich/encly/core/backup/BackupException : java/lang/Exception {
+	public fun <init> (Lcom/pasich/encly/core/backup/BackupError;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Lcom/pasich/encly/core/backup/BackupError;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getError ()Lcom/pasich/encly/core/backup/BackupError;
+}
+
+public final class com/pasich/encly/core/backup/BackupFlags {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupFlags;
+	public static final field LAST_EXPORT_KEY Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/backup/BackupFormat {
+	public static final field FILE_EXTENSION Ljava/lang/String;
+	public static final field HEADER_LENGTH I
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupFormat;
+	public static final field MAX_FILE_BYTES I
+	public static final field MIME_TYPE Ljava/lang/String;
+	public static final field NONCE_LENGTH I
+	public static final field SALT_LENGTH I
+	public static final field TAG_LENGTH I
+	public static final field VERSION I
+	public final fun encodeHeader (Lcom/pasich/encly/core/backup/BackupKdf;[B[BI)[B
+	public final fun fileSizeFor (I)J
+	public final fun getMAGIC ()[B
+	public final fun parse ([B)Lcom/pasich/encly/core/backup/ParsedBackup;
+	public final fun parseHeader ([BJ)Lcom/pasich/encly/core/backup/BackupHeader;
+	public static synthetic fun parseHeader$default (Lcom/pasich/encly/core/backup/BackupFormat;[BJILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupHeader;
+}
+
+public final class com/pasich/encly/core/backup/BackupHeader {
+	public fun <init> (ILcom/pasich/encly/core/backup/BackupKdf;[B[BI)V
+	public final fun getCiphertextLength ()I
+	public final fun getFormatVersion ()I
+	public final fun getKdf ()Lcom/pasich/encly/core/backup/BackupKdf;
+	public final fun getNonce ()[B
+	public final fun getSalt ()[B
+}
+
+public final class com/pasich/encly/core/backup/BackupKdf : java/lang/Enum {
+	public static final field Companion Lcom/pasich/encly/core/backup/BackupKdf$Companion;
+	public static final field RECOVERY_PHRASE_HKDF_SHA256 Lcom/pasich/encly/core/backup/BackupKdf;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getId ()I
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/backup/BackupKdf;
+	public static fun values ()[Lcom/pasich/encly/core/backup/BackupKdf;
+}
+
+public final class com/pasich/encly/core/backup/BackupKdf$Companion {
+	public final fun fromId (I)Lcom/pasich/encly/core/backup/BackupKdf;
+}
+
+public final class com/pasich/encly/core/backup/BackupKeys {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupKeys;
+	public static final field KEY_LENGTH I
+	public final fun fileKeyFromRoot ([B[B)[B
+	public final fun normalizeMnemonic ([C)[C
+	public final fun rootFromMnemonic ([C)[B
+}
+
+public final class com/pasich/encly/core/backup/BackupNote {
+	public static final field Companion Lcom/pasich/encly/core/backup/BackupNote$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Z
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/Integer;
+	public final fun component13 ()Ljava/lang/Integer;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun component6 ()J
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Z
+	public final fun component9 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/pasich/encly/core/backup/BackupNote;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupNote;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupNote;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Ljava/lang/String;
+	public final fun getDate ()J
+	public final fun getDateCreate ()J
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getLineSpacing ()Ljava/lang/Integer;
+	public final fun getTagUid ()Ljava/lang/String;
+	public final fun getTextSize ()Ljava/lang/Integer;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUid ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isArchived ()Z
+	public final fun isPinned ()Z
+	public final fun isTrash ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/pasich/encly/core/backup/BackupNote$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupNote$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/pasich/encly/core/backup/BackupNote;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/pasich/encly/core/backup/BackupNote;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupNote$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupPayload {
+	public static final field Companion Lcom/pasich/encly/core/backup/BackupPayload$Companion;
+	public static final field SCHEMA_V1 I
+	public static final field SCHEMA_V2 I
+	public static final field SCHEMA_V3 I
+	public static final field SCHEMA_VERSION I
+	public fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (IJLjava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/pasich/encly/core/backup/BackupPayload;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupPayload;IJLjava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExportedAt ()J
+	public final fun getNotes ()Ljava/util/List;
+	public final fun getSchema ()I
+	public final fun getTags ()Ljava/util/List;
+	public final fun getTasks ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/pasich/encly/core/backup/BackupPayload$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupPayload$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/pasich/encly/core/backup/BackupPayload;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/pasich/encly/core/backup/BackupPayload;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupPayload$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupPayloadCodec {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupPayloadCodec;
+	public static final field MAX_COLOR_LENGTH I
+	public static final field MAX_UID_LENGTH I
+	public final fun decode ([B)Lcom/pasich/encly/core/backup/BackupPayload;
+	public final fun encode (Lcom/pasich/encly/core/backup/BackupPayload;)[B
+	public final fun validate (Lcom/pasich/encly/core/backup/BackupPayload;)V
+}
+
+public abstract class com/pasich/encly/core/backup/BackupSecret {
+}
+
+public final class com/pasich/encly/core/backup/BackupSecret$RecoveryPhrase : com/pasich/encly/core/backup/BackupSecret {
+	public fun <init> ([C)V
+	public final fun getWords ()[C
+}
+
+public final class com/pasich/encly/core/backup/BackupSecret$RecoveryRoot : com/pasich/encly/core/backup/BackupSecret {
+	public fun <init> ([B)V
+	public final fun getRoot ()[B
+}
+
+public final class com/pasich/encly/core/backup/BackupSubtask {
+	public static final field Companion Lcom/pasich/encly/core/backup/BackupSubtask$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ZI)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun component4 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;ZI)Lcom/pasich/encly/core/backup/BackupSubtask;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupSubtask;Ljava/lang/String;Ljava/lang/String;ZIILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupSubtask;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPosition ()I
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isCompleted ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/pasich/encly/core/backup/BackupSubtask$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupSubtask$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/pasich/encly/core/backup/BackupSubtask;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/pasich/encly/core/backup/BackupSubtask;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupSubtask$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupTag {
+	public static final field Companion Lcom/pasich/encly/core/backup/BackupTag$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ZI)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun component4 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;ZI)Lcom/pasich/encly/core/backup/BackupTag;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupTag;Ljava/lang/String;Ljava/lang/String;ZIILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupTag;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPosition ()I
+	public final fun getUid ()Ljava/lang/String;
+	public final fun getVisible ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/pasich/encly/core/backup/BackupTag$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupTag$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/pasich/encly/core/backup/BackupTag;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/pasich/encly/core/backup/BackupTag;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupTag$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupTask {
+	public static final field Companion Lcom/pasich/encly/core/backup/BackupTask$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJLjava/lang/Long;ILjava/lang/String;ILjava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()J
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()I
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJLjava/lang/Long;ILjava/lang/String;ILjava/util/List;)Lcom/pasich/encly/core/backup/BackupTask;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupTask;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJLjava/lang/Long;ILjava/lang/String;ILjava/util/List;ILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupTask;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategoryTagUid ()Ljava/lang/String;
+	public final fun getCompletedDate ()Ljava/lang/Long;
+	public final fun getCreatedDate ()J
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getPosition ()I
+	public final fun getPriority ()I
+	public final fun getSubtasks ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isCompleted ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/pasich/encly/core/backup/BackupTask$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupTask$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/pasich/encly/core/backup/BackupTask;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/pasich/encly/core/backup/BackupTask;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/BackupTask$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/pasich/encly/core/backup/ParsedBackup {
+	public fun <init> (Lcom/pasich/encly/core/backup/BackupHeader;[B)V
+	public final fun getCiphertextOffset ()I
+	public final fun getFile ()[B
+	public final fun getHeader ()Lcom/pasich/encly/core/backup/BackupHeader;
+}
+
+public final class com/pasich/encly/core/security/AuthSettings {
+	public fun <init> (Lcom/pasich/encly/core/security/AuthType;ZZZZZZ)V
+	public synthetic fun <init> (Lcom/pasich/encly/core/security/AuthType;ZZZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/pasich/encly/core/security/AuthType;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun copy (Lcom/pasich/encly/core/security/AuthType;ZZZZZZ)Lcom/pasich/encly/core/security/AuthSettings;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/security/AuthSettings;Lcom/pasich/encly/core/security/AuthType;ZZZZZZILjava/lang/Object;)Lcom/pasich/encly/core/security/AuthSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthType ()Lcom/pasich/encly/core/security/AuthType;
+	public final fun getDuressPinTurnedOff ()Z
+	public final fun getHasDuressPin ()Z
+	public final fun getHasPinSlot ()Z
+	public final fun getWipePinTurnedOff ()Z
+	public fun hashCode ()I
+	public final fun isBiometricEnabled ()Z
+	public final fun isUserCreatedSeedKey ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/AuthStrategy : java/lang/Enum {
+	public static final field NONE Lcom/pasich/encly/core/security/AuthStrategy;
+	public static final field PIN Lcom/pasich/encly/core/security/AuthStrategy;
+	public static final field PIN_BIOMETRIC Lcom/pasich/encly/core/security/AuthStrategy;
+	public static final field RECOVERY_DATA Lcom/pasich/encly/core/security/AuthStrategy;
+	public static final field SEED_PHRASE Lcom/pasich/encly/core/security/AuthStrategy;
+	public static final field SEED_PHRASE_BIOMETRIC Lcom/pasich/encly/core/security/AuthStrategy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/AuthStrategy;
+	public static fun values ()[Lcom/pasich/encly/core/security/AuthStrategy;
+}
+
+public final class com/pasich/encly/core/security/AuthType : java/lang/Enum {
+	public static final field NONE Lcom/pasich/encly/core/security/AuthType;
+	public static final field PIN Lcom/pasich/encly/core/security/AuthType;
+	public static final field SEED_PHRASE Lcom/pasich/encly/core/security/AuthType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/AuthType;
+	public static fun values ()[Lcom/pasich/encly/core/security/AuthType;
+}
+
+public final class com/pasich/encly/core/security/AuthenticationManager {
+	public static final field Companion Lcom/pasich/encly/core/security/AuthenticationManager$Companion;
+	public static final field FIRST_LOCKOUT_MS J
+	public static final field MAX_ATTEMPTS I
+	public static final field MAX_LOCKOUT_MS J
+	public static final field STRIKE_GRACE I
+	public fun <init> (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)V
+	public final fun changePin ([C[B)Lcom/pasich/encly/core/security/PinChange;
+	public final fun clearPendingWipe ()Z
+	public final fun configureDuressPin ([C[BLkotlin/jvm/functions/Function0;)Lcom/pasich/encly/core/security/DuressPinChange;
+	public final fun configurePin ([C[B)Z
+	public final fun configureWipePin ([C)Lcom/pasich/encly/core/security/WipePinChange;
+	public final fun deactivateBiometricAuth ()V
+	public final fun deleteRetiredPinKey ()V
+	public final fun deleteStrayPinKey ()V
+	public final fun duressPinTurnedOff ([B)Z
+	public final fun ensureWipeSlot ()Z
+	public final fun getAuthType ()Lcom/pasich/encly/core/security/AuthType;
+	public final fun hasDecoyVault ([B)Z
+	public final fun hasPinSlot ()Z
+	public final fun isAuthStrategy ()Lcom/pasich/encly/core/security/AuthStrategy;
+	public final fun isBiometricEnabled ()Z
+	public final fun markBiometricEnabled (Z)V
+	public final fun markWipeDatabaseCreated ()Z
+	public final fun pendingWipe ()Lcom/pasich/encly/core/security/WipeStage;
+	public final fun remainingLockoutMillis ()J
+	public final fun removeDuressPin ()Z
+	public final fun removeWipePin ()Z
+	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/PinUnlock;
+	public final fun verifyPinAuth ([CZ)Z
+	public static synthetic fun verifyPinAuth$default (Lcom/pasich/encly/core/security/AuthenticationManager;[CZILjava/lang/Object;)Z
+	public final fun wipe ()V
+	public final fun wipePinTurnedOff ()Z
+}
+
+public final class com/pasich/encly/core/security/AuthenticationManager$Companion {
+	public final fun penaltyFor (II)J
+	public static synthetic fun penaltyFor$default (Lcom/pasich/encly/core/security/AuthenticationManager$Companion;IIILjava/lang/Object;)J
+}
+
+public final class com/pasich/encly/core/security/AuthenticationManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory$Companion;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/AuthenticationManager;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)Lcom/pasich/encly/core/security/AuthenticationManager;
+}
+
+public final class com/pasich/encly/core/security/AuthenticationManager$MetroFactory$Companion {
+	public final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)Lcom/pasich/encly/core/security/AuthenticationManager;
+}
+
+public final class com/pasich/encly/core/security/AuthenticationManagerKt {
+	public static final field PIN_LENGTH I
+}
+
+public final class com/pasich/encly/core/security/AutoLock : com/pasich/encly/core/security/AutoLockPolicy {
+	public fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;)V
+	public final fun getDelay ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun getDelayMillis ()J
+	public final fun setDelay (Lcom/pasich/encly/core/security/AutoLockDelay;)V
+}
+
+public final class com/pasich/encly/core/security/AutoLock$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/AutoLock$MetroFactory$Companion;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AutoLock$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/AutoLock;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance (Lcom/pasich/encly/core/platform/KeyValueStore;)Lcom/pasich/encly/core/security/AutoLock;
+}
+
+public final class com/pasich/encly/core/security/AutoLock$MetroFactory$Companion {
+	public final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AutoLock$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/platform/KeyValueStore;)Lcom/pasich/encly/core/security/AutoLock;
+}
+
+public final class com/pasich/encly/core/security/AutoLockDelay : java/lang/Enum {
+	public static final field Companion Lcom/pasich/encly/core/security/AutoLockDelay$Companion;
+	public static final field IMMEDIATELY Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field MINUTES_15 Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field MINUTES_2 Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field MINUTES_30 Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field MINUTE_1 Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field SECONDS_15 Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field SECONDS_30 Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getMillis ()J
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static fun values ()[Lcom/pasich/encly/core/security/AutoLockDelay;
+}
+
+public final class com/pasich/encly/core/security/AutoLockDelay$Companion {
+	public final fun getDEFAULT ()Lcom/pasich/encly/core/security/AutoLockDelay;
+}
+
+public abstract interface class com/pasich/encly/core/security/AutoLockPolicy {
+	public abstract fun getDelayMillis ()J
+}
+
+public final class com/pasich/encly/core/security/AutoLockPolicy$Immediately : com/pasich/encly/core/security/AutoLockPolicy {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/AutoLockPolicy$Immediately;
+	public fun getDelayMillis ()J
+}
+
+public abstract interface class com/pasich/encly/core/security/BiometricHost {
+}
+
+public abstract interface class com/pasich/encly/core/security/BiometricManager {
+	public static final field Companion Lcom/pasich/encly/core/security/BiometricManager$Companion;
+	public static final field SLOT_PREFIX Ljava/lang/String;
+	public abstract fun authenticate (Lcom/pasich/encly/core/security/BiometricHost;Lcom/pasich/encly/core/security/BiometricManager$BiometricType;Lcom/pasich/encly/core/security/BiometricManager$BiometricCallback;Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;)V
+	public static synthetic fun authenticate$default (Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/BiometricHost;Lcom/pasich/encly/core/security/BiometricManager$BiometricType;Lcom/pasich/encly/core/security/BiometricManager$BiometricCallback;Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;ILjava/lang/Object;)V
+	public abstract fun disable ()V
+	public abstract fun enroll (Lcom/pasich/encly/core/security/BiometricHost;[BLkotlin/jvm/functions/Function1;)V
+	public abstract fun hasSlot ()Z
+	public abstract fun isStrongBiometricAvailable ()Z
+	public abstract fun strongBiometricStatus ()Lcom/pasich/encly/core/security/BiometricStatus;
+	public abstract fun unlock (Lcom/pasich/encly/core/security/BiometricHost;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class com/pasich/encly/core/security/BiometricManager$BiometricCallback {
+	public fun onCancelled ()V
+	public abstract fun onError (ILjava/lang/String;)V
+	public abstract fun onFailed ()V
+	public abstract fun onSuccess ()V
+}
+
+public final class com/pasich/encly/core/security/BiometricManager$BiometricCallback$DefaultImpls {
+	public static fun onCancelled (Lcom/pasich/encly/core/security/BiometricManager$BiometricCallback;)V
+}
+
+public final class com/pasich/encly/core/security/BiometricManager$BiometricType : java/lang/Enum {
+	public static final field APP_UNLOCK Lcom/pasich/encly/core/security/BiometricManager$BiometricType;
+	public static final field GENERAL Lcom/pasich/encly/core/security/BiometricManager$BiometricType;
+	public static final field MASTER_KEY_ACCESS Lcom/pasich/encly/core/security/BiometricManager$BiometricType;
+	public static final field SETTINGS_TOGGLE Lcom/pasich/encly/core/security/BiometricManager$BiometricType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/BiometricManager$BiometricType;
+	public static fun values ()[Lcom/pasich/encly/core/security/BiometricManager$BiometricType;
+}
+
+public final class com/pasich/encly/core/security/BiometricManager$Companion {
+	public static final field SLOT_PREFIX Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/BiometricManager$DefaultImpls {
+	public static synthetic fun authenticate$default (Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/BiometricHost;Lcom/pasich/encly/core/security/BiometricManager$BiometricType;Lcom/pasich/encly/core/security/BiometricManager$BiometricCallback;Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;ILjava/lang/Object;)V
+}
+
+public final class com/pasich/encly/core/security/BiometricManager$PromptConfig {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getNegativeButtonText ()Ljava/lang/String;
+	public final fun getSubtitle ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/BiometricStatus : java/lang/Enum {
+	public static final field AVAILABLE Lcom/pasich/encly/core/security/BiometricStatus;
+	public static final field Companion Lcom/pasich/encly/core/security/BiometricStatus$Companion;
+	public static final field NOT_ENROLLED Lcom/pasich/encly/core/security/BiometricStatus;
+	public static final field UNAVAILABLE Lcom/pasich/encly/core/security/BiometricStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/BiometricStatus;
+	public static fun values ()[Lcom/pasich/encly/core/security/BiometricStatus;
+}
+
+public final class com/pasich/encly/core/security/BiometricStatus$Companion {
+}
+
+public abstract interface class com/pasich/encly/core/security/DeviceLockWatcher {
+	public abstract fun isDeviceLocked ()Z
+	public abstract fun watchScreenOff (Lkotlin/jvm/functions/Function0;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/core/security/DeviceLockWatcher$None : com/pasich/encly/core/security/DeviceLockWatcher {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/DeviceLockWatcher$None;
+	public fun isDeviceLocked ()Z
+	public fun watchScreenOff (Lkotlin/jvm/functions/Function0;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/core/security/DuressPinChange : java/lang/Enum {
+	public static final field FAILED Lcom/pasich/encly/core/security/DuressPinChange;
+	public static final field IN_USE Lcom/pasich/encly/core/security/DuressPinChange;
+	public static final field SAME_AS_PIN Lcom/pasich/encly/core/security/DuressPinChange;
+	public static final field SET Lcom/pasich/encly/core/security/DuressPinChange;
+	public static final field SET_NEW_VAULT Lcom/pasich/encly/core/security/DuressPinChange;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/DuressPinChange;
+	public static fun values ()[Lcom/pasich/encly/core/security/DuressPinChange;
+}
+
+public abstract interface class com/pasich/encly/core/security/HandoffStagingSweeper {
+	public abstract fun sweep ()V
+}
+
+public final class com/pasich/encly/core/security/InitialStatus : java/lang/Enum {
+	public static final field AUTH Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field LEGACY_VAULT Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field LOSS_CRYPTO Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field LOSS_DATABASE Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field MAIN Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field NO Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field ONBOARDING Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field SETUP_AUTH Lcom/pasich/encly/core/security/InitialStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/InitialStatus;
+	public static fun values ()[Lcom/pasich/encly/core/security/InitialStatus;
+}
+
+public final class com/pasich/encly/core/security/JvmMonotonicClock : com/pasich/encly/core/security/LockoutClock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/JvmMonotonicClock;
+	public fun bootCount ()I
+	public fun elapsedRealtime ()J
+}
+
+public final class com/pasich/encly/core/security/JvmVaultFileIo : com/pasich/encly/core/security/VaultFileIo {
+	public fun <init> (Ljava/io/File;)V
+	public fun delete ()Z
+	public fun deleteTemp ()V
+	public fun exists ()Z
+	public fun read ()[B
+	public fun replace ([BLkotlin/jvm/functions/Function0;)V
+}
+
+public final class com/pasich/encly/core/security/JvmVaultFileIoKt {
+	public static final fun VaultStore (Ljava/io/File;)Lcom/pasich/encly/core/security/VaultStore;
+}
+
+public final class com/pasich/encly/core/security/KeyboardPrivacy {
+	public fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;)V
+	public final fun getStrict ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun setStrict (Z)V
+}
+
+public final class com/pasich/encly/core/security/KeyboardPrivacy$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/KeyboardPrivacy$MetroFactory$Companion;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/KeyboardPrivacy$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/KeyboardPrivacy;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance (Lcom/pasich/encly/core/platform/KeyValueStore;)Lcom/pasich/encly/core/security/KeyboardPrivacy;
+}
+
+public final class com/pasich/encly/core/security/KeyboardPrivacy$MetroFactory$Companion {
+	public final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/KeyboardPrivacy$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/platform/KeyValueStore;)Lcom/pasich/encly/core/security/KeyboardPrivacy;
+}
+
+public abstract interface class com/pasich/encly/core/security/LockoutClock {
+	public abstract fun bootCount ()I
+	public abstract fun elapsedRealtime ()J
+}
+
+public final class com/pasich/encly/core/security/Mnemonic {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/Mnemonic;
+	public final fun generate ()[C
+}
+
+public final class com/pasich/encly/core/security/NeverLocked : com/pasich/encly/core/security/VaultLockEvents {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/NeverLocked;
+	public fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
+}
+
+public final class com/pasich/encly/core/security/PinChange : java/lang/Enum {
+	public static final field FAILED Lcom/pasich/encly/core/security/PinChange;
+	public static final field IN_USE Lcom/pasich/encly/core/security/PinChange;
+	public static final field SET Lcom/pasich/encly/core/security/PinChange;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/PinChange;
+	public static fun values ()[Lcom/pasich/encly/core/security/PinChange;
+}
+
+public final class com/pasich/encly/core/security/PinFactorException : java/lang/Exception {
+	public fun <init> (ZLjava/lang/Throwable;)V
+	public synthetic fun <init> (ZLjava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getLost ()Z
+}
+
+public abstract interface class com/pasich/encly/core/security/PinHardwareFactor {
+	public abstract fun delete (Lcom/pasich/encly/core/security/PinKeySlot;)V
+	public abstract fun ensureKey (Lcom/pasich/encly/core/security/PinKeySlot;)Z
+	public abstract fun mac (Lcom/pasich/encly/core/security/PinKeySlot;[B)[B
+	public abstract fun reset (Lcom/pasich/encly/core/security/PinKeySlot;)V
+}
+
+public final class com/pasich/encly/core/security/PinKeySlot : java/lang/Enum {
+	public static final field A Lcom/pasich/encly/core/security/PinKeySlot;
+	public static final field B Lcom/pasich/encly/core/security/PinKeySlot;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getOther ()Lcom/pasich/encly/core/security/PinKeySlot;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/PinKeySlot;
+	public static fun values ()[Lcom/pasich/encly/core/security/PinKeySlot;
+}
+
+public abstract interface class com/pasich/encly/core/security/PinUnlock {
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$Decoy : com/pasich/encly/core/security/PinUnlock {
+	public fun <init> ([B)V
+	public final fun getDek ()[B
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$Erased : com/pasich/encly/core/security/PinUnlock {
+	public fun <init> ([B)V
+	public final fun getDek ()[B
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$Failed : com/pasich/encly/core/security/PinUnlock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$KeyLost : com/pasich/encly/core/security/PinUnlock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$KeyLost;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$LockedOut : com/pasich/encly/core/security/PinUnlock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$LockedOut;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$Success : com/pasich/encly/core/security/PinUnlock {
+	public fun <init> ([B)V
+	public final fun getDek ()[B
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$WrongPin : com/pasich/encly/core/security/PinUnlock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$WrongPin;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/RecoveryWords {
+	public static final field COUNT I
+	public static final field INSTANCE Lcom/pasich/encly/core/security/RecoveryWords;
+	public final fun isPrefix (Ljava/lang/String;)Z
+	public final fun isValidPhrase ([C)Z
+	public final fun isWord (Ljava/lang/String;)Z
+}
+
+public final class com/pasich/encly/core/security/SecurityManager {
+	public static final field Companion Lcom/pasich/encly/core/security/SecurityManager$Companion;
+	public fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;)V
+	public synthetic fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addRecoverySeed ([C)Z
+	public final fun authStrategy ()Lcom/pasich/encly/core/security/AuthStrategy;
+	public final fun biometricAvailable ()Z
+	public final fun biometricStatus ()Lcom/pasich/encly/core/security/BiometricStatus;
+	public final fun canReauthWithBiometric ()Z
+	public final fun canResetPinWithoutCurrent ()Z
+	public final fun changePin ([C)Lcom/pasich/encly/core/security/PinChange;
+	public final fun commitInitialSetup ()Z
+	public final fun completePendingWipe ()V
+	public final fun configureDuressPin ([C)Lcom/pasich/encly/core/security/DuressPinChange;
+	public final fun configurePin ([C)Z
+	public final fun configureWipePin ([C)Lcom/pasich/encly/core/security/WipePinChange;
+	public final fun confirmBiometric (Lcom/pasich/encly/core/security/BiometricHost;Lkotlin/jvm/functions/Function1;)V
+	public final fun copyBackupRootKey ()[B
+	public final fun createBackupKey ([C)Z
+	public final fun disableBiometric ()V
+	public final fun duressPinTurnedOff ()Z
+	public final fun enrollBiometric (Lcom/pasich/encly/core/security/BiometricHost;Lkotlin/jvm/functions/Function1;)V
+	public final fun eraseEpoch ()J
+	public final fun finishInitialSetup ()Z
+	public final fun generateMnemonicCode ()[C
+	public final fun getSecurityStatus ()Lcom/pasich/encly/core/security/InitialStatus;
+	public final fun getSettingsAuth ()Lcom/pasich/encly/core/security/AuthSettings;
+	public final fun hasBackupKey ()Z
+	public final fun hasDuressPin ()Z
+	public final fun hasRecoverySeed ()Z
+	public final fun initializeNewVault ([C)Z
+	public final fun isBiometricEnabled ()Z
+	public final fun isDatabaseUnlocked ()Z
+	public final fun isDecoySession ()Z
+	public final fun isLockable ()Z
+	public final fun isOnboardingShow ()Z
+	public final fun isValidRecoveryPhrase ([C)Z
+	public final fun lock ()V
+	public final fun openInitialVault ()Z
+	public final fun pinLockoutRemainingMillis ()J
+	public final fun removeDuressPin ()Z
+	public final fun removeWipePin ()Z
+	public final fun replaceRecoverySeed ([C)Z
+	public final fun requestBiometricKey (Lcom/pasich/encly/core/security/BiometricHost;Lkotlin/jvm/functions/Function1;)V
+	public final fun resolveInitialStatus ()Lcom/pasich/encly/core/security/InitialStatus;
+	public final fun setOnboardingShown ()Z
+	public final fun setSecurityStatus (Lcom/pasich/encly/core/security/InitialStatus;)V
+	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public final fun unlockWithRawKey ([BZ)Z
+	public static synthetic fun unlockWithRawKey$default (Lcom/pasich/encly/core/security/SecurityManager;[BZILjava/lang/Object;)Z
+	public final fun unlockWithSeed ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public final fun verifyPin ([C)Z
+	public final fun verifySeed ([C)Z
+	public final fun wipeAndReset ()Z
+}
+
+public final class com/pasich/encly/core/security/SecurityManager$Companion {
+}
+
+public final class com/pasich/encly/core/security/SecurityManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/SecurityManager$MetroFactory$Companion;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SecurityManager$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/SecurityManager;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;)Lcom/pasich/encly/core/security/SecurityManager;
+}
+
+public final class com/pasich/encly/core/security/SecurityManager$MetroFactory$Companion {
+	public final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SecurityManager$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;)Lcom/pasich/encly/core/security/SecurityManager;
+}
+
+public final class com/pasich/encly/core/security/SeedPhraseManager {
+	public static final field Companion Lcom/pasich/encly/core/security/SeedPhraseManager$Companion;
+	public fun <init> (Lcom/pasich/encly/core/security/VaultStore;)V
+	public final fun addRecoverySeed ([C[B)Z
+	public final fun clearBootstrapKey ()V
+	public final fun copyBootstrapKey ()[B
+	public final fun createBackupKey ([C[B)Z
+	public final fun generateMnemonic ()[C
+	public final fun hasBackupKey ()Z
+	public final fun hasRecoverySeed ()Z
+	public final fun hasStoredSeed ()Z
+	public final fun initializeVault ([C)Z
+	public final fun isValidMnemonic ([C)Z
+	public final fun replaceRecoverySeed ([C[B)Z
+	public final fun unlockWithSeed ([C)[B
+	public final fun unwrapBackupRoot ([B)[B
+	public final fun verificationKeyData ()Z
+	public final fun verifyMnemonic ([C)Z
+	public final fun wipe ()V
+}
+
+public final class com/pasich/encly/core/security/SeedPhraseManager$Companion {
+}
+
+public final class com/pasich/encly/core/security/SeedPhraseManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/SeedPhraseManager$MetroFactory$Companion;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SeedPhraseManager$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/SeedPhraseManager;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;)Lcom/pasich/encly/core/security/SeedPhraseManager;
+}
+
+public final class com/pasich/encly/core/security/SeedPhraseManager$MetroFactory$Companion {
+	public final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SeedPhraseManager$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;)Lcom/pasich/encly/core/security/SeedPhraseManager;
+}
+
+public final class com/pasich/encly/core/security/SessionLockManager : androidx/lifecycle/DefaultLifecycleObserver, com/pasich/encly/core/security/VaultLockEvents {
+	public fun <init> (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;)V
+	public synthetic fun <init> (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun allowSystemPicker ()V
+	public final fun endSystemPicker ()V
+	public fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getSessionGeneration ()J
+	public final fun lockNow ()V
+	public fun onCreate (Landroidx/lifecycle/LifecycleOwner;)V
+	public fun onDestroy (Landroidx/lifecycle/LifecycleOwner;)V
+	public fun onPause (Landroidx/lifecycle/LifecycleOwner;)V
+	public fun onResume (Landroidx/lifecycle/LifecycleOwner;)V
+	public fun onStart (Landroidx/lifecycle/LifecycleOwner;)V
+	public fun onStop (Landroidx/lifecycle/LifecycleOwner;)V
+	public final fun onUnlockAbandoned ()V
+	public final fun onUnlocked ()Z
+	public final fun requireUnlock ()V
+}
+
+public final class com/pasich/encly/core/security/SessionLockManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory$Companion;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/SessionLockManager;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;)Lcom/pasich/encly/core/security/SessionLockManager;
+}
+
+public final class com/pasich/encly/core/security/SessionLockManager$MetroFactory$Companion {
+	public final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;)Lcom/pasich/encly/core/security/SessionLockManager;
+}
+
+public abstract interface class com/pasich/encly/core/security/VaultDatabase {
+	public abstract fun hasEncryptedDatabase (Lcom/pasich/encly/core/security/VaultKind;)Z
+	public static synthetic fun hasEncryptedDatabase$default (Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/VaultKind;ILjava/lang/Object;)Z
+	public abstract fun isDatabaseUnlocked ()Z
+	public abstract fun reset ()V
+	public abstract fun unlockDatabase ([BZ)Z
+	public abstract fun unlockDatabase ([BZLcom/pasich/encly/core/security/VaultKind;)Z
+	public static synthetic fun unlockDatabase$default (Lcom/pasich/encly/core/security/VaultDatabase;[BZILjava/lang/Object;)Z
+	public abstract fun wipe ()V
+	public abstract fun wipeIfClosed (Lcom/pasich/encly/core/security/VaultKind;)Z
+	public static synthetic fun wipeIfClosed$default (Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/VaultKind;ILjava/lang/Object;)Z
+}
+
+public final class com/pasich/encly/core/security/VaultDatabase$DefaultImpls {
+	public static synthetic fun hasEncryptedDatabase$default (Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/VaultKind;ILjava/lang/Object;)Z
+	public static synthetic fun unlockDatabase$default (Lcom/pasich/encly/core/security/VaultDatabase;[BZILjava/lang/Object;)Z
+	public static synthetic fun wipeIfClosed$default (Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/VaultKind;ILjava/lang/Object;)Z
+}
+
+public abstract interface class com/pasich/encly/core/security/VaultFileIo {
+	public abstract fun delete ()Z
+	public abstract fun deleteTemp ()V
+	public abstract fun exists ()Z
+	public abstract fun read ()[B
+	public abstract fun replace ([BLkotlin/jvm/functions/Function0;)V
+}
+
+public final class com/pasich/encly/core/security/VaultKind : java/lang/Enum {
+	public static final field DECOY Lcom/pasich/encly/core/security/VaultKind;
+	public static final field PRIMARY Lcom/pasich/encly/core/security/VaultKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/VaultKind;
+	public static fun values ()[Lcom/pasich/encly/core/security/VaultKind;
+}
+
+public abstract interface class com/pasich/encly/core/security/VaultLockEvents {
+	public abstract fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
+}
+
+public final class com/pasich/encly/core/security/VaultStore {
+	public fun <init> (Lcom/pasich/encly/core/security/VaultFileIo;)V
+	public final fun clear ()Z
+	public final fun contains (Ljava/lang/String;)Z
+	public final fun edit (Lkotlin/jvm/functions/Function1;)Z
+	public final fun getBoolean (Ljava/lang/String;Z)Z
+	public final fun getBytes (Ljava/lang/String;)[B
+	public final fun getInt (Ljava/lang/String;I)I
+	public final fun getLong (Ljava/lang/String;J)J
+	public final fun isCorrupt ()Z
+}
+
+public final class com/pasich/encly/core/security/VaultStore$Editor {
+	public final fun putBoolean (Ljava/lang/String;Z)V
+	public final fun putBytes (Ljava/lang/String;[B)V
+	public final fun putInt (Ljava/lang/String;I)V
+	public final fun putLong (Ljava/lang/String;J)V
+	public final fun remove (Ljava/lang/String;)V
+	public final fun removePrefix (Ljava/lang/String;)V
+}
+
+public final class com/pasich/encly/core/security/VaultUnlockResult : java/lang/Enum {
+	public static final field DB_ERROR Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static final field INVALID_CREDENTIAL Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static final field LOCKED_OUT Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static final field PIN_KEY_LOST Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static final field SUCCESS Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static fun values ()[Lcom/pasich/encly/core/security/VaultUnlockResult;
+}
+
+public final class com/pasich/encly/core/security/WipePinChange : java/lang/Enum {
+	public static final field FAILED Lcom/pasich/encly/core/security/WipePinChange;
+	public static final field IN_USE Lcom/pasich/encly/core/security/WipePinChange;
+	public static final field SAME_AS_PIN Lcom/pasich/encly/core/security/WipePinChange;
+	public static final field SET Lcom/pasich/encly/core/security/WipePinChange;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/WipePinChange;
+	public static fun values ()[Lcom/pasich/encly/core/security/WipePinChange;
+}
+
+public final class com/pasich/encly/core/security/WipeStage : java/lang/Enum {
+	public static final field CLEANUP Lcom/pasich/encly/core/security/WipeStage;
+	public static final field DATABASE Lcom/pasich/encly/core/security/WipeStage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/WipeStage;
+	public static fun values ()[Lcom/pasich/encly/core/security/WipeStage;
+}
+

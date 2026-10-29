@@ -4,6 +4,7 @@ import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 // of Encly: the app binds its extension points (strings, theme, clipboard, links) from outside.
 plugins {
     id("encly.kmp-library")
+    id("encly.kmp-ios")
     id("encly.compose")
     id("encly.quality")
     id("org.jetbrains.dokka")

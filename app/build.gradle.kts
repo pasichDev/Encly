@@ -269,6 +269,11 @@ kover {
 }
 
 dependencies {
+    // The shared layers (Kotlin Multiplatform libraries): texts and flags, crypto, the security core.
+    implementation(project(":core:common"))
+    implementation(project(":core:crypto"))
+    implementation(project(":core:security"))
+
     // The block editor (Kotlin Multiplatform library); the app binds its extension points.
     implementation(project(":editor"))
     // The encrypted vault database (Room + Sealite): entities, DAOs, migrations, SecureDatabaseManager.
