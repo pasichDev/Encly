@@ -20,8 +20,8 @@ import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 enum class EditNoteBottomSheetAction {
     CLOSE_NO_SAVE,
@@ -44,7 +44,7 @@ fun EditNoteBottomSheet(
     isVisible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = enclyViewModel<EditNoteViewModel>(),
+    viewModel: EditNoteViewModel = metroViewModel<EditNoteViewModel>(),
     onAction: (EditNoteBottomSheetAction) -> Unit = {},
 ) {
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()

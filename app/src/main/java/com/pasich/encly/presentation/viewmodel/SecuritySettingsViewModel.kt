@@ -15,18 +15,23 @@ import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.WipePinChange
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-@HiltViewModel
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
 @Suppress("TooManyFunctions") // One small entry point per setting on the Security page.
-class SecuritySettingsViewModel @Inject constructor(
+@Inject
+class SecuritySettingsViewModel(
     private val securityManager: SecurityManager,
     private val keyboardPrivacy: KeyboardPrivacy,
     private val autoLock: AutoLock,

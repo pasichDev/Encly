@@ -46,10 +46,10 @@ import com.pasich.encly.presentation.viewmodel.BackupUiState
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.todayStamp
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
 
@@ -62,8 +62,8 @@ import kotlin.time.Instant
 fun BackupScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: BackupViewModel = enclyViewModel(),
-    markdownViewModel: MarkdownExportViewModel = enclyViewModel(),
+    viewModel: BackupViewModel = metroViewModel(),
+    markdownViewModel: MarkdownExportViewModel = metroViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }

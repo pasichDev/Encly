@@ -15,12 +15,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
+import com.pasich.encly.core.di.appGraph
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.handoff.AndroidPackageSignatures
@@ -35,12 +37,13 @@ import com.pasich.encly.presentation.screen.handoff.ImportFromMyNotesScreen
 import com.pasich.encly.presentation.viewmodel.HandoffStep
 import com.pasich.encly.presentation.viewmodel.ImportFromMyNotesViewModel
 import com.pasich.encly.ui.theme.AppTheme
-import dagger.hilt.android.AndroidEntryPoint
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import javax.inject.Inject
 
 /**
  * Receives the one-way hand-off from My Notes (pasichDev/Encly#46): My Notes starts it with
@@ -59,7 +62,6 @@ import javax.inject.Inject
  * [EXTRA_SKIPPED]; or `RESULT_CANCELED` with the string extra [EXTRA_REASON]
  * ([HandoffError.reason]).
  */
-@AndroidEntryPoint
 class ImportFromMyNotesActivity : AppCompatActivity() {
 
     @Inject
@@ -71,9 +73,14 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
     @Inject
     lateinit var keyboardPrivacy: KeyboardPrivacy
 
-    private val viewModel: ImportFromMyNotesViewModel by viewModels()
+    @Inject
+    lateinit var viewModelFactory: MetroViewModelFactory
+
+    // Not the default factory: BiometricPrompt and others create their own ViewModels from it.
+    private val viewModel: ImportFromMyNotesViewModel by viewModels { viewModelFactory }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        appGraph.inject(this)
         // As in MainActivity: protected before the first frame.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         super.onCreate(savedInstanceState)
@@ -109,16 +116,18 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
         setContent {
             if (!themeReady) return@setContent
             val strictKeyboard by keyboardPrivacy.strict.collectAsState()
-            AppTheme {
-                SecureTextInputBoundary(strict = strictKeyboard) {
-                    SensitiveClipboardBoundary {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
-                                .windowInsetsPadding(WindowInsets.statusBars),
-                        ) {
-                            ImportFromMyNotesScreen(onClose = ::finish)
+            CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
+                AppTheme {
+                    SecureTextInputBoundary(strict = strictKeyboard) {
+                        SensitiveClipboardBoundary {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .windowInsetsPadding(WindowInsets.statusBars),
+                            ) {
+                                ImportFromMyNotesScreen(onClose = ::finish)
+                            }
                         }
                     }
                 }

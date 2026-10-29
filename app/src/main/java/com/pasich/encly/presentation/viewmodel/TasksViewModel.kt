@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.security.NeverLocked
 import com.pasich.encly.core.security.VaultLockEvents
@@ -16,7 +18,13 @@ import com.pasich.encly.domain.repository.TasksRepository
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
 import com.pasich.encly.presentation.dialogs.tasks.SUBTASK_TITLE_MAX_LENGTH
 import com.pasich.encly.presentation.dialogs.tasks.SubtaskListState
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +37,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import javax.inject.Inject
 
 private const val TAG = "TasksViewModel"
 
@@ -101,12 +108,12 @@ data class TasksUiState(
  * The Tasks screen: the lists and filters, the editor sheet, and the list's own sub-task
  * editing (each task's tree opens on a tap; one inline field adds or renames a sub-task).
  */
-@HiltViewModel
-class TasksViewModel @Inject constructor(
+@AssistedInject
+class TasksViewModel(
     private val tasksRepository: TasksRepository,
     private val updateTaskStatusUseCase: UpdateTaskStatusUseCase,
     lockEvents: VaultLockEvents = NeverLocked,
-    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    @Assisted private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TasksUiState())
@@ -708,6 +715,16 @@ class TasksViewModel @Inject constructor(
         commitInlineEdit()
         _uiState.value = TaskFilterEngine.select(_uiState.value, filter)
     }
+}
+
+/** Creates [TasksViewModel] with the SavedStateHandle of its entry, navigation arguments included. */
+@AssistedFactory
+@ViewModelAssistedFactoryKey(TasksViewModel::class)
+@ContributesIntoMap(AppScope::class)
+fun interface TasksViewModelFactory : ViewModelAssistedFactory {
+    override fun create(extras: CreationExtras): TasksViewModel = create(extras.createSavedStateHandle())
+
+    fun create(@Assisted savedStateHandle: SavedStateHandle): TasksViewModel
 }
 
 /** What a write tells the screen once it has left its lock (see launchSubtaskWrite). */

@@ -15,7 +15,11 @@ import com.pasich.encly.data.export.MarkdownDocuments
 import com.pasich.encly.data.export.MarkdownExport
 import com.pasich.encly.data.export.MarkdownLabels
 import com.pasich.encly.utils.todayStamp
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -24,7 +28,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 /** What a Markdown export writes. */
 sealed interface MarkdownExportTarget {
@@ -47,9 +50,11 @@ sealed interface MarkdownExportTarget {
  * - Nothing plaintext is held while another app (the save dialog) is in front, and no copy is
  *   made anywhere else: no temp file, no cache, no share intent.
  */
-@HiltViewModel
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
 @Suppress("TooManyFunctions") // One function per step of the flow, and the helpers of the write.
-class MarkdownExportViewModel @Inject constructor(
+@Inject
+class MarkdownExportViewModel(
     private val securityManager: SecurityManager,
     private val sessionLockManager: SessionLockManager,
     private val store: VaultDataStore,

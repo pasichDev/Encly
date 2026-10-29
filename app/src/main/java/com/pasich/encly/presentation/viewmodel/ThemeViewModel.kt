@@ -4,14 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.repository.SettingsRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import javax.inject.Inject
 
-@HiltViewModel
-class ThemeViewModel @Inject constructor(settingsRepository: SettingsRepository) : ViewModel() {
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class ThemeViewModel(settingsRepository: SettingsRepository) : ViewModel() {
 
     // MainActivity holds the splash until the theme was read once, so the first frame starts
     // from the stored theme instead of flashing the defaults. The main thread never blocks on

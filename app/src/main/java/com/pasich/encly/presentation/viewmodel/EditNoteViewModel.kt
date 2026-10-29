@@ -2,7 +2,9 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.di.IoDispatcher
 import com.pasich.encly.core.security.NeverLocked
@@ -58,7 +60,13 @@ import com.pasich.encly.presentation.editor.state.moveInteracted
 import com.pasich.encly.presentation.editor.state.pasteLink
 import com.pasich.encly.presentation.editor.state.removeInteracted
 import com.pasich.encly.presentation.editor.state.toggleChecklistLock
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -75,20 +83,17 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * The note editor. Wires the block content ([BlockEditorState]) to the stored note
  * ([NotePersistence]) and decides whether the note may be edited at all (locked, or read-only
  * from the trash). Focus is plain state here; the UI owns the FocusRequesters.
  */
-@HiltViewModel
-class EditNoteViewModel
-@Suppress("LongParameterList") // Hilt-injected dependencies; grouping them would only obscure wiring.
-@Inject
-constructor(
+@Suppress("LongParameterList") // Injected dependencies; grouping them would only obscure wiring.
+@AssistedInject
+class EditNoteViewModel(
     notesRepository: NotesRepository,
-    private val savedStateHandle: SavedStateHandle,
+    @Assisted private val savedStateHandle: SavedStateHandle,
     updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,
     private val settingsRepository: SettingsRepository,
@@ -597,6 +602,16 @@ constructor(
 
     /** Whether the block the user works on is the first, the last or in between. */
     fun getMoveBlockState(): Int = editor.interactedBlockPosition()
+}
+
+/** Creates [EditNoteViewModel] with the SavedStateHandle of its entry, navigation arguments included. */
+@AssistedFactory
+@ViewModelAssistedFactoryKey(EditNoteViewModel::class)
+@ContributesIntoMap(AppScope::class)
+fun interface EditNoteViewModelFactory : ViewModelAssistedFactory {
+    override fun create(extras: CreationExtras): EditNoteViewModel = create(extras.createSavedStateHandle())
+
+    fun create(@Assisted savedStateHandle: SavedStateHandle): EditNoteViewModel
 }
 
 /** The find bar refreshes its matches this long after the text stops changing. */

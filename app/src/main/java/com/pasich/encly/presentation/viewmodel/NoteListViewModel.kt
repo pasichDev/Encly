@@ -21,7 +21,11 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNotePinStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -35,13 +39,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class NoteListViewModel
-@Suppress("LongParameterList") // Hilt-injected dependencies, one use case per action on a note.
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Suppress("LongParameterList") // Injected dependencies, one use case per action on a note.
 @Inject
-constructor(
+class NoteListViewModel(
     private val observeNotesUseCase: ObserveNotesUseCase,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val updateNoteTagUseCase: UpdateNoteTagUseCase,

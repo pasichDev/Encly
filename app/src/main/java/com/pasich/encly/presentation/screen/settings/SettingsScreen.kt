@@ -28,14 +28,14 @@ import com.pasich.encly.presentation.dialogs.SwipeActionDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable
 fun SettingsScreen(
     navController: NavHostController?,
     modifier: Modifier = Modifier,
-    settingViewState: SettingsViewModel = enclyViewModel(),
+    settingViewState: SettingsViewModel = metroViewModel(),
     securityDisable: Boolean = false,
 ) {
     val showTasks by settingViewState.showTasksFlow.collectAsState()

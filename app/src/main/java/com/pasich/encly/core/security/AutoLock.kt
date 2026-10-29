@@ -1,11 +1,12 @@
 package com.pasich.encly.core.security
 
 import android.content.SharedPreferences
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** How long the vault may stay open after the user leaves the app (Settings → Security). */
 @Suppress("MagicNumber") // The offered delays themselves.
@@ -38,8 +39,9 @@ interface AutoLockPolicy {
  * The stored auto-lock delay. The screen turning off or the device locking still closes the
  * vault at once, whatever the delay (see [SessionLockManager]).
  */
-@Singleton
-class AutoLock @Inject constructor(private val flags: SharedPreferences) : AutoLockPolicy {
+@SingleIn(AppScope::class)
+@Inject
+class AutoLock(private val flags: SharedPreferences) : AutoLockPolicy {
     private val _delay = MutableStateFlow(read())
     val delay: StateFlow<AutoLockDelay> = _delay.asStateFlow()
 

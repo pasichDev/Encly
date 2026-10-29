@@ -23,7 +23,11 @@ import com.pasich.encly.data.importer.ImportSource
 import com.pasich.encly.data.importer.ReadResult
 import com.pasich.encly.data.importer.ReviewNote
 import com.pasich.encly.data.importer.SafImportFiles
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -36,7 +40,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import javax.inject.Inject
 
 /** Why an import ended without writing anything. */
 enum class ImportFailure {
@@ -112,8 +115,10 @@ sealed interface ImportStep {
  * dropped on cancel, when the import ends, and the moment the vault locks.
  */
 @Suppress("TooManyFunctions", "ReturnCount") // The page's actions; each one is a guard (no plan, no step) and a change.
-@HiltViewModel
-class ImportNotesViewModel @Inject constructor(
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class ImportNotesViewModel(
     private val files: SafImportFiles,
     private val store: VaultDataStore,
     private val sessionLockManager: SessionLockManager,

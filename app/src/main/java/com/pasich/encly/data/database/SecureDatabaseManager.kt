@@ -3,17 +3,18 @@ package com.pasich.encly.data.database
 import android.content.Context
 import androidx.room.useWriterConnection
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.core.di.ApplicationContext
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.cipher.SQLCipherUtils
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import io.github.pasichdev.sealite.SealiteDriver
 import io.github.pasichdev.sealite.SealiteKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.security.MessageDigest
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * The two database files a vault can have: the real one, and the decoy vault the duress PIN
@@ -30,9 +31,9 @@ enum class VaultFile(internal val fileName: String) {
  * A committed vault must already have an encrypted database file. Database creation is allowed
  * only during the atomic first-run setup path (and the first opening of a decoy vault).
  */
-@Singleton
-class SecureDatabaseManager @Inject constructor(@param:ApplicationContext private val context: Context) :
-    DatabaseProvider {
+@SingleIn(AppScope::class)
+@Inject
+class SecureDatabaseManager(@param:ApplicationContext private val context: Context) : DatabaseProvider {
     private var database: AppDatabase? = null
     private var isUnlocked = false
     private var lease: DatabaseLease? = null

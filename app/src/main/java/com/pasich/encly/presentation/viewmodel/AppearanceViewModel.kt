@@ -9,19 +9,24 @@ import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.utils.DeviceCapabilities
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * Settings → Appearance: palette, mode, dynamic colour and font. Every change is written to
  * DataStore at once; the theme (ThemeViewModel) observes the same flow, so the app restyles live.
  */
-@HiltViewModel
-class AppearanceViewModel @Inject constructor(
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class AppearanceViewModel(
     private val settingsRepository: SettingsRepository,
     private val deviceCapabilities: DeviceCapabilities,
 ) : ViewModel() {

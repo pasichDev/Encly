@@ -5,11 +5,12 @@ import android.os.Looper
 import androidx.annotation.MainThread
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Whether the open session was closed. ViewModels that hold decrypted content observe it and
@@ -43,9 +44,10 @@ object NeverLocked : VaultLockEvents {
  * the moment the screen turns off or the device locks, and are re-checked when the app comes
  * back.
  */
-@Singleton
+@SingleIn(AppScope::class)
 @Suppress("TooManyFunctions") // The whole session lifecycle: lifecycle hooks, picker grace, unlock publishing.
-class SessionLockManager @Inject constructor(
+@Inject
+class SessionLockManager(
     private val securityManager: SecurityManager,
     private val deviceLock: DeviceLockWatcher = DeviceLockWatcher.None,
     systemClock: LockoutClock = JvmMonotonicClock,

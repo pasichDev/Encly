@@ -17,7 +17,7 @@ import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * The screen side of the Markdown export, drawn by the Backup screen and by the editor: the
@@ -26,7 +26,7 @@ import com.pasich.encly.presentation.viewmodel.enclyViewModel
  * Nothing else leaves the app: no share sheet, no temp file.
  */
 @Composable
-internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: MarkdownExportViewModel = enclyViewModel()) {
+internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: MarkdownExportViewModel = metroViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val noteLauncher = rememberLauncherForActivityResult(

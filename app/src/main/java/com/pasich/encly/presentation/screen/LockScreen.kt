@@ -40,14 +40,14 @@ import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /** The app's lock screen: unlocking opens Home (or the note that was open), see [leaveLockScreen]. */
 @Composable
 fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     // The same instance the inner LockScreen gets: both come from this back-stack entry.
-    val canReopenNote = enclyViewModel<LockViewModel>()::canReopenNote
+    val canReopenNote = metroViewModel<LockViewModel>()::canReopenNote
     val unlockReveal = LocalUnlockReveal.current
     val exits = remember(navController, unlockReveal) {
         LockExits(
@@ -71,7 +71,7 @@ fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) 
 }
 
 @Composable
-fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockViewModel = enclyViewModel()) {
+fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockViewModel = metroViewModel()) {
     val activity = LocalActivity.current as? FragmentActivity
     val busy by viewModel.busy.collectAsState()
     // Above the loading view below: the forms' input and errors survive the credential check.

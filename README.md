@@ -167,7 +167,7 @@ See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and t
 
 ## Tech stack
 
-Kotlin · Jetpack Compose · Material 3 · Hilt · Room · SQLCipher · Coroutines ·
+Kotlin · Jetpack Compose · Material 3 · Metro · Room · SQLCipher · Coroutines ·
 kotlinx.serialization · BIP39 (own implementation)
 
 Clean architecture: `presentation` → `domain` → `data`, with `core/security`

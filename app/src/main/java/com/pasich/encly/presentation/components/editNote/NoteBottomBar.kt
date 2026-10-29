@@ -52,8 +52,8 @@ import com.pasich.encly.presentation.editor.mainBlockTools
 import com.pasich.encly.presentation.editor.moreBlockTools
 import com.pasich.encly.presentation.editor.state.toolType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -66,7 +66,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun NoteBottomBar(
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
     simpleEdit: Boolean = false,
 ) {
     var showMore by rememberSaveable { mutableStateOf(false) }

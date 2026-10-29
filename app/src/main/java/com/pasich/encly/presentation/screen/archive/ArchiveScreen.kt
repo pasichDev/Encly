@@ -33,8 +33,8 @@ import com.pasich.encly.presentation.screen.NoteSheetState
 import com.pasich.encly.presentation.viewmodel.ArchiveState
 import com.pasich.encly.presentation.viewmodel.ArchiveViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 private const val SKELETON_CARDS = 3
 
@@ -46,8 +46,8 @@ private const val SKELETON_CARDS = 3
 fun ArchiveScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: ArchiveViewModel = enclyViewModel(),
-    settingsViewModel: SettingsViewModel = enclyViewModel(),
+    viewModel: ArchiveViewModel = metroViewModel(),
+    settingsViewModel: SettingsViewModel = metroViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val swipe by settingsViewModel.swipeSettings.collectAsStateWithLifecycle()

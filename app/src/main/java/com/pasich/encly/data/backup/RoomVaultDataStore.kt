@@ -10,7 +10,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** [VaultDataStore] over a single SQLCipher/Room opening. */
 @Suppress("TooManyFunctions") // One function per vault table operation of the contract.

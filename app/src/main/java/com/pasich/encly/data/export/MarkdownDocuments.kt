@@ -5,21 +5,23 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.pasich.encly.core.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.io.IOException
 import kotlinx.io.Sink
 import kotlinx.io.asSink
 import kotlinx.io.buffered
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Writes the plaintext (Markdown) export to a Storage Access Framework document the user just
  * created in the system save dialog. The content is streamed straight into that document: no
  * temp file, no cache or files directory, no share intent, and no storage permission.
  */
-@Singleton
-class MarkdownDocuments @Inject constructor(@param:ApplicationContext private val context: Context) {
+@SingleIn(AppScope::class)
+@Inject
+class MarkdownDocuments(@param:ApplicationContext private val context: Context) {
 
     /**
      * Streams what [block] writes into the document at [uri]. A document that already holds data

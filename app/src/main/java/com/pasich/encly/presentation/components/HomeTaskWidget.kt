@@ -18,9 +18,9 @@ import com.pasich.encly.presentation.designsystem.EnclyInlineLink
 import com.pasich.encly.presentation.designsystem.EnclyTaskRow
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.presentation.viewmodel.widgetTasks
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * The tasks card on the notes screen (design spec §4.3): "TASKS · N OPEN", a link to all tasks
@@ -32,7 +32,7 @@ fun HomeTaskWidget(
     modifier: Modifier = Modifier,
     onTasksClick: () -> Unit = {},
     onNewTask: () -> Unit = onTasksClick,
-    viewModel: TasksViewModel = enclyViewModel(),
+    viewModel: TasksViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val preview = remember(uiState.activeTasks) { widgetTasks(uiState.activeTasks) }

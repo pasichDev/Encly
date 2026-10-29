@@ -26,7 +26,7 @@ import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.TrashListEvent
 import com.pasich.encly.presentation.viewmodel.TrashViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 enum class DialogTrashAction {
     DELETE_PERMANENTLY,
@@ -38,7 +38,7 @@ enum class DialogTrashAction {
 fun TrashScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    trashViewModel: TrashViewModel = enclyViewModel(),
+    trashViewModel: TrashViewModel = metroViewModel(),
 ) {
     val state by trashViewModel.state.collectAsStateWithLifecycle()
     var isDialogVisible by remember { mutableStateOf(DialogTrashAction.DISABLE) }

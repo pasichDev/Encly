@@ -40,7 +40,7 @@ import com.pasich.encly.presentation.screen.settings.WipePinScreen
 import com.pasich.encly.presentation.screen.trash.TrashScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable
 fun AppNavHost(navController: NavHostController, startDestination: String = NavRoutes.HomeRoute.name) {
@@ -209,7 +209,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
 private fun EditNoteDestination(
     navController: NavHostController,
     entry: NavBackStackEntry,
-    viewModel: EditNoteViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
 ) {
     val noteState by viewModel.state.collectAsState()
     val eraseEpoch = LocalEraseEpoch.current
@@ -231,7 +231,7 @@ private fun LossRoute(
     navController: NavHostController,
     route: NavRoutes,
     reason: LossReason,
-    recoveryViewModel: LossRecoveryViewModel = enclyViewModel(),
+    recoveryViewModel: LossRecoveryViewModel = metroViewModel(),
 ) {
     LossRecoveryScreen(
         reason = reason,

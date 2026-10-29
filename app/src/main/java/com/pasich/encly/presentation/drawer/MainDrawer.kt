@@ -32,8 +32,8 @@ import com.pasich.encly.presentation.navigation.DrawerNavItem
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.drawerNavItems
 import com.pasich.encly.presentation.viewmodel.StatisticViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -47,7 +47,7 @@ fun MainDrawer(
     onItemClick: (DrawerNavItem) -> Unit,
     modifier: Modifier = Modifier,
     topInset: Dp = 0.dp,
-    statisticViewModel: StatisticViewModel = enclyViewModel(),
+    statisticViewModel: StatisticViewModel = metroViewModel(),
 ) {
     val totalTags by statisticViewModel.totalTagsCreated.collectAsStateWithLifecycle()
     val openTasks by statisticViewModel.openTasksCount.collectAsStateWithLifecycle()

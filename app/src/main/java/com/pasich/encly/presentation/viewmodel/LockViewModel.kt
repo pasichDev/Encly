@@ -9,7 +9,11 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.core.security.VaultUnlockResult
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,7 +25,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 /**
  * BACKGROUNDED: the credential was right, but the app left the foreground before the vault
@@ -31,9 +34,11 @@ import javax.inject.Inject
 enum class PinUnlockResult { SUCCESS, WRONG_PIN, LOCKED_OUT, KEY_LOST, DB_ERROR, BACKGROUNDED }
 enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED }
 
-@HiltViewModel
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
 @Suppress("TooManyFunctions") // One small entry point per unlock factor and capability.
-class LockViewModel @Inject constructor(
+@Inject
+class LockViewModel(
     private val securityManager: SecurityManager,
     private val sessionLockManager: SessionLockManager,
     /** Where the rest of a wipe-PIN erase runs once the vault is open; outlives this screen. */

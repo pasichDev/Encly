@@ -11,15 +11,16 @@ import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.domain.repository.SettingsRepository
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
+@SingleIn(AppScope::class)
 @Suppress("TooManyFunctions") // Implements the settings interface with one delegate per setting.
-class SettingsRepositoryImpl @Inject constructor(private val settingsLocalDataSource: SettingsLocalDataSource) :
-    SettingsRepository {
+@Inject
+class SettingsRepositoryImpl(private val settingsLocalDataSource: SettingsLocalDataSource) : SettingsRepository {
 
     override val themeSettingsFlow: Flow<ThemeSettings> = settingsLocalDataSource.themeSettingsFlow
     override val isGridNoteList: Flow<Boolean> = settingsLocalDataSource.isGridNoteListFlow

@@ -6,8 +6,8 @@ Encly is a local-first Android application. Its runtime direction is:
 presentation → domain/use cases → repositories → local data source → Room/SQLCipher
 ```
 
-The presentation layer contains Compose screens and Hilt ViewModels. It renders state and sends
-user intent; persistence and security decisions remain outside Composables.
+The presentation layer contains Compose screens and Metro-injected ViewModels. It renders state and
+sends user intent; persistence and security decisions remain outside Composables.
 
 ## Layers
 

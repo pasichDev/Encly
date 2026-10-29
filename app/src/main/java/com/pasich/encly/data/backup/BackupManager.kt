@@ -14,17 +14,19 @@ import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CancellationException
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Encrypted export/import of the whole vault. Files are built and read fully in memory and
  * handed to/from the Storage Access Framework by the UI: no temp files, no permissions, no
  * network. Plaintext payload buffers and derived keys are zeroized after use.
  */
-@Singleton
-class BackupManager @Inject constructor(
+@SingleIn(AppScope::class)
+@Inject
+class BackupManager(
     private val securityManager: SecurityManager,
     private val store: VaultDataStore,
     private val secureStoragePrefs: SharedPreferences,

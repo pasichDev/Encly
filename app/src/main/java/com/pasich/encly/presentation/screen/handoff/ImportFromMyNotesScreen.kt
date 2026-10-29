@@ -33,8 +33,8 @@ import com.pasich.encly.presentation.screen.LockScreen
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.viewmodel.HandoffStep
 import com.pasich.encly.presentation.viewmodel.ImportFromMyNotesViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * Import from My Notes: the lock screen while the vault is closed, then the hand-off's steps.
@@ -44,7 +44,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 fun ImportFromMyNotesScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ImportFromMyNotesViewModel = enclyViewModel(),
+    viewModel: ImportFromMyNotesViewModel = metroViewModel(),
 ) {
     val locked by viewModel.locked.collectAsState()
     val step by viewModel.step.collectAsState()

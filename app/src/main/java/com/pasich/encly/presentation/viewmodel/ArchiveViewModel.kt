@@ -16,22 +16,27 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * The archive: archived notes that are not in the trash, newest edit first. It acts on a note
  * with the same [NoteListEvent]s as the main list, minus the ones that do not apply here (a
  * tag chip, the sort order, pinning: an archived note is never pinned).
  */
-@HiltViewModel
-class ArchiveViewModel @Inject constructor(
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class ArchiveViewModel(
     private val observeNotesUseCase: ObserveNotesUseCase,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val updateNoteArchiveStatusUseCase: UpdateNoteArchiveStatusUseCase,

@@ -14,13 +14,14 @@ import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.domain.model.ThemeType
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import javax.inject.Inject
-import javax.inject.Singleton
 
 const val IS_DYNAMIC_THEME = "is_dynamic_theme"
 const val THEME_TYPE = "theme_type"
@@ -39,9 +40,10 @@ const val SWIPE_RIGHT = "swipe_right"
 const val SWIPE_LEFT = "swipe_left"
 const val APPEARANCE_MIGRATED = "appearance_migrated_v1"
 
-@Singleton
+@SingleIn(AppScope::class)
 @Suppress("TooManyFunctions") // One small getter/setter pair per persisted editor or display setting.
-class SettingsLocalDataSource @Inject constructor(private val dataStore: DataStore<Preferences>) {
+@Inject
+class SettingsLocalDataSource(private val dataStore: DataStore<Preferences>) {
 
     private companion object {
         val isDynamicTheme = booleanPreferencesKey(IS_DYNAMIC_THEME)

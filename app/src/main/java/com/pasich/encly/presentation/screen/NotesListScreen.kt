@@ -58,8 +58,8 @@ import com.pasich.encly.presentation.viewmodel.NoteListState
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.NotesEmptyState
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -86,7 +86,7 @@ fun NotesList(
     swipe: SwipeSettings = SwipeSettings.Off,
     onSecondActionClick: (Note) -> Unit = {},
     header: @Composable () -> Unit = {},
-    noteListViewModel: NoteListViewModel = enclyViewModel(),
+    noteListViewModel: NoteListViewModel = metroViewModel(),
 ) {
     val state by noteListViewModel.state.collectAsStateWithLifecycle()
     val sheet = remember { NoteSheetState() }

@@ -44,16 +44,16 @@ import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun SecuritySettingsScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    securityViewModel: SecuritySettingsViewModel = enclyViewModel(),
-    vaultViewModel: BackupViewModel = enclyViewModel(),
+    securityViewModel: SecuritySettingsViewModel = metroViewModel(),
+    vaultViewModel: BackupViewModel = metroViewModel(),
 ) {
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
     val strictKeyboard by securityViewModel.strictKeyboard.collectAsStateWithLifecycle()

@@ -9,14 +9,15 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.R
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.pasich.encly.core.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import javax.inject.Inject
-import javax.inject.Singleton
 import androidx.biometric.BiometricManager as AndroidBiometricManager
 
 /**
@@ -26,12 +27,10 @@ import androidx.biometric.BiometricManager as AndroidBiometricManager
  * unwrapped by the Cipher instance returned from a successful BIOMETRIC_STRONG CryptoObject
  * prompt. A plain "prompt succeeded" boolean never releases the database key.
  */
-@Singleton
+@SingleIn(AppScope::class)
 @Suppress("TooManyFunctions") // Centralizes the complete auth-bound biometric slot lifecycle.
-class BiometricManager @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    private val store: VaultStore,
-) {
+@Inject
+class BiometricManager(@param:ApplicationContext private val context: Context, private val store: VaultStore) {
     enum class BiometricType {
         APP_UNLOCK,
         MASTER_KEY_ACCESS,

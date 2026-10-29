@@ -5,13 +5,14 @@ import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.TasksRepository
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
 
 private const val TAG = "TasksRepository"
 
 /** Bound to the opening that created it; see [NotesRepositoryImpl]. */
-class TasksRepositoryImpl @Inject constructor(private val databaseProvider: DatabaseProvider) : TasksRepository {
+@Inject
+class TasksRepositoryImpl(private val databaseProvider: DatabaseProvider) : TasksRepository {
     private val lease: DatabaseLease? = databaseProvider.captureLease()
 
     private fun dao() = databaseProvider.getDatabase(lease ?: error("Vault locked")).tasksDao()

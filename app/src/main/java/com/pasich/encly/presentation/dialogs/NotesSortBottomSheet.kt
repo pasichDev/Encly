@@ -15,7 +15,7 @@ import com.pasich.encly.presentation.designsystem.EnclyRadio
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /** View options of the notes list: the sort order, and the switch between list and grid. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +26,7 @@ fun NotesSortBottomSheet(
     isGrid: Boolean,
     onToggleView: () -> Unit,
     isBottomSheetVisible: Boolean = false,
-    noteListViewModel: NoteListViewModel = enclyViewModel(),
+    noteListViewModel: NoteListViewModel = metroViewModel(),
 ) {
     val state by noteListViewModel.state.collectAsState()
 

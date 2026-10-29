@@ -16,8 +16,8 @@ import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.editor.state.NoteTemplate
 import com.pasich.encly.presentation.editor.state.blocks
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * "Start from template" under a brand-new, still empty note: Blank (what a new note is anyway,
@@ -25,7 +25,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
  * step; not picking changes nothing, and the row is gone with the first character typed.
  */
 @Composable
-internal fun TemplateChooser(modifier: Modifier = Modifier, viewModel: EditNoteViewModel = enclyViewModel()) {
+internal fun TemplateChooser(modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel()) {
     val resources = LocalResources.current
     Column(
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),

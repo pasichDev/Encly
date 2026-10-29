@@ -5,9 +5,9 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.pasich.encly.core.di.ApplicationContext
+import dev.zacsweers.metro.Inject
 import kotlinx.io.asSource
-import javax.inject.Inject
 
 /**
  * The Storage Access Framework side of an import: the user's picked files or folder as an
@@ -15,7 +15,8 @@ import javax.inject.Inject
  * reliance on a provider's size), and a folder is walked with [DocumentsContract] up to the
  * depth and entry limits. The user's files are only ever read.
  */
-class SafImportFiles @Inject constructor(@param:ApplicationContext private val context: Context) {
+@Inject
+class SafImportFiles(@param:ApplicationContext private val context: Context) {
 
     fun files(uris: List<Uri>): ImportFileSource = ImportFileSource {
         uris.asSequence().map { uri -> SourceFile(displayName(uri) ?: FALLBACK_NAME) { open(uri) } }

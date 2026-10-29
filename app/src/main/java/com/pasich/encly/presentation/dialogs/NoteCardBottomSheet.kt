@@ -45,10 +45,10 @@ import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.noteInstant
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 sealed class NoteAction {
     object Edit : NoteAction()
@@ -180,7 +180,7 @@ private fun NoteActionHeader(item: NoteWithTag) {
 private fun TagChips(
     selectedTagId: Long,
     onSelect: (Long) -> Unit,
-    tagListViewModel: TagListViewModel = enclyViewModel(),
+    tagListViewModel: TagListViewModel = metroViewModel(),
 ) {
     val state by tagListViewModel.state.collectAsState()
     val gutter = EnclyTheme.spacing.gutter

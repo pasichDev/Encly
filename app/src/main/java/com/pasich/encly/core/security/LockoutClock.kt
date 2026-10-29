@@ -3,9 +3,10 @@ package com.pasich.encly.core.security
 import android.content.Context
 import android.os.SystemClock
 import android.provider.Settings
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
+import com.pasich.encly.core.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /**
  * Time for the PIN lockout. Monotonic, so changing the wall clock does not end a lockout.
@@ -19,8 +20,9 @@ interface LockoutClock {
     fun bootCount(): Int
 }
 
-@Singleton
-class SystemLockoutClock @Inject constructor(@param:ApplicationContext private val context: Context) : LockoutClock {
+@SingleIn(AppScope::class)
+@Inject
+class SystemLockoutClock(@param:ApplicationContext private val context: Context) : LockoutClock {
     override fun elapsedRealtime(): Long = SystemClock.elapsedRealtime()
 
     override fun bootCount(): Int = try {
@@ -32,7 +34,7 @@ class SystemLockoutClock @Inject constructor(@param:ApplicationContext private v
 
 /**
  * A monotonic clock without Android (JVM unit tests). Unlike `elapsedRealtime` it may not
- * count deep sleep, so the app itself always gets [SystemLockoutClock] through Hilt.
+ * count deep sleep, so the app itself always gets [SystemLockoutClock] from the graph.
  */
 object JvmMonotonicClock : LockoutClock {
     private const val NANOS_PER_MILLI = 1_000_000L

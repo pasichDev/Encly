@@ -5,7 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.PendingRestore
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,14 +18,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 /**
  * The last step of first-run setup: onboarding has created the vault and set its PIN (and
  * biometric) slots; this opens it, imports a backup staged by "Restore from backup" and commits.
  */
-@HiltViewModel
-class AuthSetupViewModel @Inject constructor(
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class AuthSetupViewModel(
     private val securityManager: SecurityManager,
     private val sessionLockManager: SessionLockManager,
     private val pendingRestore: PendingRestore,

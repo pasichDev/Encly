@@ -3,8 +3,9 @@ package com.pasich.encly.core.security
 import com.pasich.encly.core.backup.BackupKeys
 import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.bip39.Bip39
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /**
  * Encly vault bootstrap and recovery manager.
@@ -21,8 +22,9 @@ import javax.inject.Singleton
  *
  * Both slots live in the [VaultStore] and are always written together, in one atomic edit.
  */
-@Singleton
-class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
+@SingleIn(AppScope::class)
+@Inject
+class SeedPhraseManager(private val store: VaultStore) {
     companion object {
         private const val VAULT_PREFIX = "vault."
         internal const val RECOVERY_PREFIX = "recovery."

@@ -7,22 +7,24 @@ import android.provider.OpenableColumns
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupFormat
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.pasich.encly.core.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.io.Buffer
 import kotlinx.io.IOException
 import kotlinx.io.RawSource
 import kotlinx.io.asSource
 import kotlinx.io.readTo
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Reads and writes backup files at a Storage Access Framework [Uri] the user picked. Only the
  * already encrypted container passes through here: no plaintext and no temp file is ever
  * written, and no storage permission is needed.
  */
-@Singleton
-class BackupDocuments @Inject constructor(@param:ApplicationContext private val context: Context) {
+@SingleIn(AppScope::class)
+@Inject
+class BackupDocuments(@param:ApplicationContext private val context: Context) {
     fun read(uri: Uri): ByteArray = io {
         context.contentResolver.openInputStream(uri).orFail().use { readCapped(it.asSource()) }
     }

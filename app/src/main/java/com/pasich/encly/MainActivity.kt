@@ -35,6 +35,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.pasich.encly.core.di.appGraph
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
@@ -51,19 +52,19 @@ import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.presentation.navigation.SessionResume
 import com.pasich.encly.ui.theme.AppTheme
-import dagger.hilt.android.AndroidEntryPoint
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import javax.inject.Inject
 
 /**
  * AppCompatActivity (a FragmentActivity, as BiometricPrompt needs) so the in-app language set
  * through AppCompatDelegate.setApplicationLocales is applied on every API level, not only on
  * Android 13+ where the framework does it.
  */
-@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     @Inject
@@ -78,7 +79,11 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var keyboardPrivacy: KeyboardPrivacy
 
+    @Inject
+    lateinit var viewModelFactory: MetroViewModelFactory
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        appGraph.inject(this)
         // Encly always renders protected content. Apply FLAG_SECURE before the splash/content
         // lifecycle starts so screenshots, screen recording, casting and recents snapshots
         // cannot capture an unprotected first frame.
@@ -137,14 +142,16 @@ class MainActivity : AppCompatActivity() {
                 if (locked) navController.showLockScreen()
             }
 
-            App(
-                navController = navController,
-                startDestination = destination.name,
-                eraseEpoch = securityManager::eraseEpoch,
-                shielded = shielded,
-                locked = locked,
-                strictKeyboard = strictKeyboard,
-            )
+            CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
+                App(
+                    navController = navController,
+                    startDestination = destination.name,
+                    eraseEpoch = securityManager::eraseEpoch,
+                    shielded = shielded,
+                    locked = locked,
+                    strictKeyboard = strictKeyboard,
+                )
+            }
         }
     }
 

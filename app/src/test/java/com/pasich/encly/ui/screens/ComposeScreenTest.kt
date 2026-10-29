@@ -33,8 +33,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.domain.model.ThemeSettings
-import com.pasich.encly.presentation.viewmodel.PreloadedViewModelOwner
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -46,7 +47,7 @@ import kotlin.reflect.KClass
 
 /**
  * Base for the Compose screen tests. They run on the JVM under Robolectric, on a phone-sized
- * screen, with a plain Application (no Hilt graph, no keystore). Every `hiltViewModel()` in the
+ * screen, with a plain Application (no dependency graph, no keystore). Every `metroViewModel()` in the
  * composition resolves to a ViewModel the test built from fakes (see [FakeViewModels]).
  */
 @RunWith(RobolectricTestRunner::class)
@@ -72,7 +73,7 @@ abstract class ComposeScreenTest {
     protected fun viewModels(vararg viewModels: ViewModel): FakeViewModels =
         FakeViewModels(*viewModels).also(owners::add)
 
-    /** [content] in the app theme, with [owner] answering every `hiltViewModel()`. */
+    /** [content] in the app theme, with [owner] answering every `metroViewModel()`. */
     protected fun setScreen(
         owner: FakeViewModels = viewModels(),
         settings: ThemeSettings = ThemeSettings(),
@@ -241,9 +242,9 @@ abstract class ComposeScreenTest {
 
 /**
  * A [ViewModelStoreOwner] holding ready-made ViewModels. It deliberately has no default factory:
- * `hiltViewModel()` then asks the store directly and gets the instance put here.
+ * `metroViewModel()` then asks the store directly and gets the instance put here.
  */
-class FakeViewModels(vararg viewModels: ViewModel) : PreloadedViewModelOwner {
+class FakeViewModels(vararg viewModels: ViewModel) : ViewModelStoreOwner {
     override val viewModelStore = ViewModelStore()
 
     init {
@@ -259,7 +260,14 @@ class FakeViewModels(vararg viewModels: ViewModel) : PreloadedViewModelOwner {
     }
 }
 
+/** The factory the screens ask when the store has no instance yet; the tests always preload it. */
+private val NoViewModelFactory = object : MetroViewModelFactory() {}
+
 @Composable
 fun ProvideViewModels(owner: FakeViewModels, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalViewModelStoreOwner provides owner, content = content)
+    CompositionLocalProvider(
+        LocalViewModelStoreOwner provides owner,
+        LocalMetroViewModelFactory provides NoViewModelFactory,
+        content = content,
+    )
 }

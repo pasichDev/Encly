@@ -8,23 +8,23 @@ import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.repository.TagsRepository
 import com.pasich.encly.domain.repository.TasksRepository
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
 
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
+@ContributesTo(AppScope::class)
+@BindingContainer
+interface RepositoryModule {
     @Binds
-    abstract fun bindNotesRepository(impl: NotesRepositoryImpl): NotesRepository
-
-    @Binds
-    abstract fun bindTagsRepository(impl: TagsRepositoryImpl): TagsRepository
+    fun bindNotesRepository(impl: NotesRepositoryImpl): NotesRepository
 
     @Binds
-    abstract fun bindTasksRepository(impl: TasksRepositoryImpl): TasksRepository
+    fun bindTagsRepository(impl: TagsRepositoryImpl): TagsRepository
 
     @Binds
-    abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+    fun bindTasksRepository(impl: TasksRepositoryImpl): TasksRepository
+
+    @Binds
+    fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
 }

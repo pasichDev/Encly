@@ -66,7 +66,7 @@ jobs:
           :app:detekt
           :app:assembleFdroidRelease
 
-      # Separate invocation: lint running alongside Hilt code generation for another variant has
+      # Separate invocation: lint running alongside Metro code generation for another variant has
       # raced on generated sources; after the build it reads finished outputs.
       - name: Lint (release)
         run: ./gradlew :app:lintFdroidRelease

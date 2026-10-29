@@ -55,8 +55,8 @@ import com.pasich.encly.presentation.viewmodel.OnboardingPath
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 private const val SLIDE_MS = 500
 private const val FADE_IN_MS = 300
@@ -73,8 +73,8 @@ private const val FADE_OUT_MS = 300
 fun OnboardingScreen(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: OnboardingViewModel = enclyViewModel(),
-    setupViewModel: AuthSetupViewModel = enclyViewModel(),
+    viewModel: OnboardingViewModel = metroViewModel(),
+    setupViewModel: AuthSetupViewModel = metroViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val finishing by setupViewModel.busy.collectAsStateWithLifecycle()

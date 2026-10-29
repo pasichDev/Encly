@@ -4,14 +4,15 @@ import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.TagsRepository
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 private const val TAG = "TagsRepository"
 
 /** Bound to the opening that created it; see [NotesRepositoryImpl]. */
-class TagsRepositoryImpl @Inject constructor(private val databaseProvider: DatabaseProvider) : TagsRepository {
+@Inject
+class TagsRepositoryImpl(private val databaseProvider: DatabaseProvider) : TagsRepository {
     private val lease: DatabaseLease? = databaseProvider.captureLease()
 
     private fun dao() = databaseProvider.getDatabase(lease ?: error("Vault locked")).tagsDao()

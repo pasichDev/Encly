@@ -1,3 +1,4 @@
+import dev.zacsweers.metro.gradle.OptionalBindingBehavior
 import java.util.Properties
 
 // Minimum line coverage (%) of the whole app (generated code excluded) enforced by koverVerify.
@@ -37,7 +38,7 @@ val hasReleaseSigning = listOf(
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.hilt)
+    alias(libs.plugins.metro)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
@@ -164,10 +165,6 @@ android {
         }
     }
 
-    hilt {
-        enableAggregatingTask = true
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -208,6 +205,14 @@ android {
     sourceSets {
         getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
+}
+
+// Dependency injection (compiler plugin): the graph is validated at compile time.
+metro {
+    // A Kotlin default on an injected constructor parameter stays a plain default: the parameter
+    // is always taken from the graph, and a missing binding is an error instead of silently
+    // falling back to the default (e.g. a lock event source that never locks).
+    optionalBindingBehavior.set(OptionalBindingBehavior.DISABLED)
 }
 
 composeCompiler {
@@ -258,17 +263,13 @@ kover {
                         "*.R",
                         "*.R$*",
                         "*ComposableSingletons*",
-                        "*Hilt_*",
-                        "*_HiltModules*",
-                        "*_Factory",
-                        "*_Factory$*",
-                        "*_MembersInjector",
-                        "*_GeneratedInjector",
+                        "*MetroFactory*",
+                        "*MetroContributionTo*",
+                        "*MetroMembersInjector*",
+                        "*AppGraph\$Impl*",
                         "*_Impl",
                         "*_Impl$*",
-                        "*Dagger*",
                     )
-                    packages("dagger.hilt", "hilt_aggregated_deps")
                 }
             }
             verify {
@@ -300,7 +301,6 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.core.splashscreen)
 
     // Drag and Drop
@@ -318,9 +318,9 @@ dependencies {
     // Biometric Authentication
     implementation(libs.androidx.biometric)
 
-    // Dagger Hilt - Use KSP consistently
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
+    // Metro: compile-time dependency injection (compiler plugin) and its ViewModel integration
+    implementation(libs.metrox.viewmodel)
+    implementation(libs.metrox.viewmodel.compose)
 
     // Other dependencies
     implementation(libs.androidx.datastore.preferences)

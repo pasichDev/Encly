@@ -8,11 +8,13 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.PendingRestore
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
-@Singleton
-class OnboardingUseCase @Inject constructor(
+@SingleIn(AppScope::class)
+@Inject
+class OnboardingUseCase(
     private val securityManager: SecurityManager,
     private val backupManager: BackupManager,
     private val pendingRestore: PendingRestore,

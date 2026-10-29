@@ -49,8 +49,8 @@ import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
 import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
 internal fun EditorBlockSheets(
     sheet: BlockSheetState,
     canEdit: Boolean,
-    viewModel: EditNoteViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -115,8 +115,8 @@ internal fun EditorBlockSheets(
 internal fun EditorTagSheet(
     onManageTags: () -> Unit,
     onDismiss: () -> Unit,
-    viewModel: EditNoteViewModel = enclyViewModel(),
-    tagViewModel: TagListViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
+    tagViewModel: TagListViewModel = metroViewModel(),
 ) {
     val tagState by tagViewModel.state.collectAsState()
     val noteState by viewModel.state.collectAsState()

@@ -8,14 +8,17 @@ import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 /**
  * Settings → Backup, plus the vault actions of Settings → Security (create or replace the
@@ -23,8 +26,10 @@ import javax.inject.Inject
  * (the decrypted payload waiting for the merge/replace choice) and is dropped on cancel, on
  * completion and when the ViewModel is cleared, e.g. by a re-lock.
  */
-@HiltViewModel
-class BackupViewModel @Inject constructor(
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class BackupViewModel(
     backupManager: BackupManager,
     private val phraseSetup: BackupPhraseSetup,
     private val securityManager: SecurityManager,

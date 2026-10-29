@@ -2,8 +2,9 @@ package com.pasich.encly.data.backup
 
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupPayload
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /**
  * A backup decrypted by onboarding's "Restore from backup", held in memory until first-run
@@ -11,8 +12,9 @@ import javax.inject.Singleton
  * committed, so a process killed meanwhile leaves no committed (empty) vault: onboarding simply
  * starts over. It is never written anywhere else.
  */
-@Singleton
-class PendingRestore @Inject constructor(private val backupManager: BackupManager) {
+@SingleIn(AppScope::class)
+@Inject
+class PendingRestore(private val backupManager: BackupManager) {
     @Volatile
     private var payload: BackupPayload? = null
 

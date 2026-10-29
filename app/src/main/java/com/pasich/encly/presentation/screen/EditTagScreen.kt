@@ -79,10 +79,10 @@ import com.pasich.encly.presentation.viewmodel.TAG_NAME_MAX_LENGTH
 import com.pasich.encly.presentation.viewmodel.TagListEvent
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.TagOperationFailure
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.presentation.viewmodel.hasTagNamed
 import com.pasich.encly.presentation.viewmodel.normalizeTagName
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
@@ -102,7 +102,7 @@ private val TagNameKeyboard = KeyboardOptions(keyboardType = KeyboardType.Passwo
 fun EditTagScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: TagListViewModel = enclyViewModel(),
+    viewModel: TagListViewModel = metroViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val counts by viewModel.noteCounts.collectAsStateWithLifecycle()

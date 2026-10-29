@@ -5,8 +5,8 @@
 #   - SQLCipher (JNI classes and native methods): Sealite's consumer rules.
 #   - Room: the KSP-generated *_Impl classes, instantiated reflectively by class name, are
 #     kept by room-runtime's rules.
-#   - Hilt / Dagger, Lifecycle ViewModels, Navigation, Compose, DataStore: their own
-#     consumer rules.
+#   - Metro (generated at compile time, no reflection), Lifecycle ViewModels, Navigation, Compose,
+#     DataStore: their own consumer rules.
 #   - Note blocks (BlockJson) are written and read key by key with the kotlinx.serialization
 #     JSON tree, never by reflection, so no model class needs its field names kept
 #     (BlockConverterTest and BlockJsonFormatTest pin the stored format).

@@ -6,12 +6,12 @@ import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.repository.NotesRepository
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 /**
  * The notes of the main list (not trashed, not archived) or of the archive, sorted with the
@@ -19,7 +19,8 @@ import javax.inject.Inject
  * on [dispatcher], once per database change: never on the main thread and never per keystroke
  * or recomposition. A read failure fails the flow; the screen turns it into an error state.
  */
-class ObserveNotesUseCase @Inject constructor(
+@Inject
+class ObserveNotesUseCase(
     private val repository: NotesRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher,
 ) {

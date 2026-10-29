@@ -5,14 +5,15 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import com.pasich.encly.core.AppLogger
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.UnrecoverableKeyException
 import javax.crypto.KeyGenerator
 import javax.crypto.Mac
 import javax.crypto.SecretKey
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * The two places the device-bound PIN key can live. [A] is the one every vault starts with
@@ -70,8 +71,9 @@ class PinFactorException(val lost: Boolean, cause: Throwable? = null) : Exceptio
 // Keystore reports several failures (StrongBox missing, rejected parameters, provider errors)
 // as RuntimeExceptions; each one is mapped to a PinFactorException here, never let through.
 @Suppress("TooGenericExceptionCaught")
-@Singleton
-class KeystorePinFactor @Inject constructor() : PinHardwareFactor {
+@SingleIn(AppScope::class)
+@Inject
+class KeystorePinFactor : PinHardwareFactor {
     private val keyStore by lazy { KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) } }
 
     override fun ensureKey(slot: PinKeySlot): Boolean {

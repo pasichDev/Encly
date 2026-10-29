@@ -25,8 +25,8 @@ import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.viewmodel.ImportNotesViewModel
 import com.pasich.encly.presentation.viewmodel.ImportStep
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * Settings → Import notes. Works in a decoy session too: it imports into whichever vault is
@@ -36,7 +36,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 fun ImportNotesScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: ImportNotesViewModel = enclyViewModel(),
+    viewModel: ImportNotesViewModel = metroViewModel(),
 ) {
     val step by viewModel.step.collectAsStateWithLifecycle()
     val files = rememberLauncherForActivityResult(

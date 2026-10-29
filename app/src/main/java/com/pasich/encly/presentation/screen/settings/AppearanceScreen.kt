@@ -45,10 +45,10 @@ import com.pasich.encly.presentation.designsystem.Segment
 import com.pasich.encly.presentation.designsystem.ThemeSwatch
 import com.pasich.encly.presentation.viewmodel.AppearanceViewModel
 import com.pasich.encly.presentation.viewmodel.ModeNote
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.colorSchemeFor
 import com.pasich.encly.ui.theme.fontSet
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /** Swatches render at this opacity while dynamic colour overrides the palette accent. */
 private const val DYNAMIC_SWATCH_ALPHA = 0.38f
@@ -57,7 +57,7 @@ private const val DYNAMIC_SWATCH_ALPHA = 0.38f
 fun AppearanceScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: AppearanceViewModel = enclyViewModel(),
+    viewModel: AppearanceViewModel = metroViewModel(),
 ) {
     val settings by viewModel.themeSettings.collectAsStateWithLifecycle()
     val fontSize by viewModel.defaultFontSize.collectAsStateWithLifecycle()

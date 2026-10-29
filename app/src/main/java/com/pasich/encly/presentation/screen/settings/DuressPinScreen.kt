@@ -28,8 +28,8 @@ import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 private val DuressPinTexts = PinFlowTexts(
     title = R.string.duress_pin_title,
@@ -49,7 +49,7 @@ private val DuressPinTexts = PinFlowTexts(
 fun DuressPinScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    securityViewModel: SecuritySettingsViewModel = enclyViewModel(),
+    securityViewModel: SecuritySettingsViewModel = metroViewModel(),
 ) {
     val state = remember { PinFlowState() }
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()

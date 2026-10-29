@@ -1,15 +1,15 @@
 package com.pasich.encly.core.di
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.Qualifier
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import javax.inject.Qualifier
-import javax.inject.Singleton
 
 /**
  * Qualifier for the application-lifetime [CoroutineScope].
@@ -34,8 +34,8 @@ annotation class ApplicationScope
 annotation class IoDispatcher
 
 /** Provides coroutine infrastructure that lives for the whole application process. */
-@Module
-@InstallIn(SingletonComponent::class)
+@ContributesTo(AppScope::class)
+@BindingContainer
 object CoroutineModule {
 
     /**
@@ -44,7 +44,7 @@ object CoroutineModule {
      * application process), so work launched here survives ViewModel teardown.
      */
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @ApplicationScope
     fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 

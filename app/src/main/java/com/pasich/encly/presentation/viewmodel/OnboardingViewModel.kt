@@ -14,7 +14,11 @@ import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.domain.usecase.OnboardingUseCase
 import com.pasich.encly.presentation.screen.backup.backupErrorMessage
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +26,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 enum class SecurityType {
     /**
@@ -77,8 +80,10 @@ data class StepProgress(val step: Int, val total: Int)
  * "Open my notebook". An abandoned flow leaves no committed vault, so the next start simply
  * begins onboarding again.
  */
-@HiltViewModel
-class OnboardingViewModel @Inject constructor(
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class OnboardingViewModel(
     private val onboardingUseCase: OnboardingUseCase,
     private val backupDocuments: BackupDocuments,
 ) : ViewModel() {

@@ -4,19 +4,18 @@ import com.pasich.encly.data.backup.RoomVaultDataStore
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.database.SecureDatabaseManager
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
 
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class DatabaseModule {
+@ContributesTo(AppScope::class)
+@BindingContainer
+interface DatabaseModule {
+    // SecureDatabaseManager is itself a singleton, so this binding is one instance too.
     @Binds
-    @Singleton
-    abstract fun bindDatabaseProvider(secureDatabaseManager: SecureDatabaseManager): DatabaseProvider
+    fun bindDatabaseProvider(secureDatabaseManager: SecureDatabaseManager): DatabaseProvider
 
     @Binds
-    abstract fun bindVaultDataStore(store: RoomVaultDataStore): VaultDataStore
+    fun bindVaultDataStore(store: RoomVaultDataStore): VaultDataStore
 }

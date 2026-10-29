@@ -18,8 +18,9 @@ import com.pasich.encly.core.security.PinSlots.opensWipeSlot
 import com.pasich.encly.core.security.PinSlots.parseSlot
 import com.pasich.encly.core.security.PinSlots.sealSlot
 import com.pasich.encly.core.security.PinSlots.sealWipeSlot
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 const val PIN_LENGTH = 6
 
@@ -146,9 +147,10 @@ enum class WipeStage {
  * app mid-check or racing two checks never gets a free guess. The lockout runs on
  * [LockoutClock.elapsedRealtime], not the wall clock, and escalates up to [MAX_LOCKOUT_MS].
  */
-@Singleton
+@SingleIn(AppScope::class)
 @Suppress("TooManyFunctions") // The complete PIN slot, wipe slot and lockout lifecycle in one place.
-class AuthenticationManager @Inject constructor(
+@Inject
+class AuthenticationManager(
     private val store: VaultStore,
     private val factor: PinHardwareFactor,
     private val clock: LockoutClock,

@@ -61,7 +61,7 @@ Run the same gates as CI:
 - [detekt](https://detekt.dev) (`config/detekt/detekt.yml`) adds code-smell, unused-code and
   [Jetpack Compose](https://mrmans0n.github.io/compose-rules/) rules: public composables take a
   `modifier: Modifier = Modifier` applied to their root, ViewModels are obtained with a
-  `hiltViewModel()` default parameter and not passed down to child composables (hoist state and
+  `metroViewModel()` default parameter and not passed down to child composables (hoist state and
   pass lambdas instead), and event lambdas are named in the present tense (`onClick`, not
   `onClicked`).
 - Android lint severities live in [`app/lint.xml`](app/lint.xml): hardcoded or untranslated

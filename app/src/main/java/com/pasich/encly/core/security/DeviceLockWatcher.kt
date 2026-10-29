@@ -6,9 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
+import com.pasich.encly.core.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** Screen-off and keyguard signals for [SessionLockManager]; an interface so tests can drive it. */
 interface DeviceLockWatcher {
@@ -25,9 +26,9 @@ interface DeviceLockWatcher {
     }
 }
 
-@Singleton
-class SystemDeviceLockWatcher @Inject constructor(@param:ApplicationContext private val context: Context) :
-    DeviceLockWatcher {
+@SingleIn(AppScope::class)
+@Inject
+class SystemDeviceLockWatcher(@param:ApplicationContext private val context: Context) : DeviceLockWatcher {
     override fun isDeviceLocked(): Boolean =
         context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked == true
 

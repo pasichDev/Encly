@@ -9,7 +9,11 @@ import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.TagsRepository
 import com.pasich.encly.domain.usecase.tag.ReorderTagsUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,7 +28,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 enum class TagOperationFailure {
     CREATE,
@@ -57,8 +60,10 @@ internal fun List<Tag>.hasTagNamed(name: String, exceptId: Long? = null): Boolea
     return any { it.id != exceptId && it.nameTag.trim().equals(wanted, ignoreCase = true) }
 }
 
-@HiltViewModel
-class TagListViewModel @Inject constructor(
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class TagListViewModel(
     private val tagsRepository: TagsRepository,
     private val reorderTagsUseCase: ReorderTagsUseCase,
     private val selectedTagHolder: SelectedTagHolder,

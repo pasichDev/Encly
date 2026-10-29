@@ -8,10 +8,11 @@ import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.data.database.VaultFile
 import com.pasich.encly.data.handoff.HandoffStagingSweeper
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import javax.inject.Inject
-import javax.inject.Singleton
 
 enum class InitialStatus {
     NO,
@@ -50,15 +51,16 @@ enum class VaultUnlockResult {
  * The database key is never re-derived from locally stored seed material. Each unlock factor
  * must unwrap the same random DEK, after which the DEK opens SQLCipher.
  */
-@Singleton
-class SecurityManager @Inject constructor(
+@SingleIn(AppScope::class)
+@Inject
+class SecurityManager(
     private val appFlags: SharedPreferences,
     private val vaultStore: VaultStore,
     private val seedPhraseManager: SeedPhraseManager,
     private val secureDatabaseManager: SecureDatabaseManager,
     private val authenticationManager: AuthenticationManager,
     private val biometricManager: BiometricManager,
-    /** Hilt always passes the real one; the default only spares tests that never erase. */
+    /** The graph always passes the real one; the default only spares tests that never erase. */
     private val handoffStaging: HandoffStagingSweeper = HandoffStagingSweeper {},
 ) {
     companion object {

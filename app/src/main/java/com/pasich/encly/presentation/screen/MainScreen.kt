@@ -53,8 +53,8 @@ import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
 /** The scrim over the notes while the drawer is open. */
@@ -103,11 +103,11 @@ fun MainScreen(
     navController: NavHostController,
     drawerState: DrawerState,
     modifier: Modifier = Modifier,
-    mainListStateViewModel: MainListStateViewModel = enclyViewModel(),
-    settingsViewModel: SettingsViewModel = enclyViewModel(),
-    noteListViewModel: NoteListViewModel = enclyViewModel(),
-    searchViewModel: NoteSearchViewModel = enclyViewModel(),
-    lockNowViewModel: LockNowViewModel = enclyViewModel(),
+    mainListStateViewModel: MainListStateViewModel = metroViewModel(),
+    settingsViewModel: SettingsViewModel = metroViewModel(),
+    noteListViewModel: NoteListViewModel = metroViewModel(),
+    searchViewModel: NoteSearchViewModel = metroViewModel(),
+    lockNowViewModel: LockNowViewModel = metroViewModel(),
 ) {
     val isGrid by mainListStateViewModel.isGridNoteList.collectAsState()
     val showTasks by settingsViewModel.showTasksFlow.collectAsState()

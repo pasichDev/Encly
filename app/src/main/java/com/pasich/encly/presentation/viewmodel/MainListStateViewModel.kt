@@ -3,15 +3,20 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pasich.encly.domain.repository.SettingsRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class MainListStateViewModel @Inject constructor(private val settingsRepository: SettingsRepository) : ViewModel() {
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class MainListStateViewModel(private val settingsRepository: SettingsRepository) : ViewModel() {
 
     val isGridNoteList: StateFlow<Boolean> =
         settingsRepository.isGridNoteList.stateIn(

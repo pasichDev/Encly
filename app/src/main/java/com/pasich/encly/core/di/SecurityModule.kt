@@ -15,17 +15,16 @@ import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.security.VaultStore
 import com.pasich.encly.data.handoff.CacheHandoffStagingSweeper
 import com.pasich.encly.data.handoff.HandoffStagingSweeper
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.io.File
-import javax.inject.Singleton
 
-@Module
-@InstallIn(SingletonComponent::class)
+@ContributesTo(AppScope::class)
+@BindingContainer
 object SecurityModule {
 
     /**
@@ -34,7 +33,7 @@ object SecurityModule {
      * [VaultStore]). Construction touches no disk, so it can never fail at injection time.
      */
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideVaultStore(@ApplicationContext context: Context): VaultStore =
         VaultStore(File(context.noBackupFilesDir, VAULT_FILE))
 
@@ -44,7 +43,7 @@ object SecurityModule {
      * unreadable at startup.
      */
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideAppFlags(@ApplicationContext context: Context): SharedPreferences =
         context.getSharedPreferences(FLAGS_FILE, Context.MODE_PRIVATE)
 
@@ -52,24 +51,24 @@ object SecurityModule {
     private const val FLAGS_FILE = "encly_flags_v3"
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class SecurityBindingsModule {
+@ContributesTo(AppScope::class)
+@BindingContainer
+interface SecurityBindingsModule {
     @Binds
-    abstract fun bindPinHardwareFactor(factor: KeystorePinFactor): PinHardwareFactor
+    fun bindPinHardwareFactor(factor: KeystorePinFactor): PinHardwareFactor
 
     @Binds
-    abstract fun bindLockoutClock(clock: SystemLockoutClock): LockoutClock
+    fun bindLockoutClock(clock: SystemLockoutClock): LockoutClock
 
     @Binds
-    abstract fun bindDeviceLockWatcher(watcher: SystemDeviceLockWatcher): DeviceLockWatcher
+    fun bindDeviceLockWatcher(watcher: SystemDeviceLockWatcher): DeviceLockWatcher
 
     @Binds
-    abstract fun bindVaultLockEvents(manager: SessionLockManager): VaultLockEvents
+    fun bindVaultLockEvents(manager: SessionLockManager): VaultLockEvents
 
     @Binds
-    abstract fun bindAutoLockPolicy(autoLock: AutoLock): AutoLockPolicy
+    fun bindAutoLockPolicy(autoLock: AutoLock): AutoLockPolicy
 
     @Binds
-    abstract fun bindHandoffStagingSweeper(sweeper: CacheHandoffStagingSweeper): HandoffStagingSweeper
+    fun bindHandoffStagingSweeper(sweeper: CacheHandoffStagingSweeper): HandoffStagingSweeper
 }

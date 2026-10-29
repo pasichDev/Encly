@@ -44,7 +44,7 @@ private val bundledFonts = listOf(
 private val bundledLibraries = listOf(
     OpenSourceWork("AndroidX and Jetpack Compose", APACHE_2, "https://github.com/androidx/androidx"),
     OpenSourceWork("Kotlin and kotlinx", APACHE_2, "https://github.com/JetBrains/kotlin"),
-    OpenSourceWork("Dagger Hilt", APACHE_2, "https://github.com/google/dagger"),
+    OpenSourceWork("Metro", APACHE_2, "https://github.com/ZacSweers/metro"),
     OpenSourceWork("Sealite", APACHE_2, "https://github.com/pasichDev/sealite"),
     OpenSourceWork("SQLCipher Community Edition", "BSD 3-Clause", "https://github.com/sqlcipher/sqlcipher"),
     OpenSourceWork("OpenSSL", APACHE_2, "https://github.com/openssl/openssl"),

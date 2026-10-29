@@ -22,10 +22,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.presentation.viewmodel.ThemeViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable
-fun AppTheme(themeViewModel: ThemeViewModel = enclyViewModel(), content: @Composable () -> Unit) {
+fun AppTheme(themeViewModel: ThemeViewModel = metroViewModel(), content: @Composable () -> Unit) {
     val themeSettings by themeViewModel.themeSettingsFlow.collectAsStateWithLifecycle()
     val isDarkTheme = themeSettings.isDark(isSystemInDarkTheme())
 

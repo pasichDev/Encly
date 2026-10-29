@@ -8,7 +8,11 @@ import com.pasich.encly.core.di.IoDispatcher
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,18 +24,17 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
-import javax.inject.Inject
 
 /**
  * Searches every note that is not in the trash and whose tag is not hidden, whatever tag chip
  * the note list shows, and returns every match. The notes' text is parsed once per database
  * change (in [ObserveNotesUseCase]); a keystroke only filters, after a short pause.
  */
-@HiltViewModel
-class NoteSearchViewModel @Inject constructor(
-    observeNotesUseCase: ObserveNotesUseCase,
-    @IoDispatcher dispatcher: CoroutineDispatcher,
-) : ViewModel() {
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Inject
+class NoteSearchViewModel(observeNotesUseCase: ObserveNotesUseCase, @IoDispatcher dispatcher: CoroutineDispatcher) :
+    ViewModel() {
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()

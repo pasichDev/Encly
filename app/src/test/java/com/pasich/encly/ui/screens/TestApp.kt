@@ -71,7 +71,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
 /**
- * The app's data layer as fakes, and every ViewModel built on it the way Hilt would. The
+ * The app's data layer as fakes, and every ViewModel built on it the way the graph would. The
  * vault's key handling is a Mockito [SecurityManager]; tests stub what they need.
  */
 internal class TestApp(context: Context) {

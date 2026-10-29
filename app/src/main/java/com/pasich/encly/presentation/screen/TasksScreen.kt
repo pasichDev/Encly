@@ -42,7 +42,7 @@ import com.pasich.encly.presentation.dialogs.tasks.AddTaskDialog
 import com.pasich.encly.presentation.viewmodel.TaskOperationFailure
 import com.pasich.encly.presentation.viewmodel.TasksUiState
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -57,7 +57,7 @@ fun TasksScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     openNewTask: Boolean = false,
-    viewModel: TasksViewModel = enclyViewModel(),
+    viewModel: TasksViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }

@@ -31,8 +31,8 @@ import com.pasich.encly.presentation.designsystem.EnclySearchField
 import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.editor.state.FindState
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 private const val FOCUS_FRAMES = 3
 
@@ -42,7 +42,7 @@ private const val FOCUS_FRAMES = 3
  * saved state), and the whole bar is gone when the vault locks.
  */
 @Composable
-internal fun EditorFindBar(modifier: Modifier = Modifier, viewModel: EditNoteViewModel = enclyViewModel()) {
+internal fun EditorFindBar(modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel()) {
     val state by viewModel.find.collectAsState()
     val focus = remember { FocusRequester() }
     LaunchedEffect(focus) {

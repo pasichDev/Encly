@@ -71,9 +71,9 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
-import com.pasich.encly.presentation.viewmodel.enclyViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.noteColorStyle
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
 /** Items above the blocks: the overline and the title. */
@@ -84,7 +84,7 @@ private const val HEADER_ITEMS = 2
 fun EditNoteScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
 ) {
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -182,7 +182,7 @@ private fun EditorScaffold(
     listState: LazyListState,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val lockEditor by viewModel.lockEditor.collectAsState()
@@ -224,7 +224,7 @@ private fun EditorScaffold(
  * state, so a title keystroke does not recompose the editor; a colour change fades in.
  */
 @Composable
-private fun rememberPageColor(viewModel: EditNoteViewModel = enclyViewModel()): Color {
+private fun rememberPageColor(viewModel: EditNoteViewModel = metroViewModel()): Color {
     val noteState = viewModel.state.collectAsState()
     val colorKey by remember(noteState) { derivedStateOf { noteState.value.note.color } }
     val scheme = MaterialTheme.colorScheme
@@ -261,8 +261,8 @@ private fun EditorOverlays(
     exits: EditorExits,
     onManageTags: () -> Unit,
     onMessage: (String) -> Unit,
-    viewModel: EditNoteViewModel = enclyViewModel(),
-    markdownViewModel: MarkdownExportViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
+    markdownViewModel: MarkdownExportViewModel = metroViewModel(),
 ) {
     val context = LocalContext.current
     val lockEditor by viewModel.lockEditor.collectAsState()
@@ -324,7 +324,7 @@ private fun EditorContent(
     listState: LazyListState,
     titleFocus: FocusRequester,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
 ) {
     val spacing = LocalNoteLineSpacing.current
     val headerGap = if (spacing.isCompact) EnclyTheme.spacing.labelGap else 0.dp
@@ -392,7 +392,7 @@ private fun EditorContent(
 private fun EditorTitle(
     readOnly: Boolean,
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
 ) {
     TitleField(
         title = { viewModel.state.value.note.title },
@@ -408,8 +408,8 @@ private fun EditorTitle(
 @Composable
 private fun EditorOverline(
     modifier: Modifier = Modifier,
-    viewModel: EditNoteViewModel = enclyViewModel(),
-    tagViewModel: TagListViewModel = enclyViewModel(),
+    viewModel: EditNoteViewModel = metroViewModel(),
+    tagViewModel: TagListViewModel = metroViewModel(),
 ) {
     // Read through derived state: a title keystroke or a save does not recompose the overline.
     val noteState = viewModel.state.collectAsState()

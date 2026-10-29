@@ -4,8 +4,11 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.backup.BackupException
+import com.pasich.encly.core.di.ApplicationContext
 import com.pasich.encly.core.di.IoDispatcher
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
@@ -19,8 +22,13 @@ import com.pasich.encly.data.handoff.HandoffException
 import com.pasich.encly.data.handoff.HandoffImport
 import com.pasich.encly.data.handoff.HandoffPreview
 import com.pasich.encly.data.handoff.HandoffStaging
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +38,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
-import javax.inject.Inject
 
 /** Where a My Notes hand-off is. */
 sealed interface HandoffStep {
@@ -57,14 +64,14 @@ sealed interface HandoffStep {
  * the caller first). The vault must be unlocked through the normal lock screen before the
  * URI is read at all; the data is then shown as counts, and imported only on [confirm].
  */
-@HiltViewModel
-class ImportFromMyNotesViewModel @Inject constructor(
+@AssistedInject
+class ImportFromMyNotesViewModel(
     @param:ApplicationContext private val context: Context,
     private val securityManager: SecurityManager,
     private val sessionLockManager: SessionLockManager,
     private val backupManager: BackupManager,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    private val savedStateHandle: SavedStateHandle,
+    @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val staging = HandoffStaging(File(context.cacheDir, HandoffStaging.DIR_NAME))
@@ -185,6 +192,16 @@ class ImportFromMyNotesViewModel @Inject constructor(
         // No read grant on the URI.
         HandoffStep.Failed(HandoffError.FAILED)
     }
+}
+
+/** Creates [ImportFromMyNotesViewModel] with the SavedStateHandle of its entry, navigation arguments included. */
+@AssistedFactory
+@ViewModelAssistedFactoryKey(ImportFromMyNotesViewModel::class)
+@ContributesIntoMap(AppScope::class)
+fun interface ImportFromMyNotesViewModelFactory : ViewModelAssistedFactory {
+    override fun create(extras: CreationExtras): ImportFromMyNotesViewModel = create(extras.createSavedStateHandle())
+
+    fun create(@Assisted savedStateHandle: SavedStateHandle): ImportFromMyNotesViewModel
 }
 
 /** SavedStateHandle key of a finished hand-off's counts (see ImportFromMyNotesViewModel.start). */

@@ -1,16 +1,18 @@
 package com.pasich.encly.data.backup
 
 import com.pasich.encly.core.security.SecurityManager
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /**
  * The recovery phrase an export is sealed to. Backups have no separate passphrase (see
  * SECURITY.md), so a vault must have a recovery phrase, and its backup key, before it can
  * export. Every call needs an unlocked session.
  */
-@Singleton
-class BackupPhraseSetup @Inject constructor(private val securityManager: SecurityManager) {
+@SingleIn(AppScope::class)
+@Inject
+class BackupPhraseSetup(private val securityManager: SecurityManager) {
     fun hasRecoveryPhrase(): Boolean = securityManager.hasRecoverySeed()
 
     /** A recovery-seed vault created before backup keys existed must confirm its words once. */
