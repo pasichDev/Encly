@@ -1,0 +1,13 @@
+# Database-module detekt rules, layered on config/detekt/detekt.yml. The module's source sets
+# `commonTest`, `desktopTest`, `androidHostTest` and `androidDeviceTest` are not among the ones detekt
+# leaves out of the style and complexity rules by itself (test, commonTest, jvmTest, ...): the tests
+# build keys, pages and counts from literals and have one function per case, so they are named here.
+complexity:
+  excludes: &tests
+    - '**/commonTest/**'
+    - '**/desktopTest/**'
+    - '**/androidHostTest/**'
+    - '**/androidDeviceTest/**'
+
+style:
+  excludes: *tests

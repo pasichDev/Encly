@@ -51,7 +51,7 @@ class ObserveNotesUseCase(
     fun observeNote(noteId: Long): Flow<NoteWithTag?> = repository.observeNote(noteId)
 
     /** A note whose tag is hidden stays out of the lists that show every note. */
-    private fun NoteWithTag.isShown(): Boolean = tag == null || tag.isVisible
+    private fun NoteWithTag.isShown(): Boolean = tag?.isVisible ?: true
 
     private fun List<NoteWithTag>.toSortedItems(sortOption: NoteSortOption): List<NoteListItem> {
         // Pinned first whatever the sort, archived notes (a hidden tag's view) last; the sort orders within.

@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>TooManyFunctions:SecureDatabaseManager.kt$SecureDatabaseManager : DatabaseProvider</ID>
+    <ID>TooManyFunctions:TasksDao.kt$TasksDao</ID>
+  </CurrentIssues>
+</SmellBaseline>

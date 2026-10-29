@@ -159,7 +159,6 @@ class PlatformBoundaryTest {
             "data/export",
             "data/handoff",
             "data/zip",
-            "data/model",
             "data/datasource",
             "core/backup",
             "core/crypto",
@@ -224,7 +223,6 @@ class PlatformBoundaryTest {
             "core/security/KeystorePinFactor.kt" to "AndroidKeyStore HMAC key behind PinHardwareFactor",
             "core/security/KeystoreBiometricManager.kt" to "Keystore wrapping key and BiometricPrompt",
             "core/security/ActivityBiometricHost.kt" to "the FragmentActivity BiometricPrompt attaches to",
-            "core/security/cipher/AndroidDatabaseState.kt" to "Context.getDatabasePath for the database header check",
         )
     }
 }

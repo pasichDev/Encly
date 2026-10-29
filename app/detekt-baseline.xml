@@ -126,13 +126,11 @@
     <ID>NestedBlockDepth:NotesTextFormatter.kt$NotesTextFormatter$fun blocksToPlainText(blocks: List&lt;Block&gt;): String</ID>
     <ID>ReturnCount:SecurityManager.kt$SecurityManager$private fun initializeSecurity(): InitialStatus</ID>
     <ID>TooGenericExceptionCaught:MyApplication.kt$MyApplication$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:SecureDatabaseManager.kt$SecureDatabaseManager$e: Exception</ID>
     <ID>TooManyFunctions:AuthenticationManager.kt$AuthenticationManager</ID>
     <ID>TooManyFunctions:EditNoteViewModel.kt$EditNoteViewModel : ViewModel</ID>
     <ID>TooManyFunctions:OnboardingViewModel.kt$OnboardingViewModel : ViewModel</ID>
     <ID>TooManyFunctions:SecurityManager.kt$SecurityManager</ID>
     <ID>TooManyFunctions:SeedPhraseManager.kt$SeedPhraseManager</ID>
-    <ID>TooManyFunctions:TasksDao.kt$TasksDao</ID>
     <ID>TooManyFunctions:TasksRepositoryImpl.kt$TasksRepositoryImpl : TasksRepository</ID>
     <ID>TooManyFunctions:TasksViewModel.kt$TasksViewModel : ViewModel</ID>
     <ID>UnusedPrivateProperty:DeviceCapabilities.kt$DeviceCapabilities$@param:ApplicationContext private val context: Context</ID>

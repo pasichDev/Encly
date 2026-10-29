@@ -39,7 +39,6 @@ val hasReleaseSigning = listOf(
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.metro)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     // detekt (with the Compose rules) and Kover, from build-logic.
@@ -64,7 +63,6 @@ android {
         targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     packaging {
@@ -193,16 +191,6 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
-
-    ksp {
-        // Exported Room schemas are committed (app/schemas) so every schema change is reviewed
-        // and MigrationTestHelper can validate upgrades in androidTest.
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
-
-    sourceSets {
-        getByName("androidTest").assets.srcDir("$projectDir/schemas")
-    }
 }
 
 // Dependency injection (compiler plugin): the graph is validated at compile time.
@@ -283,13 +271,14 @@ kover {
 dependencies {
     // The block editor (Kotlin Multiplatform library); the app binds its extension points.
     implementation(project(":editor"))
+    // The encrypted vault database (Room + Sealite): entities, DAOs, migrations, SecureDatabaseManager.
+    implementation(project(":core:database"))
 
     // Jetpack Compose: every androidx.compose module takes its version from the BOM.
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     debugImplementation(composeBom)
     testImplementation(composeBom)
-    androidTestImplementation(composeBom)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -307,10 +296,9 @@ dependencies {
     // Drag and Drop
     implementation(libs.reorderable)
 
-    // Room
+    // Room (the schema and the compiler are in :core:database)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.core.ktx)
-    ksp(libs.androidx.room.compiler)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
@@ -336,9 +324,6 @@ dependencies {
     // Date and time
     implementation(libs.kotlinx.datetime)
 
-    // Cipher: SQLCipher through the androidx.sqlite driver API
-    implementation(libs.sealite)
-
     implementation(libs.icons.lucide)
 
     // detekt rule set for Jetpack Compose (Apache-2.0); runs only inside the detekt task.
@@ -351,17 +336,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     // Compose UI tests run on the JVM under Robolectric (src/test/**/ui), no emulator needed.
     testImplementation(libs.robolectric)
-    // Room's migrations run against the platform SQLite under Robolectric.
-    testImplementation(libs.androidx.sqlite.framework)
     testImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-    // Instrumented tests: native SQLCipher open/lock under WAL and the exported Room schema.
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.room.testing)
-    androidTestImplementation(libs.androidx.sqlite.framework)
-    // Writes a vault the way earlier releases did, to check that the current driver opens it.
-    androidTestImplementation(libs.sqlcipher.android)
 }

@@ -18,6 +18,6 @@
 - [ ] No new path that puts plaintext outside the vault (clipboard, share, notifications, files, logs).
 - [ ] If key derivation, the SQLCipher passphrase, the vault slots or any on-disk format changed:
       existing installs still open (migration added and tested), and SECURITY.md is updated.
-- [ ] If the Room schema changed: `DB_VERSION` bumped, a migration added, the new `app/schemas`
+- [ ] If the Room schema changed: `DB_VERSION` bumped, a migration added, the new `core/database/schemas`
       export committed, and `AppDatabaseSchemaTest` extended.
 - [ ] User-visible changes are listed under `[Unreleased]` in CHANGELOG.md.

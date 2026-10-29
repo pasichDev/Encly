@@ -48,7 +48,7 @@ Run the same gates as CI:
   through.
 - The instrumented tests (SQLCipher, Room migrations) run in CI on API 26 and 35. To run them
   yourself use an emulator, never a phone with a vault you care about:
-  `./gradlew :app:connectedFdroidDebugAndroidTest` (they wipe the debug app's data).
+  `./gradlew :core:database:connectedAndroidDeviceTest` (they run in the test app's own data and wipe it).
 - New detekt or lint findings must be fixed, not added to `app/detekt-baseline.xml` or
   `app/lint-baseline.xml`. Pull requests that shrink those baselines are very welcome.
 - For UI changes, say in the PR which device or emulator you checked it on.
@@ -100,8 +100,8 @@ git config core.hooksPath .githooks
 
 ## Room schema changes
 
-Room schemas are exported to `app/schemas` and committed. When an entity changes: bump
-`DB_VERSION` (`data/database/AppDatabase.kt`), add a `Migration`, commit the new schema JSON, and add a
+Room schemas are exported to `core/database/schemas` and committed. When an entity changes: bump
+`DB_VERSION` (`core/database/.../data/database/AppDatabase.kt`), add a `Migration`, commit the new schema JSON, and add a
 `runMigrationsAndValidate` case to `AppDatabaseSchemaTest`. Destructive migration is disabled on
 purpose.
 

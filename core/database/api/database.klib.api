@@ -1,0 +1,497 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <Encly.core:database>
+final enum class com.pasich.encly.data.database/VaultFile : kotlin/Enum<com.pasich.encly.data.database/VaultFile> { // com.pasich.encly.data.database/VaultFile|null[0]
+    enum entry DECOY // com.pasich.encly.data.database/VaultFile.DECOY|null[0]
+    enum entry PRIMARY // com.pasich.encly.data.database/VaultFile.PRIMARY|null[0]
+
+    final val entries // com.pasich.encly.data.database/VaultFile.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.pasich.encly.data.database/VaultFile> // com.pasich.encly.data.database/VaultFile.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.pasich.encly.data.database/VaultFile // com.pasich.encly.data.database/VaultFile.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.pasich.encly.data.database/VaultFile> // com.pasich.encly.data.database/VaultFile.values|values#static(){}[0]
+}
+
+abstract interface com.pasich.encly.data.database.dao/BackupDao { // com.pasich.encly.data.database.dao/BackupDao|null[0]
+    abstract suspend fun allNotes(): kotlin.collections/List<com.pasich.encly.data.model/Note> // com.pasich.encly.data.database.dao/BackupDao.allNotes|allNotes(){}[0]
+    abstract suspend fun allSubtasks(): kotlin.collections/List<com.pasich.encly.data.model/Subtask> // com.pasich.encly.data.database.dao/BackupDao.allSubtasks|allSubtasks(){}[0]
+    abstract suspend fun allTags(): kotlin.collections/List<com.pasich.encly.data.model/Tag> // com.pasich.encly.data.database.dao/BackupDao.allTags|allTags(){}[0]
+    abstract suspend fun allTasks(): kotlin.collections/List<com.pasich.encly.data.model/Task> // com.pasich.encly.data.database.dao/BackupDao.allTasks|allTasks(){}[0]
+    abstract suspend fun deleteAllNotes() // com.pasich.encly.data.database.dao/BackupDao.deleteAllNotes|deleteAllNotes(){}[0]
+    abstract suspend fun deleteAllSubtasks() // com.pasich.encly.data.database.dao/BackupDao.deleteAllSubtasks|deleteAllSubtasks(){}[0]
+    abstract suspend fun deleteAllTags() // com.pasich.encly.data.database.dao/BackupDao.deleteAllTags|deleteAllTags(){}[0]
+    abstract suspend fun deleteAllTasks() // com.pasich.encly.data.database.dao/BackupDao.deleteAllTasks|deleteAllTasks(){}[0]
+    abstract suspend fun insertNote(com.pasich.encly.data.model/Note): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao.insertNote|insertNote(com.pasich.encly.data.model.Note){}[0]
+    abstract suspend fun insertSubtask(com.pasich.encly.data.model/Subtask): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao.insertSubtask|insertSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    abstract suspend fun insertTag(com.pasich.encly.data.model/Tag): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao.insertTag|insertTag(com.pasich.encly.data.model.Tag){}[0]
+    abstract suspend fun insertTask(com.pasich.encly.data.model/Task): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao.insertTask|insertTask(com.pasich.encly.data.model.Task){}[0]
+    abstract suspend fun tagById(kotlin/Long): com.pasich.encly.data.model/Tag? // com.pasich.encly.data.database.dao/BackupDao.tagById|tagById(kotlin.Long){}[0]
+}
+
+abstract interface com.pasich.encly.data.database.dao/NotesDao { // com.pasich.encly.data.database.dao/NotesDao|null[0]
+    abstract fun getAllNotes(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Note>> // com.pasich.encly.data.database.dao/NotesDao.getAllNotes|getAllNotes(){}[0]
+    abstract fun getAllNotesWithTags(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao.getAllNotesWithTags|getAllNotesWithTags(){}[0]
+    abstract fun getArchivedNotesByTagId(kotlin/Long): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao.getArchivedNotesByTagId|getArchivedNotesByTagId(kotlin.Long){}[0]
+    abstract fun getArchivedNotesWithTags(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao.getArchivedNotesWithTags|getArchivedNotesWithTags(){}[0]
+    abstract fun getNotesByTagId(kotlin/Long?): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao.getNotesByTagId|getNotesByTagId(kotlin.Long?){}[0]
+    abstract fun getTrashNotes(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Note>> // com.pasich.encly.data.database.dao/NotesDao.getTrashNotes|getTrashNotes(){}[0]
+    abstract fun observeNoteWithTag(kotlin/Long): kotlinx.coroutines.flow/Flow<com.pasich.encly.data.model/NoteWithTag?> // com.pasich.encly.data.database.dao/NotesDao.observeNoteWithTag|observeNoteWithTag(kotlin.Long){}[0]
+    abstract suspend fun deleteNoteById(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.deleteNoteById|deleteNoteById(kotlin.Long){}[0]
+    abstract suspend fun getNoteById(kotlin/Long): com.pasich.encly.data.model/Note? // com.pasich.encly.data.database.dao/NotesDao.getNoteById|getNoteById(kotlin.Long){}[0]
+    abstract suspend fun insertNote(com.pasich.encly.data.model/Note): kotlin/Long // com.pasich.encly.data.database.dao/NotesDao.insertNote|insertNote(com.pasich.encly.data.model.Note){}[0]
+    abstract suspend fun updateArchived(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateArchived|updateArchived(kotlin.Long;kotlin.Boolean){}[0]
+    abstract suspend fun updateColor(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateColor|updateColor(kotlin.Long;kotlin.String){}[0]
+    abstract suspend fun updateDescription(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateDescription|updateDescription(kotlin.Long;kotlin.String){}[0]
+    abstract suspend fun updateNote(com.pasich.encly.data.model/Note): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateNote|updateNote(com.pasich.encly.data.model.Note){}[0]
+    abstract suspend fun updatePinned(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updatePinned|updatePinned(kotlin.Long;kotlin.Boolean){}[0]
+    abstract suspend fun updateTagId(kotlin/Long, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateTagId|updateTagId(kotlin.Long;kotlin.Long?){}[0]
+}
+
+abstract interface com.pasich.encly.data.database.dao/TagsDao { // com.pasich.encly.data.database.dao/TagsDao|null[0]
+    abstract fun getTags(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Tag>> // com.pasich.encly.data.database.dao/TagsDao.getTags|getTags(){}[0]
+    abstract suspend fun addTag(com.pasich.encly.data.model/Tag): kotlin/Long // com.pasich.encly.data.database.dao/TagsDao.addTag|addTag(com.pasich.encly.data.model.Tag){}[0]
+    abstract suspend fun addTags(kotlin.collections/List<com.pasich.encly.data.model/Tag>): kotlin.collections/List<kotlin/Long> // com.pasich.encly.data.database.dao/TagsDao.addTags|addTags(kotlin.collections.List<com.pasich.encly.data.model.Tag>){}[0]
+    abstract suspend fun deleteTag(com.pasich.encly.data.model/Tag): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao.deleteTag|deleteTag(com.pasich.encly.data.model.Tag){}[0]
+    abstract suspend fun detachNotesFromTag(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao.detachNotesFromTag|detachNotesFromTag(kotlin.Long){}[0]
+    abstract suspend fun updateTag(com.pasich.encly.data.model/Tag): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao.updateTag|updateTag(com.pasich.encly.data.model.Tag){}[0]
+    abstract suspend fun updateTags(kotlin.collections/List<com.pasich.encly.data.model/Tag>): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao.updateTags|updateTags(kotlin.collections.List<com.pasich.encly.data.model.Tag>){}[0]
+    open suspend fun deleteTagDetachingNotes(com.pasich.encly.data.model/Tag): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao.deleteTagDetachingNotes|deleteTagDetachingNotes(com.pasich.encly.data.model.Tag){}[0]
+}
+
+abstract interface com.pasich.encly.data.database.dao/TasksDao { // com.pasich.encly.data.database.dao/TasksDao|null[0]
+    abstract fun getActiveTasksCount(): kotlinx.coroutines.flow/Flow<kotlin/Int> // com.pasich.encly.data.database.dao/TasksDao.getActiveTasksCount|getActiveTasksCount(){}[0]
+    abstract fun getAllActiveTasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Task>> // com.pasich.encly.data.database.dao/TasksDao.getAllActiveTasks|getAllActiveTasks(){}[0]
+    abstract fun getAllCompletedTasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Task>> // com.pasich.encly.data.database.dao/TasksDao.getAllCompletedTasks|getAllCompletedTasks(){}[0]
+    abstract fun getAllTasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Task>> // com.pasich.encly.data.database.dao/TasksDao.getAllTasks|getAllTasks(){}[0]
+    abstract fun getCompletedTasksCount(): kotlinx.coroutines.flow/Flow<kotlin/Int> // com.pasich.encly.data.database.dao/TasksDao.getCompletedTasksCount|getCompletedTasksCount(){}[0]
+    abstract fun observeSubtasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Subtask>> // com.pasich.encly.data.database.dao/TasksDao.observeSubtasks|observeSubtasks(){}[0]
+    abstract suspend fun deleteAllCompletedTasks(): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.deleteAllCompletedTasks|deleteAllCompletedTasks(){}[0]
+    abstract suspend fun deleteSubtaskById(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.deleteSubtaskById|deleteSubtaskById(kotlin.Long){}[0]
+    abstract suspend fun deleteSubtasksExcept(kotlin/Long, kotlin.collections/List<kotlin/Long>): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.deleteSubtasksExcept|deleteSubtasksExcept(kotlin.Long;kotlin.collections.List<kotlin.Long>){}[0]
+    abstract suspend fun deleteTask(com.pasich.encly.data.model/Task): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.deleteTask|deleteTask(com.pasich.encly.data.model.Task){}[0]
+    abstract suspend fun deleteTaskById(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.deleteTaskById|deleteTaskById(kotlin.Long){}[0]
+    abstract suspend fun getSubtasks(kotlin/Long): kotlin.collections/List<com.pasich.encly.data.model/Subtask> // com.pasich.encly.data.database.dao/TasksDao.getSubtasks|getSubtasks(kotlin.Long){}[0]
+    abstract suspend fun getTaskById(kotlin/Long): com.pasich.encly.data.model/Task? // com.pasich.encly.data.database.dao/TasksDao.getTaskById|getTaskById(kotlin.Long){}[0]
+    abstract suspend fun insertSubtask(com.pasich.encly.data.model/Subtask): kotlin/Long // com.pasich.encly.data.database.dao/TasksDao.insertSubtask|insertSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    abstract suspend fun insertTask(com.pasich.encly.data.model/Task): kotlin/Long // com.pasich.encly.data.database.dao/TasksDao.insertTask|insertTask(com.pasich.encly.data.model.Task){}[0]
+    abstract suspend fun nextSubtaskPosition(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.nextSubtaskPosition|nextSubtaskPosition(kotlin.Long){}[0]
+    abstract suspend fun renameSubtask(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.renameSubtask|renameSubtask(kotlin.Long;kotlin.String){}[0]
+    abstract suspend fun setSubtaskCompleted(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.setSubtaskCompleted|setSubtaskCompleted(kotlin.Long;kotlin.Boolean){}[0]
+    abstract suspend fun shiftSubtasksFrom(kotlin/Long, kotlin/Int): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.shiftSubtasksFrom|shiftSubtasksFrom(kotlin.Long;kotlin.Int){}[0]
+    abstract suspend fun updateSubtask(com.pasich.encly.data.model/Subtask): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.updateSubtask|updateSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    abstract suspend fun updateTask(com.pasich.encly.data.model/Task): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.updateTask|updateTask(com.pasich.encly.data.model.Task){}[0]
+    abstract suspend fun updateTaskStatus(kotlin/Long, kotlin/Boolean, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao.updateTaskStatus|updateTaskStatus(kotlin.Long;kotlin.Boolean;kotlin.Long?){}[0]
+    open suspend fun appendSubtask(kotlin/Long, kotlin/String): kotlin/Long // com.pasich.encly.data.database.dao/TasksDao.appendSubtask|appendSubtask(kotlin.Long;kotlin.String){}[0]
+    open suspend fun replaceSubtasks(kotlin/Long, kotlin.collections/List<com.pasich.encly.data.model/Subtask>) // com.pasich.encly.data.database.dao/TasksDao.replaceSubtasks|replaceSubtasks(kotlin.Long;kotlin.collections.List<com.pasich.encly.data.model.Subtask>){}[0]
+    open suspend fun restoreSubtask(com.pasich.encly.data.model/Subtask) // com.pasich.encly.data.database.dao/TasksDao.restoreSubtask|restoreSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    open suspend fun restoreTask(com.pasich.encly.data.model/Task, kotlin.collections/List<com.pasich.encly.data.model/Subtask>) // com.pasich.encly.data.database.dao/TasksDao.restoreTask|restoreTask(com.pasich.encly.data.model.Task;kotlin.collections.List<com.pasich.encly.data.model.Subtask>){}[0]
+}
+
+abstract interface com.pasich.encly.data.database/DatabasePlatform { // com.pasich.encly.data.database/DatabasePlatform|null[0]
+    abstract fun databaseBuilder(kotlinx.io.files/Path): androidx.room/RoomDatabase.Builder<com.pasich.encly.data.database/AppDatabase> // com.pasich.encly.data.database/DatabasePlatform.databaseBuilder|databaseBuilder(kotlinx.io.files.Path){}[0]
+    abstract fun databasePath(com.pasich.encly.data.database/VaultFile): kotlinx.io.files/Path // com.pasich.encly.data.database/DatabasePlatform.databasePath|databasePath(com.pasich.encly.data.database.VaultFile){}[0]
+}
+
+abstract interface com.pasich.encly.data.database/DatabaseProvider { // com.pasich.encly.data.database/DatabaseProvider|null[0]
+    abstract fun captureLease(): com.pasich.encly.data.database/DatabaseLease? // com.pasich.encly.data.database/DatabaseProvider.captureLease|captureLease(){}[0]
+    abstract fun getDatabase(com.pasich.encly.data.database/DatabaseLease): com.pasich.encly.data.database/AppDatabase // com.pasich.encly.data.database/DatabaseProvider.getDatabase|getDatabase(com.pasich.encly.data.database.DatabaseLease){}[0]
+}
+
+abstract class com.pasich.encly.data.database/AppDatabase : androidx.room/RoomDatabase { // com.pasich.encly.data.database/AppDatabase|null[0]
+    constructor <init>() // com.pasich.encly.data.database/AppDatabase.<init>|<init>(){}[0]
+
+    abstract fun backupDao(): com.pasich.encly.data.database.dao/BackupDao // com.pasich.encly.data.database/AppDatabase.backupDao|backupDao(){}[0]
+    abstract fun notesDao(): com.pasich.encly.data.database.dao/NotesDao // com.pasich.encly.data.database/AppDatabase.notesDao|notesDao(){}[0]
+    abstract fun tagsDao(): com.pasich.encly.data.database.dao/TagsDao // com.pasich.encly.data.database/AppDatabase.tagsDao|tagsDao(){}[0]
+    abstract fun tasksDao(): com.pasich.encly.data.database.dao/TasksDao // com.pasich.encly.data.database/AppDatabase.tasksDao|tasksDao(){}[0]
+}
+
+final class com.pasich.encly.data.database.dao/BackupDao_Impl : com.pasich.encly.data.database.dao/BackupDao { // com.pasich.encly.data.database.dao/BackupDao_Impl|null[0]
+    constructor <init>(androidx.room/RoomDatabase) // com.pasich.encly.data.database.dao/BackupDao_Impl.<init>|<init>(androidx.room.RoomDatabase){}[0]
+
+    final suspend fun allNotes(): kotlin.collections/List<com.pasich.encly.data.model/Note> // com.pasich.encly.data.database.dao/BackupDao_Impl.allNotes|allNotes(){}[0]
+    final suspend fun allSubtasks(): kotlin.collections/List<com.pasich.encly.data.model/Subtask> // com.pasich.encly.data.database.dao/BackupDao_Impl.allSubtasks|allSubtasks(){}[0]
+    final suspend fun allTags(): kotlin.collections/List<com.pasich.encly.data.model/Tag> // com.pasich.encly.data.database.dao/BackupDao_Impl.allTags|allTags(){}[0]
+    final suspend fun allTasks(): kotlin.collections/List<com.pasich.encly.data.model/Task> // com.pasich.encly.data.database.dao/BackupDao_Impl.allTasks|allTasks(){}[0]
+    final suspend fun deleteAllNotes() // com.pasich.encly.data.database.dao/BackupDao_Impl.deleteAllNotes|deleteAllNotes(){}[0]
+    final suspend fun deleteAllSubtasks() // com.pasich.encly.data.database.dao/BackupDao_Impl.deleteAllSubtasks|deleteAllSubtasks(){}[0]
+    final suspend fun deleteAllTags() // com.pasich.encly.data.database.dao/BackupDao_Impl.deleteAllTags|deleteAllTags(){}[0]
+    final suspend fun deleteAllTasks() // com.pasich.encly.data.database.dao/BackupDao_Impl.deleteAllTasks|deleteAllTasks(){}[0]
+    final suspend fun insertNote(com.pasich.encly.data.model/Note): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao_Impl.insertNote|insertNote(com.pasich.encly.data.model.Note){}[0]
+    final suspend fun insertSubtask(com.pasich.encly.data.model/Subtask): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao_Impl.insertSubtask|insertSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    final suspend fun insertTag(com.pasich.encly.data.model/Tag): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao_Impl.insertTag|insertTag(com.pasich.encly.data.model.Tag){}[0]
+    final suspend fun insertTask(com.pasich.encly.data.model/Task): kotlin/Long // com.pasich.encly.data.database.dao/BackupDao_Impl.insertTask|insertTask(com.pasich.encly.data.model.Task){}[0]
+    final suspend fun tagById(kotlin/Long): com.pasich.encly.data.model/Tag? // com.pasich.encly.data.database.dao/BackupDao_Impl.tagById|tagById(kotlin.Long){}[0]
+
+    final object Companion { // com.pasich.encly.data.database.dao/BackupDao_Impl.Companion|null[0]
+        final fun getRequiredConverters(): kotlin.collections/List<kotlin.reflect/KClass<*>> // com.pasich.encly.data.database.dao/BackupDao_Impl.Companion.getRequiredConverters|getRequiredConverters(){}[0]
+    }
+}
+
+final class com.pasich.encly.data.database.dao/NotesDao_Impl : com.pasich.encly.data.database.dao/NotesDao { // com.pasich.encly.data.database.dao/NotesDao_Impl|null[0]
+    constructor <init>(androidx.room/RoomDatabase) // com.pasich.encly.data.database.dao/NotesDao_Impl.<init>|<init>(androidx.room.RoomDatabase){}[0]
+
+    final fun getAllNotes(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Note>> // com.pasich.encly.data.database.dao/NotesDao_Impl.getAllNotes|getAllNotes(){}[0]
+    final fun getAllNotesWithTags(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao_Impl.getAllNotesWithTags|getAllNotesWithTags(){}[0]
+    final fun getArchivedNotesByTagId(kotlin/Long): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao_Impl.getArchivedNotesByTagId|getArchivedNotesByTagId(kotlin.Long){}[0]
+    final fun getArchivedNotesWithTags(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao_Impl.getArchivedNotesWithTags|getArchivedNotesWithTags(){}[0]
+    final fun getNotesByTagId(kotlin/Long?): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/NoteWithTag>> // com.pasich.encly.data.database.dao/NotesDao_Impl.getNotesByTagId|getNotesByTagId(kotlin.Long?){}[0]
+    final fun getTrashNotes(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Note>> // com.pasich.encly.data.database.dao/NotesDao_Impl.getTrashNotes|getTrashNotes(){}[0]
+    final fun observeNoteWithTag(kotlin/Long): kotlinx.coroutines.flow/Flow<com.pasich.encly.data.model/NoteWithTag?> // com.pasich.encly.data.database.dao/NotesDao_Impl.observeNoteWithTag|observeNoteWithTag(kotlin.Long){}[0]
+    final suspend fun deleteNoteById(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.deleteNoteById|deleteNoteById(kotlin.Long){}[0]
+    final suspend fun getNoteById(kotlin/Long): com.pasich.encly.data.model/Note? // com.pasich.encly.data.database.dao/NotesDao_Impl.getNoteById|getNoteById(kotlin.Long){}[0]
+    final suspend fun insertNote(com.pasich.encly.data.model/Note): kotlin/Long // com.pasich.encly.data.database.dao/NotesDao_Impl.insertNote|insertNote(com.pasich.encly.data.model.Note){}[0]
+    final suspend fun updateArchived(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateArchived|updateArchived(kotlin.Long;kotlin.Boolean){}[0]
+    final suspend fun updateColor(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateColor|updateColor(kotlin.Long;kotlin.String){}[0]
+    final suspend fun updateDescription(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateDescription|updateDescription(kotlin.Long;kotlin.String){}[0]
+    final suspend fun updateNote(com.pasich.encly.data.model/Note): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateNote|updateNote(com.pasich.encly.data.model.Note){}[0]
+    final suspend fun updatePinned(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updatePinned|updatePinned(kotlin.Long;kotlin.Boolean){}[0]
+    final suspend fun updateTagId(kotlin/Long, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateTagId|updateTagId(kotlin.Long;kotlin.Long?){}[0]
+
+    final object Companion { // com.pasich.encly.data.database.dao/NotesDao_Impl.Companion|null[0]
+        final fun getRequiredConverters(): kotlin.collections/List<kotlin.reflect/KClass<*>> // com.pasich.encly.data.database.dao/NotesDao_Impl.Companion.getRequiredConverters|getRequiredConverters(){}[0]
+    }
+}
+
+final class com.pasich.encly.data.database.dao/TagsDao_Impl : com.pasich.encly.data.database.dao/TagsDao { // com.pasich.encly.data.database.dao/TagsDao_Impl|null[0]
+    constructor <init>(androidx.room/RoomDatabase) // com.pasich.encly.data.database.dao/TagsDao_Impl.<init>|<init>(androidx.room.RoomDatabase){}[0]
+
+    final fun getTags(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Tag>> // com.pasich.encly.data.database.dao/TagsDao_Impl.getTags|getTags(){}[0]
+    final suspend fun addTag(com.pasich.encly.data.model/Tag): kotlin/Long // com.pasich.encly.data.database.dao/TagsDao_Impl.addTag|addTag(com.pasich.encly.data.model.Tag){}[0]
+    final suspend fun addTags(kotlin.collections/List<com.pasich.encly.data.model/Tag>): kotlin.collections/List<kotlin/Long> // com.pasich.encly.data.database.dao/TagsDao_Impl.addTags|addTags(kotlin.collections.List<com.pasich.encly.data.model.Tag>){}[0]
+    final suspend fun deleteTag(com.pasich.encly.data.model/Tag): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao_Impl.deleteTag|deleteTag(com.pasich.encly.data.model.Tag){}[0]
+    final suspend fun deleteTagDetachingNotes(com.pasich.encly.data.model/Tag): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao_Impl.deleteTagDetachingNotes|deleteTagDetachingNotes(com.pasich.encly.data.model.Tag){}[0]
+    final suspend fun detachNotesFromTag(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao_Impl.detachNotesFromTag|detachNotesFromTag(kotlin.Long){}[0]
+    final suspend fun updateTag(com.pasich.encly.data.model/Tag): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao_Impl.updateTag|updateTag(com.pasich.encly.data.model.Tag){}[0]
+    final suspend fun updateTags(kotlin.collections/List<com.pasich.encly.data.model/Tag>): kotlin/Int // com.pasich.encly.data.database.dao/TagsDao_Impl.updateTags|updateTags(kotlin.collections.List<com.pasich.encly.data.model.Tag>){}[0]
+
+    final object Companion { // com.pasich.encly.data.database.dao/TagsDao_Impl.Companion|null[0]
+        final fun getRequiredConverters(): kotlin.collections/List<kotlin.reflect/KClass<*>> // com.pasich.encly.data.database.dao/TagsDao_Impl.Companion.getRequiredConverters|getRequiredConverters(){}[0]
+    }
+}
+
+final class com.pasich.encly.data.database.dao/TasksDao_Impl : com.pasich.encly.data.database.dao/TasksDao { // com.pasich.encly.data.database.dao/TasksDao_Impl|null[0]
+    constructor <init>(androidx.room/RoomDatabase) // com.pasich.encly.data.database.dao/TasksDao_Impl.<init>|<init>(androidx.room.RoomDatabase){}[0]
+
+    final fun getActiveTasksCount(): kotlinx.coroutines.flow/Flow<kotlin/Int> // com.pasich.encly.data.database.dao/TasksDao_Impl.getActiveTasksCount|getActiveTasksCount(){}[0]
+    final fun getAllActiveTasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Task>> // com.pasich.encly.data.database.dao/TasksDao_Impl.getAllActiveTasks|getAllActiveTasks(){}[0]
+    final fun getAllCompletedTasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Task>> // com.pasich.encly.data.database.dao/TasksDao_Impl.getAllCompletedTasks|getAllCompletedTasks(){}[0]
+    final fun getAllTasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Task>> // com.pasich.encly.data.database.dao/TasksDao_Impl.getAllTasks|getAllTasks(){}[0]
+    final fun getCompletedTasksCount(): kotlinx.coroutines.flow/Flow<kotlin/Int> // com.pasich.encly.data.database.dao/TasksDao_Impl.getCompletedTasksCount|getCompletedTasksCount(){}[0]
+    final fun observeSubtasks(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<com.pasich.encly.data.model/Subtask>> // com.pasich.encly.data.database.dao/TasksDao_Impl.observeSubtasks|observeSubtasks(){}[0]
+    final suspend fun appendSubtask(kotlin/Long, kotlin/String): kotlin/Long // com.pasich.encly.data.database.dao/TasksDao_Impl.appendSubtask|appendSubtask(kotlin.Long;kotlin.String){}[0]
+    final suspend fun deleteAllCompletedTasks(): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.deleteAllCompletedTasks|deleteAllCompletedTasks(){}[0]
+    final suspend fun deleteSubtaskById(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.deleteSubtaskById|deleteSubtaskById(kotlin.Long){}[0]
+    final suspend fun deleteSubtasksExcept(kotlin/Long, kotlin.collections/List<kotlin/Long>): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.deleteSubtasksExcept|deleteSubtasksExcept(kotlin.Long;kotlin.collections.List<kotlin.Long>){}[0]
+    final suspend fun deleteTask(com.pasich.encly.data.model/Task): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.deleteTask|deleteTask(com.pasich.encly.data.model.Task){}[0]
+    final suspend fun deleteTaskById(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.deleteTaskById|deleteTaskById(kotlin.Long){}[0]
+    final suspend fun getSubtasks(kotlin/Long): kotlin.collections/List<com.pasich.encly.data.model/Subtask> // com.pasich.encly.data.database.dao/TasksDao_Impl.getSubtasks|getSubtasks(kotlin.Long){}[0]
+    final suspend fun getTaskById(kotlin/Long): com.pasich.encly.data.model/Task? // com.pasich.encly.data.database.dao/TasksDao_Impl.getTaskById|getTaskById(kotlin.Long){}[0]
+    final suspend fun insertSubtask(com.pasich.encly.data.model/Subtask): kotlin/Long // com.pasich.encly.data.database.dao/TasksDao_Impl.insertSubtask|insertSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    final suspend fun insertTask(com.pasich.encly.data.model/Task): kotlin/Long // com.pasich.encly.data.database.dao/TasksDao_Impl.insertTask|insertTask(com.pasich.encly.data.model.Task){}[0]
+    final suspend fun nextSubtaskPosition(kotlin/Long): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.nextSubtaskPosition|nextSubtaskPosition(kotlin.Long){}[0]
+    final suspend fun renameSubtask(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.renameSubtask|renameSubtask(kotlin.Long;kotlin.String){}[0]
+    final suspend fun replaceSubtasks(kotlin/Long, kotlin.collections/List<com.pasich.encly.data.model/Subtask>) // com.pasich.encly.data.database.dao/TasksDao_Impl.replaceSubtasks|replaceSubtasks(kotlin.Long;kotlin.collections.List<com.pasich.encly.data.model.Subtask>){}[0]
+    final suspend fun restoreSubtask(com.pasich.encly.data.model/Subtask) // com.pasich.encly.data.database.dao/TasksDao_Impl.restoreSubtask|restoreSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    final suspend fun restoreTask(com.pasich.encly.data.model/Task, kotlin.collections/List<com.pasich.encly.data.model/Subtask>) // com.pasich.encly.data.database.dao/TasksDao_Impl.restoreTask|restoreTask(com.pasich.encly.data.model.Task;kotlin.collections.List<com.pasich.encly.data.model.Subtask>){}[0]
+    final suspend fun setSubtaskCompleted(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.setSubtaskCompleted|setSubtaskCompleted(kotlin.Long;kotlin.Boolean){}[0]
+    final suspend fun shiftSubtasksFrom(kotlin/Long, kotlin/Int): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.shiftSubtasksFrom|shiftSubtasksFrom(kotlin.Long;kotlin.Int){}[0]
+    final suspend fun updateSubtask(com.pasich.encly.data.model/Subtask): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.updateSubtask|updateSubtask(com.pasich.encly.data.model.Subtask){}[0]
+    final suspend fun updateTask(com.pasich.encly.data.model/Task): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.updateTask|updateTask(com.pasich.encly.data.model.Task){}[0]
+    final suspend fun updateTaskStatus(kotlin/Long, kotlin/Boolean, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/TasksDao_Impl.updateTaskStatus|updateTaskStatus(kotlin.Long;kotlin.Boolean;kotlin.Long?){}[0]
+
+    final object Companion { // com.pasich.encly.data.database.dao/TasksDao_Impl.Companion|null[0]
+        final fun getRequiredConverters(): kotlin.collections/List<kotlin.reflect/KClass<*>> // com.pasich.encly.data.database.dao/TasksDao_Impl.Companion.getRequiredConverters|getRequiredConverters(){}[0]
+    }
+}
+
+final class com.pasich.encly.data.database/AppDatabase_Impl : com.pasich.encly.data.database/AppDatabase { // com.pasich.encly.data.database/AppDatabase_Impl|null[0]
+    constructor <init>() // com.pasich.encly.data.database/AppDatabase_Impl.<init>|<init>(){}[0]
+
+    final fun backupDao(): com.pasich.encly.data.database.dao/BackupDao // com.pasich.encly.data.database/AppDatabase_Impl.backupDao|backupDao(){}[0]
+    final fun createAutoMigrations(kotlin.collections/Map<kotlin.reflect/KClass<out androidx.room.migration/AutoMigrationSpec>, androidx.room.migration/AutoMigrationSpec>): kotlin.collections/List<androidx.room.migration/Migration> // com.pasich.encly.data.database/AppDatabase_Impl.createAutoMigrations|createAutoMigrations(kotlin.collections.Map<kotlin.reflect.KClass<out|androidx.room.migration.AutoMigrationSpec>,androidx.room.migration.AutoMigrationSpec>){}[0]
+    final fun getRequiredAutoMigrationSpecClasses(): kotlin.collections/Set<kotlin.reflect/KClass<out androidx.room.migration/AutoMigrationSpec>> // com.pasich.encly.data.database/AppDatabase_Impl.getRequiredAutoMigrationSpecClasses|getRequiredAutoMigrationSpecClasses(){}[0]
+    final fun notesDao(): com.pasich.encly.data.database.dao/NotesDao // com.pasich.encly.data.database/AppDatabase_Impl.notesDao|notesDao(){}[0]
+    final fun tagsDao(): com.pasich.encly.data.database.dao/TagsDao // com.pasich.encly.data.database/AppDatabase_Impl.tagsDao|tagsDao(){}[0]
+    final fun tasksDao(): com.pasich.encly.data.database.dao/TasksDao // com.pasich.encly.data.database/AppDatabase_Impl.tasksDao|tasksDao(){}[0]
+}
+
+final class com.pasich.encly.data.database/DatabaseLease { // com.pasich.encly.data.database/DatabaseLease|null[0]
+    constructor <init>() // com.pasich.encly.data.database/DatabaseLease.<init>|<init>(){}[0]
+}
+
+final class com.pasich.encly.data.database/IosDatabasePlatform : com.pasich.encly.data.database/DatabasePlatform { // com.pasich.encly.data.database/IosDatabasePlatform|null[0]
+    constructor <init>(kotlinx.io.files/Path) // com.pasich.encly.data.database/IosDatabasePlatform.<init>|<init>(kotlinx.io.files.Path){}[0]
+
+    final fun databaseBuilder(kotlinx.io.files/Path): androidx.room/RoomDatabase.Builder<com.pasich.encly.data.database/AppDatabase> // com.pasich.encly.data.database/IosDatabasePlatform.databaseBuilder|databaseBuilder(kotlinx.io.files.Path){}[0]
+    final fun databasePath(com.pasich.encly.data.database/VaultFile): kotlinx.io.files/Path // com.pasich.encly.data.database/IosDatabasePlatform.databasePath|databasePath(com.pasich.encly.data.database.VaultFile){}[0]
+}
+
+final class com.pasich.encly.data.database/SecureDatabaseManager : com.pasich.encly.data.database/DatabaseProvider { // com.pasich.encly.data.database/SecureDatabaseManager|null[0]
+    constructor <init>(com.pasich.encly.data.database/DatabasePlatform) // com.pasich.encly.data.database/SecureDatabaseManager.<init>|<init>(com.pasich.encly.data.database.DatabasePlatform){}[0]
+
+    final fun captureLease(): com.pasich.encly.data.database/DatabaseLease? // com.pasich.encly.data.database/SecureDatabaseManager.captureLease|captureLease(){}[0]
+    final fun getDatabase(com.pasich.encly.data.database/DatabaseLease): com.pasich.encly.data.database/AppDatabase // com.pasich.encly.data.database/SecureDatabaseManager.getDatabase|getDatabase(com.pasich.encly.data.database.DatabaseLease){}[0]
+    final fun hasEncryptedDatabase(com.pasich.encly.data.database/VaultFile = ...): kotlin/Boolean // com.pasich.encly.data.database/SecureDatabaseManager.hasEncryptedDatabase|hasEncryptedDatabase(com.pasich.encly.data.database.VaultFile){}[0]
+    final fun isDatabaseUnlocked(): kotlin/Boolean // com.pasich.encly.data.database/SecureDatabaseManager.isDatabaseUnlocked|isDatabaseUnlocked(){}[0]
+    final fun reset() // com.pasich.encly.data.database/SecureDatabaseManager.reset|reset(){}[0]
+    final fun unlockDatabase(kotlin/ByteArray, kotlin/Boolean = ...): kotlin/Boolean // com.pasich.encly.data.database/SecureDatabaseManager.unlockDatabase|unlockDatabase(kotlin.ByteArray;kotlin.Boolean){}[0]
+    final fun unlockDatabase(kotlin/ByteArray, kotlin/Boolean, com.pasich.encly.data.database/VaultFile): kotlin/Boolean // com.pasich.encly.data.database/SecureDatabaseManager.unlockDatabase|unlockDatabase(kotlin.ByteArray;kotlin.Boolean;com.pasich.encly.data.database.VaultFile){}[0]
+    final fun wipe() // com.pasich.encly.data.database/SecureDatabaseManager.wipe|wipe(){}[0]
+    final fun wipeIfClosed(com.pasich.encly.data.database/VaultFile? = ...): kotlin/Boolean // com.pasich.encly.data.database/SecureDatabaseManager.wipeIfClosed|wipeIfClosed(com.pasich.encly.data.database.VaultFile?){}[0]
+
+    final class MetroFactory : dev.zacsweers.metro.internal/Factory<com.pasich.encly.data.database/SecureDatabaseManager> { // com.pasich.encly.data.database/SecureDatabaseManager.MetroFactory|null[0]
+        final fun declarationMirror(com.pasich.encly.data.database/DatabasePlatform): com.pasich.encly.data.database/SecureDatabaseManager // com.pasich.encly.data.database/SecureDatabaseManager.MetroFactory.declarationMirror|declarationMirror(com.pasich.encly.data.database.DatabasePlatform){}[0]
+        final fun invoke(): com.pasich.encly.data.database/SecureDatabaseManager // com.pasich.encly.data.database/SecureDatabaseManager.MetroFactory.invoke|invoke(){}[0]
+
+        final object Companion { // com.pasich.encly.data.database/SecureDatabaseManager.MetroFactory.Companion|null[0]
+            final fun create(dev.zacsweers.metro/Provider<com.pasich.encly.data.database/DatabasePlatform>): com.pasich.encly.data.database/SecureDatabaseManager.MetroFactory // com.pasich.encly.data.database/SecureDatabaseManager.MetroFactory.Companion.create|create(dev.zacsweers.metro.Provider<com.pasich.encly.data.database.DatabasePlatform>){}[0]
+            final fun newInstance(com.pasich.encly.data.database/DatabasePlatform): com.pasich.encly.data.database/SecureDatabaseManager // com.pasich.encly.data.database/SecureDatabaseManager.MetroFactory.Companion.newInstance|newInstance(com.pasich.encly.data.database.DatabasePlatform){}[0]
+        }
+    }
+}
+
+final class com.pasich.encly.data.model/Note { // com.pasich.encly.data.model/Note|null[0]
+    constructor <init>(kotlin/Long = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Long = ..., kotlin/Long = ..., kotlin/Long? = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int? = ..., kotlin/Int? = ...) // com.pasich.encly.data.model/Note.<init>|<init>(kotlin.Long;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.Long;kotlin.Long?;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Int?;kotlin.Int?){}[0]
+
+    final var color // com.pasich.encly.data.model/Note.color|{}color[0]
+        final fun <get-color>(): kotlin/String // com.pasich.encly.data.model/Note.color.<get-color>|<get-color>(){}[0]
+        final fun <set-color>(kotlin/String) // com.pasich.encly.data.model/Note.color.<set-color>|<set-color>(kotlin.String){}[0]
+    final var date // com.pasich.encly.data.model/Note.date|{}date[0]
+        final fun <get-date>(): kotlin/Long // com.pasich.encly.data.model/Note.date.<get-date>|<get-date>(){}[0]
+        final fun <set-date>(kotlin/Long) // com.pasich.encly.data.model/Note.date.<set-date>|<set-date>(kotlin.Long){}[0]
+    final var dateCreate // com.pasich.encly.data.model/Note.dateCreate|{}dateCreate[0]
+        final fun <get-dateCreate>(): kotlin/Long // com.pasich.encly.data.model/Note.dateCreate.<get-dateCreate>|<get-dateCreate>(){}[0]
+        final fun <set-dateCreate>(kotlin/Long) // com.pasich.encly.data.model/Note.dateCreate.<set-dateCreate>|<set-dateCreate>(kotlin.Long){}[0]
+    final var description // com.pasich.encly.data.model/Note.description|{}description[0]
+        final fun <get-description>(): kotlin/String // com.pasich.encly.data.model/Note.description.<get-description>|<get-description>(){}[0]
+        final fun <set-description>(kotlin/String) // com.pasich.encly.data.model/Note.description.<set-description>|<set-description>(kotlin.String){}[0]
+    final var id // com.pasich.encly.data.model/Note.id|{}id[0]
+        final fun <get-id>(): kotlin/Long // com.pasich.encly.data.model/Note.id.<get-id>|<get-id>(){}[0]
+        final fun <set-id>(kotlin/Long) // com.pasich.encly.data.model/Note.id.<set-id>|<set-id>(kotlin.Long){}[0]
+    final var isArchived // com.pasich.encly.data.model/Note.isArchived|{}isArchived[0]
+        final fun <get-isArchived>(): kotlin/Boolean // com.pasich.encly.data.model/Note.isArchived.<get-isArchived>|<get-isArchived>(){}[0]
+        final fun <set-isArchived>(kotlin/Boolean) // com.pasich.encly.data.model/Note.isArchived.<set-isArchived>|<set-isArchived>(kotlin.Boolean){}[0]
+    final var isChecked // com.pasich.encly.data.model/Note.isChecked|{}isChecked[0]
+        final fun <get-isChecked>(): kotlin/Boolean // com.pasich.encly.data.model/Note.isChecked.<get-isChecked>|<get-isChecked>(){}[0]
+        final fun <set-isChecked>(kotlin/Boolean) // com.pasich.encly.data.model/Note.isChecked.<set-isChecked>|<set-isChecked>(kotlin.Boolean){}[0]
+    final var isPinned // com.pasich.encly.data.model/Note.isPinned|{}isPinned[0]
+        final fun <get-isPinned>(): kotlin/Boolean // com.pasich.encly.data.model/Note.isPinned.<get-isPinned>|<get-isPinned>(){}[0]
+        final fun <set-isPinned>(kotlin/Boolean) // com.pasich.encly.data.model/Note.isPinned.<set-isPinned>|<set-isPinned>(kotlin.Boolean){}[0]
+    final var isTrash // com.pasich.encly.data.model/Note.isTrash|{}isTrash[0]
+        final fun <get-isTrash>(): kotlin/Boolean // com.pasich.encly.data.model/Note.isTrash.<get-isTrash>|<get-isTrash>(){}[0]
+        final fun <set-isTrash>(kotlin/Boolean) // com.pasich.encly.data.model/Note.isTrash.<set-isTrash>|<set-isTrash>(kotlin.Boolean){}[0]
+    final var lineSpacing // com.pasich.encly.data.model/Note.lineSpacing|{}lineSpacing[0]
+        final fun <get-lineSpacing>(): kotlin/Int? // com.pasich.encly.data.model/Note.lineSpacing.<get-lineSpacing>|<get-lineSpacing>(){}[0]
+        final fun <set-lineSpacing>(kotlin/Int?) // com.pasich.encly.data.model/Note.lineSpacing.<set-lineSpacing>|<set-lineSpacing>(kotlin.Int?){}[0]
+    final var tagId // com.pasich.encly.data.model/Note.tagId|{}tagId[0]
+        final fun <get-tagId>(): kotlin/Long? // com.pasich.encly.data.model/Note.tagId.<get-tagId>|<get-tagId>(){}[0]
+        final fun <set-tagId>(kotlin/Long?) // com.pasich.encly.data.model/Note.tagId.<set-tagId>|<set-tagId>(kotlin.Long?){}[0]
+    final var textSize // com.pasich.encly.data.model/Note.textSize|{}textSize[0]
+        final fun <get-textSize>(): kotlin/Int? // com.pasich.encly.data.model/Note.textSize.<get-textSize>|<get-textSize>(){}[0]
+        final fun <set-textSize>(kotlin/Int?) // com.pasich.encly.data.model/Note.textSize.<set-textSize>|<set-textSize>(kotlin.Int?){}[0]
+    final var title // com.pasich.encly.data.model/Note.title|{}title[0]
+        final fun <get-title>(): kotlin/String // com.pasich.encly.data.model/Note.title.<get-title>|<get-title>(){}[0]
+        final fun <set-title>(kotlin/String) // com.pasich.encly.data.model/Note.title.<set-title>|<set-title>(kotlin.String){}[0]
+    final var uid // com.pasich.encly.data.model/Note.uid|{}uid[0]
+        final fun <get-uid>(): kotlin/String // com.pasich.encly.data.model/Note.uid.<get-uid>|<get-uid>(){}[0]
+        final fun <set-uid>(kotlin/String) // com.pasich.encly.data.model/Note.uid.<set-uid>|<set-uid>(kotlin.String){}[0]
+    final var value // com.pasich.encly.data.model/Note.value|{}value[0]
+        final fun <get-value>(): kotlin/String // com.pasich.encly.data.model/Note.value.<get-value>|<get-value>(){}[0]
+        final fun <set-value>(kotlin/String) // com.pasich.encly.data.model/Note.value.<set-value>|<set-value>(kotlin.String){}[0]
+
+    final fun component1(): kotlin/Long // com.pasich.encly.data.model/Note.component1|component1(){}[0]
+    final fun component10(): kotlin/String // com.pasich.encly.data.model/Note.component10|component10(){}[0]
+    final fun component11(): kotlin/Boolean // com.pasich.encly.data.model/Note.component11|component11(){}[0]
+    final fun component12(): kotlin/Boolean // com.pasich.encly.data.model/Note.component12|component12(){}[0]
+    final fun component13(): kotlin/String // com.pasich.encly.data.model/Note.component13|component13(){}[0]
+    final fun component14(): kotlin/Int? // com.pasich.encly.data.model/Note.component14|component14(){}[0]
+    final fun component15(): kotlin/Int? // com.pasich.encly.data.model/Note.component15|component15(){}[0]
+    final fun component2(): kotlin/String // com.pasich.encly.data.model/Note.component2|component2(){}[0]
+    final fun component3(): kotlin/String // com.pasich.encly.data.model/Note.component3|component3(){}[0]
+    final fun component4(): kotlin/String // com.pasich.encly.data.model/Note.component4|component4(){}[0]
+    final fun component5(): kotlin/Long // com.pasich.encly.data.model/Note.component5|component5(){}[0]
+    final fun component6(): kotlin/Long // com.pasich.encly.data.model/Note.component6|component6(){}[0]
+    final fun component7(): kotlin/Long? // com.pasich.encly.data.model/Note.component7|component7(){}[0]
+    final fun component8(): kotlin/Boolean // com.pasich.encly.data.model/Note.component8|component8(){}[0]
+    final fun component9(): kotlin/Boolean // com.pasich.encly.data.model/Note.component9|component9(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Long = ..., kotlin/Long = ..., kotlin/Long? = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int? = ..., kotlin/Int? = ...): com.pasich.encly.data.model/Note // com.pasich.encly.data.model/Note.copy|copy(kotlin.Long;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.Long;kotlin.Long?;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Int?;kotlin.Int?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.data.model/Note.equals|equals(kotlin.Any?){}[0]
+    final fun hasContentChanged(kotlin/String, kotlin/String): kotlin/Boolean // com.pasich.encly.data.model/Note.hasContentChanged|hasContentChanged(kotlin.String;kotlin.String){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.data.model/Note.hashCode|hashCode(){}[0]
+    final fun isEmpty(): kotlin/Boolean // com.pasich.encly.data.model/Note.isEmpty|isEmpty(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.data.model/Note.toString|toString(){}[0]
+
+    final object Companion { // com.pasich.encly.data.model/Note.Companion|null[0]
+        final const val NO_COLOR // com.pasich.encly.data.model/Note.Companion.NO_COLOR|{}NO_COLOR[0]
+            final fun <get-NO_COLOR>(): kotlin/String // com.pasich.encly.data.model/Note.Companion.NO_COLOR.<get-NO_COLOR>|<get-NO_COLOR>(){}[0]
+
+        final fun new(kotlin/String, kotlin/String, kotlin/Long? = ...): com.pasich.encly.data.model/Note // com.pasich.encly.data.model/Note.Companion.new|new(kotlin.String;kotlin.String;kotlin.Long?){}[0]
+    }
+}
+
+final class com.pasich.encly.data.model/NoteWithTag { // com.pasich.encly.data.model/NoteWithTag|null[0]
+    constructor <init>(com.pasich.encly.data.model/Note, com.pasich.encly.data.model/Tag?) // com.pasich.encly.data.model/NoteWithTag.<init>|<init>(com.pasich.encly.data.model.Note;com.pasich.encly.data.model.Tag?){}[0]
+
+    final val note // com.pasich.encly.data.model/NoteWithTag.note|{}note[0]
+        final fun <get-note>(): com.pasich.encly.data.model/Note // com.pasich.encly.data.model/NoteWithTag.note.<get-note>|<get-note>(){}[0]
+    final val tag // com.pasich.encly.data.model/NoteWithTag.tag|{}tag[0]
+        final fun <get-tag>(): com.pasich.encly.data.model/Tag? // com.pasich.encly.data.model/NoteWithTag.tag.<get-tag>|<get-tag>(){}[0]
+
+    final fun component1(): com.pasich.encly.data.model/Note // com.pasich.encly.data.model/NoteWithTag.component1|component1(){}[0]
+    final fun component2(): com.pasich.encly.data.model/Tag? // com.pasich.encly.data.model/NoteWithTag.component2|component2(){}[0]
+    final fun copy(com.pasich.encly.data.model/Note = ..., com.pasich.encly.data.model/Tag? = ...): com.pasich.encly.data.model/NoteWithTag // com.pasich.encly.data.model/NoteWithTag.copy|copy(com.pasich.encly.data.model.Note;com.pasich.encly.data.model.Tag?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.data.model/NoteWithTag.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.data.model/NoteWithTag.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.data.model/NoteWithTag.toString|toString(){}[0]
+}
+
+final class com.pasich.encly.data.model/Subtask { // com.pasich.encly.data.model/Subtask|null[0]
+    constructor <init>(kotlin/Long = ..., kotlin/Long, kotlin/String, kotlin/Boolean = ..., kotlin/Int = ..., kotlin/String = ...) // com.pasich.encly.data.model/Subtask.<init>|<init>(kotlin.Long;kotlin.Long;kotlin.String;kotlin.Boolean;kotlin.Int;kotlin.String){}[0]
+
+    final val id // com.pasich.encly.data.model/Subtask.id|{}id[0]
+        final fun <get-id>(): kotlin/Long // com.pasich.encly.data.model/Subtask.id.<get-id>|<get-id>(){}[0]
+    final val isCompleted // com.pasich.encly.data.model/Subtask.isCompleted|{}isCompleted[0]
+        final fun <get-isCompleted>(): kotlin/Boolean // com.pasich.encly.data.model/Subtask.isCompleted.<get-isCompleted>|<get-isCompleted>(){}[0]
+    final val position // com.pasich.encly.data.model/Subtask.position|{}position[0]
+        final fun <get-position>(): kotlin/Int // com.pasich.encly.data.model/Subtask.position.<get-position>|<get-position>(){}[0]
+    final val taskId // com.pasich.encly.data.model/Subtask.taskId|{}taskId[0]
+        final fun <get-taskId>(): kotlin/Long // com.pasich.encly.data.model/Subtask.taskId.<get-taskId>|<get-taskId>(){}[0]
+    final val title // com.pasich.encly.data.model/Subtask.title|{}title[0]
+        final fun <get-title>(): kotlin/String // com.pasich.encly.data.model/Subtask.title.<get-title>|<get-title>(){}[0]
+    final val uid // com.pasich.encly.data.model/Subtask.uid|{}uid[0]
+        final fun <get-uid>(): kotlin/String // com.pasich.encly.data.model/Subtask.uid.<get-uid>|<get-uid>(){}[0]
+
+    final fun component1(): kotlin/Long // com.pasich.encly.data.model/Subtask.component1|component1(){}[0]
+    final fun component2(): kotlin/Long // com.pasich.encly.data.model/Subtask.component2|component2(){}[0]
+    final fun component3(): kotlin/String // com.pasich.encly.data.model/Subtask.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // com.pasich.encly.data.model/Subtask.component4|component4(){}[0]
+    final fun component5(): kotlin/Int // com.pasich.encly.data.model/Subtask.component5|component5(){}[0]
+    final fun component6(): kotlin/String // com.pasich.encly.data.model/Subtask.component6|component6(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin/Long = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/String = ...): com.pasich.encly.data.model/Subtask // com.pasich.encly.data.model/Subtask.copy|copy(kotlin.Long;kotlin.Long;kotlin.String;kotlin.Boolean;kotlin.Int;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.data.model/Subtask.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.data.model/Subtask.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.data.model/Subtask.toString|toString(){}[0]
+}
+
+final class com.pasich.encly.data.model/Tag { // com.pasich.encly.data.model/Tag|null[0]
+    constructor <init>(kotlin/Long = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/String = ...) // com.pasich.encly.data.model/Tag.<init>|<init>(kotlin.Long;kotlin.String;kotlin.Boolean;kotlin.Int;kotlin.String){}[0]
+
+    final var id // com.pasich.encly.data.model/Tag.id|{}id[0]
+        final fun <get-id>(): kotlin/Long // com.pasich.encly.data.model/Tag.id.<get-id>|<get-id>(){}[0]
+        final fun <set-id>(kotlin/Long) // com.pasich.encly.data.model/Tag.id.<set-id>|<set-id>(kotlin.Long){}[0]
+    final var isVisible // com.pasich.encly.data.model/Tag.isVisible|{}isVisible[0]
+        final fun <get-isVisible>(): kotlin/Boolean // com.pasich.encly.data.model/Tag.isVisible.<get-isVisible>|<get-isVisible>(){}[0]
+        final fun <set-isVisible>(kotlin/Boolean) // com.pasich.encly.data.model/Tag.isVisible.<set-isVisible>|<set-isVisible>(kotlin.Boolean){}[0]
+    final var nameTag // com.pasich.encly.data.model/Tag.nameTag|{}nameTag[0]
+        final fun <get-nameTag>(): kotlin/String // com.pasich.encly.data.model/Tag.nameTag.<get-nameTag>|<get-nameTag>(){}[0]
+        final fun <set-nameTag>(kotlin/String) // com.pasich.encly.data.model/Tag.nameTag.<set-nameTag>|<set-nameTag>(kotlin.String){}[0]
+    final var position // com.pasich.encly.data.model/Tag.position|{}position[0]
+        final fun <get-position>(): kotlin/Int // com.pasich.encly.data.model/Tag.position.<get-position>|<get-position>(){}[0]
+        final fun <set-position>(kotlin/Int) // com.pasich.encly.data.model/Tag.position.<set-position>|<set-position>(kotlin.Int){}[0]
+    final var uid // com.pasich.encly.data.model/Tag.uid|{}uid[0]
+        final fun <get-uid>(): kotlin/String // com.pasich.encly.data.model/Tag.uid.<get-uid>|<get-uid>(){}[0]
+        final fun <set-uid>(kotlin/String) // com.pasich.encly.data.model/Tag.uid.<set-uid>|<set-uid>(kotlin.String){}[0]
+
+    final fun component1(): kotlin/Long // com.pasich.encly.data.model/Tag.component1|component1(){}[0]
+    final fun component2(): kotlin/String // com.pasich.encly.data.model/Tag.component2|component2(){}[0]
+    final fun component3(): kotlin/Boolean // com.pasich.encly.data.model/Tag.component3|component3(){}[0]
+    final fun component4(): kotlin/Int // com.pasich.encly.data.model/Tag.component4|component4(){}[0]
+    final fun component5(): kotlin/String // com.pasich.encly.data.model/Tag.component5|component5(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/String = ...): com.pasich.encly.data.model/Tag // com.pasich.encly.data.model/Tag.copy|copy(kotlin.Long;kotlin.String;kotlin.Boolean;kotlin.Int;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.data.model/Tag.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.data.model/Tag.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.data.model/Tag.toString|toString(){}[0]
+}
+
+final class com.pasich.encly.data.model/Task { // com.pasich.encly.data.model/Task|null[0]
+    constructor <init>(kotlin/Long = ..., kotlin/String, kotlin/String? = ..., kotlin/Boolean = ..., kotlin/Long = ..., kotlin/Long? = ..., kotlin/Int = ..., kotlin/Long? = ..., kotlin/Int = ..., kotlin/String = ...) // com.pasich.encly.data.model/Task.<init>|<init>(kotlin.Long;kotlin.String;kotlin.String?;kotlin.Boolean;kotlin.Long;kotlin.Long?;kotlin.Int;kotlin.Long?;kotlin.Int;kotlin.String){}[0]
+
+    final val categoryId // com.pasich.encly.data.model/Task.categoryId|{}categoryId[0]
+        final fun <get-categoryId>(): kotlin/Long? // com.pasich.encly.data.model/Task.categoryId.<get-categoryId>|<get-categoryId>(){}[0]
+    final val completedDate // com.pasich.encly.data.model/Task.completedDate|{}completedDate[0]
+        final fun <get-completedDate>(): kotlin/Long? // com.pasich.encly.data.model/Task.completedDate.<get-completedDate>|<get-completedDate>(){}[0]
+    final val createdDate // com.pasich.encly.data.model/Task.createdDate|{}createdDate[0]
+        final fun <get-createdDate>(): kotlin/Long // com.pasich.encly.data.model/Task.createdDate.<get-createdDate>|<get-createdDate>(){}[0]
+    final val description // com.pasich.encly.data.model/Task.description|{}description[0]
+        final fun <get-description>(): kotlin/String? // com.pasich.encly.data.model/Task.description.<get-description>|<get-description>(){}[0]
+    final val id // com.pasich.encly.data.model/Task.id|{}id[0]
+        final fun <get-id>(): kotlin/Long // com.pasich.encly.data.model/Task.id.<get-id>|<get-id>(){}[0]
+    final val isCompleted // com.pasich.encly.data.model/Task.isCompleted|{}isCompleted[0]
+        final fun <get-isCompleted>(): kotlin/Boolean // com.pasich.encly.data.model/Task.isCompleted.<get-isCompleted>|<get-isCompleted>(){}[0]
+    final val priority // com.pasich.encly.data.model/Task.priority|{}priority[0]
+        final fun <get-priority>(): kotlin/Int // com.pasich.encly.data.model/Task.priority.<get-priority>|<get-priority>(){}[0]
+    final val title // com.pasich.encly.data.model/Task.title|{}title[0]
+        final fun <get-title>(): kotlin/String // com.pasich.encly.data.model/Task.title.<get-title>|<get-title>(){}[0]
+    final val uid // com.pasich.encly.data.model/Task.uid|{}uid[0]
+        final fun <get-uid>(): kotlin/String // com.pasich.encly.data.model/Task.uid.<get-uid>|<get-uid>(){}[0]
+
+    final var position // com.pasich.encly.data.model/Task.position|{}position[0]
+        final fun <get-position>(): kotlin/Int // com.pasich.encly.data.model/Task.position.<get-position>|<get-position>(){}[0]
+        final fun <set-position>(kotlin/Int) // com.pasich.encly.data.model/Task.position.<set-position>|<set-position>(kotlin.Int){}[0]
+
+    final fun component1(): kotlin/Long // com.pasich.encly.data.model/Task.component1|component1(){}[0]
+    final fun component10(): kotlin/String // com.pasich.encly.data.model/Task.component10|component10(){}[0]
+    final fun component2(): kotlin/String // com.pasich.encly.data.model/Task.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // com.pasich.encly.data.model/Task.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // com.pasich.encly.data.model/Task.component4|component4(){}[0]
+    final fun component5(): kotlin/Long // com.pasich.encly.data.model/Task.component5|component5(){}[0]
+    final fun component6(): kotlin/Long? // com.pasich.encly.data.model/Task.component6|component6(){}[0]
+    final fun component7(): kotlin/Int // com.pasich.encly.data.model/Task.component7|component7(){}[0]
+    final fun component8(): kotlin/Long? // com.pasich.encly.data.model/Task.component8|component8(){}[0]
+    final fun component9(): kotlin/Int // com.pasich.encly.data.model/Task.component9|component9(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/Boolean = ..., kotlin/Long = ..., kotlin/Long? = ..., kotlin/Int = ..., kotlin/Long? = ..., kotlin/Int = ..., kotlin/String = ...): com.pasich.encly.data.model/Task // com.pasich.encly.data.model/Task.copy|copy(kotlin.Long;kotlin.String;kotlin.String?;kotlin.Boolean;kotlin.Long;kotlin.Long?;kotlin.Int;kotlin.Long?;kotlin.Int;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.data.model/Task.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.data.model/Task.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.data.model/Task.toString|toString(){}[0]
+
+    final object Companion { // com.pasich.encly.data.model/Task.Companion|null[0]
+        final fun new(kotlin/String, kotlin/String? = ..., kotlin/Int = ..., kotlin/Long? = ...): com.pasich.encly.data.model/Task // com.pasich.encly.data.model/Task.Companion.new|new(kotlin.String;kotlin.String?;kotlin.Int;kotlin.Long?){}[0]
+    }
+}
+
+final object com.pasich.encly.core.security.cipher/SQLCipherUtils { // com.pasich.encly.core.security.cipher/SQLCipherUtils|null[0]
+    final fun getDatabaseState(kotlinx.io.files/Path): com.pasich.encly.core.security.cipher/SQLCipherUtils.State // com.pasich.encly.core.security.cipher/SQLCipherUtils.getDatabaseState|getDatabaseState(kotlinx.io.files.Path){}[0]
+
+    final enum class State : kotlin/Enum<com.pasich.encly.core.security.cipher/SQLCipherUtils.State> { // com.pasich.encly.core.security.cipher/SQLCipherUtils.State|null[0]
+        enum entry DOES_NOT_EXIST // com.pasich.encly.core.security.cipher/SQLCipherUtils.State.DOES_NOT_EXIST|null[0]
+        enum entry ENCRYPTED // com.pasich.encly.core.security.cipher/SQLCipherUtils.State.ENCRYPTED|null[0]
+        enum entry UNENCRYPTED // com.pasich.encly.core.security.cipher/SQLCipherUtils.State.UNENCRYPTED|null[0]
+
+        final val entries // com.pasich.encly.core.security.cipher/SQLCipherUtils.State.entries|#static{}entries[0]
+            final fun <get-entries>(): kotlin.enums/EnumEntries<com.pasich.encly.core.security.cipher/SQLCipherUtils.State> // com.pasich.encly.core.security.cipher/SQLCipherUtils.State.entries.<get-entries>|<get-entries>#static(){}[0]
+
+        final fun valueOf(kotlin/String): com.pasich.encly.core.security.cipher/SQLCipherUtils.State // com.pasich.encly.core.security.cipher/SQLCipherUtils.State.valueOf|valueOf#static(kotlin.String){}[0]
+        final fun values(): kotlin/Array<com.pasich.encly.core.security.cipher/SQLCipherUtils.State> // com.pasich.encly.core.security.cipher/SQLCipherUtils.State.values|values#static(){}[0]
+    }
+}
+
+final object com.pasich.encly.data.database/AppDatabaseConstructor : androidx.room/RoomDatabaseConstructor<com.pasich.encly.data.database/AppDatabase> { // com.pasich.encly.data.database/AppDatabaseConstructor|null[0]
+    final fun initialize(): com.pasich.encly.data.database/AppDatabase // com.pasich.encly.data.database/AppDatabaseConstructor.initialize|initialize(){}[0]
+}
+
+final object com.pasich.encly.data.database/VaultSchema { // com.pasich.encly.data.database/VaultSchema|null[0]
+    final val CALLBACK // com.pasich.encly.data.database/VaultSchema.CALLBACK|{}CALLBACK[0]
+        final fun <get-CALLBACK>(): androidx.room/RoomDatabase.Callback // com.pasich.encly.data.database/VaultSchema.CALLBACK.<get-CALLBACK>|<get-CALLBACK>(){}[0]
+    final val MIGRATION_1_2 // com.pasich.encly.data.database/VaultSchema.MIGRATION_1_2|{}MIGRATION_1_2[0]
+        final fun <get-MIGRATION_1_2>(): androidx.room.migration/Migration // com.pasich.encly.data.database/VaultSchema.MIGRATION_1_2.<get-MIGRATION_1_2>|<get-MIGRATION_1_2>(){}[0]
+    final val MIGRATION_2_3 // com.pasich.encly.data.database/VaultSchema.MIGRATION_2_3|{}MIGRATION_2_3[0]
+        final fun <get-MIGRATION_2_3>(): androidx.room.migration/Migration // com.pasich.encly.data.database/VaultSchema.MIGRATION_2_3.<get-MIGRATION_2_3>|<get-MIGRATION_2_3>(){}[0]
+    final val MIGRATION_3_4 // com.pasich.encly.data.database/VaultSchema.MIGRATION_3_4|{}MIGRATION_3_4[0]
+        final fun <get-MIGRATION_3_4>(): androidx.room.migration/Migration // com.pasich.encly.data.database/VaultSchema.MIGRATION_3_4.<get-MIGRATION_3_4>|<get-MIGRATION_3_4>(){}[0]
+    final val MIGRATION_4_5 // com.pasich.encly.data.database/VaultSchema.MIGRATION_4_5|{}MIGRATION_4_5[0]
+        final fun <get-MIGRATION_4_5>(): androidx.room.migration/Migration // com.pasich.encly.data.database/VaultSchema.MIGRATION_4_5.<get-MIGRATION_4_5>|<get-MIGRATION_4_5>(){}[0]
+    final val MIGRATION_5_6 // com.pasich.encly.data.database/VaultSchema.MIGRATION_5_6|{}MIGRATION_5_6[0]
+        final fun <get-MIGRATION_5_6>(): androidx.room.migration/Migration // com.pasich.encly.data.database/VaultSchema.MIGRATION_5_6.<get-MIGRATION_5_6>|<get-MIGRATION_5_6>(){}[0]
+
+    final fun <#A1: androidx.room/RoomDatabase> install(androidx.room/RoomDatabase.Builder<#A1>): androidx.room/RoomDatabase.Builder<#A1> // com.pasich.encly.data.database/VaultSchema.install|install(androidx.room.RoomDatabase.Builder<0:0>){0§<androidx.room.RoomDatabase>}[0]
+    final fun createTriggers(androidx.sqlite/SQLiteConnection) // com.pasich.encly.data.database/VaultSchema.createTriggers|createTriggers(androidx.sqlite.SQLiteConnection){}[0]
+}
+
+final const val com.pasich.encly.data.database/DB_VERSION // com.pasich.encly.data.database/DB_VERSION|{}DB_VERSION[0]
+    final fun <get-DB_VERSION>(): kotlin/Int // com.pasich.encly.data.database/DB_VERSION.<get-DB_VERSION>|<get-DB_VERSION>(){}[0]

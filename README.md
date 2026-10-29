@@ -209,7 +209,8 @@ links, no baseline profile) and `play`.
 ./gradlew spotlessApply                            # format Kotlin/Gradle (ktlint; spotlessCheck in CI)
 ./gradlew assembleRelease                          # both release APKs, R8 enabled
 ./gradlew :app:bundlePlayRelease                   # Google Play App Bundle (play flavor)
-./gradlew :app:connectedFdroidDebugAndroidTest     # instrumented tests (emulator; wipes the debug app's data)
+./gradlew :core:database:desktopTest :core:database:testAndroidHostTest :core:database:koverVerify   # the database module (85%)
+./gradlew :core:database:connectedAndroidDeviceTest   # instrumented tests (emulator): native SQLCipher, migrations
 ```
 
 Outputs: `app/build/outputs/apk/<flavor>/<buildType>/`, and the bundle in

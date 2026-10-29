@@ -58,9 +58,11 @@ jobs:
       # differs only in store flags and is built by the release workflow; the instrumented tests
       # (Room migrations, SQLCipher) run in the `instrumented` job below.
       #
-      # The :editor library (Kotlin Multiplatform) is checked on its desktop JVM and Android host
-      # targets here: unit tests, the 100 % Kover gates, detekt, the public API dump and Dokka. Its iOS
-      # targets compile in the `editor-ios` job below.
+      # The :editor and :core:database libraries (Kotlin Multiplatform) are checked on their desktop JVM
+      # and Android host targets here: unit tests, the Kover gates (editor 100 %, database 85 %), detekt,
+      # the public API dump and, for the editor, Dokka. The database's desktop tests open and migrate an
+      # encrypted vault through Sealite's native library. Their iOS targets compile in the `editor-ios`
+      # job below.
       - name: Format, unit tests, detekt, release build
         run: >-
           ./gradlew spotlessCheck
@@ -71,6 +73,11 @@ jobs:
           :editor:detekt
           :editor:checkKotlinAbi
           :editor:dokkaGeneratePublicationHtml
+          :core:database:desktopTest
+          :core:database:testAndroidHostTest
+          :core:database:koverVerify
+          :core:database:detekt
+          :core:database:checkKotlinAbi
           :app:testFdroidDebugUnitTest
           :app:koverXmlReportFdroidDebug
           :app:koverVerifyFdroidDebug
@@ -126,11 +133,14 @@ jobs:
             app/build/test-results/
             editor/build/reports/
             editor/build/test-results/
+            core/database/build/reports/
+            core/database/build/test-results/
           retention-days: 7
           if-no-files-found: ignore
 
-  # The :editor library also targets iOS. Kotlin/Native compiles for Apple targets only on macOS, so
-  # this job builds the iOS klibs there; it runs no iOS tests (the logic is covered on the JVM).
+  # The :editor and :core:database libraries also target iOS. Kotlin/Native compiles for Apple targets
+  # only on macOS, so this job builds the iOS klibs there (for the database, Room's KSP runs for the iOS
+  # targets too); it runs no iOS tests (the logic is covered on the JVM).
   editor-ios:
     if: github.actor != 'dependabot[bot]'
     name: editor (iOS compile)
@@ -156,15 +166,18 @@ jobs:
           ./gradlew
           :editor:compileKotlinIosSimulatorArm64
           :editor:compileKotlinIosArm64
+          :core:database:compileKotlinIosSimulatorArm64
+          :core:database:compileKotlinIosArm64
 
       # On a Mac the klib dump of the public API is made from the real iOS klibs (elsewhere it is
       # inferred), so this is where editor/api/editor.klib.api is really checked.
       - name: Public API dump
-        run: ./gradlew :editor:checkKotlinAbi
+        run: ./gradlew :editor:checkKotlinAbi :core:database:checkKotlinAbi
 
   # The tests that need the real native SQLCipher and Room on Android: opening a vault written by
-  # earlier releases, the lock/unlock lifecycle, every schema migration. On the oldest supported
-  # API and a current one.
+  # earlier releases, the lock/unlock lifecycle, every schema migration. They live in the
+  # :core:database module (source set androidDeviceTest) and run in its own test app. On the oldest
+  # supported API and a current one.
   instrumented:
     if: github.actor != 'dependabot[bot]'
     name: instrumented (API ${{ matrix.api }})
@@ -196,8 +209,8 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Build the app and the test APK
-        run: ./gradlew :app:assembleFdroidDebug :app:assembleFdroidDebugAndroidTest
+      - name: Build the test APK
+        run: ./gradlew :core:database:assembleAndroidDeviceTest
 
       - name: Instrumented tests
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
@@ -207,12 +220,12 @@ jobs:
           target: ${{ matrix.target }}
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: ./gradlew :app:connectedFdroidDebugAndroidTest
+          script: ./gradlew :core:database:connectedAndroidDeviceTest
 
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: instrumented-reports-api-${{ matrix.api }}
-          path: app/build/reports/androidTests/
+          path: core/database/build/reports/androidTests/
           retention-days: 7

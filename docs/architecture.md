@@ -14,7 +14,11 @@ sends user intent; persistence and security decisions remain outside Composables
 - **Presentation** — navigation, screens, reusable UI and ViewModels.
 - **Domain** — use cases plus repository contracts. ViewModels use these contracts for feature
   operations such as saving a note, moving it to trash or changing a task.
-- **Data** — Room entities/DAOs, repository implementations and the local data-source facade.
+- **Data** — repository implementations and the local data-source facade. The Room entities, DAOs,
+  migrations and `SecureDatabaseManager` are the Kotlin Multiplatform module `:core:database`
+  (Android, desktop, iOS): the database is opened through Sealite's SQLCipher driver on every
+  target, and the app tells it where the files are through `DatabasePlatform` (on Android, the
+  app's own `databases` directory, the same files as ever).
 - **Core security** — vault setup/unlock, session lock and auto-lock delay (`SessionLockManager`,
   `AutoLock`), the Keystore-bound PIN factor, biometric slot, recovery slot and the SQLCipher
   database lifecycle.
