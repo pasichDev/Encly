@@ -34,7 +34,7 @@ kotlin {
     }
 }
 
-// The Swift bridge exists only where Xcode does; on other hosts Kotlin does not build the Apple targets.
+// The Swift bridge exists only where Xcode does; other hosts do not build the Apple targets (gradle.properties).
 if (OperatingSystem.current().isMacOsX) {
     val swiftTargets = mapOf(
         "iosArm64" to ("iphoneos" to "arm64-apple-ios15.0"),
