@@ -5,6 +5,7 @@ import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtensi
 
 plugins {
     id("encly.kmp-library")
+    id("encly.kmp-ios")
     id("encly.quality")
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room)
