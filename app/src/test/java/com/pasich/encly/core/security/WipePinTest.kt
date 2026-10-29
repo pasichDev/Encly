@@ -126,7 +126,7 @@ class WipePinTest {
     @Test
     fun theWipePinErasesEverySlotAndTheOldPinIsWrongAfterwards() {
         val seed = SeedPhraseManager(store)
-        assertTrue(seed.initializeVault(seed.generateMnemonic().chars))
+        assertTrue(seed.initializeVault(seed.generateMnemonic()))
         val oldDek = seed.copyBootstrapKey()!!
         assertTrue(auth.configurePin(pin(PIN), oldDek))
         store.edit {
@@ -682,7 +682,7 @@ class WipePinTest {
         val security = SecurityManager(prefs, store, seed, database, auth, biometric) { sweeps++ }
 
         init {
-            assertTrue(seed.initializeVault(seed.generateMnemonic().chars))
+            assertTrue(seed.initializeVault(seed.generateMnemonic()))
             val bootstrap = seed.copyBootstrapKey()!!
             assertTrue(auth.configurePin(pin(PIN), bootstrap))
             if (withWipePin) assertEquals(WipePinChange.SET, auth.configureWipePin(pin(WIPE_PIN)))

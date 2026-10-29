@@ -48,7 +48,11 @@ private val bundledLibraries = listOf(
     OpenSourceWork("Sealite", APACHE_2, "https://github.com/pasichDev/sealite"),
     OpenSourceWork("SQLCipher Community Edition", "BSD 3-Clause", "https://github.com/sqlcipher/sqlcipher"),
     OpenSourceWork("OpenSSL", APACHE_2, "https://github.com/openssl/openssl"),
-    OpenSourceWork("kotlin-bip39", "MIT License", "https://github.com/Electric-Coin-Company/kotlin-bip39"),
+    OpenSourceWork(
+        "BIP-39 English wordlist",
+        "MIT License",
+        "https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt",
+    ),
     OpenSourceWork("Okio", APACHE_2, "https://github.com/square/okio"),
     OpenSourceWork("Guava ListenableFuture", APACHE_2, "https://github.com/google/guava"),
     OpenSourceWork("Reorderable", APACHE_2, "https://github.com/Calvin-LL/Reorderable"),

@@ -1,13 +1,27 @@
 package com.pasich.encly.core.security
 
+import com.pasich.encly.core.security.bip39.Bip39
 import java.nio.CharBuffer
 import java.security.MessageDigest
+import java.security.SecureRandom
 
 /**
  * The one normalization every recovery-phrase key goes through: the vault's recovery KEK and
  * the backup root both hash exactly these bytes, so a phrase that opens one opens the other.
  */
 internal object Mnemonic {
+    private const val ENTROPY_BYTES = 16
+
+    /** A new 12-word recovery phrase from 128 bits of system randomness. */
+    fun generate(): CharArray {
+        val entropy = ByteArray(ENTROPY_BYTES).also { SecureRandom().nextBytes(it) }
+        return try {
+            Bip39().encode(entropy)
+        } finally {
+            SensitiveDataCleaner.clear(entropy)
+        }
+    }
+
     /** Lower-cases and collapses any whitespace between words to a single space. */
     fun normalize(words: CharArray): CharArray {
         val out = CharArray(words.size)

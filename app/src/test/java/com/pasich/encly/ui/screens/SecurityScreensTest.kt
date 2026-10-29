@@ -8,13 +8,12 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.R
 import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -34,7 +33,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
 class SecurityScreensTest : ComposeScreenTest() {
-    private val words = String(MnemonicCode(WordCount.COUNT_12).chars)
+    private val words = String(Mnemonic.generate())
     private val app by lazy { TestApp(context).withWorkingVault(words) }
     private lateinit var vault: BackupViewModel
 

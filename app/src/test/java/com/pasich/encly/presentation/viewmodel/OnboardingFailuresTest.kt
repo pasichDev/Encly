@@ -1,10 +1,9 @@
 package com.pasich.encly.presentation.viewmodel
 
 import androidx.fragment.app.FragmentActivity
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.R
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
@@ -38,7 +37,7 @@ import org.mockito.Mockito.`when`
 /** Onboarding when something fails, plus the small switches of its steps. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingFailuresTest {
-    private val words = MnemonicCode(WordCount.COUNT_12).chars
+    private val words = Mnemonic.generate()
     private lateinit var security: SecurityManager
     private val activity: FragmentActivity = mock(FragmentActivity::class.java)
 

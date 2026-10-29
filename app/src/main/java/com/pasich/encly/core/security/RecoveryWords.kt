@@ -1,7 +1,7 @@
 package com.pasich.encly.core.security
 
-import cash.z.ecc.android.bip39.Mnemonics
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
+import com.pasich.encly.core.security.bip39.Bip39
+import com.pasich.encly.core.security.bip39.Bip39Wordlist
 
 /** The English BIP39 wordlist the recovery phrase is drawn from, for checking typed words. */
 object RecoveryWords {
@@ -9,7 +9,7 @@ object RecoveryWords {
     const val COUNT = 12
 
     /** Sorted, as BIP39 publishes it. */
-    private val words: List<String> by lazy { Mnemonics.getCachedWords(Mnemonics.DEFAULT_LANGUAGE_CODE) }
+    private val words: List<String> by lazy { Bip39Wordlist.words }
     private val wordSet: Set<String> by lazy { words.toHashSet() }
 
     fun isWord(word: String): Boolean = word in wordSet
@@ -22,10 +22,5 @@ object RecoveryWords {
     }
 
     /** Whether [phrase] (lower case, single spaces) is a valid mnemonic, checksum included. */
-    fun isValidPhrase(phrase: CharArray): Boolean = try {
-        MnemonicCode(phrase).validate()
-        true
-    } catch (_: Exception) {
-        false
-    }
+    fun isValidPhrase(phrase: CharArray): Boolean = Bip39().isValid(phrase)
 }

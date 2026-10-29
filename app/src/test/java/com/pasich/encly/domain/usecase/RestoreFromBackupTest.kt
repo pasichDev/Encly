@@ -1,13 +1,13 @@
 package com.pasich.encly.domain.usecase
 
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.bip39.Bip39
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.PendingRestore
@@ -29,7 +29,7 @@ import org.mockito.Mockito.`when`
 /** Onboarding's "Restore from backup": decrypt first, create the vault only on success. */
 class RestoreFromBackupTest {
 
-    private val words = MnemonicCode(WordCount.COUNT_12).chars
+    private val words = Mnemonic.generate()
     private lateinit var security: SecurityManager
     private lateinit var store: InMemoryVaultDataStore
     private lateinit var pending: PendingRestore
@@ -42,7 +42,7 @@ class RestoreFromBackupTest {
     fun setUp() {
         security = mock(SecurityManager::class.java)
         `when`(security.isValidRecoveryPhrase(anyChars())).thenAnswer {
-            runCatching { MnemonicCode(it.getArgument<CharArray>(0).copyOf()).validate() }.isSuccess
+            Bip39().isValid(it.getArgument<CharArray>(0))
         }
         `when`(security.initializeNewVault(anyChars())).thenAnswer {
             // Copied now: the use case wipes the phrase once the vault exists.
@@ -82,7 +82,7 @@ class RestoreFromBackupTest {
 
     @Test
     fun wrongWordsCreateNothing() = runTest {
-        val result = useCase.restoreFromBackup(backupFile(), MnemonicCode(WordCount.COUNT_12).chars)
+        val result = useCase.restoreFromBackup(backupFile(), Mnemonic.generate())
 
         assertEquals(BackupError.WRONG_SECRET, (result.exceptionOrNull() as BackupException).error)
         verify(security, never()).initializeNewVault(anyChars())

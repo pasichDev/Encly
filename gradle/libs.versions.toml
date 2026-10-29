@@ -34,7 +34,6 @@ datetime = "0.8.0"
 sqlcipher = "4.19.1"
 sealite = "1.0.0"
 sqliteKtx = "2.7.1"
-bip39 = "1.0.9"
 iconsLucide = "1.1.0"
 
 junit = "4.13.2"
@@ -75,7 +74,6 @@ hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.re
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 sealite = { module = "io.github.pasichdev:sealite", version.ref = "sealite" }
-kotlin-bip39 = { module = "cash.z.ecc.android:kotlin-bip39", version.ref = "bip39" }
 icons-lucide = { module = "com.composables:icons-lucide", version.ref = "iconsLucide" }
 compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "composeRulesDetekt" }
 

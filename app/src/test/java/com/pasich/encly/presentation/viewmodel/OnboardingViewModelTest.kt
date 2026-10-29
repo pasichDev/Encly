@@ -1,14 +1,14 @@
 package com.pasich.encly.presentation.viewmodel
 
 import android.net.Uri
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.common.UiText
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.bip39.Bip39
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
@@ -44,7 +44,7 @@ import org.mockito.Mockito.`when`
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
 
-    private val words = MnemonicCode(WordCount.COUNT_12).chars
+    private val words = Mnemonic.generate()
     private val wordList = String(words).split(" ")
     private lateinit var security: SecurityManager
     private lateinit var store: InMemoryVaultDataStore
@@ -65,7 +65,7 @@ class OnboardingViewModelTest {
         }
         `when`(security.configurePin(anyCharArray())).thenReturn(true)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {
-            runCatching { MnemonicCode(it.getArgument<CharArray>(0).copyOf()).validate() }.isSuccess
+            Bip39().isValid(it.getArgument<CharArray>(0))
         }
         store = InMemoryVaultDataStore()
         documents = mock(BackupDocuments::class.java)
@@ -360,7 +360,7 @@ class OnboardingViewModelTest {
         vm.startRestore()
         vm.pickBackup()
 
-        vm.restoreBackup(MnemonicCode(WordCount.COUNT_12).chars.copyOf())
+        vm.restoreBackup(Mnemonic.generate().copyOf())
         vm.settled()
 
         assertEquals(OnboardingStep.RESTORE, vm.state.step)
@@ -374,7 +374,7 @@ class OnboardingViewModelTest {
         val vm = viewModel()
         vm.startRestore()
         vm.pickBackup()
-        vm.restoreBackup(MnemonicCode(WordCount.COUNT_12).chars.copyOf())
+        vm.restoreBackup(Mnemonic.generate().copyOf())
         vm.settled()
 
         vm.onRestorePhraseEdited()

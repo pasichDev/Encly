@@ -1,13 +1,12 @@
 package com.pasich.encly.data.backup
 
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.backup.assertError
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Subtask
@@ -27,7 +26,7 @@ import org.junit.Test
 
 class BackupImporterTest {
 
-    private val words = MnemonicCode(WordCount.COUNT_12).chars
+    private val words = Mnemonic.generate()
 
     /** Every block type the editor can produce, serialized as the notes table stores it. */
     private val allBlocks = BlockConverter.blocksToJson(
@@ -301,7 +300,7 @@ class BackupImporterTest {
     @Test
     fun wrongWordsNeverReachTheVault() = runTest {
         val file = export(seededVault())
-        val other = MnemonicCode(WordCount.COUNT_12).chars
+        val other = Mnemonic.generate()
 
         assertError(BackupError.WRONG_SECRET) { BackupCipher.open(file, BackupSecret.RecoveryPhrase(other)) }
     }

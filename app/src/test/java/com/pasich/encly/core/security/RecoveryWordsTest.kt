@@ -1,7 +1,5 @@
 package com.pasich.encly.core.security
 
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,7 +24,7 @@ class RecoveryWordsTest {
 
     @Test
     fun checksum() {
-        assertTrue(RecoveryWords.isValidPhrase(MnemonicCode(WordCount.COUNT_12).chars))
+        assertTrue(RecoveryWords.isValidPhrase(Mnemonic.generate()))
         assertFalse(RecoveryWords.isValidPhrase(List(12) { "abandon" }.joinToString(" ").toCharArray()))
     }
 }

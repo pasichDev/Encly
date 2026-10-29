@@ -1,8 +1,7 @@
 package com.pasich.encly.core.security
 
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.core.backup.BackupKeys
+import com.pasich.encly.core.security.bip39.Bip39
 import java.security.GeneralSecurityException
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -53,15 +52,12 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
     @Volatile
     private var bootstrapDek: ByteArray? = null
 
-    fun generateMnemonic(): MnemonicCode = MnemonicCode(WordCount.COUNT_12)
+    fun generateMnemonic(): CharArray = Mnemonic.generate()
 
     fun isValidMnemonic(phrase: CharArray): Boolean {
         val normalized = Mnemonic.normalize(phrase)
         return try {
-            MnemonicCode(normalized).validate()
-            true
-        } catch (_: Exception) {
-            false
+            Bip39().isValid(normalized)
         } finally {
             SensitiveDataCleaner.clear(normalized)
         }

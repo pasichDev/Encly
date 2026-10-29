@@ -606,7 +606,7 @@ class SecurityManager @Inject constructor(
             .commit()
     }
 
-    fun generateMnemonicCode(): CharArray = seedPhraseManager.generateMnemonic().chars
+    fun generateMnemonicCode(): CharArray = seedPhraseManager.generateMnemonic()
 
     /**
      * Starts a brand-new vault with no legacy state. First-run setup is intentionally

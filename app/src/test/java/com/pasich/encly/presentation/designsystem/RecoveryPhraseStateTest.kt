@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.designsystem
 
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
+import com.pasich.encly.core.security.Mnemonic
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -11,7 +10,7 @@ import org.junit.Test
 
 class RecoveryPhraseStateTest {
     private val state = RecoveryPhraseState()
-    private val valid = String(MnemonicCode(WordCount.COUNT_12).chars).split(' ')
+    private val valid = String(Mnemonic.generate()).split(' ')
 
     private fun typeAll(words: List<String>) = words.forEachIndexed { i, word -> state.onValueChange(i, word) }
 

@@ -1,7 +1,6 @@
 package com.pasich.encly.core.backup
 
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
+import com.pasich.encly.core.security.Mnemonic
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -11,7 +10,7 @@ import java.nio.ByteBuffer
 
 class BackupCipherTest {
 
-    private val words = MnemonicCode(WordCount.COUNT_12).chars
+    private val words = Mnemonic.generate()
     private val plaintext = "{\"notes\":[\"secret note body\"]}".toByteArray()
 
     private fun phrase(chars: CharArray = words) = BackupSecret.RecoveryPhrase(chars.copyOf())
@@ -43,7 +42,7 @@ class BackupCipherTest {
     @Test
     fun wrongWordsAreRejected() {
         val file = BackupCipher.seal(plaintext, phrase())
-        val other = MnemonicCode(WordCount.COUNT_12).chars
+        val other = Mnemonic.generate()
 
         assertError(BackupError.WRONG_SECRET) { BackupCipher.open(file, phrase(other)) }
     }

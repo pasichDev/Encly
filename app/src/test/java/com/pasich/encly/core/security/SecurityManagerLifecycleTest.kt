@@ -80,7 +80,7 @@ class SecurityManagerLifecycleTest {
 
     /** First-run setup up to and including the committed onboarding, with a recovery phrase. */
     private fun committedVault(withRecoveryPhrase: Boolean = true): CharArray {
-        val phrase = seed.generateMnemonic().chars
+        val phrase = seed.generateMnemonic()
         assertTrue(manager.initializeNewVault(if (withRecoveryPhrase) phrase.copyOf() else null))
         assertTrue(manager.configurePin(PIN.toCharArray()))
         assertTrue(manager.finishInitialSetup())
@@ -222,7 +222,7 @@ class SecurityManagerLifecycleTest {
     @Test
     fun aWrongRecoveryPhraseIsAnInvalidCredential() {
         committedVault()
-        val other = seed.generateMnemonic().chars
+        val other = seed.generateMnemonic()
 
         assertEquals(VaultUnlockResult.INVALID_CREDENTIAL, manager.unlockWithSeed(other))
         assertFalse(manager.verifySeed(other))
@@ -262,8 +262,8 @@ class SecurityManagerLifecycleTest {
 
         assertEquals(InitialStatus.AUTH, manager.securityStatus)
         assertNull(manager.copyBackupRootKey())
-        assertFalse(manager.addRecoverySeed(seed.generateMnemonic().chars))
-        assertFalse(manager.replaceRecoverySeed(seed.generateMnemonic().chars))
+        assertFalse(manager.addRecoverySeed(seed.generateMnemonic()))
+        assertFalse(manager.replaceRecoverySeed(seed.generateMnemonic()))
         assertFalse(manager.createBackupKey(phrase.copyOf()))
         assertFalse(manager.canResetPinWithoutCurrent())
         verify(database).reset()

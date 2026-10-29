@@ -25,7 +25,7 @@ class SeedPhraseManagerTest {
 
     @Test
     fun recoverySeedUnwrapsTheBootstrapDek() {
-        val phrase = manager.generateMnemonic().chars
+        val phrase = manager.generateMnemonic()
         assertTrue(manager.initializeVault(phrase.copyOf()))
         val bootstrap = manager.copyBootstrapKey()!!
 
@@ -35,9 +35,9 @@ class SeedPhraseManagerTest {
 
     @Test
     fun wrongSeedNeverUnwraps() {
-        assertTrue(manager.initializeVault(manager.generateMnemonic().chars))
+        assertTrue(manager.initializeVault(manager.generateMnemonic()))
 
-        assertNull(manager.unlockWithSeed(manager.generateMnemonic().chars))
+        assertNull(manager.unlockWithSeed(manager.generateMnemonic()))
     }
 
     @Test
@@ -62,7 +62,7 @@ class SeedPhraseManagerTest {
 
     @Test
     fun backupSealedInTheVaultOpensWithOnlyTheWordsOnAFreshInstall() {
-        val phrase = manager.generateMnemonic().chars
+        val phrase = manager.generateMnemonic()
         assertTrue(manager.initializeVault(phrase.copyOf()))
         val dek = manager.copyBootstrapKey()!!
         assertTrue(manager.hasBackupKey())
@@ -77,7 +77,7 @@ class SeedPhraseManagerTest {
 
     @Test
     fun backupKeyNeedsTheVaultKeyAndDiffersFromIt() {
-        assertTrue(manager.initializeVault(manager.generateMnemonic().chars))
+        assertTrue(manager.initializeVault(manager.generateMnemonic()))
         val dek = manager.copyBootstrapKey()!!
 
         assertNull(manager.unwrapBackupRoot(ByteArray(32)))
@@ -91,7 +91,7 @@ class SeedPhraseManagerTest {
         assertFalse(manager.hasBackupKey())
         assertNull(manager.unwrapBackupRoot(dek))
 
-        val phrase = manager.generateMnemonic().chars
+        val phrase = manager.generateMnemonic()
         assertTrue(manager.addRecoverySeed(phrase.copyOf(), dek))
 
         assertTrue(manager.hasRecoverySeed())
@@ -99,16 +99,16 @@ class SeedPhraseManagerTest {
         assertArrayEquals(dek, manager.unlockWithSeed(phrase.copyOf()))
         assertArrayEquals(BackupKeys.rootFromMnemonic(phrase.copyOf()), manager.unwrapBackupRoot(dek))
         // A second seed is refused: it would silently replace the one the user wrote down.
-        assertFalse(manager.addRecoverySeed(manager.generateMnemonic().chars, dek))
+        assertFalse(manager.addRecoverySeed(manager.generateMnemonic(), dek))
     }
 
     @Test
     fun backupKeyIsOnlyRecreatedFromThisVaultsOwnWords() {
-        val phrase = manager.generateMnemonic().chars
+        val phrase = manager.generateMnemonic()
         assertTrue(manager.initializeVault(phrase.copyOf()))
         val dek = manager.copyBootstrapKey()!!
 
-        assertFalse(manager.createBackupKey(manager.generateMnemonic().chars, dek))
+        assertFalse(manager.createBackupKey(manager.generateMnemonic(), dek))
         assertTrue(manager.createBackupKey(phrase.copyOf(), dek))
     }
 
@@ -116,11 +116,11 @@ class SeedPhraseManagerTest {
 
     @Test
     fun replacingThePhraseMovesTheVaultToTheNewWordsOnly() {
-        val old = manager.generateMnemonic().chars
+        val old = manager.generateMnemonic()
         assertTrue(manager.initializeVault(old.copyOf()))
         val dek = manager.copyBootstrapKey()!!
         val oldRoot = manager.unwrapBackupRoot(dek)!!
-        val new = manager.generateMnemonic().chars
+        val new = manager.generateMnemonic()
 
         assertTrue(manager.replaceRecoverySeed(new.copyOf(), dek))
 
@@ -137,11 +137,11 @@ class SeedPhraseManagerTest {
 
     @Test
     fun backupsMadeBeforeAReplacementStillOpenOnlyWithTheOldWords() {
-        val old = manager.generateMnemonic().chars
+        val old = manager.generateMnemonic()
         assertTrue(manager.initializeVault(old.copyOf()))
         val dek = manager.copyBootstrapKey()!!
         val before = BackupCipher.seal("old".toByteArray(), BackupSecret.RecoveryRoot(manager.unwrapBackupRoot(dek)!!))
-        val new = manager.generateMnemonic().chars
+        val new = manager.generateMnemonic()
 
         assertTrue(manager.replaceRecoverySeed(new.copyOf(), dek))
         val after = BackupCipher.seal("new".toByteArray(), BackupSecret.RecoveryRoot(manager.unwrapBackupRoot(dek)!!))
@@ -155,16 +155,16 @@ class SeedPhraseManagerTest {
     fun replacingNeedsAnExistingPhraseAndAValidNewOne() {
         assertTrue(manager.initializeVault(null))
         val dek = manager.copyBootstrapKey()!!
-        assertFalse(manager.replaceRecoverySeed(manager.generateMnemonic().chars, dek))
+        assertFalse(manager.replaceRecoverySeed(manager.generateMnemonic(), dek))
 
-        assertTrue(manager.addRecoverySeed(manager.generateMnemonic().chars, dek))
+        assertTrue(manager.addRecoverySeed(manager.generateMnemonic(), dek))
         assertFalse(manager.replaceRecoverySeed("not a valid phrase".toCharArray(), dek))
-        assertFalse(manager.replaceRecoverySeed(manager.generateMnemonic().chars, ByteArray(16)))
+        assertFalse(manager.replaceRecoverySeed(manager.generateMnemonic(), ByteArray(16)))
     }
 
     @Test
     fun theRecoveryKeyAndTheBackupRootNormaliseThePhraseTheSameWay() {
-        val phrase = manager.generateMnemonic().chars
+        val phrase = manager.generateMnemonic()
         assertTrue(manager.initializeVault(phrase.copyOf()))
         val dek = manager.copyBootstrapKey()!!
         val messy = ("  " + String(phrase).uppercase().replace(" ", " \t ") + "\n").toCharArray()

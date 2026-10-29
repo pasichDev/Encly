@@ -12,9 +12,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.R
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.backup.BackupScreen
@@ -26,7 +25,7 @@ import org.junit.Test
 import org.mockito.Mockito.verifyNoInteractions
 
 class BackupScreenTest : ComposeScreenTest() {
-    private val words = String(MnemonicCode(WordCount.COUNT_12).chars)
+    private val words = String(Mnemonic.generate())
     private val app by lazy { TestApp(context).withWorkingVault(words) }
     private lateinit var backup: BackupViewModel
 

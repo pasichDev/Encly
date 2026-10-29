@@ -3,7 +3,6 @@ package com.pasich.encly.ui.screens
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
@@ -18,6 +17,7 @@ import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.core.security.WipePinChange
+import com.pasich.encly.core.security.bip39.Bip39
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
@@ -115,7 +115,7 @@ internal class TestApp(context: Context) {
         `when`(security.changePin(anyCharArray())).thenReturn(PinChange.SET)
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {
-            runCatching { MnemonicCode(it.getArgument<CharArray>(0).copyOf()).validate() }.isSuccess
+            Bip39().isValid(it.getArgument<CharArray>(0))
         }
     }
 

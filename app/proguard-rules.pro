@@ -13,7 +13,6 @@
 #   - kotlinx.serialization: backup classes use the plugin-generated serializers, called
 #     explicitly (BackupPayload.serializer()); the key names are string constants in that
 #     generated code, and the library ships its own rules (BackupPayloadCodecTest pins them).
-#   - kotlin-bip39: the wordlist is compiled Kotlin code, not a resource loaded by name.
 # Add a rule here only for a concrete reflective, JNI or by-name lookup, next to a comment
 # saying which one.
 

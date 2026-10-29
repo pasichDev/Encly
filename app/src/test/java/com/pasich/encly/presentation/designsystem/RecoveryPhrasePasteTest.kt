@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.designsystem
 
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
+import com.pasich.encly.core.security.Mnemonic
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,7 +10,7 @@ import org.junit.Test
 /** The 12 recovery-word cells: phrases pasted the ways people copy them, and invalid words. */
 class RecoveryPhrasePasteTest {
     private val state = RecoveryPhraseState()
-    private val valid = String(MnemonicCode(WordCount.COUNT_12).chars).split(' ')
+    private val valid = String(Mnemonic.generate()).split(' ')
 
     @Test
     fun aNumberedListPastedFromNotesFillsTheCellsInOrder() {

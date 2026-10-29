@@ -468,9 +468,9 @@ class DuressPinTest {
         assertFalse(vault.security.removeDuressPin())
         assertFalse(vault.security.hasDuressPin())
         assertNull(vault.security.copyBackupRootKey())
-        assertFalse(vault.security.addRecoverySeed(vault.seed.generateMnemonic().chars))
-        assertFalse(vault.security.replaceRecoverySeed(vault.seed.generateMnemonic().chars))
-        assertFalse(vault.security.createBackupKey(vault.seed.generateMnemonic().chars))
+        assertFalse(vault.security.addRecoverySeed(vault.seed.generateMnemonic()))
+        assertFalse(vault.security.replaceRecoverySeed(vault.seed.generateMnemonic()))
+        assertFalse(vault.security.createBackupKey(vault.seed.generateMnemonic()))
         assertFalse(vault.security.canResetPinWithoutCurrent())
         vault.security.disableBiometric()
         assertFalse(vault.security.wipeAndReset())
@@ -570,7 +570,7 @@ class DuressPinTest {
         val security = SecurityManager(prefs, store, seed, database, auth, biometric) {}
 
         init {
-            assertTrue(seed.initializeVault(seed.generateMnemonic().chars))
+            assertTrue(seed.initializeVault(seed.generateMnemonic()))
             val bootstrap = seed.copyBootstrapKey()!!
             assertTrue(auth.configurePin(pin(PIN), bootstrap))
             if (withDuressPin) {

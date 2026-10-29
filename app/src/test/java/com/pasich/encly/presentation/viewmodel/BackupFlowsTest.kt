@@ -1,11 +1,10 @@
 package com.pasich.encly.presentation.viewmodel
 
 import android.net.Uri
-import cash.z.ecc.android.bip39.Mnemonics.MnemonicCode
-import cash.z.ecc.android.bip39.Mnemonics.WordCount
 import com.pasich.encly.R
 import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupKeys
+import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.RecoveryWords
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
@@ -50,8 +49,8 @@ import org.mockito.Mockito.`when`
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BackupFlowsTest {
-    private val phrase = String(MnemonicCode(WordCount.COUNT_12).chars)
-    private val otherPhrase = String(MnemonicCode(WordCount.COUNT_12).chars)
+    private val phrase = String(Mnemonic.generate())
+    private val otherPhrase = String(Mnemonic.generate())
     private val uri: Uri = mock(Uri::class.java)
     private var written: ByteArray? = null
 

@@ -333,7 +333,6 @@ dependencies {
 
     // Cipher: SQLCipher through the androidx.sqlite driver API
     implementation(libs.sealite)
-    implementation(libs.kotlin.bip39)
 
     implementation(libs.icons.lucide)
 
