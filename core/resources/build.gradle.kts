@@ -6,6 +6,7 @@
 // app's res/.
 plugins {
     id("encly.kmp-library")
+    id("encly.kmp-ios")
     id("encly.compose")
 }
 
