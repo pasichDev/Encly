@@ -242,7 +242,8 @@ tasks.withType<Test>().configureEach {
 }
 
 // Coverage: `./gradlew :app:koverXmlReportFdroidDebug :app:koverVerifyFdroidDebug`.
-// The gate is scoped to core/security, the code that guards the key hierarchy.
+// The gate covers what the app itself holds: the activities, the graph and the Android adapters of the
+// platform interfaces. The domain, the data logic and the UI are :shared (its own 85 % gate).
 kover {
     reports {
         variant("fdroidDebug") {
@@ -260,7 +261,14 @@ kover {
                         "*AppGraph\$Impl*",
                         "*_Impl",
                         "*_Impl$*",
+                        "*\$DefaultImpls",
+                        // The system BiometricPrompt and its callbacks need a device (androidx.biometric shows
+                        // a dialog Robolectric cannot answer); what wraps and unwraps the key around them is
+                        // tested in BiometricManagerTest.
+                        "*KeystoreBiometricManager*",
                     )
+                    // The graph's binding containers only declare which implementation answers an interface.
+                    annotatedBy("dev.zacsweers.metro.BindingContainer")
                 }
             }
             verify {
@@ -277,6 +285,10 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:crypto"))
     implementation(project(":core:security"))
+
+    // The domain, the repositories, the backup / import / export logic and the whole UI (Compose Multiplatform);
+    // the app implements the platform interfaces they declare (documents, links, window, clipboard...).
+    implementation(project(":shared"))
 
     // The block editor (Kotlin Multiplatform library); the app binds its extension points.
     implementation(project(":editor"))
@@ -300,12 +312,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.core.splashscreen)
-
-    // Drag and Drop
-    implementation(libs.reorderable)
 
     // Room (the schema and the compiler are in :core:database)
     implementation(libs.androidx.room.ktx)
@@ -334,8 +342,6 @@ dependencies {
 
     // Date and time
     implementation(libs.kotlinx.datetime)
-
-    implementation(libs.icons.lucide)
 
     // detekt rule set for Jetpack Compose (Apache-2.0); runs only inside the detekt task.
     detektPlugins(libs.compose.rules.detekt)

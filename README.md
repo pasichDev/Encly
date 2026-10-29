@@ -203,7 +203,8 @@ links, no baseline profile) and `play`.
 ```bash
 ./gradlew assembleFdroidDebug                      # debug APK (com.pasich.encly.debug)
 ./gradlew :app:testFdroidDebugUnitTest             # JVM unit tests
-./gradlew :app:koverVerifyFdroidDebug              # coverage gate (whole app, 85%)
+./gradlew :app:koverVerifyFdroidDebug              # coverage gate (the Android app: activities and adapters, 85%)
+./gradlew :shared:desktopTest :shared:testAndroidHostTest :shared:koverVerify   # the UI and data logic (85%)
 ./gradlew :editor:desktopTest :editor:testAndroidHostTest :editor:koverVerify   # the editor module (100%)
 ./gradlew :app:detekt :app:lintFdroidRelease       # static analysis
 ./gradlew spotlessApply                            # format Kotlin/Gradle (ktlint; spotlessCheck in CI)

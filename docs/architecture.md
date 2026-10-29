@@ -93,8 +93,25 @@ file's fsync and atomic replace, `JvmVaultFileIo` in the module), `VaultDatabase
 `SecureDatabaseVault`), `BiometricManager` and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`,
 `DeviceLockWatcher`, `MainThreadTimer`, `HandoffStagingSweeper`, `AppStrings`.
 
-The rest of the domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`) still lives in
-the app and is held to the same rule by `PlatformBoundaryTest`, with each adapter file listed with its reason.
+The rest of the domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`) and the whole
+UI (design system, screens, dialogs, navigation, ViewModels) are the Kotlin Multiplatform module `:shared` (Android,
+desktop; no iOS target while `:core:crypto` has none). Its common sources are held to the same rule by
+`SharedBoundaryTest` (`desktopTest`): no `android.`, `java.` or `androidx.activity|core|appcompat|fragment|biometric`
+import, none of `LocalContext`, `LocalActivity`, `LocalView` or `LocalConfiguration`, and no dependency on `:app`; the few
+platform source sets (`jvmAndAndroidMain`, `androidMain`, `desktopMain`) are listed there file by file, each with its
+reason. What the UI needs from the platform is an interface in `com.pasich.encly.platform`, implemented by the host:
+
+- Composition locals, provided once around the content by `AndroidHostServices` (`:app`): `PlatformDocuments` and
+  `DocumentPickers` (the Storage Access Framework: `AndroidDocuments`, `AndroidDocumentPickers`), `ExternalLinks`,
+  `Toaster`, `SensitiveClipboard` (the clipboard policy of `SensitiveClip`), `AppWindow` (FLAG_SECURE, status bar,
+  window background, keyboard, rotation), `ScreenBiometricHost` (the Activity a biometric prompt is shown on),
+  `AppLocaleController` and `AppInfo` (the flavor's flags).
+- ViewModel dependencies, bound in the graph: `PlatformDocuments`, `CacheDirectory`, `AppLocaleController`,
+  `DeviceCapabilities`.
+
+`:app` keeps `MainActivity`, `ImportFromMyNotesActivity`, `MyApplication`, the graph and its Android binding containers,
+and every Android adapter (the platform interfaces above, Keystore and biometrics, the device lock, SharedPreferences,
+the DataStore factory, the keyboard and clipboard boundaries, the hand-off caller check, the in-app language).
 
 ## Navigation
 
@@ -117,8 +134,8 @@ the full unlock reveal plays only on the first unlock after launch, later unlock
 ## Encrypted backups
 
 Export/import is fully offline: the UI hands whole files to and from the Storage Access
-Framework (`CreateDocument` / `OpenDocument`), so there is no storage permission, no temp file
-and no network code. The key comes from the BIP39 recovery seed (see
+Framework (`CreateDocument` / `OpenDocument`, behind `DocumentPickers` and `PlatformDocuments`), so there is no
+storage permission, no temp file and no network code. The key comes from the BIP39 recovery seed (see
 [SECURITY.md](../SECURITY.md#encrypted-backups)), so the same 12 words open a backup on a new
 phone.
 
@@ -133,7 +150,7 @@ phone.
 | `data/backup/VaultDataStore` | Narrow storage contract; `RoomVaultDataStore` over `BackupDao` |
 | `data/backup/BackupPhraseSetup` | Recovery seed + backup-key slot needed before an export |
 | `data/backup/PendingRestore` | Onboarding restore held in memory until PIN setup opens the vault |
-| `data/backup/BackupDocuments` | Reads (≤ 64 MiB, buffer sized from the header) and writes the picked document; never overwrites an existing one |
+| `data/backup/BackupDocuments` | Reads (≤ 64 MiB, buffer sized from the header) and writes the picked document (through `PlatformDocuments`); never overwrites an existing one |
 | `presentation/.../BackupViewModel` + `BackupFlows` | Re-auth, export, import and seed-setup steps |
 
 ```mermaid
@@ -232,5 +249,5 @@ use) are written, in one transaction on the vault session bound when the read st
 files, parsed notes and selection live in the ViewModel only, are never put in saved state, and are
 dropped on cancel, on finish and when the vault locks. Import is available in a decoy session too
 and imports into whichever vault is open. The real exporters' files are the test fixtures
-(`app/src/test/resources/import-fixtures`).
+(`shared/src/jvmAndAndroidTest/resources/import-fixtures`).
 

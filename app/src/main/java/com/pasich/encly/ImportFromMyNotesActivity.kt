@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,14 +31,13 @@ import com.pasich.encly.data.handoff.HandoffLaunch
 import com.pasich.encly.data.handoff.HandoffRequest
 import com.pasich.encly.data.handoff.MyNotesCallerVerifier
 import com.pasich.encly.domain.repository.SettingsRepository
-import com.pasich.encly.presentation.components.SecureTextInputBoundary
-import com.pasich.encly.presentation.components.SensitiveClipboardBoundary
+import com.pasich.encly.platform.AndroidHostServices
+import com.pasich.encly.platform.DocumentRef
 import com.pasich.encly.presentation.screen.handoff.ImportFromMyNotesScreen
 import com.pasich.encly.presentation.viewmodel.HandoffStep
 import com.pasich.encly.presentation.viewmodel.ImportFromMyNotesViewModel
 import com.pasich.encly.ui.theme.AppTheme
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -77,6 +75,9 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
     @Inject
     lateinit var viewModelFactory: MetroViewModelFactory
 
+    @Inject
+    lateinit var hostServices: AndroidHostServices
+
     // Not the default factory: BiometricPrompt and others create their own ViewModels from it.
     private val viewModel: ImportFromMyNotesViewModel by viewModels { viewModelFactory }
 
@@ -113,24 +114,20 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
             themeReady = true
         }
         lifecycleScope.launch { viewModel.step.collect(::publishResult) }
-        viewModel.start(uri)
+        viewModel.start(DocumentRef(uri.toString()))
 
         setContent {
             if (!themeReady) return@setContent
             val strictKeyboard by keyboardPrivacy.strict.collectAsState()
-            CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
+            hostServices.Provide(this, strictKeyboard) {
                 AppTheme {
-                    SecureTextInputBoundary(strict = strictKeyboard) {
-                        SensitiveClipboardBoundary {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.background)
-                                    .windowInsetsPadding(WindowInsets.statusBars),
-                            ) {
-                                ImportFromMyNotesScreen(onClose = ::finish)
-                            }
-                        }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                            .windowInsetsPadding(WindowInsets.statusBars),
+                    ) {
+                        ImportFromMyNotesScreen(onClose = ::finish)
                     }
                 }
             }

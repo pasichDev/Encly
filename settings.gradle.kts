@@ -16,6 +16,7 @@ include(":core:crypto")
 include(":core:security")
 include(":core:keystore")
 include(":core:resources")
+include(":shared")
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)

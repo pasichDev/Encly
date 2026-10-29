@@ -39,6 +39,7 @@ Run the same gates as CI:
 ./gradlew :app:testFdroidDebugUnitTest :app:koverVerifyFdroidDebug   # tests + coverage gate
 ./gradlew :app:detekt :editor:detekt                                  # config/detekt/detekt.yml
 ./gradlew :editor:desktopTest :editor:testAndroidHostTest :editor:koverVerify :editor:checkKotlinAbi   # the :editor module
+./gradlew :shared:desktopTest :shared:testAndroidHostTest :shared:koverVerify :shared:detekt             # the UI and data logic
 ./gradlew :app:lintFdroidRelease :app:lintPlayRelease                  # release lint
 ./gradlew assembleRelease                                              # R8 build
 ```
@@ -75,7 +76,7 @@ Run the same gates as CI:
 
 The repository ships two opt-in hooks in [`.githooks/`](.githooks):
 
-- `pre-commit` runs `spotlessCheck` and `:app:detekt` when the commit stages Kotlin or Gradle
+- `pre-commit` runs `spotlessCheck`, `:app:detekt` and `:shared:detekt` when the commit stages Kotlin or Gradle
   files (`*.kt`, `*.kts`, `gradle/libs.versions.toml`, `.editorconfig`, `config/detekt/`), and
   does nothing for other commits, so docs and resource commits stay instant. It checks the
   working tree, so unstaged edits count too.

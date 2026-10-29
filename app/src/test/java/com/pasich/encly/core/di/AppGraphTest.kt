@@ -197,6 +197,7 @@ class AppGraphTest {
         val main = MainActivity().also { appGraph.inject(it) }
         val otherMain = MainActivity().also { appGraph.inject(it) }
         val handoff = ImportFromMyNotesActivity().also { appGraph.inject(it) }
+        val otherHandoff = ImportFromMyNotesActivity().also { appGraph.inject(it) }
         val application = MyApplication().also { appGraph.inject(it) }
 
         assertSame(main.securityManager, otherMain.securityManager)
@@ -205,7 +206,7 @@ class AppGraphTest {
         assertSame(main.sessionLockManager, application.sessionLockManager)
         assertSame(main.settingsRepository, handoff.settingsRepository)
         assertSame(main.keyboardPrivacy, handoff.keyboardPrivacy)
-        assertSame(main.viewModelFactory, handoff.viewModelFactory)
+        assertSame(handoff.viewModelFactory, otherHandoff.viewModelFactory)
     }
 
     @Test

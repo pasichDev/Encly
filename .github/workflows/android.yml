@@ -94,7 +94,9 @@ jobs:
   # The Kotlin Multiplatform libraries on their desktop JVM and Android host targets: unit tests, the
   # Kover gates, detekt and the public API dump (and Dokka for :editor). The database's desktop tests
   # open and migrate an encrypted vault through Sealite's native library. Their iOS targets compile in
-  # the `editor-ios` job below; :core:crypto and :core:security have none yet (no AES-GCM for iOS).
+  # the `editor-ios` job below; :core:crypto and :core:security have none yet (no AES-GCM for iOS), and
+  # :shared (the domain, the data logic and the whole UI) depends on both, so it has none either. Its
+  # Compose UI tests run under Robolectric in testAndroidHostTest; it has no public API to dump.
   modules:
     name: libraries (tests, coverage, detekt, API)
     # Dependabot bumps (build(deps) / ci(deps)) don't run CI on their own PR: they are merged in
@@ -158,6 +160,10 @@ jobs:
           :core:database:checkKotlinAbi
           :core:resources:desktopTest
           :core:resources:testAndroidHostTest
+          :shared:desktopTest
+          :shared:testAndroidHostTest
+          :shared:koverVerify
+          :shared:detekt
 
       - name: Upload reports on failure
         if: failure()
@@ -169,6 +175,8 @@ jobs:
             editor/build/test-results/
             core/*/build/reports/
             core/*/build/test-results/
+            shared/build/reports/
+            shared/build/test-results/
           retention-days: 7
           if-no-files-found: ignore
 

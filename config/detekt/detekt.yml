@@ -82,6 +82,17 @@ Compose:
       - LocalNavAnimatedVisibilityScope
       # Whether the open vault is the decoy one, provided once by App (presentation/navigation/DecoySession.kt).
       - LocalDecoySession
+      # What the host app (an Activity on Android) offers the shared UI, provided once around its content
+      # (platform/Documents.kt, platform/HostServices.kt): the document dialogs, the window, links, toasts,
+      # the sensitive clipboard, the biometric host, the in-app language and the build's facts.
+      - LocalDocumentPickers
+      - LocalAppWindow
+      - LocalExternalLinks
+      - LocalToaster
+      - LocalSensitiveClipboard
+      - LocalBiometricHost
+      - LocalAppLocales
+      - LocalAppInfo
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:
