@@ -41,12 +41,9 @@ class NoDpLiteralsTest {
     }
 
     private companion object {
-        // The editor carries its own tokens and small controls (it owns no design system of its host).
         val ALLOWED = listOf(
             "/com/pasich/encly/ui/theme/",
             "/com/pasich/encly/presentation/designsystem/",
-            "/com/pasich/encly/editor/theme/",
-            "/com/pasich/encly/editor/ui/components/",
         )
         val DP_LITERAL = Regex("""(?<![\w.])(\d+(?:\.\d+)?)\.dp\b""")
     }

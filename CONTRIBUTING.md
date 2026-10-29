@@ -37,7 +37,8 @@ Run the same gates as CI:
 ```bash
 ./gradlew spotlessCheck                                               # formatting (ktlint)
 ./gradlew :app:testFdroidDebugUnitTest :app:koverVerifyFdroidDebug   # tests + coverage gate
-./gradlew :app:detekt                                                 # config/detekt/detekt.yml
+./gradlew :app:detekt :editor:detekt                                  # config/detekt/detekt.yml
+./gradlew :editor:desktopTest :editor:testAndroidHostTest :editor:koverVerify :editor:checkKotlinAbi   # the :editor module
 ./gradlew :app:lintFdroidRelease :app:lintPlayRelease                  # release lint
 ./gradlew assembleRelease                                              # R8 build
 ```

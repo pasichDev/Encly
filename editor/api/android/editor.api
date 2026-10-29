@@ -1,0 +1,900 @@
+public abstract interface class com/pasich/encly/editor/EditorClipboard {
+	public static final field None Lcom/pasich/encly/editor/EditorClipboard$None;
+	public abstract fun copy (Ljava/lang/String;Ljava/lang/String;Z)V
+}
+
+public final class com/pasich/encly/editor/EditorClipboard$None : com/pasich/encly/editor/EditorClipboard {
+	public fun copy (Ljava/lang/String;Ljava/lang/String;Z)V
+}
+
+public abstract interface class com/pasich/encly/editor/EditorLogger {
+	public static final field None Lcom/pasich/encly/editor/EditorLogger$None;
+	public abstract fun warn (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class com/pasich/encly/editor/EditorLogger$None : com/pasich/encly/editor/EditorLogger {
+	public fun warn (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class com/pasich/encly/editor/EditorServicesKt {
+	public static final fun EditorProvider (Lcom/pasich/encly/editor/EditorStrings;Lcom/pasich/encly/editor/theme/EditorTheme;Lcom/pasich/encly/editor/EditorClipboard;Lcom/pasich/encly/editor/LinkOpener;Lcom/pasich/encly/editor/EditorLogger;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun getLocalEditorStrings ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class com/pasich/encly/editor/EditorString : java/lang/Enum {
+	public static final field BLOCK_BULLETED_LIST Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_CHECKLIST Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_DELETE Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_DUPLICATE Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_HEADING Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_HEADING_LEVEL Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_LINK Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_LIST Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_MOVE_DOWN Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_MOVE_UP Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_NUMBERED_LIST Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_SEPARATOR Lcom/pasich/encly/editor/EditorString;
+	public static final field CHECKLIST_LOCK Lcom/pasich/encly/editor/EditorString;
+	public static final field CHECKLIST_UNLOCK Lcom/pasich/encly/editor/EditorString;
+	public static final field ENTER_URL Lcom/pasich/encly/editor/EditorString;
+	public static final field LINK_ADD Lcom/pasich/encly/editor/EditorString;
+	public static final field LINK_BLOCKED Lcom/pasich/encly/editor/EditorString;
+	public static final field LINK_CONTENT_FAILED Lcom/pasich/encly/editor/EditorString;
+	public static final field LINK_COPY Lcom/pasich/encly/editor/EditorString;
+	public static final field LINK_EDIT Lcom/pasich/encly/editor/EditorString;
+	public static final field LINK_OPEN Lcom/pasich/encly/editor/EditorString;
+	public static final field LIST_ITEM_PLACEHOLDER Lcom/pasich/encly/editor/EditorString;
+	public static final field MORE_OPTIONS Lcom/pasich/encly/editor/EditorString;
+	public static final field PRESS_TO_EDIT Lcom/pasich/encly/editor/EditorString;
+	public static final field QUOTE Lcom/pasich/encly/editor/EditorString;
+	public static final field SLASH_MENU_TITLE Lcom/pasich/encly/editor/EditorString;
+	public static final field TAP_AGAIN_TO_DELETE Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_ACTION_ITEMS Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_AGENDA Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_ATTENDEES Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_BLANK Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_CHECKLIST_TODO Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_JOURNAL Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_JOURNAL_GRATITUDE Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_JOURNAL_TODAY Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_JOURNAL_TOMORROW Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_MEETING Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_NOTES Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_PROJECT Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_PROJECT_DECISIONS Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_PROJECT_GOAL Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_PROJECT_QUESTIONS Lcom/pasich/encly/editor/EditorString;
+	public static final field TEMPLATE_PROJECT_TASKS Lcom/pasich/encly/editor/EditorString;
+	public static final field TEXT Lcom/pasich/encly/editor/EditorString;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/EditorString;
+	public static fun values ()[Lcom/pasich/encly/editor/EditorString;
+}
+
+public abstract interface class com/pasich/encly/editor/EditorStrings {
+	public abstract fun heading (I)Ljava/lang/String;
+	public abstract fun text (Lcom/pasich/encly/editor/EditorString;)Ljava/lang/String;
+}
+
+public abstract interface class com/pasich/encly/editor/LinkOpener {
+	public static final field None Lcom/pasich/encly/editor/LinkOpener$None;
+	public abstract fun open (Ljava/lang/String;)V
+}
+
+public final class com/pasich/encly/editor/LinkOpener$None : com/pasich/encly/editor/LinkOpener {
+	public fun open (Ljava/lang/String;)V
+}
+
+public abstract interface class com/pasich/encly/editor/MarkdownBlockParser {
+	public abstract fun parsePaste (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ljava/util/List;
+}
+
+public final class com/pasich/encly/editor/codec/BlockConverter {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/pasich/encly/editor/codec/BlockConverter;
+	public final fun blocksToJson (Ljava/util/List;)Ljava/lang/String;
+	public final fun jsonToBlocks (Ljava/lang/String;)Ljava/util/List;
+	public final fun jsonToBlocksOrNull (Ljava/lang/String;Lcom/pasich/encly/editor/EditorLogger;)Ljava/util/List;
+	public static synthetic fun jsonToBlocksOrNull$default (Lcom/pasich/encly/editor/codec/BlockConverter;Ljava/lang/String;Lcom/pasich/encly/editor/EditorLogger;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class com/pasich/encly/editor/codec/ImportBlocks {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/pasich/encly/editor/codec/ImportBlocks;
+	public final fun heading (Ljava/lang/String;I)Lcom/pasich/encly/editor/model/Block;
+	public final fun list (Lcom/pasich/encly/editor/model/BlockType;Ljava/util/List;)Lcom/pasich/encly/editor/model/Block;
+	public final fun paragraphs (Ljava/lang/String;)Ljava/util/List;
+	public final fun quote (Ljava/lang/String;)Lcom/pasich/encly/editor/model/Block;
+	public final fun text (Ljava/lang/String;)Lcom/pasich/encly/editor/model/Block;
+}
+
+public final class com/pasich/encly/editor/codec/InlineHtml {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/pasich/encly/editor/codec/InlineHtml;
+	public final fun toPlainText (Ljava/lang/String;Z)Ljava/lang/String;
+	public static synthetic fun toPlainText$default (Lcom/pasich/encly/editor/codec/InlineHtml;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/codec/MarkdownBlockMapper : com/pasich/encly/editor/MarkdownBlockParser {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/pasich/encly/editor/codec/MarkdownBlockMapper;
+	public fun parsePaste (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ljava/util/List;
+	public final fun toBlocks (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final class com/pasich/encly/editor/focus/BlockFocusRegistry {
+	public static final field $stable I
+	public fun <init> (Lcom/pasich/encly/editor/EditorLogger;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/pasich/encly/editor/EditorLogger;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun focus (Lcom/pasich/encly/editor/state/FocusRequest;)Z
+	public final fun focus (Ljava/lang/String;Z)Z
+	public static synthetic fun focus$default (Lcom/pasich/encly/editor/focus/BlockFocusRegistry;Ljava/lang/String;ZILjava/lang/Object;)Z
+	public final fun focusWhenComposed (Lcom/pasich/encly/editor/state/FocusRequest;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun focusWhenComposed$default (Lcom/pasich/encly/editor/focus/BlockFocusRegistry;Lcom/pasich/encly/editor/state/FocusRequest;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract class com/pasich/encly/editor/model/Block {
+	public static final field $stable I
+	public abstract fun getId ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/Block$HBlock : com/pasich/encly/editor/model/Block, com/pasich/encly/editor/model/TextualBlock {
+	public static final field $stable I
+	public fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public final fun component2 ()Lcom/pasich/encly/editor/model/BlockType;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;)Lcom/pasich/encly/editor/model/Block$HBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/Block$HBlock;Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/Block$HBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockType ()Lcom/pasich/encly/editor/model/BlockType;
+	public fun getId ()Ljava/lang/String;
+	public fun getText ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/Block$LinkBlock : com/pasich/encly/editor/model/Block {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;)Lcom/pasich/encly/editor/model/Block$LinkBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/Block$LinkBlock;Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/Block$LinkBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlock ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/Block$ListBlock : com/pasich/encly/editor/model/Block {
+	public static final field $stable I
+	public fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;Lkotlinx/coroutines/flow/MutableStateFlow;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;Lkotlinx/coroutines/flow/MutableStateFlow;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public final fun component2 ()Lcom/pasich/encly/editor/model/BlockType;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public final fun copy (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;Lkotlinx/coroutines/flow/MutableStateFlow;)Lcom/pasich/encly/editor/model/Block$ListBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/Block$ListBlock;Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;Lkotlinx/coroutines/flow/MutableStateFlow;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/Block$ListBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockType ()Lcom/pasich/encly/editor/model/BlockType;
+	public fun getId ()Ljava/lang/String;
+	public final fun getItems ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public final fun getLocked ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/Block$QuoteBlock : com/pasich/encly/editor/model/Block, com/pasich/encly/editor/model/TextualBlock {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;)Lcom/pasich/encly/editor/model/Block$QuoteBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/Block$QuoteBlock;Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/Block$QuoteBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getId ()Ljava/lang/String;
+	public fun getText ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/Block$SeparatorBlock : com/pasich/encly/editor/model/Block {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/pasich/encly/editor/model/Block$SeparatorBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/Block$SeparatorBlock;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/Block$SeparatorBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/Block$TextBlock : com/pasich/encly/editor/model/Block, com/pasich/encly/editor/model/TextualBlock {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/EditorString;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/EditorString;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public final fun component2 ()Lcom/pasich/encly/editor/EditorString;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/EditorString;Ljava/lang/String;)Lcom/pasich/encly/editor/model/Block$TextBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/Block$TextBlock;Lkotlinx/coroutines/flow/MutableStateFlow;Lcom/pasich/encly/editor/EditorString;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/Block$TextBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getId ()Ljava/lang/String;
+	public final fun getPlaceholder ()Lcom/pasich/encly/editor/EditorString;
+	public fun getText ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/BlockFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/pasich/encly/editor/model/BlockFactory;
+	public final fun createBlock (Lcom/pasich/encly/editor/model/BlockType;)Lcom/pasich/encly/editor/model/Block;
+}
+
+public final class com/pasich/encly/editor/model/BlockKt {
+	public static final fun hasContent (Lcom/pasich/encly/editor/model/Block;)Z
+}
+
+public final class com/pasich/encly/editor/model/BlockType : java/lang/Enum {
+	public static final field H1 Lcom/pasich/encly/editor/model/BlockType;
+	public static final field H2 Lcom/pasich/encly/editor/model/BlockType;
+	public static final field H3 Lcom/pasich/encly/editor/model/BlockType;
+	public static final field H4 Lcom/pasich/encly/editor/model/BlockType;
+	public static final field LINK Lcom/pasich/encly/editor/model/BlockType;
+	public static final field LIST_BULLET Lcom/pasich/encly/editor/model/BlockType;
+	public static final field LIST_CHECK Lcom/pasich/encly/editor/model/BlockType;
+	public static final field LIST_NUMBER Lcom/pasich/encly/editor/model/BlockType;
+	public static final field QUOTE Lcom/pasich/encly/editor/model/BlockType;
+	public static final field SEPARATOR Lcom/pasich/encly/editor/model/BlockType;
+	public static final field TEXT Lcom/pasich/encly/editor/model/BlockType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/model/BlockType;
+	public static fun values ()[Lcom/pasich/encly/editor/model/BlockType;
+}
+
+public final class com/pasich/encly/editor/model/ItemListBlock {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;ZLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;ZLjava/lang/String;)Lcom/pasich/encly/editor/model/ItemListBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/ItemListBlock;Ljava/lang/String;ZLjava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/ItemListBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isCheck ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/LinkDataBlock {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/pasich/encly/editor/model/LinkDataBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/LinkDataBlock;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/pasich/encly/editor/model/LinkDataBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getImageUrl ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isError ()Z
+	public final fun setError (Z)V
+	public final fun setImageUrl (Ljava/lang/String;)V
+	public final fun setTitle (Ljava/lang/String;)V
+	public final fun setUrl (Ljava/lang/String;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/pasich/encly/editor/model/TextualBlock {
+	public abstract fun getText ()Lkotlinx/coroutines/flow/MutableStateFlow;
+}
+
+public final class com/pasich/encly/editor/state/BlockDuplicateKt {
+	public static final fun duplicateBlockOf (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;)Z
+	public static final fun duplicateInteracted (Lcom/pasich/encly/editor/state/BlockEditorState;)V
+}
+
+public final class com/pasich/encly/editor/state/BlockEditingKt {
+	public static final fun applyShortcut (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Lcom/pasich/encly/editor/state/Shortcut;)Z
+	public static final fun backspaceAtStart (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;)Z
+	public static final fun breakLine (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
+	public static final fun pasteLink (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Lcom/pasich/encly/editor/model/LinkDataBlock;)Z
+}
+
+public final class com/pasich/encly/editor/state/BlockEditorState {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lcom/pasich/encly/editor/MarkdownBlockParser;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/pasich/encly/editor/MarkdownBlockParser;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addBlock (Lcom/pasich/encly/editor/model/Block;)V
+	public final fun changeValue (Ljava/lang/String;Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/Object;ZLcom/pasich/encly/editor/state/TypingStep;)V
+	public static synthetic fun changeValue$default (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/Object;ZLcom/pasich/encly/editor/state/TypingStep;ILjava/lang/Object;)V
+	public final fun getBlocks ()Ljava/util/List;
+	public final fun getCanRedo ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getCanUndo ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getContentChanges ()Lkotlinx/coroutines/flow/Flow;
+	public final fun getFind ()Lcom/pasich/encly/editor/state/NoteFind;
+	public final fun getMarkdown ()Lcom/pasich/encly/editor/MarkdownBlockParser;
+	public final fun getSelection ()Lcom/pasich/encly/editor/state/BlockSelection;
+	public final fun getSlash ()Lcom/pasich/encly/editor/state/SlashPicker;
+	public final fun load (Ljava/util/List;)V
+	public final fun redo ()V
+	public final fun removeBlock (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;Z)V
+	public static synthetic fun removeBlock$default (Lcom/pasich/encly/editor/state/BlockEditorState;Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;ZILjava/lang/Object;)V
+	public final fun replaceBlock (ILcom/pasich/encly/editor/model/Block;)Z
+	public final fun undo ()V
+}
+
+public final class com/pasich/encly/editor/state/BlockEditorToolbarKt {
+	public static final fun addBlockAfter (Lcom/pasich/encly/editor/state/BlockEditorState;ILcom/pasich/encly/editor/model/Block;)V
+	public static final fun addBlockToEnd (Lcom/pasich/encly/editor/state/BlockEditorState;)V
+	public static final fun canMoveInteracted (Lcom/pasich/encly/editor/state/BlockEditorState;Z)Z
+	public static final fun canRemoveInteracted (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
+	public static final fun indexOf (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;)I
+	public static final fun interactedBlockPosition (Lcom/pasich/encly/editor/state/BlockEditorState;)I
+	public static final fun moveBlockOf (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Z)V
+	public static final fun moveInteracted (Lcom/pasich/encly/editor/state/BlockEditorState;Z)V
+	public static final fun removeInteracted (Lcom/pasich/encly/editor/state/BlockEditorState;)V
+}
+
+public final class com/pasich/encly/editor/state/BlockRemoveAction : java/lang/Enum {
+	public static final field REMOVE Lcom/pasich/encly/editor/state/BlockRemoveAction;
+	public static final field REMOVE_BACKSPACE Lcom/pasich/encly/editor/state/BlockRemoveAction;
+	public static final field REMOVE_BACKSPACE_LIST Lcom/pasich/encly/editor/state/BlockRemoveAction;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/state/BlockRemoveAction;
+	public static fun values ()[Lcom/pasich/encly/editor/state/BlockRemoveAction;
+}
+
+public final class com/pasich/encly/editor/state/BlockSelection {
+	public static final field $stable I
+	public fun <init> (Ljava/util/List;)V
+	public final fun getFocusedBlockId ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getImmediateFocus ()Lkotlin/jvm/functions/Function1;
+	public final fun getInteractedBlockId ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getInteractedIndex ()I
+	public final fun getRequests ()Lkotlinx/coroutines/flow/Flow;
+	public final fun onCaret (Ljava/lang/String;I)V
+	public final fun onFocusLost (Ljava/lang/String;)V
+	public final fun onFocused (Ljava/lang/String;)V
+	public final fun onInteraction (Ljava/lang/String;)V
+	public final fun onItemCaret (Ljava/lang/String;Ljava/lang/String;I)V
+	public final fun setImmediateFocus (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/pasich/encly/editor/state/BlockToolsKt {
+	public static final fun applyTool (Lcom/pasich/encly/editor/state/BlockEditorState;Lcom/pasich/encly/editor/model/BlockType;Z)V
+	public static synthetic fun applyTool$default (Lcom/pasich/encly/editor/state/BlockEditorState;Lcom/pasich/encly/editor/model/BlockType;ZILjava/lang/Object;)V
+	public static final fun focusFirstBlock (Lcom/pasich/encly/editor/state/BlockEditorState;)V
+	public static final fun focusWorkingBlock (Lcom/pasich/encly/editor/state/BlockEditorState;)V
+	public static final fun getHEADING_TOOL ()Lcom/pasich/encly/editor/model/BlockType;
+	public static final fun toggleChecklistLock (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;)Z
+	public static final fun toolType (Lcom/pasich/encly/editor/model/Block;)Lcom/pasich/encly/editor/model/BlockType;
+}
+
+public final class com/pasich/encly/editor/state/FindMatch {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;II)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;II)Lcom/pasich/encly/editor/state/FindMatch;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/FindMatch;Ljava/lang/String;Ljava/lang/String;IIILjava/lang/Object;)Lcom/pasich/encly/editor/state/FindMatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockId ()Ljava/lang/String;
+	public final fun getEnd ()I
+	public final fun getField ()Ljava/lang/String;
+	public final fun getItemId ()Ljava/lang/String;
+	public final fun getStart ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/FindState {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (ZLjava/lang/String;Ljava/util/List;I)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()I
+	public final fun copy (ZLjava/lang/String;Ljava/util/List;I)Lcom/pasich/encly/editor/state/FindState;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/FindState;ZLjava/lang/String;Ljava/util/List;IILjava/lang/Object;)Lcom/pasich/encly/editor/state/FindState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCurrent ()I
+	public final fun getCurrentMatch ()Lcom/pasich/encly/editor/state/FindMatch;
+	public final fun getMatches ()Ljava/util/List;
+	public final fun getQuery ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isOpen ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/FocusRequest {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;ZLjava/lang/Integer;Ljava/lang/String;Ljava/lang/Float;Z)V
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/Integer;Ljava/lang/String;Ljava/lang/Float;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Float;
+	public final fun component6 ()Z
+	public final fun copy (Ljava/lang/String;ZLjava/lang/Integer;Ljava/lang/String;Ljava/lang/Float;Z)Lcom/pasich/encly/editor/state/FocusRequest;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/FocusRequest;Ljava/lang/String;ZLjava/lang/Integer;Ljava/lang/String;Ljava/lang/Float;ZILjava/lang/Object;)Lcom/pasich/encly/editor/state/FocusRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockId ()Ljava/lang/String;
+	public final fun getCaret ()Ljava/lang/Integer;
+	public final fun getCaretOffset ()Ljava/lang/Integer;
+	public final fun getCaretX ()Ljava/lang/Float;
+	public final fun getCursorToEnd ()Z
+	public final fun getFromBelow ()Z
+	public final fun getItemId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/LineBreak {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/pasich/encly/editor/state/LineBreak;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/LineBreak;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/state/LineBreak;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHead ()Ljava/lang/String;
+	public final fun getLines ()Ljava/util/List;
+	public final fun getTail ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isEnter ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/ListEditingKt {
+	public static final fun listBackspaceAtStart (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;)Z
+	public static final fun listLineBreak (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
+	public static final fun listTypingStep (Ljava/util/List;Ljava/util/List;)Lcom/pasich/encly/editor/state/TypingStep;
+}
+
+public final class com/pasich/encly/editor/state/NoteFind {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun close ()V
+	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun next ()V
+	public final fun open ()V
+	public final fun previous ()V
+	public final fun refresh (Ljava/util/List;)V
+	public final fun search (Ljava/lang/String;Ljava/util/List;)V
+}
+
+public final class com/pasich/encly/editor/state/NoteTemplate : java/lang/Enum {
+	public static final field BLANK Lcom/pasich/encly/editor/state/NoteTemplate;
+	public static final field CHECKLIST Lcom/pasich/encly/editor/state/NoteTemplate;
+	public static final field JOURNAL Lcom/pasich/encly/editor/state/NoteTemplate;
+	public static final field MEETING Lcom/pasich/encly/editor/state/NoteTemplate;
+	public static final field PROJECT Lcom/pasich/encly/editor/state/NoteTemplate;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getLabel ()Lcom/pasich/encly/editor/EditorString;
+	public final fun getParts ()Ljava/util/List;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/state/NoteTemplate;
+	public static fun values ()[Lcom/pasich/encly/editor/state/NoteTemplate;
+}
+
+public final class com/pasich/encly/editor/state/NoteTemplatesKt {
+	public static final fun applyTemplate (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/util/List;)Z
+	public static final fun blocks (Lcom/pasich/encly/editor/state/NoteTemplate;Lkotlin/jvm/functions/Function1;)Ljava/util/List;
+	public static final fun isBlankNote (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
+}
+
+public final class com/pasich/encly/editor/state/Shortcut {
+	public static final field $stable I
+	public fun <init> (Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/pasich/encly/editor/model/BlockType;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun copy (Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;Z)Lcom/pasich/encly/editor/state/Shortcut;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/Shortcut;Lcom/pasich/encly/editor/model/BlockType;Ljava/lang/String;ZILjava/lang/Object;)Lcom/pasich/encly/editor/state/Shortcut;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChecked ()Z
+	public final fun getMarker ()Ljava/lang/String;
+	public final fun getType ()Lcom/pasich/encly/editor/model/BlockType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/SlashCommand : java/lang/Enum {
+	public static final field BULLETS Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field CHECKLIST Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field DIVIDER Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field H1 Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field H2 Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field H3 Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field H4 Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field LINK Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field NUMBERED Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field QUOTE Lcom/pasich/encly/editor/state/SlashCommand;
+	public static final field TEXT Lcom/pasich/encly/editor/state/SlashCommand;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/state/SlashCommand;
+	public static fun values ()[Lcom/pasich/encly/editor/state/SlashCommand;
+}
+
+public final class com/pasich/encly/editor/state/SlashCommandsKt {
+	public static final fun applySlash (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Lcom/pasich/encly/editor/state/SlashCommand;)Z
+}
+
+public final class com/pasich/encly/editor/state/SlashMenu {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;IZ)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()I
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;IZ)Lcom/pasich/encly/editor/state/SlashMenu;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/SlashMenu;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;IZILjava/lang/Object;)Lcom/pasich/encly/editor/state/SlashMenu;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockId ()Ljava/lang/String;
+	public final fun getCommitted ()Z
+	public final fun getHighlighted ()I
+	public final fun getHighlightedCommand ()Lcom/pasich/encly/editor/state/SlashCommand;
+	public final fun getMatches ()Ljava/util/List;
+	public final fun getQuery ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isShown ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/SlashPicker {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun commit ()V
+	public final fun dismiss ()V
+	public final fun getMenu ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun moveHighlight (I)V
+	public final fun onText (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun open (Ljava/lang/String;)V
+}
+
+public abstract interface class com/pasich/encly/editor/state/TemplatePart {
+}
+
+public final class com/pasich/encly/editor/state/TemplatePart$Heading : com/pasich/encly/editor/state/TemplatePart {
+	public static final field $stable I
+	public fun <init> (Lcom/pasich/encly/editor/model/BlockType;Lcom/pasich/encly/editor/EditorString;)V
+	public final fun component1 ()Lcom/pasich/encly/editor/model/BlockType;
+	public final fun component2 ()Lcom/pasich/encly/editor/EditorString;
+	public final fun copy (Lcom/pasich/encly/editor/model/BlockType;Lcom/pasich/encly/editor/EditorString;)Lcom/pasich/encly/editor/state/TemplatePart$Heading;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/TemplatePart$Heading;Lcom/pasich/encly/editor/model/BlockType;Lcom/pasich/encly/editor/EditorString;ILjava/lang/Object;)Lcom/pasich/encly/editor/state/TemplatePart$Heading;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getText ()Lcom/pasich/encly/editor/EditorString;
+	public final fun getType ()Lcom/pasich/encly/editor/model/BlockType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/TemplatePart$ListOf : com/pasich/encly/editor/state/TemplatePart {
+	public static final field $stable I
+	public fun <init> (Lcom/pasich/encly/editor/model/BlockType;)V
+	public final fun component1 ()Lcom/pasich/encly/editor/model/BlockType;
+	public final fun copy (Lcom/pasich/encly/editor/model/BlockType;)Lcom/pasich/encly/editor/state/TemplatePart$ListOf;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/TemplatePart$ListOf;Lcom/pasich/encly/editor/model/BlockType;ILjava/lang/Object;)Lcom/pasich/encly/editor/state/TemplatePart$ListOf;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getType ()Lcom/pasich/encly/editor/model/BlockType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/TemplatePart$Paragraph : com/pasich/encly/editor/state/TemplatePart {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/pasich/encly/editor/state/TemplatePart$Paragraph;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/TextDiff {
+	public static final field $stable I
+	public fun <init> (ILjava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (ILjava/lang/String;Ljava/lang/String;)Lcom/pasich/encly/editor/state/TextDiff;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/TextDiff;ILjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/state/TextDiff;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnd ()I
+	public final fun getInserted ()Ljava/lang/String;
+	public final fun getRemoved ()Ljava/lang/String;
+	public final fun getStart ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/TextEditsKt {
+	public static final fun textDiff (Ljava/lang/String;Ljava/lang/String;I)Lcom/pasich/encly/editor/state/TextDiff;
+	public static synthetic fun textDiff$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/pasich/encly/editor/state/TextDiff;
+}
+
+public final class com/pasich/encly/editor/state/TypingKind : java/lang/Enum {
+	public static final field DELETE Lcom/pasich/encly/editor/state/TypingKind;
+	public static final field INSERT Lcom/pasich/encly/editor/state/TypingKind;
+	public static final field REPLACE Lcom/pasich/encly/editor/state/TypingKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/state/TypingKind;
+	public static fun values ()[Lcom/pasich/encly/editor/state/TypingKind;
+}
+
+public final class com/pasich/encly/editor/state/TypingStep {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Lcom/pasich/encly/editor/state/TypingKind;Z)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/pasich/encly/editor/state/TypingKind;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/lang/String;Lcom/pasich/encly/editor/state/TypingKind;Z)Lcom/pasich/encly/editor/state/TypingStep;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/TypingStep;Ljava/lang/String;Lcom/pasich/encly/editor/state/TypingKind;ZILjava/lang/Object;)Lcom/pasich/encly/editor/state/TypingStep;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getField ()Ljava/lang/String;
+	public final fun getKind ()Lcom/pasich/encly/editor/state/TypingKind;
+	public final fun getStartsWord ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/theme/EditorFontFamilies {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Landroidx/compose/ui/text/font/FontFamily;Landroidx/compose/ui/text/font/FontFamily;)V
+	public synthetic fun <init> (Landroidx/compose/ui/text/font/FontFamily;Landroidx/compose/ui/text/font/FontFamily;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Landroidx/compose/ui/text/font/FontFamily;
+	public final fun component2 ()Landroidx/compose/ui/text/font/FontFamily;
+	public final fun copy (Landroidx/compose/ui/text/font/FontFamily;Landroidx/compose/ui/text/font/FontFamily;)Lcom/pasich/encly/editor/theme/EditorFontFamilies;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/theme/EditorFontFamilies;Landroidx/compose/ui/text/font/FontFamily;Landroidx/compose/ui/text/font/FontFamily;ILjava/lang/Object;)Lcom/pasich/encly/editor/theme/EditorFontFamilies;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Landroidx/compose/ui/text/font/FontFamily;
+	public final fun getHeading ()Landroidx/compose/ui/text/font/FontFamily;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/theme/EditorFontSizes {
+	public static final field $stable I
+	public fun <init> ()V
+	public synthetic fun <init> (JJJJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-XSAIIZE ()J
+	public final fun component2-XSAIIZE ()J
+	public final fun component3-XSAIIZE ()J
+	public final fun component4-XSAIIZE ()J
+	public final fun component5-XSAIIZE ()J
+	public final fun component6-XSAIIZE ()J
+	public final fun component7-XSAIIZE ()J
+	public final fun copy-TIfWF00 (JJJJJJJ)Lcom/pasich/encly/editor/theme/EditorFontSizes;
+	public static synthetic fun copy-TIfWF00$default (Lcom/pasich/encly/editor/theme/EditorFontSizes;JJJJJJJILjava/lang/Object;)Lcom/pasich/encly/editor/theme/EditorFontSizes;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getH1-XSAIIZE ()J
+	public final fun getH2-XSAIIZE ()J
+	public final fun getH3-XSAIIZE ()J
+	public final fun getH4-XSAIIZE ()J
+	public final fun getList-XSAIIZE ()J
+	public final fun getQuote-XSAIIZE ()J
+	public final fun getTextBlock-XSAIIZE ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/theme/EditorIcons {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;)V
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class com/pasich/encly/editor/theme/EditorLineSpacing : java/lang/Enum {
+	public static final field COMFORTABLE Lcom/pasich/encly/editor/theme/EditorLineSpacing;
+	public static final field COMPACT Lcom/pasich/encly/editor/theme/EditorLineSpacing;
+	public static final field DEFAULT Lcom/pasich/encly/editor/theme/EditorLineSpacing;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/theme/EditorLineSpacing;
+	public static fun values ()[Lcom/pasich/encly/editor/theme/EditorLineSpacing;
+}
+
+public final class com/pasich/encly/editor/theme/EditorSpacing {
+	public static final field $stable I
+	public fun <init> ()V
+	public synthetic fun <init> (FFFFFFFFFFFFFFFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFFFFFFFFFFFFFFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-D9Ej5fM ()F
+	public final fun component10-D9Ej5fM ()F
+	public final fun component11-D9Ej5fM ()F
+	public final fun component12-D9Ej5fM ()F
+	public final fun component13-D9Ej5fM ()F
+	public final fun component14-D9Ej5fM ()F
+	public final fun component15-D9Ej5fM ()F
+	public final fun component16-D9Ej5fM ()F
+	public final fun component17-D9Ej5fM ()F
+	public final fun component18-D9Ej5fM ()F
+	public final fun component19-D9Ej5fM ()F
+	public final fun component2-D9Ej5fM ()F
+	public final fun component20-D9Ej5fM ()F
+	public final fun component3-D9Ej5fM ()F
+	public final fun component4-D9Ej5fM ()F
+	public final fun component5-D9Ej5fM ()F
+	public final fun component6-D9Ej5fM ()F
+	public final fun component7-D9Ej5fM ()F
+	public final fun component8-D9Ej5fM ()F
+	public final fun component9-D9Ej5fM ()F
+	public final fun copy-DwpW0Ck (FFFFFFFFFFFFFFFFFFFF)Lcom/pasich/encly/editor/theme/EditorSpacing;
+	public static synthetic fun copy-DwpW0Ck$default (Lcom/pasich/encly/editor/theme/EditorSpacing;FFFFFFFFFFFFFFFFFFFFILjava/lang/Object;)Lcom/pasich/encly/editor/theme/EditorSpacing;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButtonHeight-D9Ej5fM ()F
+	public final fun getFieldGap-D9Ej5fM ()F
+	public final fun getGutter-D9Ej5fM ()F
+	public final fun getHairline-D9Ej5fM ()F
+	public final fun getIcon-D9Ej5fM ()F
+	public final fun getIconMedium-D9Ej5fM ()F
+	public final fun getIconSmall-D9Ej5fM ()F
+	public final fun getL-D9Ej5fM ()F
+	public final fun getLabelGap-D9Ej5fM ()F
+	public final fun getM-D9Ej5fM ()F
+	public final fun getMinTouchTarget-D9Ej5fM ()F
+	public final fun getRowGap-D9Ej5fM ()F
+	public final fun getRowHeight-D9Ej5fM ()F
+	public final fun getS-D9Ej5fM ()F
+	public final fun getStroke-D9Ej5fM ()F
+	public final fun getTapArea-D9Ej5fM ()F
+	public final fun getTextGap-D9Ej5fM ()F
+	public final fun getTileSmall-D9Ej5fM ()F
+	public final fun getXs-D9Ej5fM ()F
+	public final fun getXxs-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/theme/EditorTheme {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lcom/pasich/encly/editor/theme/EditorSpacing;Lcom/pasich/encly/editor/theme/EditorFontSizes;Lcom/pasich/encly/editor/theme/EditorFontFamilies;Lcom/pasich/encly/editor/theme/EditorLineSpacing;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Lcom/pasich/encly/editor/theme/EditorIcons;)V
+	public synthetic fun <init> (Lcom/pasich/encly/editor/theme/EditorSpacing;Lcom/pasich/encly/editor/theme/EditorFontSizes;Lcom/pasich/encly/editor/theme/EditorFontFamilies;Lcom/pasich/encly/editor/theme/EditorLineSpacing;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Lcom/pasich/encly/editor/theme/EditorIcons;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/pasich/encly/editor/theme/EditorSpacing;
+	public final fun component2 ()Lcom/pasich/encly/editor/theme/EditorFontSizes;
+	public final fun component3 ()Lcom/pasich/encly/editor/theme/EditorFontFamilies;
+	public final fun component4 ()Lcom/pasich/encly/editor/theme/EditorLineSpacing;
+	public final fun component5 ()Landroidx/compose/ui/text/TextStyle;
+	public final fun component6 ()Landroidx/compose/ui/text/TextStyle;
+	public final fun component7 ()Lcom/pasich/encly/editor/theme/EditorIcons;
+	public final fun copy (Lcom/pasich/encly/editor/theme/EditorSpacing;Lcom/pasich/encly/editor/theme/EditorFontSizes;Lcom/pasich/encly/editor/theme/EditorFontFamilies;Lcom/pasich/encly/editor/theme/EditorLineSpacing;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Lcom/pasich/encly/editor/theme/EditorIcons;)Lcom/pasich/encly/editor/theme/EditorTheme;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/theme/EditorTheme;Lcom/pasich/encly/editor/theme/EditorSpacing;Lcom/pasich/encly/editor/theme/EditorFontSizes;Lcom/pasich/encly/editor/theme/EditorFontFamilies;Lcom/pasich/encly/editor/theme/EditorLineSpacing;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Lcom/pasich/encly/editor/theme/EditorIcons;ILjava/lang/Object;)Lcom/pasich/encly/editor/theme/EditorTheme;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDataStyle ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getFontFamilies ()Lcom/pasich/encly/editor/theme/EditorFontFamilies;
+	public final fun getFontSizes ()Lcom/pasich/encly/editor/theme/EditorFontSizes;
+	public final fun getIcons ()Lcom/pasich/encly/editor/theme/EditorIcons;
+	public final fun getLineSpacing ()Lcom/pasich/encly/editor/theme/EditorLineSpacing;
+	public final fun getQuoteStyle ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getSpacing ()Lcom/pasich/encly/editor/theme/EditorSpacing;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/theme/EditorThemeKt {
+	public static final fun getLocalEditorTheme ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class com/pasich/encly/editor/theme/NoteSpacingKt {
+	public static final fun blockGap-3ABfNKs (Lcom/pasich/encly/editor/theme/EditorLineSpacing;F)F
+	public static final fun isCompact (Lcom/pasich/encly/editor/theme/EditorLineSpacing;)Z
+}
+
+public final class com/pasich/encly/editor/ui/BlockFocusHooksKt {
+	public static final fun rememberBlockFocusRegistry (Ljava/util/List;Landroidx/compose/runtime/Composer;I)Lcom/pasich/encly/editor/focus/BlockFocusRegistry;
+}
+
+public final class com/pasich/encly/editor/ui/EditorBlocksHost {
+	public static final field $stable I
+	public fun <init> (Lcom/pasich/encly/editor/ui/EditorController;Lcom/pasich/encly/editor/focus/BlockFocusRegistry;Lcom/pasich/encly/editor/ui/FindHighlights;Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/pasich/encly/editor/ui/EditorBlocksHostKt {
+	public static final fun editorBlocks (Landroidx/compose/foundation/lazy/LazyListScope;Lcom/pasich/encly/editor/ui/EditorBlocksHost;Ljava/util/List;ZLjava/util/Set;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun editorBlocks$default (Landroidx/compose/foundation/lazy/LazyListScope;Lcom/pasich/encly/editor/ui/EditorBlocksHost;Ljava/util/List;ZLjava/util/Set;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public abstract interface class com/pasich/encly/editor/ui/EditorController {
+	public abstract fun addBlockAfter (ILcom/pasich/encly/editor/model/BlockType;)V
+	public abstract fun addBlockToEnd ()V
+	public abstract fun applySlash (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/SlashCommand;)V
+	public abstract fun duplicateBlock (Lcom/pasich/encly/editor/model/Block;)V
+	public abstract fun editLink (Lcom/pasich/encly/editor/model/Block$LinkBlock;)V
+	public abstract fun getBlocks ()Ljava/util/List;
+	public abstract fun getSlashPicker ()Lcom/pasich/encly/editor/state/SlashPicker;
+	public abstract fun indexOfBlock (Lcom/pasich/encly/editor/model/Block;)I
+	public abstract fun interactedBlockPosition ()I
+	public abstract fun moveBlock (Z)V
+	public abstract fun moveBlockOf (Lcom/pasich/encly/editor/model/Block;Z)V
+	public abstract fun onBackspaceAtStart (Lcom/pasich/encly/editor/model/Block;)Z
+	public abstract fun onBlockFocusLost (Lcom/pasich/encly/editor/model/Block;)V
+	public abstract fun onBlockFocused (Lcom/pasich/encly/editor/model/Block;)V
+	public abstract fun onBlockInteraction (Lcom/pasich/encly/editor/model/Block;)V
+	public abstract fun onBlockTextChanged (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;)V
+	public abstract fun onCaretMoved (Lcom/pasich/encly/editor/model/Block;I)V
+	public abstract fun onLineBreak (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
+	public abstract fun onLinkChanged (Lcom/pasich/encly/editor/model/Block$LinkBlock;Lcom/pasich/encly/editor/model/LinkDataBlock;)V
+	public abstract fun onLinkPasted (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Lcom/pasich/encly/editor/model/LinkDataBlock;)Z
+	public abstract fun onListBackspaceAtStart (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;)Z
+	public abstract fun onListItemCaret (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;I)V
+	public abstract fun onListItemsChanged (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/util/List;Z)V
+	public abstract fun onListLineBreak (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
+	public abstract fun onShortcut (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Lcom/pasich/encly/editor/state/Shortcut;)Z
+	public abstract fun onSlashTyped (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Z)V
+	public abstract fun removeBlock (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;)V
+	public abstract fun replaceBlock (ILcom/pasich/encly/editor/model/Block;)Z
+	public abstract fun toggleChecklistLock (Lcom/pasich/encly/editor/model/Block;)V
+}
+
+public final class com/pasich/encly/editor/ui/FindHighlights {
+	public static final field $stable I
+	public fun <init> (Landroidx/compose/runtime/State;)V
+}
+
+public final class com/pasich/encly/editor/ui/TapBelowBlocksKt {
+	public static final fun rememberWriteAtEnd (Lcom/pasich/encly/editor/ui/EditorController;Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function0;
+	public static final fun tapBelowBlocks (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/lazy/LazyListState;ZLkotlin/jvm/functions/Function0;)Landroidx/compose/ui/Modifier;
+}
+
+public final class com/pasich/encly/editor/ui/blocks/NoteLinkKt {
+	public static final fun isOpenableLink (Ljava/lang/String;)Z
+}
+
+public final class com/pasich/encly/editor/ui/blocks/TextBlockKt {
+	public static final fun getWritingKeyboard ()Landroidx/compose/foundation/text/KeyboardOptions;
+}
+
+public final class com/pasich/encly/editor/ui/blocks/TextSyncKt {
+	public static final fun rememberSyncedTextFieldState (Lkotlin/jvm/functions/Function0;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;I)Landroidx/compose/foundation/text/input/TextFieldState;
+}
+
+public final class com/pasich/encly/editor/ui/components/ComposableSingletons$EditorSheetKt {
+	public static final field INSTANCE Lcom/pasich/encly/editor/ui/components/ComposableSingletons$EditorSheetKt;
+	public fun <init> ()V
+	public final fun getLambda$1043769206$Encly_editor ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/pasich/encly/editor/ui/sheets/BlockSheetKind : java/lang/Enum {
+	public static final field LINK Lcom/pasich/encly/editor/ui/sheets/BlockSheetKind;
+	public static final field OTHER Lcom/pasich/encly/editor/ui/sheets/BlockSheetKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/ui/sheets/BlockSheetKind;
+	public static fun values ()[Lcom/pasich/encly/editor/ui/sheets/BlockSheetKind;
+}
+
+public final class com/pasich/encly/editor/ui/sheets/BlockSheetKindKt {
+	public static final fun EditorBlockSheet (Lcom/pasich/encly/editor/ui/sheets/BlockSheetKind;Ljava/lang/String;ZLcom/pasich/encly/editor/ui/EditorController;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+}
+

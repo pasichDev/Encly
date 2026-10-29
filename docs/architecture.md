@@ -52,8 +52,9 @@ Note editor writes are serialized by its ViewModel and must complete before navi
 success. Notes, tags and tasks remain local Room records inside the encrypted database. Room
 Flows drive list state; the active note list is derived from selected tag and sort state.
 
-The block editor lives in the package `com.pasich.encly.editor` (`model`, `codec`, `state`, `focus`,
-`theme`, `ui`), which imports nothing of the app (`EditorBoundaryTest`): the app gives it its texts
+The block editor is the Kotlin Multiplatform module `:editor` (package `com.pasich.encly.editor`:
+`model`, `codec`, `state`, `focus`, `theme`, `ui`; see `editor/README.md`), which depends on nothing of
+the app (`EditorBoundaryTest`): the app gives it its texts
 (`EditorStrings`), look (`EditorTheme`), clipboard, link opener and logger, and a controller over
 the note's view model (`EditorController`), all bound in `presentation/screen/editnote/EditorBindings.kt`.
 

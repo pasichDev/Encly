@@ -2,23 +2,19 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:ListBlock.kt$firstItem != null &amp;&amp; firstItem.value.isEmpty() &amp;&amp; itemsList.size == 1 &amp;&amp; focusedItemIndex == null</ID>
     <ID>CyclomaticComplexMethod:BlockSerialization.kt$BlockDeserializer$override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Block</ID>
     <ID>CyclomaticComplexMethod:EditNoteScreen.kt$@OptIn( ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ) @Composable fun EditNoteScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:EditTagScreen.kt$@Composable private fun TagEditItem( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
-    <ID>CyclomaticComplexMethod:ListBlock.kt$@Composable fun ListBlock( block: Block.ListBlock, blockActions: BlockActions, index: Int, modifier: Modifier = Modifier, isLocked: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:NoteSubTitle.kt$@Composable fun NoteSubTitle( statusSaveNote: SaveStatusNote, note: Note, modifier: Modifier = Modifier, tagButtonPadding: PaddingValues = PaddingValues(0.dp), editTagListViewModel: TagListViewModel = metroViewModel(), tagsViewListen: ((Boolean) -&gt; Unit)? = null, changeTag: ((Long) -&gt; Unit)? = null, isDuplicate: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:NotesTextFormatter.kt$NotesTextFormatter$fun blocksToPlainText(blocks: List&lt;Block&gt;): String</ID>
     <ID>CyclomaticComplexMethod:TasksScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TasksScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: TasksViewModel = metroViewModel(), )</ID>
     <ID>LongMethod:AboutScreen.kt$@Composable private fun DeveloperActionsSection(context: Context)</ID>
-    <ID>LongMethod:ActionLinkBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ActionLinkBottomSheet( settings: SettingsBlockDialog, sheetState: SheetState, onAction: (ActionBlockDialog) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
     <ID>LongMethod:EditNoteBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun EditNoteBottomSheet( isVisible: Boolean, onDismiss: () -&gt; Unit, viewModel: EditNoteViewModel = metroViewModel&lt;EditNoteViewModel&gt;(), onAction: (EditNoteBottomSheetAction) -&gt; Unit = {}, )</ID>
     <ID>LongMethod:EditNoteScreen.kt$@OptIn( ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ) @Composable fun EditNoteScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel(), )</ID>
     <ID>LongMethod:EditTagScreen.kt$@Composable private fun TagEditItem( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
     <ID>LongMethod:EditTagScreen.kt$@OptIn(ExperimentalFoundationApi::class) @SuppressLint("MutableCollectionMutableState") @Composable private fun ListTagsEdit( globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, modifier: Modifier = Modifier, viewModel: TagListViewModel = metroViewModel(), )</ID>
     <ID>LongMethod:HeroCard.kt$@Composable fun HeroCard(icon: HeroIcon, title: String, subtitle: String, description: String, modifier: Modifier = Modifier)</ID>
     <ID>LongMethod:HomeBar.kt$@Composable fun HomeBar( drawerState: DrawerState, isGrid: Boolean, onToggleView: () -&gt; Unit, showSortDialog: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>LongMethod:ListBlock.kt$@Composable fun ListBlock( block: Block.ListBlock, blockActions: BlockActions, index: Int, modifier: Modifier = Modifier, isLocked: Boolean = false, )</ID>
     <ID>LongMethod:LossRecoveryScreen.kt$@Composable fun LossRecoveryScreen(onRecoveryConfirm: () -&gt; Unit, modifier: Modifier = Modifier)</ID>
     <ID>LongMethod:MainScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MainScreen( navController: NavHostController, drawerState: DrawerState, modifier: Modifier = Modifier, mainListStateViewModel: MainListStateViewModel = metroViewModel(), settingsViewModel: SettingsViewModel = metroViewModel(), noteListViewModel: NoteListViewModel = metroViewModel(), )</ID>
     <ID>LongMethod:ModalBoxItem.kt$@Composable fun ModalBoxItem( title: String, modifier: Modifier = Modifier, roundPosition: RoundPosition = RoundPosition.Full, icon: Painter = painterResource(id = R.drawable.ic_about), active: Boolean = false, next: Boolean = false, confirmationRequest: Color? = null, action: () -&gt; Unit = {}, enable: Boolean = true, checked: Boolean = false, )</ID>
@@ -92,8 +88,6 @@
     <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$4</ID>
     <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$6</ID>
     <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$8</ID>
-    <ID>MagicNumber:ListBlock.kt$0.7f</ID>
-    <ID>MagicNumber:ListBlock.kt$50</ID>
     <ID>MagicNumber:MainDrawer.kt$0.8f</ID>
     <ID>MagicNumber:MainDrawer.kt$600</ID>
     <ID>MagicNumber:MainListStateViewModel.kt$MainListStateViewModel$5_000</ID>
@@ -134,7 +128,6 @@
     <ID>TooGenericExceptionCaught:MyApplication.kt$MyApplication$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SecureDatabaseManager.kt$SecureDatabaseManager$e: Exception</ID>
     <ID>TooManyFunctions:AuthenticationManager.kt$AuthenticationManager</ID>
-    <ID>TooManyFunctions:BlockOperations.kt$BlockOperations</ID>
     <ID>TooManyFunctions:EditNoteViewModel.kt$EditNoteViewModel : ViewModel</ID>
     <ID>TooManyFunctions:OnboardingViewModel.kt$OnboardingViewModel : ViewModel</ID>
     <ID>TooManyFunctions:SecurityManager.kt$SecurityManager</ID>
