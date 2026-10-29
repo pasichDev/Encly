@@ -1,10 +1,16 @@
 package com.pasich.encly.core.di
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.pasich.encly.core.platform.HandlerMainThreadTimer
+import com.pasich.encly.core.platform.KeyValueStore
+import com.pasich.encly.core.platform.MainThreadTimer
+import com.pasich.encly.core.platform.SharedPreferencesKeyValueStore
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.AutoLockPolicy
+import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.DeviceLockWatcher
+import com.pasich.encly.core.security.HandoffStagingSweeper
+import com.pasich.encly.core.security.KeystoreBiometricManager
 import com.pasich.encly.core.security.KeystorePinFactor
 import com.pasich.encly.core.security.LockoutClock
 import com.pasich.encly.core.security.PinHardwareFactor
@@ -14,18 +20,16 @@ import com.pasich.encly.core.security.SystemLockoutClock
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.security.VaultStore
 import com.pasich.encly.data.handoff.CacheHandoffStagingSweeper
-import com.pasich.encly.data.handoff.HandoffStagingSweeper
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.io.File
-import javax.inject.Singleton
 
-@Module
-@InstallIn(SingletonComponent::class)
+@ContributesTo(AppScope::class)
+@BindingContainer
 object SecurityModule {
 
     /**
@@ -34,7 +38,7 @@ object SecurityModule {
      * [VaultStore]). Construction touches no disk, so it can never fail at injection time.
      */
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideVaultStore(@ApplicationContext context: Context): VaultStore =
         VaultStore(File(context.noBackupFilesDir, VAULT_FILE))
 
@@ -44,32 +48,38 @@ object SecurityModule {
      * unreadable at startup.
      */
     @Provides
-    @Singleton
-    fun provideAppFlags(@ApplicationContext context: Context): SharedPreferences =
-        context.getSharedPreferences(FLAGS_FILE, Context.MODE_PRIVATE)
+    @SingleIn(AppScope::class)
+    fun provideAppFlags(@ApplicationContext context: Context): KeyValueStore =
+        SharedPreferencesKeyValueStore(context.getSharedPreferences(FLAGS_FILE, Context.MODE_PRIVATE))
 
     private const val VAULT_FILE = "vault_state_v3.bin"
     private const val FLAGS_FILE = "encly_flags_v3"
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class SecurityBindingsModule {
+@ContributesTo(AppScope::class)
+@BindingContainer
+interface SecurityBindingsModule {
     @Binds
-    abstract fun bindPinHardwareFactor(factor: KeystorePinFactor): PinHardwareFactor
+    fun bindPinHardwareFactor(factor: KeystorePinFactor): PinHardwareFactor
 
     @Binds
-    abstract fun bindLockoutClock(clock: SystemLockoutClock): LockoutClock
+    fun bindBiometricManager(manager: KeystoreBiometricManager): BiometricManager
 
     @Binds
-    abstract fun bindDeviceLockWatcher(watcher: SystemDeviceLockWatcher): DeviceLockWatcher
+    fun bindMainThreadTimer(timer: HandlerMainThreadTimer): MainThreadTimer
 
     @Binds
-    abstract fun bindVaultLockEvents(manager: SessionLockManager): VaultLockEvents
+    fun bindLockoutClock(clock: SystemLockoutClock): LockoutClock
 
     @Binds
-    abstract fun bindAutoLockPolicy(autoLock: AutoLock): AutoLockPolicy
+    fun bindDeviceLockWatcher(watcher: SystemDeviceLockWatcher): DeviceLockWatcher
 
     @Binds
-    abstract fun bindHandoffStagingSweeper(sweeper: CacheHandoffStagingSweeper): HandoffStagingSweeper
+    fun bindVaultLockEvents(manager: SessionLockManager): VaultLockEvents
+
+    @Binds
+    fun bindAutoLockPolicy(autoLock: AutoLock): AutoLockPolicy
+
+    @Binds
+    fun bindHandoffStagingSweeper(sweeper: CacheHandoffStagingSweeper): HandoffStagingSweeper
 }

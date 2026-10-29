@@ -5,13 +5,25 @@ naming:
     # Jetpack Compose @Composable functions are PascalCase by convention.
     ignoreAnnotated: ['Composable']
 
+# Tests are scenarios, not production code: the complexity and style rules (magic numbers in test data,
+# one class with many test functions, long lines of expected bytes) do not apply to them. The Kotlin
+# Multiplatform modules keep tests in these source sets, which detekt's own defaults do not know.
 complexity:
+  excludes: &tests
+    - '**/test/**'
+    - '**/commonTest/**'
+    - '**/jvmAndAndroidTest/**'
+    - '**/desktopTest/**'
+    - '**/androidHostTest/**'
+    - '**/androidUnitTest/**'
+    - '**/iosTest/**'
   LongParameterList:
     # Parameters with defaults (Compose `modifier`, injected ViewModels, optional flags) cost
     # callers nothing; count only the ones every call has to pass.
     ignoreDefaultParameters: true
 
 style:
+  excludes: *tests
   # Unused code. Stricter than the defaults: unused imports are reported too, and nothing is
   # whitelisted by name except the conventional `_`. Private @Preview functions are only used by
   # the IDE, so they are exempt.
@@ -46,13 +58,22 @@ Compose:
       - LocalBaseFontSize
       - LocalFontStyle
       - LocalSimpleEdit
-      - LocalNoteLineSpacing
       - LocalFontStyles
-      # The slash picker's labels, built once for the editor (editor/blocks/SlashMenuPopup.kt).
+      # What the note editor needs from its host, provided once per screen (editor/EditorServices.kt,
+      # editor/theme/EditorTheme.kt) and the slash picker's labels built once for it
+      # (editor/ui/blocks/SlashMenuPopup.kt).
+      - LocalEditorTheme
+      - LocalEditorStrings
+      - LocalEditorClipboard
+      - LocalLinkOpener
+      - LocalEditorLogger
       - LocalSlashLabels
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors
       - LocalEnclyTypography
+      # The window size class and the spacing density, provided once by App (ui/theme/Adaptive.kt).
+      - LocalWidthClass
+      - LocalDensityProfile
       # The unlock reveal, provided once by App (presentation/effects/UnlockReveal.kt).
       - LocalUnlockReveal
       - LocalSpacing
@@ -64,6 +85,29 @@ Compose:
       - LocalNavAnimatedVisibilityScope
       # Whether the open vault is the decoy one, provided once by App (presentation/navigation/DecoySession.kt).
       - LocalDecoySession
+      # What the host app (an Activity on Android) offers the shared UI, provided once around its content
+      # (platform/Documents.kt, platform/HostServices.kt): the document dialogs, the window, links, toasts,
+      # the sensitive clipboard, the biometric host, the in-app language and the build's facts.
+      - LocalDocumentPickers
+      - LocalAppWindow
+      - LocalExternalLinks
+      - LocalToaster
+      - LocalSensitiveClipboard
+      - LocalBiometricHost
+      - LocalAppLocales
+      - LocalAppInfo
+      - LocalNavigationRequests
+      # What a host with several windows adds (platform/NoteHostServices.kt): the PDF and print renderer, "open in
+      # new window", the window's claims on the notes it edits, and whether the windows share one lock.
+      - LocalNoteDocumentRenderer
+      - LocalNoteWindows
+      - LocalNoteEditClaims
+      - LocalSessionSharedAcrossWindows
+      # The window's pointer-first flag, key map and command router, provided once around the app
+      # (ui/theme/Adaptive.kt, presentation/designsystem/EnclyShortcuts.kt, presentation/navigation/AppCommandRouter.kt).
+      - LocalPointerFirst
+      - LocalEnclyShortcuts
+      - LocalAppCommands
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

@@ -3,7 +3,6 @@ package com.pasich.encly.release
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * Plaintext never leaves the vault by a side door (issue #15): no share sheet, no FileProvider
@@ -14,19 +13,18 @@ import java.io.File
  * re-authentication (see SECURITY.md → Markdown export). Creating a document is allowed only in the
  * two files that host them.
  *
- * Scans every source and resource under app/src/main; comments are skipped, so a comment may
- * still name what is banned.
+ * Scans every source and resource of the app (app/src/main) and of the shared UI (every production source
+ * set of shared/src); comments are skipped, so a comment may still name what is banned.
  */
 class NoPlaintextExportTest {
 
-    private val mainRoot = listOf(File("src/main"), File("app/src/main")).first { it.isDirectory }
+    private val sources = ShippedSources.files(SCANNED)
 
     @Test
     fun nothingInTheAppExportsPlaintext() {
-        val offenders = mainRoot.walkTopDown()
-            .filter { it.isFile && it.extension in SCANNED }
-            .flatMap { file ->
-                val path = file.relativeTo(mainRoot).invariantSeparatorsPath
+        assertTrue("no sources found", sources.size > 250)
+        val offenders = sources
+            .flatMap { (file, path) ->
                 file.readLines().mapIndexedNotNull { index, line ->
                     if (isComment(line)) return@mapIndexedNotNull null
                     BANNED.filter { (_, rule) -> rule.matches(path, line) }
@@ -34,7 +32,6 @@ class NoPlaintextExportTest {
                         .takeIf { it.isNotEmpty() }
                 }.flatten()
             }
-            .toList()
         assertTrue(
             "Plaintext must not leave the app except as an encrypted backup or the warned, re-authenticated " +
                 "Markdown export (see SECURITY.md): $offenders",
@@ -56,6 +53,7 @@ class NoPlaintextExportTest {
             "clipboard write" to "clipboard.setClipEntry(entry)",
             "clipboard write" to "val clipboard = LocalClipboardManager.current",
             "document creation" to "ActivityResultContracts.CreateDocument(\"text/plain\")",
+            "document creation" to "val launcher = pickers.rememberCreateDocument(\"text/plain\") { }",
             "document creation" to "Intent(Intent.ACTION_CREATE_DOCUMENT)",
         )
         caught.forEach { (name, line) ->
@@ -67,8 +65,10 @@ class NoPlaintextExportTest {
             OTHER_FILE to "val intent = Intent(Intent.ACTION_SENDTO).apply {",
             SENSITIVE_CLIP to "clipboard.setPrimaryClip(clip)",
             SENSITIVE_CLIP to "delegate.setClipEntry(clipEntry)",
-            BACKUP_SCREEN to "ActivityResultContracts.CreateDocument(BackupFormat.MIME_TYPE),",
-            MARKDOWN_HOST to "ActivityResultContracts.CreateDocument(MarkdownExport.MIME_NOTE),",
+            BACKUP_SCREEN to "pickers.rememberCreateDocument(BackupFormat.MIME_TYPE, onExportTarget)",
+            MARKDOWN_HOST to "pickers.rememberCreateDocument(MarkdownExport.MIME_NOTE, viewModel::onTarget)",
+            PICKERS to "ActivityResultContracts.CreateDocument(mimeType)",
+            PICKER_API to "fun rememberCreateDocument(mimeType: String, onPicked: (DocumentRef?) -> Unit)",
         ).forEach { (path, line) ->
             assertFalse("$path: $line", BANNED.values.any { it.matches(path, line) })
         }
@@ -83,10 +83,16 @@ class NoPlaintextExportTest {
 
     private companion object {
         val SCANNED = setOf("kt", "java", "xml")
-        const val SENSITIVE_CLIP = "java/com/pasich/encly/presentation/components/SensitiveClip.kt"
-        const val BACKUP_SCREEN = "java/com/pasich/encly/presentation/screen/backup/BackupScreen.kt"
-        const val MARKDOWN_HOST = "java/com/pasich/encly/presentation/screen/backup/MarkdownExportHost.kt"
-        const val OTHER_FILE = "java/com/pasich/encly/presentation/screen/SomeScreen.kt"
+        const val SENSITIVE_CLIP = "app/src/main/java/com/pasich/encly/platform/SensitiveClip.kt"
+        const val IOS_CLIP = "shared/src/iosMain/kotlin/com/pasich/encly/ios/platform/IosClipboard.kt"
+        const val IOS_PICKERS = "shared/src/iosMain/kotlin/com/pasich/encly/ios/platform/IosDocumentPickers.kt"
+        const val PICKERS = "app/src/main/java/com/pasich/encly/platform/AndroidDocumentPickers.kt"
+        const val PICKER_API = "shared/src/commonMain/kotlin/com/pasich/encly/platform/Documents.kt"
+        const val BACKUP_SCREEN =
+            "shared/src/commonMain/kotlin/com/pasich/encly/presentation/screen/backup/BackupScreen.kt"
+        const val MARKDOWN_HOST =
+            "shared/src/commonMain/kotlin/com/pasich/encly/presentation/screen/backup/MarkdownExportHost.kt"
+        const val OTHER_FILE = "shared/src/commonMain/kotlin/com/pasich/encly/presentation/screen/SomeScreen.kt"
 
         val BANNED = mapOf(
             // ACTION_SEND and ACTION_SEND_MULTIPLE, in code or an intent filter; not ACTION_SENDTO.
@@ -96,12 +102,13 @@ class NoPlaintextExportTest {
             "alarm" to Rule(Regex("""\bAlarmManager\b""")),
             "clipboard write" to Rule(
                 Regex("""\bsetPrimaryClip\b|\bsetClipEntry\b|\bLocalClipboardManager\b"""),
-                allowedIn = setOf(SENSITIVE_CLIP),
+                allowedIn = setOf(SENSITIVE_CLIP, IOS_CLIP),
             ),
-            // Creating a document is how a file leaves the app: only the two export hosts may.
+            // Creating a document is how a file leaves the app: only the two export hosts may ask the platform
+            // for one, and only the picker adapter (and its interface) names the system dialog.
             "document creation" to Rule(
-                Regex("""\bCreateDocument\b|ACTION_CREATE_DOCUMENT"""),
-                allowedIn = setOf(BACKUP_SCREEN, MARKDOWN_HOST),
+                Regex("""\bCreateDocument\b|ACTION_CREATE_DOCUMENT|\brememberCreateDocument\b"""),
+                allowedIn = setOf(BACKUP_SCREEN, MARKDOWN_HOST, PICKERS, PICKER_API, IOS_PICKERS),
             ),
         )
 

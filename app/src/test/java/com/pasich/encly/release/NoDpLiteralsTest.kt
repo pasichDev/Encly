@@ -3,7 +3,6 @@ package com.pasich.encly.release
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * Screens take their spacing and sizes from the design system (EnclyTheme.spacing and the
@@ -12,20 +11,19 @@ import java.io.File
  */
 class NoDpLiteralsTest {
 
-    private val sourceRoot = listOf(File("src/main/java"), File("app/src/main/java")).first { it.isDirectory }
+    private val sources = ShippedSources.files(setOf("kt"))
 
     @Test
     fun dpLiteralsOnlyInTheDesignSystem() {
-        val offenders = sourceRoot.walkTopDown()
-            .filter { it.isFile && it.extension == "kt" }
-            .filterNot { file -> ALLOWED.any { file.invariantSeparatorsPath.contains(it) } }
-            .flatMap { file ->
+        assertTrue("no sources found", sources.size > 250)
+        val offenders = sources
+            .filterNot { (_, path) -> ALLOWED.any { path.contains(it) } }
+            .flatMap { (file, path) ->
                 file.readLines().mapIndexedNotNull { index, line ->
-                    "${file.relativeTo(sourceRoot).invariantSeparatorsPath}:${index + 1}"
+                    "$path:${index + 1}"
                         .takeIf { DP_LITERAL.findAll(line).any { it.groupValues[1].toDouble() != 0.0 } }
                 }
             }
-            .toList()
         assertTrue(
             "Use EnclyTheme.spacing or a design-system component instead of dp literals: $offenders",
             offenders.isEmpty(),
@@ -41,7 +39,10 @@ class NoDpLiteralsTest {
     }
 
     private companion object {
-        val ALLOWED = listOf("/com/pasich/encly/ui/theme/", "/com/pasich/encly/presentation/designsystem/")
+        val ALLOWED = listOf(
+            "/com/pasich/encly/ui/theme/",
+            "/com/pasich/encly/presentation/designsystem/",
+        )
         val DP_LITERAL = Regex("""(?<![\w.])(\d+(?:\.\d+)?)\.dp\b""")
     }
 }

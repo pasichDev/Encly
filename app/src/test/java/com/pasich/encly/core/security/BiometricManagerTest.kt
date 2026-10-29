@@ -28,11 +28,15 @@ import android.hardware.biometrics.BiometricManager as PlatformBiometricManager
 class BiometricManagerTest {
     private val context: Application get() = ApplicationProvider.getApplicationContext()
     private val store = tempVaultStore()
-    private lateinit var manager: BiometricManager
+    private val texts = BiometricTextSource().apply {
+        val prompt = BiometricManager.PromptConfig("title", "subtitle")
+        set(BiometricTexts("unavailable", "cancel", prompt, prompt, prompt, prompt))
+    }
+    private lateinit var manager: KeystoreBiometricManager
 
     @Before
     fun setUp() {
-        manager = BiometricManager(context, store)
+        manager = KeystoreBiometricManager(context, store, texts)
     }
 
     private fun sensor(available: Boolean) {
@@ -40,7 +44,8 @@ class BiometricManagerTest {
         Shadow.extract<ShadowBiometricManager>(platform).setCanAuthenticate(available)
     }
 
-    private fun activity(): FragmentActivity = Robolectric.buildActivity(FragmentActivity::class.java).get()
+    private fun activity(): BiometricHost =
+        ActivityBiometricHost(Robolectric.buildActivity(FragmentActivity::class.java).get())
 
     @Test
     fun withoutASensorBiometricsAreUnavailable() {

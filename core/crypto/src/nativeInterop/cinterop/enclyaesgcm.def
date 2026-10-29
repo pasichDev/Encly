@@ -1,0 +1,5 @@
+package = com.pasich.encly.core.crypto.swift
+headers = enclyaesgcm.h
+staticLibraries = libenclyaesgcm.a
+# The Swift runtime and CryptoKit come with the OS; ld resolves an absolute -L path inside the SDK.
+linkerOpts = -L/usr/lib/swift

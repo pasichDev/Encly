@@ -27,7 +27,11 @@ permissions:
   contents: read
 
 jobs:
+  # The checks run as three parallel jobs (app, libraries, release build) rather than one long Gradle
+  # invocation; fdroid flavor only, the play flavor differs only in store flags and is built by the
+  # release workflow. The instrumented tests run in the `instrumented` job below.
   build:
+    name: app (format, unit tests, coverage, detekt)
     # Dependabot bumps (build(deps) / ci(deps)) don't run CI on their own PR: they are merged in
     # batches and checked on the branch that takes them, or on main after the merge.
     if: github.actor != 'dependabot[bot]'
@@ -54,19 +58,423 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # One Gradle invocation, fdroid flavor only, to keep Actions minutes low. The play flavor
-      # differs only in store flags and is built by the release workflow; instrumented tests
-      # (Room migrations, SQLCipher) run locally on an emulator: see CONTRIBUTING.md.
-      - name: Format, unit tests, detekt, release build
+      - name: Format, unit tests, coverage, detekt
         run: >-
           ./gradlew spotlessCheck
           :app:testFdroidDebugUnitTest
           :app:koverXmlReportFdroidDebug
           :app:koverVerifyFdroidDebug
           :app:detekt
-          :app:assembleFdroidRelease
 
-      # Separate invocation: lint running alongside Hilt code generation for another variant has
+      # For information only: posts (and keeps updating) one PR comment with the app
+      # coverage. It never fails the build.
+      - name: Coverage comment
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: madrapps/jacoco-report@e51ce1f46f7f8b5331593f935e59cbaf44b84920 # v1.8.0
+        with:
+          paths: app/build/reports/kover/reportFdroidDebug.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: 'Coverage'
+          update-comment: true
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reports-app
+          path: |
+            app/build/reports/
+            app/build/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The Kotlin Multiplatform libraries on their desktop JVM and Android host targets: unit tests, the
+  # Kover gates, detekt and the public API dump (and Dokka for :editor). The database's desktop tests
+  # open and migrate an encrypted vault through Sealite's native library. Their iOS targets compile in
+  # the `editor-ios` job below, which also builds the iOS app around :shared (the domain, the data logic and
+  # the whole UI). Its Compose UI tests run under Robolectric in testAndroidHostTest; it has no public API to
+  # dump.
+  modules:
+    name: libraries (tests, coverage, detekt, API)
+    # Dependabot bumps (build(deps) / ci(deps)) don't run CI on their own PR: they are merged in
+    # batches and checked on the branch that takes them, or on main after the merge.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # The desktop app's tests open real AWT windows (capture exclusion, window hooks), so they run under a
+      # virtual X display.
+      - name: Virtual display for the desktop tests
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Library checks
+        run: >-
+          xvfb-run --auto-servernum ./gradlew
+          :editor:desktopTest
+          :editor:testAndroidHostTest
+          :editor:koverVerify
+          :editor:koverVerifyEditorLogic
+          :editor:detekt
+          :editor:checkKotlinAbi
+          :editor:dokkaGeneratePublicationHtml
+          :core:common:desktopTest
+          :core:common:testAndroidHostTest
+          :core:common:koverVerify
+          :core:common:detekt
+          :core:common:checkKotlinAbi
+          :core:crypto:desktopTest
+          :core:crypto:testAndroidHostTest
+          :core:crypto:koverVerify
+          :core:crypto:detekt
+          :core:crypto:checkKotlinAbi
+          :core:security:desktopTest
+          :core:security:testAndroidHostTest
+          :core:security:koverVerify
+          :core:security:detekt
+          :core:security:checkKotlinAbi
+          :core:keystore:desktopTest
+          :core:keystore:detekt
+          :core:keystore:koverVerify
+          :core:keystore:checkKotlinAbi
+          :core:database:desktopTest
+          :core:database:testAndroidHostTest
+          :core:database:koverVerify
+          :core:database:detekt
+          :core:database:checkKotlinAbi
+          :core:resources:desktopTest
+          :core:resources:testAndroidHostTest
+          :shared:desktopTest
+          :shared:testAndroidHostTest
+          :shared:koverVerify
+          :shared:detekt
+          :desktopApp:desktopTest
+          :desktopApp:koverVerify
+          :desktopApp:detekt
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reports-libraries
+          path: |
+            editor/build/reports/
+            editor/build/test-results/
+            core/*/build/reports/
+            core/*/build/test-results/
+            shared/build/reports/
+            shared/build/test-results/
+            desktopApp/build/reports/
+            desktopApp/build/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The desktop installers: MSI (Windows), DMG (macOS) and DEB (Linux), each built on its own OS since jpackage
+  # cannot cross-build, plus a Flatpak bundle on Linux. They are signed (macOS: Developer ID, hardened runtime,
+  # notarized and stapled; Windows: the MSI with signtool) only when the signing secrets exist and the run is not
+  # a pull request; otherwise they stay unsigned, as before, and the artifact name keeps `-unsigned`. Partly set
+  # secrets fail the job. The secrets and what they are: desktopApp/README.md, "Signing the desktop installers".
+  # The DEB and the Flatpak bundle are not code-signed on any path (a Linux release is signed by the repository
+  # or the store that serves it), so their artifacts always say `-unsigned`.
+  desktop-package:
+    name: desktop installer (${{ matrix.os }})
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, task: packageDeb, pattern: 'desktopApp/build/compose/binaries/main/deb/*.deb' }
+          - { os: windows-latest, task: packageMsi, pattern: 'desktopApp/build/compose/binaries/main/msi/*.msi' }
+          - { os: macos-15, task: packageDmg, pattern: 'desktopApp/build/compose/binaries/main/dmg/*.dmg' }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # Decides whether this run signs, from which secrets exist. `secrets` cannot be used in an `if:`, so the
+      # secrets are read into this one step's environment and the result goes out as step outputs. A pull request
+      # never signs (its code must not run with the certificates). Some of a group set and some not is an error,
+      # never a silent unsigned build.
+      - name: Signing
+        id: signing
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ENCLY_MACOS_CERT_P12_BASE64: ${{ secrets.ENCLY_MACOS_CERT_P12_BASE64 }}
+          ENCLY_MACOS_CERT_PASSWORD: ${{ secrets.ENCLY_MACOS_CERT_PASSWORD }}
+          ENCLY_MACOS_SIGN_IDENTITY: ${{ secrets.ENCLY_MACOS_SIGN_IDENTITY }}
+          ENCLY_MACOS_NOTARY_APPLE_ID: ${{ secrets.ENCLY_MACOS_NOTARY_APPLE_ID }}
+          ENCLY_MACOS_NOTARY_PASSWORD: ${{ secrets.ENCLY_MACOS_NOTARY_PASSWORD }}
+          ENCLY_MACOS_NOTARY_TEAM_ID: ${{ secrets.ENCLY_MACOS_NOTARY_TEAM_ID }}
+          ENCLY_WINDOWS_CERT_PFX_BASE64: ${{ secrets.ENCLY_WINDOWS_CERT_PFX_BASE64 }}
+          ENCLY_WINDOWS_CERT_PASSWORD: ${{ secrets.ENCLY_WINDOWS_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          # none / all / partial, for the secrets named in the arguments
+          state() {
+            local set=0 total=0 name
+            for name in "$@"; do
+              total=$((total + 1))
+              if [ -n "${!name:-}" ]; then set=$((set + 1)); fi
+            done
+            if [ "$set" -eq 0 ]; then echo none; elif [ "$set" -eq "$total" ]; then echo all; else echo partial; fi
+          }
+          signed=false
+          notarize=false
+          if [ "$EVENT_NAME" = pull_request ]; then
+            echo "::notice::Pull request: the installer is not signed."
+          elif [ "$RUNNER_OS" = macOS ]; then
+            cert=$(state ENCLY_MACOS_CERT_P12_BASE64 ENCLY_MACOS_CERT_PASSWORD ENCLY_MACOS_SIGN_IDENTITY)
+            notary=$(state ENCLY_MACOS_NOTARY_APPLE_ID ENCLY_MACOS_NOTARY_PASSWORD ENCLY_MACOS_NOTARY_TEAM_ID)
+            if [ "$cert" = partial ] || [ "$notary" = partial ] || { [ "$notary" = all ] && [ "$cert" != all ]; }; then
+              echo "::error::Incomplete macOS signing secrets (certificate: $cert, notarization: $notary). Set all of a group or none; notarization needs the certificate."
+              exit 1
+            fi
+            if [ "$cert" = all ]; then signed=true; fi
+            if [ "$notary" = all ]; then notarize=true; fi
+            if [ "$signed" = false ]; then echo "::notice::No macOS signing secrets: the DMG is not signed."; fi
+            if [ "$signed" = true ] && [ "$notarize" = false ]; then echo "::warning::Signed but not notarized: Gatekeeper will still warn."; fi
+          elif [ "$RUNNER_OS" = Windows ]; then
+            cert=$(state ENCLY_WINDOWS_CERT_PFX_BASE64 ENCLY_WINDOWS_CERT_PASSWORD)
+            if [ "$cert" = partial ]; then
+              echo "::error::Incomplete Windows signing secrets. Set ENCLY_WINDOWS_CERT_PFX_BASE64 and ENCLY_WINDOWS_CERT_PASSWORD, or neither."
+              exit 1
+            fi
+            if [ "$cert" = all ]; then signed=true; else echo "::notice::No Windows signing secrets: the MSI is not signed."; fi
+          fi
+          suffix=-unsigned
+          if [ "$RUNNER_OS" != Linux ] && [ "$signed" = true ]; then suffix=''; fi
+          {
+            echo "signed=$signed"
+            echo "notarize=$notarize"
+            echo "suffix=$suffix"
+          } >> "$GITHUB_OUTPUT"
+
+      # jpackage builds a .deb with dpkg-deb and fakeroot.
+      - name: Linux packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y fakeroot
+
+      # macOS: the Developer ID certificate goes into a keychain of its own that exists for this job only
+      # (random password, masked) and is deleted again in the last step. Nothing is written to the repository.
+      - name: Import the signing certificate (macOS)
+        if: runner.os == 'macOS' && steps.signing.outputs.signed == 'true'
+        env:
+          CERT_P12_BASE64: ${{ secrets.ENCLY_MACOS_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.ENCLY_MACOS_CERT_PASSWORD }}
+          SIGN_IDENTITY: ${{ secrets.ENCLY_MACOS_SIGN_IDENTITY }}
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/encly-signing.keychain-db"
+          keychain_password=$(openssl rand -base64 24)
+          echo "::add-mask::$keychain_password"
+          printf '%s' "$CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/encly-signing.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/encly-signing.p12" -P "$CERT_PASSWORD" -t cert -f pkcs12 \
+            -T /usr/bin/codesign -T /usr/bin/security -k "$keychain" > /dev/null
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$keychain" > /dev/null
+          rm -f "$RUNNER_TEMP/encly-signing.p12"
+          # The keychain must be on the search list for codesign to find the chain.
+          keychains=("$keychain")
+          while IFS= read -r existing; do
+            keychains+=("$existing")
+          done < <(security list-keychains -d user | sed 's/^[[:space:]]*"//; s/"$//')
+          security list-keychains -d user -s "${keychains[@]}"
+          if ! security find-identity -v -p codesigning "$keychain" | grep -qF "$SIGN_IDENTITY"; then
+            echo "::error::The certificate has no code-signing identity named like ENCLY_MACOS_SIGN_IDENTITY."
+            exit 1
+          fi
+          echo "ENCLY_MACOS_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+
+      - name: Package
+        if: runner.os != 'macOS' || steps.signing.outputs.signed != 'true'
+        run: ./gradlew :desktopApp:${{ matrix.task }}
+
+      # Gradle signs the app image (every binary, hardened runtime, desktopApp/packaging/macos/entitlements.plist)
+      # and the DMG; notarizeDmg submits it to Apple with notarytool, waits, and staples the ticket.
+      - name: Package, sign and notarize (macOS)
+        if: runner.os == 'macOS' && steps.signing.outputs.signed == 'true'
+        env:
+          ENCLY_MACOS_SIGN_IDENTITY: ${{ secrets.ENCLY_MACOS_SIGN_IDENTITY }}
+          ENCLY_MACOS_NOTARY_APPLE_ID: ${{ secrets.ENCLY_MACOS_NOTARY_APPLE_ID }}
+          ENCLY_MACOS_NOTARY_PASSWORD: ${{ secrets.ENCLY_MACOS_NOTARY_PASSWORD }}
+          ENCLY_MACOS_NOTARY_TEAM_ID: ${{ secrets.ENCLY_MACOS_NOTARY_TEAM_ID }}
+          NOTARIZE: ${{ steps.signing.outputs.notarize }}
+        run: |
+          set -euo pipefail
+          tasks=(:desktopApp:packageDmg)
+          if [ "$NOTARIZE" = true ]; then tasks+=(:desktopApp:notarizeDmg); fi
+          ./gradlew "${tasks[@]}"
+
+      # A signed build that Gatekeeper would reject must fail here, not at the first user.
+      - name: Verify the signature (macOS)
+        if: runner.os == 'macOS' && steps.signing.outputs.signed == 'true'
+        env:
+          NOTARIZE: ${{ steps.signing.outputs.notarize }}
+        run: |
+          set -euo pipefail
+          dmg=$(ls desktopApp/build/compose/binaries/main/dmg/*.dmg)
+          mount="$RUNNER_TEMP/encly-dmg"
+          mkdir -p "$mount"
+          hdiutil attach "$dmg" -nobrowse -readonly -mountpoint "$mount" > /dev/null
+          trap 'hdiutil detach "$mount" -quiet || true' EXIT
+          app=$(ls -d "$mount"/*.app)
+          codesign --verify --deep --strict --verbose=2 "$app"
+          if [ "$NOTARIZE" = true ]; then
+            xcrun stapler validate "$dmg"
+            spctl --assess --type execute --verbose=2 "$app"
+          fi
+
+      # Windows: signtool, from the Windows SDK on the runner, signs the MSI with the PFX and a timestamp, so the
+      # signature outlives the certificate. The PFX exists on disk only for this step.
+      - name: Sign the MSI (Windows)
+        if: runner.os == 'Windows' && steps.signing.outputs.signed == 'true'
+        env:
+          PFX_BASE64: ${{ secrets.ENCLY_WINDOWS_CERT_PFX_BASE64 }}
+          PFX_PASSWORD: ${{ secrets.ENCLY_WINDOWS_CERT_PASSWORD }}
+          TIMESTAMP_URL: ${{ vars.ENCLY_WINDOWS_TIMESTAMP_URL || 'http://timestamp.digicert.com' }}
+          MSYS2_ARG_CONV_EXCL: '*'
+        run: |
+          set -euo pipefail
+          pfx="$RUNNER_TEMP/encly-signing.pfx"
+          printf '%s' "$PFX_BASE64" | base64 --decode > "$pfx"
+          signtool=$(find "/c/Program Files (x86)/Windows Kits/10/bin" -path '*/x64/signtool.exe' | sort -V | tail -n 1)
+          if [ -z "$signtool" ]; then
+            echo "::error::signtool.exe not found on the runner"
+            exit 1
+          fi
+          msi=$(ls desktopApp/build/compose/binaries/main/msi/*.msi)
+          "$signtool" sign /f "$(cygpath -w "$pfx")" /p "$PFX_PASSWORD" /fd SHA256 \
+            /tr "$TIMESTAMP_URL" /td SHA256 /d "Encly" "$(cygpath -w "$msi")"
+          "$signtool" verify /pa /v "$(cygpath -w "$msi")"
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: encly-desktop-${{ matrix.os }}${{ steps.signing.outputs.suffix }}
+          path: ${{ matrix.pattern }}
+          retention-days: 14
+          if-no-files-found: error
+
+      # Linux only: the Flatpak bundle (desktopApp/packaging/flatpak). flatpak-builder installs the freedesktop
+      # runtime from Flathub; ubuntu-latest restricts unprivileged user namespaces, which bubblewrap needs.
+      - name: Flatpak tooling
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils libxml2-utils
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: App image
+        if: runner.os == 'Linux'
+        run: ./gradlew :desktopApp:createDistributable
+
+      - name: Flatpak
+        if: runner.os == 'Linux'
+        env:
+          ENCLY_FLATPAK_SKIP_GRADLE: '1'
+          ENCLY_FLATPAK_REQUIRE_LINT: '1'
+        run: desktopApp/packaging/flatpak/build.sh
+
+      # For information only: Flathub's linter. It expects a source build and screenshots, so it reports things
+      # that do not apply to this bundle; it never fails the job.
+      - name: Flatpak lint
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        run: |
+          flatpak install --user -y flathub org.flatpak.Builder
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest desktopApp/packaging/flatpak/io.github.pasichdev.Encly.yml
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo desktopApp/build/flatpak/repo
+
+      - name: Upload the Flatpak bundle
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: encly-desktop-flatpak-unsigned
+          path: desktopApp/build/flatpak/*.flatpak
+          retention-days: 14
+          if-no-files-found: error
+
+      # Whatever happened above, the certificate does not stay on the runner.
+      - name: Remove the signing material
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/encly-signing.p12" "$RUNNER_TEMP/encly-signing.pfx"
+          if [ "$RUNNER_OS" = macOS ]; then
+            security delete-keychain "$RUNNER_TEMP/encly-signing.keychain-db" 2> /dev/null || true
+          fi
+
+  release:
+    name: release build (R8, lint, manifest)
+    # Dependabot bumps (build(deps) / ci(deps)) don't run CI on their own PR: they are merged in
+    # batches and checked on the branch that takes them, or on main after the merge.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Release build
+        run: ./gradlew :app:assembleFdroidRelease
+
+      # Separate invocation: lint running alongside Metro code generation for another variant has
       # raced on generated sources; after the build it reads finished outputs.
       - name: Lint (release)
         run: ./gradlew :app:lintFdroidRelease
@@ -91,27 +499,222 @@ jobs:
           done
           exit $found
 
-      # For information only: posts (and keeps updating) one PR comment with the app
-      # coverage. It never fails the build.
-      - name: Coverage comment
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: madrapps/jacoco-report@e51ce1f46f7f8b5331593f935e59cbaf44b84920 # v1.8.0
-        with:
-          paths: app/build/reports/kover/reportFdroidDebug.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: 'Coverage'
-          update-comment: true
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
-
       - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: reports
+          name: reports-release
           path: |
             app/build/reports/
-            app/build/test-results/
           retention-days: 7
           if-no-files-found: ignore
+
+  # The KMP libraries with iOS targets compile for iOS here. Kotlin/Native compiles for Apple targets only on
+  # macOS, so this job builds the iOS klibs there (for the database, Room's KSP runs for the iOS targets too).
+  # The crypto, security and key store tests run on the iOS simulator: the AES-GCM bridge to CryptoKit and
+  # the golden vectors of every vault and backup format must give the JVM's bytes. So do the common tests of
+  # :shared (the ViewModels, the formatters), which also exercise the iOS actuals of dates and Unicode. The
+  # last step builds the iOS app (iosApp/) for the Simulator, unsigned: the Xcode project links the static
+  # framework that Gradle builds from :shared. The job keeps its name so that the name of the check does not change.
+  editor-ios:
+    if: github.actor != 'dependabot[bot]'
+    name: editor (iOS compile)
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Compile the iOS targets
+        run: >-
+          ./gradlew
+          :editor:compileKotlinIosSimulatorArm64
+          :editor:compileKotlinIosArm64
+          :core:common:compileKotlinIosSimulatorArm64
+          :core:common:compileKotlinIosArm64
+          :core:database:compileKotlinIosSimulatorArm64
+          :core:database:compileKotlinIosArm64
+          :core:resources:compileKotlinIosSimulatorArm64
+          :core:resources:compileKotlinIosArm64
+          :core:crypto:compileKotlinIosArm64
+          :core:security:compileKotlinIosArm64
+          :core:keystore:compileKotlinIosArm64
+          :shared:compileKotlinIosSimulatorArm64
+          :shared:compileKotlinIosArm64
+
+      - name: iOS tests (crypto, security, key store, shared)
+        run: >-
+          ./gradlew
+          :core:crypto:iosSimulatorArm64Test
+          :core:security:iosSimulatorArm64Test
+          :core:keystore:iosSimulatorArm64Test
+          :shared:iosSimulatorArm64Test
+
+      # On a Mac the klib dump of the public API is made from the real iOS klibs (elsewhere it is
+      # inferred), so this is where editor/api/editor.klib.api and core/common/api/common.klib.api
+      # are really checked.
+      - name: Public API dump
+        run: >-
+          ./gradlew :editor:checkKotlinAbi :core:common:checkKotlinAbi :core:database:checkKotlinAbi
+          :core:crypto:checkKotlinAbi :core:security:checkKotlinAbi :core:keystore:checkKotlinAbi
+
+      # The app itself, for the Simulator and without signing. The first build phase of the project runs
+      # Gradle (`:shared:embedAndSignAppleFrameworkForXcode`), which links the framework.
+      - name: Build the iOS app (Simulator, unsigned)
+        run: >-
+          xcodebuild
+          -project iosApp/iosApp.xcodeproj
+          -scheme iosApp
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
+
+  # The desktop PIN factor against the real secret store of each OS: DPAPI on Windows, the login Keychain on
+  # macOS, the freedesktop Secret Service (GNOME Keyring) on Linux. The unit tests of :core:keystore run in
+  # the `build` job; here ENCLY_KEYSTORE_IT=1 turns on the one test per OS that creates, reads, uses and
+  # deletes a secret in the real store (under a test namespace). --rerun: the test result must not come
+  # from the build cache of a run without the variable.
+  keystore-it:
+    if: github.actor != 'dependabot[bot]'
+    name: keystore (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15, ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # A headless Secret Service: a private session bus, GNOME Keyring started on it with the login keyring
+      # created and unlocked with a throw-away password (read from stdin), then the Gradle run inside that
+      # same bus session. The probe fails the job early, and readably, if no Secret Service answers.
+      - name: Keystore tests (Linux, Secret Service)
+        if: runner.os == 'Linux'
+        env:
+          ENCLY_KEYSTORE_IT: '1'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnome-keyring dbus-x11 libsecret-tools
+          dbus-run-session -- bash -euo pipefail -c '
+            printf "%s" "ci-throwaway-keyring-password" | gnome-keyring-daemon --replace --daemonize --unlock --components=secrets > /dev/null
+            printf "probe" | secret-tool store --label="probe" application encly-ci-probe
+            secret-tool lookup application encly-ci-probe
+            secret-tool clear application encly-ci-probe
+            ./gradlew :core:keystore:desktopTest --rerun
+          '
+
+      - name: Keystore tests (Windows, macOS)
+        if: runner.os != 'Linux'
+        env:
+          ENCLY_KEYSTORE_IT: '1'
+        run: ./gradlew :core:keystore:desktopTest --rerun
+
+      # RealBackendTest skips every OS but the runner's own: exactly one of its tests must have run here,
+      # so a backend that silently skipped (wrong OS detection, variable not passed) fails the job.
+      - name: The real secret store was exercised
+        run: |
+          report=core/keystore/build/test-results/desktopTest/TEST-com.pasich.encly.core.keystore.RealBackendTest.xml
+          test -f "$report"
+          tests=$(grep -o 'tests="[0-9]*"' "$report" | head -1 | tr -dc 0-9)
+          skipped=$(grep -o 'skipped="[0-9]*"' "$report" | head -1 | tr -dc 0-9)
+          failures=$(grep -o 'failures="[0-9]*"' "$report" | head -1 | tr -dc 0-9)
+          echo "RealBackendTest: tests=$tests skipped=$skipped failures=$failures"
+          if [ $((tests - skipped)) -lt 1 ] || [ "$failures" != "0" ]; then
+            echo "::error::RealBackendTest did not run against the ${{ runner.os }} secret store"
+            exit 1
+          fi
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: keystore-reports-${{ matrix.os }}
+          path: core/keystore/build/reports/tests/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The tests that need the real native SQLCipher and Room on Android: opening a vault written by
+  # earlier releases, the lock/unlock lifecycle, every schema migration. They live in the
+  # :core:database module (source set androidDeviceTest) and run in its own test app. On the oldest
+  # supported API and a current one.
+  instrumented:
+    if: github.actor != 'dependabot[bot]'
+    name: instrumented (API ${{ matrix.api }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { api: 26, target: default }
+          - { api: 35, target: google_apis }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build the test APK
+        run: ./gradlew :core:database:assembleAndroidDeviceTest
+
+      - name: Instrumented tests
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: ${{ matrix.target }}
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew :core:database:connectedAndroidDeviceTest
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: instrumented-reports-api-${{ matrix.api }}
+          path: core/database/build/reports/androidTests/
+          retention-days: 7

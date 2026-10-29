@@ -29,6 +29,8 @@ By taking part you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
    `local.properties` (see [README → Build](README.md#build)).
 3. Open the project in Android Studio or use `./gradlew`. Pick the `fdroidDebug` variant for
    day-to-day work.
+4. The desktop app (Windows, macOS, Linux) is the `:desktopApp` module: `./gradlew :desktopApp:run`, and
+   `:desktopApp:desktopTest` for its headless tests. See [desktopApp/README.md](desktopApp/README.md).
 
 ## Before you open a pull request
 
@@ -37,7 +39,9 @@ Run the same gates as CI:
 ```bash
 ./gradlew spotlessCheck                                               # formatting (ktlint)
 ./gradlew :app:testFdroidDebugUnitTest :app:koverVerifyFdroidDebug   # tests + coverage gate
-./gradlew :app:detekt                                                 # config/detekt/detekt.yml
+./gradlew :app:detekt :editor:detekt                                  # config/detekt/detekt.yml
+./gradlew :editor:desktopTest :editor:testAndroidHostTest :editor:koverVerify :editor:checkKotlinAbi   # the :editor module
+./gradlew :shared:desktopTest :shared:testAndroidHostTest :shared:koverVerify :shared:detekt             # the UI and data logic
 ./gradlew :app:lintFdroidRelease :app:lintPlayRelease                  # release lint
 ./gradlew assembleRelease                                              # R8 build
 ```
@@ -45,8 +49,9 @@ Run the same gates as CI:
 - Add or extend unit tests for behaviour you change. The app has a minimum line coverage gate of
   85% (Kover, generated code excluded, see `app/build.gradle.kts`); do not lower it to get a PR
   through.
-- For storage, Keystore or SQLCipher changes also run the instrumented tests on an emulator:
-  `./gradlew :app:connectedFdroidDebugAndroidTest` (they wipe the debug app's data).
+- The instrumented tests (SQLCipher, Room migrations) run in CI on API 26 and 35. To run them
+  yourself use an emulator, never a phone with a vault you care about:
+  `./gradlew :core:database:connectedAndroidDeviceTest` (they run in the test app's own data and wipe it).
 - New detekt or lint findings must be fixed, not added to `app/detekt-baseline.xml` or
   `app/lint-baseline.xml`. Pull requests that shrink those baselines are very welcome.
 - For UI changes, say in the PR which device or emulator you checked it on.
@@ -61,7 +66,7 @@ Run the same gates as CI:
 - [detekt](https://detekt.dev) (`config/detekt/detekt.yml`) adds code-smell, unused-code and
   [Jetpack Compose](https://mrmans0n.github.io/compose-rules/) rules: public composables take a
   `modifier: Modifier = Modifier` applied to their root, ViewModels are obtained with a
-  `hiltViewModel()` default parameter and not passed down to child composables (hoist state and
+  `metroViewModel()` default parameter and not passed down to child composables (hoist state and
   pass lambdas instead), and event lambdas are named in the present tense (`onClick`, not
   `onClicked`).
 - Android lint severities live in [`app/lint.xml`](app/lint.xml): hardcoded or untranslated
@@ -73,7 +78,7 @@ Run the same gates as CI:
 
 The repository ships two opt-in hooks in [`.githooks/`](.githooks):
 
-- `pre-commit` runs `spotlessCheck` and `:app:detekt` when the commit stages Kotlin or Gradle
+- `pre-commit` runs `spotlessCheck`, `:app:detekt` and `:shared:detekt` when the commit stages Kotlin or Gradle
   files (`*.kt`, `*.kts`, `gradle/libs.versions.toml`, `.editorconfig`, `config/detekt/`), and
   does nothing for other commits, so docs and resource commits stay instant. It checks the
   working tree, so unstaged edits count too.
@@ -98,17 +103,20 @@ git config core.hooksPath .githooks
 
 ## Room schema changes
 
-Room schemas are exported to `app/schemas` and committed. When an entity changes: bump
-`DB_VERSION` (`data/database/AppDatabase.kt`), add a `Migration`, commit the new schema JSON, and add a
+Room schemas are exported to `core/database/schemas` and committed. When an entity changes: bump
+`DB_VERSION` (`core/database/.../data/database/AppDatabase.kt`), add a `Migration`, commit the new schema JSON, and add a
 `runMigrationsAndValidate` case to `AppDatabaseSchemaTest`. Destructive migration is disabled on
 purpose.
 
 ## Translations
 
-Every user-visible string lives in string resources. English is the default
-(`app/src/main/res/values/`); each translation is a `values-<lang>/` folder with a `strings.xml`
-(most of the UI), a `strings_security.xml` (security settings), a `strings_handoff.xml` (the
-import from My Notes) and a `strings_import.xml` (Import notes from other apps).
+Every user-visible string lives in the `:core:resources` module, in Android's `strings.xml`
+format; the build turns them into Compose Multiplatform resources. English is the default
+(`core/resources/src/commonMain/strings/values/`); each translation is a `values-<lang>/`
+folder next to it with a `strings.xml` (most of the UI), a `strings_security.xml` (security
+settings), a `strings_handoff.xml` (the import from My Notes) and a `strings_import.xml` (Import
+notes from other apps). The only string left in the Android resources is the launcher label
+(`app/src/main/res/values/manifest_strings.xml`).
 
 [![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
 
@@ -120,12 +128,18 @@ Weblate collects the changes and opens a pull request from its `weblate-translat
 it never pushes to `main`. That pull request runs the same CI as any other, so it is merged only
 when every check below passes. Thank you to Weblate for libre hosting of Encly's translations.
 
-**Fixing a translation in Git:** edit the string in `values-<lang>/strings.xml` (or
-`strings_security.xml`, `strings_handoff.xml`, `strings_import.xml`) and open a PR. Keep the key;
+**Fixing a translation in Git:** edit the string in
+`core/resources/src/commonMain/strings/values-<lang>/strings.xml` (or `strings_security.xml`,
+`strings_handoff.xml`, `strings_import.xml`) and open a PR. Keep the key;
 only change the text. If a Weblate pull request is open, say so in yours; Weblate picks up merged changes from
 `main` on its own.
 
-**For maintainers:** Weblate pulls `main` on every push (GitHub webhook
+**For maintainers:** Weblate reads the same Android XML files, now under
+`core/resources/src/commonMain/strings/` (file mask
+`core/resources/src/commonMain/strings/values-*/strings.xml`, template
+`.../values/strings.xml`, and the same for `strings_security.xml`, `strings_handoff.xml` and
+`strings_import.xml`); the components must point there after the move from `app/src/main/res/`.
+Weblate pulls `main` on every push (GitHub webhook
 `https://hosted.weblate.org/hooks/github/`). Merge its pull request like any other, preferably
 before changing the same strings in a branch of your own; on a conflict, merge `main` first,
 then use *Repository maintenance → Reset* on Weblate, which drops only Weblate's unmerged
@@ -134,27 +148,35 @@ pull request can pass CI.
 
 **Adding a string (code change):** add it in English to `values/strings.xml` (or
 `strings_security.xml`) and to the same file in *every* `values-<lang>/`, even if only with an
-English placeholder you flag in the PR. Use it
-with `stringResource(R.string.…)` in Compose. Text produced outside the UI (ViewModels,
-managers, validators) must not be resolved there: return a resource id or a `UiText`
-(`core/common/UiText.kt`) and resolve it in the UI, so it follows the in-app language. Never
-resolve UI text with the application context — it ignores the in-app language on Android 12 and
-lower.
+English placeholder you flag in the PR. Use it with `stringResource(Res.string.…)` (and
+`pluralStringResource(Res.plurals.…)`) in Compose; `Res` and the key are imports from
+`com.pasich.encly.core.resources`. Text produced outside the UI (ViewModels, managers, validators)
+must not be resolved there: return a `StringResource` or a `UiText` (`core/common/UiText.kt`) and
+resolve it in the UI, so it follows the in-app language. Where no composable is at hand, resolve
+it with the suspend `getString(Res.string.…)` (or the `AppStrings` interface for text that is
+stored); both read the process's default locale, which `AppLocales.apply` sets to the in-app
+language.
+
+**Format arguments:** write strings as for Android (`\'` for an apostrophe, `%d`, `%s`, `%1$d`, `%%`);
+the build converts them (`ConvertAndroidStrings` in `build-logic`). Compose resources fill in only
+`%d` and `%s` (also numbered), so another format (`%.1f`, `%02d`) fails the build.
 
 **Adding a language:**
 
 1. start it on Weblate, or copy `values/strings.xml`, `values/strings_security.xml`,
-   `values/strings_handoff.xml` and `values/strings_import.xml` to `values-<lang>/` and translate them,
+   `values/strings_handoff.xml` and `values/strings_import.xml` of
+   `core/resources/src/commonMain/strings/` to `values-<lang>/` and translate them,
    leaving out the entries marked `translatable="false"`;
 2. add `<locale android:name="<lang>" />` to `res/xml/locales_config.xml`;
 3. add an entry to `AppLanguage` (`core/locale/AppLanguage.kt`) and its own-language name as a
-   non-translatable `language_name_<lang>` string in `values/strings.xml`;
+   non-translatable `language_name_<lang>` string in `values/strings.xml`, and the language to
+   `androidResources.localeFilters` in `app/build.gradle.kts`;
 4. add the language's CLDR plural categories to `REQUIRED_QUANTITIES` in
    `TranslationCompletenessTest`.
 
-**Rules the build enforces** (`./gradlew :app:testFdroidDebugUnitTest :app:lintFdroidDebug`):
-every locale has every key and no extra ones (lint `MissingTranslation` is an error, and
-`TranslationCompletenessTest` checks it too); format arguments (`%1$s`, `%d`, …) match English;
+**Rules the build enforces** (`./gradlew :app:testFdroidDebugUnitTest`): every locale has every
+key and no extra ones (`TranslationCompletenessTest`; Android lint cannot see Compose resources);
+format arguments (`%1$s`, `%1$d`, …) are numbered and match English;
 each `<plurals>` has all categories its language uses (e.g. `one`/`few`/`many`/`other` for
 Ukrainian and Polish); apostrophes and double quotes are escaped (`\'`, `\"`).
 

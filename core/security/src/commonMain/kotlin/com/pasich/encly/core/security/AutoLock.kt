@@ -1,0 +1,62 @@
+package com.pasich.encly.core.security
+
+import com.pasich.encly.core.platform.KeyValueStore
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+/** How long the vault may stay open after the user leaves the app (Settings → Security). */
+@Suppress("MagicNumber") // The offered delays themselves.
+public enum class AutoLockDelay(public val millis: Long) {
+    IMMEDIATELY(0L),
+    SECONDS_15(15_000L),
+    SECONDS_30(30_000L),
+    MINUTE_1(60_000L),
+    MINUTES_2(120_000L),
+    MINUTES_15(900_000L),
+    MINUTES_30(1_800_000L),
+    ;
+
+    public companion object {
+        public val DEFAULT: AutoLockDelay = SECONDS_15
+    }
+}
+
+/** What [SessionLockManager] reads when the app goes to the background. */
+public interface AutoLockPolicy {
+    public val delayMillis: Long
+
+    /** Tests and previews: lock the moment the app leaves. */
+    public object Immediately : AutoLockPolicy {
+        override val delayMillis: Long = 0L
+    }
+}
+
+/**
+ * The stored auto-lock delay. The screen turning off or the device locking still closes the
+ * vault at once, whatever the delay (see [SessionLockManager]).
+ */
+@SingleIn(AppScope::class)
+@Inject
+public class AutoLock(private val flags: KeyValueStore) : AutoLockPolicy {
+    private val _delay = MutableStateFlow(read())
+    public val delay: StateFlow<AutoLockDelay> = _delay.asStateFlow()
+
+    override val delayMillis: Long get() = _delay.value.millis
+
+    public fun setDelay(delay: AutoLockDelay) {
+        flags.edit { putString(DELAY_KEY, delay.name) }
+        _delay.value = delay
+    }
+
+    private fun read(): AutoLockDelay = flags.getString(DELAY_KEY, null)
+        ?.let { name -> AutoLockDelay.entries.firstOrNull { it.name == name } }
+        ?: AutoLockDelay.DEFAULT
+
+    private companion object {
+        const val DELAY_KEY = "auto_lock_delay"
+    }
+}

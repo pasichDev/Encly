@@ -82,9 +82,9 @@ if ! ./gradlew --quiet help >/dev/null 2>&1; then
     echo "Run ./gradlew help to see why. This is not a formatting or detekt failure." >&2
     exit 1
 fi
-if ! ./gradlew --quiet spotlessCheck :app:detekt; then
+if ! ./gradlew --quiet spotlessCheck :app:detekt :shared:detekt; then
     echo >&2
     echo "pre-commit: checks failed. Fix formatting with ./gradlew spotlessApply, fix the" >&2
-    echo "detekt findings (do not add them to app/detekt-baseline.xml), then commit again." >&2
+    echo "detekt findings (do not add them to a detekt-baseline.xml), then commit again." >&2
     exit 1
 fi

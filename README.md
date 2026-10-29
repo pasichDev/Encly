@@ -52,7 +52,7 @@ it also appears in the system's per-app language settings.
 
 Translations are done on [Hosted Weblate](https://hosted.weblate.org/projects/encly/), which
 offers free hosting to open-source projects. Found a wrong or clumsy translation, or want to add
-a language? Fix it there, no Git needed. A pull request that edits the `values-<lang>/` files
+a language? Fix it there, no Git needed. A pull request that edits the `values-<lang>/` files of `core/resources`
 still works as a fallback: see [CONTRIBUTING.md → Translations](CONTRIBUTING.md#translations).
 Many thanks to [Weblate](https://weblate.org) for hosting Encly's translations as libre software.
 
@@ -167,8 +167,8 @@ See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and t
 
 ## Tech stack
 
-Kotlin · Jetpack Compose · Material 3 · Hilt · Room · SQLCipher · Coroutines ·
-kotlinx.serialization · BIP39 (kotlin-bip39)
+Kotlin · Jetpack Compose · Material 3 · Metro · Room · SQLCipher · Coroutines ·
+kotlinx.serialization · BIP39 (own implementation)
 
 Clean architecture: `presentation` → `domain` → `data`, with `core/security`
 coordinating the key vault.
@@ -203,12 +203,15 @@ links, no baseline profile) and `play`.
 ```bash
 ./gradlew assembleFdroidDebug                      # debug APK (com.pasich.encly.debug)
 ./gradlew :app:testFdroidDebugUnitTest             # JVM unit tests
-./gradlew :app:koverVerifyFdroidDebug              # coverage gate (whole app, 85%)
+./gradlew :app:koverVerifyFdroidDebug              # coverage gate (the Android app: activities and adapters, 85%)
+./gradlew :shared:desktopTest :shared:testAndroidHostTest :shared:koverVerify   # the UI and data logic (85%)
+./gradlew :editor:desktopTest :editor:testAndroidHostTest :editor:koverVerify   # the editor module (100%)
 ./gradlew :app:detekt :app:lintFdroidRelease       # static analysis
 ./gradlew spotlessApply                            # format Kotlin/Gradle (ktlint; spotlessCheck in CI)
 ./gradlew assembleRelease                          # both release APKs, R8 enabled
 ./gradlew :app:bundlePlayRelease                   # Google Play App Bundle (play flavor)
-./gradlew :app:connectedFdroidDebugAndroidTest     # instrumented tests (emulator; wipes the debug app's data)
+./gradlew :core:database:desktopTest :core:database:testAndroidHostTest :core:database:koverVerify   # the database module (85%)
+./gradlew :core:database:connectedAndroidDeviceTest   # instrumented tests (emulator): native SQLCipher, migrations
 ```
 
 Outputs: `app/build/outputs/apk/<flavor>/<buildType>/`, and the bundle in
@@ -255,6 +258,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - [Security model](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
+- [Desktop app](desktopApp/README.md) (Windows, macOS, Linux: run, package, data location, security notes; in development)
 
 ## Contributing
 

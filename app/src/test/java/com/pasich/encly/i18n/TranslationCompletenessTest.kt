@@ -13,13 +13,21 @@ import javax.xml.parsers.DocumentBuilderFactory
  * of the default (English) resources, with the same format arguments, the plural quantities
  * its language needs, and be listed in res/xml/locales_config.xml and [AppLanguage].
  *
- * Lint's MissingTranslation (an error in this build) checks the first rule too; this test
- * also covers format arguments, plural categories, unescaped apostrophes and the locale lists.
+ * The strings are the translations of `:core:resources` (Android format, converted to Compose
+ * resources by the build), so Android lint's MissingTranslation does not see them; this test is the
+ * only check of the keys, format arguments, plural categories, unescaped apostrophes and the locale
+ * lists.
  */
 class TranslationCompletenessTest {
 
-    private val resDir = listOf(File("src/main/res"), File("app/src/main/res"))
-        .first { it.isDirectory }
+    private val root = listOf(File(".."), File("."))
+        .first { File(it, "version.properties").isFile }
+
+    /** The strings in Android's format: what Weblate translates; the build converts them to Compose resources. */
+    private val resDir = File(root, "core/resources/src/commonMain/strings")
+
+    /** What Android itself reads: the launcher label, and the languages of the system's per-app settings. */
+    private val androidResDir = File(root, "app/src/main/res")
 
     /** Folders such as values-uk or values-pt-rBR; not values-night, values-v31, ... */
     private val localeDirs: Map<String, File> = resDir.listFiles().orEmpty()
@@ -83,6 +91,13 @@ class TranslationCompletenessTest {
     }
 
     @Test
+    fun theLauncherLabelStaysInTheAndroidResources() {
+        val label = readElements(File(androidResDir, "values/manifest_strings.xml"))
+            .single { it.getAttribute("name") == "app_name" }
+        assertEquals("Encly", label.textContent)
+    }
+
+    @Test
     fun pluralsDefineTheCategoriesOfTheirLanguage() {
         val all = localeDirs.mapValues { parse(it.value) } + ("en" to defaults)
         all.forEach { (locale, resources) ->
@@ -116,7 +131,7 @@ class TranslationCompletenessTest {
     @Test
     fun localeConfigListsExactlyTheShippedLocales() {
         val config = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-            .parse(File(resDir, "xml/locales_config.xml"))
+            .parse(File(androidResDir, "xml/locales_config.xml"))
         val nodes = config.getElementsByTagName("locale")
         val declared = (0 until nodes.length)
             .map { (nodes.item(it) as Element).getAttribute("android:name") }
@@ -134,7 +149,7 @@ class TranslationCompletenessTest {
 
     @Test
     fun buildLocaleFiltersKeepExactlyTheShippedLocales() {
-        val buildFile = File(resDir, "../../../build.gradle.kts")
+        val buildFile = File(root, "app/build.gradle.kts")
         val filters = LOCALE_FILTERS.find(buildFile.readText())
             ?.groupValues?.get(1)
             ?.let { list -> Regex("\"([^\"]+)\"").findAll(list).map { it.groupValues[1] }.toSet() }

@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:EditNoteScreen.kt$@OptIn( ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ) @Composable fun EditNoteScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel(), )</ID>
+    <ID>CyclomaticComplexMethod:EditTagScreen.kt$@Composable private fun TagEditItem( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
+    <ID>CyclomaticComplexMethod:NotesTextFormatter.kt$NotesTextFormatter$fun blocksToPlainText(blocks: List&lt;Block&gt;): String</ID>
+    <ID>CyclomaticComplexMethod:TasksScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TasksScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: TasksViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:AboutScreen.kt$@Composable private fun DeveloperActionsSection(links: ExternalLinks, toaster: Toaster, onSupport: () -&gt; Unit)</ID>
+    <ID>LongMethod:EditNoteBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun EditNoteBottomSheet( isVisible: Boolean, onDismiss: () -&gt; Unit, viewModel: EditNoteViewModel = metroViewModel&lt;EditNoteViewModel&gt;(), onAction: (EditNoteBottomSheetAction) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:EditNoteScreen.kt$@OptIn( ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ) @Composable fun EditNoteScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:EditTagScreen.kt$@Composable private fun TagEditItem( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
+    <ID>LongMethod:EditTagScreen.kt$@OptIn(ExperimentalFoundationApi::class) @SuppressLint("MutableCollectionMutableState") @Composable private fun ListTagsEdit( globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, modifier: Modifier = Modifier, viewModel: TagListViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:LossRecoveryScreen.kt$@Composable fun LossRecoveryScreen(onRecoveryConfirm: () -&gt; Unit, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:MainScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MainScreen( navController: NavHostController, drawerState: DrawerState, modifier: Modifier = Modifier, mainListStateViewModel: MainListStateViewModel = metroViewModel(), settingsViewModel: SettingsViewModel = metroViewModel(), noteListViewModel: NoteListViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:NavHost.kt$@Composable fun AppNavHost(navController: NavHostController, startDestination: String = NavRoutes.HomeRoute.name)</ID>
+    <ID>LongMethod:NoteBottomBar.kt$@Composable fun NoteBottomBar( modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel(), simpleEdit: Boolean = false, )</ID>
+    <ID>LongMethod:NoteCardBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun NoteCardBottomSheet( isVisible: Boolean, item: NoteWithTag, onAction: (NoteAction) -&gt; Unit, sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), onDismiss: () -&gt; Unit, )</ID>
+    <ID>LongMethod:NotesListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun NotesList( isGrid: Boolean, listScrollState: LazyListState, gridScrollState: LazyStaggeredGridState, onItemClick: (Note) -&gt; Unit, modifier: Modifier = Modifier, onSecondActionClick: (Note) -&gt; Unit = {}, noteListViewModel: NoteListViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:SecuritySettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SecuritySettingsScreen( navController: NavHostController, modifier: Modifier = Modifier, securityViewModel: SecuritySettingsViewModel = metroViewModel(), vaultViewModel: BackupViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:SettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SettingsScreen( navController: NavHostController?, modifier: Modifier = Modifier, settingViewState: SettingsViewModel = metroViewModel(), securityDisable: Boolean = false, )</ID>
+    <ID>LongMethod:TaskProgressCard.kt$@Composable fun TaskProgressCard( completionPercentage: Int, completedTasksCount: Int, totalTasksCount: Int, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:TasksScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TasksScreen( navController: NavHostController, modifier: Modifier = Modifier, viewModel: TasksViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:TrashNotesList.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun TrashNotesList( onItemClick: (Int, Note) -&gt; Unit, modifier: Modifier = Modifier, trashViewModel: TrashViewModel = metroViewModel(), )</ID>
+    <ID>LongMethod:TrashScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TrashScreen( navController: NavHostController, modifier: Modifier = Modifier, trashViewModel: TrashViewModel = metroViewModel(), )</ID>
+    <ID>LongParameterList:EditNoteScreen.kt$( isReadTrashOnly: Boolean, lockEditor: Boolean, onBackClick: () -&gt; Unit, onRestoreClick: () -&gt; Unit, onDeleteClick: () -&gt; Unit, onMenuClick: () -&gt; Unit, onLockToggle: () -&gt; Unit, onDoneClick: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:EditTagScreen.kt$( item: Tag, onAction: (TagEditTypeAction, Tag) -&gt; Unit, globalFocusManager: FocusManager, keyboardController: SoftwareKeyboardController?, onFocusChange: (Boolean) -&gt; Unit, shouldPreventFocus: Boolean, isDragging: Boolean = false, )</ID>
+    <ID>MagicNumber:EditNoteViewModel.kt$EditNoteViewModel$5000</ID>
+    <ID>MagicNumber:EditTagScreen.kt$20</ID>
+    <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$10</ID>
+    <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$4</ID>
+    <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$6</ID>
+    <ID>MagicNumber:FontSizeUtils.kt$FontSizeUtils$8</ID>
+    <ID>MagicNumber:MainDrawer.kt$0.8f</ID>
+    <ID>MagicNumber:MainDrawer.kt$600</ID>
+    <ID>MagicNumber:MainListStateViewModel.kt$MainListStateViewModel$5_000</ID>
+    <ID>MagicNumber:NoteCardBottomSheet.kt$300</ID>
+    <ID>MagicNumber:NotesListScreen.kt$200</ID>
+    <ID>MagicNumber:NotesListScreen.kt$4</ID>
+    <ID>MagicNumber:SettingsLocalDataSource.kt$SettingsLocalDataSource$10</ID>
+    <ID>MagicNumber:SettingsLocalDataSource.kt$SettingsLocalDataSource$16</ID>
+    <ID>MagicNumber:SettingsLocalDataSource.kt$SettingsLocalDataSource$32</ID>
+    <ID>MagicNumber:StatisticViewModel.kt$StatisticViewModel$5000</ID>
+    <ID>MagicNumber:TagItem.kt$0.6f</ID>
+    <ID>MagicNumber:TaskItem.kt$0.8f</ID>
+    <ID>MagicNumber:TaskProgressCard.kt$100f</ID>
+    <ID>MagicNumber:ThemeViewModel.kt$ThemeViewModel$5_000</ID>
+    <ID>MatchingDeclarationName:EditNoteBottomSheet.kt$EditNoteBottomSheetAction</ID>
+    <ID>MatchingDeclarationName:EditTagScreen.kt$TagEditTypeAction</ID>
+    <ID>MatchingDeclarationName:NoteBottomBar.kt$NoteBottomBarFragment</ID>
+    <ID>MatchingDeclarationName:NoteCardBottomSheet.kt$NoteAction</ID>
+    <ID>MatchingDeclarationName:TasksScreen.kt$TasksScreenUiState</ID>
+    <ID>MatchingDeclarationName:TrashScreen.kt$DialogTrashAction</ID>
+    <ID>NestedBlockDepth:NotesTextFormatter.kt$NotesTextFormatter$fun blocksToPlainText(blocks: List&lt;Block&gt;): String</ID>
+    <ID>TooManyFunctions:EditNoteViewModel.kt$EditNoteViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:OnboardingViewModel.kt$OnboardingViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:TasksRepositoryImpl.kt$TasksRepositoryImpl : TasksRepository</ID>
+    <ID>TooManyFunctions:TasksViewModel.kt$TasksViewModel : ViewModel</ID>
+    <ID>UnusedPrivateProperty:DeviceCapabilities.kt$DeviceCapabilities$@param:ApplicationContext private val context: Context</ID>
+    <ID>UnusedPrivateProperty:SettingsBuilder.kt$SettingsBuilder$private val deviceCapabilities: DeviceCapabilities</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,3 +1,4 @@
+import dev.zacsweers.metro.gradle.OptionalBindingBehavior
 import java.util.Properties
 
 // Minimum line coverage (%) of the whole app (generated code excluded) enforced by koverVerify.
@@ -37,21 +38,18 @@ val hasReleaseSigning = listOf(
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.metro)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.detekt)
-    alias(libs.plugins.kover)
+    // detekt (with the Compose rules) and Kover, from build-logic.
+    id("encly.quality")
 }
 
-// Static analysis (default rules + Jetpack Compose rules, config/detekt/detekt.yml). Legacy
+// Static analysis (default rules + Jetpack Compose rules, config/detekt/detekt.yml; the rest of the
+// setup is in encly.quality). Legacy
 // findings are captured in detekt-baseline.xml so only NEW issues fail. Fix new findings instead
 // of regenerating the baseline; it should only ever shrink.
 detekt {
-    buildUponDefaultConfig = true
-    parallel = true
-    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
     baseline = file("$projectDir/detekt-baseline.xml")
 }
 
@@ -65,7 +63,6 @@ android {
         targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     packaging {
@@ -118,7 +115,8 @@ android {
 
     // Keep only the app's own 9 languages in the APK and bundle, so the store listing does not
     // advertise the ~85 languages AndroidX libraries ship strings for. Keep in sync with the
-    // values-* folders, res/xml/locales_config.xml and AppLanguage (TranslationCompletenessTest).
+    // values-* folders of :core:resources (src/commonMain/strings), res/xml/locales_config.xml and AppLanguage
+    // (TranslationCompletenessTest).
     androidResources {
         localeFilters += listOf("en", "uk", "de", "fr", "es", "it", "pl", "pt", "nl")
     }
@@ -164,10 +162,6 @@ android {
         }
     }
 
-    hilt {
-        enableAggregatingTask = true
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -198,16 +192,14 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
+}
 
-    ksp {
-        // Exported Room schemas are committed (app/schemas) so every schema change is reviewed
-        // and MigrationTestHelper can validate upgrades in androidTest.
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
-
-    sourceSets {
-        getByName("androidTest").assets.srcDir("$projectDir/schemas")
-    }
+// Dependency injection (compiler plugin): the graph is validated at compile time.
+metro {
+    // A Kotlin default on an injected constructor parameter stays a plain default: the parameter
+    // is always taken from the graph, and a missing binding is an error instead of silently
+    // falling back to the default (e.g. a lock event source that never locks).
+    optionalBindingBehavior.set(OptionalBindingBehavior.DISABLED)
 }
 
 composeCompiler {
@@ -222,12 +214,15 @@ tasks.configureEach {
     }
 }
 
-// StoreMetadataTest and CodeQualityToolingTest read files outside the module; declare them as
-// inputs so an edited store text, changelog, workflow or tool config re-runs the unit tests
-// instead of leaving them UP-TO-DATE.
+// StoreMetadataTest, TranslationCompletenessTest and CodeQualityToolingTest read files outside the
+// module; declare them as inputs so an edited store text, translation, changelog, workflow or tool
+// config re-runs the unit tests instead of leaving them UP-TO-DATE.
 tasks.withType<Test>().configureEach {
     inputs.dir(rootProject.file("fastlane/metadata/android"))
         .withPropertyName("storeMetadata")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(rootProject.file("core/resources/src/commonMain/strings"))
+        .withPropertyName("translations")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         rootProject.file("CHANGELOG.md"),
@@ -241,12 +236,14 @@ tasks.withType<Test>().configureEach {
     inputs.files(
         rootProject.file(".github/workflows/android.yml"),
         rootProject.file("config/detekt/detekt.yml"),
+        rootProject.file("build-logic/src/main/kotlin/encly.quality.gradle.kts"),
         file("lint.xml"),
     ).withPropertyName("qualityConfig").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 // Coverage: `./gradlew :app:koverXmlReportFdroidDebug :app:koverVerifyFdroidDebug`.
-// The gate is scoped to core/security, the code that guards the key hierarchy.
+// The gate covers what the app itself holds: the activities, the graph and the Android adapters of the
+// platform interfaces. The domain, the data logic and the UI are :shared (its own 85 % gate).
 kover {
     reports {
         variant("fdroidDebug") {
@@ -258,17 +255,20 @@ kover {
                         "*.R",
                         "*.R$*",
                         "*ComposableSingletons*",
-                        "*Hilt_*",
-                        "*_HiltModules*",
-                        "*_Factory",
-                        "*_Factory$*",
-                        "*_MembersInjector",
-                        "*_GeneratedInjector",
+                        "*MetroFactory*",
+                        "*MetroContributionTo*",
+                        "*MetroMembersInjector*",
+                        "*AppGraph\$Impl*",
                         "*_Impl",
                         "*_Impl$*",
-                        "*Dagger*",
+                        "*\$DefaultImpls",
+                        // The system BiometricPrompt and its callbacks need a device (androidx.biometric shows
+                        // a dialog Robolectric cannot answer); what wraps and unwraps the key around them is
+                        // tested in BiometricManagerTest.
+                        "*KeystoreBiometricManager*",
                     )
-                    packages("dagger.hilt", "hilt_aggregated_deps")
+                    // The graph's binding containers only declare which implementation answers an interface.
+                    annotatedBy("dev.zacsweers.metro.BindingContainer")
                 }
             }
             verify {
@@ -281,13 +281,27 @@ kover {
 }
 
 dependencies {
+    // The shared layers (Kotlin Multiplatform libraries): texts and flags, crypto, the security core.
+    implementation(project(":core:common"))
+    implementation(project(":core:crypto"))
+    implementation(project(":core:security"))
+
+    // The domain, the repositories, the backup / import / export logic and the whole UI (Compose Multiplatform);
+    // the app implements the platform interfaces they declare (documents, links, window, clipboard...).
+    implementation(project(":shared"))
+
+    // The block editor (Kotlin Multiplatform library); the app binds its extension points.
+    implementation(project(":editor"))
+    // The encrypted vault database (Room + Sealite): entities, DAOs, migrations, SecureDatabaseManager.
+    implementation(project(":core:database"))
+    // Every string and plural the UI shows (Compose Multiplatform resources, generated Res class).
+    implementation(project(":core:resources"))
 
     // Jetpack Compose: every androidx.compose module takes its version from the BOM.
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     debugImplementation(composeBom)
     testImplementation(composeBom)
-    androidTestImplementation(composeBom)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -298,18 +312,12 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.core.splashscreen)
 
-    // Drag and Drop
-    implementation(libs.reorderable)
-
-    // Room
+    // Room (the schema and the compiler are in :core:database)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.core.ktx)
-    ksp(libs.androidx.room.compiler)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
@@ -318,23 +326,22 @@ dependencies {
     // Biometric Authentication
     implementation(libs.androidx.biometric)
 
-    // Dagger Hilt - Use KSP consistently
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
+    // Metro: compile-time dependency injection (compiler plugin) and its ViewModel integration
+    implementation(libs.metrox.viewmodel)
+    implementation(libs.metrox.viewmodel.compose)
 
     // Other dependencies
-    implementation(libs.gson)
     implementation(libs.androidx.datastore.preferences)
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.json.io)
 
-    // Cipher
-    implementation(libs.sqlcipher.android)
-    implementation(libs.androidx.sqlite.ktx)
-    implementation(libs.kotlin.bip39)
+    // Bytes and streams (Source / Sink), so import, export and hand-off do not depend on java.io
+    implementation(libs.kotlinx.io.core)
 
-    implementation(libs.icons.lucide)
+    // Date and time
+    implementation(libs.kotlinx.datetime)
 
     // detekt rule set for Jetpack Compose (Apache-2.0); runs only inside the detekt task.
     detektPlugins(libs.compose.rules.detekt)
@@ -348,10 +355,4 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-    // Instrumented tests: native SQLCipher open/lock under WAL and the exported Room schema.
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.room.testing)
 }

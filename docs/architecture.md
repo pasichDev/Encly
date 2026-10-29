@@ -6,15 +6,19 @@ Encly is a local-first Android application. Its runtime direction is:
 presentation → domain/use cases → repositories → local data source → Room/SQLCipher
 ```
 
-The presentation layer contains Compose screens and Hilt ViewModels. It renders state and sends
-user intent; persistence and security decisions remain outside Composables.
+The presentation layer contains Compose screens and Metro-injected ViewModels. It renders state and
+sends user intent; persistence and security decisions remain outside Composables.
 
 ## Layers
 
 - **Presentation** — navigation, screens, reusable UI and ViewModels.
 - **Domain** — use cases plus repository contracts. ViewModels use these contracts for feature
   operations such as saving a note, moving it to trash or changing a task.
-- **Data** — Room entities/DAOs, repository implementations and the local data-source facade.
+- **Data** — repository implementations and the local data-source facade. The Room entities, DAOs,
+  migrations and `SecureDatabaseManager` are the Kotlin Multiplatform module `:core:database`
+  (Android, desktop, iOS): the database is opened through Sealite's SQLCipher driver on every
+  target, and the app tells it where the files are through `DatabasePlatform` (on Android, the
+  app's own `databases` directory, the same files as ever).
 - **Core security** — vault setup/unlock, session lock and auto-lock delay (`SessionLockManager`,
   `AutoLock`), the Keystore-bound PIN factor, biometric slot, recovery slot and the SQLCipher
   database lifecycle.
@@ -52,6 +56,12 @@ Note editor writes are serialized by its ViewModel and must complete before navi
 success. Notes, tags and tasks remain local Room records inside the encrypted database. Room
 Flows drive list state; the active note list is derived from selected tag and sort state.
 
+The block editor is the Kotlin Multiplatform module `:editor` (package `com.pasich.encly.editor`:
+`model`, `codec`, `state`, `focus`, `theme`, `ui`; see `editor/README.md`), which depends on nothing of
+the app (`EditorBoundaryTest`): the app gives it its texts
+(`EditorStrings`), look (`EditorTheme`), clipboard, link opener and logger, and a controller over
+the note's view model (`EditorController`), all bound in `presentation/screen/editnote/EditorBindings.kt`.
+
 The block editor keeps its logic out of the composables: `BlockEditorState` owns the blocks, the
 undo history and the focus; the slash picker (`SlashPicker`), Find in this note (`NoteFind`),
 Smart Paste, block actions and templates are plain state or extension functions beside it, tested
@@ -59,8 +69,49 @@ on the JVM. Find, the slash picker and the template offer are transient UI state
 ViewModel: never written to the note, to `SavedStateHandle` or to disk, and cleared when the vault
 locks. They use the existing block kinds only, so the stored `Note.value` format is unchanged and
 a note is saved only when the user edits it. Smart Paste reads pasted plain text through the
-importer's `MarkdownBlockMapper` in its paste mode (nothing rewritten); the reading density
+editor's `MarkdownBlockMapper` (shared with the importers) in its paste mode (nothing rewritten); the reading density
 (`NoteLineSpacing`) is presentation only.
+
+## Platform boundary
+
+The shared core is three Kotlin Multiplatform modules, checked by a source-scan test each
+(`CommonBoundaryTest`, `CryptoBoundaryTest`, `SecurityBoundaryTest` in the module's `desktopTest`):
+
+- `:core:common` (Android, desktop, iOS): `UiText`, `AppStrings`, `LoadState`, `KeyValueStore`,
+  `MainThreadTimer`, `SensitiveDataCleaner`, `AppLogger`. No dependency on another module.
+- `:core:crypto` (Android, desktop): `Crypto` (AES-256-GCM, HKDF, PBKDF2, SHA-256, the CSPRNG) and BIP-39. The API
+  is common code; the implementation is JCA in `jvmAndAndroidMain`, shared by both targets. There is no iOS
+  target until AES-GCM exists there (Apple's public CommonCrypto has none).
+- `:core:security` (Android, desktop): the vault store, the PIN, wipe-PIN, duress and recovery slots, the
+  lockout, `SecurityManager`, `SessionLockManager`, `AutoLock`, and the backup file format and cipher. Locks are
+  atomicfu `SynchronizedObject`s. Only the vault file I/O and the backup JSON bytes are JVM code
+  (`jvmAndAndroidMain`).
+
+Their sources import nothing of Android and nothing of the JVM. What they need from the platform is an interface
+they declare, implemented in `:app` and bound in `core/di`: `KeyValueStore` (flags), `VaultFileIo` (the vault
+file's fsync and atomic replace, `JvmVaultFileIo` in the module), `VaultDatabase` (the encrypted database,
+`SecureDatabaseVault`, in `:shared` for both apps), `BiometricManager` and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`,
+`DeviceLockWatcher`, `MainThreadTimer`, `HandoffStagingSweeper`, `AppStrings`.
+
+The rest of the domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`) and the whole
+UI (design system, screens, dialogs, navigation, ViewModels) are the Kotlin Multiplatform module `:shared` (Android,
+desktop; no iOS target while `:core:crypto` has none). Its common sources are held to the same rule by
+`SharedBoundaryTest` (`desktopTest`): no `android.`, `java.` or `androidx.activity|core|appcompat|fragment|biometric`
+import, none of `LocalContext`, `LocalActivity`, `LocalView` or `LocalConfiguration`, and no dependency on `:app`; the few
+platform source sets (`jvmAndAndroidMain`, `androidMain`, `desktopMain`) are listed there file by file, each with its
+reason. What the UI needs from the platform is an interface in `com.pasich.encly.platform`, implemented by the host:
+
+- Composition locals, provided once around the content by `AndroidHostServices` (`:app`): `PlatformDocuments` and
+  `DocumentPickers` (the Storage Access Framework: `AndroidDocuments`, `AndroidDocumentPickers`), `ExternalLinks`,
+  `Toaster`, `SensitiveClipboard` (the clipboard policy of `SensitiveClip`), `AppWindow` (FLAG_SECURE, status bar,
+  window background, keyboard, rotation), `ScreenBiometricHost` (the Activity a biometric prompt is shown on),
+  `AppLocaleController` and `AppInfo` (the flavor's flags).
+- ViewModel dependencies, bound in the graph: `PlatformDocuments`, `CacheDirectory`, `AppLocaleController`,
+  `DeviceCapabilities`.
+
+`:app` keeps `MainActivity`, `ImportFromMyNotesActivity`, `MyApplication`, the graph and its Android binding containers,
+and every Android adapter (the platform interfaces above, Keystore and biometrics, the device lock, SharedPreferences,
+the DataStore factory, the keyboard and clipboard boundaries, the hand-off caller check, the in-app language).
 
 ## Navigation
 
@@ -83,8 +134,8 @@ the full unlock reveal plays only on the first unlock after launch, later unlock
 ## Encrypted backups
 
 Export/import is fully offline: the UI hands whole files to and from the Storage Access
-Framework (`CreateDocument` / `OpenDocument`), so there is no storage permission, no temp file
-and no network code. The key comes from the BIP39 recovery seed (see
+Framework (`CreateDocument` / `OpenDocument`, behind `DocumentPickers` and `PlatformDocuments`), so there is no
+storage permission, no temp file and no network code. The key comes from the BIP39 recovery seed (see
 [SECURITY.md](../SECURITY.md#encrypted-backups)), so the same 12 words open a backup on a new
 phone.
 
@@ -99,7 +150,7 @@ phone.
 | `data/backup/VaultDataStore` | Narrow storage contract; `RoomVaultDataStore` over `BackupDao` |
 | `data/backup/BackupPhraseSetup` | Recovery seed + backup-key slot needed before an export |
 | `data/backup/PendingRestore` | Onboarding restore held in memory until PIN setup opens the vault |
-| `data/backup/BackupDocuments` | Reads (≤ 64 MiB, buffer sized from the header) and writes the picked document; never overwrites an existing one |
+| `data/backup/BackupDocuments` | Reads (≤ 64 MiB, buffer sized from the header) and writes the picked document (through `PlatformDocuments`); never overwrites an existing one |
 | `presentation/.../BackupViewModel` + `BackupFlows` | Re-auth, export, import and seed-setup steps |
 
 ```mermaid
@@ -198,5 +249,5 @@ use) are written, in one transaction on the vault session bound when the read st
 files, parsed notes and selection live in the ViewModel only, are never put in saved state, and are
 dropped on cancel, on finish and when the vault locks. Import is available in a decoy session too
 and imports into whichever vault is open. The real exporters' files are the test fixtures
-(`app/src/test/resources/import-fixtures`).
+(`shared/src/jvmAndAndroidTest/resources/import-fixtures`).
 

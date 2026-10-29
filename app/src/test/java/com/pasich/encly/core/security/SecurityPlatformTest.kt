@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
-import com.pasich.encly.testutil.InMemorySharedPreferences
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -101,7 +101,7 @@ class SecurityPlatformTest {
 
     @Test
     fun strictKeyboardPrivacyIsOffByDefaultAndPersistsWhenSet() {
-        val prefs = InMemorySharedPreferences()
+        val prefs = InMemoryKeyValueStore()
         val privacy = KeyboardPrivacy(prefs)
         assertFalse(privacy.strict.value)
 

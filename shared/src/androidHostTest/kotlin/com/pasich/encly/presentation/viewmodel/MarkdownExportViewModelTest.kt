@@ -1,0 +1,570 @@
+package com.pasich.encly.presentation.viewmodel
+
+import com.pasich.encly.core.backup.BackupError
+import com.pasich.encly.core.backup.BackupException
+import com.pasich.encly.core.common.AppStrings
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_error_io
+import com.pasich.encly.core.resources.backup_error_locked
+import com.pasich.encly.core.resources.backup_error_target_exists
+import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.resources.markdown_export_done
+import com.pasich.encly.core.resources.pdf_export_done
+import com.pasich.encly.core.resources.print_done
+import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.data.backup.VaultDataStore
+import com.pasich.encly.data.backup.VaultSnapshot
+import com.pasich.encly.data.export.MarkdownDocuments
+import com.pasich.encly.data.export.NoteDocument
+import com.pasich.encly.data.model.Note
+import com.pasich.encly.platform.DocumentRef
+import com.pasich.encly.platform.NoteDocumentRenderer
+import com.pasich.encly.platform.PrintResult
+import com.pasich.encly.testutil.InMemoryVaultDataStore
+import com.pasich.encly.testutil.anyCharArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlinx.io.Sink
+import kotlinx.io.asSink
+import kotlinx.io.buffered
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.zip.ZipInputStream
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class MarkdownExportViewModelTest {
+
+    private lateinit var security: SecurityManager
+    private lateinit var documents: MarkdownDocuments
+    private lateinit var store: InMemoryVaultDataStore
+    private lateinit var sessionLock: SessionLockManager
+    private lateinit var viewModel: MarkdownExportViewModel
+    private val written = ByteArrayOutputStream()
+    private val uri = DocumentRef("content://test/doc")
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        security = mock(SecurityManager::class.java)
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        documents = mock(MarkdownDocuments::class.java)
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            writeTo(invocation.getArgument<Any>(1) as (Sink) -> Unit)
+        }.`when`(documents).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+        store = InMemoryVaultDataStore().apply {
+            notes += Note(id = 1, title = "Groceries", value = "[]", uid = "n1", date = 5L)
+            notes += Note(id = 2, title = "Trashed", value = "[]", uid = "n2", isTrash = true)
+        }
+        sessionLock = SessionLockManager(security)
+        viewModel = viewModelOver(store)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun viewModelOver(vaultStore: VaultDataStore) = MarkdownExportViewModel(
+        securityManager = security,
+        sessionLockManager = sessionLock,
+        store = vaultStore,
+        documents = documents,
+        strings = mock(AppStrings::class.java) { "label" },
+    )
+
+    private fun anyBlock(): (Sink) -> Unit = any() ?: {}
+
+    /** What the real writer does: the block writes to a buffered sink over the document, which is flushed after it. */
+    private fun writeTo(block: (Sink) -> Unit) {
+        val sink = written.asSink().buffered()
+        try {
+            block(sink)
+        } finally {
+            sink.flush()
+        }
+    }
+
+    private fun step() = viewModel.uiState.value.step
+
+    private fun authenticate() {
+        viewModel.confirmWarning()
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+        waitUntil { step() is BackupStep.PickMarkdownTarget || step() == BackupStep.Idle }
+    }
+
+    /** Lets the work the ViewModel started on other threads finish, so none outlives the test. */
+    private fun settle() = waitUntil { true }
+
+    private fun waitUntil(condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + TIMEOUT_MS
+        while (!condition() || viewModel.uiState.value.busy) {
+            check(System.currentTimeMillis() < deadline) { "state is ${viewModel.uiState.value}" }
+            Thread.sleep(POLL_MS)
+        }
+    }
+
+    private fun zipNames(): List<String> = ZipInputStream(ByteArrayInputStream(written.toByteArray())).use { zip ->
+        generateSequence { zip.nextEntry }.map { it.name }.toList()
+    }
+
+    // --- the order: warning, PIN, save dialog, write -------------------------------------------------
+
+    @Test
+    fun theWarningComesFirstAndNothingIsReadOrWritten() {
+        viewModel.start(MarkdownExportTarget.AllData)
+
+        assertEquals(BackupStep.ConfirmPlainExport, step())
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+        verify(security, never()).verifyPin(anyCharArray())
+    }
+
+    @Test
+    fun continuingFromTheWarningAsksForThePinWithTheExistingReauthStep() {
+        viewModel.start(MarkdownExportTarget.AllData)
+
+        viewModel.confirmWarning()
+
+        assertEquals(BackupStep.Reauth(BackupAction.EXPORT_MARKDOWN, biometric = false), step())
+    }
+
+    @Test
+    fun theWarningCannotBeSkippedByAskingForThePinDirectly() {
+        // Without start() there is no export pending: a PIN submitted now has nowhere to go.
+        viewModel.confirmWarning()
+
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun aWrongPinStaysOnTheReauthAndReachesNothingElse() {
+        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+
+        viewModel.reauthFlow.submitPin("000000".toCharArray())
+        waitUntil { (step() as? BackupStep.Reauth)?.error != null }
+
+        assertEquals(Res.string.lock_wrong_pin, (step() as BackupStep.Reauth).error)
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+    }
+
+    @Test
+    fun theExportNeverAsksForARecoveryPhraseOrSealsABackup() {
+        // The encrypted export would stop at NeedsPhrase for a vault without a phrase.
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+
+        assertTrue(step() is BackupStep.PickMarkdownTarget)
+        verify(security, never()).hasBackupKey()
+        verify(security, never()).copyBackupRootKey()
+    }
+
+    @Test
+    fun theSaveDialogSuggestsADateOnlyNameNeverATitle() {
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        val all = step() as BackupStep.PickMarkdownTarget
+        assertTrue(all.zip)
+        assertTrue(all.name.matches(Regex("""encly-notes-\d{4}-\d{2}-\d{2}\.zip""")))
+
+        viewModel.cancel()
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1))
+        authenticate()
+        val one = step() as BackupStep.PickMarkdownTarget
+        assertFalse(one.zip)
+        assertTrue(one.name.matches(Regex("""encly-note-\d{4}-\d{2}-\d{2}\.md""")))
+    }
+
+    // --- writing ---------------------------------------------------------------------------------------
+
+    @Test
+    fun theZipIsWrittenAfterTheSaveDialogReturns() {
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.markdown_export_done), viewModel.uiState.value.message)
+        assertEquals(listOf("tasks.md", "Groceries.md"), zipNames())
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun oneNoteIsWrittenAsOneMarkdownDocument() {
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1))
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertTrue(written.toString(Charsets.UTF_8).startsWith("---\ntitle: \"Groceries\"\n"))
+    }
+
+    @Test
+    fun aCancelledSaveDialogWritesNothingAndKeepsNothing() {
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(null)
+        viewModel.onTarget(uri)
+        settle()
+
+        // The pending export was dropped with the first call: a second result has nothing to write.
+        // The empty document it names is removed, because nothing will be written to it.
+        assertEquals(0, written.size())
+        verify(documents).discard(uri)
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun cancellingAtAnyStepDropsTheExport() {
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.cancel()
+        assertEquals(BackupStep.Idle, step())
+
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        viewModel.cancel()
+        assertEquals(BackupStep.Idle, step())
+
+        viewModel.onTarget(uri)
+        settle()
+        assertEquals(0, written.size())
+    }
+
+    @Test
+    fun aVaultThatClosedMeanwhileFailsInsteadOfExportingAndTheEmptyDocumentIsRemoved() {
+        val closing = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            override suspend fun snapshot(): VaultSnapshot = error("Vault locked")
+        }
+        viewModel = viewModelOver(closing)
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
+        verify(documents).discard(uri)
+        assertEquals(0, written.size())
+    }
+
+    @Test
+    fun aReLockAfterTheReadStopsTheWriteBeforeTheDocumentIsOpened() {
+        val closing = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            // The read succeeds; the vault closes right after it.
+            override fun assertCurrentSession() = error("Vault locked")
+        }
+        viewModel = viewModelOver(closing)
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+        verify(documents).discard(uri)
+        assertEquals(0, written.size())
+    }
+
+    @Test
+    fun aPinThatVerifiesAfterTheFlowWasCancelledCannotSkipTheNextWarning() {
+        val release = java.util.concurrent.CountDownLatch(1)
+        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+            release.await(TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+            true
+        }
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        // The user backs out and starts again while the first PIN is still being checked.
+        viewModel.cancel()
+        viewModel.start(MarkdownExportTarget.AllData)
+        release.countDown()
+        waitUntil { true }
+
+        assertEquals(BackupStep.ConfirmPlainExport, step())
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+    }
+
+    @Test
+    fun oneNoteIsReadWithoutReadingTheWholeVault() {
+        val noteOnly = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            override suspend fun snapshot(): VaultSnapshot = error("the whole vault must not be read")
+        }
+        viewModel = viewModelOver(noteOnly)
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 1))
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.markdown_export_done), viewModel.uiState.value.message)
+        assertTrue(written.toString(Charsets.UTF_8).contains("Groceries"))
+    }
+
+    @Test
+    fun theFingerprintIsOfferedOnlyWhereTheSecurityLayerAllowsIt() {
+        `when`(security.canReauthWithBiometric()).thenReturn(true)
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        assertEquals(true, (step() as BackupStep.Reauth).biometric)
+
+        viewModel.cancel()
+        `when`(security.canReauthWithBiometric()).thenReturn(false)
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        assertEquals(false, (step() as BackupStep.Reauth).biometric)
+    }
+
+    @Test
+    fun aVaultThatIsAlreadyLockedWhenTheExportIsAuthenticatedEndsWithAMessage() {
+        val locked = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = error("Vault locked")
+        }
+        viewModel = viewModelOver(locked)
+        viewModel.start(MarkdownExportTarget.AllData)
+        viewModel.confirmWarning()
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun aProviderFailureIsReportedWithoutItsMessage() {
+        doAnswer { throw BackupException(BackupError.TARGET_EXISTS) }
+            .`when`(documents).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_target_exists), viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun aNoteThatIsGoneMeanwhileFailsTheWholeWriteSoTheDocumentIsDiscardedByTheWriter() {
+        viewModel.start(MarkdownExportTarget.SingleNote(noteId = 99))
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+        // The real writer deletes the document when its block throws; the fake only runs the block.
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            runCatching { writeTo(invocation.getArgument<Any>(1) as (Sink) -> Unit) }
+                .getOrElse { throw it }
+        }.`when`(documents).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_io), viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun theDecoyVaultExportsWhatItHolds() {
+        `when`(security.isDecoySession()).thenReturn(true)
+        store.notes.clear()
+        store.notes += Note(id = 1, title = "Decoy note", value = "[]", uid = "d1")
+        viewModel.start(MarkdownExportTarget.AllData)
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(listOf("tasks.md", "Decoy note.md"), zipNames())
+    }
+
+    // --- one note as a PDF or a printout (the desktop) ---------------------------------------------------
+
+    private class FakeRenderer : NoteDocumentRenderer {
+        val pdfs = mutableListOf<NoteDocument>()
+        val printed = mutableListOf<NoteDocument>()
+        var printResult = PrintResult.PRINTED
+        var printFails = false
+
+        override fun writePdf(document: NoteDocument, out: Sink) {
+            pdfs += document
+            out.write("%PDF-fake".encodeToByteArray())
+        }
+
+        override suspend fun print(document: NoteDocument): PrintResult {
+            if (printFails) throw java.io.IOException("no printer")
+            printed += document
+            return printResult
+        }
+    }
+
+    private val renderer = FakeRenderer()
+
+    private fun asPdf(id: Long = 1) = MarkdownExportTarget.NoteAsDocument(id, DocumentFormat.PDF, renderer)
+
+    private fun asPrint(id: Long = 1) = MarkdownExportTarget.NoteAsDocument(id, DocumentFormat.PRINT, renderer)
+
+    @Test
+    fun aPdfAsksTheSameWarningAndThePinBeforeTheSaveDialog() {
+        viewModel.start(asPdf())
+        assertEquals(BackupStep.ConfirmDocumentExport(print = false), step())
+        verify(security, never()).verifyPin(anyCharArray())
+
+        authenticate()
+
+        val picker = step() as BackupStep.PickMarkdownTarget
+        assertTrue(picker.pdf)
+        assertFalse(picker.zip)
+        assertTrue(picker.name.matches(Regex("""encly-note-\d{4}-\d{2}-\d{2}\.pdf""")))
+        assertTrue(renderer.pdfs.isEmpty())
+    }
+
+    @Test
+    fun thePdfIsBuiltAfterTheSaveDialogReturnsFromTheStoredNote() {
+        viewModel.start(asPdf())
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.pdf_export_done), viewModel.uiState.value.message)
+        assertEquals("%PDF-fake", written.toString(Charsets.UTF_8))
+        assertEquals("Groceries", renderer.pdfs.single().title)
+    }
+
+    @Test
+    fun aCancelledPdfWritesNothingAndTouchesNoRenderer() {
+        viewModel.start(asPdf())
+        viewModel.cancel()
+        viewModel.start(asPdf())
+        viewModel.confirmWarning()
+        viewModel.cancel()
+        viewModel.start(asPdf())
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+        viewModel.onTarget(null)
+        settle()
+
+        assertEquals(0, written.size())
+        assertTrue(renderer.pdfs.isEmpty())
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun aPdfOfANoteThatIsGoneFailsAndTheEmptyDocumentIsRemoved() {
+        viewModel.start(asPdf(id = 2))
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        // The note in the trash is not exported.
+        assertEquals(BackupMessage.Text(Res.string.backup_error_io), viewModel.uiState.value.message)
+        assertTrue(renderer.pdfs.isEmpty())
+    }
+
+    @Test
+    fun printingWarnsAboutThePrinterThenHandsTheNoteOverWithoutAFile() {
+        viewModel.start(asPrint())
+        assertEquals(BackupStep.ConfirmDocumentExport(print = true), step())
+
+        authenticate()
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.print_done), viewModel.uiState.value.message)
+        assertEquals("Groceries", renderer.printed.single().title)
+        assertEquals(0, written.size())
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+    }
+
+    @Test
+    fun aClosedPrintDialogEndsQuietly() {
+        renderer.printResult = PrintResult.CANCELLED
+        viewModel.start(asPrint())
+        authenticate()
+        settle()
+
+        assertEquals(null, viewModel.uiState.value.message)
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun aPrinterThatFailsIsReportedWithoutItsMessage() {
+        renderer.printFails = true
+        viewModel.start(asPrint())
+        authenticate()
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_io), viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun aReLockBeforeThePrintStopsItBeforeTheDialog() {
+        val closing = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            override fun assertCurrentSession() = error("Vault locked")
+        }
+        viewModel = viewModelOver(closing)
+        viewModel.start(asPrint())
+        authenticate()
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
+        assertTrue(renderer.printed.isEmpty())
+    }
+
+    @Test
+    fun aCancelledPrintAtTheWarningOrThePinPrintsNothing() {
+        viewModel.start(asPrint())
+        viewModel.cancel()
+        viewModel.start(asPrint())
+        viewModel.confirmWarning()
+        viewModel.cancel()
+        settle()
+
+        assertTrue(renderer.printed.isEmpty())
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    private companion object {
+        const val TIMEOUT_MS = 5_000L
+        const val POLL_MS = 10L
+    }
+}

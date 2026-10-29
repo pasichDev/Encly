@@ -1,0 +1,461 @@
+public final class com/pasich/encly/core/security/cipher/SQLCipherUtils {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/cipher/SQLCipherUtils;
+	public final fun getDatabaseState (Lkotlinx/io/files/Path;)Lcom/pasich/encly/core/security/cipher/SQLCipherUtils$State;
+}
+
+public final class com/pasich/encly/core/security/cipher/SQLCipherUtils$State : java/lang/Enum {
+	public static final field DOES_NOT_EXIST Lcom/pasich/encly/core/security/cipher/SQLCipherUtils$State;
+	public static final field ENCRYPTED Lcom/pasich/encly/core/security/cipher/SQLCipherUtils$State;
+	public static final field UNENCRYPTED Lcom/pasich/encly/core/security/cipher/SQLCipherUtils$State;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/cipher/SQLCipherUtils$State;
+	public static fun values ()[Lcom/pasich/encly/core/security/cipher/SQLCipherUtils$State;
+}
+
+public abstract class com/pasich/encly/data/database/AppDatabase : androidx/room/RoomDatabase {
+	public fun <init> ()V
+	public abstract fun backupDao ()Lcom/pasich/encly/data/database/dao/BackupDao;
+	public abstract fun notesDao ()Lcom/pasich/encly/data/database/dao/NotesDao;
+	public abstract fun tagsDao ()Lcom/pasich/encly/data/database/dao/TagsDao;
+	public abstract fun tasksDao ()Lcom/pasich/encly/data/database/dao/TasksDao;
+}
+
+public final class com/pasich/encly/data/database/AppDatabaseConstructor : androidx/room/RoomDatabaseConstructor {
+	public static final field INSTANCE Lcom/pasich/encly/data/database/AppDatabaseConstructor;
+	public synthetic fun initialize ()Landroidx/room/RoomDatabase;
+	public fun initialize ()Lcom/pasich/encly/data/database/AppDatabase;
+}
+
+public final class com/pasich/encly/data/database/AppDatabaseKt {
+	public static final field DB_VERSION I
+}
+
+public final class com/pasich/encly/data/database/AppDatabase_Impl : com/pasich/encly/data/database/AppDatabase {
+	public fun <init> ()V
+	public fun backupDao ()Lcom/pasich/encly/data/database/dao/BackupDao;
+	public fun createAutoMigrations (Ljava/util/Map;)Ljava/util/List;
+	public synthetic fun createOpenDelegate ()Landroidx/room/RoomOpenDelegateMarker;
+	public fun getRequiredAutoMigrationSpecClasses ()Ljava/util/Set;
+	public fun notesDao ()Lcom/pasich/encly/data/database/dao/NotesDao;
+	public fun tagsDao ()Lcom/pasich/encly/data/database/dao/TagsDao;
+	public fun tasksDao ()Lcom/pasich/encly/data/database/dao/TasksDao;
+}
+
+public final class com/pasich/encly/data/database/DatabaseLease {
+	public fun <init> ()V
+}
+
+public abstract interface class com/pasich/encly/data/database/DatabasePlatform {
+	public abstract fun databaseBuilder (Lkotlinx/io/files/Path;)Landroidx/room/RoomDatabase$Builder;
+	public abstract fun databasePath (Lcom/pasich/encly/data/database/VaultFile;)Lkotlinx/io/files/Path;
+}
+
+public abstract interface class com/pasich/encly/data/database/DatabaseProvider {
+	public abstract fun captureLease ()Lcom/pasich/encly/data/database/DatabaseLease;
+	public abstract fun getDatabase (Lcom/pasich/encly/data/database/DatabaseLease;)Lcom/pasich/encly/data/database/AppDatabase;
+}
+
+public final class com/pasich/encly/data/database/DesktopDatabasePlatform : com/pasich/encly/data/database/DatabasePlatform {
+	public fun <init> (Lkotlinx/io/files/Path;)V
+	public fun databaseBuilder (Lkotlinx/io/files/Path;)Landroidx/room/RoomDatabase$Builder;
+	public fun databasePath (Lcom/pasich/encly/data/database/VaultFile;)Lkotlinx/io/files/Path;
+}
+
+public final class com/pasich/encly/data/database/SecureDatabaseManager : com/pasich/encly/data/database/DatabaseProvider {
+	public fun <init> (Lcom/pasich/encly/data/database/DatabasePlatform;)V
+	public fun captureLease ()Lcom/pasich/encly/data/database/DatabaseLease;
+	public fun getDatabase (Lcom/pasich/encly/data/database/DatabaseLease;)Lcom/pasich/encly/data/database/AppDatabase;
+	public final fun hasEncryptedDatabase (Lcom/pasich/encly/data/database/VaultFile;)Z
+	public static synthetic fun hasEncryptedDatabase$default (Lcom/pasich/encly/data/database/SecureDatabaseManager;Lcom/pasich/encly/data/database/VaultFile;ILjava/lang/Object;)Z
+	public final fun isDatabaseUnlocked ()Z
+	public final fun reset ()V
+	public final fun unlockDatabase ([BZ)Z
+	public final fun unlockDatabase ([BZLcom/pasich/encly/data/database/VaultFile;)Z
+	public static synthetic fun unlockDatabase$default (Lcom/pasich/encly/data/database/SecureDatabaseManager;[BZILjava/lang/Object;)Z
+	public final fun wipe ()V
+	public final fun wipeIfClosed (Lcom/pasich/encly/data/database/VaultFile;)Z
+	public static synthetic fun wipeIfClosed$default (Lcom/pasich/encly/data/database/SecureDatabaseManager;Lcom/pasich/encly/data/database/VaultFile;ILjava/lang/Object;)Z
+}
+
+public final class com/pasich/encly/data/database/SecureDatabaseManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/data/database/SecureDatabaseManager$MetroFactory$Companion;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/data/database/SecureDatabaseManager$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/data/database/SecureDatabaseManager;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance (Lcom/pasich/encly/data/database/DatabasePlatform;)Lcom/pasich/encly/data/database/SecureDatabaseManager;
+}
+
+public final class com/pasich/encly/data/database/SecureDatabaseManager$MetroFactory$Companion {
+	public final fun create (Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/data/database/SecureDatabaseManager$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/data/database/DatabasePlatform;)Lcom/pasich/encly/data/database/SecureDatabaseManager;
+}
+
+public final class com/pasich/encly/data/database/VaultFile : java/lang/Enum {
+	public static final field DECOY Lcom/pasich/encly/data/database/VaultFile;
+	public static final field PRIMARY Lcom/pasich/encly/data/database/VaultFile;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/data/database/VaultFile;
+	public static fun values ()[Lcom/pasich/encly/data/database/VaultFile;
+}
+
+public final class com/pasich/encly/data/database/VaultSchema {
+	public static final field INSTANCE Lcom/pasich/encly/data/database/VaultSchema;
+	public final fun createTriggers (Landroidx/sqlite/SQLiteConnection;)V
+	public final fun getCALLBACK ()Landroidx/room/RoomDatabase$Callback;
+	public final fun getMIGRATION_1_2 ()Landroidx/room/migration/Migration;
+	public final fun getMIGRATION_2_3 ()Landroidx/room/migration/Migration;
+	public final fun getMIGRATION_3_4 ()Landroidx/room/migration/Migration;
+	public final fun getMIGRATION_4_5 ()Landroidx/room/migration/Migration;
+	public final fun getMIGRATION_5_6 ()Landroidx/room/migration/Migration;
+	public final fun install (Landroidx/room/RoomDatabase$Builder;)Landroidx/room/RoomDatabase$Builder;
+}
+
+public abstract interface class com/pasich/encly/data/database/dao/BackupDao {
+	public abstract fun allNotes (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun allSubtasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun allTags (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun allTasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteAllNotes (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteAllSubtasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteAllTags (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteAllTasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun insertNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun insertSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun insertTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun insertTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun tagById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/BackupDao_Impl : com/pasich/encly/data/database/dao/BackupDao {
+	public static final field Companion Lcom/pasich/encly/data/database/dao/BackupDao_Impl$Companion;
+	public fun <init> (Landroidx/room/RoomDatabase;)V
+	public fun allNotes (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun allSubtasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun allTags (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun allTasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteAllNotes (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteAllSubtasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteAllTags (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteAllTasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun insertNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun insertSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun insertTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun insertTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun tagById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/BackupDao_Impl$Companion {
+	public final fun getRequiredConverters ()Ljava/util/List;
+}
+
+public abstract interface class com/pasich/encly/data/database/dao/NotesDao {
+	public abstract fun deleteNoteById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getAllNotes ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getAllNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getArchivedNotesByTagId (J)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getArchivedNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getNoteById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getNotesByTagId (Ljava/lang/Long;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getTrashNotes ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun insertNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun observeNoteWithTag (J)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun updateArchived (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateColor (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateDescription (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updatePinned (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateTagId (JLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/NotesDao_Impl : com/pasich/encly/data/database/dao/NotesDao {
+	public static final field Companion Lcom/pasich/encly/data/database/dao/NotesDao_Impl$Companion;
+	public fun <init> (Landroidx/room/RoomDatabase;)V
+	public fun deleteNoteById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getAllNotes ()Lkotlinx/coroutines/flow/Flow;
+	public fun getAllNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
+	public fun getArchivedNotesByTagId (J)Lkotlinx/coroutines/flow/Flow;
+	public fun getArchivedNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
+	public fun getNoteById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getNotesByTagId (Ljava/lang/Long;)Lkotlinx/coroutines/flow/Flow;
+	public fun getTrashNotes ()Lkotlinx/coroutines/flow/Flow;
+	public fun insertNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun observeNoteWithTag (J)Lkotlinx/coroutines/flow/Flow;
+	public fun updateArchived (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateColor (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateDescription (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updatePinned (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateTagId (JLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/NotesDao_Impl$Companion {
+	public final fun getRequiredConverters ()Ljava/util/List;
+}
+
+public abstract interface class com/pasich/encly/data/database/dao/TagsDao {
+	public abstract fun addTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun addTags (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteTagDetachingNotes (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun detachNotesFromTag (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getTags ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun updateTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateTags (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/TagsDao$DefaultImpls {
+	public static fun deleteTagDetachingNotes (Lcom/pasich/encly/data/database/dao/TagsDao;Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/TagsDao_Impl : com/pasich/encly/data/database/dao/TagsDao {
+	public static final field Companion Lcom/pasich/encly/data/database/dao/TagsDao_Impl$Companion;
+	public fun <init> (Landroidx/room/RoomDatabase;)V
+	public fun addTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun addTags (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteTagDetachingNotes (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun detachNotesFromTag (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTags ()Lkotlinx/coroutines/flow/Flow;
+	public fun updateTag (Lcom/pasich/encly/data/model/Tag;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateTags (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/TagsDao_Impl$Companion {
+	public final fun getRequiredConverters ()Ljava/util/List;
+}
+
+public abstract interface class com/pasich/encly/data/database/dao/TasksDao {
+	public fun appendSubtask (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteAllCompletedTasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteSubtaskById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteSubtasksExcept (JLjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteTaskById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getActiveTasksCount ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getAllActiveTasks ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getAllCompletedTasks ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getAllTasks ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getCompletedTasksCount ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getSubtasks (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getTaskById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun insertSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun insertTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun nextSubtaskPosition (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun observeSubtasks ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun renameSubtask (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun replaceSubtasks (JLjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun restoreSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun restoreTask (Lcom/pasich/encly/data/model/Task;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun setSubtaskCompleted (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun shiftSubtasksFrom (JILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateTaskStatus (JZLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/TasksDao$DefaultImpls {
+	public static fun appendSubtask (Lcom/pasich/encly/data/database/dao/TasksDao;JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun replaceSubtasks (Lcom/pasich/encly/data/database/dao/TasksDao;JLjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun restoreSubtask (Lcom/pasich/encly/data/database/dao/TasksDao;Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun restoreTask (Lcom/pasich/encly/data/database/dao/TasksDao;Lcom/pasich/encly/data/model/Task;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/TasksDao_Impl : com/pasich/encly/data/database/dao/TasksDao {
+	public static final field Companion Lcom/pasich/encly/data/database/dao/TasksDao_Impl$Companion;
+	public fun <init> (Landroidx/room/RoomDatabase;)V
+	public fun appendSubtask (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteAllCompletedTasks (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteSubtaskById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteSubtasksExcept (JLjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteTaskById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getActiveTasksCount ()Lkotlinx/coroutines/flow/Flow;
+	public fun getAllActiveTasks ()Lkotlinx/coroutines/flow/Flow;
+	public fun getAllCompletedTasks ()Lkotlinx/coroutines/flow/Flow;
+	public fun getAllTasks ()Lkotlinx/coroutines/flow/Flow;
+	public fun getCompletedTasksCount ()Lkotlinx/coroutines/flow/Flow;
+	public fun getSubtasks (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTaskById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun insertSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun insertTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun nextSubtaskPosition (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun observeSubtasks ()Lkotlinx/coroutines/flow/Flow;
+	public fun renameSubtask (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun replaceSubtasks (JLjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun restoreSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun restoreTask (Lcom/pasich/encly/data/model/Task;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun setSubtaskCompleted (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun shiftSubtasksFrom (JILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateSubtask (Lcom/pasich/encly/data/model/Subtask;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateTask (Lcom/pasich/encly/data/model/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateTaskStatus (JZLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/pasich/encly/data/database/dao/TasksDao_Impl$Companion {
+	public final fun getRequiredConverters ()Ljava/util/List;
+}
+
+public final class com/pasich/encly/data/model/Note {
+	public static final field Companion Lcom/pasich/encly/data/model/Note$Companion;
+	public static final field NO_COLOR Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Long;ZZLjava/lang/String;ZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Long;ZZLjava/lang/String;ZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Z
+	public final fun component12 ()Z
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Ljava/lang/Integer;
+	public final fun component15 ()Ljava/lang/Integer;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun component6 ()J
+	public final fun component7 ()Ljava/lang/Long;
+	public final fun component8 ()Z
+	public final fun component9 ()Z
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Long;ZZLjava/lang/String;ZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/pasich/encly/data/model/Note;
+	public static synthetic fun copy$default (Lcom/pasich/encly/data/model/Note;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Long;ZZLjava/lang/String;ZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/pasich/encly/data/model/Note;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Ljava/lang/String;
+	public final fun getDate ()J
+	public final fun getDateCreate ()J
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getId ()J
+	public final fun getLineSpacing ()Ljava/lang/Integer;
+	public final fun getTagId ()Ljava/lang/Long;
+	public final fun getTextSize ()Ljava/lang/Integer;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUid ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public final fun hasContentChanged (Ljava/lang/String;Ljava/lang/String;)Z
+	public fun hashCode ()I
+	public final fun isArchived ()Z
+	public final fun isChecked ()Z
+	public final fun isEmpty ()Z
+	public final fun isPinned ()Z
+	public final fun isTrash ()Z
+	public final fun setArchived (Z)V
+	public final fun setChecked (Z)V
+	public final fun setColor (Ljava/lang/String;)V
+	public final fun setDate (J)V
+	public final fun setDateCreate (J)V
+	public final fun setDescription (Ljava/lang/String;)V
+	public final fun setId (J)V
+	public final fun setLineSpacing (Ljava/lang/Integer;)V
+	public final fun setPinned (Z)V
+	public final fun setTagId (Ljava/lang/Long;)V
+	public final fun setTextSize (Ljava/lang/Integer;)V
+	public final fun setTitle (Ljava/lang/String;)V
+	public final fun setTrash (Z)V
+	public final fun setUid (Ljava/lang/String;)V
+	public final fun setValue (Ljava/lang/String;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/data/model/Note$Companion {
+	public final fun new (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lcom/pasich/encly/data/model/Note;
+	public static synthetic fun new$default (Lcom/pasich/encly/data/model/Note$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lcom/pasich/encly/data/model/Note;
+}
+
+public final class com/pasich/encly/data/model/NoteWithTag {
+	public fun <init> (Lcom/pasich/encly/data/model/Note;Lcom/pasich/encly/data/model/Tag;)V
+	public final fun component1 ()Lcom/pasich/encly/data/model/Note;
+	public final fun component2 ()Lcom/pasich/encly/data/model/Tag;
+	public final fun copy (Lcom/pasich/encly/data/model/Note;Lcom/pasich/encly/data/model/Tag;)Lcom/pasich/encly/data/model/NoteWithTag;
+	public static synthetic fun copy$default (Lcom/pasich/encly/data/model/NoteWithTag;Lcom/pasich/encly/data/model/Note;Lcom/pasich/encly/data/model/Tag;ILjava/lang/Object;)Lcom/pasich/encly/data/model/NoteWithTag;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNote ()Lcom/pasich/encly/data/model/Note;
+	public final fun getTag ()Lcom/pasich/encly/data/model/Tag;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/data/model/Subtask {
+	public fun <init> (JJLjava/lang/String;ZILjava/lang/String;)V
+	public synthetic fun <init> (JJLjava/lang/String;ZILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()I
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (JJLjava/lang/String;ZILjava/lang/String;)Lcom/pasich/encly/data/model/Subtask;
+	public static synthetic fun copy$default (Lcom/pasich/encly/data/model/Subtask;JJLjava/lang/String;ZILjava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/data/model/Subtask;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()J
+	public final fun getPosition ()I
+	public final fun getTaskId ()J
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isCompleted ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/data/model/Tag {
+	public fun <init> ()V
+	public fun <init> (JLjava/lang/String;ZILjava/lang/String;)V
+	public synthetic fun <init> (JLjava/lang/String;ZILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun component4 ()I
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;ZILjava/lang/String;)Lcom/pasich/encly/data/model/Tag;
+	public static synthetic fun copy$default (Lcom/pasich/encly/data/model/Tag;JLjava/lang/String;ZILjava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/data/model/Tag;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()J
+	public final fun getNameTag ()Ljava/lang/String;
+	public final fun getPosition ()I
+	public final fun getUid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isVisible ()Z
+	public final fun setId (J)V
+	public final fun setNameTag (Ljava/lang/String;)V
+	public final fun setPosition (I)V
+	public final fun setUid (Ljava/lang/String;)V
+	public final fun setVisible (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/data/model/Task {
+	public static final field Companion Lcom/pasich/encly/data/model/Task$Companion;
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;ZJLjava/lang/Long;ILjava/lang/Long;ILjava/lang/String;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/lang/String;ZJLjava/lang/Long;ILjava/lang/Long;ILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()J
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()I
+	public final fun component8 ()Ljava/lang/Long;
+	public final fun component9 ()I
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;ZJLjava/lang/Long;ILjava/lang/Long;ILjava/lang/String;)Lcom/pasich/encly/data/model/Task;
+	public static synthetic fun copy$default (Lcom/pasich/encly/data/model/Task;JLjava/lang/String;Ljava/lang/String;ZJLjava/lang/Long;ILjava/lang/Long;ILjava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/data/model/Task;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategoryId ()Ljava/lang/Long;
+	public final fun getCompletedDate ()Ljava/lang/Long;
+	public final fun getCreatedDate ()J
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getId ()J
+	public final fun getPosition ()I
+	public final fun getPriority ()I
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isCompleted ()Z
+	public final fun setPosition (I)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/data/model/Task$Companion {
+	public final fun new (Ljava/lang/String;Ljava/lang/String;ILjava/lang/Long;)Lcom/pasich/encly/data/model/Task;
+	public static synthetic fun new$default (Lcom/pasich/encly/data/model/Task$Companion;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Long;ILjava/lang/Object;)Lcom/pasich/encly/data/model/Task;
+}
+

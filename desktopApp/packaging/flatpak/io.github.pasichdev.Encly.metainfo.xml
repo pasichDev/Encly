@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.pasichdev.Encly</id>
+  <name>Encly</name>
+  <summary>Offline encrypted notes and tasks</summary>
+  <developer id="io.github.pasichdev">
+    <name>Encly contributors</name>
+  </developer>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <launchable type="desktop-id">io.github.pasichdev.Encly.desktop</launchable>
+  <description>
+    <p>Encly is a private notes and tasks app with no account, no cloud, no ads and no network access. Your notes stay in one encrypted vault on this computer.</p>
+    <ul>
+      <li>Encrypted at rest: a SQLCipher (AES-256) database under a random key that only your PIN or your 12-word recovery phrase can unlock.</li>
+      <li>The device-bound half of the PIN key lives in your desktop's secret service (GNOME Keyring, KWallet).</li>
+      <li>Locks itself when the window loses focus, after you have been idle, and when the session locks or the computer sleeps.</li>
+      <li>A block editor with headings, quotes, checklists, lists and links, tags, search and tasks with priorities.</li>
+      <li>Encrypted backups to a single file that you save wherever you choose; Encly never uploads anything.</li>
+    </ul>
+  </description>
+  <categories>
+    <category>Office</category>
+  </categories>
+  <keywords>
+    <keyword>notes</keyword>
+    <keyword>tasks</keyword>
+    <keyword>encrypted</keyword>
+    <keyword>private</keyword>
+    <keyword>vault</keyword>
+  </keywords>
+  <provides>
+    <mediatype>application/vnd.encly.backup</mediatype>
+  </provides>
+  <url type="homepage">https://github.com/pasichDev/Encly</url>
+  <url type="bugtracker">https://github.com/pasichDev/Encly/issues</url>
+  <url type="vcs-browser">https://github.com/pasichDev/Encly</url>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <releases>
+    <release version="2.3.1" date="2026-10-27"/>
+  </releases>
+</component>

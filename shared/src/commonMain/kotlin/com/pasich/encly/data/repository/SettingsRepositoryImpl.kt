@@ -1,0 +1,69 @@
+package com.pasich.encly.data.repository
+
+import com.pasich.encly.data.datasource.local.SettingsLocalDataSource
+import com.pasich.encly.domain.enums.NoteSortOption
+import com.pasich.encly.domain.model.FontStyleType
+import com.pasich.encly.domain.model.NoteLineSpacing
+import com.pasich.encly.domain.model.SwipeAction
+import com.pasich.encly.domain.model.SwipeSettings
+import com.pasich.encly.domain.model.SwipeSide
+import com.pasich.encly.domain.model.ThemePalette
+import com.pasich.encly.domain.model.ThemeSettings
+import com.pasich.encly.domain.model.ThemeType
+import com.pasich.encly.domain.repository.SettingsRepository
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+
+@SingleIn(AppScope::class)
+@Suppress("TooManyFunctions") // Implements the settings interface with one delegate per setting.
+@Inject
+class SettingsRepositoryImpl(private val settingsLocalDataSource: SettingsLocalDataSource) : SettingsRepository {
+
+    override val themeSettingsFlow: Flow<ThemeSettings> = settingsLocalDataSource.themeSettingsFlow
+    override val isGridNoteList: Flow<Boolean> = settingsLocalDataSource.isGridNoteListFlow
+    override val getSortNotes: Flow<NoteSortOption> = settingsLocalDataSource.getSortNotes
+    override val showTasksFlow: Flow<Boolean> = settingsLocalDataSource.showTasksFlow
+    override val simpleEditFlow: Flow<Boolean> = settingsLocalDataSource.simpleEditFlow
+    override val fontSizeFlow: Flow<Int> = settingsLocalDataSource.fontSizeFlow
+    override val fontStyleFlow: Flow<FontStyleType> = settingsLocalDataSource.fontStyleFlow
+    override val noteLineSpacingFlow: Flow<NoteLineSpacing> = settingsLocalDataSource.noteLineSpacingFlow
+
+    override val swipeSettingsFlow: Flow<SwipeSettings> = settingsLocalDataSource.swipeSettingsFlow
+
+    override val latestThemeSettings: ThemeSettings?
+        get() = settingsLocalDataSource.latestThemeSettings
+
+    override suspend fun loadThemeSettings(existingInstall: Boolean): ThemeSettings {
+        settingsLocalDataSource.migrateAppearance(existingInstall)
+        settingsLocalDataSource.removeLegacyNoteTextKeys()
+        return settingsLocalDataSource.themeSettingsFlow.first()
+    }
+
+    override suspend fun setDynamicTheme(value: Boolean) = settingsLocalDataSource.setDynamicTheme(value)
+
+    override suspend fun setThemeType(value: ThemeType) = settingsLocalDataSource.setThemeType(value)
+
+    override suspend fun setThemePalette(value: ThemePalette) = settingsLocalDataSource.setThemePalette(value)
+
+    override suspend fun setGridNoteList(value: Boolean) = settingsLocalDataSource.setGridNoteList(value)
+
+    override suspend fun setSortNotes(option: NoteSortOption) = settingsLocalDataSource.setSortNotes(option)
+
+    override suspend fun setShowTasks(value: Boolean) = settingsLocalDataSource.setShowTasks(value)
+
+    override suspend fun setSimpleEdit(value: Boolean) = settingsLocalDataSource.setSimpleEdit(value)
+
+    override suspend fun setFontSize(value: Int) = settingsLocalDataSource.setFontSize(value)
+
+    override suspend fun setFontStyle(value: FontStyleType) = settingsLocalDataSource.setFontStyle(value)
+
+    override suspend fun setNoteLineSpacing(value: NoteLineSpacing) = settingsLocalDataSource.setNoteLineSpacing(value)
+
+    override suspend fun setSwipeEnabled(value: Boolean) = settingsLocalDataSource.setSwipeEnabled(value)
+
+    override suspend fun setSwipeAction(side: SwipeSide, action: SwipeAction) =
+        settingsLocalDataSource.setSwipeAction(side, action)
+}

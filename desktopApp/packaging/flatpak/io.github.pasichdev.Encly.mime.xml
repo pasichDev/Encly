@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Encly's own backup type (never application/octet-stream, which would claim every binary file). -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/vnd.encly.backup">
+    <comment>Encly backup</comment>
+    <glob pattern="*.enclybak"/>
+  </mime-type>
+</mime-info>

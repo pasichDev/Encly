@@ -1,0 +1,121 @@
+package com.pasich.encly.presentation.screen
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.licenses_fonts
+import com.pasich.encly.core.resources.licenses_heading
+import com.pasich.encly.core.resources.licenses_intro
+import com.pasich.encly.core.resources.licenses_libraries
+import com.pasich.encly.core.resources.licenses_title
+import com.pasich.encly.platform.LocalExternalLinks
+import com.pasich.encly.platform.LocalToaster
+import com.pasich.encly.presentation.designsystem.EnclyGroup
+import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyListRow
+import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.SectionOverline
+import com.pasich.encly.presentation.designsystem.StepHeading
+import com.pasich.encly.ui.theme.EnclyTheme
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+
+/** A third-party work Encly ships: its name, its licence and where to read both. */
+private class OpenSourceWork(val name: String, val license: String, val url: String)
+
+private const val APACHE_2 = "Apache License 2.0"
+private const val OFL = "SIL Open Font License 1.1"
+
+private class LicenseSection(val title: StringResource, val works: List<OpenSourceWork>)
+
+private val bundledFonts = listOf(
+    OpenSourceWork("Playfair Display", OFL, "https://github.com/clauseggers/Playfair"),
+    OpenSourceWork("Source Sans 3", OFL, "https://github.com/adobe-fonts/source-sans"),
+    OpenSourceWork("IBM Plex Sans", OFL, "https://github.com/IBM/plex"),
+    OpenSourceWork("Poppins", OFL, "https://github.com/itfoundry/Poppins"),
+)
+
+private val bundledLibraries = listOf(
+    OpenSourceWork("AndroidX and Jetpack Compose", APACHE_2, "https://github.com/androidx/androidx"),
+    OpenSourceWork("Kotlin and kotlinx", APACHE_2, "https://github.com/JetBrains/kotlin"),
+    OpenSourceWork("Metro", APACHE_2, "https://github.com/ZacSweers/metro"),
+    OpenSourceWork("Sealite", APACHE_2, "https://github.com/pasichDev/sealite"),
+    OpenSourceWork("SQLCipher Community Edition", "BSD 3-Clause", "https://github.com/sqlcipher/sqlcipher"),
+    OpenSourceWork("OpenSSL", APACHE_2, "https://github.com/openssl/openssl"),
+    OpenSourceWork(
+        "BIP-39 English wordlist",
+        "MIT License",
+        "https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt",
+    ),
+    OpenSourceWork("Okio", APACHE_2, "https://github.com/square/okio"),
+    OpenSourceWork("Guava ListenableFuture", APACHE_2, "https://github.com/google/guava"),
+    OpenSourceWork("Reorderable", APACHE_2, "https://github.com/Calvin-LL/Reorderable"),
+    OpenSourceWork("Lucide", "ISC License", "https://github.com/lucide-icons/lucide"),
+)
+
+/** The fonts and libraries Encly is built with, each linking to its licence. */
+@Composable
+fun LicensesScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+    val links = LocalExternalLinks.current
+    val toaster = LocalToaster.current
+    val sections = listOf(
+        LicenseSection(Res.string.licenses_libraries, bundledLibraries),
+        LicenseSection(Res.string.licenses_fonts, bundledFonts),
+    )
+    Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            EnclyTopBar(title = stringResource(Res.string.licenses_title), onBack = { navController.popBackStack() })
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
+            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section),
+        ) {
+            StepHeading(
+                title = stringResource(Res.string.licenses_heading),
+                body = stringResource(Res.string.licenses_intro),
+            )
+            sections.forEach { section ->
+                Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
+                    SectionOverline(stringResource(section.title))
+                    EnclyGroup {
+                        section.works.forEachIndexed { index, work ->
+                            if (index > 0) EnclyGroupDivider()
+                            EnclyListRow(
+                                title = work.name,
+                                supporting = work.license,
+                                onClick = { openExternalLink(links, toaster, work.url) },
+                                modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+                            ) {
+                                Icon(
+                                    EnclyIcons.External,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,295 @@
+package com.pasich.encly.core.security
+
+import com.pasich.encly.core.backup.BackupKeys
+import com.pasich.encly.core.crypto.Crypto
+import com.pasich.encly.core.security.bip39.Bip39
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import kotlin.concurrent.Volatile
+
+/**
+ * Encly vault bootstrap and recovery manager.
+ *
+ * The SQLCipher key is a random 256-bit DEK. A user-managed BIP39 seed never becomes the
+ * database key directly: it derives a recovery KEK that wraps the DEK with AES-256-GCM.
+ *
+ * No seed hashes, HMAC mirrors or device-only master key are kept.
+ *
+ * A vault with a recovery seed also keeps a backup-key slot: the seed-derived `backupRoot`
+ * (see [BackupKeys]) sealed under a sub-key of the DEK. It lets an unlocked session write
+ * encrypted backups that the same 12 words decrypt on a fresh install, without asking for
+ * the words on every export. The slot opens only with the DEK, i.e. in an unlocked session.
+ *
+ * Both slots live in the [VaultStore] and are always written together, in one atomic edit.
+ */
+@SingleIn(AppScope::class)
+@Inject
+public class SeedPhraseManager(private val store: VaultStore) {
+    public companion object {
+        private const val VAULT_PREFIX = "vault."
+        internal const val RECOVERY_PREFIX = "recovery."
+        internal const val BACKUP_PREFIX = "backup."
+        private const val VERSION_KEY = "vault.version"
+        private const val RECOVERY_SLOT_KEY = "recovery.slot"
+        private const val RECOVERY_ENABLED_KEY = "recovery.enabled"
+        private const val BACKUP_SLOT_KEY = "backup.slot"
+        private const val VAULT_VERSION = 3
+        private const val IV_LENGTH = 12
+        private const val DEK_LENGTH = 32
+
+        private val RECOVERY_SALT = "encly/recovery/salt/v3".encodeToByteArray()
+        private val RECOVERY_INFO = "encly/recovery/kek/v3".encodeToByteArray()
+        private val RECOVERY_AAD = "encly/recovery/slot/v3".encodeToByteArray()
+        private val BACKUP_SLOT_SALT = "encly/backup/slot/salt/v1".encodeToByteArray()
+        private val BACKUP_SLOT_INFO = "encly/backup/slot/kek/v1".encodeToByteArray()
+        private val BACKUP_SLOT_AAD = "encly/backup/slot/v1".encodeToByteArray()
+    }
+
+    // Written and copied under [lock].
+    @Volatile
+    private var bootstrapDek: ByteArray? = null
+
+    // The one lock of the manager: every state-changing operation holds it (reentrant, so one may call another).
+    private val lock = SynchronizedObject()
+
+    public fun generateMnemonic(): CharArray = Mnemonic.generate()
+
+    public fun isValidMnemonic(phrase: CharArray): Boolean {
+        val normalized = Mnemonic.normalize(phrase)
+        return try {
+            Bip39().isValid(normalized)
+        } finally {
+            SensitiveDataCleaner.clear(normalized)
+        }
+    }
+
+    /**
+     * Creates a brand-new vault. Existing vault metadata is intentionally replaced.
+     *
+     * [recoverySeed] == null means auto-managed mode: the DEK can only be persisted once the
+     * mandatory PIN slot is created. If setup is interrupted before then, onboarding restarts.
+     */
+    @Suppress("ReturnCount") // Invalid seed and failed durable metadata commits abort setup immediately.
+    public fun initializeVault(recoverySeed: CharArray?): Boolean = synchronized(lock) {
+        if (recoverySeed != null && !isValidMnemonic(recoverySeed)) return false
+
+        clearBootstrapKey()
+        if (!store.edit { clearOwnKeys() }) return false
+
+        val dek = Crypto.randomBytes(DEK_LENGTH)
+        val recoverySlot = recoverySeed?.let { sealRecoverySlot(it, dek) }
+        val backupSlot = recoverySeed?.let { sealBackupRoot(it, dek) }
+        return try {
+            val committed = store.edit {
+                putInt(VERSION_KEY, VAULT_VERSION)
+                putBoolean(RECOVERY_ENABLED_KEY, recoverySlot != null)
+                recoverySlot?.let { putBytes(RECOVERY_SLOT_KEY, it) }
+                backupSlot?.let { putBytes(BACKUP_SLOT_KEY, it) }
+            }
+            if (committed) bootstrapDek = dek.copyOf()
+            committed
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+            recoverySlot?.let(SensitiveDataCleaner::clear)
+            backupSlot?.let(SensitiveDataCleaner::clear)
+        }
+    }
+
+    public fun hasStoredSeed(): Boolean = store.getInt(VERSION_KEY, 0) == VAULT_VERSION
+
+    public fun hasRecoverySeed(): Boolean = hasStoredSeed() &&
+        store.getBoolean(RECOVERY_ENABLED_KEY, false) &&
+        store.contains(RECOVERY_SLOT_KEY)
+
+    public fun verificationKeyData(): Boolean {
+        if (!hasStoredSeed()) return false
+        val recoveryEnabled = store.getBoolean(RECOVERY_ENABLED_KEY, false)
+        return !recoveryEnabled || hasRecoverySeed()
+    }
+
+    public fun copyBootstrapKey(): ByteArray? = synchronized(lock) { bootstrapDek?.copyOf() }
+
+    public fun clearBootstrapKey(): Unit = synchronized(lock) {
+        bootstrapDek?.let(SensitiveDataCleaner::clear)
+        bootstrapDek = null
+    }
+
+    /**
+     * Attempts to unwrap the DEK using the BIP39 recovery seed.
+     * The returned key belongs to the caller and must be zeroized after use.
+     */
+    @Suppress("ReturnCount") // Fail-closed early exits keep malformed recovery metadata out of crypto operations.
+    public fun unlockWithSeed(phrase: CharArray): ByteArray? {
+        if (!hasRecoverySeed() || !isValidMnemonic(phrase)) return null
+        val wrapped = store.getBytes(RECOVERY_SLOT_KEY) ?: return null
+        val kek = deriveRecoveryKek(phrase)
+        return try {
+            unwrap(wrapped, kek, RECOVERY_AAD)
+        } finally {
+            SensitiveDataCleaner.clear(kek)
+            SensitiveDataCleaner.clear(wrapped)
+        }
+    }
+
+    public fun verifyMnemonic(phrase: CharArray): Boolean {
+        val dek = unlockWithSeed(phrase) ?: return false
+        SensitiveDataCleaner.clear(dek)
+        return true
+    }
+
+    public fun hasBackupKey(): Boolean = hasRecoverySeed() && store.contains(BACKUP_SLOT_KEY)
+
+    /**
+     * Opens the backup-key slot with the live [dek]. The returned `backupRoot` belongs to the
+     * caller and must be zeroized after use.
+     */
+    @Suppress("ReturnCount") // Fail-closed early exits keep malformed metadata out of crypto.
+    public fun unwrapBackupRoot(dek: ByteArray): ByteArray? {
+        if (!hasBackupKey() || dek.size != DEK_LENGTH) return null
+        val wrapped = store.getBytes(BACKUP_SLOT_KEY) ?: return null
+        val kek = deriveBackupSlotKek(dek)
+        return try {
+            unwrap(wrapped, kek, BACKUP_SLOT_AAD)
+        } finally {
+            SensitiveDataCleaner.clear(kek)
+            SensitiveDataCleaner.clear(wrapped)
+        }
+    }
+
+    /**
+     * Adds the backup-key slot to a recovery-seed vault that lacks one. [phrase] must be this
+     * vault's recovery seed: it has to unwrap the recovery slot to exactly [dek].
+     */
+    public fun createBackupKey(phrase: CharArray, dek: ByteArray): Boolean = synchronized(lock) {
+        if (!isSeedOfVault(phrase, dek)) return false
+        val slot = sealBackupRoot(phrase, dek)
+        return try {
+            store.edit { putBytes(BACKUP_SLOT_KEY, slot) }
+        } finally {
+            SensitiveDataCleaner.clear(slot)
+        }
+    }
+
+    /** True when [phrase] unwraps the recovery slot to exactly [dek]. */
+    private fun isSeedOfVault(phrase: CharArray, dek: ByteArray): Boolean {
+        val recovered = unlockWithSeed(phrase) ?: return false
+        return try {
+            Crypto.constantTimeEquals(recovered, dek)
+        } finally {
+            SensitiveDataCleaner.clear(recovered)
+        }
+    }
+
+    /**
+     * Turns an unlocked automatic-security vault into a recovery-seed vault: seals the live
+     * [dek] under [phrase] (recovery slot) and adds the backup-key slot. The PIN and biometric
+     * slots are untouched. Refuses when a recovery seed already exists (see [replaceRecoverySeed]).
+     */
+    public fun addRecoverySeed(phrase: CharArray, dek: ByteArray): Boolean = synchronized(lock) {
+        if (!hasStoredSeed() || hasRecoverySeed()) return false
+        return writeRecoverySeed(phrase, dek)
+    }
+
+    /**
+     * Replaces the recovery phrase of an unlocked recovery-seed vault with [newPhrase]: the
+     * live [dek] is sealed under the new words and the backup key is re-derived from them, in
+     * one atomic write that also drops the old recovery slot. From then on the old words open
+     * nothing on this device; backups already made with them still open only with them.
+     */
+    public fun replaceRecoverySeed(newPhrase: CharArray, dek: ByteArray): Boolean = synchronized(lock) {
+        if (!hasRecoverySeed()) return false
+        return writeRecoverySeed(newPhrase, dek)
+    }
+
+    private fun writeRecoverySeed(phrase: CharArray, dek: ByteArray): Boolean {
+        if (dek.size != DEK_LENGTH || !isValidMnemonic(phrase)) return false
+        val recoverySlot = sealRecoverySlot(phrase, dek)
+        val backupSlot = sealBackupRoot(phrase, dek)
+        return try {
+            store.edit {
+                putBytes(RECOVERY_SLOT_KEY, recoverySlot)
+                putBytes(BACKUP_SLOT_KEY, backupSlot)
+                putBoolean(RECOVERY_ENABLED_KEY, true)
+            }
+        } finally {
+            SensitiveDataCleaner.clear(recoverySlot)
+            SensitiveDataCleaner.clear(backupSlot)
+        }
+    }
+
+    private fun sealRecoverySlot(phrase: CharArray, dek: ByteArray): ByteArray {
+        val kek = deriveRecoveryKek(phrase)
+        return try {
+            wrap(dek, kek, RECOVERY_AAD)
+        } finally {
+            SensitiveDataCleaner.clear(kek)
+        }
+    }
+
+    private fun sealBackupRoot(seed: CharArray, dek: ByteArray): ByteArray {
+        val root = BackupKeys.rootFromMnemonic(seed)
+        val kek = deriveBackupSlotKek(dek)
+        return try {
+            wrap(root, kek, BACKUP_SLOT_AAD)
+        } finally {
+            SensitiveDataCleaner.clear(root)
+            SensitiveDataCleaner.clear(kek)
+        }
+    }
+
+    /** A dedicated sub-key, so the SQLCipher key itself is never used as an AES-GCM key. */
+    private fun deriveBackupSlotKek(dek: ByteArray): ByteArray =
+        Hkdf.sha256(ikm = dek, salt = BACKUP_SLOT_SALT, info = BACKUP_SLOT_INFO, length = DEK_LENGTH)
+
+    /**
+     * The 12 words carry 128 bits of entropy, so a fast KDF suffices. Normalized exactly like
+     * the backup root ([Mnemonic]); different salt/info keep the two keys unrelated.
+     */
+    private fun deriveRecoveryKek(seed: CharArray): ByteArray {
+        val seedHash = Mnemonic.seedHash(seed)
+        return try {
+            Hkdf.sha256(ikm = seedHash, salt = RECOVERY_SALT, info = RECOVERY_INFO, length = DEK_LENGTH)
+        } finally {
+            SensitiveDataCleaner.clear(seedHash)
+        }
+    }
+
+    /** `iv ‖ AES-GCM(plaintext)` with [aad] authenticated. */
+    private fun wrap(plaintext: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray {
+        val iv = Crypto.randomBytes(IV_LENGTH)
+        val encrypted = Crypto.aesGcmSeal(kek, iv, aad, plaintext)
+        return try {
+            iv + encrypted
+        } finally {
+            SensitiveDataCleaner.clear(iv)
+            SensitiveDataCleaner.clear(encrypted)
+        }
+    }
+
+    /** The plaintext of [wrapped] (see [wrap]), or null when [kek] and [aad] do not open it. */
+    private fun unwrap(wrapped: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray? {
+        if (wrapped.size <= IV_LENGTH) return null
+        val iv = wrapped.copyOfRange(0, IV_LENGTH)
+        val ciphertext = wrapped.copyOfRange(IV_LENGTH, wrapped.size)
+        return try {
+            Crypto.aesGcmOpen(kek, iv, aad, ciphertext)
+        } finally {
+            SensitiveDataCleaner.clear(iv)
+            SensitiveDataCleaner.clear(ciphertext)
+        }
+    }
+
+    private fun VaultStore.Editor.clearOwnKeys() {
+        removePrefix(VAULT_PREFIX)
+        removePrefix(RECOVERY_PREFIX)
+        removePrefix(BACKUP_PREFIX)
+    }
+
+    public fun wipe() {
+        clearBootstrapKey()
+        store.edit { clearOwnKeys() }
+    }
+}
