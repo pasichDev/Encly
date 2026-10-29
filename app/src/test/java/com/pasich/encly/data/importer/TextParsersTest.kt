@@ -240,7 +240,7 @@ class JoplinParserTest {
         assertEquals(1, parsed.skips.unsupported)
     }
 
-    private fun describe(blocks: List<com.pasich.encly.dynamicBlocks.Block>) = ImportFixtures.describe(blocks)
+    private fun describe(blocks: List<com.pasich.encly.editor.model.Block>) = ImportFixtures.describe(blocks)
 }
 
 class MarkdownNotesParserTest {

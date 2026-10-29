@@ -1,9 +1,9 @@
 package com.pasich.encly.data.export
 
-import com.pasich.encly.domain.model.ItemListBlock
-import com.pasich.encly.domain.model.LinkDataBlock
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.LinkDataBlock
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

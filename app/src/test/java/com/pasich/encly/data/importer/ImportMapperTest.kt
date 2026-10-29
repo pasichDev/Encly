@@ -5,7 +5,7 @@ import com.pasich.encly.data.backup.BackupImporter
 import com.pasich.encly.data.backup.ImportMode
 import com.pasich.encly.data.backup.TagMatch
 import com.pasich.encly.data.importer.ImportFixtures.NOW
-import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.editor.model.Block
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest

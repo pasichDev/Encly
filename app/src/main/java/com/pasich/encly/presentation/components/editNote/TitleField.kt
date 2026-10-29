@@ -22,9 +22,9 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import com.pasich.encly.R
-import com.pasich.encly.presentation.editor.blocks.WritingKeyboard
-import com.pasich.encly.presentation.editor.blocks.rememberSyncedTextFieldState
-import com.pasich.encly.presentation.editor.state.textDiff
+import com.pasich.encly.editor.state.textDiff
+import com.pasich.encly.editor.ui.blocks.WritingKeyboard
+import com.pasich.encly.editor.ui.blocks.rememberSyncedTextFieldState
 import com.pasich.encly.presentation.screen.editnote.rememberFontStyles
 import com.pasich.encly.ui.theme.EnclyTheme
 import kotlinx.coroutines.flow.Flow

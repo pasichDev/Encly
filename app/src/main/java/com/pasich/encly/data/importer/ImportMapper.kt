@@ -4,10 +4,10 @@ import com.pasich.encly.core.backup.BackupNote
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupTag
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.backup.BackupImporter
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
 import java.security.MessageDigest
 
 /** What the user confirms before anything is written: counts only, never content. */

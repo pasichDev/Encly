@@ -6,8 +6,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 

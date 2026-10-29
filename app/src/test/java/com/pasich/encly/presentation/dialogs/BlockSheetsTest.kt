@@ -5,14 +5,17 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.pasich.encly.R
-import com.pasich.encly.domain.model.LinkDataBlock
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
-import com.pasich.encly.presentation.dialogs.blocks.ActionBlockDialog
-import com.pasich.encly.presentation.dialogs.blocks.ActionLinkBottomSheet
-import com.pasich.encly.presentation.dialogs.blocks.ActionOtherBottomSheet
-import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
-import com.pasich.encly.presentation.dialogs.blocks.describe
+import com.pasich.encly.editor.EditorProvider
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.ui.sheets.ActionBlockDialog
+import com.pasich.encly.editor.ui.sheets.ActionLinkBottomSheet
+import com.pasich.encly.editor.ui.sheets.ActionOtherBottomSheet
+import com.pasich.encly.editor.ui.sheets.SettingsBlockDialog
+import com.pasich.encly.editor.ui.sheets.describe
+import com.pasich.encly.presentation.screen.editnote.rememberEditorStrings
+import com.pasich.encly.presentation.screen.editnote.resourceId
 import com.pasich.encly.ui.screens.ComposeScreenTest
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
@@ -28,22 +31,27 @@ class BlockSheetsTest : ComposeScreenTest() {
     private fun linkBlock(url: String, isError: Boolean = false) =
         Block.LinkBlock(MutableStateFlow(LinkDataBlock(title = "Example", url = url, isError = isError)))
 
+    // The sheets are the editor's; the app's strings reach them through its provider.
     private fun showOther(settings: SettingsBlockDialog) = setScreen {
-        ActionOtherBottomSheet(
-            settings = settings,
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            onAction = { actions += it },
-            onDismiss = { dismissed++ },
-        )
+        EditorProvider(strings = rememberEditorStrings()) {
+            ActionOtherBottomSheet(
+                settings = settings,
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                onAction = { actions += it },
+                onDismiss = { dismissed++ },
+            )
+        }
     }
 
     private fun showLink(settings: SettingsBlockDialog) = setScreen {
-        ActionLinkBottomSheet(
-            settings = settings,
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            onAction = { actions += it },
-            onDismiss = { dismissed++ },
-        )
+        EditorProvider(strings = rememberEditorStrings()) {
+            ActionLinkBottomSheet(
+                settings = settings,
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                onAction = { actions += it },
+                onDismiss = { dismissed++ },
+            )
+        }
     }
 
     private fun shown(id: Int) = countText(str(id)) > 0
@@ -61,7 +69,7 @@ class BlockSheetsTest : ComposeScreenTest() {
             Block.SeparatorBlock() to R.string.block_separator,
         )
 
-        names.forEach { (block, name) -> assertEquals(block::class.simpleName, name, block.describe()) }
+        names.forEach { (block, name) -> assertEquals(block::class.simpleName, name, block.describe().resourceId()) }
         assertEquals(names.size, names.map { it.second }.toSet().size)
     }
 

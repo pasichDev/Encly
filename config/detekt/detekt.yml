@@ -46,9 +46,15 @@ Compose:
       - LocalBaseFontSize
       - LocalFontStyle
       - LocalSimpleEdit
-      - LocalNoteLineSpacing
       - LocalFontStyles
-      # The slash picker's labels, built once for the editor (editor/blocks/SlashMenuPopup.kt).
+      # What the note editor needs from its host, provided once per screen (editor/EditorServices.kt,
+      # editor/theme/EditorTheme.kt) and the slash picker's labels built once for it
+      # (editor/ui/blocks/SlashMenuPopup.kt).
+      - LocalEditorTheme
+      - LocalEditorStrings
+      - LocalEditorClipboard
+      - LocalLinkOpener
+      - LocalEditorLogger
       - LocalSlashLabels
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors

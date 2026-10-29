@@ -1,7 +1,7 @@
 package com.pasich.encly.data.importer
 
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
 import kotlinx.io.Buffer
 import kotlinx.io.asSource
 import java.io.ByteArrayOutputStream

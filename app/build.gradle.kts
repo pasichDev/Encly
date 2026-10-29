@@ -4,6 +4,9 @@ import java.util.Properties
 // Minimum line coverage (%) of the whole app (generated code excluded) enforced by koverVerify.
 val koverMinLineCoverage = 85
 
+// Minimum line and branch coverage (%) of the editor package, enforced by koverVerifyEditor.
+val editorMinCoverage = 100
+
 // Derive the app version from the tracked root `version.properties` so versionName and
 // versionCode always stay in sync and only one file needs bumping per release.
 val versionProps = Properties().apply {
@@ -227,10 +230,19 @@ tasks.configureEach {
     }
 }
 
+// The app-wide gate also runs the editor's: one command checks both.
+tasks.matching { it.name == "koverVerifyFdroidDebug" }.configureEach {
+    dependsOn("koverVerifyEditor", "koverVerifyEditorLogic")
+}
+
 // StoreMetadataTest and CodeQualityToolingTest read files outside the module; declare them as
 // inputs so an edited store text, changelog, workflow or tool config re-runs the unit tests
 // instead of leaving them UP-TO-DATE.
 tasks.withType<Test>().configureEach {
+    // EditorBoundaryTest reads the editor's sources.
+    inputs.dir(file("src/main/java/com/pasich/encly/editor"))
+        .withPropertyName("editorSources")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.file("fastlane/metadata/android"))
         .withPropertyName("storeMetadata")
         .withPathSensitivity(PathSensitivity.RELATIVE)
@@ -253,7 +265,61 @@ tasks.withType<Test>().configureEach {
 // Coverage: `./gradlew :app:koverXmlReportFdroidDebug :app:koverVerifyFdroidDebug`.
 // The gate is scoped to core/security, the code that guards the key hierarchy.
 kover {
+    // A report variant of its own for the note editor (package com.pasich.encly.editor), built from
+    // the fdroid debug classes and tests, so its gate below can differ from the app-wide one.
+    currentProject {
+        createVariant("editor") {
+            add("fdroidDebug")
+        }
+        createVariant("editorLogic") {
+            add("fdroidDebug")
+        }
+    }
     reports {
+        // The editor is a self-contained library in waiting: every line of it is covered by its own
+        // tests (EditorBoundaryTest guards the other half of that contract).
+        variant("editor") {
+            filters {
+                includes {
+                    packages("com.pasich.encly.editor")
+                }
+                excludes {
+                    classes("*ComposableSingletons*")
+                }
+            }
+            verify {
+                rule("Editor line coverage") {
+                    bound {
+                        minValue = editorMinCoverage
+                        coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.LINE
+                    }
+                }
+            }
+        }
+        // Branches are gated on the editor's logic (model, codec, state, focus, theme). The branches
+        // of @Composable functions are not: the Compose compiler adds `$changed`/`$default` checks
+        // to every one of them, which no test can take both ways.
+        variant("editorLogic") {
+            filters {
+                includes {
+                    packages(
+                        "com.pasich.encly.editor.model",
+                        "com.pasich.encly.editor.codec",
+                        "com.pasich.encly.editor.state",
+                        "com.pasich.encly.editor.focus",
+                        "com.pasich.encly.editor.theme",
+                    )
+                }
+            }
+            verify {
+                rule("Editor logic branch coverage") {
+                    bound {
+                        minValue = editorMinCoverage
+                        coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH
+                    }
+                }
+            }
+        }
         variant("fdroidDebug") {
             filters {
                 // Code the compilers and annotation processors write, not this project.

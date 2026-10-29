@@ -1,5 +1,7 @@
 package com.pasich.encly.data.importer
 
+import com.pasich.encly.editor.codec.MarkdownBlockMapper
+
 /**
  * Markdown / TXT files: generic (Obsidian, Markor, Joplin's Markdown export, ...) and the
  * Notesnook export, which differs only in its extras ([notesnook]).

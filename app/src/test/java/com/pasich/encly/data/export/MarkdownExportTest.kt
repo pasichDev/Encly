@@ -1,15 +1,15 @@
 package com.pasich.encly.data.export
 
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.data.zip.zipWriter
-import com.pasich.encly.domain.model.ItemListBlock
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.ItemListBlock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.io.Buffer
 import kotlinx.io.asSink

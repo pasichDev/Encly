@@ -1,9 +1,9 @@
 package com.pasich.encly.domain.model
 
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
+import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.utils.NotesTextFormatter
 
 /**

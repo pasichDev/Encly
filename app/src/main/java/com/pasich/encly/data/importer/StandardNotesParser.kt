@@ -1,7 +1,9 @@
 package com.pasich.encly.data.importer
 
-import com.pasich.encly.data.handoff.InlineHtml
-import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.editor.codec.ImportBlocks
+import com.pasich.encly.editor.codec.InlineHtml
+import com.pasich.encly.editor.codec.MarkdownBlockMapper
+import com.pasich.encly.editor.model.Block
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject

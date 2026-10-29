@@ -24,11 +24,11 @@ import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.text.TextRange
 import com.pasich.encly.R
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.domain.model.ItemListBlock
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen

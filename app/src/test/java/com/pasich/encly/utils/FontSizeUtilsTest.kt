@@ -1,7 +1,7 @@
 package com.pasich.encly.utils
 
 import androidx.compose.ui.unit.sp
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.model.BlockType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

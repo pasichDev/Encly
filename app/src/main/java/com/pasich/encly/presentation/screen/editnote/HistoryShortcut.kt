@@ -45,5 +45,5 @@ internal fun EditNoteViewModel.handleHistoryKey(event: KeyEvent): Boolean {
 internal fun EditNoteViewModel.ownsHistoryKeys(): Boolean {
     val id = focusedBlockId.value ?: return false
     val block = blocks.firstOrNull { it.id == id }
-    return block != null && block !is com.pasich.encly.dynamicBlocks.Block.LinkBlock
+    return block != null && block !is com.pasich.encly.editor.model.Block.LinkBlock
 }

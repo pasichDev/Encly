@@ -3,9 +3,9 @@ package com.pasich.encly.data.importer
 import com.pasich.encly.core.backup.BackupNote
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
-import com.pasich.encly.core.serialization.BlockConverter
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
 
 /**
  * One note of the review list. Held in memory only, for the open vault; it is dropped on cancel,

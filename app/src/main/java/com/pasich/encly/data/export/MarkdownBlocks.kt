@@ -1,10 +1,10 @@
 package com.pasich.encly.data.export
 
-import com.pasich.encly.domain.model.ItemListBlock
-import com.pasich.encly.domain.model.LinkDataBlock
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
-import com.pasich.encly.dynamicBlocks.hasContent
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.model.hasContent
 import java.util.Locale
 
 /**

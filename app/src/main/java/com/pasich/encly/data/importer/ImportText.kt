@@ -1,6 +1,6 @@
 package com.pasich.encly.data.importer
 
-import com.pasich.encly.dynamicBlocks.hasContent
+import com.pasich.encly.editor.model.hasContent
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement

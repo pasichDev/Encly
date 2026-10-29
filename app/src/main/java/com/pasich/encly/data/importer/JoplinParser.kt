@@ -1,5 +1,7 @@
 package com.pasich.encly.data.importer
 
+import com.pasich.encly.editor.codec.MarkdownBlockMapper
+
 /**
  * Joplin RAW / JEX: one `<id>.md` per item, `title`, a blank line, the body, a blank line, then
  * `key: value` metadata ending with `type_`. Types: 1 note, 2 notebook, 4 resource, 5 tag,

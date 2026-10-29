@@ -1,9 +1,9 @@
 package com.pasich.encly.utils
 
-import com.pasich.encly.core.serialization.BlockConverter
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
-import com.pasich.encly.dynamicBlocks.hasContent
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.hasContent
 
 /**
  * Utility class for formatting note text.

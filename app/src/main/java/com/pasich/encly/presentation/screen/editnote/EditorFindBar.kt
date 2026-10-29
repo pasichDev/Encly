@@ -26,10 +26,10 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.pasich.encly.R
+import com.pasich.encly.editor.state.FindState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySearchField
 import com.pasich.encly.presentation.designsystem.IconWithTooltip
-import com.pasich.encly.presentation.editor.state.FindState
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel

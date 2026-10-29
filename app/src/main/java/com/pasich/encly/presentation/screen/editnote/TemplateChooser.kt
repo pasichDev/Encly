@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
+import com.pasich.encly.editor.LocalEditorStrings
+import com.pasich.encly.editor.state.NoteTemplate
+import com.pasich.encly.editor.state.blocks
 import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.SectionOverline
-import com.pasich.encly.presentation.editor.state.NoteTemplate
-import com.pasich.encly.presentation.editor.state.blocks
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -26,7 +26,7 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
  */
 @Composable
 internal fun TemplateChooser(modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel()) {
-    val resources = LocalResources.current
+    val strings = LocalEditorStrings.current
     Column(
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
         modifier = modifier.padding(horizontal = EnclyTheme.spacing.gutter, vertical = EnclyTheme.spacing.s),
@@ -38,9 +38,9 @@ internal fun TemplateChooser(modifier: Modifier = Modifier, viewModel: EditNoteV
         ) {
             NoteTemplate.entries.forEach { template ->
                 EnclyChip(
-                    label = stringResource(template.label),
+                    label = strings.text(template.label),
                     selected = template == NoteTemplate.BLANK,
-                    onClick = { viewModel.applyTemplate(template.blocks { id -> resources.getString(id) }) },
+                    onClick = { viewModel.applyTemplate(template.blocks(strings::text)) },
                 )
             }
         }

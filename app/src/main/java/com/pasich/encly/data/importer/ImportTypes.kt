@@ -2,7 +2,7 @@ package com.pasich.encly.data.importer
 
 import androidx.annotation.StringRes
 import com.pasich.encly.R
-import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.editor.model.Block
 
 /**
  * The apps Encly can import from. [formats], [howTo] and [losses] are string resources shown on

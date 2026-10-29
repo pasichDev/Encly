@@ -1,8 +1,8 @@
 package com.pasich.encly.data.importer
 
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.importer.ImportFixtures.describe
 import com.pasich.encly.data.importer.ImportFixtures.source
+import com.pasich.encly.editor.codec.BlockConverter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

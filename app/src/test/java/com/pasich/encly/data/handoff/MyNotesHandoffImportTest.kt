@@ -1,7 +1,6 @@
 package com.pasich.encly.data.handoff
 
 import com.pasich.encly.core.backup.BackupPayloadCodec
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.backup.BackupImporter
 import com.pasich.encly.data.backup.ImportMode
 import com.pasich.encly.data.backup.TagMatch
@@ -12,7 +11,8 @@ import com.pasich.encly.data.handoff.HandoffFixtures.read
 import com.pasich.encly.data.handoff.HandoffFixtures.tag
 import com.pasich.encly.data.handoff.HandoffFixtures.task
 import com.pasich.encly.data.model.Tag
-import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject

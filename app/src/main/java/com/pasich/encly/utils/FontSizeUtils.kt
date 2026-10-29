@@ -2,7 +2,7 @@ package com.pasich.encly.utils
 
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.model.BlockType
 
 /**
  * Utility for calculating font sizes for different block types.

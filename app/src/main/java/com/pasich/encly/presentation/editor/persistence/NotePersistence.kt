@@ -2,13 +2,13 @@ package com.pasich.encly.presentation.editor.persistence
 
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.common.suspendRunCatching
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.hasContent
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.hasContent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview

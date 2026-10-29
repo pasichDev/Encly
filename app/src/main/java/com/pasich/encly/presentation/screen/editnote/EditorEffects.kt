@@ -28,8 +28,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.pasich.encly.domain.enums.BottomSheetsOpenType
-import com.pasich.encly.presentation.editor.focus.BlockFocusRegistry
+import com.pasich.encly.editor.focus.BlockFocusRegistry
+import com.pasich.encly.editor.ui.sheets.BlockSheetKind
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -123,26 +123,26 @@ internal fun FocusNewNoteTitle(titleFocus: FocusRequester, viewModel: EditNoteVi
 }
 
 /** Which block sheet is open, and for which block (by id). */
-internal class BlockSheetState(type: MutableState<BottomSheetsOpenType>, blockId: MutableState<String?>) {
-    var type by type
+internal class BlockSheetState(kind: MutableState<BlockSheetKind?>, blockId: MutableState<String?>) {
+    var kind by kind
     var blockId by blockId
 
-    fun open(sheet: BottomSheetsOpenType, id: String) {
-        type = sheet
+    fun open(sheet: BlockSheetKind, id: String) {
+        kind = sheet
         blockId = id
     }
 
     fun close() {
-        type = BottomSheetsOpenType.NONE
+        kind = null
         blockId = null
     }
 }
 
 @Composable
 internal fun rememberBlockSheetState(): BlockSheetState {
-    val type = rememberSaveable { mutableStateOf(BottomSheetsOpenType.NONE) }
+    val kind = rememberSaveable { mutableStateOf<BlockSheetKind?>(null) }
     val blockId = rememberSaveable { mutableStateOf<String?>(null) }
-    return remember { BlockSheetState(type, blockId) }
+    return remember { BlockSheetState(kind, blockId) }
 }
 
 /** Whether the find bar is open. */

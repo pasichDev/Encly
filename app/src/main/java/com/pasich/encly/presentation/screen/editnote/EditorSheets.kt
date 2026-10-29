@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,93 +20,42 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.pasich.encly.R
-import com.pasich.encly.domain.enums.BottomSheetsOpenType
-import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.editor.ui.sheets.EditorBlockSheet
 import com.pasich.encly.presentation.components.editNote.NoteTagSheet
 import com.pasich.encly.presentation.designsystem.EnclyBackButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTooltip
 import com.pasich.encly.presentation.designsystem.IconWithTooltip
-import com.pasich.encly.presentation.dialogs.blocks.ActionBlockDialog
-import com.pasich.encly.presentation.dialogs.blocks.ActionLinkBottomSheet
-import com.pasich.encly.presentation.dialogs.blocks.ActionOtherBottomSheet
-import com.pasich.encly.presentation.dialogs.blocks.SettingsBlockDialog
-import com.pasich.encly.presentation.editor.state.BlockRemoveAction
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import kotlinx.coroutines.launch
 
 /**
- * The sheet of one block (a link's, or a separator's), found by the block's id on every
- * composition, so it can never act on a position that undo, redo or a delete already changed.
+ * The sheet of one block (a link's, or a separator's); the editor shows it (`EditorBlockSheet`),
+ * the app only says which one is open and whether it may change the note.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EditorBlockSheets(
-    sheet: BlockSheetState,
-    canEdit: Boolean,
-    viewModel: EditNoteViewModel = metroViewModel(),
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val block = sheet.blockId?.let { id -> viewModel.blocks.firstOrNull { it.id == id } }
-    if (block == null || sheet.type == BottomSheetsOpenType.NONE) return
-
-    fun dismiss() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion { sheet.close() }
-    }
-
-    fun onAction(action: ActionBlockDialog) {
-        val link = (block as? Block.LinkBlock)?.block?.value?.url.orEmpty()
-        when (action) {
-            ActionBlockDialog.Duplicate -> viewModel.duplicateBlock(block)
-            ActionBlockDialog.Delete -> viewModel.removeBlock(block, BlockRemoveAction.REMOVE)
-            is ActionBlockDialog.Move -> viewModel.moveBlock(action.move == 1)
-            ActionBlockDialog.OpenLink -> openNoteLink(context, link)
-            ActionBlockDialog.CopyLink -> copyNoteLink(context, link)
-            ActionBlockDialog.EditLink -> (block as? Block.LinkBlock)?.let(viewModel::editLink)
-        }
-        if (action !is ActionBlockDialog.Move) dismiss()
-    }
-
-    val settings = SettingsBlockDialog(
-        block = block,
-        isBottomSheetVisible = true,
-        blockMove = viewModel.getMoveBlockState(),
+internal fun EditorBlockSheets(sheet: BlockSheetState, canEdit: Boolean) {
+    val controller = rememberEditorController()
+    EditorBlockSheet(
+        kind = sheet.kind,
+        blockId = sheet.blockId,
         canEdit = canEdit,
+        controller = controller,
+        onClose = sheet::close,
     )
-    if (sheet.type == BottomSheetsOpenType.ACTION_LINK) {
-        ActionLinkBottomSheet(
-            settings = settings,
-            sheetState = sheetState,
-            onDismiss = ::dismiss,
-            onAction = ::onAction,
-        )
-    } else {
-        ActionOtherBottomSheet(
-            settings = settings,
-            sheetState = sheetState,
-            onDismiss = ::dismiss,
-            onAction = ::onAction,
-        )
-    }
 }
 
 /** Chooses the note's tag; "Manage tags" leaves for the tags screen ([onManageTags]). */

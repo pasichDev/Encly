@@ -1,20 +1,20 @@
 package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.FontStyleType
-import com.pasich.encly.domain.model.ItemListBlock
-import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.state.BlockRemoveAction
+import com.pasich.encly.editor.state.FocusRequest
 import com.pasich.encly.presentation.editor.persistence.AUTOSAVE_DEBOUNCE_MS
-import com.pasich.encly.presentation.editor.state.BlockRemoveAction
-import com.pasich.encly.presentation.editor.state.FocusRequest
 import com.pasich.encly.testutil.TestNotesRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -1,8 +1,9 @@
 package com.pasich.encly.data.importer
 
-import com.pasich.encly.domain.model.ItemListBlock
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.codec.ImportBlocks
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.ItemListBlock
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 

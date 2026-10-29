@@ -9,8 +9,8 @@ import android.widget.Toast
 import androidx.core.net.toUri
 import com.pasich.encly.R
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.editor.ui.blocks.isOpenableLink
 import com.pasich.encly.presentation.components.SensitiveClip
-import com.pasich.encly.presentation.editor.blocks.isOpenableLink
 
 /**
  * Opens a note's link in an app the user picks. The link leaves Encly: nothing is fetched by
@@ -38,12 +38,12 @@ fun openNoteLink(context: Context, url: String) {
 private const val TAG = "LinkActions"
 
 /**
- * Copies a note's link under the app's clipboard policy ([SensitiveClip]: marked sensitive,
- * cleared after a minute). Older versions get a toast, since the system shows no confirmation.
+ * Copies [text] (a note's link) under [label] with the app's clipboard policy ([SensitiveClip]: marked
+ * sensitive, cleared after a minute). Older versions get a toast, since the system shows no confirmation.
  */
-fun copyNoteLink(context: Context, url: String) {
+fun copyNoteLink(context: Context, label: String, text: String) {
     val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
-    SensitiveClip.copy(clipboard, context.getString(R.string.block_link), url)
+    SensitiveClip.copy(clipboard, label, text)
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
         Toast.makeText(context, R.string.link_copied, Toast.LENGTH_SHORT).show()
     }

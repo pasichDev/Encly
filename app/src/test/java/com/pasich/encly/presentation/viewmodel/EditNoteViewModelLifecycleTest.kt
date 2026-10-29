@@ -2,12 +2,12 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
-import com.pasich.encly.core.serialization.BlockConverter
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
-import com.pasich.encly.dynamicBlocks.Block
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.testutil.TestNotesRepository
 import com.pasich.encly.testutil.TestSettingsRepository

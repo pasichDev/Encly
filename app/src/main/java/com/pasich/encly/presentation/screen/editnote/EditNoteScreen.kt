@@ -45,6 +45,15 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.pasich.encly.R
 import com.pasich.encly.domain.model.NoteColor
+import com.pasich.encly.editor.theme.LocalEditorTheme
+import com.pasich.encly.editor.theme.blockGap
+import com.pasich.encly.editor.theme.isCompact
+import com.pasich.encly.editor.ui.EditorBlocksHost
+import com.pasich.encly.editor.ui.FindHighlights
+import com.pasich.encly.editor.ui.editorBlocks
+import com.pasich.encly.editor.ui.rememberBlockFocusRegistry
+import com.pasich.encly.editor.ui.rememberWriteAtEnd
+import com.pasich.encly.editor.ui.tapBelowBlocks
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
 import com.pasich.encly.presentation.components.editNote.NoteOverline
 import com.pasich.encly.presentation.components.editNote.TitleField
@@ -52,15 +61,9 @@ import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
-import com.pasich.encly.presentation.designsystem.blockGap
-import com.pasich.encly.presentation.designsystem.isCompact
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheet
 import com.pasich.encly.presentation.dialogs.EditNoteBottomSheetAction
-import com.pasich.encly.presentation.editor.EditorBlocksHost
-import com.pasich.encly.presentation.editor.FindHighlights
-import com.pasich.encly.presentation.editor.editorBlocks
-import com.pasich.encly.presentation.editor.focus.rememberBlockFocusRegistry
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.effects.ContainerEnd
 import com.pasich.encly.presentation.effects.rememberNoteContainerModifier
@@ -121,8 +124,9 @@ fun EditNoteScreen(
     val focusRegistry = rememberBlockFocusRegistry(viewModel.blocks)
     val findState = viewModel.find.collectAsState()
     val highlights = remember(findState) { FindHighlights(findState) }
-    val host = remember(viewModel, focusRegistry, highlights) {
-        EditorBlocksHost(viewModel, focusRegistry, highlights) { type, block ->
+    val controller = rememberEditorController()
+    val host = remember(controller, focusRegistry, highlights) {
+        EditorBlocksHost(controller, focusRegistry, highlights) { type, block ->
             overlays.blockSheet.open(type, block.id)
         }
     }
@@ -135,19 +139,19 @@ fun EditNoteScreen(
     FocusNewNoteTitle(titleFocus)
     BackHandler { exits.back() }
     CloseFindOrSlashOnBack()
-    EditorOverlays(
-        overlays = overlays,
-        exits = exits,
-        onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) },
-        onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
-    )
-
     EditNoteSettingsProvider(
         baseFontSize = fontSize.sp,
         fontStyle = fontStyle,
         simpleEdit = simpleEdit,
         lineSpacing = lineSpacing,
     ) {
+        // Inside the provider: the block sheets are the editor's, and read its strings and theme.
+        EditorOverlays(
+            overlays = overlays,
+            exits = exits,
+            onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) },
+            onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
+        )
         EditorScaffold(
             actions = EditorBarActions(
                 onBack = exits::back,
@@ -326,7 +330,8 @@ private fun EditorContent(
     modifier: Modifier = Modifier,
     viewModel: EditNoteViewModel = metroViewModel(),
 ) {
-    val spacing = LocalNoteLineSpacing.current
+    val spacing = LocalEditorTheme.current.lineSpacing
+    val controller = rememberEditorController()
     val headerGap = if (spacing.isCompact) EnclyTheme.spacing.labelGap else 0.dp
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
@@ -345,7 +350,7 @@ private fun EditorContent(
             modifier = modifier
                 .fillMaxSize()
                 // The empty page under a short note is part of the note: a tap there writes at its end, keyboard up.
-                .tapBelowBlocks(listState, enabled = !lockEditor, onTap = rememberWriteAtEnd(viewModel)),
+                .tapBelowBlocks(listState, enabled = !lockEditor, onTap = rememberWriteAtEnd(controller)),
         ) {
             if (loading) {
                 item(key = "skeleton") {

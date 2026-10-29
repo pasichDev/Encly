@@ -39,12 +39,6 @@ import com.pasich.encly.ui.theme.EnclyTheme
 /** Placeholder text is the field's text colour at this opacity. */
 const val PLACEHOLDER_ALPHA = 0.72f
 
-/**
- * The hint in an empty editor block ("Text", "List item", ...): much lighter than a field
- * placeholder, so it never reads as typed text. It shows on the focused empty block only.
- */
-const val EDITOR_PLACEHOLDER_ALPHA = 0.38f
-
 /** Validation state of a [EnclyTextField]. */
 sealed interface FieldState {
     data object Default : FieldState

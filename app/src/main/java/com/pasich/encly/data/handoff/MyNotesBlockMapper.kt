@@ -1,8 +1,9 @@
 package com.pasich.encly.data.handoff
 
-import com.pasich.encly.core.serialization.BlockConverter
-import com.pasich.encly.dynamicBlocks.Block
-import com.pasich.encly.dynamicBlocks.BlockType
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.codec.InlineHtml
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
