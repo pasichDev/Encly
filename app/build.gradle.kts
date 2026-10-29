@@ -323,7 +323,6 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     // Other dependencies
-    implementation(libs.gson)
     implementation(libs.androidx.datastore.preferences)
 
     // Serialization

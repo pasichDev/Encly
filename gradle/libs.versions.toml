@@ -28,7 +28,6 @@ room = "2.8.5"
 coroutines = "1.11.0"
 biometric = "1.1.0"
 reorderable = "3.1.0"
-gson = "2.14.0"
 datastore = "1.2.1"
 serializationJson = "1.11.0"
 datetime = "0.8.0"
@@ -74,7 +73,6 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 sealite = { module = "io.github.pasichdev:sealite", version.ref = "sealite" }
 kotlin-bip39 = { module = "cash.z.ecc.android:kotlin-bip39", version.ref = "bip39" }

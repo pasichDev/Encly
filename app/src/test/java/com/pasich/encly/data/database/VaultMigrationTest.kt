@@ -9,9 +9,12 @@ import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
-import com.google.gson.JsonParser
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -49,16 +52,16 @@ class VaultMigrationTest {
      * written the way that version wrote it ([noteSql] inserts it).
      */
     private fun createVersion(version: Int, schemaPath: String, noteSql: String) {
-        val schema = JsonParser.parseString(File(schemaPath).readText()).asJsonObject.getAsJsonObject("database")
+        val schema = Json.parseToJsonElement(File(schemaPath).readText()).jsonObject.getValue("database").jsonObject
         val statements = buildList {
-            schema.getAsJsonArray("entities").forEach { entity ->
-                val table = entity.asJsonObject.get("tableName").asString
-                add(entity.asJsonObject.get("createSql").asString.replace("\${TABLE_NAME}", table))
-                entity.asJsonObject.getAsJsonArray("indices").forEach { index ->
-                    add(index.asJsonObject.get("createSql").asString.replace("\${TABLE_NAME}", table))
+            schema.getValue("entities").jsonArray.forEach { entity ->
+                val table = entity.jsonObject.getValue("tableName").jsonPrimitive.content
+                add(entity.jsonObject.getValue("createSql").jsonPrimitive.content.replace("\${TABLE_NAME}", table))
+                entity.jsonObject.getValue("indices").jsonArray.forEach { index ->
+                    add(index.jsonObject.getValue("createSql").jsonPrimitive.content.replace("\${TABLE_NAME}", table))
                 }
             }
-            schema.getAsJsonArray("setupQueries").forEach { add(it.asString) }
+            schema.getValue("setupQueries").jsonArray.forEach { add(it.jsonPrimitive.content) }
         }
         val helper = FrameworkSQLiteOpenHelperFactory().create(
             SupportSQLiteOpenHelper.Configuration.builder(context)

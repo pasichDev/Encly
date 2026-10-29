@@ -7,9 +7,9 @@
 #     kept by room-runtime's rules.
 #   - Hilt / Dagger, Lifecycle ViewModels, Navigation, Compose, DataStore: their own
 #     consumer rules.
-#   - Gson: gson.jar ships the TypeToken/Signature rules. Note blocks are written and read
-#     field by field in BlockSerializer/BlockDeserializer, never by reflection, so no model
-#     class needs its field names kept (BlockConverterTest pins the stored key names).
+#   - Note blocks (BlockJson) are written and read key by key with the kotlinx.serialization
+#     JSON tree, never by reflection, so no model class needs its field names kept
+#     (BlockConverterTest and BlockJsonFormatTest pin the stored format).
 #   - kotlinx.serialization: backup classes use the plugin-generated serializers, called
 #     explicitly (BackupPayload.serializer()); the key names are string constants in that
 #     generated code, and the library ships its own rules (BackupPayloadCodecTest pins them).

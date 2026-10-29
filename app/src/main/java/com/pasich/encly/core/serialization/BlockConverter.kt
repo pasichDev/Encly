@@ -1,26 +1,15 @@
 package com.pasich.encly.core.serialization
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonParseException
-import com.google.gson.reflect.TypeToken
 import com.pasich.encly.core.AppLogger
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.hasContent
+import kotlinx.serialization.SerializationException
 
 /**
  * Converter for transforming blocks to JSON and back.
- * Uses custom serializers and deserializers.
+ * The format is written and read by [BlockJson].
  */
 object BlockConverter {
-    // Create a Gson instance with custom serialization adapters
-    private val gson by lazy {
-        GsonBuilder()
-            .registerTypeAdapter(Block::class.java, BlockSerializer())
-            .registerTypeAdapter(Block::class.java, BlockDeserializer())
-            .setPrettyPrinting()
-            .create()
-    }
-
     /**
      * Converts a list of blocks into a JSON representation. Blocks without content
      * ([hasContent]) are left out, except an empty paragraph between other blocks: it is a blank
@@ -30,23 +19,20 @@ object BlockConverter {
      * @return the JSON string
      */
     fun blocksToJson(blocks: List<Block>): String {
-        val type = object : TypeToken<List<Block>>() {}.type
         val kept = blocks.dropLastWhile { !it.hasContent() }.filter { it.hasContent() || it is Block.TextBlock }
-        return gson.toJson(kept, type)
+        return BlockJson.encode(kept)
     }
 
     /**
      * Converts JSON into a list of blocks.
      * @param json the JSON string to deserialize
      * @return the list of blocks; empty for an empty string
-     * @throws JsonParseException for malformed JSON or a block this version does not know
+     * @throws SerializationException for malformed JSON or a block this version does not know
      *   (for example one written by a newer version); use [jsonToBlocksOrNull] to get null instead
      */
     fun jsonToBlocks(json: String): List<Block> {
         if (json.isEmpty()) return emptyList()
-        val type = object : TypeToken<List<Block>>() {}.type
-        // `null` array entries deserialize to null elements; drop them.
-        return gson.fromJson<List<Block>>(json, type).orEmpty().filterIsInstance<Block>()
+        return BlockJson.decode(json)
     }
 
     /**
@@ -55,17 +41,9 @@ object BlockConverter {
      */
     fun jsonToBlocksOrNull(json: String): List<Block>? = try {
         jsonToBlocks(json)
-    } catch (e: JsonParseException) {
-        logUnreadable(e)
-    } catch (e: IllegalStateException) {
-        // Gson's JsonElement.getAsJsonObject/getAsString on the wrong element type
-        logUnreadable(e)
-    } catch (e: UnsupportedOperationException) {
-        logUnreadable(e)
     } catch (e: IllegalArgumentException) {
-        // BlockType.valueOf, number parsing
-        logUnreadable(e)
-    } catch (e: ClassCastException) {
+        // SerializationException (malformed JSON, a wrong shape, an unknown block) is one; so are
+        // BlockType.valueOf failures.
         logUnreadable(e)
     }
 

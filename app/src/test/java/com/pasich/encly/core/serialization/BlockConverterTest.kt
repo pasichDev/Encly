@@ -1,11 +1,11 @@
 package com.pasich.encly.core.serialization
 
-import com.google.gson.JsonParser
 import com.pasich.encly.domain.model.ItemListBlock
 import com.pasich.encly.domain.model.LinkDataBlock
 import com.pasich.encly.dynamicBlocks.Block
 import com.pasich.encly.dynamicBlocks.BlockType
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -154,7 +154,7 @@ class BlockConverterTest {
               {"blockType":"LIST_NUMBER","items":[{"value":"a","isCheck":true}]}
             ]
         """
-        assertEquals(JsonParser.parseString(expected), JsonParser.parseString(json))
+        assertEquals(Json.parseToJsonElement(expected), Json.parseToJsonElement(json))
     }
 
     private fun text(value: String) = Block.TextBlock(MutableStateFlow(value))
