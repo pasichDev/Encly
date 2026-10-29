@@ -124,9 +124,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      # The desktop app's tests open real AWT windows (capture exclusion, window hooks), so they run under a
+      # virtual X display.
+      - name: Virtual display for the desktop tests
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
       - name: Library checks
         run: >-
-          ./gradlew
+          xvfb-run --auto-servernum ./gradlew
           :editor:desktopTest
           :editor:testAndroidHostTest
           :editor:koverVerify
