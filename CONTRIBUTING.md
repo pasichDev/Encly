@@ -45,7 +45,8 @@ Run the same gates as CI:
 - Add or extend unit tests for behaviour you change. The app has a minimum line coverage gate of
   85% (Kover, generated code excluded, see `app/build.gradle.kts`); do not lower it to get a PR
   through.
-- For storage, Keystore or SQLCipher changes also run the instrumented tests on an emulator:
+- The instrumented tests (SQLCipher, Room migrations) run in CI on API 26 and 35. To run them
+  yourself use an emulator, never a phone with a vault you care about:
   `./gradlew :app:connectedFdroidDebugAndroidTest` (they wipe the debug app's data).
 - New detekt or lint findings must be fixed, not added to `app/detekt-baseline.xml` or
   `app/lint-baseline.xml`. Pull requests that shrink those baselines are very welcome.
