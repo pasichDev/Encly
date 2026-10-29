@@ -1,16 +1,10 @@
 package com.pasich.encly.core.security
 
-import com.pasich.encly.core.security.PinSlots.AES_GCM
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.PinSlots.DEK_LENGTH
 import com.pasich.encly.core.security.PinSlots.GCM_TAG_BYTES
-import com.pasich.encly.core.security.PinSlots.GCM_TAG_LENGTH
 import com.pasich.encly.core.security.PinSlots.IV_LENGTH
 import com.pasich.encly.core.security.PinSlots.SLOT_VERSION
-import java.security.GeneralSecurityException
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * The duress slot (`version ‖ iv ‖ AES-GCM_dkek(decoy DEK)`, bound to the PIN slot's salt) and
@@ -33,13 +27,12 @@ internal object DuressSlots {
 
     /** `version ‖ iv ‖ AES-GCM(dek)`: the shape of the duress slot and the decoy key, 61 bytes. */
     fun sealDecoy(dek: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance(AES_GCM)
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
-        cipher.updateAAD(aad)
-        val encrypted = cipher.doFinal(dek)
+        val iv = Crypto.randomBytes(IV_LENGTH)
+        val encrypted = Crypto.aesGcmSeal(kek, iv, aad, dek)
         return try {
-            byteArrayOf(SLOT_VERSION) + cipher.iv + encrypted
+            byteArrayOf(SLOT_VERSION) + iv + encrypted
         } finally {
+            SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(encrypted)
         }
     }
@@ -49,12 +42,7 @@ internal object DuressSlots {
         val iv = sealed.copyOfRange(1, 1 + IV_LENGTH)
         val ciphertext = sealed.copyOfRange(1 + IV_LENGTH, sealed.size)
         return try {
-            val cipher = Cipher.getInstance(AES_GCM)
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(kek, "AES"), GCMParameterSpec(GCM_TAG_LENGTH, iv))
-            cipher.updateAAD(aad)
-            cipher.doFinal(ciphertext)
-        } catch (_: GeneralSecurityException) {
-            null
+            Crypto.aesGcmOpen(kek, iv, aad, ciphertext)
         } finally {
             SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(ciphertext)
@@ -64,8 +52,5 @@ internal object DuressSlots {
     fun decoySlotAad(salt: ByteArray): ByteArray = DECOY_AAD + byteArrayOf(SLOT_VERSION) + salt
 
     /** Random bytes shaped like a duress slot or decoy key: nothing opens them. */
-    fun randomSlot(): ByteArray = ByteArray(DECOY_SLOT_LENGTH).also {
-        SecureRandom().nextBytes(it)
-        it[0] = SLOT_VERSION
-    }
+    fun randomSlot(): ByteArray = Crypto.randomBytes(DECOY_SLOT_LENGTH).also { it[0] = SLOT_VERSION }
 }

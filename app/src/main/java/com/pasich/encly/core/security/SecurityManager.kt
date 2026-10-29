@@ -3,11 +3,11 @@ package com.pasich.encly.core.security
 import android.content.SharedPreferences
 import androidx.fragment.app.FragmentActivity
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.database.SecureDatabaseManager
 import com.pasich.encly.data.database.VaultFile
 import com.pasich.encly.data.handoff.HandoffStagingSweeper
-import java.security.SecureRandom
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
@@ -97,7 +97,7 @@ class SecurityManager @Inject constructor(
     // (real or decoy), and never on a lock and unlock of the same vault, so a screen remembered
     // before (the note open when the app re-locked) is not shown in another vault. Random per
     // process: one saved by an earlier process never matches.
-    private val eraseEpoch = AtomicLong(SecureRandom().nextLong())
+    private val eraseEpoch = AtomicLong(Crypto.randomLong())
 
     var securityStatus = InitialStatus.NO
 

@@ -1,9 +1,7 @@
 package com.pasich.encly.core.security
 
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.bip39.Bip39
-import java.nio.CharBuffer
-import java.security.MessageDigest
-import java.security.SecureRandom
 
 /**
  * The one normalization every recovery-phrase key goes through: the vault's recovery KEK and
@@ -14,7 +12,7 @@ internal object Mnemonic {
 
     /** A new 12-word recovery phrase from 128 bits of system randomness. */
     fun generate(): CharArray {
-        val entropy = ByteArray(ENTROPY_BYTES).also { SecureRandom().nextBytes(it) }
+        val entropy = Crypto.randomBytes(ENTROPY_BYTES)
         return try {
             Bip39().encode(entropy)
         } finally {
@@ -48,20 +46,12 @@ internal object Mnemonic {
     /** SHA-256 of the normalized words in UTF-8. No String copy of the words is made. */
     fun seedHash(words: CharArray): ByteArray {
         val normalized = normalize(words)
-        val utf8 = utf8(normalized)
+        val utf8 = Utf8.encode(normalized)
         SensitiveDataCleaner.clear(normalized)
         return try {
-            MessageDigest.getInstance("SHA-256").digest(utf8)
+            Crypto.sha256(utf8)
         } finally {
             SensitiveDataCleaner.clear(utf8)
         }
-    }
-
-    private fun utf8(chars: CharArray): ByteArray {
-        val buffer = Charsets.UTF_8.encode(CharBuffer.wrap(chars))
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        if (buffer.hasArray()) SensitiveDataCleaner.clear(buffer.array())
-        return bytes
     }
 }

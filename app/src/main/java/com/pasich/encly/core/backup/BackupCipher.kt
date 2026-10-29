@@ -1,11 +1,7 @@
 package com.pasich.encly.core.backup
 
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.SensitiveDataCleaner
-import java.security.GeneralSecurityException
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * What the per-file key is derived from. Both forms describe the same recovery phrase; the
@@ -24,12 +20,9 @@ sealed class BackupSecret {
  * Derived keys are zeroized before returning, on success and on failure.
  */
 object BackupCipher {
-    private const val TRANSFORMATION = "AES/GCM/NoPadding"
-    private val random = SecureRandom()
-
     fun seal(plaintext: ByteArray, secret: BackupSecret): ByteArray {
-        val salt = ByteArray(BackupFormat.SALT_LENGTH).also(random::nextBytes)
-        val nonce = ByteArray(BackupFormat.NONCE_LENGTH).also(random::nextBytes)
+        val salt = Crypto.randomBytes(BackupFormat.SALT_LENGTH)
+        val nonce = Crypto.randomBytes(BackupFormat.NONCE_LENGTH)
         val header = BackupFormat.encodeHeader(
             kdf = BackupKdf.RECOVERY_PHRASE_HKDF_SHA256,
             salt = salt,
@@ -38,10 +31,7 @@ object BackupCipher {
         )
         val key = deriveKey(secret, salt)
         return try {
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), gcmSpec(nonce))
-            cipher.updateAAD(header)
-            header + cipher.doFinal(plaintext)
+            header + Crypto.aesGcmSeal(key, nonce, header, plaintext)
         } finally {
             SensitiveDataCleaner.clear(key)
         }
@@ -58,20 +48,20 @@ object BackupCipher {
         val parsed = BackupFormat.parse(file)
         val key = deriveKey(secret, parsed.header.salt)
         return try {
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), gcmSpec(parsed.header.nonce))
-            // Offsets instead of copies: a large backup is held in memory once, not twice.
-            cipher.updateAAD(parsed.file, 0, BackupFormat.HEADER_LENGTH)
-            cipher.doFinal(parsed.file, parsed.ciphertextOffset, parsed.header.ciphertextLength)
-        } catch (e: GeneralSecurityException) {
-            // AEADBadTagException: wrong recovery phrase, or a modified header/ciphertext.
-            throw BackupException(BackupError.WRONG_SECRET, e)
+            // The library takes whole arrays, so the header and the ciphertext are copied out of the
+            // file (neither is secret): a large backup's ciphertext is held in memory twice.
+            val header = parsed.file.copyOf(BackupFormat.HEADER_LENGTH)
+            val ciphertext = parsed.file.copyOfRange(
+                parsed.ciphertextOffset,
+                parsed.ciphertextOffset + parsed.header.ciphertextLength,
+            )
+            // Null: wrong recovery phrase, or a modified header/ciphertext.
+            Crypto.aesGcmOpen(key, parsed.header.nonce, header, ciphertext)
+                ?: throw BackupException(BackupError.WRONG_SECRET)
         } finally {
             SensitiveDataCleaner.clear(key)
         }
     }
-
-    private fun gcmSpec(nonce: ByteArray) = GCMParameterSpec(BackupFormat.TAG_LENGTH * Byte.SIZE_BITS, nonce)
 
     private fun deriveKey(secret: BackupSecret, salt: ByteArray): ByteArray = when (secret) {
         is BackupSecret.RecoveryRoot -> BackupKeys.fileKeyFromRoot(secret.root, salt)

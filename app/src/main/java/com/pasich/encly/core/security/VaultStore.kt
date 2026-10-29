@@ -1,5 +1,6 @@
 package com.pasich.encly.core.security
 
+import com.pasich.encly.core.crypto.Crypto
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -10,7 +11,6 @@ import java.nio.ByteBuffer
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import java.security.MessageDigest
 
 /**
  * The vault's key slots and PIN lockout state, in one app-private file.
@@ -198,7 +198,7 @@ class VaultStore(private val file: File) {
                 }
             }
             val body = buffer.toByteArray()
-            val digest = MessageDigest.getInstance("SHA-256").digest(body)
+            val digest = Crypto.sha256(body)
             return try {
                 body + digest
             } finally {
@@ -212,8 +212,8 @@ class VaultStore(private val file: File) {
             try {
                 if (bytes.size < MAGIC.size + Int.SIZE_BYTES + DIGEST_LENGTH) return null
                 val bodyLength = bytes.size - DIGEST_LENGTH
-                val expected = MessageDigest.getInstance("SHA-256").apply { update(bytes, 0, bodyLength) }.digest()
-                if (!MessageDigest.isEqual(expected, bytes.copyOfRange(bodyLength, bytes.size))) return null
+                val expected = Crypto.sha256(bytes, 0, bodyLength)
+                if (!Crypto.constantTimeEquals(expected, bytes.copyOfRange(bodyLength, bytes.size))) return null
                 val input = DataInputStream(bytes.inputStream(0, bodyLength))
                 val magic = ByteArray(MAGIC.size).also(input::readFully)
                 if (!magic.contentEquals(MAGIC)) return null

@@ -1,10 +1,6 @@
 package com.pasich.encly.core.security
 
-import java.security.GeneralSecurityException
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
+import com.pasich.encly.core.crypto.Crypto
 
 /**
  * The byte formats of the PIN-derived slots in the vault store, and their AES-256-GCM sealing:
@@ -17,27 +13,23 @@ internal object PinSlots {
     const val PIN_SALT_SIZE = 16
     const val DEK_LENGTH = 32
     const val SLOT_VERSION: Byte = 3
-    const val GCM_TAG_LENGTH = 128
-    const val GCM_TAG_BYTES = GCM_TAG_LENGTH / 8
-    const val IV_LENGTH = 12
+    const val GCM_TAG_BYTES = Crypto.TAG_BYTES
+    const val IV_LENGTH = Crypto.NONCE_BYTES
     private const val SLOT_LENGTH = 1 + PIN_SALT_SIZE + IV_LENGTH + DEK_LENGTH + GCM_TAG_BYTES
     private const val WIPE_MARKER_LENGTH = 32
     private const val WIPE_SLOT_LENGTH = 1 + IV_LENGTH + WIPE_MARKER_LENGTH + GCM_TAG_BYTES
-    const val AES_GCM = "AES/GCM/NoPadding"
 
     private val PIN_AAD = "encly/pin/slot/v3".toByteArray(Charsets.UTF_8)
     private val WIPE_AAD = "encly/pin/wipe-slot/v3".toByteArray(Charsets.UTF_8)
 
     /** `version ‖ salt ‖ iv ‖ AES-GCM(dek)`, with the version and salt authenticated as AAD. */
     fun sealSlot(dek: ByteArray, kek: ByteArray, salt: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance(AES_GCM)
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
-        cipher.updateAAD(aad(salt))
-        val encrypted = cipher.doFinal(dek)
-        val iv = cipher.iv
+        val iv = Crypto.randomBytes(IV_LENGTH)
+        val encrypted = Crypto.aesGcmSeal(kek, iv, aad(salt), dek)
         return try {
             byteArrayOf(SLOT_VERSION) + salt + iv + encrypted
         } finally {
+            SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(encrypted)
         }
     }
@@ -52,33 +44,25 @@ internal object PinSlots {
         return ParsedSlot(salt, iv, slot.copyOfRange(offset, slot.size))
     }
 
-    /** The DEK in [slot], or null when [kek] does not open it. The caller wipes the result. */
-    fun openSlotOrNull(slot: ParsedSlot, kek: ByteArray): ByteArray? = try {
-        val cipher = Cipher.getInstance(AES_GCM)
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(kek, "AES"), GCMParameterSpec(GCM_TAG_LENGTH, slot.iv))
-        cipher.updateAAD(aad(slot.salt))
-        cipher.doFinal(slot.ciphertext)
-    } catch (_: GeneralSecurityException) {
-        // AEADBadTagException included: a wrong PIN.
-        null
-    }
+    /** The DEK in [slot], or null when [kek] does not open it (a wrong PIN). The caller wipes the result. */
+    fun openSlotOrNull(slot: ParsedSlot, kek: ByteArray): ByteArray? =
+        Crypto.aesGcmOpen(kek, slot.iv, aad(slot.salt), slot.ciphertext)
 
     fun aad(salt: ByteArray): ByteArray = PIN_AAD + byteArrayOf(SLOT_VERSION) + salt
 
     /** `version ‖ iv ‖ AES-GCM(random marker)`, bound to the PIN slot's [salt] as AAD. */
     fun sealWipeSlot(wipeKek: ByteArray, salt: ByteArray): ByteArray {
-        val marker = ByteArray(WIPE_MARKER_LENGTH).also { SecureRandom().nextBytes(it) }
-        val cipher = Cipher.getInstance(AES_GCM)
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(wipeKek, "AES"))
-        cipher.updateAAD(wipeAad(salt))
+        val marker = Crypto.randomBytes(WIPE_MARKER_LENGTH)
+        val iv = Crypto.randomBytes(IV_LENGTH)
         val encrypted = try {
-            cipher.doFinal(marker)
+            Crypto.aesGcmSeal(wipeKek, iv, wipeAad(salt), marker)
         } finally {
             SensitiveDataCleaner.clear(marker)
         }
         return try {
-            byteArrayOf(SLOT_VERSION) + cipher.iv + encrypted
+            byteArrayOf(SLOT_VERSION) + iv + encrypted
         } finally {
+            SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(encrypted)
         }
     }
@@ -89,13 +73,9 @@ internal object PinSlots {
         val iv = wipeSlot.copyOfRange(1, 1 + IV_LENGTH)
         val ciphertext = wipeSlot.copyOfRange(1 + IV_LENGTH, wipeSlot.size)
         return try {
-            val cipher = Cipher.getInstance(AES_GCM)
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(wipeKek, "AES"), GCMParameterSpec(GCM_TAG_LENGTH, iv))
-            cipher.updateAAD(wipeAad(salt))
-            SensitiveDataCleaner.clear(cipher.doFinal(ciphertext))
-            true
-        } catch (_: GeneralSecurityException) {
-            false
+            val marker = Crypto.aesGcmOpen(wipeKek, iv, wipeAad(salt), ciphertext)
+            if (marker != null) SensitiveDataCleaner.clear(marker)
+            marker != null
         } finally {
             SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(ciphertext)
@@ -105,10 +85,7 @@ internal object PinSlots {
     fun wipeAad(salt: ByteArray): ByteArray = WIPE_AAD + byteArrayOf(SLOT_VERSION) + salt
 
     /** Random bytes shaped like a wipe slot (the same version byte and length): no PIN opens it. */
-    fun decoyWipeSlot(): ByteArray = ByteArray(WIPE_SLOT_LENGTH).also {
-        SecureRandom().nextBytes(it)
-        it[0] = SLOT_VERSION
-    }
+    fun decoyWipeSlot(): ByteArray = Crypto.randomBytes(WIPE_SLOT_LENGTH).also { it[0] = SLOT_VERSION }
 
     class ParsedSlot(val salt: ByteArray, val iv: ByteArray, val ciphertext: ByteArray) {
         fun wipe() {

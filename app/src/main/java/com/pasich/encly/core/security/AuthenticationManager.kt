@@ -1,5 +1,7 @@
 package com.pasich.encly.core.security
 
+import com.pasich.encly.core.crypto.Crypto
+import com.pasich.encly.core.crypto.CryptoException
 import com.pasich.encly.core.security.DuressSlots.DECOY_KEY_AAD
 import com.pasich.encly.core.security.DuressSlots.DECOY_KEY_OFF_AAD
 import com.pasich.encly.core.security.DuressSlots.decoyKeyKek
@@ -16,10 +18,6 @@ import com.pasich.encly.core.security.PinSlots.opensWipeSlot
 import com.pasich.encly.core.security.PinSlots.parseSlot
 import com.pasich.encly.core.security.PinSlots.sealSlot
 import com.pasich.encly.core.security.PinSlots.sealWipeSlot
-import java.security.GeneralSecurityException
-import java.security.SecureRandom
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.PBEKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -177,7 +175,7 @@ class AuthenticationManager @Inject constructor(
         if (!isWellFormed(pin) || dek.size != DEK_LENGTH) return PinChange.FAILED
         val keySlot = activeKeySlot()
         val keptSalt = currentSalt()
-        val salt = keptSalt ?: ByteArray(PIN_SALT_SIZE).also { SecureRandom().nextBytes(it) }
+        val salt = keptSalt ?: Crypto.randomBytes(PIN_SALT_SIZE)
         var keyReset = false
         val keys = try {
             // A key made here (deleted by the system, not just invalidated) is a reset too: the
@@ -214,7 +212,7 @@ class AuthenticationManager @Inject constructor(
             }
             val written = writePinSlot(dek, keys.kek, salt, keySlot, SlotChanges(change, decoyChange))
             if (written) PinChange.SET else PinChange.FAILED
-        } catch (_: GeneralSecurityException) {
+        } catch (_: CryptoException) {
             PinChange.FAILED
         } finally {
             SensitiveDataCleaner.clear(salt)
@@ -652,7 +650,7 @@ class AuthenticationManager @Inject constructor(
         } catch (_: PinFactorException) {
             return PinUnlock.Failed
         }
-        val dek = ByteArray(DEK_LENGTH).also { SecureRandom().nextBytes(it) }
+        val dek = Crypto.randomBytes(DEK_LENGTH)
         val decoy = decoyWipeSlot()
         // The decoy vault goes with the erase: its slot and key become random bytes, and its
         // database is deleted with the old one (see SecurityManager.completePendingWipe).
@@ -678,7 +676,7 @@ class AuthenticationManager @Inject constructor(
                 SensitiveDataCleaner.clear(slot)
             }
             if (erased) PinUnlock.Erased(dek.copyOf()) else PinUnlock.Failed
-        } catch (_: GeneralSecurityException) {
+        } catch (_: CryptoException) {
             PinUnlock.Failed
         } finally {
             SensitiveDataCleaner.clear(dek)
@@ -759,7 +757,7 @@ class AuthenticationManager @Inject constructor(
         val kept = openDecoyKeyOrNull(primaryDek)?.dek
         // No decoy vault yet: whatever an earlier one left can never open again, so it goes first.
         if (kept == null && !onNewVault()) return DuressPinChange.FAILED
-        val decoyDek = kept ?: ByteArray(DEK_LENGTH).also { SecureRandom().nextBytes(it) }
+        val decoyDek = kept ?: Crypto.randomBytes(DEK_LENGTH)
         return try {
             val duressSlot = sealDecoy(decoyDek, decoyKek, decoySlotAad(salt))
             val decoyKey = sealDecoyKey(decoyDek, primaryDek)
@@ -777,7 +775,7 @@ class AuthenticationManager @Inject constructor(
                 kept == null -> DuressPinChange.SET_NEW_VAULT
                 else -> DuressPinChange.SET
             }
-        } catch (_: GeneralSecurityException) {
+        } catch (_: CryptoException) {
             DuressPinChange.FAILED
         } finally {
             SensitiveDataCleaner.clear(decoyDek)
@@ -787,7 +785,7 @@ class AuthenticationManager @Inject constructor(
     private fun writeWipeSlot(wipeKek: ByteArray, salt: ByteArray): WipePinChange {
         val wipeSlot = try {
             sealWipeSlot(wipeKek, salt)
-        } catch (_: GeneralSecurityException) {
+        } catch (_: CryptoException) {
             return WipePinChange.FAILED
         }
         return try {
@@ -895,14 +893,8 @@ class AuthenticationManager @Inject constructor(
         }
     }
 
-    private fun pbkdf2(pin: CharArray, salt: ByteArray): ByteArray {
-        val spec = PBEKeySpec(pin, salt, PBKDF2_ITERATIONS, DEK_LENGTH * Byte.SIZE_BITS)
-        return try {
-            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
-        } finally {
-            spec.clearPassword()
-        }
-    }
+    private fun pbkdf2(pin: CharArray, salt: ByteArray): ByteArray =
+        Crypto.pbkdf2HmacSha256(pin, salt, PBKDF2_ITERATIONS, DEK_LENGTH)
 
     /** Whether [decoyKek] opens the duress slot; the DEK it holds is wiped at once. */
     private fun opensDecoySlot(decoyKek: ByteArray, salt: ByteArray): Boolean {

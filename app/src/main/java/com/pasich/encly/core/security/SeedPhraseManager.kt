@@ -1,13 +1,8 @@
 package com.pasich.encly.core.security
 
 import com.pasich.encly.core.backup.BackupKeys
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.bip39.Bip39
-import java.security.GeneralSecurityException
-import java.security.MessageDigest
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,7 +32,6 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
         private const val RECOVERY_ENABLED_KEY = "recovery.enabled"
         private const val BACKUP_SLOT_KEY = "backup.slot"
         private const val VAULT_VERSION = 3
-        private const val GCM_TAG_LENGTH = 128
         private const val IV_LENGTH = 12
         private const val DEK_LENGTH = 32
 
@@ -77,7 +71,7 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
         clearBootstrapKey()
         if (!store.edit { clearOwnKeys() }) return false
 
-        val dek = ByteArray(DEK_LENGTH).also { SecureRandom().nextBytes(it) }
+        val dek = Crypto.randomBytes(DEK_LENGTH)
         val recoverySlot = recoverySeed?.let { sealRecoverySlot(it, dek) }
         val backupSlot = recoverySeed?.let { sealBackupRoot(it, dek) }
         return try {
@@ -128,8 +122,6 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
         val kek = deriveRecoveryKek(phrase)
         return try {
             unwrap(wrapped, kek, RECOVERY_AAD)
-        } catch (_: GeneralSecurityException) {
-            null
         } finally {
             SensitiveDataCleaner.clear(kek)
             SensitiveDataCleaner.clear(wrapped)
@@ -155,8 +147,6 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
         val kek = deriveBackupSlotKek(dek)
         return try {
             unwrap(wrapped, kek, BACKUP_SLOT_AAD)
-        } catch (_: GeneralSecurityException) {
-            null
         } finally {
             SensitiveDataCleaner.clear(kek)
             SensitiveDataCleaner.clear(wrapped)
@@ -182,7 +172,7 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
     private fun isSeedOfVault(phrase: CharArray, dek: ByteArray): Boolean {
         val recovered = unlockWithSeed(phrase) ?: return false
         return try {
-            MessageDigest.isEqual(recovered, dek)
+            Crypto.constantTimeEquals(recovered, dek)
         } finally {
             SensitiveDataCleaner.clear(recovered)
         }
@@ -264,27 +254,25 @@ class SeedPhraseManager @Inject constructor(private val store: VaultStore) {
         }
     }
 
+    /** `iv ‖ AES-GCM(plaintext)` with [aad] authenticated. */
     private fun wrap(plaintext: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
-        cipher.updateAAD(aad)
-        val encrypted = cipher.doFinal(plaintext)
+        val iv = Crypto.randomBytes(IV_LENGTH)
+        val encrypted = Crypto.aesGcmSeal(kek, iv, aad, plaintext)
         return try {
-            cipher.iv + encrypted
+            iv + encrypted
         } finally {
+            SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(encrypted)
         }
     }
 
+    /** The plaintext of [wrapped] (see [wrap]), or null when [kek] and [aad] do not open it. */
     private fun unwrap(wrapped: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray? {
         if (wrapped.size <= IV_LENGTH) return null
         val iv = wrapped.copyOfRange(0, IV_LENGTH)
         val ciphertext = wrapped.copyOfRange(IV_LENGTH, wrapped.size)
         return try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(kek, "AES"), GCMParameterSpec(GCM_TAG_LENGTH, iv))
-            cipher.updateAAD(aad)
-            cipher.doFinal(ciphertext)
+            Crypto.aesGcmOpen(kek, iv, aad, ciphertext)
         } finally {
             SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(ciphertext)

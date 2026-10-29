@@ -1,5 +1,6 @@
 package com.pasich.encly.core.security.bip39
 
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.SensitiveDataCleaner
 
 /**
@@ -7,10 +8,11 @@ import com.pasich.encly.core.security.SensitiveDataCleaner
  * turns the words into a BIP-39 seed (no PBKDF2): its keys come from SHA-256 of the normalized
  * words (see `Mnemonic`), so that step is deliberately absent.
  *
- * Plain Kotlin plus a [Sha256], so it can move to common code. Phrases are char arrays and every
- * intermediate array is wiped; arrays handed back belong to the caller.
+ * Plain Kotlin plus a [Sha256] (the app's [Crypto] by default), so it can move to common code.
+ * Phrases are char arrays and every intermediate array is wiped; arrays handed back belong to
+ * the caller.
  */
-internal class Bip39(private val sha256: Sha256 = JvmSha256) {
+internal class Bip39(private val sha256: Sha256 = Sha256 { Crypto.sha256(it) }) {
 
     /**
      * The phrase for [entropy] (16, 20, 24, 28 or 32 bytes: 12 to 24 words), words joined by one
