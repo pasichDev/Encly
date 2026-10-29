@@ -674,4 +674,15 @@
     <string name="menu_help">Pomoc</string>
     <string name="menu_exit">Zakończ</string>
     <string name="menu_minimize">Minimalizuj</string>
+    <string name="menu_new_window">Nowe okno</string>
+    <string name="note_open_in_new_window">Otwórz w nowym oknie</string>
+    <string name="note_export_pdf">Eksportuj jako PDF</string>
+    <string name="note_print">Drukuj</string>
+    <string name="pdf_export_warning_title">Wyeksportować do PDF bez szyfrowania?</string>
+    <string name="pdf_export_warning_body">Plik PDF nie jest zaszyfrowany. Każdy, kto go zdobędzie, przeczyta twoją notatkę. Miejsce, w którym go zapiszesz, także folder w chmurze, będzie zawierać czytelną kopię, której Encly nie może ani chronić, ani cofnąć. Następnie potwierdzisz kodem PIN.</string>
+    <string name="print_warning_title">Drukować bez szyfrowania?</string>
+    <string name="print_warning_body">Drukowanie wysyła tekst notatki do drukarki bez szyfrowania. Systemowa kolejka wydruku może zachować jego tymczasowe kopie, a drukarka sieciowa lub w chmurze może go także zapisać. Encly nie może ich usunąć. Następnie potwierdzisz kodem PIN.</string>
+    <string name="pdf_export_done">Zapisano PDF</string>
+    <string name="print_done">Wysłano do drukarki</string>
+    <string name="note_open_elsewhere">Ta notatka jest otwarta do edycji w innym oknie. Tutaj jest tylko do odczytu.</string>
 </resources>

@@ -8,6 +8,7 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.onboarding_welcome_headline
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.desktop.di.DesktopAppGraph
+import com.pasich.encly.desktop.window.WindowServices
 import com.pasich.encly.platform.AppWindow
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.runBlocking
@@ -45,12 +46,10 @@ class DesktopAppGraphTest {
         assertNotNull(graph.applicationScope)
         assertNotNull(graph.lifecycle)
         assertNotNull(graph.deviceLockWatcher)
-        assertNotNull(graph.dropRouter)
-        assertNotNull(graph.navigationRequests)
         assertNotNull(graph.toaster)
         assertNotNull(graph.clipboardWiper)
         assertNotNull(graph.locales)
-        assertNotNull(graph.documentPickers)
+        assertNotNull(graph.noteDocuments)
         assertNotNull(graph.externalLinks)
         assertNotNull(graph.clipboard)
         assertNotNull(graph.appInfo)
@@ -63,7 +62,7 @@ class DesktopAppGraphTest {
         val graph = graphIn(temp.root.toPath())
         assertSame(graph.securityManager, graph.securityManager)
         assertSame(graph.sessionLockManager, graph.sessionLockManager)
-        assertSame(graph.navigationRequests, graph.navigationRequests)
+        assertSame(graph.noteDocuments, graph.noteDocuments)
         assertSame(graph.flags, graph.flags)
     }
 
@@ -119,8 +118,9 @@ class DesktopAppUiTest {
     @Test
     fun `a request for a screen is ignored while no vault is open`() = runComposeUiTest {
         val graph = graphIn(temp.root.toPath())
-        setContent { DesktopApp(graph, AppWindow.None) }
-        graph.navigationRequests.request("SettingsRoute")
+        val services = WindowServices.create(graph.environment, graph.lifecycle)
+        setContent { DesktopApp(graph, AppWindow.None, services = services) }
+        services.navigation.request("SettingsRoute")
         val headline = runBlocking {
             org.jetbrains.compose.resources.getString(Res.string.onboarding_welcome_headline)
         }

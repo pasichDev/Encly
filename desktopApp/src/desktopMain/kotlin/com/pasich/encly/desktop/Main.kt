@@ -8,7 +8,7 @@ import com.pasich.encly.desktop.di.DesktopAppGraph
 import com.pasich.encly.desktop.platform.DesktopEnvironment
 import com.pasich.encly.desktop.storage.AppDirectories
 import com.pasich.encly.desktop.storage.DesktopOs
-import com.pasich.encly.desktop.window.EnclyWindow
+import com.pasich.encly.desktop.window.EnclyWindows
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.launch
 import java.awt.GraphicsEnvironment
@@ -48,7 +48,7 @@ fun main(args: Array<String>) {
 
     val launchFiles = LaunchFiles.fromArguments(args)
     application(exitProcessOnExit = true) {
-        EnclyWindow(graph, launchFiles) {
+        EnclyWindows(graph, launchFiles) {
             shutdown(graph)
             instance.close()
             exitApplication()
@@ -75,9 +75,14 @@ private fun startServices(graph: DesktopAppGraph) {
     graph.applicationScope.launch { graph.handoffStagingSweeper.sweep() }
 }
 
-/** Closes the vault and empties the clipboard of what Encly put there before the process ends. */
+/**
+ * Closes the vault and empties the clipboard of what Encly put there before the process ends. The windows are
+ * closed and their editors have saved by now (see `EnclyWindows`).
+ */
 private fun shutdown(graph: DesktopAppGraph) {
     graph.sessionLockManager.lockNow()
+    // First-run setup has no lockable vault yet but may hold the database open: it is closed all the same.
+    if (graph.securityManager.isDatabaseUnlocked()) graph.securityManager.lock()
     graph.clipboardWiper.wipeIfStillHeld()
     graph.deviceLockWatcher.close()
     graph.lifecycle.destroy()

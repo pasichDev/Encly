@@ -11,6 +11,8 @@ import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.main_drawer_tasks
 import com.pasich.encly.core.resources.markdown_export_done
 import com.pasich.encly.core.resources.note_preview_unreadable
+import com.pasich.encly.core.resources.pdf_export_done
+import com.pasich.encly.core.resources.print_done
 import com.pasich.encly.core.resources.priority_high
 import com.pasich.encly.core.resources.priority_low
 import com.pasich.encly.core.resources.priority_medium
@@ -18,10 +20,14 @@ import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.VaultDataStore
+import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.export.MarkdownDocuments
 import com.pasich.encly.data.export.MarkdownExport
 import com.pasich.encly.data.export.MarkdownLabels
+import com.pasich.encly.data.export.NoteDocument
 import com.pasich.encly.platform.DocumentRef
+import com.pasich.encly.platform.NoteDocumentRenderer
+import com.pasich.encly.platform.PrintResult
 import com.pasich.encly.utils.todayStamp
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
@@ -36,14 +42,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.io.IOException
 
-/** What a Markdown export writes. */
+/** How a note leaves as a document: a PDF file the user saves, or a printout. */
+enum class DocumentFormat { PDF, PRINT }
+
+/** What a Markdown export writes (and, on the desktop, one note as a PDF or on paper). */
 sealed interface MarkdownExportTarget {
     /** Every note that is not in the trash, and the tasks, as a `.zip` of `.md` files. */
     data object AllData : MarkdownExportTarget
 
     /** One note, as one `.md` file. */
     data class SingleNote(val noteId: Long) : MarkdownExportTarget
+
+    /** One note as a PDF or a printout, drawn by [renderer] (the host's; Android has none). */
+    data class NoteAsDocument(val noteId: Long, val format: DocumentFormat, val renderer: NoteDocumentRenderer) :
+        MarkdownExportTarget
 }
 
 /**
@@ -96,12 +110,18 @@ class MarkdownExportViewModel(
     fun start(target: MarkdownExportTarget) {
         dropPending()
         this.target = target
-        state.go(BackupStep.ConfirmPlainExport)
+        state.go(
+            if (target is MarkdownExportTarget.NoteAsDocument) {
+                BackupStep.ConfirmDocumentExport(print = target.format == DocumentFormat.PRINT)
+            } else {
+                BackupStep.ConfirmPlainExport
+            },
+        )
     }
 
     /** "Continue" on the warning: re-authenticate before anything is read. */
     fun confirmWarning() {
-        if (state.step != BackupStep.ConfirmPlainExport) return
+        if (state.step != BackupStep.ConfirmPlainExport && state.step !is BackupStep.ConfirmDocumentExport) return
         val biometric = securityManager.canReauthWithBiometric()
         state.go(BackupStep.Reauth(BackupAction.EXPORT_MARKDOWN, biometric))
     }
@@ -112,27 +132,31 @@ class MarkdownExportViewModel(
         // re-authentication of the export now waiting for it counts.
         val waiting = (state.step as? BackupStep.Reauth)?.action == BackupAction.EXPORT_MARKDOWN
         if (action != BackupAction.EXPORT_MARKDOWN || target == null || !waiting) return
-        try {
+        val bound = try {
             // Tied to this opening of the vault: after a re-lock it fails instead of reading.
-            session = store.bindToCurrentSession()
+            store.bindToCurrentSession()
         } catch (_: RuntimeException) {
             state.fail(BackupError.VAULT_UNAVAILABLE)
             return
         }
-        state.go(
-            when (target) {
-                MarkdownExportTarget.AllData -> BackupStep.PickMarkdownTarget(
-                    datedName("encly-notes", "zip"),
-                    zip = true,
-                )
+        session = bound
+        if (target is MarkdownExportTarget.NoteAsDocument && target.format == DocumentFormat.PRINT) {
+            // A printout has no file to pick: the dialog that follows is the printer's.
+            print(bound, target)
+        } else {
+            state.go(pickerFor(target))
+        }
+    }
 
-                // A date only, never the title: the name shows in the system file dialog and its Recents.
-                is MarkdownExportTarget.SingleNote -> BackupStep.PickMarkdownTarget(
-                    datedName("encly-note", "md"),
-                    zip = false,
-                )
-            },
-        )
+    /** The save dialog a file export asks for. */
+    private fun pickerFor(target: MarkdownExportTarget): BackupStep.PickMarkdownTarget = when (target) {
+        MarkdownExportTarget.AllData -> BackupStep.PickMarkdownTarget(datedName("encly-notes", "zip"), zip = true)
+
+        is MarkdownExportTarget.NoteAsDocument ->
+            BackupStep.PickMarkdownTarget(datedName("encly-note", "pdf"), zip = false, pdf = true)
+
+        // A date only, never the title: the name shows in the system file dialog and its Recents.
+        is MarkdownExportTarget.SingleNote -> BackupStep.PickMarkdownTarget(datedName("encly-note", "md"), zip = false)
     }
 
     /**
@@ -164,7 +188,12 @@ class MarkdownExportViewModel(
         state.launchBusy {
             try {
                 export(bound, what, uri)
-                state.finish(BackupMessage.Text(Res.string.markdown_export_done))
+                val done = if (what is MarkdownExportTarget.NoteAsDocument) {
+                    Res.string.pdf_export_done
+                } else {
+                    Res.string.markdown_export_done
+                }
+                state.finish(BackupMessage.Text(done))
             } catch (e: BackupException) {
                 state.fail(e.error)
             } catch (e: CancellationException) {
@@ -184,6 +213,8 @@ class MarkdownExportViewModel(
 
             // Only that note and its tag are read, not the whole vault.
             is MarkdownExportTarget.SingleNote -> bound.snapshotOfNote(what.noteId)
+
+            is MarkdownExportTarget.NoteAsDocument -> bound.snapshotOfNote(what.noteId)
         }
         val labels = labels()
         // A re-lock that landed after the read must not be followed by a write.
@@ -199,7 +230,49 @@ class MarkdownExportViewModel(
                         if (!MarkdownExport.writeNote(snapshot, what.noteId, labels, out)) {
                             throw BackupException(BackupError.IO)
                         }
+
+                    // The PDF is built in memory first and written in one go, so a failure leaves no half file.
+                    is MarkdownExportTarget.NoteAsDocument ->
+                        what.renderer.writePdf(documentOf(snapshot, what.noteId, labels), out)
                 }
+            }
+        }
+    }
+
+    /** The note [noteId] of [snapshot] as a document; fails when the vault has no such note (or it is in the trash). */
+    private fun documentOf(snapshot: VaultSnapshot, noteId: Long, labels: MarkdownLabels): NoteDocument {
+        val note = snapshot.notes.firstOrNull { it.id == noteId && !it.isTrash }
+            ?: throw BackupException(BackupError.IO)
+        val tagName = snapshot.tags.firstOrNull { it.id == note.tagId }?.nameTag
+        return NoteDocument.of(note, tagName, labels.untitled, labels.unreadable)
+    }
+
+    /** Prints the note: read through the authenticated session, handed to the printer's dialog, then forgotten. */
+    private fun print(bound: VaultDataStore, what: MarkdownExportTarget.NoteAsDocument) {
+        dropPending()
+        state.go(BackupStep.Idle)
+        state.launchBusy {
+            try {
+                val snapshot = bound.snapshotOfNote(what.noteId)
+                val document = documentOf(snapshot, what.noteId, labels())
+                // A re-lock that landed after the read must not be followed by a print.
+                bound.assertCurrentSession()
+                when (what.renderer.print(document)) {
+                    PrintResult.PRINTED -> state.finish(BackupMessage.Text(Res.string.print_done))
+                    PrintResult.CANCELLED -> Unit
+                }
+            } catch (e: BackupException) {
+                state.fail(e.error)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: IOException) {
+                // The printer or the renderer failed; the note itself was read.
+                AppLogger.w(TAG, "Print failed")
+                state.fail(BackupError.IO)
+            } catch (_: RuntimeException) {
+                // The vault closed under the print (a re-lock): nothing readable was sent.
+                AppLogger.w(TAG, "Print failed")
+                state.fail(BackupError.VAULT_UNAVAILABLE)
             }
         }
     }

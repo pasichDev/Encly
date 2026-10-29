@@ -117,6 +117,7 @@ class CommandsRig {
         scope = CoroutineScope(Dispatchers.Unconfined),
         onMinimise = { events += "minimise" },
         onQuit = { events += "quit" },
+        openWindow = { events += "window" },
     )
 
     /** The screens asked for so far, in order. */

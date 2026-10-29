@@ -679,4 +679,15 @@
     <string name="menu_help">Help</string>
     <string name="menu_exit">Exit</string>
     <string name="menu_minimize">Minimize</string>
+    <string name="menu_new_window">New window</string>
+    <string name="note_open_in_new_window">Open in new window</string>
+    <string name="note_export_pdf">Export as PDF</string>
+    <string name="note_print">Print</string>
+    <string name="pdf_export_warning_title">Export to PDF without encryption?</string>
+    <string name="pdf_export_warning_body">The PDF is not encrypted. Anyone who gets it can read your note. Wherever you save it, including a cloud folder, will hold a readable copy that Encly cannot protect or take back. You will confirm with your PIN next.</string>
+    <string name="print_warning_title">Print without encryption?</string>
+    <string name="print_warning_body">Printing sends the text of your note to the printer unencrypted. The system print spooler may keep temporary copies of it, and a network or cloud printer may store it too. Encly cannot remove them. You will confirm with your PIN next.</string>
+    <string name="pdf_export_done">PDF saved</string>
+    <string name="print_done">Sent to the printer</string>
+    <string name="note_open_elsewhere">This note is open for editing in another window. Here it is read-only.</string>
 </resources>

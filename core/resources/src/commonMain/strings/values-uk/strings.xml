@@ -674,4 +674,15 @@
     <string name="menu_help">Довідка</string>
     <string name="menu_exit">Вийти</string>
     <string name="menu_minimize">Згорнути</string>
+    <string name="menu_new_window">Нове вікно</string>
+    <string name="note_open_in_new_window">Відкрити в новому вікні</string>
+    <string name="note_export_pdf">Експортувати як PDF</string>
+    <string name="note_print">Друкувати</string>
+    <string name="pdf_export_warning_title">Експортувати в PDF без шифрування?</string>
+    <string name="pdf_export_warning_body">PDF не зашифрований. Будь-хто, хто його отримає, зможе прочитати вашу нотатку. Місце, куди ви його збережете, зокрема хмарна тека, міститиме читабельну копію, яку Encly не може ні захистити, ні відкликати. Далі потрібно буде підтвердити PIN-кодом.</string>
+    <string name="print_warning_title">Друкувати без шифрування?</string>
+    <string name="print_warning_body">Під час друку текст нотатки надсилається на принтер без шифрування. Системна черга друку може зберігати його тимчасові копії, а мережевий або хмарний принтер також може його зберегти. Encly не може їх видалити. Далі потрібно буде підтвердити PIN-кодом.</string>
+    <string name="pdf_export_done">PDF збережено</string>
+    <string name="print_done">Надіслано на принтер</string>
+    <string name="note_open_elsewhere">Ця нотатка відкрита для редагування в іншому вікні. Тут її можна лише читати.</string>
 </resources>

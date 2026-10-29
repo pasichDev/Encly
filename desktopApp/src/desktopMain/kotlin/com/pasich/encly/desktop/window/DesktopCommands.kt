@@ -20,10 +20,21 @@ import kotlinx.coroutines.launch
  *
  * Commands that open a screen are ignored while the vault is locked (see `HostNavigationRequests`): no menu
  * item skips the lock screen. A new note is asked for as the [AppCommand] it is, so it opens the way the
- * keyboard shortcut and the button open it (as a tab, in a wide window).
+ * keyboard shortcut and the button open it (as a tab, in a wide window). Every window has its own commands over
+ * its own [NavigationRequests], so a menu item acts on the window it belongs to (the focused one).
  */
+@Suppress("TooManyFunctions") // One function per item of the menu bar.
 interface DesktopCommands {
     fun newNote()
+
+    /** Another window on the same vault. */
+    fun newWindow()
+
+    /** Print the note open in this window (nothing if none is open). */
+    fun printNote()
+
+    /** Save the note open in this window as a PDF (nothing if none is open). */
+    fun exportPdf()
 
     fun importNotes()
 
@@ -50,6 +61,7 @@ interface DesktopCommands {
 }
 
 /** [DesktopCommands] over the graph's services. */
+@Suppress("TooManyFunctions") // One function per item of the menu bar.
 class DefaultDesktopCommands(
     private val navigation: NavigationRequests,
     private val lockSession: () -> Unit,
@@ -58,9 +70,20 @@ class DefaultDesktopCommands(
     private val scope: CoroutineScope,
     private val onMinimise: () -> Unit,
     private val onQuit: () -> Unit,
+    private val openWindow: () -> Unit = {},
 ) : DesktopCommands {
     override fun newNote() {
         navigation.request(AppCommand.NewNote)
+    }
+
+    override fun newWindow() = openWindow()
+
+    override fun printNote() {
+        navigation.request(AppCommand.PrintNote)
+    }
+
+    override fun exportPdf() {
+        navigation.request(AppCommand.ExportPdf)
     }
 
     override fun importNotes() = open(NavRoutes.ImportNotesRoute.name)
@@ -110,7 +133,8 @@ data class Accelerator(
  * either the menu's ([menuOwned]: the menu registers its chord, built from the map's own key, and the host
  * declines it) or the host's (the menu registers nothing for it), never both: on a Mac the menu bar is native and
  * takes its chords before any key reaches the window, so a chord both sides took would run twice or not at all.
- * The chords below that are not in the map (import, backup, settings, minimise, quit) are the menu's alone.
+ * The chords below that are not in the map (new window, print, PDF, import, backup, settings, minimise, quit) are the
+ * menu's alone: none of them is a chord the map answers, so the host never runs one.
  */
 object DesktopShortcuts {
     /** The commands whose accelerators the menu registers; the keyboard host declines them. */
@@ -128,6 +152,12 @@ object DesktopShortcuts {
         return Accelerator(key = key, ctrl = !shortcuts.usesMetaKey, meta = shortcuts.usesMetaKey)
     }
 
+    fun newWindow(os: DesktopOs) = primary(os, Key.N, shift = true)
+
+    fun printNote(os: DesktopOs) = primary(os, Key.P)
+
+    fun exportPdf(os: DesktopOs) = primary(os, Key.P, shift = true)
+
     fun importNotes(os: DesktopOs) = primary(os, Key.I)
 
     fun backup(os: DesktopOs) = primary(os, Key.B)
@@ -139,6 +169,14 @@ object DesktopShortcuts {
     fun quit(os: DesktopOs) = primary(os, Key.Q)
 
     /** The chords only the menu has, which the key map does not know. */
-    fun menuOnly(os: DesktopOs): List<Accelerator> =
-        listOf(importNotes(os), backup(os), settings(os), minimise(os), quit(os))
+    fun menuOnly(os: DesktopOs): List<Accelerator> = listOf(
+        newWindow(os),
+        printNote(os),
+        exportPdf(os),
+        importNotes(os),
+        backup(os),
+        settings(os),
+        minimise(os),
+        quit(os),
+    )
 }

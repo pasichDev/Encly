@@ -101,6 +101,39 @@ class AppCommandRouterTest {
     }
 
     @Test
+    fun printAndPdfReachTheEditorOnScreenAndOnlyThere() {
+        assertFalse(router.hasEditor)
+        assertFalse(router.run(AppCommand.PrintNote))
+        assertFalse(router.run(AppCommand.ExportPdf))
+
+        val calls = mutableListOf<String>()
+        val commands = EditorCommands(
+            find = { false },
+            moveToTrash = { false },
+            dismiss = { false },
+            print = { true.also { calls += "print" } },
+            exportPdf = { true.also { calls += "pdf" } },
+        )
+        router.attachEditor(commands)
+
+        assertTrue(router.hasEditor)
+        assertTrue(router.run(AppCommand.PrintNote))
+        assertTrue(router.run(AppCommand.ExportPdf))
+        assertEquals(listOf("print", "pdf"), calls)
+
+        router.detachEditor(commands)
+        assertFalse(router.hasEditor)
+    }
+
+    @Test
+    fun anEditorWithoutDocumentSupportDoesNotPrint() {
+        router.attachEditor(RecordingEditor().commands)
+
+        assertFalse(router.run(AppCommand.PrintNote))
+        assertFalse(router.run(AppCommand.ExportPdf))
+    }
+
+    @Test
     fun anEditorThatDoesNothingLeavesTheKeyUnused() {
         val editor = RecordingEditor(allowTrash = false, findOpen = false)
         router.attachEditor(editor.commands)

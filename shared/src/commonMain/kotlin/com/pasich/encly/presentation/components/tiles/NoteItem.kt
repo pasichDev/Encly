@@ -10,10 +10,13 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.duplicate
 import com.pasich.encly.core.resources.note_archive
 import com.pasich.encly.core.resources.note_color_title
+import com.pasich.encly.core.resources.note_export_pdf
 import com.pasich.encly.core.resources.note_open
 import com.pasich.encly.core.resources.note_open_in_new_tab
+import com.pasich.encly.core.resources.note_open_in_new_window
 import com.pasich.encly.core.resources.note_pin
 import com.pasich.encly.core.resources.note_preview_unreadable
+import com.pasich.encly.core.resources.note_print
 import com.pasich.encly.core.resources.note_unarchive
 import com.pasich.encly.core.resources.note_unpin
 import com.pasich.encly.core.resources.swipe_choice_delete
@@ -21,6 +24,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.presentation.designsystem.EnclyContextMenu
+import com.pasich.encly.presentation.designsystem.EnclyDesktopIcons
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNoteCard
 import com.pasich.encly.presentation.designsystem.MenuEntry
@@ -88,13 +92,16 @@ fun NoteItem(
     }
 }
 
-/** Open, open in a new tab, pin, archive, the next colour, duplicate and move to trash, as the sheet offers them. */
+/** Open, open in a new tab or window, pin, archive, the next colour, duplicate, PDF, print and move to trash. */
 @Composable
 private fun noteMenuEntries(note: Note, actions: NoteContextActions?): List<MenuEntry> {
     if (actions == null) return emptyList()
     val nextColor = NoteColor.fromKey(note.color).next()
     val open = stringResource(Res.string.note_open)
     val newTab = stringResource(Res.string.note_open_in_new_tab)
+    val newWindow = stringResource(Res.string.note_open_in_new_window)
+    val pdf = stringResource(Res.string.note_export_pdf)
+    val print = stringResource(Res.string.note_print)
     val pin = stringResource(if (note.isPinned) Res.string.note_unpin else Res.string.note_pin)
     val archive = stringResource(if (note.isArchived) Res.string.note_unarchive else Res.string.note_archive)
     val color = "${stringResource(Res.string.note_color_title)}: ${stringResource(nextColor.labelRes)}"
@@ -103,6 +110,7 @@ private fun noteMenuEntries(note: Note, actions: NoteContextActions?): List<Menu
     return buildList {
         add(MenuEntry(open, { actions.onAction(NoteAction.Edit) }, EnclyIcons.Edit))
         actions.onOpenInNewTab?.let { add(MenuEntry(newTab, it, EnclyIcons.Plus)) }
+        actions.onOpenInNewWindow?.let { add(MenuEntry(newWindow, it, EnclyDesktopIcons.Window)) }
         if (!note.isArchived) {
             add(
                 MenuEntry(
@@ -121,6 +129,8 @@ private fun noteMenuEntries(note: Note, actions: NoteContextActions?): List<Menu
         )
         add(MenuEntry(color, { actions.onAction(NoteAction.ChangeColor(nextColor)) }, EnclyIcons.Palette))
         add(MenuEntry(duplicate, { actions.onAction(NoteAction.Duplicate) }, EnclyIcons.Duplicate))
+        actions.onExportPdf?.let { add(MenuEntry(pdf, it, EnclyIcons.Paper)) }
+        actions.onPrint?.let { add(MenuEntry(print, it, EnclyDesktopIcons.Print)) }
         add(MenuEntry(trash, { actions.onAction(NoteAction.Delete) }, EnclyIcons.Trash, destructive = true))
     }
 }

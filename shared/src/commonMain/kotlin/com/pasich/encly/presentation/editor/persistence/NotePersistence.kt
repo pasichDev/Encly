@@ -81,6 +81,13 @@ class NotePersistence(
     @Volatile
     private var closed = false
 
+    /**
+     * Set while another window edits this note: nothing of this editor may be written, so the other window's
+     * work is not overwritten with what this one loaded earlier. Unlike [closed], it can be lifted.
+     */
+    @Volatile
+    var suspended = false
+
     // False while a stored note (or the source of a copy) is still to be read ([loading]). Until
     // then the editor does not hold that note yet, so nothing may be saved: a save would see
     // id = -1 and insert a duplicate.
@@ -107,7 +114,7 @@ class NotePersistence(
 
     /** False when nothing may be saved: closed, still loading, read-only or unreadable. */
     private val canPersist: Boolean
-        get() = !closed && loaded && !readOnly && !_contentLoadFailed.value
+        get() = !closed && loaded && !readOnly && !suspended && !_contentLoadFailed.value
 
     /**
      * Reads note [noteId] (as a new, unsaved copy with [isCopy]) and hands its blocks to
@@ -219,7 +226,7 @@ class NotePersistence(
      * was already autosaved is deleted instead of leaving a ghost note behind.
      */
     suspend fun discard(): Boolean = saveMutex.withLock {
-        if (!loaded) return@withLock false
+        if (!loaded || suspended) return@withLock false
         val currentNote = _state.value.note
         val backupNote = _state.value.backupNote
 
@@ -237,7 +244,7 @@ class NotePersistence(
     /** Takes the note out of the trash, with the editor's content. */
     suspend fun restoreFromTrash(): Boolean = saveMutex.withLock {
         val currentNote = _state.value.note
-        if (!loaded || currentNote.id == -1L) return@withLock false
+        if (!loaded || suspended || currentNote.id == -1L) return@withLock false
 
         val restored = currentNote.copy(value = contentJson(), isTrash = false)
         val ok = updateNoteTrashStatusUseCase.invoke(restored, false).isSuccess
@@ -251,7 +258,7 @@ class NotePersistence(
     /** Moves the note to the trash (a soft delete), with the editor's content. */
     suspend fun moveToTrash(): Boolean = saveMutex.withLock {
         val currentNote = _state.value.note
-        if (!loaded) return@withLock false
+        if (!loaded || suspended) return@withLock false
         if (currentNote.id == -1L) {
             close()
             return@withLock true
@@ -273,7 +280,7 @@ class NotePersistence(
      */
     suspend fun setArchived(archived: Boolean): Boolean = saveMutex.withLock {
         val currentNote = _state.value.note
-        if (!loaded || currentNote.id == -1L) return@withLock false
+        if (!loaded || suspended || currentNote.id == -1L) return@withLock false
 
         val updated = currentNote.copy(
             value = contentJson(),
@@ -325,7 +332,7 @@ class NotePersistence(
     suspend fun delete(): Boolean = saveMutex.withLock {
         val currentNoteId = _state.value.note.id
         val deleted = when {
-            !loaded -> false
+            !loaded || suspended -> false
             currentNoteId == -1L -> true
             else -> notesRepository.deleteNoteById(currentNoteId).isSuccess
         }

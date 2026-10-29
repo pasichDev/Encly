@@ -28,6 +28,7 @@ import com.pasich.encly.core.resources.lock_use_recovery_phrase
 import com.pasich.encly.core.security.PIN_LENGTH
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.platform.LocalBiometricHost
+import com.pasich.encly.platform.LocalSessionSharedAcrossWindows
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
@@ -48,14 +49,20 @@ import com.pasich.encly.presentation.viewmodel.PinUnlockResult
 import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.stringResource
 
 /** The app's lock screen: unlocking opens Home (or the note that was open), see [leaveLockScreen]. */
 @Composable
 fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     // The same instance the inner LockScreen gets: both come from this back-stack entry.
-    val canReopenNote = metroViewModel<LockViewModel>()::canReopenNote
+    val lockViewModel = metroViewModel<LockViewModel>()
+    val canReopenNote = lockViewModel::canReopenNote
     val unlockReveal = LocalUnlockReveal.current
+    if (LocalSessionSharedAcrossWindows.current) {
+        FollowUnlockFromOtherWindows(navController, lockViewModel, unlockReveal)
+    }
     val exits = remember(navController, unlockReveal) {
         LockExits(
             onUnlock = { isSessionLocked ->
@@ -76,6 +83,31 @@ fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     }
     LockScreen(exits = exits, modifier = modifier)
 }
+
+/**
+ * In a host with several windows over one vault, an unlock made on another window's lock screen opens the vault
+ * for this one too: this lock screen leaves for Home (or the note this window had open) like its own unlock does,
+ * without the reveal. A short grace lets this window's own unlock start its reveal first, which this must not cut off.
+ */
+@Composable
+private fun FollowUnlockFromOtherWindows(
+    navController: NavHostController,
+    viewModel: LockViewModel,
+    reveal: UnlockRevealState?,
+) {
+    LaunchedEffect(viewModel) {
+        viewModel.sessionLocked.collectLatest { locked ->
+            if (locked) return@collectLatest
+            delay(FOLLOW_UNLOCK_GRACE_MS)
+            val ownUnlock = viewModel.busy.value || reveal?.running == true
+            if (!ownUnlock && !viewModel.isSessionLocked()) {
+                navController.leaveLockScreen(null, viewModel::isSessionLocked, viewModel::canReopenNote)
+            }
+        }
+    }
+}
+
+private const val FOLLOW_UNLOCK_GRACE_MS = 250L
 
 @Composable
 fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockViewModel = metroViewModel()) {

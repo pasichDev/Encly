@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.pasich.encly.presentation.designsystem.AppCommand
 import com.pasich.encly.presentation.pane.NoteTabs
@@ -16,7 +18,13 @@ import kotlinx.coroutines.launch
  * What the editor on screen does for a command. Each returns whether it did something, so a key that
  * changed nothing is left to whoever else wants it.
  */
-class EditorCommands(val find: () -> Boolean, val moveToTrash: () -> Boolean, val dismiss: () -> Boolean)
+class EditorCommands(
+    val find: () -> Boolean,
+    val moveToTrash: () -> Boolean,
+    val dismiss: () -> Boolean,
+    val print: () -> Boolean = { false },
+    val exportPdf: () -> Boolean = { false },
+)
 
 /**
  * Runs the app's [AppCommand]s, whether a keyboard shortcut or a menu item asked: the screens that own the
@@ -33,7 +41,10 @@ class AppCommandRouter(
 ) {
     private var newNote: (() -> Unit)? = null
     private var tabs: NoteTabs? = null
-    private var editor: EditorCommands? = null
+    private var editor: EditorCommands? by mutableStateOf(null)
+
+    /** Whether an editor is on screen (a note to print or save as PDF); observable by the host's menu. */
+    val hasEditor: Boolean get() = editor != null
 
     /** The home screen's way of starting a note (the FAB's); a newer one replaces it. */
     fun attachNewNote(action: () -> Unit) {
@@ -75,6 +86,8 @@ class AppCommandRouter(
         AppCommand.PreviousTab -> switchTab(forward = false)
         AppCommand.DeleteNote -> editor?.moveToTrash?.invoke() == true
         AppCommand.Dismiss -> editor?.dismiss?.invoke() == true
+        AppCommand.PrintNote -> editor?.print?.invoke() == true
+        AppCommand.ExportPdf -> editor?.exportPdf?.invoke() == true
     }
 
     private fun startNote(): Boolean {

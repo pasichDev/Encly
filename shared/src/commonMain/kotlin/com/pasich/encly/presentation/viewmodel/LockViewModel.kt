@@ -64,6 +64,9 @@ class LockViewModel(
     fun recoveryAvailable(): Boolean = securityManager.hasRecoverySeed()
     fun lockoutRemainingMillis(): Long = securityManager.pinLockoutRemainingMillis()
 
+    /** Whether the session is closed; changes when any lock screen of the host unlocks or the vault locks. */
+    val sessionLocked: StateFlow<Boolean> get() = sessionLockManager.locked
+
     /** Whether the session is closed (again); an unlock reveal then must not open Home. */
     fun isSessionLocked(): Boolean = sessionLockManager.locked.value
 

@@ -47,6 +47,12 @@ enum class AppCommand {
 
     /** Close what is open on top: a dialog, a sheet, the find bar. */
     Dismiss,
+
+    /** Print the open note. Asked by the host's menu, which owns its chord. */
+    PrintNote,
+
+    /** Save the open note as a PDF. Asked by the host's menu, which owns its chord. */
+    ExportPdf,
 }
 
 /**
@@ -64,6 +70,10 @@ enum class AppCommand {
  * | [AppCommand.PreviousTab] | ⌃⇧Tab, ⌘⇧[ | Ctrl+Shift+Tab, Ctrl+PageUp |
  * | [AppCommand.DeleteNote] | ⌘⇧⌫ | Ctrl+Shift+Backspace |
  * | [AppCommand.Dismiss] | Esc | Esc |
+ * | [AppCommand.PrintNote] | ⌘P (menu) | Ctrl+P (menu) |
+ * | [AppCommand.ExportPdf] | ⌘⇧P (menu) | Ctrl+Shift+P (menu) |
+ *
+ * The last two are asked by the host's menu only; the map has no key for them, so the host never sees their chord.
  *
  * Delete is Shift-qualified on purpose: plain ⌘⌫ / Ctrl+Backspace belong to the text field (delete to
  * the line start / the previous word), and the app confirms before it trashes a note anyway.
@@ -112,6 +122,10 @@ class EnclyShortcuts(private val commandKeyIsMeta: Boolean = platformUsesCommand
             AppCommand.DeleteNote -> if (commandKeyIsMeta) "⌘⇧⌫" else "Ctrl+Shift+Backspace"
 
             AppCommand.Dismiss -> "Esc"
+
+            AppCommand.PrintNote -> "${mod}P"
+
+            AppCommand.ExportPdf -> if (commandKeyIsMeta) "⌘⇧P" else "Ctrl+Shift+P"
         }
     }
 

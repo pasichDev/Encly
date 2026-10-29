@@ -696,7 +696,7 @@ object EnclyIcons {
 private const val STROKE = 1.75f
 private val Ink = SolidColor(Color.Black)
 
-private fun enclyIcon(
+internal fun enclyIcon(
     name: String,
     vararg paths: String,
     strokeWidth: Float = STROKE,

@@ -662,4 +662,15 @@
     <string name="menu_help">Hilfe</string>
     <string name="menu_exit">Beenden</string>
     <string name="menu_minimize">Minimieren</string>
+    <string name="menu_new_window">Neues Fenster</string>
+    <string name="note_open_in_new_window">In neuem Fenster öffnen</string>
+    <string name="note_export_pdf">Als PDF exportieren</string>
+    <string name="note_print">Drucken</string>
+    <string name="pdf_export_warning_title">Ohne Verschlüsselung als PDF exportieren?</string>
+    <string name="pdf_export_warning_body">Das PDF ist nicht verschlüsselt. Jeder, der es bekommt, kann deine Notiz lesen. Überall, wo du es speicherst, auch in einem Cloud-Ordner, liegt eine lesbare Kopie, die Encly weder schützen noch zurückholen kann. Als Nächstes bestätigst du mit deiner PIN.</string>
+    <string name="print_warning_title">Ohne Verschlüsselung drucken?</string>
+    <string name="print_warning_body">Beim Drucken wird der Text deiner Notiz unverschlüsselt an den Drucker gesendet. Die Druckwarteschlange des Systems kann temporäre Kopien davon behalten, und ein Netzwerk- oder Cloud-Drucker speichert ihn möglicherweise ebenfalls. Encly kann sie nicht entfernen. Als Nächstes bestätigst du mit deiner PIN.</string>
+    <string name="pdf_export_done">PDF gespeichert</string>
+    <string name="print_done">An den Drucker gesendet</string>
+    <string name="note_open_elsewhere">Diese Notiz ist in einem anderen Fenster zum Bearbeiten geöffnet. Hier ist sie schreibgeschützt.</string>
 </resources>

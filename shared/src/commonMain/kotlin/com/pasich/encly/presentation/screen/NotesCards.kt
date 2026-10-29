@@ -11,13 +11,23 @@ import com.pasich.encly.core.resources.swipe_delete_message
 import com.pasich.encly.core.resources.swipe_delete_title
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteListItem
+import com.pasich.encly.platform.LocalNoteDocumentRenderer
+import com.pasich.encly.platform.LocalNoteWindows
+import com.pasich.encly.platform.LocalToaster
+import com.pasich.encly.platform.NoteDocumentRenderer
+import com.pasich.encly.platform.ToastDuration
 import com.pasich.encly.presentation.components.swipe.SwipeContext
 import com.pasich.encly.presentation.components.tiles.NoteContextActions
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.dialogs.ConfirmDialog
 import com.pasich.encly.presentation.dialogs.NoteAction
+import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
+import com.pasich.encly.presentation.viewmodel.DocumentFormat
+import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
+import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.ui.theme.LocalPointerFirst
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import org.jetbrains.compose.resources.stringResource
 
 /** The cards to show and what a tap or long-press on one does. */
@@ -75,6 +85,9 @@ internal fun rememberNotesPointer(tabs: NotesTabs?, handlers: NoteMenuHandlers):
         onDismiss = { trashing = null },
         destructive = true,
     )
+    val windows = LocalNoteWindows.current
+    val renderer = LocalNoteDocumentRenderer.current
+    val export = rememberNoteDocumentExport(renderer)
     if (!LocalPointerFirst.current) return NotesPointer(tabs, actionsFor = null)
     return NotesPointer(tabs) { note ->
         NoteContextActions(
@@ -87,7 +100,27 @@ internal fun rememberNotesPointer(tabs: NotesTabs?, handlers: NoteMenuHandlers):
                 }
             },
             onOpenInNewTab = tabs?.let { { it.onOpenInNewTab(note) } },
+            onOpenInNewWindow = windows?.let { { it.openNote(note.id) } },
+            onExportPdf = export?.let { { it(note.id, DocumentFormat.PDF) } },
+            onPrint = export?.let { { it(note.id, DocumentFormat.PRINT) } },
         )
+    }
+}
+
+/**
+ * Starts the PDF or print flow for a note of the list (the warning, the PIN, then the dialog), or null where the
+ * host has no [renderer]. The flow's dialogs are drawn here, beside the list.
+ */
+@Composable
+private fun rememberNoteDocumentExport(
+    renderer: NoteDocumentRenderer?,
+): ((noteId: Long, format: DocumentFormat) -> Unit)? {
+    if (renderer == null) return null
+    val flow: MarkdownExportViewModel = metroViewModel()
+    val toaster = LocalToaster.current
+    MarkdownExportHost(onMessage = {}, onMessageRes = { toaster.show(it, ToastDuration.SHORT) })
+    return remember(flow, renderer) {
+        { noteId, format -> flow.start(MarkdownExportTarget.NoteAsDocument(noteId, format, renderer)) }
     }
 }
 

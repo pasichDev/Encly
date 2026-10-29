@@ -8,16 +8,14 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.desktop.platform.ClipboardWiper
 import com.pasich.encly.desktop.platform.DesktopAppLocaleController
-import com.pasich.encly.desktop.platform.DesktopDocumentPickers
 import com.pasich.encly.desktop.platform.DesktopEnvironment
 import com.pasich.encly.desktop.platform.DesktopToaster
-import com.pasich.encly.desktop.platform.DropRouter
 import com.pasich.encly.desktop.security.DesktopAppLifecycle
 import com.pasich.encly.desktop.security.DesktopDeviceLockWatcher
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.platform.AppInfo
 import com.pasich.encly.platform.ExternalLinks
-import com.pasich.encly.platform.NavigationRequests
+import com.pasich.encly.platform.NoteDocumentRenderer
 import com.pasich.encly.platform.SensitiveClipboard
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
@@ -31,7 +29,8 @@ import kotlinx.coroutines.CoroutineScope
  * come in by themselves; [DesktopPlatformModule] and [DesktopBindingsModule] add what the platform provides.
  *
  * Unlike Android, the desktop creates every object itself, so the entry points are plain accessors: the
- * window host reads what it needs from here once.
+ * window host reads what it needs from here once. What belongs to one window (its menu requests, dropped files
+ * and file dialogs) is not here but in `WindowServices`: the graph is the process's, shared by every window.
  */
 @DependencyGraph(AppScope::class)
 interface DesktopAppGraph : ViewModelGraph {
@@ -48,12 +47,10 @@ interface DesktopAppGraph : ViewModelGraph {
     val environment: DesktopEnvironment
     val lifecycle: DesktopAppLifecycle
     val deviceLockWatcher: DesktopDeviceLockWatcher
-    val dropRouter: DropRouter
-    val navigationRequests: NavigationRequests
     val toaster: DesktopToaster
     val clipboardWiper: ClipboardWiper
     val locales: DesktopAppLocaleController
-    val documentPickers: DesktopDocumentPickers
+    val noteDocuments: NoteDocumentRenderer
     val externalLinks: ExternalLinks
     val clipboard: SensitiveClipboard
     val appInfo: AppInfo

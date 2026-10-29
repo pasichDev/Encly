@@ -668,4 +668,15 @@
     <string name="menu_help">Ayuda</string>
     <string name="menu_exit">Salir</string>
     <string name="menu_minimize">Minimizar</string>
+    <string name="menu_new_window">Nueva ventana</string>
+    <string name="note_open_in_new_window">Abrir en una ventana nueva</string>
+    <string name="note_export_pdf">Exportar como PDF</string>
+    <string name="note_print">Imprimir</string>
+    <string name="pdf_export_warning_title">¿Exportar a PDF sin cifrado?</string>
+    <string name="pdf_export_warning_body">El PDF no está cifrado. Cualquiera que lo obtenga puede leer tu nota. Dondequiera que lo guardes, incluida una carpeta en la nube, habrá una copia legible que Encly no puede proteger ni recuperar. A continuación confirmarás con tu PIN.</string>
+    <string name="print_warning_title">¿Imprimir sin cifrado?</string>
+    <string name="print_warning_body">Al imprimir, el texto de tu nota se envía a la impresora sin cifrar. La cola de impresión del sistema puede conservar copias temporales, y una impresora de red o en la nube también puede guardarlo. Encly no puede eliminarlas. A continuación confirmarás con tu PIN.</string>
+    <string name="pdf_export_done">PDF guardado</string>
+    <string name="print_done">Enviado a la impresora</string>
+    <string name="note_open_elsewhere">Esta nota está abierta para editar en otra ventana. Aquí es de solo lectura.</string>
 </resources>

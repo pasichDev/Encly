@@ -10,6 +10,10 @@ import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.cancel
 import com.pasich.encly.core.resources.markdown_export_warning_body
 import com.pasich.encly.core.resources.markdown_export_warning_title
+import com.pasich.encly.core.resources.pdf_export_warning_body
+import com.pasich.encly.core.resources.pdf_export_warning_title
+import com.pasich.encly.core.resources.print_warning_body
+import com.pasich.encly.core.resources.print_warning_title
 import com.pasich.encly.data.export.MarkdownExport
 import com.pasich.encly.platform.LocalDocumentPickers
 import com.pasich.encly.platform.PickerUnavailableException
@@ -19,6 +23,7 @@ import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupStep
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
@@ -29,17 +34,28 @@ import org.jetbrains.compose.resources.stringResource
  * Nothing else leaves the app: no share sheet, no temp file.
  */
 @Composable
-internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: MarkdownExportViewModel = metroViewModel()) {
+internal fun MarkdownExportHost(
+    onMessage: (String) -> Unit,
+    viewModel: MarkdownExportViewModel = metroViewModel(),
+    onMessageRes: ((StringResource) -> Unit)? = null,
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val pickers = LocalDocumentPickers.current
     val noteLauncher = pickers.rememberCreateDocument(MarkdownExport.MIME_NOTE, viewModel::onTarget)
     val zipLauncher = pickers.rememberCreateDocument(MarkdownExport.MIME_ZIP, viewModel::onTarget)
+    val pdfLauncher = pickers.rememberCreateDocument(MIME_PDF, viewModel::onTarget)
     val currentOnMessage by rememberUpdatedState(onMessage)
+    val currentOnMessageRes by rememberUpdatedState(onMessageRes)
 
     LaunchedEffect(state.step) {
         val step = state.step as? BackupStep.PickMarkdownTarget ?: return@LaunchedEffect
         try {
-            (if (step.zip) zipLauncher else noteLauncher).launch(step.name)
+            val launcher = when {
+                step.pdf -> pdfLauncher
+                step.zip -> zipLauncher
+                else -> noteLauncher
+            }
+            launcher.launch(step.name)
         } catch (_: PickerUnavailableException) {
             viewModel.onSystemPickerUnavailable()
             return@LaunchedEffect
@@ -49,7 +65,8 @@ internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: Markdown
     LaunchedEffect(state.message) {
         val message = state.message as? BackupMessage.Text ?: return@LaunchedEffect
         viewModel.clearMessage()
-        currentOnMessage(getString(message.id))
+        // A host that shows its messages itself (the list's toasts) takes the resource; the others the text.
+        currentOnMessageRes?.invoke(message.id) ?: currentOnMessage(getString(message.id))
     }
 
     when (val step = state.step) {
@@ -58,18 +75,36 @@ internal fun MarkdownExportHost(onMessage: (String) -> Unit, viewModel: Markdown
             onCancel = viewModel::cancel,
         )
 
+        is BackupStep.ConfirmDocumentExport -> PlainExportWarning(
+            onContinue = viewModel::confirmWarning,
+            onCancel = viewModel::cancel,
+            title = stringResource(
+                if (step.print) Res.string.print_warning_title else Res.string.pdf_export_warning_title,
+            ),
+            body = stringResource(
+                if (step.print) Res.string.print_warning_body else Res.string.pdf_export_warning_body,
+            ),
+        )
+
         is BackupStep.Reauth -> ReauthDialog(viewModel.reauthFlow, step, viewModel::cancel)
 
         else -> Unit
     }
 }
 
+private const val MIME_PDF = "application/pdf"
+
 /** Before any plaintext export: the file is not encrypted, wherever it is saved. */
 @Composable
-private fun PlainExportWarning(onContinue: () -> Unit, onCancel: () -> Unit) {
+private fun PlainExportWarning(
+    onContinue: () -> Unit,
+    onCancel: () -> Unit,
+    title: String = stringResource(Res.string.markdown_export_warning_title),
+    body: String = stringResource(Res.string.markdown_export_warning_body),
+) {
     EnclyDialog(
-        title = stringResource(Res.string.markdown_export_warning_title),
-        text = stringResource(Res.string.markdown_export_warning_body),
+        title = title,
+        text = body,
         onDismissRequest = onCancel,
         confirm = DialogAction(stringResource(Res.string.action_continue), onContinue),
         dismiss = DialogAction(stringResource(Res.string.cancel), onCancel),

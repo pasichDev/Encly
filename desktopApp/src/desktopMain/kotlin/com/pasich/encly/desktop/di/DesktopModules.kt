@@ -17,19 +17,18 @@ import com.pasich.encly.core.security.VaultStore
 import com.pasich.encly.data.database.DatabasePlatform
 import com.pasich.encly.data.database.DesktopDatabasePlatform
 import com.pasich.encly.data.handoff.HandoffStaging
+import com.pasich.encly.desktop.documents.DesktopNoteDocuments
+import com.pasich.encly.desktop.nativeos.AwtPrinting
 import com.pasich.encly.desktop.platform.ClipboardWiper
 import com.pasich.encly.desktop.platform.DesktopAppInfo
 import com.pasich.encly.desktop.platform.DesktopAppLocaleController
 import com.pasich.encly.desktop.platform.DesktopCacheDirectory
 import com.pasich.encly.desktop.platform.DesktopDeviceCapabilities
-import com.pasich.encly.desktop.platform.DesktopDocumentPickers
 import com.pasich.encly.desktop.platform.DesktopDocuments
 import com.pasich.encly.desktop.platform.DesktopEnvironment
 import com.pasich.encly.desktop.platform.DesktopExternalLinks
 import com.pasich.encly.desktop.platform.DesktopSensitiveClipboard
 import com.pasich.encly.desktop.platform.DesktopToaster
-import com.pasich.encly.desktop.platform.DropRouter
-import com.pasich.encly.desktop.platform.GatedFileDialogs
 import com.pasich.encly.desktop.security.DesktopAppLifecycle
 import com.pasich.encly.desktop.security.DesktopDeviceLockWatcher
 import com.pasich.encly.desktop.security.NoBiometricManager
@@ -38,7 +37,7 @@ import com.pasich.encly.desktop.storage.FileKeyValueStore
 import com.pasich.encly.platform.AppInfo
 import com.pasich.encly.platform.CacheDirectory
 import com.pasich.encly.platform.ExternalLinks
-import com.pasich.encly.platform.NavigationRequests
+import com.pasich.encly.platform.NoteDocumentRenderer
 import com.pasich.encly.platform.PlatformDocuments
 import com.pasich.encly.platform.SensitiveClipboard
 import com.pasich.encly.platform.Toaster
@@ -147,23 +146,12 @@ object DesktopPlatformModule {
 object DesktopServicesModule {
     @Provides
     @SingleIn(AppScope::class)
-    fun provideNavigationRequests(): NavigationRequests = NavigationRequests()
-
-    @Provides
-    @SingleIn(AppScope::class)
-    fun provideDropRouter(navigation: NavigationRequests): DropRouter = DropRouter(navigation)
-
-    @Provides
-    @SingleIn(AppScope::class)
     fun provideDocuments(): PlatformDocuments = DesktopDocuments()
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideDocumentPickers(
-        environment: DesktopEnvironment,
-        lifecycle: DesktopAppLifecycle,
-        drops: DropRouter,
-    ): DesktopDocumentPickers = DesktopDocumentPickers(GatedFileDialogs(environment.fileDialogs, lifecycle), drops)
+    fun provideNoteDocuments(lifecycle: DesktopAppLifecycle): NoteDocumentRenderer =
+        DesktopNoteDocuments(AwtPrinting(lifecycle))
 
     @Provides
     @SingleIn(AppScope::class)

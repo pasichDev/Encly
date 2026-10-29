@@ -113,6 +113,9 @@ class DesktopCommandsAndShortcutsTest {
             val keys = DesktopShortcuts.map(os)
             val shortcuts = listOf(
                 DesktopShortcuts.of(keys, AppCommand.NewNote),
+                DesktopShortcuts.newWindow(os),
+                DesktopShortcuts.printNote(os),
+                DesktopShortcuts.exportPdf(os),
                 DesktopShortcuts.importNotes(os),
                 DesktopShortcuts.backup(os),
                 DesktopShortcuts.of(keys, AppCommand.LockApp),
@@ -174,6 +177,18 @@ class DesktopCommandsAndShortcutsTest {
 
         assertEquals(emptyList(), rig.requested())
         assertEquals(listOf(AppCommand.NewNote), drainCommands(rig.navigation))
+    }
+
+    @Test
+    fun `new window print and pdf are asked of the window they belong to`() {
+        val rig = CommandsRig()
+
+        rig.commands.printNote()
+        rig.commands.exportPdf()
+        rig.commands.newWindow()
+
+        assertEquals(listOf(AppCommand.PrintNote, AppCommand.ExportPdf), drainCommands(rig.navigation))
+        assertEquals(listOf("window"), rig.events)
     }
 
     @Test

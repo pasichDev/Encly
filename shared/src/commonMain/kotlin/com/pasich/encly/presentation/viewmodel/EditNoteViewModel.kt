@@ -169,6 +169,23 @@ class EditNoteViewModel(
     private val _lockEditor = MutableStateFlow(false)
     val lockEditor: StateFlow<Boolean> get() = _lockEditor
 
+    private val _editedElsewhere = MutableStateFlow(false)
+
+    /**
+     * True while another window edits this note (a host with several windows): this editor only shows the note, it
+     * cannot be unlocked, and nothing it holds is saved, so the other window's changes are not overwritten.
+     */
+    val editedElsewhere: StateFlow<Boolean> get() = _editedElsewhere
+
+    /** The host says whether another window edits this note ([elsewhere]); see [editedElsewhere]. */
+    fun setEditedElsewhere(elsewhere: Boolean) {
+        _editedElsewhere.value = elsewhere
+        persistence.suspended = elsewhere
+        if (elsewhere) _lockEditor.value = true
+    }
+
+    private val readOnly: Boolean get() = isReadTrashOnly || _editedElsewhere.value
+
     // Link blocks whose saved address is open in URL entry. Editor UI state only: the block
     // keeps its stored link until a new one is committed.
     private val _editingLinkIds = MutableStateFlow<Set<String>>(emptySet())
@@ -311,7 +328,7 @@ class EditNoteViewModel(
 
     /** Marks the note with [color]. Stored with the next save, like the title. */
     fun updateColor(color: NoteColor) {
-        if (!isReadTrashOnly) persistence.updateNote { it.copy(color = color.key) }
+        if (!readOnly) persistence.updateNote { it.copy(color = color.key) }
     }
 
     /** Inserts a copy of the note, titled by [NoteCopyTitle]; returns its id, or -1 on failure. */
@@ -341,26 +358,26 @@ class EditNoteViewModel(
 
     /** Sets this note's own text size; the default in Settings stays as it is. */
     fun updateFontSize(size: Int) {
-        if (!isReadTrashOnly) persistence.updateNote { it.copy(textSize = size.coerceIn(MIN_TEXT_SIZE, MAX_TEXT_SIZE)) }
+        if (!readOnly) persistence.updateNote { it.copy(textSize = size.coerceIn(MIN_TEXT_SIZE, MAX_TEXT_SIZE)) }
     }
 
     /** Sets this note's own line spacing; the default in Settings stays as it is. */
     fun updateNoteLineSpacing(value: NoteLineSpacing) {
-        if (!isReadTrashOnly) persistence.updateNote { it.copy(lineSpacing = value.ordinal) }
+        if (!readOnly) persistence.updateNote { it.copy(lineSpacing = value.ordinal) }
     }
 
     /** "Use default": the note follows the text size and line spacing of Settings again. */
     fun useDefaultText() {
-        if (!isReadTrashOnly) persistence.updateNote { it.copy(textSize = null, lineSpacing = null) }
+        if (!readOnly) persistence.updateNote { it.copy(textSize = null, lineSpacing = null) }
     }
 
     /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */
     fun toggleLockEditor() {
-        if (contentLoadFailed.value || isReadTrashOnly) return
+        if (contentLoadFailed.value || readOnly) return
         _lockEditor.value = !_lockEditor.value
     }
 
-    private fun canEdit(): Boolean = !isReadTrashOnly && !_lockEditor.value
+    private fun canEdit(): Boolean = !readOnly && !_lockEditor.value
 
     // --- blocks ----------------------------------------------------------------------------
 

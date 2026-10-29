@@ -62,13 +62,32 @@ handed to the first one; drop it on the open window.
 ## The window
 
 - minimum size 720 x 520; size, place and maximised state are remembered and clamped to the connected screens;
-- menu bar (the native one on macOS): File (new note, import, backup, lock now, settings, exit), View (theme,
-  language), Window, Help (about, licences, FAQ). The shortcuts use Cmd on macOS and Ctrl elsewhere. There is no Edit
+- menu bar (the native one on macOS): File (new note, new window, export as PDF, print, import, backup, lock now,
+  settings, exit), View (theme, language), Window, Help (about, licences, FAQ). The shortcuts use Cmd on macOS and
+  Ctrl elsewhere; new window, print and PDF (Cmd/Ctrl+Shift+N, +P, +Shift+P) are menu chords like import and backup. There is no Edit
   menu on purpose: the text fields handle cut, copy, paste and undo themselves, and a menu item with the same
   shortcut would take the key from them on macOS. The menu titles "File", "View", "Window", "Help", "Exit" and
   "Minimize" are English for now; the items use the app's translated strings;
 - menu items ask the UI to open a screen through `NavigationRequests` (`:shared`, `platform`), which `EnclyApp`
   collects. They are ignored while the vault is locked, so no item skips the lock screen;
+- several windows ("New window", and "Open in new window" on a note's right-click menu): all show the one vault
+  behind the one `SessionLockManager`, so a lock (idle, Lock now, the OS) locks every window and an unlock on any lock
+  screen opens the others (`LockScreen` follows it, switched on by `LocalSessionSharedAcrossWindows`). Each window has
+  its own `EnclyApp`, `AppCommandRouter`, navigation, `NavigationRequests`, drop router and file dialogs
+  (`WindowServices`); the graph, the lock, the idle timer and the OS hooks (About, Preferences, open file) are the
+  process's. Each window has its own menu bar and its own commands, so on a Mac, where one menu bar shows the active
+  window's menu, an item acts on the window in front. The app counts as in front while any window is active and not
+  every one is minimised, and focus moving between its own windows is not leaving (`WindowForeground`), so it does not
+  start the auto-lock. Closing a window saves its editors; closing the last one (or Quit) waits for the last saves,
+  locks and closes the database, and ends the app. A further window is refused until the vault exists (onboarding);
+- a note has one editor at a time across the windows (`NoteEditRegistry`): the editor saves the whole note, so a second
+  editor would overwrite the first one's work. The window that opens a note another window is editing shows it
+  read-only, with a notice, and writes nothing from it;
+- export as PDF and print (File menu, the note's right-click menu and the editor's More sheet) are plaintext exports:
+  they go through the Markdown export's warning and PIN (the print warning also names the system print spooler, which
+  may keep temporary copies), then the save dialog or the system print dialog. The PDF is written with Apache PDFBox,
+  built in memory with the app's Source Sans 3 (Latin and Cyrillic: all nine languages) embedded, and written to the
+  file the user picked and nowhere else; it is not touched on the way by the network or a temp file;
 - files dropped on the window, or a backup opened from the file manager, go to the same flows as the file dialogs:
   a `.enclybak` answers the restore or import-backup picker, notes (`.md`, `.zip`, `.txt`, `.json`, `.jex`, `.html`)
   and folders answer the import screen's pickers; with none open, the matching screen is opened first;

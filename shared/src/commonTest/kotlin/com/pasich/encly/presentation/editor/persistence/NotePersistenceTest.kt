@@ -168,6 +168,29 @@ class NotePersistenceTest {
         assertEquals(0, repository.updateCalls)
     }
 
+    @Test
+    fun aSuspendedEditorWritesNothingUntilItIsLifted() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("edited"))
+
+        // Another window edits the note: whatever this editor holds must not overwrite it.
+        persistence.suspended = true
+        assertTrue(persistence.save())
+        assertFalse(persistence.moveToTrash())
+        assertFalse(persistence.setArchived(true))
+        assertFalse(persistence.restoreFromTrash())
+        assertFalse(persistence.discard())
+        assertFalse(persistence.delete())
+        assertEquals(0, repository.updateCalls)
+        assertTrue(repository.deletedIds.isEmpty())
+
+        persistence.suspended = false
+        assertTrue(persistence.save())
+        assertEquals(1, repository.updateCalls)
+    }
+
     // --- loading ------------------------------------------------------------------------------
 
     @Test

@@ -668,4 +668,15 @@
     <string name="menu_help">Aide</string>
     <string name="menu_exit">Quitter</string>
     <string name="menu_minimize">Réduire</string>
+    <string name="menu_new_window">Nouvelle fenêtre</string>
+    <string name="note_open_in_new_window">Ouvrir dans une nouvelle fenêtre</string>
+    <string name="note_export_pdf">Exporter en PDF</string>
+    <string name="note_print">Imprimer</string>
+    <string name="pdf_export_warning_title">Exporter en PDF sans chiffrement ?</string>
+    <string name="pdf_export_warning_body">Le PDF n\'est pas chiffré. Quiconque l\'obtient peut lire votre note. Là où vous l\'enregistrez, y compris un dossier dans le cloud, se trouvera une copie lisible qu\'Encly ne peut ni protéger ni reprendre. Vous confirmerez ensuite avec votre code PIN.</string>
+    <string name="print_warning_title">Imprimer sans chiffrement ?</string>
+    <string name="print_warning_body">L\'impression envoie le texte de votre note à l\'imprimante sans chiffrement. Le spouleur d\'impression du système peut en conserver des copies temporaires, et une imprimante réseau ou cloud peut aussi le stocker. Encly ne peut pas les supprimer. Vous confirmerez ensuite avec votre code PIN.</string>
+    <string name="pdf_export_done">PDF enregistré</string>
+    <string name="print_done">Envoyé à l\'imprimante</string>
+    <string name="note_open_elsewhere">Cette note est ouverte en modification dans une autre fenêtre. Ici, elle est en lecture seule.</string>
 </resources>

@@ -1,15 +1,20 @@
 package com.pasich.encly.platform
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation.NavHostController
 import com.pasich.encly.presentation.designsystem.AppCommand
 import com.pasich.encly.presentation.navigation.AppCommandRouter
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -28,6 +33,15 @@ class NavigationRequests {
 
     /** The requested commands, each delivered once. */
     val commands: Flow<AppCommand> = commandChannel.receiveAsFlow()
+
+    private val _editorOpen = MutableStateFlow(false)
+
+    /** Whether the window shows a note editor (a note to print): the UI sets it, the host's menu reads it. */
+    val editorOpen: StateFlow<Boolean> = _editorOpen.asStateFlow()
+
+    internal fun setEditorOpen(open: Boolean) {
+        _editorOpen.value = open
+    }
 
     /** Asks for [route]; false if the queue is full (the request is dropped, never blocks). */
     fun request(route: String): Boolean = channel.trySend(route).isSuccess
@@ -60,5 +74,9 @@ internal fun HostNavigationRequests(
         launch {
             requests.commands.collect { command -> if (currentIsOpen()) router.run(command) }
         }
+        launch {
+            snapshotFlow { router.hasEditor }.collect(requests::setEditorOpen)
+        }
     }
+    DisposableEffect(requests) { onDispose { requests.setEditorOpen(false) } }
 }

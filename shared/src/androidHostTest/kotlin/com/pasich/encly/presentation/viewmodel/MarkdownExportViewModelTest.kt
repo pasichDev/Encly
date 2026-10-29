@@ -9,13 +9,18 @@ import com.pasich.encly.core.resources.backup_error_locked
 import com.pasich.encly.core.resources.backup_error_target_exists
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.markdown_export_done
+import com.pasich.encly.core.resources.pdf_export_done
+import com.pasich.encly.core.resources.print_done
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.export.MarkdownDocuments
+import com.pasich.encly.data.export.NoteDocument
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.platform.DocumentRef
+import com.pasich.encly.platform.NoteDocumentRenderer
+import com.pasich.encly.platform.PrintResult
 import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.anyCharArray
 import kotlinx.coroutines.Dispatchers
@@ -404,6 +409,158 @@ class MarkdownExportViewModelTest {
         waitUntil { viewModel.uiState.value.message != null }
 
         assertEquals(listOf("tasks.md", "Decoy note.md"), zipNames())
+    }
+
+    // --- one note as a PDF or a printout (the desktop) ---------------------------------------------------
+
+    private class FakeRenderer : NoteDocumentRenderer {
+        val pdfs = mutableListOf<NoteDocument>()
+        val printed = mutableListOf<NoteDocument>()
+        var printResult = PrintResult.PRINTED
+        var printFails = false
+
+        override fun writePdf(document: NoteDocument, out: Sink) {
+            pdfs += document
+            out.write("%PDF-fake".encodeToByteArray())
+        }
+
+        override suspend fun print(document: NoteDocument): PrintResult {
+            if (printFails) throw java.io.IOException("no printer")
+            printed += document
+            return printResult
+        }
+    }
+
+    private val renderer = FakeRenderer()
+
+    private fun asPdf(id: Long = 1) = MarkdownExportTarget.NoteAsDocument(id, DocumentFormat.PDF, renderer)
+
+    private fun asPrint(id: Long = 1) = MarkdownExportTarget.NoteAsDocument(id, DocumentFormat.PRINT, renderer)
+
+    @Test
+    fun aPdfAsksTheSameWarningAndThePinBeforeTheSaveDialog() {
+        viewModel.start(asPdf())
+        assertEquals(BackupStep.ConfirmDocumentExport(print = false), step())
+        verify(security, never()).verifyPin(anyCharArray())
+
+        authenticate()
+
+        val picker = step() as BackupStep.PickMarkdownTarget
+        assertTrue(picker.pdf)
+        assertFalse(picker.zip)
+        assertTrue(picker.name.matches(Regex("""encly-note-\d{4}-\d{2}-\d{2}\.pdf""")))
+        assertTrue(renderer.pdfs.isEmpty())
+    }
+
+    @Test
+    fun thePdfIsBuiltAfterTheSaveDialogReturnsFromTheStoredNote() {
+        viewModel.start(asPdf())
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.pdf_export_done), viewModel.uiState.value.message)
+        assertEquals("%PDF-fake", written.toString(Charsets.UTF_8))
+        assertEquals("Groceries", renderer.pdfs.single().title)
+    }
+
+    @Test
+    fun aCancelledPdfWritesNothingAndTouchesNoRenderer() {
+        viewModel.start(asPdf())
+        viewModel.cancel()
+        viewModel.start(asPdf())
+        viewModel.confirmWarning()
+        viewModel.cancel()
+        viewModel.start(asPdf())
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+        viewModel.onTarget(null)
+        settle()
+
+        assertEquals(0, written.size())
+        assertTrue(renderer.pdfs.isEmpty())
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun aPdfOfANoteThatIsGoneFailsAndTheEmptyDocumentIsRemoved() {
+        viewModel.start(asPdf(id = 2))
+        authenticate()
+        viewModel.onSystemPickerLaunched()
+
+        viewModel.onTarget(uri)
+        waitUntil { viewModel.uiState.value.message != null }
+
+        // The note in the trash is not exported.
+        assertEquals(BackupMessage.Text(Res.string.backup_error_io), viewModel.uiState.value.message)
+        assertTrue(renderer.pdfs.isEmpty())
+    }
+
+    @Test
+    fun printingWarnsAboutThePrinterThenHandsTheNoteOverWithoutAFile() {
+        viewModel.start(asPrint())
+        assertEquals(BackupStep.ConfirmDocumentExport(print = true), step())
+
+        authenticate()
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.print_done), viewModel.uiState.value.message)
+        assertEquals("Groceries", renderer.printed.single().title)
+        assertEquals(0, written.size())
+        verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
+    }
+
+    @Test
+    fun aClosedPrintDialogEndsQuietly() {
+        renderer.printResult = PrintResult.CANCELLED
+        viewModel.start(asPrint())
+        authenticate()
+        settle()
+
+        assertEquals(null, viewModel.uiState.value.message)
+        assertEquals(BackupStep.Idle, step())
+    }
+
+    @Test
+    fun aPrinterThatFailsIsReportedWithoutItsMessage() {
+        renderer.printFails = true
+        viewModel.start(asPrint())
+        authenticate()
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_io), viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun aReLockBeforeThePrintStopsItBeforeTheDialog() {
+        val closing = object : VaultDataStore by store {
+            override fun bindToCurrentSession(): VaultDataStore = this
+
+            override fun assertCurrentSession() = error("Vault locked")
+        }
+        viewModel = viewModelOver(closing)
+        viewModel.start(asPrint())
+        authenticate()
+        waitUntil { viewModel.uiState.value.message != null }
+
+        assertEquals(BackupMessage.Text(Res.string.backup_error_locked), viewModel.uiState.value.message)
+        assertTrue(renderer.printed.isEmpty())
+    }
+
+    @Test
+    fun aCancelledPrintAtTheWarningOrThePinPrintsNothing() {
+        viewModel.start(asPrint())
+        viewModel.cancel()
+        viewModel.start(asPrint())
+        viewModel.confirmWarning()
+        viewModel.cancel()
+        settle()
+
+        assertTrue(renderer.printed.isEmpty())
+        assertEquals(BackupStep.Idle, step())
     }
 
     private companion object {

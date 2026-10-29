@@ -47,6 +47,8 @@ iconsLucide = "1.1.0"
 jna = "5.19.1"
 dbusJava = "5.1.1"
 slf4j = "2.0.17"
+# The desktop PDF writer and printer (Apache-2.0): builds the document in memory, with no network code.
+pdfbox = "3.0.5"
 
 junit = "4.13.2"
 androidxTestCore = "1.7.0"
@@ -113,6 +115,7 @@ jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbusJava" }
 dbus-java-transport = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbusJava" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 icons-lucide = { module = "com.composables:icons-lucide", version.ref = "iconsLucide" }
 compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "composeRulesDetekt" }
 

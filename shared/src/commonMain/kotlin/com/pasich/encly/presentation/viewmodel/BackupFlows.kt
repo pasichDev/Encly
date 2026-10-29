@@ -86,8 +86,14 @@ sealed interface BackupStep {
     /** Before a plaintext (Markdown) export: the file will not be encrypted. Cancel or continue to the PIN. */
     data object ConfirmPlainExport : BackupStep
 
-    /** The system "create document" picker for a Markdown export: a `.zip` of all notes, or one `.md`. */
-    data class PickMarkdownTarget(val name: String, val zip: Boolean) : BackupStep
+    /**
+     * Before one note leaves as a PDF or a printout (the desktop): the same warning as the Markdown export, with
+     * the printer's own caveat when [print].
+     */
+    data class ConfirmDocumentExport(val print: Boolean) : BackupStep
+
+    /** The system "create document" picker for an export: a `.zip` of all notes, one `.md`, or one [pdf]. */
+    data class PickMarkdownTarget(val name: String, val zip: Boolean, val pdf: Boolean = false) : BackupStep
 
     data object PickImportFile : BackupStep
 

@@ -15,12 +15,15 @@ import com.pasich.encly.core.resources.markdown_export
 import com.pasich.encly.core.resources.note_archive
 import com.pasich.encly.core.resources.note_color_title
 import com.pasich.encly.core.resources.note_discard_all_changes
+import com.pasich.encly.core.resources.note_export_pdf
+import com.pasich.encly.core.resources.note_print
 import com.pasich.encly.core.resources.note_text_use_default
 import com.pasich.encly.core.resources.note_unarchive
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.components.FontSizeSlider
 import com.pasich.encly.presentation.components.NoteLineSpacingSlider
+import com.pasich.encly.presentation.designsystem.EnclyDesktopIcons
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyNoteColorPicker
@@ -38,6 +41,8 @@ enum class EditNoteBottomSheetAction {
     FIND,
     TRASH,
     EXPORT_MARKDOWN,
+    EXPORT_PDF,
+    PRINT,
     COPY_MARKDOWN,
     ARCHIVE,
     UNARCHIVE,
@@ -54,6 +59,7 @@ fun EditNoteBottomSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditNoteViewModel = metroViewModel<EditNoteViewModel>(),
+    documents: Boolean = false,
     onAction: (EditNoteBottomSheetAction) -> Unit = {},
 ) {
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
@@ -79,7 +85,7 @@ fun EditNoteBottomSheet(
                 contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
             )
             ArchiveRow(note = note.note, onAction = onAction, onDismiss = onDismiss)
-            EditorActionRows(canCopy = !loadFailed, onAction = onAction, onDismiss = onDismiss)
+            EditorActionRows(canCopy = !loadFailed, documents = documents, onAction = onAction, onDismiss = onDismiss)
         }
     }
 }
@@ -89,7 +95,12 @@ fun EditNoteBottomSheet(
  * Copy as Markdown is hidden for a note whose content could not be read, like the export's no-op.
  */
 @Composable
-private fun EditorActionRows(canCopy: Boolean, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
+private fun EditorActionRows(
+    canCopy: Boolean,
+    documents: Boolean,
+    onAction: (EditNoteBottomSheetAction) -> Unit,
+    onDismiss: () -> Unit,
+) {
     fun run(action: EditNoteBottomSheetAction) {
         onAction(action)
         onDismiss()
@@ -104,6 +115,18 @@ private fun EditorActionRows(canCopy: Boolean, onAction: (EditNoteBottomSheetAct
         icon = EnclyIcons.Upload,
         onClick = { run(EditNoteBottomSheetAction.EXPORT_MARKDOWN) },
     )
+    if (documents) {
+        EnclySheetRow(
+            title = stringResource(Res.string.note_export_pdf),
+            icon = EnclyIcons.Paper,
+            onClick = { run(EditNoteBottomSheetAction.EXPORT_PDF) },
+        )
+        EnclySheetRow(
+            title = stringResource(Res.string.note_print),
+            icon = EnclyDesktopIcons.Print,
+            onClick = { run(EditNoteBottomSheetAction.PRINT) },
+        )
+    }
     if (canCopy) {
         EnclySheetRow(
             title = stringResource(Res.string.markdown_copy),

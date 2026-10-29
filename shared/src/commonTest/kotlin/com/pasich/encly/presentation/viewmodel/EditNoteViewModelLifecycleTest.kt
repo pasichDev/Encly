@@ -138,6 +138,33 @@ class EditNoteViewModelLifecycleTest {
     }
 
     @Test
+    fun aNoteEditedInAnotherWindowIsOnlyShownAndNothingOfItIsSaved() = runTest(dispatcher) {
+        storeNote()
+        val viewModel = viewModel(SavedStateHandle(mapOf("idNote" to NOTE_ID)))
+        advanceUntilIdle()
+
+        viewModel.setEditedElsewhere(true)
+
+        assertTrue(viewModel.editedElsewhere.value)
+        assertTrue(viewModel.lockEditor.value)
+        // The lock cannot be lifted, the text settings do not change, and a save writes nothing.
+        viewModel.toggleLockEditor()
+        assertTrue(viewModel.lockEditor.value)
+        viewModel.updateFontSize(FONT_SIZE)
+        viewModel.updateColor(com.pasich.encly.domain.model.NoteColor.entries.last())
+        assertTrue(viewModel.saveNote())
+        assertFalse(viewModel.noteMoveToTrash())
+        assertEquals(0, repository.updateCalls)
+        assertEquals(null, viewModel.state.value.note.textSize)
+
+        // When the other window is done the editor may be lifted again by the user.
+        viewModel.setEditedElsewhere(false)
+        assertFalse(viewModel.editedElsewhere.value)
+        viewModel.toggleLockEditor()
+        assertFalse(viewModel.lockEditor.value)
+    }
+
+    @Test
     fun aNoteInTheTrashCannotBeUnlocked() = runTest(dispatcher) {
         storeNote(isTrash = true)
         val viewModel = viewModel(

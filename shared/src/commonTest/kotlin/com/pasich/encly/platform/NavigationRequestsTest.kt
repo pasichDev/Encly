@@ -17,6 +17,30 @@ class NavigationRequestsTest {
     }
 
     @Test
+    fun theWindowSaysWhetherANoteIsOpenForTheMenu() {
+        val requests = NavigationRequests()
+        assertEquals(false, requests.editorOpen.value)
+
+        requests.setEditorOpen(true)
+        assertEquals(true, requests.editorOpen.value)
+
+        requests.setEditorOpen(false)
+        assertEquals(false, requests.editorOpen.value)
+    }
+
+    @Test
+    fun eachWindowHasItsOwnQueue() = runTest {
+        val first = NavigationRequests()
+        val second = NavigationRequests()
+
+        first.request("BackupRoute")
+        second.request("SettingsRoute")
+
+        assertEquals("BackupRoute", first.routes.first())
+        assertEquals("SettingsRoute", second.routes.first())
+    }
+
+    @Test
     fun aFullQueueDropsTheRequestInsteadOfBlocking() {
         val requests = NavigationRequests()
         var accepted = 0

@@ -49,7 +49,6 @@ import com.pasich.encly.core.resources.markdown_copied
 import com.pasich.encly.core.resources.markdown_copy
 import com.pasich.encly.core.resources.note_discard_confirm_message
 import com.pasich.encly.core.resources.note_discard_confirm_title
-import com.pasich.encly.core.resources.note_load_failed
 import com.pasich.encly.core.resources.swipe_delete_message
 import com.pasich.encly.core.resources.swipe_delete_title
 import com.pasich.encly.domain.model.NoteColor
@@ -66,8 +65,6 @@ import com.pasich.encly.platform.LocalSensitiveClipboard
 import com.pasich.encly.presentation.components.editNote.NoteBottomBar
 import com.pasich.encly.presentation.components.editNote.NoteOverline
 import com.pasich.encly.presentation.components.editNote.TitleField
-import com.pasich.encly.presentation.designsystem.CalloutTone
-import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
@@ -81,6 +78,7 @@ import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
 import com.pasich.encly.presentation.pane.EditorPane
 import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
+import com.pasich.encly.presentation.viewmodel.DocumentFormat
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
@@ -136,6 +134,7 @@ fun EditNoteScreen(
     val lineSpacing by viewModel.noteLineSpacing.collectAsStateWithLifecycle()
     val simpleEdit by viewModel.simpleEdit.collectAsStateWithLifecycle()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+    val editedElsewhere by viewModel.editedElsewhere.collectAsState()
     val overlays = rememberEditorOverlays()
     val listState = rememberLazyListState()
     val focusRegistry = rememberBlockFocusRegistry(viewModel.blocks)
@@ -151,8 +150,10 @@ fun EditNoteScreen(
 
     SaveWhenPaused()
     if (pane != null) PaneTabBinding(pane, exits)
-    EditorShortcutCommands(overlays)
-    val blocksStart = HEADER_ITEMS + if (contentLoadFailed) 1 else 0
+    val documents = rememberEditorDocumentExport(exits)
+    EditorShortcutCommands(overlays, documents)
+    ClaimNoteForEditing()
+    val blocksStart = HEADER_ITEMS + (if (contentLoadFailed) 1 else 0) + (if (editedElsewhere) 1 else 0)
     CarryOutFocusRequests(focusRegistry, listState, blocksStart = blocksStart)
     ScrollToFindMatch(listState, blocksStart)
     FocusNewNoteTitle(titleFocus)
@@ -168,6 +169,7 @@ fun EditNoteScreen(
         EditorOverlays(
             overlays = overlays,
             exits = exits,
+            documents = documents,
             onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) },
             onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
         )
@@ -279,10 +281,12 @@ private fun rememberEditorOverlays(): EditorOverlaysState {
 }
 
 /** The editor's sheets and dialogs: block sheets, tags, More actions, delete and discard. */
+@Suppress("LongMethod") // One sheet, its dialogs and the actions of its rows, wired in one place.
 @Composable
 private fun EditorOverlays(
     overlays: EditorOverlaysState,
     exits: EditorExits,
+    documents: EditorDocumentExport,
     onManageTags: () -> Unit,
     onMessage: (String) -> Unit,
     viewModel: EditNoteViewModel = metroViewModel(),
@@ -321,6 +325,7 @@ private fun EditorOverlays(
     EditNoteBottomSheet(
         isVisible = overlays.isEditMenuVisible,
         onDismiss = { overlays.isEditMenuVisible = false },
+        documents = documents.available,
         onAction = { action ->
             when (action) {
                 EditNoteBottomSheetAction.CLOSE_NO_SAVE -> exits.discardOrConfirm {
@@ -337,6 +342,10 @@ private fun EditorOverlays(
                 EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id ->
                     markdownViewModel.start(MarkdownExportTarget.SingleNote(id))
                 }
+
+                EditNoteBottomSheetAction.EXPORT_PDF -> documents.start(DocumentFormat.PDF)
+
+                EditNoteBottomSheetAction.PRINT -> documents.start(DocumentFormat.PRINT)
 
                 EditNoteBottomSheetAction.COPY_MARKDOWN -> copyNoteAsMarkdown(
                     clipboard,
@@ -381,6 +390,7 @@ private fun EditorBlocks(
     val headerGap = if (spacing.isCompact) EnclyTheme.spacing.labelGap else 0.dp
     val lockEditor by viewModel.lockEditor.collectAsState()
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+    val editedElsewhere by viewModel.editedElsewhere.collectAsState()
     val editingLinkIds by viewModel.editingLinkIds.collectAsState()
     val templatesOffered by viewModel.templatesOffered.collectAsState()
     // Only whether it is loading: a save changing the status must not recompose the list.
@@ -415,18 +425,7 @@ private fun EditorBlocks(
                         .padding(bottom = headerGap),
                 )
             }
-            if (contentLoadFailed) {
-                item(key = "unreadable") {
-                    EnclyCallout(
-                        text = stringResource(Res.string.note_load_failed),
-                        tone = CalloutTone.WARNING,
-                        modifier = Modifier.padding(
-                            horizontal = EnclyTheme.spacing.gutter,
-                            vertical = headerGap,
-                        ),
-                    )
-                }
-            }
+            editorNotices(contentLoadFailed, editedElsewhere, headerGap)
             editorBlocks(
                 host,
                 viewModel.blocks,

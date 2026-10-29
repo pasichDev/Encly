@@ -662,4 +662,15 @@
     <string name="menu_help">Help</string>
     <string name="menu_exit">Afsluiten</string>
     <string name="menu_minimize">Minimaliseren</string>
+    <string name="menu_new_window">Nieuw venster</string>
+    <string name="note_open_in_new_window">Openen in nieuw venster</string>
+    <string name="note_export_pdf">Exporteren als PDF</string>
+    <string name="note_print">Afdrukken</string>
+    <string name="pdf_export_warning_title">Zonder versleuteling naar PDF exporteren?</string>
+    <string name="pdf_export_warning_body">De pdf is niet versleuteld. Iedereen die hem in handen krijgt, kan je notitie lezen. Waar je hem ook opslaat, ook in een cloudmap, komt een leesbare kopie te staan die Encly niet kan beschermen of terughalen. Daarna bevestig je met je pincode.</string>
+    <string name="print_warning_title">Zonder versleuteling afdrukken?</string>
+    <string name="print_warning_body">Bij het afdrukken wordt de tekst van je notitie onversleuteld naar de printer gestuurd. De afdrukwachtrij van het systeem kan tijdelijke kopieën bewaren en een netwerk- of cloudprinter kan de tekst ook opslaan. Encly kan ze niet verwijderen. Daarna bevestig je met je pincode.</string>
+    <string name="pdf_export_done">PDF opgeslagen</string>
+    <string name="print_done">Naar de printer gestuurd</string>
+    <string name="note_open_elsewhere">Deze notitie is in een ander venster geopend om te bewerken. Hier is ze alleen-lezen.</string>
 </resources>
