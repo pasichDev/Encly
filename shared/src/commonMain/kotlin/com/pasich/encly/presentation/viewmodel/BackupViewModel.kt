@@ -77,7 +77,7 @@ class BackupViewModel(
         this.action = action
         reauthGeneration = sessionLockManager.sessionGeneration
         val biometric = securityManager.canReauthWithBiometric()
-        state.go(BackupStep.Reauth(action, biometric, methods = securityManager.unlockMethods()))
+        state.go(BackupStep.Reauth(action, biometric))
     }
 
     private suspend fun proceed(action: BackupAction) {

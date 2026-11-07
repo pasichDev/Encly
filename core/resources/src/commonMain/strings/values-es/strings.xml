@@ -132,7 +132,7 @@
     <string name="faq_change_pin_q">¿Cómo cambio mi PIN?</string>
     <string name="faq_db_key_a">Encly genera una clave de base de datos aleatoria de 256 bits. Tu PIN protege una ranura de desbloqueo AES-GCM independiente, y la biometría usa una clave de Android Keystore que exige autenticación en cada uso.</string>
     <string name="faq_db_key_q">¿Cómo se protege la clave de la base de datos?</string>
-    <string name="faq_forgot_pin_a">En la pantalla de bloqueo, toca «Recuperar el acceso» e introduce tus 12 palabras. Si tu PIN o tu contraseña siguen funcionando, puedes conservarlos o elegir un PIN nuevo; si no, eliges un PIN nuevo en ese momento. Sin frase de recuperación no hay otra forma de entrar: nadie, ni siquiera el desarrollador, puede restablecerla.</string>
+    <string name="faq_forgot_pin_a">En la pantalla de bloqueo, toca «Recuperar el acceso» e introduce tus 12 palabras. Si tu PIN sigue funcionando, puedes conservarlo o elegir un PIN nuevo; si no, eliges un PIN nuevo en ese momento. Sin frase de recuperación no hay otra forma de entrar: nadie, ni siquiera el desarrollador, puede restablecerla.</string>
     <string name="faq_forgot_pin_q">¿Y si olvido mi PIN?</string>
     <string name="faq_language_a">Abre Ajustes → Idioma y elige uno de los idiomas disponibles, o «Predeterminado del sistema» para usar el idioma del dispositivo. El cambio se aplica al instante.</string>
     <string name="faq_language_q">¿Cómo cambio el idioma?</string>
@@ -695,8 +695,6 @@
     <string name="whats_new_row_desc">Los cambios de esta versión</string>
     <string name="whats_new_dismiss">Entendido</string>
     <string name="trash_auto_delete_hint">Las notas se eliminan definitivamente tras 28 días en la papelera.</string>
-    <string name="faq_password_q">¿Puedo desbloquear con una contraseña en lugar de un PIN?</string>
-    <string name="faq_password_a">Sí. En Ajustes → Seguridad → Contraseña puedes añadir una contraseña de al menos 8 caracteres, en cualquier idioma. Funciona junto a tu PIN: la pantalla de bloqueo te deja cambiar entre ambos y cada uno desbloquea por sí solo. Comparten el mismo límite de intentos fallidos y la misma protección con la clave del dispositivo. El PIN de borrado y el PIN de coacción siguen siendo solo PIN. Puedes quitar cualquiera de los dos mientras el otro esté establecido.</string>
     <string name="faq_pin_length_q">¿Qué longitud puede tener mi PIN?</string>
     <string name="faq_pin_length_a">Entre 6 y 12 dígitos, a tu elección. No se ofrecen PIN más cortos: el bloqueo y la clave del dispositivo limitan los intentos, y 6 dígitos es lo más corto que sigue siendo seguro con esos límites. La pantalla de bloqueo nunca muestra la longitud de tu PIN: pulsas «Desbloquear» cuando terminas, y lo mismo vale para el PIN de borrado y el PIN de coacción. Los PIN que ya tenías siguen funcionando igual.</string>
     <string name="block_code">Código</string>

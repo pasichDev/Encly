@@ -213,7 +213,7 @@ internal fun PinFlowScaffold(
 
 /** Shows [message] once as a snackbar; [onShow] clears it. */
 @Composable
-internal fun PinFlowMessageEffect(message: StringResource?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
+private fun PinFlowMessageEffect(message: StringResource?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
     val messageText = message?.let { stringResource(it) }
     val currentOnShow by rememberUpdatedState(onShow)
     // Clearing the message restarts this effect, which must not cancel the snackbar it opened.

@@ -132,7 +132,7 @@
     <string name="faq_change_pin_q">Comment modifier mon code PIN ?</string>
     <string name="faq_db_key_a">Encly génère une clé de base de données aléatoire de 256 bits. Votre code PIN protège un emplacement de déverrouillage AES-GCM distinct, et la biométrie utilise une clé Android Keystore qui exige une authentification à chaque utilisation.</string>
     <string name="faq_db_key_q">Comment la clé de la base de données est-elle protégée ?</string>
-    <string name="faq_forgot_pin_a">Sur l’écran de verrouillage, touchez « Récupérer l’accès » et saisissez vos 12 mots. Si votre code PIN ou votre mot de passe fonctionne encore, vous pouvez le garder ou définir un nouveau PIN ; sinon, vous définissez tout de suite un nouveau PIN. Sans phrase de récupération, il n’y a pas d’autre moyen d’entrer : personne, pas même le développeur, ne peut la réinitialiser.</string>
+    <string name="faq_forgot_pin_a">Sur l’écran de verrouillage, touchez « Récupérer l’accès » et saisissez vos 12 mots. Si votre code PIN fonctionne encore, vous pouvez le garder ou définir un nouveau PIN ; sinon, vous définissez tout de suite un nouveau PIN. Sans phrase de récupération, il n’y a pas d’autre moyen d’entrer : personne, pas même le développeur, ne peut la réinitialiser.</string>
     <string name="faq_forgot_pin_q">Et si j\'oublie mon code PIN ?</string>
     <string name="faq_language_a">Ouvrez Paramètres → Langue et choisissez l\'une des langues disponibles, ou « Langue du système » pour suivre votre appareil. Le changement s\'applique immédiatement.</string>
     <string name="faq_language_q">Comment changer la langue ?</string>
@@ -695,8 +695,6 @@
     <string name="whats_new_row_desc">Les changements de cette version</string>
     <string name="whats_new_dismiss">Compris</string>
     <string name="trash_auto_delete_hint">Les notes sont supprimées définitivement après 28 jours dans la corbeille.</string>
-    <string name="faq_password_q">Puis-je déverrouiller avec un mot de passe plutôt qu’un code PIN ?</string>
-    <string name="faq_password_a">Oui. Dans Paramètres → Sécurité → Mot de passe, vous pouvez ajouter un mot de passe d’au moins 8 caractères, dans n’importe quelle langue. Il s’ajoute à votre code PIN : l’écran de verrouillage permet de passer de l’un à l’autre, et chacun déverrouille à lui seul. Les deux partagent la même limite d’essais erronés et la même protection par la clé de l’appareil. Le PIN d’effacement et le PIN de contrainte restent des codes PIN. Vous pouvez supprimer l’un des deux tant que l’autre est défini.</string>
     <string name="faq_pin_length_q">Quelle longueur peut avoir mon code PIN ?</string>
     <string name="faq_pin_length_a">Entre 6 et 12 chiffres, à votre choix. Les codes plus courts ne sont pas proposés : le blocage et la clé de l’appareil limitent le nombre d’essais, et 6 chiffres est le minimum qui reste sûr avec ces limites. L’écran de verrouillage n’indique jamais la longueur de votre code : vous touchez « Déverrouiller » quand vous avez fini, de même pour le PIN d’effacement et le PIN de contrainte. Les codes définis auparavant continuent de fonctionner tels quels.</string>
     <string name="block_code">Code</string>

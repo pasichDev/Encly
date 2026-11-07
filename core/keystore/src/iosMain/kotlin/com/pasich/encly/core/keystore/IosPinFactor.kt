@@ -19,10 +19,15 @@ import com.pasich.encly.core.security.SensitiveDataCleaner
  * ```
  * - Deterministic: the same slot key and `data` give the same `hw`, as the vault needs to open its PIN slot again.
  * - Needs the Enclave per guess: `Q` has no known discrete logarithm, so `Z = d·Q` cannot be computed from the
- *   public key, the Keychain, the vault file or a dump of this process's memory taken at another time. A copy of
- *   everything on the phone except the Enclave tests no PINs; each guess made with the phone costs an Enclave call.
- *   Only someone who can run code in this process while it is unlocked can query the Enclave, and that guess
- *   rate is the Enclave's, not a GPU's.
+ *   public key, the Keychain or the vault file. A copy of everything on the phone except the Enclave tests no PINs;
+ *   each guess made with the phone costs an Enclave call. Only someone who can run code in this process while it is
+ *   unlocked can query the Enclave, and that guess rate is the Enclave's, not a GPU's.
+ * - What stays in memory after an unlock: the point `Q` of the last real guess (it gives that PIN back by hashing every
+ *   possible PIN to a point: 10^6 tries for six digits, no Enclave involved) and its agreement `Z` can survive in
+ *   memory that cannot be wiped (Swift `Data`, the `SecKey` made for the peer point, the CFData of the
+ *   agreement). A dump of this process taken after an unlock, together with
+ *   the vault file, therefore holds the PIN and the hardware half of that one unlock without the Enclave. It gives
+ *   nothing for any other guess.
  * - Not the same bytes as the desktop or Android factor for the same data (the vault is bound to one device anyway).
  *
  * Two constructions that look simpler were rejected because they let the PIN be searched without the Enclave:
@@ -40,7 +45,7 @@ import com.pasich.encly.core.security.SensitiveDataCleaner
  * On a device the key is in the Secure Enclave and a device whose Enclave refuses to make one cannot set a PIN up
  * (`ensureKey`/`reset` fail with `lost = false`): there is no weaker fallback. Only the Simulator, which has no
  * Enclave, uses a software key (see [platformPinEnclave]). Every array this class holds (the point, the agreement,
- * the key material) is wiped after use; the CFData the system returns for the agreement is immutable and is not.
+ * the key material) is wiped after use; the copies the system and Swift keep (see above) are immutable and are not.
  */
 public class IosPinFactor internal constructor(private val enclave: PinEnclave) : PinHardwareFactor {
     @Throws(PinFactorException::class)

@@ -42,7 +42,8 @@
         <item quantity="other">%d tagu</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Twój PIN i hasło nie mogą już odblokować Encly na tym telefonie: ich klucz sprzętowy został zresetowany. Użyj frazy odzyskiwania (lub odcisku palca), a potem ustaw nowy PIN.</string>
+    <string name="lock_pin_key_lost">Twój PIN nie może już odblokować Encly na tym telefonie: jego klucz sprzętowy został zresetowany. Użyj frazy odzyskiwania (lub odcisku palca), a potem ustaw nowy PIN.</string>
+    <string name="lock_device_locked">Urządzenie zgłasza, że jest nadal zablokowane, więc Encly pozostało zamknięte. Odblokuj urządzenie i spróbuj ponownie.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %d minutę</item>
         <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %d minuty</item>
@@ -143,47 +144,8 @@
     <string name="security_previews_desc">Lista notatek pokazuje pierwsze wiersze każdej notatki. Wyłącz, aby widzieć tylko tytuł, etykietę i datę; wyszukiwanie nadal przeszukuje cały tekst.</string>
     <string name="pin_digits_count">Wpisane cyfry: %1$d</string>
     <string name="lock_unlock">Odblokuj</string>
-    <string name="lock_use_password">Użyj hasła</string>
-    <string name="lock_use_pin">Użyj PIN-u</string>
-    <string name="lock_password_subtitle">Wpisz hasło, aby kontynuować</string>
-    <string name="lock_password_label">Hasło</string>
-    <string name="lock_wrong_password">Nieprawidłowe hasło</string>
-    <string name="password_title">Hasło</string>
-    <string name="password_intro">Hasło to kolejny sposób odblokowania Encly obok PIN-u. Każde z nich samodzielnie otwiera sejf, a błędne próby z użyciem któregokolwiek wliczają się do tej samej blokady. Użyj co najmniej 8 znaków; dobrze sprawdza się kilka słów z rzędu.</string>
-    <string name="password_pin_only_note">PIN kasujący i PIN przymusowy pozostają wyłącznie kodami PIN: hasło nie może być żadnym z nich.</string>
-    <string name="password_turned_off">Klucz urządzenia został zresetowany, więc hasło przestało działać i zostało usunięte. Ustaw je ponownie, jeśli chcesz.</string>
-    <string name="password_set">Ustaw hasło</string>
-    <string name="password_change">Zmień hasło</string>
-    <string name="password_remove">Usuń hasło</string>
-    <string name="password_remove_confirm_title">Usunąć hasło?</string>
-    <string name="password_remove_confirm_body">Encly będzie odblokowywane tylko za pomocą PIN-u.</string>
-    <string name="password_remove_confirm">Usuń</string>
-    <string name="password_removed">Hasło usunięte</string>
-    <string name="password_saved">Hasło zapisane</string>
-    <string name="password_failed">Nie udało się zapisać hasła. Nic nie zostało zmienione.</string>
-    <string name="password_too_short">Użyj od 8 do 128 znaków</string>
-    <string name="password_mismatch">Hasła nie są takie same</string>
-    <string name="password_new_label">Nowe hasło</string>
-    <string name="password_confirm_label">Powtórz hasło</string>
-    <string name="password_save">Zapisz hasło</string>
-    <string name="password_edit_title">Wybierz hasło</string>
-    <string name="password_current_title">Wpisz hasło</string>
-    <string name="password_current_subtitle">Potwierdź hasło, zanim zmienisz sposób odblokowywania Encly</string>
-    <string name="password_current_wrong">Hasło jest nieprawidłowe</string>
-    <string name="pin_remove">Usuń PIN</string>
-    <string name="pin_remove_confirm_title">Usunąć PIN?</string>
-    <string name="pin_remove_confirm_body">Encly będzie odblokowywane tylko hasłem. PIN kasujący i PIN przymusowy wymagają PIN-u, więc również zostaną wyłączone; sejf-przynęta zachowa swoje notatki. Wpisz hasło, aby upewnić się, że działa.</string>
-    <string name="pin_remove_confirm">Usuń PIN</string>
-    <string name="pin_removed">PIN usunięty</string>
-    <string name="pin_remove_failed">Nie udało się usunąć PIN-u. Nic nie zostało zmienione.</string>
-    <string name="password_row_on">Ustawione. Stuknij, aby zmienić lub usunąć.</string>
-    <string name="password_row_off">Nie ustawiono. Dodaj kolejny sposób odblokowania.</string>
-    <string name="password_row_turned_off">Przestało działać po zresetowaniu klucza urządzenia. Stuknij, aby ustawić ponownie.</string>
-    <string name="auth_method_pin_none">Nie ustawiono PIN-u. Stuknij, aby go dodać.</string>
     <string name="recovery_choice_title">Fraza odzyskiwania zaakceptowana</string>
     <string name="recovery_choice_body_pin">Twój PIN nadal działa. Zachowaj go albo ustaw nowy.</string>
-    <string name="recovery_choice_body_password">Twoje hasło nadal działa. Zachowaj je albo ustaw PIN.</string>
     <string name="recovery_keep_pin">Zachowaj mój PIN</string>
-    <string name="recovery_keep_password">Zachowaj moje hasło</string>
     <string name="recovery_set_new_pin">Ustaw nowy PIN</string>
 </resources>

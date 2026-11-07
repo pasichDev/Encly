@@ -118,30 +118,6 @@ internal object GoldenVectors {
             "fddb368becdab848194f27ec96",
     )
 
-    // The password slot (see PasswordSlots): fixed dek, kek, salt and IV as for the PIN slots above, computed with
-    // an AES-GCM, PBKDF2 and HMAC implementation independent of the code under test (Python hashlib and
-    // cryptography).
-    val passwordSlot = hex(
-        "01000306090c0f1215181b1e2124272a2d202122232425262728292a2b58a9c03c53e5da37e57c6d6bd7b79ab45c8f05" +
-            "ff14a64ca347f3ca7ad54a0125c34d650c3e67ff1019c1abfb5f0f8f7b",
-    )
-
-    val passwordSw = hex("beb69746d4c0f5df40e06d7c6fdb64dfc27229d97f99808b5817a528cbf8034a")
-
-    val passwordHw = hex("d3599244ef93353258585089592976a8f93f022b3cdf5e1c26900fcbf1b05ee1")
-
-    val passwordKek = hex("3926a89e5f1e1cd24745f2365ba2dd04fc30b9aa3d433b3c7e4e7fa3f868d68d")
-
-    val chainPasswordSlot = hex(
-        "01000306090c0f1215181b1e2124272a2d202122232425262728292a2b306ca670770005af0f1c30434a1ac2e0ecacee" +
-            "6b45033093ff27067dd954beee55ae71e3431a4f21fccb71deec798d5b",
-    )
-
-    val chainAsciiPasswordSlot = hex(
-        "01000306090c0f1215181b1e2124272a2d202122232425262728292a2b3baaef977c1b97622046cd2a9c37769b46b8c5" +
-            "55b746be4f57beb35043b440e20b7ba0d974f2ff95605c304986d5aa9b",
-    )
-
     val storeFile = hex(
         "454e434c595653330000000200016100000003010203000262630000000058f24fb12b5c0a411161cd12ebdb9fdbf492" +
             "19ef0aee2e78afa6e5562e370519",

@@ -36,7 +36,8 @@
         <item quantity="other">%d tags</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Your PIN and password can no longer unlock Encly on this phone: their hardware key was reset. Use your recovery phrase (or fingerprint), then set a new PIN.</string>
+    <string name="lock_pin_key_lost">Your PIN can no longer unlock Encly on this phone: its hardware key was reset. Use your recovery phrase (or fingerprint), then set a new PIN.</string>
+    <string name="lock_device_locked">The device says it is still locked, so Encly stayed closed. Unlock the device, then try again.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Too many attempts. Try again in %d minute</item>
         <item quantity="other">Too many attempts. Try again in %d minutes</item>
@@ -133,47 +134,8 @@
     <string name="security_previews_desc">The notes list shows the first lines of each note. Turn it off to show only the title, label and date; search still finds the full text.</string>
     <string name="pin_digits_count">Digits entered: %1$d</string>
     <string name="lock_unlock">Unlock</string>
-    <string name="lock_use_password">Use password</string>
-    <string name="lock_use_pin">Use PIN</string>
-    <string name="lock_password_subtitle">Enter your password to continue</string>
-    <string name="lock_password_label">Password</string>
-    <string name="lock_wrong_password">Wrong password</string>
-    <string name="password_title">Password</string>
-    <string name="password_intro">A password is another way to unlock Encly, next to your PIN. Each one opens the vault on its own, and wrong attempts with either count toward the same lockout. Use at least 8 characters; a few words strung together work well.</string>
-    <string name="password_pin_only_note">The wipe PIN and the duress PIN stay PIN-only: a password can\'t be either of them.</string>
-    <string name="password_turned_off">Your device key was reset, so the password stopped working and was removed. Set it again if you want one.</string>
-    <string name="password_set">Set a password</string>
-    <string name="password_change">Change password</string>
-    <string name="password_remove">Remove password</string>
-    <string name="password_remove_confirm_title">Remove the password?</string>
-    <string name="password_remove_confirm_body">Encly will unlock with your PIN only.</string>
-    <string name="password_remove_confirm">Remove</string>
-    <string name="password_removed">Password removed</string>
-    <string name="password_saved">Password saved</string>
-    <string name="password_failed">Couldn\'t save the password. Nothing was changed.</string>
-    <string name="password_too_short">Use 8 to 128 characters</string>
-    <string name="password_mismatch">Passwords don\'t match</string>
-    <string name="password_new_label">New password</string>
-    <string name="password_confirm_label">Repeat the password</string>
-    <string name="password_save">Save password</string>
-    <string name="password_edit_title">Choose a password</string>
-    <string name="password_current_title">Enter your password</string>
-    <string name="password_current_subtitle">Confirm your password before changing how Encly unlocks</string>
-    <string name="password_current_wrong">Password is incorrect</string>
-    <string name="pin_remove">Remove PIN</string>
-    <string name="pin_remove_confirm_title">Remove the PIN?</string>
-    <string name="pin_remove_confirm_body">Encly will unlock with your password only. The wipe PIN and the duress PIN need a PIN, so they are turned off too; the decoy vault keeps its notes. Type your password to make sure it works.</string>
-    <string name="pin_remove_confirm">Remove PIN</string>
-    <string name="pin_removed">PIN removed</string>
-    <string name="pin_remove_failed">Couldn\'t remove the PIN. Nothing was changed.</string>
-    <string name="password_row_on">Set. Tap to change or remove it.</string>
-    <string name="password_row_off">Not set. Add another way to unlock.</string>
-    <string name="password_row_turned_off">Stopped working when the device key was reset. Tap to set it again.</string>
-    <string name="auth_method_pin_none">No PIN is set. Tap to add one.</string>
     <string name="recovery_choice_title">Recovery phrase accepted</string>
     <string name="recovery_choice_body_pin">Your PIN still works. Keep it, or set a new one.</string>
-    <string name="recovery_choice_body_password">Your password still works. Keep it, or set a PIN.</string>
     <string name="recovery_keep_pin">Keep my PIN</string>
-    <string name="recovery_keep_password">Keep my password</string>
     <string name="recovery_set_new_pin">Set a new PIN</string>
 </resources>

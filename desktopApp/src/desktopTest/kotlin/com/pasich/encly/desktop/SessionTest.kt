@@ -10,6 +10,7 @@ import com.pasich.encly.desktop.security.CoarseUptime
 import com.pasich.encly.desktop.security.DesktopAppLifecycle
 import com.pasich.encly.desktop.security.DesktopDeviceLockWatcher
 import com.pasich.encly.desktop.security.IdleLock
+import com.pasich.encly.desktop.security.LinuxLiveLock
 import com.pasich.encly.desktop.security.NoBiometricManager
 import com.pasich.encly.desktop.security.OsLockSignals
 import com.pasich.encly.desktop.security.OsUptimeClock
@@ -243,6 +244,45 @@ class DesktopDeviceLockWatcherTest {
         watcher.close()
         assertTrue(signals.closed)
         watcher.close()
+    }
+
+    @Test
+    fun `an OS that can be asked is asked, not the last signal`() {
+        // A locker started by logind's Lock (swaylock, hyprlock) never sends Unlock: the latched signal stays true.
+        var live: Boolean? = true
+        val signals = object : OsLockSignals {
+            var report: ((Boolean) -> Unit)? = null
+
+            override fun start(onChange: (locked: Boolean) -> Unit): AutoCloseable {
+                report = onChange
+                return AutoCloseable { }
+            }
+
+            override fun liveLocked(): Boolean? = live
+        }
+        val watcher = watcher(signals).also { it.start() }
+        signals.report!!(true)
+        assertTrue(watcher.isDeviceLocked())
+
+        live = false
+
+        assertFalse(watcher.isDeviceLocked(), "the desktop was unlocked; no Unlock signal came")
+        var locks = 0
+        watcher.onLocked { locks++ }
+        signals.report!!(false)
+        signals.report!!(true)
+        assertEquals(1, locks, "a new lock still reaches the listeners")
+    }
+
+    @Test
+    fun `an OS that only reports changes keeps the last report as the state`() {
+        val signals = Signals()
+        val watcher = watcher(signals).also { it.start() }
+        assertNull(signals.liveLocked())
+
+        signals.report!!(true)
+
+        assertTrue(watcher.isDeviceLocked())
     }
 
     @Test
@@ -551,5 +591,50 @@ class SwingMainThreadTimerTest {
         val cancel = SwingMainThreadTimer().schedule(50) { ran.countDown() }
         SwingUtilities.invokeAndWait { cancel() }
         assertFalse(ran.await(300, TimeUnit.MILLISECONDS))
+    }
+}
+
+class LinuxLiveLockTest {
+    private fun live(hint: () -> Boolean?, vararg savers: () -> Boolean?) = LinuxLiveLock(hint, savers.toList())
+
+    @Test
+    fun `a session that logind calls locked is locked`() {
+        assertTrue(live({ true }).isLocked())
+    }
+
+    @Test
+    fun `an unlocked session with nothing active is not locked`() {
+        assertFalse(live({ false }, { false }, { null }).isLocked())
+    }
+
+    @Test
+    fun `an active screen saver is a lock even when logind sets no hint`() {
+        assertTrue(live({ false }, { null }, { true }).isLocked())
+        assertTrue(live({ null }, { true }).isLocked())
+    }
+
+    @Test
+    fun `nothing that can be read counts as not locked`() {
+        assertFalse(live({ null }, { null }).isLocked())
+        assertFalse(live({ null }).isLocked())
+    }
+
+    @Test
+    fun `a source that fails is skipped and the others still answer`() {
+        assertFalse(live({ error("no bus") }, { error("no screen saver") }).isLocked())
+        assertTrue(live({ error("no bus") }, { true }).isLocked())
+        assertTrue(live({ true }, { error("no screen saver") }).isLocked())
+    }
+
+    @Test
+    fun `every answer is read when asked and none is remembered`() {
+        var hint: Boolean? = true
+        val lock = live({ hint })
+
+        assertTrue(lock.isLocked())
+        hint = false
+        assertFalse(lock.isLocked())
+        hint = true
+        assertTrue(lock.isLocked())
     }
 }

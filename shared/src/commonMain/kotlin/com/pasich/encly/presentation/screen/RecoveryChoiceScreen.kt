@@ -3,15 +3,12 @@ package com.pasich.encly.presentation.screen
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
-import com.pasich.encly.core.resources.recovery_choice_body_password
 import com.pasich.encly.core.resources.recovery_choice_body_pin
 import com.pasich.encly.core.resources.recovery_choice_title
-import com.pasich.encly.core.resources.recovery_keep_password
 import com.pasich.encly.core.resources.recovery_keep_pin
 import com.pasich.encly.core.resources.recovery_set_new_pin
 import com.pasich.encly.core.security.RecoveryStage
@@ -28,7 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 private const val CHOICE_SETTLED_POLL_MS = 1_000L
 
 /**
- * After the recovery phrase unlocked a vault whose PIN (or password) still works: keep it, which is the default, or
+ * After the recovery phrase unlocked a vault whose PIN still works: keep it, which is the default, or
  * set a new PIN. The vault is open meanwhile, but there is no way past this page except one of the two, so a
  * forgotten PIN is replaced only by the user's own choice. A PIN that cannot be used any more skips this page: the
  * new-PIN screen comes straight up (see [LockScreen]).
@@ -39,7 +36,6 @@ fun RecoveryChoiceScreen(
     modifier: Modifier = Modifier,
     viewModel: LockViewModel = metroViewModel(),
 ) {
-    val methods = remember { viewModel.unlockMethods() }
     BackHandler(enabled = true) { }
     // Another window may settle the choice first: this one goes on into the app with it.
     LaunchedEffect(viewModel) {
@@ -53,16 +49,12 @@ fun RecoveryChoiceScreen(
     }
     PinEntryScaffold(
         title = stringResource(Res.string.recovery_choice_title),
-        subtitle = stringResource(
-            if (methods.pin) Res.string.recovery_choice_body_pin else Res.string.recovery_choice_body_password,
-        ),
+        subtitle = stringResource(Res.string.recovery_choice_body_pin),
         icon = EnclyIcons.Key,
         modifier = modifier,
         footer = {
             EnclyButton(
-                text = stringResource(
-                    if (methods.pin) Res.string.recovery_keep_pin else Res.string.recovery_keep_password,
-                ),
+                text = stringResource(Res.string.recovery_keep_pin),
                 onClick = {
                     viewModel.keepAfterRecovery()
                     navController.goHome()

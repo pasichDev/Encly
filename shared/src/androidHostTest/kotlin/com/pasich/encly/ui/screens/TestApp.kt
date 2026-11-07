@@ -18,7 +18,6 @@ import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.core.security.bip39.Bip39
 import com.pasich.encly.data.backup.BackupDocuments
@@ -108,8 +107,7 @@ internal class TestApp {
         sessionLock.onStart(mock(androidx.lifecycle.LifecycleOwner::class.java))
         withAuth(recoveryPhrase = false)
         `when`(security.wipeAndReset()).thenReturn(true)
-        // A vault with a PIN and no password, and a session that owes nothing after the recovery phrase.
-        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = true, password = false))
+        // A session that owes nothing after the recovery phrase.
         `when`(security.recoveryStage()).thenReturn(RecoveryStage.NONE)
     }
 

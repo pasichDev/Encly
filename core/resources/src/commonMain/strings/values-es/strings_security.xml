@@ -39,7 +39,8 @@
         <item quantity="other">%d etiquetas</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Tu PIN y tu contraseña ya no pueden desbloquear Encly en este teléfono: su clave de hardware se ha restablecido. Usa tu frase de recuperación (o tu huella) y luego establece un PIN nuevo.</string>
+    <string name="lock_pin_key_lost">Tu PIN ya no puede desbloquear Encly en este teléfono: su clave de hardware se ha restablecido. Usa tu frase de recuperación (o tu huella) y luego establece un PIN nuevo.</string>
+    <string name="lock_device_locked">El dispositivo indica que sigue bloqueado, así que Encly se quedó cerrado. Desbloquea el dispositivo e inténtalo de nuevo.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Demasiados intentos. Vuelve a intentarlo en %d minuto</item>
         <item quantity="many">Demasiados intentos. Vuelve a intentarlo en %d minutos</item>
@@ -138,47 +139,8 @@
     <string name="security_previews_desc">La lista de notas muestra las primeras líneas de cada nota. Desactívalo para mostrar solo el título, la etiqueta y la fecha; la búsqueda sigue encontrando todo el texto.</string>
     <string name="pin_digits_count">Dígitos introducidos: %1$d</string>
     <string name="lock_unlock">Desbloquear</string>
-    <string name="lock_use_password">Usar contraseña</string>
-    <string name="lock_use_pin">Usar PIN</string>
-    <string name="lock_password_subtitle">Introduce tu contraseña para continuar</string>
-    <string name="lock_password_label">Contraseña</string>
-    <string name="lock_wrong_password">Contraseña incorrecta</string>
-    <string name="password_title">Contraseña</string>
-    <string name="password_intro">Una contraseña es otra forma de desbloquear Encly, además de tu PIN. Cada una abre la bóveda por sí sola, y los intentos fallidos con cualquiera de las dos cuentan para el mismo bloqueo. Usa al menos 8 caracteres; unas cuantas palabras seguidas funcionan bien.</string>
-    <string name="password_pin_only_note">El PIN de borrado y el PIN de coacción siguen siendo solo PIN: una contraseña no puede ser ninguno de los dos.</string>
-    <string name="password_turned_off">Se restableció la clave del dispositivo, así que la contraseña dejó de funcionar y se eliminó. Vuelve a configurarla si quieres una.</string>
-    <string name="password_set">Establecer una contraseña</string>
-    <string name="password_change">Cambiar la contraseña</string>
-    <string name="password_remove">Quitar la contraseña</string>
-    <string name="password_remove_confirm_title">¿Quitar la contraseña?</string>
-    <string name="password_remove_confirm_body">Encly solo se desbloqueará con tu PIN.</string>
-    <string name="password_remove_confirm">Quitar</string>
-    <string name="password_removed">Contraseña eliminada</string>
-    <string name="password_saved">Contraseña guardada</string>
-    <string name="password_failed">No se pudo guardar la contraseña. No se cambió nada.</string>
-    <string name="password_too_short">Usa de 8 a 128 caracteres</string>
-    <string name="password_mismatch">Las contraseñas no coinciden</string>
-    <string name="password_new_label">Contraseña nueva</string>
-    <string name="password_confirm_label">Repite la contraseña</string>
-    <string name="password_save">Guardar la contraseña</string>
-    <string name="password_edit_title">Elige una contraseña</string>
-    <string name="password_current_title">Introduce tu contraseña</string>
-    <string name="password_current_subtitle">Confirma tu contraseña antes de cambiar cómo se desbloquea Encly</string>
-    <string name="password_current_wrong">La contraseña no es correcta</string>
-    <string name="pin_remove">Quitar el PIN</string>
-    <string name="pin_remove_confirm_title">¿Quitar el PIN?</string>
-    <string name="pin_remove_confirm_body">Encly solo se desbloqueará con tu contraseña. El PIN de borrado y el PIN de coacción necesitan un PIN, así que también se desactivan; la bóveda señuelo conserva sus notas. Escribe tu contraseña para comprobar que funciona.</string>
-    <string name="pin_remove_confirm">Quitar el PIN</string>
-    <string name="pin_removed">PIN eliminado</string>
-    <string name="pin_remove_failed">No se pudo quitar el PIN. No se cambió nada.</string>
-    <string name="password_row_on">Establecida. Toca para cambiarla o quitarla.</string>
-    <string name="password_row_off">Sin establecer. Añade otra forma de desbloquear.</string>
-    <string name="password_row_turned_off">Dejó de funcionar al restablecerse la clave del dispositivo. Toca para configurarla de nuevo.</string>
-    <string name="auth_method_pin_none">No hay PIN. Toca para añadir uno.</string>
     <string name="recovery_choice_title">Frase de recuperación aceptada</string>
     <string name="recovery_choice_body_pin">Tu PIN sigue funcionando. Consérvalo o elige uno nuevo.</string>
-    <string name="recovery_choice_body_password">Tu contraseña sigue funcionando. Consérvala o establece un PIN.</string>
     <string name="recovery_keep_pin">Conservar mi PIN</string>
-    <string name="recovery_keep_password">Conservar mi contraseña</string>
     <string name="recovery_set_new_pin">Establecer un PIN nuevo</string>
 </resources>

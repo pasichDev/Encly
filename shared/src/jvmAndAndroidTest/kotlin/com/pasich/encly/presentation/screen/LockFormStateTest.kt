@@ -1,8 +1,8 @@
 package com.pasich.encly.presentation.screen
 
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.lock_device_locked
 import com.pasich.encly.core.resources.lock_pin_key_lost
-import com.pasich.encly.core.resources.lock_wrong_password
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
@@ -75,6 +75,16 @@ class LockFormStateTest {
     }
 
     @Test
+    fun anUnlockRefusedByTheDeviceLockSaysSoOnThePinPadAndTheRecoveryForm() {
+        form.onPinResult(PinUnlockResult.DEVICE_LOCKED, lockoutRemainingMillis = 0L)
+        form.onSeedResult(SeedUnlockResult.DEVICE_LOCKED)
+
+        assertEquals(Res.string.lock_device_locked, form.pinError)
+        assertEquals(Res.string.lock_device_locked, form.phraseError)
+        assertFalse(form.lockedOut)
+    }
+
+    @Test
     fun aBackgroundedUnlockShowsNoError() {
         form.onPinResult(PinUnlockResult.BACKGROUNDED, lockoutRemainingMillis = 0L)
         form.onSeedResult(SeedUnlockResult.BACKGROUNDED)
@@ -131,72 +141,5 @@ class LockFormStateTest {
 
         assertEquals(0, form.pinLength)
         assertEquals(8, form.submittedLength)
-    }
-
-    @Test
-    fun aWrongPasswordShowsItsErrorAndKeepsThePinPadClean() {
-        form.usePassword = true
-        form.password.text = "not the password"
-
-        form.onPasswordResult(PinUnlockResult.WRONG_PIN, lockoutRemainingMillis = 0L)
-
-        assertEquals(Res.string.lock_wrong_password, form.passwordError)
-        assertNull(form.pinError)
-        form.onPasswordEdited()
-        assertNull(form.passwordError)
-    }
-
-    @Test
-    fun aPasswordFailureStartsTheSameLockoutCountdown() {
-        form.onPasswordResult(PinUnlockResult.WRONG_PIN, lockoutRemainingMillis = 30_000L)
-
-        assertEquals(30L, form.lockoutSeconds)
-        assertTrue(form.lockedOut)
-    }
-
-    @Test
-    fun aLostKeyExplainsItOnThePasswordFormAndTheRecoveryForm() {
-        form.onPasswordResult(PinUnlockResult.KEY_LOST, lockoutRemainingMillis = 0L)
-
-        assertEquals(Res.string.lock_pin_key_lost, form.passwordError)
-        assertEquals(Res.string.lock_pin_key_lost, form.phraseError)
-    }
-
-    @Test
-    fun switchingMethodsDropsWhatWasTyped() {
-        typePin("123456")
-        form.switchTo(usePassword = true)
-
-        assertTrue(form.usePassword)
-        assertEquals(0, form.pinLength)
-
-        form.password.text = "correct horse"
-        form.switchTo(usePassword = false)
-
-        assertFalse(form.usePassword)
-        assertEquals("", form.password.text)
-    }
-
-    @Test
-    fun thePasswordIsTakenOutOfTheFormToBeChecked() {
-        form.password.text = "correct horse"
-        assertTrue(form.password.canSubmit)
-
-        val taken = form.takePassword()
-
-        assertEquals("correct horse", String(taken))
-        assertEquals("", form.password.text)
-        assertFalse(form.password.canSubmit)
-    }
-
-    @Test
-    fun aPasswordNeedsEightCharactersCountedAsCodePoints() {
-        form.password.text = "1234567"
-        assertFalse(form.password.canSubmit)
-
-        form.password.text = "1234567\uD83D\uDD11"
-
-        assertEquals(8, form.password.length)
-        assertTrue(form.password.canSubmit)
     }
 }

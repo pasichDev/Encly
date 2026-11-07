@@ -132,7 +132,7 @@
     <string name="faq_change_pin_q">Wie ändere ich meine PIN?</string>
     <string name="faq_db_key_a">Encly erzeugt einen zufälligen 256-Bit-Datenbankschlüssel. Deine PIN schützt einen separaten AES-GCM-Entsperrslot, und die Biometrie nutzt einen Android-Keystore-Schlüssel, der bei jeder Verwendung eine Authentifizierung erfordert.</string>
     <string name="faq_db_key_q">Wie ist der Datenbankschlüssel geschützt?</string>
-    <string name="faq_forgot_pin_a">Tippe auf dem Sperrbildschirm auf „Zugang wiederherstellen“ und gib deine 12 Wörter ein. Funktioniert deine PIN oder dein Passwort noch, kannst du sie behalten oder eine neue PIN festlegen; sonst legst du sofort eine neue PIN fest. Ohne Wiederherstellungsphrase gibt es keinen anderen Weg hinein: Niemand, auch nicht der Entwickler, kann sie zurücksetzen.</string>
+    <string name="faq_forgot_pin_a">Tippe auf dem Sperrbildschirm auf „Zugang wiederherstellen“ und gib deine 12 Wörter ein. Funktioniert deine PIN noch, kannst du sie behalten oder eine neue PIN festlegen; sonst legst du sofort eine neue PIN fest. Ohne Wiederherstellungsphrase gibt es keinen anderen Weg hinein: Niemand, auch nicht der Entwickler, kann sie zurücksetzen.</string>
     <string name="faq_forgot_pin_q">Was passiert, wenn ich meine PIN vergesse?</string>
     <string name="faq_language_a">Öffne Einstellungen → Sprache und wähle eine der verfügbaren Sprachen oder „Systemstandard“, um der Sprache deines Geräts zu folgen. Die Änderung gilt sofort.</string>
     <string name="faq_language_q">Wie ändere ich die Sprache?</string>
@@ -689,8 +689,6 @@
     <string name="whats_new_row_desc">Die Änderungen dieser Version</string>
     <string name="whats_new_dismiss">Verstanden</string>
     <string name="trash_auto_delete_hint">Notizen werden nach 28 Tagen im Papierkorb endgültig gelöscht.</string>
-    <string name="faq_password_q">Kann ich statt mit einer PIN mit einem Passwort entsperren?</string>
-    <string name="faq_password_a">Ja. Unter Einstellungen → Sicherheit → Passwort kannst du ein Passwort mit mindestens 8 Zeichen in jeder Sprache hinzufügen. Es gilt neben deiner PIN: Auf dem Sperrbildschirm wechselst du zwischen beiden, und jedes entsperrt für sich. Beide teilen sich dasselbe Limit für Fehlversuche und denselben Schutz durch den Gerätschlüssel. Lösch-PIN und Zwangs-PIN bleiben reine PINs. Du kannst jedes der beiden entfernen, solange das andere festgelegt ist.</string>
     <string name="faq_pin_length_q">Wie lang darf meine PIN sein?</string>
     <string name="faq_pin_length_a">Zwischen 6 und 12 Ziffern, du entscheidest. Kürzere PINs werden nicht angeboten: Die Sperre und der Gerätschlüssel begrenzen die Zahl der Versuche, und 6 Ziffern sind die kürzeste PIN, die damit sicher bleibt. Der Sperrbildschirm zeigt nie, wie lang deine PIN ist: Du tippst auf „Entsperren“, wenn du fertig bist; das gilt auch für Lösch-PIN und Zwangs-PIN. PINs, die du vorher festgelegt hast, funktionieren unverändert.</string>
     <string name="block_code">Code</string>

@@ -19,6 +19,13 @@ import javax.swing.SwingUtilities
 fun interface OsLockSignals {
     fun start(onChange: (locked: Boolean) -> Unit): AutoCloseable
 
+    /**
+     * Whether the session is locked right now, read from the OS, or null when this OS only reports changes through
+     * [start] (the last reported change is then the state). A source that reports changes some lockers never send
+     * (a lock that starts and is never told it ended) must answer here, or its last change stays the state for good.
+     */
+    fun liveLocked(): Boolean? = null
+
     /** An OS where nothing can be detected: only the idle and focus based locks apply. */
     object None : OsLockSignals {
         override fun start(onChange: (locked: Boolean) -> Unit): AutoCloseable = AutoCloseable { }
@@ -50,6 +57,24 @@ class SleepDetector(private val clocks: () -> Clocks?, private val minSleepMilli
         /** Shorter naps are not told apart from clock rounding. */
         const val MIN_SLEEP_MILLIS: Long = 2_000L
     }
+}
+
+/**
+ * What Linux can be asked about the session being locked, each source `null` when it cannot be read: logind's
+ * `LockedHint` of the session (kept right by most lockers: swaylock, hyprlock, i3lock through xss-lock and the
+ * desktops' own), and whether a desktop screen saver is active. Locked when any source says so. A source that throws
+ * answers "not locked": an unreadable state must not keep the vault from opening.
+ */
+class LinuxLiveLock(private val lockedHint: () -> Boolean?, private val screenSaversActive: List<() -> Boolean?>) {
+    @Suppress("TooGenericExceptionCaught")
+    private fun says(source: () -> Boolean?): Boolean = try {
+        source() == true
+    } catch (_: Exception) {
+        false
+    }
+
+    /** Whether the session is locked now. */
+    fun isLocked(): Boolean = says(lockedHint) || screenSaversActive.any(::says)
 }
 
 /**
@@ -131,7 +156,8 @@ class DesktopDeviceLockWatcher(
         }
     }
 
-    override fun isDeviceLocked(): Boolean = locked
+    // Where the OS can be asked, it is: the last signal can be stale for good (a locker that never says it ended).
+    override fun isDeviceLocked(): Boolean = signals.liveLocked() ?: locked
 
     override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit {
         screenOffListeners += onScreenOff

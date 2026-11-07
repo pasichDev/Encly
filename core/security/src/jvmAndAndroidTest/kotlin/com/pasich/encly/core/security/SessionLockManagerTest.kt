@@ -550,6 +550,18 @@ class SessionLockManagerTest {
         verify(security).lock()
     }
 
+    @Test
+    fun theManagerReportsWhetherTheDeviceIsLockedFromTheWatcherAtTheMoment() {
+        val deviceLock = FakeDeviceLock()
+        val guarded = SessionLockManager(security, deviceLock = deviceLock)
+
+        assertFalse(guarded.isDeviceLocked())
+        deviceLock.locked = true
+        assertTrue(guarded.isDeviceLocked())
+        deviceLock.locked = false
+        assertFalse(guarded.isDeviceLocked())
+    }
+
     private class FakeDeviceLock : DeviceLockWatcher {
         var locked = false
         var watching = false

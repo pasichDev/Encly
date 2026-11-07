@@ -17,7 +17,6 @@ enum class NavRoutes {
     LegacyVaultRoute,
     StorageUnreadableRoute,
     PinCodeConfig,
-    PasswordRoute,
     RecoveryChoiceRoute,
     WipePinRoute,
     DuressPinRoute,

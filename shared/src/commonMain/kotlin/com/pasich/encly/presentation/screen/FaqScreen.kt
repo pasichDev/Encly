@@ -35,8 +35,6 @@ import com.pasich.encly.core.resources.faq_new_note_a
 import com.pasich.encly.core.resources.faq_new_note_q
 import com.pasich.encly.core.resources.faq_note_actions_a
 import com.pasich.encly.core.resources.faq_note_actions_q
-import com.pasich.encly.core.resources.faq_password_a
-import com.pasich.encly.core.resources.faq_password_q
 import com.pasich.encly.core.resources.faq_pin_length_a
 import com.pasich.encly.core.resources.faq_pin_length_q
 import com.pasich.encly.core.resources.faq_recovery_phrase_a
@@ -104,7 +102,6 @@ private val faqSections = listOf(
             Res.string.faq_recovery_phrase_q to Res.string.faq_recovery_phrase_a,
             Res.string.faq_forgot_pin_q to Res.string.faq_forgot_pin_a,
             Res.string.faq_pin_length_q to Res.string.faq_pin_length_a,
-            Res.string.faq_password_q to Res.string.faq_password_a,
             Res.string.faq_screenshots_q to Res.string.faq_screenshots_a,
             Res.string.faq_background_q to Res.string.faq_background_a,
         ),

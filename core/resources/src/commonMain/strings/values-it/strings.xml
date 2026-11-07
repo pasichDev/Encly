@@ -132,7 +132,7 @@
     <string name="faq_change_pin_q">Come cambio il PIN?</string>
     <string name="faq_db_key_a">Encly genera una chiave del database casuale a 256 bit. Il PIN protegge uno slot di sblocco AES-GCM separato e la biometria usa una chiave Android Keystore che richiede l\'autenticazione a ogni utilizzo.</string>
     <string name="faq_db_key_q">Come è protetta la chiave del database?</string>
-    <string name="faq_forgot_pin_a">Nella schermata di blocco tocca «Recupera l’accesso» e inserisci le 12 parole. Se il PIN o la password funzionano ancora, puoi tenerli o impostare un nuovo PIN; altrimenti imposti subito un nuovo PIN. Senza frase di recupero non c’è altro modo di entrare: nessuno, nemmeno lo sviluppatore, può reimpostarla.</string>
+    <string name="faq_forgot_pin_a">Nella schermata di blocco tocca «Recupera l’accesso» e inserisci le 12 parole. Se il PIN funziona ancora, puoi tenerlo o impostare un nuovo PIN; altrimenti imposti subito un nuovo PIN. Senza frase di recupero non c’è altro modo di entrare: nessuno, nemmeno lo sviluppatore, può reimpostarla.</string>
     <string name="faq_forgot_pin_q">Cosa succede se dimentico il PIN?</string>
     <string name="faq_language_a">Apri Impostazioni → Lingua e scegli una delle lingue disponibili, oppure «Predefinita di sistema» per usare la lingua del dispositivo. La modifica si applica subito.</string>
     <string name="faq_language_q">Come cambio la lingua?</string>
@@ -695,8 +695,6 @@
     <string name="whats_new_row_desc">Le novità di questa versione</string>
     <string name="whats_new_dismiss">Ho capito</string>
     <string name="trash_auto_delete_hint">Le note vengono eliminate definitivamente dopo 28 giorni nel cestino.</string>
-    <string name="faq_password_q">Posso sbloccare con una password invece del PIN?</string>
-    <string name="faq_password_a">Sì. In Impostazioni → Sicurezza → Password puoi aggiungere una password di almeno 8 caratteri, in qualsiasi lingua. Funziona accanto al PIN: la schermata di blocco permette di passare dal PIN alla password e viceversa, e ciascuno sblocca da solo. Condividono lo stesso limite di tentativi errati e la stessa protezione con la chiave del dispositivo. Il PIN di cancellazione e il PIN di coercizione restano solo PIN. Puoi rimuovere uno dei due finché l’altro è impostato.</string>
     <string name="faq_pin_length_q">Quanto può essere lungo il PIN?</string>
     <string name="faq_pin_length_a">Da 6 a 12 cifre, a tua scelta. PIN più corti non sono previsti: il blocco e la chiave del dispositivo limitano i tentativi, e 6 cifre è il minimo che resta sicuro con quei limiti. La schermata di blocco non mostra mai la lunghezza del PIN: tocchi «Sblocca» quando hai finito, e lo stesso vale per il PIN di cancellazione e il PIN di coercizione. I PIN impostati prima continuano a funzionare così come sono.</string>
     <string name="block_code">Codice</string>

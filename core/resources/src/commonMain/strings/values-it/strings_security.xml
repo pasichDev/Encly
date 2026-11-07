@@ -39,7 +39,8 @@
         <item quantity="other">%d tag</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Il tuo PIN e la tua password non possono più sbloccare Encly su questo telefono: la loro chiave hardware è stata reimpostata. Usa la frase di recupero (o l\'impronta), poi imposta un nuovo PIN.</string>
+    <string name="lock_pin_key_lost">Il tuo PIN non può più sbloccare Encly su questo telefono: la sua chiave hardware è stata reimpostata. Usa la frase di recupero (o l\'impronta), poi imposta un nuovo PIN.</string>
+    <string name="lock_device_locked">Il dispositivo segnala di essere ancora bloccato, quindi Encly è rimasto chiuso. Sblocca il dispositivo e riprova.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Troppi tentativi. Riprova tra %d minuto</item>
         <item quantity="many">Troppi tentativi. Riprova tra %d minuti</item>
@@ -138,47 +139,8 @@
     <string name="security_previews_desc">L\'elenco delle note mostra le prime righe di ogni nota. Disattivalo per mostrare solo titolo, etichetta e data; la ricerca trova comunque tutto il testo.</string>
     <string name="pin_digits_count">Cifre inserite: %1$d</string>
     <string name="lock_unlock">Sblocca</string>
-    <string name="lock_use_password">Usa la password</string>
-    <string name="lock_use_pin">Usa il PIN</string>
-    <string name="lock_password_subtitle">Inserisci la password per continuare</string>
-    <string name="lock_password_label">Password</string>
-    <string name="lock_wrong_password">Password errata</string>
-    <string name="password_title">Password</string>
-    <string name="password_intro">Una password è un altro modo per sbloccare Encly, oltre al PIN. Ciascuno dei due apre la cassaforte da solo e i tentativi errati con uno qualsiasi dei due contano per lo stesso blocco. Usa almeno 8 caratteri; alcune parole di seguito vanno benissimo.</string>
-    <string name="password_pin_only_note">Il PIN di cancellazione e il PIN di coercizione restano solo PIN: una password non può essere nessuno dei due.</string>
-    <string name="password_turned_off">La chiave del dispositivo è stata reimpostata, quindi la password ha smesso di funzionare ed è stata rimossa. Impostala di nuovo se ti serve.</string>
-    <string name="password_set">Imposta una password</string>
-    <string name="password_change">Cambia password</string>
-    <string name="password_remove">Rimuovi la password</string>
-    <string name="password_remove_confirm_title">Rimuovere la password?</string>
-    <string name="password_remove_confirm_body">Encly si sbloccherà solo con il PIN.</string>
-    <string name="password_remove_confirm">Rimuovi</string>
-    <string name="password_removed">Password rimossa</string>
-    <string name="password_saved">Password salvata</string>
-    <string name="password_failed">Impossibile salvare la password. Non è cambiato nulla.</string>
-    <string name="password_too_short">Usa da 8 a 128 caratteri</string>
-    <string name="password_mismatch">Le password non corrispondono</string>
-    <string name="password_new_label">Nuova password</string>
-    <string name="password_confirm_label">Ripeti la password</string>
-    <string name="password_save">Salva la password</string>
-    <string name="password_edit_title">Scegli una password</string>
-    <string name="password_current_title">Inserisci la password</string>
-    <string name="password_current_subtitle">Conferma la password prima di cambiare il modo in cui si sblocca Encly</string>
-    <string name="password_current_wrong">La password non è corretta</string>
-    <string name="pin_remove">Rimuovi il PIN</string>
-    <string name="pin_remove_confirm_title">Rimuovere il PIN?</string>
-    <string name="pin_remove_confirm_body">Encly si sbloccherà solo con la password. Il PIN di cancellazione e il PIN di coercizione richiedono un PIN, quindi vengono disattivati anch’essi; la cassaforte civetta conserva le sue note. Scrivi la password per verificare che funzioni.</string>
-    <string name="pin_remove_confirm">Rimuovi il PIN</string>
-    <string name="pin_removed">PIN rimosso</string>
-    <string name="pin_remove_failed">Impossibile rimuovere il PIN. Non è cambiato nulla.</string>
-    <string name="password_row_on">Impostata. Tocca per cambiarla o rimuoverla.</string>
-    <string name="password_row_off">Non impostata. Aggiungi un altro modo per sbloccare.</string>
-    <string name="password_row_turned_off">Ha smesso di funzionare quando la chiave del dispositivo è stata reimpostata. Tocca per impostarla di nuovo.</string>
-    <string name="auth_method_pin_none">Nessun PIN impostato. Tocca per aggiungerne uno.</string>
     <string name="recovery_choice_title">Frase di recupero accettata</string>
     <string name="recovery_choice_body_pin">Il tuo PIN funziona ancora. Tienilo o imposta un nuovo PIN.</string>
-    <string name="recovery_choice_body_password">La tua password funziona ancora. Tienila o imposta un PIN.</string>
     <string name="recovery_keep_pin">Tieni il mio PIN</string>
-    <string name="recovery_keep_password">Tieni la mia password</string>
     <string name="recovery_set_new_pin">Imposta un nuovo PIN</string>
 </resources>

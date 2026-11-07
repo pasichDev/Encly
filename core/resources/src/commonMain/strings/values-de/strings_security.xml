@@ -36,7 +36,8 @@
         <item quantity="other">%d Tags</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Deine PIN und dein Passwort können Encly auf diesem Telefon nicht mehr entsperren: Ihr Hardware-Schlüssel wurde zurückgesetzt. Nutze deine Wiederherstellungsphrase (oder deinen Fingerabdruck) und lege dann eine neue PIN fest.</string>
+    <string name="lock_pin_key_lost">Deine PIN kann Encly auf diesem Telefon nicht mehr entsperren: Ihr Hardware-Schlüssel wurde zurückgesetzt. Nutze deine Wiederherstellungsphrase (oder deinen Fingerabdruck) und lege dann eine neue PIN fest.</string>
+    <string name="lock_device_locked">Das Gerät meldet, dass es noch gesperrt ist, deshalb ist Encly geschlossen geblieben. Entsperre das Gerät und versuche es erneut.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Zu viele Versuche. Versuche es in %d Minute erneut</item>
         <item quantity="other">Zu viele Versuche. Versuche es in %d Minuten erneut</item>
@@ -133,47 +134,8 @@
     <string name="security_previews_desc">Die Notizliste zeigt die ersten Zeilen jeder Notiz. Ausgeschaltet erscheinen nur Titel, Tag und Datum; die Suche findet weiterhin den ganzen Text.</string>
     <string name="pin_digits_count">Eingegebene Ziffern: %1$d</string>
     <string name="lock_unlock">Entsperren</string>
-    <string name="lock_use_password">Passwort verwenden</string>
-    <string name="lock_use_pin">PIN verwenden</string>
-    <string name="lock_password_subtitle">Gib dein Passwort ein, um fortzufahren</string>
-    <string name="lock_password_label">Passwort</string>
-    <string name="lock_wrong_password">Falsches Passwort</string>
-    <string name="password_title">Passwort</string>
-    <string name="password_intro">Ein Passwort ist ein weiterer Weg, Encly zu entsperren, neben deiner PIN. Jedes von beiden öffnet den Tresor für sich, und Fehlversuche mit einem von beiden zählen für dieselbe Sperre. Nutze mindestens 8 Zeichen; mehrere aneinandergereihte Wörter eignen sich gut.</string>
-    <string name="password_pin_only_note">Lösch-PIN und Zwangs-PIN bleiben reine PINs: Ein Passwort kann keine von beiden sein.</string>
-    <string name="password_turned_off">Dein Gerätschlüssel wurde zurückgesetzt, daher funktionierte das Passwort nicht mehr und wurde entfernt. Lege es neu fest, wenn du eines möchtest.</string>
-    <string name="password_set">Passwort festlegen</string>
-    <string name="password_change">Passwort ändern</string>
-    <string name="password_remove">Passwort entfernen</string>
-    <string name="password_remove_confirm_title">Passwort entfernen?</string>
-    <string name="password_remove_confirm_body">Encly lässt sich dann nur noch mit deiner PIN entsperren.</string>
-    <string name="password_remove_confirm">Entfernen</string>
-    <string name="password_removed">Passwort entfernt</string>
-    <string name="password_saved">Passwort gespeichert</string>
-    <string name="password_failed">Das Passwort konnte nicht gespeichert werden. Es wurde nichts geändert.</string>
-    <string name="password_too_short">Verwende 8 bis 128 Zeichen</string>
-    <string name="password_mismatch">Die Passwörter stimmen nicht überein</string>
-    <string name="password_new_label">Neues Passwort</string>
-    <string name="password_confirm_label">Passwort wiederholen</string>
-    <string name="password_save">Passwort speichern</string>
-    <string name="password_edit_title">Wähle ein Passwort</string>
-    <string name="password_current_title">Gib dein Passwort ein</string>
-    <string name="password_current_subtitle">Bestätige dein Passwort, bevor du änderst, wie Encly entsperrt wird</string>
-    <string name="password_current_wrong">Das Passwort ist falsch</string>
-    <string name="pin_remove">PIN entfernen</string>
-    <string name="pin_remove_confirm_title">PIN entfernen?</string>
-    <string name="pin_remove_confirm_body">Encly lässt sich dann nur noch mit deinem Passwort entsperren. Lösch-PIN und Zwangs-PIN brauchen eine PIN und werden deshalb ebenfalls ausgeschaltet; der Tarn-Tresor behält seine Notizen. Gib dein Passwort ein, um sicherzugehen, dass es funktioniert.</string>
-    <string name="pin_remove_confirm">PIN entfernen</string>
-    <string name="pin_removed">PIN entfernt</string>
-    <string name="pin_remove_failed">Die PIN konnte nicht entfernt werden. Es wurde nichts geändert.</string>
-    <string name="password_row_on">Festgelegt. Tippe, um es zu ändern oder zu entfernen.</string>
-    <string name="password_row_off">Nicht festgelegt. Füge einen weiteren Weg zum Entsperren hinzu.</string>
-    <string name="password_row_turned_off">Funktioniert nicht mehr, seit der Gerätschlüssel zurückgesetzt wurde. Tippe, um es neu festzulegen.</string>
-    <string name="auth_method_pin_none">Keine PIN festgelegt. Tippe, um eine hinzuzufügen.</string>
     <string name="recovery_choice_title">Wiederherstellungsphrase akzeptiert</string>
     <string name="recovery_choice_body_pin">Deine PIN funktioniert noch. Behalte sie oder lege eine neue fest.</string>
-    <string name="recovery_choice_body_password">Dein Passwort funktioniert noch. Behalte es oder lege eine PIN fest.</string>
     <string name="recovery_keep_pin">Meine PIN behalten</string>
-    <string name="recovery_keep_password">Mein Passwort behalten</string>
     <string name="recovery_set_new_pin">Neue PIN festlegen</string>
 </resources>

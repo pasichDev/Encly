@@ -8,12 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.error_database_open
+import com.pasich.encly.core.resources.lock_device_locked
 import com.pasich.encly.core.resources.lock_pin_key_lost
-import com.pasich.encly.core.resources.lock_wrong_password
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
-import com.pasich.encly.presentation.screen.pincode.PasswordInput
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
@@ -21,25 +20,16 @@ import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import org.jetbrains.compose.resources.StringResource
 
 /**
- * What the lock screen's forms show: the PIN typed so far, the password, the recovery phrase, and the last
+ * What the lock screen's forms show: the PIN typed so far, the recovery phrase, and the last
  * error of each. Held by [LockScreen] itself, above the "Unlocking…" view that replaces the
  * forms while a credential is checked, so a wrong PIN or phrase is still shown afterwards
  * instead of being lost with the form that asked for it.
  */
 @Stable
-@Suppress("TooManyFunctions") // One small handler per field of the PIN, password and phrase forms.
+@Suppress("TooManyFunctions") // One small handler per field of the PIN and phrase forms.
 internal class LockFormState {
     /** The recovery-phrase form is shown instead of the PIN pad. */
     var useRecovery by mutableStateOf(false)
-
-    /** The password form is shown instead of the PIN pad (the user switched, or the vault has no PIN). */
-    var usePassword by mutableStateOf(false)
-
-    /** The password typed so far; a String in the text field, dropped when taken or cleared (see [PasswordInput]). */
-    val password = PasswordInput()
-
-    var passwordError by mutableStateOf<StringResource?>(null)
-        private set
 
     /** How many digits the PIN had when it was sent to be checked: the dots stay full meanwhile. */
     var submittedLength by mutableIntStateOf(0)
@@ -89,43 +79,6 @@ internal class LockFormState {
     /** Forgets the typed digits. */
     fun clearPin() = pinDigits.clear()
 
-    /** The password, taken out of the form to be checked. The caller wipes the copy. */
-    fun takePassword(): CharArray = password.take()
-
-    /** Any edit of the password clears the last error. */
-    fun onPasswordEdited() {
-        passwordError = null
-    }
-
-    /** The PIN pad and the password form swap places; what was typed in the one is dropped. */
-    fun switchTo(usePassword: Boolean) {
-        clearPin()
-        password.clear()
-        pinError = null
-        passwordError = null
-        this.usePassword = usePassword
-    }
-
-    fun onPasswordResult(result: PinUnlockResult, lockoutRemainingMillis: Long) {
-        when (result) {
-            PinUnlockResult.WRONG_PIN -> {
-                passwordError = Res.string.lock_wrong_password
-                lockoutSeconds = lockoutSecondsLeft(lockoutRemainingMillis)
-            }
-
-            PinUnlockResult.DB_ERROR -> passwordError = Res.string.error_database_open
-
-            PinUnlockResult.LOCKED_OUT -> lockoutSeconds = lockoutSecondsLeft(lockoutRemainingMillis)
-
-            PinUnlockResult.KEY_LOST -> {
-                passwordError = Res.string.lock_pin_key_lost
-                phraseError = Res.string.lock_pin_key_lost
-            }
-
-            PinUnlockResult.SUCCESS, PinUnlockResult.BACKGROUNDED -> Unit
-        }
-    }
-
     fun onPinResult(result: PinUnlockResult, lockoutRemainingMillis: Long) {
         when (result) {
             PinUnlockResult.WRONG_PIN -> {
@@ -135,6 +88,8 @@ internal class LockFormState {
             }
 
             PinUnlockResult.DB_ERROR -> pinError = Res.string.error_database_open
+
+            PinUnlockResult.DEVICE_LOCKED -> pinError = Res.string.lock_device_locked
 
             PinUnlockResult.LOCKED_OUT -> lockoutSeconds = lockoutSecondsLeft(lockoutRemainingMillis)
 
@@ -153,12 +108,12 @@ internal class LockFormState {
         phraseError = null
     }
 
-    /** System back: from the recovery form to the PIN pad or password form; those themselves stay. */
+    /** System back: from the recovery form to the PIN pad; the PIN pad itself stays. */
     fun back() {
         if (useRecovery) leaveRecovery()
     }
 
-    /** Back to the PIN pad (or the password form); the typed words are dropped. */
+    /** Back to the PIN pad; the typed words are dropped. */
     fun leaveRecovery() {
         useRecovery = false
         phrase.clear()
@@ -170,6 +125,7 @@ internal class LockFormState {
         when (result) {
             SeedUnlockResult.WRONG_SEED -> phraseError = Res.string.lock_wrong_recovery_phrase
             SeedUnlockResult.DB_ERROR -> phraseError = Res.string.error_database_open
+            SeedUnlockResult.DEVICE_LOCKED -> phraseError = Res.string.lock_device_locked
             SeedUnlockResult.SUCCESS, SeedUnlockResult.BACKGROUNDED -> Unit
         }
     }

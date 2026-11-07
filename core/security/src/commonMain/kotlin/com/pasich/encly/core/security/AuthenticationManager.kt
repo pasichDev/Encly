@@ -30,12 +30,6 @@ public const val MIN_PIN_LENGTH: Int = 6
 /** The longest PIN. */
 public const val MAX_PIN_LENGTH: Int = 12
 
-/** The fewest characters a password has (Unicode code points, after NFC normalisation). */
-public const val MIN_PASSWORD_LENGTH: Int = Passwords.MIN_LENGTH
-
-/** The most characters a password has. */
-public const val MAX_PASSWORD_LENGTH: Int = Passwords.MAX_LENGTH
-
 public enum class AuthType {
     NONE,
     PIN,
@@ -97,23 +91,14 @@ public enum class WipePinChange {
     FAILED,
 }
 
-/** The outcome of setting the vault's password from Settings. */
-public enum class PasswordChange {
-    SET,
-
-    /** Shorter than [MIN_PASSWORD_LENGTH] or longer than [MAX_PASSWORD_LENGTH] characters. */
-    INVALID,
-    FAILED,
-}
-
 /**
  * What a recovery-phrase unlock asks of the user next (see [AuthenticationManager.recoveryFollowUp]).
  */
 public enum class RecoveryFollowUp {
-    /** The PIN (or password) still opens the vault: the user may keep it or set a new PIN. */
+    /** The PIN still opens the vault: the user may keep it or set a new PIN. */
     KEEP_OR_CHANGE,
 
-    /** No PIN or password slot is left that can be used (missing, lost key, locked out): a new PIN is set now. */
+    /** No PIN slot is left that can be used (missing, lost key, locked out): a new PIN is set now. */
     MUST_SET_PIN,
 }
 
@@ -175,22 +160,12 @@ public enum class WipeStage {
  * same length, so the store has the same keys and sizes either way and only the wipe PIN itself
  * can tell. Every attempt runs the KDF once and tries both slots, with no early exit.
  *
- * A password (`pin.password.slot`) is a second way to the same DEK, for a user who prefers one to a
- * PIN (or has no PIN). It is the same chain over its own salt and domain, with the same hardware key:
- *
- *     hw   = HMAC-SHA256_keystore("encly/pw/hw/v1" ‖ salt ‖ utf8(password))
- *     sw   = PBKDF2-HMAC-SHA256(password, salt, 600 000)
- *     kek  = HKDF-SHA256(ikm = sw ‖ hw, salt = salt, info = "encly/pw/kek/v1")
- *
- * It has no wipe or duress slot (those stay PIN-only) and shares the PIN's lockout counters: a guess
- * at either spends the same attempts.
- *
  * Failed attempts are counted durably *before* the KDF runs, under one lock, so killing the
  * app mid-check or racing two checks never gets a free guess. The lockout runs on
  * [LockoutClock.elapsedRealtime], not the wall clock, and escalates up to [MAX_LOCKOUT_MS].
  */
 @SingleIn(AppScope::class)
-@Suppress("TooManyFunctions", "LargeClass") // PIN, password, wipe, duress and lockout in one place.
+@Suppress("TooManyFunctions", "LargeClass") // The complete PIN slot, wipe slot and lockout lifecycle in one place.
 @Inject
 public class AuthenticationManager(
     private val store: VaultStore,
@@ -254,9 +229,7 @@ public class AuthenticationManager(
                 keyReset || keptSalt == null -> WipeSlotChange.TURN_OFF
                 else -> WipeSlotChange.KEEP
             }
-            // A password is sealed with the same device key: a key made anew cannot open it either.
-            val dropPassword = keyReset && hasPasswordSlot()
-            val written = writePinSlot(dek, keys.kek, salt, keySlot, SlotChanges(change, decoyChange, dropPassword))
+            val written = writePinSlot(dek, keys.kek, salt, keySlot, SlotChanges(change, decoyChange))
             if (written) PinChange.SET else PinChange.FAILED
         } catch (_: CryptoException) {
             PinChange.FAILED
@@ -309,163 +282,9 @@ public class AuthenticationManager(
         }
     }
 
-    /**
-     * One password attempt from the lock screen. [password] stays the caller's to wipe. Counted
-     * and locked out exactly like a PIN attempt (the same counters), and answers with the same
-     * results: [PinUnlock.Success] (the caller owns and wipes the DEK), [PinUnlock.WrongPin] for a wrong
-     * password, [PinUnlock.LockedOut], [PinUnlock.KeyLost] and [PinUnlock.Failed]. Never a decoy or an erase:
-     * the duress and wipe PINs are PIN-only.
-     */
-    public fun unlockWithPassword(password: CharArray): PinUnlock = attemptPassword(password, Purpose.UNLOCK)
-
-    /**
-     * Whether [password] is the password of the open session's vault; counts like an unlock attempt.
-     * [password] stays the caller's. In a decoy session ([decoy]) it is never checked against the real
-     * vault's slot, so that session can not be used to test guesses: the attempt is counted and refused.
-     */
-    public fun verifyPasswordAuth(password: CharArray, decoy: Boolean = false): Boolean {
-        val result = attemptPassword(password, if (decoy) Purpose.VERIFY_DECOY else Purpose.VERIFY)
-        if (result is PinUnlock.Success) SensitiveDataCleaner.clear(result.dek)
-        return result is PinUnlock.Success
-    }
-
-    /** One counted password attempt; see [unlockWithPassword] and [verifyPasswordAuth]. */
-    @Suppress("ReturnCount") // Fail-closed gates: lockout, missing slot, unrecorded attempt, unusable text.
-    private fun attemptPassword(password: CharArray, purpose: Purpose): PinUnlock = synchronized(attemptLock) {
-        if (remainingLockoutMillis() > 0) return PinUnlock.LockedOut
-        val slot = store.getBytes(PASSWORD_SLOT_KEY) ?: return PinUnlock.WrongPin
-        try {
-            val previous = Misses(store.getInt(FAILURES_KEY, 0), store.getInt(STRIKES_KEY, 0))
-            // Counted before the KDF, like a PIN attempt.
-            if (!chargeAttempt(previous.next())) return PinUnlock.Failed
-            if (purpose == Purpose.VERIFY_DECOY) return PinUnlock.WrongPin
-            val normalized = Passwords.normalize(password)
-            try {
-                if (!Passwords.isPlausible(normalized)) return PinUnlock.WrongPin
-                val parsed = PasswordSlots.parseSlot(slot) ?: return PinUnlock.WrongPin
-                try {
-                    openPasswordSlot(normalized, parsed, previous)
-                } finally {
-                    parsed.wipe()
-                }
-            } finally {
-                SensitiveDataCleaner.clear(normalized)
-            }
-        } finally {
-            SensitiveDataCleaner.clear(slot)
-        }
-    }
-
-    @Suppress("ReturnCount") // Fail-closed: a key that never answered, a wrong password, a right one.
-    private fun openPasswordSlot(normalized: CharArray, parsed: ParsedSlot, previous: Misses): PinUnlock {
-        val kek = try {
-            derivePasswordKek(normalized, parsed.salt, activeKeySlot())
-        } catch (e: PinFactorException) {
-            // Not a guess: the hardware never answered. Give the attempt back.
-            refundAttempt(previous)
-            return if (e.lost) PinUnlock.KeyLost else PinUnlock.Failed
-        }
-        return try {
-            val dek = PasswordSlots.openSlotOrNull(parsed, kek) ?: return PinUnlock.WrongPin
-            // The right password ends the lockout and clears the misses, as the right PIN does.
-            store.edit {
-                removePrefix(LOCKOUT_PREFIX)
-                remove(STRIKES_KEY)
-            }
-            PinUnlock.Success(dek)
-        } finally {
-            SensitiveDataCleaner.clear(kek)
-        }
-    }
-
-    /**
-     * Creates (or replaces) the password slot around [dek]; [password] stays the caller's to wipe.
-     * Refused with [PasswordChange.INVALID] when it is not [MIN_PASSWORD_LENGTH]..[MAX_PASSWORD_LENGTH]
-     * characters. A new salt every time, the same device key as the PIN. When that key had to be made anew
-     * (it was lost) a PIN slot sealed under the old one can never open again: it is dropped in the same write,
-     * with the wipe and duress PINs that hung on it.
-     */
-    @Suppress("ReturnCount", "CyclomaticComplexMethod") // Validation gates fail closed before any key is touched.
-    public fun changePassword(password: CharArray, dek: ByteArray): PasswordChange = synchronized(attemptLock) {
-        if (dek.size != DEK_LENGTH) return PasswordChange.FAILED
-        val normalized = Passwords.normalize(password)
-        val salt = Crypto.randomBytes(PasswordSlots.SALT_SIZE)
-        var keyReset = false
-        var kek: ByteArray? = null
-        try {
-            if (!Passwords.isAcceptable(normalized)) return PasswordChange.INVALID
-            val keySlot = activeKeySlot()
-            kek = try {
-                keyReset = factor.ensureKey(keySlot)
-                try {
-                    derivePasswordKek(normalized, salt, keySlot)
-                } catch (e: PinFactorException) {
-                    // A key the system invalidated can be replaced: what it served is lost anyway.
-                    if (!e.lost) throw e
-                    factor.reset(keySlot)
-                    keyReset = true
-                    derivePasswordKek(normalized, salt, keySlot)
-                }
-            } catch (_: PinFactorException) {
-                return PasswordChange.FAILED
-            }
-            val slot = PasswordSlots.sealSlot(dek, kek, salt)
-            val retired = if (keyReset && hasPinSlot()) retirePin(dek) else null
-            val written = try {
-                store.edit {
-                    putBytes(PASSWORD_SLOT_KEY, slot)
-                    remove(PASSWORD_NOTICE_KEY)
-                    retired?.applyTo(this)
-                    removePrefix(LOCKOUT_PREFIX)
-                    remove(STRIKES_KEY)
-                }
-            } finally {
-                SensitiveDataCleaner.clear(slot)
-                retired?.wipe()
-            }
-            return if (written) PasswordChange.SET else PasswordChange.FAILED
-        } catch (_: CryptoException) {
-            return PasswordChange.FAILED
-        } finally {
-            SensitiveDataCleaner.clear(normalized)
-            SensitiveDataCleaner.clear(salt)
-            kek?.let(SensitiveDataCleaner::clear)
-        }
-    }
-
-    /**
-     * Turns the password off. The last way to unlock stays: refused (false) while there is no PIN slot.
-     * The caller has checked who is asking (the vault is open and the PIN was just confirmed).
-     */
-    public fun removePassword(): Boolean = synchronized(attemptLock) {
-        if (!hasPinSlot()) return false
-        store.edit {
-            remove(PASSWORD_SLOT_KEY)
-            remove(PASSWORD_NOTICE_KEY)
-        }
-    }
-
-    /**
-     * Turns the PIN off, leaving the password as the way in: the PIN slot goes, and the wipe slot and the
-     * duress slot, which only the PIN can open, become random bytes again (the decoy vault keeps its notes and its
-     * duress PIN can be set again, as after a PIN key reset). Refused (false) while there is no password:
-     * the last way to unlock stays. [dek] is the open session's own key.
-     */
-    @Suppress("ReturnCount")
-    public fun removePin(dek: ByteArray): Boolean = synchronized(attemptLock) {
-        if (dek.size != DEK_LENGTH || !hasPasswordSlot()) return false
-        if (!hasPinSlot()) return true
-        val retired = retirePin(dek)
-        try {
-            store.edit { retired.applyTo(this) }
-        } finally {
-            retired.wipe()
-        }
-    }
-
     /** What a recovery-phrase unlock asks of the user next; see [RecoveryFollowUp]. */
     public fun recoveryFollowUp(): RecoveryFollowUp = synchronized(attemptLock) {
-        val usable = (hasPinSlot() || hasPasswordSlot()) &&
+        val usable = hasPinSlot() &&
             remainingLockoutMillis() <= 0L &&
             !deviceKeyLost()
         if (usable) RecoveryFollowUp.KEEP_OR_CHANGE else RecoveryFollowUp.MUST_SET_PIN
@@ -726,15 +545,6 @@ public class AuthenticationManager(
 
     public fun hasPinSlot(): Boolean = store.contains(PIN_SLOT_KEY)
 
-    /** A password slot exists (whether it can still open is only known by trying). */
-    public fun hasPasswordSlot(): Boolean = store.contains(PASSWORD_SLOT_KEY)
-
-    /**
-     * True after the device key had to be reset (see [changePin]): the password stopped working and was
-     * dropped. Settings says so until the password is set again or removed.
-     */
-    public fun passwordTurnedOff(): Boolean = store.getBoolean(PASSWORD_NOTICE_KEY, false)
-
     public fun getAuthType(): AuthType {
         val ordinal = store.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
         return AuthType.entries.getOrNull(ordinal) ?: AuthType.NONE
@@ -746,7 +556,7 @@ public class AuthenticationManager(
             AuthType.NONE -> AuthStrategy.NONE
 
             AuthType.PIN -> when {
-                !hasPinSlot() && !hasPasswordSlot() -> AuthStrategy.RECOVERY_DATA
+                !hasPinSlot() -> AuthStrategy.RECOVERY_DATA
                 biometric -> AuthStrategy.PIN_BIOMETRIC
                 else -> AuthStrategy.PIN
             }
@@ -896,9 +706,9 @@ public class AuthenticationManager(
                     putInt(KEY_SLOT_KEY, keySlot.ordinal)
                     putInt(WIPE_PENDING_KEY, WipeStage.DATABASE.ordinal)
                     remove(WIPE_NOTICE_KEY)
-                    // The password opens the erased vault's DEK: it goes with the rest.
-                    remove(PASSWORD_SLOT_KEY)
-                    remove(PASSWORD_NOTICE_KEY)
+                    // An entry of a dev build's password slot opens the erased vault's DEK: it goes too.
+                    remove(LEGACY_PASSWORD_SLOT_KEY)
+                    remove(LEGACY_PASSWORD_NOTICE_KEY)
                     remove(BIOMETRIC_ENABLED_KEY)
                     removePrefix(LOCKOUT_PREFIX)
                     remove(STRIKES_KEY)
@@ -947,7 +757,7 @@ public class AuthenticationManager(
         keySlot: PinKeySlot,
         changes: SlotChanges,
     ): Boolean {
-        val (change, decoyChange, dropPassword) = changes
+        val (change, decoyChange) = changes
         val slot = sealSlot(dek, kek, salt)
         val decoy = if (change == WipeSlotChange.KEEP) null else decoyWipeSlot()
         val duressSlot = if (decoyChange == WipeSlotChange.KEEP) null else randomSlot()
@@ -964,10 +774,9 @@ public class AuthenticationManager(
                 putInt(KEY_SLOT_KEY, keySlot.ordinal)
                 putInt(AUTH_TYPE_KEY, AuthType.PIN.ordinal)
                 if (change == WipeSlotChange.TURN_OFF_AND_TELL) putBoolean(WIPE_NOTICE_KEY, true)
-                if (dropPassword) {
-                    remove(PASSWORD_SLOT_KEY)
-                    putBoolean(PASSWORD_NOTICE_KEY, true)
-                }
+                // The password of a dev build is gone for good; its leftover entries are dropped with this write.
+                remove(LEGACY_PASSWORD_SLOT_KEY)
+                remove(LEGACY_PASSWORD_NOTICE_KEY)
                 removePrefix(LOCKOUT_PREFIX)
                 remove(STRIKES_KEY)
             }
@@ -1093,19 +902,27 @@ public class AuthenticationManager(
     private fun derivePinKeys(pin: CharArray, salt: ByteArray, keySlot: PinKeySlot): PinKeys {
         // The hardware half first: it is cheap, and a lost key fails before the PBKDF2 cost.
         val hardware = hardwareHalf(pin, salt, keySlot)
-        val stretched = pbkdf2(pin, salt)
-        val ikm = stretched + hardware
-        return try {
-            PinKeys(
+        var stretched: ByteArray? = null
+        var ikm: ByteArray? = null
+        var made = false
+        try {
+            // A throw from the KDF or the HKDF leaves nothing behind: the hardware half is wiped below, and the
+            // stretched key unless it went into the result.
+            val derived = pbkdf2(pin, salt).also { stretched = it }
+            val material = (derived + hardware).also { ikm = it }
+            val keys = PinKeys(
                 keySlot = keySlot,
-                stretched = stretched,
-                kek = Hkdf.sha256(ikm = ikm, salt = salt, info = KEK_INFO, length = DEK_LENGTH),
-                wipeKek = Hkdf.sha256(ikm = ikm, salt = salt, info = WIPE_INFO, length = DEK_LENGTH),
-                decoyKek = Hkdf.sha256(ikm = ikm, salt = salt, info = DECOY_INFO, length = DEK_LENGTH),
+                stretched = derived,
+                kek = Hkdf.sha256(ikm = material, salt = salt, info = KEK_INFO, length = DEK_LENGTH),
+                wipeKek = Hkdf.sha256(ikm = material, salt = salt, info = WIPE_INFO, length = DEK_LENGTH),
+                decoyKek = Hkdf.sha256(ikm = material, salt = salt, info = DECOY_INFO, length = DEK_LENGTH),
             )
+            made = true
+            return keys
         } finally {
             SensitiveDataCleaner.clear(hardware)
-            SensitiveDataCleaner.clear(ikm)
+            ikm?.let(SensitiveDataCleaner::clear)
+            if (!made) stretched?.let(SensitiveDataCleaner::clear)
         }
     }
 
@@ -1132,56 +949,6 @@ public class AuthenticationManager(
 
     private fun pbkdf2(pin: CharArray, salt: ByteArray): ByteArray =
         Crypto.pbkdf2HmacSha256(pin, salt, PBKDF2_ITERATIONS, DEK_LENGTH)
-
-    /**
-     * The KEK of the password slot. [PinFactorException] leaves nothing behind; the result is the caller's
-     * to wipe. [password] is already NFC-normalised.
-     */
-    private fun derivePasswordKek(password: CharArray, salt: ByteArray, keySlot: PinKeySlot): ByteArray {
-        // The hardware half first, as for the PIN: a lost key fails before the PBKDF2 cost.
-        val utf8 = Utf8.encode(password)
-        val macInput = PasswordSlots.HARDWARE_TAG + salt + utf8
-        val hardware = try {
-            factor.mac(keySlot, macInput)
-        } finally {
-            SensitiveDataCleaner.clear(utf8)
-            SensitiveDataCleaner.clear(macInput)
-        }
-        val stretched = pbkdf2(password, salt)
-        val ikm = stretched + hardware
-        return try {
-            Hkdf.sha256(ikm = ikm, salt = salt, info = PasswordSlots.KEK_INFO, length = DEK_LENGTH)
-        } finally {
-            SensitiveDataCleaner.clear(hardware)
-            SensitiveDataCleaner.clear(stretched)
-            SensitiveDataCleaner.clear(ikm)
-        }
-    }
-
-    /**
-     * What drops the PIN slot: the slot itself, and the wipe slot and duress slot (only the PIN opens them) as
-     * random bytes again, with the decoy vault's key sealed as turned off so a new duress PIN opens the same notes.
-     * [dek] is the real vault's.
-     */
-    private fun retirePin(dek: ByteArray): RetiredPin =
-        RetiredPin(wipeSlot = decoyWipeSlot(), duressSlot = randomSlot(), decoyKey = turnedOffDecoyKey(dek))
-
-    /** The entries a dropped PIN slot is replaced with; [applyTo] writes them into one store edit. */
-    private class RetiredPin(val wipeSlot: ByteArray, val duressSlot: ByteArray, val decoyKey: ByteArray) {
-        fun applyTo(editor: VaultStore.Editor) {
-            editor.remove(PIN_SLOT_KEY)
-            editor.putBytes(WIPE_SLOT_KEY, wipeSlot)
-            editor.putBytes(DECOY_SLOT_KEY, duressSlot)
-            editor.putBytes(DECOY_KEY_KEY, decoyKey)
-            editor.remove(WIPE_NOTICE_KEY)
-        }
-
-        fun wipe() {
-            SensitiveDataCleaner.clear(wipeSlot)
-            SensitiveDataCleaner.clear(duressSlot)
-            SensitiveDataCleaner.clear(decoyKey)
-        }
-    }
 
     /** Whether [decoyKek] opens the duress slot; the DEK it holds is wiped at once. */
     private fun opensDecoySlot(decoyKek: ByteArray, salt: ByteArray): Boolean {
@@ -1285,12 +1052,7 @@ public class AuthenticationManager(
     private enum class WipeSlotChange { KEEP, TURN_OFF, TURN_OFF_AND_TELL }
 
     /** What a new PIN slot does to the wipe slot and to the duress slot. */
-    private data class SlotChanges(
-        val wipe: WipeSlotChange,
-        val decoy: WipeSlotChange,
-        /** The password slot is dropped: the device key it was sealed with is gone. */
-        val dropPassword: Boolean = false,
-    )
+    private data class SlotChanges(val wipe: WipeSlotChange, val decoy: WipeSlotChange)
 
     public companion object {
         private const val PIN_PREFIX = "pin."
@@ -1299,13 +1061,11 @@ public class AuthenticationManager(
         private const val WIPE_NOTICE_KEY = "pin.wipe.notice"
 
         /**
-         * The password slot. Under `pin.` on purpose: an older build that wipes the PIN state drops it too, so no
-         * slot is left behind for a vault it re-created.
+         * Entries of a password slot that only dev builds wrote (under `pin.` so that an old wipe dropped it too).
+         * Nothing reads them: a vault that has them opens with its PIN as before, and the next PIN write drops them.
          */
-        private const val PASSWORD_SLOT_KEY = "pin.password.slot"
-
-        /** Set when the device key was reset and the password with it; cleared by setting or removing the password. */
-        private const val PASSWORD_NOTICE_KEY = "pin.password.notice"
+        private const val LEGACY_PASSWORD_SLOT_KEY = "pin.password.slot"
+        private const val LEGACY_PASSWORD_NOTICE_KEY = "pin.password.notice"
         private const val KEY_SLOT_KEY = "pin.key_slot"
         private const val WIPE_PENDING_KEY = "wipe.pending"
         private const val DECOY_SLOT_KEY = "pin.decoy.slot"

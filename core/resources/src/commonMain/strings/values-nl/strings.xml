@@ -132,7 +132,7 @@
     <string name="faq_change_pin_q">Hoe wijzig ik mijn pincode?</string>
     <string name="faq_db_key_a">Encly maakt een willekeurige databasesleutel van 256 bits. Je pincode beschermt een afzonderlijk AES-GCM-ontgrendelslot en biometrie gebruikt een Android Keystore-sleutel die bij elk gebruik verificatie vereist.</string>
     <string name="faq_db_key_q">Hoe is de databasesleutel beveiligd?</string>
-    <string name="faq_forgot_pin_a">Tik op het vergrendelscherm op ‘Toegang herstellen’ en voer je 12 woorden in. Werkt je pincode of wachtwoord nog, dan kun je die behouden of een nieuwe pincode instellen; zo niet, dan stel je meteen een nieuwe pincode in. Zonder herstelzin is er geen andere weg naar binnen: niemand, ook de ontwikkelaar niet, kan hem resetten.</string>
+    <string name="faq_forgot_pin_a">Tik op het vergrendelscherm op ‘Toegang herstellen’ en voer je 12 woorden in. Werkt je pincode nog, dan kun je die behouden of een nieuwe pincode instellen; zo niet, dan stel je meteen een nieuwe pincode in. Zonder herstelzin is er geen andere weg naar binnen: niemand, ook de ontwikkelaar niet, kan hem resetten.</string>
     <string name="faq_forgot_pin_q">Wat als ik mijn pincode vergeet?</string>
     <string name="faq_language_a">Open Instellingen → Taal en kies een van de beschikbare talen, of \'Systeemstandaard\' om de taal van je apparaat te volgen. De wijziging gaat meteen in.</string>
     <string name="faq_language_q">Hoe wijzig ik de taal?</string>
@@ -689,8 +689,6 @@
     <string name="whats_new_row_desc">De wijzigingen in deze versie</string>
     <string name="whats_new_dismiss">Begrepen</string>
     <string name="trash_auto_delete_hint">Notities worden na 28 dagen in de prullenbak definitief verwijderd.</string>
-    <string name="faq_password_q">Kan ik met een wachtwoord ontgrendelen in plaats van met een pincode?</string>
-    <string name="faq_password_a">Ja. Onder Instellingen → Beveiliging → Wachtwoord kun je een wachtwoord van minstens 8 tekens toevoegen, in elke taal. Het werkt naast je pincode: op het vergrendelscherm wissel je tussen beide en elk ontgrendelt zelfstandig. Ze delen dezelfde limiet voor foute pogingen en dezelfde bescherming door de sleutel van het apparaat. De wis-pincode en de dwangpincode blijven pincodes. Je kunt een van beide verwijderen zolang de ander is ingesteld.</string>
     <string name="faq_pin_length_q">Hoe lang mag mijn pincode zijn?</string>
     <string name="faq_pin_length_a">Tussen 6 en 12 cijfers, naar keuze. Kortere pincodes worden niet aangeboden: de blokkade en de sleutel van het apparaat beperken het aantal pogingen, en 6 cijfers is het kortste dat daarmee veilig blijft. Het vergrendelscherm toont nooit hoe lang je pincode is: je tikt op ‘Ontgrendelen’ als je klaar bent, en hetzelfde geldt voor de wis-pincode en de dwangpincode. Pincodes die je eerder instelde, blijven gewoon werken.</string>
     <string name="block_code">Code</string>

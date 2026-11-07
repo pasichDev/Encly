@@ -54,20 +54,6 @@ class DesktopPinFactorTest {
     }
 
     @Test
-    fun theSameKeyAlsoServesThePasswordSlotWhoseInputIsLongerAndNotJustNumbers() {
-        // The password slot signs `tag ‖ salt ‖ UTF-8 password` under the PIN's key slot: any bytes, any length.
-        factor.ensureKey(PinKeySlot.A)
-        val password = "Pässwörd-日本語-🔑".toByteArray(Charsets.UTF_8)
-        val input = "encly/pw/hw/v1".toByteArray(Charsets.UTF_8) + salt + password
-
-        val hw = factor.mac(PinKeySlot.A, input)
-
-        assertContentEquals(referenceHmac(store.peek(PinKeySlot.A)!!, input), hw)
-        assertNotEquals(factor.mac(PinKeySlot.A, data).toHex(), hw.toHex())
-        assertContentEquals(hw, factor.mac(PinKeySlot.A, input))
-    }
-
-    @Test
     fun macOfTheRealRandomSecretMatchesAPlainJavaxCryptoHMAC() {
         factor.ensureKey(PinKeySlot.A)
 

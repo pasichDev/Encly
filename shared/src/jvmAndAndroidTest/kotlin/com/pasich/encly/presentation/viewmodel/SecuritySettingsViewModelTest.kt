@@ -12,11 +12,9 @@ import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
-import com.pasich.encly.core.security.PasswordChange
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
-import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.TestScreen
@@ -208,116 +206,6 @@ class SecuritySettingsViewModelTest {
 
         `when`(security.pinLockoutRemainingMillis()).thenReturn(LOCKOUT_MS)
         assertEquals(LOCKOUT_MS, viewModel.pinLockoutRemainingMillis())
-    }
-
-    @Test
-    fun thePasswordStateIsReadFromTheVaultAndPasswordOnlyHasNoPinToAskFor() = runTest {
-        `when`(security.getSettingsAuth()).thenReturn(
-            AuthSettings(
-                AuthType.PIN,
-                false,
-                false,
-                hasPinSlot = false,
-                hasPassword = true,
-                passwordTurnedOff = false,
-            ),
-        )
-        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = false, password = true))
-
-        viewModel.refresh()
-
-        val state = viewModel.uiState.first { it.hasPassword }
-        assertFalse(state.hasPinSlot)
-        assertFalse(viewModel.hasPinSlot())
-    }
-
-    @Test
-    fun aPasswordTurnedOffByAKeyResetIsReported() = runTest {
-        `when`(security.getSettingsAuth()).thenReturn(
-            AuthSettings(AuthType.PIN, false, false, passwordTurnedOff = true),
-        )
-
-        viewModel.refresh()
-
-        assertTrue(viewModel.uiState.first { it.passwordTurnedOff }.passwordTurnedOff)
-    }
-
-    @Test
-    fun theCurrentPasswordIsCheckedAndWipedLikeAPin() = runTest {
-        `when`(security.verifyPassword(anyCharArray())).thenReturn(true)
-        val typed = "correct horse".toCharArray()
-        val result = CompletableDeferred<Boolean>()
-
-        viewModel.verifyCurrentPassword(typed) { result.complete(it) }
-
-        assertTrue(result.await())
-        verify(security).verifyPassword(anyCharArray())
-    }
-
-    @Test
-    fun aNewPasswordIsHandedOnAndMarksThePasswordAsSet() = runTest {
-        `when`(security.changePassword(anyCharArray())).thenReturn(PasswordChange.SET)
-        val result = CompletableDeferred<PasswordChange>()
-
-        viewModel.setPassword("correct horse".toCharArray()) { result.complete(it) }
-
-        assertEquals(PasswordChange.SET, result.await())
-        assertTrue(viewModel.uiState.value.hasPassword)
-        assertFalse(viewModel.uiState.value.passwordTurnedOff)
-    }
-
-    @Test
-    fun aRefusedPasswordLeavesTheStateAlone() = runTest {
-        `when`(security.changePassword(anyCharArray())).thenReturn(PasswordChange.INVALID)
-        val result = CompletableDeferred<PasswordChange>()
-
-        viewModel.setPassword("short".toCharArray()) { result.complete(it) }
-
-        assertEquals(PasswordChange.INVALID, result.await())
-        assertFalse(viewModel.uiState.value.hasPassword)
-    }
-
-    @Test
-    fun removingThePasswordUpdatesTheState() = runTest {
-        `when`(security.changePassword(anyCharArray())).thenReturn(PasswordChange.SET)
-        `when`(security.removePassword()).thenReturn(true)
-        viewModel.setPassword("correct horse".toCharArray()) {}
-        val result = CompletableDeferred<Boolean>()
-
-        viewModel.removePassword { result.complete(it) }
-
-        assertTrue(result.await())
-        assertFalse(viewModel.uiState.value.hasPassword)
-    }
-
-    @Test
-    fun theLastWayInIsReportedAsNotRemoved() = runTest {
-        `when`(security.removePassword()).thenReturn(false)
-        `when`(security.removePin()).thenReturn(false)
-        val password = CompletableDeferred<Boolean>()
-        val pin = CompletableDeferred<Boolean>()
-
-        viewModel.removePassword { password.complete(it) }
-        viewModel.removePin { pin.complete(it) }
-
-        assertFalse(password.await())
-        assertFalse(pin.await())
-    }
-
-    @Test
-    fun removingThePinReloadsWhatItTookWithIt() = runTest {
-        `when`(security.removePin()).thenReturn(true)
-        `when`(security.getSettingsAuth()).thenReturn(
-            AuthSettings(AuthType.PIN, false, false, hasPinSlot = false, hasPassword = true, duressPinTurnedOff = true),
-        )
-        val result = CompletableDeferred<Boolean>()
-
-        viewModel.removePin { result.complete(it) }
-
-        assertTrue(result.await())
-        val state = viewModel.uiState.first { it.duressPinTurnedOff }
-        assertFalse(state.hasPinSlot)
-        assertFalse(state.hasDuressPin)
     }
 
     @Test

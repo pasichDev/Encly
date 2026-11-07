@@ -12,12 +12,10 @@ import com.pasich.encly.core.resources.backup_export_done
 import com.pasich.encly.core.resources.backup_phrase_added
 import com.pasich.encly.core.resources.backup_phrase_check_wrong
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
-import com.pasich.encly.core.resources.lock_wrong_password
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.security_recovery_replaced
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
-import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
@@ -50,16 +48,14 @@ sealed interface BackupStep {
     data object Idle : BackupStep
 
     /**
-     * Re-authentication (PIN or password, or biometric when enabled) before any export or import. [failures]
-     * counts wrong secrets, so each one shakes the dots, even with the same error.
+     * Re-authentication (PIN, or biometric when enabled) before any export or import. [failures]
+     * counts wrong PINs, so each one shakes the dots, even with the same error.
      */
     data class Reauth(
         val action: BackupAction,
         val biometric: Boolean,
         val error: StringResource? = null,
         val failures: Int = 0,
-        /** Which secrets the vault has: the dialog asks for the PIN, or the password, or lets the user pick. */
-        val methods: UnlockMethods = UnlockMethods(pin = true, password = false),
     ) : BackupStep
 
     /** Export needs a recovery phrase and this vault has none: explain and offer to create it. */
@@ -183,7 +179,7 @@ internal fun <T> withNormalizedPhrase(backupManager: BackupManager, input: CharA
 }
 
 /**
- * Re-authentication before any export or import: the PIN or the password, or biometric when enabled.
+ * Re-authentication before any export or import: the PIN, or biometric when enabled.
  * [onAuthenticated] continues the flow that was started.
  */
 class ReauthFlow(
@@ -217,24 +213,6 @@ class ReauthFlow(
                 onAuthenticated(step.action)
             } else {
                 state.go(step.copy(error = Res.string.lock_wrong_pin, failures = step.failures + 1))
-            }
-        }
-    }
-
-    /** [submitPin] for a password; counted with the PIN's attempts and locked out with them. */
-    fun submitPassword(password: CharArray) {
-        val step = state.step as? BackupStep.Reauth
-        if (step == null || pinLockoutRemainingMillis() > 0L) {
-            SensitiveDataCleaner.clear(password)
-            if (step != null) state.go(step.copy(error = null))
-            return
-        }
-        state.launchBusy {
-            val ok = withContext(Dispatchers.Default) { securityManager.verifyPassword(password) }
-            if (ok) {
-                onAuthenticated(step.action)
-            } else {
-                state.go(step.copy(error = Res.string.lock_wrong_password, failures = step.failures + 1))
             }
         }
     }

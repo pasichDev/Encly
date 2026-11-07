@@ -18,8 +18,8 @@ backup and, only when you ask for it, a readable Markdown export that is not enc
 ## Features
 
 - 🔒 **Encrypted at rest** — Room on SQLCipher with a random 256-bit database key.
-- 🔐 **Mandatory lock** — a PIN of 6 to 12 digits bound to the phone's Android Keystore, an optional
-  password as another way in, and optional Class 3 biometric unlock.
+- 🔐 **Mandatory lock** — a PIN of 6 to 12 digits bound to the phone's Android Keystore, plus optional
+  Class 3 biometric unlock.
 - ⏱️ **Auto-lock** — the database closes and its key is wiped after you leave the app
   (immediately up to 2 minutes, 15 s by default) and at once when the screen turns off.
 - 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN.

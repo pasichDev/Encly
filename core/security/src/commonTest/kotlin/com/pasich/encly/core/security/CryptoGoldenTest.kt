@@ -419,84 +419,6 @@ class CryptoGoldenTest {
         assertEquals(PinUnlock.WrongPin, wrong)
     }
 
-    // --- Password slot ---------------------------------------------------------------------
-
-    @Test
-    fun theGoldenPasswordSlotOpensWithItsKek() {
-        val parsed = PasswordSlots.parseSlot(GoldenVectors.passwordSlot)!!
-
-        assertContentEquals(salt, parsed.salt)
-        assertContentEquals(dek, PasswordSlots.openSlotOrNull(parsed, kek))
-        assertNull(PasswordSlots.openSlotOrNull(parsed, wipeKek))
-    }
-
-    @Test
-    fun aSealedPasswordSlotHasTheDocumentedLayoutAndOpensWithAnIndependentImplementation() {
-        val slot = PasswordSlots.sealSlot(dek, kek, salt)
-
-        assertEquals(1 + 16 + 12 + 32 + 16, slot.size)
-        assertEquals(1, slot[0].toInt())
-        assertContentEquals(salt, slot.copyOfRange(1, 17))
-        val aad = "encly/pw/slot/v1".encodeToByteArray() + byteArrayOf(1) + salt
-        assertContentEquals(dek, Reference.gcmOpen(kek, slot.copyOfRange(17, 29), aad, slot.copyOfRange(29, slot.size)))
-        assertFalse(slot.contentEquals(PasswordSlots.sealSlot(dek, kek, salt)))
-    }
-
-    @Test
-    fun thePasswordKekIsTheHkdfOfThePbkdf2AndDeviceHalves() {
-        val derived = Hkdf.sha256(
-            GoldenVectors.passwordSw + GoldenVectors.passwordHw,
-            salt,
-            "encly/pw/kek/v1".encodeToByteArray(),
-            32,
-        )
-
-        assertContentEquals(GoldenVectors.passwordKek, derived)
-        val chain = PasswordSlots.parseSlot(GoldenVectors.chainPasswordSlot)!!
-        assertContentEquals(dek, PasswordSlots.openSlotOrNull(chain, derived))
-    }
-
-    @Test
-    fun aPinSlotAndAPasswordSlotAreNotInterchangeable() {
-        // Different version byte and size rules: neither parser takes the other's slot.
-        assertNull(PasswordSlots.parseSlot(GoldenVectors.pinSlot))
-        assertNull(PinSlots.parseSlot(GoldenVectors.passwordSlot))
-        // Even with the version byte changed the AAD keeps them apart.
-        val relabelled = GoldenVectors.pinSlot.copyOf().also { it[0] = 1 }
-        assertNull(PasswordSlots.openSlotOrNull(PasswordSlots.parseSlot(relabelled)!!, kek))
-        val relabelledBack = GoldenVectors.passwordSlot.copyOf().also { it[0] = 3 }
-        assertNull(PinSlots.openSlotOrNull(PinSlots.parseSlot(relabelledBack)!!, kek))
-    }
-
-    @Test
-    fun theGoldenPasswordSlotsUnlockThroughTheFullKdfChain() {
-        val store = VaultStore(InMemoryVaultFileIo())
-        store.edit { putBytes("pin.password.slot", GoldenVectors.chainPasswordSlot) }
-        val manager = AuthenticationManager(store, FixedKeyFactor(hardwareKey), FakeLockoutClock())
-
-        val composed = manager.unlockWithPassword(UNICODE_PASSWORD.toCharArray())
-        // The same word typed with combining marks is the same password (NFC).
-        val decomposed = manager.unlockWithPassword(UNICODE_PASSWORD_DECOMPOSED.toCharArray())
-        val wrong = manager.unlockWithPassword("P\u00e4ssw\u00f6rd".toCharArray())
-
-        assertContentEquals(dek, (composed as PinUnlock.Success).dek)
-        assertContentEquals(dek, (decomposed as PinUnlock.Success).dek)
-        assertEquals(PinUnlock.WrongPin, wrong)
-    }
-
-    @Test
-    fun theGoldenAsciiPasswordSlotUnlocksThroughTheFullKdfChain() {
-        val store = VaultStore(InMemoryVaultFileIo())
-        store.edit { putBytes("pin.password.slot", GoldenVectors.chainAsciiPasswordSlot) }
-        val manager = AuthenticationManager(store, FixedKeyFactor(hardwareKey), FakeLockoutClock())
-
-        val opened = manager.unlockWithPassword("correct horse battery".toCharArray())
-        val wrong = manager.unlockWithPassword("correct horse batterz".toCharArray())
-
-        assertContentEquals(dek, (opened as PinUnlock.Success).dek)
-        assertEquals(PinUnlock.WrongPin, wrong)
-    }
-
     private class FixedKeyFactor(private val key: ByteArray) : PinHardwareFactor {
         override fun ensureKey(slot: PinKeySlot) = false
 
@@ -552,9 +474,5 @@ class CryptoGoldenTest {
         const val MESSY_PHRASE =
             "  ABANDON  abandon\tabandon abandon abandon abandon abandon abandon abandon abandon abandon\nAbout "
         const val OTHER_PHRASE = "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong"
-
-        // "Pässwörd-日本語-🔑" as typed by a keyboard that composes, and as one that sends combining marks.
-        const val UNICODE_PASSWORD = "P\u00e4ssw\u00f6rd-\u65e5\u672c\u8a9e-\uD83D\uDD11"
-        const val UNICODE_PASSWORD_DECOMPOSED = "Pa\u0308sswo\u0308rd-\u65e5\u672c\u8a9e-\uD83D\uDD11"
     }
 }

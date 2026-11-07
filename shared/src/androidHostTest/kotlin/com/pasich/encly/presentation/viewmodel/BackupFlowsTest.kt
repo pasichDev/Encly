@@ -13,7 +13,6 @@ import com.pasich.encly.core.security.RecoveryWords
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
@@ -72,7 +71,6 @@ class BackupFlowsTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         security = mock(SecurityManager::class.java)
-        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = true, password = false))
         `when`(security.verifyPin(anyCharArray())).thenAnswer { String(it.getArgument<CharArray>(0)) == PIN }
         `when`(security.hasRecoverySeed()).thenReturn(true)
         `when`(security.hasBackupKey()).thenReturn(true)
@@ -144,35 +142,6 @@ class BackupFlowsTest {
 
         waitFor { (it as? BackupStep.Reauth)?.error != null }
         verify(security, never()).copyBackupRootKey()
-    }
-
-    @Test
-    fun aVaultWithOnlyAPasswordIsAskedForItAndAWrongOneNeverSeals() {
-        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = false, password = true))
-        `when`(security.verifyPassword(anyCharArray())).thenAnswer { String(it.getArgument<CharArray>(0)) == PASSWORD }
-
-        viewModel.start(BackupAction.EXPORT)
-        assertEquals(UnlockMethods(pin = false, password = true), (state().step as BackupStep.Reauth).methods)
-        viewModel.reauthFlow.submitPassword("not the password".toCharArray())
-
-        waitFor { (it as? BackupStep.Reauth)?.error != null }
-        verify(security, never()).copyBackupRootKey()
-
-        viewModel.reauthFlow.submitPassword(PASSWORD.toCharArray())
-
-        waitFor { it == BackupStep.PickExportTarget }
-        verify(security, never()).verifyPin(anyCharArray())
-    }
-
-    @Test
-    fun aPasswordDuringALockoutIsNotCheckedAndSaysNothingWrong() {
-        `when`(security.pinLockoutRemainingMillis()).thenReturn(30_000L)
-
-        viewModel.start(BackupAction.EXPORT)
-        viewModel.reauthFlow.submitPassword(PASSWORD.toCharArray())
-
-        verify(security, never()).verifyPassword(anyCharArray())
-        assertNull((state().step as BackupStep.Reauth).error)
     }
 
     @Test
@@ -516,7 +485,6 @@ class BackupFlowsTest {
 
     private companion object {
         const val PIN = "482915"
-        const val PASSWORD = "correct horse battery"
         const val TIMEOUT_MS = 10_000L
         const val POLL_MS = 10L
     }

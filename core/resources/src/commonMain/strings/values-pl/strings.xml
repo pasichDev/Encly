@@ -132,7 +132,7 @@
     <string name="faq_change_pin_q">Jak zmienić PIN?</string>
     <string name="faq_db_key_a">Encly tworzy losowy 256-bitowy klucz bazy danych. PIN chroni osobny slot odblokowania AES-GCM, a biometria korzysta z klucza Android Keystore, który wymaga uwierzytelnienia przy każdym użyciu.</string>
     <string name="faq_db_key_q">Jak chroniony jest klucz bazy danych?</string>
-    <string name="faq_forgot_pin_a">Na ekranie blokady stuknij „Odzyskaj dostęp” i wpisz 12 słów. Jeśli twój PIN lub hasło nadal działa, możesz je zachować albo ustawić nowy PIN; jeśli nie, od razu ustawiasz nowy PIN. Bez frazy odzyskiwania nie ma innej drogi: nikt, nawet twórca aplikacji, nie może jej zresetować.</string>
+    <string name="faq_forgot_pin_a">Na ekranie blokady stuknij „Odzyskaj dostęp” i wpisz 12 słów. Jeśli twój PIN nadal działa, możesz go zachować albo ustawić nowy PIN; jeśli nie, od razu ustawiasz nowy PIN. Bez frazy odzyskiwania nie ma innej drogi: nikt, nawet twórca aplikacji, nie może jej zresetować.</string>
     <string name="faq_forgot_pin_q">Co jeśli zapomnę PIN-u?</string>
     <string name="faq_language_a">Otwórz Ustawienia → Język i wybierz jeden z dostępnych języków albo „Domyślny systemu”, aby używać języka urządzenia. Zmiana działa od razu.</string>
     <string name="faq_language_q">Jak zmienić język?</string>
@@ -701,8 +701,6 @@
     <string name="whats_new_row_desc">Zmiany w tej wersji</string>
     <string name="whats_new_dismiss">Rozumiem</string>
     <string name="trash_auto_delete_hint">Notatki są trwale usuwane po 28 dniach w koszu.</string>
-    <string name="faq_password_q">Czy mogę odblokowywać hasłem zamiast PIN-em?</string>
-    <string name="faq_password_a">Tak. W Ustawienia → Bezpieczeństwo → Hasło możesz dodać hasło z co najmniej 8 znaków, w dowolnym języku. Działa obok PIN-u: na ekranie blokady przełączasz się między nimi, a każde odblokowuje samodzielnie. Oba mają ten sam limit błędnych prób i tę samą ochronę kluczem urządzenia. PIN kasujący i PIN przymusowy pozostają wyłącznie kodami PIN. Możesz usunąć jedno z nich, dopóki drugie jest ustawione.</string>
     <string name="faq_pin_length_q">Jak długi może być mój PIN?</string>
     <string name="faq_pin_length_a">Od 6 do 12 cyfr, do wyboru. Krótszych PIN-ów nie oferujemy: blokada i klucz urządzenia ograniczają liczbę prób, a 6 cyfr to najkrótszy PIN, który przy tych ograniczeniach pozostaje bezpieczny. Ekran blokady nigdy nie pokazuje długości PIN-u: po wpisaniu stukasz „Odblokuj”, tak samo w przypadku PIN-u kasującego i przymusowego. PIN-y ustawione wcześniej działają bez zmian.</string>
     <string name="block_code">Kod</string>

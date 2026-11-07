@@ -42,7 +42,8 @@
         <item quantity="other">%d тега</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Ваші PIN і пароль більше не можуть розблокувати Encly на цьому телефоні: їхній апаратний ключ скинуто. Скористайтеся фразою відновлення (або відбитком пальця), а потім задайте новий PIN.</string>
+    <string name="lock_pin_key_lost">Ваш PIN більше не може розблокувати Encly на цьому телефоні: його апаратний ключ скинуто. Скористайтеся фразою відновлення (або відбитком пальця), а потім задайте новий PIN.</string>
+    <string name="lock_device_locked">Пристрій повідомляє, що він досі заблокований, тому Encly залишився закритим. Розблокуйте пристрій і спробуйте ще раз.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Забагато спроб. Спробуйте через %d хвилину</item>
         <item quantity="few">Забагато спроб. Спробуйте через %d хвилини</item>
@@ -143,47 +144,8 @@
     <string name="security_previews_desc">Список нотаток показує перші рядки кожної нотатки. Вимкніть, щоб бачити лише заголовок, мітку й дату; пошук і далі знаходить увесь текст.</string>
     <string name="pin_digits_count">Введено цифр: %1$d</string>
     <string name="lock_unlock">Розблокувати</string>
-    <string name="lock_use_password">Використати пароль</string>
-    <string name="lock_use_pin">Використати PIN</string>
-    <string name="lock_password_subtitle">Введіть пароль, щоб продовжити</string>
-    <string name="lock_password_label">Пароль</string>
-    <string name="lock_wrong_password">Неправильний пароль</string>
-    <string name="password_title">Пароль</string>
-    <string name="password_intro">Пароль — ще один спосіб розблокувати Encly поряд із PIN. Кожен із них відкриває сховище самостійно, а помилкові спроби з будь-яким із них враховуються в одному й тому самому блокуванні. Використайте щонайменше 8 символів; добре підходить кілька слів поспіль.</string>
-    <string name="password_pin_only_note">PIN для стирання та PIN під примусом залишаються лише PIN-кодами: пароль не може бути жодним із них.</string>
-    <string name="password_turned_off">Ключ пристрою було скинуто, тож пароль перестав працювати й був видалений. Задайте його знову, якщо він вам потрібен.</string>
-    <string name="password_set">Задати пароль</string>
-    <string name="password_change">Змінити пароль</string>
-    <string name="password_remove">Видалити пароль</string>
-    <string name="password_remove_confirm_title">Видалити пароль?</string>
-    <string name="password_remove_confirm_body">Encly розблоковуватиметься лише за допомогою PIN.</string>
-    <string name="password_remove_confirm">Видалити</string>
-    <string name="password_removed">Пароль видалено</string>
-    <string name="password_saved">Пароль збережено</string>
-    <string name="password_failed">Не вдалося зберегти пароль. Нічого не змінено.</string>
-    <string name="password_too_short">Використайте від 8 до 128 символів</string>
-    <string name="password_mismatch">Паролі не збігаються</string>
-    <string name="password_new_label">Новий пароль</string>
-    <string name="password_confirm_label">Повторіть пароль</string>
-    <string name="password_save">Зберегти пароль</string>
-    <string name="password_edit_title">Оберіть пароль</string>
-    <string name="password_current_title">Введіть свій пароль</string>
-    <string name="password_current_subtitle">Підтвердьте пароль, перш ніж змінювати спосіб розблокування Encly</string>
-    <string name="password_current_wrong">Пароль неправильний</string>
-    <string name="pin_remove">Видалити PIN</string>
-    <string name="pin_remove_confirm_title">Видалити PIN?</string>
-    <string name="pin_remove_confirm_body">Encly розблоковуватиметься лише паролем. PIN для стирання та PIN під примусом потребують PIN, тому їх також буде вимкнено; підставне сховище збереже свої нотатки. Введіть пароль, щоб переконатися, що він працює.</string>
-    <string name="pin_remove_confirm">Видалити PIN</string>
-    <string name="pin_removed">PIN видалено</string>
-    <string name="pin_remove_failed">Не вдалося видалити PIN. Нічого не змінено.</string>
-    <string name="password_row_on">Задано. Натисніть, щоб змінити або видалити.</string>
-    <string name="password_row_off">Не задано. Додайте ще один спосіб розблокування.</string>
-    <string name="password_row_turned_off">Перестав працювати після скидання ключа пристрою. Натисніть, щоб задати знову.</string>
-    <string name="auth_method_pin_none">PIN не задано. Натисніть, щоб додати.</string>
     <string name="recovery_choice_title">Фразу відновлення прийнято</string>
     <string name="recovery_choice_body_pin">Ваш PIN усе ще працює. Залиште його або задайте новий.</string>
-    <string name="recovery_choice_body_password">Ваш пароль усе ще працює. Залиште його або задайте PIN.</string>
     <string name="recovery_keep_pin">Залишити мій PIN</string>
-    <string name="recovery_keep_password">Залишити мій пароль</string>
     <string name="recovery_set_new_pin">Задати новий PIN</string>
 </resources>

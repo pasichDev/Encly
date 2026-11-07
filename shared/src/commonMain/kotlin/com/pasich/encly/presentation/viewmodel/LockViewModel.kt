@@ -9,7 +9,6 @@ import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.platform.ScreenBiometricHost
 import dev.zacsweers.metro.AppScope
@@ -30,13 +29,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The result of a PIN or a password attempt (WRONG_PIN: the wrong secret of either kind).
+ * The result of a PIN attempt.
  * BACKGROUNDED: the credential was right, but the app left the foreground before the vault
  * finished opening, so SessionLockManager closed it again. The lock screen stays; no error.
- * KEY_LOST: the device-bound key is gone; only the recovery phrase (or fingerprint) unlocks.
+ * KEY_LOST: the device-bound PIN key is gone; only the recovery phrase (or fingerprint) unlocks.
+ * DEVICE_LOCKED: the credential was right, but the operating system reports the screen as locked, so the vault was
+ * closed again; the lock screen says so.
  */
-enum class PinUnlockResult { SUCCESS, WRONG_PIN, LOCKED_OUT, KEY_LOST, DB_ERROR, BACKGROUNDED }
-enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED }
+enum class PinUnlockResult { SUCCESS, WRONG_PIN, LOCKED_OUT, KEY_LOST, DB_ERROR, BACKGROUNDED, DEVICE_LOCKED }
+enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED, DEVICE_LOCKED }
 
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 @ViewModelKey
@@ -83,9 +84,6 @@ class LockViewModel(
      */
     fun recoveryStage(): RecoveryStage = securityManager.recoveryStage()
 
-    /** Which of the PIN and the password this vault has; the lock screen offers each that is set. */
-    fun unlockMethods(): UnlockMethods = securityManager.unlockMethods()
-
     /** Whether the session is closed (again); an unlock reveal then must not open Home. */
     fun isSessionLocked(): Boolean = sessionLockManager.locked.value
 
@@ -110,23 +108,12 @@ class LockViewModel(
             }
             // The rest of a wipe-PIN erase (if that was one) runs while the vault is revealed.
             if (result == PinUnlockResult.SUCCESS) appScope.launch { securityManager.completePendingWipe() }
-            publish(result == PinUnlockResult.SUCCESS, result, PinUnlockResult.BACKGROUNDED)
-        }
-    }
-
-    /** Unlocks with [password], which is wiped. Counted and locked out together with the PIN. */
-    fun authenticatePassword(password: CharArray, onResult: (PinUnlockResult) -> Unit) {
-        launchUnlock(onResult) {
-            val result = withContext(Dispatchers.Default) {
-                when (securityManager.unlockWithPassword(password)) {
-                    VaultUnlockResult.SUCCESS -> PinUnlockResult.SUCCESS
-                    VaultUnlockResult.INVALID_CREDENTIAL -> PinUnlockResult.WRONG_PIN
-                    VaultUnlockResult.LOCKED_OUT -> PinUnlockResult.LOCKED_OUT
-                    VaultUnlockResult.PIN_KEY_LOST -> PinUnlockResult.KEY_LOST
-                    VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
-                }
-            }
-            publish(result == PinUnlockResult.SUCCESS, result, PinUnlockResult.BACKGROUNDED)
+            publish(
+                result == PinUnlockResult.SUCCESS,
+                result,
+                PinUnlockResult.BACKGROUNDED,
+                PinUnlockResult.DEVICE_LOCKED,
+            )
         }
     }
 
@@ -147,7 +134,12 @@ class LockViewModel(
                     SensitiveDataCleaner.clear(chars)
                 }
             }
-            publish(result == SeedUnlockResult.SUCCESS, result, SeedUnlockResult.BACKGROUNDED)
+            publish(
+                result == SeedUnlockResult.SUCCESS,
+                result,
+                SeedUnlockResult.BACKGROUNDED,
+                SeedUnlockResult.DEVICE_LOCKED,
+            )
         }
     }
 
@@ -175,7 +167,7 @@ class LockViewModel(
                             SensitiveDataCleaner.clear(dek)
                         }
                     }
-                    publish(ok, ok, false)
+                    publish(ok, ok, false, false)
                 }
             }
         }
@@ -206,9 +198,10 @@ class LockViewModel(
     private inner class UnlockScope(private val owner: Job, private val lockRequests: Long) {
         /**
          * The unlock [succeeded]: publish it if the app is in front and the screen still
-         * exists, otherwise close the vault again and report [backgrounded].
+         * exists, otherwise close the vault again and report [backgrounded], or [deviceLocked] when the
+         * operating system's lock is what refused it.
          */
-        fun <T> publish(succeeded: Boolean, result: T, backgrounded: T): T = when {
+        fun <T> publish(succeeded: Boolean, result: T, backgrounded: T, deviceLocked: T): T = when {
             !succeeded -> result
 
             !owner.isActive -> {
@@ -217,6 +210,8 @@ class LockViewModel(
             }
 
             sessionLockManager.onUnlocked(lockRequests) -> result
+
+            sessionLockManager.isDeviceLocked() -> deviceLocked
 
             else -> backgrounded
         }

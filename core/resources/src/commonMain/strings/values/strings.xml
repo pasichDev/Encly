@@ -149,7 +149,7 @@
     <string name="faq_change_pin_q">How do I change my PIN?</string>
     <string name="faq_db_key_a">Encly creates a random 256-bit database key. Your PIN protects a separate AES-GCM unlock slot, and biometrics use an auth-per-use Android Keystore key.</string>
     <string name="faq_db_key_q">How is the database key protected?</string>
-    <string name="faq_forgot_pin_a">On the lock screen, tap \"Recover access\" and enter your 12 words. If your PIN or password still works, you can keep it or set a new PIN; if not, you set a new PIN right away. Without a recovery phrase there is no other way in: nobody, not even the developer, can reset it.</string>
+    <string name="faq_forgot_pin_a">On the lock screen, tap \"Recover access\" and enter your 12 words. If your PIN still works, you can keep it or set a new PIN; if not, you set a new PIN right away. Without a recovery phrase there is no other way in: nobody, not even the developer, can reset it.</string>
     <string name="faq_forgot_pin_q">What if I forget my PIN?</string>
     <string name="faq_language_a">Open Settings → Language and pick one of the available languages, or \"System default\" to follow your device. The change applies right away.</string>
     <string name="faq_language_q">How do I change the language?</string>
@@ -707,8 +707,6 @@
     <string name="whats_new_row_desc">The changes in this version</string>
     <string name="whats_new_dismiss">Got it</string>
     <string name="trash_auto_delete_hint">Notes are deleted for good after 28 days in the trash.</string>
-    <string name="faq_password_q">Can I unlock with a password instead of a PIN?</string>
-    <string name="faq_password_a">Yes. In Settings → Security → Password you can add a password of at least 8 characters, any language. It works next to your PIN: the lock screen lets you switch between them, and each one unlocks on its own. Both share the same limit on wrong attempts and the same protection by the device key. The wipe PIN and the duress PIN stay PIN-only. You can remove either one while the other is set.</string>
     <string name="faq_pin_length_q">How long can my PIN be?</string>
     <string name="faq_pin_length_a">Between 6 and 12 digits, your choice. Shorter PINs are not offered: the lockout and the device key limit how many guesses anyone gets, and 6 digits is the shortest that stays safe with those limits. The lock screen never shows how long your PIN is: you press Unlock when you are done, and the same goes for the wipe PIN and the duress PIN. PINs you set before this option keep working as they are.</string>
     <string name="block_code">Code</string>

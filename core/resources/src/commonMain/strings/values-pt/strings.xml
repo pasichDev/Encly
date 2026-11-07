@@ -132,7 +132,7 @@
     <string name="faq_change_pin_q">Como altero meu PIN?</string>
     <string name="faq_db_key_a">O Encly gera uma chave aleatória de 256 bits para o banco de dados. Seu PIN protege um slot de desbloqueio AES-GCM separado, e a biometria usa uma chave do Android Keystore que exige autenticação a cada uso.</string>
     <string name="faq_db_key_q">Como a chave do banco de dados é protegida?</string>
-    <string name="faq_forgot_pin_a">Na tela de bloqueio, toque em \"Recuperar acesso\" e digite as 12 palavras. Se o PIN ou a senha ainda funcionarem, você pode mantê-los ou definir um novo PIN; se não, define um novo PIN na hora. Sem frase de recuperação não há outra forma de entrar: ninguém, nem o desenvolvedor, pode redefini-la.</string>
+    <string name="faq_forgot_pin_a">Na tela de bloqueio, toque em \"Recuperar acesso\" e digite as 12 palavras. Se o PIN ainda funcionar, você pode mantê-lo ou definir um novo PIN; se não, define um novo PIN na hora. Sem frase de recuperação não há outra forma de entrar: ninguém, nem o desenvolvedor, pode redefini-la.</string>
     <string name="faq_forgot_pin_q">E se eu esquecer meu PIN?</string>
     <string name="faq_language_a">Abra Configurações → Idioma e escolha um dos idiomas disponíveis, ou \"Padrão do sistema\" para seguir o idioma do dispositivo. A alteração é aplicada na hora.</string>
     <string name="faq_language_q">Como altero o idioma?</string>
@@ -695,8 +695,6 @@
     <string name="whats_new_row_desc">As alterações desta versão</string>
     <string name="whats_new_dismiss">Entendi</string>
     <string name="trash_auto_delete_hint">As notas são eliminadas definitivamente após 28 dias na lixeira.</string>
-    <string name="faq_password_q">Posso desbloquear com uma senha em vez de um PIN?</string>
-    <string name="faq_password_a">Sim. Em Configurações → Segurança → Senha você pode adicionar uma senha com pelo menos 8 caracteres, em qualquer idioma. Ela funciona ao lado do PIN: a tela de bloqueio permite alternar entre os dois e cada um desbloqueia sozinho. Os dois compartilham o mesmo limite de tentativas erradas e a mesma proteção pela chave do dispositivo. O PIN de apagamento e o PIN de coação continuam sendo apenas PINs. Você pode remover um dos dois enquanto o outro estiver definido.</string>
     <string name="faq_pin_length_q">Qual pode ser o tamanho do meu PIN?</string>
     <string name="faq_pin_length_a">Entre 6 e 12 dígitos, à sua escolha. PINs mais curtos não são oferecidos: o bloqueio e a chave do dispositivo limitam as tentativas, e 6 dígitos é o mínimo que continua seguro com esses limites. A tela de bloqueio nunca mostra o tamanho do seu PIN: você toca em «Desbloquear» quando terminar, e o mesmo vale para o PIN de apagamento e o PIN de coação. Os PINs definidos antes continuam funcionando como estão.</string>
     <string name="block_code">Código</string>

@@ -13,8 +13,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.lock_back_to_pin
-import com.pasich.encly.core.resources.lock_password_label
-import com.pasich.encly.core.resources.lock_password_subtitle
 import com.pasich.encly.core.resources.lock_recover_access
 import com.pasich.encly.core.resources.lock_recovery_subtitle
 import com.pasich.encly.core.resources.lock_recovery_title
@@ -22,17 +20,13 @@ import com.pasich.encly.core.resources.lock_subtitle
 import com.pasich.encly.core.resources.lock_title
 import com.pasich.encly.core.resources.lock_unlock
 import com.pasich.encly.core.resources.lock_unlocking
-import com.pasich.encly.core.resources.lock_use_password
-import com.pasich.encly.core.resources.lock_use_pin
 import com.pasich.encly.core.resources.lock_use_recovery_phrase
 import com.pasich.encly.core.security.SensitiveDataCleaner
-import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
-import com.pasich.encly.presentation.screen.pincode.PasswordField
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
@@ -44,26 +38,12 @@ import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
-/**
- * What the lock screen offers besides the form on show: the fingerprint key, the recovery phrase, and which of the
- * PIN and the password the vault has ([methods]).
- */
-internal data class LockCapabilities(
-    val biometricEnabled: Boolean,
-    val recoveryAvailable: Boolean,
-    val methods: UnlockMethods,
-) {
-    /**
-     * The other way in, as a link under the form on show: null when the vault has one way in only, else whether it
-     * is the password (true, from the PIN pad) or the PIN (false, from the password form).
-     */
-    fun otherMethod(form: LockFormState): Boolean? = if (methods.pin && methods.password) !form.usePassword else null
-}
+/** What the lock screen offers besides the form on show: the fingerprint key and the recovery phrase. */
+internal data class LockCapabilities(val biometricEnabled: Boolean, val recoveryAvailable: Boolean)
 
-/** The three checks of a secret the lock screen can send; each wipes what it is given. */
+/** The checks of a secret the lock screen can send; each wipes what it is given. */
 internal class LockChecks(
     val pin: (pin: CharArray, onResult: (PinUnlockResult) -> Unit) -> Unit,
-    val password: (password: CharArray, onResult: (PinUnlockResult) -> Unit) -> Unit,
     val seed: (phrase: CharArray, onResult: (SeedUnlockResult) -> Unit) -> Unit,
 )
 
@@ -79,7 +59,7 @@ internal class LockActions(
     val onPromptBiometric: () -> Unit,
 )
 
-/** The form on show: the recovery phrase, the password, or the PIN pad. */
+/** The form on show: the recovery phrase or the PIN pad. */
 @Composable
 internal fun LockForms(
     form: LockFormState,
@@ -99,8 +79,6 @@ internal fun LockForms(
             // Drawn over the phrase form rather than instead of it, so it keeps its state. The PIN
             // form shows the check in place (full dots, breathing logo) and hands over to the reveal.
             if (busy) AuthLoading(stringResource(Res.string.lock_unlocking))
-        } else if (form.usePassword) {
-            PasswordLockContent(form, capabilities, busy, actions)
         } else {
             PinLockContent(form, capabilities, busy, actions)
         }
@@ -145,89 +123,12 @@ private fun PinLockContent(form: LockFormState, capabilities: LockCapabilities, 
                 onClick = submit,
             ),
         )
-        OtherMethodLinks(form, capabilities, busy)
-    }
-}
-
-/** The links under the PIN pad: the password (when the vault has one), and the recovery phrase. */
-@Composable
-private fun OtherMethodLinks(form: LockFormState, capabilities: LockCapabilities, busy: Boolean) {
-    capabilities.otherMethod(form)?.let { toPassword ->
-        EnclyTextButton(
-            text = stringResource(if (toPassword) Res.string.lock_use_password else Res.string.lock_use_pin),
-            onClick = { form.switchTo(usePassword = toPassword) },
-            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter),
-            enabled = !busy,
-        )
-    }
-    if (capabilities.recoveryAvailable) RecoveryLink(onUseRecovery = { form.useRecovery = true })
-}
-
-/** The password form: a masked field, the Unlock button pinned above the keyboard, and the same links. */
-@Composable
-private fun PasswordLockContent(
-    form: LockFormState,
-    capabilities: LockCapabilities,
-    busy: Boolean,
-    actions: LockActions,
-) {
-    PinLockoutTicker(form.lockedOut, actions.lockoutRemainingMillis) { form.lockoutSeconds = it }
-    DisposableEffect(form) { onDispose { form.password.clear() } }
-    ReleaseFocusWhile(busy)
-    val canSubmit = form.password.canSubmit && !form.lockedOut && !busy
-    val submit = {
-        if (canSubmit) {
-            submitSecret(form.takePassword(), actions.checks.password, actions) { r, ms ->
-                form.onPasswordResult(r, ms)
-            }
-        }
-    }
-    val shownError = form.passwordError
-    PinEntryScaffold(
-        title = stringResource(Res.string.lock_title),
-        subtitle = when {
-            form.lockedOut -> pinLockoutText(form.lockoutSeconds)
-            shownError != null -> stringResource(shownError)
-            else -> stringResource(Res.string.lock_password_subtitle)
-        },
-        subtitleIsError = form.lockedOut || shownError != null,
-        icon = EnclyIcons.Key,
-        compact = true,
-        footer = {
-            EnclyButton(text = stringResource(Res.string.lock_unlock), onClick = submit, enabled = canSubmit)
-            capabilities.otherMethod(form)?.let { toPassword ->
-                EnclyTextButton(
-                    text = stringResource(if (toPassword) Res.string.lock_use_password else Res.string.lock_use_pin),
-                    onClick = { form.switchTo(usePassword = toPassword) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !busy,
-                )
-            }
-            if (capabilities.recoveryAvailable) {
-                EnclyTextButton(
-                    text = stringResource(Res.string.lock_use_recovery_phrase),
-                    onClick = { form.useRecovery = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !busy,
-                )
-            }
-        },
-    ) {
-        PasswordField(
-            input = form.password,
-            label = stringResource(Res.string.lock_password_label),
-            enabled = !form.lockedOut && !busy,
-            onEdit = form::onPasswordEdited,
-            onDone = submit,
-            modifier = Modifier
-                .padding(horizontal = EnclyTheme.spacing.gutter)
-                .padding(top = EnclyTheme.spacing.l),
-        )
+        if (capabilities.recoveryAvailable) RecoveryLink(onUseRecovery = { form.useRecovery = true })
     }
 }
 
 /**
- * Sends [secret] (a PIN or a password) to be checked by [authenticate], unless a lockout runs. The ViewModel wipes it
+ * Sends [secret] (the PIN) to be checked by [authenticate], unless a lockout runs. The ViewModel wipes it
  * once it is checked; [onFailure] shows a result that did not unlock, with the lockout left.
  */
 private fun submitSecret(
@@ -318,7 +219,7 @@ private fun RecoveryLink(onUseRecovery: () -> Unit) {
 }
 
 /**
- * The loading view covers a form but not the keyboard: while a secret is checked (the phrase, the password) the
+ * The loading view covers a form but not the keyboard: while the phrase is checked the
  * field lets go of focus, so the keyboard closes and cannot type into it meanwhile.
  */
 @Composable

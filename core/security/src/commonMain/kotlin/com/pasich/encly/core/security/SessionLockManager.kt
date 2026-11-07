@@ -237,6 +237,12 @@ public class SessionLockManager(
     public fun lockRequests(): Long = lockRequestCount.load()
 
     /**
+     * Whether the device reports itself locked right now. An unlock that [onUnlocked] refuses for this reason can say
+     * so, instead of leaving the lock screen as it was.
+     */
+    public fun isDeviceLocked(): Boolean = deviceLock.isDeviceLocked()
+
+    /**
      * Publishes a completed unlock (PIN, biometric, recovery seed, first-run setup or v1
      * upgrade). Call on the main thread, where ON_START/ON_STOP are delivered too, right
      * after the vault was opened. [lockRequestsAtStart] is [lockRequests] as it was when the unlock began.

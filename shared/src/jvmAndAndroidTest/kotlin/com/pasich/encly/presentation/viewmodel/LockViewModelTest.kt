@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.DeviceLockWatcher
 import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.testutil.TestScreen
 import com.pasich.encly.testutil.answerCallback
@@ -114,6 +114,29 @@ class LockViewModelTest {
     }
 
     @Test
+    fun aRightPinWhileTheDeviceIsLockedIsRefusedAndSaysWhy() = runTest {
+        val deviceLocked = object : DeviceLockWatcher {
+            override fun isDeviceLocked(): Boolean = true
+
+            override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit = {}
+        }
+        val guarded = SessionLockManager(security, deviceLock = deviceLocked)
+        guarded.onStart(mock(LifecycleOwner::class.java))
+        val locked = LockViewModel(security, guarded, CoroutineScope(Dispatchers.Default))
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        `when`(security.unlockWithSeed(WORDS.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        val pin = CompletableDeferred<PinUnlockResult>()
+        val seed = CompletableDeferred<SeedUnlockResult>()
+
+        locked.authenticatePin(PIN.toCharArray()) { pin.complete(it) }
+        locked.authenticateSeed(WORDS.toCharArray()) { seed.complete(it) }
+
+        assertEquals(PinUnlockResult.DEVICE_LOCKED, pin.await())
+        assertEquals(SeedUnlockResult.DEVICE_LOCKED, seed.await())
+        assertTrue(guarded.locked.value)
+    }
+
+    @Test
     fun theRecoveryPhraseResetIsAskedOfTheSecurityLayer() {
         `when`(security.recoveryStage()).thenReturn(RecoveryStage.MUST_SET_PIN)
         assertTrue(viewModel.mustResetPin())
@@ -135,51 +158,6 @@ class LockViewModelTest {
         assertTrue(viewModel.keepAfterRecovery())
 
         verify(security).keepUnlockMethodsAfterRecovery()
-    }
-
-    @Test
-    fun theLockScreenAsksWhichMethodsTheVaultHas() {
-        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = true, password = true))
-
-        assertEquals(UnlockMethods(pin = true, password = true), viewModel.unlockMethods())
-    }
-
-    @Test
-    fun theRightPasswordUnlocks() = runTest {
-        `when`(security.unlockWithPassword(PASSWORD.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
-
-        assertEquals(PinUnlockResult.SUCCESS, password())
-        assertFalse(viewModel.busy.value)
-        assertFalse(sessionLock.locked.value)
-        verify(security, never()).unlockWithPin(anyCharArray())
-    }
-
-    @Test
-    fun aPasswordResultIsToldApartLikeAPinResult() = runTest {
-        `when`(security.unlockWithPassword(PASSWORD.toCharArray()))
-            .thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
-            .thenReturn(VaultUnlockResult.LOCKED_OUT)
-            .thenReturn(VaultUnlockResult.PIN_KEY_LOST)
-            .thenReturn(VaultUnlockResult.DB_ERROR)
-
-        assertEquals(PinUnlockResult.WRONG_PIN, password())
-        assertEquals(PinUnlockResult.LOCKED_OUT, password())
-        assertEquals(PinUnlockResult.KEY_LOST, password())
-        assertEquals(PinUnlockResult.DB_ERROR, password())
-    }
-
-    @Test
-    fun aPasswordUnlockThatLandsInTheBackgroundIsClosedAgain() = runTest {
-        `when`(security.isLockable()).thenReturn(true)
-        doAnswer {
-            sessionLock.lockNow()
-            VaultUnlockResult.SUCCESS
-        }.`when`(security).unlockWithPassword(PASSWORD.toCharArray())
-
-        assertEquals(PinUnlockResult.BACKGROUNDED, password())
-
-        verify(security).lock()
-        assertTrue(sessionLock.locked.value)
     }
 
     @Test
@@ -458,12 +436,6 @@ class LockViewModelTest {
         return result.await()
     }
 
-    private suspend fun password(): PinUnlockResult {
-        val result = CompletableDeferred<PinUnlockResult>()
-        viewModel.authenticatePassword(PASSWORD.toCharArray()) { result.complete(it) }
-        return result.await()
-    }
-
     private suspend fun seed(words: CharArray): SeedUnlockResult {
         val result = CompletableDeferred<SeedUnlockResult>()
         viewModel.authenticateSeed(words) { result.complete(it) }
@@ -478,7 +450,6 @@ class LockViewModelTest {
 
     private companion object {
         const val PIN = "482915"
-        const val PASSWORD = "correct horse battery"
         const val WORDS = "one two three four five six seven eight nine ten eleven twelve"
         const val KEY_LENGTH = 32
         const val LOCKOUT_MS = 30_000L
