@@ -24,6 +24,8 @@ class ContentChangesTest {
                 Block.LinkBlock(),
                 Block.ListBlock(blockType = BlockType.LIST_CHECK),
                 Block.SeparatorBlock(),
+                Block.CodeBlock(),
+                Block.TableBlock(),
             ),
         )
         editor.contentChanges.first()

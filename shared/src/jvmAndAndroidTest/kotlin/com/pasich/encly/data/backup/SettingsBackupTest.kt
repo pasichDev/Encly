@@ -8,6 +8,7 @@ import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.data.datasource.local.MAX_FONT_SIZE
 import com.pasich.encly.data.datasource.local.MIN_FONT_SIZE
 import com.pasich.encly.domain.enums.NoteSortOption
+import com.pasich.encly.domain.model.EditorToolbar
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.NotePreviews
@@ -15,6 +16,9 @@ import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeType
+import com.pasich.encly.domain.model.ToolbarLayout
+import com.pasich.encly.domain.model.ToolbarSection
+import com.pasich.encly.domain.model.ToolbarTool
 import com.pasich.encly.platform.AppLocaleController
 import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.TestSettingsRepository
@@ -32,7 +36,8 @@ class SettingsBackupTest {
     private val autoLock = AutoLock(flags)
     private val keyboard = KeyboardPrivacy(flags)
     private val previews = NotePreviews(flags)
-    private val backup = SettingsBackup(repository, autoLock, keyboard, previews, locales)
+    private val toolbar = EditorToolbar(flags)
+    private val backup = SettingsBackup(repository, autoLock, keyboard, previews, locales, toolbar)
 
     @Test
     fun theSnapshotHoldsExactlyTheAllowListedKeys() = runTest {
@@ -147,10 +152,33 @@ class SettingsBackupTest {
         assertEquals(FontStyleType.entries.map { it.name }, BackupSettings.FONT_STYLES)
         assertEquals(NoteLineSpacing.entries.map { it.name }, BackupSettings.LINE_SPACINGS)
         assertEquals(NoteSortOption.entries.map { it.name }, BackupSettings.SORT_OPTIONS)
+        assertEquals(ToolbarTool.entries.map { it.name }, BackupSettings.TOOLBAR_TOOLS)
+        assertEquals(ToolbarSection.entries.map { it.name.lowercase() }, BackupSettings.TOOLBAR_SECTIONS)
         assertEquals(SwipeAction.entries.map { it.name }, BackupSettings.SWIPE_ACTIONS)
         assertEquals(AppLanguage.entries.map { it.name }, BackupSettings.LANGUAGES)
         assertEquals(MIN_FONT_SIZE, BackupSettings.MIN_FONT_SIZE)
         assertEquals(MAX_FONT_SIZE, BackupSettings.MAX_FONT_SIZE)
+    }
+
+    @Test
+    fun theToolbarLayoutIsExportedAndRestored() = runTest {
+        val custom = ToolbarLayout.DEFAULT.moved(ToolbarTool.TABLE, -20).toggled(ToolbarTool.QUOTE)
+        toolbar.set(custom)
+        val snapshot = backup.snapshot()
+
+        val other = fresh()
+        other.backup.apply(snapshot)
+
+        assertEquals(custom, other.toolbar.layout.value)
+    }
+
+    @Test
+    fun aToolbarLayoutThatNamesNoToolIsNotRestored() = runTest {
+        val other = fresh()
+        other.backup.apply(mapOf(BackupSettings.EDITOR_TOOLBAR to "main:NOT_A_TOOL"))
+        other.backup.apply(mapOf(BackupSettings.EDITOR_TOOLBAR to "tools:HEADING"))
+
+        assertEquals(ToolbarLayout.DEFAULT, other.toolbar.layout.value)
     }
 
     private fun fresh(settings: TestSettingsRepository = TestSettingsRepository()) = Target(settings)
@@ -161,7 +189,8 @@ class SettingsBackupTest {
         val autoLock = AutoLock(flags)
         val keyboard = KeyboardPrivacy(flags)
         val previews = NotePreviews(flags)
-        val backup = SettingsBackup(settings, autoLock, keyboard, previews, locales)
+        val toolbar = EditorToolbar(flags)
+        val backup = SettingsBackup(settings, autoLock, keyboard, previews, locales, toolbar)
     }
 
     private class FakeLocales : AppLocaleController {

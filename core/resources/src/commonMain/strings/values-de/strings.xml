@@ -693,4 +693,23 @@
     <string name="faq_password_a">Ja. Unter Einstellungen → Sicherheit → Passwort kannst du ein Passwort mit mindestens 8 Zeichen in jeder Sprache hinzufügen. Es gilt neben deiner PIN: Auf dem Sperrbildschirm wechselst du zwischen beiden, und jedes entsperrt für sich. Beide teilen sich dasselbe Limit für Fehlversuche und denselben Schutz durch den Gerätschlüssel. Lösch-PIN und Zwangs-PIN bleiben reine PINs. Du kannst jedes der beiden entfernen, solange das andere festgelegt ist.</string>
     <string name="faq_pin_length_q">Wie lang darf meine PIN sein?</string>
     <string name="faq_pin_length_a">Zwischen 6 und 12 Ziffern, du entscheidest. Kürzere PINs werden nicht angeboten: Die Sperre und der Gerätschlüssel begrenzen die Zahl der Versuche, und 6 Ziffern sind die kürzeste PIN, die damit sicher bleibt. Der Sperrbildschirm zeigt nie, wie lang deine PIN ist: Du tippst auf „Entsperren“, wenn du fertig bist; das gilt auch für Lösch-PIN und Zwangs-PIN. PINs, die du vorher festgelegt hast, funktionieren unverändert.</string>
+    <string name="block_code">Code</string>
+    <string name="block_table">Tabelle</string>
+    <string name="table_add_row">Zeile hinzufügen</string>
+    <string name="table_add_column">Spalte hinzufügen</string>
+    <string name="table_remove_row">Zeile löschen</string>
+    <string name="table_remove_column">Spalte löschen</string>
+    <string name="table_header_row">Kopfzeile</string>
+    <string name="table_cell_options">Zellenoptionen</string>
+    <string name="settings_editor_toolbar">Editor-Werkzeugleiste</string>
+    <string name="settings_editor_toolbar_desc">Werkzeuge auswählen und anordnen</string>
+    <string name="toolbar_hint">Zum Umordnen am Griff ziehen. Das Auge blendet ein Werkzeug aus oder wieder ein. Werkzeuge unter „Weiteres Menü“ liegen hinter dem Pfeil.</string>
+    <string name="toolbar_reset">Zurücksetzen</string>
+    <string name="toolbar_section_main">Werkzeugleiste</string>
+    <string name="toolbar_section_more">Weiteres Menü</string>
+    <string name="toolbar_section_hidden">Ausgeblendet</string>
+    <string name="toolbar_tool_hide">Werkzeug ausblenden</string>
+    <string name="toolbar_tool_show">Werkzeug einblenden</string>
+    <string name="toolbar_move_up">Nach oben</string>
+    <string name="toolbar_move_down">Nach unten</string>
 </resources>

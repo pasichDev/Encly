@@ -108,7 +108,7 @@ class NotePreviewsTest : ComposeScreenTest() {
     @Test
     fun theSecuritySwitchTurnsPreviewsOffAndOn() {
         setNavScreen(
-            viewModels(app.securitySettings(), app.notePreviewsVm(), app.backup()),
+            viewModels(app.securitySettings(), app.notePreviewsVm(), app.toolbarVm(), app.backup()),
             route = NavRoutes.SecuritySettingsRoute.name,
         ) { nav -> SecuritySettingsScreen(nav) }
         val title = str(Res.string.security_previews_title)

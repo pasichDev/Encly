@@ -403,7 +403,7 @@ class BranchGapsTest {
         for (tool in BlockType.entries) {
             val paragraph = text("x\ny")
             val converted = convertBlock(paragraph, tool)
-            if (tool == BlockType.TEXT || tool == BlockType.SEPARATOR || tool == BlockType.LINK) {
+            if (tool in listOf(BlockType.TEXT, BlockType.SEPARATOR, BlockType.LINK, BlockType.TABLE)) {
                 assertNull(converted, tool.name)
             } else {
                 assertNotNull(converted, tool.name)

@@ -125,6 +125,8 @@ private fun SlashCommand.icon(icons: EditorIcons): ImageVector = when (this) {
     SlashCommand.QUOTE -> icons.quote
     SlashCommand.LINK -> icons.link
     SlashCommand.DIVIDER -> icons.separator
+    SlashCommand.CODE -> icons.code
+    SlashCommand.TABLE -> icons.table
 }
 
 /**

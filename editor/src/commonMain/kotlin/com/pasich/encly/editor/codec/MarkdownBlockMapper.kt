@@ -6,6 +6,7 @@ import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.MAX_LIST_LEVEL
 import com.pasich.encly.editor.model.normalizedLevels
+import com.pasich.encly.editor.state.cellText
 
 /**
  * Markdown as Encly blocks. Line based and forgiving; only the markup it reads is removed.
@@ -16,7 +17,9 @@ import com.pasich.encly.editor.model.normalizedLevels
  *   `>` -> QUOTE; `---` / `***` -> SEPARATOR; everything else -> TEXT, one block per paragraph.
  * - `✅` / `☐` lines (Notesnook text exports) are checklist items. An Obsidian callout keeps its title
  *   (`> [!note] Decisions` -> `Decisions`), a wiki link keeps its alias or name.
- * - Fenced code keeps its lines as TEXT, markers removed. Inline markdown (`**bold**`, links) is
+ * - Fenced code becomes a CODE block, fence markers removed and every space kept. A GFM pipe table (a header row, a
+ *   `---` delimiter row, then rows) becomes a TABLE block; `\|` is a bar inside a cell, the column alignment is
+ *   dropped, and a header row of only empty cells is the table without a header. Inline markdown (`**bold**`, links) is
  *   kept as typed, which reads fine as plain text; HTML tags are removed and entities decoded
  *   ([InlineHtml]) outside code spans: the inline tags of real HTML (`<b>`, `<a href>`, `<br>`, ...)
  *   go and their text stays, while other angle-bracket text (`Map<String, Int>`, `<name>`) is kept.
@@ -37,7 +40,9 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
     private val NUMBER = Regex("""^[ \t]*\d{1,3}[.)][ \t]+(.*)$""")
     private val QUOTE = Regex("""^ {0,3}>[ \t]?(.*)$""")
     private val SEPARATOR = Regex("""^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$""")
-    private val FENCE = Regex("""^ {0,3}(```|~~~).*$""")
+    private val FENCE = Regex("""^ {0,3}(`{3,}|~{3,}).*$""")
+    private val FENCE_CLOSE = Regex("""^ {0,3}(`{3,}|~{3,})[ \t]*$""")
+    private val TABLE_DELIMITER_CELL = Regex("""^:?-+:?$""")
     private val CODE_SPAN = Regex("""`[^`\n]+`""")
     private val AUTOLINK = Regex("""<((?:https?://|mailto:)[^\s<>]+|[^\s<>@/]+@[^\s<>@/]+)>""")
 
@@ -125,6 +130,7 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
         knownTagsOnly = true,
     )
 
+    @Suppress("TooManyFunctions") // One function per kind of block the lines add up to.
     private class Builder(private val paste: PasteRules? = null) {
         private val blocks = ArrayList<Block>()
         private val paragraph = ArrayList<String>()
@@ -135,6 +141,11 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
 
         private val indents = IndentLevels()
         private var inFence = false
+        private var fenceMarker = ""
+
+        // A line with a bar in it that may be the header of a table: told by the line that follows.
+        private var tableHeader: String? = null
+        private val tableRows = ArrayList<List<String>>()
 
         fun line(raw: String) {
             if (paste?.plainFirstLine == true) {
@@ -144,18 +155,20 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
                     return
                 }
             }
-            val fence = FENCE.matches(raw)
+            if (paste == null && !inFence && tableLine(raw)) return
+            val fence = FENCE.matchEntire(raw)
             when {
-                inFence && fence -> {
+                inFence && closesFence(raw) -> {
                     if (paste != null) code += raw
                     closeFence()
                 }
 
                 inFence -> code += raw
 
-                fence -> {
+                fence != null -> {
                     flushAll()
                     inFence = true
+                    fenceMarker = fence.groupValues[1]
                     if (paste != null) code += raw
                 }
 
@@ -169,13 +182,49 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
             }
         }
 
+        // A fence ends only at a line of the same mark, at least as long as the one that opened it, and nothing else.
+        private fun closesFence(raw: String): Boolean {
+            val match = FENCE_CLOSE.matchEntire(raw) ?: return false
+            val mark = match.groupValues[1]
+            return mark[0] == fenceMarker[0] && mark.length >= fenceMarker.length
+        }
+
         fun finish(): List<Block> {
+            releaseHeader()
+            flushTable()
             if (inFence) closeFence()
             flushAll()
             return blocks
         }
 
-        private fun block(raw: String) {
+        // Table rows. True when [raw] was taken as part of a table (or held as its possible header).
+        private fun tableLine(raw: String): Boolean {
+            val header = tableHeader
+            tableHeader = null
+            val headerCells = header?.let(::tableCells)
+            if (headerCells != null && isDelimiter(raw, headerCells.size)) {
+                flushAll()
+                tableRows += headerCells
+                return true
+            }
+            if (header != null) block(header, mayStartTable = false)
+            val isRow = tableRows.isNotEmpty() && raw.isNotBlank() && '|' in raw && !FENCE.matches(raw)
+            if (isRow) tableRows += tableCells(raw) else flushTable()
+            return isRow
+        }
+
+        private fun releaseHeader() {
+            tableHeader?.let { block(it, mayStartTable = false) }
+            tableHeader = null
+        }
+
+        private fun isDelimiter(raw: String, columns: Int): Boolean {
+            val cells = tableCells(raw)
+            return '|' in raw && cells.size == columns && cells.all { TABLE_DELIMITER_CELL.matches(it) }
+        }
+
+        @Suppress("CyclomaticComplexMethod") // One branch per kind of line.
+        private fun block(raw: String, mayStartTable: Boolean = true) {
             val heading = Heading.of(raw)
             val check = CHECK.matchEntire(raw)
             val glyph = GLYPH_ITEM.matchEntire(raw)
@@ -228,6 +277,12 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
                     items += last.copy(value = (last.value + " " + readable(raw.trim())).trim())
                 }
 
+                paste == null && mayStartTable && '|' in raw -> {
+                    flushList()
+                    flushQuote()
+                    tableHeader = raw
+                }
+
                 else -> {
                     flushList()
                     flushQuote()
@@ -258,10 +313,40 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
             inFence = false
             val text = code.joinToString("\n").trimEnd()
             code.clear()
-            if (text.isNotBlank()) blocks += ImportBlocks.text(text)
+            // A paste keeps code as a paragraph, fences and all; an import makes it a code block.
+            if (text.isNotBlank()) blocks += if (paste == null) ImportBlocks.code(text) else ImportBlocks.text(text)
+        }
+
+        private fun flushTable() {
+            if (tableRows.isEmpty()) return
+            val rows = tableRows.toList()
+            tableRows.clear()
+            // A header row of only empty cells is how a table without a header is written.
+            val headless = rows.first().all { it.isEmpty() }
+            blocks += ImportBlocks.table(if (headless) rows.drop(1) else rows, header = !headless)
+        }
+
+        // The cells of a pipe-table row: an outer bar dropped, `\|` a bar, `\\` a backslash, no line breaks or HTML.
+        private fun tableCells(row: String): List<String> {
+            val cells = ArrayList<String>()
+            val cell = StringBuilder()
+            var escaped = false
+            for (c in row.trim().removePrefix("|")) {
+                when {
+                    escaped && (c == '|' || c == '\\') -> cell.append(c)
+                    escaped -> cell.append('\\').append(c)
+                    c == '|' -> cells.add(cell.toString().also { cell.clear() })
+                    c != '\\' -> cell.append(c)
+                }
+                escaped = c == '\\' && !escaped
+            }
+            // A last cell that is empty is only the closing bar, unless it was escaped away.
+            if (cell.isNotBlank() || cells.isEmpty()) cells.add(cell.toString())
+            return cells.map { cellText(readable(it.trim())) }
         }
 
         private fun flushAll() {
+            flushTable()
             flushParagraph()
             flushQuote()
             flushList()

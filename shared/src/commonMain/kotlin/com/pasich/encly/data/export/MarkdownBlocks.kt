@@ -5,6 +5,7 @@ import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
 import com.pasich.encly.editor.model.MAX_LIST_LEVEL
+import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.model.hasContent
 import com.pasich.encly.editor.model.kindIn
 import com.pasich.encly.editor.model.normalizedLevels
@@ -19,16 +20,20 @@ import com.pasich.encly.editor.model.numbers
  *   `<`, `\`, `~`, a word-edge `_`, an entity such as `&amp;`) and whatever would start a block at
  *   the start of a line (`#`, `>`, `-`, `+`, `1.`, `===`, an indent of four spaces).
  * - A line break inside a block is kept as a hard break (a trailing `\`).
+ * - Code is a fenced block and a table a GFM pipe table.
  * - A link is `[title](url)`. Only `http`, `https`, `mailto` and `tel` addresses become links; any
  *   other scheme (`javascript:`, `data:`) is written as inline code, so the file never carries a
  *   link that runs something when opened in a viewer. A link's preview image is never written:
  *   `![](...)` would make a viewer fetch it from the network.
  */
+@Suppress("TooManyFunctions") // One function per kind of block.
 object MarkdownBlocks {
     private const val NO_BREAK_SPACE = '\u00A0'
 
     /** The width of `- `, the marker of a bullet and of a task item. */
     private const val BULLET_WIDTH = 2
+    private const val MIN_FENCE = 3
+    private val BACKTICK_RUN = Regex("`+")
     private val LINK_SCHEMES = setOf("http", "https", "mailto", "tel")
     private val ENCODED_IN_LINK = mapOf(
         ' ' to "%20",
@@ -50,7 +55,32 @@ object MarkdownBlocks {
         is Block.LinkBlock -> link(block.block.value)
         is Block.SeparatorBlock -> "---"
         is Block.ListBlock -> list(block.blockType, block.items.value)
+        is Block.CodeBlock -> code(block.text.value)
+        is Block.TableBlock -> table(block.table.value)
     }
+
+    /** A fenced code block; the fence is longer than any run of backticks inside, so the code cannot end it. */
+    private fun code(text: String): String {
+        val longestRun = BACKTICK_RUN.findAll(text).maxOfOrNull { it.value.length } ?: 0
+        val fence = "`".repeat(maxOf(MIN_FENCE, longestRun + 1))
+        return "$fence\n${text.trimEnd('\n', '\r')}\n$fence"
+    }
+
+    /**
+     * A GFM pipe table. GFM has no table without a header row, so one is written as a header of empty cells
+     * (which the importer reads back as no header). A bar in a cell is `\|`, a line break a space; the
+     * columns are not aligned.
+     */
+    private fun table(data: TableData): String {
+        val rows = data.rows.map { row -> row.cells.map { cell(it.value) } }
+        val header = if (data.header) rows.first() else List(data.columnCount) { "" }
+        val body = if (data.header) rows.drop(1) else rows
+        return (listOf(header, List(data.columnCount) { "---" }) + body).joinToString("\n") { row ->
+            row.joinToString(" | ", prefix = "| ", postfix = " |")
+        }
+    }
+
+    private fun cell(text: String): String = MarkdownText.escapeInline(MarkdownText.oneLine(text))
 
     private fun heading(type: BlockType, text: String): String {
         // H1 to H4 are consecutive.

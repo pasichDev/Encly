@@ -201,6 +201,7 @@ public final class com/pasich/encly/core/backup/BackupSecret$RecoveryRoot : com/
 public final class com/pasich/encly/core/backup/BackupSettings {
 	public static final field APP_LANGUAGE Ljava/lang/String;
 	public static final field AUTO_LOCK_DELAY Ljava/lang/String;
+	public static final field EDITOR_TOOLBAR Ljava/lang/String;
 	public static final field FONT_SIZE Ljava/lang/String;
 	public static final field FONT_STYLE Ljava/lang/String;
 	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupSettings;
@@ -230,6 +231,8 @@ public final class com/pasich/encly/core/backup/BackupSettings {
 	public final fun getSWIPE_ACTIONS ()Ljava/util/List;
 	public final fun getTHEME_PALETTES ()Ljava/util/List;
 	public final fun getTHEME_TYPES ()Ljava/util/List;
+	public final fun getTOOLBAR_SECTIONS ()Ljava/util/List;
+	public final fun getTOOLBAR_TOOLS ()Ljava/util/List;
 }
 
 public final class com/pasich/encly/core/backup/BackupSettings$SettingKind {

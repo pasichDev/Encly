@@ -8,6 +8,7 @@ import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.SelectedBlocks
@@ -121,6 +122,8 @@ internal class EditNoteViewModelController(
 
     override fun onListItemMove(block: Block.ListBlock, itemId: String, by: Int): Boolean =
         viewModel.moveListItem(block, itemId, by)
+    override fun onTableChanged(block: Block.TableBlock, newTable: TableData, mergeable: Boolean) =
+        viewModel.onTableChanged(block, newTable, mergeable)
 }
 
 /** The editor's view of the screen's note view model. */

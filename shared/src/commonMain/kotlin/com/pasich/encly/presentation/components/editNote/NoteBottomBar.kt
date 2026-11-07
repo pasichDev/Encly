@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -25,11 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.block_duplicate
 import com.pasich.encly.core.resources.block_more_tools
@@ -45,6 +48,8 @@ import com.pasich.encly.core.resources.list_item_indent
 import com.pasich.encly.core.resources.list_item_outdent
 import com.pasich.encly.core.resources.redo
 import com.pasich.encly.core.resources.undo
+import com.pasich.encly.domain.model.ToolbarLayout
+import com.pasich.encly.domain.model.toolbarScale
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.state.toolType
 import com.pasich.encly.platform.LocalAppWindow
@@ -53,7 +58,9 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyToolButton
 import com.pasich.encly.presentation.designsystem.EnclyToolbarRule
 import com.pasich.encly.presentation.designsystem.Indent
+import com.pasich.encly.presentation.designsystem.LocalToolSizes
 import com.pasich.encly.presentation.designsystem.Outdent
+import com.pasich.encly.presentation.designsystem.ToolSizes
 import com.pasich.encly.presentation.designsystem.ToolStyle
 import com.pasich.encly.presentation.effects.rememberImeVisible
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
@@ -61,6 +68,9 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+
+/** The user's choice of toolbar tools (Settings → Appearance → Editor toolbar), provided once around the app. */
+val LocalEditorToolbar = staticCompositionLocalOf { ToolbarLayout.DEFAULT }
 
 /**
  * The editor's formatting toolbar, pinned to the bottom above the keyboard (design spec §3.3):
@@ -90,6 +100,7 @@ fun NoteBottomBar(
     }
     val history = rememberHistoryTools(viewModel, keepingKeyboard)
     val blockTools = rememberBlockMoveTools(viewModel, interactedBlockId, checklistLock, keepingKeyboard)
+    val layout = LocalEditorToolbar.current
     EnclyEditorToolbar(modifier = modifier.imePadding()) {
         KeyboardAnchorField(anchor)
         when {
@@ -107,6 +118,7 @@ fun NoteBottomBar(
             ) { more ->
                 if (more) {
                     MoreTools(
+                        layout = layout,
                         blockTools = blockTools,
                         onApply = toolApplier(checklistLock) { type ->
                             keepingKeyboard { viewModel.applyTool(type, exact = true) }
@@ -115,9 +127,14 @@ fun NoteBottomBar(
                     )
                 } else {
                     MainTools(
-                        activeTool = activeTool,
+                        tools = RowTools(
+                            layout = layout,
+                            activeTool = activeTool,
+                            onApply = toolApplier(checklistLock) { type ->
+                                keepingKeyboard { viewModel.applyTool(type) }
+                            },
+                        ),
                         history = history,
-                        onApply = toolApplier(checklistLock) { type -> keepingKeyboard { viewModel.applyTool(type) } },
                         onMore = { showMore = true },
                         keyboard = KeyboardToggleState(blockFocused, viewModel::focusWorkingBlock),
                     )
@@ -127,16 +144,13 @@ fun NoteBottomBar(
     }
 }
 
+/** The tools of the row: the user's [layout], the [activeTool] of the block in use, and how to [onApply] one. */
+private class RowTools(val layout: ToolbarLayout, val activeTool: BlockType?, val onApply: ((BlockType) -> Unit)?)
+
 /** The block-tools toggle, the block tools (the active one marked), then undo and redo. */
 @Composable
-private fun MainTools(
-    activeTool: BlockType?,
-    history: HistoryTools,
-    onApply: ((BlockType) -> Unit)?,
-    onMore: () -> Unit,
-    keyboard: KeyboardToggleState,
-) {
-    ToolRow(spread = true) {
+private fun MainTools(tools: RowTools, history: HistoryTools, onMore: () -> Unit, keyboard: KeyboardToggleState) {
+    ToolRow(spread = true, buttons = tools.layout.main.size + MAIN_ROW_EXTRAS) {
         EnclyToolButton(
             icon = EnclyIcons.ChevronUp,
             contentDescription = stringResource(Res.string.block_more_tools),
@@ -145,11 +159,12 @@ private fun MainTools(
         )
         // The filled toggle never touches a highlighted tool next to it, even when the row is tight.
         Spacer(Modifier.width(EnclyTheme.spacing.xs))
-        mainBlockTools.forEach { tool ->
+        tools.layout.main.forEach { entry ->
+            val tool = entry.toBlockTool()
             BlockToolButton(
                 tool = tool,
-                active = tool.type == activeTool,
-                onClick = onApply?.let { apply -> { apply(tool.type) } },
+                active = tool.type == tools.activeTool,
+                onClick = tools.onApply?.let { apply -> { apply(tool.type) } },
             )
         }
         EnclyToolbarRule()
@@ -230,22 +245,33 @@ private const val SHOW_AFTER_FRAMES = 2
  * scrolling sideways on a screen too narrow for them.
  */
 @Composable
-private fun ToolRow(spread: Boolean, content: @Composable RowScope.() -> Unit) {
+private fun ToolRow(spread: Boolean, buttons: Int? = null, content: @Composable RowScope.() -> Unit) {
     BoxWithConstraints {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (spread) {
-                Arrangement.SpaceBetween
-            } else {
-                Arrangement.spacedBy(EnclyTheme.spacing.xxs)
-            },
-            modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-                .widthIn(min = maxWidth),
-            content = content,
-        )
+        // The buttons shrink as the row holds more of them, so a crowded toolbar still fits without scrolling.
+        val scale = buttons?.let { toolbarScale(it, maxWidth.value.toInt()) }
+        val sizes = remember(scale) { scale?.let { ToolSizes(it.button.dp, it.icon.dp) } }
+        CompositionLocalProvider(LocalToolSizes provides sizes) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = if (spread) {
+                    Arrangement.SpaceBetween
+                } else {
+                    Arrangement.spacedBy(EnclyTheme.spacing.xxs)
+                },
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .widthIn(min = maxWidth),
+                content = content,
+            )
+        }
     }
 }
+
+/** Buttons in the row besides the tools: the toggle, undo, redo and the keyboard. */
+private const val MAIN_ROW_EXTRAS = 4
+
+/** Buttons in the "more" row besides the tools: close, move up and down, duplicate and delete (and the lock). */
+private const val MORE_ROW_EXTRAS = 6
 
 @Composable
 private fun HistoryButtons(history: HistoryTools) {
@@ -263,14 +289,20 @@ private fun HistoryButtons(history: HistoryTools) {
 
 /** Behind the toggle: close, paragraph, heading levels, link and separator, move, duplicate and delete. */
 @Composable
-private fun MoreTools(blockTools: BlockMoveTools, onApply: ((BlockType) -> Unit)?, onClose: () -> Unit) {
-    ToolRow(spread = false) {
+private fun MoreTools(
+    layout: ToolbarLayout,
+    blockTools: BlockMoveTools,
+    onApply: ((BlockType) -> Unit)?,
+    onClose: () -> Unit,
+) {
+    ToolRow(spread = false, buttons = layout.more.size + MORE_ROW_EXTRAS) {
         EnclyToolButton(
             icon = EnclyIcons.Close,
             contentDescription = stringResource(Res.string.close),
             onClick = onClose,
         )
-        moreBlockTools.forEach { tool ->
+        layout.more.forEach { entry ->
+            val tool = entry.toBlockTool()
             BlockToolButton(
                 tool = tool,
                 active = false,

@@ -526,6 +526,8 @@ class BlockEditingTest {
         is Block.TextBlock -> BlockType.TEXT
         is Block.LinkBlock -> BlockType.LINK
         is Block.SeparatorBlock -> BlockType.SEPARATOR
+        is Block.CodeBlock -> BlockType.CODE
+        is Block.TableBlock -> BlockType.TABLE
     }
 
     private fun BlockEditorState.lastFocus(): FocusRequest = runTestResult { selection.requests.first() }

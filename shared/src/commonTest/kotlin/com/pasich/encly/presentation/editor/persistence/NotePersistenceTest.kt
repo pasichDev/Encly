@@ -262,6 +262,19 @@ class NotePersistenceTest {
     }
 
     @Test
+    fun duplicatingUnreadableContentCopiesTheStoredText() = runTest(dispatcher) {
+        repository.allNotesWithTags.value =
+            listOf(NoteWithTag(note = Note(id = NOTE_ID, title = "t", value = "{not json"), tag = null))
+        val persistence = persistence(loading = true)
+        assertFalse(persistence.load(NOTE_ID, isCopy = false) { blocks = it })
+
+        persistence.duplicate()
+
+        // The editor shows nothing it could read, so its empty blocks must not become the copy.
+        assertEquals("{not json", repository.insertedNotes.single().value)
+    }
+
+    @Test
     fun aCopyOfUnreadableContentIsReportedAndNeverInserted() = runTest(dispatcher) {
         repository.allNotesWithTags.value =
             listOf(NoteWithTag(note = Note(id = NOTE_ID, title = "t", value = "{not json"), tag = null))

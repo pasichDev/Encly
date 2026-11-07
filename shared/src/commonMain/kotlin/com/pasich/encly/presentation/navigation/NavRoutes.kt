@@ -26,6 +26,7 @@ enum class NavRoutes {
     AppearanceRoute,
     LicensesRoute,
     ImportNotesRoute,
+    EditorToolbarRoute,
 }
 
 /** Query argument of [NavRoutes.TasksRoute]: open the new-task sheet on arrival. */

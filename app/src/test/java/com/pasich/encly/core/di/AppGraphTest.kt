@@ -34,6 +34,7 @@ import com.pasich.encly.presentation.viewmodel.ArchiveViewModel
 import com.pasich.encly.presentation.viewmodel.AuthSetupViewModel
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.EditorToolbarViewModel
 import com.pasich.encly.presentation.viewmodel.ImportFromMyNotesViewModel
 import com.pasich.encly.presentation.viewmodel.ImportNotesViewModel
 import com.pasich.encly.presentation.viewmodel.LockNowViewModel
@@ -167,10 +168,10 @@ class AppGraphTest {
     }
 
     @Test
-    fun theViewModelsAreTheTwentySixOfTheApp() {
+    fun theViewModelsAreTheTwentySevenOfTheApp() {
         assertEquals(PLAIN_VIEW_MODELS, graph.viewModelProviders.keys)
         assertEquals(ASSISTED_VIEW_MODELS, graph.assistedFactoryProviders.keys)
-        assertEquals(26, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
+        assertEquals(27, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
         assertTrue(graph.manualAssistedFactoryProviders.isEmpty())
     }
 
@@ -252,6 +253,7 @@ class AppGraphTest {
             MarkdownExportViewModel::class,
             NoteListViewModel::class,
             NotePreviewsViewModel::class,
+            EditorToolbarViewModel::class,
             NoteSearchViewModel::class,
             NoteTabsViewModel::class,
             OnboardingViewModel::class,

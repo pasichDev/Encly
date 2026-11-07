@@ -51,6 +51,28 @@ public object BackupSettings {
         "ARABIC",
     )
 
+    /** The block tools of the editor toolbar and the sections they sit in; a test in `:shared` keeps them in step. */
+    public val TOOLBAR_TOOLS: List<String> = listOf(
+        "HEADING",
+        "LIST_CHECK",
+        "LIST_BULLET",
+        "LIST_NUMBER",
+        "QUOTE",
+        "CODE",
+        "TABLE",
+        "TEXT",
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "LINK",
+        "SEPARATOR",
+    )
+    public val TOOLBAR_SECTIONS: List<String> = listOf("main", "more", "hidden")
+
+    /** The longest stored toolbar layout there can be: every tool named once, with the section words. */
+    private const val MAX_TOOLBAR_LENGTH = 400
+
     public const val IS_DYNAMIC_THEME: String = "is_dynamic_theme"
     public const val THEME_TYPE: String = "theme_type"
     public const val THEME_PALETTE: String = "theme_palette"
@@ -68,10 +90,19 @@ public object BackupSettings {
     public const val KEYBOARD_STRICT_PRIVACY: String = "keyboard_strict_privacy"
     public const val SHOW_NOTE_PREVIEWS: String = "show_note_previews"
     public const val APP_LANGUAGE: String = "app_language"
+    public const val EDITOR_TOOLBAR: String = "editor_toolbar"
 
     private val bool = SettingKind { it == "true" || it == "false" }
 
     private fun choice(names: Collection<String>) = SettingKind { it in names }
+
+    /** `main:A,B;more:C;hidden:D`: sections of tool names, as the editor toolbar stores its layout. */
+    private val toolbar = SettingKind { value ->
+        value.length <= MAX_TOOLBAR_LENGTH && value.split(';').all { part ->
+            part.substringBefore(':') in TOOLBAR_SECTIONS && ':' in part &&
+                part.substringAfter(':').split(',').filter { it.isNotEmpty() }.all { it in TOOLBAR_TOOLS }
+        }
+    }
 
     private fun number(range: IntRange) = SettingKind { value -> value.toIntOrNull()?.let { it in range } == true }
 
@@ -85,6 +116,7 @@ public object BackupSettings {
         FONT_SIZE to number(MIN_FONT_SIZE..MAX_FONT_SIZE),
         NOTE_LINE_SPACING to choice(LINE_SPACINGS),
         // Lists and editor.
+        EDITOR_TOOLBAR to toolbar,
         IS_GRID_NOTE_LIST to bool,
         SORT to choice(SORT_OPTIONS),
         SHOW_TASKS to bool,

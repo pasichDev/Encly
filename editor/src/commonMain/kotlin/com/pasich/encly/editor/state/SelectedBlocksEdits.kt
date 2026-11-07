@@ -3,6 +3,7 @@ package com.pasich.encly.editor.state
 import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.TextualBlock
 import com.pasich.encly.editor.model.hasContent
 import com.pasich.encly.editor.model.kindIn
 import com.pasich.encly.editor.model.normalizedLevels
@@ -44,13 +45,11 @@ public fun BlockEditorState.pickedPlainText(): String = pickedBlocks.picked().pl
 public fun List<Block>.plainText(): String = filter { it.hasContent() }.joinToString("\n\n") { it.plainLines() }
 
 private fun Block.plainLines(): String = when (this) {
-    is Block.TextBlock -> text.value
-
-    is Block.HBlock -> text.value
-
-    is Block.QuoteBlock -> text.value
+    is Block.TextBlock, is Block.HBlock, is Block.QuoteBlock, is Block.CodeBlock -> (this as TextualBlock).text.value
 
     is Block.SeparatorBlock -> "---"
+
+    is Block.TableBlock -> table.value.rows.joinToString("\n") { row -> row.cells.joinToString(" | ") { it.value } }
 
     is Block.LinkBlock -> block.value.let { if (it.title.isBlank()) it.url else "${it.title} (${it.url})" }
 

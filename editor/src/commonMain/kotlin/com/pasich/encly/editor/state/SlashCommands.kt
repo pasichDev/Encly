@@ -33,6 +33,8 @@ public enum class SlashCommand(
     QUOTE(BlockType.QUOTE, EditorString.QUOTE, keywords = listOf("citation")),
     LINK(BlockType.LINK, EditorString.BLOCK_LINK, keywords = listOf("url", "bookmark")),
     DIVIDER(BlockType.SEPARATOR, EditorString.BLOCK_SEPARATOR, keywords = listOf("divider", "rule", "line", "hr")),
+    CODE(BlockType.CODE, EditorString.BLOCK_CODE, keywords = listOf("snippet", "pre", "monospace")),
+    TABLE(BlockType.TABLE, EditorString.BLOCK_TABLE, keywords = listOf("grid", "rows", "columns")),
 }
 
 /**

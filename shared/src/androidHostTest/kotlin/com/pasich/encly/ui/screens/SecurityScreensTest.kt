@@ -101,7 +101,7 @@ class SecurityScreensTest : ComposeScreenTest() {
     private fun showSecurity(recoveryPhrase: Boolean, biometric: BiometricStatus = BiometricStatus.UNAVAILABLE) {
         app.withAuth(recoveryPhrase, biometric)
         vault = app.backup()
-        val owner = viewModels(app.securitySettings(), app.notePreviewsVm(), vault)
+        val owner = viewModels(app.securitySettings(), app.notePreviewsVm(), app.toolbarVm(), vault)
         setNavScreen(owner, route = NavRoutes.SecuritySettingsRoute.name) { nav ->
             SecuritySettingsScreen(nav)
         }

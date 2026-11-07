@@ -51,6 +51,8 @@ import com.pasich.encly.core.resources.palette_midnight
 import com.pasich.encly.core.resources.palette_ocean
 import com.pasich.encly.core.resources.palette_paper
 import com.pasich.encly.core.resources.settings_appearance
+import com.pasich.encly.core.resources.settings_editor_toolbar
+import com.pasich.encly.core.resources.settings_editor_toolbar_desc
 import com.pasich.encly.core.resources.theme
 import com.pasich.encly.core.resources.theme_type_dark
 import com.pasich.encly.core.resources.theme_type_light
@@ -65,6 +67,8 @@ import com.pasich.encly.presentation.components.NoteLineSpacingSlider
 import com.pasich.encly.presentation.designsystem.EnclyCard
 import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyGroup
+import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
 import com.pasich.encly.presentation.designsystem.EnclyRadioRow
 import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclySegmentedControl
@@ -74,6 +78,7 @@ import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.Segment
 import com.pasich.encly.presentation.designsystem.ThemeSwatch
+import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.viewmodel.AppearanceViewModel
 import com.pasich.encly.presentation.viewmodel.ModeNote
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -110,6 +115,7 @@ fun AppearanceScreen(
             onMode = viewModel::selectMode,
             onDynamicColor = viewModel::setDynamicColor,
             onFontStyle = viewModel::selectFontStyle,
+            onEditorToolbar = { navController.navigate(NavRoutes.EditorToolbarRoute.name) },
         ),
         modifier = modifier,
     )
@@ -157,6 +163,15 @@ private fun AppearanceContent(
             }
             FontSection(selected = settings.fontStyle, onFontStyle = actions.onFontStyle)
             TextDefaultsSection(textDefaults)
+            EnclyGroup {
+                EnclyNavigationRow(
+                    title = stringResource(Res.string.settings_editor_toolbar),
+                    supporting = stringResource(Res.string.settings_editor_toolbar_desc),
+                    icon = EnclyIcons.Checklist,
+                    onClick = actions.onEditorToolbar,
+                    modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+                )
+            }
             PreviewCard()
         }
     }
@@ -192,6 +207,7 @@ private class AppearanceActions(
     val onMode: (ThemeType) -> Unit,
     val onDynamicColor: (Boolean) -> Unit,
     val onFontStyle: (FontStyleType) -> Unit,
+    val onEditorToolbar: () -> Unit,
 )
 
 private fun ThemePalette.labelRes(): StringResource = when (this) {

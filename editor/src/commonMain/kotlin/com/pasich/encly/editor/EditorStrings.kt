@@ -66,6 +66,14 @@ public enum class EditorString(internal val english: String) {
     LIST_ITEM_MOVE_DOWN("Move item down"),
     LIST_ITEM_INDENT("Indent item"),
     LIST_ITEM_OUTDENT("Outdent item"),
+    BLOCK_CODE("Code"),
+    BLOCK_TABLE("Table"),
+    TABLE_ADD_ROW("Add row"),
+    TABLE_ADD_COLUMN("Add column"),
+    TABLE_REMOVE_ROW("Delete row"),
+    TABLE_REMOVE_COLUMN("Delete column"),
+    TABLE_HEADER_ROW("Header row"),
+    TABLE_CELL_OPTIONS("Cell options"),
 }
 
 /**

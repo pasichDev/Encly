@@ -113,9 +113,12 @@ internal fun serverPublicKeyOf(output: Variant<*>): ByteArray {
     val value = output.value
     val bytes = when (value) {
         is ByteArray -> value
+
         is Array<*> -> value.filterIsInstance<Byte>().toByteArray().takeIf { it.size == value.size }
+
         // dbus-java hands an `ay` inside a variant over as a list of boxed bytes.
         is List<*> -> value.filterIsInstance<Byte>().toByteArray().takeIf { it.size == value.size }
+
         else -> null
     }
     return bytes ?: throw GeneralSecurityException(

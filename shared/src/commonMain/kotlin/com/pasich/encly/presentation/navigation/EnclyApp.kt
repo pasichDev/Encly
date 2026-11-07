@@ -33,6 +33,7 @@ import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.platform.HostNavigationRequests
+import com.pasich.encly.presentation.components.editNote.LocalEditorToolbar
 import com.pasich.encly.presentation.components.tiles.LocalShowNotePreviews
 import com.pasich.encly.presentation.designsystem.AppCommand
 import com.pasich.encly.presentation.designsystem.EnclyShortcutHost
@@ -40,6 +41,7 @@ import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
+import com.pasich.encly.presentation.viewmodel.EditorToolbarViewModel
 import com.pasich.encly.presentation.viewmodel.NotePreviewsViewModel
 import com.pasich.encly.presentation.viewmodel.StartupViewModel
 import com.pasich.encly.ui.theme.AppTheme
@@ -318,6 +320,7 @@ private fun AppContent(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val showPreviews by metroViewModel<NotePreviewsViewModel>().show.collectAsState()
+            val toolbar by metroViewModel<EditorToolbarViewModel>().layout.collectAsState()
             val unlockReveal = remember { UnlockRevealState() }
             // A re-lock during the reveal ends it: no deferred navigation into the vault,
             // no reveal left covering the lock screen.
@@ -325,6 +328,7 @@ private fun AppContent(
             CompositionLocalProvider(
                 LocalUnlockReveal provides unlockReveal,
                 LocalShowNotePreviews provides showPreviews,
+                LocalEditorToolbar provides toolbar,
                 LocalVaultLocked provides (locked || shielded),
             ) {
                 // The whole app layer moves with the unlock reveal: it slides in from the

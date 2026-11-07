@@ -102,9 +102,22 @@ internal object BlockJson {
                 // the lock the next time it saves the note.
                 if (block.locked.value) put("isLocked", true)
             }
+
+            // Newer than any release: an older app reads neither and refuses the note (see BlockJsonFormatTest).
+            is Block.CodeBlock -> {
+                put("blockType", "CODE")
+                put("text", block.text.value)
+            }
+
+            is Block.TableBlock -> {
+                put("blockType", "TABLE")
+                put("hasHeader", block.table.value.header)
+                put("rows", TableJson.rows(block.table.value))
+            }
         }
     }
 
+    @Suppress("CyclomaticComplexMethod") // One branch per kind of block.
     private fun fromJson(element: JsonElement): Block {
         val json = element.asObject()
         val blockType = json.string("blockType") ?: throw SerializationException("Missing blockType")
@@ -136,6 +149,12 @@ internal object BlockJson {
 
             // "LIST" kept as a legacy alias for checklists.
             "LIST", "LIST_CHECK", "LIST_NUMBER", "LIST_BULLET" -> listBlock(json, blockType)
+
+            "CODE" -> Block.CodeBlock(text = MutableStateFlow(json.string("text").orEmpty()))
+
+            "TABLE" -> Block.TableBlock(
+                MutableStateFlow(TableJson.decode(json.array("rows"), json.string("hasHeader"))),
+            )
 
             else -> throw SerializationException("Unknown block type: $blockType")
         }

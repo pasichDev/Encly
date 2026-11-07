@@ -254,6 +254,10 @@ private fun Block.contentFlow(): Flow<Any>? = when (this) {
     is Block.ListBlock -> combine(items, locked) { list, locked -> list to locked }
 
     is Block.SeparatorBlock -> null
+
+    is Block.CodeBlock -> text
+
+    is Block.TableBlock -> table
 }
 
 /**

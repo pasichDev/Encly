@@ -56,6 +56,8 @@ public fun Block.toolType(): BlockType? = when (this) {
     is Block.ListBlock -> blockType
     is Block.LinkBlock -> BlockType.LINK
     is Block.SeparatorBlock -> BlockType.SEPARATOR
+    is Block.CodeBlock -> BlockType.CODE
+    is Block.TableBlock -> BlockType.TABLE
 }
 
 /**
@@ -112,7 +114,10 @@ private fun convertText(block: Block, text: String, tool: BlockType): Block? = w
 
     BlockType.TEXT -> Block.TextBlock(MutableStateFlow(text))
 
-    BlockType.SEPARATOR -> null
+    BlockType.CODE -> Block.CodeBlock(MutableStateFlow(text))
+
+    // A table is added next to the block, never made of its text.
+    BlockType.SEPARATOR, BlockType.TABLE -> null
 }
 
 private fun Block.exactType(): BlockType? = when (this) {

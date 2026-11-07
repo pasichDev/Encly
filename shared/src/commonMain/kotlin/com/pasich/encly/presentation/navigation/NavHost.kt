@@ -40,6 +40,7 @@ import com.pasich.encly.presentation.screen.importnotes.ImportNotesScreen
 import com.pasich.encly.presentation.screen.onboarding.OnboardingScreen
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
 import com.pasich.encly.presentation.screen.settings.DuressPinScreen
+import com.pasich.encly.presentation.screen.settings.EditorToolbarScreen
 import com.pasich.encly.presentation.screen.settings.PasswordScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.screen.settings.SettingsScreen
@@ -158,6 +159,10 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
 
                 animationScreens(NavRoutes.AppearanceRoute.name) {
                     NavigationPage(navController, NavRoutes.SettingsRoute) { AppearanceScreen(navController) }
+                }
+
+                animationScreens(NavRoutes.EditorToolbarRoute.name) {
+                    NavigationPage(navController, NavRoutes.AppearanceRoute) { EditorToolbarScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.BackupRoute.name) {

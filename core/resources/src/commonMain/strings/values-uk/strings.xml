@@ -705,4 +705,23 @@
     <string name="faq_password_a">Так. У Налаштування → Безпека → Пароль можна додати пароль щонайменше з 8 символів будь-якою мовою. Він працює поряд із PIN: на екрані блокування можна перемикатися між ними, і кожен розблоковує сам по собі. Обидва мають спільний ліміт помилкових спроб і той самий захист ключем пристрою. PIN для стирання та PIN під примусом залишаються лише PIN-кодами. Будь-який із двох можна видалити, поки задано інший.</string>
     <string name="faq_pin_length_q">Якої довжини може бути PIN?</string>
     <string name="faq_pin_length_a">Від 6 до 12 цифр на ваш вибір. Коротших PIN не пропонується: блокування й ключ пристрою обмежують кількість спроб, а 6 цифр — найкоротший PIN, що лишається безпечним за цих обмежень. Екран блокування ніколи не показує довжину вашого PIN: коли закінчите, натисніть «Розблокувати» — так само для PIN для стирання та PIN під примусом. PIN, задані раніше, працюють без змін.</string>
+    <string name="block_code">Код</string>
+    <string name="block_table">Таблиця</string>
+    <string name="table_add_row">Додати рядок</string>
+    <string name="table_add_column">Додати стовпець</string>
+    <string name="table_remove_row">Видалити рядок</string>
+    <string name="table_remove_column">Видалити стовпець</string>
+    <string name="table_header_row">Рядок заголовка</string>
+    <string name="table_cell_options">Параметри клітинки</string>
+    <string name="settings_editor_toolbar">Панель редактора</string>
+    <string name="settings_editor_toolbar_desc">Оберіть інструменти та їхній порядок</string>
+    <string name="toolbar_hint">Перетягуйте за ручку, щоб змінити порядок. Око ховає інструмент або повертає його. Інструменти з розділу «Додаткове меню» ховаються за стрілкою.</string>
+    <string name="toolbar_reset">Скинути</string>
+    <string name="toolbar_section_main">Панель</string>
+    <string name="toolbar_section_more">Додаткове меню</string>
+    <string name="toolbar_section_hidden">Приховані</string>
+    <string name="toolbar_tool_hide">Приховати інструмент</string>
+    <string name="toolbar_tool_show">Показати інструмент</string>
+    <string name="toolbar_move_up">Вгору</string>
+    <string name="toolbar_move_down">Вниз</string>
 </resources>

@@ -4,6 +4,7 @@ import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.SelectedBlocks
@@ -134,4 +135,7 @@ public interface EditorController {
 
     /** Moves item [itemId] of [block], with its sub-items, [by] places among its siblings (up is negative). */
     public fun onListItemMove(block: Block.ListBlock, itemId: String, by: Int): Boolean
+
+    /** The table [block] now holds [newTable]; typing is [mergeable] into one undo step. */
+    public fun onTableChanged(block: Block.TableBlock, newTable: TableData, mergeable: Boolean)
 }

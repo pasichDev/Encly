@@ -47,7 +47,7 @@ class ScreenshotAllowanceScreensTest : ComposeScreenTest() {
     private fun showSecurity(offered: Boolean = true) {
         app.withAuth(recoveryPhrase = true, biometric = BiometricStatus.UNAVAILABLE)
         setNavScreen(
-            viewModels(app.securitySettings(), app.notePreviewsVm(), app.backup()),
+            viewModels(app.securitySettings(), app.notePreviewsVm(), app.toolbarVm(), app.backup()),
             route = NavRoutes.SecuritySettingsRoute.name,
         ) { nav ->
             CompositionLocalProvider(LocalScreenshotAllowance provides app.screenshots.takeIf { offered }) {

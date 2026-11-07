@@ -32,6 +32,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
+import com.pasich.encly.domain.model.EditorToolbar
 import com.pasich.encly.domain.model.NotePreviews
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.usecase.OnboardingUseCase
@@ -52,6 +53,7 @@ import com.pasich.encly.presentation.viewmodel.AppearanceViewModel
 import com.pasich.encly.presentation.viewmodel.AuthSetupViewModel
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.presentation.viewmodel.EditorToolbarViewModel
 import com.pasich.encly.presentation.viewmodel.LockNowViewModel
 import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
@@ -208,6 +210,10 @@ internal class TestApp {
 
     fun notePreviewsVm() = NotePreviewsViewModel(notePreviews)
 
+    val editorToolbar = EditorToolbar(InMemoryKeyValueStore())
+
+    fun toolbarVm() = EditorToolbarViewModel(editorToolbar)
+
     /** The start-up work of the home screen, with the trash and the version notes the tests control. */
     fun startup(tracker: WhatsNewTracker = freshInstall()) = StartupViewModel(
         tracker,
@@ -281,6 +287,7 @@ internal class TestApp {
     fun home(noteList: NoteListViewModel = noteList()): Array<androidx.lifecycle.ViewModel> = arrayOf(
         mainListState(),
         notePreviewsVm(),
+        toolbarVm(),
         startup(),
         settingsVm(),
         noteList,

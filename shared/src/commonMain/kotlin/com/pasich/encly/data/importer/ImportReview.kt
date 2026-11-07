@@ -49,6 +49,7 @@ object ImportReview {
         is Block.TextBlock -> block.text.value
         is Block.HBlock -> block.text.value
         is Block.QuoteBlock -> block.text.value
+        is Block.CodeBlock -> block.text.value
         is Block.ListBlock -> block.items.value.firstOrNull()?.value.orEmpty()
         else -> ""
     }
@@ -70,6 +71,12 @@ object ImportReview {
         is Block.SeparatorBlock -> "———"
 
         is Block.LinkBlock -> block.block.value.url
+
+        is Block.CodeBlock -> block.text.value
+
+        is Block.TableBlock -> block.table.value.rows.joinToString("\n") { row ->
+            row.cells.joinToString(" | ") { it.value }
+        }
 
         is Block.ListBlock -> block.items.value.withIndex().joinToString("\n") { (index, item) ->
             when (block.blockType) {

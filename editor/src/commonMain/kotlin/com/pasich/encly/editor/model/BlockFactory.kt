@@ -20,5 +20,7 @@ public object BlockFactory {
         BlockType.H4 -> Block.HBlock(blockType = BlockType.H4)
         BlockType.QUOTE -> Block.QuoteBlock()
         BlockType.SEPARATOR -> Block.SeparatorBlock()
+        BlockType.CODE -> Block.CodeBlock()
+        BlockType.TABLE -> Block.TableBlock()
     }
 }

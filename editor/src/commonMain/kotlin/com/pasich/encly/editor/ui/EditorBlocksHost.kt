@@ -38,16 +38,19 @@ import com.pasich.encly.editor.LocalEditorStrings
 import com.pasich.encly.editor.focus.BlockFocusRegistry
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.theme.editorBlockFrame
 import com.pasich.encly.editor.theme.frameInset
+import com.pasich.encly.editor.ui.blocks.CodeBlock
 import com.pasich.encly.editor.ui.blocks.HBlock
 import com.pasich.encly.editor.ui.blocks.LinkBlock
 import com.pasich.encly.editor.ui.blocks.ListBlock
 import com.pasich.encly.editor.ui.blocks.QuoteBlock
 import com.pasich.encly.editor.ui.blocks.ReadingDirection
 import com.pasich.encly.editor.ui.blocks.SeparatorBlock
+import com.pasich.encly.editor.ui.blocks.TableBlock
 import com.pasich.encly.editor.ui.blocks.TextBlock
 import com.pasich.encly.editor.ui.components.ContextEntry
 import com.pasich.encly.editor.ui.components.EditorContextMenu
@@ -99,6 +102,9 @@ public fun LazyListScope.editorBlocks(
                 onDuplicate = { host.controller.duplicateBlock(block) },
                 onDelete = { host.controller.removeBlock(block, BlockRemoveAction.REMOVE) },
                 onSelect = { host.controller.selectedBlocks.select(block.id) },
+                onTableChange = { table, mergeable ->
+                    (block as? Block.TableBlock)?.let { host.controller.onTableChanged(it, table, mergeable) }
+                },
             )
         }
         BlockChrome(block, host.controller, isLocked) {
@@ -152,6 +158,7 @@ private class EditorBlockCallbacks(
     val onDuplicate: () -> Unit,
     val onDelete: () -> Unit,
     val onSelect: () -> Unit,
+    val onTableChange: (TableData, mergeable: Boolean) -> Unit,
 )
 
 /** Where a block is in the note: TalkBack offers to move it only where it can go. */
@@ -170,8 +177,8 @@ private fun EditorBlock(
 ) {
     val theme = LocalEditorTheme.current
     val focusRequester = remember { FocusRequester() }
-    // A list registers its own target: it focuses its first or last item.
-    if (block !is Block.ListBlock) RegisterFocusRequester(block.id, focusRegistry, focusRequester)
+    // A list or a table registers its own target: it focuses one of its items or cells.
+    if (!block.hasItemFields()) RegisterFocusRequester(block.id, focusRegistry, focusRequester)
     // Whether the block is being edited: its placeholder shows then.
     var hasFocus by remember { mutableStateOf(false) }
 
@@ -198,9 +205,9 @@ private fun EditorBlock(
                 .padding(horizontal = theme.spacing.m)
                 .onFocusChanged { focusState ->
                     hasFocus = focusState.hasFocus
-                    // A list has one field per item: any of them focused counts as the list focused,
-                    // so a new block goes after the list and not after the block focused before it.
-                    val focused = if (block is Block.ListBlock) focusState.hasFocus else focusState.isFocused
+                    // A list has one field per item, a table one per cell: any of them focused counts as the
+                    // block focused, so a new block goes after it and not after the block focused before it.
+                    val focused = if (block.hasItemFields()) focusState.hasFocus else focusState.isFocused
                     when {
                         focused -> callbacks.onFocus()
                         !focusState.hasFocus -> callbacks.onFocusLost()
@@ -220,6 +227,7 @@ private fun EditorBlock(
                     isLocked = isLocked,
                     isEditingLink = isEditingLink,
                     showPlaceholder = !isLocked && (hasFocus || isOnlyBlock),
+                    onTableChange = callbacks.onTableChange,
                 ),
                 onOpenSheet = callbacks.onOpenSheet,
                 modifier = if (isLocked) Modifier else blockAccessibilityActions(commands),
@@ -227,6 +235,9 @@ private fun EditorBlock(
         }
     }
 }
+
+/** A list has a field per item and a table one per cell: they register their own focus target. */
+private fun Block.hasItemFields() = this is Block.ListBlock || this is Block.TableBlock
 
 /** A separator and a link card have no text field of their own to keep a right click for. */
 private fun Block.hasNoText() = this is Block.SeparatorBlock || this is Block.LinkBlock
@@ -293,8 +304,13 @@ private fun blockAccessibilityActions(commands: List<BlockCommand>): Modifier = 
     customActions = commands.map { command -> CustomAccessibilityAction(command.label) { true.also { command.run() } } }
 }
 
-/** How a block shows: read-only, its link being edited, its placeholder. */
-private class BlockContentState(val isLocked: Boolean, val isEditingLink: Boolean, val showPlaceholder: Boolean)
+/** How a block shows (read-only, its link being edited, its placeholder) and where a table reports its edits. */
+private class BlockContentState(
+    val isLocked: Boolean,
+    val isEditingLink: Boolean,
+    val showPlaceholder: Boolean,
+    val onTableChange: (TableData, Boolean) -> Unit,
+)
 
 @Composable
 private fun BlockContent(
@@ -335,6 +351,23 @@ private fun BlockContent(
         }
 
         is Block.ListBlock -> ListBlock(block, blockActions, fieldModifier = modifier, isLocked = isLocked)
+
+        // Code reads left to right, as written, whatever its text.
+        is Block.CodeBlock -> CodeBlock(
+            block,
+            blockActions,
+            modifier = fieldModifier,
+            isLocked = isLocked,
+            showPlaceholder = state.showPlaceholder,
+        )
+
+        is Block.TableBlock -> TableBlock(
+            block,
+            blockActions,
+            onTableChange = state.onTableChange,
+            modifier = modifier,
+            isLocked = isLocked,
+        )
 
         is Block.LinkBlock -> LinkBlock(
             block,

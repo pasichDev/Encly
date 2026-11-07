@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,12 +26,19 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /** Editor tool buttons: 44 dp, radius 14 (design spec §3.3). */
 private val ToolSize = 44.dp
 private val ToolShape = RoundedCornerShape(14.dp)
+
+/** A toolbar button's [button] target and [icon] size. */
+class ToolSizes(val button: Dp, val icon: Dp)
+
+/** The size of the toolbar's buttons below it; a toolbar crowded with tools provides smaller ones. */
+val LocalToolSizes = staticCompositionLocalOf<ToolSizes?> { null }
 
 /**
  * The editor's formatting toolbar, pinned above the keyboard: `surfaceContainerHigh`, a 1 dp
@@ -63,7 +71,7 @@ enum class ToolStyle { PLAIN, ACTIVE, FILLED }
 /**
  * A 44 dp toolbar button with radius 14 and a 22 dp icon. [ToolStyle.FILLED] is the `primary`
  * "Add block"; [ToolStyle.ACTIVE] marks the tool of the focused block (`primaryContainer`).
- * A null [onClick] shows it disabled.
+ * A null [onClick] shows it disabled. A toolbar crowded with tools passes a smaller [size] and [iconSize].
  */
 @Composable
 fun EnclyToolButton(
@@ -72,6 +80,8 @@ fun EnclyToolButton(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     style: ToolStyle = ToolStyle.PLAIN,
+    size: Dp = LocalToolSizes.current?.button ?: ToolSize,
+    iconSize: Dp = LocalToolSizes.current?.icon ?: EnclyTheme.spacing.iconMedium,
 ) {
     val colors = MaterialTheme.colorScheme
     val enabled = onClick != null
@@ -89,7 +99,7 @@ fun EnclyToolButton(
             contentColor = if (enabled) content else content.disabled(),
             modifier = Modifier
                 .enclyInteractive(ToolShape, enabled)
-                .size(ToolSize)
+                .size(size)
                 .semantics {
                     role = Role.Button
                     selected = style == ToolStyle.ACTIVE
@@ -99,7 +109,7 @@ fun EnclyToolButton(
                 Icon(
                     icon,
                     contentDescription = contentDescription,
-                    modifier = Modifier.size(EnclyTheme.spacing.iconMedium),
+                    modifier = Modifier.size(iconSize),
                 )
             }
         }

@@ -22,6 +22,11 @@ class MarkdownBlockMapperTest {
 
             is Block.LinkBlock -> "link"
 
+            is Block.CodeBlock -> "code:${block.text.value}"
+
+            is Block.TableBlock -> "table${if (block.table.value.header) "" else "-headless"}:" +
+                block.table.value.rows.joinToString("/") { row -> row.cells.joinToString("|") { it.value } }
+
             is Block.ListBlock -> {
                 val kind = when (block.blockType) {
                     BlockType.LIST_CHECK -> "check"
@@ -87,8 +92,8 @@ class MarkdownBlockMapperTest {
     }
 
     @Test
-    fun codeIsKeptAsTextWithoutItsFences() {
-        assertEquals(listOf("text:val x = <b>1</b>\nprint(x)"), blocks("```kotlin\nval x = <b>1</b>\nprint(x)\n```"))
+    fun fencedCodeIsACodeBlockWithoutItsFences() {
+        assertEquals(listOf("code:val x = <b>1</b>\nprint(x)"), blocks("```kotlin\nval x = <b>1</b>\nprint(x)\n```"))
     }
 
     @Test
@@ -102,7 +107,7 @@ class MarkdownBlockMapperTest {
     @Test
     fun noTextIsDropped() {
         assertEquals(
-            listOf("text:#hashtag no space", "text:| a | b |\n|---|---|"),
+            listOf("text:#hashtag no space", "table:a|b"),
             blocks("#hashtag no space\n\n| a | b |\n|---|---|"),
         )
         assertEquals(emptyList<String>(), blocks("\n\n  \n"))

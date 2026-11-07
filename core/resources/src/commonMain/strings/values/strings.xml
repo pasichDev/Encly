@@ -711,4 +711,23 @@
     <string name="faq_password_a">Yes. In Settings → Security → Password you can add a password of at least 8 characters, any language. It works next to your PIN: the lock screen lets you switch between them, and each one unlocks on its own. Both share the same limit on wrong attempts and the same protection by the device key. The wipe PIN and the duress PIN stay PIN-only. You can remove either one while the other is set.</string>
     <string name="faq_pin_length_q">How long can my PIN be?</string>
     <string name="faq_pin_length_a">Between 6 and 12 digits, your choice. Shorter PINs are not offered: the lockout and the device key limit how many guesses anyone gets, and 6 digits is the shortest that stays safe with those limits. The lock screen never shows how long your PIN is: you press Unlock when you are done, and the same goes for the wipe PIN and the duress PIN. PINs you set before this option keep working as they are.</string>
+    <string name="block_code">Code</string>
+    <string name="block_table">Table</string>
+    <string name="table_add_row">Add row</string>
+    <string name="table_add_column">Add column</string>
+    <string name="table_remove_row">Delete row</string>
+    <string name="table_remove_column">Delete column</string>
+    <string name="table_header_row">Header row</string>
+    <string name="table_cell_options">Cell options</string>
+    <string name="settings_editor_toolbar">Editor toolbar</string>
+    <string name="settings_editor_toolbar_desc">Choose and order the editing tools</string>
+    <string name="toolbar_hint">Drag the handle to reorder. Tap the eye to hide a tool or bring it back. Tools under “More menu” sit behind the chevron.</string>
+    <string name="toolbar_reset">Reset</string>
+    <string name="toolbar_section_main">Toolbar</string>
+    <string name="toolbar_section_more">More menu</string>
+    <string name="toolbar_section_hidden">Hidden</string>
+    <string name="toolbar_tool_hide">Hide tool</string>
+    <string name="toolbar_tool_show">Show tool</string>
+    <string name="toolbar_move_up">Move up</string>
+    <string name="toolbar_move_down">Move down</string>
 </resources>

@@ -17,6 +17,8 @@ public enum class BlockType {
     H2,
     H3,
     H4,
+    CODE,
+    TABLE,
 }
 
 /** A fresh editor-session identity for a block or list item. Never persisted. */
@@ -81,6 +83,19 @@ public sealed class Block {
          */
         val locked: MutableStateFlow<Boolean> = MutableStateFlow(false),
     ) : Block()
+
+    /** Code, set in a monospace face; it keeps its spaces and line breaks exactly as typed. */
+    public data class CodeBlock(
+        override val text: MutableStateFlow<String> = MutableStateFlow(""),
+        override val id: String = newBlockId(),
+    ) : Block(),
+        TextualBlock
+
+    /** A table of plain-text cells; see [TableData]. */
+    public data class TableBlock(
+        val table: MutableStateFlow<TableData> = MutableStateFlow(TableData.empty()),
+        override val id: String = newBlockId(),
+    ) : Block()
 }
 
 /**
@@ -94,4 +109,6 @@ public fun Block.hasContent(): Boolean = when (this) {
     is Block.ListBlock -> items.value.any { item -> item.value.isNotBlank() }
     is Block.LinkBlock -> block.value.url.isNotBlank()
     is Block.SeparatorBlock -> true
+    is Block.CodeBlock -> text.value.isNotBlank()
+    is Block.TableBlock -> table.value.rows.any { row -> row.cells.any { it.value.isNotBlank() } }
 }

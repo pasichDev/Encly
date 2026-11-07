@@ -699,4 +699,23 @@
     <string name="faq_password_a">Sì. In Impostazioni → Sicurezza → Password puoi aggiungere una password di almeno 8 caratteri, in qualsiasi lingua. Funziona accanto al PIN: la schermata di blocco permette di passare dal PIN alla password e viceversa, e ciascuno sblocca da solo. Condividono lo stesso limite di tentativi errati e la stessa protezione con la chiave del dispositivo. Il PIN di cancellazione e il PIN di coercizione restano solo PIN. Puoi rimuovere uno dei due finché l’altro è impostato.</string>
     <string name="faq_pin_length_q">Quanto può essere lungo il PIN?</string>
     <string name="faq_pin_length_a">Da 6 a 12 cifre, a tua scelta. PIN più corti non sono previsti: il blocco e la chiave del dispositivo limitano i tentativi, e 6 cifre è il minimo che resta sicuro con quei limiti. La schermata di blocco non mostra mai la lunghezza del PIN: tocchi «Sblocca» quando hai finito, e lo stesso vale per il PIN di cancellazione e il PIN di coercizione. I PIN impostati prima continuano a funzionare così come sono.</string>
+    <string name="block_code">Codice</string>
+    <string name="block_table">Tabella</string>
+    <string name="table_add_row">Aggiungi riga</string>
+    <string name="table_add_column">Aggiungi colonna</string>
+    <string name="table_remove_row">Elimina riga</string>
+    <string name="table_remove_column">Elimina colonna</string>
+    <string name="table_header_row">Riga di intestazione</string>
+    <string name="table_cell_options">Opzioni cella</string>
+    <string name="settings_editor_toolbar">Barra dell\'editor</string>
+    <string name="settings_editor_toolbar_desc">Scegli e ordina gli strumenti</string>
+    <string name="toolbar_hint">Trascina la maniglia per riordinare. L\'occhio nasconde uno strumento o lo ripristina. Gli strumenti in «Altro menu» stanno dietro la freccia.</string>
+    <string name="toolbar_reset">Ripristina</string>
+    <string name="toolbar_section_main">Barra</string>
+    <string name="toolbar_section_more">Altro menu</string>
+    <string name="toolbar_section_hidden">Nascosti</string>
+    <string name="toolbar_tool_hide">Nascondi strumento</string>
+    <string name="toolbar_tool_show">Mostra strumento</string>
+    <string name="toolbar_move_up">Su</string>
+    <string name="toolbar_move_down">Giù</string>
 </resources>

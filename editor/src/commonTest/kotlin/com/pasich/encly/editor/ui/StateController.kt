@@ -19,6 +19,7 @@ import com.pasich.encly.editor.model.BlockFactory
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.model.TextualBlock
 import com.pasich.encly.editor.state.BlockEditorState
 import com.pasich.encly.editor.state.BlockRemoveAction
@@ -45,6 +46,7 @@ import com.pasich.encly.editor.state.moveListItem
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.replaceTextRange
 import com.pasich.encly.editor.state.shiftListItem
+import com.pasich.encly.editor.state.tableTypingStep
 import com.pasich.encly.editor.state.textRangePlainText
 import com.pasich.encly.editor.state.toggleChecklistLock
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
@@ -134,6 +136,11 @@ internal class StateController(val state: BlockEditorState) : EditorController {
     override fun onListItemsChanged(block: Block.ListBlock, newItems: List<ItemListBlock>, mergeable: Boolean) {
         val step = if (mergeable) listTypingStep(block.items.value, newItems) else null
         state.changeValue(block.id, block.items, newItems, mergeable, step)
+    }
+
+    override fun onTableChanged(block: Block.TableBlock, newTable: TableData, mergeable: Boolean) {
+        val step = if (mergeable) tableTypingStep(block.table.value, newTable) else null
+        state.changeValue(block.id, block.table, newTable, mergeable, step)
     }
 
     override fun onLinkChanged(block: Block.LinkBlock, newLink: LinkDataBlock) {

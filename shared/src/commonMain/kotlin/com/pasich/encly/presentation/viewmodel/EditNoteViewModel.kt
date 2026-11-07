@@ -22,6 +22,7 @@ import com.pasich.encly.editor.model.BlockFactory
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.model.TextualBlock
 import com.pasich.encly.editor.state.BlockEditorState
 import com.pasich.encly.editor.state.BlockRemoveAction
@@ -62,6 +63,7 @@ import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.removeInteracted
 import com.pasich.encly.editor.state.replaceTextRange
 import com.pasich.encly.editor.state.shiftListItem
+import com.pasich.encly.editor.state.tableTypingStep
 import com.pasich.encly.editor.state.textRangeBlocks
 import com.pasich.encly.editor.state.toggleChecklistLock
 import com.pasich.encly.presentation.editor.persistence.LoadNoteState
@@ -507,6 +509,13 @@ class EditNoteViewModel(
         if (!canEdit(block)) return
         val step = if (mergeable) listTypingStep(block.items.value, newItems) else null
         editor.changeValue(block.id, block.items, newItems, mergeable, step)
+    }
+
+    /** Sets the content of a table [block] (typing in a cell, a row or column added or removed). */
+    fun onTableChanged(block: Block.TableBlock, newTable: TableData, mergeable: Boolean) {
+        if (!canEdit(block)) return
+        val step = if (mergeable) tableTypingStep(block.table.value, newTable) else null
+        editor.changeValue(block.id, block.table, newTable, mergeable, step)
     }
 
     // A block that left the note (converted, merged, undone) may still report a late edit from

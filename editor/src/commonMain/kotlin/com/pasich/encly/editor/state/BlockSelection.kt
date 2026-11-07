@@ -147,7 +147,7 @@ internal fun Block.firstItemId(): String? = (this as? Block.ListBlock)?.let { it
 
 /** Whether [this] block has a field that can take focus. */
 internal fun Block.canTakeFocus(): Boolean = when (this) {
-    is Block.TextBlock, is Block.HBlock, is Block.QuoteBlock -> true
+    is Block.TextBlock, is Block.HBlock, is Block.QuoteBlock, is Block.CodeBlock, is Block.TableBlock -> true
 
     // A list focuses its own items; a locked checklist has none to focus.
     is Block.ListBlock -> !locked.value

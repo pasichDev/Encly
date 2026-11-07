@@ -68,6 +68,13 @@ class NoteDocument(val title: String, val tag: String?, val blocks: List<Documen
 
                 is Block.SeparatorBlock -> DocumentBlock.Separator
 
+                // Code and tables are drawn as paragraphs of their text (a table as one row of cells per line).
+                is Block.CodeBlock -> DocumentBlock.Paragraph(block.text.value)
+
+                is Block.TableBlock -> DocumentBlock.Paragraph(
+                    block.table.value.rows.joinToString("\n") { row -> row.cells.joinToString(" | ") { it.value } },
+                )
+
                 is Block.ListBlock -> DocumentBlock.Items(
                     kind = when (block.blockType) {
                         BlockType.LIST_NUMBER -> ListKind.NUMBERED

@@ -50,9 +50,18 @@ internal fun findMatches(blocks: List<Block>, query: String): List<FindMatch> {
     for (block in blocks) {
         when (block) {
             is Block.TextBlock -> found.addMatches(block.id, null, block.text.value, query)
+
             is Block.HBlock -> found.addMatches(block.id, null, block.text.value, query)
+
             is Block.QuoteBlock -> found.addMatches(block.id, null, block.text.value, query)
+
             is Block.ListBlock -> block.items.value.forEach { found.addMatches(block.id, it.id, it.value, query) }
+
+            is Block.CodeBlock -> found.addMatches(block.id, null, block.text.value, query)
+
+            is Block.TableBlock -> block.table.value.rows.flatMap { it.cells }
+                .forEach { found.addMatches(block.id, it.id, it.value, query) }
+
             is Block.LinkBlock, is Block.SeparatorBlock -> Unit
         }
     }

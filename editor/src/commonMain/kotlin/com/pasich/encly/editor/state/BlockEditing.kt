@@ -20,7 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 public fun BlockEditorState.breakLine(blockId: String, lineBreak: LineBreak): String? {
     val index = indexOf(blockId)
     val block = blocks.getOrNull(index)
-    if (block !is TextualBlock) return null
+    // Code keeps its line breaks as text: Enter and a paste never split it.
+    if (block !is TextualBlock || block is Block.CodeBlock) return null
     return if (lineBreak.isEnter) {
         enter(index, block, lineBreak.head, lineBreak.tail)
     } else {
@@ -78,7 +79,7 @@ public fun BlockEditorState.backspaceAtStart(blockId: String): Boolean {
             (block.text.value.isNotEmpty() || blocks.getOrNull(index - 1) is Block.TextBlock) &&
                 joinToPrevious(index, block.text.value)
 
-        is Block.HBlock, is Block.QuoteBlock -> {
+        is Block.HBlock, is Block.QuoteBlock, is Block.CodeBlock -> {
             val text = (block as TextualBlock).text.value
             val paragraph = Block.TextBlock(MutableStateFlow(text))
             batch { replaceBlock(index, paragraph) }
@@ -107,11 +108,13 @@ private fun BlockEditorState.joinToPrevious(index: Int, text: String): Boolean {
 
         is Block.QuoteBlock -> joinText(index, previous.text, text)
 
+        is Block.CodeBlock -> joinText(index, previous.text, text)
+
         // A locked checklist takes no edits: Backspace at the start of the block below it does nothing.
         is Block.ListBlock -> if (!previous.locked.value) joinToList(index, previous, text)
 
-        // The first block, or a link card, which has no text to join.
-        is Block.LinkBlock, null -> return false
+        // The first block, or a link card or a table, which has no text to join.
+        is Block.LinkBlock, is Block.TableBlock, null -> return false
     }
     return true
 }

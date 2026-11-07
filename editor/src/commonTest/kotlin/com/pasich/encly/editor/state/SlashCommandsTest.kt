@@ -36,6 +36,7 @@ class SlashCommandsTest {
             listOf(
                 BlockType.TEXT, BlockType.H1, BlockType.H2, BlockType.H3, BlockType.H4, BlockType.LIST_CHECK,
                 BlockType.LIST_BULLET, BlockType.LIST_NUMBER, BlockType.QUOTE, BlockType.LINK, BlockType.SEPARATOR,
+                BlockType.CODE, BlockType.TABLE,
             ),
             slashMatches("", labels).map { it.type },
         )
@@ -113,7 +114,7 @@ class SlashCommandsTest {
         picker.commit()
 
         picker.moveHighlight(-1)
-        assertEquals(SlashCommand.DIVIDER, picker.menu.value?.highlightedCommand)
+        assertEquals(SlashCommand.TABLE, picker.menu.value?.highlightedCommand)
         picker.moveHighlight(1)
         assertEquals(SlashCommand.TEXT, picker.menu.value?.highlightedCommand)
         picker.moveHighlight(1)

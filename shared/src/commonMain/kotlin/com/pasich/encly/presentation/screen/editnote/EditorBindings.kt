@@ -6,6 +6,7 @@ import com.pasich.encly.core.AppLogger
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.block_bulleted_list
 import com.pasich.encly.core.resources.block_checklist
+import com.pasich.encly.core.resources.block_code
 import com.pasich.encly.core.resources.block_duplicate
 import com.pasich.encly.core.resources.block_heading
 import com.pasich.encly.core.resources.block_heading_level
@@ -16,6 +17,7 @@ import com.pasich.encly.core.resources.block_move_up
 import com.pasich.encly.core.resources.block_numbered_list
 import com.pasich.encly.core.resources.block_select
 import com.pasich.encly.core.resources.block_separator
+import com.pasich.encly.core.resources.block_table
 import com.pasich.encly.core.resources.checklist_lock
 import com.pasich.encly.core.resources.checklist_unlock
 import com.pasich.encly.core.resources.delete_block
@@ -42,6 +44,12 @@ import com.pasich.encly.core.resources.selection_count
 import com.pasich.encly.core.resources.selection_cut
 import com.pasich.encly.core.resources.selection_delete
 import com.pasich.encly.core.resources.slash_menu_title
+import com.pasich.encly.core.resources.table_add_column
+import com.pasich.encly.core.resources.table_add_row
+import com.pasich.encly.core.resources.table_cell_options
+import com.pasich.encly.core.resources.table_header_row
+import com.pasich.encly.core.resources.table_remove_column
+import com.pasich.encly.core.resources.table_remove_row
 import com.pasich.encly.core.resources.tap_again_to_delete
 import com.pasich.encly.core.resources.template_action_items
 import com.pasich.encly.core.resources.template_agenda
@@ -78,7 +86,9 @@ import com.pasich.encly.platform.LocalSensitiveClipboard
 import com.pasich.encly.platform.LocalToaster
 import com.pasich.encly.platform.SensitiveClipboard
 import com.pasich.encly.platform.Toaster
+import com.pasich.encly.presentation.designsystem.Code
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.Table
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -133,7 +143,7 @@ internal fun rememberEditorStrings(): EditorStrings {
 }
 
 /** The string resource of [this] key. */
-@Suppress("CyclomaticComplexMethod") // One branch per string the editor shows.
+@Suppress("CyclomaticComplexMethod", "LongMethod") // One branch per string the editor shows.
 internal fun EditorString.resource(): StringResource = when (this) {
     EditorString.TEXT -> Res.string.text
     EditorString.PRESS_TO_EDIT -> Res.string.press_to_edit
@@ -191,6 +201,14 @@ internal fun EditorString.resource(): StringResource = when (this) {
     EditorString.LIST_ITEM_MOVE_DOWN -> Res.string.list_item_move_down
     EditorString.LIST_ITEM_INDENT -> Res.string.list_item_indent
     EditorString.LIST_ITEM_OUTDENT -> Res.string.list_item_outdent
+    EditorString.BLOCK_CODE -> Res.string.block_code
+    EditorString.BLOCK_TABLE -> Res.string.block_table
+    EditorString.TABLE_ADD_ROW -> Res.string.table_add_row
+    EditorString.TABLE_ADD_COLUMN -> Res.string.table_add_column
+    EditorString.TABLE_REMOVE_ROW -> Res.string.table_remove_row
+    EditorString.TABLE_REMOVE_COLUMN -> Res.string.table_remove_column
+    EditorString.TABLE_HEADER_ROW -> Res.string.table_header_row
+    EditorString.TABLE_CELL_OPTIONS -> Res.string.table_cell_options
 }
 
 /**
@@ -279,6 +297,8 @@ private val AppEditorIcons by lazy {
         lock = EnclyIcons.Lock,
         lockOpen = EnclyIcons.LockOpen,
         grip = EnclyIcons.Grip,
+        code = EnclyIcons.Code,
+        table = EnclyIcons.Table,
     )
 }
 

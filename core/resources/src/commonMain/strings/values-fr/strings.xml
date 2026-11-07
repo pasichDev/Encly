@@ -699,4 +699,23 @@
     <string name="faq_password_a">Oui. Dans Paramètres → Sécurité → Mot de passe, vous pouvez ajouter un mot de passe d’au moins 8 caractères, dans n’importe quelle langue. Il s’ajoute à votre code PIN : l’écran de verrouillage permet de passer de l’un à l’autre, et chacun déverrouille à lui seul. Les deux partagent la même limite d’essais erronés et la même protection par la clé de l’appareil. Le PIN d’effacement et le PIN de contrainte restent des codes PIN. Vous pouvez supprimer l’un des deux tant que l’autre est défini.</string>
     <string name="faq_pin_length_q">Quelle longueur peut avoir mon code PIN ?</string>
     <string name="faq_pin_length_a">Entre 6 et 12 chiffres, à votre choix. Les codes plus courts ne sont pas proposés : le blocage et la clé de l’appareil limitent le nombre d’essais, et 6 chiffres est le minimum qui reste sûr avec ces limites. L’écran de verrouillage n’indique jamais la longueur de votre code : vous touchez « Déverrouiller » quand vous avez fini, de même pour le PIN d’effacement et le PIN de contrainte. Les codes définis auparavant continuent de fonctionner tels quels.</string>
+    <string name="block_code">Code</string>
+    <string name="block_table">Tableau</string>
+    <string name="table_add_row">Ajouter une ligne</string>
+    <string name="table_add_column">Ajouter une colonne</string>
+    <string name="table_remove_row">Supprimer la ligne</string>
+    <string name="table_remove_column">Supprimer la colonne</string>
+    <string name="table_header_row">Ligne d\'en-tête</string>
+    <string name="table_cell_options">Options de la cellule</string>
+    <string name="settings_editor_toolbar">Barre d\'outils de l\'éditeur</string>
+    <string name="settings_editor_toolbar_desc">Choisir et ordonner les outils</string>
+    <string name="toolbar_hint">Faites glisser la poignée pour réordonner. L\'œil masque un outil ou le rétablit. Les outils de « Menu supplémentaire » se cachent derrière la flèche.</string>
+    <string name="toolbar_reset">Réinitialiser</string>
+    <string name="toolbar_section_main">Barre d\'outils</string>
+    <string name="toolbar_section_more">Menu supplémentaire</string>
+    <string name="toolbar_section_hidden">Masqués</string>
+    <string name="toolbar_tool_hide">Masquer l\'outil</string>
+    <string name="toolbar_tool_show">Afficher l\'outil</string>
+    <string name="toolbar_move_up">Monter</string>
+    <string name="toolbar_move_down">Descendre</string>
 </resources>

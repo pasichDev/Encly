@@ -7,6 +7,7 @@ import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.domain.enums.NoteSortOption
+import com.pasich.encly.domain.model.EditorToolbar
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.model.NotePreviews
@@ -14,6 +15,7 @@ import com.pasich.encly.domain.model.SwipeAction
 import com.pasich.encly.domain.model.SwipeSide
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeType
+import com.pasich.encly.domain.model.ToolbarLayout
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.platform.AppLocaleController
 import dev.zacsweers.metro.AppScope
@@ -67,8 +69,8 @@ object NoBackupPreferences : BackupPreferences {
 
 /**
  * The app's preference stores behind [BackupPreferences]: the settings repository (DataStore), the
- * auto-lock delay, strict keyboard privacy and note previews (flag store, held in memory by their
- * own classes, so they are set through those), and the in-app language.
+ * auto-lock delay, strict keyboard privacy, note previews and the editor toolbar (flag store, held in memory
+ * by their own classes, so they are set through those), and the in-app language.
  */
 @Inject
 @ContributesBinding(AppScope::class)
@@ -79,6 +81,7 @@ class SettingsBackup(
     private val keyboardPrivacy: KeyboardPrivacy,
     private val notePreviews: NotePreviews,
     private val locales: AppLocaleController,
+    private val toolbar: EditorToolbar,
 ) : BackupPreferences {
 
     override suspend fun snapshot(): Map<String, String> {
@@ -102,6 +105,7 @@ class SettingsBackup(
             BackupSettings.KEYBOARD_STRICT_PRIVACY to keyboardPrivacy.strict.value.toString(),
             BackupSettings.SHOW_NOTE_PREVIEWS to notePreviews.show.value.toString(),
             BackupSettings.APP_LANGUAGE to locales.current().name,
+            BackupSettings.EDITOR_TOOLBAR to toolbar.layout.value.encode(),
         )
         // Only what the allow-list names, whatever else is added above by mistake.
         return all.filterKeys { it in BackupSettings.included }
@@ -156,6 +160,8 @@ class SettingsBackup(
             BackupSettings.KEYBOARD_STRICT_PRIVACY -> keyboardPrivacy.setStrict(value.toBoolean())
 
             BackupSettings.SHOW_NOTE_PREVIEWS -> notePreviews.setShow(value.toBoolean())
+
+            BackupSettings.EDITOR_TOOLBAR -> toolbar.set(ToolbarLayout.decode(value))
 
             // The language is applied after the others (see [apply]); any other key is not ours.
             else -> Unit

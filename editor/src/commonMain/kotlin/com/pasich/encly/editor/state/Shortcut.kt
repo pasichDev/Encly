@@ -69,7 +69,8 @@ internal fun shortcutBlock(shortcut: Shortcut, rest: String): Block = when (shor
 
     BlockType.LINK -> Block.LinkBlock(MutableStateFlow(LinkDataBlock(url = rest)))
 
-    BlockType.TEXT -> Block.TextBlock(MutableStateFlow(rest))
+    // Code and tables have no mark to type.
+    BlockType.TEXT, BlockType.CODE, BlockType.TABLE -> Block.TextBlock(MutableStateFlow(rest))
 }
 
 private val LONE_WEB_ADDRESS = Regex("^https?://[^\\s\\\\]+$", RegexOption.IGNORE_CASE)

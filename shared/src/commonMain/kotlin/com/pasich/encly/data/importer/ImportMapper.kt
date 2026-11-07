@@ -150,9 +150,18 @@ object ImportMapper {
     private fun textOf(blocks: List<Block>): String = blocks.joinToString("\n") { block ->
         when (block) {
             is Block.TextBlock -> block.text.value
+
             is Block.HBlock -> block.text.value
+
             is Block.QuoteBlock -> block.text.value
+
+            is Block.CodeBlock -> block.text.value
+
+            is Block.TableBlock ->
+                block.table.value.rows.joinToString("\n") { row -> row.cells.joinToString(" ") { it.value } }
+
             is Block.ListBlock -> block.items.value.joinToString("\n") { (if (it.isCheck) "[x] " else "") + it.value }
+
             else -> ""
         }
     }

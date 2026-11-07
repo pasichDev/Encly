@@ -3,6 +3,7 @@ package com.pasich.encly.editor.codec
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.TableData
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** Builders for the Encly blocks the parsers produce. */
@@ -25,6 +26,13 @@ public object ImportBlocks {
     /** A list block of [type] (bulleted, numbered or checklist) holding [items]. */
     public fun list(type: BlockType, items: List<ItemListBlock>): Block =
         Block.ListBlock(items = MutableStateFlow(items), blockType = type)
+
+    /** A code block with [value] as its text, spaces and line breaks exactly as given. */
+    public fun code(value: String): Block = Block.CodeBlock(text = MutableStateFlow(value))
+
+    /** A table of [grid] (rows of cells; short rows are padded), its first row a header when [header]. */
+    public fun table(grid: List<List<String>>, header: Boolean): Block =
+        Block.TableBlock(table = MutableStateFlow(TableData.of(grid, header)))
 
     /** Blank-line separated paragraphs as TEXT blocks; line breaks stay inside their paragraph. */
     public fun paragraphs(text: String): List<Block> = text.trim().split(PARAGRAPH_BREAK)

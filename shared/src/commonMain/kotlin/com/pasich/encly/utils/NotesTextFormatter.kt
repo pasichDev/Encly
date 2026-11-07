@@ -3,6 +3,7 @@ package com.pasich.encly.utils
 import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.TextualBlock
 import com.pasich.encly.editor.model.hasContent
 import com.pasich.encly.editor.model.kindIn
 import com.pasich.encly.editor.model.normalizedLevels
@@ -38,6 +39,8 @@ object NotesTextFormatter {
             is Block.LinkBlock -> listOf(block.block.value.title, block.block.value.url)
             is Block.ListBlock -> block.items.value.map { it.value }
             is Block.SeparatorBlock -> emptyList()
+            is Block.CodeBlock -> listOf(block.text.value)
+            is Block.TableBlock -> block.table.value.rows.flatMap { row -> row.cells.map { it.value } }
         }
     }.filter { it.isNotBlank() }.joinToString("\n")
 
@@ -51,13 +54,8 @@ object NotesTextFormatter {
 
         blocks.filter { it.hasContent() }.forEach { block ->
             when (block) {
-                is Block.TextBlock -> {
-                    text.append(block.text.value)
-                    text.append("\n")
-                }
-
-                is Block.HBlock -> {
-                    text.append(block.text.value)
+                is Block.TextBlock, is Block.HBlock, is Block.CodeBlock -> {
+                    text.append((block as TextualBlock).text.value)
                     text.append("\n")
                 }
 
@@ -80,6 +78,11 @@ object NotesTextFormatter {
 
                 is Block.SeparatorBlock -> {
                     text.append("---------------------")
+                    text.append("\n")
+                }
+
+                is Block.TableBlock -> block.table.value.rows.forEach { row ->
+                    text.append(row.cells.joinToString(" | ") { it.value })
                     text.append("\n")
                 }
 

@@ -14,7 +14,15 @@ IzzyOnDroid) and used as the GitHub Release notes.
 ### Added
 
 - Choose the length of your PIN: 6 to 12 digits, for the PIN, the wipe PIN and the duress PIN. PINs you already have keep working unchanged. The lock screen no longer sends the PIN by itself or shows how long it is: press Unlock when you have typed it ([#95](https://github.com/pasichDev/Encly/issues/95)).
-- Unlock with a password instead of, or next to, the PIN: Settings → Security → Password (8 to 128 characters, any language). The lock screen switches between them, both share the same limit on wrong attempts and the same protection by the phone's secure hardware. The wipe PIN and the duress PIN stay PIN-only. At least one of PIN and password always remains; the PIN can be removed once a password is set ([#95](https://github.com/pasichDev/Encly/issues/95)).
+
+- Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
+- Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
+- Arabic, and right-to-left layouts in every screen; each paragraph and list item of a note follows the direction of its own text ([#105](https://github.com/pasichDev/Encly/issues/105)).
+- Backups carry your settings (appearance, lists, editor, language and privacy preferences); a full restore applies them after the notes. Security state never leaves the vault ([#93](https://github.com/pasichDev/Encly/issues/93)).
+- Select text across paragraphs, lists and headings, like in a document: drag, use the handles or Shift with the arrow keys, or press Select all twice. Typing, pasting or deleting over a selection is one undo step, and copies go through the protected clipboard. Whole blocks can also be picked from their left edge ([#83](https://github.com/pasichDev/Encly/issues/83)).
+- Nested lists up to three levels (Tab and Shift+Tab), and list items that can be dragged into place ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Tables, code blocks, and a toolbar you can arrange yourself in Settings → Appearance ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- A lock button next to a checklist while you work in it, and lists indented under their heading ([#76](https://github.com/pasichDev/Encly/issues/76)).
 
 ### Changed
 

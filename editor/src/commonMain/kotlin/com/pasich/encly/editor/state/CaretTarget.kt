@@ -2,6 +2,7 @@ package com.pasich.encly.editor.state
 
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.model.TextualBlock
 
 /** Where the cursor goes after an undo or a redo: block [blockId], in a list its item [itemId], at [caret]. */
@@ -18,6 +19,8 @@ internal fun caretTargetOf(blockId: String, before: Any?, after: Any?): CaretTar
 
     before is List<*> && after is List<*> ->
         listCaret(blockId, before.filterIsInstance<ItemListBlock>(), after.filterIsInstance<ItemListBlock>())
+
+    before is TableData && after is TableData -> tableCaret(blockId, before, after)
 
     else -> null
 }

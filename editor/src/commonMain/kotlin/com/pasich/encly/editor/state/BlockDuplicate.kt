@@ -36,6 +36,10 @@ internal fun Block.duplicate(): Block = when (this) {
 
     is Block.SeparatorBlock -> copy(id = newBlockId())
 
+    is Block.CodeBlock -> copy(text = MutableStateFlow(text.value), id = newBlockId())
+
+    is Block.TableBlock -> copy(table = MutableStateFlow(table.value.duplicate()), id = newBlockId())
+
     is Block.ListBlock -> copy(
         items = MutableStateFlow(items.value.map { it.copy(id = newBlockId()) }),
         id = newBlockId(),

@@ -705,4 +705,23 @@
     <string name="faq_password_a">Tak. W Ustawienia → Bezpieczeństwo → Hasło możesz dodać hasło z co najmniej 8 znaków, w dowolnym języku. Działa obok PIN-u: na ekranie blokady przełączasz się między nimi, a każde odblokowuje samodzielnie. Oba mają ten sam limit błędnych prób i tę samą ochronę kluczem urządzenia. PIN kasujący i PIN przymusowy pozostają wyłącznie kodami PIN. Możesz usunąć jedno z nich, dopóki drugie jest ustawione.</string>
     <string name="faq_pin_length_q">Jak długi może być mój PIN?</string>
     <string name="faq_pin_length_a">Od 6 do 12 cyfr, do wyboru. Krótszych PIN-ów nie oferujemy: blokada i klucz urządzenia ograniczają liczbę prób, a 6 cyfr to najkrótszy PIN, który przy tych ograniczeniach pozostaje bezpieczny. Ekran blokady nigdy nie pokazuje długości PIN-u: po wpisaniu stukasz „Odblokuj”, tak samo w przypadku PIN-u kasującego i przymusowego. PIN-y ustawione wcześniej działają bez zmian.</string>
+    <string name="block_code">Kod</string>
+    <string name="block_table">Tabela</string>
+    <string name="table_add_row">Dodaj wiersz</string>
+    <string name="table_add_column">Dodaj kolumnę</string>
+    <string name="table_remove_row">Usuń wiersz</string>
+    <string name="table_remove_column">Usuń kolumnę</string>
+    <string name="table_header_row">Wiersz nagłówka</string>
+    <string name="table_cell_options">Opcje komórki</string>
+    <string name="settings_editor_toolbar">Pasek edytora</string>
+    <string name="settings_editor_toolbar_desc">Wybierz i ułóż narzędzia</string>
+    <string name="toolbar_hint">Przeciągnij uchwyt, aby zmienić kolejność. Oko ukrywa narzędzie lub je przywraca. Narzędzia z sekcji „Więcej” są za strzałką.</string>
+    <string name="toolbar_reset">Przywróć</string>
+    <string name="toolbar_section_main">Pasek</string>
+    <string name="toolbar_section_more">Więcej</string>
+    <string name="toolbar_section_hidden">Ukryte</string>
+    <string name="toolbar_tool_hide">Ukryj narzędzie</string>
+    <string name="toolbar_tool_show">Pokaż narzędzie</string>
+    <string name="toolbar_move_up">W górę</string>
+    <string name="toolbar_move_down">W dół</string>
 </resources>

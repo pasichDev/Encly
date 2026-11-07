@@ -6,17 +6,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.block_bulleted_list
 import com.pasich.encly.core.resources.block_checklist
+import com.pasich.encly.core.resources.block_code
 import com.pasich.encly.core.resources.block_heading
 import com.pasich.encly.core.resources.block_heading_level
 import com.pasich.encly.core.resources.block_link
 import com.pasich.encly.core.resources.block_numbered_list
 import com.pasich.encly.core.resources.block_separator
+import com.pasich.encly.core.resources.block_table
 import com.pasich.encly.core.resources.quote
 import com.pasich.encly.core.resources.text
+import com.pasich.encly.domain.model.ToolbarTool
 import com.pasich.encly.editor.model.BlockType
-import com.pasich.encly.editor.state.HEADING_TOOL
+import com.pasich.encly.presentation.designsystem.Code
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyToolButton
+import com.pasich.encly.presentation.designsystem.Table
 import com.pasich.encly.presentation.designsystem.ToolStyle
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -29,28 +33,38 @@ data class BlockTool(
     val headingLevel: Int? = null,
 )
 
-/**
- * The toolbar's block tools (design spec §3.3), in its order. Each turns the block the user works
- * on into its type, or adds one after it (see applyTool).
- */
-val mainBlockTools = listOf(
-    BlockTool(EnclyIcons.Heading1, HEADING_TOOL, Res.string.block_heading),
-    BlockTool(EnclyIcons.Checklist, BlockType.LIST_CHECK, Res.string.block_checklist),
-    BlockTool(EnclyIcons.ListBullet, BlockType.LIST_BULLET, Res.string.block_bulleted_list),
-    BlockTool(EnclyIcons.ListNumbered, BlockType.LIST_NUMBER, Res.string.block_numbered_list),
-    BlockTool(EnclyIcons.Quote, BlockType.QUOTE, Res.string.quote),
-)
+/** The icon, block type and label of toolbar tool [this]. */
+fun ToolbarTool.toBlockTool(): BlockTool = when (this) {
+    ToolbarTool.HEADING -> BlockTool(EnclyIcons.Heading1, type, Res.string.block_heading)
 
-/** Behind "More block tools": a plain paragraph, every heading level, a link and a separator. */
-val moreBlockTools = listOf(
-    BlockTool(EnclyIcons.Type, BlockType.TEXT, Res.string.text),
-    BlockTool(EnclyIcons.Heading1, BlockType.H1, Res.string.block_heading_level, headingLevel = 1),
-    BlockTool(EnclyIcons.Heading2, BlockType.H2, Res.string.block_heading_level, headingLevel = 2),
-    BlockTool(EnclyIcons.Heading3, BlockType.H3, Res.string.block_heading_level, headingLevel = 3),
-    BlockTool(EnclyIcons.Heading4, BlockType.H4, Res.string.block_heading_level, headingLevel = 4),
-    BlockTool(EnclyIcons.Link, BlockType.LINK, Res.string.block_link),
-    BlockTool(EnclyIcons.Separator, BlockType.SEPARATOR, Res.string.block_separator),
-)
+    ToolbarTool.LIST_CHECK -> BlockTool(EnclyIcons.Checklist, type, Res.string.block_checklist)
+
+    ToolbarTool.LIST_BULLET -> BlockTool(EnclyIcons.ListBullet, type, Res.string.block_bulleted_list)
+
+    ToolbarTool.LIST_NUMBER -> BlockTool(EnclyIcons.ListNumbered, type, Res.string.block_numbered_list)
+
+    ToolbarTool.QUOTE -> BlockTool(EnclyIcons.Quote, type, Res.string.quote)
+
+    ToolbarTool.CODE -> BlockTool(EnclyIcons.Code, type, Res.string.block_code)
+
+    ToolbarTool.TABLE -> BlockTool(EnclyIcons.Table, type, Res.string.block_table)
+
+    ToolbarTool.TEXT -> BlockTool(EnclyIcons.Type, type, Res.string.text)
+
+    ToolbarTool.H1, ToolbarTool.H2, ToolbarTool.H3, ToolbarTool.H4 ->
+        BlockTool(headingIcon(), type, Res.string.block_heading_level, headingLevel)
+
+    ToolbarTool.LINK -> BlockTool(EnclyIcons.Link, type, Res.string.block_link)
+
+    ToolbarTool.SEPARATOR -> BlockTool(EnclyIcons.Separator, type, Res.string.block_separator)
+}
+
+private fun ToolbarTool.headingIcon() = when (this) {
+    ToolbarTool.H1 -> EnclyIcons.Heading1
+    ToolbarTool.H2 -> EnclyIcons.Heading2
+    ToolbarTool.H3 -> EnclyIcons.Heading3
+    else -> EnclyIcons.Heading4
+}
 
 /** A tool button; [active] marks the tool of the block the user works on. */
 @Composable

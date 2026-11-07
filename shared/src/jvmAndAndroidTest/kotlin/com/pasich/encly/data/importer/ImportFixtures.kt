@@ -133,6 +133,12 @@ internal object ImportFixtures {
 
             is Block.LinkBlock -> "link"
 
+            is Block.CodeBlock -> "code:${block.text.value}"
+
+            is Block.TableBlock -> "table:" + block.table.value.rows.joinToString("/") { row ->
+                row.cells.joinToString("|") { it.value }
+            }
+
             is Block.ListBlock -> {
                 val kind = when (block.blockType) {
                     BlockType.LIST_CHECK -> "check"

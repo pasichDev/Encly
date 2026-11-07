@@ -706,4 +706,23 @@
     <string name="faq_password_a">نعم. في الإعدادات ← الأمان ← كلمة المرور يمكنك إضافة كلمة مرور من 8 أحرف على الأقل وبأي لغة. تعمل إلى جانب رمز PIN: تتيح لك شاشة القفل التبديل بينهما ويفتح كل منهما بمفرده. يتشاركان الحد نفسه للمحاولات الخاطئة والحماية نفسها بمفتاح الجهاز. يبقى رمز المسح ورمز الإكراه رمزَي PIN فقط. يمكنك إزالة أحدهما ما دام الآخر مُعيَّنًا.</string>
     <string name="faq_pin_length_q">ما طول رمز PIN المسموح به؟</string>
     <string name="faq_pin_length_a">من 6 إلى 12 رقمًا بحسب اختيارك. لا تُعرض رموز أقصر: فالقفل المؤقت ومفتاح الجهاز يحدّان من عدد المحاولات، و6 أرقام هي أقصر طول يبقى آمنًا مع هذه الحدود. لا تُظهر شاشة القفل طول رمزك أبدًا: تضغط «فتح القفل» عند الانتهاء، والأمر نفسه ينطبق على رمز المسح ورمز الإكراه. تبقى الرموز التي عيّنتها سابقًا تعمل كما هي.</string>
+    <string name="block_code">كود</string>
+    <string name="block_table">جدول</string>
+    <string name="table_add_row">إضافة صف</string>
+    <string name="table_add_column">إضافة عمود</string>
+    <string name="table_remove_row">حذف الصف</string>
+    <string name="table_remove_column">حذف العمود</string>
+    <string name="table_header_row">صف الرأس</string>
+    <string name="table_cell_options">خيارات الخلية</string>
+    <string name="settings_editor_toolbar">شريط أدوات المحرر</string>
+    <string name="settings_editor_toolbar_desc">اختر الأدوات ورتّبها</string>
+    <string name="toolbar_hint">اسحب المقبض لإعادة الترتيب. تخفي العين الأداة أو تعيدها. أدوات «المزيد» خلف السهم.</string>
+    <string name="toolbar_reset">إعادة تعيين</string>
+    <string name="toolbar_section_main">الشريط</string>
+    <string name="toolbar_section_more">المزيد</string>
+    <string name="toolbar_section_hidden">المخفية</string>
+    <string name="toolbar_tool_hide">إخفاء الأداة</string>
+    <string name="toolbar_tool_show">إظهار الأداة</string>
+    <string name="toolbar_move_up">أعلى</string>
+    <string name="toolbar_move_down">أسفل</string>
 </resources>

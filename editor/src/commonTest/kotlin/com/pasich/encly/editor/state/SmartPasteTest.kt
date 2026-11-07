@@ -302,6 +302,10 @@ class SmartPasteTest {
 
             is Block.SeparatorBlock -> "---"
 
+            is Block.CodeBlock -> "CODE:${block.text.value}"
+
+            is Block.TableBlock -> "TABLE"
+
             is Block.ListBlock -> block.blockType.name + ":" + block.items.value.joinToString("|") {
                 (if (block.blockType == BlockType.LIST_CHECK) if (it.isCheck) "[x]" else "[ ]" else "") + it.value
             }

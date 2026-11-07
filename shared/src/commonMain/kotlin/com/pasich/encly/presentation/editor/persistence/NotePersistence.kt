@@ -118,6 +118,12 @@ class NotePersistence(
         return withContext(ioDispatcher) { BlockConverter.blocksToJson(content) }
     }
 
+    /**
+     * What a write that is not an edit (archive, duplicate) stores as the content: the editor's blocks, or the stored
+     * text as it is when it could not be read, so that a note this version cannot read is never written back empty.
+     */
+    private suspend fun contentToKeep(note: Note): String = if (_contentLoadFailed.value) note.value else contentJson()
+
     /** False when nothing may be saved: closed, still loading, read-only or unreadable. */
     private val canPersist: Boolean
         get() = !closed && loaded && !readOnly && !suspended && !_contentLoadFailed.value
@@ -369,7 +375,7 @@ class NotePersistence(
         if (!loaded || suspended || currentNote.id == -1L) return@withLock false
 
         val updated = currentNote.copy(
-            value = contentJson(),
+            value = contentToKeep(currentNote),
             isArchived = archived,
             isPinned = currentNote.isPinned && !archived,
         )
@@ -401,7 +407,7 @@ class NotePersistence(
     /** Stores a copy of the note, titled by [copyTitle]. Returns its id, or -1 on failure. */
     suspend fun duplicate(): Long = saveMutex.withLock {
         val currentNote = _state.value.note
-        val content = contentJson()
+        val content = contentToKeep(currentNote)
         withContext(ioDispatcher) {
             notesRepository.insertNote(
                 Note.new(title = copyTitle(currentNote.title), value = content, tagId = currentNote.tagId)
@@ -485,6 +491,10 @@ private fun List<Block>.frozen(): List<Block> = map { block ->
             items = MutableStateFlow(block.items.value),
             locked = MutableStateFlow(block.locked.value),
         )
+
+        is Block.CodeBlock -> block.copy(text = MutableStateFlow(block.text.value))
+
+        is Block.TableBlock -> block.copy(table = MutableStateFlow(block.table.value))
 
         is Block.SeparatorBlock -> block
     }

@@ -699,4 +699,23 @@
     <string name="faq_password_a">Sim. Em Configurações → Segurança → Senha você pode adicionar uma senha com pelo menos 8 caracteres, em qualquer idioma. Ela funciona ao lado do PIN: a tela de bloqueio permite alternar entre os dois e cada um desbloqueia sozinho. Os dois compartilham o mesmo limite de tentativas erradas e a mesma proteção pela chave do dispositivo. O PIN de apagamento e o PIN de coação continuam sendo apenas PINs. Você pode remover um dos dois enquanto o outro estiver definido.</string>
     <string name="faq_pin_length_q">Qual pode ser o tamanho do meu PIN?</string>
     <string name="faq_pin_length_a">Entre 6 e 12 dígitos, à sua escolha. PINs mais curtos não são oferecidos: o bloqueio e a chave do dispositivo limitam as tentativas, e 6 dígitos é o mínimo que continua seguro com esses limites. A tela de bloqueio nunca mostra o tamanho do seu PIN: você toca em «Desbloquear» quando terminar, e o mesmo vale para o PIN de apagamento e o PIN de coação. Os PINs definidos antes continuam funcionando como estão.</string>
+    <string name="block_code">Código</string>
+    <string name="block_table">Tabela</string>
+    <string name="table_add_row">Adicionar linha</string>
+    <string name="table_add_column">Adicionar coluna</string>
+    <string name="table_remove_row">Excluir linha</string>
+    <string name="table_remove_column">Excluir coluna</string>
+    <string name="table_header_row">Linha de cabeçalho</string>
+    <string name="table_cell_options">Opções da célula</string>
+    <string name="settings_editor_toolbar">Barra do editor</string>
+    <string name="settings_editor_toolbar_desc">Escolha e ordene as ferramentas</string>
+    <string name="toolbar_hint">Arraste a alça para reordenar. O olho oculta uma ferramenta ou a traz de volta. As ferramentas de «Mais opções» ficam atrás da seta.</string>
+    <string name="toolbar_reset">Repor</string>
+    <string name="toolbar_section_main">Barra</string>
+    <string name="toolbar_section_more">Mais opções</string>
+    <string name="toolbar_section_hidden">Ocultas</string>
+    <string name="toolbar_tool_hide">Ocultar ferramenta</string>
+    <string name="toolbar_tool_show">Mostrar ferramenta</string>
+    <string name="toolbar_move_up">Subir</string>
+    <string name="toolbar_move_down">Descer</string>
 </resources>

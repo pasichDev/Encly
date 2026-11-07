@@ -20,9 +20,15 @@ class BlockFactoryTest {
                 is Block.LinkBlock -> BlockType.LINK
                 is Block.SeparatorBlock -> BlockType.SEPARATOR
                 is Block.ListBlock -> block.blockType
+                is Block.CodeBlock -> BlockType.CODE
+                is Block.TableBlock -> BlockType.TABLE
             }
             assertEquals(type, created)
-            if (type != BlockType.SEPARATOR) assertTrue(BlockUtils.isBlockEmpty(block), "$type starts empty")
+            if (type != BlockType.SEPARATOR &&
+                type != BlockType.TABLE
+            ) {
+                assertTrue(BlockUtils.isBlockEmpty(block), "$type starts empty")
+            }
         }
     }
 

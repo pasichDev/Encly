@@ -19,6 +19,8 @@ internal object BlockUtils {
             items.isEmpty() || (items.size == 1 && items[0].value.isEmpty())
         }
 
+        is Block.TableBlock -> block.table.value.rows.all { row -> row.cells.all { it.value.isEmpty() } }
+
         else -> false
     }
 }

@@ -7,6 +7,7 @@
 
 // Library unique name: <Encly:editor>
 final enum class com.pasich.encly.editor.model/BlockType : kotlin/Enum<com.pasich.encly.editor.model/BlockType> { // com.pasich.encly.editor.model/BlockType|null[0]
+    enum entry CODE // com.pasich.encly.editor.model/BlockType.CODE|null[0]
     enum entry H1 // com.pasich.encly.editor.model/BlockType.H1|null[0]
     enum entry H2 // com.pasich.encly.editor.model/BlockType.H2|null[0]
     enum entry H3 // com.pasich.encly.editor.model/BlockType.H3|null[0]
@@ -17,6 +18,7 @@ final enum class com.pasich.encly.editor.model/BlockType : kotlin/Enum<com.pasic
     enum entry LIST_NUMBER // com.pasich.encly.editor.model/BlockType.LIST_NUMBER|null[0]
     enum entry QUOTE // com.pasich.encly.editor.model/BlockType.QUOTE|null[0]
     enum entry SEPARATOR // com.pasich.encly.editor.model/BlockType.SEPARATOR|null[0]
+    enum entry TABLE // com.pasich.encly.editor.model/BlockType.TABLE|null[0]
     enum entry TEXT // com.pasich.encly.editor.model/BlockType.TEXT|null[0]
 
     final val entries // com.pasich.encly.editor.model/BlockType.entries|#static{}entries[0]
@@ -78,6 +80,7 @@ final enum class com.pasich.encly.editor.state/NoteTemplate : kotlin/Enum<com.pa
 final enum class com.pasich.encly.editor.state/SlashCommand : kotlin/Enum<com.pasich.encly.editor.state/SlashCommand> { // com.pasich.encly.editor.state/SlashCommand|null[0]
     enum entry BULLETS // com.pasich.encly.editor.state/SlashCommand.BULLETS|null[0]
     enum entry CHECKLIST // com.pasich.encly.editor.state/SlashCommand.CHECKLIST|null[0]
+    enum entry CODE // com.pasich.encly.editor.state/SlashCommand.CODE|null[0]
     enum entry DIVIDER // com.pasich.encly.editor.state/SlashCommand.DIVIDER|null[0]
     enum entry H1 // com.pasich.encly.editor.state/SlashCommand.H1|null[0]
     enum entry H2 // com.pasich.encly.editor.state/SlashCommand.H2|null[0]
@@ -86,6 +89,7 @@ final enum class com.pasich.encly.editor.state/SlashCommand : kotlin/Enum<com.pa
     enum entry LINK // com.pasich.encly.editor.state/SlashCommand.LINK|null[0]
     enum entry NUMBERED // com.pasich.encly.editor.state/SlashCommand.NUMBERED|null[0]
     enum entry QUOTE // com.pasich.encly.editor.state/SlashCommand.QUOTE|null[0]
+    enum entry TABLE // com.pasich.encly.editor.state/SlashCommand.TABLE|null[0]
     enum entry TEXT // com.pasich.encly.editor.state/SlashCommand.TEXT|null[0]
 
     final val entries // com.pasich.encly.editor.state/SlashCommand.entries|#static{}entries[0]
@@ -133,6 +137,7 @@ final enum class com.pasich.encly.editor.ui.sheets/BlockSheetKind : kotlin/Enum<
 final enum class com.pasich.encly.editor/EditorString : kotlin/Enum<com.pasich.encly.editor/EditorString> { // com.pasich.encly.editor/EditorString|null[0]
     enum entry BLOCK_BULLETED_LIST // com.pasich.encly.editor/EditorString.BLOCK_BULLETED_LIST|null[0]
     enum entry BLOCK_CHECKLIST // com.pasich.encly.editor/EditorString.BLOCK_CHECKLIST|null[0]
+    enum entry BLOCK_CODE // com.pasich.encly.editor/EditorString.BLOCK_CODE|null[0]
     enum entry BLOCK_DELETE // com.pasich.encly.editor/EditorString.BLOCK_DELETE|null[0]
     enum entry BLOCK_DUPLICATE // com.pasich.encly.editor/EditorString.BLOCK_DUPLICATE|null[0]
     enum entry BLOCK_HEADING // com.pasich.encly.editor/EditorString.BLOCK_HEADING|null[0]
@@ -144,6 +149,7 @@ final enum class com.pasich.encly.editor/EditorString : kotlin/Enum<com.pasich.e
     enum entry BLOCK_NUMBERED_LIST // com.pasich.encly.editor/EditorString.BLOCK_NUMBERED_LIST|null[0]
     enum entry BLOCK_SELECT // com.pasich.encly.editor/EditorString.BLOCK_SELECT|null[0]
     enum entry BLOCK_SEPARATOR // com.pasich.encly.editor/EditorString.BLOCK_SEPARATOR|null[0]
+    enum entry BLOCK_TABLE // com.pasich.encly.editor/EditorString.BLOCK_TABLE|null[0]
     enum entry CHECKLIST_LOCK // com.pasich.encly.editor/EditorString.CHECKLIST_LOCK|null[0]
     enum entry CHECKLIST_UNLOCK // com.pasich.encly.editor/EditorString.CHECKLIST_UNLOCK|null[0]
     enum entry ENTER_URL // com.pasich.encly.editor/EditorString.ENTER_URL|null[0]
@@ -169,6 +175,12 @@ final enum class com.pasich.encly.editor/EditorString : kotlin/Enum<com.pasich.e
     enum entry SELECTION_CUT // com.pasich.encly.editor/EditorString.SELECTION_CUT|null[0]
     enum entry SELECTION_DELETE // com.pasich.encly.editor/EditorString.SELECTION_DELETE|null[0]
     enum entry SLASH_MENU_TITLE // com.pasich.encly.editor/EditorString.SLASH_MENU_TITLE|null[0]
+    enum entry TABLE_ADD_COLUMN // com.pasich.encly.editor/EditorString.TABLE_ADD_COLUMN|null[0]
+    enum entry TABLE_ADD_ROW // com.pasich.encly.editor/EditorString.TABLE_ADD_ROW|null[0]
+    enum entry TABLE_CELL_OPTIONS // com.pasich.encly.editor/EditorString.TABLE_CELL_OPTIONS|null[0]
+    enum entry TABLE_HEADER_ROW // com.pasich.encly.editor/EditorString.TABLE_HEADER_ROW|null[0]
+    enum entry TABLE_REMOVE_COLUMN // com.pasich.encly.editor/EditorString.TABLE_REMOVE_COLUMN|null[0]
+    enum entry TABLE_REMOVE_ROW // com.pasich.encly.editor/EditorString.TABLE_REMOVE_ROW|null[0]
     enum entry TAP_AGAIN_TO_DELETE // com.pasich.encly.editor/EditorString.TAP_AGAIN_TO_DELETE|null[0]
     enum entry TEMPLATE_ACTION_ITEMS // com.pasich.encly.editor/EditorString.TEMPLATE_ACTION_ITEMS|null[0]
     enum entry TEMPLATE_AGENDA // com.pasich.encly.editor/EditorString.TEMPLATE_AGENDA|null[0]
@@ -268,6 +280,7 @@ abstract interface com.pasich.encly.editor.ui/EditorController { // com.pasich.e
     abstract fun onListLineBreak(com.pasich.encly.editor.model/Block.ListBlock, kotlin/String, com.pasich.encly.editor.state/LineBreak): kotlin/String? // com.pasich.encly.editor.ui/EditorController.onListLineBreak|onListLineBreak(com.pasich.encly.editor.model.Block.ListBlock;kotlin.String;com.pasich.encly.editor.state.LineBreak){}[0]
     abstract fun onShortcut(com.pasich.encly.editor.model/Block, kotlin/String, com.pasich.encly.editor.state/Shortcut): kotlin/Boolean // com.pasich.encly.editor.ui/EditorController.onShortcut|onShortcut(com.pasich.encly.editor.model.Block;kotlin.String;com.pasich.encly.editor.state.Shortcut){}[0]
     abstract fun onSlashTyped(com.pasich.encly.editor.model/Block, kotlin/String, kotlin/Boolean) // com.pasich.encly.editor.ui/EditorController.onSlashTyped|onSlashTyped(com.pasich.encly.editor.model.Block;kotlin.String;kotlin.Boolean){}[0]
+    abstract fun onTableChanged(com.pasich.encly.editor.model/Block.TableBlock, com.pasich.encly.editor.model/TableData, kotlin/Boolean) // com.pasich.encly.editor.ui/EditorController.onTableChanged|onTableChanged(com.pasich.encly.editor.model.Block.TableBlock;com.pasich.encly.editor.model.TableData;kotlin.Boolean){}[0]
     abstract fun removeBlock(com.pasich.encly.editor.model/Block, com.pasich.encly.editor.state/BlockRemoveAction) // com.pasich.encly.editor.ui/EditorController.removeBlock|removeBlock(com.pasich.encly.editor.model.Block;com.pasich.encly.editor.state.BlockRemoveAction){}[0]
     abstract fun replaceBlock(kotlin/Int, com.pasich.encly.editor.model/Block): kotlin/Boolean // com.pasich.encly.editor.ui/EditorController.replaceBlock|replaceBlock(kotlin.Int;com.pasich.encly.editor.model.Block){}[0]
     abstract fun replaceTextRange(kotlin/String): kotlin/Boolean // com.pasich.encly.editor.ui/EditorController.replaceTextRange|replaceTextRange(kotlin.String){}[0]
@@ -375,6 +388,69 @@ final class com.pasich.encly.editor.model/LinkDataBlock { // com.pasich.encly.ed
     final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.editor.model/LinkDataBlock.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.pasich.encly.editor.model/LinkDataBlock.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.pasich.encly.editor.model/LinkDataBlock.toString|toString(){}[0]
+}
+
+final class com.pasich.encly.editor.model/TableCell { // com.pasich.encly.editor.model/TableCell|null[0]
+    constructor <init>(kotlin/String = ..., kotlin/String = ...) // com.pasich.encly.editor.model/TableCell.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+    final val id // com.pasich.encly.editor.model/TableCell.id|{}id[0]
+        final fun <get-id>(): kotlin/String // com.pasich.encly.editor.model/TableCell.id.<get-id>|<get-id>(){}[0]
+    final val value // com.pasich.encly.editor.model/TableCell.value|{}value[0]
+        final fun <get-value>(): kotlin/String // com.pasich.encly.editor.model/TableCell.value.<get-value>|<get-value>(){}[0]
+
+    final fun component1(): kotlin/String // com.pasich.encly.editor.model/TableCell.component1|component1(){}[0]
+    final fun component2(): kotlin/String // com.pasich.encly.editor.model/TableCell.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ...): com.pasich.encly.editor.model/TableCell // com.pasich.encly.editor.model/TableCell.copy|copy(kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.editor.model/TableCell.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.editor.model/TableCell.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.editor.model/TableCell.toString|toString(){}[0]
+}
+
+final class com.pasich.encly.editor.model/TableData { // com.pasich.encly.editor.model/TableData|null[0]
+    constructor <init>(kotlin.collections/List<com.pasich.encly.editor.model/TableRow>, kotlin/Boolean = ...) // com.pasich.encly.editor.model/TableData.<init>|<init>(kotlin.collections.List<com.pasich.encly.editor.model.TableRow>;kotlin.Boolean){}[0]
+
+    final val columnCount // com.pasich.encly.editor.model/TableData.columnCount|{}columnCount[0]
+        final fun <get-columnCount>(): kotlin/Int // com.pasich.encly.editor.model/TableData.columnCount.<get-columnCount>|<get-columnCount>(){}[0]
+    final val header // com.pasich.encly.editor.model/TableData.header|{}header[0]
+        final fun <get-header>(): kotlin/Boolean // com.pasich.encly.editor.model/TableData.header.<get-header>|<get-header>(){}[0]
+    final val rowCount // com.pasich.encly.editor.model/TableData.rowCount|{}rowCount[0]
+        final fun <get-rowCount>(): kotlin/Int // com.pasich.encly.editor.model/TableData.rowCount.<get-rowCount>|<get-rowCount>(){}[0]
+    final val rows // com.pasich.encly.editor.model/TableData.rows|{}rows[0]
+        final fun <get-rows>(): kotlin.collections/List<com.pasich.encly.editor.model/TableRow> // com.pasich.encly.editor.model/TableData.rows.<get-rows>|<get-rows>(){}[0]
+
+    final fun addColumn(kotlin/Int): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.addColumn|addColumn(kotlin.Int){}[0]
+    final fun addRow(kotlin/Int): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.addRow|addRow(kotlin.Int){}[0]
+    final fun cell(kotlin/String): com.pasich.encly.editor.model/TableCell? // com.pasich.encly.editor.model/TableData.cell|cell(kotlin.String){}[0]
+    final fun component1(): kotlin.collections/List<com.pasich.encly.editor.model/TableRow> // com.pasich.encly.editor.model/TableData.component1|component1(){}[0]
+    final fun component2(): kotlin/Boolean // com.pasich.encly.editor.model/TableData.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<com.pasich.encly.editor.model/TableRow> = ..., kotlin/Boolean = ...): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.copy|copy(kotlin.collections.List<com.pasich.encly.editor.model.TableRow>;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.editor.model/TableData.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.editor.model/TableData.hashCode|hashCode(){}[0]
+    final fun locate(kotlin/String): kotlin/Pair<kotlin/Int, kotlin/Int>? // com.pasich.encly.editor.model/TableData.locate|locate(kotlin.String){}[0]
+    final fun removeColumn(kotlin/Int): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.removeColumn|removeColumn(kotlin.Int){}[0]
+    final fun removeRow(kotlin/Int): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.removeRow|removeRow(kotlin.Int){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.editor.model/TableData.toString|toString(){}[0]
+    final fun valueAt(kotlin/Int, kotlin/Int): kotlin/String // com.pasich.encly.editor.model/TableData.valueAt|valueAt(kotlin.Int;kotlin.Int){}[0]
+    final fun withCell(kotlin/String, kotlin/String): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.withCell|withCell(kotlin.String;kotlin.String){}[0]
+    final fun withHeader(kotlin/Boolean): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.withHeader|withHeader(kotlin.Boolean){}[0]
+
+    final object Companion { // com.pasich.encly.editor.model/TableData.Companion|null[0]
+        final fun empty(kotlin/Int = ..., kotlin/Int = ...): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.Companion.empty|empty(kotlin.Int;kotlin.Int){}[0]
+        final fun of(kotlin.collections/List<kotlin.collections/List<kotlin/String>>, kotlin/Boolean = ...): com.pasich.encly.editor.model/TableData // com.pasich.encly.editor.model/TableData.Companion.of|of(kotlin.collections.List<kotlin.collections.List<kotlin.String>>;kotlin.Boolean){}[0]
+    }
+}
+
+final class com.pasich.encly.editor.model/TableRow { // com.pasich.encly.editor.model/TableRow|null[0]
+    constructor <init>(kotlin.collections/List<com.pasich.encly.editor.model/TableCell>) // com.pasich.encly.editor.model/TableRow.<init>|<init>(kotlin.collections.List<com.pasich.encly.editor.model.TableCell>){}[0]
+
+    final val cells // com.pasich.encly.editor.model/TableRow.cells|{}cells[0]
+        final fun <get-cells>(): kotlin.collections/List<com.pasich.encly.editor.model/TableCell> // com.pasich.encly.editor.model/TableRow.cells.<get-cells>|<get-cells>(){}[0]
+
+    final fun component1(): kotlin.collections/List<com.pasich.encly.editor.model/TableCell> // com.pasich.encly.editor.model/TableRow.component1|component1(){}[0]
+    final fun copy(kotlin.collections/List<com.pasich.encly.editor.model/TableCell> = ...): com.pasich.encly.editor.model/TableRow // com.pasich.encly.editor.model/TableRow.copy|copy(kotlin.collections.List<com.pasich.encly.editor.model.TableCell>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.editor.model/TableRow.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.editor.model/TableRow.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.editor.model/TableRow.toString|toString(){}[0]
 }
 
 final class com.pasich.encly.editor.state/BlockEditorState { // com.pasich.encly.editor.state/BlockEditorState|null[0]
@@ -769,7 +845,7 @@ final class com.pasich.encly.editor.theme/EditorFontSizes { // com.pasich.encly.
 }
 
 final class com.pasich.encly.editor.theme/EditorIcons { // com.pasich.encly.editor.theme/EditorIcons|null[0]
-    constructor <init>(androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ...) // com.pasich.encly.editor.theme/EditorIcons.<init>|<init>(androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector){}[0]
+    constructor <init>(androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ..., androidx.compose.ui.graphics.vector/ImageVector = ...) // com.pasich.encly.editor.theme/EditorIcons.<init>|<init>(androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector;androidx.compose.ui.graphics.vector.ImageVector){}[0]
 }
 
 final class com.pasich.encly.editor.theme/EditorSpacing { // com.pasich.encly.editor.theme/EditorSpacing|null[0]
@@ -902,6 +978,22 @@ sealed class com.pasich.encly.editor.model/Block { // com.pasich.encly.editor.mo
     abstract val id // com.pasich.encly.editor.model/Block.id|{}id[0]
         abstract fun <get-id>(): kotlin/String // com.pasich.encly.editor.model/Block.id.<get-id>|<get-id>(){}[0]
 
+    final class CodeBlock : com.pasich.encly.editor.model/Block, com.pasich.encly.editor.model/TextualBlock { // com.pasich.encly.editor.model/Block.CodeBlock|null[0]
+        constructor <init>(kotlinx.coroutines.flow/MutableStateFlow<kotlin/String> = ..., kotlin/String = ...) // com.pasich.encly.editor.model/Block.CodeBlock.<init>|<init>(kotlinx.coroutines.flow.MutableStateFlow<kotlin.String>;kotlin.String){}[0]
+
+        final val id // com.pasich.encly.editor.model/Block.CodeBlock.id|{}id[0]
+            final fun <get-id>(): kotlin/String // com.pasich.encly.editor.model/Block.CodeBlock.id.<get-id>|<get-id>(){}[0]
+        final val text // com.pasich.encly.editor.model/Block.CodeBlock.text|{}text[0]
+            final fun <get-text>(): kotlinx.coroutines.flow/MutableStateFlow<kotlin/String> // com.pasich.encly.editor.model/Block.CodeBlock.text.<get-text>|<get-text>(){}[0]
+
+        final fun component1(): kotlinx.coroutines.flow/MutableStateFlow<kotlin/String> // com.pasich.encly.editor.model/Block.CodeBlock.component1|component1(){}[0]
+        final fun component2(): kotlin/String // com.pasich.encly.editor.model/Block.CodeBlock.component2|component2(){}[0]
+        final fun copy(kotlinx.coroutines.flow/MutableStateFlow<kotlin/String> = ..., kotlin/String = ...): com.pasich.encly.editor.model/Block.CodeBlock // com.pasich.encly.editor.model/Block.CodeBlock.copy|copy(kotlinx.coroutines.flow.MutableStateFlow<kotlin.String>;kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.editor.model/Block.CodeBlock.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.editor.model/Block.CodeBlock.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.editor.model/Block.CodeBlock.toString|toString(){}[0]
+    }
+
     final class HBlock : com.pasich.encly.editor.model/Block, com.pasich.encly.editor.model/TextualBlock { // com.pasich.encly.editor.model/Block.HBlock|null[0]
         constructor <init>(kotlinx.coroutines.flow/MutableStateFlow<kotlin/String> = ..., com.pasich.encly.editor.model/BlockType, kotlin/String = ...) // com.pasich.encly.editor.model/Block.HBlock.<init>|<init>(kotlinx.coroutines.flow.MutableStateFlow<kotlin.String>;com.pasich.encly.editor.model.BlockType;kotlin.String){}[0]
 
@@ -988,6 +1080,22 @@ sealed class com.pasich.encly.editor.model/Block { // com.pasich.encly.editor.mo
         final fun toString(): kotlin/String // com.pasich.encly.editor.model/Block.SeparatorBlock.toString|toString(){}[0]
     }
 
+    final class TableBlock : com.pasich.encly.editor.model/Block { // com.pasich.encly.editor.model/Block.TableBlock|null[0]
+        constructor <init>(kotlinx.coroutines.flow/MutableStateFlow<com.pasich.encly.editor.model/TableData> = ..., kotlin/String = ...) // com.pasich.encly.editor.model/Block.TableBlock.<init>|<init>(kotlinx.coroutines.flow.MutableStateFlow<com.pasich.encly.editor.model.TableData>;kotlin.String){}[0]
+
+        final val id // com.pasich.encly.editor.model/Block.TableBlock.id|{}id[0]
+            final fun <get-id>(): kotlin/String // com.pasich.encly.editor.model/Block.TableBlock.id.<get-id>|<get-id>(){}[0]
+        final val table // com.pasich.encly.editor.model/Block.TableBlock.table|{}table[0]
+            final fun <get-table>(): kotlinx.coroutines.flow/MutableStateFlow<com.pasich.encly.editor.model/TableData> // com.pasich.encly.editor.model/Block.TableBlock.table.<get-table>|<get-table>(){}[0]
+
+        final fun component1(): kotlinx.coroutines.flow/MutableStateFlow<com.pasich.encly.editor.model/TableData> // com.pasich.encly.editor.model/Block.TableBlock.component1|component1(){}[0]
+        final fun component2(): kotlin/String // com.pasich.encly.editor.model/Block.TableBlock.component2|component2(){}[0]
+        final fun copy(kotlinx.coroutines.flow/MutableStateFlow<com.pasich.encly.editor.model/TableData> = ..., kotlin/String = ...): com.pasich.encly.editor.model/Block.TableBlock // com.pasich.encly.editor.model/Block.TableBlock.copy|copy(kotlinx.coroutines.flow.MutableStateFlow<com.pasich.encly.editor.model.TableData>;kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.editor.model/Block.TableBlock.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.editor.model/Block.TableBlock.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.editor.model/Block.TableBlock.toString|toString(){}[0]
+    }
+
     final class TextBlock : com.pasich.encly.editor.model/Block, com.pasich.encly.editor.model/TextualBlock { // com.pasich.encly.editor.model/Block.TextBlock|null[0]
         constructor <init>(kotlinx.coroutines.flow/MutableStateFlow<kotlin/String> = ..., com.pasich.encly.editor/EditorString = ..., kotlin/String = ...) // com.pasich.encly.editor.model/Block.TextBlock.<init>|<init>(kotlinx.coroutines.flow.MutableStateFlow<kotlin.String>;com.pasich.encly.editor.EditorString;kotlin.String){}[0]
 
@@ -1015,10 +1123,12 @@ final object com.pasich.encly.editor.codec/BlockConverter { // com.pasich.encly.
 }
 
 final object com.pasich.encly.editor.codec/ImportBlocks { // com.pasich.encly.editor.codec/ImportBlocks|null[0]
+    final fun code(kotlin/String): com.pasich.encly.editor.model/Block // com.pasich.encly.editor.codec/ImportBlocks.code|code(kotlin.String){}[0]
     final fun heading(kotlin/String, kotlin/Int): com.pasich.encly.editor.model/Block // com.pasich.encly.editor.codec/ImportBlocks.heading|heading(kotlin.String;kotlin.Int){}[0]
     final fun list(com.pasich.encly.editor.model/BlockType, kotlin.collections/List<com.pasich.encly.editor.model/ItemListBlock>): com.pasich.encly.editor.model/Block // com.pasich.encly.editor.codec/ImportBlocks.list|list(com.pasich.encly.editor.model.BlockType;kotlin.collections.List<com.pasich.encly.editor.model.ItemListBlock>){}[0]
     final fun paragraphs(kotlin/String): kotlin.collections/List<com.pasich.encly.editor.model/Block> // com.pasich.encly.editor.codec/ImportBlocks.paragraphs|paragraphs(kotlin.String){}[0]
     final fun quote(kotlin/String): com.pasich.encly.editor.model/Block // com.pasich.encly.editor.codec/ImportBlocks.quote|quote(kotlin.String){}[0]
+    final fun table(kotlin.collections/List<kotlin.collections/List<kotlin/String>>, kotlin/Boolean): com.pasich.encly.editor.model/Block // com.pasich.encly.editor.codec/ImportBlocks.table|table(kotlin.collections.List<kotlin.collections.List<kotlin.String>>;kotlin.Boolean){}[0]
     final fun text(kotlin/String): com.pasich.encly.editor.model/Block // com.pasich.encly.editor.codec/ImportBlocks.text|text(kotlin.String){}[0]
 }
 
@@ -1045,14 +1155,19 @@ final val com.pasich.encly.editor.codec/com_pasich_encly_editor_codec_MarkdownBl
 final val com.pasich.encly.editor.focus/com_pasich_encly_editor_focus_BlockFocusRegistry$stableprop // com.pasich.encly.editor.focus/com_pasich_encly_editor_focus_BlockFocusRegistry$stableprop|#static{}com_pasich_encly_editor_focus_BlockFocusRegistry$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block$stableprop|#static{}com_pasich_encly_editor_model_Block$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_BlockFactory$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_BlockFactory$stableprop|#static{}com_pasich_encly_editor_model_BlockFactory$stableprop[0]
+final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_CodeBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_CodeBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_CodeBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_HBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_HBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_HBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_LinkBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_LinkBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_LinkBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_ListBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_ListBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_ListBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_QuoteBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_QuoteBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_QuoteBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_SeparatorBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_SeparatorBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_SeparatorBlock$stableprop[0]
+final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TableBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TableBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_TableBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TextBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TextBlock$stableprop|#static{}com_pasich_encly_editor_model_Block_TextBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_ItemListBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_ItemListBlock$stableprop|#static{}com_pasich_encly_editor_model_ItemListBlock$stableprop[0]
 final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_LinkDataBlock$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_LinkDataBlock$stableprop|#static{}com_pasich_encly_editor_model_LinkDataBlock$stableprop[0]
+final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableCell$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableCell$stableprop|#static{}com_pasich_encly_editor_model_TableCell$stableprop[0]
+final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableData$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableData$stableprop|#static{}com_pasich_encly_editor_model_TableData$stableprop[0]
+final val com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableRow$stableprop // com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableRow$stableprop|#static{}com_pasich_encly_editor_model_TableRow$stableprop[0]
 final val com.pasich.encly.editor.state/HEADING_TOOL // com.pasich.encly.editor.state/HEADING_TOOL|{}HEADING_TOOL[0]
     final fun <get-HEADING_TOOL>(): com.pasich.encly.editor.model/BlockType // com.pasich.encly.editor.state/HEADING_TOOL.<get-HEADING_TOOL>|<get-HEADING_TOOL>(){}[0]
 final val com.pasich.encly.editor.state/com_pasich_encly_editor_state_BlockEditorState$stableprop // com.pasich.encly.editor.state/com_pasich_encly_editor_state_BlockEditorState$stableprop|#static{}com_pasich_encly_editor_state_BlockEditorState$stableprop[0]
@@ -1089,6 +1204,7 @@ final val com.pasich.encly.editor.theme/isCompact // com.pasich.encly.editor.the
     final fun (com.pasich.encly.editor.theme/EditorLineSpacing).<get-isCompact>(): kotlin/Boolean // com.pasich.encly.editor.theme/isCompact.<get-isCompact>|<get-isCompact>@com.pasich.encly.editor.theme.EditorLineSpacing(){}[0]
 final val com.pasich.encly.editor.ui.blocks/WritingKeyboard // com.pasich.encly.editor.ui.blocks/WritingKeyboard|{}WritingKeyboard[0]
     final fun <get-WritingKeyboard>(): androidx.compose.foundation.text/KeyboardOptions // com.pasich.encly.editor.ui.blocks/WritingKeyboard.<get-WritingKeyboard>|<get-WritingKeyboard>(){}[0]
+final val com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Code$stableprop // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Code$stableprop|#static{}com_pasich_encly_editor_ui_blocks_BlockField_Code$stableprop[0]
 final val com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_ListItem$stableprop // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_ListItem$stableprop|#static{}com_pasich_encly_editor_ui_blocks_BlockField_ListItem$stableprop[0]
 final val com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Paragraph$stableprop // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Paragraph$stableprop|#static{}com_pasich_encly_editor_ui_blocks_BlockField_Paragraph$stableprop[0]
 final val com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Styled$stableprop // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Styled$stableprop|#static{}com_pasich_encly_editor_ui_blocks_BlockField_Styled$stableprop[0]
@@ -1166,14 +1282,19 @@ final fun com.pasich.encly.editor.codec/com_pasich_encly_editor_codec_MarkdownBl
 final fun com.pasich.encly.editor.focus/com_pasich_encly_editor_focus_BlockFocusRegistry$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.focus/com_pasich_encly_editor_focus_BlockFocusRegistry$stableprop_getter|com_pasich_encly_editor_focus_BlockFocusRegistry$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block$stableprop_getter|com_pasich_encly_editor_model_Block$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_BlockFactory$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_BlockFactory$stableprop_getter|com_pasich_encly_editor_model_BlockFactory$stableprop_getter(){}[0]
+final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_CodeBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_CodeBlock$stableprop_getter|com_pasich_encly_editor_model_Block_CodeBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_HBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_HBlock$stableprop_getter|com_pasich_encly_editor_model_Block_HBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_LinkBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_LinkBlock$stableprop_getter|com_pasich_encly_editor_model_Block_LinkBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_ListBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_ListBlock$stableprop_getter|com_pasich_encly_editor_model_Block_ListBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_QuoteBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_QuoteBlock$stableprop_getter|com_pasich_encly_editor_model_Block_QuoteBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_SeparatorBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_SeparatorBlock$stableprop_getter|com_pasich_encly_editor_model_Block_SeparatorBlock$stableprop_getter(){}[0]
+final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TableBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TableBlock$stableprop_getter|com_pasich_encly_editor_model_Block_TableBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TextBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_Block_TextBlock$stableprop_getter|com_pasich_encly_editor_model_Block_TextBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_ItemListBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_ItemListBlock$stableprop_getter|com_pasich_encly_editor_model_ItemListBlock$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_LinkDataBlock$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_LinkDataBlock$stableprop_getter|com_pasich_encly_editor_model_LinkDataBlock$stableprop_getter(){}[0]
+final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableCell$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableCell$stableprop_getter|com_pasich_encly_editor_model_TableCell$stableprop_getter(){}[0]
+final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableData$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableData$stableprop_getter|com_pasich_encly_editor_model_TableData$stableprop_getter(){}[0]
+final fun com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableRow$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.model/com_pasich_encly_editor_model_TableRow$stableprop_getter|com_pasich_encly_editor_model_TableRow$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.state/com_pasich_encly_editor_state_BlockEditorState$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.state/com_pasich_encly_editor_state_BlockEditorState$stableprop_getter|com_pasich_encly_editor_state_BlockEditorState$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.state/com_pasich_encly_editor_state_BlockSelection$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.state/com_pasich_encly_editor_state_BlockSelection$stableprop_getter|com_pasich_encly_editor_state_BlockSelection$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.state/com_pasich_encly_editor_state_CaretMove_Down$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.state/com_pasich_encly_editor_state_CaretMove_Down$stableprop_getter|com_pasich_encly_editor_state_CaretMove_Down$stableprop_getter(){}[0]
@@ -1198,12 +1319,14 @@ final fun com.pasich.encly.editor.state/com_pasich_encly_editor_state_TextRangeE
 final fun com.pasich.encly.editor.state/com_pasich_encly_editor_state_TextRangeSelection$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.state/com_pasich_encly_editor_state_TextRangeSelection$stableprop_getter|com_pasich_encly_editor_state_TextRangeSelection$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.state/com_pasich_encly_editor_state_TypingStep$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.state/com_pasich_encly_editor_state_TypingStep$stableprop_getter|com_pasich_encly_editor_state_TypingStep$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.state/listTypingStep(kotlin.collections/List<com.pasich.encly.editor.model/ItemListBlock>, kotlin.collections/List<com.pasich.encly.editor.model/ItemListBlock>): com.pasich.encly.editor.state/TypingStep? // com.pasich.encly.editor.state/listTypingStep|listTypingStep(kotlin.collections.List<com.pasich.encly.editor.model.ItemListBlock>;kotlin.collections.List<com.pasich.encly.editor.model.ItemListBlock>){}[0]
+final fun com.pasich.encly.editor.state/tableTypingStep(com.pasich.encly.editor.model/TableData, com.pasich.encly.editor.model/TableData): com.pasich.encly.editor.state/TypingStep? // com.pasich.encly.editor.state/tableTypingStep|tableTypingStep(com.pasich.encly.editor.model.TableData;com.pasich.encly.editor.model.TableData){}[0]
 final fun com.pasich.encly.editor.state/textDiff(kotlin/String, kotlin/String, kotlin/Int = ...): com.pasich.encly.editor.state/TextDiff // com.pasich.encly.editor.state/textDiff|textDiff(kotlin.String;kotlin.String;kotlin.Int){}[0]
 final fun com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorFontFamilies$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorFontFamilies$stableprop_getter|com_pasich_encly_editor_theme_EditorFontFamilies$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorFontSizes$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorFontSizes$stableprop_getter|com_pasich_encly_editor_theme_EditorFontSizes$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorIcons$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorIcons$stableprop_getter|com_pasich_encly_editor_theme_EditorIcons$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorSpacing$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorSpacing$stableprop_getter|com_pasich_encly_editor_theme_EditorSpacing$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorTheme$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.theme/com_pasich_encly_editor_theme_EditorTheme$stableprop_getter|com_pasich_encly_editor_theme_EditorTheme$stableprop_getter(){}[0]
+final fun com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Code$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Code$stableprop_getter|com_pasich_encly_editor_ui_blocks_BlockField_Code$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_ListItem$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_ListItem$stableprop_getter|com_pasich_encly_editor_ui_blocks_BlockField_ListItem$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Paragraph$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Paragraph$stableprop_getter|com_pasich_encly_editor_ui_blocks_BlockField_Paragraph$stableprop_getter(){}[0]
 final fun com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Styled$stableprop_getter(): kotlin/Int // com.pasich.encly.editor.ui.blocks/com_pasich_encly_editor_ui_blocks_BlockField_Styled$stableprop_getter|com_pasich_encly_editor_ui_blocks_BlockField_Styled$stableprop_getter(){}[0]

@@ -36,4 +36,6 @@ internal fun Block.describe(): EditorString = when (this) {
     is Block.HBlock -> EditorString.BLOCK_HEADING
     is Block.LinkBlock -> EditorString.BLOCK_LINK
     is Block.SeparatorBlock -> EditorString.BLOCK_SEPARATOR
+    is Block.CodeBlock -> EditorString.BLOCK_CODE
+    is Block.TableBlock -> EditorString.BLOCK_TABLE
 }

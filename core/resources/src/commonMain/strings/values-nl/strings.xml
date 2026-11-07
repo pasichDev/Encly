@@ -693,4 +693,23 @@
     <string name="faq_password_a">Ja. Onder Instellingen → Beveiliging → Wachtwoord kun je een wachtwoord van minstens 8 tekens toevoegen, in elke taal. Het werkt naast je pincode: op het vergrendelscherm wissel je tussen beide en elk ontgrendelt zelfstandig. Ze delen dezelfde limiet voor foute pogingen en dezelfde bescherming door de sleutel van het apparaat. De wis-pincode en de dwangpincode blijven pincodes. Je kunt een van beide verwijderen zolang de ander is ingesteld.</string>
     <string name="faq_pin_length_q">Hoe lang mag mijn pincode zijn?</string>
     <string name="faq_pin_length_a">Tussen 6 en 12 cijfers, naar keuze. Kortere pincodes worden niet aangeboden: de blokkade en de sleutel van het apparaat beperken het aantal pogingen, en 6 cijfers is het kortste dat daarmee veilig blijft. Het vergrendelscherm toont nooit hoe lang je pincode is: je tikt op ‘Ontgrendelen’ als je klaar bent, en hetzelfde geldt voor de wis-pincode en de dwangpincode. Pincodes die je eerder instelde, blijven gewoon werken.</string>
+    <string name="block_code">Code</string>
+    <string name="block_table">Tabel</string>
+    <string name="table_add_row">Rij toevoegen</string>
+    <string name="table_add_column">Kolom toevoegen</string>
+    <string name="table_remove_row">Rij verwijderen</string>
+    <string name="table_remove_column">Kolom verwijderen</string>
+    <string name="table_header_row">Koprij</string>
+    <string name="table_cell_options">Celopties</string>
+    <string name="settings_editor_toolbar">Editorwerkbalk</string>
+    <string name="settings_editor_toolbar_desc">Kies en orden de hulpmiddelen</string>
+    <string name="toolbar_hint">Sleep het handvat om te herordenen. Het oog verbergt een hulpmiddel of toont het weer. Hulpmiddelen onder “Meer menu” zitten achter de pijl.</string>
+    <string name="toolbar_reset">Herstellen</string>
+    <string name="toolbar_section_main">Werkbalk</string>
+    <string name="toolbar_section_more">Meer menu</string>
+    <string name="toolbar_section_hidden">Verborgen</string>
+    <string name="toolbar_tool_hide">Hulpmiddel verbergen</string>
+    <string name="toolbar_tool_show">Hulpmiddel tonen</string>
+    <string name="toolbar_move_up">Omhoog</string>
+    <string name="toolbar_move_down">Omlaag</string>
 </resources>

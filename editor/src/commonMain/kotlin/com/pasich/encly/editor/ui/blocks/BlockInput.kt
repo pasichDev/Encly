@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
 import com.pasich.encly.editor.state.LineBreak
+import com.pasich.encly.editor.state.TextDiff
 import com.pasich.encly.editor.state.isLoneWebAddress
 import com.pasich.encly.editor.state.normalizeLineBreaks
 import com.pasich.encly.editor.state.textDiff
@@ -25,6 +26,9 @@ internal sealed interface BlockField {
 
     /** Item [itemId] of a list. */
     data class ListItem(val itemId: String) : BlockField
+
+    /** Code: everything stays as typed or pasted, line breaks included. */
+    data object Code : BlockField
 }
 
 /**
@@ -53,7 +57,14 @@ internal class BlockInput(
         if (old == new) return
         val cursor = if (selection.collapsed) selection.start else -1
         val diff = textDiff(old, new, cursor)
-        if (actions().textRange.isCrossField) return replaceRange(diff.inserted)
+        when {
+            actions().textRange.isCrossField -> replaceRange(diff.inserted)
+            field == BlockField.Code -> keepVerbatim(diff)
+            else -> applyRules(old, new, cursor, diff)
+        }
+    }
+
+    private fun TextFieldBuffer.applyRules(old: String, new: String, cursor: Int, diff: TextDiff) {
         val lineBreak = LineBreak.of(old, diff)
         when {
             lineBreak != null -> {
@@ -78,6 +89,11 @@ internal class BlockInput(
                 actions().onSlashTyped(new, started = old.isEmpty() && new == SLASH && cursor == 1)
             }
         }
+    }
+
+    // Code is never split, converted or rewritten; only a carriage return is made a line feed, as everywhere.
+    private fun TextFieldBuffer.keepVerbatim(diff: TextDiff) {
+        if ('\r' in diff.inserted) replace(diff.start, diff.end, normalizeLineBreaks(diff.inserted))
     }
 
     // The selection across blocks is replaced once this edit is over: it moves the cursor and the text of the fields,
