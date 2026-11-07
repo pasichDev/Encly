@@ -109,11 +109,19 @@ internal class SecretServiceCipher(private val key: ByteArray) : AutoCloseable {
  * The service's public key from the output of `OpenSession` (`ay`, however the D-Bus library typed it); throws
  * [GeneralSecurityException] when the service did not give one.
  */
-internal fun serverPublicKeyOf(output: Variant<*>): ByteArray = when (val value = output.value) {
-    is ByteArray -> value
-    is Array<*> -> value.filterIsInstance<Byte>().toByteArray().takeIf { it.size == value.size }
-    else -> null
-} ?: throw GeneralSecurityException("The Secret Service did not answer the key exchange")
+internal fun serverPublicKeyOf(output: Variant<*>): ByteArray {
+    val value = output.value
+    val bytes = when (value) {
+        is ByteArray -> value
+        is Array<*> -> value.filterIsInstance<Byte>().toByteArray().takeIf { it.size == value.size }
+        // dbus-java hands an `ay` inside a variant over as a list of boxed bytes.
+        is List<*> -> value.filterIsInstance<Byte>().toByteArray().takeIf { it.size == value.size }
+        else -> null
+    }
+    return bytes ?: throw GeneralSecurityException(
+        "The Secret Service did not answer the key exchange (${output.sig}: ${value?.javaClass?.name})",
+    )
+}
 
 /**
  * HKDF (RFC 5869) with SHA-256 for one block of output, without salt (the RFC then uses [SHA256_SIZE] zero bytes)

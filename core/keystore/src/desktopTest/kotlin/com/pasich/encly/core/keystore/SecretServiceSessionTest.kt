@@ -112,6 +112,7 @@ class SecretServiceSessionTest {
         val key = ByteArray(KEY_SIZE) { it.toByte() }
 
         assertContentEquals(key, serverPublicKeyOf(org.freedesktop.dbus.types.Variant(key)))
+        assertContentEquals(key, serverPublicKeyOf(org.freedesktop.dbus.types.Variant(key.toList(), "ay")))
         assertFailsWith<GeneralSecurityException> { serverPublicKeyOf(org.freedesktop.dbus.types.Variant("none")) }
     }
 
