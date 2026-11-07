@@ -97,12 +97,13 @@ internal class BlockOperations(
             as? ValueChangeOperation
         if (mergeTarget != null && mergeTarget.canMerge(blockId, state, now, typing)) {
             // Same undo (back to the value before the first keystroke), newer redo.
+            forget(mergeTarget)
             undoStack[undoStack.lastIndex] = mergeTarget.copy(applyChange = apply, timestamp = now, step = typing)
         } else {
             val revert = { state.value = oldValue }
             pushUndo(ValueChangeOperation(blockId, state, apply, revert, mergeable, now, typing))
         }
-        redoStack.clear()
+        dropAll(redoStack)
         breakMerge = false
     }
 
@@ -116,7 +117,7 @@ internal class BlockOperations(
         val operations = batch.operations
         if (operations.isEmpty()) return
         pushUndo(operations.singleOrNull() ?: CompositeOperation(operations))
-        redoStack.clear()
+        dropAll(redoStack)
         breakMerge = false
     }
 
@@ -181,6 +182,9 @@ internal class BlockOperations(
         else -> emptyList()
     }
 
+    /** How many steps carry a cursor step: what the side list holds, for tests of what is still reachable. */
+    internal fun caretStepCount(): Int = caretSteps.size
+
     /** Attaches [step] to the step recorded last. */
     internal fun attachCaret(step: CaretStep) {
         undoStack.lastOrNull()?.let { last ->
@@ -224,6 +228,8 @@ internal class BlockOperations(
     fun clear() {
         undoStack.clear()
         redoStack.clear()
+        caretSteps.clear()
+        lastMoved = null
         breakMerge = false
     }
 
@@ -240,7 +246,7 @@ internal class BlockOperations(
     private fun record(operation: Operation) {
         execute(operation)
         pushUndo(operation)
-        redoStack.clear()
+        dropAll(redoStack)
         breakMerge = false
     }
 
@@ -250,7 +256,18 @@ internal class BlockOperations(
     }
 
     private fun trim(stack: ArrayDeque<Operation>) {
-        while (stack.size > MAX_HISTORY) stack.removeFirst()
+        while (stack.size > MAX_HISTORY) forget(stack.removeFirst())
+    }
+
+    private fun dropAll(stack: ArrayDeque<Operation>) {
+        stack.forEach(::forget)
+        stack.clear()
+    }
+
+    /** An operation that left both stacks keeps neither its cursor step nor its place as the last one moved. */
+    private fun forget(operation: Operation) {
+        caretSteps.removeAll { it.first === operation }
+        if (lastMoved === operation) lastMoved = null
     }
 
     /**

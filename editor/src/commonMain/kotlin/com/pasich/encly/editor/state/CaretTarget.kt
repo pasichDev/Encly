@@ -34,8 +34,21 @@ internal fun changedCaret(before: String, after: String): Int? {
     while (prefix < limit && before[prefix] == after[prefix]) prefix++
     var suffix = 0
     while (suffix < limit - prefix && before[before.length - 1 - suffix] == after[after.length - 1 - suffix]) suffix++
-    return after.length - suffix
+    return after.snappedToCodePoint(after.length - suffix)
 }
+
+/**
+ * [offset] in this text, moved back to the start of the character when it falls between the two
+ * halves of a surrogate pair: a cursor there makes the next keystroke split the emoji.
+ */
+internal fun CharSequence.snappedToCodePoint(offset: Int): Int =
+    if (offset in 1 until length && this[offset - 1].isHighSurrogate() &&
+        this[offset].isLowSurrogate()
+    ) {
+        offset - 1
+    } else {
+        offset
+    }
 
 private fun listCaret(blockId: String, before: List<ItemListBlock>, after: List<ItemListBlock>): CaretTarget? {
     val beforeIds = before.mapTo(HashSet()) { it.id }

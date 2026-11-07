@@ -11,6 +11,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.text.TextRange
 import com.pasich.encly.editor.focus.caretOffsetFor
+import com.pasich.encly.editor.state.snappedToCodePoint
 import com.pasich.encly.editor.ui.BlockActions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -122,5 +123,5 @@ internal fun RegisterCaretAtX(blockActions: BlockActions, state: TextFieldState,
  */
 internal fun TextFieldState.placeCaret(stored: String, offset: Int) {
     if (text.toString() != stored) setTextAndPlaceCursorAtEnd(stored)
-    edit { selection = TextRange(offset.coerceIn(0, length)) }
+    edit { selection = TextRange(asCharSequence().snappedToCodePoint(offset.coerceIn(0, length))) }
 }

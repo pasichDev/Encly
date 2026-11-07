@@ -19,7 +19,9 @@ import com.pasich.encly.editor.model.ItemListBlock
  *   go and their text stays, while other angle-bracket text (`Map<String, Int>`, `<name>`) is kept.
  */
 public object MarkdownBlockMapper : MarkdownBlockParser {
-    private val HEADING = Regex("""^ {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$""")
+    // Only the start is a pattern: a lazy title followed by an optional closing run backtracks quadratically on a
+    // long run of blanks, so the title and its closing hashes are cut by hand (see [Heading]).
+    private val HEADING_START = Regex("""^ {0,3}(#{1,6})[ \t]""")
     private val CHECK = Regex("""^[ \t]*[-*+][ \t]+\[([ xX])\][ \t]+(.*)$""")
     private val GLYPH_ITEM = Regex("""^[ \t]*([✅☑☐])[ \t]*(.*)$""")
     private val CALLOUT = Regex("""^\[![A-Za-z-]+][+-]?[ \t]*""")
@@ -58,6 +60,23 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
 
     override fun parsePaste(text: String, plainFirstLine: Boolean, claim: (String) -> Block?): List<Block> =
         pasteBlocks(text, plainFirstLine, claim)
+
+    /** An ATX heading of [level] (1 to 6) with its [title], blanks and closing `#` run removed. */
+    private class Heading(val level: Int, val title: String) {
+        companion object {
+            fun of(raw: String): Heading? {
+                val start = HEADING_START.find(raw) ?: return null
+                val title = raw.substring(start.value.length).trim(::isBlank)
+                val closing = title.length - title.trimEnd('#').length
+                val head = title.dropLast(closing)
+                // A closing run counts only after a blank: "# a#" keeps its hash, "# #" is a title.
+                val closed = closing > 0 && head.isNotEmpty() && isBlank(head.last())
+                return Heading(start.groupValues[1].length, if (closed) head.trimEnd(::isBlank) else title)
+            }
+
+            private fun isBlank(char: Char) = char == ' ' || char == '\t'
+        }
+    }
 
     private class PasteRules(val claim: (String) -> Block?, var plainFirstLine: Boolean)
 
@@ -128,7 +147,7 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
         }
 
         private fun block(raw: String) {
-            val heading = HEADING.matchEntire(raw)
+            val heading = Heading.of(raw)
             val check = CHECK.matchEntire(raw)
             val glyph = GLYPH_ITEM.matchEntire(raw)
             val bullet = BULLET.matchEntire(raw)
@@ -148,8 +167,7 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
 
                 heading != null -> {
                     flushAll()
-                    val level = heading.groupValues[1].length
-                    blocks += ImportBlocks.heading(readable(heading.groupValues[2]), level)
+                    blocks += ImportBlocks.heading(readable(heading.title), heading.level)
                 }
 
                 check != null -> item(BlockType.LIST_CHECK, check.groupValues[2], check.groupValues[1] != " ")

@@ -65,6 +65,10 @@ import com.pasich.encly.editor.theme.markerColumn
 import com.pasich.encly.editor.ui.BlockActions
 import com.pasich.encly.editor.ui.components.EditorCheckbox
 import com.pasich.encly.editor.ui.components.editorInteractive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlin.math.roundToInt
 
 /** From this many items numbers take two digits, and a wider hanging indent. */
@@ -148,6 +152,34 @@ private fun rememberListFocus(block: Block.ListBlock, blockActions: BlockActions
 }
 
 /**
+ * The stored text of a list's items by id. The map is built once per list the model holds, so an
+ * item field reads its text in constant time: with a lookup by scan, every keystroke cost every
+ * item field a pass over the whole list.
+ */
+internal class ItemValues(private val items: StateFlow<List<ItemListBlock>>) {
+    private var source: List<ItemListBlock>? = null
+    private var byId = emptyMap<String, String>()
+
+    /** How many times the map was built; a test reads it to see that lookups do not scan. */
+    var builds = 0
+        private set
+
+    /** The text of item [id] in the list the model holds right now; null when it is not in it. */
+    fun valueOf(id: String): String? {
+        val current = items.value
+        if (current !== source) {
+            source = current
+            byId = current.associate { it.id to it.value }
+            builds++
+        }
+        return byId[id]
+    }
+
+    /** Emits an item's text when it changes, and only then: the other items' fields do not wake. */
+    fun changes(id: String): Flow<String?> = items.map { valueOf(id) }.distinctUntilChanged()
+}
+
+/**
  * A checklist, bulleted or numbered list: one field per item. Every change goes through
  * [blockActions], so it is autosaved and can be undone. The editor focuses the list through the
  * target it registers ([BlockActions.registerFieldsFocusTarget]).
@@ -165,9 +197,11 @@ internal fun ListBlock(
     val actions by rememberUpdatedState(blockActions)
     val focus = rememberListFocus(block, blockActions)
     val editor = remember(block) { ListEditor(block, { actions }) { focus.pending = it } }
+    val values = remember(block) { ItemValues(block.items) }
     val checklist = block.blockType == BlockType.LIST_CHECK
     val theme = LocalEditorTheme.current
     val marker = rememberListMarker(block.blockType, items.size)
+    val locks = remember(isLocked, textLocked) { ItemLocks(editorLocked = isLocked, textLocked = textLocked) }
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(
@@ -177,8 +211,8 @@ internal fun ListBlock(
         items.forEachIndexed { itemIndex, item ->
             key(item.id) {
                 val state = rememberSyncedTextFieldState(
-                    model = { block.items.value.firstOrNull { it.id == item.id }?.value },
-                    modelChanges = block.items,
+                    model = { values.valueOf(item.id) },
+                    modelChanges = remember(values) { values.changes(item.id) },
                     onEdit = { text -> editor.setText(item.id, text) },
                 )
                 val requester = remember { FocusRequester() }
@@ -188,30 +222,48 @@ internal fun ListBlock(
                         if (focus.focusedItem == item.id) actions.onListItemCaret(item.id, offset)
                     }
                 }
-                DisposableEffect(item.id) {
-                    focus.requesters[item.id] = requester
-                    focus.fieldStates[item.id] = state
-                    focus.highlights[item.id] = highlight
-                    onDispose {
-                        focus.highlights.remove(item.id)
-                        focus.requesters.remove(item.id)
-                        focus.fieldStates.remove(item.id)
+                RegisterItem(focus, item.id, requester, state, highlight)
+                // Remembered, so a row whose item did not change is skipped: a new object each time
+                // would make every row recompose on every keystroke.
+                val field = remember(state, highlight, marker.metrics) { ItemField(state, highlight, marker.metrics) }
+                val itemModifier = remember(fieldModifier, requester, state) {
+                    fieldModifier.focusRequester(requester).onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            focus.focusedItem = item.id
+                            actions.onListItemCaret(item.id, state.selection.start)
+                        }
                     }
                 }
                 ListItemRow(
                     item = item,
                     marker = marker.forItem(itemIndex + 1),
-                    field = ItemField(state, highlight, marker.metrics),
+                    field = field,
                     editor = editor,
-                    locks = ItemLocks(editorLocked = isLocked, textLocked = textLocked),
-                    fieldModifier = fieldModifier.focusRequester(requester).onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            focus.focusedItem = item.id
-                            actions.onListItemCaret(item.id, state.selection.start)
-                        }
-                    },
+                    locks = locks,
+                    fieldModifier = itemModifier,
                 )
             }
+        }
+    }
+}
+
+/** Lets the list find item [id]'s focus requester, text state and highlight while the item is composed. */
+@Composable
+private fun RegisterItem(
+    focus: ListFocus,
+    id: String,
+    requester: FocusRequester,
+    state: TextFieldState,
+    highlight: FieldHighlight,
+) {
+    DisposableEffect(id) {
+        focus.requesters[id] = requester
+        focus.fieldStates[id] = state
+        focus.highlights[id] = highlight
+        onDispose {
+            focus.highlights.remove(id)
+            focus.requesters.remove(id)
+            focus.fieldStates.remove(id)
         }
     }
 }

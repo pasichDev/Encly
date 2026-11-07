@@ -44,6 +44,23 @@ class MarkdownBlockMapperTest {
     }
 
     @Test
+    fun aHeadingLosesItsBlanksAndItsClosingHashesButNotAHashThatIsPartOfTheTitle() {
+        assertEquals(
+            listOf("h1:A", "h2:A b", "h1:a#", "h1:#", "h3:#", "h1:a #"),
+            blocks("#\t A  ##  \n\n##   A b #\n\n# a#\n\n# #\n\n###  #\n\n# a # #"),
+        )
+    }
+
+    @Test
+    fun aHeadingWithAHugeRunOfBlanksIsReadInLinearTime() {
+        val blanks = " \t".repeat(50_000)
+
+        assertEquals(listOf("h1:a"), blocks("# a$blanks"))
+        assertEquals(listOf("h1:!"), blocks("#$blanks!"))
+        assertEquals(listOf("h1:a"), blocks("# a$blanks#$blanks"))
+    }
+
+    @Test
     fun listsAreFlatAndKeepTheirKind() {
         assertEquals(listOf("check:[x] a|[ ] b|[x] c"), blocks("- [x] a\n* [ ] b\n+ [X] c"))
         assertEquals(listOf("bullet:[ ] a|[ ] b|[ ] c"), blocks("- a\n* b\n+ c"))

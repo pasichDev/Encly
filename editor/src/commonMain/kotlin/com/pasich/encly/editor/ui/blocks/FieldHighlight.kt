@@ -56,7 +56,7 @@ internal class FieldHighlight(
         // From the first character's box to the last one's; a match that wraps spans both lines.
         val from = result.getBoundingBox(start)
         val to = result.getBoundingBox(minOf(end, result.layoutInput.text.length) - 1)
-        bringIntoView.bringIntoView(Rect(from.left, from.top, to.right, to.bottom))
+        bringIntoView.bringIntoView(spanning(from, to))
         return true
     }
 
@@ -96,3 +96,7 @@ internal fun rememberFieldHighlight(
     }
     return field
 }
+
+/** The rectangle holding [from] and [to]; for a wrapped or right-to-left match, [to] is left of [from]. */
+internal fun spanning(from: Rect, to: Rect): Rect =
+    Rect(minOf(from.left, to.left), minOf(from.top, to.top), maxOf(from.right, to.right), maxOf(from.bottom, to.bottom))

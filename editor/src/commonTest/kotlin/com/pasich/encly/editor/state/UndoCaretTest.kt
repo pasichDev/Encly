@@ -203,4 +203,28 @@ class UndoCaretTest {
             assertEquals(FocusRequest(list.id, caret = 3, itemId = b.id), redone())
         }
     }
+
+    @Test
+    fun undoAndRedoOfAnEmojiInFrontOfAnotherNeverPutTheCursorInsideAPair() = runTest {
+        val block = Block.TextBlock(MutableStateFlow("\uD83D\uDE03"))
+        editor.load(listOf(block))
+        editor.selection.onFocused(block.id)
+        step()
+        editor.changeValue(block.id, block.text, "\uD83D\uDE00\uD83D\uDE03", mergeable = true)
+
+        assertEquals(0, undone().caret)
+        assertEquals(2, redone().caret)
+        // Typing at the caret leaves both emoji whole.
+        val caret = undone().caret!!
+        val text = block.text.value
+        assertEquals("\uD83D\uDE03", text)
+        assertEquals("a\uD83D\uDE03", text.substring(0, caret) + "a" + text.substring(caret))
+    }
+
+    @Test
+    fun aCaretAtAPairBoundaryIsLeftAlone() {
+        assertEquals(2, "\uD83D\uDE03a".snappedToCodePoint(2))
+        assertEquals(0, "\uD83D\uDE03a".snappedToCodePoint(0))
+        assertEquals(1, "\uD83Da".snappedToCodePoint(1))
+    }
 }

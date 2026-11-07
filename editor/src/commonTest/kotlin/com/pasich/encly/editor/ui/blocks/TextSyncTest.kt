@@ -52,4 +52,13 @@ class TextSyncTest {
         assertEquals("xyz", state.text.toString())
         assertEquals(3, state.selection.start)
     }
+
+    @Test
+    fun theCursorNeverLandsBetweenTheHalvesOfAnEmoji() {
+        val state = TextFieldState("\uD83D\uDE03", TextRange(0))
+
+        state.placeCaret("\uD83D\uDE03", 1)
+
+        assertEquals(0, state.selection.start)
+    }
 }

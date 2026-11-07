@@ -126,7 +126,9 @@ public class BlockSelection(private val blocks: List<Block>) {
     internal fun focusAt(index: Int, cursorToEnd: Boolean = false, caret: Int? = null, itemId: String? = null) {
         val block = blocks.getOrNull(index) ?: return
         val blockId = block.id
-        onFocused(blockId)
+        // A block with no field to focus (a separator, a locked checklist) never takes focus, so the field that
+        // has it keeps it and keeps being the one history keys and toolbar actions apply to.
+        if (block.canTakeFocus()) onFocused(blockId) else onInteraction(blockId)
         caret?.let { carets[blockId] = it }
         // The item asked for is where the cursor now is, before its field reports it back.
         itemId?.let { listItems[blockId] = it }

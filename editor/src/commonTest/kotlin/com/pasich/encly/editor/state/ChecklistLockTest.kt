@@ -36,6 +36,24 @@ class ChecklistLockTest {
     }
 
     @Test
+    fun movingABlockThatCannotTakeFocusLeavesFocusWhereItIs() {
+        val paragraph = Block.TextBlock(MutableStateFlow("typing"))
+        val list = checklist().also { it.locked.value = true }
+        val separator = Block.SeparatorBlock()
+        editor.load(listOf(paragraph, list, separator))
+        editor.selection.onFocused(paragraph.id)
+
+        editor.moveBlock(1, 0)
+        editor.moveBlock(2, 1)
+
+        assertEquals(paragraph.id, editor.selection.focusedBlockId.value)
+        // The toolbar still applies where the user last worked: the block just moved.
+        assertEquals(1, editor.selection.interactedIndex)
+        editor.selection.onFocusLost(paragraph.id)
+        assertEquals(null, editor.selection.focusedBlockId.value)
+    }
+
+    @Test
     fun aLockedChecklistIsNotConvertedByTheToolbar() {
         val list = checklist()
         editor.load(listOf(list))

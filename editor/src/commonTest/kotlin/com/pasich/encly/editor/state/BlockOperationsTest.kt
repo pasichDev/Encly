@@ -124,4 +124,66 @@ class BlockOperationsTest {
 
         assertFalse(operations.canUndo())
     }
+
+    private fun recordStep(at: Int) {
+        operations.addBlock(blocks.size, Block.SeparatorBlock())
+        operations.attachCaret(
+            BlockOperations.CaretStep(CaretTarget("b$at", null, 0), CaretTarget("a$at", null, 0)),
+        )
+    }
+
+    @Test
+    fun clearForgetsTheCaretOfEveryStepAndTheOneLastMoved() {
+        recordStep(0)
+        recordStep(1)
+        operations.undo()
+        assertEquals(2, operations.caretStepCount())
+
+        operations.clear()
+
+        assertEquals(0, operations.caretStepCount())
+        assertEquals(null, operations.lastMovedCaret())
+    }
+
+    @Test
+    fun aNewEditDropsTheCaretOfTheStepsItMadeUnredoable() {
+        recordStep(0)
+        recordStep(1)
+        operations.undo()
+
+        operations.changeValue(block.id, block.text, "x", mergeable = false)
+
+        assertEquals(1, operations.caretStepCount())
+        assertEquals(null, operations.lastMovedCaret())
+    }
+
+    @Test
+    fun aBatchAlsoDropsTheCaretOfTheStepsItMadeUnredoable() {
+        recordStep(0)
+        operations.undo()
+
+        operations.batch { addBlock(0, Block.SeparatorBlock()) }
+
+        assertEquals(0, operations.caretStepCount())
+    }
+
+    @Test
+    fun caretStepsStayBoundedOverALongSession() {
+        repeat(BlockOperations.MAX_HISTORY * 3) { recordStep(it) }
+
+        assertEquals(BlockOperations.MAX_HISTORY, operations.caretStepCount())
+    }
+
+    @Test
+    fun mergingIntoAStepThatHadACaretDoesNotLeaveItsCaretBehind() {
+        operations.changeValue(block.id, block.text, "a", mergeable = true)
+        operations.attachCaret(
+            BlockOperations.CaretStep(CaretTarget(block.id, null, 0), CaretTarget(block.id, null, 1)),
+        )
+        now += 10
+
+        operations.changeValue(block.id, block.text, "ab", mergeable = true)
+
+        assertEquals(0, operations.caretStepCount())
+    }
 }

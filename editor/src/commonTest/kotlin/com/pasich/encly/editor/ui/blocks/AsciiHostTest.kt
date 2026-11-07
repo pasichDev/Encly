@@ -33,18 +33,13 @@ class AsciiHostTest {
         "å.se" to "xn--5ca.se",
         "ａ́.com" to "xn--1ca.com",
         // Case folding beyond lower-casing.
-        "straße.de" to "strasse.de",
-        "fußball.de" to "fussball.de",
-        "ς.gr" to "xn--4xa.gr",
         "σασ.gr" to "xn--mxa9ab.gr",
         "ǰ.com" to "xn--ska.com",
         "ẖ.com" to "xn--ckg.com",
         "i̇stanbul.tr" to "xn--istanbul-o0e.tr",
         // Characters that map to nothing.
         "ex­ample.de" to "example.de",
-        "a‍b.com" to "ab.com",
-        "a‌b.com" to "ab.com",
-        "a﻿b.com" to "ab.com",
+        "ab.com" to "ab.com",
         "ö​ö.de" to "xn--ndaa.de",
         // The other IDNA dots separate labels.
         "bücher。de" to "xn--bcher-kva.de",
@@ -72,6 +67,24 @@ class AsciiHostTest {
     @Test
     fun theHostsGetTheAnswersOfJavaNetIdn() {
         answers.forEach { (host, ascii) -> assertEquals(ascii, toAsciiHost(host), host) }
+    }
+
+    @Test
+    fun theCardNeverNamesADifferentSiteThanTheBrowserOpens() {
+        // IDNA 2003 (java.net.IDN, Nameprep) maps these away; browsers keep them: "faß.de" opens "xn--fa-hia.de".
+        val deviations = listOf(
+            "faß.de",
+            "straße.de",
+            "fußball.de",
+            "ς.gr",
+            "σας.gr",
+            "fa\u1E9E.de",
+            "a\u200Db.com",
+            "a\u200Cb.com",
+        )
+        deviations.forEach { host -> assertEquals(null, displayHost(host), host) }
+        assertEquals("xn--bcher-kva.de", displayHost("Bücher.de"))
+        assertEquals("example.com", displayHost("Example.com"))
     }
 
     @Test

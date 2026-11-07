@@ -72,12 +72,20 @@ private fun parseWebLink(url: String): NoteLink {
 /**
  * [host] as the card shows it: lower case, and a name in other scripts in its ASCII (punycode)
  * form, as browsers show one that could imitate another site ("аpple.com" with a Cyrillic "а").
- * Null when it is not a valid name.
+ * Null when it is not a valid name, or one that browsers and the platform's IDNA 2003 tables read
+ * differently: "faß.de" is "xn--fa-hia.de" in a browser but "fass.de" to [toAsciiHost].
  */
-private fun displayHost(host: String): String? {
+internal fun displayHost(host: String): String? {
     val lower = host.lowercase()
-    return if (lower.all { it.code < ASCII_END }) lower else toAsciiHost(lower)
+    return when {
+        lower.all { it.code < ASCII_END } -> lower
+        lower.any { it in IDNA_DEVIATIONS } -> null
+        else -> toAsciiHost(lower)
+    }
 }
+
+// The characters IDNA 2003 maps or drops and UTS 46 keeps: sharp s, final sigma, the zero-width joiners.
+private const val IDNA_DEVIATIONS = "\u00DF\u03C2\u200C\u200D"
 
 private const val ASCII_END = 0x80
 
