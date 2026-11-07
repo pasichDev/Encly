@@ -516,6 +516,68 @@ jobs:
   # :shared (the ViewModels, the formatters), which also exercise the iOS actuals of dates and Unicode. The
   # last step builds the iOS app (iosApp/) for the Simulator, unsigned: the Xcode project links the static
   # framework that Gradle builds from :shared. The job keeps its name so that the name of the check does not change.
+  # F-Droid builds the fdroid flavor from the tag on its own server and publishes it only when its APK
+  # is byte for byte the one on the GitHub release (fdroiddata: Binaries + AllowedAPKSigningKeys). Two
+  # builds of the same commit in different directories, without the build cache, must give identical
+  # unsigned APKs; a path or machine value that leaks into the output would stop every F-Droid update.
+  fdroid-reproducible:
+    name: fdroid build reproducible
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: first
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: elsewhere/second
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          build-root-directory: first
+
+      # No build cache and no shared daemon: the second build must compute everything again.
+      - name: Build twice
+        run: |
+          set -euo pipefail
+          for dir in first elsewhere/second; do
+            (cd "$dir" && chmod +x ./gradlew && ./gradlew --no-daemon --no-build-cache \
+              --no-configuration-cache :app:assembleFdroidRelease)
+          done
+
+      - name: Compare the APKs
+        run: |
+          set -euo pipefail
+          a=$(ls first/app/build/outputs/apk/fdroid/release/*.apk)
+          b=$(ls elsewhere/second/app/build/outputs/apk/fdroid/release/*.apk)
+          if cmp -s "$a" "$b"; then
+            echo "Identical: $(sha256sum "$a" | cut -d' ' -f1)"
+            exit 0
+          fi
+          echo "::error::The two fdroid release builds differ; F-Droid would not publish this version."
+          python3 - "$a" "$b" <<'PY'
+          import hashlib, sys, zipfile
+          def entries(path):
+              with zipfile.ZipFile(path) as z:
+                  return {i.filename: hashlib.sha256(z.read(i)).hexdigest() for i in z.infolist()}
+          a, b = entries(sys.argv[1]), entries(sys.argv[2])
+          for name in sorted(set(a) | set(b)):
+              if a.get(name) != b.get(name):
+                  print("differs:", name)
+          PY
+          exit 1
+
   editor-ios:
     if: github.actor != 'dependabot[bot]'
     name: editor (iOS compile)

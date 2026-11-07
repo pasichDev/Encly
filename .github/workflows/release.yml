@@ -82,7 +82,7 @@ jobs:
           cache-read-only: true
 
       - name: Build and test release APKs (unsigned)
-        run: ./gradlew :app:testFdroidDebugUnitTest assembleRelease
+        run: ./gradlew :app:testFdroidDebugUnitTest :app:assembleRelease
 
       - name: Sign APKs
         env:
