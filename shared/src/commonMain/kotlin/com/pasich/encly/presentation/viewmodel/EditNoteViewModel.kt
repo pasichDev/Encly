@@ -44,6 +44,7 @@ import com.pasich.encly.editor.state.backspaceAtStart
 import com.pasich.encly.editor.state.breakLine
 import com.pasich.encly.editor.state.canMoveInteracted
 import com.pasich.encly.editor.state.canRemoveInteracted
+import com.pasich.encly.editor.state.canReplaceTextRange
 import com.pasich.encly.editor.state.deleteSelectedBlocks
 import com.pasich.encly.editor.state.duplicateBlockOf
 import com.pasich.encly.editor.state.duplicateInteracted
@@ -59,6 +60,7 @@ import com.pasich.encly.editor.state.listTypingStep
 import com.pasich.encly.editor.state.moveBlockOf
 import com.pasich.encly.editor.state.moveInteracted
 import com.pasich.encly.editor.state.moveListItem
+import com.pasich.encly.editor.state.pasteCopied
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.removeInteracted
 import com.pasich.encly.editor.state.replaceTextRange
@@ -536,6 +538,14 @@ class EditNoteViewModel(
         return if (pickedHere) "" else editor.breakLine(block.id, lineBreak)
     }
 
+    /**
+     * [pasted] went into the field of [block] (item [itemId] of a list) between [head] and [tail]. When it is exactly
+     * what the last copy or cut put on the clipboard, the blocks it was made of go in (see pasteCopied). Null when it
+     * is not that text, in simple editing or a locked editor: the paste then stays as the field read it.
+     */
+    fun onPasteCopied(block: Block, itemId: String?, head: String, pasted: String, tail: String): String? =
+        if (!canEdit(block) || simpleEdit.value) null else editor.pasteCopied(block.id, itemId, head, pasted, tail)
+
     /** Backspace at the start of [block]'s field; false when it does nothing there. */
     fun onBackspaceAtStart(block: Block): Boolean = canEdit(block) && editor.backspaceAtStart(block.id)
 
@@ -680,6 +690,12 @@ class EditNoteViewModel(
 
     /** The part of the note the text selection covers, as blocks of their own (for the clipboard). */
     fun textRangeBlocks(): List<Block> = editor.textRangeBlocks()
+
+    /** Whether the text selection across blocks can be replaced or cut: it reaches no locked checklist. */
+    fun canReplaceTextRange(): Boolean = editor.canReplaceTextRange()
+
+    /** A copy or cut put [text], the rendering of [blocks], on the clipboard: pasting it back inserts these blocks. */
+    fun rememberCopied(text: String, blocks: List<Block>) = editor.rememberCopied(text, blocks)
 
     /** The text selection that runs across blocks. */
     val textRange: TextRangeSelection get() = editor.textRange

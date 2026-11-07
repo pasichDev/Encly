@@ -28,7 +28,11 @@ public fun BlockEditorState.focusWorkingBlock() {
     if (block.canTakeFocus()) {
         // A list's items keep their own cursors; its field target puts it at the end.
         val caret = selection.caretOf(block.id).takeIf { block !is Block.ListBlock }
-        selection.focusAt(target, cursorToEnd = true, caret = caret)
+        // A table goes back to the cell the cursor was in, if that cell is still there.
+        val cell = (block as? Block.TableBlock)?.let { table ->
+            selection.itemOf(table.id)?.takeIf { table.table.value.cell(it) != null }
+        }
+        selection.focusAt(target, cursorToEnd = true, caret = caret, itemId = cell)
     } else {
         focusFirstBlock()
     }

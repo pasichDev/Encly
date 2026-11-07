@@ -63,6 +63,9 @@ public class BlockEditorState(
     /** Find in this note: transient, read-only, forgotten when the note is loaded or the vault locks. */
     public val find: NoteFind = NoteFind()
 
+    // What the last copy or cut put on the clipboard; in memory only, forgotten when a note is loaded (the lock too).
+    private var copied: CopiedBlocks? = null
+
     private val _canUndo = MutableStateFlow(false)
 
     /** Whether there is an edit to undo. */
@@ -90,10 +93,27 @@ public class BlockEditorState(
         find.close()
         pickedBlocks.clear()
         textRange.clear()
+        copied = null
         _blocks.clear()
         _blocks.addAll(loaded)
         history.clear()
         afterChange()
+    }
+
+    /**
+     * Remembers that a copy or cut put [text] on the clipboard for [blocks] (the text as the host rendered them): a
+     * later paste of exactly that text inserts these blocks again, tables, code and nested lists intact, instead of
+     * reading the text. The blocks are copied now, so editing or removing the originals changes nothing. Kept in
+     * memory only, until the next copy or until a note is loaded (which the vault lock does with an empty one).
+     */
+    public fun rememberCopied(text: String, blocks: List<Block>) {
+        copied = if (text.isEmpty() || blocks.isEmpty()) null else CopiedBlocks(text, blocks.map { it.duplicate() })
+    }
+
+    /** New copies of the blocks of the last copy or cut when it put exactly [text] on the clipboard, else null. */
+    internal fun copiedFor(text: String): List<Block>? {
+        val remembered = copied
+        return if (remembered != null && remembered.text == text) remembered.blocks.map { it.duplicate() } else null
     }
 
     /**
@@ -280,3 +300,6 @@ private fun BlockSelection.keepFocus(blocks: List<Block>, blockId: String) {
         focusAt(blocks.previousFocusableIndex(interactedIndex + 1), cursorToEnd = true)
     }
 }
+
+/** The blocks of a copy or cut and the exact text it put on the clipboard. */
+private class CopiedBlocks(val text: String, val blocks: List<Block>)

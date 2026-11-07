@@ -36,39 +36,85 @@ internal fun BlockEditorState.pasteLines(index: Int, block: TextualBlock, lineBr
 
         // One line (its line break is just the end of the copied text), or text the mapper left
         // nothing of: pasted as typed.
-        mapped.isEmpty() || mapped.singleOrNull() is Block.TextBlock -> pasteParagraph(index, block, lineBreak, pasted)
+        mapped.isEmpty() || mapped.singleOrNull() is Block.TextBlock ->
+            pasteParagraph(PasteSite(index, block, lineBreak.head, lineBreak.tail), pasted)
 
-        else -> pasteBlocks(index, block, lineBreak, pasted, mapped)
+        else -> pasteBlocks(
+            PasteSite(index, block, lineBreak.head, lineBreak.tail),
+            mapped,
+            lead = pasted.first().takeWhile { it.isWhitespace() },
+            trail = pasted.last().takeLastWhile { it.isWhitespace() },
+        )
     }
 }
 
+/**
+ * [pasted], the whole text of an insertion into the field of block [blockId] (item [itemId] when it is a list) that
+ * read [head] before it and [tail] after it, when it is exactly what the last copy or cut of this editor put on the
+ * clipboard ([BlockEditorState.rememberCopied]): the blocks that were copied go in, as they were, instead of the text
+ * being read. In a paragraph, heading or quote the blocks follow the rules of [pasteLines]; in a list item they
+ * become items, as plain text (a list item holds no other block). One undo step. Returns the text the field keeps,
+ * or null when the paste is not that text or the field takes no paste (code, a table cell, a link).
+ */
+public fun BlockEditorState.pasteCopied(
+    blockId: String,
+    itemId: String?,
+    head: String,
+    pasted: String,
+    tail: String,
+): String? {
+    val text = normalizeLineBreaks(pasted)
+    val copied = copiedFor(text) ?: return null
+    val index = indexOf(blockId)
+    return when (val block = blocks.getOrNull(index)) {
+        is Block.CodeBlock -> null
+
+        is TextualBlock -> {
+            val single = copied.singleOrNull() as? Block.TextBlock
+            val site = PasteSite(index, block, head, tail)
+            if (single != null) {
+                pasteParagraph(site, single.text.value.split('\n'))
+            } else {
+                pasteBlocks(site, copied, lead = "", trail = "")
+            }
+        }
+
+        is Block.ListBlock -> itemId?.let { itemAt(blockId, it) }
+            ?.let { listPasteText(it, head, copied.plainText().split('\n'), tail) }
+
+        else -> null
+    }
+}
+
+/** Where a paste lands: the block at [index], which read [head] before the pasted text and [tail] after it. */
+private data class PasteSite(val index: Int, val block: TextualBlock, val head: String, val tail: String)
+
 /** A paste that is one paragraph: it goes into the block at the cursor, line breaks and all. */
-private fun BlockEditorState.pasteParagraph(
-    index: Int,
-    block: TextualBlock,
-    lineBreak: LineBreak,
-    pasted: List<String>,
-): String {
+private fun BlockEditorState.pasteParagraph(site: PasteSite, pasted: List<String>): String {
+    val index = site.index
+    val block = site.block
+    val head = site.head
+    val tail = site.tail
     val text = pasted.joinToString("\n").let { if (block is Block.HBlock) it.replace('\n', ' ') else it }
-    val kept = lineBreak.head + text + lineBreak.tail
+    val kept = head + text + tail
     batch { setValue(blocks[index].id, block.text, kept) }
-    selection.focusAt(index, caret = lineBreak.head.length + text.length)
+    selection.focusAt(index, caret = head.length + text.length)
     return kept
 }
 
-/** A paste of several paragraphs or marks: see [pasteLines]. */
-private fun BlockEditorState.pasteBlocks(
-    index: Int,
-    block: TextualBlock,
-    lineBreak: LineBreak,
-    pasted: List<String>,
-    mapped: List<Block>,
-): String {
-    val (head, _, tail) = lineBreak
+/**
+ * A paste of several paragraphs or marks: see [pasteLines]. [lead] is the whitespace the first pasted line started
+ * with and [trail] the whitespace the last one ended in.
+ */
+private fun BlockEditorState.pasteBlocks(site: PasteSite, mapped: List<Block>, lead: String, trail: String): String {
+    val index = site.index
+    val block = site.block
+    val head = site.head
+    val tail = site.tail
     val first = mapped.first() as? Block.TextBlock
-    val lead = when (first) {
+    val before = when (first) {
         null -> head
-        else -> head + pasted.first().takeWhile { it.isWhitespace() } + first.text.value.flattenFor(block)
+        else -> head + lead + first.text.value.flattenFor(block)
     }
     var rest = if (first == null) mapped else mapped.drop(1)
     var caret = 0
@@ -80,7 +126,7 @@ private fun BlockEditorState.pasteBlocks(
         if (last == null) {
             rest = rest + block.sameKind(tail)
         } else {
-            val joined = last.text.value + pasted.last().takeLastWhile { it.isWhitespace() }
+            val joined = last.text.value + trail
             caret = joined.length
             rest = rest.dropLast(1) + block.sameKind(joined + tail)
         }
@@ -92,13 +138,13 @@ private fun BlockEditorState.pasteBlocks(
             replaceBlock(index, rest.first())
             rest.drop(1).forEachIndexed { i, added -> addBlock(index + 1 + i, added) }
         } else {
-            setValue(blocks[index].id, block.text, lead)
+            setValue(blocks[index].id, block.text, before)
             rest.forEachIndexed { i, added -> addBlock(index + 1 + i, added) }
         }
     }
     val last = if (replaceCurrent) index + rest.lastIndex else index + rest.size
     if (tail.isEmpty()) selection.focusAt(last, cursorToEnd = true) else selection.focusAt(last, caret = caret)
-    return if (replaceCurrent) "" else lead
+    return if (replaceCurrent) "" else before
 }
 
 /** A heading is one line: line breaks of pasted text become spaces there. */

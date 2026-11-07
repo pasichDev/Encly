@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.state.BlockEditorState
+import com.pasich.encly.editor.state.TextPoint
 import com.pasich.encly.editor.ui.blocks.TABLE_MENU_TAG
 import com.pasich.encly.editor.ui.blocks.cellFor
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +60,8 @@ class TablesAndCodeUiTest {
     private fun fields() = rule.onAllNodes(hasSetTextAction())
 
     private fun idle() = rule.waitForIdle()
+
+    private fun cell(block: Block.TableBlock, row: Int, column: Int) = block.table.value.rows[row].cells[column].id
 
     private fun grid(block: Block.TableBlock) = block.table.value.rows.map { row -> row.cells.map { it.value } }
 
@@ -140,19 +143,98 @@ class TablesAndCodeUiTest {
         fields()[4].assertIsFocused()
     }
 
-    @Test
-    fun shiftTabInTheFirstCellLeavesItToTheFocusSystem() {
-        show(table(listOf("a", "b")))
-        fields()[0].performClick()
-
-        fields()[0].performKeyInput {
+    private fun shiftTab(index: Int) {
+        fields()[index].performKeyInput {
             keyDown(Key.ShiftLeft)
             pressKey(Key.Tab)
             keyUp(Key.ShiftLeft)
         }
         idle()
+    }
 
-        assertEquals(1, state.blocks.size)
+    @Test
+    fun shiftTabInTheFirstCellStaysInTheTable() {
+        show(table(listOf("a", "b")))
+        fields()[0].performClick()
+
+        shiftTab(0)
+
+        fields()[0].assertIsFocused()
+    }
+
+    @Test
+    fun shiftTabInTheFirstCellGoesToTheBlockBeforeTheTable() {
+        show(text("above"), table(listOf("a", "b")))
+        fields()[1].performClick()
+
+        shiftTab(1)
+
+        fields()[0].assertIsFocused()
+    }
+
+    @Test
+    fun tabWithControlHeldIsNotTheTablesKey() {
+        val block = table(listOf("a", "b"))
+        show(block)
+        fields()[1].performClick()
+
+        fields()[1].performKeyInput {
+            keyDown(Key.CtrlLeft)
+            pressKey(Key.Tab)
+            keyUp(Key.CtrlLeft)
+        }
+        idle()
+
+        assertEquals(1, block.table.value.rowCount)
+    }
+
+    @Test
+    fun aSecondSelectAllInACellSelectsTheWholeNote() {
+        show(text("above"), table(listOf("ab", "cd")))
+        fields()[1].performClick()
+        fields()[1].performTextInputSelection(TextRange(0, 2))
+
+        fields()[1].performKeyInput {
+            keyDown(Key.CtrlLeft)
+            pressKey(Key.A)
+            keyUp(Key.CtrlLeft)
+        }
+        idle()
+
+        assertTrue(state.textRange.isActive)
+        assertTrue(state.textRange.isCrossField)
+    }
+
+    @Test
+    fun typingOverASelectionFromACellIntoTheParagraphBelowReplacesTheSelection() {
+        val block = table(listOf("ab", "cd"))
+        val below = text("below text")
+        show(block, below)
+        fields()[1].performClick()
+        state.textRange.select(TextPoint(block.id, 1, cell(block, 0, 1)), TextPoint(below.id, 6))
+        idle()
+
+        fields()[1].performTextInput("x")
+        idle()
+
+        assertEquals(listOf(listOf("ab", "cd")), grid(block))
+        assertEquals("xtext", (state.blocks.last() as Block.TextBlock).text.value)
+    }
+
+    @Test
+    fun deletingASelectionFromAParagraphIntoACellLeavesTheTable() {
+        val above = text("above")
+        val block = table(listOf("ab", "cd"))
+        show(above, block)
+        fields()[2].performClick()
+        state.textRange.select(TextPoint(above.id, 2), TextPoint(block.id, 1, cell(block, 0, 1)))
+        idle()
+
+        press(2, Key.Backspace)
+
+        assertEquals("ab", above.text.value)
+        assertEquals(2, state.blocks.size)
+        assertEquals(listOf(listOf("ab", "cd")), grid(block))
     }
 
     @Test

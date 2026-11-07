@@ -27,6 +27,23 @@ internal fun selectedBlocksText(blocks: List<Block>, markdown: Boolean): String 
     if (markdown) MarkdownBlocks.render(blocks) else blocks.plainText()
 
 /**
+ * Puts [blocks] on the clipboard as [markdown] or plain text through [SensitiveClipboard], and when they got there lets
+ * the editor remember them: pasting that exact text back inserts the blocks, not the text read again. True when copied.
+ */
+internal fun copyBlocks(
+    clipboard: SensitiveClipboard,
+    viewModel: EditNoteViewModel,
+    blocks: List<Block>,
+    markdown: Boolean,
+    label: String,
+): Boolean {
+    val text = selectedBlocksText(blocks, markdown)
+    val copied = text.isNotEmpty() && clipboard.copy(label, text)
+    if (copied) viewModel.rememberCopied(text, blocks)
+    return copied
+}
+
+/**
  * Copies the picked blocks as [markdown] or plain text through [SensitiveClipboard]: marked sensitive and cleared
  * after a minute. Block selection mode ends when the text reached the clipboard. Returns the confirmation to show
  * ([confirmation]), or null when there is nothing to say: nothing was copied or the system already confirms it.
@@ -38,16 +55,16 @@ internal fun copyPickedBlocks(
     label: String,
     confirmation: String,
 ): String? {
-    val text = selectedBlocksText(viewModel.selectedBlocks.picked(), markdown)
-    val copied = text.isNotEmpty() && clipboard.copy(label, text)
+    val copied = copyBlocks(clipboard, viewModel, viewModel.selectedBlocks.picked(), markdown, label)
     if (copied) viewModel.selectedBlocks.clear()
     return confirmation.takeIf { copied && !clipboard.systemConfirmsCopy }
 }
 
 /**
- * Cuts the picked blocks: Markdown (so pasting them back into a note rebuilds the blocks) goes to the clipboard, and
- * only when it got there are the blocks removed, as one undo step. Does nothing in a note that cannot be changed.
- * Returns the confirmation to show, or null.
+ * Cuts the picked blocks: their Markdown goes to the clipboard, and only when it got there are the blocks removed, as
+ * one undo step. The editor remembers the blocks too, so pasting that exact text back in this editor inserts them
+ * again as they were (tables, code and nested lists intact); the Markdown is what any other app gets. Does nothing in
+ * a note that cannot be changed. Returns the confirmation to show, or null.
  */
 internal fun cutPickedBlocks(
     clipboard: SensitiveClipboard,
@@ -56,8 +73,7 @@ internal fun cutPickedBlocks(
     confirmation: String,
 ): String? {
     if (!viewModel.canEditBlocks) return null
-    val text = selectedBlocksText(viewModel.selectedBlocks.picked(), markdown = true)
-    val copied = text.isNotEmpty() && clipboard.copy(label, text)
+    val copied = copyBlocks(clipboard, viewModel, viewModel.selectedBlocks.picked(), markdown = true, label)
     if (copied) viewModel.deleteSelectedBlocks()
     return confirmation.takeIf { copied && !clipboard.systemConfirmsCopy }
 }
@@ -102,8 +118,7 @@ internal fun EditorTextRangeBar(
     val locked by viewModel.lockEditor.collectAsState()
     val actions = remember(viewModel, clipboard, label, copied, copiedMarkdown, locked) {
         fun copy(markdown: Boolean, message: String) {
-            val text = selectedBlocksText(viewModel.textRangeBlocks(), markdown)
-            if (text.isNotEmpty() && clipboard.copy(label, text)) {
+            if (copyBlocks(clipboard, viewModel, viewModel.textRangeBlocks(), markdown, label)) {
                 viewModel.textRange.clear()
                 message.takeIf { !clipboard.systemConfirmsCopy }?.let(onMessage)
             }
@@ -113,8 +128,10 @@ internal fun EditorTextRangeBar(
             onCopy = { copy(markdown = false, message = copied) },
             onCopyMarkdown = { copy(markdown = true, message = copiedMarkdown) },
             onCut = {
-                val text = selectedBlocksText(viewModel.textRangeBlocks(), markdown = true)
-                if (text.isNotEmpty() && clipboard.copy(label, text)) viewModel.replaceTextRange("")
+                // A selection that reaches a locked checklist is not cut: it would be copied but stay.
+                val cut = viewModel.canReplaceTextRange() &&
+                    copyBlocks(clipboard, viewModel, viewModel.textRangeBlocks(), markdown = true, label)
+                if (cut) viewModel.replaceTextRange("")
             },
             onDelete = { viewModel.replaceTextRange("") },
         )

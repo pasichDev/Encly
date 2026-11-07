@@ -103,6 +103,13 @@ public interface EditorController {
     /** A line break typed or pasted into [block]'s field; the text the field keeps, null to keep the break. */
     public fun onLineBreak(block: Block, lineBreak: LineBreak): String?
 
+    /**
+     * [pasted] went into [block]'s field (item [itemId] of a list) between [head] and [tail]. When it is exactly what
+     * the last copy or cut put on the clipboard, the blocks it was made of go in; returns the text the field keeps.
+     * Null when it is not that text, or the editor takes no paste (simple editing, a locked note).
+     */
+    public fun onPasteCopied(block: Block, itemId: String?, head: String, pasted: String, tail: String): String?
+
     /** Backspace at the start of [block]'s field; false when it does nothing. */
     public fun onBackspaceAtStart(block: Block): Boolean
 

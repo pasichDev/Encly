@@ -483,6 +483,7 @@ public final class com/pasich/encly/editor/state/BlockEditorState {
 	public final fun getTextRange ()Lcom/pasich/encly/editor/state/TextRangeSelection;
 	public final fun load (Ljava/util/List;)V
 	public final fun redo ()V
+	public final fun rememberCopied (Ljava/lang/String;Ljava/util/List;)V
 	public final fun removeBlock (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;Z)V
 	public static synthetic fun removeBlock$default (Lcom/pasich/encly/editor/state/BlockEditorState;Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;ZILjava/lang/Object;)V
 	public final fun replaceBlock (ILcom/pasich/encly/editor/model/Block;)Z
@@ -677,6 +678,10 @@ public final class com/pasich/encly/editor/state/NoteTemplatesKt {
 	public static final fun applyTemplate (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/util/List;)Z
 	public static final fun blocks (Lcom/pasich/encly/editor/state/NoteTemplate;Lkotlin/jvm/functions/Function1;)Ljava/util/List;
 	public static final fun isBlankNote (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
+}
+
+public final class com/pasich/encly/editor/state/PasteEditingKt {
+	public static final fun pasteCopied (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class com/pasich/encly/editor/state/SelectedBlocks {
@@ -884,6 +889,7 @@ public final class com/pasich/encly/editor/state/TextRangeSelection {
 }
 
 public final class com/pasich/encly/editor/state/TextRangeSelectionKt {
+	public static final fun canReplaceTextRange (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
 	public static final fun replaceTextRange (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;)Z
 	public static final fun textRangeBlocks (Lcom/pasich/encly/editor/state/BlockEditorState;)Ljava/util/List;
 	public static final fun textRangePlainText (Lcom/pasich/encly/editor/state/BlockEditorState;)Ljava/lang/String;
@@ -1105,6 +1111,7 @@ public abstract interface class com/pasich/encly/editor/ui/EditorController {
 	public abstract fun onListItemShift (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;Z)Z
 	public abstract fun onListItemsChanged (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/util/List;Z)V
 	public abstract fun onListLineBreak (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
+	public abstract fun onPasteCopied (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 	public abstract fun onShortcut (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Lcom/pasich/encly/editor/state/Shortcut;)Z
 	public abstract fun onSlashTyped (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Z)V
 	public abstract fun onTableChanged (Lcom/pasich/encly/editor/model/Block$TableBlock;Lcom/pasich/encly/editor/model/TableData;Z)V

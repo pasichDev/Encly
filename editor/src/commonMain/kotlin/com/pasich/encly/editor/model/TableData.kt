@@ -12,14 +12,20 @@ public data class TableRow(val cells: List<TableCell>)
 /**
  * The content of a table block: [rows] of plain-text cells (at least 1 x 1, every row equally wide) and whether
  * the first row is a [header]. Immutable: every edit makes a new value, which is what the history stores. The
- * operations that would leave less than one row or column do nothing.
+ * operations that would leave less than one row or column do nothing. A grid that is not rectangular, or has no
+ * cell, is refused at construction ([of] pads one instead), so no cell lookup can meet a missing one.
  */
 public data class TableData(val rows: List<TableRow>, val header: Boolean = true) {
+    init {
+        require(rows.isNotEmpty() && rows[0].cells.isNotEmpty()) { "A table has at least one cell" }
+        require(rows.all { it.cells.size == rows[0].cells.size }) { "Every row of a table is as wide as the first" }
+    }
+
     /** How many rows the table has. */
     val rowCount: Int get() = rows.size
 
     /** How many columns the table has. */
-    val columnCount: Int get() = rows.firstOrNull()?.let { it.cells.size } ?: 0
+    val columnCount: Int get() = rows[0].cells.size
 
     /** The text of the cell at [row], [column]; empty outside the table. */
     public fun valueAt(row: Int, column: Int): String =

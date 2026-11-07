@@ -245,6 +245,34 @@ class EditNoteViewModelSelectionTest {
     }
 
     @Test
+    fun pastingBackExactlyWhatWasCutInsertsTheTextNotItsEscapedMarkdown() = runTest(dispatcher) {
+        val viewModel = opened()
+        viewModel.onBlockTextChanged(viewModel.blocks[1], "price*2")
+        viewModel.selectedBlocks.select(viewModel.blocks[1].id)
+        cutPickedBlocks(clipboard, viewModel, "label", "Copied")
+        val onClipboard = clipboard.copies.single().second
+        assertEquals("price\\*2", onClipboard)
+        val target = viewModel.blocks.last()
+
+        assertNull(viewModel.onPasteCopied(target, null, "", "something else", ""))
+        assertEquals("price*2on the mat", viewModel.onPasteCopied(target, null, "", onClipboard, "on the mat"))
+
+        viewModel.toggleLockEditor()
+        assertNull(viewModel.onPasteCopied(target, null, "", onClipboard, "on the mat"))
+    }
+
+    @Test
+    fun aCopyWithNothingInItForgetsTheEarlierOne() = runTest(dispatcher) {
+        val viewModel = opened()
+        viewModel.selectedBlocks.select(viewModel.blocks[1].id)
+        copyPickedBlocks(clipboard, viewModel, markdown = false, "label", "Copied")
+
+        viewModel.rememberCopied("x", emptyList())
+
+        assertNull(viewModel.onPasteCopied(viewModel.blocks[2], null, "", "the cat sat", ""))
+    }
+
+    @Test
     fun aCutThatCouldNotCopyRemovesNothing() = runTest(dispatcher) {
         clipboard.accepts = false
         val viewModel = opened()

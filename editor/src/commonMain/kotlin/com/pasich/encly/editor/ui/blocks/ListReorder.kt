@@ -95,7 +95,7 @@ internal fun KeyEvent.listItemKey(): ListItemKey? =
     listItemKeyOf(key, type, command = isCtrlPressed || isMetaPressed, alt = isAltPressed, shift = isShiftPressed)
 
 /** What can be done to one item: which ways it can move, and whether it can go a level deeper or out. */
-internal class ItemMoves(val up: Boolean, val down: Boolean, val indent: Boolean, val outdent: Boolean)
+internal data class ItemMoves(val up: Boolean, val down: Boolean, val indent: Boolean, val outdent: Boolean)
 
 /** What each of [rows] (items with valid levels) can do, found in one pass over the list. */
 internal fun movesOf(rows: List<ItemListBlock>): List<ItemMoves> {

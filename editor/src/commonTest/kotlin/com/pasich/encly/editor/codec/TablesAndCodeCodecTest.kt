@@ -96,14 +96,15 @@ class TablesAndCodeCodecTest {
     }
 
     @Test
-    fun blankCodeAndTablesAreNotStoredButOneBetweenOtherBlocksIsKept() {
-        val blank = listOf(Block.CodeBlock(), Block.TableBlock())
-        assertEquals("[]", BlockConverter.blocksToJson(blank))
+    fun emptyCodeAndTablesAreStoredWhereverTheyAre() {
+        // The blank paragraph a fresh note starts with is still dropped, but a block the user made is kept.
+        val alone = BlockConverter.blocksToJson(listOf(Block.CodeBlock(), Block.TableBlock(), Block.TextBlock()))
+        assertEquals(listOf("code:", "table:|/|"), describe(BlockConverter.jsonToBlocks(alone)))
 
-        val kept = BlockConverter.blocksToJson(
+        val between = BlockConverter.blocksToJson(
             listOf(Block.CodeBlock(MutableStateFlow("x")), Block.TableBlock(), Block.TextBlock(MutableStateFlow("t"))),
         )
-        assertEquals(listOf("code:x", "text:t"), describe(BlockConverter.jsonToBlocks(kept)))
+        assertEquals(listOf("code:x", "table:|/|", "text:t"), describe(BlockConverter.jsonToBlocks(between)))
     }
 
     // --- Markdown import --------------------------------------------------------------------------

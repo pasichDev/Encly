@@ -223,6 +223,12 @@ internal fun ListBlock(
     val theme = LocalEditorTheme.current
     val marker = rememberListMarker(block.blockType, items.size)
     val locks = remember(isLocked, textLocked) { ItemLocks(editorLocked = isLocked, textLocked = textLocked) }
+    // One pair of edits for the whole list, and one context and drag modifier per row that changes only with the row's
+    // own inputs: a new object each time would make every row recompose on every keystroke.
+    val onMove = remember<(String, Int) -> Unit> { { id, by -> actions.onListItemMove(id, by) } }
+    val onShift = remember<(String, Boolean) -> Unit> { { id, deeper -> actions.onListItemShift(id, deeper) } }
+    val editable = !isLocked && !textLocked
+    val reorderable = items.size > 1
     val dropColor = MaterialTheme.colorScheme.primary.copy(alpha = DROP_LINE_ALPHA)
     Column(
         // The whole list, markers and text, sits in from the text column: under the heading above it.
@@ -263,22 +269,23 @@ internal fun ListBlock(
                         }
                     }
                 }
+                val itemMarker = remember(marker, numbers[itemIndex], item.level, item.kind) {
+                    marker.forItem(numbers[itemIndex], item.kindIn(block.blockType))
+                }
+                val itemMoves = moves[itemIndex]
+                val context = remember(drag, itemMoves, editable, reorderable) {
+                    ItemContext(drag, itemMoves, editable, reorderable, onMove, onShift)
+                }
+                val rowModifier = remember(drag, item.id) { Modifier.dragged(drag, item.id) }
                 // Each item reads in its own direction: its marker and indent sit on the side it starts.
                 ReadingDirection(text = { state.text }) {
                     ListItemRow(
                         item = item,
-                        marker = marker.forItem(numbers[itemIndex], item.kindIn(block.blockType)),
+                        marker = itemMarker,
                         field = field,
                         editor = editor,
-                        context = ItemContext(
-                            drag = drag,
-                            moves = moves[itemIndex],
-                            editable = !isLocked && !textLocked,
-                            reorderable = items.size > 1,
-                            onMove = { id, by -> actions.onListItemMove(id, by) },
-                            onShift = { id, deeper -> actions.onListItemShift(id, deeper) },
-                        ),
-                        modifier = Modifier.dragged(drag, item.id),
+                        context = context,
+                        modifier = rowModifier,
                         fieldModifier = itemModifier,
                     )
                 }
@@ -314,13 +321,15 @@ private fun rememberListMarker(type: BlockType, count: Int): ListMarker {
     val font = listFontDp()
     val wide = font * (if (count >= WIDE_MARKER_FROM) WIDE_MARKER_EXTRA else 0f)
     val metrics = rememberLineMetrics()
-    return ListMarker(
-        type = type,
-        width = markerColumn(font) + wide,
-        box = markerBoxSize(font),
-        metrics = metrics,
-        levelIndent = markerColumn(font),
-    )
+    return remember(type, font, wide, metrics) {
+        ListMarker(
+            type = type,
+            width = markerColumn(font) + wide,
+            box = markerBoxSize(font),
+            metrics = metrics,
+            levelIndent = markerColumn(font),
+        )
+    }
 }
 
 /** What keeps a list item from being edited: the whole editor ([editorLocked]) or this checklist's text. */

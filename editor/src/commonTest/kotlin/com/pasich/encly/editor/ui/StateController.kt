@@ -43,6 +43,7 @@ import com.pasich.encly.editor.state.listTypingStep
 import com.pasich.encly.editor.state.moveBlockOf
 import com.pasich.encly.editor.state.moveInteracted
 import com.pasich.encly.editor.state.moveListItem
+import com.pasich.encly.editor.state.pasteCopied
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.replaceTextRange
 import com.pasich.encly.editor.state.shiftListItem
@@ -154,6 +155,9 @@ internal class StateController(val state: BlockEditorState) : EditorController {
             ?.highlightedCommand
         return if (picked != null && state.applySlash(block.id, picked)) "" else state.breakLine(block.id, lineBreak)
     }
+
+    override fun onPasteCopied(block: Block, itemId: String?, head: String, pasted: String, tail: String): String? =
+        state.pasteCopied(block.id, itemId, head, pasted, tail)
 
     override fun onBackspaceAtStart(block: Block): Boolean = state.backspaceAtStart(block.id)
 

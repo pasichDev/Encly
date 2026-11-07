@@ -13,15 +13,19 @@ public object BlockConverter {
     /**
      * Converts a list of blocks into a JSON representation. Blocks without content
      * ([hasContent]) are left out, except an empty paragraph between other blocks: it is a blank
-     * line the user added on purpose and must survive closing and reopening the note. Blank
-     * blocks at the end (the placeholder paragraph a fresh note starts with) are dropped.
+     * line the user added on purpose and must survive closing and reopening the note. An empty
+     * code block or table is kept wherever it is: the user made it to fill in, its shape is their
+     * work. Blank blocks at the end (the placeholder paragraph a fresh note starts with) are dropped.
      * @param blocks the list of blocks to serialize
      * @return the JSON string
      */
     public fun blocksToJson(blocks: List<Block>): String {
-        val kept = blocks.dropLastWhile { !it.hasContent() }.filter { it.hasContent() || it is Block.TextBlock }
+        val kept = blocks.dropLastWhile { !it.isStored() }.filter { it.isStored() || it is Block.TextBlock }
         return BlockJson.encode(kept)
     }
+
+    // A code block or table is the user's own making, empty or not.
+    private fun Block.isStored(): Boolean = hasContent() || this is Block.CodeBlock || this is Block.TableBlock
 
     /**
      * Converts JSON into a list of blocks.

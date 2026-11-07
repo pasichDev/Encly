@@ -179,7 +179,7 @@ internal object BlockJson {
         }
         return Block.ListBlock(
             items = MutableStateFlow(
-                if (stored == null) listOf(ItemListBlock("")) else stored.normalizedLevels(listType),
+                if (stored.isNullOrEmpty()) listOf(ItemListBlock("")) else stored.normalizedLevels(listType),
             ),
             blockType = listType,
             // Optional, absent in notes written before checklists could be locked.

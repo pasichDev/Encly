@@ -35,6 +35,13 @@ internal interface BlockActions {
      */
     fun onLineBreak(lineBreak: LineBreak): String?
 
+    /**
+     * [pasted] went into this block's field (item [itemId] of a list), between [head] and [tail]: when it is exactly
+     * what the last copy or cut put on the clipboard, the blocks it was made of go in instead.
+     * @return the text the field keeps; null when it is not that text (the field keeps the paste as it is)
+     */
+    fun onPasteCopied(itemId: String?, head: String, pasted: String, tail: String): String?
+
     /** Backspace with the cursor at the start of this block's field; false when it does nothing. */
     fun onBackspaceAtStart(): Boolean
 

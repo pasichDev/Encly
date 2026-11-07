@@ -67,6 +67,8 @@ internal class BlockInput(
     private fun TextFieldBuffer.applyRules(old: String, new: String, cursor: Int, diff: TextDiff) {
         val lineBreak = LineBreak.of(old, diff)
         when {
+            pastedCopy(old, diff) -> Unit
+
             lineBreak != null -> {
                 val kept = when (field) {
                     is BlockField.ListItem -> actions().onListLineBreak(field.itemId, lineBreak)
@@ -91,18 +93,32 @@ internal class BlockInput(
         }
     }
 
+    // A paste of exactly what the last copy or cut in the editor put on the clipboard inserts the blocks it was of.
+    private fun TextFieldBuffer.pastedCopy(old: String, diff: TextDiff): Boolean {
+        val itemId = (field as? BlockField.ListItem)?.itemId
+        val kept = if (diff.inserted.length < 2) {
+            null
+        } else {
+            actions().onPasteCopied(
+                itemId,
+                head = old.substring(0, diff.start),
+                pasted = diff.inserted,
+                tail = old.substring(diff.start + diff.removed.length),
+            )
+        }
+        kept?.let {
+            replace(0, length, it)
+            placeCursorAtEnd()
+        }
+        return kept != null
+    }
+
     // Code is never split, converted or rewritten; only a carriage return is made a line feed, as everywhere.
     private fun TextFieldBuffer.keepVerbatim(diff: TextDiff) {
         if ('\r' in diff.inserted) replace(diff.start, diff.end, normalizeLineBreaks(diff.inserted))
     }
 
-    // The selection across blocks is replaced once this edit is over: it moves the cursor and the text of the fields,
-    // which must not happen under an edit of one of them. The field itself keeps its text. Enter only deletes.
-    private fun TextFieldBuffer.replaceRange(inserted: String) {
-        revertAllChanges()
-        val typed = inserted.takeUnless { it == "\n" || it == "\r" }.orEmpty()
-        defer { actions().replaceTextRange(typed) }
-    }
+    private fun TextFieldBuffer.replaceRange(inserted: String) = replaceSelectedRange(inserted, defer, actions())
 
     private fun onParagraphInsert(old: String, new: String, cursor: Int, inserted: String) {
         val shortcut = typedShortcut(new, cursor)
@@ -114,6 +130,21 @@ internal class BlockInput(
                 buildLinkData(new)?.let { actions().onLinkPasted(new, it) }
         }
     }
+}
+
+/**
+ * An edit of a field while a selection runs across blocks: the selection is replaced once this edit is over (it moves
+ * the cursor and the text of the fields, which must not happen under an edit of one of them) and the field itself
+ * keeps its text. Enter only deletes.
+ */
+internal fun TextFieldBuffer.replaceSelectedRange(
+    inserted: String,
+    defer: (() -> Unit) -> Unit,
+    actions: BlockActions,
+) {
+    revertAllChanges()
+    val typed = inserted.takeUnless { it == "\n" || it == "\r" }.orEmpty()
+    defer { actions.replaceTextRange(typed) }
 }
 
 /** The character that opens the slash picker in an empty paragraph. */

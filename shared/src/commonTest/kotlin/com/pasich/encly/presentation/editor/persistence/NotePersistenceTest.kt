@@ -162,6 +162,17 @@ class NotePersistenceTest {
     }
 
     @Test
+    fun anEmptyTableOrCodeBlockIsContentTheUserMadeNotABlankDraft() = runTest(dispatcher) {
+        val persistence = persistence()
+
+        blocks = listOf(Block.TableBlock())
+        assertFalse(persistence.isBlankDraft)
+
+        blocks = listOf(Block.CodeBlock())
+        assertFalse(persistence.isBlankDraft)
+    }
+
+    @Test
     fun nothingIsSavedWhileTheNoteIsLoading() = runTest(dispatcher) {
         val persistence = persistence(loading = true)
         persistence.updateNote { it.copy(title = "typed before the note arrived") }

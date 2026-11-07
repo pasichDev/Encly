@@ -389,7 +389,8 @@ class NotePersistence(
 
     /** Whether the editor holds nothing to keep: a new note without a title or content. */
     val isBlankDraft: Boolean
-        get() = _state.value.note.let { it.id == -1L && it.title.isBlank() } && blocks().none { it.hasContent() }
+        get() = _state.value.note.let { it.id == -1L && it.title.isBlank() } &&
+            blocks().none { it.hasContent() || it is Block.CodeBlock || it is Block.TableBlock }
 
     /**
      * Whether the note differs from how the editor opened it (its title, tag or content), or a

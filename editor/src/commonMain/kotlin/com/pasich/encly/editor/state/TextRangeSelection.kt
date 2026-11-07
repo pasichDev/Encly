@@ -99,9 +99,13 @@ public class TextRangeSelection(private val blocks: List<Block>) {
         else -> null
     }
 
-    /** Whether the selection runs from one field into another. */
+    /**
+     * Whether the selection runs from one field into another. A cell of a table is a field here too, though a range
+     * only ever takes a table whole (see [resolved]): what is typed over a selection from a cell into a paragraph
+     * replaces the range, it does not go into the cell.
+     */
     public val isCrossField: Boolean
-        get() = resolved()?.let { it.first != it.last || it.firstItem != it.lastItem } == true
+        get() = range(trimTables = false)?.let { it.first != it.last || it.firstItem != it.lastItem } == true
 
     /**
      * Shift plus [move] in a field whose own selection runs from [anchor] to [caret] (the same point when it is
@@ -222,10 +226,45 @@ public class TextRangeSelection(private val blocks: List<Block>) {
         }
     }
 
-    /** The selection in the order of the note with its offsets kept inside the text; null without one. */
-    internal fun resolved(): ResolvedRange? {
+    /**
+     * The selection in the order of the note with its offsets kept inside the text; null without one. A table at an
+     * end of a selection that runs into another block is part of it only when the selection covers the whole table
+     * (from the start of its first cell, or to the end of its last): a drag that ends in the middle of a table leaves
+     * the table alone and selects only what lies outside it.
+     */
+    internal fun resolved(): ResolvedRange? = range(trimTables = true)
+
+    private fun range(trimTables: Boolean): ResolvedRange? {
         val ends = current?.takeIf { indexOf(it.anchor.blockId) >= 0 && indexOf(it.head.blockId) >= 0 }
-        return ends?.let { placed(it.ordered(), it.head) }
+            ?: return null
+        val ordered = ends.ordered().let { if (trimTables) withoutPartialTables(it) else it }
+        return ordered?.let { placed(it, ends.head) }
+    }
+
+    // A table at an end of a selection across blocks, covered only in part, is left out: the selection then starts at
+    // the block after it or ends at the block before it. Null when nothing is left.
+    private fun withoutPartialTables(ordered: Pair<TextPoint, TextPoint>): Pair<TextPoint, TextPoint>? {
+        val (start, end) = ordered
+        val from = indexOf(start.blockId)
+        val to = indexOf(end.blockId)
+        if (from == to) return ordered
+        val first = if (isPartialTable(from, start, atStart = true)) from + 1 else from
+        val last = if (isPartialTable(to, end, atStart = false)) to - 1 else to
+        return if (first > last) {
+            null
+        } else {
+            (if (first == from) start else TextPoint(blocks[first].id, 0)) to
+                (if (last == to) end else TextPoint(blocks[last].id, Int.MAX_VALUE))
+        }
+    }
+
+    private fun isPartialTable(index: Int, point: TextPoint, atStart: Boolean): Boolean {
+        val block = blocks[index] as? Block.TableBlock ?: return false
+        val cells = block.table.value.rows.flatMap { it.cells }
+        val cell = if (atStart) cells.first() else cells.last()
+        val inEdgeCell = point.itemId == null || point.itemId == cell.id
+        val atEdge = if (atStart) point.offset <= 0 else point.offset >= cell.value.length
+        return !(inEdgeCell && atEdge)
     }
 
     /** [this] as (start, end) in the order of the note. */
@@ -351,9 +390,12 @@ public fun BlockEditorState.textRangePlainText(): String = textRangeBlocks().pla
  * neither is, a paragraph holds the result. A list that the selection starts in keeps its earlier items and takes
  * the items after the selection's end; one it ends in, with a paragraph before it, stays as the items after the end.
  * The cursor goes after [replacement]; undo puts it back at the selection's head, redo after [replacement] again.
+ * A selection that reaches a locked checklist, at an end or between, changes nothing and gives false, as in a locked
+ * editor: the lock keeps the list's text out of reach, so it has to be unlocked first (see [canReplaceTextRange]).
  */
 public fun BlockEditorState.replaceTextRange(replacement: String): Boolean {
-    val r = textRange.resolved() ?: return false
+    val r = textRange.resolved()
+    if (r == null || touchesLockedList(r)) return false
     val plan = RangePlan(this, r, replacement)
     batch { plan.apply(this) }
     textRange.clear()
@@ -365,6 +407,13 @@ public fun BlockEditorState.replaceTextRange(replacement: String): Boolean {
     selection.focusAt(target, caret = plan.caret, itemId = plan.keeperItem)
     return true
 }
+
+/** Whether [replaceTextRange] can change the selection: there is one, and it reaches no locked checklist. */
+public fun BlockEditorState.canReplaceTextRange(): Boolean =
+    textRange.resolved()?.let { !touchesLockedList(it) } == true
+
+private fun BlockEditorState.touchesLockedList(r: ResolvedRange): Boolean =
+    (r.first..r.last).any { index -> blocks[index].let { it is Block.ListBlock && it.locked.value } }
 
 /** What replacing a selection does: the block that holds the result, its new content and the blocks that go. */
 private class RangePlan(state: BlockEditorState, private val r: ResolvedRange, replacement: String) {

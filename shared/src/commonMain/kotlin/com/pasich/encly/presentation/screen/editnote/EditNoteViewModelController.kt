@@ -48,13 +48,12 @@ internal class EditNoteViewModelController(
 
     override fun replaceTextRange(replacement: String): Boolean = viewModel.replaceTextRange(replacement)
 
-    override fun copyTextRange(markdown: Boolean): Boolean {
-        val text = selectedBlocksText(viewModel.textRangeBlocks(), markdown)
-        return text.isNotEmpty() && clipboard.copy(clipLabel, text)
-    }
+    override fun copyTextRange(markdown: Boolean): Boolean =
+        copyBlocks(clipboard, viewModel, viewModel.textRangeBlocks(), markdown, clipLabel)
 
     override fun cutTextRange(): Boolean =
-        viewModel.canEditBlocks && copyTextRange(markdown = true) && viewModel.replaceTextRange("")
+        viewModel.canEditBlocks && viewModel.canReplaceTextRange() && copyTextRange(markdown = true) &&
+            viewModel.replaceTextRange("")
 
     override fun indexOfBlock(block: Block): Int = viewModel.indexOfBlock(block)
 
@@ -92,6 +91,9 @@ internal class EditNoteViewModelController(
     override fun onLinkChanged(block: Block.LinkBlock, newLink: LinkDataBlock) = viewModel.onLinkChanged(block, newLink)
 
     override fun onLineBreak(block: Block, lineBreak: LineBreak): String? = viewModel.onLineBreak(block, lineBreak)
+
+    override fun onPasteCopied(block: Block, itemId: String?, head: String, pasted: String, tail: String): String? =
+        viewModel.onPasteCopied(block, itemId, head, pasted, tail)
 
     override fun onBackspaceAtStart(block: Block): Boolean = viewModel.onBackspaceAtStart(block)
 

@@ -59,6 +59,9 @@ internal class BlockActionsImpl(
 
     override fun onLineBreak(lineBreak: LineBreak): String? = controller.onLineBreak(block, lineBreak)
 
+    override fun onPasteCopied(itemId: String?, head: String, pasted: String, tail: String): String? =
+        controller.onPasteCopied(block, itemId, head, pasted, tail)
+
     override fun onBackspaceAtStart(): Boolean = controller.onBackspaceAtStart(block)
 
     override fun onShortcut(typed: String, shortcut: Shortcut): Boolean = controller.onShortcut(block, typed, shortcut)

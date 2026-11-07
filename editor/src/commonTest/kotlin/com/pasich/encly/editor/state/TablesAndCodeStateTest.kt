@@ -380,7 +380,7 @@ class TablesAndCodeStateTest {
     }
 
     @Test
-    fun aRangeThatReachesATableTakesTheWholeTableWhetherItsEndIsInOrAround() {
+    fun aRangeTakesATableWholeWhenItCoversItAndLeavesItAloneWhenItEndsInsideIt() {
         val before = text("before")
         val grid = table(listOf("a", "b"), listOf("c", "d"))
         val after = text("after")
@@ -392,21 +392,24 @@ class TablesAndCodeStateTest {
         assertTrue(editor.replaceTextRange(""))
         assertEquals(listOf("befter"), editor.blocks.map { (it as Block.TextBlock).text.value })
 
-        // An end inside a cell: the table goes whole, the text on the other side is cut as usual.
+        // A start inside a cell: the table is not covered, so it stays and the text on the other side is cut.
         val second = table(listOf("a", "b"))
         val tail = text("tail text")
         editor.load(listOf(second, tail))
         editor.textRange.select(TextPoint(second.id, 1, idAt(second.table.value, 0, 1)), TextPoint(tail.id, 5))
-        assertEquals(1, editor.textRangeBlocks().count { it is Block.TableBlock })
+        assertEquals(0, editor.textRangeBlocks().count { it is Block.TableBlock })
         assertTrue(editor.replaceTextRange(""))
-        assertEquals(listOf("text"), editor.blocks.map { (it as Block.TextBlock).text.value })
+        assertEquals(listOf(second.id, tail.id), editor.blocks.map { it.id })
+        assertEquals("text", tail.text.value)
 
+        // An end inside a cell, at its start: the same.
         val first = text("head text")
         val third = table(listOf("a"))
         editor.load(listOf(first, third))
         editor.textRange.select(TextPoint(first.id, 5), TextPoint(third.id, 0, idAt(third.table.value, 0, 0)))
         assertTrue(editor.replaceTextRange(""))
-        assertEquals(listOf("head "), editor.blocks.map { (it as Block.TextBlock).text.value })
+        assertEquals(listOf(first.id, third.id), editor.blocks.map { it.id })
+        assertEquals("head ", first.text.value)
     }
 
     @Test

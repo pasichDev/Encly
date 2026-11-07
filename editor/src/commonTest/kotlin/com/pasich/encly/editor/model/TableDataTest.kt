@@ -3,6 +3,7 @@ package com.pasich.encly.editor.model
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
@@ -24,8 +25,13 @@ class TableDataTest {
     }
 
     @Test
-    fun aTableWithoutRowsHasNoColumns() {
-        assertEquals(0, TableData(emptyList()).columnCount)
+    fun aGridThatIsEmptyOrRaggedIsRefusedAtConstruction() {
+        assertFailsWith<IllegalArgumentException> { TableData(emptyList()) }
+        assertFailsWith<IllegalArgumentException> { TableData(listOf(TableRow(emptyList()))) }
+        assertFailsWith<IllegalArgumentException> {
+            TableData(listOf(TableRow(listOf(TableCell("a"), TableCell("b"))), TableRow(listOf(TableCell("c")))))
+        }
+        assertEquals(1, TableData(listOf(TableRow(listOf(TableCell("a"))))).columnCount)
     }
 
     @Test

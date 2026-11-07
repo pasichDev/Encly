@@ -44,7 +44,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -77,6 +81,8 @@ import com.pasich.encly.editor.state.toggleHeader
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.theme.lineHeight
 import com.pasich.encly.editor.ui.BlockActions
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -166,7 +172,15 @@ internal fun TableBlock(
             edit.focusCellId?.let { focus.pending = CellFocus(it, Int.MAX_VALUE) }
         }
     }
-    val context = CellContext(block, blockActions, focus, commands, defer)
+    val values = remember(block) { CellValues(block.table) }
+    // Remembered, with one edit for all the cells: a new object each time would make every cell recompose on every
+    // keystroke, and only the cell that was typed in has anything to show.
+    val context = remember(block, blockActions, focus, commands, defer, values) {
+        CellContext(block, blockActions, focus, commands, defer, values)
+    }
+    val onCell = remember(block) {
+        { cellId: String, text: String -> change(block.table.value.withCell(cellId, text), true) }
+    }
     Column(modifier = modifier.fillMaxWidth()) {
         if (!isLocked) CellMenu(commands, table.header, modifier = Modifier.align(Alignment.End))
         Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
@@ -179,7 +193,7 @@ internal fun TableBlock(
                                     cell = cell,
                                     isHeader = table.header && rowIndex == 0,
                                     context = context,
-                                    onValue = { text -> change(block.table.value.withCell(cell.id, text), true) },
+                                    onValue = onCell,
                                     isLocked = isLocked,
                                 )
                             }
@@ -231,7 +245,36 @@ private class CellContext(
     val focus: TableFocus,
     val commands: TableCommands,
     val defer: (() -> Unit) -> Unit,
+    val values: CellValues,
 )
+
+/**
+ * The text of a table's cells by cell id. The map is built once per table value, so a cell field reads its text in
+ * constant time: with a search of the whole table for every cell, one keystroke cost every cell a pass over all of
+ * them.
+ */
+internal class CellValues(private val table: StateFlow<TableData>) {
+    private var source: TableData? = null
+    private var byId = emptyMap<String, String>()
+
+    /** How many times the map was built; a test reads it to see that lookups do not scan. */
+    var builds = 0
+        private set
+
+    /** The text of cell [id] in the table the model holds right now; null when it is not in it. */
+    fun valueOf(id: String): String? {
+        val current = table.value
+        if (current !== source) {
+            source = current
+            byId = current.rows.flatMap { it.cells }.associate { it.id to it.value }
+            builds++
+        }
+        return byId[id]
+    }
+
+    /** Emits a cell's text when it changes, and only then: the other cells' fields do not wake. */
+    fun changes(id: String): Flow<String?> = table.map { valueOf(id) }.distinctUntilChanged()
+}
 
 /** The small button at the table's end that opens the menu of row, column and header commands. */
 @Composable
@@ -289,22 +332,24 @@ private fun TableCellField(
     cell: TableCell,
     isHeader: Boolean,
     context: CellContext,
-    onValue: (String) -> Unit,
+    onValue: (cellId: String, text: String) -> Unit,
     isLocked: Boolean,
 ) {
     val theme = LocalEditorTheme.current
     val block = context.block
     val actions by rememberUpdatedState(context.blockActions)
     val state = rememberSyncedTextFieldState(
-        model = { block.table.value.cell(cell.id)?.value },
-        modelChanges = remember(block, cell.id) { block.table.map { it.cell(cell.id)?.value }.distinctUntilChanged() },
-        onEdit = onValue,
+        model = { context.values.valueOf(cell.id) },
+        modelChanges = remember(context.values, cell.id) { context.values.changes(cell.id) },
+        onEdit = { text -> onValue(cell.id, text) },
     )
     val requester = remember { FocusRequester() }
     val highlight = rememberFieldHighlight(context.blockActions.highlights, block.id, cell.id)
     val focus = context.focus
     RegisterCell(cell.id, CellField(state, requester), context)
-    val input = remember(context.commands) { CellInput(context.defer) { context.commands.enter(cell.id) } }
+    val input = remember(context.commands) {
+        CellInput(context.defer, { actions }) { context.commands.enter(cell.id) }
+    }
     val style = cellTextStyle(isHeader)
     val background = if (isHeader) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surface
     ReadingDirection(text = { state.text }) {
@@ -379,9 +424,12 @@ private fun cellTextStyle(isHeader: Boolean): TextStyle {
 }
 
 /**
- * The cell's keys: Tab and Shift+Tab move to the next and previous cell (Tab in the last cell adds a row), and the
- * arrow keys leave the cell only from its edges, to the cell beside or above or below it, or past the table to the
- * block before or after it.
+ * The cell's keys: Tab and Shift+Tab move to the next and previous cell (Tab in the last cell adds a row, Shift+Tab
+ * in the first one goes to the block before the table, or stays), the arrow keys leave the cell only from its edges,
+ * to the cell beside or above or below it, or past the table to the block before or after it, and the keys over a text
+ * selection across blocks (a second Select all, Delete, Escape, Copy and Cut) work as in any other field. A cell is
+ * not a field of that selection, so Shift+arrows move the cell's own selection only. Tab with Ctrl, Alt or Meta held
+ * belongs to whoever asked for it.
  */
 private fun Modifier.cellKeys(
     cellId: String,
@@ -393,54 +441,84 @@ private fun Modifier.cellKeys(
     val line = if (event.isArrow()) caretLine(highlight.geometry(), state.text.length, selection.end) else null
     val commands = context.commands
     val actions = context.blockActions
-    when {
-        event.key == Key.Tab && event.type == KeyEventType.KeyDown ->
-            if (event.isShiftPressed) {
-                commands.step(cellId, CellStep.PREVIOUS, caret = Int.MAX_VALUE)
-            } else {
-                true.also { commands.tab(cellId) }
-            }
-
-        event.key == Key.Tab -> true
-
-        else -> KeyboardUtils.handleKeyEvent(
-            event = event,
-            text = state.text,
-            cursorPosition = if (selection.collapsed) selection.start else -1,
-            onNavigateUp = {
-                commands.step(cellId, CellStep.UP, caret = Int.MAX_VALUE) ||
-                    actions.navigate(CaretMove.Up(line?.x))
-            },
-            onNavigateDown = {
-                commands.step(cellId, CellStep.DOWN, caret = 0) ||
-                    actions.navigate(CaretMove.Down(line?.x))
-            },
-            onNavigateLeft = {
-                commands.step(cellId, CellStep.PREVIOUS, caret = Int.MAX_VALUE) || actions.navigate(CaretMove.Left)
-            },
-            onNavigateRight = { commands.step(cellId, CellStep.NEXT, caret = 0) || actions.navigate(CaretMove.Right) },
-            line = line,
+    tabKey(event, cellId, context) ?: (
+        rangeKey(event, rangeField(context.block.id, cellId, selection, line), actions) ||
+            selectAllTextKey(event, selection, state.text.length, actions) ||
+            KeyboardUtils.handleKeyEvent(
+                event = event,
+                text = state.text,
+                cursorPosition = if (selection.collapsed) selection.start else -1,
+                onNavigateUp = {
+                    commands.step(cellId, CellStep.UP, caret = Int.MAX_VALUE) ||
+                        actions.navigate(CaretMove.Up(line?.x))
+                },
+                onNavigateDown = {
+                    commands.step(cellId, CellStep.DOWN, caret = 0) ||
+                        actions.navigate(CaretMove.Down(line?.x))
+                },
+                onNavigateLeft = {
+                    commands.step(cellId, CellStep.PREVIOUS, caret = Int.MAX_VALUE) ||
+                        actions.navigate(CaretMove.Left)
+                },
+                onNavigateRight = {
+                    commands.step(cellId, CellStep.NEXT, caret = 0) || actions.navigate(CaretMove.Right)
+                },
+                line = line,
+            )
         )
+}
+
+/**
+ * Tab in a cell: the next cell (after the last one a new row), Shift+Tab the one before (in the first cell: the block
+ * before the table, or the cursor stays). Always taken, so Tab never leaves the table half way through editing. Null
+ * for any other key, and for Tab with Ctrl, Alt or Meta held, which belongs to whoever asked for it.
+ */
+private fun tabKey(event: KeyEvent, cellId: String, context: CellContext): Boolean? {
+    val plain = event.key == Key.Tab && !event.isCtrlPressed && !event.isAltPressed && !event.isMetaPressed
+    return when {
+        !plain -> null
+
+        event.type != KeyEventType.KeyDown -> true
+
+        event.isShiftPressed -> true.also {
+            context.commands.step(cellId, CellStep.PREVIOUS, caret = Int.MAX_VALUE) ||
+                context.blockActions.navigate(CaretMove.Left)
+        }
+
+        else -> true.also { context.commands.tab(cellId) }
     }
 }
 
 /**
  * The writing rules of a cell: a cell holds one line. A typed Enter goes to the cell below (a new row after the
- * last one) and leaves the text as it was; line breaks in pasted text become spaces.
+ * last one) and leaves the text as it was; line breaks in pasted text become spaces. While a selection runs across
+ * blocks from or into the cell, an edit replaces that selection instead.
  */
-private class CellInput(private val defer: (() -> Unit) -> Unit, private val onEnter: () -> Unit) :
-    InputTransformation {
+private class CellInput(
+    private val defer: (() -> Unit) -> Unit,
+    private val actions: () -> BlockActions,
+    private val onEnter: () -> Unit,
+) : InputTransformation {
     override fun TextFieldBuffer.transformInput() {
-        val new = asCharSequence().toString()
-        if (new.none { it in LINE_BREAK_CHARS }) return
         val old = originalText.toString()
+        val new = asCharSequence().toString()
+        if (old == new) return
         val diff = textDiff(old, new, if (selection.collapsed) selection.start else -1)
-        if (LineBreak.of(old, diff)?.isEnter == true) {
-            revertAllChanges()
-            defer(onEnter)
-        } else {
-            replace(0, length, cellText(new))
-            placeCursorAtEnd()
+        when {
+            // A selection that runs from or into this cell is replaced, not typed into the cell.
+            actions().textRange.isCrossField -> replaceSelectedRange(diff.inserted, defer, actions())
+
+            new.none { it in LINE_BREAK_CHARS } -> Unit
+
+            LineBreak.of(old, diff)?.isEnter == true -> {
+                revertAllChanges()
+                defer(onEnter)
+            }
+
+            else -> {
+                replace(0, length, cellText(new))
+                placeCursorAtEnd()
+            }
         }
     }
 }

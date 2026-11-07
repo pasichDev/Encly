@@ -16,7 +16,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
  */
 public fun BlockEditorState.listLineBreak(listId: String, itemId: String, lineBreak: LineBreak): String? {
     val item = itemAt(listId, itemId) ?: return null
-    return if (lineBreak.isEnter) listEnter(item, lineBreak.head, lineBreak.tail) else listPaste(item, lineBreak)
+    return if (lineBreak.isEnter) {
+        listEnter(item, lineBreak.head, lineBreak.tail)
+    } else {
+        listPasteText(item, lineBreak.head, lineBreak.lines, lineBreak.tail)
+    }
 }
 
 /** Item [at] of [list], the block at [index]. */
@@ -29,17 +33,26 @@ internal fun BlockEditorState.itemAt(listId: String, itemId: String): ListItemAt
     return if (list != null && at >= 0) ListItemAt(index, list, at) else null
 }
 
-/** Pasted lines in an item: the first joins it, the others become items after it. */
-private fun BlockEditorState.listPaste(item: ListItemAt, lineBreak: LineBreak): String {
+/**
+ * Pasted [lines] in an item, after its text [head] and before its [tail]: the first joins it, the others become
+ * items after it. One line stays in the item.
+ */
+internal fun BlockEditorState.listPasteText(item: ListItemAt, head: String, lines: List<String>, tail: String): String {
     val (index, list, at) = item
     val items = list.items.value
-    val rest = lineBreak.lines.drop(1)
-    val kept = lineBreak.head + lineBreak.lines.first()
+    val rest = lines.drop(1)
+    val kept = head + lines.first()
     val here = items[at]
+    if (rest.isEmpty()) {
+        val whole = kept + tail
+        batch { setValue(list.id, list.items, items.toMutableList().apply { this[at] = here.copy(value = whole) }) }
+        selection.focusAt(index, caret = kept.length, itemId = here.id)
+        return whole
+    }
     // Pasted lines go in at the level of the item they are pasted into.
     val middle = rest.dropLast(1).filter { it.isNotBlank() }.map { listItemText(it).alongside(here) }
     val lastLine = listItemText(rest.last()).alongside(here)
-    val last = lastLine.copy(value = lastLine.value + lineBreak.tail)
+    val last = lastLine.copy(value = lastLine.value + tail)
     val newItems = items.toMutableList().apply {
         this[at] = items[at].copy(value = kept)
         addAll(at + 1, middle + last)

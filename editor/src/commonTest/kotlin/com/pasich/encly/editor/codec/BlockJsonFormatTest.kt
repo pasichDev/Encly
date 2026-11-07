@@ -444,4 +444,65 @@ class BlockJsonFormatTest {
         assertEquals("42", (blocks[0] as Block.TextBlock).text.value)
         assertEquals(true, (blocks[1] as Block.ListBlock).items.value.single().isCheck)
     }
+
+    // CODE and TABLE are newer than any release: an older app refuses a note that holds one (see BlockJson), so
+    // their bytes are pinned here from the start.
+
+    @Test
+    fun codeBlock() = assertStable(
+        """
+        [
+          {
+            "blockType": "CODE",
+            "text": "if (a \u003c b) {\n\tgo()\n}"
+          }
+        ]
+        """.trimIndent(),
+    )
+
+    @Test
+    fun tableBlock() = assertStable(
+        """
+        [
+          {
+            "blockType": "TABLE",
+            "hasHeader": true,
+            "rows": [
+              [
+                "name",
+                "qty"
+              ],
+              [
+                "a|b",
+                ""
+              ]
+            ]
+          }
+        ]
+        """.trimIndent(),
+    )
+
+    @Test
+    fun tableBlockWithoutHeader() = assertStable(
+        """
+        [
+          {
+            "blockType": "TABLE",
+            "hasHeader": false,
+            "rows": [
+              [
+                "x"
+              ]
+            ]
+          }
+        ]
+        """.trimIndent(),
+    )
+
+    @Test
+    fun aStoredListWithNoItemsHasOneEmptyItem() {
+        val list = BlockConverter.jsonToBlocks("""[{"blockType":"LIST_BULLET","items":[]}]""").single()
+
+        assertEquals(listOf(""), (list as Block.ListBlock).items.value.map { it.value })
+    }
 }
