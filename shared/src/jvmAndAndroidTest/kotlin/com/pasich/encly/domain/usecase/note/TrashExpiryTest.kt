@@ -3,11 +3,11 @@ package com.pasich.encly.domain.usecase.note
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.testutil.TestNotesRepository
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -15,7 +15,7 @@ import org.mockito.Mockito.`when`
 
 class TrashExpiryTest {
     private val repository = TestNotesRepository()
-    private val purge = PurgeExpiredTrashUseCase(repository, CleanTrashNotesUseCase(repository))
+    private val purge = PurgeExpiredTrashUseCase(repository)
 
     private fun trashed(id: Long, trashedAt: Long?) = Note(id = id, isTrash = true, trashedAt = trashedAt)
 
@@ -71,22 +71,52 @@ class TrashExpiryTest {
     }
 
     @Test
-    fun aTrashThatCannotBeReadIsAFailureAndDeletesNothing() = runTest {
-        val notes = mock(NotesRepository::class.java)
-        `when`(notes.stampUntimedTrash(NOW)).thenReturn(Result.success(Unit))
-        `when`(notes.getTrashNotes()).thenReturn(flow { throw IllegalStateException("vault locked") })
+    fun aNoteRestoredMeanwhileIsNotDeleted() = runTest {
+        // The old note was read as expired, then restored: the delete must see it is no longer trashed.
+        repository.trashNotes.value = listOf(
+            trashed(1, NOW - TRASH_RETENTION_MILLIS - 1),
+            Note(id = 2, isTrash = false, trashedAt = NOW - TRASH_RETENTION_MILLIS - 1),
+        )
 
-        assertTrue(PurgeExpiredTrashUseCase(notes, CleanTrashNotesUseCase(notes))(NOW).isFailure)
-        verify(notes, never()).deleteNoteById(1)
+        assertEquals(1, purge(NOW).getOrNull())
+
+        assertEquals(listOf(1L), repository.deletedIds)
+        assertEquals(listOf(2L), repository.trashNotes.value.map { it.id })
     }
 
     @Test
-    fun aFailedStampStopsBeforeAnythingIsRead() = runTest {
+    fun aTrashTimeInTheFutureIsNeverExpired() = runTest {
+        repository.trashNotes.value = listOf(trashed(1, NOW + TRASH_RETENTION_MILLIS * 2))
+
+        assertEquals(0, purge(NOW).getOrNull())
+
+        assertTrue(repository.deletedIds.isEmpty())
+    }
+
+    @Test
+    fun theCutoffIsTheRetentionBeforeNow() = runTest {
+        purge(NOW)
+
+        assertEquals(listOf(NOW - TRASH_RETENTION_MILLIS), repository.purgeCutoffs)
+    }
+
+    @Test
+    fun aFailedStampStopsBeforeAnythingIsDeleted() = runTest {
         val notes = mock(NotesRepository::class.java)
         `when`(notes.stampUntimedTrash(NOW)).thenReturn(Result.failure(IllegalStateException("disk")))
 
-        assertTrue(PurgeExpiredTrashUseCase(notes, CleanTrashNotesUseCase(notes))(NOW).isFailure)
-        verify(notes, never()).getTrashNotes()
+        assertTrue(PurgeExpiredTrashUseCase(notes)(NOW).isFailure)
+        verify(notes, never()).deleteTrashedBefore(anyLong())
+    }
+
+    @Test
+    fun aFailedDeleteIsAFailure() = runTest {
+        val notes = mock(NotesRepository::class.java)
+        `when`(notes.stampUntimedTrash(NOW)).thenReturn(Result.success(Unit))
+        `when`(notes.deleteTrashedBefore(NOW - TRASH_RETENTION_MILLIS))
+            .thenReturn(Result.failure(IllegalStateException("vault locked")))
+
+        assertTrue(PurgeExpiredTrashUseCase(notes)(NOW).isFailure)
     }
 
     private companion object {

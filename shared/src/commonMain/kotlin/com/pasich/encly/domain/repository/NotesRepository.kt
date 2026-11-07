@@ -40,4 +40,10 @@ interface NotesRepository {
 
     /** Gives the trashed notes that have no trash time (imported ones) [at], so the trash can age them. */
     suspend fun stampUntimedTrash(at: Long): Result<Unit>
+
+    /**
+     * Deletes for good, in one write, the notes that are in the trash and were trashed before [cutoff]. A note
+     * restored meanwhile is not in the trash any more and is kept. The number of notes deleted.
+     */
+    suspend fun deleteTrashedBefore(cutoff: Long): Result<Int>
 }

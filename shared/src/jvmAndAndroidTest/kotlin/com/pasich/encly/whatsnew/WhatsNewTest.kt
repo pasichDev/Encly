@@ -171,7 +171,7 @@ class WhatsNewTest {
 
     private fun startup(version: String, repository: TestNotesRepository = TestNotesRepository()) = StartupViewModel(
         tracker(version),
-        PurgeExpiredTrashUseCase(repository, CleanTrashNotesUseCase(repository)),
+        PurgeExpiredTrashUseCase(repository),
     )
 
     @Test

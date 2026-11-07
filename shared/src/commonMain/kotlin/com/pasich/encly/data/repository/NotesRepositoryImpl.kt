@@ -70,4 +70,9 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
         dao().stampTrashedAt(at)
         Unit
     }
+
+    override suspend fun deleteTrashedBefore(cutoff: Long): Result<Int> = storageWrite(TAG, "deleteTrashedBefore") {
+        // Any number of rows, none included: nothing expired is not a failed write.
+        dao().deleteTrashedBefore(cutoff)
+    }
 }

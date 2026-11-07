@@ -107,6 +107,17 @@ internal class TestNotesRepository : NotesRepository {
         return Result.success(Unit)
     }
 
+    /** Every cutoff passed to [deleteTrashedBefore], in call order. */
+    val purgeCutoffs = mutableListOf<Long>()
+
+    override suspend fun deleteTrashedBefore(cutoff: Long): Result<Int> {
+        purgeCutoffs += cutoff
+        val (gone, kept) = trashNotes.value.partition { it.isTrash && (it.trashedAt ?: Long.MAX_VALUE) < cutoff }
+        deletedIds += gone.map { it.id }
+        trashNotes.value = kept
+        return Result.success(gone.size)
+    }
+
     private companion object {
         const val DEFAULT_INSERT_ID = 42L
     }

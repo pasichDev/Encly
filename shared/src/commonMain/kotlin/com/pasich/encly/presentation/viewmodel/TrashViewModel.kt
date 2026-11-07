@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asLoadState
 import com.pasich.encly.core.common.valueOrNull
+import com.pasich.encly.core.security.NeverLocked
+import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
@@ -14,6 +16,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -26,17 +29,24 @@ class TrashViewModel(
     private val notesRepository: NotesRepository,
     private val updateNoteTrashStatusUseCase: UpdateNoteTrashStatusUseCase,
     private val cleanTrashNotesUseCase: CleanTrashNotesUseCase,
+    lockEvents: VaultLockEvents = NeverLocked,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TrashListState())
     val state: StateFlow<TrashListState> get() = _state
 
+    private var notesJob: Job? = null
+
     init {
         loadNotes()
+        clearOnLock(lockEvents) {
+            notesJob?.cancel()
+            _state.value = TrashListState()
+        }
     }
 
     private fun loadNotes() {
-        viewModelScope.launch {
+        notesJob = viewModelScope.launch {
             notesRepository.getTrashNotes().asLoadState(ListLoadErrors.NOTES).collect { load ->
                 _state.update { it.copy(notesLoad = load) }
             }

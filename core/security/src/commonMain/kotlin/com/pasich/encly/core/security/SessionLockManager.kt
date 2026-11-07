@@ -7,9 +7,17 @@ import com.pasich.encly.core.platform.MainThreadTimer
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.concurrent.Volatile
 
 /**
@@ -20,7 +28,17 @@ import kotlin.concurrent.Volatile
 public interface VaultLockEvents {
     /** True from the moment the vault is closed until the next unlock is published. */
     public val locked: StateFlow<Boolean>
+
+    /**
+     * Registers [flush] to run before the vault is closed by a lock: an editor writes its pending changes in it. A
+     * lock waits for the registered flushes for at most [LOCK_FLUSH_TIMEOUT_MS], then closes the vault whether they
+     * finished or not. Returns the function that unregisters it. Nothing happens here by default.
+     */
+    public fun registerPreLockFlush(flush: suspend () -> Unit): () -> Unit = {}
 }
+
+/** The longest a lock waits for the pending editor saves before it closes the vault anyway. */
+public const val LOCK_FLUSH_TIMEOUT_MS: Long = 1_000L
 
 /** For code that runs without a session manager (tests, previews): never locks. */
 public object NeverLocked : VaultLockEvents {
@@ -59,6 +77,14 @@ public class SessionLockManager(
 
     private val _locked = MutableStateFlow(false)
 
+    private class PreLockFlush(val run: suspend () -> Unit)
+
+    private val preLockFlushes = MutableStateFlow<List<PreLockFlush>>(emptyList())
+
+    /** True from the moment a lock starts waiting for the editors until the vault is closed. */
+    @Volatile
+    private var flushing = false
+
     /** Emits true when the app was re-locked in the background and must show the lock screen. */
     override val locked: StateFlow<Boolean> = _locked.asStateFlow()
 
@@ -94,6 +120,9 @@ public class SessionLockManager(
     /** Set when the screen went off (or the keyguard came up) during a picker grace. */
     @Volatile
     private var lockedWhileAway = false
+
+    /** Where a lock waits for the editors' saves; replaceable in tests. */
+    internal var lockScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /** Schedules [action] on the main thread after a delay; returns a cancel function. */
     internal var timer: (delayMs: Long, action: () -> Unit) -> () -> Unit = mainThread::schedule
@@ -230,9 +259,39 @@ public class SessionLockManager(
 
     private fun isOpenAndLockable(): Boolean = securityManager.isLockable() && securityManager.isDatabaseUnlocked()
 
+    override fun registerPreLockFlush(flush: suspend () -> Unit): () -> Unit {
+        val entry = PreLockFlush(flush)
+        preLockFlushes.update { it + entry }
+        return { preLockFlushes.update { it - entry } }
+    }
+
     private fun relock() {
         // The screenshot allowance ends with every lock, before anything else can show.
         screenshots.revoke()
+        val flushes = preLockFlushes.value
+        if (flushes.isEmpty()) {
+            closeVault()
+            return
+        }
+        // A lock already waiting for the editors covers this one.
+        if (flushing) return
+        flushing = true
+        lockScope.launch {
+            try {
+                // The saves run in jobs of their own, so a save stuck in the database cannot hold the lock past
+                // the timeout: only the wait for them is cancelled.
+                val saves = flushes.map { flush ->
+                    launch { runCatching { flush.run() }.onFailure { if (it is CancellationException) throw it } }
+                }
+                withTimeoutOrNull(LOCK_FLUSH_TIMEOUT_MS) { saves.joinAll() }
+            } finally {
+                closeVault()
+                flushing = false
+            }
+        }
+    }
+
+    private fun closeVault() {
         securityManager.lock()
         _locked.value = true
     }

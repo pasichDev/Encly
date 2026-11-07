@@ -237,6 +237,8 @@ class EditNoteViewModel(
         initialValue = false,
     )
 
+    private var unregisterLockFlush: () -> Unit = {}
+
     init {
         when {
             copySource != -1L -> loadNote(copySource, isCopy = true)
@@ -247,6 +249,15 @@ class EditNoteViewModel(
             addTag != 0L -> persistence.updateNote { it.copy(tagId = addTag) }
         }
         persistence.startAutosave(viewModelScope, editor.contentChanges)
+        // A lock writes what the autosave still waits for before it closes the vault, then ends editing: nothing
+        // is written to the closed database.
+        unregisterLockFlush = lockEvents.registerPreLockFlush {
+            try {
+                persistence.save()
+            } finally {
+                persistence.close()
+            }
+        }
         keepFindInStep()
         rememberStoredId()
         // Session lock hook (security): a re-lock drops the note's plaintext at once, even
@@ -292,6 +303,7 @@ class EditNoteViewModel(
     }
 
     override fun onCleared() {
+        unregisterLockFlush()
         // One last-chance save for lifecycle teardown. It does nothing once the editor was
         // closed (explicit exit, trash, delete, restore, discard), so it cannot duplicate an
         // insert or undo any of those.

@@ -205,7 +205,7 @@ internal class TestApp {
     /** The start-up work of the home screen, with the trash and the version notes the tests control. */
     fun startup(tracker: WhatsNewTracker = freshInstall()) = StartupViewModel(
         tracker,
-        PurgeExpiredTrashUseCase(notes, CleanTrashNotesUseCase(notes)),
+        PurgeExpiredTrashUseCase(notes),
     )
 
     /** A tracker that has already recorded the version, as after the install: no "What's new" is due. */

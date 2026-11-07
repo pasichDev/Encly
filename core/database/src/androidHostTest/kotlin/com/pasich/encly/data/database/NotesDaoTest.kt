@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -213,6 +214,29 @@ class NotesDaoTest {
         assertEquals(EARLIER, dao.getNoteById(timed)?.trashedAt)
         assertEquals(STAMP, dao.getNoteById(untimed)?.trashedAt)
         assertEquals(null, dao.getNoteById(live)?.trashedAt)
+    }
+
+    @Test
+    fun deletingExpiredTrashTouchesOnlyTrashedNotesOlderThanTheCutoff() = runBlocking {
+        val old = insert("old") {
+            isTrash = true
+            trashedAt = EARLIER
+        }
+        val restored = insert("restored") { trashedAt = EARLIER }
+        val recent = insert("recent") {
+            isTrash = true
+            trashedAt = STAMP + 1
+        }
+        val untimed = insert("untimed") { isTrash = true }
+        val future = insert("future") {
+            isTrash = true
+            trashedAt = Long.MAX_VALUE
+        }
+
+        assertEquals(1, dao.deleteTrashedBefore(STAMP))
+
+        assertEquals(null, dao.getNoteById(old))
+        listOf(restored, recent, untimed, future).forEach { assertNotNull(dao.getNoteById(it)) }
     }
 
     private companion object {

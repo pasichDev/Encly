@@ -78,6 +78,13 @@ public interface NotesDao {
     @Query("UPDATE notes SET trashedAt = :at WHERE isTrash = 1 AND trashedAt IS NULL")
     public suspend fun stampTrashedAt(at: Long): Int
 
+    /**
+     * Deletes the trashed notes that were trashed before [cutoff], in one statement: a note restored a moment ago is
+     * no longer trashed when the delete runs, so it stays. Returns the number of rows deleted.
+     */
+    @Query("DELETE FROM notes WHERE isTrash = 1 AND trashedAt IS NOT NULL AND trashedAt < :cutoff")
+    public suspend fun deleteTrashedBefore(cutoff: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insertNote(note: Note): Long
 

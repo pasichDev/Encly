@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.common.asLoadState
 import com.pasich.encly.core.common.valueOrNull
+import com.pasich.encly.core.security.NeverLocked
+import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.TagsRepository
@@ -68,6 +70,7 @@ class TagListViewModel(
     private val reorderTagsUseCase: ReorderTagsUseCase,
     private val selectedTagHolder: SelectedTagHolder,
     notesRepository: NotesRepository,
+    lockEvents: VaultLockEvents = NeverLocked,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TagListState())
@@ -90,11 +93,20 @@ class TagListViewModel(
     private var persistedTags: List<Tag> = emptyList()
     private var reorderJob: Job? = null
 
+    private var tagsJob: Job? = null
+
     init {
         loadTags()
+        clearOnLock(lockEvents) {
+            tagsJob?.cancel()
+            reorderJob?.cancel()
+            persistedTags = emptyList()
+            _state.update { it.copy(tagsLoad = LoadState.Loading) }
+        }
         viewModelScope.launch {
             selectedTagHolder.selectedTagFlow.collect { selectedTag ->
                 _state.update { it.copy(selectedTagId = selectedTag.id) }
+                dropForeignSelection()
             }
         }
     }
@@ -194,11 +206,19 @@ class TagListViewModel(
         }
     }
 
+    /** A selection that is not a tag of the open vault (left over from another one) is dropped. */
+    private fun dropForeignSelection() {
+        val selected = _state.value.selectedTagId
+        val tags = _state.value.tagsLoad.valueOrNull() ?: return
+        if (selected != 0L && tags.none { it.id == selected }) selectedTagHolder.selectTag(Tag())
+    }
+
     private fun loadTags() {
-        viewModelScope.launch {
+        tagsJob = viewModelScope.launch {
             tagsRepository.getTags().asLoadState(ListLoadErrors.TAGS).collect { load ->
                 load.valueOrNull()?.let { persistedTags = it }
                 _state.update { it.copy(tagsLoad = load) }
+                dropForeignSelection()
             }
         }
     }

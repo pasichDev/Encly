@@ -46,8 +46,14 @@ class EditNoteViewModelComfortTest {
     private val dispatcher = StandardTestDispatcher()
     private val settings = TestSettingsRepository()
     private val locked = MutableStateFlow(false)
+    private var lockFlush: (suspend () -> Unit)? = null
     private val lockEvents = object : VaultLockEvents {
         override val locked = this@EditNoteViewModelComfortTest.locked
+
+        override fun registerPreLockFlush(flush: suspend () -> Unit): () -> Unit {
+            lockFlush = flush
+            return { lockFlush = null }
+        }
     }
     private val note = Note(
         id = NOTE_ID,
@@ -251,6 +257,22 @@ class EditNoteViewModelComfortTest {
 
         assertEquals(FindState(), viewModel.find.value)
         assertNull(viewModel.slashPicker.menu.value)
+    }
+
+    @Test
+    fun textTypedJustBeforeALockIsSavedBeforeTheVaultCloses() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        (viewModel.blocks.single() as Block.TextBlock).text.value = "the cat sat on the mat"
+        advanceTimeBy(500) // well inside the 2 s autosave pause
+
+        checkNotNull(lockFlush).invoke()
+
+        assertEquals(1, repository.updatedNotes.size)
+        assertTrue(repository.updatedNotes.single().value.contains("on the mat"))
+        // Editing has ended: the autosave that was waiting writes nothing into the closed vault.
+        advanceTimeBy(10_000)
+        assertEquals(1, repository.updatedNotes.size)
     }
 
     // --- slash ----------------------------------------------------------------------------------------
