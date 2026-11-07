@@ -13,6 +13,8 @@ object DesktopLicenses {
 
     val notices: List<OpenSourceNotice> = listOf(
         OpenSourceNotice("Apache PDFBox, FontBox", APACHE_2, "https://pdfbox.apache.org/"),
+        OpenSourceNotice("ICU for Java (ICU4J)", "Unicode License v3", "https://icu.unicode.org/"),
+        OpenSourceNotice("Noto Sans Arabic", "SIL Open Font License 1.1", "https://github.com/notofonts/arabic"),
         OpenSourceNotice(
             "Apache Commons Logging",
             APACHE_2,

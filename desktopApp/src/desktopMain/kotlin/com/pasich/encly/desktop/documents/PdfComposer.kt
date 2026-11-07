@@ -7,7 +7,6 @@ import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.common.PDRectangle
-import org.apache.pdfbox.pdmodel.font.PDFont
 import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode
 import org.apache.pdfbox.util.Matrix
 import java.awt.Color
@@ -32,21 +31,22 @@ internal object PageStyle {
 
 /**
  * Draws a [NoteDocument] onto PDF pages: the title, then headings, paragraphs, quotes, lists, checklists, links
- * (as text) and rules, flowing onto as many pages as it needs. One embedded font draws everything (Latin and
- * Cyrillic: the nine app languages); a character the font does not have is drawn as `?`, never an error. Bold is
- * the same font, stroked a little. Nothing here reads a file or uses the network.
+ * (as text) and rules, flowing onto as many pages as it needs. The embedded fonts of [layout] draw everything
+ * (Latin and Cyrillic, Arabic); a character none of them has is drawn as `?`, never an error. A block reads in the
+ * direction of its first strong character: right-to-left blocks are right-aligned, with their markers and bars on
+ * the right. Bold is the same font, stroked a little. Nothing here reads a file or uses the network.
  */
 @Suppress("MagicNumber", "TooManyFunctions") // One page layout: proportions of a glyph and a drawing step each.
 internal class PdfComposer(
     private val document: PDDocument,
-    private val font: PDFont,
-    private val hasGlyph: (Int) -> Boolean,
+    private val layout: TextLayout,
     private val paper: PDRectangle,
 ) : Closeable {
     private var stream: PDPageContentStream? = null
     private var y = 0f
     private val left = PageStyle.MARGIN
     private val width = paper.width - 2 * PageStyle.MARGIN
+    private val right = left + width
 
     fun compose(note: NoteDocument) {
         newPage()
@@ -86,12 +86,15 @@ internal class PdfComposer(
     }
 
     private fun quote(text: String) {
+        val rtl = layout.isRtl(text)
+        val from = if (rtl) left else left + PageStyle.INDENT
+        val to = if (rtl) right - PageStyle.INDENT else right
         wrap(clean(text), PageStyle.BODY, width - PageStyle.INDENT).forEach { line ->
             ensureRoom(lineHeight(PageStyle.BODY))
             val top = y
-            text(line, left + PageStyle.INDENT, PageStyle.BODY, PageStyle.QUIET)
+            text(line, rtl, Column(from, to), PageStyle.BODY, PageStyle.QUIET)
             // The quote's bar runs beside every line of the block, page by page.
-            bar(top, y)
+            bar(if (rtl) right - 3f else left + 3f, top, y)
         }
     }
 
@@ -105,44 +108,86 @@ internal class PdfComposer(
 
     private fun items(block: DocumentBlock.Items) {
         block.items.forEachIndexed { index, item ->
-            val textLeft = left + PageStyle.INDENT + MARKER_ROOM
+            val rtl = layout.isRtl(item.text)
+            val from = if (rtl) left else left + PageStyle.INDENT + MARKER_ROOM
+            val to = if (rtl) right - PageStyle.INDENT - MARKER_ROOM else right
             val lines = wrap(clean(item.text), PageStyle.BODY, width - PageStyle.INDENT - MARKER_ROOM)
             ensureRoom(lineHeight(PageStyle.BODY))
             val baseline = y - PageStyle.BODY
+            // The marker sits at the start of the item: on the left for left-to-right text, else on the right.
+            val markerEdge = if (rtl) right - PageStyle.INDENT else left + PageStyle.INDENT
+            val side = PageStyle.BODY - 1f
             when (block.kind) {
-                ListKind.BULLET -> bullet(left + PageStyle.INDENT + 3f, baseline + PageStyle.BODY * 0.32f)
+                ListKind.BULLET ->
+                    bullet(if (rtl) markerEdge - 3f else markerEdge + 3f, baseline + PageStyle.BODY * 0.32f)
 
-                ListKind.NUMBERED ->
-                    drawText("${index + 1}.", left + PageStyle.INDENT - 2f, baseline, PageStyle.BODY, PageStyle.INK)
+                ListKind.NUMBERED -> drawNumber(
+                    "${index + 1}.",
+                    rtl,
+                    if (rtl) markerEdge + 2f else markerEdge - 2f,
+                    baseline,
+                )
 
-                ListKind.CHECKLIST -> checkbox(left + PageStyle.INDENT, baseline, item.checked)
+                ListKind.CHECKLIST ->
+                    checkbox(if (rtl) markerEdge - side else markerEdge, baseline, item.checked)
             }
             lines.forEach { line ->
                 ensureRoom(lineHeight(PageStyle.BODY))
-                text(line, textLeft, PageStyle.BODY, if (item.checked) PageStyle.QUIET else PageStyle.INK)
+                text(line, rtl, Column(from, to), PageStyle.BODY, if (item.checked) PageStyle.QUIET else PageStyle.INK)
             }
             y -= LIST_GAP
         }
     }
 
     private fun paragraph(text: String, size: Float, bold: Boolean = false, color: Color = PageStyle.INK) {
+        val rtl = layout.isRtl(text)
         wrap(clean(text), size, width).forEach { line ->
             ensureRoom(lineHeight(size))
-            text(line, left, size, color, bold)
+            text(line, rtl, Column(left, right), size, color, bold)
         }
     }
 
-    /** Draws [line] at the cursor and moves the cursor down one line. */
-    private fun text(line: String, x: Float, size: Float, color: Color, bold: Boolean = false) {
+    /** Where text may run: from the [from] x to the [to] x. */
+    private class Column(val from: Float, val to: Float)
+
+    /**
+     * Draws [line] at the cursor, against the left edge or the right edge of [column] as its direction [rtl]
+     * says, and moves the cursor down one line.
+     */
+    private fun text(line: String, rtl: Boolean, column: Column, size: Float, color: Color, bold: Boolean = false) {
         val baseline = y - size
-        if (line.isNotEmpty()) drawText(line, x, baseline, size, color, bold)
+        if (line.isNotEmpty()) {
+            val runs = layout.visual(line, rtl)
+            drawRuns(runs, if (rtl) column.to - lineWidth(runs, size) else column.from, baseline, size, color, bold)
+        }
         y -= lineHeight(size)
     }
 
-    private fun drawText(text: String, x: Float, baseline: Float, size: Float, color: Color, bold: Boolean = false) {
+    /** Draws a list number on [baseline] with its end at [edge]: the right end for [rtl] text, else the left end. */
+    private fun drawNumber(text: String, rtl: Boolean, edge: Float, baseline: Float) {
+        val runs = layout.visual(text, rtl)
+        drawRuns(
+            runs,
+            if (rtl) edge - lineWidth(runs, PageStyle.BODY) else edge,
+            baseline,
+            PageStyle.BODY,
+            PageStyle.INK,
+        )
+    }
+
+    private fun lineWidth(runs: List<GlyphRun>, size: Float): Float =
+        runs.sumOf { it.face.font.getStringWidth(it.text).toDouble() }.toFloat() / FONT_UNITS * size
+
+    private fun drawRuns(
+        runs: List<GlyphRun>,
+        x: Float,
+        baseline: Float,
+        size: Float,
+        color: Color,
+        bold: Boolean = false,
+    ) {
         val cs = checkNotNull(stream)
         cs.beginText()
-        cs.setFont(font, size)
         cs.setNonStrokingColor(color)
         if (bold) {
             cs.setRenderingMode(RenderingMode.FILL_STROKE)
@@ -152,7 +197,11 @@ internal class PdfComposer(
             cs.setRenderingMode(RenderingMode.FILL)
         }
         cs.setTextMatrix(Matrix.getTranslateInstance(x, baseline))
-        cs.showText(text)
+        // Each run moves the pen on, so the runs of different fonts follow one another.
+        runs.forEach { run ->
+            cs.setFont(run.face.font, size)
+            cs.showText(run.text)
+        }
         cs.endText()
     }
 
@@ -191,12 +240,12 @@ internal class PdfComposer(
         y -= PageStyle.BODY
     }
 
-    private fun bar(from: Float, to: Float) {
+    private fun bar(x: Float, from: Float, to: Float) {
         val cs = checkNotNull(stream)
         cs.setStrokingColor(PageStyle.RULE)
         cs.setLineWidth(2f)
-        cs.moveTo(left + 3f, from)
-        cs.lineTo(left + 3f, to)
+        cs.moveTo(x, from)
+        cs.lineTo(x, to)
         cs.stroke()
     }
 
@@ -225,20 +274,16 @@ internal class PdfComposer(
         y = paper.height - PageStyle.MARGIN
     }
 
-    /** [text] with what the font cannot draw replaced, tabs widened and line ends made `\n`. */
+    /** [text] with tabs widened, non-breaking spaces made plain, line ends made `\n` and control characters dropped. */
     private fun clean(text: String): String = buildString(text.length) {
         val flat = text.replace("\r\n", "\n").replace('\r', '\n')
-        var index = 0
-        while (index < flat.length) {
-            val point = flat.codePointAt(index)
-            index += Character.charCount(point)
+        flat.forEach { char ->
             when {
-                point == '\n'.code -> append('\n')
-                point == '\t'.code -> append("    ")
-                point == NO_BREAK_SPACE -> append(' ')
-                Character.isISOControl(point) || point == ZERO_WIDTH_JOINER || isVariationSelector(point) -> Unit
-                hasGlyph(point) -> appendCodePoint(point)
-                else -> append('?')
+                char == '\n' -> append('\n')
+                char == '\t' -> append("    ")
+                char.code == NO_BREAK_SPACE -> append(' ')
+                Character.isISOControl(char) -> Unit
+                else -> append(char)
             }
         }
     }
@@ -274,9 +319,12 @@ internal class PdfComposer(
         return lines.dropLastWhile { it.isEmpty() }.ifEmpty { listOf("") }
     }
 
-    private fun measure(text: String, size: Float): Float = font.getStringWidth(text) / FONT_UNITS * size
+    private fun measure(text: String, size: Float): Float = layout.width(text) / FONT_UNITS * size
 
-    /** How many chars of [word] fit in [maxWidth] (at least one code point, so the loop always ends). */
+    /**
+     * How many chars of [word] fit in [maxWidth] (at least one code point, so the loop always ends). A combining
+     * mark stays with its letter.
+     */
     private fun fitting(word: String, size: Float, maxWidth: Float): Int {
         var end = word.offsetByCodePoints(0, 1)
         while (end < word.length) {
@@ -284,10 +332,13 @@ internal class PdfComposer(
             if (measure(word.substring(0, next), size) > maxWidth) break
             end = next
         }
+        while (end < word.length && isMark(word.codePointAt(end))) end += Character.charCount(word.codePointAt(end))
         return end
     }
 
-    private fun isVariationSelector(point: Int) = point in VARIATION_FROM..VARIATION_TO
+    private fun isMark(point: Int) = Character.getType(point).let {
+        it == Character.NON_SPACING_MARK.toInt() || it == Character.ENCLOSING_MARK.toInt()
+    }
 
     private companion object {
         const val FONT_UNITS = 1000f
@@ -296,8 +347,5 @@ internal class PdfComposer(
         const val BULLET_RADIUS = 1.9f
         const val KAPPA = 0.5523f
         const val NO_BREAK_SPACE = 0x00A0
-        const val ZERO_WIDTH_JOINER = 0x200D
-        const val VARIATION_FROM = 0xFE00
-        const val VARIATION_TO = 0xFE0F
     }
 }

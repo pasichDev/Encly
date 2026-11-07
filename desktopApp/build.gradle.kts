@@ -74,6 +74,8 @@ kotlin {
                 runtimeOnly(libs.slf4j.nop)
                 // Note to PDF and to the printer, built in memory (Apache-2.0).
                 implementation(libs.pdfbox)
+                // Arabic shaping and bidi reordering of the PDF text, which PDFBox does not do.
+                implementation(libs.icu4j)
             }
         }
         getByName("desktopTest").dependencies {
