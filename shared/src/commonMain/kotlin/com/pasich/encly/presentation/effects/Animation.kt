@@ -37,19 +37,22 @@ fun axisExit(forward: Boolean): ExitTransition =
     } + fadeOut(tween(AXIS_FADE_OUT))
 
 /**
- * Duration of the card-to-editor container transform. Longer than a screen slide: the card travels
+ * Duration of the card growing into the editor. A little longer than a screen slide: the card travels
  * and grows across the whole window, and at 300 ms that read as a jump rather than a growth.
  */
-const val CONTAINER_DURATION = 450
+const val CONTAINER_DURATION = 340
+
+/** Closing is quicker than opening: the user is leaving, and the shrink felt slow at the opening's pace. */
+const val CONTAINER_CLOSE_DURATION = 220
 
 /** The editor fades in over this part of the transform, starting [CONTAINER_FADE_IN_DELAY] in. */
-const val CONTAINER_FADE_IN = 300
+const val CONTAINER_FADE_IN = 220
 
 /** The card grows a little before the editor shows in it, so the motion leads and the content follows. */
-const val CONTAINER_FADE_IN_DELAY = 90
+const val CONTAINER_FADE_IN_DELAY = 60
 
 /** Closing, the editor fades out quickly so the shrinking card is what the eye follows. */
-const val CONTAINER_FADE_OUT = 180
+const val CONTAINER_FADE_OUT = 120
 
 /**
  * The cross-fade of the screens behind a container transform, paced with it: the screen being left

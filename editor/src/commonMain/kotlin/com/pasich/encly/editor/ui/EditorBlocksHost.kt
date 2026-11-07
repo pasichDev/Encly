@@ -1,6 +1,7 @@
 package com.pasich.encly.editor.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -23,7 +24,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -336,12 +340,24 @@ private fun BlockContent(
     }
 }
 
-/** Calls [onTouch] on every touch that lands in the block, whether or not a child handles it. */
-private fun Modifier.markInteractionOn(onTouch: () -> Unit): Modifier = pointerInput(onTouch) {
-    awaitPointerEventScope {
-        while (true) {
-            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            onTouch()
-        }
+/**
+ * Calls [onTap] when a touch lands in the block and lifts again without moving past the touch slop,
+ * whether or not a child handles it. A touch that scrolls the note (a finger gliding over the list)
+ * is not an interaction: it must not make the list the block the toolbar shows active.
+ */
+private fun Modifier.markInteractionOn(onTap: () -> Unit): Modifier = pointerInput(onTap) {
+    val slop = viewConfiguration.touchSlop
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        if (awaitTapUp(down, slop)) onTap()
+    }
+}
+
+/** Whether [down] lifts without moving past [slop]; false once it moves farther, or is lost. */
+private suspend fun AwaitPointerEventScope.awaitTapUp(down: PointerInputChange, slop: Float): Boolean {
+    while (true) {
+        val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id }
+        if (change == null || (change.position - down.position).getDistance() > slop) return false
+        if (change.changedToUp()) return true
     }
 }

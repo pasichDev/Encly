@@ -861,6 +861,7 @@ public abstract interface class com/pasich/encly/editor/ui/EditorController {
 public final class com/pasich/encly/editor/ui/FindHighlights {
 	public static final field $stable I
 	public fun <init> (Landroidx/compose/runtime/State;)V
+	public final fun reveal (Lcom/pasich/encly/editor/state/FindMatch;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/pasich/encly/editor/ui/TapBelowBlocksKt {

@@ -1,13 +1,17 @@
 package com.pasich.encly.editor.ui.blocks
 
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
@@ -15,8 +19,8 @@ import com.pasich.encly.editor.focus.CaretGeometry
 import com.pasich.encly.editor.focus.geometry
 import com.pasich.encly.editor.ui.FindHighlights
 
-private const val MATCH_ALPHA = 0.18f
-private const val CURRENT_MATCH_ALPHA = 0.4f
+private const val MATCH_ALPHA = 0.4f
+private const val CURRENT_MATCH_ALPHA = 0.65f
 
 /**
  * Tints the Find matches of one text field behind its text. Pass [onTextLayout] to the field and
@@ -41,7 +45,22 @@ internal class FieldHighlight(
         if (layout == null) layout = getResult
     }
 
-    val modifier: Modifier = Modifier.drawBehind {
+    private val bringIntoView = BringIntoViewRequester()
+
+    /**
+     * Scrolls the text from [start] to [end] into view; false while the field has no text layout (or no
+     * text that long) to place it with.
+     */
+    suspend fun reveal(start: Int, end: Int): Boolean {
+        val result = layout?.invoke()?.takeIf { start < it.layoutInput.text.length } ?: return false
+        // From the first character's box to the last one's; a match that wraps spans both lines.
+        val from = result.getBoundingBox(start)
+        val to = result.getBoundingBox(minOf(end, result.layoutInput.text.length) - 1)
+        bringIntoView.bringIntoView(Rect(from.left, from.top, to.right, to.bottom))
+        return true
+    }
+
+    val modifier: Modifier = Modifier.bringIntoViewRequester(bringIntoView).drawBehind {
         val matches = highlights.matchesOf(blockId, itemId)
         if (matches.isEmpty()) return@drawBehind
         val result = layout?.invoke() ?: return@drawBehind
@@ -62,7 +81,7 @@ internal fun rememberFieldHighlight(
     itemId: String? = null,
 ): FieldHighlight {
     val primary = MaterialTheme.colorScheme.primary
-    return remember(highlights, blockId, itemId, primary) {
+    val field = remember(highlights, blockId, itemId, primary) {
         FieldHighlight(
             highlights = highlights,
             blockId = blockId,
@@ -71,4 +90,9 @@ internal fun rememberFieldHighlight(
             currentMatch = primary.copy(alpha = CURRENT_MATCH_ALPHA),
         )
     }
+    DisposableEffect(field) {
+        highlights.register(blockId, itemId, field)
+        onDispose { highlights.unregister(blockId, itemId, field) }
+    }
+    return field
 }

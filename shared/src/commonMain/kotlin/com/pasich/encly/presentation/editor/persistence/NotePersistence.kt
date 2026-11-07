@@ -206,11 +206,16 @@ class NotePersistence(
                 stored?.let { note -> updateNote { it.copy(date = note.date, description = note.description) } }
                 stored != null
             } else {
-                val insertedId = withContext(ioDispatcher) { notesRepository.insertDraft(currentNote, blocksJson) }
+                val draft = newDraft(currentNote, blocksJson)
+                val insertedId = withContext(ioDispatcher) { notesRepository.insertDraft(draft) }
                 // Merged into the latest state: a title or tag changed while the insert ran is
-                // kept, and the next autosave stores it.
+                // kept, and the next autosave stores it. The stored creation time comes along:
+                // every later save writes the whole row, so a note that still said 0 here would
+                // wipe it on the first autosave.
                 insertedId?.let { id ->
-                    updateNote { it.copy(id = id, value = blocksJson, date = Clock.System.now().toEpochMilliseconds()) }
+                    updateNote {
+                        it.copy(id = id, value = blocksJson, date = draft.date, dateCreate = draft.dateCreate)
+                    }
                 }
                 insertedId != null
             }
@@ -398,11 +403,13 @@ private fun List<Block>.frozen(): List<Block> = map { block ->
     }
 }
 
-/** Inserts [note] as a new row with [blocksJson] as its content; returns its id, or null. */
-private suspend fun NotesRepository.insertDraft(note: Note, blocksJson: String): Long? = insertNote(
+/** The row a new note is first stored as: stamped with its creation time, which is never set again. */
+private fun newDraft(note: Note, blocksJson: String): Note =
     Note.new(title = note.title, value = blocksJson, tagId = note.tagId)
-        .copy(isPinned = note.isPinned, color = note.color, textSize = note.textSize, lineSpacing = note.lineSpacing),
-)
+        .copy(isPinned = note.isPinned, color = note.color, textSize = note.textSize, lineSpacing = note.lineSpacing)
+
+/** Inserts [draft] as a new row; returns its id, or null. */
+private suspend fun NotesRepository.insertDraft(draft: Note): Long? = insertNote(draft)
     .getOrNull()
     ?.takeIf { it > 0L }
 

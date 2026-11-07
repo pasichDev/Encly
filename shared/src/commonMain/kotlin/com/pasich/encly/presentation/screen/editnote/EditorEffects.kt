@@ -22,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pasich.encly.editor.focus.BlockFocusRegistry
+import com.pasich.encly.editor.ui.FindHighlights
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
 import com.pasich.encly.presentation.pane.ActiveEditor
 import com.pasich.encly.presentation.pane.EditorPane
@@ -148,12 +149,14 @@ internal fun rememberFindOpen(viewModel: EditNoteViewModel = metroViewModel()): 
 }
 
 /**
- * Scrolls the list to the block of the match Find is on, when that block is off screen. Nothing
- * gets focus and nothing is edited.
+ * Scrolls the list to the match Find is on: to its block when that block is off screen, then to the
+ * match itself within the block (a long paragraph or list is taller than the screen). Nothing gets
+ * focus and nothing is edited.
  */
 @Composable
 internal fun ScrollToFindMatch(
     listState: LazyListState,
+    highlights: FindHighlights,
     blocksStart: Int,
     viewModel: EditNoteViewModel = metroViewModel(),
 ) {
@@ -161,9 +164,10 @@ internal fun ScrollToFindMatch(
     val match by current.collectAsState(initial = null)
     val currentBlocksStart by rememberUpdatedState(blocksStart)
     LaunchedEffect(match) {
-        val blockId = match?.blockId ?: return@LaunchedEffect
-        val index = viewModel.blocks.indexOfFirst { it.id == blockId }
+        val found = match ?: return@LaunchedEffect
+        val index = viewModel.blocks.indexOfFirst { it.id == found.blockId }
         if (index >= 0) listState.reveal(currentBlocksStart + index)
+        highlights.reveal(found)
     }
 }
 

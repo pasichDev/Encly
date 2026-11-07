@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.effects
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
@@ -85,7 +86,7 @@ private fun rememberContainerBounds(
             animatedVisibilityScope = visibility,
             enter = if (end == ContainerEnd.EDITOR) fadeIn(ContainerFadeIn) else EnterTransition.None,
             exit = if (end == ContainerEnd.EDITOR) fadeOut(ContainerFadeOut) else ExitTransition.None,
-            boundsTransform = ContainerBounds,
+            boundsTransform = containerBounds(visibility, end),
             resizeMode = if (end == ContainerEnd.CARD) {
                 SharedTransitionScope.ResizeMode.RemeasureToBounds
             } else {
@@ -102,7 +103,15 @@ private val ContainerFadeIn =
 
 private val ContainerFadeOut = tween<Float>(CONTAINER_FADE_OUT, easing = FastOutLinearInEasing)
 
-private val ContainerBounds = BoundsTransform { _, _ -> tween(CONTAINER_DURATION, easing = ContainerEasing) }
+/**
+ * The bounds of the card growing into the editor, and of the editor shrinking back (quicker). The
+ * editor is on its way out when it is leaving; the card, when it is coming back.
+ */
+private fun containerBounds(visibility: AnimatedVisibilityScope, end: ContainerEnd) = BoundsTransform { _, _ ->
+    val visible = visibility.transition.targetState == EnterExitState.Visible
+    val closing = if (end == ContainerEnd.EDITOR) !visible else visible
+    tween(if (closing) CONTAINER_CLOSE_DURATION else CONTAINER_DURATION, easing = ContainerEasing)
+}
 
 /** Below this share of the window a container still has the card's full corner radius. */
 private const val ROUND_UNTIL_COVERAGE = 0.35f

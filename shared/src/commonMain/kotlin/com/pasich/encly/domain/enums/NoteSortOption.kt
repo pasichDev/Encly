@@ -39,9 +39,17 @@ enum class NoteSortOption(val labelRes: StringResource, val shortLabelRes: Strin
     fun comparator(): Comparator<Note> = when (this) {
         UPDATED_ASC -> compareBy { it.date }
         UPDATED_DESC -> compareByDescending { it.date }
-        CREATED_ASC -> compareBy { it.dateCreate }
-        CREATED_DESC -> compareByDescending { it.dateCreate }
+        CREATED_ASC -> compareBy { it.createdOrEdited() }
+        CREATED_DESC -> compareByDescending { it.createdOrEdited() }
     }
+
+    /**
+     * The creation time, or for a note that lost it (an autosave bug stored 0) the only time still
+     * known, when it was last edited. Never an invented one (an import does the same: created, else
+     * edited). Without it those notes would all sort as the oldest, ahead of every dated note. Such a
+     * note moves with its edits in the creation orders; its real creation time cannot be recovered.
+     */
+    private fun Note.createdOrEdited(): Long = if (dateCreate > 0L) dateCreate else date
 
     companion object {
         fun fromIndex(index: Int): NoteSortOption = entries.find { it.index == index } ?: UPDATED_DESC

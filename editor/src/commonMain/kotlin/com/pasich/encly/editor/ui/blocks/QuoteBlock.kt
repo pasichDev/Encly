@@ -68,11 +68,11 @@ internal fun QuoteBlock(
     )
 
     // A tonal card between an opening and a closing quote mark in `primary`, 8 dp below the block
-    // above (design spec §4.4).
+    // above and 8 dp above the one below (design spec §4.4).
     Column(
         verticalArrangement = Arrangement.spacedBy(spacing.labelGap),
         modifier = modifier
-            .padding(top = spacing.xs)
+            .padding(vertical = spacing.xs)
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium)
             .padding(horizontal = spacing.fieldGap, vertical = spacing.m),

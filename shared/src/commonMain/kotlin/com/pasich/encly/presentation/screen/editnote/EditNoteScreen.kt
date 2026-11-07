@@ -155,7 +155,7 @@ fun EditNoteScreen(
     ClaimNoteForEditing()
     val blocksStart = HEADER_ITEMS + (if (contentLoadFailed) 1 else 0) + (if (editedElsewhere) 1 else 0)
     CarryOutFocusRequests(focusRegistry, listState, blocksStart = blocksStart)
-    ScrollToFindMatch(listState, blocksStart)
+    ScrollToFindMatch(listState, highlights, blocksStart)
     FocusNewNoteTitle(titleFocus)
     BackHandler { exits.back() }
     CloseFindOrSlashOnBack()

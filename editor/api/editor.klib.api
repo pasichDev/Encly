@@ -751,6 +751,8 @@ final class com.pasich.encly.editor.ui/EditorBlocksHost { // com.pasich.encly.ed
 
 final class com.pasich.encly.editor.ui/FindHighlights { // com.pasich.encly.editor.ui/FindHighlights|null[0]
     constructor <init>(androidx.compose.runtime/State<com.pasich.encly.editor.state/FindState>) // com.pasich.encly.editor.ui/FindHighlights.<init>|<init>(androidx.compose.runtime.State<com.pasich.encly.editor.state.FindState>){}[0]
+
+    final suspend fun reveal(com.pasich.encly.editor.state/FindMatch): kotlin/Boolean // com.pasich.encly.editor.ui/FindHighlights.reveal|reveal(com.pasich.encly.editor.state.FindMatch){}[0]
 }
 
 sealed class com.pasich.encly.editor.model/Block { // com.pasich.encly.editor.model/Block|null[0]

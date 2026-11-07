@@ -47,6 +47,22 @@ class NotePersistenceTest {
     }
 
     @Test
+    fun theCreationTimeSurvivesTheAutosavesAfterTheFirstInsert() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "draft") }
+
+        assertTrue(persistence.save())
+        val created = repository.insertedNotes.single().dateCreate
+        assertTrue(created > 0L)
+        assertEquals(created, persistence.state.value.note.dateCreate)
+
+        blocks = listOf(text("more"))
+        assertTrue(persistence.save())
+
+        assertEquals(created, repository.updatedNotes.single().dateCreate)
+    }
+
+    @Test
     fun aBlankNewNoteIsNotStored() = runTest(dispatcher) {
         val persistence = persistence()
         blocks = listOf(text("  \n "), Block.LinkBlock())

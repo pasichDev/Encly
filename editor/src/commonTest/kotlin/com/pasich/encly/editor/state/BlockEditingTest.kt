@@ -380,25 +380,44 @@ class BlockEditingTest {
     fun backspaceAtTheStartOfALaterItemJoinsItToTheItemAbove() {
         val list = list(BlockType.LIST_BULLET, "milk", " and eggs", "flour")
         editor.load(listOf(list))
-        val first = list.items.value[0]
+        val second = list.items.value[1]
 
-        editor.listBackspaceAtStart(list.id, list.items.value[1].id)
+        editor.listBackspaceAtStart(list.id, second.id)
 
         assertEquals(listOf("milk and eggs", "flour"), list.items.value.map { it.value })
+        // The item the cursor was in stays (and keeps its field, so a held Backspace goes on).
+        assertEquals(second.id, list.items.value[0].id)
         val focus = editor.lastFocus()
-        assertEquals(first.id, focus.itemId)
+        assertEquals(second.id, focus.itemId)
         assertEquals(4, focus.caret)
     }
 
     @Test
-    fun backspaceOnAnEmptyLastItemLeavesTheList() {
+    fun backspaceOnAnEmptyLastItemRemovesItAndKeepsTheFocusInTheList() {
         val list = list(BlockType.LIST_BULLET, "milk", "")
+        editor.load(listOf(list))
+        val empty = list.items.value[1]
+
+        editor.listBackspaceAtStart(list.id, empty.id)
+
+        assertEquals(listOf("milk"), list.items.value.map { it.value })
+        assertEquals(1, editor.blocks.size)
+        assertEquals(empty.id, list.items.value.single().id)
+        val focus = editor.lastFocus()
+        assertEquals(empty.id, focus.itemId)
+        assertEquals(4, focus.caret)
+    }
+
+    @Test
+    fun theItemAboveGivesItsTickedStateToTheJoinedItem() {
+        val above = ItemListBlock("done", isCheck = true)
+        val list = Block.ListBlock(MutableStateFlow(listOf(above, ItemListBlock("more"))), BlockType.LIST_CHECK)
         editor.load(listOf(list))
 
         editor.listBackspaceAtStart(list.id, list.items.value[1].id)
 
-        assertEquals(listOf("milk"), list.items.value.map { it.value })
-        assertTrue(editor.blocks[1] is Block.TextBlock)
+        assertEquals(listOf("donemore"), list.items.value.map { it.value })
+        assertTrue(list.items.value.single().isCheck)
     }
 
     @Test

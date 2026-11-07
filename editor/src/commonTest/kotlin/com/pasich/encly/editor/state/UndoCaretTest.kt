@@ -187,4 +187,20 @@ class UndoCaretTest {
             assertEquals(FocusRequest(paragraph.id, caret = 0), redone())
         }
     }
+
+    @Test
+    fun anItemJoinedIntoTheOneBelowUndoesToItsStartAndRedoesToTheJoin() = runTest {
+        val a = ItemListBlock("one")
+        val b = ItemListBlock("two")
+        val list = Block.ListBlock(MutableStateFlow(listOf(a, b)), BlockType.LIST_BULLET)
+        editor.load(listOf(list))
+        editor.selection.onFocused(list.id)
+        step()
+        editor.listBackspaceAtStart(list.id, b.id)
+
+        repeat(2) {
+            assertEquals(FocusRequest(list.id, caret = 0, itemId = b.id), undone())
+            assertEquals(FocusRequest(list.id, caret = 3, itemId = b.id), redone())
+        }
+    }
 }

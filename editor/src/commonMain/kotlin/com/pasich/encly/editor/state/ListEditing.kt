@@ -108,8 +108,7 @@ private fun BlockEditorState.exitList(index: Int, list: Block.ListBlock, at: Int
 
 /**
  * Backspace with the cursor at the start of item [itemId]: the first item leaves the list as a
- * paragraph above it, an empty last item leaves it as a paragraph below, and any other item joins
- * the item above, its text appended there.
+ * paragraph above it, and any other item, empty or not, joins the item above (see [joinIntoCurrent]).
  */
 public fun BlockEditorState.listBackspaceAtStart(listId: String, itemId: String): Boolean {
     val where = itemAt(listId, itemId) ?: return false
@@ -131,28 +130,30 @@ public fun BlockEditorState.listBackspaceAtStart(listId: String, itemId: String)
             selection.focusAt(indexOf(paragraph.id), caret = 0)
         }
 
-        item.value.isEmpty() && at == items.lastIndex -> exitList(
-            index,
-            list,
-            at,
-            from = CaretTarget(list.id, item.id, 0),
-        )
-
-        else -> {
-            val previous = items[at - 1]
-            val newItems = items.toMutableList().apply {
-                this[at - 1] = previous.copy(value = previous.value + item.value)
-                removeAt(at)
-            }
-            batch { setValue(list.id, list.items, newItems) }
-            attachCaretToLastStep(
-                CaretTarget(list.id, item.id, 0),
-                CaretTarget(list.id, previous.id, previous.value.length),
-            )
-            selection.focusAt(index, caret = previous.value.length, itemId = previous.id)
-        }
+        else -> joinIntoCurrent(where)
     }
     return true
+}
+
+/**
+ * Item [where] and the one above it become one: the item above is removed and its text (and its
+ * ticked state) goes in front of the item's own, which keeps the focus and the keyboard. Backspace held
+ * down then goes on deleting, item after item, in the field that has it: when the focus moves to another
+ * field the keyboard starts a new input and stops repeating the key. One undo step.
+ */
+private fun BlockEditorState.joinIntoCurrent(where: ListItemAt) {
+    val (index, list, at) = where
+    val items = list.items.value
+    val item = items[at]
+    val previous = items[at - 1]
+    val join = previous.value.length
+    val newItems = items.toMutableList().apply {
+        this[at] = item.copy(value = previous.value + item.value, isCheck = previous.isCheck)
+        removeAt(at - 1)
+    }
+    batch { setValue(list.id, list.items, newItems) }
+    attachCaretToLastStep(CaretTarget(list.id, item.id, 0), CaretTarget(list.id, item.id, join))
+    selection.focusAt(index, caret = join, itemId = item.id)
 }
 
 /**
