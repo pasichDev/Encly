@@ -698,6 +698,7 @@ private const val STROKE = 1.75f
 /** The icons with a direction, drawn flipped in a right-to-left layout (a back arrow, undo, a list marker...). */
 private val MirroredIcons = setOf(
     "Back", "Chevron", "Undo", "Redo", "Send", "ListBullet", "Checklist", "Quote", "External", "Help", "Comment",
+    "Indent", "Outdent",
 )
 private val Ink = SolidColor(Color.Black)
 

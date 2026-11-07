@@ -53,6 +53,11 @@
     <string name="checklist_lock">Blocca la lista di controllo</string>
     <string name="checklist_unlock">Sblocca la lista di controllo</string>
     <string name="block_select">Seleziona blocco</string>
+    <string name="list_item_reorder">Riordina elemento</string>
+    <string name="list_item_move_up">Sposta elemento su</string>
+    <string name="list_item_move_down">Sposta elemento giù</string>
+    <string name="list_item_indent">Aumenta rientro dell\'elemento</string>
+    <string name="list_item_outdent">Riduci rientro dell\'elemento</string>
     <string name="selection_count">Blocchi selezionati: %1$d</string>
     <string name="selection_close">Annulla selezione</string>
     <string name="selection_copy">Copia</string>

@@ -53,6 +53,11 @@
     <string name="checklist_lock">Checkliste sperren</string>
     <string name="checklist_unlock">Checkliste entsperren</string>
     <string name="block_select">Block auswählen</string>
+    <string name="list_item_reorder">Eintrag verschieben</string>
+    <string name="list_item_move_up">Eintrag nach oben verschieben</string>
+    <string name="list_item_move_down">Eintrag nach unten verschieben</string>
+    <string name="list_item_indent">Eintrag einrücken</string>
+    <string name="list_item_outdent">Einrückung des Eintrags verringern</string>
     <string name="selection_count">Ausgewählte Blöcke: %1$d</string>
     <string name="selection_close">Auswahl aufheben</string>
     <string name="selection_copy">Kopieren</string>

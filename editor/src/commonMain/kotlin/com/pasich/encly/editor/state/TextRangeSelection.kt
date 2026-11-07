@@ -7,6 +7,7 @@ import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.TextualBlock
+import com.pasich.encly.editor.model.normalizedLevels
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -318,12 +319,13 @@ public fun BlockEditorState.textRangeBlocks(): List<Block> {
         when (copy) {
             is TextualBlock -> copy.text.value = copy.text.value.let { it.substring(from, to.coerceAtMost(it.length)) }
 
+            // The copied items start at the top, whatever level the first one had.
             is Block.ListBlock -> copy.items.value = copy.items.value.slice(
                 firstItem = if (index == r.first) r.firstItem else 0,
                 firstOffset = from,
                 lastItem = if (index == r.last) r.lastItem else copy.items.value.lastIndex,
                 lastOffset = to,
-            )
+            ).normalizedLevels(copy.blockType)
 
             else -> Unit
         }
@@ -404,16 +406,24 @@ private class RangePlan(state: BlockEditorState, private val r: ResolvedRange, r
                 batch.setValue(
                     keptList.id,
                     keptList.items,
-                    keptList.items.value.take(r.firstItem) + item(keptList) + tail,
+                    (keptList.items.value.take(r.firstItem) + item(keptList) + tail)
+                        .normalizedLevels(keptList.blockType),
                 )
 
-            keptList != null -> batch.setValue(keptList.id, keptList.items, listOf(item(keptList)) + tail)
+            keptList != null -> batch.setValue(
+                keptList.id,
+                keptList.items,
+                (listOf(item(keptList)) + tail).normalizedLevels(keptList.blockType),
+            )
 
             isNew -> batch.replaceBlock(r.first, keeper)
 
             else -> batch.setValue(keeper.id, (keeper as TextualBlock).text, joined)
         }
-        if (keepsLast) batch.setValue(last.id, (last as Block.ListBlock).items, tail)
+        if (keepsLast) {
+            val remaining = last as Block.ListBlock
+            batch.setValue(remaining.id, remaining.items, tail.normalizedLevels(remaining.blockType))
+        }
         // Highest first: a removal never shifts the position of one still to come.
         val gone = (r.first..r.last).filter { it != keeperIndex && !(keepsLast && it == r.last) }
         for (index in gone.asReversed()) batch.removeBlock(index)

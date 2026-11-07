@@ -50,15 +50,18 @@ import com.pasich.encly.editor.state.focusFirstBlock
 import com.pasich.encly.editor.state.focusWorkingBlock
 import com.pasich.encly.editor.state.indexOf
 import com.pasich.encly.editor.state.interactedBlockPosition
+import com.pasich.encly.editor.state.interactedListItem
 import com.pasich.encly.editor.state.isBlankNote
 import com.pasich.encly.editor.state.listBackspaceAtStart
 import com.pasich.encly.editor.state.listLineBreak
 import com.pasich.encly.editor.state.listTypingStep
 import com.pasich.encly.editor.state.moveBlockOf
 import com.pasich.encly.editor.state.moveInteracted
+import com.pasich.encly.editor.state.moveListItem
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.removeInteracted
 import com.pasich.encly.editor.state.replaceTextRange
+import com.pasich.encly.editor.state.shiftListItem
 import com.pasich.encly.editor.state.textRangeBlocks
 import com.pasich.encly.editor.state.toggleChecklistLock
 import com.pasich.encly.presentation.editor.persistence.LoadNoteState
@@ -559,6 +562,20 @@ class EditNoteViewModel(
     /** Backspace at the start of item [itemId] of list [block]. */
     fun onListBackspaceAtStart(block: Block.ListBlock, itemId: String): Boolean =
         canEdit(block) && editor.listBackspaceAtStart(block.id, itemId)
+
+    /** Indents ([deeper]) or outdents item [itemId] of list [block] one level (see shiftListItem). */
+    fun shiftListItem(block: Block.ListBlock, itemId: String, deeper: Boolean): Boolean =
+        canEdit(block) && editor.shiftListItem(block.id, itemId, deeper)
+
+    /** Moves item [itemId] of list [block] [by] places among its siblings (see moveListItem). */
+    fun moveListItem(block: Block.ListBlock, itemId: String, by: Int): Boolean =
+        canEdit(block) && editor.moveListItem(block.id, itemId, by)
+
+    /** Indents ([deeper]) or outdents the list item the user works in. */
+    fun shiftInteractedListItem(deeper: Boolean) {
+        val (listId, itemId) = editor.interactedListItem() ?: return
+        if (canEdit()) editor.shiftListItem(listId, itemId, deeper)
+    }
 
     /** The cursor in [block]'s field moved to [offset]. */
     fun onCaretMoved(block: Block, offset: Int) = editor.selection.onCaret(block.id, offset)

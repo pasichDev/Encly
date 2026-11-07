@@ -53,6 +53,11 @@
     <string name="checklist_lock">Заблокувати чекліст</string>
     <string name="checklist_unlock">Розблокувати чекліст</string>
     <string name="block_select">Виділити блок</string>
+    <string name="list_item_reorder">Перемістити пункт</string>
+    <string name="list_item_move_up">Перемістити пункт вгору</string>
+    <string name="list_item_move_down">Перемістити пункт вниз</string>
+    <string name="list_item_indent">Збільшити відступ пункту</string>
+    <string name="list_item_outdent">Зменшити відступ пункту</string>
     <string name="selection_count">Виділено блоків: %1$d</string>
     <string name="selection_close">Зняти виділення</string>
     <string name="selection_copy">Копіювати</string>

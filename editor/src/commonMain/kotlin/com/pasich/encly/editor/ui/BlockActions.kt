@@ -67,6 +67,12 @@ internal interface BlockActions {
     /** The id of this block. */
     val blockId: String
 
+    /** Indents ([deeper]) or outdents item [itemId] of this list one level; false when it cannot. */
+    fun onListItemShift(itemId: String, deeper: Boolean): Boolean
+
+    /** Moves item [itemId] of this list [by] places among its siblings (up is negative); false when it cannot. */
+    fun onListItemMove(itemId: String, by: Int): Boolean
+
     /** The text selection across blocks. */
     val textRange: TextRangeSelection
 

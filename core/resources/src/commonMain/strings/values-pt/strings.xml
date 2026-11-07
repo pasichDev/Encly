@@ -53,6 +53,11 @@
     <string name="checklist_lock">Bloquear lista de tarefas</string>
     <string name="checklist_unlock">Desbloquear lista de tarefas</string>
     <string name="block_select">Selecionar bloco</string>
+    <string name="list_item_reorder">Reordenar item</string>
+    <string name="list_item_move_up">Mover item para cima</string>
+    <string name="list_item_move_down">Mover item para baixo</string>
+    <string name="list_item_indent">Aumentar recuo do item</string>
+    <string name="list_item_outdent">Diminuir recuo do item</string>
     <string name="selection_count">Blocos selecionados: %1$d</string>
     <string name="selection_close">Limpar seleção</string>
     <string name="selection_copy">Copiar</string>

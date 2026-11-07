@@ -690,6 +690,11 @@
     <string name="whats_new_dismiss">فهمت</string>
     <string name="trash_auto_delete_hint">تُحذف الملاحظات نهائيًا بعد 28 يومًا في سلة المحذوفات.</string>
     <string name="block_select">تحديد الكتلة</string>
+    <string name="list_item_reorder">إعادة ترتيب العنصر</string>
+    <string name="list_item_move_up">نقل العنصر لأعلى</string>
+    <string name="list_item_move_down">نقل العنصر لأسفل</string>
+    <string name="list_item_indent">زيادة إزاحة العنصر</string>
+    <string name="list_item_outdent">تقليل إزاحة العنصر</string>
     <string name="select_all">تحديد الكل</string>
     <string name="selection_close">إلغاء التحديد</string>
     <string name="selection_copied">تم النسخ</string>

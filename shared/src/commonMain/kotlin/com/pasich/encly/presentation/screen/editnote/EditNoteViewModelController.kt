@@ -115,6 +115,12 @@ internal class EditNoteViewModelController(
         viewModel.onSlashTyped(block, text, started)
 
     override fun applySlash(block: Block, command: SlashCommand) = viewModel.applySlash(block, command)
+
+    override fun onListItemShift(block: Block.ListBlock, itemId: String, deeper: Boolean): Boolean =
+        viewModel.shiftListItem(block, itemId, deeper)
+
+    override fun onListItemMove(block: Block.ListBlock, itemId: String, by: Int): Boolean =
+        viewModel.moveListItem(block, itemId, by)
 }
 
 /** The editor's view of the screen's note view model. */

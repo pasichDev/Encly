@@ -26,7 +26,12 @@ import com.pasich.encly.core.resources.link_blocked
 import com.pasich.encly.core.resources.link_copy
 import com.pasich.encly.core.resources.link_edit
 import com.pasich.encly.core.resources.link_open
+import com.pasich.encly.core.resources.list_item_indent
+import com.pasich.encly.core.resources.list_item_move_down
+import com.pasich.encly.core.resources.list_item_move_up
+import com.pasich.encly.core.resources.list_item_outdent
 import com.pasich.encly.core.resources.list_item_placeholder
+import com.pasich.encly.core.resources.list_item_reorder
 import com.pasich.encly.core.resources.markdown_copy
 import com.pasich.encly.core.resources.more_options
 import com.pasich.encly.core.resources.press_to_edit
@@ -181,6 +186,11 @@ internal fun EditorString.resource(): StringResource = when (this) {
     EditorString.TEMPLATE_PROJECT_DECISIONS -> Res.string.template_project_decisions
     EditorString.TEMPLATE_PROJECT_QUESTIONS -> Res.string.template_project_questions
     EditorString.TEMPLATE_CHECKLIST_TODO -> Res.string.template_checklist_todo
+    EditorString.LIST_ITEM_REORDER -> Res.string.list_item_reorder
+    EditorString.LIST_ITEM_MOVE_UP -> Res.string.list_item_move_up
+    EditorString.LIST_ITEM_MOVE_DOWN -> Res.string.list_item_move_down
+    EditorString.LIST_ITEM_INDENT -> Res.string.list_item_indent
+    EditorString.LIST_ITEM_OUTDENT -> Res.string.list_item_outdent
 }
 
 /**

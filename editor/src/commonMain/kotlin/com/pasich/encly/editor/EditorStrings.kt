@@ -61,6 +61,11 @@ public enum class EditorString(internal val english: String) {
     TEMPLATE_PROJECT_DECISIONS("Decisions"),
     TEMPLATE_PROJECT_QUESTIONS("Open questions"),
     TEMPLATE_CHECKLIST_TODO("To do"),
+    LIST_ITEM_REORDER("Reorder item"),
+    LIST_ITEM_MOVE_UP("Move item up"),
+    LIST_ITEM_MOVE_DOWN("Move item down"),
+    LIST_ITEM_INDENT("Indent item"),
+    LIST_ITEM_OUTDENT("Outdent item"),
 }
 
 /**

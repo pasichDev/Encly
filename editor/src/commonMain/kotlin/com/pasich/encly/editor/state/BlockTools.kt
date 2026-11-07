@@ -68,6 +68,7 @@ public fun BlockEditorState.applyTool(tool: BlockType, exact: Boolean = false) {
     val index = selection.workingIndex
     // A locked checklist keeps its kind: converting it would drop the lock the user set.
     if ((blocks[index] as? Block.ListBlock)?.let { it.locked.value } == true) return
+    if (retargetNestedItem(blocks[index], tool)) return
     val converted = convertBlock(blocks[index], tool, exact)
     when {
         converted != null -> replaceBlock(index, converted)
@@ -103,7 +104,7 @@ private fun convertText(block: Block, text: String, tool: BlockType): Block? = w
 
     BlockType.LIST_CHECK, BlockType.LIST_BULLET, BlockType.LIST_NUMBER -> {
         val items = if (block is Block.ListBlock) block.items.value else text.split('\n').map { ItemListBlock(it) }
-        Block.ListBlock(MutableStateFlow(items), blockType = tool)
+        Block.ListBlock(MutableStateFlow(items.map { it.copy(kind = null) }), blockType = tool)
     }
 
     // Only an empty paragraph becomes a link; text is never thrown away.

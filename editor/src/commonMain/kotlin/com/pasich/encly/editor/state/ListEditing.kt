@@ -2,6 +2,8 @@ package com.pasich.encly.editor.state
 
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.alongside
+import com.pasich.encly.editor.model.normalizedLevels
 import kotlinx.coroutines.flow.MutableStateFlow
 
 // Enter, Backspace and a paste in a list's items: an item splits at the cursor, an empty item
@@ -18,9 +20,9 @@ public fun BlockEditorState.listLineBreak(listId: String, itemId: String, lineBr
 }
 
 /** Item [at] of [list], the block at [index]. */
-private data class ListItemAt(val index: Int, val list: Block.ListBlock, val at: Int)
+internal data class ListItemAt(val index: Int, val list: Block.ListBlock, val at: Int)
 
-private fun BlockEditorState.itemAt(listId: String, itemId: String): ListItemAt? {
+internal fun BlockEditorState.itemAt(listId: String, itemId: String): ListItemAt? {
     val index = indexOf(listId)
     val list = blocks.getOrNull(index) as? Block.ListBlock
     val at = list?.let { l -> l.items.value.indexOfFirst { it.id == itemId } } ?: -1
@@ -33,8 +35,10 @@ private fun BlockEditorState.listPaste(item: ListItemAt, lineBreak: LineBreak): 
     val items = list.items.value
     val rest = lineBreak.lines.drop(1)
     val kept = lineBreak.head + lineBreak.lines.first()
-    val middle = rest.dropLast(1).filter { it.isNotBlank() }.map(::listItemText)
-    val lastLine = listItemText(rest.last())
+    val here = items[at]
+    // Pasted lines go in at the level of the item they are pasted into.
+    val middle = rest.dropLast(1).filter { it.isNotBlank() }.map { listItemText(it).alongside(here) }
+    val lastLine = listItemText(rest.last()).alongside(here)
     val last = lastLine.copy(value = lastLine.value + lineBreak.tail)
     val newItems = items.toMutableList().apply {
         this[at] = items[at].copy(value = kept)
@@ -50,21 +54,27 @@ private fun BlockEditorState.listEnter(where: ListItemAt, head: String, tail: St
     val items = list.items.value
     val item = items[at]
     return when {
+        // An empty nested item comes out one level first; an empty item at the top leaves the list.
         head.isEmpty() && tail.isEmpty() -> {
-            exitList(index, list, at, from = CaretTarget(list.id, item.id, 0))
+            if (items.normalizedLevels(list.blockType)[at].level > 0) {
+                outdentEmpty(index, list, at)
+            } else {
+                exitList(index, list, at, from = CaretTarget(list.id, item.id, 0))
+            }
             ""
         }
 
         // At the start of an item: an empty item opens above it.
         head.isEmpty() -> {
-            batch { setValue(list.id, list.items, items.toMutableList().apply { add(at, ItemListBlock("")) }) }
+            val above = ItemListBlock("").alongside(item)
+            batch { setValue(list.id, list.items, items.toMutableList().apply { add(at, above) }) }
             CaretTarget(list.id, item.id, 0).let { attachCaretToLastStep(it, it) }
             selection.focusAt(index, caret = 0, itemId = item.id)
             tail
         }
 
         else -> {
-            val next = ItemListBlock(tail)
+            val next = ItemListBlock(tail).alongside(item)
             val newItems = items.toMutableList().apply {
                 this[at] = item.copy(value = head)
                 add(at + 1, next)
@@ -77,6 +87,13 @@ private fun BlockEditorState.listEnter(where: ListItemAt, head: String, tail: St
     }
 }
 
+/** The empty nested item [at] comes out one level (with its children), the cursor staying in it. */
+private fun BlockEditorState.outdentEmpty(index: Int, list: Block.ListBlock, at: Int) {
+    val item = list.items.value[at]
+    shiftListItem(list.id, item.id, deeper = false)
+    selection.focusAt(index, caret = 0, itemId = item.id)
+}
+
 /**
  * The empty item [at] leaves the list: a paragraph takes its place, after the list for its last
  * item, before it for its first, and in the middle it splits the list in two around it.
@@ -84,7 +101,7 @@ private fun BlockEditorState.listEnter(where: ListItemAt, head: String, tail: St
 private fun BlockEditorState.exitList(index: Int, list: Block.ListBlock, at: Int, from: CaretTarget) {
     val items = list.items.value
     val before = items.take(at)
-    val after = items.drop(at + 1)
+    val after = items.drop(at + 1).normalizedLevels(list.blockType)
     val paragraph = Block.TextBlock()
     batch {
         when {
@@ -107,8 +124,9 @@ private fun BlockEditorState.exitList(index: Int, list: Block.ListBlock, at: Int
 }
 
 /**
- * Backspace with the cursor at the start of item [itemId]: the first item leaves the list as a
- * paragraph above it, and any other item, empty or not, joins the item above (see [joinIntoCurrent]).
+ * Backspace with the cursor at the start of item [itemId]: a nested item comes out one level first, the
+ * first item leaves the list as a paragraph above it, and any other item, empty or not, joins the item
+ * above (see [joinIntoCurrent]).
  */
 public fun BlockEditorState.listBackspaceAtStart(listId: String, itemId: String): Boolean {
     val where = itemAt(listId, itemId) ?: return false
@@ -116,13 +134,18 @@ public fun BlockEditorState.listBackspaceAtStart(listId: String, itemId: String)
     val items = list.items.value
     val item = items[at]
     when {
+        items.normalizedLevels(list.blockType)[at].level > 0 -> {
+            shiftListItem(list.id, item.id, deeper = false)
+            selection.focusAt(index, caret = 0, itemId = item.id)
+        }
+
         at == 0 -> {
             val paragraph = Block.TextBlock(MutableStateFlow(item.value))
             batch {
                 if (items.size == 1) {
                     replaceBlock(index, paragraph)
                 } else {
-                    setValue(list.id, list.items, items.drop(1))
+                    setValue(list.id, list.items, items.drop(1).normalizedLevels(list.blockType))
                     addBlock(index, paragraph)
                 }
             }
@@ -148,10 +171,15 @@ private fun BlockEditorState.joinIntoCurrent(where: ListItemAt) {
     val previous = items[at - 1]
     val join = previous.value.length
     val newItems = items.toMutableList().apply {
-        this[at] = item.copy(value = previous.value + item.value, isCheck = previous.isCheck)
+        this[at] = item.copy(
+            value = previous.value + item.value,
+            isCheck = previous.isCheck,
+            level = previous.level,
+            kind = previous.kind,
+        )
         removeAt(at - 1)
     }
-    batch { setValue(list.id, list.items, newItems) }
+    batch { setValue(list.id, list.items, newItems.normalizedLevels(list.blockType)) }
     attachCaretToLastStep(CaretTarget(list.id, item.id, 0), CaretTarget(list.id, item.id, join))
     selection.focusAt(index, caret = join, itemId = item.id)
 }

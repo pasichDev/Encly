@@ -4,6 +4,9 @@ import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.hasContent
+import com.pasich.encly.editor.model.kindIn
+import com.pasich.encly.editor.model.normalizedLevels
+import com.pasich.encly.editor.model.numbers
 
 /**
  * Removes every picked block as one undo step and leaves block selection mode. The note keeps at
@@ -51,12 +54,17 @@ private fun Block.plainLines(): String = when (this) {
 
     is Block.LinkBlock -> block.value.let { if (it.title.isBlank()) it.url else "${it.title} (${it.url})" }
 
-    is Block.ListBlock -> items.value.filter { it.value.isNotBlank() }.withIndex().joinToString("\n") { (at, item) ->
-        val marker = when (blockType) {
-            BlockType.LIST_NUMBER -> "${at + 1}. "
-            BlockType.LIST_CHECK -> if (item.isCheck) "[x] " else "[ ] "
-            else -> "- "
+    is Block.ListBlock -> {
+        // A nested item is indented two spaces a level, and numbers start again at every level.
+        val shown = items.value.filter { it.value.isNotBlank() }.normalizedLevels(blockType)
+        val numbers = shown.numbers(blockType)
+        shown.withIndex().joinToString("\n") { (at, item) ->
+            val marker = when (item.kindIn(blockType)) {
+                BlockType.LIST_NUMBER -> "${numbers[at]}. "
+                BlockType.LIST_CHECK -> if (item.isCheck) "[x] " else "[ ] "
+                else -> "- "
+            }
+            "  ".repeat(item.level) + marker + item.value
         }
-        marker + item.value
     }
 }

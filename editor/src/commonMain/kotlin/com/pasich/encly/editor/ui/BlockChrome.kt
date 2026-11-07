@@ -38,6 +38,7 @@ import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.ui.blocks.BlockSelectAllIme
+import com.pasich.encly.editor.ui.blocks.ReorderHandleWidth
 import com.pasich.encly.editor.ui.components.EditorTooltip
 import com.pasich.encly.editor.ui.components.editorInteractive
 
@@ -152,12 +153,16 @@ private fun BoxScope.BlockHandle(marked: Boolean, onSelect: () -> Unit) {
 private fun BoxScope.ChecklistLockToggle(block: Block, controller: EditorController) {
     val checklist = (block as? Block.ListBlock)?.takeIf { it.blockType == BlockType.LIST_CHECK } ?: return
     val locked by checklist.locked.collectAsState()
+    val items by checklist.items.collectAsState()
     val strings = LocalEditorStrings.current
     val icons = LocalEditorTheme.current.icons
     val colors = MaterialTheme.colorScheme
     EditorTooltip(
         label = strings.text(if (locked) EditorString.CHECKLIST_UNLOCK else EditorString.CHECKLIST_LOCK),
-        modifier = Modifier.align(Alignment.TopEnd),
+        // Beside the drag handle of the first item, not over it.
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(end = if (items.size > 1 && !locked) ReorderHandleWidth else 0.dp),
     ) {
         Surface(
             onClick = { controller.toggleChecklistLock(checklist) },

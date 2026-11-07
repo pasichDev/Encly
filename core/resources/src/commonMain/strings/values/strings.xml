@@ -70,6 +70,11 @@
     <string name="checklist_lock">Lock checklist</string>
     <string name="checklist_unlock">Unlock checklist</string>
     <string name="block_select">Select block</string>
+    <string name="list_item_reorder">Reorder item</string>
+    <string name="list_item_move_up">Move item up</string>
+    <string name="list_item_move_down">Move item down</string>
+    <string name="list_item_indent">Indent item</string>
+    <string name="list_item_outdent">Outdent item</string>
     <string name="selection_count">Blocks selected: %1$d</string>
     <string name="selection_close">Clear selection</string>
     <string name="selection_copy">Copy</string>

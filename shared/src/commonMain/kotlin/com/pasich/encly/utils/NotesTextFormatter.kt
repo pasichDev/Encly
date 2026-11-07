@@ -4,6 +4,9 @@ import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.hasContent
+import com.pasich.encly.editor.model.kindIn
+import com.pasich.encly.editor.model.normalizedLevels
+import com.pasich.encly.editor.model.numbers
 
 /**
  * Utility class for formatting note text.
@@ -81,32 +84,21 @@ object NotesTextFormatter {
                 }
 
                 is Block.ListBlock -> {
-                    val items = block.items.value
+                    // A nested item is indented two spaces a level; numbers start again at every level.
+                    val items = block.items.value.normalizedLevels(block.blockType)
+                    val numbers = items.numbers(block.blockType)
+                    items.forEachIndexed { index, item ->
+                        val marker = when (item.kindIn(block.blockType)) {
+                            // For checkboxes, use [x] or [ ]
+                            BlockType.LIST_CHECK -> if (item.isCheck) "[x]" else "[ ]"
 
-                    if (items.isNotEmpty()) {
-                        when (block.blockType) {
-                            BlockType.LIST_CHECK -> {
-                                // For checkboxes, use [x] or [ ]
-                                items.forEach { item ->
-                                    val status = if (item.isCheck) "[x]" else "[ ]"
-                                    text.append("$status ${item.value}\n")
-                                }
-                            }
+                            // Leave numbered lists as they are
+                            BlockType.LIST_NUMBER -> "${numbers[index]}."
 
-                            BlockType.LIST_NUMBER -> {
-                                // Leave numbered lists as they are
-                                items.forEachIndexed { index, item ->
-                                    text.append("${index + 1}. ${item.value}\n")
-                                }
-                            }
-
-                            else -> {
-                                // For bulleted lists, use a hyphen
-                                items.forEach { item ->
-                                    text.append("- ${item.value}\n")
-                                }
-                            }
+                            // For bulleted lists, use a hyphen
+                            else -> "-"
                         }
+                        text.append("  ".repeat(item.level)).append("$marker ${item.value}\n")
                     }
                 }
 

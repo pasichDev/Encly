@@ -74,6 +74,12 @@ internal class BlockActionsImpl(
 
     override val blockId: String get() = block.id
 
+    override fun onListItemShift(itemId: String, deeper: Boolean): Boolean =
+        (block as? Block.ListBlock)?.let { controller.onListItemShift(it, itemId, deeper) } == true
+
+    override fun onListItemMove(itemId: String, by: Int): Boolean =
+        (block as? Block.ListBlock)?.let { controller.onListItemMove(it, itemId, by) } == true
+
     override val textRange: TextRangeSelection get() = controller.textRange
 
     override fun selectAllText(): Boolean = controller.selectAllText()

@@ -44,7 +44,12 @@ public final class com/pasich/encly/editor/EditorString : java/lang/Enum {
 	public static final field LINK_COPY Lcom/pasich/encly/editor/EditorString;
 	public static final field LINK_EDIT Lcom/pasich/encly/editor/EditorString;
 	public static final field LINK_OPEN Lcom/pasich/encly/editor/EditorString;
+	public static final field LIST_ITEM_INDENT Lcom/pasich/encly/editor/EditorString;
+	public static final field LIST_ITEM_MOVE_DOWN Lcom/pasich/encly/editor/EditorString;
+	public static final field LIST_ITEM_MOVE_UP Lcom/pasich/encly/editor/EditorString;
+	public static final field LIST_ITEM_OUTDENT Lcom/pasich/encly/editor/EditorString;
 	public static final field LIST_ITEM_PLACEHOLDER Lcom/pasich/encly/editor/EditorString;
+	public static final field LIST_ITEM_REORDER Lcom/pasich/encly/editor/EditorString;
 	public static final field MORE_OPTIONS Lcom/pasich/encly/editor/EditorString;
 	public static final field PRESS_TO_EDIT Lcom/pasich/encly/editor/EditorString;
 	public static final field QUOTE Lcom/pasich/encly/editor/EditorString;
@@ -276,15 +281,19 @@ public final class com/pasich/encly/editor/model/BlockType : java/lang/Enum {
 public final class com/pasich/encly/editor/model/ItemListBlock {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;ZLjava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;ZLjava/lang/String;ILcom/pasich/encly/editor/model/BlockType;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/String;ILcom/pasich/encly/editor/model/BlockType;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Z
 	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;ZLjava/lang/String;)Lcom/pasich/encly/editor/model/ItemListBlock;
-	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/ItemListBlock;Ljava/lang/String;ZLjava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/ItemListBlock;
+	public final fun component4 ()I
+	public final fun component5 ()Lcom/pasich/encly/editor/model/BlockType;
+	public final fun copy (Ljava/lang/String;ZLjava/lang/String;ILcom/pasich/encly/editor/model/BlockType;)Lcom/pasich/encly/editor/model/ItemListBlock;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/model/ItemListBlock;Ljava/lang/String;ZLjava/lang/String;ILcom/pasich/encly/editor/model/BlockType;ILjava/lang/Object;)Lcom/pasich/encly/editor/model/ItemListBlock;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Ljava/lang/String;
+	public final fun getKind ()Lcom/pasich/encly/editor/model/BlockType;
+	public final fun getLevel ()I
 	public final fun getValue ()Ljava/lang/String;
 	public fun hashCode ()I
 	public final fun isCheck ()Z
@@ -313,6 +322,23 @@ public final class com/pasich/encly/editor/model/LinkDataBlock {
 	public final fun setTitle (Ljava/lang/String;)V
 	public final fun setUrl (Ljava/lang/String;)V
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/model/ListLevelsKt {
+	public static final field MAX_LIST_LEVEL I
+	public static final fun isListKind (Lcom/pasich/encly/editor/model/BlockType;)Z
+	public static final fun kindIn (Lcom/pasich/encly/editor/model/ItemListBlock;Lcom/pasich/encly/editor/model/BlockType;)Lcom/pasich/encly/editor/model/BlockType;
+	public static final fun normalizedLevels (Ljava/util/List;Lcom/pasich/encly/editor/model/BlockType;)Ljava/util/List;
+	public static final fun numbers (Ljava/util/List;Lcom/pasich/encly/editor/model/BlockType;)Ljava/util/List;
+	public static final fun siblingStarts (Ljava/util/List;I)Ljava/util/List;
+	public static final fun subtreeEnd (Ljava/util/List;I)I
+}
+
+public final class com/pasich/encly/editor/model/ListMovesKt {
+	public static final fun movedBy (Ljava/util/List;II)Lkotlin/Pair;
+	public static final fun shifted (Ljava/util/List;IZLcom/pasich/encly/editor/model/BlockType;)Ljava/util/List;
+	public static final fun siblingOffsetAt (Ljava/util/List;ILjava/util/List;Ljava/util/List;F)I
+	public static final fun withSiblingsOfKind (Ljava/util/List;ILcom/pasich/encly/editor/model/BlockType;Lcom/pasich/encly/editor/model/BlockType;)Ljava/util/List;
 }
 
 public abstract interface class com/pasich/encly/editor/model/TextualBlock {
@@ -505,6 +531,15 @@ public final class com/pasich/encly/editor/state/ListEditingKt {
 	public static final fun listBackspaceAtStart (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;)Z
 	public static final fun listLineBreak (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
 	public static final fun listTypingStep (Ljava/util/List;Ljava/util/List;)Lcom/pasich/encly/editor/state/TypingStep;
+}
+
+public final class com/pasich/encly/editor/state/ListNestingKt {
+	public static final fun canMoveListItem (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;I)Z
+	public static final fun canShiftListItem (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Z)Z
+	public static final fun interactedListItem (Lcom/pasich/encly/editor/state/BlockEditorState;)Lkotlin/Pair;
+	public static final fun moveListItem (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;I)Z
+	public static final fun setNestedListKind (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Lcom/pasich/encly/editor/model/BlockType;)Z
+	public static final fun shiftListItem (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Z)Z
 }
 
 public final class com/pasich/encly/editor/state/NoteFind {
@@ -954,6 +989,8 @@ public abstract interface class com/pasich/encly/editor/ui/EditorController {
 	public abstract fun onLinkPasted (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Lcom/pasich/encly/editor/model/LinkDataBlock;)Z
 	public abstract fun onListBackspaceAtStart (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;)Z
 	public abstract fun onListItemCaret (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;I)V
+	public abstract fun onListItemMove (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;I)Z
+	public abstract fun onListItemShift (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;Z)Z
 	public abstract fun onListItemsChanged (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/util/List;Z)V
 	public abstract fun onListLineBreak (Lcom/pasich/encly/editor/model/Block$ListBlock;Ljava/lang/String;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
 	public abstract fun onShortcut (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Lcom/pasich/encly/editor/state/Shortcut;)Z

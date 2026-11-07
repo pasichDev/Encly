@@ -4,12 +4,15 @@ import com.pasich.encly.editor.MarkdownBlockParser
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.MAX_LIST_LEVEL
+import com.pasich.encly.editor.model.normalizedLevels
 
 /**
  * Markdown as Encly blocks. Line based and forgiving; only the markup it reads is removed.
  *
  * - `#`..`####` -> H1-H4 (5 and 6 -> H4); `- [ ]` / `- [x]` -> LIST_CHECK; `-` `*` `+` ->
- *   LIST_BULLET; `1.` -> LIST_NUMBER (nested items are flattened, Encly lists are flat);
+ *   LIST_BULLET; `1.` -> LIST_NUMBER; items indented under another (2 or 4 spaces, or a tab) nest, up to three
+ *   levels, and a nested item may be of another kind than its list;
  *   `>` -> QUOTE; `---` / `***` -> SEPARATOR; everything else -> TEXT, one block per paragraph.
  * - `✅` / `☐` lines (Notesnook text exports) are checklist items. An Obsidian callout keeps its title
  *   (`> [!note] Decisions` -> `Decisions`), a wiki link keeps its alias or name.
@@ -61,6 +64,30 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
     override fun parsePaste(text: String, plainFirstLine: Boolean, claim: (String) -> Block?): List<Block> =
         pasteBlocks(text, plainFirstLine, claim)
 
+    /** The columns [raw] is indented by: a space is one, a tab goes on to the next multiple of four. */
+    private fun indentWidth(raw: String): Int = raw.takeWhile { it == ' ' || it == '\t' }
+        .fold(0) { width, char -> if (char == '\t') width + TAB_WIDTH - width % TAB_WIDTH else width + 1 }
+
+    private const val TAB_WIDTH = 4
+
+    /** The indentation of each open level of the list being read. */
+    private class IndentLevels {
+        private val widths = ArrayList<Int>()
+
+        /**
+         * The level of an item indented by [width] columns: it nests under the item before it when indented more
+         * than that one, however many spaces (2, 4, a tab) the writer uses, and comes out to the nearest level it
+         * lines up with when indented less.
+         */
+        fun levelOf(width: Int): Int {
+            while (widths.isNotEmpty() && widths.last() > width) widths.removeAt(widths.lastIndex)
+            if (widths.isEmpty() || widths.last() < width) widths += width
+            return (widths.size - 1).coerceAtMost(MAX_LIST_LEVEL)
+        }
+
+        fun clear() = widths.clear()
+    }
+
     /** An ATX heading of [level] (1 to 6) with its [title], blanks and closing `#` run removed. */
     private class Heading(val level: Int, val title: String) {
         companion object {
@@ -105,6 +132,8 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
         private val code = ArrayList<String>()
         private val items = ArrayList<ItemListBlock>()
         private var listType: BlockType? = null
+
+        private val indents = IndentLevels()
         private var inFence = false
 
         fun line(raw: String) {
@@ -170,13 +199,13 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
                     blocks += ImportBlocks.heading(readable(heading.title), heading.level)
                 }
 
-                check != null -> item(BlockType.LIST_CHECK, check.groupValues[2], check.groupValues[1] != " ")
+                check != null -> item(BlockType.LIST_CHECK, check.groupValues[2], check.groupValues[1] != " ", raw)
 
-                glyph != null -> item(BlockType.LIST_CHECK, glyph.groupValues[2], glyph.groupValues[1] != "☐")
+                glyph != null -> item(BlockType.LIST_CHECK, glyph.groupValues[2], glyph.groupValues[1] != "☐", raw)
 
-                bullet != null -> item(BlockType.LIST_BULLET, bullet.groupValues[1], false)
+                bullet != null -> item(BlockType.LIST_BULLET, bullet.groupValues[1], false, raw)
 
-                number != null -> item(BlockType.LIST_NUMBER, number.groupValues[1], false)
+                number != null -> item(BlockType.LIST_NUMBER, number.groupValues[1], false, raw)
 
                 quoted != null -> {
                     flushParagraph()
@@ -210,12 +239,19 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
         /** [text] as the importer reads it; a paste keeps it as it is. */
         private fun readable(text: String): String = if (paste == null) inline(text) else text
 
-        private fun item(type: BlockType, text: String, checked: Boolean) {
+        private fun item(type: BlockType, text: String, checked: Boolean, raw: String) {
             flushParagraph()
             flushQuote()
-            if (listType != type) flushList()
-            listType = type
-            items += ItemListBlock(value = readable(text).trim(), isCheck = checked)
+            val width = indentWidth(raw)
+            var level = indents.levelOf(width)
+            // A new kind at the top level starts a list of its own; deeper, a sub-list of that kind.
+            if (listType != null && listType != type && level == 0) {
+                flushList()
+                level = indents.levelOf(width)
+            }
+            val kind = type.takeIf { level > 0 && it != listType }
+            listType = listType ?: type
+            items += ItemListBlock(value = readable(text).trim(), isCheck = checked, level = level, kind = kind)
         }
 
         private fun closeFence() {
@@ -248,8 +284,10 @@ public object MarkdownBlockMapper : MarkdownBlockParser {
         private fun flushList() {
             val type = listType ?: return
             // A paste keeps an empty item (an empty checklist template); an import drops it.
-            val kept = if (paste != null) items.toList() else items.filter { it.value.isNotBlank() }
+            val kept = (if (paste != null) items.toList() else items.filter { it.value.isNotBlank() })
+                .normalizedLevels(type)
             items.clear()
+            indents.clear()
             listType = null
             if (kept.isNotEmpty()) blocks += ImportBlocks.list(type, kept)
         }

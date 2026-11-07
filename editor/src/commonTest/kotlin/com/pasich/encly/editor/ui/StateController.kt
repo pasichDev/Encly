@@ -41,8 +41,10 @@ import com.pasich.encly.editor.state.listLineBreak
 import com.pasich.encly.editor.state.listTypingStep
 import com.pasich.encly.editor.state.moveBlockOf
 import com.pasich.encly.editor.state.moveInteracted
+import com.pasich.encly.editor.state.moveListItem
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.replaceTextRange
+import com.pasich.encly.editor.state.shiftListItem
 import com.pasich.encly.editor.state.textRangePlainText
 import com.pasich.encly.editor.state.toggleChecklistLock
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
@@ -153,6 +155,12 @@ internal class StateController(val state: BlockEditorState) : EditorController {
 
     override fun onLinkPasted(block: Block, pasted: String, link: LinkDataBlock): Boolean =
         state.pasteLink(block.id, pasted, link)
+
+    override fun onListItemShift(block: Block.ListBlock, itemId: String, deeper: Boolean): Boolean =
+        state.shiftListItem(block.id, itemId, deeper)
+
+    override fun onListItemMove(block: Block.ListBlock, itemId: String, by: Int): Boolean =
+        state.moveListItem(block.id, itemId, by)
 
     override fun onListLineBreak(block: Block.ListBlock, itemId: String, lineBreak: LineBreak): String? =
         state.listLineBreak(block.id, itemId, lineBreak)

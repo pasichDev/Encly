@@ -128,4 +128,10 @@ public interface EditorController {
 
     /** Turns the paragraph [block] into [command]'s block. */
     public fun applySlash(block: Block, command: SlashCommand)
+
+    /** Indents ([deeper]) or outdents item [itemId] of [block] one level, with its sub-items; false when it cannot. */
+    public fun onListItemShift(block: Block.ListBlock, itemId: String, deeper: Boolean): Boolean
+
+    /** Moves item [itemId] of [block], with its sub-items, [by] places among its siblings (up is negative). */
+    public fun onListItemMove(block: Block.ListBlock, itemId: String, by: Int): Boolean
 }

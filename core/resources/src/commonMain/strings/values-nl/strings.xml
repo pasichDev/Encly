@@ -53,6 +53,11 @@
     <string name="checklist_lock">Checklist vergrendelen</string>
     <string name="checklist_unlock">Checklist ontgrendelen</string>
     <string name="block_select">Blok selecteren</string>
+    <string name="list_item_reorder">Item verplaatsen</string>
+    <string name="list_item_move_up">Item omhoog verplaatsen</string>
+    <string name="list_item_move_down">Item omlaag verplaatsen</string>
+    <string name="list_item_indent">Item inspringen</string>
+    <string name="list_item_outdent">Inspringing van item verkleinen</string>
     <string name="selection_count">Geselecteerde blokken: %1$d</string>
     <string name="selection_close">Selectie wissen</string>
     <string name="selection_copy">Kopiëren</string>

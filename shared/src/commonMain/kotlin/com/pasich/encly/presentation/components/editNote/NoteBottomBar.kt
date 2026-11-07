@@ -41,6 +41,8 @@ import com.pasich.encly.core.resources.close
 import com.pasich.encly.core.resources.delete_block
 import com.pasich.encly.core.resources.keyboard_hide
 import com.pasich.encly.core.resources.keyboard_show
+import com.pasich.encly.core.resources.list_item_indent
+import com.pasich.encly.core.resources.list_item_outdent
 import com.pasich.encly.core.resources.redo
 import com.pasich.encly.core.resources.undo
 import com.pasich.encly.editor.model.BlockType
@@ -50,6 +52,8 @@ import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyToolButton
 import com.pasich.encly.presentation.designsystem.EnclyToolbarRule
+import com.pasich.encly.presentation.designsystem.Indent
+import com.pasich.encly.presentation.designsystem.Outdent
 import com.pasich.encly.presentation.designsystem.ToolStyle
 import com.pasich.encly.presentation.effects.rememberImeVisible
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
@@ -303,10 +307,26 @@ private fun MoreTools(blockTools: BlockMoveTools, onApply: ((BlockType) -> Unit)
                 onClick = lock.onToggle,
             )
         }
+        blockTools.indent?.let { ListIndentButtons(it) }
         EnclyToolButton(
             icon = EnclyIcons.Trash,
             contentDescription = stringResource(Res.string.delete_block),
             onClick = blockTools.onDelete,
         )
     }
+}
+
+/** Outdent and indent, for the list item the user works in. */
+@Composable
+private fun ListIndentButtons(indent: ListIndentTools) {
+    EnclyToolButton(
+        icon = EnclyIcons.Outdent,
+        contentDescription = stringResource(Res.string.list_item_outdent),
+        onClick = indent.onOutdent,
+    )
+    EnclyToolButton(
+        icon = EnclyIcons.Indent,
+        contentDescription = stringResource(Res.string.list_item_indent),
+        onClick = indent.onIndent,
+    )
 }

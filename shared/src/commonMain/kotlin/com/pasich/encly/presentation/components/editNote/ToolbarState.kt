@@ -45,6 +45,23 @@ internal fun rememberBlockMoveTools(
         onDuplicate = viewModel::duplicateInteractedBlock,
         onDelete = if (canDelete) ({ keepingKeyboard(viewModel::removeInteractedBlock) }) else null,
         lock = lock,
+        indent = rememberListIndentTools(viewModel, interactedBlockId),
+    )
+}
+
+/** Indenting and outdenting the list item the user works in; null while they work on anything but a list. */
+@Composable
+private fun rememberListIndentTools(viewModel: EditNoteViewModel, interactedBlockId: String?): ListIndentTools? {
+    val current by rememberUpdatedState(interactedBlockId)
+    val inList by remember(viewModel) {
+        derivedStateOf { viewModel.blocks.firstOrNull { it.id == current } is Block.ListBlock }
+    }
+    if (!inList) return null
+    // Always offered while the user works in a list: which item they are in changes with the cursor, which the
+    // toolbar does not watch, so the buttons do nothing for an item that cannot go that way.
+    return ListIndentTools(
+        onIndent = { viewModel.shiftInteractedListItem(true) },
+        onOutdent = { viewModel.shiftInteractedListItem(false) },
     )
 }
 
@@ -73,7 +90,11 @@ internal class BlockMoveTools(
     val onDuplicate: (() -> Unit)?,
     val onDelete: (() -> Unit)?,
     val lock: ChecklistLock?,
+    val indent: ListIndentTools? = null,
 )
+
+/** Indenting and outdenting a list item; a null action shows its button disabled. */
+internal class ListIndentTools(val onIndent: (() -> Unit)?, val onOutdent: (() -> Unit)?)
 
 /** Locking the checklist the user works on: whether it is [locked], and how to flip that. */
 internal class ChecklistLock(val locked: Boolean, val onToggle: () -> Unit)

@@ -4,7 +4,11 @@ import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.model.MAX_LIST_LEVEL
 import com.pasich.encly.editor.model.hasContent
+import com.pasich.encly.editor.model.kindIn
+import com.pasich.encly.editor.model.normalizedLevels
+import com.pasich.encly.editor.model.numbers
 
 /**
  * A note's blocks as Markdown (CommonMark with GFM task lists), for the plaintext export.
@@ -22,6 +26,9 @@ import com.pasich.encly.editor.model.hasContent
  */
 object MarkdownBlocks {
     private const val NO_BREAK_SPACE = '\u00A0'
+
+    /** The width of `- `, the marker of a bullet and of a task item. */
+    private const val BULLET_WIDTH = 2
     private val LINK_SCHEMES = setOf("http", "https", "mailto", "tel")
     private val ENCODED_IN_LINK = mapOf(
         ' ' to "%20",
@@ -79,17 +86,25 @@ object MarkdownBlocks {
     }
 
     private fun list(type: BlockType, items: List<ItemListBlock>): String {
-        val shown = items.filter { it.value.isNotBlank() }
+        val shown = items.filter { it.value.isNotBlank() }.normalizedLevels(type)
+        val numbers = shown.numbers(type)
+        // How far each open level is indented: its parent's indent plus the width of the parent's list marker, which
+        // is where the parent's text starts, as CommonMark wants a nested item to line up. (The box of a task item
+        // belongs to its text, not to the marker.)
+        val indents = IntArray(MAX_LIST_LEVEL + 2)
         return shown.withIndex().joinToString("\n") { (index, item) ->
-            val marker = when (type) {
-                BlockType.LIST_NUMBER -> "${index + 1}. "
+            val kind = item.kindIn(type)
+            val marker = when (kind) {
+                BlockType.LIST_NUMBER -> "${numbers[index]}. "
                 BlockType.LIST_CHECK -> if (item.isCheck) "- [x] " else "- [ ] "
                 else -> "- "
             }
+            val indent = indents[item.level]
+            indents[item.level + 1] = indent + if (kind == BlockType.LIST_NUMBER) marker.length else BULLET_WIDTH
             val lines = MarkdownText.hardBreakLines(item.value)
-            val indent = " ".repeat(marker.length)
-            (listOf(marker + lines.first()) + lines.drop(1).map { if (it.isEmpty()) "" else indent + it })
-                .joinToString("\n")
+            val continuation = " ".repeat(indent + marker.length)
+            val first = " ".repeat(indent) + marker + lines.first()
+            (listOf(first) + lines.drop(1).map { if (it.isEmpty()) "" else continuation + it }).joinToString("\n")
         }
     }
 

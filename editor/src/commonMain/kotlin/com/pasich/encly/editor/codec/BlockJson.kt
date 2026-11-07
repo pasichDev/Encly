@@ -4,6 +4,7 @@ import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
+import com.pasich.encly.editor.model.normalizedLevels
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -81,12 +82,19 @@ internal object BlockJson {
                 put(
                     "items",
                     JsonArray(
-                        block.items.value.filter { it.value.isNotBlank() }.map { item ->
-                            buildJsonObject {
-                                put("value", item.value)
-                                put("isCheck", item.isCheck)
-                            }
-                        },
+                        block.items.value.filter { it.value.isNotBlank() }
+                            .normalizedLevels(block.blockType)
+                            .map { item ->
+                                buildJsonObject {
+                                    put("value", item.value)
+                                    put("isCheck", item.isCheck)
+                                    // Written only for a nested row, so a flat list is stored byte for byte as
+                                    // before. An older app ignores both keys: it shows the row at the top
+                                    // level and drops them the next time it saves the note.
+                                    if (item.level > 0) put("level", item.level)
+                                    item.kind?.let { put("kind", it.name) }
+                                }
+                            },
                     ),
                 )
                 // Written only when set, so a note without a locked list is stored as before. An older
@@ -127,27 +135,37 @@ internal object BlockJson {
             "SEPARATOR" -> Block.SeparatorBlock()
 
             // "LIST" kept as a legacy alias for checklists.
-            "LIST", "LIST_CHECK", "LIST_NUMBER", "LIST_BULLET" -> Block.ListBlock(
-                items = MutableStateFlow(
-                    json.array("items")?.map { item ->
-                        val itemObject = item.asObject()
-                        ItemListBlock(
-                            value = itemObject.string("value").orEmpty(),
-                            isCheck = itemObject.string("isCheck").toBoolean(),
-                        )
-                    } ?: listOf(ItemListBlock("")),
-                ),
-                blockType = when (blockType) {
-                    "LIST_NUMBER" -> BlockType.LIST_NUMBER
-                    "LIST_BULLET" -> BlockType.LIST_BULLET
-                    else -> BlockType.LIST_CHECK
-                },
-                // Optional, absent in notes written before checklists could be locked.
-                locked = MutableStateFlow(json.string("isLocked").toBoolean()),
-            )
+            "LIST", "LIST_CHECK", "LIST_NUMBER", "LIST_BULLET" -> listBlock(json, blockType)
 
             else -> throw SerializationException("Unknown block type: $blockType")
         }
+    }
+
+    private fun listBlock(json: JsonObject, blockType: String): Block {
+        val listType = when (blockType) {
+            "LIST_NUMBER" -> BlockType.LIST_NUMBER
+            "LIST_BULLET" -> BlockType.LIST_BULLET
+            else -> BlockType.LIST_CHECK
+        }
+        val stored = json.array("items")?.map { item ->
+            val itemObject = item.asObject()
+            ItemListBlock(
+                value = itemObject.string("value").orEmpty(),
+                isCheck = itemObject.string("isCheck").toBoolean(),
+                // Optional, absent in notes written before lists could be nested.
+                level = itemObject.string("level")?.toIntOrNull() ?: 0,
+                kind = itemObject.string("kind")
+                    ?.let { name -> BlockType.entries.firstOrNull { it.name == name } },
+            )
+        }
+        return Block.ListBlock(
+            items = MutableStateFlow(
+                if (stored == null) listOf(ItemListBlock("")) else stored.normalizedLevels(listType),
+            ),
+            blockType = listType,
+            // Optional, absent in notes written before checklists could be locked.
+            locked = MutableStateFlow(json.string("isLocked").toBoolean()),
+        )
     }
 
     private fun JsonElement.asObject(): JsonObject =
