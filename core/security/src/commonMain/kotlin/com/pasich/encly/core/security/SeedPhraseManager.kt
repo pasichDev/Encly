@@ -110,6 +110,9 @@ public class SeedPhraseManager(private val store: VaultStore) {
         return !recoveryEnabled || hasRecoverySeed()
     }
 
+    /** True while this process holds the key of a vault whose setup is not committed yet. */
+    public fun hasBootstrapKey(): Boolean = synchronized(lock) { bootstrapDek != null }
+
     public fun copyBootstrapKey(): ByteArray? = synchronized(lock) { bootstrapDek?.copyOf() }
 
     public fun clearBootstrapKey(): Unit = synchronized(lock) {

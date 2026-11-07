@@ -28,6 +28,12 @@ public enum class InitialStatus {
     LEGACY_VAULT,
     AUTH,
     SETUP_AUTH,
+
+    /**
+     * The vault's state file cannot be read right now (an I/O error, not damage): nothing is
+     * known about the vault, so nothing may be wiped or created. Retried by asking again.
+     */
+    STORAGE_UNREADABLE,
 }
 
 public enum class VaultUnlockResult {
@@ -124,8 +130,15 @@ public class SecurityManager(
     }
 
     private fun initializeSecurity(): InitialStatus {
+        if (vaultStore.isUnreadable()) return InitialStatus.STORAGE_UNREADABLE
         if (vaultStore.isCorrupt()) return InitialStatus.LOSS_CRYPTO
-        if (!isOnboardingShown()) return uncommittedVaultStatus()
+        if (!isOnboardingShown()) {
+            if (!isCommittedWithoutFlag()) return uncommittedVaultStatus()
+            // The flag was lost (or its file could not be read): the vault is committed all the same.
+            if (!appFlags.commit { putBoolean(ONBOARDING_SHOWN_KEY, true) }) {
+                AppLogger.w(TAG, "The onboarding flag of a committed vault could not be repaired")
+            }
+        }
         // Vaults from before the wipe PIN get their decoy wipe slot; no PIN needed, nothing shown.
         authenticationManager.ensureWipeSlot()
         if (startupFinished.compareAndSet(false, true)) {
@@ -163,9 +176,23 @@ public class SecurityManager(
         InitialStatus.ONBOARDING
     }
 
+    /**
+     * A vault the non-secret flags store forgot: a stored seed, a PIN or recovery slot and the
+     * encrypted database all exist. Setup writes the seed and the slots first and the database
+     * last, and holds the bootstrap key in memory until the commit, so an onboarding killed at any
+     * earlier step (no seed, no slot, or no database yet: nothing to lose) and the one still
+     * running in this process do not match, and restart.
+     */
+    private fun isCommittedWithoutFlag(): Boolean = !seedPhraseManager.hasBootstrapKey() &&
+        seedPhraseManager.hasStoredSeed() &&
+        (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()) &&
+        vaultDatabase.hasEncryptedDatabase()
+
     /** True when first-run setup may (re)create the vault without destroying user data. */
-    private fun isSafeToCreateVault(): Boolean =
-        !isOnboardingShown() && uncommittedVaultStatus() == InitialStatus.ONBOARDING
+    private fun isSafeToCreateVault(): Boolean = !vaultStore.isUnreadable() &&
+        !isOnboardingShown() &&
+        !isCommittedWithoutFlag() &&
+        uncommittedVaultStatus() == InitialStatus.ONBOARDING
 
     public fun authStrategy(): AuthStrategy = authenticationManager.isAuthStrategy()
 
@@ -589,8 +616,8 @@ public class SecurityManager(
      * restore that a re-lock would abort. Setup closes it itself if it finishes in the
      * background (SessionLockManager.onUnlocked) or fails.
      */
-    public fun isLockable(): Boolean =
-        isOnboardingShown() && (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed())
+    public fun isLockable(): Boolean = (isOnboardingShown() || isCommittedWithoutFlag()) &&
+        (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed())
 
     public fun isDatabaseUnlocked(): Boolean = vaultDatabase.isDatabaseUnlocked()
 

@@ -18,6 +18,10 @@
     <string name="security_recovery_set_desc">Utworzona podczas konfiguracji. Encly nigdy nie przechowuje słów i nie może ich ponownie pokazać. Nie masz ich? Zastąp frazę poniżej.</string>
     <string name="security_recovery_status_set">Skonfigurowana</string>
     <string name="vault_reset_restore_hint">Po zresetowaniu możesz przywrócić plik kopii zapasowej za pomocą jego 12 słów.</string>
+    <string name="vault_unreadable_title">Nie można teraz otworzyć sejfu</string>
+    <string name="vault_unreadable_message">Encly nie mogło odczytać swoich danych. Może używa ich inna aplikacja lub system albo urządzenie jest nadal zablokowane. Twoje notatki nie zostały utracone. Spróbuj ponownie za chwilę.</string>
+    <string name="vault_unreadable_retry">Spróbuj ponownie</string>
+    <string name="vault_unreadable_still">Nadal nie można odczytać. Spróbuj ponownie za chwilę.</string>
     <string name="pin_change_bar_title">Zmień PIN</string>
     <plurals name="backup_count_notes">
         <item quantity="one">%d notatka</item>

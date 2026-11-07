@@ -130,7 +130,7 @@ private fun NavHostController.startNewNote(): Boolean {
 }
 
 /** Where the app starts for [status]; null while there is nothing to show yet. */
-private fun startRoute(status: InitialStatus): NavRoutes? = when (status) {
+internal fun startRoute(status: InitialStatus): NavRoutes? = when (status) {
     InitialStatus.MAIN -> NavRoutes.HomeRoute
 
     // PIN setup is part of onboarding, which restarts until the vault is committed.
@@ -141,6 +141,8 @@ private fun startRoute(status: InitialStatus): NavRoutes? = when (status) {
     InitialStatus.AUTH -> NavRoutes.LockRoute
 
     InitialStatus.LEGACY_VAULT -> NavRoutes.LegacyVaultRoute
+
+    InitialStatus.STORAGE_UNREADABLE -> NavRoutes.StorageUnreadableRoute
 
     InitialStatus.NO -> null
 }
@@ -215,6 +217,7 @@ private val PUBLIC_ROUTES = setOf(
     NavRoutes.OnboardingRoute.name,
     NavRoutes.LossDataRoute.name,
     NavRoutes.LegacyVaultRoute.name,
+    NavRoutes.StorageUnreadableRoute.name,
 )
 
 private fun isProtectedRoute(route: String?): Boolean = route != null && route !in PUBLIC_ROUTES

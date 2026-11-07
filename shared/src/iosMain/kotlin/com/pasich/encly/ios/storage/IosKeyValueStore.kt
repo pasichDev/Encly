@@ -22,8 +22,9 @@ import kotlinx.serialization.json.Json
  *
  * Every change rewrites the whole file through [io] (a temp file, `F_FULLFSYNC`, an atomic rename), so a crash
  * leaves the old content or the new, never a mix. [edit] returns at once and writes in order on a background
- * thread; [commit] writes before it returns. A file that cannot be read starts as empty (the keys are non-secret
- * flags).
+ * thread; [commit] writes before it returns. A file that is absent starts as empty. A file that exists but cannot
+ * be read or parsed fails closed: nothing is changed or written, so the file is never replaced by an empty state,
+ * and every read tries the file again. Meanwhile reads give the defaults.
  */
 internal class IosKeyValueStore(
     private val io: VaultFileIo,
@@ -33,38 +34,41 @@ internal class IosKeyValueStore(
 
     private val stateLock = SynchronizedObject()
     private val writeLock = SynchronizedObject()
-    private val values: MutableMap<String, String> = load().toMutableMap()
 
-    override fun getString(key: String, default: String?): String? = synchronized(stateLock) { values[key] } ?: default
+    // Guarded by [stateLock]. Null while the file exists but could not be read.
+    private var values: MutableMap<String, String>? = load()?.toMutableMap()
+
+    override fun getString(key: String, default: String?): String? = read { it[key] } ?: default
 
     override fun getBoolean(key: String, default: Boolean): Boolean =
-        synchronized(stateLock) { values[key] }?.toBooleanStrictOrNull() ?: default
+        read { it[key] }?.toBooleanStrictOrNull() ?: default
 
-    override fun getLong(key: String, default: Long): Long =
-        synchronized(stateLock) { values[key] }?.toLongOrNull() ?: default
+    override fun getLong(key: String, default: Long): Long = read { it[key] }?.toLongOrNull() ?: default
 
-    override fun contains(key: String): Boolean = synchronized(stateLock) { values.containsKey(key) }
+    override fun contains(key: String): Boolean = read { it.containsKey(key) } ?: false
 
     override fun edit(block: KeyValueStore.Editor.() -> Unit) {
-        apply(block)
-        writer.launch { persist() }
+        if (read { MapEditor(it).block() } != null) writer.launch { persist() }
     }
 
-    override fun commit(block: KeyValueStore.Editor.() -> Unit): Boolean {
-        apply(block)
-        return persist()
+    override fun commit(block: KeyValueStore.Editor.() -> Unit): Boolean =
+        read { MapEditor(it).block() } != null && persist()
+
+    /**
+     * [action] on the values, or null while the file is unreadable (it is read again first, and taken in once it
+     * can be read).
+     */
+    private fun <T> read(action: (MutableMap<String, String>) -> T): T? = synchronized(stateLock) {
+        val current = values ?: load()?.toMutableMap()?.also { values = it } ?: return null
+        action(current)
     }
 
     /** Waits for the writes queued by [edit] (tests). */
     internal fun flush() = runBlocking { writer.launch { }.join() }
 
-    private fun apply(block: KeyValueStore.Editor.() -> Unit) {
-        synchronized(stateLock) { MapEditor(values).block() }
-    }
-
     /** Writes the current values; false if the file could not be replaced (the values stay in memory). */
     private fun persist(): Boolean = synchronized(writeLock) {
-        val snapshot = synchronized(stateLock) { values.toMap() }
+        val snapshot = synchronized(stateLock) { values?.toMap() } ?: return false
         try {
             io.replace(Json.encodeToString(SERIALIZER, snapshot).encodeToByteArray(), null)
             true
@@ -73,15 +77,16 @@ internal class IosKeyValueStore(
         }
     }
 
-    private fun load(): Map<String, String> {
+    /** The file's content; empty when there is no file, null when there is one that cannot be read or parsed. */
+    private fun load(): Map<String, String>? {
         if (!io.exists()) return emptyMap()
         return try {
             Json.decodeFromString(SERIALIZER, io.read().decodeToString())
         } catch (_: IOException) {
-            emptyMap()
+            null
         } catch (_: IllegalArgumentException) {
             // Damaged JSON.
-            emptyMap()
+            null
         }
     }
 

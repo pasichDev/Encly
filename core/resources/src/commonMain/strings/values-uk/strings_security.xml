@@ -18,6 +18,10 @@
     <string name="security_recovery_set_desc">Створена під час налаштування. Encly не зберігає слова й не може показати їх знову. Немає їх? Замініть фразу нижче.</string>
     <string name="security_recovery_status_set">Налаштовано</string>
     <string name="vault_reset_restore_hint">Після скидання можна відновити резервну копію з файлу за її 12 словами.</string>
+    <string name="vault_unreadable_title">Зараз не вдається відкрити сховище</string>
+    <string name="vault_unreadable_message">Encly не змогло прочитати свої дані. Їх може використовувати інший застосунок чи система, або пристрій ще заблокований. Ваші нотатки не втрачено. Спробуйте ще раз за мить.</string>
+    <string name="vault_unreadable_retry">Спробувати ще раз</string>
+    <string name="vault_unreadable_still">Досі не вдається прочитати. Спробуйте ще раз за мить.</string>
     <string name="pin_change_bar_title">Змінити PIN</string>
     <plurals name="backup_count_notes">
         <item quantity="one">%d нотатка</item>

@@ -29,6 +29,7 @@ import com.pasich.encly.presentation.screen.LossReason
 import com.pasich.encly.presentation.screen.LossRecoveryScreen
 import com.pasich.encly.presentation.screen.MainRootScreen
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
+import com.pasich.encly.presentation.screen.StorageUnreadableScreen
 import com.pasich.encly.presentation.screen.SupportScreen
 import com.pasich.encly.presentation.screen.TasksScreen
 import com.pasich.encly.presentation.screen.archive.ArchiveScreen
@@ -45,6 +46,7 @@ import com.pasich.encly.presentation.screen.trash.TrashScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
 import com.pasich.encly.presentation.viewmodel.NoteTabsViewModel
+import com.pasich.encly.presentation.viewmodel.StorageUnreadableViewModel
 import com.pasich.encly.ui.theme.LocalWidthClass
 import com.pasich.encly.ui.theme.WidthClass
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -182,6 +184,9 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                 animationScreens(NavRoutes.LegacyVaultRoute.name) {
                     CenteredContent { LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION) }
                 }
+                animationScreens(NavRoutes.StorageUnreadableRoute.name) {
+                    CenteredContent { StorageUnreadableRoute(navController) }
+                }
                 animationScreens(NavRoutes.PinCodeConfig.name) {
                     NavigationPage(navController, NavRoutes.SettingsRoute) { PinCodeConfigScreen(navController) }
                 }
@@ -289,6 +294,28 @@ private fun EditNoteDestination(
     }
     // The screen resolves the same ViewModel instance: it is scoped to [entry].
     EditNoteScreen(navController)
+}
+
+/** The vault's state file could not be read: trying again resolves the start anew, and leaves for wherever it leads. */
+@Composable
+private fun StorageUnreadableRoute(
+    navController: NavHostController,
+    viewModel: StorageUnreadableViewModel = metroViewModel(),
+) {
+    val stillUnreadable by viewModel.stillUnreadable.collectAsState()
+    StorageUnreadableScreen(
+        stillUnreadable = stillUnreadable,
+        onRetry = {
+            viewModel.retry { status ->
+                val route = startRoute(status)
+                if (route != null && route != NavRoutes.StorageUnreadableRoute) {
+                    navController.navigate(route.name) {
+                        popUpTo(NavRoutes.StorageUnreadableRoute.name) { inclusive = true }
+                    }
+                }
+            }
+        },
+    )
 }
 
 /** The vault cannot be opened ([reason]): wiping it, once confirmed, starts onboarding afresh. */

@@ -18,6 +18,10 @@
     <string name="security_recovery_set_desc">Bei der Einrichtung erstellt. Encly speichert die Wörter nie und kann sie nicht erneut zeigen. Hast du sie nicht? Ersetze die Phrase unten.</string>
     <string name="security_recovery_status_set">Eingerichtet</string>
     <string name="vault_reset_restore_hint">Nach dem Zurücksetzen kannst du eine Backup-Datei mit ihren 12 Wörtern wiederherstellen.</string>
+    <string name="vault_unreadable_title">Dein Tresor lässt sich gerade nicht öffnen</string>
+    <string name="vault_unreadable_message">Encly konnte seine Daten eben nicht lesen. Eine andere App oder das System nutzt sie womöglich, oder das Gerät ist noch gesperrt. Deine Notizen sind nicht verloren. Versuche es gleich noch einmal.</string>
+    <string name="vault_unreadable_retry">Erneut versuchen</string>
+    <string name="vault_unreadable_still">Immer noch nicht lesbar. Versuche es gleich noch einmal.</string>
     <string name="pin_change_bar_title">PIN ändern</string>
     <plurals name="backup_count_notes">
         <item quantity="one">%d Notiz</item>

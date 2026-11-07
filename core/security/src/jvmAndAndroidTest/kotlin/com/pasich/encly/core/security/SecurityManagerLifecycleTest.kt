@@ -1,5 +1,6 @@
 package com.pasich.encly.core.security
 
+import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.testutil.FakeLockoutClock
 import com.pasich.encly.testutil.FakePinFactor
 import com.pasich.encly.testutil.InMemoryKeyValueStore
@@ -31,6 +32,8 @@ class SecurityManagerLifecycleTest {
     private lateinit var prefs: InMemoryKeyValueStore
     private lateinit var seed: SeedPhraseManager
     private lateinit var auth: AuthenticationManager
+    private val pinFactor = FakePinFactor()
+    private val lockoutClock = FakeLockoutClock()
     private lateinit var database: VaultDatabase
     private lateinit var biometric: BiometricManager
     private var slotPresent = false
@@ -46,7 +49,7 @@ class SecurityManagerLifecycleTest {
         store = VaultStore(file)
         prefs = InMemoryKeyValueStore()
         seed = SeedPhraseManager(store)
-        auth = AuthenticationManager(store, FakePinFactor(), FakeLockoutClock())
+        auth = AuthenticationManager(store, pinFactor, lockoutClock)
         database = mock(VaultDatabase::class.java)
         biometric = mock(BiometricManager::class.java) { call ->
             when (call.method.name) {
@@ -362,6 +365,159 @@ class SecurityManagerLifecycleTest {
         callback.onCancelled()
 
         assertEquals(listOf(true, false, false), results)
+    }
+
+    // --- a lost flags store, and a setup killed at each step ---------------------------------
+
+    /** A new process over the same files: nothing in memory (no bootstrap key) survives. */
+    private fun restarted(vaultStore: VaultStore = VaultStore(file), flags: KeyValueStore = prefs): SecurityManager {
+        val seeds = SeedPhraseManager(vaultStore)
+        val authentication = AuthenticationManager(vaultStore, pinFactor, lockoutClock)
+        return SecurityManager(flags, vaultStore, seeds, database, authentication, biometric) {}
+    }
+
+    @Test
+    fun aSetupKilledBeforeAnythingWasWrittenRestartsOnboarding() {
+        assertEquals(InitialStatus.ONBOARDING, restarted().resolveInitialStatus())
+    }
+
+    @Test
+    fun aSetupKilledAfterTheSeedWasWrittenRestartsOnboarding() {
+        assertTrue(manager.initializeNewVault(null))
+
+        val next = restarted()
+
+        assertEquals(InitialStatus.ONBOARDING, next.resolveInitialStatus())
+        assertTrue(next.initializeNewVault(null))
+    }
+
+    @Test
+    fun aSetupKilledAfterTheRecoverySlotWasWrittenRestartsOnboarding() {
+        assertTrue(manager.initializeNewVault(seed.generateMnemonic()))
+
+        val next = restarted()
+
+        assertEquals(InitialStatus.ONBOARDING, next.resolveInitialStatus())
+        assertTrue(next.initializeNewVault(null))
+    }
+
+    @Test
+    fun aSetupKilledAfterThePinSlotButBeforeTheDatabaseRestartsOnboarding() {
+        assertTrue(manager.initializeNewVault(seed.generateMnemonic()))
+        assertTrue(manager.configurePin(PIN.toCharArray()))
+
+        val next = restarted()
+
+        assertEquals(InitialStatus.ONBOARDING, next.resolveInitialStatus())
+        assertTrue(next.initializeNewVault(null))
+    }
+
+    @Test
+    fun aSetupKilledAfterTheDatabaseWasCreatedIsACommittedVaultAndKeepsIt() {
+        assertTrue(manager.initializeNewVault(null))
+        assertTrue(manager.configurePin(PIN.toCharArray()))
+        assertTrue(manager.openInitialVault())
+        `when`(database.hasEncryptedDatabase()).thenReturn(true)
+        clearInvocations(database)
+
+        val next = restarted()
+
+        assertEquals(InitialStatus.AUTH, next.resolveInitialStatus())
+        assertFalse(next.initializeNewVault(null))
+        verify(database, never()).wipe()
+    }
+
+    @Test
+    fun theSetupStillRunningInThisProcessMayStartOverEvenWithItsDatabase() {
+        assertTrue(manager.initializeNewVault(null))
+        assertTrue(manager.configurePin(PIN.toCharArray()))
+        assertTrue(manager.openInitialVault())
+        `when`(database.hasEncryptedDatabase()).thenReturn(true)
+
+        assertTrue(manager.initializeNewVault(null))
+    }
+
+    @Test
+    fun aLostFlagOnACommittedVaultIsRepairedAndTheVaultIsNeverRecreated() {
+        committedVault()
+        prefs.commit { clear() }
+        clearInvocations(database)
+
+        val next = restarted()
+
+        assertEquals(InitialStatus.AUTH, next.resolveInitialStatus())
+        assertFalse(next.isOnboardingShow())
+        assertFalse(next.initializeNewVault(null))
+        verify(database, never()).wipe()
+        assertEquals(VaultUnlockResult.SUCCESS, next.unlockWithPin(PIN.toCharArray()))
+    }
+
+    @Test
+    fun aLostFlagOnACommittedVaultIsRefusedEvenBeforeStartupRoutingRan() {
+        committedVault()
+        prefs.commit { clear() }
+        clearInvocations(database)
+
+        assertFalse(restarted().initializeNewVault(null))
+        verify(database, never()).wipe()
+        assertTrue(manager.hasRecoverySeed())
+    }
+
+    @Test
+    fun aLostFlagOnAVaultWithOnlyARecoverySlotIsStillCommitted() {
+        committedVault()
+        auth.wipe()
+        prefs.commit { clear() }
+
+        assertEquals(InitialStatus.AUTH, restarted().resolveInitialStatus())
+    }
+
+    @Test
+    fun aFlagsStoreThatCanNotBeWrittenStillLocksACommittedVault() {
+        committedVault()
+        val flagless = object : KeyValueStore {
+            override fun getString(key: String, default: String?) = default
+            override fun getBoolean(key: String, default: Boolean) = default
+            override fun getLong(key: String, default: Long) = default
+            override fun contains(key: String) = false
+            override fun edit(block: KeyValueStore.Editor.() -> Unit) = Unit
+            override fun commit(block: KeyValueStore.Editor.() -> Unit) = false
+        }
+        val next = restarted(flags = flagless)
+
+        assertEquals(InitialStatus.AUTH, next.resolveInitialStatus())
+        assertEquals(VaultUnlockResult.SUCCESS, next.unlockWithPin(PIN.toCharArray()))
+        assertTrue("backgrounding and Lock now still close the vault", next.isLockable())
+    }
+
+    @Test
+    fun aLostFlagAndALostDatabaseHasNothingToProtectAndRestartsOnboarding() {
+        committedVault()
+        prefs.commit { clear() }
+        `when`(database.hasEncryptedDatabase()).thenReturn(false)
+
+        assertEquals(InitialStatus.ONBOARDING, restarted().resolveInitialStatus())
+    }
+
+    @Test
+    fun aVaultFileThatCanNotBeReadRightNowIsNeitherDamagedNorOnboarding() {
+        committedVault()
+        prefs.commit { clear() }
+        val io = object : VaultFileIo by JvmVaultFileIo(file) {
+            var failReads = true
+            override fun read(): ByteArray = if (failReads) throw java.io.IOException("locked") else file.readBytes()
+        }
+        val locked = restarted(VaultStore(io))
+        clearInvocations(database)
+
+        assertEquals(InitialStatus.STORAGE_UNREADABLE, locked.resolveInitialStatus())
+        assertFalse(locked.initializeNewVault(null))
+        verify(database, never()).wipe()
+
+        io.failReads = false
+
+        assertEquals(InitialStatus.AUTH, locked.resolveInitialStatus())
+        assertFalse(file.readBytes().isEmpty())
     }
 
     private companion object {

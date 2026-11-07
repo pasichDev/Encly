@@ -19,6 +19,9 @@ import kotlinx.io.IOException
  * - the file ends with a SHA-256 of its content. A file that fails the check is reported by
  *   [isCorrupt] and reads as empty (fail closed: no slot, nothing unlocks), writes are
  *   refused, and only [clear] (the damaged-vault wipe) starts over.
+ * - a file that cannot be read right now (an I/O error: a scanner holding it, iOS data protection
+ *   while the device is locked) is not damage. [isUnreadable] reports it, it is not remembered,
+ *   every access tries again, and writes are refused meanwhile; [isCorrupt] stays false.
  *
  * The digest detects accidental damage only; tampering is caught by each envelope's GCM tag.
  * Values are copied in and out, and the caller wipes what it gets.
@@ -34,11 +37,22 @@ public class VaultStore(private val io: VaultFileIo) {
     // Guarded by [lock]. Null until the first read.
     private var cache: Map<String, ByteArray>? = null
     private var corrupt = false
+    private var unreadable = false
 
     /** True when the file exists but could not be read back intact. */
     public fun isCorrupt(): Boolean = synchronized(lock) {
         load()
         corrupt
+    }
+
+    /**
+     * True when the file exists but the last attempt to read it failed with an I/O error. Not
+     * damage and not remembered: the next access reads again. What is read meanwhile is empty and
+     * must not be taken for a vault that has no slots.
+     */
+    public fun isUnreadable(): Boolean = synchronized(lock) {
+        load()
+        unreadable
     }
 
     public fun contains(key: String): Boolean = synchronized(lock) { load().containsKey(key) }
@@ -62,11 +76,11 @@ public class VaultStore(private val io: VaultFileIo) {
 
     /**
      * Applies every change made in [block] in one atomic, durable write. Returns false (and
-     * changes nothing) when the file is damaged or cannot be written.
+     * changes nothing) when the file is damaged, cannot be read or cannot be written.
      */
     public fun edit(block: Editor.() -> Unit): Boolean = synchronized(lock) {
         val current = load()
-        if (corrupt) return false
+        if (corrupt || unreadable) return false
         val next = LinkedHashMap(current)
         Editor(next).block()
         val written = try {
@@ -90,6 +104,7 @@ public class VaultStore(private val io: VaultFileIo) {
         cache?.values?.forEach(SensitiveDataCleaner::clear)
         cache = emptyMap()
         corrupt = false
+        unreadable = false
         io.deleteTemp()
         io.delete()
     }
@@ -126,17 +141,20 @@ public class VaultStore(private val io: VaultFileIo) {
         cache?.let { return it }
         // A temp file left by a write that never reached its rename is never the state.
         io.deleteTemp()
-        val loaded = if (!io.exists()) {
-            emptyMap()
-        } else {
+        var loaded: Map<String, ByteArray>? = emptyMap()
+        unreadable = false
+        if (io.exists()) {
             try {
-                parse(io.read())
+                loaded = parse(io.read())
             } catch (_: IOException) {
-                null
+                // Not damage, and not remembered: the next access reads the file again.
+                unreadable = true
             }
         }
-        corrupt = loaded == null
-        return (loaded ?: emptyMap()).also { cache = it }
+        corrupt = !unreadable && loaded == null
+        val result = loaded ?: emptyMap()
+        if (!unreadable) cache = result
+        return result
     }
 
     private fun write(values: Map<String, ByteArray>) {

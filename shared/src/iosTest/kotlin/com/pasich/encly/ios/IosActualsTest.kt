@@ -1,5 +1,6 @@
 package com.pasich.encly.ios
 
+import com.pasich.encly.core.security.IosVaultFileIo
 import com.pasich.encly.data.export.keepFileNameCharacters
 import com.pasich.encly.data.export.normalizeNfc
 import com.pasich.encly.data.export.utf8Prefix
@@ -117,6 +118,23 @@ class IosActualsTest {
         assertEquals(7L, reopened.getLong("c", 0L))
         reopened.commit { remove("a") }
         assertFalse(IosKeyValueStore(file).contains("a"))
+    }
+
+    @Test
+    fun aDamagedFlagsFileFailsClosedAndIsNeverOverwritten() {
+        val file = tempPath(".json").toString()
+        val damaged = "{ not json".encodeToByteArray()
+        IosVaultFileIo(file).replace(damaged, null)
+        val store = IosKeyValueStore(file)
+
+        assertFalse(store.contains("a"))
+        assertFalse(store.commit { putString("a", "1") })
+        store.edit { putString("a", "1") }
+        store.flush()
+
+        assertContentEquals(damaged, IosVaultFileIo(file).read())
+        IosVaultFileIo(file).replace("""{"a":"1"}""".encodeToByteArray(), null)
+        assertEquals("1", store.getString("a", null))
     }
 
     private fun read(zip: com.pasich.encly.data.zip.ZipEntrySource, name: String): ByteArray {

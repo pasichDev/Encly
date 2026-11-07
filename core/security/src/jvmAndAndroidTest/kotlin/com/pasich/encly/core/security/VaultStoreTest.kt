@@ -169,5 +169,67 @@ class VaultStoreTest {
         assertEquals(1, VaultStore(file).getInt("x", 0))
     }
 
+    @Test
+    fun anIoErrorOnReadIsNotDamageAndIsTriedAgain() {
+        val io = FlakyReadIo()
+        VaultStore(io).edit { putInt("x", 1) }
+        io.writes = 0
+        io.failReads = true
+        val store = VaultStore(io)
+
+        assertTrue(store.isUnreadable())
+        assertFalse("an I/O error is not damage", store.isCorrupt())
+        assertEquals(0, store.getInt("x", 0))
+        assertFalse("writes are refused, the file is not replaced", store.edit { putInt("x", 2) })
+        assertEquals(0, io.writes)
+
+        io.failReads = false
+
+        assertFalse(store.isUnreadable())
+        assertFalse(store.isCorrupt())
+        assertEquals(1, store.getInt("x", 0))
+        assertTrue(store.edit { putInt("x", 3) })
+        assertEquals(3, VaultStore(io).getInt("x", 0))
+    }
+
+    @Test
+    fun aFileThatReadsButFailsTheDigestIsStillDamaged() {
+        val io = FlakyReadIo()
+        VaultStore(io).edit { putInt("x", 1) }
+        io.bytes!![io.bytes!!.size / 2] = (io.bytes!![io.bytes!!.size / 2].toInt() xor 0x40).toByte()
+
+        val store = VaultStore(io)
+
+        assertFalse(store.isUnreadable())
+        assertTrue(store.isCorrupt())
+        assertFalse(store.edit { putInt("x", 2) })
+    }
+
+    private class FlakyReadIo : VaultFileIo {
+        var bytes: ByteArray? = null
+        var failReads = false
+        var writes = 0
+
+        override fun exists(): Boolean = bytes != null
+
+        override fun read(): ByteArray = if (failReads) {
+            throw java.io.IOException("sharing violation")
+        } else {
+            bytes!!.copyOf()
+        }
+
+        override fun deleteTemp() = Unit
+
+        override fun replace(bytes: ByteArray, beforeRename: (() -> Unit)?) {
+            writes++
+            this.bytes = bytes.copyOf()
+        }
+
+        override fun delete(): Boolean {
+            bytes = null
+            return true
+        }
+    }
+
     private class CrashBeforeRename : RuntimeException()
 }

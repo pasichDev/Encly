@@ -18,6 +18,10 @@
     <string name="security_recovery_set_desc">Creada durante la configuración. Encly nunca guarda las palabras y no puede volver a mostrarlas. ¿No las tienes? Sustituye la frase abajo.</string>
     <string name="security_recovery_status_set">Configurada</string>
     <string name="vault_reset_restore_hint">Después del restablecimiento puedes restaurar un archivo de copia con sus 12 palabras.</string>
+    <string name="vault_unreadable_title">No se puede abrir tu bóveda ahora</string>
+    <string name="vault_unreadable_message">Encly no pudo leer sus datos hace un momento. Puede que otra app o el sistema los esté usando, o que el dispositivo siga bloqueado. Tus notas no se han perdido. Inténtalo de nuevo en un momento.</string>
+    <string name="vault_unreadable_retry">Reintentar</string>
+    <string name="vault_unreadable_still">Sigue sin poder leerse. Inténtalo de nuevo en un momento.</string>
     <string name="pin_change_bar_title">Cambiar PIN</string>
     <plurals name="backup_count_notes">
         <item quantity="one">%d nota</item>

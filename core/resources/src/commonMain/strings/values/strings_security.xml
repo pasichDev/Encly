@@ -18,6 +18,10 @@
     <string name="security_recovery_set_desc">Created during setup. Encly never stores the words and can\'t show them again. Don\'t have them? Replace the phrase below.</string>
     <string name="security_recovery_status_set">Set up</string>
     <string name="vault_reset_restore_hint">After the reset you can restore a backup file with its 12 words.</string>
+    <string name="vault_unreadable_title">Can\'t open your vault right now</string>
+    <string name="vault_unreadable_message">Encly could not read its data just now. Another app or the system may be using it, or the device may still be locked. Your notes are not lost. Try again in a moment.</string>
+    <string name="vault_unreadable_retry">Try again</string>
+    <string name="vault_unreadable_still">Still can\'t read it. Try again in a moment.</string>
     <string name="pin_change_bar_title">Change PIN</string>
     <plurals name="backup_count_notes">
         <item quantity="one">%d note</item>

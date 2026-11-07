@@ -22,8 +22,9 @@ import java.util.concurrent.Executors
  *
  * Every change rewrites the whole file to a temp file in the same directory, fsyncs it and renames it over the
  * old one (an atomic replace), so a crash leaves the old content or the new, never a mix. [edit] returns at
- * once and writes on [writer]; [commit] writes before it returns. A file that cannot be read starts as empty
- * (the keys are non-secret flags).
+ * once and writes on [writer]; [commit] writes before it returns. A file that is absent starts as empty. A file
+ * that exists but cannot be read or parsed fails closed: nothing is changed or written, so the file is never
+ * replaced by an empty state, and every read tries the file again. Meanwhile reads give the defaults.
  */
 class FileKeyValueStore(
     private val file: Path,
@@ -33,35 +34,38 @@ class FileKeyValueStore(
 ) : KeyValueStore {
     private val stateLock = Any()
     private val writeLock = Any()
-    private val values: MutableMap<String, String> = load().toMutableMap()
 
-    override fun getString(key: String, default: String?): String? = synchronized(stateLock) { values[key] } ?: default
+    // Guarded by [stateLock]. Null while the file exists but could not be read.
+    private var values: MutableMap<String, String>? = load()?.toMutableMap()
+
+    override fun getString(key: String, default: String?): String? = read { it[key] } ?: default
 
     override fun getBoolean(key: String, default: Boolean): Boolean =
-        synchronized(stateLock) { values[key] }?.toBooleanStrictOrNull() ?: default
+        read { it[key] }?.toBooleanStrictOrNull() ?: default
 
-    override fun getLong(key: String, default: Long): Long =
-        synchronized(stateLock) { values[key] }?.toLongOrNull() ?: default
+    override fun getLong(key: String, default: Long): Long = read { it[key] }?.toLongOrNull() ?: default
 
-    override fun contains(key: String): Boolean = synchronized(stateLock) { values.containsKey(key) }
+    override fun contains(key: String): Boolean = read { it.containsKey(key) } ?: false
 
     override fun edit(block: KeyValueStore.Editor.() -> Unit) {
-        apply(block)
-        writer.execute { persist() }
+        if (read { MapEditor(it).block() } != null) writer.execute { persist() }
     }
 
-    override fun commit(block: KeyValueStore.Editor.() -> Unit): Boolean {
-        apply(block)
-        return persist()
-    }
+    override fun commit(block: KeyValueStore.Editor.() -> Unit): Boolean =
+        read { MapEditor(it).block() } != null && persist()
 
-    private fun apply(block: KeyValueStore.Editor.() -> Unit) {
-        synchronized(stateLock) { MapEditor(values).block() }
+    /**
+     * [action] on the values, or null while the file is unreadable (it is read again first, and taken in once it
+     * can be read).
+     */
+    private fun <T> read(action: (MutableMap<String, String>) -> T): T? = synchronized(stateLock) {
+        val current = values ?: load()?.toMutableMap()?.also { values = it } ?: return null
+        action(current)
     }
 
     /** Writes the current values; false if the file could not be replaced (the values stay in memory). */
     private fun persist(): Boolean = synchronized(writeLock) {
-        val snapshot = synchronized(stateLock) { values.toMap() }
+        val snapshot = synchronized(stateLock) { values?.toMap() } ?: return false
         try {
             write(snapshot)
             true
@@ -98,17 +102,19 @@ class FileKeyValueStore(
         }
     }
 
-    private fun load(): Map<String, String> {
-        if (!Files.isRegularFile(file)) return emptyMap()
+    /** The file's content; empty when there is no file, null when there is one that cannot be read or parsed. */
+    private fun load(): Map<String, String>? {
+        // Only a file known to be absent starts empty; "cannot tell" goes on to the read and fails closed.
+        if (Files.notExists(file)) return emptyMap()
         return try {
             val properties = Properties()
             Files.newBufferedReader(file, StandardCharsets.UTF_8).use(properties::load)
             properties.stringPropertyNames().associateWith { properties.getProperty(it) }
         } catch (_: IOException) {
-            emptyMap()
+            null
         } catch (_: IllegalArgumentException) {
             // A malformed \u escape: the file is damaged.
-            emptyMap()
+            null
         }
     }
 

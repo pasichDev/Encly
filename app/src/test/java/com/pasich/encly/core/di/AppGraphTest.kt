@@ -50,6 +50,7 @@ import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.presentation.viewmodel.StartupViewModel
 import com.pasich.encly.presentation.viewmodel.StatisticViewModel
+import com.pasich.encly.presentation.viewmodel.StorageUnreadableViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
 import com.pasich.encly.presentation.viewmodel.ThemeViewModel
@@ -166,10 +167,10 @@ class AppGraphTest {
     }
 
     @Test
-    fun theViewModelsAreTheTwentyFiveOfTheApp() {
+    fun theViewModelsAreTheTwentySixOfTheApp() {
         assertEquals(PLAIN_VIEW_MODELS, graph.viewModelProviders.keys)
         assertEquals(ASSISTED_VIEW_MODELS, graph.assistedFactoryProviders.keys)
-        assertEquals(25, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
+        assertEquals(26, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
         assertTrue(graph.manualAssistedFactoryProviders.isEmpty())
     }
 
@@ -258,6 +259,7 @@ class AppGraphTest {
             SettingsViewModel::class,
             StartupViewModel::class,
             StatisticViewModel::class,
+            StorageUnreadableViewModel::class,
             TagListViewModel::class,
             ThemeViewModel::class,
             TrashViewModel::class,

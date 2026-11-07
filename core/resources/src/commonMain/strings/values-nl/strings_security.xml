@@ -18,6 +18,10 @@
     <string name="security_recovery_set_desc">Gemaakt tijdens het instellen. Encly bewaart de woorden nooit en kan ze niet opnieuw tonen. Heb je ze niet? Vervang de zin hieronder.</string>
     <string name="security_recovery_status_set">Ingesteld</string>
     <string name="vault_reset_restore_hint">Na de reset kun je een back-upbestand terugzetten met de 12 woorden ervan.</string>
+    <string name="vault_unreadable_title">Je kluis kan nu niet worden geopend</string>
+    <string name="vault_unreadable_message">Encly kon zijn gegevens zojuist niet lezen. Een andere app of het systeem gebruikt ze misschien, of het apparaat is nog vergrendeld. Je notities zijn niet kwijt. Probeer het zo opnieuw.</string>
+    <string name="vault_unreadable_retry">Opnieuw proberen</string>
+    <string name="vault_unreadable_still">Nog steeds niet leesbaar. Probeer het zo opnieuw.</string>
     <string name="pin_change_bar_title">Pincode wijzigen</string>
     <plurals name="backup_count_notes">
         <item quantity="one">%d notitie</item>

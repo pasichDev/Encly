@@ -18,6 +18,10 @@
     <string name="security_recovery_set_desc">Créée lors de la configuration. Encly ne conserve jamais les mots et ne peut pas les réafficher. Vous ne les avez plus ? Remplacez la phrase ci-dessous.</string>
     <string name="security_recovery_status_set">Configurée</string>
     <string name="vault_reset_restore_hint">Après la réinitialisation, vous pourrez restaurer un fichier de sauvegarde avec ses 12 mots.</string>
+    <string name="vault_unreadable_title">Impossible d\'ouvrir votre coffre pour le moment</string>
+    <string name="vault_unreadable_message">Encly n\'a pas pu lire ses données à l\'instant. Une autre appli ou le système les utilise peut-être, ou l\'appareil est encore verrouillé. Vos notes ne sont pas perdues. Réessayez dans un instant.</string>
+    <string name="vault_unreadable_retry">Réessayer</string>
+    <string name="vault_unreadable_still">Toujours illisible. Réessayez dans un instant.</string>
     <string name="pin_change_bar_title">Changer le code PIN</string>
     <plurals name="backup_count_notes">
         <item quantity="one">%d note</item>

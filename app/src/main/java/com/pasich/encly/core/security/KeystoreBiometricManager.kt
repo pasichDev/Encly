@@ -8,6 +8,7 @@ import android.security.keystore.KeyProperties
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import com.pasich.encly.core.di.ApplicationContext
 import com.pasich.encly.core.security.BiometricManager.BiometricType
 import com.pasich.encly.core.security.BiometricManager.PromptConfig
@@ -65,18 +66,20 @@ class KeystoreBiometricManager(
     }
 
     override fun enroll(host: BiometricHost, dek: ByteArray, onResult: (Boolean) -> Unit) {
-        val activity = host.activityOrNull()
+        // A prompt over a stopped activity is never shown, and its copy would wait for the destroy.
+        val activity = host.activityOrNull()?.takeIf {
+            it.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) &&
+                isStrongBiometricAvailable() &&
+                dek.size == DEK_LENGTH
+        }
         if (activity == null) {
             onResult(false)
             return
         }
-        if (!isStrongBiometricAvailable() || dek.size != DEK_LENGTH) {
-            onResult(false)
-            return
-        }
 
-        val dekCopy = dek.copyOf()
+        val pending = PendingDek(dek)
         try {
+            pending.wipeWhenStopped(activity.lifecycle)
             store.edit { remove(SLOT_KEY) }
             deleteKeyOnly()
             val key = generateAuthBoundKey()
@@ -88,35 +91,43 @@ class KeystoreBiometricManager(
                 type = BiometricType.SETTINGS_TOGGLE,
                 cipher = cipher,
                 onSuccess = { authenticatedCipher ->
-                    try {
-                        val encrypted = authenticatedCipher.doFinal(dekCopy)
-                        val iv = authenticatedCipher.iv
-                        val combined = ByteArray(iv.size + encrypted.size).also { out ->
-                            System.arraycopy(iv, 0, out, 0, iv.size)
-                            System.arraycopy(encrypted, 0, out, iv.size, encrypted.size)
-                        }
-                        val stored = store.edit { putBytes(SLOT_KEY, combined) }
-                        SensitiveDataCleaner.clear(encrypted)
-                        SensitiveDataCleaner.clear(combined)
-                        if (!stored) disable()
-                        onResult(stored)
+                    val stored = try {
+                        storeEnrolment(authenticatedCipher, pending)
                     } catch (_: Exception) {
-                        disable()
-                        onResult(false)
+                        false
                     } finally {
-                        SensitiveDataCleaner.clear(dekCopy)
+                        pending.wipe()
                     }
+                    if (!stored) disable()
+                    onResult(stored)
                 },
                 onFailure = {
-                    SensitiveDataCleaner.clear(dekCopy)
+                    pending.wipe()
                     deleteKeyOnly()
                     onResult(false)
                 },
             )
         } catch (_: Exception) {
-            SensitiveDataCleaner.clear(dekCopy)
+            pending.wipe()
             disable()
             onResult(false)
+        }
+    }
+
+    /** Wraps the pending DEK with the authenticated [cipher] and stores the slot; false when nothing was stored. */
+    private fun storeEnrolment(cipher: Cipher, pending: PendingDek): Boolean {
+        // Null when the activity stopped meanwhile: the copy is gone, nothing is enrolled.
+        val encrypted = pending.use { cipher.doFinal(it) } ?: return false
+        val iv = cipher.iv
+        val combined = ByteArray(iv.size + encrypted.size).also { out ->
+            System.arraycopy(iv, 0, out, 0, iv.size)
+            System.arraycopy(encrypted, 0, out, iv.size, encrypted.size)
+        }
+        return try {
+            store.edit { putBytes(SLOT_KEY, combined) }
+        } finally {
+            SensitiveDataCleaner.clear(encrypted)
+            SensitiveDataCleaner.clear(combined)
         }
     }
 

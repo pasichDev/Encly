@@ -12,6 +12,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.Executor
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -190,8 +191,32 @@ class FileKeyValueStoreTest {
     }
 
     @Test
-    fun `an unreadable file starts empty`() {
+    fun `an unreadable file fails closed and is never overwritten`() {
+        val damaged = byteArrayOf(0x5c, 0x75, 0x7a)
+        Files.write(file(), damaged)
+        val store = FileKeyValueStore(file(), now)
+        assertFalse(store.contains("anything"))
+        assertTrue(store.getBoolean("flag", true))
+        assertFalse(store.commit { putString("k", "v") })
+        store.edit { putString("k", "v") }
+        assertContentEquals(damaged, Files.readAllBytes(file()))
+        assertNull(store.getString("k", null))
+    }
+
+    @Test
+    fun `a file that could not be read is read again once it can be`() {
         Files.write(file(), byteArrayOf(0x5c, 0x75, 0x7a))
+        val store = FileKeyValueStore(file(), now)
+        assertFalse(store.getBoolean("flag", false))
+        Files.writeString(file(), "flag=true\n")
+        assertTrue(store.getBoolean("flag", false))
+        assertTrue(store.commit { putString("k", "v") })
+        assertEquals("v", FileKeyValueStore(file(), now).getString("k", null))
+        assertTrue(FileKeyValueStore(file(), now).getBoolean("flag", false))
+    }
+
+    @Test
+    fun `a missing file starts empty and is created by the first write`() {
         val store = FileKeyValueStore(file(), now)
         assertFalse(store.contains("anything"))
         assertTrue(store.commit { putString("k", "v") })
