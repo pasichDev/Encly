@@ -22,42 +22,51 @@ data class SavedWindow(val width: Int, val height: Int, val x: Int?, val y: Int?
  * The window's size, position and maximised state in the app's flags file. What comes back is always usable:
  * a size below the minimum or above the biggest screen is clamped, and a position that would put the window
  * (almost) off every connected screen (a monitor that is gone) is dropped, so the OS centres it.
+ *
+ * Every window has its own entry: [slot] 0 is the first window, a further window takes the lowest slot no open
+ * window uses, so two windows keep two places and sizes between runs.
  */
 class WindowStateStore(
     private val flags: KeyValueStore,
+    private val slot: Int = 0,
     private val minWidth: Int = MIN_WIDTH,
     private val minHeight: Int = MIN_HEIGHT,
 ) {
+    // The first window keeps the plain keys; a further one adds its slot ("window_width_1"). The keys are written
+    // as constant + suffix at every call, which is also how the check that every stored key is classified (for the
+    // backup) finds them.
+    private val suffix = if (slot == 0) "" else "_$slot"
+
     fun load(screens: List<WindowBounds>): SavedWindow? {
-        if (!flags.contains(KEY_WIDTH) || !flags.contains(KEY_HEIGHT)) return null
+        if (!flags.contains(KEY_WIDTH + suffix) || !flags.contains(KEY_HEIGHT + suffix)) return null
         val biggest = screens.maxByOrNull { it.width.toLong() * it.height }
-        val width = flags.getLong(KEY_WIDTH, 0L).toInt().coerceAtLeast(minWidth).let { w ->
+        val width = flags.getLong(KEY_WIDTH + suffix, 0L).toInt().coerceAtLeast(minWidth).let { w ->
             if (biggest == null) w else w.coerceAtMost(biggest.width)
         }
-        val height = flags.getLong(KEY_HEIGHT, 0L).toInt().coerceAtLeast(minHeight).let { h ->
+        val height = flags.getLong(KEY_HEIGHT + suffix, 0L).toInt().coerceAtLeast(minHeight).let { h ->
             if (biggest == null) h else h.coerceAtMost(biggest.height)
         }
-        val x = flags.getLong(KEY_X, Long.MIN_VALUE).takeIf { flags.contains(KEY_X) }?.toInt()
-        val y = flags.getLong(KEY_Y, Long.MIN_VALUE).takeIf { flags.contains(KEY_Y) }?.toInt()
+        val x = flags.getLong(KEY_X + suffix, Long.MIN_VALUE).takeIf { flags.contains(KEY_X + suffix) }?.toInt()
+        val y = flags.getLong(KEY_Y + suffix, Long.MIN_VALUE).takeIf { flags.contains(KEY_Y + suffix) }?.toInt()
         val onScreen = x != null && y != null && isVisible(WindowBounds(x, y, width, height), screens)
         return SavedWindow(
             width = width,
             height = height,
             x = if (onScreen) x else null,
             y = if (onScreen) y else null,
-            maximised = flags.getBoolean(KEY_MAXIMISED, false),
+            maximised = flags.getBoolean(KEY_MAXIMISED + suffix, false),
         )
     }
 
     /** Remembers the window. The size and position of a maximised window are kept from before it was maximised. */
     fun save(bounds: WindowBounds?, maximised: Boolean) {
         flags.edit {
-            putBoolean(KEY_MAXIMISED, maximised)
+            putBoolean(KEY_MAXIMISED + suffix, maximised)
             if (bounds != null && !maximised) {
-                putLong(KEY_WIDTH, bounds.width.toLong())
-                putLong(KEY_HEIGHT, bounds.height.toLong())
-                putLong(KEY_X, bounds.x.toLong())
-                putLong(KEY_Y, bounds.y.toLong())
+                putLong(KEY_WIDTH + suffix, bounds.width.toLong())
+                putLong(KEY_HEIGHT + suffix, bounds.height.toLong())
+                putLong(KEY_X + suffix, bounds.x.toLong())
+                putLong(KEY_Y + suffix, bounds.y.toLong())
             }
         }
     }

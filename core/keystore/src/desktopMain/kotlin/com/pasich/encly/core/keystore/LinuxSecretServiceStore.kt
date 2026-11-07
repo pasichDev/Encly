@@ -6,6 +6,7 @@ import org.freedesktop.dbus.DBusPath
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
 import org.freedesktop.dbus.types.Variant
+import java.security.GeneralSecurityException
 import java.security.SecureRandom
 
 /**
@@ -19,8 +20,10 @@ import java.security.SecureRandom
  *
  * The D-Bus client is dbus-java (pure JVM, over the JDK's own Unix domain sockets), chosen over JNA to
  * libsecret because it needs no native library on the system and no GLib structures through JNA. The session
- * uses the `plain` transfer algorithm: the secret crosses the session bus, a socket that only the same user
- * can open, unencrypted; the encrypted `dh-ietf1024-sha256-aes128-cbc-pkcs7` algorithm is not implemented.
+ * uses the encrypted `dh-ietf1024-sha256-aes128-cbc-pkcs7` transfer algorithm (see [SecretServiceDh]), so the
+ * secret does not cross the session bus in the clear, where anything that can read the bus (a debugging tool,
+ * `dbus-monitor` run as the same user) could see it. There is no fallback to `plain`: a service that cannot do
+ * the exchange is reported as unavailable rather than silently asked for less protection.
  *
  * There is no file fallback. Without a session bus or a running Secret Service the operations fail with a
  * [SecretStoreException] whose cause is a [SecretStoreUnavailableException]. A locked collection is not
@@ -33,19 +36,30 @@ internal class LinuxSecretServiceStore(
     private val application: String = APPLICATION_ID,
     private val random: SecureRandom = SecureRandom(),
 ) : SecretStore {
-    override fun read(slot: PinKeySlot): ByteArray? = session { connection, service, sessionPath ->
-        val items = findItems(connection, service, slot)
+    override fun read(slot: PinKeySlot): ByteArray? = session { connection, service, opened ->
+        var items = findItems(connection, service, slot)
+        if (items.isEmpty()) {
+            // Nothing found. Before that means "gone for good", make sure the keyring that would hold it is there
+            // and open: a locked or missing default collection hides its items, and that passes.
+            requireDefaultCollectionOpen(connection, service)
+            items = findItems(connection, service, slot)
+        }
         val item = items.firstOrNull() ?: return@session null
-        val secret = item.GetSecret(sessionPath)
-        SensitiveDataCleaner.clear(secret.parameters)
-        secret.value
+        val secret = item.GetSecret(opened.path)
+        try {
+            opened.cipher.decrypt(secret.parameters, secret.value)
+        } catch (e: GeneralSecurityException) {
+            throw unavailable("The Secret Service sent a secret that could not be decrypted", e)
+        } finally {
+            SensitiveDataCleaner.clear(secret.value)
+        }
     }
 
     override fun create(slot: PinKeySlot): ByteArray {
         val secret = ByteArray(SecretStore.SECRET_SIZE).also(random::nextBytes)
         val sent = secret.copyOf()
         try {
-            session { connection, service, sessionPath ->
+            session { connection, service, opened ->
                 val collectionPath = service.ReadAlias(DEFAULT_ALIAS)
                 if (collectionPath.path == NO_OBJECT_PATH) {
                     throw unavailable("The Secret Service has no default collection")
@@ -61,7 +75,8 @@ internal class LinuxSecretServiceStore(
                     ITEM_LABEL to Variant(LABEL),
                     ITEM_ATTRIBUTES to Variant(attributesOf(slot), "a{ss}"),
                 )
-                val struct = SecretStruct(sessionPath, ByteArray(0), sent, CONTENT_TYPE)
+                val sealed = opened.cipher.encrypt(sent, random)
+                val struct = SecretStruct(opened.path, sealed.iv, sealed.encrypted, CONTENT_TYPE)
                 requireNoPrompt(collection.CreateItem(properties, struct, true).prompt)
             }
             return secret
@@ -92,8 +107,27 @@ internal class LinuxSecretServiceStore(
         }
     }
 
-    /** Opens a bus connection and a `plain` Secret Service session, runs [block], and closes both. */
-    private fun <T> session(block: (DBusConnection, SecretServiceApi, DBusPath) -> T): T {
+    /**
+     * An open Secret Service session: its object [path] and the [cipher] of the secrets that go through it. Closing it
+     * ends the session on the service (the session ends with the connection anyway) and wipes the cipher's key.
+     */
+    private class OpenSession(
+        val path: DBusPath,
+        val cipher: SecretServiceCipher,
+        private val connection: DBusConnection,
+    ) : AutoCloseable {
+        override fun close() {
+            cipher.close()
+            try {
+                connection.getRemoteObject(SECRETS_BUS_NAME, path.path, SecretSessionApi::class.java, true).Close()
+            } catch (_: Exception) {
+                // The session ends with the connection anyway.
+            }
+        }
+    }
+
+    /** Opens a bus connection and an encrypted Secret Service session, runs [block], and closes both. */
+    private fun <T> session(block: (DBusConnection, SecretServiceApi, OpenSession) -> T): T {
         try {
             DBusConnectionBuilder.forSessionBus().withShared(false).build().use { connection ->
                 val service = connection.getRemoteObject(
@@ -102,12 +136,10 @@ internal class LinuxSecretServiceStore(
                     SecretServiceApi::class.java,
                     true,
                 )
-                val opened = service.OpenSession(PLAIN_ALGORITHM, Variant(""))
-                try {
-                    return block(connection, service, opened.session)
-                } finally {
-                    closeQuietly(connection, opened.session)
-                }
+                val dh = SecretServiceDh.create(random)
+                val opened = service.OpenSession(DH_ALGORITHM, Variant(dh.publicKey))
+                val cipher = dh.cipher(serverPublicKeyOf(opened.output))
+                return OpenSession(opened.session, cipher, connection).use { block(connection, service, it) }
             }
         } catch (e: SecretStoreException) {
             throw e
@@ -116,12 +148,21 @@ internal class LinuxSecretServiceStore(
         }
     }
 
-    private fun closeQuietly(connection: DBusConnection, session: DBusPath) {
-        try {
-            connection.getRemoteObject(SECRETS_BUS_NAME, session.path, SecretSessionApi::class.java, true).Close()
-        } catch (_: Exception) {
-            // The session ends with the connection anyway.
-        }
+    /**
+     * The default collection must exist and be unlocked (without a prompt) for "not found" to be an answer: a locked
+     * or missing keyring only hides what is in it, which is a temporary failure and not a lost key.
+     */
+    private fun requireDefaultCollectionOpen(connection: DBusConnection, service: SecretServiceApi) {
+        val collectionPath = service.ReadAlias(DEFAULT_ALIAS)
+        if (collectionPath.path == NO_OBJECT_PATH) throw unavailable("The Secret Service has no default collection")
+        val properties = connection.getRemoteObject(
+            SECRETS_BUS_NAME,
+            collectionPath.path,
+            org.freedesktop.dbus.interfaces.Properties::class.java,
+            true,
+        )
+        val locked = properties.Get<Boolean>(COLLECTION_INTERFACE, "Locked")
+        if (locked) requireNoPrompt(service.Unlock(listOf(collectionPath)).prompt)
     }
 
     private fun requireNoPrompt(prompt: DBusPath) {
@@ -141,7 +182,7 @@ internal class LinuxSecretServiceStore(
 
     private companion object {
         const val DEFAULT_ALIAS = "default"
-        const val PLAIN_ALGORITHM = "plain"
+        const val COLLECTION_INTERFACE = "org.freedesktop.Secret.Collection"
         const val CONTENT_TYPE = "application/octet-stream"
         const val LABEL = "Encly PIN factor"
         const val ITEM_LABEL = "org.freedesktop.Secret.Item.Label"

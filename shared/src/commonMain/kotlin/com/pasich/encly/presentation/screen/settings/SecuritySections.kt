@@ -53,6 +53,7 @@ import com.pasich.encly.core.resources.security_screenshots_warning_title
 import com.pasich.encly.core.resources.wipe_pin_row_desc
 import com.pasich.encly.core.resources.wipe_pin_row_turned_off
 import com.pasich.encly.core.resources.wipe_pin_title
+import com.pasich.encly.platform.LocalKeyboardPrivacyOffered
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyGroup
@@ -269,21 +270,26 @@ internal fun PrivacySection(
     onStrictKeyboard: (Boolean) -> Unit,
     screenshots: ScreenshotsSetting? = null,
 ) {
+    // A host with no on-screen keyboard to restrain (the desktop) offers neither, and shows no empty section.
+    val keyboardOffered = LocalKeyboardPrivacyOffered.current
+    if (!keyboardOffered && screenshots == null) return
     SectionOverline(
         text = stringResource(Res.string.security_privacy_section),
         modifier = Modifier.padding(top = EnclyTheme.spacing.s),
     )
     EnclyGroup {
-        EnclySwitchRow(
-            title = stringResource(Res.string.security_keyboard_strict_title),
-            supporting = stringResource(Res.string.security_keyboard_strict_desc),
-            icon = EnclyIcons.Keyboard,
-            checked = strictKeyboard,
-            onCheckedChange = onStrictKeyboard,
-            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
-        )
+        if (keyboardOffered) {
+            EnclySwitchRow(
+                title = stringResource(Res.string.security_keyboard_strict_title),
+                supporting = stringResource(Res.string.security_keyboard_strict_desc),
+                icon = EnclyIcons.Keyboard,
+                checked = strictKeyboard,
+                onCheckedChange = onStrictKeyboard,
+                modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+            )
+        }
         if (screenshots != null) {
-            EnclyGroupDivider()
+            if (keyboardOffered) EnclyGroupDivider()
             ScreenshotsRow(screenshots)
         }
     }

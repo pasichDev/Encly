@@ -1,8 +1,10 @@
 package com.pasich.encly.desktop.window
 
 import androidx.compose.runtime.mutableStateListOf
+import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.desktop.platform.DesktopDocumentPickers
 import com.pasich.encly.desktop.platform.DesktopEnvironment
+import com.pasich.encly.desktop.platform.DesktopToaster
 import com.pasich.encly.desktop.platform.DropRouter
 import com.pasich.encly.desktop.platform.GatedFileDialogs
 import com.pasich.encly.desktop.security.DesktopAppLifecycle
@@ -10,15 +12,19 @@ import com.pasich.encly.platform.NavigationRequests
 import com.pasich.encly.platform.NoteEditClaims
 import com.pasich.encly.platform.NoteEditRegistry
 import com.pasich.encly.platform.NoteWindows
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withTimeoutOrNull
+import java.nio.file.Path
 
 /**
  * What belongs to one window and must not be shared between windows: the requests the menu sends it, the files
- * dropped on it (and the screens waiting for them), and the file dialogs those screens open. The vault, the lock,
- * the settings and the other services of the graph are the process's, one for all windows.
+ * dropped on it (and the screens waiting for them), the file dialogs those screens open, and its messages. The vault,
+ * the lock, the settings and the other services of the graph are the process's, one for all windows.
  */
 class WindowServices(
     val navigation: NavigationRequests,
@@ -28,7 +34,25 @@ class WindowServices(
     val noteWindows: NoteWindows? = null,
     /** This window's claims on the notes it edits; null where nothing shares a vault between windows. */
     val claims: NoteEditClaims? = null,
+    /** The messages of this window: a copy or a failure is told in the window that caused it, not in every one. */
+    val toaster: DesktopToaster = DesktopToaster(),
 ) {
+    /** Completed with the vault's start status once the window's app has resolved it (see `DesktopApp`). */
+    val startStatus = CompletableDeferred<InitialStatus>()
+
+    /**
+     * Waits until files given to the app can be taken: the start status is known and, for a vault that starts
+     * locked, until it is unlocked ([locked] turns false) and the lock screen has left; [settle] pauses for that.
+     * Files handed over before this would meet a window that cannot take them yet and be dropped without a word.
+     */
+    suspend fun awaitReadyForFiles(locked: StateFlow<Boolean>, settle: suspend () -> Unit) {
+        if (startStatus.await() != InitialStatus.AUTH) return
+        if (locked.value) {
+            locked.first { !it }
+            settle()
+        }
+    }
+
     companion object {
         /** The services of a window of [environment]. */
         fun create(
@@ -45,8 +69,24 @@ class WindowServices(
     }
 }
 
+/**
+ * Hands [files] to this window once it can take them (see [WindowServices.awaitReadyForFiles]). A fixed pause was not
+ * enough: a slow start (a big vault, a busy disk) took longer, and the files met a window that was not ready and were
+ * dropped without a word.
+ */
+suspend fun WindowServices.handOverFiles(locked: StateFlow<Boolean>, files: List<Path>, settle: suspend () -> Unit) {
+    awaitReadyForFiles(locked, settle)
+    dropRouter.drop(files)
+}
+
 /** One open window: its [id], its [services] and, for a window opened on a note, the note's id. */
-class WindowSession(val id: Int, val services: WindowServices, val openNoteId: Long? = null) {
+class WindowSession(
+    val id: Int,
+    val services: WindowServices,
+    val openNoteId: Long? = null,
+    /** The place this window keeps its size and position under: the lowest one no other open window uses. */
+    val slot: Int = 0,
+) {
     /** What the menu of this window does; set by the window host once its window exists. */
     @Volatile
     var commands: DesktopCommands? = null
@@ -84,7 +124,9 @@ class DesktopWindows(
         // The first window is the app itself; a further one needs a vault that exists.
         if (open.isNotEmpty() && !canOpen()) return null
         val id = nextId++
-        val session = WindowSession(id, create(id, this), noteId)
+        val used = open.map { it.slot }.toSet()
+        val slot = generateSequence(0) { it + 1 }.first { it !in used }
+        val session = WindowSession(id, create(id, this), noteId, slot)
         open.add(session)
         focusedId = id
         return session

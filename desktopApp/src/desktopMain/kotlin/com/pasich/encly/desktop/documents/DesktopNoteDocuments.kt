@@ -18,8 +18,11 @@ import java.util.Locale
 
 /** Hands a finished document to the system print dialog and the printer. */
 fun interface PrintLauncher {
-    /** Asks the user, then prints [pages]; [PrintResult.CANCELLED] when the dialog was closed. Throws on failure. */
-    suspend fun print(pages: Pageable): PrintResult
+    /**
+     * Asks the user, then prints [pages]; [PrintResult.CANCELLED] when the dialog was closed or [mayProceed] said no
+     * (after the dialog, or before a page). Throws on failure.
+     */
+    suspend fun print(pages: Pageable, mayProceed: () -> Boolean): PrintResult
 }
 
 /**
@@ -38,9 +41,10 @@ class DesktopNoteDocuments(
         build(document).use { pdf -> pdf.save(out.asOutputStream()) }
     }
 
-    override suspend fun print(document: NoteDocument): PrintResult {
+    override suspend fun print(document: NoteDocument, mayProceed: () -> Boolean): PrintResult {
         // Rendered before the dialog opens, so a note that cannot be drawn fails before the user is asked anything.
-        return build(document).use { pdf -> printer.print(PDFPageable(pdf)) }
+        // The document is closed when the print ends, however it ends (a lock included).
+        return build(document).use { pdf -> printer.print(PDFPageable(pdf), mayProceed) }
     }
 
     /** The PDF of [note], open in memory until the caller closes it. */

@@ -47,12 +47,25 @@ internal class TestNotesRepository : NotesRepository {
         return if (insertResult > 0L) Result.success(insertResult) else Result.failure(IllegalStateException())
     }
 
-    /** Every note passed to [updateNote], in call order. */
+    /** Every note passed to [updateEdited], and every trash write as the note it was made on, in call order. */
     val updatedNotes = mutableListOf<Note>()
 
-    override suspend fun updateNote(note: Note): Result<Unit> {
+    /** The `base` of every [updateEdited], in call order. */
+    val updateBases = mutableListOf<Note?>()
+
+    override suspend fun updateEdited(note: Note, base: Note?): Result<Unit> {
         updateCalls += 1
         updatedNotes += note
+        updateBases += base
+        return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
+    }
+
+    override suspend fun setTrashed(noteId: Long, trashed: Boolean, at: Long?): Result<Unit> {
+        updateCalls += 1
+        val known =
+            (allNotesWithTags.value.map { it.note } + archivedNotesWithTags.value.map { it.note } + trashNotes.value)
+                .firstOrNull { it.id == noteId } ?: Note(id = noteId)
+        updatedNotes += known.copy(isTrash = trashed, trashedAt = at)
         return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
     }
 

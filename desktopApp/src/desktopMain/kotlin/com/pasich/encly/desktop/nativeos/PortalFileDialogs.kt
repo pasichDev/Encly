@@ -6,6 +6,7 @@ import com.pasich.encly.desktop.platform.FileDialogs
 import org.freedesktop.dbus.DBusMatchRule
 import org.freedesktop.dbus.DBusPath
 import org.freedesktop.dbus.annotations.DBusInterfaceName
+import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
 import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.interfaces.DBusSigHandler
@@ -17,12 +18,21 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import javax.swing.SwingUtilities
 
 // The freedesktop desktop portal's file chooser (xdg-desktop-portal, org.freedesktop.portal.FileChooser) over
 // the local session bus: the dialog of the user's own desktop (GNOME, KDE) instead of AWT's Motif-style one,
 // and the only way a sandboxed (Flatpak) app can open files. D-Bus glue: it only runs against a real desktop
 // and is excluded from the coverage gate. Any failure before the dialog is shown falls back to [fallback].
+
+@DBusInterfaceName("org.freedesktop.portal.Request")
+internal interface PortalRequest : DBusInterface {
+    /** Closes the dialog the request opened; the portal then answers it as cancelled. */
+    fun Close()
+}
 
 @DBusInterfaceName("org.freedesktop.portal.FileChooser")
 internal interface PortalFileChooser : DBusInterface {
@@ -36,6 +46,14 @@ internal interface PortalFileChooser : DBusInterface {
 /** A [FileDialogs] on the portal that uses [fallback] when the portal is not there or fails to start. */
 class PortalFileDialogs(private val fallback: FileDialogs) : FileDialogs {
     private class Unavailable : Exception()
+
+    // The dialogs waiting for an answer, to cancel them when the app locks.
+    private val waiting = CopyOnWriteArraySet<CompletableFuture<List<Path>>>()
+
+    /** The app is locking: every dialog still open is closed and answered as cancelled. */
+    override fun cancelAll() {
+        waiting.forEach { it.complete(emptyList()) }
+    }
 
     override fun save(suggestedName: String, onResult: (Path?) -> Unit) {
         val options = mutableMapOf<String, Variant<*>>("current_name" to Variant(suggestedName))
@@ -92,6 +110,7 @@ class PortalFileDialogs(private val fallback: FileDialogs) : FileDialogs {
             val sender = connection.uniqueName.removePrefix(":").replace('.', '_')
             val handle = "/org/freedesktop/portal/desktop/request/$sender/$token"
             val answer = CompletableFuture<List<Path>>()
+            waiting += answer
             connection.addGenericSigHandler(
                 DBusMatchRule("signal", "org.freedesktop.portal.Request", "Response", handle),
                 DBusSigHandler<DBusSignal> { signal -> answer.complete(pathsOf(signal.parameters)) },
@@ -106,10 +125,38 @@ class PortalFileDialogs(private val fallback: FileDialogs) : FileDialogs {
             try {
                 method(chooser)
             } catch (e: Exception) {
+                waiting -= answer
                 throw Unavailable().initCause(e)
             }
-            answer.get()
+            try {
+                answer.get(DIALOG_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+            } catch (_: TimeoutException) {
+                // Nobody answered: a portal that lost the request would keep the app "in front" for good.
+                emptyList()
+            } finally {
+                waiting -= answer
+                closeRequest(connection, handle)
+            }
         }
+
+    /** Asks the portal to close the dialog of [handle] (a no-op when it is closed already). */
+    private fun closeRequest(connection: DBusConnection, handle: String) {
+        try {
+            connection.getRemoteObject(
+                "org.freedesktop.portal.Desktop",
+                handle,
+                PortalRequest::class.java,
+                true,
+            ).Close()
+        } catch (_: Exception) {
+            // Already answered, or the portal is gone.
+        }
+    }
+
+    private companion object {
+        // Long enough for a person choosing a file, short enough that a lost request frees the app.
+        const val DIALOG_TIMEOUT_MINUTES = 30L
+    }
 
     /** `Response(u code, a{sv} results)`: code 0 is an answer, anything else a cancel; `uris` are file: URIs. */
     private fun pathsOf(parameters: Array<Any?>): List<Path> {

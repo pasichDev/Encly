@@ -25,18 +25,22 @@ class AppDirectoriesTest {
     private fun env(vararg pairs: Pair<String, String>): (String) -> String? = mapOf(*pairs)::get
 
     @Test
-    fun `windows uses APPDATA and falls back to the roaming profile`() {
+    fun `windows uses LOCALAPPDATA and never the roaming profile`() {
         assertEquals(
-            Paths.get("C:\\Users\\a\\AppData\\Roaming", "Encly"),
+            Paths.get("C:\\Users\\a\\AppData\\Local", "Encly"),
             AppDirectories.dataDirectory(
                 DesktopOs.WINDOWS,
-                env("APPDATA" to "C:\\Users\\a\\AppData\\Roaming"),
+                env("LOCALAPPDATA" to "C:\\Users\\a\\AppData\\Local", "APPDATA" to "C:\\roaming"),
                 "C:\\Users\\a",
             ),
         )
         assertEquals(
-            Paths.get("home", "AppData", "Roaming", "Encly"),
-            AppDirectories.dataDirectory(DesktopOs.WINDOWS, env("APPDATA" to " "), "home"),
+            Paths.get("home", "AppData", "Local", "Encly"),
+            AppDirectories.dataDirectory(DesktopOs.WINDOWS, env("LOCALAPPDATA" to " ", "APPDATA" to "r"), "home"),
+        )
+        assertEquals(
+            Paths.get("home", "AppData", "Local", "Encly"),
+            AppDirectories.dataDirectory(DesktopOs.WINDOWS, env("APPDATA" to "C:\\roaming"), "home"),
         )
     }
 
@@ -191,23 +195,45 @@ class FileKeyValueStoreTest {
     }
 
     @Test
-    fun `an unreadable file fails closed and is never overwritten`() {
+    fun `a damaged file is moved aside and the store starts empty and writable`() {
         val damaged = byteArrayOf(0x5c, 0x75, 0x7a)
         Files.write(file(), damaged)
         val store = FileKeyValueStore(file(), now)
         assertFalse(store.contains("anything"))
         assertTrue(store.getBoolean("flag", true))
+        assertContentEquals(damaged, Files.readAllBytes(file().resolveSibling("flags.properties.damaged")))
+        assertTrue(store.commit { putString("k", "v") })
+        assertEquals("v", FileKeyValueStore(file(), now).getString("k", null))
+    }
+
+    @Test
+    fun `a file that is not utf-8 is damaged too`() {
+        Files.write(file(), byteArrayOf(0x66, 0x3d, 0xc3.toByte(), 0x28))
+        val store = FileKeyValueStore(file(), now)
+        assertTrue(store.commit { putString("k", "v") })
+        assertTrue(Files.exists(file().resolveSibling("flags.properties.damaged")))
+        assertEquals("v", FileKeyValueStore(file(), now).getString("k", null))
+    }
+
+    @Test
+    fun `a file that cannot be read now fails closed and is never overwritten`() {
+        // A directory where the file should be: reading it is an I/O error, not damage.
+        Files.createDirectory(file())
+        val store = FileKeyValueStore(file(), now)
+        assertFalse(store.contains("anything"))
+        assertTrue(store.getBoolean("flag", true))
         assertFalse(store.commit { putString("k", "v") })
         store.edit { putString("k", "v") }
-        assertContentEquals(damaged, Files.readAllBytes(file()))
+        assertTrue(Files.isDirectory(file()))
         assertNull(store.getString("k", null))
     }
 
     @Test
     fun `a file that could not be read is read again once it can be`() {
-        Files.write(file(), byteArrayOf(0x5c, 0x75, 0x7a))
+        Files.createDirectory(file())
         val store = FileKeyValueStore(file(), now)
         assertFalse(store.getBoolean("flag", false))
+        Files.delete(file())
         Files.writeString(file(), "flag=true\n")
         assertTrue(store.getBoolean("flag", false))
         assertTrue(store.commit { putString("k", "v") })

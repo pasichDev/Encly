@@ -19,6 +19,9 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.concurrent.Volatile
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 /**
  * Whether the open session was closed. ViewModels that hold decrypted content observe it and
@@ -62,6 +65,7 @@ public object NeverLocked : VaultLockEvents {
  * the moment the screen turns off or the device locks, and are re-checked when the app comes
  * back.
  */
+@OptIn(ExperimentalAtomicApi::class)
 @SingleIn(AppScope::class)
 @Suppress("TooManyFunctions") // The whole session lifecycle: lifecycle hooks, picker grace, unlock publishing.
 @Inject
@@ -82,8 +86,14 @@ public class SessionLockManager(
     private val preLockFlushes = MutableStateFlow<List<PreLockFlush>>(emptyList())
 
     /** True from the moment a lock starts waiting for the editors until the vault is closed. */
-    @Volatile
-    private var flushing = false
+    private val flushing = AtomicBoolean(false)
+
+    /**
+     * Counts the lock requests of a lockable vault (an OS lock, the idle lock, "Lock now", a background stop), whether
+     * or not anything was open when they came. An unlock that was running while one arrived must not be published: see
+     * [lockRequests] and [onUnlocked].
+     */
+    private val lockRequestCount = AtomicLong(0L)
 
     /** Emits true when the app was re-locked in the background and must show the lock screen. */
     override val locked: StateFlow<Boolean> = _locked.asStateFlow()
@@ -158,6 +168,7 @@ public class SessionLockManager(
      */
     @MainThread
     public fun requireUnlock() {
+        lockRequestCount.addAndFetch(1L)
         screenshots.revoke()
         _locked.value = true
     }
@@ -219,18 +230,25 @@ public class SessionLockManager(
     }
 
     /**
+     * The number of lock requests so far. A caller that starts an unlock reads it first and passes it to [onUnlocked]
+     * when the unlock is done: a lock that came in between (an OS lock or the idle lock while the PIN was being
+     * checked, when there was nothing open yet to close) must not be lost to the unlock that finishes after it.
+     */
+    public fun lockRequests(): Long = lockRequestCount.load()
+
+    /**
      * Publishes a completed unlock (PIN, biometric, recovery seed, first-run setup or v1
      * upgrade). Call on the main thread, where ON_START/ON_STOP are delivered too, right
-     * after the vault was opened.
+     * after the vault was opened. [lockRequestsAtStart] is [lockRequests] as it was when the unlock began.
      *
      * PBKDF2 and the SQLCipher open run off the main thread and can finish after the app was
-     * sent to the background, when [onStop] already ran and found nothing to close. In that
-     * case the vault is closed again at once, [locked] stays true and this returns false:
-     * the caller must not navigate into protected content.
+     * sent to the background, when [onStop] already ran and found nothing to close, or after a lock request that
+     * found nothing open. In that case the vault is closed again at once, [locked] stays true and this returns
+     * false: the caller must not navigate into protected content.
      */
     @MainThread
-    public fun onUnlocked(): Boolean {
-        if (!foreground) {
+    public fun onUnlocked(lockRequestsAtStart: Long = lockRequests()): Boolean {
+        if (!foreground || lockRequestCount.load() != lockRequestsAtStart || deviceLock.isDeviceLocked()) {
             relock()
             return false
         }
@@ -254,6 +272,8 @@ public class SessionLockManager(
      */
     @MainThread
     public fun lockNow() {
+        // Counted even with nothing open: an unlock that is running must not publish after it.
+        if (securityManager.isLockable()) lockRequestCount.addAndFetch(1L)
         if (isOpenAndLockable()) relock()
     }
 
@@ -266,6 +286,7 @@ public class SessionLockManager(
     }
 
     private fun relock() {
+        lockRequestCount.addAndFetch(1L)
         // The screenshot allowance ends with every lock, before anything else can show.
         screenshots.revoke()
         val flushes = preLockFlushes.value
@@ -274,8 +295,7 @@ public class SessionLockManager(
             return
         }
         // A lock already waiting for the editors covers this one.
-        if (flushing) return
-        flushing = true
+        if (!flushing.compareAndSet(false, true)) return
         lockScope.launch {
             try {
                 // The saves run in jobs of their own, so a save stuck in the database cannot hold the lock past
@@ -286,7 +306,7 @@ public class SessionLockManager(
                 withTimeoutOrNull(LOCK_FLUSH_TIMEOUT_MS) { saves.joinAll() }
             } finally {
                 closeVault()
-                flushing = false
+                flushing.store(false)
             }
         }
     }

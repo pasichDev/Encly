@@ -97,6 +97,30 @@ class LockViewModelTest {
     }
 
     @Test
+    fun aLockThatCameWhileThePinWasBeingCheckedIsNotLostToTheUnlock() = runTest {
+        // The OS locks the session (or the idle lock fires) during the PBKDF2 run: nothing is open yet to close.
+        `when`(security.isLockable()).thenReturn(true)
+        doAnswer {
+            sessionLock.lockNow()
+            VaultUnlockResult.SUCCESS
+        }.`when`(security).unlockWithPin(PIN.toCharArray())
+
+        assertEquals(PinUnlockResult.BACKGROUNDED, pin())
+
+        verify(security).lock()
+        assertTrue(sessionLock.locked.value)
+    }
+
+    @Test
+    fun theRecoveryPhraseResetIsAskedOfTheSecurityLayer() {
+        `when`(security.canResetPinWithoutCurrent()).thenReturn(true)
+        assertTrue(viewModel.mustResetPin())
+
+        `when`(security.canResetPinWithoutCurrent()).thenReturn(false)
+        assertFalse(viewModel.mustResetPin())
+    }
+
+    @Test
     fun aWrongPinAndABrokenVaultAreToldApart() = runTest {
         `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
         assertEquals(PinUnlockResult.WRONG_PIN, pin())

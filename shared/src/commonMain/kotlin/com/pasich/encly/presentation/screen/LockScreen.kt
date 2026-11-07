@@ -89,7 +89,8 @@ fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) 
 /**
  * In a host with several windows over one vault, an unlock made on another window's lock screen opens the vault
  * for this one too: this lock screen leaves for Home (or the note this window had open) like its own unlock does,
- * without the reveal. A short grace lets this window's own unlock start its reveal first, which this must not cut off.
+ * without the reveal, or for the new-PIN screen when the other window unlocked with the recovery phrase. A short
+ * grace lets this window's own unlock start its reveal first, which this must not cut off.
  */
 @Composable
 private fun FollowUnlockFromOtherWindows(
@@ -103,7 +104,14 @@ private fun FollowUnlockFromOtherWindows(
             delay(FOLLOW_UNLOCK_GRACE_MS)
             val ownUnlock = viewModel.busy.value || reveal?.running == true
             if (!ownUnlock && !viewModel.isSessionLocked()) {
-                navController.leaveLockScreen(null, viewModel::isSessionLocked, viewModel::canReopenNote)
+                if (viewModel.mustResetPin()) {
+                    // The other window unlocked with the recovery phrase: this one needs the new PIN too.
+                    navController.navigate(NavRoutes.PinCodeConfig.name) {
+                        popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
+                    }
+                } else {
+                    navController.leaveLockScreen(null, viewModel::isSessionLocked, viewModel::canReopenNote)
+                }
             }
         }
     }

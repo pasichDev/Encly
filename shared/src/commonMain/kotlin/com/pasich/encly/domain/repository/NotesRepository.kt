@@ -35,7 +35,17 @@ interface NotesRepository {
 
     /** The new note's row id. */
     suspend fun insertNote(note: Note): Result<Long>
-    suspend fun updateNote(note: Note): Result<Unit>
+
+    /**
+     * Saves what an editor owns of [note]: its title and content, and each of tag, pin, colour, text size and line
+     * spacing that differs from [base] (all of them when [base] is null), plus the date and summary when those
+     * differ. Never the trash or archive state, and not a column the editor did not change: a note trashed, archived
+     * or pinned from another window meanwhile stays so.
+     */
+    suspend fun updateEdited(note: Note, base: Note?): Result<Unit>
+
+    /** Moves the note to the trash ([at]: when) or back, writing those two columns only. */
+    suspend fun setTrashed(noteId: Long, trashed: Boolean, at: Long?): Result<Unit>
     suspend fun deleteNoteById(id: Long): Result<Unit>
 
     /** Gives the trashed notes that have no trash time (imported ones) [at], so the trash can age them. */

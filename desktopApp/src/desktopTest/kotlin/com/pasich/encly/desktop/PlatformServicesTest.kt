@@ -36,6 +36,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -355,6 +356,56 @@ class PickersTest {
         }
         GatedFileDialogs(slow, lifecycle).save("x") { }
         assertTrue(lifecycle.inForeground)
+    }
+
+    @Test
+    fun `a dialog that cannot be shown does not keep the app in front`() {
+        val lifecycle = DesktopAppLifecycle()
+        val broken = object : com.pasich.encly.desktop.platform.FileDialogs {
+            override fun save(suggestedName: String, onResult: (Path?) -> Unit) = error("no display")
+
+            override fun open(multiple: Boolean, extensions: Set<String>, onResult: (List<Path>) -> Unit) = Unit
+
+            override fun folder(onResult: (Path?) -> Unit) = Unit
+        }
+
+        assertFailsWith<IllegalStateException> { GatedFileDialogs(broken, lifecycle).save("x") { } }
+        lifecycle.windowDeactivated()
+
+        // Without the give-back the dialog count would stay above zero and the app could never be "left".
+        assertFalse(lifecycle.inForeground)
+    }
+
+    @Test
+    fun `a dialog that answers twice is ended once and cancelling reaches the delegate`() {
+        val lifecycle = DesktopAppLifecycle()
+        var cancelled = false
+        var stray: (Path?) -> Unit = { }
+        val twice = object : com.pasich.encly.desktop.platform.FileDialogs {
+            override fun save(suggestedName: String, onResult: (Path?) -> Unit) {
+                onResult(null)
+                stray = onResult
+            }
+
+            override fun open(multiple: Boolean, extensions: Set<String>, onResult: (List<Path>) -> Unit) = Unit
+
+            override fun folder(onResult: (Path?) -> Unit) = Unit
+
+            override fun cancelAll() {
+                cancelled = true
+            }
+        }
+        val gated = GatedFileDialogs(twice, lifecycle)
+
+        gated.save("x") { }
+        // A second dialog is open now; the stray second answer of the first must not have ended it too.
+        gated.open(multiple = false, extensions = emptySet()) { }
+        stray(null)
+        lifecycle.windowDeactivated()
+        assertTrue(lifecycle.inForeground)
+
+        gated.cancelAll()
+        assertTrue(cancelled)
     }
 
     @Test

@@ -908,6 +908,7 @@ public final class com/pasich/encly/core/security/SessionLockManager : androidx/
 	public fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getSessionGeneration ()J
 	public final fun lockNow ()V
+	public final fun lockRequests ()J
 	public fun onCreate (Landroidx/lifecycle/LifecycleOwner;)V
 	public fun onDestroy (Landroidx/lifecycle/LifecycleOwner;)V
 	public fun onPause (Landroidx/lifecycle/LifecycleOwner;)V
@@ -915,7 +916,8 @@ public final class com/pasich/encly/core/security/SessionLockManager : androidx/
 	public fun onStart (Landroidx/lifecycle/LifecycleOwner;)V
 	public fun onStop (Landroidx/lifecycle/LifecycleOwner;)V
 	public final fun onUnlockAbandoned ()V
-	public final fun onUnlocked ()Z
+	public final fun onUnlocked (J)Z
+	public static synthetic fun onUnlocked$default (Lcom/pasich/encly/core/security/SessionLockManager;JILjava/lang/Object;)Z
 	public fun registerPreLockFlush (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
 	public final fun requireUnlock ()V
 }

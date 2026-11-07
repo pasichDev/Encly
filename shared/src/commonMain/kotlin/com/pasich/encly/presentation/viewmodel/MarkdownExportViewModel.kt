@@ -257,7 +257,11 @@ class MarkdownExportViewModel(
                 val document = documentOf(snapshot, what.noteId, labels())
                 // A re-lock that landed after the read must not be followed by a print.
                 bound.assertCurrentSession()
-                when (what.renderer.print(document)) {
+                // The dialog stays open over a lock (the OS's own window): the printer asks again after it.
+                val stillAllowed = {
+                    !sessionLockManager.locked.value && runCatching { bound.assertCurrentSession() }.isSuccess
+                }
+                when (what.renderer.print(document, stillAllowed)) {
                     PrintResult.PRINTED -> state.finish(BackupMessage.Text(Res.string.print_done))
                     PrintResult.CANCELLED -> Unit
                 }

@@ -286,22 +286,134 @@ class NotePersistenceTest {
         assertTrue(persistence.moveToTrash())
         persistence.save()
 
-        assertEquals(1, repository.updateCalls)
-        assertTrue(repository.updatedNotes.single().isTrash)
+        // What was typed is stored first, then the trash columns are written; nothing after the close.
+        assertEquals(2, repository.updateCalls)
+        assertFalse(repository.updatedNotes.first().isTrash)
+        assertEquals(BlockConverter.blocksToJson(listOf(text("edited"))), repository.updatedNotes.first().value)
+        assertTrue(repository.updatedNotes.last().isTrash)
         assertTrue(persistence.state.value.note.isTrash)
     }
 
     @Test
-    fun restoringTakesTheNoteOutOfTheTrashWithTheEditorContent() = runTest(dispatcher) {
+    fun trashingAnUntouchedNoteWritesTheTrashColumnsOnly() = runTest(dispatcher) {
+        storeNote(text("original"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+
+        assertTrue(persistence.moveToTrash())
+
+        assertEquals(1, repository.updateCalls)
+        assertTrue(repository.updatedNotes.single().isTrash)
+        assertTrue(repository.updateBases.isEmpty())
+    }
+
+    @Test
+    fun aSaveWritesOnlyAgainstTheRowTheEditorLastSaw() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("body, edited"))
+
+        assertTrue(persistence.save())
+
+        // The base is the note as loaded (not trashed, not archived, no pin): the repository diffs against it.
+        val base = checkNotNull(repository.updateBases.single())
+        assertEquals("title", base.title)
+        assertEquals(BlockConverter.blocksToJson(listOf(text("body"))), base.value)
+    }
+
+    @Test
+    fun releasingSavesTheLastChangesAndThenWritesNothing() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("typed just before"))
+
+        assertTrue(persistence.release())
+
+        assertEquals(BlockConverter.blocksToJson(blocks), repository.updatedNotes.single().value)
+        // Released: an autosave or a last-chance save finds nothing to do.
+        blocks = listOf(text("typed after"))
+        assertTrue(persistence.save())
+        assertEquals(1, repository.updateCalls)
+    }
+
+    @Test
+    fun anEditorThatRegainsTheNoteShowsWhatWasSavedMeanwhile() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertTrue(persistence.release())
+
+        // Another window saves new text.
+        val other = BlockConverter.blocksToJson(listOf(text("from the other window")))
+        repository.allNotesWithTags.value =
+            listOf(NoteWithTag(Note(id = NOTE_ID, title = "title", value = other), null))
+        persistence.resume { blocks = it }
+
+        assertEquals("from the other window", (blocks.single() as Block.TextBlock).text.value)
+        // Editing resumed on top of the fresh text: nothing is pending, and a change is saved again.
+        assertTrue(persistence.save(onlyIfChanged = true))
+        assertEquals(0, repository.updateCalls)
+        blocks = listOf(text("and mine"))
+        assertTrue(persistence.save())
+        assertEquals(1, repository.updateCalls)
+    }
+
+    @Test
+    fun anEditorThatRegainsAnUnchangedNoteKeepsWhatItHolds() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertTrue(persistence.release())
+        var reloaded = false
+
+        persistence.resume { reloaded = true }
+
+        assertFalse(reloaded)
+    }
+
+    @Test
+    fun aViewOfANoteEditedElsewhereFollowsWhatTheOtherWindowSaves() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        persistence.suspended = true
+
+        val saved = Note(
+            id = NOTE_ID,
+            title = "renamed",
+            value = BlockConverter.blocksToJson(listOf(text("new text"))),
+        )
+        persistence.showStored(saved) { blocks = it }
+
+        assertEquals("new text", (blocks.single() as Block.TextBlock).text.value)
+        assertEquals("renamed", persistence.state.value.note.title)
+    }
+
+    @Test
+    fun anEditorThatIsNotSuspendedIgnoresTheStoredNote() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        var shown = false
+
+        persistence.showStored(Note(id = NOTE_ID, title = "other", value = "[]")) { shown = true }
+
+        assertFalse(shown)
+        assertEquals("title", persistence.state.value.note.title)
+    }
+
+    @Test
+    fun restoringTakesTheNoteOutOfTheTrash() = runTest(dispatcher) {
         storeNote(text("original"), isTrash = true)
         val persistence = persistence(loading = true)
         persistence.load(NOTE_ID, isCopy = false) { blocks = it }
 
         assertTrue(persistence.restoreFromTrash())
 
-        val restored = repository.updatedNotes.single()
-        assertFalse(restored.isTrash)
-        assertEquals(BlockConverter.blocksToJson(blocks), restored.value)
+        assertFalse(repository.updatedNotes.single().isTrash)
+        assertNull(repository.updatedNotes.single().trashedAt)
     }
 
     @Test

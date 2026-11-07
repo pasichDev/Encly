@@ -155,6 +155,18 @@ val LocalBiometricHost = staticCompositionLocalOf<ScreenBiometricHost?> { null }
  */
 val LocalScreenshotAllowance = staticCompositionLocalOf<ScreenshotAllowance?> { null }
 
+/**
+ * Whether the host can restrain the system keyboard's learning (Android: strict keyboard privacy). The desktop has
+ * no such keyboard and says no, so Settings does not show a switch that would do nothing.
+ */
+val LocalKeyboardPrivacyOffered = staticCompositionLocalOf { true }
+
+/** A third-party work a host ships besides the ones every host does: its name, its licence and where to read both. */
+class OpenSourceNotice(val name: String, val license: String, val url: String)
+
+/** The works only this host ships (the desktop's PDF library and native bindings), listed on the licences screen. */
+val LocalExtraLicenses = staticCompositionLocalOf<List<OpenSourceNotice>> { emptyList() }
+
 /** The in-app language controller. */
 val LocalAppLocales = staticCompositionLocalOf<AppLocaleController> { FixedLocale }
 

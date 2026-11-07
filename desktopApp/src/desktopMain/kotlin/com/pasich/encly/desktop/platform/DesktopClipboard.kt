@@ -14,22 +14,44 @@ import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.Clipboard as AwtClipboard
 
 /**
+ * Writes text to the system clipboard with the OS's markers for a clip that must not be kept (see
+ * `nativeos/NativeClipboard.kt`). [write] answers whether it did.
+ */
+fun interface ClipboardWriter {
+    fun write(text: String): Boolean
+}
+
+/**
  * Encly's clipboard policy on the desktop, the one Android applies: what the app copies out is cleared after
  * [CLEAR_AFTER_MS] unless something else was copied since. "Something else" is recognised by the clipboard's
  * text: if it still holds exactly what was armed, it is Encly's clip and it is emptied; if it holds anything
  * else, it is left alone. A clipboard that cannot be read (another program holds it) is emptied anyway, as on
  * Android: an Encly clip must not outlive its minute.
  *
- * Limit: AWT has no "sensitive" flag, so a clipboard history (Windows Win+V, a clipboard manager) may keep a
- * copy that this wipe cannot reach.
+ * The clip is written with the OS's own calls where they exist ([ClipboardWriter]): Windows clipboard history and
+ * cloud sync and macOS Universal Clipboard and clipboard managers are told to leave it out. Where they do not (Linux,
+ * or the call failed) AWT puts it there with no marking, and a clipboard history or manager may keep a copy that this
+ * wipe cannot reach.
  */
 class ClipboardWiper(
     private val clipboard: () -> AwtClipboard?,
     private val timer: MainThreadTimer,
     private val clearAfterMillis: Long = CLEAR_AFTER_MS,
+    private val writer: ClipboardWriter? = null,
 ) {
     private var armedText: String? = null
     private var cancel: (() -> Unit)? = null
+
+    /**
+     * Puts [text] on the clipboard marked so that clipboard history, cloud sync and Universal Clipboard leave it
+     * alone, and arms the wipe. False when the OS has no such marking or it failed: the caller then uses AWT, whose
+     * clip carries no marking.
+     */
+    fun writeSensitive(text: String): Boolean {
+        if (writer?.write(text) != true) return false
+        arm(text)
+        return true
+    }
 
     /** [text] was just put on the clipboard: empties it after the delay if it is still there. */
     fun arm(text: String) {
@@ -90,7 +112,10 @@ class DesktopSensitiveClipboard(private val clipboard: () -> AwtClipboard?, priv
     // The desktop shows nothing when something is copied: the app says so itself.
     override val systemConfirmsCopy: Boolean = false
 
-    override fun copy(label: String, text: String): Boolean {
+    override fun copy(label: String, text: String): Boolean = wiper.writeSensitive(text) || copyWithAwt(text)
+
+    /** The fallback: AWT puts the text there with no marking. */
+    private fun copyWithAwt(text: String): Boolean {
         val board = clipboard() ?: return false
         return try {
             board.setContents(StringSelection(text), null)
@@ -115,8 +140,10 @@ private class SensitiveComposeClipboard(private val delegate: Clipboard, private
     override suspend fun getClipEntry(): ClipEntry? = delegate.getClipEntry()
 
     override suspend fun setClipEntry(clipEntry: ClipEntry?) {
-        delegate.setClipEntry(clipEntry)
         val text = clipEntry?.let(::textOf)
+        // Text goes out marked, and not through the delegate first: that would put it there unmarked for a moment.
+        if (text != null && wiper.writeSensitive(text)) return
+        delegate.setClipEntry(clipEntry)
         if (clipEntry == null) {
             wiper.clearNow()
         } else if (text != null) {

@@ -45,18 +45,49 @@ class RepositoryImplTest {
 
     @Test
     fun updatingZeroRowsIsAFailure() = runBlocking {
-        val note = Note(id = NOTE_ID)
-        `when`(notesDao.updateNote(note)).thenReturn(0)
+        `when`(notesDao.updateTrashed(NOTE_ID, true, TRASHED_AT)).thenReturn(0)
 
-        assertTrue(NotesRepositoryImpl(provider).updateNote(note).isFailure)
+        assertTrue(NotesRepositoryImpl(provider).setTrashed(NOTE_ID, true, TRASHED_AT).isFailure)
     }
 
     @Test
     fun updatingARowSucceeds() = runBlocking {
-        val note = Note(id = NOTE_ID)
-        `when`(notesDao.updateNote(note)).thenReturn(1)
+        `when`(notesDao.updateTrashed(NOTE_ID, true, TRASHED_AT)).thenReturn(1)
 
-        assertTrue(NotesRepositoryImpl(provider).updateNote(note).isSuccess)
+        assertTrue(NotesRepositoryImpl(provider).setTrashed(NOTE_ID, true, TRASHED_AT).isSuccess)
+    }
+
+    @Test
+    fun restoringWritesNoTrashTime() = runBlocking {
+        `when`(notesDao.updateTrashed(NOTE_ID, false, null)).thenReturn(1)
+
+        assertTrue(NotesRepositoryImpl(provider).setTrashed(NOTE_ID, false, TRASHED_AT).isSuccess)
+    }
+
+    @Test
+    fun anEditSavesOnlyTheColumnsItChanged() = runBlocking {
+        val base = Note(id = NOTE_ID, title = "t", value = "v", date = 1L, color = "teal", isPinned = true)
+        val edited = base.copy(value = "w", tagId = 3L)
+        // The title and content go; the tag changed; the pin, colour and sizes are left to whatever the row holds.
+        `when`(
+            notesDao.updateEdited(
+                NOTE_ID, "t", "w", false, "", 1L, true, 3L, false, true, false, "teal", false, null, false, null,
+            ),
+        ).thenReturn(1)
+
+        assertTrue(NotesRepositoryImpl(provider).updateEdited(edited, base).isSuccess)
+    }
+
+    @Test
+    fun withoutABaseEveryColumnIsWritten() = runBlocking {
+        val note = Note(id = NOTE_ID, title = "t", value = "v", date = 1L)
+        `when`(
+            notesDao.updateEdited(
+                NOTE_ID, "t", "v", true, "", 1L, true, null, true, false, true, "none", true, null, true, null,
+            ),
+        ).thenReturn(1)
+
+        assertTrue(NotesRepositoryImpl(provider).updateEdited(note, null).isSuccess)
     }
 
     @Test
@@ -89,11 +120,12 @@ class RepositoryImplTest {
 
     @Test
     fun cancellationIsRethrownNotReportedAsAFailure() {
-        val note = Note(id = NOTE_ID)
         val cancellation = CancellationException("cancelled")
-        runBlocking { `when`(notesDao.updateNote(note)).thenAnswer { throw cancellation } }
+        runBlocking { `when`(notesDao.updateTrashed(NOTE_ID, true, TRASHED_AT)).thenAnswer { throw cancellation } }
 
-        val thrown = runCatching { runBlocking { NotesRepositoryImpl(provider).updateNote(note) } }.exceptionOrNull()
+        val thrown = runCatching {
+            runBlocking { NotesRepositoryImpl(provider).setTrashed(NOTE_ID, true, TRASHED_AT) }
+        }.exceptionOrNull()
 
         assertSame(cancellation, thrown)
     }
@@ -138,6 +170,7 @@ class RepositoryImplTest {
 
     private companion object {
         const val NOTE_ID = 5L
+        const val TRASHED_AT = 1_000L
         const val TAG_ID = 8L
         const val TASK_ID = 3L
     }

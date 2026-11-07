@@ -74,6 +74,49 @@ public interface NotesDao {
     )
     public suspend fun updateArchived(noteId: Long, archived: Boolean): Int
 
+    /** Moves a note to the trash (with the time) or back, and writes nothing else of the row. */
+    @Query("UPDATE notes SET isTrash = :trashed, trashedAt = :trashedAt WHERE id = :noteId")
+    public suspend fun updateTrashed(noteId: Long, trashed: Boolean, trashedAt: Long?): Int
+
+    /**
+     * What an editor saves: the title and content always, and every other column only when its flag says the editor
+     * changed it. A note trashed, archived, pinned or recoloured from another window meanwhile keeps that: nothing
+     * here writes `isTrash`, `trashedAt` or `isArchived`, and a column the editor left alone is not written back.
+     * [stamp] also writes [date] and [description] (the content changed). A pin never lands on an archived note.
+     */
+    @Suppress("LongParameterList") // One value and one flag per column of the row.
+    @Query(
+        """
+    UPDATE notes SET title = :title, value = :value,
+    description = CASE WHEN :stamp = 1 THEN :description ELSE description END,
+    date = CASE WHEN :stamp = 1 THEN :date ELSE date END,
+    tagId = CASE WHEN :setTag = 1 THEN :tagId ELSE tagId END,
+    isPinned = CASE WHEN :setPinned = 1 THEN (:pinned = 1 AND isArchived = 0) ELSE isPinned END,
+    color = CASE WHEN :setColor = 1 THEN :color ELSE color END,
+    textSize = CASE WHEN :setTextSize = 1 THEN :textSize ELSE textSize END,
+    lineSpacing = CASE WHEN :setLineSpacing = 1 THEN :lineSpacing ELSE lineSpacing END
+    WHERE id = :noteId
+    """,
+    )
+    public suspend fun updateEdited(
+        noteId: Long,
+        title: String,
+        value: String,
+        stamp: Boolean,
+        description: String,
+        date: Long,
+        setTag: Boolean,
+        tagId: Long?,
+        setPinned: Boolean,
+        pinned: Boolean,
+        setColor: Boolean,
+        color: String,
+        setTextSize: Boolean,
+        textSize: Int?,
+        setLineSpacing: Boolean,
+        lineSpacing: Int?,
+    ): Int
+
     /** Gives the trashed notes that have no trash time (imported ones) [at], so the trash can age them. */
     @Query("UPDATE notes SET trashedAt = :at WHERE isTrash = 1 AND trashedAt IS NULL")
     public suspend fun stampTrashedAt(at: Long): Int

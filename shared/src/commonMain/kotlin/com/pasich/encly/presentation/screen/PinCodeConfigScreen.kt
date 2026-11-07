@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,7 @@ import com.pasich.encly.core.resources.pin_reset_subtitle
 import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.platform.LocalSessionSharedAcrossWindows
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
@@ -189,6 +191,9 @@ fun PinCodeConfigScreen(
     val pinState = remember { PinChangeState(isReset = !securityViewModel.requiresCurrentPin()) }
 
     BackHandler(enabled = pinState.isReset) { }
+    if (pinState.isReset && LocalSessionSharedAcrossWindows.current) {
+        LeaveWhenAnotherWindowSetThePin(pinState, securityViewModel::requiresCurrentPin, navController)
+    }
     PinLockoutTicker(pinState.lockoutSeconds > 0L, securityViewModel::pinLockoutRemainingMillis) {
         pinState.lockoutSeconds = it
     }
@@ -241,6 +246,27 @@ fun PinCodeConfigScreen(
                 } else {
                     SuccessAnimation()
                 }
+            }
+        }
+    }
+}
+
+private const val RESET_STILL_NEEDED_POLL_MS = 1_000L
+
+/** Another window may set the new PIN first: this reset has nothing left to do then, and goes on into the app. */
+@Composable
+private fun LeaveWhenAnotherWindowSetThePin(
+    pinState: PinChangeState,
+    requiresCurrentPin: () -> Boolean,
+    navController: NavHostController,
+) {
+    val stillRequired by rememberUpdatedState(requiresCurrentPin)
+    LaunchedEffect(pinState) {
+        while (pinState.animationState == PinAnimationState.Entering) {
+            delay(RESET_STILL_NEEDED_POLL_MS)
+            if (pinState.animationState == PinAnimationState.Entering && stillRequired()) {
+                navController.finishPinChange(isReset = true)
+                break
             }
         }
     }

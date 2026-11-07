@@ -66,11 +66,16 @@ files never hold it unprotected, and it is never logged.
 
 | OS | Where the secret lives |
 |---|---|
-| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%APPDATA%\Encly\`; only the same Windows user can decrypt it. |
+| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\Encly\` (local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
 | macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
-| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. |
+| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure ("unlock your keyring"), not a lost key. |
 
 The second PIN key slot (used after a wipe-PIN unlock) keeps its own secret under the same names with a `-b` suffix.
+
+On Windows the DPAPI blob and the vault are in the local profile (`%LOCALAPPDATA%`), never the roaming one. In a domain,
+DPAPI master keys can be recovered with the domain's backup key, so domain administrators can obtain the secret of a
+domain user; that is part of the desktop trust boundary below. On macOS the data folder is excluded from Time Machine
+(the sticky `com.apple.metadata:com_apple_backup_excludeItem` attribute, set at every start).
 
 A secret that is missing or can no longer be read is the same state as a lost Keystore key above: the PIN no
 longer unlocks and the recovery phrase is needed. A store that is only locked or not running is a temporary

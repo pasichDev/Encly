@@ -5,6 +5,7 @@ import java.io.IOException
 import java.io.StringWriter
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.charset.CharacterCodingException
 import java.nio.charset.StandardCharsets
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -23,8 +24,11 @@ import java.util.concurrent.Executors
  * Every change rewrites the whole file to a temp file in the same directory, fsyncs it and renames it over the
  * old one (an atomic replace), so a crash leaves the old content or the new, never a mix. [edit] returns at
  * once and writes on [writer]; [commit] writes before it returns. A file that is absent starts as empty. A file
- * that exists but cannot be read or parsed fails closed: nothing is changed or written, so the file is never
- * replaced by an empty state, and every read tries the file again. Meanwhile reads give the defaults.
+ * that exists but cannot be read (an I/O error: a scanner holds it, the disk hiccups) fails closed: nothing is
+ * changed or written, so the file is never replaced by an empty state, and every read tries the file again.
+ * Meanwhile reads give the defaults. A file that was read but is not valid (damaged) is moved aside as
+ * `<name>.damaged` and the store starts empty and writable: the flags are not secret, and the vault does not
+ * depend on them to be recognised.
  */
 class FileKeyValueStore(
     private val file: Path,
@@ -102,7 +106,10 @@ class FileKeyValueStore(
         }
     }
 
-    /** The file's content; empty when there is no file, null when there is one that cannot be read or parsed. */
+    /**
+     * The file's content; empty when there is no file or a damaged one was moved aside, null when there is one that
+     * cannot be read right now.
+     */
     private fun load(): Map<String, String>? {
         // Only a file known to be absent starts empty; "cannot tell" goes on to the read and fails closed.
         if (Files.notExists(file)) return emptyMap()
@@ -110,12 +117,28 @@ class FileKeyValueStore(
             val properties = Properties()
             Files.newBufferedReader(file, StandardCharsets.UTF_8).use(properties::load)
             properties.stringPropertyNames().associateWith { properties.getProperty(it) }
+        } catch (_: CharacterCodingException) {
+            // Not UTF-8: the file is damaged, not busy.
+            moveAside()
         } catch (_: IOException) {
             null
         } catch (_: IllegalArgumentException) {
             // A malformed \u escape: the file is damaged.
-            null
+            moveAside()
         }
+    }
+
+    /** Keeps a damaged file as `<name>.damaged` and starts empty; null if it cannot be moved (try again later). */
+    private fun moveAside(): Map<String, String>? = try {
+        val aside = file.resolveSibling(file.fileName.toString() + DAMAGED_SUFFIX)
+        Files.move(file, aside, StandardCopyOption.REPLACE_EXISTING)
+        emptyMap()
+    } catch (_: IOException) {
+        null
+    }
+
+    private companion object {
+        const val DAMAGED_SUFFIX = ".damaged"
     }
 
     private class MapEditor(private val map: MutableMap<String, String>) : KeyValueStore.Editor {

@@ -168,7 +168,7 @@ object DesktopServicesModule {
     @Provides
     @SingleIn(AppScope::class)
     fun provideClipboardWiper(environment: DesktopEnvironment): ClipboardWiper =
-        ClipboardWiper(environment.systemClipboard, environment.timer)
+        ClipboardWiper(environment.systemClipboard, environment.timer, writer = environment.clipboardWriter)
 
     @Provides
     @SingleIn(AppScope::class)

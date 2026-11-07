@@ -57,9 +57,29 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
         dao().insertNote(note)
     }
 
-    override suspend fun updateNote(note: Note): Result<Unit> = storageWrite(TAG, "updateNote") {
-        dao().updateNote(note).requireRows()
+    override suspend fun updateEdited(note: Note, base: Note?): Result<Unit> = storageWrite(TAG, "updateEdited") {
+        dao().updateEdited(
+            noteId = note.id,
+            title = note.title,
+            value = note.value,
+            stamp = base == null || note.date != base.date || note.description != base.description,
+            description = note.description,
+            date = note.date,
+            setTag = base == null || note.tagId != base.tagId,
+            tagId = note.tagId,
+            setPinned = base == null || note.isPinned != base.isPinned,
+            pinned = note.isPinned,
+            setColor = base == null || note.color != base.color,
+            color = note.color,
+            setTextSize = base == null || note.textSize != base.textSize,
+            textSize = note.textSize,
+            setLineSpacing = base == null || note.lineSpacing != base.lineSpacing,
+            lineSpacing = note.lineSpacing,
+        ).requireRows()
     }
+
+    override suspend fun setTrashed(noteId: Long, trashed: Boolean, at: Long?): Result<Unit> =
+        storageWrite(TAG, "setTrashed") { dao().updateTrashed(noteId, trashed, at.takeIf { trashed }).requireRows() }
 
     override suspend fun deleteNoteById(id: Long): Result<Unit> = storageWrite(TAG, "deleteNoteById") {
         dao().deleteNoteById(id).requireRows()

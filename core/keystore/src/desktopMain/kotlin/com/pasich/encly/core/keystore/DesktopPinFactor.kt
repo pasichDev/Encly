@@ -107,7 +107,7 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
         public fun create(dataDirectory: Path): DesktopPinFactor = DesktopPinFactor(
             selectSecretStore(
                 osName = System.getProperty("os.name").orEmpty(),
-                windows = { WindowsDpapiSecretStore() },
+                windows = { WindowsDpapiSecretStore(directory = dataDirectory) },
                 macos = { MacKeychainSecretStore() },
                 linux = { LinuxSecretServiceStore(vault = dataDirectory.toAbsolutePath().normalize().toString()) },
             ),

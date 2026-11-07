@@ -49,6 +49,8 @@ class DesktopEnvironment(
     val fileDialogs: FileDialogs,
     val linkOpener: LinkOpener,
     val systemClipboard: () -> Clipboard?,
+    /** Writes clips marked so history and sync leave them out; null where the OS cannot (then AWT writes them). */
+    val clipboardWriter: ClipboardWriter? = null,
     val timer: MainThreadTimer = SwingMainThreadTimer(),
     val dialogParent: DialogParent = DialogParent(),
 ) {
@@ -78,6 +80,7 @@ class DesktopEnvironment(
                 },
                 linkOpener = AwtLinkOpener,
                 systemClipboard = { runCatching { java.awt.Toolkit.getDefaultToolkit().systemClipboard }.getOrNull() },
+                clipboardWriter = com.pasich.encly.desktop.nativeos.NativeClipboard.forOs(os),
                 dialogParent = dialogParent,
             )
         }

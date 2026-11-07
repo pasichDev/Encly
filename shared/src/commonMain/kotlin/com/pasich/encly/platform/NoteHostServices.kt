@@ -4,6 +4,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.pasich.encly.data.export.NoteDocument
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.io.Sink
 
 /** What came of a print request that was not an error. */
@@ -24,8 +28,12 @@ interface NoteDocumentRenderer {
     /** Writes [document] as one PDF to [out]. The whole file is built before the first byte is written. */
     fun writePdf(document: NoteDocument, out: Sink)
 
-    /** Shows the system print dialog and prints [document]; throws when printing fails. */
-    suspend fun print(document: NoteDocument): PrintResult
+    /**
+     * Shows the system print dialog and prints [document]; throws when printing fails. [mayProceed] is asked once the
+     * user confirmed the dialog and again before each page: when it says no (the vault was locked meanwhile) nothing
+     * more is sent to the printer and the result is [PrintResult.CANCELLED].
+     */
+    suspend fun print(document: NoteDocument, mayProceed: () -> Boolean = { true }): PrintResult
 }
 
 /** The host's PDF and print support, or null where the host has none (Android). */
@@ -49,6 +57,10 @@ val LocalNoteWindows = staticCompositionLocalOf<NoteWindows?> { null }
 class NoteEditRegistry {
     private val lock = SynchronizedObject()
     private val holders = HashMap<Long, Holder>()
+    private val _releases = MutableStateFlow(0L)
+
+    /** Counts the notes given back so far: a window that was refused tries again when it changes. */
+    val releases: StateFlow<Long> = _releases.asStateFlow()
 
     private class Holder(val window: Any, var count: Int)
 
@@ -78,7 +90,10 @@ class NoteEditRegistry {
         synchronized(lock) {
             val holder = holders[noteId] ?: return
             if (holder.window != window) return
-            if (--holder.count <= 0) holders.remove(noteId)
+            if (--holder.count <= 0) {
+                holders.remove(noteId)
+                _releases.update { it + 1 }
+            }
         }
     }
 
@@ -92,6 +107,11 @@ class NoteEditClaims internal constructor(private val registry: NoteEditRegistry
     fun claim(noteId: Long): Boolean = registry.claim(window, noteId)
 
     fun release(noteId: Long) = registry.release(window, noteId)
+
+    /** The registry's [NoteEditRegistry.releases]. */
+    val releases: StateFlow<Long> get() = registry.releases
+
+    fun releaseCount(): Long = registry.releases.value
 }
 
 /** This window's note claims, or null where the host has one window only (Android): editors never refuse. */

@@ -17,9 +17,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -98,6 +100,10 @@ class NotePersistence(
     // only writes when the editor differs from it.
     private var persistedSnapshot: String = snapshotOf(_state.value.note, "[]")
 
+    // The row as this editor last read or wrote it: a save writes only the columns that differ from it, so it never
+    // puts back a column that another window changed meanwhile (trash, archive, pin, colour).
+    private var persistedNote: Note = _state.value.note
+
     // The note as the editor opened it, for [hasChanges].
     private var openedSnapshot: String = persistedSnapshot
 
@@ -148,6 +154,7 @@ class NotePersistence(
         val shown = if (isCopy) note.asCopy(copyTitle(note.title)) else note
         _state.value = LoadNoteState(note = shown, backupNote = shown)
         persistedSnapshot = snapshotOf(shown, contentJson())
+        persistedNote = shown
         openedSnapshot = persistedSnapshot
         loaded = true
         _status.value = SaveStatusNote.OLD
@@ -180,30 +187,40 @@ class NotePersistence(
      * not stored; a save that is not allowed (see [canPersist]) is a successful no-op. With
      * [onlyIfChanged] (the autosave), nothing is written when the editor matches what is stored.
      */
-    suspend fun save(onlyIfChanged: Boolean = false): Boolean = saveMutex.withLock {
-        if (!canPersist) {
+    suspend fun save(onlyIfChanged: Boolean = false): Boolean = saveMutex.withLock { saveLocked(onlyIfChanged) }
+
+    /** [save] for a caller that holds [saveMutex] already. */
+    private suspend fun saveLocked(onlyIfChanged: Boolean): Boolean = when {
+        !canPersist -> {
             if (_status.value != SaveStatusNote.LOADING && _status.value != SaveStatusNote.FAILED) {
                 _status.value = SaveStatusNote.OLD
             }
-            return@withLock true
-        }
-        val currentNote = _state.value.note
-        if (currentNote.id == -1L && currentNote.title.isBlank() && blocks().none { it.hasContent() }) {
-            return@withLock true
+            true
         }
 
+        // A blank new note is not stored.
+        isBlankDraft -> true
+
+        else -> writeNote(onlyIfChanged)
+    }
+
+    private suspend fun writeNote(onlyIfChanged: Boolean): Boolean {
+        val currentNote = _state.value.note
         val blocksJson = contentJson()
         val snapshot = snapshotOf(currentNote, blocksJson)
-        if (onlyIfChanged && snapshot == persistedSnapshot) return@withLock true
+        if (onlyIfChanged && snapshot == persistedSnapshot) return true
 
         _status.value = SaveStatusNote.SAVING
         val saved = suspendRunCatching {
             if (currentNote.id != -1L) {
                 val stored = withContext(ioDispatcher) {
-                    notesRepository.updateStored(currentNote, _state.value.backupNote, blocksJson)
+                    notesRepository.updateStored(currentNote, persistedNote, _state.value.backupNote, blocksJson)
                 }
                 // The editor shows when the note was last edited.
-                stored?.let { note -> updateNote { it.copy(date = note.date, description = note.description) } }
+                stored?.let { note ->
+                    updateNote { it.copy(date = note.date, description = note.description) }
+                    persistedNote = note
+                }
                 stored != null
             } else {
                 val draft = newDraft(currentNote, blocksJson)
@@ -216,6 +233,7 @@ class NotePersistence(
                     updateNote {
                         it.copy(id = id, value = blocksJson, date = draft.date, dateCreate = draft.dateCreate)
                     }
+                    persistedNote = draft.copy(id = id)
                 }
                 insertedId != null
             }
@@ -223,7 +241,62 @@ class NotePersistence(
 
         if (saved) persistedSnapshot = snapshot
         _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.FAILED
+        return saved
+    }
+
+    /**
+     * Ends this editor's hold on the note (its window gives the claim back): the changes not yet stored are saved
+     * first, then nothing is written until [resume]. Both happen under the save mutex, so no autosave slips in
+     * between, and the claim is released only after this returns: another window that claims the note next loads
+     * what was saved here.
+     */
+    suspend fun release(): Boolean = saveMutex.withLock {
+        val saved = saveLocked(onlyIfChanged = true)
+        suspended = true
         saved
+    }
+
+    /**
+     * Starts editing again after [release], or after another window had the note. If the stored note changed
+     * meanwhile it is read again and shown by [showBlocks]; otherwise the editor keeps what it holds (and its undo
+     * history).
+     */
+    suspend fun resume(showBlocks: (List<Block>) -> Unit) = saveMutex.withLock {
+        val id = _state.value.note.id
+        if (id != -1L && loaded) {
+            val stored = suspendRunCatching { notesRepository.getNoteById(id) }.getOrNull()
+            if (stored != null) showIfChanged(stored, showBlocks)
+        }
+        suspended = false
+    }
+
+    /** The stored row of the note, following every change to it; empty for a note that is not stored yet. */
+    fun storedNote(): Flow<Note?> {
+        val id = _state.value.note.id
+        // The flow fails once the vault closes; the view then simply stops following.
+        return if (id == -1L) emptyFlow() else notesRepository.observeNote(id).map { it?.note }.catch { }
+    }
+
+    /** A read-only view of a note edited elsewhere: shows [stored] when it differs from what is on screen. */
+    suspend fun showStored(stored: Note?, showBlocks: (List<Block>) -> Unit) {
+        if (stored == null) return
+        saveMutex.withLock { if (suspended) showIfChanged(stored, showBlocks) }
+    }
+
+    private suspend fun showIfChanged(stored: Note, showBlocks: (List<Block>) -> Unit) {
+        if (closed || stored.sameAs(persistedNote)) return
+        val parsed = if (stored.value.isEmpty()) {
+            emptyList()
+        } else {
+            withContext(ioDispatcher) { BlockConverter.jsonToBlocksOrNull(stored.value) }
+        }
+        // Unreadable content stays as it is on screen; the original is never replaced.
+        if (parsed == null) return
+        showBlocks(parsed)
+        _state.value = LoadNoteState(note = stored, backupNote = stored)
+        persistedSnapshot = snapshotOf(stored, contentJson())
+        persistedNote = stored
+        openedSnapshot = persistedSnapshot
     }
 
     /**
@@ -236,8 +309,13 @@ class NotePersistence(
         val backupNote = _state.value.backupNote
 
         val discarded = when {
-            backupNote.id != -1L -> withContext(ioDispatcher) { notesRepository.updateNote(backupNote) }
+            // Only the columns this editor changed go back; the trash and archive state never.
+            backupNote.id != -1L -> withContext(ioDispatcher) {
+                notesRepository.updateEdited(backupNote, persistedNote)
+            }
+
             currentNote.id != -1L -> withContext(ioDispatcher) { notesRepository.deleteNoteById(currentNote.id) }
+
             else -> Result.success(Unit)
         }.isSuccess
 
@@ -251,7 +329,8 @@ class NotePersistence(
         val currentNote = _state.value.note
         if (!loaded || suspended || currentNote.id == -1L) return@withLock false
 
-        val restored = currentNote.copy(value = contentJson(), isTrash = false)
+        if (!saveLocked(onlyIfChanged = true)) return@withLock false
+        val restored = _state.value.note.copy(isTrash = false)
         val ok = updateNoteTrashStatusUseCase.invoke(restored, false).isSuccess
         if (ok) {
             _state.value = _state.value.copy(note = restored)
@@ -269,7 +348,9 @@ class NotePersistence(
             return@withLock true
         }
 
-        val trashed = currentNote.copy(value = contentJson(), isTrash = true)
+        // What was typed goes first, then the note moves; the trash write touches its own two columns only.
+        if (!saveLocked(onlyIfChanged = true)) return@withLock false
+        val trashed = _state.value.note.copy(isTrash = true)
         val ok = updateNoteTrashStatusUseCase.invoke(trashed, true).isSuccess
         if (ok) {
             // Keep the in-memory note in sync with the row: nothing may write isTrash=false back.
@@ -366,21 +447,27 @@ private data class NoteMeta(
     val lineSpacing: Int?,
 )
 
+/** Whether [other] holds the same title, content and organizing columns (the editor's, not the trash state). */
+private fun Note.sameAs(other: Note): Boolean = id == other.id && title == other.title && value == other.value &&
+    tagId == other.tagId && isPinned == other.isPinned && color == other.color &&
+    textSize == other.textSize && lineSpacing == other.lineSpacing && date == other.date
+
 private fun Note.metaKey() = NoteMeta(title, tagId, isPinned, color, textSize, lineSpacing)
 
 /**
- * Stores [note] with [blocksJson] as its content; returns the stored note, or null. Its date
+ * Stores [note] with [blocksJson] as its content, writing only what differs from [base] (the row as the editor last
+ * saw it); returns the stored note, or null. Its date
  * moves forward only when the title or content differ from [backup], the note as the editor
  * opened it, and then an imported summary ([Note.description]) no longer describes it.
  */
-private suspend fun NotesRepository.updateStored(note: Note, backup: Note, blocksJson: String): Note? {
+private suspend fun NotesRepository.updateStored(note: Note, base: Note, backup: Note, blocksJson: String): Note? {
     val changed = backup.hasContentChanged(blocksJson, note.title)
     val stored = if (changed) {
         note.copy(value = blocksJson, date = Clock.System.now().toEpochMilliseconds(), description = "")
     } else {
         note.copy(value = blocksJson)
     }
-    return stored.takeIf { updateNote(it).isSuccess }
+    return stored.takeIf { updateEdited(it, base).isSuccess }
 }
 
 /** A copy of the blocks holding their current values, to serialize away from the editor. */

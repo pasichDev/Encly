@@ -5,6 +5,7 @@ import com.pasich.encly.desktop.storage.DesktopOs
 import java.awt.FileDialog
 import java.awt.Frame
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 
@@ -21,6 +22,12 @@ interface FileDialogs {
 
     /** "Choose a folder". */
     fun folder(onResult: (Path?) -> Unit)
+
+    /**
+     * Closes the dialogs this can close from outside (the portal's, which lives in another process) and answers
+     * each as cancelled; a native modal dialog of AWT cannot be closed this way. The app locking calls it.
+     */
+    fun cancelAll() = Unit
 }
 
 /** Which file extensions to offer for the MIME types the screens ask for. Empty means no filter. */
@@ -110,27 +117,44 @@ class AwtFileDialogs(private val os: DesktopOs, private val parent: () -> Frame?
  * vault in the middle of an export).
  */
 class GatedFileDialogs(private val delegate: FileDialogs, private val lifecycle: DesktopAppLifecycle) : FileDialogs {
-    override fun save(suggestedName: String, onResult: (Path?) -> Unit) {
-        lifecycle.beginOwnDialog()
+    override fun save(suggestedName: String, onResult: (Path?) -> Unit) = gated { end ->
         delegate.save(suggestedName) { path ->
-            lifecycle.endOwnDialog()
+            end()
             onResult(path)
         }
     }
 
-    override fun open(multiple: Boolean, extensions: Set<String>, onResult: (List<Path>) -> Unit) {
-        lifecycle.beginOwnDialog()
+    override fun open(multiple: Boolean, extensions: Set<String>, onResult: (List<Path>) -> Unit) = gated { end ->
         delegate.open(multiple, extensions) { paths ->
-            lifecycle.endOwnDialog()
+            end()
             onResult(paths)
         }
     }
 
-    override fun folder(onResult: (Path?) -> Unit) {
-        lifecycle.beginOwnDialog()
+    override fun folder(onResult: (Path?) -> Unit) = gated { end ->
         delegate.folder { path ->
-            lifecycle.endOwnDialog()
+            end()
             onResult(path)
+        }
+    }
+
+    override fun cancelAll() = delegate.cancelAll()
+
+    /**
+     * Counts the dialog as open until [show] calls the `end` it is given, once; if showing it fails on the spot the
+     * count is given back at once, so a dialog that never appeared cannot keep the app "in front" (and unlocked)
+     * for good.
+     */
+    @Suppress("TooGenericExceptionCaught") // Whatever failed to show it: the count is given back, then rethrown.
+    private fun gated(show: (end: () -> Unit) -> Unit) {
+        lifecycle.beginOwnDialog()
+        val ended = AtomicBoolean(false)
+        val end: () -> Unit = { if (ended.compareAndSet(false, true)) lifecycle.endOwnDialog() }
+        try {
+            show(end)
+        } catch (e: Exception) {
+            end()
+            throw e
         }
     }
 }

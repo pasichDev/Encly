@@ -49,9 +49,11 @@ abstract interface com.pasich.encly.data.database.dao/NotesDao { // com.pasich.e
     abstract suspend fun updateArchived(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateArchived|updateArchived(kotlin.Long;kotlin.Boolean){}[0]
     abstract suspend fun updateColor(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateColor|updateColor(kotlin.Long;kotlin.String){}[0]
     abstract suspend fun updateDescription(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateDescription|updateDescription(kotlin.Long;kotlin.String){}[0]
+    abstract suspend fun updateEdited(kotlin/Long, kotlin/String, kotlin/String, kotlin/Boolean, kotlin/String, kotlin/Long, kotlin/Boolean, kotlin/Long?, kotlin/Boolean, kotlin/Boolean, kotlin/Boolean, kotlin/String, kotlin/Boolean, kotlin/Int?, kotlin/Boolean, kotlin/Int?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateEdited|updateEdited(kotlin.Long;kotlin.String;kotlin.String;kotlin.Boolean;kotlin.String;kotlin.Long;kotlin.Boolean;kotlin.Long?;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Boolean;kotlin.Int?;kotlin.Boolean;kotlin.Int?){}[0]
     abstract suspend fun updateNote(com.pasich.encly.data.model/Note): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateNote|updateNote(com.pasich.encly.data.model.Note){}[0]
     abstract suspend fun updatePinned(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updatePinned|updatePinned(kotlin.Long;kotlin.Boolean){}[0]
     abstract suspend fun updateTagId(kotlin/Long, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateTagId|updateTagId(kotlin.Long;kotlin.Long?){}[0]
+    abstract suspend fun updateTrashed(kotlin/Long, kotlin/Boolean, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao.updateTrashed|updateTrashed(kotlin.Long;kotlin.Boolean;kotlin.Long?){}[0]
 }
 
 abstract interface com.pasich.encly.data.database.dao/TagsDao { // com.pasich.encly.data.database.dao/TagsDao|null[0]
@@ -153,9 +155,11 @@ final class com.pasich.encly.data.database.dao/NotesDao_Impl : com.pasich.encly.
     final suspend fun updateArchived(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateArchived|updateArchived(kotlin.Long;kotlin.Boolean){}[0]
     final suspend fun updateColor(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateColor|updateColor(kotlin.Long;kotlin.String){}[0]
     final suspend fun updateDescription(kotlin/Long, kotlin/String): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateDescription|updateDescription(kotlin.Long;kotlin.String){}[0]
+    final suspend fun updateEdited(kotlin/Long, kotlin/String, kotlin/String, kotlin/Boolean, kotlin/String, kotlin/Long, kotlin/Boolean, kotlin/Long?, kotlin/Boolean, kotlin/Boolean, kotlin/Boolean, kotlin/String, kotlin/Boolean, kotlin/Int?, kotlin/Boolean, kotlin/Int?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateEdited|updateEdited(kotlin.Long;kotlin.String;kotlin.String;kotlin.Boolean;kotlin.String;kotlin.Long;kotlin.Boolean;kotlin.Long?;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Boolean;kotlin.Int?;kotlin.Boolean;kotlin.Int?){}[0]
     final suspend fun updateNote(com.pasich.encly.data.model/Note): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateNote|updateNote(com.pasich.encly.data.model.Note){}[0]
     final suspend fun updatePinned(kotlin/Long, kotlin/Boolean): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updatePinned|updatePinned(kotlin.Long;kotlin.Boolean){}[0]
     final suspend fun updateTagId(kotlin/Long, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateTagId|updateTagId(kotlin.Long;kotlin.Long?){}[0]
+    final suspend fun updateTrashed(kotlin/Long, kotlin/Boolean, kotlin/Long?): kotlin/Int // com.pasich.encly.data.database.dao/NotesDao_Impl.updateTrashed|updateTrashed(kotlin.Long;kotlin.Boolean;kotlin.Long?){}[0]
 
     final object Companion { // com.pasich.encly.data.database.dao/NotesDao_Impl.Companion|null[0]
         final fun getRequiredConverters(): kotlin.collections/List<kotlin.reflect/KClass<*>> // com.pasich.encly.data.database.dao/NotesDao_Impl.Companion.getRequiredConverters|getRequiredConverters(){}[0]

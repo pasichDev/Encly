@@ -1,5 +1,6 @@
 package com.pasich.encly.desktop.di
 
+import com.pasich.encly.core.di.AppViewModelFactory
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.AutoLockPolicy
@@ -48,6 +49,7 @@ interface DesktopAppGraph : ViewModelGraph {
     val lifecycle: DesktopAppLifecycle
     val deviceLockWatcher: DesktopDeviceLockWatcher
     val toaster: DesktopToaster
+    val viewModelFactory: AppViewModelFactory
     val clipboardWiper: ClipboardWiper
     val locales: DesktopAppLocaleController
     val noteDocuments: NoteDocumentRenderer

@@ -61,6 +61,7 @@ class AuthSetupViewModel(
     fun finishSetup(onResult: (FinishResult) -> Unit) {
         _restoreFailed.value = false
         _finishFailed.value = false
+        val lockRequests = sessionLockManager.lockRequests()
         viewModelScope.launch {
             val owner = coroutineContext.job
             _busy.value = true
@@ -77,7 +78,7 @@ class AuthSetupViewModel(
                         false
                     }
 
-                    else -> sessionLockManager.onUnlocked()
+                    else -> sessionLockManager.onUnlocked(lockRequests)
                 }
                 outcome to published
             }

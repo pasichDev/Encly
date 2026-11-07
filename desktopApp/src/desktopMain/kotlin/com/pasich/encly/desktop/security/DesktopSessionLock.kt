@@ -26,13 +26,46 @@ fun interface OsLockSignals {
 }
 
 /**
+ * Whether the machine slept since the last time it was asked. Two OS clocks tell: one that keeps counting while
+ * the machine sleeps and one that stops, so the gap between them only grows by the time spent asleep (a stalled
+ * process or a changed wall clock moves neither). [clocks] gives both in milliseconds, or null when they cannot be
+ * read (then nothing is detected). The first question only takes the starting gap.
+ */
+class SleepDetector(private val clocks: () -> Clocks?, private val minSleepMillis: Long = MIN_SLEEP_MILLIS) {
+    /** [counting]: milliseconds since boot, sleep included; [awake]: the same without the time asleep. */
+    class Clocks(val counting: Long, val awake: Long)
+
+    private var gap: Long? = null
+
+    /** True when the machine slept for at least [minSleepMillis] since the previous call. */
+    @Synchronized
+    fun sleptSinceLastCheck(): Boolean {
+        val now = clocks()?.let { it.counting - it.awake } ?: return false
+        val before = gap
+        gap = now
+        return before != null && now - before >= minSleepMillis
+    }
+
+    companion object {
+        /** Shorter naps are not told apart from clock rounding. */
+        const val MIN_SLEEP_MILLIS: Long = 2_000L
+    }
+}
+
+/**
  * [OsLockSignals] for an OS that offers only a question ("is the session locked?"): [probe] is asked every
  * [intervalMillis] on a daemon thread, and a change of its answer is reported. [probe] must never throw; a
  * failure answers `false` (the state is unknown, not locked).
+ *
+ * Sleep is reported as a lock that ends at once: a machine that slept without locking the session (a Mac that
+ * does not ask for the password after sleep, a PC without the wake-up sign-in) leaves the vault open for whoever
+ * opens the lid, so [slept] says when it did and the vault locks. It is seen when the machine wakes, at the
+ * next poll.
  */
 class PollingLockSignals(
     private val intervalMillis: Long,
     private val probe: () -> Boolean,
+    private val slept: () -> Boolean = { false },
     private val executor: () -> ScheduledExecutorService = {
         Executors.newSingleThreadScheduledExecutor { runnable ->
             Thread(runnable, "encly-screen-lock-poll").apply { isDaemon = true }
@@ -43,10 +76,15 @@ class PollingLockSignals(
         val scheduler = executor()
         var last = false
         val poll = Runnable {
+            val sleptSincePoll = slept()
             val now = probe()
             if (now != last) {
                 last = now
                 onChange(now)
+            } else if (sleptSincePoll && !now) {
+                // Slept with the session never locked: a lock that is over as soon as it is reported.
+                onChange(true)
+                onChange(false)
             }
         }
         scheduler.scheduleWithFixedDelay(poll, 0L, intervalMillis, TimeUnit.MILLISECONDS)
@@ -190,6 +228,33 @@ class DesktopAppLifecycle : LifecycleOwner {
 }
 
 /**
+ * The OS uptime in nanoseconds for [IdleLock.touch], which runs on every input event and must not ask the OS each time
+ * (a file read on Linux, a native call elsewhere): [uptimeMillis] is read at most once per [refreshNanos] of the
+ * process's own monotonic clock, and in between the uptime moves on with that clock. A sleep makes this read low until
+ * the next refresh, which can only make the idle time look longer, never shorter: the vault locks sooner, not later.
+ */
+class CoarseUptime(
+    private val uptimeMillis: () -> Long,
+    private val monotonicNanos: () -> Long = System::nanoTime,
+    private val refreshNanos: Long = TimeUnit.SECONDS.toNanos(1),
+) {
+    private class Reading(val uptimeNanos: Long, val atMonotonicNanos: Long)
+
+    @Volatile
+    private var reading = take()
+
+    /** The uptime now, nanoseconds. Any thread. */
+    fun nanos(): Long {
+        val now = monotonicNanos()
+        val current = reading
+        if (now - current.atMonotonicNanos < refreshNanos) return current.uptimeNanos + (now - current.atMonotonicNanos)
+        return take(now).also { reading = it }.uptimeNanos
+    }
+
+    private fun take(now: Long = monotonicNanos()) = Reading(TimeUnit.MILLISECONDS.toNanos(uptimeMillis()), now)
+}
+
+/**
  * Locks the vault after the user has not touched the keyboard or the mouse for a while although the window is
  * in front (the auto-lock delay covers the app being left, not an unattended open window). The limit is the
  * user's auto-lock delay, but never shorter than [MIN_IDLE_MILLIS]: the default delay of 15 seconds is meant
@@ -203,6 +268,8 @@ class IdleLock(
     private val policy: AutoLockPolicy,
     private val lockNow: () -> Unit,
     private val clock: () -> Long = System::nanoTime,
+    /** The clock the check reads; the exact one, where [clock] (read on every input event) may be a cheap one. */
+    private val checkClock: () -> Long = clock,
 ) {
     @Volatile
     private var lastInputNanos = clock()
@@ -233,7 +300,7 @@ class IdleLock(
 
     private fun check() {
         val limit = limitMillis()
-        val idle = TimeUnit.NANOSECONDS.toMillis(clock() - lastInputNanos)
+        val idle = TimeUnit.NANOSECONDS.toMillis(checkClock() - lastInputNanos)
         if (idle >= limit) {
             lockNow()
             schedule(limit)

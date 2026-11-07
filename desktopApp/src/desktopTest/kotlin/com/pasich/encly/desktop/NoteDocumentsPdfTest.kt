@@ -26,7 +26,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NoteDocumentsPdfTest {
-    private val offline = PrintLauncher { error("nothing prints here") }
+    private val offline = PrintLauncher { _, _ -> error("nothing prints here") }
     private val documents = DesktopNoteDocuments(offline)
 
     private fun pdfOf(note: NoteDocument, renderer: DesktopNoteDocuments = documents): ByteArray {
@@ -209,7 +209,7 @@ class NoteDocumentsPdfTest {
         val cacheBefore = cache.exists() to cache.lastModified()
 
         pdfOf(note(DocumentBlock.Paragraph("Привіт"), DocumentBlock.Heading(1, "Zażółć")))
-        val printing = DesktopNoteDocuments(PrintLauncher { PrintResult.PRINTED })
+        val printing = DesktopNoteDocuments(PrintLauncher { _, _ -> PrintResult.PRINTED })
         runBlocking { printing.print(note(DocumentBlock.Paragraph("x"))) }
 
         val created = temp.list().orEmpty().toSet() - tempBefore
@@ -220,7 +220,7 @@ class NoteDocumentsPdfTest {
     @Test
     fun printingHandsTheRenderedPagesToThePrinter() = runBlocking {
         var pages = 0
-        val printer = PrintLauncher { pageable: Pageable ->
+        val printer = PrintLauncher { pageable: Pageable, _ ->
             pages = pageable.numberOfPages
             PrintResult.PRINTED
         }
@@ -232,8 +232,21 @@ class NoteDocumentsPdfTest {
     }
 
     @Test
+    fun theGuardAgainstALockReachesThePrinter() = runBlocking {
+        var seen: Boolean? = null
+        val printer = PrintLauncher { _, mayProceed ->
+            seen = mayProceed()
+            PrintResult.CANCELLED
+        }
+
+        DesktopNoteDocuments(printer).print(note(DocumentBlock.Paragraph("Hello"))) { false }
+
+        assertEquals(false, seen)
+    }
+
+    @Test
     fun aClosedPrintDialogIsReportedAsCancelled() = runBlocking {
-        val closed = DesktopNoteDocuments(PrintLauncher { PrintResult.CANCELLED })
+        val closed = DesktopNoteDocuments(PrintLauncher { _, _ -> PrintResult.CANCELLED })
         val result = closed.print(note(DocumentBlock.Paragraph("Hello")))
 
         assertEquals(PrintResult.CANCELLED, result)
@@ -241,7 +254,7 @@ class NoteDocumentsPdfTest {
 
     @Test
     fun aPrinterThatFailsFailsThePrint() {
-        val printer = PrintLauncher { throw IOException("jam") }
+        val printer = PrintLauncher { _, _ -> throw IOException("jam") }
 
         assertFailsWith<IOException> {
             runBlocking { DesktopNoteDocuments(printer).print(note(DocumentBlock.Paragraph("Hello"))) }

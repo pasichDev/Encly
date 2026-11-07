@@ -68,6 +68,12 @@ class LockViewModel(
     /** Whether the session is closed; changes when any lock screen of the host unlocks or the vault locks. */
     val sessionLocked: StateFlow<Boolean> get() = sessionLockManager.locked
 
+    /**
+     * Whether the open session was unlocked with the recovery phrase and still has no new PIN: whichever window the
+     * vault was opened from, every lock screen then sends the user to set one before going on.
+     */
+    fun mustResetPin(): Boolean = securityManager.canResetPinWithoutCurrent()
+
     /** Whether the session is closed (again); an unlock reveal then must not open Home. */
     fun isSessionLocked(): Boolean = sessionLockManager.locked.value
 
@@ -151,10 +157,12 @@ class LockViewModel(
      * ([SessionLockManager.onUnlockAbandoned]) instead of staying open in the background.
      */
     private fun <T> launchUnlock(onResult: (T) -> Unit, unlock: suspend UnlockScope.() -> T) {
+        // Read where the unlock starts: a lock that comes in while the key is being checked is then not lost.
+        val lockRequests = sessionLockManager.lockRequests()
         val job = viewModelScope.launch {
             val owner = coroutineContext.job
             _busy.value = true
-            val result = withContext(NonCancellable) { UnlockScope(owner).unlock() }
+            val result = withContext(NonCancellable) { UnlockScope(owner, lockRequests).unlock() }
             // A cleared screen gets no result: the unlock was already closed again.
             ensureActive()
             _busy.value = false
@@ -164,7 +172,7 @@ class LockViewModel(
     }
 
     /** What an unlock body can see: whether its ViewModel is still alive. */
-    private inner class UnlockScope(private val owner: Job) {
+    private inner class UnlockScope(private val owner: Job, private val lockRequests: Long) {
         /**
          * The unlock [succeeded]: publish it if the app is in front and the screen still
          * exists, otherwise close the vault again and report [backgrounded].
@@ -177,7 +185,7 @@ class LockViewModel(
                 backgrounded
             }
 
-            sessionLockManager.onUnlocked() -> result
+            sessionLockManager.onUnlocked(lockRequests) -> result
 
             else -> backgrounded
         }

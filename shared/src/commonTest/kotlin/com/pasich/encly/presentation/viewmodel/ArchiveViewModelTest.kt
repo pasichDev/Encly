@@ -91,7 +91,10 @@ class ArchiveViewModelTest {
 
         val trashed = repository.updatedNotes.single()
         assertNotNull(trashed.trashedAt, "the time it went to the trash is remembered")
-        assertEquals(note.copy(isTrash = true, trashedAt = trashed.trashedAt), trashed)
+        assertEquals(1L, trashed.id)
+        assertTrue(trashed.isTrash)
+        // Two columns of the row by id, never the note a screen read earlier: its archive state is not written.
+        assertTrue(repository.updateBases.isEmpty())
     }
 
     @Test

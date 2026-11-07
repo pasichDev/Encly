@@ -6,6 +6,7 @@ import com.pasich.encly.core.security.AutoLockPolicy
 import com.pasich.encly.core.security.BiometricHost
 import com.pasich.encly.core.security.BiometricManager
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.desktop.security.CoarseUptime
 import com.pasich.encly.desktop.security.DesktopAppLifecycle
 import com.pasich.encly.desktop.security.DesktopDeviceLockWatcher
 import com.pasich.encly.desktop.security.IdleLock
@@ -13,6 +14,7 @@ import com.pasich.encly.desktop.security.NoBiometricManager
 import com.pasich.encly.desktop.security.OsLockSignals
 import com.pasich.encly.desktop.security.OsUptimeClock
 import com.pasich.encly.desktop.security.PollingLockSignals
+import com.pasich.encly.desktop.security.SleepDetector
 import com.pasich.encly.desktop.security.SwingMainThreadTimer
 import com.pasich.encly.desktop.security.parseProcUptime
 import org.junit.Test
@@ -282,11 +284,160 @@ class DesktopDeviceLockWatcherTest {
     }
 
     @Test
+    fun `a sleep without a lock is reported as a lock that is over at once`() {
+        val sleeps = ArrayDeque(listOf(false, true, false, false))
+        val reported = mutableListOf<Boolean>()
+        val done = CountDownLatch(2)
+        val polling = PollingLockSignals(
+            intervalMillis = 5,
+            probe = { false },
+            slept = { if (sleeps.size > 1) sleeps.removeFirst() else false },
+        )
+        val subscription = polling.start {
+            reported += it
+            done.countDown()
+        }
+        assertTrue(done.await(5, TimeUnit.SECONDS))
+        subscription.close()
+        // Locked, then unlocked: the lock listeners hear one lock, and the device is not "locked" afterwards.
+        assertEquals(listOf(true, false), reported.take(2))
+    }
+
+    @Test
+    fun `a sleep during a real lock adds nothing`() {
+        val answers = ArrayDeque(listOf(false, true, true, true))
+        val sleeps = ArrayDeque(listOf(false, false, true, false))
+        val reported = mutableListOf<Boolean>()
+        val polling = PollingLockSignals(
+            intervalMillis = 5,
+            probe = { if (answers.size > 1) answers.removeFirst() else answers.first() },
+            slept = { if (sleeps.size > 1) sleeps.removeFirst() else false },
+        )
+        val done = CountDownLatch(1)
+        val subscription = polling.start {
+            reported += it
+            done.countDown()
+        }
+        assertTrue(done.await(5, TimeUnit.SECONDS))
+        Thread.sleep(100)
+        subscription.close()
+        assertEquals(listOf(true), reported)
+    }
+
+    @Test
     fun `polling accepts its own scheduler`() {
         val scheduler = Executors.newSingleThreadScheduledExecutor()
         val polling = PollingLockSignals(intervalMillis = 1, probe = { false }, executor = { scheduler })
         polling.start { }.close()
         assertTrue(scheduler.isShutdown)
+    }
+}
+
+class CoarseUptimeTest {
+    private var uptimeMillis = 10_000L
+    private var monotonic = 0L
+    private var reads = 0
+    private val clock = CoarseUptime(
+        uptimeMillis = {
+            reads++
+            uptimeMillis
+        },
+        monotonicNanos = { monotonic },
+        refreshNanos = 1_000_000_000L,
+    )
+
+    @Test
+    fun `an input event within the second does not ask the OS and the uptime moves on with the process clock`() {
+        val first = clock.nanos()
+        val readsAfterFirst = reads
+        monotonic += 400_000_000L
+
+        assertEquals(first + 400_000_000L, clock.nanos())
+        assertEquals(readsAfterFirst, reads)
+    }
+
+    @Test
+    fun `after a second the OS is asked again and a sleep in between shows`() {
+        clock.nanos()
+        monotonic += 1_500_000_000L
+        // The machine slept an hour: the uptime moved on, the process clock (macOS) did not.
+        uptimeMillis += 3_600_000L
+
+        assertEquals(3_610_000L * 1_000_000L, clock.nanos())
+        assertEquals(2, reads)
+    }
+
+    @Test
+    fun `the idle check reads the exact clock and not the cheap one`() {
+        val timer = ManualTimer()
+        var exactNanos = 0L
+        var cheapNanos = 0L
+        var locks = 0
+        val idle = IdleLock(
+            timer = timer,
+            policy = object : AutoLockPolicy {
+                override val delayMillis: Long = 15_000
+            },
+            lockNow = { locks++ },
+            clock = { cheapNanos },
+            checkClock = { exactNanos },
+        )
+        idle.start()
+        // The cheap clock stood still (a sleep), the exact one did not: past the limit, the vault locks.
+        exactNanos = (IdleLock.MIN_IDLE_MILLIS + 1) * 1_000_000L
+        timer.fireAll()
+
+        assertEquals(1, locks)
+    }
+}
+
+class SleepDetectorTest {
+    private var counting = 10_000L
+    private var awake = 10_000L
+    private var readable = true
+    private val detector = SleepDetector({ if (readable) SleepDetector.Clocks(counting, awake) else null })
+
+    @Test
+    fun `the first question only takes the starting gap`() {
+        assertFalse(detector.sleptSinceLastCheck())
+    }
+
+    @Test
+    fun `time that passes awake is no sleep`() {
+        detector.sleptSinceLastCheck()
+        counting += 1_500
+        awake += 1_500
+        assertFalse(detector.sleptSinceLastCheck())
+    }
+
+    @Test
+    fun `a gap that grew by the time asleep is a sleep, once`() {
+        detector.sleptSinceLastCheck()
+        counting += 3_600_000
+        awake += 1_500
+
+        assertTrue(detector.sleptSinceLastCheck())
+        counting += 1_500
+        awake += 1_500
+        assertFalse(detector.sleptSinceLastCheck())
+    }
+
+    @Test
+    fun `a nap shorter than the threshold is not told apart from rounding`() {
+        detector.sleptSinceLastCheck()
+        counting += 1_000
+
+        assertFalse(detector.sleptSinceLastCheck())
+    }
+
+    @Test
+    fun `clocks that cannot be read detect nothing, and a sleep in the meantime is still seen afterwards`() {
+        detector.sleptSinceLastCheck()
+        readable = false
+        counting += 10_000
+        assertFalse(detector.sleptSinceLastCheck())
+        readable = true
+        assertTrue(detector.sleptSinceLastCheck())
     }
 }
 

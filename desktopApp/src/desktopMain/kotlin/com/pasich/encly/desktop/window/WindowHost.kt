@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -59,7 +60,6 @@ import com.pasich.encly.core.resources.theme_type_system
 import com.pasich.encly.desktop.DesktopApp
 import com.pasich.encly.desktop.di.DesktopAppGraph
 import com.pasich.encly.desktop.platform.DesktopAppWindow
-import com.pasich.encly.desktop.security.IdleLock
 import com.pasich.encly.desktop.storage.DesktopOs
 import com.pasich.encly.domain.model.ThemeType
 import com.pasich.encly.platform.NoteWindows
@@ -70,14 +70,12 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import java.awt.AWTEvent
 import java.awt.Desktop
 import java.awt.Dimension
 import java.awt.GraphicsEnvironment
-import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
-import java.awt.event.AWTEventListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.io.File
@@ -128,20 +126,18 @@ fun ApplicationScope.EnclyWindows(graph: DesktopAppGraph, launchFiles: List<Path
         }
     }
 
-    // One idle timer for the process: the AWT listener below sees the input of every window.
-    DisposableEffect(Unit) {
-        val idle = IdleLock(environment.timer, graph.autoLockPolicy, lockNow = graph.sessionLockManager::lockNow)
-        val listener = AWTEventListener { idle.touch() }
-        Toolkit.getDefaultToolkit().addAWTEventListener(listener, INPUT_EVENTS)
-        idle.start()
-        onDispose {
-            idle.stop()
-            Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
-        }
-    }
+    IdleLockWhileOpen(graph)
     // The OS's own hooks are the process's too: they go to the window that was active last.
+    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
-        installOsHandlers(windows) { files -> windows.focused?.services?.dropRouter?.drop(files) == true }
+        installOsHandlers(windows) { files ->
+            // A file opened with the app waits for the window like one it was started with.
+            windows.focused?.let { window ->
+                scope.launch {
+                    window.services.handOverFiles(graph.sessionLockManager.locked, files) { delay(FIRST_FRAME_MILLIS) }
+                }
+            }
+        }
     }
 
     windows.sessions.forEach { session ->
@@ -159,7 +155,7 @@ fun ApplicationScope.EnclyWindows(graph: DesktopAppGraph, launchFiles: List<Path
     }
 }
 
-/** One window of the app. The first one remembers its place and size; the others open at the saved size. */
+/** One window of the app. Every window remembers its own place and size (see [WindowStateStore]). */
 @OptIn(FlowPreview::class)
 @Suppress("LongMethod", "LongParameterList", "ModifierMissing") // A window has no parent to size it.
 @Composable
@@ -174,20 +170,23 @@ private fun ApplicationScope.EnclyWindow(
 ) {
     val environment = graph.environment
     val os = environment.os
-    val primary = session.id == FIRST_WINDOW
-    val store = remember { WindowStateStore(graph.flags) }
-    val saved = remember { store.load(screenBounds()) }
+    val store = remember(session) { WindowStateStore(graph.flags, session.slot) }
+    // A window that has no place of its own yet opens at the size of the first one, where the OS puts it.
+    val saved = remember(session) {
+        store.load(screenBounds())
+            ?: WindowStateStore(graph.flags).load(screenBounds())?.copy(x = null, y = null, maximised = false)
+    }
     val state = rememberWindowState(
         size = DpSize(
             (saved?.width ?: WindowStateStore.DEFAULT_WIDTH).dp,
             (saved?.height ?: WindowStateStore.DEFAULT_HEIGHT).dp,
         ),
-        position = if (primary && saved?.x != null && saved.y != null) {
+        position = if (saved?.x != null && saved.y != null) {
             WindowPosition(saved.x.dp, saved.y.dp)
         } else {
             WindowPosition.PlatformDefault
         },
-        placement = if (primary && saved?.maximised == true) WindowPlacement.Maximized else WindowPlacement.Floating,
+        placement = if (saved?.maximised == true) WindowPlacement.Maximized else WindowPlacement.Floating,
     )
     val commands = remember {
         DefaultDesktopCommands(
@@ -251,24 +250,21 @@ private fun ApplicationScope.EnclyWindow(
             }
         }
 
-        if (primary) {
-            LaunchedEffect(state) {
-                snapshotFlow { Triple(state.size, state.position, state.placement) }
-                    .debounce(SAVE_DEBOUNCE_MILLIS)
-                    .collect {
-                        val maximised = state.placement == WindowPlacement.Maximized
-                        val bounds = composeWindow.bounds.let { WindowBounds(it.x, it.y, it.width, it.height) }
-                        store.save(bounds, maximised)
-                    }
-            }
+        LaunchedEffect(state) {
+            snapshotFlow { Triple(state.size, state.position, state.placement) }
+                .debounce(SAVE_DEBOUNCE_MILLIS)
+                .collect {
+                    val maximised = state.placement == WindowPlacement.Maximized
+                    val bounds = composeWindow.bounds.let { WindowBounds(it.x, it.y, it.width, it.height) }
+                    store.save(bounds, maximised)
+                }
         }
 
         LaunchedEffect(Unit) {
             if (launchFiles.isNotEmpty()) {
-                // Let the UI start and, with a vault, the lock screen come up; then hand the files over.
-                delay(FIRST_FRAME_MILLIS)
-                graph.sessionLockManager.locked.first { !it }
-                session.services.dropRouter.drop(launchFiles)
+                session.services.handOverFiles(graph.sessionLockManager.locked, launchFiles) {
+                    delay(FIRST_FRAME_MILLIS)
+                }
             }
         }
 
@@ -301,11 +297,6 @@ private suspend fun openStartNote(graph: DesktopAppGraph, session: WindowSession
 
 private const val FIRST_WINDOW = 1
 
-private const val INPUT_EVENTS: Long = AWTEvent.KEY_EVENT_MASK or
-    AWTEvent.MOUSE_EVENT_MASK or
-    AWTEvent.MOUSE_MOTION_EVENT_MASK or
-    AWTEvent.MOUSE_WHEEL_EVENT_MASK
-
 /** Files dropped on the window go to [onDrop], which answers whether it took any. */
 private fun Modifier.dropFiles(onDrop: (List<Path>) -> Boolean): Modifier = dragAndDropTarget(
     shouldStartDragAndDrop = { event -> event.awtTransferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor) },
@@ -326,7 +317,7 @@ private fun Modifier.dropFiles(onDrop: (List<Path>) -> Boolean): Modifier = drag
  * The OS's own hooks: the About and Preferences items of the macOS app menu, and files opened with the app. There is
  * one of each for the process, so they act on the window that was active last ([DesktopWindows.focused]).
  */
-private fun installOsHandlers(windows: DesktopWindows, onFiles: (List<Path>) -> Boolean) {
+private fun installOsHandlers(windows: DesktopWindows, onFiles: (List<Path>) -> Unit) {
     if (!Desktop.isDesktopSupported()) return
     val desktop = Desktop.getDesktop()
     runCatching {

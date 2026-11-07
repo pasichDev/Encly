@@ -424,7 +424,7 @@ class MarkdownExportViewModelTest {
             out.write("%PDF-fake".encodeToByteArray())
         }
 
-        override suspend fun print(document: NoteDocument): PrintResult {
+        override suspend fun print(document: NoteDocument, mayProceed: () -> Boolean): PrintResult {
             if (printFails) throw java.io.IOException("no printer")
             printed += document
             return printResult

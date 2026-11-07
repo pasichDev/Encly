@@ -18,15 +18,16 @@ import java.security.SecureRandom
 
 /**
  * Windows: the secret is encrypted with DPAPI (`CryptProtectData`, user scope, no UI) and the blob is kept in
- * `%APPDATA%\Encly\`. Only the same Windows user (on the same machine, or a roaming profile with the same
- * credentials) can unprotect it, so the file is useless to anyone who copies it away.
+ * `%LOCALAPPDATA%\Encly\` (the app's data folder; never the roaming `%APPDATA%`, which is copied to profile
+ * servers and other machines). Only the same Windows user can unprotect it, so the file is useless to anyone who
+ * copies it away.
  *
  * The blob is bound to an Encly-specific entropy as well, so another program of the same user cannot unprotect
  * it by calling `CryptUnprotectData` without knowing it. That is defence against a careless program, not against
  * malware running as the user, which DPAPI cannot stop.
  *
  * A blob that DPAPI rejects as damaged or as sealed under a key state this user does not have (see
- * LOST_ERRORS) is reported as lost; any other DPAPI failure and every I/O failure is not.
+ * [DpapiErrors]) is reported as lost; any other DPAPI failure and every I/O failure is not, and carries its code.
  */
 @Suppress("TooGenericExceptionCaught") // JNA reports a failed native call as a RuntimeException (Win32Exception).
 internal class WindowsDpapiSecretStore(
@@ -47,7 +48,7 @@ internal class WindowsDpapiSecretStore(
             // Only the codes that say the data or its key state is bad are final; anything else may pass.
             throw SecretStoreException(
                 lost = isFinal(e),
-                message = "The DPAPI blob does not unprotect (error ${e.errorCode})",
+                message = "The DPAPI blob does not unprotect (error ${DpapiErrors.describe(e.errorCode)})",
                 cause = e,
             )
         }
@@ -83,7 +84,8 @@ internal class WindowsDpapiSecretStore(
         }
     }
 
-    private fun isFinal(e: Win32Exception): Boolean = e.errorCode in LOST_ERRORS || e.hr.toInt() in LOST_ERRORS
+    private fun isFinal(e: Win32Exception): Boolean =
+        DpapiErrors.isFinal(e.errorCode) || DpapiErrors.isFinal(e.hr.toInt())
 
     private fun fileOf(slot: PinKeySlot): Path = directory.resolve(slot.entryName() + FILE_EXTENSION)
 
@@ -117,18 +119,15 @@ internal class WindowsDpapiSecretStore(
         const val TEMP_EXTENSION = ".tmp"
         const val DESCRIPTION = "Encly PIN factor"
 
-        /** ERROR_INVALID_DATA, NTE_BAD_DATA, NTE_BAD_KEY, NTE_BAD_KEY_STATE. */
-        val LOST_ERRORS = setOf(13, 0x80090005.toInt(), 0x80090003.toInt(), 0x8009000B.toInt())
-
         /** Not a secret: it scopes the blob to Encly. */
         val ENTROPY: ByteArray = "$APPLICATION_ID/pin-factor-v1".toByteArray(Charsets.UTF_8)
 
         fun defaultDirectory(): Path {
-            val appData = System.getenv("APPDATA")
+            val appData = System.getenv("LOCALAPPDATA")
             val base = if (!appData.isNullOrBlank()) {
                 Paths.get(appData)
             } else {
-                Paths.get(System.getProperty("user.home"), "AppData", "Roaming")
+                Paths.get(System.getProperty("user.home"), "AppData", "Local")
             }
             return base.resolve("Encly")
         }

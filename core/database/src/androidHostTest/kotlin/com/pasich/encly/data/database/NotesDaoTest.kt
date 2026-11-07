@@ -95,14 +95,94 @@ class NotesDaoTest {
     fun aTrashedArchivedNoteIsInTheTrashAndComesBackToTheArchive() = runBlocking {
         val id = insert("both") { isArchived = true }
 
-        dao.updateNote(checkNotNull(dao.getNoteById(id)).copy(isTrash = true))
+        dao.updateTrashed(id, true, TRASHED_AT)
         assertEquals(listOf("both"), dao.getTrashNotes().first().map { it.title })
         assertTrue(titles(dao.getArchivedNotesWithTags()).isEmpty())
 
-        dao.updateNote(checkNotNull(dao.getNoteById(id)).copy(isTrash = false))
+        dao.updateTrashed(id, false, null)
         assertTrue(dao.getTrashNotes().first().isEmpty())
         assertEquals(listOf("both"), titles(dao.getArchivedNotesWithTags()))
         assertTrue(titles(dao.getAllNotesWithTags()).isEmpty())
+    }
+
+    @Test
+    fun anEditorSaveKeepsWhatAnotherWindowDidToTheRow() = runBlocking {
+        val id = insert("note") { value = "old" }
+        // Another window moves the note to the trash and then archives and pins it...
+        dao.updateTrashed(id, true, TRASHED_AT)
+
+        // ...and the editor, which opened the note before, saves its text and the colour it changed.
+        dao.updateEdited(
+            id, "edited", "new", false, "", 0L, false, null, false, false, true, "teal", false, null, false, null,
+        )
+
+        val stored = checkNotNull(dao.getNoteById(id))
+        assertEquals("edited", stored.title)
+        assertEquals("new", stored.value)
+        assertEquals("teal", stored.color)
+        assertEquals(true, stored.isTrash)
+        assertEquals(TRASHED_AT, stored.trashedAt)
+    }
+
+    @Test
+    fun anEditorSaveDoesNotUnarchiveOrUnpinWhatItDidNotChange() = runBlocking {
+        val id = insert("note") {
+            isArchived = true
+            isPinned = false
+        }
+
+        dao.updateEdited(
+            id, "note", "text", false, "", 0L, false, null, false, true, false, "none", false, null, false, null,
+        )
+
+        // The editor never wrote the pin (its flag is off), and the archive is not its column at all.
+        val stored = checkNotNull(dao.getNoteById(id))
+        assertEquals(true, stored.isArchived)
+        assertEquals(false, stored.isPinned)
+    }
+
+    @Test
+    fun anEditorPinNeverLandsOnAnArchivedNote() = runBlocking {
+        val id = insert("note") { isArchived = true }
+
+        dao.updateEdited(
+            id, "note", "", false, "", 0L, false, null, true, true, false, "none", false, null, false, null,
+        )
+
+        assertEquals(false, checkNotNull(dao.getNoteById(id)).isPinned)
+    }
+
+    @Test
+    fun theDateAndSummaryChangeOnlyWithTheContent() = runBlocking {
+        val id = insert("note") {
+            date = 5L
+            description = "summary"
+        }
+
+        dao.updateEdited(
+            id, "note", "same", false, "", 99L, false, null, false, false, false, "none", false, null, false, null,
+        )
+        assertEquals(5L, checkNotNull(dao.getNoteById(id)).date)
+        assertEquals("summary", checkNotNull(dao.getNoteById(id)).description)
+
+        dao.updateEdited(
+            id, "note", "changed", true, "", 99L, false, null, false, false, false, "none", false, null, false, null,
+        )
+        assertEquals(99L, checkNotNull(dao.getNoteById(id)).date)
+        assertEquals("", checkNotNull(dao.getNoteById(id)).description)
+    }
+
+    @Test
+    fun aPartialUpdateKeepsTheUid() = runBlocking {
+        val id = insert("note")
+        val uid = checkNotNull(dao.getNoteById(id)).uid
+        assertTrue(uid.isNotEmpty())
+
+        dao.updateEdited(
+            id, "again", "x", false, "", 0L, false, null, false, false, false, "none", false, null, false, null,
+        )
+
+        assertEquals(uid, checkNotNull(dao.getNoteById(id)).uid)
     }
 
     @Test
@@ -241,6 +321,7 @@ class NotesDaoTest {
 
     private companion object {
         const val EARLIER = 1_000L
+        const val TRASHED_AT = 3_000L
         const val STAMP = 2_000L
         const val TAG = 1L
         const val OTHER_TAG = 2L

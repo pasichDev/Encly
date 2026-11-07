@@ -59,6 +59,69 @@ class DesktopWindowsTest {
         createGraphFactory<DesktopAppGraph.Factory>().create(testEnvironment(temp.root.toPath()))
 
     @Test
+    fun everyWindowTakesTheLowestPlaceNoOpenWindowUses() {
+        val windows = windows()
+
+        val first = assertNotNull(windows.open())
+        val second = assertNotNull(windows.open())
+        val third = assertNotNull(windows.open())
+        assertEquals(listOf(0, 1, 2), listOf(first, second, third).map { it.slot })
+
+        // A closed window gives its place back; the next one takes it, the others keep theirs.
+        windows.close(second.id)
+        assertEquals(1, assertNotNull(windows.open()).slot)
+        assertEquals(2, third.slot)
+    }
+
+    @Test
+    fun filesWaitForTheStartStatusAndForTheUnlockOfALockedVault() = runBlocking {
+        val windows = windows()
+        val services = assertNotNull(windows.open()).services
+        val locked = kotlinx.coroutines.flow.MutableStateFlow(true)
+        var ready = false
+        val waiting = launch {
+            services.awaitReadyForFiles(locked) { }
+            ready = true
+        }
+
+        // Nothing is known about the vault yet: a slow start must not let the files through.
+        kotlinx.coroutines.delay(50)
+        assertFalse(ready)
+
+        services.startStatus.complete(com.pasich.encly.core.security.InitialStatus.AUTH)
+        kotlinx.coroutines.delay(50)
+        assertFalse(ready, "the vault is still locked")
+
+        locked.value = false
+        waiting.join()
+        assertTrue(ready)
+    }
+
+    @Test
+    fun filesAreTakenAtOnceWhenTheVaultIsOpenOrThereIsNoneYet() = runBlocking {
+        val windows = windows()
+        for (status in listOf(
+            com.pasich.encly.core.security.InitialStatus.MAIN,
+            com.pasich.encly.core.security.InitialStatus.ONBOARDING,
+        )) {
+            val services = assertNotNull(windows.open()).services
+            services.startStatus.complete(status)
+            // Still "locked" as a flag: only a vault that starts locked waits for the unlock.
+            services.awaitReadyForFiles(kotlinx.coroutines.flow.MutableStateFlow(true)) { }
+        }
+    }
+
+    @Test
+    fun everyWindowHasItsOwnMessages() {
+        val windows = windows()
+
+        val first = assertNotNull(windows.open())
+        val second = assertNotNull(windows.open())
+
+        assertNotSame(first.services.toaster, second.services.toaster)
+    }
+
+    @Test
     fun theFirstWindowOpensAlwaysAndTheFocusIsOnIt() {
         canOpen = false
         val windows = windows()

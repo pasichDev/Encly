@@ -22,7 +22,7 @@ One private directory per OS user. It is created `rwx------` where POSIX permiss
 
 | OS | Directory |
 |---|---|
-| Windows | `%APPDATA%\Encly` |
+| Windows | `%LOCALAPPDATA%\Encly` (local, never the roaming profile) |
 | macOS | `~/Library/Application Support/Encly` |
 | Linux | `$XDG_DATA_HOME/encly`, else `~/.local/share/encly` |
 
@@ -40,9 +40,10 @@ in the registry (Windows) or a plist outside this directory (macOS).
 
 The device-bound half of the PIN key is not in this directory: it lives in the OS secret store (Windows DPAPI,
 the macOS login Keychain, the freedesktop Secret Service). See `SECURITY.md`, "Desktop". On Windows the blob of
-DPAPI sits in `%APPDATA%\Encly` too. Windows has no POSIX modes; the folder keeps the ACL it inherits from
-`%APPDATA%` (the user, SYSTEM and Administrators), which is the same boundary DPAPI gives the secret. Encly does not
-rewrite ACLs.
+DPAPI sits in `%LOCALAPPDATA%\Encly` too: the roaming `%APPDATA%` is copied to profile servers and to every machine
+the user signs in to, which would take the vault and the PIN's device secret off this device. Windows has no POSIX
+modes; the folder keeps the ACL it inherits from `%LOCALAPPDATA%` (the user, SYSTEM and Administrators), which is the
+same boundary DPAPI gives the secret. Encly does not rewrite ACLs.
 
 ## Security parity with Android
 
@@ -50,9 +51,10 @@ rewrite ACLs.
 |---|---|---|
 | `FLAG_SECURE` from the first frame | the window is excluded from screenshots and recordings from the first frame and again whenever the theme asserts it: Windows `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)` (Windows 10 2004+; older: `WDA_MONITOR`, a black window), macOS `NSWindow.sharingType = none` | Linux: X11 and Wayland have no such call. macOS: best effort, newer ScreenCaptureKit tools can ignore the flag on macOS 15 and later |
 | lock when the app goes to the background, after the auto-lock delay | the same, when the window loses the focus or is minimised (its own file dialogs do not count) | |
-| lock at once when the screen turns off | lock at once when the OS locks the session: macOS (the window server's session state, polled every 1.5 s), Windows (the input desktop, polled), Linux (logind `Lock` and `PrepareForSleep`, and the screen-saver `ActiveChanged` of GNOME, KDE, Cinnamon, MATE over D-Bus) | |
-| (none) | idle lock: no keyboard or mouse input for the auto-lock delay, but at least 5 minutes, locks a window that stays in front | |
-| clipboard marked sensitive, cleared after a minute | cleared after a minute unless something else was copied since, also for what the editor copies, and on quit | AWT has no sensitive flag: a clipboard history (Windows Win+V, clipboard managers) may keep a copy |
+| lock at once when the screen turns off | lock at once when the OS locks the session: macOS (the window server's session state, polled every 1.5 s), Windows (the input desktop, polled), Linux (logind `Lock` and `PrepareForSleep`, and the screen-saver `ActiveChanged` of GNOME, KDE, Cinnamon, MATE over D-Bus). A sleep without a session lock locks the vault too: on macOS and Windows it is seen when the machine wakes (the clock that counts sleep runs ahead of the one that does not), at the next 1.5 s poll | |
+| (none) | idle lock: no keyboard or mouse input for the auto-lock delay, but at least 5 minutes, locks a window that stays in front; the time is measured on the OS uptime, so time asleep counts | |
+| clipboard marked sensitive, cleared after a minute | cleared after a minute unless something else was copied since, also for what the editor copies, and on quit. Windows: the text is written with `ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory` = 0 and `CanUploadToCloudClipboard` = 0 (no Win+V history, no cloud sync); macOS: with `org.nspasteboard.ConcealedType` and `TransientType` (clipboard managers skip it) | Linux: no marker exists in AWT; a clipboard manager may keep a copy |
+| strict keyboard privacy | not offered (a desktop has no on-screen keyboard that learns) | |
 | PIN lockout on `elapsedRealtime` and boot count | the OS uptime (including sleep) and the boot id (Linux `boot_id`, macOS `kern.bootsessionuuid`), so restarting the app does not shorten a lockout; Windows has no boot id, the uptime comparison covers it | |
 | biometrics | none yet | Windows Hello, Touch ID and fprintd are not wired in |
 
@@ -61,7 +63,7 @@ handed to the first one; drop it on the open window.
 
 ## The window
 
-- minimum size 720 x 520; size, place and maximised state are remembered and clamped to the connected screens;
+- minimum size 720 x 520; size, place and maximised state are remembered and clamped to the connected screens, for each window slot (the first window, the second, ...) on its own;
 - menu bar (the native one on macOS): File (new note, new window, export as PDF, print, import, backup, lock now,
   settings, exit), View (theme, language), Window, Help (about, licences, FAQ). The shortcuts use Cmd on macOS and
   Ctrl elsewhere; new window, print and PDF (Cmd/Ctrl+Shift+N, +P, +Shift+P) are menu chords like import and backup. There is no Edit

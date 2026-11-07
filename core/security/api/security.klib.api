@@ -934,10 +934,11 @@ final class com.pasich.encly.core.security/SessionLockManager : androidx.lifecyc
     final fun allowSystemPicker() // com.pasich.encly.core.security/SessionLockManager.allowSystemPicker|allowSystemPicker(){}[0]
     final fun endSystemPicker() // com.pasich.encly.core.security/SessionLockManager.endSystemPicker|endSystemPicker(){}[0]
     final fun lockNow() // com.pasich.encly.core.security/SessionLockManager.lockNow|lockNow(){}[0]
+    final fun lockRequests(): kotlin/Long // com.pasich.encly.core.security/SessionLockManager.lockRequests|lockRequests(){}[0]
     final fun onStart(androidx.lifecycle/LifecycleOwner) // com.pasich.encly.core.security/SessionLockManager.onStart|onStart(androidx.lifecycle.LifecycleOwner){}[0]
     final fun onStop(androidx.lifecycle/LifecycleOwner) // com.pasich.encly.core.security/SessionLockManager.onStop|onStop(androidx.lifecycle.LifecycleOwner){}[0]
     final fun onUnlockAbandoned() // com.pasich.encly.core.security/SessionLockManager.onUnlockAbandoned|onUnlockAbandoned(){}[0]
-    final fun onUnlocked(): kotlin/Boolean // com.pasich.encly.core.security/SessionLockManager.onUnlocked|onUnlocked(){}[0]
+    final fun onUnlocked(kotlin/Long = ...): kotlin/Boolean // com.pasich.encly.core.security/SessionLockManager.onUnlocked|onUnlocked(kotlin.Long){}[0]
     final fun registerPreLockFlush(kotlin.coroutines/SuspendFunction0<kotlin/Unit>): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.security/SessionLockManager.registerPreLockFlush|registerPreLockFlush(kotlin.coroutines.SuspendFunction0<kotlin.Unit>){}[0]
     final fun requireUnlock() // com.pasich.encly.core.security/SessionLockManager.requireUnlock|requireUnlock(){}[0]
 

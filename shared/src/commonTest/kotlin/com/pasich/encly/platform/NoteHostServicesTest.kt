@@ -55,4 +55,27 @@ class NoteHostServicesTest {
         first.release(7)
         assertFalse(registry.isClaimed(7))
     }
+
+    @Test
+    fun aRefusedWindowIsToldWhenANoteIsGivenBack() {
+        assertTrue(first.claim(7))
+        val before = second.releaseCount()
+        assertFalse(second.claim(7))
+
+        first.release(7)
+
+        assertTrue(second.releases.value != before)
+        assertTrue(second.claim(7))
+    }
+
+    @Test
+    fun aClaimStillHeldByTheReplacedEditorIsNotAGiveBack() {
+        assertTrue(first.claim(7))
+        assertTrue(first.claim(7))
+        val before = first.releaseCount()
+
+        first.release(7)
+
+        assertTrue(first.releaseCount() == before)
+    }
 }

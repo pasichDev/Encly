@@ -20,6 +20,7 @@ import com.pasich.encly.core.resources.licenses_intro
 import com.pasich.encly.core.resources.licenses_libraries
 import com.pasich.encly.core.resources.licenses_title
 import com.pasich.encly.platform.LocalExternalLinks
+import com.pasich.encly.platform.LocalExtraLicenses
 import com.pasich.encly.platform.LocalToaster
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -72,8 +73,9 @@ private val bundledLibraries = listOf(
 fun LicensesScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val links = LocalExternalLinks.current
     val toaster = LocalToaster.current
+    val extra = LocalExtraLicenses.current.map { OpenSourceWork(it.name, it.license, it.url) }
     val sections = listOf(
-        LicenseSection(Res.string.licenses_libraries, bundledLibraries),
+        LicenseSection(Res.string.licenses_libraries, bundledLibraries + extra),
         LicenseSection(Res.string.licenses_fonts, bundledFonts),
     )
     Scaffold(

@@ -151,6 +151,95 @@ class ClipboardWiperTest {
     }
 }
 
+class SensitiveClipWriterTest {
+    private val board = Clipboard("test")
+    private val timer = ManualTimer()
+    private val written = mutableListOf<String>()
+    private var accepts = true
+    private val wiper = ClipboardWiper({ board }, timer, writer = { text ->
+        written += text
+        accepts
+    })
+    private val clipboard = DesktopSensitiveClipboard({ board }, wiper)
+
+    @Test
+    fun `a copy goes out through the marked writer and never through AWT`() {
+        assertTrue(clipboard.copy("label", "secret"))
+
+        assertEquals(listOf("secret"), written)
+        // AWT was not touched: its clipboard has nothing (the writer would have put the text on the real one).
+        assertFalse(board.isDataFlavorAvailable(DataFlavor.stringFlavor))
+        // The wipe is armed all the same.
+        assertEquals(ClipboardWiper.CLEAR_AFTER_MS, timer.pending.single().delayMs)
+    }
+
+    @Test
+    fun `a writer that cannot write falls back to AWT`() {
+        accepts = false
+
+        assertTrue(clipboard.copy("label", "secret"))
+
+        assertEquals("secret", board.getData(DataFlavor.stringFlavor))
+        assertEquals(1, timer.pending.size)
+    }
+
+    @Test
+    fun `writing sensitive text is refused without a writer`() {
+        assertFalse(ClipboardWiper({ board }, timer).writeSensitive("secret"))
+        assertTrue(timer.pending.isEmpty())
+    }
+}
+
+/**
+ * The marked clipboard against the real OS clipboard of the machine. It overwrites the user's clipboard, so it runs
+ * only on its own OS and only when `ENCLY_NATIVE_IT=1` is set.
+ */
+class NativeClipboardTest {
+    private fun assumeNative(osPrefix: String) {
+        org.junit.Assume.assumeTrue("ENCLY_NATIVE_IT is not set", System.getenv("ENCLY_NATIVE_IT") == "1")
+        org.junit.Assume.assumeTrue(System.getProperty("os.name").lowercase().startsWith(osPrefix))
+    }
+
+    @Test
+    fun `macos marks the text as concealed and transient`() {
+        assumeNative("mac")
+        val pasteboard = com.pasich.encly.desktop.nativeos.NativeClipboard.forOs(
+            com.pasich.encly.desktop.storage.DesktopOs.MACOS,
+        ) as com.pasich.encly.desktop.nativeos.MacPasteboard
+
+        assertTrue(pasteboard.write("encly-clip-test"))
+
+        val types = pasteboard.types()
+        assertTrue("public.utf8-plain-text" in types, "types: $types")
+        assertTrue("org.nspasteboard.ConcealedType" in types, "types: $types")
+        assertTrue("org.nspasteboard.TransientType" in types, "types: $types")
+        val text = java.awt.Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor)
+        assertEquals("encly-clip-test", text)
+        java.awt.Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(""), null)
+    }
+
+    @Test
+    fun `windows marks the text out of history and cloud sync`() {
+        assumeNative("windows")
+        val clipboard = com.pasich.encly.desktop.nativeos.NativeClipboard.forOs(
+            com.pasich.encly.desktop.storage.DesktopOs.WINDOWS,
+        ) as com.pasich.encly.desktop.nativeos.WindowsClipboard
+
+        assertTrue(clipboard.write("encly-clip-test"))
+
+        for (name in listOf(
+            com.pasich.encly.desktop.nativeos.WindowsClipboard.EXCLUDE_FROM_MONITORS,
+            com.pasich.encly.desktop.nativeos.WindowsClipboard.CAN_INCLUDE_IN_HISTORY,
+            com.pasich.encly.desktop.nativeos.WindowsClipboard.CAN_UPLOAD_TO_CLOUD,
+        )) {
+            assertTrue(clipboard.hasMarker(name), name)
+        }
+        val text = java.awt.Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor)
+        assertEquals("encly-clip-test", text)
+        java.awt.Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(""), null)
+    }
+}
+
 @OptIn(ExperimentalTestApi::class)
 class ComposeClipboardBoundaryTest {
     private class FakeComposeClipboard : ComposeClipboard {
@@ -192,6 +281,30 @@ class ComposeClipboardBoundaryTest {
         )
         timer.fireAll()
         assertEquals("", board.getData(DataFlavor.stringFlavor))
+    }
+
+    @Test
+    fun `text copied in the editor goes out marked and is not put there plain first`() = runComposeUiTest {
+        val board = Clipboard("compose")
+        val timer = ManualTimer()
+        val platform = FakeComposeClipboard()
+        val written = mutableListOf<String>()
+        var wrapped: ComposeClipboard? = null
+        setContent {
+            Capture(
+                platform,
+                ClipboardWiper({ board }, timer, writer = {
+                    written += it
+                    true
+                }),
+            ) { wrapped = it }
+        }
+
+        runBlocking { wrapped!!.setClipEntry(ClipEntry(StringSelection("from the editor"))) }
+
+        assertEquals(listOf("from the editor"), written)
+        assertNull(platform.entry, "the delegate would have written the text unmarked")
+        assertEquals(1, timer.pending.size)
     }
 
     @Test

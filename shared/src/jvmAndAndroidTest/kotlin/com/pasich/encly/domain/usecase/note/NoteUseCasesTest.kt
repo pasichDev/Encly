@@ -1,6 +1,7 @@
 package com.pasich.encly.domain.usecase.note
 
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.testutil.TestNotesRepository
@@ -29,7 +30,9 @@ class NoteUseCasesTest {
         assertTrue(useCase(note.copy(isTrash = true), isTrash = false).isSuccess)
 
         assertEquals(listOf(true, false), repository.updatedNotes.map { it.isTrash })
-        assertTrue(repository.updatedNotes.all { it.title == "Plan" && it.tagId == 1L })
+        // Two columns of the row, by id: nothing else of the (possibly stale) note is written back.
+        assertTrue(repository.updatedNotes.all { it.id == 4L })
+        assertEquals(0, repository.updateBases.size)
     }
 
     @Test
@@ -56,6 +59,7 @@ class NoteUseCasesTest {
     fun trashingAnArchivedNoteKeepsItArchivedSoRestoringReturnsItToTheArchive() = runTest {
         val useCase = UpdateNoteTrashStatusUseCase(repository)
         val archived = note.copy(isArchived = true)
+        repository.archivedNotesWithTags.value = listOf(NoteWithTag(archived, null))
 
         useCase(archived, isTrash = true)
         useCase(archived.copy(isTrash = true), isTrash = false)

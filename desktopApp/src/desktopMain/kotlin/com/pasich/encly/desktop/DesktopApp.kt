@@ -20,8 +20,10 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.navigation.NavHostController
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.desktop.di.DesktopAppGraph
+import com.pasich.encly.desktop.platform.DesktopLicenses
 import com.pasich.encly.desktop.platform.SensitiveClipboardBoundary
 import com.pasich.encly.desktop.platform.ToastHost
 import com.pasich.encly.desktop.window.DesktopShortcuts
@@ -32,6 +34,8 @@ import com.pasich.encly.platform.LocalAppLocales
 import com.pasich.encly.platform.LocalAppWindow
 import com.pasich.encly.platform.LocalDocumentPickers
 import com.pasich.encly.platform.LocalExternalLinks
+import com.pasich.encly.platform.LocalExtraLicenses
+import com.pasich.encly.platform.LocalKeyboardPrivacyOffered
 import com.pasich.encly.platform.LocalNavigationRequests
 import com.pasich.encly.platform.LocalNoteDocumentRenderer
 import com.pasich.encly.platform.LocalNoteEditClaims
@@ -41,6 +45,7 @@ import com.pasich.encly.platform.LocalSessionSharedAcrossWindows
 import com.pasich.encly.platform.LocalToaster
 import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.navigation.EnclyApp
+import com.pasich.encly.presentation.viewmodel.SelectedTagHolder
 import com.pasich.encly.ui.theme.AppTheme
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -78,15 +83,23 @@ fun DesktopApp(
         // A committed vault that is not open starts locked, before the first frame.
         if (status == InitialStatus.AUTH) graph.sessionLockManager.requireUnlock()
         startStatus = status
+        // Files the app was started with (or is given) wait for this.
+        services.startStatus.complete(status)
     }
 
     DesktopHostServices(graph, appWindow, services) {
         // There is no Activity to recreate when the language changes: a new key makes every screen read its
         // strings again.
         val revision by graph.locales.revision.collectAsState()
+        // The place the user is at survives the rebuild: the replaced controller's back stack goes to the new one
+        // (same entries, so the same ViewModels), instead of the window starting over from the launch-time status.
+        val controllerOfWindow = remember { NavControllerOfWindow() }
+        val navState = remember(revision) { controllerOfWindow.controller?.saveState() }
         Box(modifier.fillMaxSize()) {
             key(revision) {
                 EnclyApp(
+                    restoredNavState = navState,
+                    onNavController = { controllerOfWindow.controller = it },
                     startStatus = startStatus,
                     securityManager = graph.securityManager,
                     sessionLockManager = graph.sessionLockManager,
@@ -96,10 +109,15 @@ fun DesktopApp(
                 )
             }
             AppTheme {
-                ToastHost(graph.toaster, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+                ToastHost(services.toaster, Modifier.align(Alignment.BottomCenter).padding(16.dp))
             }
         }
     }
+}
+
+/** The navigation controller the window's app currently runs on, to carry its back stack across a rebuild. */
+private class NavControllerOfWindow {
+    var controller: NavHostController? = null
 }
 
 /** Hands the shared UI what it needs from the desktop, once, around its whole content. */
@@ -116,13 +134,19 @@ fun DesktopHostServices(
         }
     }
     DisposableEffect(viewModelStoreOwner) { onDispose { viewModelStoreOwner.viewModelStore.clear() } }
+    // The tag filter is this window's own: the ViewModels of the window are created with it.
+    val selectedTag = remember(graph) { SelectedTagHolder(graph.sessionLockManager) }
+    DisposableEffect(selectedTag) { onDispose { selectedTag.close() } }
+    val viewModelFactory = remember(graph, selectedTag) { graph.viewModelFactory.forWindow(selectedTag) }
     CompositionLocalProvider(
         LocalViewModelStoreOwner provides viewModelStoreOwner,
         LocalLifecycleOwner provides graph.lifecycle,
-        LocalMetroViewModelFactory provides graph.metroViewModelFactory,
+        LocalMetroViewModelFactory provides viewModelFactory,
         LocalAppWindow provides appWindow,
         LocalExternalLinks provides graph.externalLinks,
-        LocalToaster provides graph.toaster,
+        LocalExtraLicenses provides DesktopLicenses.notices,
+        LocalKeyboardPrivacyOffered provides false,
+        LocalToaster provides services.toaster,
         LocalSensitiveClipboard provides graph.clipboard,
         LocalAppLocales provides graph.locales,
         LocalAppInfo provides graph.appInfo,

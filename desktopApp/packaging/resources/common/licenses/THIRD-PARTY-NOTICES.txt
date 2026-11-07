@@ -1,0 +1,39 @@
+Encly for the desktop: third-party software
+===========================================
+
+Encly itself is licensed under the Apache License 2.0 (the LICENSE file of the installer). The desktop app also
+contains the following software, which is used under its own licence. The texts and notices are in this folder.
+The libraries and fonts that every Encly build contains (Kotlin, Compose Multiplatform, Okio, SQLCipher, ...) are
+listed in the app under About -> Licenses.
+
+Apache PDFBox, FontBox and PDFBox IO 3.0.5          Apache License 2.0
+    Builds the PDF of a note and sends it to the printer.            https://pdfbox.apache.org/
+    pdfbox-LICENSE.txt, pdfbox-NOTICE.txt
+
+Apache Commons Logging 1.3.5                         Apache License 2.0
+    Used by PDFBox.                                                  https://commons.apache.org/proper/commons-logging/
+    commons-logging-LICENSE.txt, commons-logging-NOTICE.txt
+
+Java Native Access (JNA) and JNA Platform 5.19.1     Apache License 2.0 (also available under LGPL 2.1 or later)
+    Calls the operating system: the secret store, the screen lock,    https://github.com/java-native-access/jna
+    the clipboard, window capture protection. Encly uses it under the Apache License 2.0.
+    jna-LICENSE.txt, jna-AL2.0.txt, jna-LGPL2.1.txt
+
+dbus-java 5.1.1 (core and the native Unix socket transport)   MIT License
+    Talks to the Secret Service, logind and the file chooser portal   https://github.com/hypfvieh/dbus-java
+    on Linux over the local D-Bus socket.
+    dbus-java-LICENSE.txt
+
+SLF4J 2.0.17 (API and the no-op binding)             MIT License
+    The logging facade of dbus-java; Encly binds it to nothing.      https://www.slf4j.org/
+    slf4j-LICENSE.txt
+
+Skiko (the Skia bindings under Compose Multiplatform)    Apache License 2.0
+    Draws the window.                                                https://github.com/JetBrains/skiko
+
+JetBrains Runtime API 1.9.0, JSpecify 1.0.0          Apache License 2.0
+    Window and annotation support of Compose Desktop. The text of the licence is jna-AL2.0.txt.   https://jspecify.dev/
+
+OpenJDK runtime (bundled by the installer)           GNU General Public License v2 with the Classpath Exception
+    The Java runtime the app runs on. Its legal notices are in the runtime's own "legal" folder.
+    https://openjdk.org/legal/gplv2+ce.html

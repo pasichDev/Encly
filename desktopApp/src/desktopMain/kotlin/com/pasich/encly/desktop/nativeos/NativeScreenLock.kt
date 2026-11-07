@@ -4,10 +4,12 @@ package com.pasich.encly.desktop.nativeos
 
 import com.pasich.encly.desktop.security.OsLockSignals
 import com.pasich.encly.desktop.security.PollingLockSignals
+import com.pasich.encly.desktop.security.SleepDetector
 import com.pasich.encly.desktop.storage.DesktopOs
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
+import com.sun.jna.ptr.LongByReference
 import com.sun.jna.win32.StdCallLibrary
 import org.freedesktop.dbus.DBusMatchRule
 import org.freedesktop.dbus.connections.impl.DBusConnection
@@ -22,8 +24,18 @@ import org.freedesktop.dbus.messages.DBusSignal
 /** The lock signals of [os]. Never throws: a source that cannot start reports nothing. */
 object NativeScreenLock {
     fun forOs(os: DesktopOs): OsLockSignals = when (os) {
-        DesktopOs.MACOS -> PollingLockSignals(POLL_MILLIS, MacScreenLockProbe()::isLocked)
-        DesktopOs.WINDOWS -> PollingLockSignals(POLL_MILLIS, WindowsScreenLockProbe()::isLocked)
+        DesktopOs.MACOS -> PollingLockSignals(
+            POLL_MILLIS,
+            MacScreenLockProbe()::isLocked,
+            SleepDetector(MacSleepClocks()::read)::sleptSinceLastCheck,
+        )
+
+        DesktopOs.WINDOWS -> PollingLockSignals(
+            POLL_MILLIS,
+            WindowsScreenLockProbe()::isLocked,
+            SleepDetector(WindowsSleepClocks()::read)::sleptSinceLastCheck,
+        )
+
         DesktopOs.LINUX -> LogindLockSignals()
     }
 
@@ -86,6 +98,73 @@ private class MacScreenLockProbe {
     private companion object {
         const val LOCKED_KEY = "CGSSessionScreenIsLocked"
         const val UTF8 = 0x08000100
+    }
+}
+
+private interface MacTime : Library {
+    fun mach_continuous_time(): Long
+
+    fun mach_absolute_time(): Long
+
+    fun mach_timebase_info(info: IntArray): Int
+}
+
+/** macOS: `mach_continuous_time` counts the time asleep, `mach_absolute_time` does not. */
+private class MacSleepClocks {
+    private val time: MacTime? = try {
+        Native.load("System", MacTime::class.java)
+    } catch (_: Throwable) {
+        null
+    }
+    private val timebase: IntArray? = time?.let {
+        IntArray(2).takeIf { info -> it.mach_timebase_info(info) == 0 && info[1] != 0 }
+    }
+
+    fun read(): SleepDetector.Clocks? {
+        val lib = time ?: return null
+        val base = timebase ?: return null
+        return try {
+            SleepDetector.Clocks(
+                counting = lib.mach_continuous_time() * base[0] / base[1] / NANOS_PER_MILLI,
+                awake = lib.mach_absolute_time() * base[0] / base[1] / NANOS_PER_MILLI,
+            )
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private companion object {
+        const val NANOS_PER_MILLI = 1_000_000L
+    }
+}
+
+private interface WindowsTime : StdCallLibrary {
+    fun GetTickCount64(): Long
+
+    fun QueryUnbiasedInterruptTime(time: LongByReference): Boolean
+}
+
+/** Windows: `GetTickCount64` counts the time asleep, `QueryUnbiasedInterruptTime` (100 ns units) does not. */
+private class WindowsSleepClocks {
+    private val time: WindowsTime? = try {
+        Native.load("kernel32", WindowsTime::class.java)
+    } catch (_: Throwable) {
+        null
+    }
+
+    fun read(): SleepDetector.Clocks? {
+        val lib = time ?: return null
+        return try {
+            val awake = LongByReference()
+            if (!lib.QueryUnbiasedInterruptTime(awake)) return null
+            SleepDetector.Clocks(counting = lib.GetTickCount64(), awake = awake.value / HUNDRED_NANOS_PER_MILLI)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private companion object {
+        const val HUNDRED_NANOS_PER_MILLI = 10_000L
     }
 }
 

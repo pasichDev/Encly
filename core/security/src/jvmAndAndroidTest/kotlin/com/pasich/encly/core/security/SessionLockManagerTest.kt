@@ -504,6 +504,52 @@ class SessionLockManagerTest {
         assertFalse(screenshots.allowed.value)
     }
 
+    @Test
+    fun aLockThatCameWhileTheUnlockWasRunningIsNotLostToIt() {
+        // The PIN is being checked: nothing is open yet, so the OS lock finds nothing to close...
+        val started = manager.lockRequests()
+        manager.lockNow()
+        verify(security, never()).lock()
+
+        // ...and the unlock that finishes afterwards must not be published.
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        assertFalse(manager.onUnlocked(started))
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun anUnlockWithNoLockInBetweenIsPublished() {
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        val started = manager.lockRequests()
+
+        assertTrue(manager.onUnlocked(started))
+        assertFalse(manager.locked.value)
+    }
+
+    @Test
+    fun aLockRequestBeforeOnboardingIsCommittedIsNotCounted() {
+        `when`(security.isLockable()).thenReturn(false)
+        val started = manager.lockRequests()
+
+        manager.lockNow()
+
+        assertEquals(started, manager.lockRequests())
+    }
+
+    @Test
+    fun anUnlockWhileTheDeviceIsLockedIsClosedAgain() {
+        val deviceLock = FakeDeviceLock().apply { locked = true }
+        val guarded = SessionLockManager(security, deviceLock = deviceLock)
+        guarded.onStart(owner)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+
+        assertFalse(guarded.onUnlocked())
+
+        verify(security).lock()
+    }
+
     private class FakeDeviceLock : DeviceLockWatcher {
         var locked = false
         var watching = false

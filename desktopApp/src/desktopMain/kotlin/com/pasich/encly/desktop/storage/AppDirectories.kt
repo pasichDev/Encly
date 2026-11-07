@@ -39,15 +39,17 @@ object AppDirectories {
 
     /**
      * The data directory for [os]. Pure: [env] answers environment variables and [home] is the user's home.
-     * - Windows: `%APPDATA%\Encly` (the same folder the DPAPI blob of the PIN factor lives in);
+     * - Windows: `%LOCALAPPDATA%\Encly` (the same folder the DPAPI blob of the PIN factor lives in). Local, not
+     *   the roaming `%APPDATA%`: a roaming profile is copied to the profile server and to every machine the user
+     *   signs in to, and the vault and the PIN's device secret must stay on this one;
      * - macOS: `~/Library/Application Support/Encly`;
      * - Linux: `$XDG_DATA_HOME/encly`, or `~/.local/share/encly` when it is unset, empty or not absolute (the
      *   XDG specification says a relative value is invalid and must be ignored).
      */
     fun dataDirectory(os: DesktopOs, env: (String) -> String?, home: String): Path = when (os) {
         DesktopOs.WINDOWS -> {
-            val appData = env("APPDATA")?.takeIf { it.isNotBlank() }
-            (appData?.let(Paths::get) ?: Paths.get(home, "AppData", "Roaming")).resolve(WINDOWS_NAME)
+            val appData = env("LOCALAPPDATA")?.takeIf { it.isNotBlank() }
+            (appData?.let(Paths::get) ?: Paths.get(home, "AppData", "Local")).resolve(WINDOWS_NAME)
         }
 
         DesktopOs.MACOS -> Paths.get(home, "Library", "Application Support", MACOS_NAME)
@@ -68,7 +70,7 @@ object AppDirectories {
      * On POSIX systems (macOS, Linux) the directory gets `rwx------`, also when it already existed with looser
      * permissions: the key slots file and the databases inside carry no permission bits of their own that
      * matter, the directory is the boundary. On Windows POSIX permissions do not exist and the ACL is left to
-     * inheritance: a folder under `%APPDATA%` is readable by the user, SYSTEM and Administrators only, which
+     * inheritance: a folder under `%LOCALAPPDATA%` is readable by the user, SYSTEM and Administrators only, which
      * is the same trust boundary the DPAPI-protected PIN secret has. Encly does not rewrite ACLs (a wrong
      * ACL can lock the user out of their own vault).
      *

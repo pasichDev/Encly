@@ -102,6 +102,10 @@ compose.desktop {
             copyright = "Copyright 2026 Encly contributors. Apache-2.0."
             licenseFile.set(rootProject.file("LICENSE"))
 
+            // The licence texts and notices of the libraries only the desktop app contains (PDFBox, JNA, dbus-java,
+            // ...): `common/licenses/` goes into the app's resources folder of every installer.
+            appResourcesRootDir.set(layout.projectDirectory.dir("packaging/resources"))
+
             // The JDK modules the app needs beyond the defaults; `suggestRuntimeModules` lists what is missing.
             // java.desktop (AWT, Swing), java.prefs and java.naming come with the defaults of Compose.
             modules(

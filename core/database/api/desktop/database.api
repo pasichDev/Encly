@@ -166,9 +166,11 @@ public abstract interface class com/pasich/encly/data/database/dao/NotesDao {
 	public abstract fun updateArchived (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun updateColor (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun updateDescription (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateEdited (JLjava/lang/String;Ljava/lang/String;ZLjava/lang/String;JZLjava/lang/Long;ZZZLjava/lang/String;ZLjava/lang/Integer;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun updateNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun updatePinned (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun updateTagId (JLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateTrashed (JZLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/pasich/encly/data/database/dao/NotesDao_Impl : com/pasich/encly/data/database/dao/NotesDao {
@@ -189,9 +191,11 @@ public final class com/pasich/encly/data/database/dao/NotesDao_Impl : com/pasich
 	public fun updateArchived (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun updateColor (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun updateDescription (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateEdited (JLjava/lang/String;Ljava/lang/String;ZLjava/lang/String;JZLjava/lang/Long;ZZZLjava/lang/String;ZLjava/lang/Integer;ZLjava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun updateNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun updatePinned (JZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun updateTagId (JLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun updateTrashed (JZLjava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/pasich/encly/data/database/dao/NotesDao_Impl$Companion {

@@ -5,6 +5,7 @@ import com.pasich.encly.core.keystore.DesktopPinFactor
 import com.pasich.encly.core.keystore.SecretStoreUnavailableException
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.desktop.di.DesktopAppGraph
+import com.pasich.encly.desktop.nativeos.NativeBackupExclusion
 import com.pasich.encly.desktop.platform.DesktopEnvironment
 import com.pasich.encly.desktop.storage.AppDirectories
 import com.pasich.encly.desktop.storage.DesktopOs
@@ -36,6 +37,8 @@ fun main(args: Array<String>) {
     } catch (e: IOException) {
         fail("Encly cannot create its data folder: ${e.message}")
     }
+    // Kept out of the OS's backups (Time Machine) every start, in case the attribute was lost with a restored folder.
+    NativeBackupExclusion.forOs(os).exclude(dataDirectory)
     // Held until the process ends: the OS releases the lock with it.
     val instance = SingleInstanceLock.tryAcquire(dataDirectory)
         ?: fail("Encly is already running.", exitCode = 0)
@@ -70,6 +73,11 @@ private fun startServices(graph: DesktopAppGraph) {
     graph.lifecycle.lifecycle.addObserver(graph.sessionLockManager)
     // The OS locking the screen locks the vault, whether Encly is in front or not.
     graph.deviceLockWatcher.onLocked { graph.sessionLockManager.lockNow() }
+    // A file dialog of the portal lives in another process and stays on screen over any lock (the OS's, the idle
+    // lock, "Lock now"): close it when the vault closes.
+    graph.applicationScope.launch {
+        graph.sessionLockManager.locked.collect { locked -> if (locked) graph.environment.fileDialogs.cancelAll() }
+    }
     graph.deviceLockWatcher.start()
     // A My Notes hand-off (plaintext) that a killed process left in the cache; off the UI thread.
     graph.applicationScope.launch { graph.handoffStagingSweeper.sweep() }

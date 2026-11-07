@@ -70,6 +70,7 @@ import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -184,6 +185,49 @@ class EditNoteViewModel(
         if (elsewhere) _lockEditor.value = true
     }
 
+    private var followStored: Job? = null
+
+    // The last give-back in progress: a claim granted again waits for it, so its late "suspended" cannot land on an
+    // editor that holds the claim again (the same window recreating this editor's screen is the usual case).
+    private var finishing: Job? = null
+
+    /**
+     * The host answers this editor's claim on its note. Refused: another window edits it, so this one only shows the
+     * note, and shows what that window saves. Granted: if the note was saved elsewhere since this editor last held
+     * it, the stored text is shown instead of the stale copy, then editing resumes.
+     */
+    fun onClaimResult(granted: Boolean) {
+        followStored?.cancel()
+        if (!granted) {
+            setEditedElsewhere(true)
+            followStored = viewModelScope.launch {
+                persistence.storedNote().collect { persistence.showStored(it, editor::load) }
+            }
+            return
+        }
+        viewModelScope.launch {
+            finishing?.join()
+            persistence.resume(editor::load)
+            _editedElsewhere.value = false
+        }
+    }
+
+    /**
+     * The host takes this editor off the screen: what is not yet stored is saved, nothing is written from now on
+     * until a claim is granted again, and only then [release] gives the note to another window. Runs on the app's
+     * scope, so it finishes even when the window is closing.
+     */
+    fun finishEditing(release: () -> Unit) {
+        followStored?.cancel()
+        finishing = appScope.launch {
+            try {
+                persistence.release()
+            } finally {
+                release()
+            }
+        }
+    }
+
     private val readOnly: Boolean get() = isReadTrashOnly || _editedElsewhere.value
 
     // Link blocks whose saved address is open in URL entry. Editor UI state only: the block
@@ -263,6 +307,7 @@ class EditNoteViewModel(
         // Session lock hook (security): a re-lock drops the note's plaintext at once, even
         // while the app is in the background and this screen is not composed.
         clearOnLock(lockEvents) {
+            followStored?.cancel()
             persistence.close()
             // Also closes the find bar and the slash picker: no query or match survives a lock.
             editor.load(emptyList())

@@ -108,6 +108,10 @@ Compose:
       - LocalNoteWindows
       - LocalNoteEditClaims
       - LocalSessionSharedAcrossWindows
+      # What a host offers or ships on top of the common set: whether it can restrain the keyboard's learning
+      # (the desktop cannot) and the libraries only it contains (platform/HostServices.kt).
+      - LocalKeyboardPrivacyOffered
+      - LocalExtraLicenses
       # The window's pointer-first flag, key map and command router, provided once around the app
       # (ui/theme/Adaptive.kt, presentation/designsystem/EnclyShortcuts.kt, presentation/navigation/AppCommandRouter.kt).
       - LocalPointerFirst

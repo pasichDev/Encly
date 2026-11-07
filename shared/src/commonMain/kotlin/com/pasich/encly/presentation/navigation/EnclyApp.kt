@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -26,6 +27,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import androidx.savedstate.SavedState
 import androidx.savedstate.read
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
@@ -62,7 +64,9 @@ val LocalVaultLocked = staticCompositionLocalOf { false }
  * The keyboard shortcuts ([EnclyShortcuts]) are handled around the whole app and run by an [AppCommandRouter],
  * which the host's menu bar reaches through `NavigationRequests` too. A host whose menu registers the
  * accelerator of a command itself passes it in [declinedCommands], so the chord has one owner. [shortcuts] is
- * the one key map of the window; commands are ignored while the vault is locked.
+ * the one key map of the window; commands are ignored while the vault is locked. A host that rebuilds this under
+ * a new key keeps the user's place by passing the replaced controller's `saveState()` as [restoredNavState] and
+ * learning the new controller from [onNavController].
  */
 @Composable
 fun EnclyApp(
@@ -72,9 +76,18 @@ fun EnclyApp(
     modifier: Modifier = Modifier,
     shortcuts: EnclyShortcuts = remember { EnclyShortcuts() },
     declinedCommands: Set<AppCommand> = emptySet(),
+    restoredNavState: SavedState? = null,
+    onNavController: (NavHostController) -> Unit = {},
 ) {
     val destination = startStatus?.let(::startRoute) ?: return
     val navController = rememberNavController()
+    // A host that rebuilds the app under a new key (the desktop, on a language change) hands the back stack of the
+    // controller it replaces to the new one, before its graph is set: the screens, and the entries' ViewModels, stay.
+    remember(navController) {
+        if (restoredNavState != null) navController.restoreState(restoredNavState)
+        Unit
+    }
+    SideEffect { onNavController(navController) }
     // A start with no vault yet is a fresh install: it has no earlier version whose news it missed.
     val startup = metroViewModel<StartupViewModel>()
     val freshInstall = startStatus == InitialStatus.ONBOARDING || startStatus == InitialStatus.SETUP_AUTH

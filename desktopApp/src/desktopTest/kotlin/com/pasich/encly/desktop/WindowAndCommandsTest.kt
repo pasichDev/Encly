@@ -35,6 +35,23 @@ class WindowStateStoreTest {
     }
 
     @Test
+    fun `every window slot keeps its own place and size`() {
+        WindowStateStore(flags(), slot = 0).save(WindowBounds(100, 80, 1000, 700), maximised = false)
+        WindowStateStore(flags(), slot = 1).save(WindowBounds(300, 200, 800, 600), maximised = false)
+        WindowStateStore(flags(), slot = 1).save(null, maximised = true)
+
+        assertEquals(
+            SavedWindow(1000, 700, 100, 80, maximised = false),
+            WindowStateStore(flags(), slot = 0).load(listOf(screen)),
+        )
+        assertEquals(
+            SavedWindow(800, 600, 300, 200, maximised = true),
+            WindowStateStore(flags(), slot = 1).load(listOf(screen)),
+        )
+        assertNull(WindowStateStore(flags(), slot = 2).load(listOf(screen)))
+    }
+
+    @Test
     fun `size and position survive a restart`() {
         WindowStateStore(flags()).save(WindowBounds(100, 80, 1000, 700), maximised = false)
         val restored = WindowStateStore(flags()).load(listOf(screen))

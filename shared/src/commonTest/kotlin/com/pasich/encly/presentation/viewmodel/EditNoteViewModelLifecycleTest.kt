@@ -165,6 +165,61 @@ class EditNoteViewModelLifecycleTest {
     }
 
     @Test
+    fun aClaimGrantedAgainAfterAGiveBackLeavesTheEditorEditableWhicheverRunsFirst() = runTest(dispatcher) {
+        storeNote()
+        // The give-back runs on the app's scope, the claim on the screen's: two queues that need not run in order.
+        val appDispatcher = StandardTestDispatcher()
+        val viewModel = EditNoteViewModel(
+            notesRepository = repository,
+            savedStateHandle = SavedStateHandle(mapOf("idNote" to NOTE_ID)),
+            updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+            updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+            settingsRepository = settings,
+            appScope = CoroutineScope(appDispatcher),
+            ioDispatcher = UnconfinedTestDispatcher(),
+            copyTitle = { "$it (Copy)" },
+        )
+        advanceUntilIdle()
+
+        // The window recreates the editor's screen: the old one gives the note back, the new one claims it again.
+        var released = false
+        viewModel.finishEditing { released = true }
+        viewModel.onClaimResult(granted = true)
+        advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        assertTrue(released)
+        // A late "suspended" from the give-back must not have landed on an editor that holds the claim again.
+        viewModel.onBlockTextChanged(viewModel.blocks.first(), "typed after")
+        assertTrue(viewModel.saveNote())
+        assertEquals(1, repository.updateCalls)
+    }
+
+    @Test
+    fun aRefusedClaimShowsWhatTheOtherWindowSavesAndKeepsNothingOfItsOwn() = runTest(dispatcher) {
+        storeNote()
+        val viewModel = viewModel(SavedStateHandle(mapOf("idNote" to NOTE_ID)))
+        advanceUntilIdle()
+
+        viewModel.onClaimResult(granted = false)
+        advanceUntilIdle()
+        assertTrue(viewModel.editedElsewhere.value)
+
+        val saved = Note(
+            id = NOTE_ID,
+            title = "Renamed elsewhere",
+            value = BlockConverter.blocksToJson(listOf(Block.TextBlock(MutableStateFlow("new text")))),
+        )
+        repository.allNotesWithTags.value = listOf(NoteWithTag(note = saved, tag = null))
+        advanceUntilIdle()
+
+        assertEquals("Renamed elsewhere", viewModel.state.value.note.title)
+        assertEquals("new text", (viewModel.blocks.first() as Block.TextBlock).text.value)
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
     fun aNoteInTheTrashCannotBeUnlocked() = runTest(dispatcher) {
         storeNote(isTrash = true)
         val viewModel = viewModel(

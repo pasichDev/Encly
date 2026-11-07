@@ -178,15 +178,17 @@ public class SecurityManager(
 
     /**
      * A vault the non-secret flags store forgot: a stored seed, a PIN or recovery slot and the
-     * encrypted database all exist. Setup writes the seed and the slots first and the database
-     * last, and holds the bootstrap key in memory until the commit, so an onboarding killed at any
-     * earlier step (no seed, no slot, or no database yet: nothing to lose) and the one still
+     * encrypted database (or an erase that is about to replace it) all exist. Setup writes the seed
+     * and the slots first and the database last, and holds the bootstrap key in memory until the commit,
+     * so an onboarding killed at any earlier step (no seed, no slot, or no database yet: nothing to lose) and
+     * the one still
      * running in this process do not match, and restart.
      */
     private fun isCommittedWithoutFlag(): Boolean = !seedPhraseManager.hasBootstrapKey() &&
         seedPhraseManager.hasStoredSeed() &&
         (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()) &&
-        vaultDatabase.hasEncryptedDatabase()
+        // A wipe-PIN erase that has not created the empty database yet leaves none: the vault is still committed.
+        (vaultDatabase.hasEncryptedDatabase() || authenticationManager.pendingWipe() != null)
 
     /** True when first-run setup may (re)create the vault without destroying user data. */
     private fun isSafeToCreateVault(): Boolean = !vaultStore.isUnreadable() &&
@@ -604,10 +606,17 @@ public class SecurityManager(
         return finalized
     }
 
+    /**
+     * Closes the vault and drops the session key. Serialized with the open ([unlockWithRawKey]): a lock never lands
+     * between the database being opened and its key being recorded, which would leave a key with no database to
+     * close it. It can therefore wait for an open in progress.
+     */
     public fun lock() {
-        vaultDatabase.reset()
-        clearSessionKey()
-        securityStatus = InitialStatus.AUTH
+        synchronized(databaseLock) {
+            vaultDatabase.reset()
+            clearSessionKey()
+            securityStatus = InitialStatus.AUTH
+        }
     }
 
     /**
