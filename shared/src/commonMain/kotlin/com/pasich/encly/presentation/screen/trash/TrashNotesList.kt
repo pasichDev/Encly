@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.screen.trash
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import com.pasich.encly.core.common.asString
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.empty_trash_desc
 import com.pasich.encly.core.resources.empty_trash_title
+import com.pasich.encly.core.resources.trash_auto_delete_hint
 import com.pasich.encly.core.resources.trash_hint
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.presentation.components.tiles.NoteItem
@@ -38,8 +40,8 @@ private const val SKELETON_CARDS = 3
 
 /**
  * The trashed notes: a skeleton while they load, "Trash is empty" or the read error, else the
- * dimmed cards under a hint that a long-press selects. Tapping a card opens it read-only, or
- * toggles it while a selection is open.
+ * dimmed cards under a hint that a long-press selects and one that the trash empties itself after 28 days.
+ * Tapping a card opens it read-only, or toggles it while a selection is open.
  */
 @Composable
 fun TrashNotesList(
@@ -99,12 +101,21 @@ private fun LazyListScope.trashCards(
     onToggle: (Int) -> Unit,
 ) {
     item(key = "hint") {
-        Text(
-            text = stringResource(Res.string.trash_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Column(
+            verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.listGutter),
-        )
+        ) {
+            Text(
+                text = stringResource(Res.string.trash_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(Res.string.trash_auto_delete_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
     items(items = notes, key = { it.id }) { stableItem ->
         NoteItem(

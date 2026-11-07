@@ -685,4 +685,8 @@
     <string name="pdf_export_done">Zapisano PDF</string>
     <string name="print_done">Wysłano do drukarki</string>
     <string name="note_open_elsewhere">Ta notatka jest otwarta do edycji w innym oknie. Tutaj jest tylko do odczytu.</string>
+    <string name="whats_new_title">Co nowego</string>
+    <string name="whats_new_row_desc">Zmiany w tej wersji</string>
+    <string name="whats_new_dismiss">Rozumiem</string>
+    <string name="trash_auto_delete_hint">Notatki są trwale usuwane po 28 dniach w koszu.</string>
 </resources>

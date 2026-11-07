@@ -134,7 +134,7 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
     @Test
     fun security() {
         setNavScreen(
-            viewModels(app.securitySettings(), app.backup()),
+            viewModels(app.securitySettings(), app.notePreviewsVm(), app.backup()),
             route = NavRoutes.SecuritySettingsRoute.name,
         ) { nav ->
             SecuritySettingsScreen(nav)

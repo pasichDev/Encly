@@ -28,10 +28,12 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
+import com.pasich.encly.domain.model.NotePreviews
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.usecase.OnboardingUseCase
 import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
+import com.pasich.encly.domain.usecase.note.PurgeExpiredTrashUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteColorUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteDescriptionUseCase
@@ -40,6 +42,7 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteTagUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.domain.usecase.tag.ReorderTagsUseCase
 import com.pasich.encly.domain.usecase.task.UpdateTaskStatusUseCase
+import com.pasich.encly.platform.AppInfo
 import com.pasich.encly.platform.DocumentRef
 import com.pasich.encly.presentation.viewmodel.AppearanceViewModel
 import com.pasich.encly.presentation.viewmodel.AuthSetupViewModel
@@ -50,11 +53,13 @@ import com.pasich.encly.presentation.viewmodel.LockViewModel
 import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
+import com.pasich.encly.presentation.viewmodel.NotePreviewsViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.presentation.viewmodel.SelectedTagHolder
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
+import com.pasich.encly.presentation.viewmodel.StartupViewModel
 import com.pasich.encly.presentation.viewmodel.StatisticViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
@@ -65,6 +70,7 @@ import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.TestNotesRepository
 import com.pasich.encly.testutil.anyCharArray
 import com.pasich.encly.utils.DeviceCapabilities
+import com.pasich.encly.whatsnew.WhatsNewTracker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -190,6 +196,21 @@ internal class TestApp {
 
     fun mainListState() = MainListStateViewModel(settings)
 
+    val notePreviews = NotePreviews(InMemoryKeyValueStore())
+
+    fun notePreviewsVm() = NotePreviewsViewModel(notePreviews)
+
+    /** The start-up work of the home screen, with the trash and the version notes the tests control. */
+    fun startup(tracker: WhatsNewTracker = freshInstall()) = StartupViewModel(
+        tracker,
+        PurgeExpiredTrashUseCase(notes, CleanTrashNotesUseCase(notes)),
+    )
+
+    /** A tracker that has already recorded the version, as after the install: no "What's new" is due. */
+    private fun freshInstall() = WhatsNewTracker(InMemoryKeyValueStore(), AppInfo.Default).also {
+        it.recordFreshInstall()
+    }
+
     fun lockNow() = LockNowViewModel(sessionLock)
 
     fun trash() = TrashViewModel(notes, UpdateNoteTrashStatusUseCase(notes), CleanTrashNotesUseCase(notes))
@@ -249,6 +270,8 @@ internal class TestApp {
     /** The ViewModels the home screen and its drawer, chips and task card ask for. */
     fun home(noteList: NoteListViewModel = noteList()): Array<androidx.lifecycle.ViewModel> = arrayOf(
         mainListState(),
+        notePreviewsVm(),
+        startup(),
         settingsVm(),
         noteList,
         search(),

@@ -199,7 +199,25 @@ class NotesDaoTest {
         assertEquals(null, dao.observeNoteWithTag(999).first())
     }
 
+    @Test
+    fun stampingGivesATrashTimeOnlyToTrashedNotesWithoutOne() = runBlocking {
+        val timed = insert("timed") {
+            isTrash = true
+            trashedAt = EARLIER
+        }
+        val untimed = insert("untimed") { isTrash = true }
+        val live = insert("live")
+
+        assertEquals(1, dao.stampTrashedAt(STAMP))
+
+        assertEquals(EARLIER, dao.getNoteById(timed)?.trashedAt)
+        assertEquals(STAMP, dao.getNoteById(untimed)?.trashedAt)
+        assertEquals(null, dao.getNoteById(live)?.trashedAt)
+    }
+
     private companion object {
+        const val EARLIER = 1_000L
+        const val STAMP = 2_000L
         const val TAG = 1L
         const val OTHER_TAG = 2L
     }

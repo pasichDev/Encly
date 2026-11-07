@@ -685,4 +685,8 @@
     <string name="pdf_export_done">PDF збережено</string>
     <string name="print_done">Надіслано на принтер</string>
     <string name="note_open_elsewhere">Ця нотатка відкрита для редагування в іншому вікні. Тут її можна лише читати.</string>
+    <string name="whats_new_title">Що нового</string>
+    <string name="whats_new_row_desc">Зміни в цій версії</string>
+    <string name="whats_new_dismiss">Зрозуміло</string>
+    <string name="trash_auto_delete_hint">Нотатки остаточно видаляються через 28 днів у кошику.</string>
 </resources>

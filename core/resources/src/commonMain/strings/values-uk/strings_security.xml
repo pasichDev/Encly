@@ -129,4 +129,6 @@
     <string name="duress_pin_remove_confirm_title">Вимкнути PIN під примусом?</string>
     <string name="duress_pin_remove_confirm_body">Підставне сховище та нотатки в ньому буде видалено. Ваше справжнє сховище це не зачепить.</string>
     <string name="duress_pin_remove_confirm">Вимкнути</string>
+    <string name="security_previews_title">Показувати попередній перегляд нотаток</string>
+    <string name="security_previews_desc">Список нотаток показує перші рядки кожної нотатки. Вимкніть, щоб бачити лише заголовок, мітку й дату; пошук і далі знаходить увесь текст.</string>
 </resources>

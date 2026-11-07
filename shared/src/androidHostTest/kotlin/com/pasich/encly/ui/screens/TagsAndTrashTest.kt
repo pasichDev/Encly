@@ -28,6 +28,7 @@ import com.pasich.encly.core.resources.tag_show_in_list
 import com.pasich.encly.core.resources.tags_empty_desc
 import com.pasich.encly.core.resources.tags_empty_title
 import com.pasich.encly.core.resources.tags_hint
+import com.pasich.encly.core.resources.trash_auto_delete_hint
 import com.pasich.encly.core.resources.trash_hint
 import com.pasich.encly.core.resources.trash_selected
 import com.pasich.encly.data.model.Note
@@ -150,6 +151,7 @@ class TagsAndTrashTest : ComposeScreenTest() {
         waitForText("Old plan")
         rule.onNodeWithText("Draft").assertIsDisplayed()
         rule.onNodeWithText(str(Res.string.trash_hint)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.trash_auto_delete_hint)).assertIsDisplayed()
     }
 
     @Test

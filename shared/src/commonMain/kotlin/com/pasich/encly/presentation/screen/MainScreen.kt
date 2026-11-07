@@ -82,6 +82,7 @@ fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifi
         WidthClass.Medium -> MediumMainRoot(navController, modifier)
         WidthClass.Expanded -> ExpandedMainRoot(navController, modifier)
     }
+    UnlockedStartup()
 }
 
 /** The phone layout: the notes, with the navigation drawer sliding over them. */

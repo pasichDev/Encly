@@ -194,6 +194,31 @@ class AppDatabaseSchemaTest {
     }
 
     @Test
+    fun migrate6To7StampsTheNotesAlreadyInTheTrash() {
+        helper.createDatabase(6).use { db ->
+            db.execSQL(
+                "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                    "VALUES (1, 'Trashed', '[]', 'd', 20, 10, NULL, 1, 'trashed-uid')",
+            )
+            db.execSQL(
+                "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                    "VALUES (2, 'Kept', '[]', 'd', 20, 10, NULL, 0, 'kept-uid')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(7, listOf(VaultSchema.MIGRATION_6_7)).use { db ->
+            db.prepare("SELECT trashedAt FROM notes WHERE id = 1").use { s ->
+                assertTrue(s.step())
+                assertTrue(s.getLong(0) > 0)
+            }
+            db.prepare("SELECT trashedAt FROM notes WHERE id = 2").use { s ->
+                assertTrue(s.step())
+                assertTrue(s.isNull(0))
+            }
+        }
+    }
+
+    @Test
     fun migrate1ToCurrentRunsTheWholeChain() {
         helper.createDatabase(1).close()
 
@@ -205,6 +230,7 @@ class AppDatabaseSchemaTest {
                 VaultSchema.MIGRATION_3_4,
                 VaultSchema.MIGRATION_4_5,
                 VaultSchema.MIGRATION_5_6,
+                VaultSchema.MIGRATION_6_7,
             ),
         ).close()
     }

@@ -124,4 +124,6 @@
     <string name="duress_pin_remove_confirm_title">Disattivare il PIN di coercizione?</string>
     <string name="duress_pin_remove_confirm_body">La cassaforte civetta e le note che contiene vengono eliminate. La tua vera cassaforte non è toccata.</string>
     <string name="duress_pin_remove_confirm">Disattiva</string>
+    <string name="security_previews_title">Mostra anteprima delle note</string>
+    <string name="security_previews_desc">L\'elenco delle note mostra le prime righe di ogni nota. Disattivalo per mostrare solo titolo, etichetta e data; la ricerca trova comunque tutto il testo.</string>
 </resources>

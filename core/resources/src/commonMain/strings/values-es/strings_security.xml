@@ -124,4 +124,6 @@
     <string name="duress_pin_remove_confirm_title">¿Desactivar el PIN de coacción?</string>
     <string name="duress_pin_remove_confirm_body">La bóveda señuelo y las notas que contiene se eliminan. Tu bóveda real no se ve afectada.</string>
     <string name="duress_pin_remove_confirm">Desactivar</string>
+    <string name="security_previews_title">Mostrar vista previa de las notas</string>
+    <string name="security_previews_desc">La lista de notas muestra las primeras líneas de cada nota. Desactívalo para mostrar solo el título, la etiqueta y la fecha; la búsqueda sigue encontrando todo el texto.</string>
 </resources>

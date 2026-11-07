@@ -124,4 +124,6 @@
     <string name="duress_pin_remove_confirm_title">Desativar o PIN de coação?</string>
     <string name="duress_pin_remove_confirm_body">O cofre isca e as notas dentro dele são excluídos. Seu cofre real não é afetado.</string>
     <string name="duress_pin_remove_confirm">Desativar</string>
+    <string name="security_previews_title">Mostrar pré-visualização das notas</string>
+    <string name="security_previews_desc">A lista de notas mostra as primeiras linhas de cada nota. Desative para mostrar só o título, a etiqueta e a data; a pesquisa continua a encontrar o texto completo.</string>
 </resources>

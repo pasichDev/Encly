@@ -11,6 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -41,6 +45,8 @@ import com.pasich.encly.core.resources.about_write_developer_desc
 import com.pasich.encly.core.resources.licenses_row_desc
 import com.pasich.encly.core.resources.licenses_title
 import com.pasich.encly.core.resources.main_drawer_support
+import com.pasich.encly.core.resources.whats_new_row_desc
+import com.pasich.encly.core.resources.whats_new_title
 import com.pasich.encly.platform.AppInfo
 import com.pasich.encly.platform.ExternalLinks
 import com.pasich.encly.platform.LocalAppInfo
@@ -56,14 +62,21 @@ import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.EnclyWordmark
 import com.pasich.encly.presentation.designsystem.SectionOverline
+import com.pasich.encly.presentation.dialogs.WhatsNewSheet
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.utils.currentLanguageTag
+import com.pasich.encly.whatsnew.Changelogs
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val links = LocalExternalLinks.current
     val toaster = LocalToaster.current
+    // The notes of this build, in the app's language; a build with no changelog has no entry.
+    val languageTag = currentLanguageTag()
+    val whatsNew = remember(languageTag) { Changelogs.current(languageTag) }
+    var whatsNewOpen by remember { mutableStateOf(false) }
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -85,6 +98,16 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
             )
             DeveloperActionsSection(links, toaster, onSupport = { navController.navigate(NavRoutes.SupportRoute.name) })
             EnclyGroup {
+                if (whatsNew != null) {
+                    EnclyNavigationRow(
+                        title = stringResource(Res.string.whats_new_title),
+                        supporting = stringResource(Res.string.whats_new_row_desc),
+                        icon = EnclyIcons.Info,
+                        onClick = { whatsNewOpen = true },
+                        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+                    )
+                    EnclyGroupDivider()
+                }
                 EnclyNavigationRow(
                     title = stringResource(Res.string.licenses_title),
                     supporting = stringResource(Res.string.licenses_row_desc),
@@ -93,6 +116,7 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
                     modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
                 )
             }
+            if (whatsNewOpen && whatsNew != null) WhatsNewSheet(whatsNew, onDismiss = { whatsNewOpen = false })
         }
     }
 }

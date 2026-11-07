@@ -38,6 +38,16 @@ metro {
     optionalBindingBehavior.set(OptionalBindingBehavior.DISABLED)
 }
 
+// The store changelog of the version being built, bundled for "What's new" (see GenerateChangelogs in build-logic).
+val appVersionCode = versionCodeOf(rootProject.file("version.properties"))
+val generateChangelogs = tasks.register<GenerateChangelogs>("generateChangelogs") {
+    versionCode.set(appVersionCode)
+    changelogs.from(
+        fileTree(rootProject.file("fastlane/metadata/android")) { include("*/changelogs/$appVersionCode.txt") },
+    )
+    output.set(layout.buildDirectory.dir("generated/changelogs/kotlin"))
+}
+
 kotlin {
     // An application layer, not a library: its classes are public because the host app and the tests reach
     // them, not because they are a published API.
@@ -58,6 +68,9 @@ kotlin {
     }
 
     sourceSets {
+        commonMain {
+            kotlin.srcDir(generateChangelogs.flatMap { it.output })
+        }
         commonMain.dependencies {
             api(project(":core:common"))
             api(project(":core:crypto"))

@@ -679,4 +679,8 @@
     <string name="pdf_export_done">PDF salvato</string>
     <string name="print_done">Inviato alla stampante</string>
     <string name="note_open_elsewhere">Questa nota è aperta in modifica in un\'altra finestra. Qui è di sola lettura.</string>
+    <string name="whats_new_title">Novità</string>
+    <string name="whats_new_row_desc">Le novità di questa versione</string>
+    <string name="whats_new_dismiss">Ho capito</string>
+    <string name="trash_auto_delete_hint">Le note vengono eliminate definitivamente dopo 28 giorni nel cestino.</string>
 </resources>

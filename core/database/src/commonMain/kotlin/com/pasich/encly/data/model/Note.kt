@@ -36,6 +36,11 @@ public data class Note(
     var textSize: Int? = null,
     /** The note's own line spacing (a `NoteLineSpacing` ordinal), or null to follow the default. */
     var lineSpacing: Int? = null,
+    /**
+     * When the note went to the trash (epoch millis), or null while it is not in the trash. The trash empties a
+     * note 28 days after this; a trashed note without it (an imported one) gets the time of the next check.
+     */
+    var trashedAt: Long? = null,
 ) {
 
     /**

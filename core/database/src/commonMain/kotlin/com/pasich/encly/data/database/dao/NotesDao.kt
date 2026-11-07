@@ -74,6 +74,10 @@ public interface NotesDao {
     )
     public suspend fun updateArchived(noteId: Long, archived: Boolean): Int
 
+    /** Gives the trashed notes that have no trash time (imported ones) [at], so the trash can age them. */
+    @Query("UPDATE notes SET trashedAt = :at WHERE isTrash = 1 AND trashedAt IS NULL")
+    public suspend fun stampTrashedAt(at: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insertNote(note: Note): Long
 

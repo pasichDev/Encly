@@ -124,4 +124,6 @@
     <string name="duress_pin_remove_confirm_title">Désactiver le PIN de contrainte ?</string>
     <string name="duress_pin_remove_confirm_body">Le coffre leurre et les notes qu\'il contient sont supprimés. Votre vrai coffre n\'est pas affecté.</string>
     <string name="duress_pin_remove_confirm">Désactiver</string>
+    <string name="security_previews_title">Afficher l\'aperçu des notes</string>
+    <string name="security_previews_desc">La liste des notes affiche les premières lignes de chaque note. Désactivez-le pour n\'afficher que le titre, le libellé et la date ; la recherche trouve toujours le texte entier.</string>
 </resources>

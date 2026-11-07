@@ -119,4 +119,6 @@
     <string name="duress_pin_remove_confirm_title">Turn off the duress PIN?</string>
     <string name="duress_pin_remove_confirm_body">The decoy vault and the notes in it are deleted. Your real vault is not affected.</string>
     <string name="duress_pin_remove_confirm">Turn off</string>
+    <string name="security_previews_title">Show note previews</string>
+    <string name="security_previews_desc">The notes list shows the first lines of each note. Turn it off to show only the title, label and date; search still finds the full text.</string>
 </resources>

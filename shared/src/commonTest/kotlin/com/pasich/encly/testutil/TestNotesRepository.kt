@@ -102,6 +102,11 @@ internal class TestNotesRepository : NotesRepository {
         return Result.success(Unit)
     }
 
+    override suspend fun stampUntimedTrash(at: Long): Result<Unit> {
+        trashNotes.value = trashNotes.value.map { if (it.trashedAt == null) it.copy(trashedAt = at) else it }
+        return Result.success(Unit)
+    }
+
     private companion object {
         const val DEFAULT_INSERT_ID = 42L
     }

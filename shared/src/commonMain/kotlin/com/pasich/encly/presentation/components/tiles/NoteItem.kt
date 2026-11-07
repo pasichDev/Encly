@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.components.tiles
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -40,6 +41,13 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 /**
+ * Whether a note card shows a preview of the note's text. Off, a card is the title, tag and date (see
+ * [com.pasich.encly.domain.model.NotePreviews]). Provided once around the app; every list draws its cards with
+ * [NoteItem], so the one switch covers the home list and grid, the tabs' list, search, the archive and the trash.
+ */
+val LocalShowNotePreviews = staticCompositionLocalOf { true }
+
+/**
  * A note in a list: the design-system note card with its tag and date. Long-press opens the
  * note's actions. [dimmed] is the trash look; a checked note ([Note.isChecked]) is shown selected.
  * With [contextActions] a right click (or the Menu key) on the card opens a menu of the same actions;
@@ -61,7 +69,11 @@ fun NoteItem(
     onCommandClick: ((Note) -> Unit)? = null,
 ) {
     val note: Note = item?.note ?: itemNote ?: Note()
-    val preview = rememberNotePreview(item, note) ?: stringResource(Res.string.note_preview_unreadable)
+    val preview = if (LocalShowNotePreviews.current) {
+        rememberNotePreview(item, note) ?: stringResource(Res.string.note_preview_unreadable)
+    } else {
+        ""
+    }
     val hapticFeedback = LocalHapticFeedback.current
 
     val menu = noteMenuEntries(note, contextActions)

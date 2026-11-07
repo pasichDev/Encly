@@ -18,6 +18,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -110,6 +111,32 @@ class VaultMigrationTest {
     }
 
     @Test
+    fun aVersion6VaultStampsItsTrashedNotesWithTheTimeOfTheMigration() = runBlocking {
+        createVersion(
+            6,
+            SCHEMA_6,
+            "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                "VALUES (1, 'Trashed', '[]', 'd', 20, 10, NULL, 1, 'trashed-uid')",
+        )
+        val before = System.currentTimeMillis()
+
+        val db = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name))
+            .setDriver(AndroidSQLiteDriver())
+            .build()
+        try {
+            db.notesDao().insertNote(com.pasich.encly.data.model.Note(title = "Kept", isTrash = false))
+            val trashed = checkNotNull(db.notesDao().getNoteById(1))
+            val stamp = checkNotNull(trashed.trashedAt)
+            // Seconds precision: the stamp is not older than the start of the test by more than a second.
+            assertTrue("stamp $stamp is about now ($before)", stamp >= before - 1_000 && stamp <= before + 60_000)
+            assertEquals(DB_VERSION, db.userVersion())
+            assertNull(db.notesDao().getAllNotes().first().single().trashedAt)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test
     fun aVersion4VaultOpensAtTheCurrentVersionAndKeepsItsNotes() = runBlocking {
         createVersion(
             4,
@@ -155,6 +182,7 @@ class VaultMigrationTest {
     }
 
     private companion object {
+        const val SCHEMA_6 = "schemas/com.pasich.encly.data.database.AppDatabase/6.json"
         const val SCHEMA_5 = "schemas/com.pasich.encly.data.database.AppDatabase/5.json"
         const val SCHEMA_4 = "schemas/com.pasich.encly.data.database.AppDatabase/4.json"
     }

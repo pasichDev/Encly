@@ -59,6 +59,10 @@ Compose:
       - LocalFontStyle
       - LocalSimpleEdit
       - LocalFontStyles
+      # App-wide switches provided once by App: the note previews setting, and the locked vault that nothing may
+      # be drawn over (presentation/navigation/EnclyApp.kt).
+      - LocalShowNotePreviews
+      - LocalVaultLocked
       # What the note editor needs from its host, provided once per screen (editor/EditorServices.kt,
       # editor/theme/EditorTheme.kt) and the slash picker's labels built once for it
       # (editor/ui/blocks/SlashMenuPopup.kt).

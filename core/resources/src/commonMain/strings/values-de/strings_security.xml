@@ -119,4 +119,6 @@
     <string name="duress_pin_remove_confirm_title">Zwangs-PIN ausschalten?</string>
     <string name="duress_pin_remove_confirm_body">Der Tarn-Tresor und die Notizen darin werden gelöscht. Dein echter Tresor bleibt unverändert.</string>
     <string name="duress_pin_remove_confirm">Ausschalten</string>
+    <string name="security_previews_title">Notizvorschau anzeigen</string>
+    <string name="security_previews_desc">Die Notizliste zeigt die ersten Zeilen jeder Notiz. Ausgeschaltet erscheinen nur Titel, Tag und Datum; die Suche findet weiterhin den ganzen Text.</string>
 </resources>

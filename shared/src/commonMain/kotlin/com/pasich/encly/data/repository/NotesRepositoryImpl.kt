@@ -64,4 +64,10 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
     override suspend fun deleteNoteById(id: Long): Result<Unit> = storageWrite(TAG, "deleteNoteById") {
         dao().deleteNoteById(id).requireRows()
     }
+
+    override suspend fun stampUntimedTrash(at: Long): Result<Unit> = storageWrite(TAG, "stampUntimedTrash") {
+        // Any number of rows, none included: an empty trash is not a failed write.
+        dao().stampTrashedAt(at)
+        Unit
+    }
 }

@@ -207,6 +207,7 @@ private fun SecurityRows(
         }
     }
     PrivacySection(strictKeyboard = options.strictKeyboard, onStrictKeyboard = actions.onStrictKeyboard)
+    NotePreviewsSetting()
     ProtectionSection()
     EraseSection(busy = vaultBusy, onErase = { actions.onVaultAction(BackupAction.ERASE) })
 }

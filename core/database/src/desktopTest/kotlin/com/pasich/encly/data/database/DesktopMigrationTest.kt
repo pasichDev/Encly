@@ -191,6 +191,26 @@ class DesktopMigrationTest {
         assertEquals(DB_VERSION, userVersion(db))
     }
 
+    @Test
+    fun anEncryptedVersion6VaultStampsItsTrashedNotesWithTheTimeOfTheMigration() = runBlocking {
+        writeEncryptedVersion(
+            6,
+            "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                "VALUES (1, 'Trashed', '[]', 'd', 20, 10, NULL, 1, 'trashed-uid')",
+            "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                "VALUES (2, 'Kept', '[]', 'd', 20, 10, NULL, 0, 'kept-uid')",
+        )
+        val before = System.currentTimeMillis()
+
+        assertTrue(manager.unlockDatabase(KEY))
+        val db = manager.getDatabase(checkNotNull(manager.captureLease()))
+
+        val stamp = checkNotNull(db.notesDao().getNoteById(1)).trashedAt
+        assertTrue(stamp != null && stamp >= before - 1_000 && stamp <= before + 60_000, "stamp $stamp")
+        assertNull(db.notesDao().getNoteById(2)?.trashedAt)
+        assertEquals(DB_VERSION, userVersion(db))
+    }
+
     private companion object {
         const val UID_LENGTH = 32
         const val SCHEMA_DIR = "com.pasich.encly.data.database.AppDatabase"

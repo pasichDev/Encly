@@ -23,6 +23,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -88,7 +89,9 @@ class ArchiveViewModelTest {
         viewModel.onEvent(NoteListEvent.NoteToTrash(note))
         advanceUntilIdle()
 
-        assertEquals(note.copy(isTrash = true), repository.updatedNotes.single())
+        val trashed = repository.updatedNotes.single()
+        assertNotNull(trashed.trashedAt, "the time it went to the trash is remembered")
+        assertEquals(note.copy(isTrash = true, trashedAt = trashed.trashedAt), trashed)
     }
 
     @Test

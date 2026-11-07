@@ -41,11 +41,13 @@ import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
 import com.pasich.encly.presentation.viewmodel.MainListStateViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
+import com.pasich.encly.presentation.viewmodel.NotePreviewsViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.NoteTabsViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
+import com.pasich.encly.presentation.viewmodel.StartupViewModel
 import com.pasich.encly.presentation.viewmodel.StatisticViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
@@ -150,10 +152,10 @@ class AppGraphTest {
     }
 
     @Test
-    fun theViewModelsAreTheTwentyThreeOfTheApp() {
+    fun theViewModelsAreTheTwentyFiveOfTheApp() {
         assertEquals(PLAIN_VIEW_MODELS, graph.viewModelProviders.keys)
         assertEquals(ASSISTED_VIEW_MODELS, graph.assistedFactoryProviders.keys)
-        assertEquals(23, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
+        assertEquals(25, PLAIN_VIEW_MODELS.size + ASSISTED_VIEW_MODELS.size)
         assertTrue(graph.manualAssistedFactoryProviders.isEmpty())
     }
 
@@ -234,11 +236,13 @@ class AppGraphTest {
             MainListStateViewModel::class,
             MarkdownExportViewModel::class,
             NoteListViewModel::class,
+            NotePreviewsViewModel::class,
             NoteSearchViewModel::class,
             NoteTabsViewModel::class,
             OnboardingViewModel::class,
             SecuritySettingsViewModel::class,
             SettingsViewModel::class,
+            StartupViewModel::class,
             StatisticViewModel::class,
             TagListViewModel::class,
             ThemeViewModel::class,

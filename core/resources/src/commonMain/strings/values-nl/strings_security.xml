@@ -119,4 +119,6 @@
     <string name="duress_pin_remove_confirm_title">De dwangpincode uitschakelen?</string>
     <string name="duress_pin_remove_confirm_body">De schijnkluis en de notities daarin worden verwijderd. Je echte kluis blijft ongemoeid.</string>
     <string name="duress_pin_remove_confirm">Uitschakelen</string>
+    <string name="security_previews_title">Notitievoorbeelden tonen</string>
+    <string name="security_previews_desc">De notitielijst toont de eerste regels van elke notitie. Zet dit uit om alleen titel, label en datum te tonen; zoeken vindt nog steeds de volledige tekst.</string>
 </resources>

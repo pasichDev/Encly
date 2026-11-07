@@ -673,4 +673,8 @@
     <string name="pdf_export_done">PDF gespeichert</string>
     <string name="print_done">An den Drucker gesendet</string>
     <string name="note_open_elsewhere">Diese Notiz ist in einem anderen Fenster zum Bearbeiten geöffnet. Hier ist sie schreibgeschützt.</string>
+    <string name="whats_new_title">Neuigkeiten</string>
+    <string name="whats_new_row_desc">Die Änderungen dieser Version</string>
+    <string name="whats_new_dismiss">Verstanden</string>
+    <string name="trash_auto_delete_hint">Notizen werden nach 28 Tagen im Papierkorb endgültig gelöscht.</string>
 </resources>

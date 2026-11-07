@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -28,20 +29,27 @@ import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.platform.HostNavigationRequests
+import com.pasich.encly.presentation.components.tiles.LocalShowNotePreviews
 import com.pasich.encly.presentation.designsystem.AppCommand
 import com.pasich.encly.presentation.designsystem.EnclyShortcutHost
 import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.effects.UnlockRevealOverlay
 import com.pasich.encly.presentation.effects.UnlockRevealState
+import com.pasich.encly.presentation.viewmodel.NotePreviewsViewModel
+import com.pasich.encly.presentation.viewmodel.StartupViewModel
 import com.pasich.encly.ui.theme.AppTheme
 import com.pasich.encly.ui.theme.DensityProfile
 import com.pasich.encly.ui.theme.LocalDensityProfile
 import com.pasich.encly.ui.theme.LocalPointerFirst
 import com.pasich.encly.ui.theme.LocalWidthClass
 import com.pasich.encly.ui.theme.WidthClass
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+
+/** True while the vault is locked, or a re-lock is still being covered: nothing may be drawn over the lock screen. */
+val LocalVaultLocked = staticCompositionLocalOf { false }
 
 /**
  * The whole app UI: the theme, the navigation host and the guards that keep protected screens away from
@@ -65,6 +73,10 @@ fun EnclyApp(
 ) {
     val destination = startStatus?.let(::startRoute) ?: return
     val navController = rememberNavController()
+    // A start with no vault yet is a fresh install: it has no earlier version whose news it missed.
+    val startup = metroViewModel<StartupViewModel>()
+    val freshInstall = startStatus == InitialStatus.ONBOARDING || startStatus == InitialStatus.SETUP_AUTH
+    LaunchedEffect(startup) { startup.onAppStart(freshInstall) }
 
     // Auto re-lock. Collected without a lifecycle gate so the value is already true in
     // the first frame after returning from the background. That frame still composes
@@ -285,11 +297,16 @@ private fun AppContent(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
         ) {
+            val showPreviews by metroViewModel<NotePreviewsViewModel>().show.collectAsState()
             val unlockReveal = remember { UnlockRevealState() }
             // A re-lock during the reveal ends it: no deferred navigation into the vault,
             // no reveal left covering the lock screen.
             LaunchedEffect(locked) { if (locked) unlockReveal.cancel() }
-            CompositionLocalProvider(LocalUnlockReveal provides unlockReveal) {
+            CompositionLocalProvider(
+                LocalUnlockReveal provides unlockReveal,
+                LocalShowNotePreviews provides showPreviews,
+                LocalVaultLocked provides (locked || shielded),
+            ) {
                 // The whole app layer moves with the unlock reveal: it slides in from the
                 // right and pushes the logo colour out (see UnlockRevealOverlay).
                 Box(

@@ -37,4 +37,7 @@ interface NotesRepository {
     suspend fun insertNote(note: Note): Result<Long>
     suspend fun updateNote(note: Note): Result<Unit>
     suspend fun deleteNoteById(id: Long): Result<Unit>
+
+    /** Gives the trashed notes that have no trash time (imported ones) [at], so the trash can age them. */
+    suspend fun stampUntimedTrash(at: Long): Result<Unit>
 }

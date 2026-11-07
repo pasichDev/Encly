@@ -36,6 +36,9 @@ public object VaultSchema {
     /** Database version that added a note's own text size and line spacing. */
     private const val VERSION_WITH_NOTE_TEXT_SETTINGS = 6
 
+    /** Database version that added the time a note went to the trash. */
+    private const val VERSION_WITH_TRASH_TIME = 7
+
     private fun triggers(table: String) = listOf(
         "CREATE TRIGGER IF NOT EXISTS `${table}_uid_on_insert` AFTER INSERT ON `$table` " +
             "WHEN NEW.uid = '' BEGIN " +
@@ -142,14 +145,31 @@ public object VaultSchema {
     }
 
     /**
+     * 6 -> 7: add `trashedAt`, when a note went to the trash. Nullable, so every note outside the trash
+     * stays as it was. A note already in the trash is stamped with the time of the migration: its real
+     * trash time was never kept, and the trash must not empty a note the first time it is checked.
+     */
+    public val MIGRATION_6_7: Migration = object : Migration(
+        VERSION_WITH_NOTE_TEXT_SETTINGS,
+        VERSION_WITH_TRASH_TIME,
+    ) {
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `notes` ADD COLUMN `trashedAt` INTEGER")
+            connection.execSQL(
+                "UPDATE `notes` SET `trashedAt` = CAST(strftime('%s', 'now') AS INTEGER) * 1000 WHERE `isTrash` = 1",
+            )
+        }
+    }
+
+    /**
      * Adds every migration and the trigger callback to a vault database builder, and nothing
      * destructive: Room's default (`requireMigration`) makes a missing migration fail loudly
      * instead of recreating the tables, which would erase every note. List each new migration
      * here explicitly.
      */
-    public fun <T : RoomDatabase> install(builder: RoomDatabase.Builder<T>): RoomDatabase.Builder<T> =
-        builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-            .addCallback(CALLBACK)
+    public fun <T : RoomDatabase> install(builder: RoomDatabase.Builder<T>): RoomDatabase.Builder<T> = builder
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+        .addCallback(CALLBACK)
 
     /** Installs the triggers on a freshly created database. */
     public val CALLBACK: RoomDatabase.Callback = object : RoomDatabase.Callback() {

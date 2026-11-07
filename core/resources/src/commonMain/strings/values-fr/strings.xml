@@ -679,4 +679,8 @@
     <string name="pdf_export_done">PDF enregistré</string>
     <string name="print_done">Envoyé à l\'imprimante</string>
     <string name="note_open_elsewhere">Cette note est ouverte en modification dans une autre fenêtre. Ici, elle est en lecture seule.</string>
+    <string name="whats_new_title">Nouveautés</string>
+    <string name="whats_new_row_desc">Les changements de cette version</string>
+    <string name="whats_new_dismiss">Compris</string>
+    <string name="trash_auto_delete_hint">Les notes sont supprimées définitivement après 28 jours dans la corbeille.</string>
 </resources>

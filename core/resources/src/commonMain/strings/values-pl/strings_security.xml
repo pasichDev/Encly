@@ -129,4 +129,6 @@
     <string name="duress_pin_remove_confirm_title">Wyłączyć PIN przymusowy?</string>
     <string name="duress_pin_remove_confirm_body">Sejf-przynęta i notatki w nim zostaną usunięte. Twój prawdziwy sejf pozostanie bez zmian.</string>
     <string name="duress_pin_remove_confirm">Wyłącz</string>
+    <string name="security_previews_title">Pokazuj podgląd notatek</string>
+    <string name="security_previews_desc">Lista notatek pokazuje pierwsze wiersze każdej notatki. Wyłącz, aby widzieć tylko tytuł, etykietę i datę; wyszukiwanie nadal przeszukuje cały tekst.</string>
 </resources>

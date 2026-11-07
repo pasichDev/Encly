@@ -679,4 +679,8 @@
     <string name="pdf_export_done">PDF guardado</string>
     <string name="print_done">Enviado para a impressora</string>
     <string name="note_open_elsewhere">Esta nota está aberta para edição noutra janela. Aqui é só de leitura.</string>
+    <string name="whats_new_title">Novidades</string>
+    <string name="whats_new_row_desc">As alterações desta versão</string>
+    <string name="whats_new_dismiss">Entendi</string>
+    <string name="trash_auto_delete_hint">As notas são eliminadas definitivamente após 28 dias na lixeira.</string>
 </resources>
