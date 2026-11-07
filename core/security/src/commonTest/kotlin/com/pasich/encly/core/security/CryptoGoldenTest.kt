@@ -5,6 +5,8 @@ import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.backup.BackupFormat
 import com.pasich.encly.core.backup.BackupKeys
+import com.pasich.encly.core.backup.BackupPayload
+import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
 import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.testutil.FakeLockoutClock
@@ -294,6 +296,22 @@ class CryptoGoldenTest {
     }
 
     // --- Backup file ----------------------------------------------------------------------
+
+    @Test
+    fun theGoldenBackupFileWithSettingsOpensAndReadsItsSettingsSection() {
+        val plaintext = BackupCipher.open(
+            GoldenVectors.backupFileWithSettings.copyOf(),
+            BackupSecret.RecoveryPhrase(PHRASE.toCharArray()),
+        )
+
+        val decoded = BackupPayloadCodec.decode(plaintext)
+
+        assertEquals(BackupPayload.SCHEMA_VERSION, decoded.schema)
+        assertEquals(
+            mapOf("theme_type" to "DARK", "font_size" to "18", "auto_lock_delay" to "MINUTE_1"),
+            decoded.settings,
+        )
+    }
 
     @Test
     fun theGoldenBackupFileOpensWithThePhraseAndWithTheRoot() {

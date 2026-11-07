@@ -5,6 +5,7 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.testutil.InMemoryKeyValueStore
@@ -48,7 +49,7 @@ class AuthSetupViewModelTest {
             true
         }
         store = InMemoryVaultDataStore()
-        pending = PendingRestore(BackupManager(security, store, InMemoryKeyValueStore()))
+        pending = PendingRestore(BackupManager(security, store, InMemoryKeyValueStore(), NoBackupPreferences))
         val source = InMemoryVaultDataStore().apply { insertNote(Note(title = "Plan", value = "[]", uid = "n-plan")) }
         pending.stage(BackupMapper.toPayload(source.snapshot(), exportedAt = 1))
 

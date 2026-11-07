@@ -1,6 +1,7 @@
 package com.pasich.encly.core.backup
 
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -29,7 +30,12 @@ import kotlinx.serialization.json.jsonObject
  * - 4: each note carries `isPinned`, `isArchived`, a `color` key and its own `textSize` and
  *   `lineSpacing` (null: the default). An app that reads only schema 3 reports such a file as
  *   [BackupError.UNSUPPORTED_VERSION], it does not fail on the keys.
+ * - 5: the file carries the user's preferences as `settings` (see [BackupSettings]). A schema-4
+ *   file has none and restores exactly as before. An app that reads only schema 4 reports a
+ *   schema-5 file as [BackupError.UNSUPPORTED_VERSION] ("update the app"): its strict reader
+ *   cannot skip a section, and it never half-restores.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 public data class BackupPayload(
     val schema: Int = SCHEMA_VERSION,
@@ -37,9 +43,16 @@ public data class BackupPayload(
     val tags: List<BackupTag>,
     val notes: List<BackupNote>,
     val tasks: List<BackupTask>,
+    /**
+     * Preferences by storage key, values as strings (see [BackupSettings]). Not part of the
+     * vault, so it is never validated into a failure: a restore keeps what it understands.
+     * Empty (and left out of the file) when there are none.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val settings: Map<String, String> = emptyMap(),
 ) {
     public companion object {
-        public const val SCHEMA_VERSION: Int = 4
+        public const val SCHEMA_VERSION: Int = 5
 
         /** Tasks carried a `reminderDate`, dropped on import. */
         public const val SCHEMA_V1: Int = 1
@@ -49,6 +62,9 @@ public data class BackupPayload(
 
         /** Notes had no pin, archive or colour; they are imported unpinned, not archived, uncoloured. */
         public const val SCHEMA_V3: Int = 3
+
+        /** The file carried no preferences; it is imported with none. */
+        public const val SCHEMA_V4: Int = 4
     }
 }
 
@@ -105,6 +121,7 @@ public object BackupPayloadCodec {
     private const val TASKS_KEY = "tasks"
     private const val SUBTASKS_KEY = "subtasks"
     private const val NOTES_KEY = "notes"
+    private const val SETTINGS_KEY = "settings"
     private val NOTE_ORGANIZING_KEYS = listOf("isPinned", "isArchived", "color", "textSize", "lineSpacing")
     private val PRIORITIES = 0..2
     private const val MIN_TEXT_SIZE = 10
@@ -138,11 +155,19 @@ public object BackupPayloadCodec {
         val schema = invalidPayloadOn { decodeStream(schemaJson, SchemaProbe.serializer(), plaintext).schema }
         if (schema > BackupPayload.SCHEMA_VERSION) throw BackupException(BackupError.UNSUPPORTED_VERSION)
         val payload = invalidPayloadOn {
-            if (schema in BackupPayload.SCHEMA_V1..BackupPayload.SCHEMA_V3) {
-                val tree = decodeStream(json, JsonElement.serializer(), plaintext)
-                json.decodeFromJsonElement(BackupPayload.serializer(), upgrade(tree.jsonObject, schema))
-            } else {
-                decodeStream(json, BackupPayload.serializer(), plaintext)
+            when (schema) {
+                in BackupPayload.SCHEMA_V1..BackupPayload.SCHEMA_V3 -> {
+                    val tree = decodeStream(json, JsonElement.serializer(), plaintext)
+                    json.decodeFromJsonElement(BackupPayload.serializer(), upgrade(tree.jsonObject, schema))
+                }
+
+                // The shape of the current schema without the section: decoded strictly in one pass (the
+                // commonest file, up to the size limit), not through a JSON tree.
+                BackupPayload.SCHEMA_V4 -> decodeStream(json, BackupPayload.serializer(), plaintext).also {
+                    require(it.settings.isEmpty()) { "Unexpected settings in schema $schema" }
+                }.copy(schema = BackupPayload.SCHEMA_VERSION)
+
+                else -> decodeStream(json, BackupPayload.serializer(), plaintext)
             }
         }
         validate(payload)
@@ -150,11 +175,12 @@ public object BackupPayloadCodec {
     }
 
     /**
-     * Schema 1, 2 or 3 -> current. 1 -> 2 drops each task's `reminderDate`; 2 -> 3 gives each task
-     * an empty `subtasks` list; 3 -> 4 leaves notes to the defaults of the new fields (unpinned,
-     * not archived, no colour). Everything else is unchanged. A key an older schema did not have
-     * (`subtasks` in 1 or 2, a note's pin, archive or colour in 1 to 3) fails like any other
-     * unknown key.
+     * Schema 1 to 3 -> current (schema 4 needs no tree: see [decode]). 1 -> 2 drops each task's
+     * `reminderDate`; 2 -> 3 gives each task an empty `subtasks` list; 3 -> 4 leaves notes to the
+     * defaults of the new fields (unpinned, not archived, no colour); 4 -> 5 leaves `settings`
+     * empty. Everything else is unchanged. A
+     * key an older schema did not have (`subtasks` in 1 or 2, a note's pin, archive or colour in
+     * 1 to 3, `settings` in 1 to 4) fails like any other unknown key.
      */
     private fun upgrade(old: JsonObject, schema: Int): JsonObject {
         val tasks = old[TASKS_KEY]?.jsonArray?.map { element ->
@@ -169,6 +195,7 @@ public object BackupPayloadCodec {
         old[NOTES_KEY]?.jsonArray?.forEach { note ->
             require(NOTE_ORGANIZING_KEYS.none { it in note.jsonObject }) { "Unexpected note field in schema $schema" }
         }
+        require(SETTINGS_KEY !in old) { "Unexpected settings in schema $schema" }
         return JsonObject(
             old + ("schema" to JsonPrimitive(BackupPayload.SCHEMA_VERSION)) +
                 (tasks?.let { mapOf(TASKS_KEY to JsonArray(it)) }.orEmpty()),

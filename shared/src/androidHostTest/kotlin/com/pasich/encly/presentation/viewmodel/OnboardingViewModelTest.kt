@@ -14,6 +14,7 @@ import com.pasich.encly.core.security.bip39.Bip39
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.usecase.OnboardingUseCase
@@ -81,7 +82,7 @@ class OnboardingViewModelTest {
 
     private fun viewModel(biometric: Boolean = false): OnboardingViewModel {
         `when`(security.biometricAvailable()).thenReturn(biometric)
-        val backupManager = BackupManager(security, store, InMemoryKeyValueStore())
+        val backupManager = BackupManager(security, store, InMemoryKeyValueStore(), NoBackupPreferences)
         pending = PendingRestore(backupManager)
         return OnboardingViewModel(OnboardingUseCase(security, backupManager, pending), documents)
     }

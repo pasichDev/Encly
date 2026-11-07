@@ -11,6 +11,7 @@ import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.testutil.FakeDocuments
 import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
@@ -47,7 +48,12 @@ class BackupViewModelTest {
         security = mock(SecurityManager::class.java)
         sessionLock = SessionLockManager(security, screenshots = screenshots)
         viewModel = BackupViewModel(
-            backupManager = BackupManager(security, InMemoryVaultDataStore(), InMemoryKeyValueStore()),
+            backupManager = BackupManager(
+                security,
+                InMemoryVaultDataStore(),
+                InMemoryKeyValueStore(),
+                NoBackupPreferences,
+            ),
             phraseSetup = BackupPhraseSetup(security),
             securityManager = security,
             sessionLockManager = sessionLock,

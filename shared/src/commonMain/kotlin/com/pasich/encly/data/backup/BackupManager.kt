@@ -11,6 +11,7 @@ import com.pasich.encly.core.backup.BackupKeys
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
+import com.pasich.encly.core.backup.BackupSettings
 import com.pasich.encly.core.common.currentTimeMillis
 import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.SecurityManager
@@ -31,6 +32,7 @@ class BackupManager(
     private val securityManager: SecurityManager,
     private val store: VaultDataStore,
     private val secureStoragePrefs: KeyValueStore,
+    private val preferences: BackupPreferences,
 ) {
     internal var clock: () -> Long = ::currentTimeMillis
 
@@ -38,14 +40,17 @@ class BackupManager(
     internal var maxFileBytes: Int = BackupFormat.MAX_FILE_BYTES
 
     /**
-     * Seals every note (trash included), tag and task of the unlocked vault. Throws
+     * Seals every note (trash included), tag and task of the unlocked vault, with the user's
+     * preferences ([BackupSettings.included] only; never a PIN, lock or install state). Throws
      * [BackupError.TOO_LARGE] instead of producing a file larger than import accepts, which
      * would look like a good backup but could never be restored.
      */
     suspend fun createBackup(): ByteArray {
         realVaultOnly()
         val boundStore = guarded { store.bindToCurrentSession() }
-        val payload = guarded { BackupMapper.toPayload(boundStore.snapshot(), clock()) }
+        val payload = guarded {
+            BackupMapper.toPayload(boundStore.snapshot(), clock(), preferences.snapshotOrEmpty())
+        }
         val root = securityManager.copyBackupRootKey()
             ?: throw BackupException(BackupError.VAULT_UNAVAILABLE)
         return try {
@@ -91,10 +96,17 @@ class BackupManager(
     /**
      * Imports into the unlocked vault in one transaction; nothing is written on failure. Refused
      * in the decoy vault.
+     *
+     * Only [ImportMode.REPLACE] also restores the backup's preferences ("make this install like
+     * the backup": a fresh install, or an explicit replace). A merge keeps the preferences of
+     * the install it lands in. They are applied after the notes were imported, so a failed import
+     * changes none; a preference that cannot be applied is skipped and never fails the restore.
      */
     suspend fun import(payload: BackupPayload, mode: ImportMode, tagMatch: TagMatch = TagMatch.UID): ImportSummary {
         realVaultOnly()
-        return guarded { BackupImporter.import(payload, mode, store.bindToCurrentSession(), tagMatch) }
+        val summary = guarded { BackupImporter.import(payload, mode, store.bindToCurrentSession(), tagMatch) }
+        if (mode == ImportMode.REPLACE && payload.settings.isNotEmpty()) preferences.applyQuietly(payload.settings)
+        return summary
     }
 
     /**

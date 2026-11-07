@@ -81,6 +81,18 @@ internal object GoldenVectors {
             "a7ef6bcf8bba1903b2e9f3",
     )
 
+    /**
+     * A backup file whose payload is schema 5 with a `settings` section (same phrase, salt and nonce as
+     * [backupFile]). Frozen: a restore must read it as long as the format exists.
+     */
+    val backupFileWithSettings = hex(
+        "454e434c5942414b00010120101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f0c606162" +
+            "636465666768696a6b000000a6675adbb40af6a7a9f4b28b6e27cb8e51cf5f932736891bb9701e7b766ef6ce32983523" +
+            "9c07a5f02d51ad3738211c48a28be6f4d625f832bf44a2e917fdf9713d73c3056d81a051de1c572afc950ca4847eda51" +
+            "f293d757419f10beef717791cd86c81df475b3e85deb46fca156096a23ed9fbe19ca5b9aaa0d731f1dd24727bfe3e5c7" +
+            "2500f5e3c57a0ab47a50a8053d9deac9286e1d5a66856a81c0d32a69bce19eff4c253c",
+    )
+
     val pinSw = hex("4f5705502cd1802172fbf3eecd6a1b14fb647976595714bce7c922b66c30a4e7")
 
     val pinHw = hex("8cd97cc6eb415406f66958ab3716a0716f1095f80f2ae50b1c3cf75c5c0eb82c")

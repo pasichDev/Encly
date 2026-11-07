@@ -32,6 +32,9 @@ class BackupPayloadCodecTest {
         BackupSubtask(uid = "s2", title = "Bread", isCompleted = false, position = 1),
     )
     private val withSubtasks = payload.copy(tasks = payload.tasks.map { it.copy(subtasks = subtasks) })
+    private val withSettings = withSubtasks.copy(
+        settings = linkedMapOf("theme_type" to "DARK", "font_size" to "18", "is_grid_note_list" to "true"),
+    )
 
     @Test
     fun encodeDecodeRoundTrips() {
@@ -185,20 +188,65 @@ class BackupPayloadCodecTest {
     /**
      * The key names of a backup file are its format: backups written by the release build must
      * be readable by any other build, so none of them may follow a (renamable) property name.
+     * This is the schema-4 vector, kept byte for byte: a payload without preferences encodes
+     * exactly as the schema-4 app wrote it, apart from the schema number.
      */
     @Test
     fun encodedKeyNamesArePinned() {
-        val expected = """{"schema":4,"exportedAt":1700000000000,""" +
-            """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
-            """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
-            """"dateCreate":1,"tagUid":"t1","isTrash":true,"isPinned":false,"isArchived":false,""" +
-            """"color":"none","textSize":null,"lineSpacing":null}],""" +
-            """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
-            """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5,""" +
-            """"subtasks":[{"uid":"s1","title":"Milk","isCompleted":true,"position":0},""" +
-            """{"uid":"s2","title":"Bread","isCompleted":false,"position":1}]}]}"""
+        assertEquals(schema4Json(), BackupPayloadCodec.encode(withSubtasks.copy(schema = 4)).decodeToString())
+    }
 
-        assertEquals(expected, BackupPayloadCodec.encode(withSubtasks).decodeToString())
+    /** The schema-5 vector: the same file plus the `settings` section, last, in the order given. */
+    @Test
+    fun encodedSettingsSectionIsPinned() {
+        val expected = schema4Json().replaceFirst("\"schema\":4", "\"schema\":5").removeSuffix("}") +
+            ""","settings":{"theme_type":"DARK","font_size":"18","is_grid_note_list":"true"}}"""
+
+        assertEquals(expected, BackupPayloadCodec.encode(withSettings).decodeToString())
+    }
+
+    @Test
+    fun aPayloadWithoutSettingsLeavesTheSectionOut() {
+        assertEquals(false, BackupPayloadCodec.encode(payload).decodeToString().contains("settings"))
+    }
+
+    @Test
+    fun settingsRoundTrip() {
+        assertEquals(withSettings, BackupPayloadCodec.decode(BackupPayloadCodec.encode(withSettings)))
+    }
+
+    @Test
+    fun schema4BackupDecodesWithNoSettings() {
+        val decoded = BackupPayloadCodec.decode(schema4Json().encodeToByteArray())
+
+        assertEquals(withSubtasks.copy(schema = BackupPayload.SCHEMA_VERSION), decoded)
+        assertEquals(emptyMap(), decoded.settings)
+    }
+
+    @Test
+    fun schema4BackupWithSettingsIsInvalid() {
+        // Schema 4 never had the section: such a file is malformed, not a newer one.
+        val json = schema4Json().removeSuffix("}") + ""","settings":{"theme_type":"DARK"}}"""
+
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(json.encodeToByteArray()) }
+    }
+
+    @Test
+    fun aSchemaAboveTheKnownOneIsUnsupportedEvenWithASettingsSection() {
+        // How a reader treats a file newer than itself: the schema number is read first, before any field,
+        // so a section it does not know is "update the app", never "damaged". An app that reads 4 does
+        // exactly this to a schema-5 file; this build is shown the same with 6.
+        val future = withSettings.copy(schema = BackupPayload.SCHEMA_VERSION + 1)
+
+        assertError(BackupError.UNSUPPORTED_VERSION) { BackupPayloadCodec.decode(BackupPayloadCodec.encode(future)) }
+    }
+
+    @Test
+    fun settingsAreNeverValidatedIntoAFailure() {
+        // Unknown keys and bad values are the restore's to ignore, key by key; the file stays valid.
+        val odd = payload.copy(settings = mapOf("from_the_future" to "x", "theme_type" to "NEON"))
+
+        assertEquals(odd, BackupPayloadCodec.decode(BackupPayloadCodec.encode(odd)))
     }
 
     /** [payload] as the schema-1 app wrote it: every task carried a `reminderDate`. */
@@ -217,6 +265,17 @@ class BackupPayloadCodecTest {
         """"dateCreate":1,"tagUid":"t1","isTrash":true}],""" +
         """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
         """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5}]}"""
+
+    /** [withSubtasks] as the schema-4 app wrote it: the final shape before preferences. */
+    private fun schema4Json(): String = """{"schema":4,"exportedAt":1700000000000,""" +
+        """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
+        """"notes":[{"uid":"n1","title":"Title","value":"[]","description":"desc","date":2,""" +
+        """"dateCreate":1,"tagUid":"t1","isTrash":true,"isPinned":false,"isArchived":false,""" +
+        """"color":"none","textSize":null,"lineSpacing":null}],""" +
+        """"tasks":[{"uid":"k1","title":"Task","description":null,"isCompleted":false,""" +
+        """"createdDate":3,"completedDate":null,"priority":2,"categoryTagUid":"t1","position":5,""" +
+        """"subtasks":[{"uid":"s1","title":"Milk","isCompleted":true,"position":0},""" +
+        """{"uid":"s2","title":"Bread","isCompleted":false,"position":1}]}]}"""
 
     /** [withSubtasks] as the schema-3 app wrote it: notes had no pin, archive or colour. */
     private fun schema3Json(): String = """{"schema":3,"exportedAt":1700000000000,""" +

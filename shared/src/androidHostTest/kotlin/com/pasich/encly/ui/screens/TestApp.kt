@@ -23,6 +23,7 @@ import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.BackupPhraseSetup
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.export.MarkdownDocuments
 import com.pasich.encly.data.model.Note
@@ -94,7 +95,7 @@ internal class TestApp {
     val documents: BackupDocuments = mock(BackupDocuments::class.java)
     val markdownDocuments: MarkdownDocuments = mock(MarkdownDocuments::class.java)
     val store = InMemoryVaultDataStore()
-    val backupManager = BackupManager(security, store, InMemoryKeyValueStore())
+    val backupManager = BackupManager(security, store, InMemoryKeyValueStore(), NoBackupPreferences)
     val screenshots = ScreenshotAllowance()
     val sessionLock = SessionLockManager(security, screenshots = screenshots)
     val selectedTag = SelectedTagHolder()

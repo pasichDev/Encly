@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupManager
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.handoff.HandoffFixtures.handoff
 import com.pasich.encly.data.handoff.HandoffFixtures.handoffZip
 import com.pasich.encly.data.handoff.HandoffFixtures.note
@@ -75,7 +76,7 @@ class ImportFromMyNotesViewModelTest {
         cache = cache,
         securityManager = security,
         sessionLockManager = sessionLock,
-        backupManager = BackupManager(security, store, InMemoryKeyValueStore()),
+        backupManager = BackupManager(security, store, InMemoryKeyValueStore(), NoBackupPreferences),
         ioDispatcher = dispatcher,
         savedStateHandle = savedState,
     )

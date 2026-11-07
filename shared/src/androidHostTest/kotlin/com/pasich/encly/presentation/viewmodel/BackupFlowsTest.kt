@@ -17,6 +17,7 @@ import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
 import com.pasich.encly.data.backup.ImportSummary
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
@@ -430,7 +431,7 @@ class BackupFlowsTest {
 
     private fun viewModelFor(store: InMemoryVaultDataStore, prefs: InMemoryKeyValueStore = InMemoryKeyValueStore()) =
         BackupViewModel(
-            backupManager = BackupManager(security, store, prefs),
+            backupManager = BackupManager(security, store, prefs, NoBackupPreferences),
             phraseSetup = BackupPhraseSetup(security),
             securityManager = security,
             sessionLockManager = SessionLockManager(security),

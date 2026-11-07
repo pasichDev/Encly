@@ -6,6 +6,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -244,7 +246,14 @@ class AndroidSensitiveClipboard(@param:ApplicationContext private val context: C
 class AndroidAppLocaleController : AppLocaleController {
     override fun current(): AppLanguage = AppLocales.current()
 
-    override fun apply(language: AppLanguage) = AppLocales.apply(language)
+    /** Applied on the main thread: a restore from a backup calls this from its I/O thread. */
+    override fun apply(language: AppLanguage) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            AppLocales.apply(language)
+        } else {
+            Handler(Looper.getMainLooper()).post { AppLocales.apply(language) }
+        }
+    }
 }
 
 /** This build's facts, from [BuildConfig] and the launcher label. */

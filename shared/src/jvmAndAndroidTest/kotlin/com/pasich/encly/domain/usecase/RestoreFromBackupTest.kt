@@ -10,6 +10,7 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.bip39.Bip39
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupMapper
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Tag
@@ -50,7 +51,7 @@ class RestoreFromBackupTest {
             true
         }
         store = InMemoryVaultDataStore()
-        val backupManager = BackupManager(security, store, InMemoryKeyValueStore())
+        val backupManager = BackupManager(security, store, InMemoryKeyValueStore(), NoBackupPreferences)
         pending = PendingRestore(backupManager)
         useCase = OnboardingUseCase(security, backupManager, pending)
     }

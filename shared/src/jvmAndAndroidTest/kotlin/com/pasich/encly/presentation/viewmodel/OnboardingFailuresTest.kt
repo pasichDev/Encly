@@ -10,6 +10,7 @@ import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
+import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.domain.usecase.OnboardingUseCase
 import com.pasich.encly.testutil.InMemoryKeyValueStore
@@ -198,7 +199,8 @@ class OnboardingFailuresTest {
 
     private fun viewModel(biometric: Boolean = false): OnboardingViewModel {
         `when`(security.biometricAvailable()).thenReturn(biometric)
-        val backupManager = BackupManager(security, InMemoryVaultDataStore(), InMemoryKeyValueStore())
+        val backupManager =
+            BackupManager(security, InMemoryVaultDataStore(), InMemoryKeyValueStore(), NoBackupPreferences)
         return OnboardingViewModel(
             OnboardingUseCase(security, backupManager, PendingRestore(backupManager)),
             mock(BackupDocuments::class.java),

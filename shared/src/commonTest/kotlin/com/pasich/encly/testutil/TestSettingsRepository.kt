@@ -13,7 +13,8 @@ import com.pasich.encly.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** Settings in memory: every setter writes the flow the app observes. */
-internal class TestSettingsRepository(override var latestThemeSettings: ThemeSettings? = null) : SettingsRepository {
+internal open class TestSettingsRepository(override var latestThemeSettings: ThemeSettings? = null) :
+    SettingsRepository {
     override val themeSettingsFlow = MutableStateFlow(latestThemeSettings ?: ThemeSettings())
     override val isGridNoteList = MutableStateFlow(false)
     override val getSortNotes = MutableStateFlow(NoteSortOption.UPDATED_DESC)

@@ -46,7 +46,11 @@ data class ImportSummary(
 
 /** Vault rows <-> [BackupPayload]. Links travel as uids, never as local autoincrement ids. */
 object BackupMapper {
-    fun toPayload(snapshot: VaultSnapshot, exportedAt: Long): BackupPayload {
+    fun toPayload(
+        snapshot: VaultSnapshot,
+        exportedAt: Long,
+        settings: Map<String, String> = emptyMap(),
+    ): BackupPayload {
         val tagUidById = snapshot.tags.associate { it.id to it.uid }
         val subtasksByTask = snapshot.subtasks.groupBy { it.taskId }
         return BackupPayload(
@@ -85,6 +89,7 @@ object BackupMapper {
                         .map { BackupSubtask(it.uid, it.title, it.isCompleted, it.position) },
                 )
             },
+            settings = settings,
         ).also(BackupPayloadCodec::validate)
     }
 }

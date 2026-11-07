@@ -311,8 +311,22 @@ description, completion, created/completed dates, priority, order). Records carr
 stable random `uid`; links between them (note → tag, task → tag) are stored as uids, never as
 per-device database ids.
 
-A backup **never** contains the DEK, the PIN or biometric slots, lockout state, the recovery
-seed, the backup key, or app settings.
+It also carries the user's display and behaviour preferences (theme, palette, fonts, text size
+and spacing, list layout, sort order, swipe actions, language, auto-lock delay, strict keyboard
+privacy, note previews). They come from an explicit allow-list (`BackupSettings` in
+`:core:security`); a test fails for any preference key the app uses that is on neither the
+allow-list nor the documented exclusion list. A restore reads each value separately: an unknown
+key or a value outside the allowed set is ignored, and preferences are applied only after the
+notes were imported, and only by "replace all" and the first-run restore (a merge keeps the
+preferences of the install it lands in).
+
+A backup **never** contains the DEK, the PIN or biometric slots, lockout state, onboarding or
+vault-commit flags, the screenshot allowance, the recovery seed, the backup key, or any other
+state of the install or the vault.
+
+Payload schema 5 added the preferences section. A schema-4 file restores exactly as before. An app
+that reads only schema 4 reports a schema-5 file as "unsupported version, update the app": its
+strict reader cannot skip a section, and it never half-restores or reports the file as damaged.
 
 ### Key: the recovery seed, not a separate password
 
