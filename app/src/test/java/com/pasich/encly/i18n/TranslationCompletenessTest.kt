@@ -233,6 +233,7 @@ class TranslationCompletenessTest {
             "pt" to setOf("one", "many", "other"),
             "uk" to setOf("one", "few", "many", "other"),
             "pl" to setOf("one", "few", "many", "other"),
+            "ar" to setOf("zero", "one", "two", "few", "many", "other"),
         )
     }
 }

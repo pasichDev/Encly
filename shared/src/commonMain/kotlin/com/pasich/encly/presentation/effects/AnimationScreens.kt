@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.effects
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -12,18 +13,20 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 
 /** The enter transition for a swap of the destinations whose routes are [from] and [to]. */
-fun enterFor(from: String?, to: String?, forward: Boolean): EnterTransition = when (screenMotion(from, to)) {
-    ScreenMotion.NONE -> EnterTransition.None
-    ScreenMotion.FADE -> fadeScreenEnter()
-    ScreenMotion.AXIS -> axisEnter(forward)
-}
+fun AnimatedContentTransitionScope<*>.enterFor(from: String?, to: String?, forward: Boolean): EnterTransition =
+    when (screenMotion(from, to)) {
+        ScreenMotion.NONE -> EnterTransition.None
+        ScreenMotion.FADE -> fadeScreenEnter()
+        ScreenMotion.AXIS -> axisEnter(forward)
+    }
 
 /** The exit transition for a swap of the destinations whose routes are [from] and [to]. */
-fun exitFor(from: String?, to: String?, forward: Boolean): ExitTransition = when (screenMotion(from, to)) {
-    ScreenMotion.NONE -> ExitTransition.None
-    ScreenMotion.FADE -> fadeScreenExit()
-    ScreenMotion.AXIS -> axisExit(forward)
-}
+fun AnimatedContentTransitionScope<*>.exitFor(from: String?, to: String?, forward: Boolean): ExitTransition =
+    when (screenMotion(from, to)) {
+        ScreenMotion.NONE -> ExitTransition.None
+        ScreenMotion.FADE -> fadeScreenExit()
+        ScreenMotion.AXIS -> axisExit(forward)
+    }
 
 /**
  * A destination with the app's screen motion (see [screenMotion]). Its [content] also gets the

@@ -48,6 +48,7 @@ public object BackupSettings {
         "POLISH",
         "PORTUGUESE",
         "DUTCH",
+        "ARABIC",
     )
 
     public const val IS_DYNAMIC_THEME: String = "is_dynamic_theme"

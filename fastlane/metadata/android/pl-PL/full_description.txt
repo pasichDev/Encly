@@ -26,7 +26,7 @@ BEZPIECZNY NOTATNIK, W KTÓRYM DOBRZE SIĘ PISZE
 OTWARTE ŹRÓDŁO
 • Encly ma otwarty kod (Apache-2.0): każdy może sprawdzić, co robi.
 • Działa bez Usług Google Play. Android 8.0 lub nowszy.
-• 9 języków: polski, angielski, ukraiński, niemiecki, francuski, hiszpański, włoski, portugalski i niderlandzki. Język tylko dla Encly wybierzesz w Ustawienia → Język.
+• 10 języków: polski, angielski, ukraiński, niemiecki, francuski, hiszpański, włoski, portugalski, niderlandzki i arabski. Język tylko dla Encly wybierzesz w Ustawienia → Język.
 
 Encly: szyfrowane notatki, które zostają twoje.
 

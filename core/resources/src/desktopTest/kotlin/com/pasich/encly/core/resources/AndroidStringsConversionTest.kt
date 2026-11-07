@@ -139,6 +139,41 @@ class AndroidStringsConversionTest {
         assertTrue(rewritten > 0, "no format argument was rewritten?")
     }
 
+    @Test
+    fun arabicPicksOneOfItsSixPluralCategories() {
+        fun lockout(count: Int, unit: String) = "محاولات كثيرة جدًا. أعد المحاولة بعد $count $unit"
+        val expected = listOf(
+            lockout(0, "ثانية"),
+            lockout(1, "ثانية"),
+            lockout(2, "ثانيتين"),
+            lockout(3, "ثوانٍ"),
+            lockout(10, "ثوانٍ"),
+            lockout(11, "ثانية"),
+            lockout(99, "ثانية"),
+            lockout(100, "ثانية"),
+            lockout(101, "ثانية"),
+            lockout(102, "ثانية"),
+        )
+
+        val actual = listOf(0, 1, 2, 3, 10, 11, 99, 100, 101, 102).map { count ->
+            inLocale("ar") { runBlocking { getPluralString(Res.plurals.lock_lockout_seconds, count, count) } }
+        }
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun arabicNamesWhatABackupHoldsInTheFormOfTheNumber() {
+        val counts = listOf(2 to "2 ملاحظتين", 5 to "5 ملاحظات", 12 to "12 ملاحظة")
+
+        counts.forEach { (count, text) ->
+            val actual = inLocale("ar") {
+                runBlocking { getPluralString(Res.plurals.backup_count_notes, count, count) }
+            }
+            assertEquals(text, actual)
+        }
+    }
+
     private fun <T> inLocale(tag: String, block: () -> T): T {
         Locale.setDefault(Locale.forLanguageTag(tag))
         try {
@@ -204,6 +239,7 @@ class AndroidStringsConversionTest {
             "pt" to mapOf("one" to 1, "many" to 1_000_000, "other" to 2),
             "uk" to mapOf("one" to 1, "few" to 2, "many" to 5),
             "pl" to mapOf("one" to 1, "few" to 2, "many" to 5),
+            "ar" to mapOf("zero" to 0, "one" to 1, "two" to 2, "few" to 3, "many" to 11, "other" to 100),
         )
     }
 }

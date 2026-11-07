@@ -116,12 +116,12 @@ android {
         }
     }
 
-    // Keep only the app's own 9 languages in the APK and bundle, so the store listing does not
+    // Keep only the app's own 10 languages in the APK and bundle, so the store listing does not
     // advertise the ~85 languages AndroidX libraries ship strings for. Keep in sync with the
     // values-* folders of :core:resources (src/commonMain/strings), res/xml/locales_config.xml and AppLanguage
     // (TranslationCompletenessTest).
     androidResources {
-        localeFilters += listOf("en", "uk", "de", "fr", "es", "it", "pl", "pt", "nl")
+        localeFilters += listOf("en", "uk", "de", "fr", "es", "it", "pl", "pt", "nl", "ar")
     }
 
     // Google Play serves the `play` bundle (bundlePlayRelease). Language splits stay off: Play

@@ -23,7 +23,7 @@ internal fun formatLocalizedJvm(
     bestPattern: (Locale, String) -> String,
 ): String {
     val format = formats.getOrPut(style to languageTag) {
-        newFormat(style, Locale.forLanguageTag(languageTag), bestPattern)
+        newFormat(style, dateLocale(languageTag), bestPattern)
     }
     // A DateFormat is not thread-safe, and the cached one may last longer than the zone it was made in.
     return synchronized(format) {
@@ -42,3 +42,13 @@ private fun newFormat(style: LocalizedDate, locale: Locale, bestPattern: (Locale
         LocalizedDate.DAY_MONTH -> SimpleDateFormat(bestPattern(locale, "dMMM"), locale)
         LocalizedDate.DAY_MONTH_YEAR -> SimpleDateFormat(bestPattern(locale, "dMMMy"), locale)
     }
+
+/**
+ * The locale to format dates in. Arabic keeps the Western digits the rest of the UI shows (counts and
+ * times come out of the string resources as 0-9), unless the tag asks for other digits itself.
+ */
+internal fun dateLocale(languageTag: String): Locale {
+    val locale = Locale.forLanguageTag(languageTag)
+    if (locale.language != "ar" || locale.getUnicodeLocaleType("nu") != null) return locale
+    return Locale.Builder().setLocale(locale).setUnicodeLocaleKeyword("nu", "latn").build()
+}

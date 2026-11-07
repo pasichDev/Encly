@@ -172,7 +172,10 @@ the build converts them (`ConvertAndroidStrings` in `build-logic`). Compose reso
    non-translatable `language_name_<lang>` string in `values/strings.xml`, and the language to
    `androidResources.localeFilters` in `app/build.gradle.kts`;
 4. add the language's CLDR plural categories to `REQUIRED_QUANTITIES` in
-   `TranslationCompletenessTest`.
+   `TranslationCompletenessTest`, and the language, with a number for each category, to
+   `AndroidStrings.languages` and `QUANTITIES` in `AndroidStringsConversionTest`;
+5. a right-to-left language sets `rightToLeft = true` in `AppLanguage`: the whole UI is then laid out
+   right to left on every platform. The recovery words and the PIN keypad stay left to right.
 
 **Rules the build enforces** (`./gradlew :app:testFdroidDebugUnitTest`): every locale has every
 key and no extra ones (`TranslationCompletenessTest`; Android lint cannot see Compose resources);
@@ -228,7 +231,7 @@ upload this key instead of letting Google generate one).
    notes, so use absolute links in it.
 3. Write the store release notes (≤ 500 characters each) to
    `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` for **every** locale folder
-   (`en-US`, `uk`, `de-DE`, `fr-FR`, `es-ES`, `it-IT`, `pl-PL`, `pt-PT`, `nl-NL`);
+   (`en-US`, `uk`, `de-DE`, `fr-FR`, `es-ES`, `it-IT`, `pl-PL`, `pt-PT`, `nl-NL`, `ar`);
    `StoreMetadataTest` checks they exist and fit.
    Add the version to `<releases>` in `desktopApp/packaging/flatpak/io.github.pasichdev.Encly.metainfo.xml`
    too; the Flatpak build in CI refuses a version that is not listed there.

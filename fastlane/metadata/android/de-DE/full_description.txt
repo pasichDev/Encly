@@ -26,7 +26,7 @@ EIN SICHERER NOTIZBLOCK, IN DEM MAN GERN SCHREIBT
 OPEN SOURCE
 • Encly ist Open Source (Apache-2.0): Jeder kann prüfen, was die App tut.
 • Läuft ohne Google Play-Dienste. Android 8.0 oder neuer.
-• 9 Sprachen: Deutsch, Englisch, Ukrainisch, Französisch, Spanisch, Italienisch, Polnisch, Portugiesisch und Niederländisch. Unter Einstellungen → Sprache wählst du eine Sprache nur für Encly.
+• 10 Sprachen: Deutsch, Englisch, Ukrainisch, Französisch, Spanisch, Italienisch, Polnisch, Portugiesisch, Niederländisch und Arabisch. Unter Einstellungen → Sprache wählst du eine Sprache nur für Encly.
 
 Encly: verschlüsselte Notizen, die dir gehören.
 

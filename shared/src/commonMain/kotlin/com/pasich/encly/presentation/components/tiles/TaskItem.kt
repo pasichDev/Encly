@@ -15,10 +15,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.LayoutDirection
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.subtask_add
 import com.pasich.encly.core.resources.subtasks_done_summary
@@ -107,12 +109,13 @@ fun TaskItem(
     val enabledNow = state.enabled && !state.isRemoving
     // Done tasks show only the bar while folded.
     val showsNextStep = !task.isCompleted && subtasks.isNotEmpty()
+    val towardsEnd = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
     Column(
         modifier = modifier.graphicsLayer {
             alpha = state.animationProgress
             scaleX = state.animationProgress
             scaleY = state.animationProgress
-            translationX = (1f - state.animationProgress) * TASK_TRANSLATION_X
+            translationX = towardsEnd * (1f - state.animationProgress) * TASK_TRANSLATION_X
         },
     ) {
         TaskRow(

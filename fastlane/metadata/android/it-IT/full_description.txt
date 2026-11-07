@@ -26,7 +26,7 @@ UN BLOCCO NOTE SICURO E PIACEVOLE
 OPEN SOURCE
 • Encly è open source (Apache-2.0): chiunque può verificare cosa fa.
 • Funziona senza Google Play Services. Android 8.0 o successivo.
-• 9 lingue: italiano, inglese, ucraino, tedesco, francese, spagnolo, polacco, portoghese e olandese. Scegli una lingua solo per Encly in Impostazioni → Lingua.
+• 10 lingue: italiano, inglese, ucraino, tedesco, francese, spagnolo, polacco, portoghese, olandese e arabo. Scegli una lingua solo per Encly in Impostazioni → Lingua.
 
 Encly: note criptate che restano tue.
 

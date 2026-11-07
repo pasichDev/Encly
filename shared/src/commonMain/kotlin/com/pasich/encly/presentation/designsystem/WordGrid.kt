@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -54,6 +55,19 @@ fun WordGrid(words: List<String>, hidden: Boolean, modifier: Modifier = Modifier
 @Composable
 internal fun WordGridLayout(longestWordPx: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val gap = EnclyTheme.spacing.xs
+    // The words are English (BIP-39): the grid and the numbers stay left to right in any layout.
+    LtrContent {
+        WordGridLayoutBody(longestWordPx, gap, modifier, content)
+    }
+}
+
+@Composable
+private fun WordGridLayoutBody(
+    longestWordPx: Int,
+    gap: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
     Layout(modifier = modifier, content = content) { measurables, constraints ->
         val gapPx = gap.roundToPx()
         val chromePx = WordCellChrome.roundToPx()

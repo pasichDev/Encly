@@ -89,6 +89,7 @@ class UiTextAndStringsTest(private val language: AppLanguage, private val expect
             arrayOf(AppLanguage.POLISH, "Anuluj"),
             arrayOf(AppLanguage.PORTUGUESE, "Cancelar"),
             arrayOf(AppLanguage.DUTCH, "Annuleren"),
+            arrayOf(AppLanguage.ARABIC, "إلغاء"),
         )
     }
 }

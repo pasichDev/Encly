@@ -28,7 +28,7 @@ A SECURE NOTEPAD THAT IS PLEASANT TO WRITE IN
 OPEN SOURCE
 • Encly is open source (Apache-2.0): anyone can check what it does.
 • Works without Google Play Services. Android 8.0 or newer.
-• 9 languages: English, Ukrainian, German, French, Spanish, Italian, Polish, Portuguese and Dutch. Pick one for Encly alone in Settings → Language.
+• 10 languages: English, Ukrainian, German, French, Spanish, Italian, Polish, Portuguese, Dutch and Arabic. Pick one for Encly alone in Settings → Language.
 
 Encly: encrypted notes that stay yours.
 

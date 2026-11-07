@@ -27,6 +27,7 @@ object Changelogs {
         AppLanguage.POLISH -> "pl-PL"
         AppLanguage.PORTUGUESE -> "pt-PT"
         AppLanguage.DUTCH -> "nl-NL"
+        AppLanguage.ARABIC -> "ar"
         AppLanguage.ENGLISH, AppLanguage.SYSTEM -> FALLBACK
     }
 

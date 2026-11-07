@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
  * Encly's line icons: 24 viewBox, stroke 1.75, round caps and joins (SPEC Appendix B, plus the extra
  * glyphs drawn in the same grammar). They carry no colour of their own; `Icon` tints them.
  * The `*Bold` variants are the heavier strokes the canvas uses for the FAB, the add-block button,
- * the wordmark and small done checks.
+ * the wordmark and small done checks. The glyphs with a direction flip in a right-to-left layout.
  */
 object EnclyIcons {
     /** A drag handle: two columns of three dots. */
@@ -694,6 +694,11 @@ object EnclyIcons {
 }
 
 private const val STROKE = 1.75f
+
+/** The icons with a direction, drawn flipped in a right-to-left layout (a back arrow, undo, a list marker...). */
+private val MirroredIcons = setOf(
+    "Back", "Chevron", "Undo", "Redo", "Send", "ListBullet", "Checklist", "Quote", "External", "Help", "Comment",
+)
 private val Ink = SolidColor(Color.Black)
 
 internal fun enclyIcon(
@@ -707,6 +712,7 @@ internal fun enclyIcon(
     defaultHeight = 24.dp,
     viewportWidth = 24f,
     viewportHeight = 24f,
+    autoMirror = name in MirroredIcons,
 ).apply {
     paths.forEach { data ->
         addPath(

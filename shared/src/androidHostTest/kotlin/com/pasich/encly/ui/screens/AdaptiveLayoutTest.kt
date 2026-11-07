@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -20,6 +21,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -29,6 +31,7 @@ import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.rightClick
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -123,9 +126,13 @@ class AdaptiveLayoutTest : ComposeScreenTest() {
                 LocalWidthClass provides widthClass,
                 LocalPointerFirst provides pointerFirst,
                 LocalMetroViewModelFactory provides PaneFactory(),
+                LocalLayoutDirection provides direction,
             ) { WithShortcuts { MainRootScreen(nav) } }
         }
     }
+
+    /** The layout direction of the window, left to right unless a test says otherwise. */
+    private var direction = LayoutDirection.Ltr
 
     private fun listCard(title: String) =
         rule.onNode(hasText(title) and hasClickAction() and !isTab and !hasSetTextAction())
@@ -159,6 +166,27 @@ class AdaptiveLayoutTest : ComposeScreenTest() {
         assertEquals(1, count(str(Res.string.open_menu)))
         assertEquals(0, count(str(Res.string.main_drawer_tasks)))
         assertEquals(0, countText(str(Res.string.pane_select_note)))
+    }
+
+    private fun centreX(text: String) = rule.onNode(hasText(text)).fetchSemanticsNode().boundsInRoot.center.x
+
+    @Test
+    fun anExpandedWindowPutsTheDrawerThenTheNotesThenThePaneFromLeftToRight() {
+        showHome(WidthClass.Expanded, note(1, "Trip"))
+
+        val drawer = rule.onAllNodes(hasText(str(Res.string.main_drawer_tasks))).onFirst().fetchSemanticsNode()
+        assertTrue(drawer.boundsInRoot.center.x < centreX("Trip"))
+        assertTrue(centreX("Trip") < centreX(str(Res.string.pane_select_note)))
+    }
+
+    @Test
+    fun anExpandedWindowMirrorsItsDrawerNotesAndPaneInARightToLeftLayout() {
+        direction = LayoutDirection.Rtl
+        showHome(WidthClass.Expanded, note(1, "Trip"))
+
+        val drawer = rule.onAllNodes(hasText(str(Res.string.main_drawer_tasks))).onFirst().fetchSemanticsNode()
+        assertTrue(drawer.boundsInRoot.center.x > centreX("Trip"))
+        assertTrue(centreX("Trip") > centreX(str(Res.string.pane_select_note)))
     }
 
     @Test

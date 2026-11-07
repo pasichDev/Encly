@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDirection
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.onboarding_verify_label
 import com.pasich.encly.core.resources.onboarding_verify_placeholder
@@ -55,7 +56,7 @@ internal fun PhraseCheckFields(
                 placeholder = stringResource(Res.string.onboarding_verify_placeholder),
                 state = fieldState,
                 enabled = enabled,
-                textStyle = EnclyTheme.typography.dataLarge,
+                textStyle = EnclyTheme.typography.dataLarge.copy(textDirection = TextDirection.Ltr),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     autoCorrectEnabled = false,

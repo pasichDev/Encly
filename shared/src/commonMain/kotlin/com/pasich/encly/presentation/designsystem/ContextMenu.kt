@@ -28,8 +28,10 @@ import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 
 /**
  * A menu that opens at the pointer on a right click (the secondary mouse button) on [content], or on the
@@ -53,6 +55,7 @@ fun EnclyContextMenu(
     val open = remember { { position: Offset -> anchor = position } }
     var size by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(
         modifier = modifier
             .onSizeChanged { size = it }
@@ -62,8 +65,12 @@ fun EnclyContextMenu(
         anchor?.let { position ->
             ContextMenuPopup(
                 entries = remember(position) { entries() },
-                // A menu is placed from the bottom start of its anchor.
-                offset = with(density) { DpOffset(position.x.toDp(), (position.y - size.height).toDp()) },
+                // A menu is placed from the bottom start of its anchor: its left edge, or its right edge in a
+                // right-to-left layout, where the horizontal offset counts from there.
+                offset = with(density) {
+                    val fromStart = if (rtl) size.width - position.x else position.x
+                    DpOffset(fromStart.toDp(), (position.y - size.height).toDp())
+                },
                 onDismiss = { anchor = null },
             )
         }

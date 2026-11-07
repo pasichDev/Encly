@@ -46,6 +46,7 @@ import com.pasich.encly.editor.ui.blocks.HBlock
 import com.pasich.encly.editor.ui.blocks.LinkBlock
 import com.pasich.encly.editor.ui.blocks.ListBlock
 import com.pasich.encly.editor.ui.blocks.QuoteBlock
+import com.pasich.encly.editor.ui.blocks.ReadingDirection
 import com.pasich.encly.editor.ui.blocks.SeparatorBlock
 import com.pasich.encly.editor.ui.blocks.TextBlock
 import com.pasich.encly.editor.ui.components.ContextEntry
@@ -302,23 +303,30 @@ private fun BlockContent(
     val fieldModifier = modifier.focusRequester(focusRequester)
     val isLocked = state.isLocked
     when (block) {
-        is Block.TextBlock -> TextBlock(
-            block,
-            blockActions,
-            modifier = fieldModifier,
-            isLocked = isLocked,
-            showPlaceholder = state.showPlaceholder,
-        )
+        // Each paragraph reads in the direction of its own text (see ReadingDirection).
+        is Block.TextBlock -> ReadingDirection(block.text) {
+            TextBlock(
+                block,
+                blockActions,
+                modifier = fieldModifier,
+                isLocked = isLocked,
+                showPlaceholder = state.showPlaceholder,
+            )
+        }
 
-        is Block.QuoteBlock -> QuoteBlock(
-            block,
-            blockActions,
-            focusRequester,
-            fieldModifier = modifier,
-            isLocked = isLocked,
-        )
+        is Block.QuoteBlock -> ReadingDirection(block.text) {
+            QuoteBlock(
+                block,
+                blockActions,
+                focusRequester,
+                fieldModifier = modifier,
+                isLocked = isLocked,
+            )
+        }
 
-        is Block.HBlock -> HBlock(block, blockActions, modifier = fieldModifier, isLocked = isLocked)
+        is Block.HBlock -> ReadingDirection(block.text) {
+            HBlock(block, blockActions, modifier = fieldModifier, isLocked = isLocked)
+        }
 
         is Block.ListBlock -> ListBlock(block, blockActions, fieldModifier = modifier, isLocked = isLocked)
 

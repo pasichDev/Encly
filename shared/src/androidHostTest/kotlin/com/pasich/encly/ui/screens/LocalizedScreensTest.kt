@@ -169,6 +169,6 @@ class LocalizedScreensTest(private val language: String) : ComposeScreenTest() {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun languages(): List<Array<Any>> =
-            listOf("en", "uk", "de", "es", "fr", "it", "nl", "pl", "pt").map { arrayOf(it) }
+            listOf("en", "uk", "de", "es", "fr", "it", "nl", "pl", "pt", "ar").map { arrayOf(it) }
     }
 }

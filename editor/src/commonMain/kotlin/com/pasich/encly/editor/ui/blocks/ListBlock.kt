@@ -234,14 +234,17 @@ internal fun ListBlock(
                         }
                     }
                 }
-                ListItemRow(
-                    item = item,
-                    marker = marker.forItem(itemIndex + 1),
-                    field = field,
-                    editor = editor,
-                    locks = locks,
-                    fieldModifier = itemModifier,
-                )
+                // Each item reads in its own direction: its marker and indent sit on the side it starts.
+                ReadingDirection(text = { state.text }) {
+                    ListItemRow(
+                        item = item,
+                        marker = marker.forItem(itemIndex + 1),
+                        field = field,
+                        editor = editor,
+                        locks = locks,
+                        fieldModifier = itemModifier,
+                    )
+                }
             }
         }
     }
@@ -485,7 +488,7 @@ private fun RowScope.RowCheckMark(state: CheckState, marker: ListMarker) {
         val box = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
         val centre = pad + metrics.centre
         val top = (centre - box.height / 2f).roundToInt().coerceAtLeast(0)
-        layout(marker.width.roundToPx(), top + box.height) { box.place(0, top) }
+        layout(marker.width.roundToPx(), top + box.height) { box.placeRelative(0, top) }
     }
 }
 

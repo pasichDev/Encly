@@ -1,4 +1,4 @@
-// Every string and plural the UI shows, in all nine languages, as Compose Multiplatform resources. The
+// Every string and plural the UI shows, in all ten languages, as Compose Multiplatform resources. The
 // translations are kept in Android's strings.xml format, which is what Weblate reads and writes
 // (src/commonMain/strings/values[-<lang>]/*.xml); a build step turns them into the files Compose
 // resources read. The generated `Res` class is public, so the app and the feature modules read

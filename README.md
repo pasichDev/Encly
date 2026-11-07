@@ -38,7 +38,7 @@ backup and, only when you ask for it, a readable Markdown export that is not enc
   open-source license pages, a note's link block and, in the `play` flavor, the store page or, in
   the `fdroid` flavor, the Ko-fi donation page) open in another app and only when you tap them.
 - 🛡️ **Protected UI** — `FLAG_SECURE` is enforced from the first Activity frame.
-- 🌍 **9 languages** — pick one in Settings → Language, independently of the system language.
+- 🌍 **10 languages** — pick one in Settings → Language, independently of the system language.
 
 ## Languages
 

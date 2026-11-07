@@ -1,6 +1,7 @@
 package com.pasich.encly.core.locale
 
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.language_name_ar
 import com.pasich.encly.core.resources.language_name_de
 import com.pasich.encly.core.resources.language_name_en
 import com.pasich.encly.core.resources.language_name_es
@@ -18,9 +19,11 @@ import org.jetbrains.compose.resources.StringResource
  * res/xml/locales_config.xml; [nativeName] is the language's own name, which is what the
  * picker shows so a user can find their language whatever the current UI language is.
  *
+ * [rightToLeft] languages are laid out right to left (see `appLayoutDirection`).
+ *
  * [SYSTEM] clears the per-app override and follows the device language.
  */
-enum class AppLanguage(val tag: String?, val nativeName: StringResource) {
+enum class AppLanguage(val tag: String?, val nativeName: StringResource, val rightToLeft: Boolean = false) {
     SYSTEM(null, Res.string.language_system_default),
     ENGLISH("en", Res.string.language_name_en),
     UKRAINIAN("uk", Res.string.language_name_uk),
@@ -31,6 +34,7 @@ enum class AppLanguage(val tag: String?, val nativeName: StringResource) {
     POLISH("pl", Res.string.language_name_pl),
     PORTUGUESE("pt", Res.string.language_name_pt),
     DUTCH("nl", Res.string.language_name_nl),
+    ARABIC("ar", Res.string.language_name_ar, rightToLeft = true),
     ;
 
     companion object {

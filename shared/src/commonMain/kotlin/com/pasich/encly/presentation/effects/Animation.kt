@@ -1,5 +1,7 @@
 package com.pasich.encly.presentation.effects
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.CubicBezierEasing
@@ -8,8 +10,6 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 
 private const val AXIS_DURATION = 300
 private const val AXIS_FADE_IN = 210
@@ -23,18 +23,21 @@ private const val AXIS_SHIFT_FRACTION = 8
 private val AxisEasing = CubicBezierEasing(a = 0.05f, b = 0.7f, c = 0.1f, d = 1f)
 
 /**
- * Shared X axis (Material motion): going forward, the new screen slides in from the right as it
- * fades in and the old one drifts left as it fades out; [forward] false mirrors it for Back.
+ * Shared X axis (Material motion): going forward, the new screen slides in from the end side as it
+ * fades in and the old one drifts toward the start as it fades out; [forward] false mirrors it for Back.
+ * Start and end follow the layout direction, so a right-to-left layout moves the other way.
  */
-fun axisEnter(forward: Boolean): EnterTransition =
-    slideInHorizontally(tween(AXIS_DURATION, easing = AxisEasing)) { width ->
-        (if (forward) width else -width) / AXIS_SHIFT_FRACTION
-    } + fadeIn(tween(AXIS_FADE_IN, delayMillis = AXIS_FADE_IN_DELAY))
+fun AnimatedContentTransitionScope<*>.axisEnter(forward: Boolean): EnterTransition = slideIntoContainer(
+    towards = if (forward) SlideDirection.Start else SlideDirection.End,
+    animationSpec = tween(AXIS_DURATION, easing = AxisEasing),
+    initialOffset = { fullSlide -> fullSlide / AXIS_SHIFT_FRACTION },
+) + fadeIn(tween(AXIS_FADE_IN, delayMillis = AXIS_FADE_IN_DELAY))
 
-fun axisExit(forward: Boolean): ExitTransition =
-    slideOutHorizontally(tween(AXIS_DURATION, easing = AxisEasing)) { width ->
-        (if (forward) -width else width) / AXIS_SHIFT_FRACTION
-    } + fadeOut(tween(AXIS_FADE_OUT))
+fun AnimatedContentTransitionScope<*>.axisExit(forward: Boolean): ExitTransition = slideOutOfContainer(
+    towards = if (forward) SlideDirection.Start else SlideDirection.End,
+    animationSpec = tween(AXIS_DURATION, easing = AxisEasing),
+    targetOffset = { fullSlide -> fullSlide / AXIS_SHIFT_FRACTION },
+) + fadeOut(tween(AXIS_FADE_OUT))
 
 /**
  * Duration of the card growing into the editor. A little longer than a screen slide: the card travels

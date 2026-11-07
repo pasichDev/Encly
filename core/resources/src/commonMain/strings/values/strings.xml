@@ -15,6 +15,7 @@
     <string name="language_name_pl" translatable="false">Polski</string>
     <string name="language_name_pt" translatable="false">Português</string>
     <string name="language_name_nl" translatable="false">Nederlands</string>
+    <string name="language_name_ar" translatable="false">العربية</string>
 
     <string name="about">About</string>
     <string name="about_app_description">A local encrypted space for notes, ideas and tasks, with no cloud sync.</string>

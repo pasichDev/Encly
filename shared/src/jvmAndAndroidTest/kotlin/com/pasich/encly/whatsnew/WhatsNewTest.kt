@@ -115,6 +115,7 @@ class WhatsNewTest {
             "pl" to "pl-PL",
             "pt" to "pt-PT",
             "nl" to "nl-NL",
+            "ar" to "ar",
         )
         folders.forEach { (tag, folder) -> assertEquals(tag, folder, Changelogs.folderFor(tag)) }
         assertEquals("pt-PT", Changelogs.folderFor("pt-BR"))
@@ -123,8 +124,8 @@ class WhatsNewTest {
 
     @Test
     fun anUnsupportedOrMissingLanguageReadsEnglish() {
-        assertEquals("en-US", Changelogs.folderFor("ar"))
         assertEquals("en-US", Changelogs.folderFor("ja-JP"))
+        assertEquals("en-US", Changelogs.folderFor("he"))
         assertEquals("en-US", Changelogs.folderFor(null))
         assertEquals("en-US", Changelogs.folderFor(""))
     }
@@ -137,9 +138,9 @@ class WhatsNewTest {
         )
 
         assertEquals("• Deutsche Änderung", Changelogs.notes("de", bundled)?.body)
-        // French has no file for this version, Arabic is not an app language: both read English.
+        // French has no file for this version, Japanese is not an app language: both read English.
         assertEquals("• English change", Changelogs.notes("fr", bundled)?.body)
-        assertEquals("• English change", Changelogs.notes("ar", bundled)?.body)
+        assertEquals("• English change", Changelogs.notes("ja", bundled)?.body)
         assertEquals("Encly 2.4.0", Changelogs.notes("de", bundled)?.heading)
     }
 
@@ -164,7 +165,7 @@ class WhatsNewTest {
             .associate { it.parentFile.parentFile.name to it.readText().trim() }
         assertEquals(expected, BundledChangelogs.notes)
         // Every language of the app has its notes for the version, since the store has them.
-        assertEquals(9, BundledChangelogs.notes.size)
+        assertEquals(10, BundledChangelogs.notes.size)
         assertNotNull(Changelogs.current("uk"))
         assertTrue(BundledChangelogs.notes.getValue("uk").startsWith(Changelogs.current("uk")!!.heading))
     }

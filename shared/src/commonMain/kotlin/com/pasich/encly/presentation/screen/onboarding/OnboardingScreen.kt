@@ -1,12 +1,11 @@
 package com.pasich.encly.presentation.screen.onboarding
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -235,11 +234,12 @@ private fun StepContent(
         modifier = modifier.fillMaxWidth(),
         transitionSpec = {
             val forward = targetState.ordinal > initialState.ordinal
-            slideInHorizontally(
-                initialOffsetX = { if (forward) it else -it },
+            val direction = if (forward) SlideDirection.Start else SlideDirection.End
+            slideIntoContainer(
+                towards = direction,
                 animationSpec = tween(SLIDE_MS, easing = FastOutSlowInEasing),
-            ) + fadeIn(tween(FADE_IN_MS, FADE_IN_DELAY_MS)) togetherWith slideOutHorizontally(
-                targetOffsetX = { if (forward) -it else it },
+            ) + fadeIn(tween(FADE_IN_MS, FADE_IN_DELAY_MS)) togetherWith slideOutOfContainer(
+                towards = direction,
                 animationSpec = tween(SLIDE_MS, easing = FastOutSlowInEasing),
             ) + fadeOut(tween(FADE_OUT_MS))
         },

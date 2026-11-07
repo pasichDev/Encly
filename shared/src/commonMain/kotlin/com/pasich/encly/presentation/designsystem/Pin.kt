@@ -75,32 +75,34 @@ fun PinDots(
             shake.animateTo(0f, tween(SHAKE_QUARTER_MS))
         }
     }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m, Alignment.CenterHorizontally),
-        modifier = modifier
-            .fillMaxWidth()
-            .offset { IntOffset(shake.value.dp.roundToPx(), 0) }
-            .semantics { contentDescription = description },
-    ) {
-        repeat(length) { index ->
-            val filled = index < entered
-            val tint = if (error) colors.error else colors.primary
-            Box(
-                modifier = Modifier
-                    .size(14.dp)
-                    .border(
-                        2.dp,
-                        if (filled) {
-                            tint
-                        } else if (error) {
-                            colors.error
-                        } else {
-                            colors.outline
-                        },
-                        CircleShape,
-                    ),
-            ) {
-                if (filled) Surface(shape = CircleShape, color = tint, modifier = Modifier.size(14.dp)) {}
+    LtrContent {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m, Alignment.CenterHorizontally),
+            modifier = modifier
+                .fillMaxWidth()
+                .offset { IntOffset(shake.value.dp.roundToPx(), 0) }
+                .semantics { contentDescription = description },
+        ) {
+            repeat(length) { index ->
+                val filled = index < entered
+                val tint = if (error) colors.error else colors.primary
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .border(
+                            2.dp,
+                            if (filled) {
+                                tint
+                            } else if (error) {
+                                colors.error
+                            } else {
+                                colors.outline
+                            },
+                            CircleShape,
+                        ),
+                ) {
+                    if (filled) Surface(shape = CircleShape, color = tint, modifier = Modifier.size(14.dp)) {}
+                }
             }
         }
     }
@@ -128,57 +130,59 @@ fun PinKeypad(
     onClear: (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
-    Column(
-        verticalArrangement = Arrangement.spacedBy(size.gap),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 40.dp),
-    ) {
-        KEYPAD_DIGITS.chunked(KEYPAD_COLUMNS).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(size.gap)) {
-                row.map { it.digitToInt() }.forEach { digit ->
-                    DigitKey(digit, size, enabled, { onDigit(digit) }, Modifier.weight(1f))
+    LtrContent {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(size.gap),
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 40.dp),
+        ) {
+            KEYPAD_DIGITS.chunked(KEYPAD_COLUMNS).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(size.gap)) {
+                    row.map { it.digitToInt() }.forEach { digit ->
+                        DigitKey(digit, size, enabled, { onDigit(digit) }, Modifier.weight(1f))
+                    }
                 }
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(size.gap)) {
-            if (onBiometric != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(size.gap)) {
+                if (onBiometric != null) {
+                    Key(
+                        onClick = onBiometric,
+                        size = size,
+                        enabled = enabled,
+                        container = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(
+                            imageVector = EnclyIcons.Fingerprint,
+                            contentDescription = stringResource(Res.string.pin_unlock_with_fingerprint),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
+                } else {
+                    Box(modifier = Modifier.weight(1f))
+                }
+                DigitKey(0, size, enabled, { onDigit(0) }, Modifier.weight(1f))
                 Key(
-                    onClick = onBiometric,
+                    onClick = onBackspace,
                     size = size,
                     enabled = enabled,
-                    container = MaterialTheme.colorScheme.primaryContainer,
+                    container = Color.Transparent,
                     modifier = Modifier.weight(1f),
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        // No clear handler: delete once per digit a PIN can hold.
+                        onClear?.invoke() ?: repeat(PIN_LENGTH) { onBackspace() }
+                    },
                 ) {
                     Icon(
-                        imageVector = EnclyIcons.Fingerprint,
-                        contentDescription = stringResource(Res.string.pin_unlock_with_fingerprint),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(28.dp),
+                        imageVector = EnclyIcons.Backspace,
+                        contentDescription = stringResource(Res.string.pin_delete_digit),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(26.dp),
                     )
                 }
-            } else {
-                Box(modifier = Modifier.weight(1f))
-            }
-            DigitKey(0, size, enabled, { onDigit(0) }, Modifier.weight(1f))
-            Key(
-                onClick = onBackspace,
-                size = size,
-                enabled = enabled,
-                container = Color.Transparent,
-                modifier = Modifier.weight(1f),
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    // No clear handler: delete once per digit a PIN can hold.
-                    onClear?.invoke() ?: repeat(PIN_LENGTH) { onBackspace() }
-                },
-            ) {
-                Icon(
-                    imageVector = EnclyIcons.Backspace,
-                    contentDescription = stringResource(Res.string.pin_delete_digit),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(26.dp),
-                )
             }
         }
     }

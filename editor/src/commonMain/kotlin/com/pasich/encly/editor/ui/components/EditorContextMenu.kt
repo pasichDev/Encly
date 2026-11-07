@@ -28,8 +28,10 @@ import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 
 /**
  * A menu of [entries] that opens at the pointer on a right click on [content], or at its corner on the
@@ -52,18 +54,27 @@ internal fun EditorContextMenu(
     // One lambda for the life of the menu, so the pointer loop is never restarted.
     val open = remember { { position: Offset -> anchor = position } }
     val density = LocalDensity.current
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(modifier = modifier.onSizeChanged { size = it }.contextMenuTriggers(enabled, claimPress, open)) {
         content()
         anchor?.let { position ->
             MenuPopup(
                 entries = remember(position) { entries() },
                 // A menu is placed from the bottom start of its anchor.
-                offset = with(density) { DpOffset(position.x.toDp(), (position.y - size.height).toDp()) },
+                offset = with(density) {
+                    DpOffset(menuOffsetFromStart(position.x, size.width, rtl).toDp(), (position.y - size.height).toDp())
+                },
                 onDismiss = { anchor = null },
             )
         }
     }
 }
+
+/**
+ * How far from the start edge of a box [width] pixels wide a menu opened at [x] (counted from its left edge)
+ * is offset: a dropdown counts the offset from the right edge in a right-to-left layout ([rtl]).
+ */
+internal fun menuOffsetFromStart(x: Float, width: Int, rtl: Boolean): Float = if (rtl) width - x else x
 
 @Composable
 private fun MenuPopup(entries: List<ContextEntry>, offset: DpOffset, onDismiss: () -> Unit) {

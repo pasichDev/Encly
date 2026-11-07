@@ -1,6 +1,6 @@
 # :core:resources
 
-Every string and plural the UI shows, in English and eight translations (de es fr it nl pl pt uk),
+Every string and plural the UI shows, in English and nine translations (ar de es fr it nl pl pt uk),
 as Compose Multiplatform resources. Android, desktop JVM and iOS targets.
 
 - Files: `src/commonMain/strings/values[-<lang>]/{strings,strings_handoff,strings_import,strings_security}.xml`,

@@ -74,6 +74,14 @@ class LocalizedDateTest {
     }
 
     @Test
+    fun arabicKeepsWesternDigitsUnlessTheTagAsksOtherwise() {
+        val western = formatLocalized(instant, LocalizedDate.DATE_TIME_SHORT, "ar", kyiv)
+        assertEquals(true, western.any { it in '0'..'9' } && western.none { it in '\u0660'..'\u0669' })
+        val arabicIndic = formatLocalized(instant, LocalizedDate.TIME, "ar-u-nu-arab", kyiv)
+        assertEquals(true, arabicIndic.any { it in '\u0660'..'\u0669' })
+    }
+
+    @Test
     fun aFixedOffsetZoneIsHonouredNotReadAsGmt() {
         val plusThree = UtcOffset(hours = 3).asTimeZone()
         assertEquals("22:32", formatLocalized(instant, LocalizedDate.TIME, "de", plusThree))

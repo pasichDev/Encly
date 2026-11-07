@@ -18,6 +18,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -273,11 +275,13 @@ fun App(
     shielded: Boolean = false,
     locked: Boolean = false,
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val widthClass = WidthClass.of(maxWidth, maxHeight)
-        val density = DensityProfile.of(widthClass, LocalPointerFirst.current)
-        CompositionLocalProvider(LocalWidthClass provides widthClass, LocalDensityProfile provides density) {
-            AppContent(navController, startDestination, eraseEpoch, shielded, locked)
+    CompositionLocalProvider(LocalLayoutDirection provides appLayoutDirection()) {
+        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+            val widthClass = WidthClass.of(maxWidth, maxHeight)
+            val density = DensityProfile.of(widthClass, LocalPointerFirst.current)
+            CompositionLocalProvider(LocalWidthClass provides widthClass, LocalDensityProfile provides density) {
+                AppContent(navController, startDestination, eraseEpoch, shielded, locked)
+            }
         }
     }
 }
@@ -311,11 +315,12 @@ private fun AppContent(
                 LocalVaultLocked provides (locked || shielded),
             ) {
                 // The whole app layer moves with the unlock reveal: it slides in from the
-                // right and pushes the logo colour out (see UnlockRevealOverlay).
+                // end side and pushes the logo colour out (see UnlockRevealOverlay).
+                val towardsEnd = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .graphicsLayer { translationX = unlockReveal.contentOffset * size.width }
+                        .graphicsLayer { translationX = towardsEnd * unlockReveal.contentOffset * size.width }
                         .background(MaterialTheme.colorScheme.background),
                 ) {
                     CompositionLocalProvider(LocalEraseEpoch provides eraseEpoch) {

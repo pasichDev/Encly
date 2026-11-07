@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.recovery_phrase_checksum
@@ -316,6 +317,8 @@ private fun PhraseField(
         singleLine = true,
         textStyle = EnclyTheme.typography.dataLarge.copy(
             color = if (enabled) colors.onSurface else colors.onSurface.disabled(),
+            // The words are English: the caret starts on the left in a right-to-left layout too.
+            textDirection = TextDirection.Ltr,
         ),
         cursorBrush = SolidColor(colors.primary),
         keyboardOptions = phraseKeyboard(last = index == state.count - 1),

@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import com.pasich.encly.shared.resources.Res
 import com.pasich.encly.shared.resources.ic_launcher_foreground
@@ -35,7 +36,7 @@ import kotlin.math.max
 /** The tile grows until the window is the logo's colour... */
 private const val UNLOCK_GROW_MS = 300
 
-/** ...then the notes list slides in from the right and pushes that colour out the left. */
+/** ...then the notes list slides in from the end side (the right, left to right) and pushes that colour out. */
 private const val UNLOCK_PUSH_MS = 520
 
 /** How long the list rests under the cover first, so its data and first layout land before it moves. */
@@ -198,7 +199,8 @@ fun UnlockRevealOverlay(state: UnlockRevealState, modifier: Modifier = Modifier)
             }
         } else {
             // A flat sheet, so the edge the list pushes against is a straight line.
-            drawRect(color = colors.primary, topLeft = Offset(-push.value * size.width, 0f))
+            val towardsStart = if (layoutDirection == LayoutDirection.Rtl) 1f else -1f
+            drawRect(color = colors.primary, topLeft = Offset(towardsStart * push.value * size.width, 0f))
         }
     }
 }

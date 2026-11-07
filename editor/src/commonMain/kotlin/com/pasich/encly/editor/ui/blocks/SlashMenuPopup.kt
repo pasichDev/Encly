@@ -138,7 +138,12 @@ private class UnderOrOverField(private val bottomLimit: (windowHeight: Int) -> I
         layoutDirection: LayoutDirection,
         popupContentSize: IntSize,
     ): IntOffset {
-        val x = anchorBounds.left.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0))
+        val start = if (layoutDirection == LayoutDirection.Rtl) {
+            anchorBounds.right - popupContentSize.width
+        } else {
+            anchorBounds.left
+        }
+        val x = start.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0))
         val below = anchorBounds.bottom
         val fitsBelow = below + popupContentSize.height <= bottomLimit(windowSize.height)
         val y = if (fitsBelow) below else (anchorBounds.top - popupContentSize.height).coerceAtLeast(0)

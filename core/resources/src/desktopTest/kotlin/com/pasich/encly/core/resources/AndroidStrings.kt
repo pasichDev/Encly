@@ -25,6 +25,7 @@ internal object AndroidStrings {
         Language("pl", "values-pl"),
         Language("pt", "values-pt"),
         Language("uk", "values-uk"),
+        Language("ar", "values-ar"),
     )
 
     private val files = listOf("strings.xml", "strings_handoff.xml", "strings_import.xml", "strings_security.xml")

@@ -18,6 +18,7 @@ class AppLanguageTest {
         assertEquals(AppLanguage.PORTUGUESE, AppLanguage.fromTag("pt-BR"))
         assertEquals(AppLanguage.GERMAN, AppLanguage.fromTag("de_AT"))
         assertEquals(AppLanguage.DUTCH, AppLanguage.fromTag("NL"))
+        assertEquals(AppLanguage.ARABIC, AppLanguage.fromTag("ar-EG"))
     }
 
     @Test
@@ -33,8 +34,13 @@ class AppLanguageTest {
     }
 
     @Test
-    fun systemDefaultIsListedFirstThenNineLanguages() {
+    fun systemDefaultIsListedFirstThenTenLanguages() {
         assertEquals(AppLanguage.SYSTEM, AppLanguage.entries.first())
-        assertEquals(9, AppLanguage.entries.count { it.tag != null })
+        assertEquals(10, AppLanguage.entries.count { it.tag != null })
+    }
+
+    @Test
+    fun onlyArabicIsLaidOutRightToLeft() {
+        assertEquals(listOf(AppLanguage.ARABIC), AppLanguage.entries.filter { it.rightToLeft })
     }
 }

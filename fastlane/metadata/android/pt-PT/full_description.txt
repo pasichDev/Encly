@@ -26,7 +26,7 @@ UM BLOCO DE NOTAS SEGURO E AGRADÁVEL
 CÓDIGO ABERTO
 • O Encly tem código aberto (Apache-2.0): qualquer pessoa pode verificar o que faz.
 • Funciona sem os serviços do Google Play. Android 8.0 ou mais recente.
-• 9 idiomas: português, inglês, ucraniano, alemão, francês, espanhol, italiano, polaco e neerlandês. Escolha um idioma só para o Encly em Configurações → Idioma.
+• 10 idiomas: português, inglês, ucraniano, alemão, francês, espanhol, italiano, polaco, neerlandês e árabe. Escolha um idioma só para o Encly em Configurações → Idioma.
 
 Encly: notas encriptadas que continuam a ser suas.
 

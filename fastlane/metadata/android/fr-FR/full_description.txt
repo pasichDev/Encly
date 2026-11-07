@@ -26,7 +26,7 @@ UN BLOC-NOTES SÛR ET AGRÉABLE
 OPEN SOURCE
 • Encly est open source (Apache-2.0) : chacun peut vérifier ce qu'elle fait.
 • Fonctionne sans les services Google Play. Android 8.0 ou plus récent.
-• 9 langues : français, anglais, ukrainien, allemand, espagnol, italien, polonais, portugais et néerlandais. Choisissez une langue pour Encly seule dans Paramètres → Langue.
+• 10 langues : français, anglais, ukrainien, allemand, espagnol, italien, polonais, portugais, néerlandais et arabe. Choisissez une langue pour Encly seule dans Paramètres → Langue.
 
 Encly : des notes chiffrées qui restent à vous.
 
