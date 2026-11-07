@@ -50,6 +50,7 @@ private val bundledFonts = listOf(
 private val bundledLibraries = listOf(
     OpenSourceWork("AndroidX and Jetpack Compose", APACHE_2, "https://github.com/androidx/androidx"),
     OpenSourceWork("Kotlin and kotlinx", APACHE_2, "https://github.com/JetBrains/kotlin"),
+    OpenSourceWork("Compose Multiplatform", APACHE_2, "https://github.com/JetBrains/compose-multiplatform"),
     OpenSourceWork("Metro", APACHE_2, "https://github.com/ZacSweers/metro"),
     OpenSourceWork("Sealite", APACHE_2, "https://github.com/pasichDev/sealite"),
     OpenSourceWork("SQLCipher Community Edition", "BSD 3-Clause", "https://github.com/sqlcipher/sqlcipher"),
@@ -63,6 +64,7 @@ private val bundledLibraries = listOf(
     OpenSourceWork("Guava ListenableFuture", APACHE_2, "https://github.com/google/guava"),
     OpenSourceWork("Reorderable", APACHE_2, "https://github.com/Calvin-LL/Reorderable"),
     OpenSourceWork("Lucide", "ISC License", "https://github.com/lucide-icons/lucide"),
+    OpenSourceWork("Compose Icons for Lucide", "MIT License", "https://github.com/composablehorizons/composeicons"),
 )
 
 /** The fonts and libraries Encly is built with, each linking to its licence. */

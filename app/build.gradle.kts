@@ -68,6 +68,9 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = false
+            // The native libraries come stripped from their AARs. Stripping again would depend on whether the build
+            // machine has an NDK, and the APK must be byte for byte the same on F-Droid's server as on CI.
+            keepDebugSymbols += "**/*.so"
         }
         resources {
             excludes += listOf(

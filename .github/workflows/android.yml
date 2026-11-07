@@ -547,14 +547,18 @@ jobs:
         with:
           build-root-directory: first
 
-      # No build cache and no shared daemon: the second build must compute everything again.
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # The release workflow's command, no build cache, no shared daemon, and a Gradle home of its own for the
+      # second build, so it downloads and transforms every dependency again.
       - name: Build twice
         run: |
           set -euo pipefail
-          for dir in first elsewhere/second; do
-            (cd "$dir" && chmod +x ./gradlew && ./gradlew --no-daemon --no-build-cache \
-              --no-configuration-cache :app:assembleFdroidRelease)
-          done
+          (cd first && chmod +x ./gradlew && ./gradlew --no-daemon --no-build-cache --no-configuration-cache \
+            :app:assembleRelease)
+          (cd elsewhere/second && chmod +x ./gradlew && GRADLE_USER_HOME="$RUNNER_TEMP/gradle-home-2" \
+            ./gradlew --no-daemon --no-build-cache --no-configuration-cache :app:assembleRelease)
 
       - name: Compare the APKs
         run: |
