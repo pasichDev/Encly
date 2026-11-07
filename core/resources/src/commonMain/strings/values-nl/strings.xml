@@ -292,6 +292,10 @@
     <string name="sort_created_asc_short">Gemaakt ↑</string>
     <string name="sort_created_desc">Op aanmaakdatum (nieuwste eerst)</string>
     <string name="sort_created_desc_short">Gemaakt ↓</string>
+    <string name="sort_title_asc">Op titel (A tot Z)</string>
+    <string name="sort_title_asc_short">Titel A–Z</string>
+    <string name="sort_title_desc">Op titel (Z tot A)</string>
+    <string name="sort_title_desc_short">Titel Z–A</string>
     <string name="sort_updated_asc">Op laatst bewerkt (oudste eerst)</string>
     <string name="sort_updated_asc_short">Bewerkt ↑</string>
     <string name="sort_updated_desc">Op laatst bewerkt (nieuwste eerst)</string>

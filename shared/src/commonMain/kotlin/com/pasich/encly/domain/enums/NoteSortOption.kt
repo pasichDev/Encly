@@ -5,6 +5,10 @@ import com.pasich.encly.core.resources.sort_created_asc
 import com.pasich.encly.core.resources.sort_created_asc_short
 import com.pasich.encly.core.resources.sort_created_desc
 import com.pasich.encly.core.resources.sort_created_desc_short
+import com.pasich.encly.core.resources.sort_title_asc
+import com.pasich.encly.core.resources.sort_title_asc_short
+import com.pasich.encly.core.resources.sort_title_desc
+import com.pasich.encly.core.resources.sort_title_desc_short
 import com.pasich.encly.core.resources.sort_updated_asc
 import com.pasich.encly.core.resources.sort_updated_asc_short
 import com.pasich.encly.core.resources.sort_updated_desc
@@ -33,6 +37,16 @@ enum class NoteSortOption(val labelRes: StringResource, val shortLabelRes: Strin
         shortLabelRes = Res.string.sort_created_desc_short,
         index = 3,
     ),
+    TITLE_ASC(
+        labelRes = Res.string.sort_title_asc,
+        shortLabelRes = Res.string.sort_title_asc_short,
+        index = 4,
+    ),
+    TITLE_DESC(
+        labelRes = Res.string.sort_title_desc,
+        shortLabelRes = Res.string.sort_title_desc_short,
+        index = 5,
+    ),
     ;
 
     /** Orders notes the way this option names. */
@@ -41,6 +55,34 @@ enum class NoteSortOption(val labelRes: StringResource, val shortLabelRes: Strin
         UPDATED_DESC -> compareByDescending { it.date }
         CREATED_ASC -> compareBy { it.createdOrEdited() }
         CREATED_DESC -> compareByDescending { it.createdOrEdited() }
+        TITLE_ASC -> titleComparator(descending = false)
+        TITLE_DESC -> titleComparator(descending = true)
+    }
+
+    /**
+     * Titles by the language's alphabet, case-insensitive ([titleCollator]); equal titles by the
+     * last edit, newest first. A note without a title (blank) always comes after the titled ones in
+     * both directions, and those are ordered by the last edit, newest first: their text is no title,
+     * and the list has no better stable key for them than the date.
+     */
+    private fun titleComparator(descending: Boolean): Comparator<Note> {
+        val collator = titleCollator()
+        return Comparator { a, b ->
+            val aTitle = a.title.trim()
+            val bTitle = b.title.trim()
+            when {
+                aTitle.isEmpty() && bTitle.isEmpty() -> b.date.compareTo(a.date)
+
+                aTitle.isEmpty() -> 1
+
+                bTitle.isEmpty() -> -1
+
+                else -> {
+                    val byTitle = collator.compare(aTitle, bTitle).let { if (descending) -it else it }
+                    if (byTitle != 0) byTitle else b.date.compareTo(a.date)
+                }
+            }
+        }
     }
 
     /**

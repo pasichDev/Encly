@@ -28,12 +28,14 @@ versionCode 30000.
 - A lock button next to a checklist while you work in it, and lists indented under their heading ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Settings → Security → "Show note previews": when off, the notes list, the grid and search results show only the title, tag and date; search still matches the text inside notes ([#105](https://github.com/pasichDev/Encly/issues/105)).
 - Settings → Security → "Allow screenshots until the app locks": after your PIN or biometrics and a warning, screenshots and screen recording are allowed until Encly locks. The lock, PIN and recovery phrase screens stay protected, and the setting is never stored ([#94](https://github.com/pasichDev/Encly/issues/94)).
+- Sort notes by title, A to Z or Z to A, in the language's alphabetical order.
 - Auto-lock after 5 or 10 minutes ([#98](https://github.com/pasichDev/Encly/issues/98)).
 - Notes are deleted for good after 28 days in the trash, the same way "Delete forever" does. Notes already in the trash start their 28 days with this update ([#97](https://github.com/pasichDev/Encly/issues/97)).
 - After an update, the first unlock shows what changed in that version, once; Settings → About keeps it ([#105](https://github.com/pasichDev/Encly/issues/105)).
 
 ### Changed
 
+- The unlock animation takes half as long, and is skipped when animations are turned off in the system settings.
 - After you unlock with the recovery phrase, a PIN that still works is no longer replaced: choose "Keep my PIN" or "Set a new PIN". A new PIN is still required when the PIN or its key is lost, or while it is locked out ([#95](https://github.com/pasichDev/Encly/issues/95)).
 - Encly is rebuilt on a Kotlin Multiplatform core ([#92](https://github.com/pasichDev/Encly/pull/92)). The encrypted database now opens through the Sealite driver (SQLCipher 4.20). Vaults, recovery phrases, backups and notes from earlier versions open unchanged.
 - Opening and closing a note is quicker ([#76](https://github.com/pasichDev/Encly/issues/76)).

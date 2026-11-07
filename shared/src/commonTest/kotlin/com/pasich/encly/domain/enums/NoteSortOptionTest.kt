@@ -26,4 +26,46 @@ class NoteSortOptionTest {
         assertEquals(listOf(3L, 1L, 2L), notes.sortedWith(NoteSortOption.UPDATED_ASC.comparator()).map { it.id })
         assertEquals(listOf(2L, 1L, 3L), notes.sortedWith(NoteSortOption.UPDATED_DESC.comparator()).map { it.id })
     }
+
+    @Test
+    fun storedIndexesKeepTheirMeaningAndTheNewOrdersAreAppended() {
+        assertEquals(
+            listOf(
+                NoteSortOption.UPDATED_ASC,
+                NoteSortOption.UPDATED_DESC,
+                NoteSortOption.CREATED_ASC,
+                NoteSortOption.CREATED_DESC,
+                NoteSortOption.TITLE_ASC,
+                NoteSortOption.TITLE_DESC,
+            ),
+            (0..5).map(NoteSortOption::fromIndex),
+        )
+        assertEquals(NoteSortOption.UPDATED_DESC, NoteSortOption.fromIndex(99))
+    }
+
+    private fun titled(id: Long, title: String, date: Long = id) = Note(id = id, title = title, date = date)
+
+    @Test
+    fun titlesSortIgnoringCaseInBothDirections() {
+        val notes = listOf(titled(1, "banana"), titled(2, "Apple"), titled(3, "cherry"), titled(4, "Banana "))
+
+        assertEquals(listOf(2L, 4L, 1L, 3L), notes.sortedWith(NoteSortOption.TITLE_ASC.comparator()).map { it.id })
+        assertEquals(listOf(3L, 4L, 1L, 2L), notes.sortedWith(NoteSortOption.TITLE_DESC.comparator()).map { it.id })
+    }
+
+    @Test
+    fun equalTitlesFallBackToTheNewestEditFirst() {
+        val notes = listOf(titled(1, "Same", date = 10), titled(2, "same", date = 30), titled(3, "SAME", date = 20))
+
+        assertEquals(listOf(2L, 3L, 1L), notes.sortedWith(NoteSortOption.TITLE_ASC.comparator()).map { it.id })
+        assertEquals(listOf(2L, 3L, 1L), notes.sortedWith(NoteSortOption.TITLE_DESC.comparator()).map { it.id })
+    }
+
+    @Test
+    fun untitledNotesComeAfterTheTitledOnesWhicheverWayAndKeepTheirEditOrder() {
+        val notes = listOf(titled(1, "", date = 10), titled(2, "Zed"), titled(3, "   ", date = 50), titled(4, "Alpha"))
+
+        assertEquals(listOf(4L, 2L, 3L, 1L), notes.sortedWith(NoteSortOption.TITLE_ASC.comparator()).map { it.id })
+        assertEquals(listOf(2L, 4L, 3L, 1L), notes.sortedWith(NoteSortOption.TITLE_DESC.comparator()).map { it.id })
+    }
 }

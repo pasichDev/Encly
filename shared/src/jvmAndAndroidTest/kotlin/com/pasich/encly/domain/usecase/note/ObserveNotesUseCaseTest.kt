@@ -77,6 +77,22 @@ class ObserveNotesUseCaseTest {
     }
 
     @Test
+    fun titleOrdersKeepPinnedFirstAndPutUntitledNotesLast() = runTest {
+        val repository = TestNotesRepository().apply {
+            allNotesWithTags.value = listOf(
+                noteWithTag(id = 1, date = 10, title = "beta"),
+                noteWithTag(id = 2, date = 30, title = ""),
+                noteWithTag(id = 3, date = 20, title = "Zulu", pinned = true),
+                noteWithTag(id = 4, date = 5, title = "alpha"),
+                noteWithTag(id = 5, date = 6, title = "Yankee", pinned = true),
+            )
+        }
+
+        assertEquals(listOf(5L, 3L, 4L, 1L, 2L), loaded(repository, NoteSortOption.TITLE_ASC).map { it.note.id })
+        assertEquals(listOf(3L, 5L, 1L, 4L, 2L), loaded(repository, NoteSortOption.TITLE_DESC).map { it.note.id })
+    }
+
+    @Test
     fun theArchiveIsReadFromItsOwnQueryAndLeavesOutHiddenTags() = runTest {
         val hidden = Tag(id = 1, nameTag = "Private", isVisible = false)
         val repository = TestNotesRepository().apply {
@@ -154,17 +170,23 @@ class ObserveNotesUseCaseTest {
     private suspend fun TestScope.loaded(repository: NotesRepository, sortOption: NoteSortOption): List<NoteListItem> =
         ObserveNotesUseCase(repository, StandardTestDispatcher(testScheduler))(null, sortOption).first()
 
-    private fun noteWithTag(id: Long, date: Long, tag: Tag? = null, value: String = "", pinned: Boolean = false) =
-        NoteWithTag(
-            note = Note(
-                id = id,
-                title = "n$id",
-                value = value,
-                date = date,
-                dateCreate = date,
-                tagId = tag?.id,
-                isPinned = pinned,
-            ),
-            tag = tag,
-        )
+    private fun noteWithTag(
+        id: Long,
+        date: Long,
+        tag: Tag? = null,
+        value: String = "",
+        pinned: Boolean = false,
+        title: String = "n$id",
+    ) = NoteWithTag(
+        note = Note(
+            id = id,
+            title = title,
+            value = value,
+            date = date,
+            dateCreate = date,
+            tagId = tag?.id,
+            isPinned = pinned,
+        ),
+        tag = tag,
+    )
 }

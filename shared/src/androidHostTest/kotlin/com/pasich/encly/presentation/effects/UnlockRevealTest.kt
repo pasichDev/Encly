@@ -1,5 +1,7 @@
 package com.pasich.encly.presentation.effects
 
+import android.provider.Settings
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.geometry.Rect
 import com.pasich.encly.ui.screens.ComposeScreenTest
 import org.junit.Assert.assertEquals
@@ -152,5 +154,62 @@ class UnlockRevealTest : ComposeScreenTest() {
 
         assertEquals(0, covered)
         assertFalse(state.running)
+    }
+
+    // One frame of the test clock; the budgets below are what a user waits behind the colour.
+    private val frameMs = 16L
+
+    /** Starts the reveal on the paused clock and gives the overlay its first frames to compose and launch. */
+    private fun startAndLetItBegin() {
+        rule.runOnIdle { state.start { covered++ } }
+        // The paused clock does not idle the looper that delivers the state change to the composition.
+        Snapshot.sendApplyNotifications()
+        repeat(3) { rule.mainClock.advanceTimeByFrame() }
+    }
+
+    @Test
+    fun theFullRevealIsOverWithinHalfASecond() {
+        state.logoBounds = logo
+        setScreen { UnlockRevealOverlay(state) }
+        rule.mainClock.autoAdvance = false
+
+        startAndLetItBegin()
+        rule.mainClock.advanceTimeBy(UNLOCK_GROW_MS + frameMs * (SETTLE_FRAMES + 2))
+        assertEquals("the list is out of sight once the colour has grown", 1, covered)
+        assertTrue("the push is still playing", state.running)
+
+        rule.mainClock.advanceTimeBy(UNLOCK_PUSH_MS + frameMs)
+        assertFalse(state.running)
+        assertTrue(UNLOCK_GROW_MS + SETTLE_FRAMES * frameMs + UNLOCK_PUSH_MS <= 500)
+    }
+
+    @Test
+    fun theLaterRevealIsShorterStill() {
+        state.logoBounds = logo
+        setScreen { UnlockRevealOverlay(state) }
+        rule.runOnIdle { state.start {} }
+        waitFor { !state.running }
+        rule.mainClock.autoAdvance = false
+
+        startAndLetItBegin()
+        rule.mainClock.advanceTimeBy(QUICK_OUT_MS + QUICK_IN_MS + frameMs * (SETTLE_FRAMES + 3))
+
+        assertEquals(1, covered)
+        assertFalse(state.running)
+    }
+
+    @Test
+    fun withAnimationsOffTheLockScreenIsLeftAtOnceWithoutAnyColour() {
+        Settings.Global.putFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
+        state.logoBounds = logo
+        setScreen { UnlockRevealOverlay(state) }
+        rule.mainClock.autoAdvance = false
+
+        startAndLetItBegin()
+        rule.mainClock.advanceTimeBy(frameMs * 2)
+
+        assertEquals(1, covered)
+        assertFalse(state.running)
+        assertEquals(0f, state.contentOffset, 0f)
     }
 }

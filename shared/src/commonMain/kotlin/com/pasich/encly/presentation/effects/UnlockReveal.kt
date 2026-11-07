@@ -28,19 +28,19 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import com.pasich.encly.shared.resources.Res
 import com.pasich.encly.shared.resources.ic_launcher_foreground
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.hypot
 import kotlin.math.max
 
-/** The tile grows until the window is the logo's colour... */
-private const val UNLOCK_GROW_MS = 300
+/**
+ * The tile grows until the window is the logo's colour... Grow, the frames that follow and the push add up to
+ * about 0.5 s, so the colour never reads as a green screen the user waits behind. There is no fixed pause
+ * under the cover: the list is rendered by its own skeleton while its notes load, so it can already move.
+ */
+internal const val UNLOCK_GROW_MS = 200
 
 /** ...then the notes list slides in from the end side (the right, left to right) and pushes that colour out. */
-private const val UNLOCK_PUSH_MS = 520
-
-/** How long the list rests under the cover first, so its data and first layout land before it moves. */
-private const val SETTLE_MS = 120L
+internal const val UNLOCK_PUSH_MS = 250
 
 /** The glyph is gone by this share of the growth. */
 private const val GLYPH_OUT = 0.25f
@@ -55,11 +55,11 @@ private val UnlockEasing = CubicBezierEasing(a = 0.3f, b = 0f, c = 0.2f, d = 1f)
 private val PushEasing = CubicBezierEasing(a = 0.05f, b = 0.7f, c = 0.1f, d = 1f)
 
 /** The short reveal: the lock screen fades out, then the app fades in. */
-private const val QUICK_OUT_MS = 120
-private const val QUICK_IN_MS = 200
+internal const val QUICK_OUT_MS = 100
+internal const val QUICK_IN_MS = 160
 
 /** Frames the first screen gets to compose and draw under the cover before it starts to rise. */
-private const val SETTLE_FRAMES = 3
+internal const val SETTLE_FRAMES = 3
 
 /** The lock screen has faded under the backdrop by this share of the growth. */
 private const val LOCK_OUT = 0.4f
@@ -141,27 +141,42 @@ fun UnlockRevealState?.revealThen(leave: () -> Unit) {
  * The unlock reveal, drawn above the NavHost as one continuous move. The logo tile grows from its
  * place while the lock screen fades under a `surface` backdrop, until the window is `primary`.
  * Only then does the app leave the lock screen ([UnlockRevealState.start]), so the notes list
- * composes behind the colour; after a short rest it slides in from the right
+ * composes behind the colour; after a few frames it slides in from the right
  * ([UnlockRevealState.contentOffset], applied by App) and pushes the colour out the left. It
  * swallows touches while it plays, so the lock screen's keypad can't be tapped on the way out.
  */
 @Composable
 fun UnlockRevealOverlay(state: UnlockRevealState, modifier: Modifier = Modifier) {
     val bounds = state.logoBounds
-    if (!state.running || bounds == null) return
+    val animationsOff = rememberAnimationsOff()
+    when {
+        !state.running || bounds == null -> Unit
+        animationsOff -> LeaveAtOnce(state)
+        !state.full -> QuickUnlockFade(state, modifier)
+        else -> FullUnlockReveal(state, bounds, modifier)
+    }
+}
+
+/** The system asks for no animation: leave the lock screen at once, no colour, no slide. */
+@Composable
+private fun LeaveAtOnce(state: UnlockRevealState) {
+    LaunchedEffect(Unit) {
+        state.cover()
+        state.push(1f)
+        state.finish()
+    }
+}
+
+@Composable
+private fun FullUnlockReveal(state: UnlockRevealState, bounds: Rect, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val glyph = painterResource(Res.drawable.ic_launcher_foreground)
     val grow = remember { Animatable(0f) }
     val push = remember { Animatable(0f) }
-    if (!state.full) {
-        QuickUnlockFade(state, modifier)
-        return
-    }
     LaunchedEffect(Unit) {
         grow.animateTo(1f, tween(UNLOCK_GROW_MS, easing = UnlockEasing))
         state.cover()
         repeat(SETTLE_FRAMES) { withFrameNanos { } }
-        delay(SETTLE_MS)
         push.animateTo(1f, tween(UNLOCK_PUSH_MS, easing = PushEasing)) { state.push(value) }
         state.finish()
     }

@@ -35,7 +35,14 @@ public object BackupSettings {
     public val THEME_PALETTES: List<String> = listOf("PAPER", "FOREST", "OCEAN", "GRAPHITE", "MIDNIGHT")
     public val FONT_STYLES: List<String> = listOf("MODERN_SIMPLE", "COZY_EDITOR", "TECH_MINIMAL")
     public val LINE_SPACINGS: List<String> = listOf("DEFAULT", "COMPACT", "COMFORTABLE")
-    public val SORT_OPTIONS: List<String> = listOf("UPDATED_ASC", "UPDATED_DESC", "CREATED_ASC", "CREATED_DESC")
+    public val SORT_OPTIONS: List<String> = listOf(
+        "UPDATED_ASC",
+        "UPDATED_DESC",
+        "CREATED_ASC",
+        "CREATED_DESC",
+        "TITLE_ASC",
+        "TITLE_DESC",
+    )
     public val SWIPE_ACTIONS: List<String> = listOf("PIN", "ARCHIVE", "NEXT_COLOR", "DELETE", "NONE")
     public val LANGUAGES: List<String> = listOf(
         "SYSTEM",

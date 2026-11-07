@@ -309,6 +309,10 @@
     <string name="sort_created_asc_short">Created ↑</string>
     <string name="sort_created_desc">By creation date (newest first)</string>
     <string name="sort_created_desc_short">Created ↓</string>
+    <string name="sort_title_asc">By title (A to Z)</string>
+    <string name="sort_title_asc_short">Title A–Z</string>
+    <string name="sort_title_desc">By title (Z to A)</string>
+    <string name="sort_title_desc_short">Title Z–A</string>
     <string name="sort_updated_asc">By last edited (oldest first)</string>
     <string name="sort_updated_asc_short">Edited ↑</string>
     <string name="sort_updated_desc">By last edited (newest first)</string>

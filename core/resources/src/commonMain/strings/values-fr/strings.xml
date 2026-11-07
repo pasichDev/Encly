@@ -292,6 +292,10 @@
     <string name="sort_created_asc_short">Créée ↑</string>
     <string name="sort_created_desc">Par date de création (plus récentes d\'abord)</string>
     <string name="sort_created_desc_short">Créée ↓</string>
+    <string name="sort_title_asc">Par titre (A à Z)</string>
+    <string name="sort_title_asc_short">Titre A–Z</string>
+    <string name="sort_title_desc">Par titre (Z à A)</string>
+    <string name="sort_title_desc_short">Titre Z–A</string>
     <string name="sort_updated_asc">Par dernière modification (plus anciennes d\'abord)</string>
     <string name="sort_updated_asc_short">Modifiée ↑</string>
     <string name="sort_updated_desc">Par dernière modification (plus récentes d\'abord)</string>

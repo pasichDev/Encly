@@ -269,6 +269,10 @@
     <string name="sort_created_asc_short">الإنشاء ↑</string>
     <string name="sort_created_desc">حسب تاريخ الإنشاء (الأحدث أولًا)</string>
     <string name="sort_created_desc_short">الإنشاء ↓</string>
+    <string name="sort_title_asc">حسب العنوان (أ إلى ي)</string>
+    <string name="sort_title_asc_short">العنوان أ–ي</string>
+    <string name="sort_title_desc">حسب العنوان (ي إلى أ)</string>
+    <string name="sort_title_desc_short">العنوان ي–أ</string>
     <string name="sort_updated_asc">حسب آخر تعديل (الأقدم أولًا)</string>
     <string name="sort_updated_asc_short">التعديل ↑</string>
     <string name="sort_updated_desc">حسب آخر تعديل (الأحدث أولًا)</string>

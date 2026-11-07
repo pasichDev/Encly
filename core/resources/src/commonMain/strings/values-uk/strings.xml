@@ -292,6 +292,10 @@
     <string name="sort_created_asc_short">Ств ↑</string>
     <string name="sort_created_desc">За датою створення (спадання)</string>
     <string name="sort_created_desc_short">Ств ↓</string>
+    <string name="sort_title_asc">За назвою (А–Я)</string>
+    <string name="sort_title_asc_short">Назва А–Я</string>
+    <string name="sort_title_desc">За назвою (Я–А)</string>
+    <string name="sort_title_desc_short">Назва Я–А</string>
     <string name="sort_updated_asc">За датою редагування (зростання)</string>
     <string name="sort_updated_asc_short">Ред ↑</string>
     <string name="sort_updated_desc">За датою редагування (спадання)</string>
