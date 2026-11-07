@@ -1,9 +1,0 @@
-Encly 2.4.0
-• O desbloqueio por impressão digital volta a funcionar após bloqueio em segundo plano.
-• As notas novas mantêm a data de criação.
-• Novo: ocultar o texto das notas nas listas (Configurações → Segurança).
-• Novo: permitir capturas de ecrã até a app bloquear.
-• Bloqueio após 5 ou 10 minutos.
-• O lixo esvazia-se após 28 dias.
-• A pesquisa desloca até cada resultado; as notas abrem mais depressa.
-• Novo núcleo; o seu cofre fica igual.

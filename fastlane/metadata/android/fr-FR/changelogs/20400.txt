@@ -1,9 +1,0 @@
-Encly 2.4.0
-• Le déverrouillage par empreinte refonctionne après un verrouillage en arrière-plan.
-• Les nouvelles notes gardent leur date de création.
-• Nouveau : masquer le texte des notes dans les listes (Paramètres → Sécurité).
-• Nouveau : autoriser les captures jusqu'au verrouillage.
-• Verrouillage après 5 ou 10 minutes.
-• La corbeille se vide après 28 jours.
-• La recherche défile vers chaque résultat ; notes plus rapides à ouvrir.
-• Nouveau moteur ; votre coffre reste intact.

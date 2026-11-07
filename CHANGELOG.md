@@ -11,10 +11,13 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-07
+
+versionCode 30000.
+
 ### Added
 
 - Choose the length of your PIN: 6 to 12 digits, for the PIN, the wipe PIN and the duress PIN. PINs you already have keep working unchanged. The lock screen no longer sends the PIN by itself or shows how long it is: press Unlock when you have typed it ([#95](https://github.com/pasichDev/Encly/issues/95)).
-
 - Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
 - Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
 - Arabic, and right-to-left layouts in every screen; each paragraph and list item of a note follows the direction of its own text ([#105](https://github.com/pasichDev/Encly/issues/105)).
@@ -23,17 +26,6 @@ IzzyOnDroid) and used as the GitHub Release notes.
 - Nested lists up to three levels (Tab and Shift+Tab), and list items that can be dragged into place ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Tables, code blocks, and a toolbar you can arrange yourself in Settings → Appearance ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - A lock button next to a checklist while you work in it, and lists indented under their heading ([#76](https://github.com/pasichDev/Encly/issues/76)).
-
-### Changed
-
-- After you unlock with the recovery phrase, a PIN that still works is no longer replaced: choose "Keep my PIN" or "Set a new PIN". A new PIN is still required when the PIN or its key is lost, or while it is locked out ([#95](https://github.com/pasichDev/Encly/issues/95)).
-
-## [2.4.0] - 2026-11-07
-
-versionCode 20400.
-
-### Added
-
 - Settings → Security → "Show note previews": when off, the notes list, the grid and search results show only the title, tag and date; search still matches the text inside notes ([#105](https://github.com/pasichDev/Encly/issues/105)).
 - Settings → Security → "Allow screenshots until the app locks": after your PIN or biometrics and a warning, screenshots and screen recording are allowed until Encly locks. The lock, PIN and recovery phrase screens stay protected, and the setting is never stored ([#94](https://github.com/pasichDev/Encly/issues/94)).
 - Auto-lock after 5 or 10 minutes ([#98](https://github.com/pasichDev/Encly/issues/98)).
@@ -42,6 +34,7 @@ versionCode 20400.
 
 ### Changed
 
+- After you unlock with the recovery phrase, a PIN that still works is no longer replaced: choose "Keep my PIN" or "Set a new PIN". A new PIN is still required when the PIN or its key is lost, or while it is locked out ([#95](https://github.com/pasichDev/Encly/issues/95)).
 - Encly is rebuilt on a Kotlin Multiplatform core ([#92](https://github.com/pasichDev/Encly/pull/92)). The encrypted database now opens through the Sealite driver (SQLCipher 4.20). Vaults, recovery phrases, backups and notes from earlier versions open unchanged.
 - Opening and closing a note is quicker ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Find in note highlights matches more strongly ([#76](https://github.com/pasichDev/Encly/issues/76)).

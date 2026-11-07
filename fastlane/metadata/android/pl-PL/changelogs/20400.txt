@@ -1,9 +1,0 @@
-Encly 2.4.0
-• Odblokowanie odciskiem znów działa po blokadzie w tle.
-• Nowe notatki zachowują datę utworzenia.
-• Nowość: ukryj tekst notatek na listach (Ustawienia → Bezpieczeństwo).
-• Nowość: zezwól na zrzuty ekranu do blokady.
-• Blokada po 5 lub 10 minutach.
-• Kosz opróżnia się sam po 28 dniach.
-• Wyszukiwanie przewija do każdego wyniku; notatki otwierają się szybciej.
-• Nowy rdzeń; twój sejf pozostaje bez zmian.

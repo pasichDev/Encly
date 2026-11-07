@@ -1,9 +1,0 @@
-Encly 2.4.0
-• Fingerprint unlock works again after Encly locks in the background.
-• New notes keep their creation date.
-• New: hide note text in lists (Settings → Security).
-• New: allow screenshots until the app locks.
-• Auto-lock after 5 or 10 minutes.
-• The trash empties itself after 28 days.
-• Find in note scrolls to each match; holding delete runs through lists; notes open faster.
-• Rebuilt on a new core; your vault stays as it is.
