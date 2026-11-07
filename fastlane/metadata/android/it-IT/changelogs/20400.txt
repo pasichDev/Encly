@@ -1,0 +1,9 @@
+Encly 2.4.0
+• Lo sblocco con impronta funziona di nuovo dopo il blocco in background.
+• Le nuove note mantengono la data di creazione.
+• Novità: nascondi il testo delle note negli elenchi (Impostazioni → Sicurezza).
+• Novità: consenti gli screenshot fino al blocco.
+• Blocco dopo 5 o 10 minuti.
+• Il cestino si svuota da solo dopo 28 giorni.
+• La ricerca scorre a ogni risultato; le note si aprono più in fretta.
+• Nuovo motore; la tua cassaforte resta com'è.

@@ -1,0 +1,9 @@
+Encly 2.4.0
+• Fingerabdruck-Entsperrung klappt wieder nach Sperre im Hintergrund.
+• Neue Notizen behalten ihr Erstelldatum.
+• Neu: Notiztext in Listen ausblenden (Einstellungen → Sicherheit).
+• Neu: Screenshots erlauben, bis die App sperrt.
+• Automatische Sperre nach 5 oder 10 Minuten.
+• Der Papierkorb leert sich nach 28 Tagen.
+• Suche scrollt zu jedem Treffer; Löschen läuft durch Listen; Notizen öffnen schneller.
+• Neuer Kern; dein Tresor bleibt unverändert.

@@ -1,0 +1,9 @@
+Encly 2.4.0
+• El desbloqueo con huella vuelve a funcionar tras el bloqueo en segundo plano.
+• Las notas nuevas conservan su fecha de creación.
+• Nuevo: ocultar el texto de las notas en las listas (Ajustes → Seguridad).
+• Nuevo: permitir capturas hasta que la app se bloquee.
+• Bloqueo tras 5 o 10 minutos.
+• La papelera se vacía sola a los 28 días.
+• Buscar desplaza a cada resultado; las notas abren más rápido.
+• Nuevo núcleo; tu bóveda sigue igual.

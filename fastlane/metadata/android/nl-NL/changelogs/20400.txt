@@ -1,0 +1,9 @@
+Encly 2.4.0
+• Ontgrendelen met vingerafdruk werkt weer na vergrendeling op de achtergrond.
+• Nieuwe notities houden hun aanmaakdatum.
+• Nieuw: notitietekst in lijsten verbergen (Instellingen → Beveiliging).
+• Nieuw: screenshots toestaan tot de app vergrendelt.
+• Vergrendelen na 5 of 10 minuten.
+• De prullenbak leegt zichzelf na 28 dagen.
+• Zoeken scrolt naar elke treffer; notities openen sneller.
+• Nieuwe basis; je kluis blijft zoals hij is.

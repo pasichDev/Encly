@@ -11,6 +11,33 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-07
+
+versionCode 20400.
+
+### Added
+
+- Settings → Security → "Show note previews": when off, the notes list, the grid and search results show only the title, tag and date; search still matches the text inside notes ([#105](https://github.com/pasichDev/Encly/issues/105)).
+- Settings → Security → "Allow screenshots until the app locks": after your PIN or biometrics and a warning, screenshots and screen recording are allowed until Encly locks. The lock, PIN and recovery phrase screens stay protected, and the setting is never stored ([#94](https://github.com/pasichDev/Encly/issues/94)).
+- Auto-lock after 5 or 10 minutes ([#98](https://github.com/pasichDev/Encly/issues/98)).
+- Notes are deleted for good after 28 days in the trash, the same way "Delete forever" does. Notes already in the trash start their 28 days with this update ([#97](https://github.com/pasichDev/Encly/issues/97)).
+- After an update, the first unlock shows what changed in that version, once; Settings → About keeps it ([#105](https://github.com/pasichDev/Encly/issues/105)).
+
+### Changed
+
+- Encly is rebuilt on a Kotlin Multiplatform core ([#92](https://github.com/pasichDev/Encly/pull/92)). The encrypted database now opens through the Sealite driver (SQLCipher 4.20). Vaults, recovery phrases, backups and notes from earlier versions open unchanged.
+- Opening and closing a note is quicker ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Find in note highlights matches more strongly ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Backspace at the start of a list item joins it into the item above, so holding delete runs through a list without stopping ([#76](https://github.com/pasichDev/Encly/issues/76)).
+
+### Fixed
+
+- Fingerprint unlock did not start, and its button did nothing, after Encly locked itself in the background ([#104](https://github.com/pasichDev/Encly/issues/104)).
+- A new note lost its creation date at the first autosave. Notes that already lost it now sort by their last edit ([#103](https://github.com/pasichDev/Encly/issues/103)).
+- Stepping through matches in Find in note now scrolls to each match, also inside long paragraphs and lists ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Scrolling over a list no longer leaves its toolbar button active ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- The gap below a quote matches the gap above it ([#76](https://github.com/pasichDev/Encly/issues/76)).
+
 ## [2.3.1] - 2026-10-27
 
 versionCode 20301.
