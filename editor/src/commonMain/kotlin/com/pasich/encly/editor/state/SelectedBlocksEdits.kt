@@ -39,7 +39,7 @@ public fun BlockEditorState.pickedPlainText(): String = pickedBlocks.picked().pl
 
 /**
  * [this] list of blocks as plain text: one paragraph per block, a blank line between blocks, and
- * lists one item to a line with a plain marker ("- ", "1. ", "[ ] " or "[x] "). Blocks with no
+ * lists one item to a line with a plain marker ("- ", "1. ", `[ ] ` or `[x] `). Blocks with no
  * content are left out. Markdown, for a host that wants it, is the host's own renderer.
  */
 public fun List<Block>.plainText(): String = filter { it.hasContent() }.joinToString("\n\n") { it.plainLines() }

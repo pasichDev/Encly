@@ -13,7 +13,7 @@ import com.pasich.encly.editor.model.withSiblingsOfKind
 // each operation is one undo step. The cursor stays in the item when its field has it. A locked checklist takes
 // none of them: its text and its structure stay as they are until it is unlocked.
 
-/** The list [listId] and its items with valid levels, and the position of [itemId] in them. */
+/** The list `listId` and its items with valid levels, and the position of `itemId` in them. */
 private class ListRows(val index: Int, val list: Block.ListBlock, val rows: List<ItemListBlock>, val at: Int)
 
 private fun BlockEditorState.rowsOf(listId: String, itemId: String): ListRows? {
