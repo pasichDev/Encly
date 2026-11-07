@@ -33,6 +33,7 @@ public final class com/pasich/encly/editor/EditorString : java/lang/Enum {
 	public static final field BLOCK_MOVE_DOWN Lcom/pasich/encly/editor/EditorString;
 	public static final field BLOCK_MOVE_UP Lcom/pasich/encly/editor/EditorString;
 	public static final field BLOCK_NUMBERED_LIST Lcom/pasich/encly/editor/EditorString;
+	public static final field BLOCK_SELECT Lcom/pasich/encly/editor/EditorString;
 	public static final field BLOCK_SEPARATOR Lcom/pasich/encly/editor/EditorString;
 	public static final field CHECKLIST_LOCK Lcom/pasich/encly/editor/EditorString;
 	public static final field CHECKLIST_UNLOCK Lcom/pasich/encly/editor/EditorString;
@@ -47,6 +48,12 @@ public final class com/pasich/encly/editor/EditorString : java/lang/Enum {
 	public static final field MORE_OPTIONS Lcom/pasich/encly/editor/EditorString;
 	public static final field PRESS_TO_EDIT Lcom/pasich/encly/editor/EditorString;
 	public static final field QUOTE Lcom/pasich/encly/editor/EditorString;
+	public static final field SELECTION_CLOSE Lcom/pasich/encly/editor/EditorString;
+	public static final field SELECTION_COPY Lcom/pasich/encly/editor/EditorString;
+	public static final field SELECTION_COPY_MARKDOWN Lcom/pasich/encly/editor/EditorString;
+	public static final field SELECTION_COUNT Lcom/pasich/encly/editor/EditorString;
+	public static final field SELECTION_CUT Lcom/pasich/encly/editor/EditorString;
+	public static final field SELECTION_DELETE Lcom/pasich/encly/editor/EditorString;
 	public static final field SLASH_MENU_TITLE Lcom/pasich/encly/editor/EditorString;
 	public static final field TAP_AGAIN_TO_DELETE Lcom/pasich/encly/editor/EditorString;
 	public static final field TEMPLATE_ACTION_ITEMS Lcom/pasich/encly/editor/EditorString;
@@ -73,6 +80,7 @@ public final class com/pasich/encly/editor/EditorString : java/lang/Enum {
 
 public abstract interface class com/pasich/encly/editor/EditorStrings {
 	public abstract fun heading (I)Ljava/lang/String;
+	public abstract fun selectionCount (I)Ljava/lang/String;
 	public abstract fun text (Lcom/pasich/encly/editor/EditorString;)Ljava/lang/String;
 }
 
@@ -337,8 +345,10 @@ public final class com/pasich/encly/editor/state/BlockEditorState {
 	public final fun getContentChanges ()Lkotlinx/coroutines/flow/Flow;
 	public final fun getFind ()Lcom/pasich/encly/editor/state/NoteFind;
 	public final fun getMarkdown ()Lcom/pasich/encly/editor/MarkdownBlockParser;
+	public final fun getPickedBlocks ()Lcom/pasich/encly/editor/state/SelectedBlocks;
 	public final fun getSelection ()Lcom/pasich/encly/editor/state/BlockSelection;
 	public final fun getSlash ()Lcom/pasich/encly/editor/state/SlashPicker;
+	public final fun getTextRange ()Lcom/pasich/encly/editor/state/TextRangeSelection;
 	public final fun load (Ljava/util/List;)V
 	public final fun redo ()V
 	public final fun removeBlock (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;Z)V
@@ -458,6 +468,22 @@ public final class com/pasich/encly/editor/state/FocusRequest {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/pasich/encly/editor/state/HeadMove : java/lang/Enum {
+	public static final field DOWN Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field FIELD_END Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field FIELD_START Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field NEXT Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field NOTE_END Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field NOTE_START Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field PAGE_DOWN Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field PAGE_UP Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field PREVIOUS Lcom/pasich/encly/editor/state/HeadMove;
+	public static final field UP Lcom/pasich/encly/editor/state/HeadMove;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/editor/state/HeadMove;
+	public static fun values ()[Lcom/pasich/encly/editor/state/HeadMove;
+}
+
 public final class com/pasich/encly/editor/state/LineBreak {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
@@ -510,6 +536,26 @@ public final class com/pasich/encly/editor/state/NoteTemplatesKt {
 	public static final fun applyTemplate (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/util/List;)Z
 	public static final fun blocks (Lcom/pasich/encly/editor/state/NoteTemplate;Lkotlin/jvm/functions/Function1;)Ljava/util/List;
 	public static final fun isBlankNote (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
+}
+
+public final class com/pasich/encly/editor/state/SelectedBlocks {
+	public static final field $stable I
+	public fun <init> (Ljava/util/List;)V
+	public final fun clear ()V
+	public final fun extend (Z)V
+	public final fun getCount ()I
+	public final fun getIds ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun isActive ()Z
+	public final fun picked ()Ljava/util/List;
+	public final fun select (Ljava/lang/String;)V
+	public final fun selectAll ()V
+	public final fun toggle (Ljava/lang/String;)V
+}
+
+public final class com/pasich/encly/editor/state/SelectedBlocksEditsKt {
+	public static final fun deleteSelectedBlocks (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
+	public static final fun pickedPlainText (Lcom/pasich/encly/editor/state/BlockEditorState;)Ljava/lang/String;
+	public static final fun plainText (Ljava/util/List;)Ljava/lang/String;
 }
 
 public final class com/pasich/encly/editor/state/Shortcut {
@@ -642,6 +688,60 @@ public final class com/pasich/encly/editor/state/TextEditsKt {
 	public static synthetic fun textDiff$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/pasich/encly/editor/state/TextDiff;
 }
 
+public final class com/pasich/encly/editor/state/TextPoint {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;ILjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;)Lcom/pasich/encly/editor/state/TextPoint;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/TextPoint;Ljava/lang/String;ILjava/lang/String;ILjava/lang/Object;)Lcom/pasich/encly/editor/state/TextPoint;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlockId ()Ljava/lang/String;
+	public final fun getItemId ()Ljava/lang/String;
+	public final fun getOffset ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/TextRangeEnds {
+	public static final field $stable I
+	public fun <init> (Lcom/pasich/encly/editor/state/TextPoint;Lcom/pasich/encly/editor/state/TextPoint;)V
+	public final fun component1 ()Lcom/pasich/encly/editor/state/TextPoint;
+	public final fun component2 ()Lcom/pasich/encly/editor/state/TextPoint;
+	public final fun copy (Lcom/pasich/encly/editor/state/TextPoint;Lcom/pasich/encly/editor/state/TextPoint;)Lcom/pasich/encly/editor/state/TextRangeEnds;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/TextRangeEnds;Lcom/pasich/encly/editor/state/TextPoint;Lcom/pasich/encly/editor/state/TextPoint;ILjava/lang/Object;)Lcom/pasich/encly/editor/state/TextRangeEnds;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnchor ()Lcom/pasich/encly/editor/state/TextPoint;
+	public final fun getHead ()Lcom/pasich/encly/editor/state/TextPoint;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/editor/state/TextRangeSelection {
+	public static final field $stable I
+	public fun <init> (Ljava/util/List;)V
+	public final fun blockCount ()I
+	public final fun clear ()V
+	public final fun coverOf (Ljava/lang/String;Ljava/lang/String;I)Lkotlin/Pair;
+	public final fun extend (Lcom/pasich/encly/editor/state/HeadMove;Lcom/pasich/encly/editor/state/TextPoint;Lcom/pasich/encly/editor/state/TextPoint;Z)Z
+	public final fun extendTo (Lcom/pasich/encly/editor/state/TextPoint;)V
+	public final fun getEnds ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun isActive ()Z
+	public final fun isCrossField ()Z
+	public final fun moveHead (Lcom/pasich/encly/editor/state/HeadMove;)V
+	public final fun orderedPoints ()Lkotlin/Pair;
+	public final fun select (Lcom/pasich/encly/editor/state/TextPoint;Lcom/pasich/encly/editor/state/TextPoint;)V
+	public final fun selectAll ()V
+}
+
+public final class com/pasich/encly/editor/state/TextRangeSelectionKt {
+	public static final fun replaceTextRange (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;)Z
+	public static final fun textRangeBlocks (Lcom/pasich/encly/editor/state/BlockEditorState;)Ljava/util/List;
+	public static final fun textRangePlainText (Lcom/pasich/encly/editor/state/BlockEditorState;)Ljava/lang/String;
+}
+
 public final class com/pasich/encly/editor/state/TypingKind : java/lang/Enum {
 	public static final field DELETE Lcom/pasich/encly/editor/state/TypingKind;
 	public static final field INSERT Lcom/pasich/encly/editor/state/TypingKind;
@@ -712,8 +812,8 @@ public final class com/pasich/encly/editor/theme/EditorFontSizes {
 public final class com/pasich/encly/editor/theme/EditorIcons {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;)V
-	public synthetic fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;)V
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class com/pasich/encly/editor/theme/EditorLineSpacing : java/lang/Enum {
@@ -830,10 +930,15 @@ public abstract interface class com/pasich/encly/editor/ui/EditorController {
 	public abstract fun addBlockAfter (ILcom/pasich/encly/editor/model/BlockType;)V
 	public abstract fun addBlockToEnd ()V
 	public abstract fun applySlash (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/SlashCommand;)V
+	public abstract fun copyTextRange (Z)Z
+	public abstract fun cutTextRange ()Z
 	public abstract fun duplicateBlock (Lcom/pasich/encly/editor/model/Block;)V
 	public abstract fun editLink (Lcom/pasich/encly/editor/model/Block$LinkBlock;)V
 	public abstract fun getBlocks ()Ljava/util/List;
+	public abstract fun getInteractedBlockId ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun getSelectedBlocks ()Lcom/pasich/encly/editor/state/SelectedBlocks;
 	public abstract fun getSlashPicker ()Lcom/pasich/encly/editor/state/SlashPicker;
+	public abstract fun getTextRange ()Lcom/pasich/encly/editor/state/TextRangeSelection;
 	public abstract fun indexOfBlock (Lcom/pasich/encly/editor/model/Block;)I
 	public abstract fun interactedBlockPosition ()I
 	public abstract fun moveBlock (Z)V
@@ -855,6 +960,8 @@ public abstract interface class com/pasich/encly/editor/ui/EditorController {
 	public abstract fun onSlashTyped (Lcom/pasich/encly/editor/model/Block;Ljava/lang/String;Z)V
 	public abstract fun removeBlock (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;)V
 	public abstract fun replaceBlock (ILcom/pasich/encly/editor/model/Block;)Z
+	public abstract fun replaceTextRange (Ljava/lang/String;)Z
+	public abstract fun selectAllText ()Z
 	public abstract fun toggleChecklistLock (Lcom/pasich/encly/editor/model/Block;)V
 }
 
@@ -864,9 +971,28 @@ public final class com/pasich/encly/editor/ui/FindHighlights {
 	public final fun reveal (Lcom/pasich/encly/editor/state/FindMatch;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/pasich/encly/editor/ui/SelectedBlocksActions {
+	public static final field $stable I
+	public fun <init> (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public final fun getCanEdit ()Z
+	public final fun getOnCopy ()Lkotlin/jvm/functions/Function0;
+	public final fun getOnCopyMarkdown ()Lkotlin/jvm/functions/Function0;
+	public final fun getOnCut ()Lkotlin/jvm/functions/Function0;
+	public final fun getOnDelete ()Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/editor/ui/SelectedBlocksBarKt {
+	public static final fun SelectedBlocksBar (Lcom/pasich/encly/editor/state/SelectedBlocks;Lcom/pasich/encly/editor/ui/SelectedBlocksActions;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TextRangeBar (Lcom/pasich/encly/editor/state/TextRangeSelection;Lcom/pasich/encly/editor/ui/SelectedBlocksActions;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+}
+
 public final class com/pasich/encly/editor/ui/TapBelowBlocksKt {
 	public static final fun rememberWriteAtEnd (Lcom/pasich/encly/editor/ui/EditorController;Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function0;
 	public static final fun tapBelowBlocks (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/lazy/LazyListState;ZLkotlin/jvm/functions/Function0;)Landroidx/compose/ui/Modifier;
+}
+
+public final class com/pasich/encly/editor/ui/TextRangeOverlayKt {
+	public static final fun TextRangeOverlay (Lcom/pasich/encly/editor/ui/EditorBlocksHost;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class com/pasich/encly/editor/ui/blocks/NoteLinkKt {

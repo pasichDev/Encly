@@ -77,8 +77,12 @@ public class BlockSelection(private val blocks: List<Block>) {
     /** The focused block, else the one the user last worked on: where toolbar actions apply. */
     internal val workingIndex: Int get() = focusedIndex.takeIf { it >= 0 } ?: interactedIndex
 
+    // Told whenever a field takes focus: block selection mode ends then (set by the editor state).
+    internal var onFieldFocused: () -> Unit = {}
+
     /** The field of [blockId] took focus. */
     public fun onFocused(blockId: String) {
+        onFieldFocused()
         _focusedBlockId.value = blockId
         onInteraction(blockId)
     }

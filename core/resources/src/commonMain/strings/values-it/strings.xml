@@ -52,6 +52,14 @@
     <string name="block_list">Elenco</string>
     <string name="checklist_lock">Blocca la lista di controllo</string>
     <string name="checklist_unlock">Sblocca la lista di controllo</string>
+    <string name="block_select">Seleziona blocco</string>
+    <string name="selection_count">Blocchi selezionati: %1$d</string>
+    <string name="selection_close">Annulla selezione</string>
+    <string name="selection_copy">Copia</string>
+    <string name="selection_cut">Taglia</string>
+    <string name="selection_delete">Elimina i blocchi selezionati</string>
+    <string name="select_all">Seleziona tutto</string>
+    <string name="selection_copied">Copiato</string>
     <string name="block_move_down">Sposta blocco giù</string>
     <string name="block_move_up">Sposta blocco su</string>
     <string name="block_numbered_list">Elenco numerato</string>

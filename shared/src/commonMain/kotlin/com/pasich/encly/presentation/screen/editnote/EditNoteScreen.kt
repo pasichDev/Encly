@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
@@ -57,6 +58,7 @@ import com.pasich.encly.editor.theme.blockGap
 import com.pasich.encly.editor.theme.isCompact
 import com.pasich.encly.editor.ui.EditorBlocksHost
 import com.pasich.encly.editor.ui.FindHighlights
+import com.pasich.encly.editor.ui.TextRangeOverlay
 import com.pasich.encly.editor.ui.editorBlocks
 import com.pasich.encly.editor.ui.rememberBlockFocusRegistry
 import com.pasich.encly.editor.ui.rememberWriteAtEnd
@@ -159,6 +161,7 @@ fun EditNoteScreen(
     FocusNewNoteTitle(titleFocus)
     BackHandler { exits.back() }
     CloseFindOrSlashOnBack()
+    LeaveBlockSelectionOnBack()
     EditNoteSettingsProvider(
         baseFontSize = fontSize.sp,
         fontStyle = fontStyle,
@@ -184,6 +187,7 @@ fun EditNoteScreen(
             ),
             listState = listState,
             snackbarHostState = snackbarHostState,
+            onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
             modifier = modifier.then(container),
         ) { padding ->
             EditorContent(
@@ -206,11 +210,15 @@ private fun EditorScaffold(
     actions: EditorBarActions,
     listState: LazyListState,
     snackbarHostState: SnackbarHostState,
+    onMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditNoteViewModel = metroViewModel(),
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val lockEditor by viewModel.lockEditor.collectAsState()
+    val picking by viewModel.selectedBlocks.ids.collectAsState()
+    val textRange by viewModel.textRange.ends.collectAsState()
+    val crossBlocks = textRange != null && viewModel.textRange.isCrossField
     val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
     val findOpen by rememberFindOpen()
     val pageColor = rememberPageColor()
@@ -237,7 +245,15 @@ private fun EditorScaffold(
             }
         },
         bottomBar = {
-            if (!lockEditor && !viewModel.isReadTrashOnly) NoteBottomBar(simpleEdit = LocalSimpleEdit.current)
+            when {
+                // Picked blocks have their own bar, also where the note cannot be changed (they can be copied).
+                picking.isNotEmpty() -> EditorSelectionBar(onMessage)
+
+                // A selection that runs across blocks has one too; the fields keep the keyboard, so it sits above it.
+                crossBlocks -> EditorTextRangeBar(onMessage, Modifier.imePadding())
+
+                !lockEditor && !viewModel.isReadTrashOnly -> NoteBottomBar(simpleEdit = LocalSimpleEdit.current)
+            }
         },
         snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         content = content,
@@ -337,6 +353,8 @@ private fun EditorOverlays(
 
                 EditNoteBottomSheetAction.FIND -> viewModel.openFind()
 
+                EditNoteBottomSheetAction.SELECT_ALL -> viewModel.selectAllBlocks()
+
                 EditNoteBottomSheetAction.TRASH -> exits.trash()
 
                 EditNoteBottomSheetAction.EXPORT_MARKDOWN -> exits.exportMarkdown { id ->
@@ -372,6 +390,7 @@ private fun EditorContent(
 ) {
     Box(modifier = modifier) {
         EditorBlocks(host, listState, titleFocus)
+        TextRangeOverlay(host, listState)
         EnclyScrollbar(listState)
     }
 }

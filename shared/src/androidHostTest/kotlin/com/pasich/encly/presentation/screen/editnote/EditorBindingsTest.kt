@@ -9,6 +9,7 @@ import com.pasich.encly.core.resources.block_move_up
 import com.pasich.encly.core.resources.block_separator
 import com.pasich.encly.core.resources.delete_block
 import com.pasich.encly.core.resources.quote
+import com.pasich.encly.core.resources.selection_count
 import com.pasich.encly.core.resources.tap_again_to_delete
 import com.pasich.encly.core.resources.text
 import com.pasich.encly.editor.EditorString
@@ -71,6 +72,13 @@ class EditorBindingsTest {
     fun aHeadingNamesItsLevel() {
         (1..4).forEach { level ->
             assertEquals(runBlocking { getString(Res.string.block_heading_level, level) }, strings.heading(level))
+        }
+    }
+
+    @Test
+    fun theSelectionCountNamesTheNumberOfBlocks() {
+        listOf(1, 7, 42).forEach { count ->
+            assertEquals(runBlocking { getString(Res.string.selection_count, count) }, strings.selectionCount(count))
         }
     }
 }

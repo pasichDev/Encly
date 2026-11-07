@@ -131,4 +131,28 @@ class BlockActionsImplTest {
         assertTrue(a.onShortcut("x", Shortcut(BlockType.QUOTE, "> ")))
         assertFalse(a.onLinkPasted("https://x.org", LinkDataBlock(url = "https://x.org")))
     }
+
+    @Test
+    fun selectAllSelectsTheNotesTextWhereTheControllerOffersItAndOtherwiseLeavesTheKey() {
+        assertTrue(actions(paragraph).selectAllText())
+        assertTrue(state.textRange.isActive)
+
+        state.textRange.clear()
+        controller.offersSelectAll = false
+        assertFalse(actions(paragraph).selectAllText())
+        assertFalse(state.textRange.isActive)
+    }
+
+    @Test
+    fun theTextSelectionAcrossBlocksIsTheControllersAndItsOperationsReachIt() {
+        val a = actions(paragraph)
+        assertEquals(paragraph.id, a.blockId)
+        assertEquals(state.textRange, a.textRange)
+
+        state.textRange.selectAll()
+        assertTrue(a.copyTextRange(markdown = false))
+        assertTrue(a.cutTextRange())
+        assertEquals(listOf(false, true), controller.copies.map { it.first })
+        assertFalse(a.replaceTextRange("x"))
+    }
 }

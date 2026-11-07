@@ -77,6 +77,7 @@ public fun LazyListScope.editorBlocks(
     editingLinkIds: Set<String>,
     afterBlocks: (@Composable () -> Unit)? = null,
 ) {
+    host.highlights.textRange = host.controller.textRange
     itemsIndexed(
         items = blocks,
         key = { _, block -> block.id },
@@ -97,18 +98,21 @@ public fun LazyListScope.editorBlocks(
                 onMove = { up -> host.controller.moveBlockOf(block, up) },
                 onDuplicate = { host.controller.duplicateBlock(block) },
                 onDelete = { host.controller.removeBlock(block, BlockRemoveAction.REMOVE) },
+                onSelect = { host.controller.selectedBlocks.select(block.id) },
             )
         }
-        EditorBlock(
-            block = block,
-            blockActions = blockActions,
-            callbacks = callbacks,
-            focusRegistry = host.focusRegistry,
-            isLocked = isLocked,
-            isEditingLink = block.id in editingLinkIds,
-            isOnlyBlock = blocks.size == 1,
-            position = BlockPosition(first = index == 0, last = index == blocks.lastIndex),
-        )
+        BlockChrome(block, host.controller, isLocked) {
+            EditorBlock(
+                block = block,
+                blockActions = blockActions,
+                callbacks = callbacks,
+                focusRegistry = host.focusRegistry,
+                isLocked = isLocked,
+                isEditingLink = block.id in editingLinkIds,
+                isOnlyBlock = blocks.size == 1,
+                position = BlockPosition(first = index == 0, last = index == blocks.lastIndex),
+            )
+        }
     }
 
     // Below the blocks, so the blocks keep their positions in the list.
@@ -147,6 +151,7 @@ private class EditorBlockCallbacks(
     val onMove: (up: Boolean) -> Unit,
     val onDuplicate: () -> Unit,
     val onDelete: () -> Unit,
+    val onSelect: () -> Unit,
 )
 
 /** Where a block is in the note: TalkBack offers to move it only where it can go. */
@@ -272,6 +277,7 @@ private fun blockCommands(
                 callbacks.onDuplicate()
             },
         )
+        add(BlockCommand(strings.text(EditorString.BLOCK_SELECT), icons.grip, false) { callbacks.onSelect() })
         if (!isOnlyBlock) {
             add(BlockCommand(strings.text(EditorString.BLOCK_DELETE), icons.trash, true) { callbacks.onDelete() })
         }

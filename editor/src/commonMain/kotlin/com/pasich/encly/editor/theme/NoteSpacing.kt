@@ -60,17 +60,27 @@ internal fun EditorLineSpacing.listItemGap(checklist: Boolean, base: Dp): Dp = w
 // A list's marker follows the text: the checkbox and the gap after it grow with the font size, and
 // bullets and numbers use the same column, so every kind of list lines its text up the same way.
 private const val MARKER_BOX_PER_FONT = 1.1f
-private const val MARKER_GAP_PER_FONT = 0.5f
+private const val MARKER_GAP_PER_FONT = 0.375f
+private const val LIST_INDENT_PER_FONT = 0.75f
 private val MARKER_BOX_MIN = 16.dp
 private val MARKER_BOX_MAX = 28.dp
 private val MARKER_GAP_MIN = 6.dp
 private val MARKER_GAP_MAX = 14.dp
+private val LIST_INDENT_MIN = 10.dp
+private val LIST_INDENT_MAX = 18.dp
 
 /** The checkbox side for list text of [font] size: 1.1 times it, from 16 to 28 dp. */
 internal fun markerBoxSize(font: Dp): Dp = (font * MARKER_BOX_PER_FONT).coerceIn(MARKER_BOX_MIN, MARKER_BOX_MAX)
 
-/** The gap between the marker and the text for list text of [font] size: half of it, from 6 to 14 dp. */
+/** The gap between the marker and the text for list text of [font] size: 3/8 of it, from 6 to 14 dp. */
 internal fun markerGap(font: Dp): Dp = (font * MARKER_GAP_PER_FONT).coerceIn(MARKER_GAP_MIN, MARKER_GAP_MAX)
 
 /** The marker column of a list: the box and the gap after it. */
 internal fun markerColumn(font: Dp): Dp = markerBoxSize(font) + markerGap(font)
+
+/**
+ * How far a whole list (its markers and its text together) sits in from the text column, for list text of [font]
+ * size: three quarters of it, from 10 to 18 dp. A list then reads as under the heading or paragraph above it, as
+ * a rendered Markdown list does, instead of its marker standing under that text with a wide gap before its own.
+ */
+internal fun listIndent(font: Dp): Dp = (font * LIST_INDENT_PER_FONT).coerceIn(LIST_INDENT_MIN, LIST_INDENT_MAX)

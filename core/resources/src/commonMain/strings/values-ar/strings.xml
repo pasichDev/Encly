@@ -690,4 +690,12 @@
     <string name="whats_new_row_desc">التغييرات في هذا الإصدار</string>
     <string name="whats_new_dismiss">فهمت</string>
     <string name="trash_auto_delete_hint">تُحذف الملاحظات نهائيًا بعد 28 يومًا في سلة المحذوفات.</string>
+    <string name="block_select">تحديد الكتلة</string>
+    <string name="select_all">تحديد الكل</string>
+    <string name="selection_close">إلغاء التحديد</string>
+    <string name="selection_copied">تم النسخ</string>
+    <string name="selection_copy">نسخ</string>
+    <string name="selection_count">الكتل المحددة: %1$d</string>
+    <string name="selection_cut">قص</string>
+    <string name="selection_delete">حذف الكتل المحددة</string>
 </resources>

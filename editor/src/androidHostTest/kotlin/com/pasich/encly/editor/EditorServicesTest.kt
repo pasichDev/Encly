@@ -30,6 +30,7 @@ class EditorServicesTest {
     fun englishIsTheDefaultTextOfEveryKey() {
         EditorString.entries.forEach { assertEquals(it.english, EnglishEditorStrings.text(it)) }
         assertEquals("Heading 3", EnglishEditorStrings.heading(3))
+        assertEquals("Blocks selected: 4", EnglishEditorStrings.selectionCount(4))
     }
 
     @Test
@@ -68,6 +69,8 @@ class EditorServicesTest {
             override fun text(key: EditorString) = "t:${key.name}"
 
             override fun heading(level: Int) = "h$level"
+
+            override fun selectionCount(count: Int) = "n$count"
         }
         val theme = EditorTheme(lineSpacing = EditorLineSpacing.COMPACT)
         val clipboard = EditorClipboard { _, _, _ -> }
@@ -111,7 +114,7 @@ class EditorServicesTest {
             icons.text, icons.heading1, icons.heading2, icons.heading3, icons.heading4, icons.checklist,
             icons.bulletList, icons.numberedList, icons.quote, icons.link, icons.separator, icons.globe,
             icons.plus, icons.check, icons.external, icons.copy, icons.edit, icons.arrowUp, icons.arrowDown,
-            icons.duplicate, icons.trash,
+            icons.duplicate, icons.trash, icons.close, icons.cut, icons.lock, icons.lockOpen, icons.grip,
         )
         assertEquals(all.size, all.map { it.name }.toSet().size)
     }

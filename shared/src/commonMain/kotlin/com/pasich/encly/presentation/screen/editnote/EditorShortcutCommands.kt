@@ -31,12 +31,22 @@ internal fun EditorShortcutCommands(
                 )
                 allowed.also { if (it) overlays.isTrashDialogVisible = true }
             },
-            dismiss = { viewModel.find.value.isOpen.also { open -> if (open) viewModel.closeFind() } },
+            dismiss = { dismissSelectionOrFind(viewModel) },
             print = { documents.start(DocumentFormat.PRINT) },
             exportPdf = { documents.start(DocumentFormat.PDF) },
         )
     }
     EditorCommandsBinding(commands)
+}
+
+/** Esc leaves block selection mode, else closes the find bar; true when it did either. */
+private fun dismissSelectionOrFind(viewModel: EditNoteViewModel): Boolean {
+    if (viewModel.selectedBlocks.isActive || viewModel.textRange.isActive) {
+        viewModel.selectedBlocks.clear()
+        viewModel.textRange.clear()
+        return true
+    }
+    return viewModel.find.value.isOpen.also { open -> if (open) viewModel.closeFind() }
 }
 
 /** Whether Delete may ask to trash the note: not one in the trash, a blank draft, or one this window cannot change. */

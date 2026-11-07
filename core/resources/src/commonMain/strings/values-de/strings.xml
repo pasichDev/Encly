@@ -52,6 +52,14 @@
     <string name="block_list">Liste</string>
     <string name="checklist_lock">Checkliste sperren</string>
     <string name="checklist_unlock">Checkliste entsperren</string>
+    <string name="block_select">Block auswählen</string>
+    <string name="selection_count">Ausgewählte Blöcke: %1$d</string>
+    <string name="selection_close">Auswahl aufheben</string>
+    <string name="selection_copy">Kopieren</string>
+    <string name="selection_cut">Ausschneiden</string>
+    <string name="selection_delete">Ausgewählte Blöcke löschen</string>
+    <string name="select_all">Alles auswählen</string>
+    <string name="selection_copied">Kopiert</string>
     <string name="block_move_down">Block nach unten verschieben</string>
     <string name="block_move_up">Block nach oben verschieben</string>
     <string name="block_numbered_list">Nummerierte Liste</string>

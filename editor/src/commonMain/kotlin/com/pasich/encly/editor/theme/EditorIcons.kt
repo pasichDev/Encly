@@ -39,9 +39,20 @@ public class EditorIcons(
     internal val arrowDown: ImageVector = DefaultIcons.ArrowDown,
     internal val duplicate: ImageVector = DefaultIcons.Duplicate,
     internal val trash: ImageVector = DefaultIcons.Trash,
+    internal val close: ImageVector = DefaultIcons.Close,
+    internal val cut: ImageVector = DefaultIcons.Cut,
+    internal val lock: ImageVector = DefaultIcons.Lock,
+    internal val lockOpen: ImageVector = DefaultIcons.LockOpen,
+    internal val grip: ImageVector = DefaultIcons.Grip,
 )
 
 private const val STROKE = 1.75f
+
+// Two columns of three dots: the handle of a block.
+private const val GRIP_DOTS = "M8.4 6.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM13.4 6.5a1.1 1.1 0 1 0 2.2 0" +
+    "a1.1 1.1 0 1 0 -2.2 0zM8.4 12a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM13.4 12a1.1 1.1 0 1 0 2.2 0" +
+    "a1.1 1.1 0 1 0 -2.2 0zM8.4 17.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM13.4 17.5a1.1 1.1 0 1 0 2.2 0" +
+    "a1.1 1.1 0 1 0 -2.2 0z"
 private val Ink = SolidColor(Color.Black)
 
 @Suppress("LongMethod") // The path data of every default icon, in one place.
@@ -131,6 +142,29 @@ private object DefaultIcons {
         "M6 7l.9 12.1a1.5 1.5 0 0 0 1.5 1.4h7.2a1.5 1.5 0 0 0 1.5-1.4L18 7",
         "M10 11v5.5M14 11v5.5",
     )
+
+    val Close = icon("Close", "M6 6l12 12M18 6L6 18")
+
+    val Cut = icon(
+        "Cut",
+        "M6 3.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z",
+        "M6 15.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z",
+        "M7.8 7.6L20 18.5M7.8 16.4L20 5.5",
+    )
+
+    val Lock = icon(
+        "Lock",
+        "M6.5 10.5h11A1.5 1.5 0 0 1 19 12v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19v-7a1.5 1.5 0 0 1 1.5-1.5z",
+        "M8 10.5V8a4 4 0 0 1 8 0v2.5",
+    )
+
+    val LockOpen = icon(
+        "LockOpen",
+        "M6.5 10.5h11A1.5 1.5 0 0 1 19 12v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19v-7a1.5 1.5 0 0 1 1.5-1.5z",
+        "M8 10.5V8a4 4 0 0 1 7.5-1.9",
+    )
+
+    val Grip = icon("Grip", dots = GRIP_DOTS)
 
     private fun icon(name: String, vararg paths: String, dots: String? = null): ImageVector = ImageVector.Builder(
         name = "Editor.$name",

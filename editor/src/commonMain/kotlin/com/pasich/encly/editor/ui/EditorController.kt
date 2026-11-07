@@ -6,9 +6,12 @@ import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
 import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.state.LineBreak
+import com.pasich.encly.editor.state.SelectedBlocks
 import com.pasich.encly.editor.state.Shortcut
 import com.pasich.encly.editor.state.SlashCommand
 import com.pasich.encly.editor.state.SlashPicker
+import com.pasich.encly.editor.state.TextRangeSelection
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * What the editor's blocks ask of whoever owns the note: the host's view model, which decides
@@ -23,6 +26,27 @@ public interface EditorController {
 
     /** The slash picker the blocks show. */
     public val slashPicker: SlashPicker
+
+    /** The blocks picked as whole blocks (block selection mode). Picking changes no content, so any note may. */
+    public val selectedBlocks: SelectedBlocks
+
+    /** The id of the block the user last worked on; null before any. */
+    public val interactedBlockId: StateFlow<String?>
+
+    /** The text selection that may run across blocks; picking changes no content, so any note may. */
+    public val textRange: TextRangeSelection
+
+    /** Select all pressed twice or asked of the keyboard: selects the whole note's text; false where not offered. */
+    public fun selectAllText(): Boolean
+
+    /** Replaces the text selection across blocks with [replacement] as one undo step; false if it cannot. */
+    public fun replaceTextRange(replacement: String): Boolean
+
+    /** Copies the text selection across blocks, as Markdown or plain text, to the sensitive clipboard. */
+    public fun copyTextRange(markdown: Boolean): Boolean
+
+    /** Copies the text selection across blocks as Markdown, then removes it; false if either cannot be done. */
+    public fun cutTextRange(): Boolean
 
     /** Position of [block]; -1 when it is not in the note (any more). */
     public fun indexOfBlock(block: Block): Int

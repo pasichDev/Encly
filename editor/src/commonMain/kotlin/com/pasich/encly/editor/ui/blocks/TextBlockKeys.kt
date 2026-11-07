@@ -31,20 +31,23 @@ internal fun Modifier.textBlockKeys(
 ): Modifier = onPreviewKeyEvent { event ->
     val selection = state.selection
     // Only the arrow keys need to know where the cursor is among the lines.
-    val line = if (event.isArrow()) caretLine(highlight.geometry(), state.text.length, selection.start) else null
-    slashKey(event, blockActions.slash) || KeyboardUtils.handleKeyEvent(
-        event = event,
-        text = state.text,
-        // A selection is not a cursor at either end: the field moves within it.
-        cursorPosition = if (selection.collapsed) selection.start else -1,
-        onBackspaceEmpty = { blockActions.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE) },
-        onBackspaceAtStart = { blockActions.onBackspaceAtStart() },
-        onNavigateUp = { blockActions.navigate(CaretMove.Up(line?.x)) },
-        onNavigateDown = { blockActions.navigate(CaretMove.Down(line?.x)) },
-        onNavigateLeft = { blockActions.navigate(CaretMove.Left) },
-        onNavigateRight = { blockActions.navigate(CaretMove.Right) },
-        line = line,
-    )
+    val line = if (event.isArrow()) caretLine(highlight.geometry(), state.text.length, selection.end) else null
+    slashKey(event, blockActions.slash) ||
+        rangeKey(event, rangeField(blockActions.blockId, null, selection, line), blockActions) ||
+        selectAllTextKey(event, selection, state.text.length, blockActions) ||
+        KeyboardUtils.handleKeyEvent(
+            event = event,
+            text = state.text,
+            // A selection is not a cursor at either end: the field moves within it.
+            cursorPosition = if (selection.collapsed) selection.start else -1,
+            onBackspaceEmpty = { blockActions.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE) },
+            onBackspaceAtStart = { blockActions.onBackspaceAtStart() },
+            onNavigateUp = { blockActions.navigate(CaretMove.Up(line?.x)) },
+            onNavigateDown = { blockActions.navigate(CaretMove.Down(line?.x)) },
+            onNavigateLeft = { blockActions.navigate(CaretMove.Left) },
+            onNavigateRight = { blockActions.navigate(CaretMove.Right) },
+            line = line,
+        )
 }
 
 /** Whether [this] is one of the four arrow keys. */

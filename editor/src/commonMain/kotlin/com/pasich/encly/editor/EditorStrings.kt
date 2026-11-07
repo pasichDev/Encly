@@ -36,6 +36,15 @@ public enum class EditorString(internal val english: String) {
     TAP_AGAIN_TO_DELETE("Tap again to delete"),
     CHECKLIST_LOCK("Lock checklist"),
     CHECKLIST_UNLOCK("Unlock checklist"),
+    BLOCK_SELECT("Select block"),
+
+    /** Takes the number of selected blocks: see [EditorStrings.selectionCount]. */
+    SELECTION_COUNT("Blocks selected: %d"),
+    SELECTION_CLOSE("Clear selection"),
+    SELECTION_COPY("Copy"),
+    SELECTION_COPY_MARKDOWN("Copy as Markdown"),
+    SELECTION_CUT("Cut"),
+    SELECTION_DELETE("Delete selected blocks"),
     TEMPLATE_BLANK("Blank"),
     TEMPLATE_MEETING("Meeting"),
     TEMPLATE_ATTENDEES("Attendees"),
@@ -65,6 +74,9 @@ public interface EditorStrings {
 
     /** The "Heading N" label for [level] (1 to 4): [EditorString.BLOCK_HEADING_LEVEL] with the level filled in. */
     public fun heading(level: Int): String
+
+    /** The "N blocks selected" label for [count] blocks: [EditorString.SELECTION_COUNT] with the number filled in. */
+    public fun selectionCount(count: Int): String
 }
 
 /** English texts: the default when the host provides none, and what the editor's tests read. */
@@ -72,4 +84,7 @@ internal object EnglishEditorStrings : EditorStrings {
     override fun text(key: EditorString): String = key.english
 
     override fun heading(level: Int): String = EditorString.BLOCK_HEADING_LEVEL.english.replace("%d", level.toString())
+
+    override fun selectionCount(count: Int): String =
+        EditorString.SELECTION_COUNT.english.replace("%d", count.toString())
 }

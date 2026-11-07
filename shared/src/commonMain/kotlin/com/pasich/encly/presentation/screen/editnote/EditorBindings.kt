@@ -14,6 +14,7 @@ import com.pasich.encly.core.resources.block_list
 import com.pasich.encly.core.resources.block_move_down
 import com.pasich.encly.core.resources.block_move_up
 import com.pasich.encly.core.resources.block_numbered_list
+import com.pasich.encly.core.resources.block_select
 import com.pasich.encly.core.resources.block_separator
 import com.pasich.encly.core.resources.checklist_lock
 import com.pasich.encly.core.resources.checklist_unlock
@@ -26,9 +27,15 @@ import com.pasich.encly.core.resources.link_copy
 import com.pasich.encly.core.resources.link_edit
 import com.pasich.encly.core.resources.link_open
 import com.pasich.encly.core.resources.list_item_placeholder
+import com.pasich.encly.core.resources.markdown_copy
 import com.pasich.encly.core.resources.more_options
 import com.pasich.encly.core.resources.press_to_edit
 import com.pasich.encly.core.resources.quote
+import com.pasich.encly.core.resources.selection_close
+import com.pasich.encly.core.resources.selection_copy
+import com.pasich.encly.core.resources.selection_count
+import com.pasich.encly.core.resources.selection_cut
+import com.pasich.encly.core.resources.selection_delete
 import com.pasich.encly.core.resources.slash_menu_title
 import com.pasich.encly.core.resources.tap_again_to_delete
 import com.pasich.encly.core.resources.template_action_items
@@ -101,8 +108,11 @@ internal class ResourceEditorStrings(private val texts: Map<EditorString, String
     override fun heading(level: Int): String =
         texts.getValue(EditorString.BLOCK_HEADING_LEVEL).replace(HEADING_LEVEL_ARGUMENT, level.toString())
 
+    override fun selectionCount(count: Int): String =
+        texts.getValue(EditorString.SELECTION_COUNT).replace(HEADING_LEVEL_ARGUMENT, count.toString())
+
     private companion object {
-        /** The placeholder of the level in `block_heading_level`. */
+        /** The placeholder of the number in `block_heading_level` and `selection_count`. */
         const val HEADING_LEVEL_ARGUMENT = "%1\$d"
     }
 }
@@ -148,6 +158,13 @@ internal fun EditorString.resource(): StringResource = when (this) {
     EditorString.TAP_AGAIN_TO_DELETE -> Res.string.tap_again_to_delete
     EditorString.CHECKLIST_LOCK -> Res.string.checklist_lock
     EditorString.CHECKLIST_UNLOCK -> Res.string.checklist_unlock
+    EditorString.BLOCK_SELECT -> Res.string.block_select
+    EditorString.SELECTION_COUNT -> Res.string.selection_count
+    EditorString.SELECTION_CLOSE -> Res.string.selection_close
+    EditorString.SELECTION_COPY -> Res.string.selection_copy
+    EditorString.SELECTION_COPY_MARKDOWN -> Res.string.markdown_copy
+    EditorString.SELECTION_CUT -> Res.string.selection_cut
+    EditorString.SELECTION_DELETE -> Res.string.selection_delete
     EditorString.TEMPLATE_BLANK -> Res.string.template_blank
     EditorString.TEMPLATE_MEETING -> Res.string.template_meeting
     EditorString.TEMPLATE_ATTENDEES -> Res.string.template_attendees
@@ -248,6 +265,10 @@ private val AppEditorIcons by lazy {
         arrowDown = EnclyIcons.ArrowDown,
         duplicate = EnclyIcons.Duplicate,
         trash = EnclyIcons.Trash,
+        close = EnclyIcons.Close,
+        lock = EnclyIcons.Lock,
+        lockOpen = EnclyIcons.LockOpen,
+        grip = EnclyIcons.Grip,
     )
 }
 

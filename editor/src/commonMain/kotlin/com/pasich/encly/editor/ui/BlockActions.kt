@@ -10,6 +10,7 @@ import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.Shortcut
 import com.pasich.encly.editor.state.SlashCommand
 import com.pasich.encly.editor.state.SlashMenu
+import com.pasich.encly.editor.state.TextRangeSelection
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -62,6 +63,27 @@ internal interface BlockActions {
      * @return a function that removes the registration
      */
     fun registerCaretAtX(callback: (Float, Boolean) -> Unit): () -> Unit
+
+    /** The id of this block. */
+    val blockId: String
+
+    /** The text selection across blocks. */
+    val textRange: TextRangeSelection
+
+    /**
+     * Ctrl or Cmd+A in a field whose text is all selected already: selects the whole note's text.
+     * False when that is not offered (the key is then left to the field).
+     */
+    fun selectAllText(): Boolean
+
+    /** Replaces the text selection across blocks with [replacement]; false when it cannot (the field then edits). */
+    fun replaceTextRange(replacement: String): Boolean
+
+    /** Copies the text selection across blocks; true when it did. */
+    fun copyTextRange(markdown: Boolean): Boolean
+
+    /** Cuts the text selection across blocks; true when it did. */
+    fun cutTextRange(): Boolean
 
     /** The cursor in item [itemId] of this list moved to [offset]. */
     fun onListItemCaret(itemId: String, offset: Int)

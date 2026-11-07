@@ -2,28 +2,58 @@ package com.pasich.encly.presentation.screen.editnote
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.markdown_copy
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
 import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.state.LineBreak
+import com.pasich.encly.editor.state.SelectedBlocks
 import com.pasich.encly.editor.state.Shortcut
 import com.pasich.encly.editor.state.SlashCommand
 import com.pasich.encly.editor.state.SlashPicker
+import com.pasich.encly.editor.state.TextRangeSelection
 import com.pasich.encly.editor.ui.EditorController
+import com.pasich.encly.platform.LocalSensitiveClipboard
+import com.pasich.encly.platform.SensitiveClipboard
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The editor's view of the note's view model: every call goes to the view model's own method, so
  * its rules (a locked, read-only or simple-edit note changes nothing) apply unchanged.
  */
 @Suppress("TooManyFunctions") // One call each for what the editor's blocks can ask.
-internal class EditNoteViewModelController(private val viewModel: EditNoteViewModel) : EditorController {
+internal class EditNoteViewModelController(
+    private val viewModel: EditNoteViewModel,
+    private val clipboard: SensitiveClipboard,
+    private val clipLabel: String,
+) : EditorController {
     override val blocks: List<Block> get() = viewModel.blocks
 
     override val slashPicker: SlashPicker get() = viewModel.slashPicker
+
+    override val selectedBlocks: SelectedBlocks get() = viewModel.selectedBlocks
+
+    override val interactedBlockId: StateFlow<String?> get() = viewModel.interactedBlockId
+
+    override val textRange: TextRangeSelection get() = viewModel.textRange
+
+    override fun selectAllText(): Boolean = viewModel.selectAllText()
+
+    override fun replaceTextRange(replacement: String): Boolean = viewModel.replaceTextRange(replacement)
+
+    override fun copyTextRange(markdown: Boolean): Boolean {
+        val text = selectedBlocksText(viewModel.textRangeBlocks(), markdown)
+        return text.isNotEmpty() && clipboard.copy(clipLabel, text)
+    }
+
+    override fun cutTextRange(): Boolean =
+        viewModel.canEditBlocks && copyTextRange(markdown = true) && viewModel.replaceTextRange("")
 
     override fun indexOfBlock(block: Block): Int = viewModel.indexOfBlock(block)
 
@@ -91,5 +121,7 @@ internal class EditNoteViewModelController(private val viewModel: EditNoteViewMo
 @Composable
 internal fun rememberEditorController(): EditorController {
     val viewModel: EditNoteViewModel = metroViewModel()
-    return remember(viewModel) { EditNoteViewModelController(viewModel) }
+    val clipboard = LocalSensitiveClipboard.current
+    val label = stringResource(Res.string.markdown_copy)
+    return remember(viewModel, clipboard, label) { EditNoteViewModelController(viewModel, clipboard, label) }
 }

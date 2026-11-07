@@ -12,6 +12,7 @@ import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.Shortcut
 import com.pasich.encly.editor.state.SlashCommand
 import com.pasich.encly.editor.state.SlashMenu
+import com.pasich.encly.editor.state.TextRangeSelection
 import com.pasich.encly.editor.state.goesUp
 import com.pasich.encly.editor.state.requestFor
 import kotlinx.coroutines.flow.StateFlow
@@ -70,6 +71,18 @@ internal class BlockActionsImpl(
 
     override fun onListBackspaceAtStart(itemId: String): Boolean =
         (block as? Block.ListBlock)?.let { controller.onListBackspaceAtStart(it, itemId) } == true
+
+    override val blockId: String get() = block.id
+
+    override val textRange: TextRangeSelection get() = controller.textRange
+
+    override fun selectAllText(): Boolean = controller.selectAllText()
+
+    override fun replaceTextRange(replacement: String): Boolean = controller.replaceTextRange(replacement)
+
+    override fun copyTextRange(markdown: Boolean): Boolean = controller.copyTextRange(markdown)
+
+    override fun cutTextRange(): Boolean = controller.cutTextRange()
 
     override fun onCaretMoved(offset: Int) = controller.onCaretMoved(block, offset)
 

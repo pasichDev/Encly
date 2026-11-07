@@ -54,7 +54,8 @@ internal fun QuoteBlock(
     val state = rememberBlockTextFieldState(block.text, blockActions)
     val actions by rememberUpdatedState(blockActions)
     // Enter ends the quote: the text after the cursor goes on as a paragraph (BlockInput).
-    val input = remember { BlockInput(BlockField.Styled) { actions } }
+    val defer = rememberDefer()
+    val input = remember { BlockInput(BlockField.Styled, defer) { actions } }
     val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
     RegisterCaretAtX(blockActions, state, highlight)
     var focused by remember { mutableStateOf(false) }

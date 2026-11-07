@@ -52,6 +52,14 @@
     <string name="block_list">Lista</string>
     <string name="checklist_lock">Bloquear lista de tareas</string>
     <string name="checklist_unlock">Desbloquear lista de tareas</string>
+    <string name="block_select">Seleccionar bloque</string>
+    <string name="selection_count">Bloques seleccionados: %1$d</string>
+    <string name="selection_close">Quitar selección</string>
+    <string name="selection_copy">Copiar</string>
+    <string name="selection_cut">Cortar</string>
+    <string name="selection_delete">Eliminar bloques seleccionados</string>
+    <string name="select_all">Seleccionar todo</string>
+    <string name="selection_copied">Copiado</string>
     <string name="block_move_down">Mover bloque hacia abajo</string>
     <string name="block_move_up">Mover bloque hacia arriba</string>
     <string name="block_numbered_list">Lista numerada</string>

@@ -34,6 +34,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -42,8 +43,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import com.pasich.encly.editor.EditorString
@@ -59,9 +62,11 @@ import com.pasich.encly.editor.state.goesUp
 import com.pasich.encly.editor.theme.EDITOR_PLACEHOLDER_ALPHA
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.theme.lineHeight
+import com.pasich.encly.editor.theme.listIndent
 import com.pasich.encly.editor.theme.listItemGap
 import com.pasich.encly.editor.theme.markerBoxSize
 import com.pasich.encly.editor.theme.markerColumn
+import com.pasich.encly.editor.theme.markerGap
 import com.pasich.encly.editor.ui.BlockActions
 import com.pasich.encly.editor.ui.components.EditorCheckbox
 import com.pasich.encly.editor.ui.components.editorInteractive
@@ -196,14 +201,16 @@ internal fun ListBlock(
     val textLocked by block.locked.collectAsState()
     val actions by rememberUpdatedState(blockActions)
     val focus = rememberListFocus(block, blockActions)
-    val editor = remember(block) { ListEditor(block, { actions }) { focus.pending = it } }
+    val defer = rememberDefer()
+    val editor = remember(block) { ListEditor(block, { actions }, defer) { focus.pending = it } }
     val values = remember(block) { ItemValues(block.items) }
     val checklist = block.blockType == BlockType.LIST_CHECK
     val theme = LocalEditorTheme.current
     val marker = rememberListMarker(block.blockType, items.size)
     val locks = remember(isLocked, textLocked) { ItemLocks(editorLocked = isLocked, textLocked = textLocked) }
     Column(
-        modifier = modifier.fillMaxWidth(),
+        // The whole list, markers and text, sits in from the text column: under the heading above it.
+        modifier = modifier.fillMaxWidth().padding(start = listIndent(listFontDp())),
         verticalArrangement = Arrangement.spacedBy(
             theme.lineSpacing.listItemGap(checklist, theme.spacing.xxs),
         ),
@@ -223,6 +230,7 @@ internal fun ListBlock(
                     }
                 }
                 RegisterItem(focus, item.id, requester, state, highlight)
+                BindFieldRange(state, blockActions, highlight)
                 // Remembered, so a row whose item did not change is skipped: a new object each time
                 // would make every row recompose on every keystroke.
                 val field = remember(state, highlight, marker.metrics) { ItemField(state, highlight, marker.metrics) }
@@ -347,21 +355,23 @@ private fun ListItemRow(
                 .onPreviewKeyEvent { event ->
                     val selection = state.selection
                     val line = if (event.isArrow()) {
-                        caretLine(field.highlight.geometry(), state.text.length, selection.start)
+                        caretLine(field.highlight.geometry(), state.text.length, selection.end)
                     } else {
                         null
                     }
-                    KeyboardUtils.handleKeyEvent(
-                        event = event,
-                        text = state.text,
-                        cursorPosition = if (selection.collapsed) selection.start else -1,
-                        onBackspaceAtStart = { editor.backspaceAtStart(item.id) },
-                        onNavigateUp = { editor.moveFocus(item.id, CaretMove.Up(line?.x)) },
-                        onNavigateDown = { editor.moveFocus(item.id, CaretMove.Down(line?.x)) },
-                        onNavigateLeft = { editor.moveFocus(item.id, CaretMove.Left) },
-                        onNavigateRight = { editor.moveFocus(item.id, CaretMove.Right) },
-                        line = line,
-                    )
+                    editor.rangeKey(event, rangeField(editor.blockId, item.id, selection, line)) ||
+                        editor.selectAllText(event, selection, state.text.length) ||
+                        KeyboardUtils.handleKeyEvent(
+                            event = event,
+                            text = state.text,
+                            cursorPosition = if (selection.collapsed) selection.start else -1,
+                            onBackspaceAtStart = { editor.backspaceAtStart(item.id) },
+                            onNavigateUp = { editor.moveFocus(item.id, CaretMove.Up(line?.x)) },
+                            onNavigateDown = { editor.moveFocus(item.id, CaretMove.Down(line?.x)) },
+                            onNavigateLeft = { editor.moveFocus(item.id, CaretMove.Left) },
+                            onNavigateRight = { editor.moveFocus(item.id, CaretMove.Right) },
+                            line = line,
+                        )
                 },
         )
     }
@@ -371,9 +381,20 @@ private fun ListItemRow(
 private class ListEditor(
     private val block: Block.ListBlock,
     private val actions: () -> BlockActions,
+    private val defer: (() -> Unit) -> Unit,
     private val focusItem: (ItemFocus) -> Unit,
 ) {
     private val items: List<ItemListBlock> get() = block.items.value
+
+    /** The id of the list. */
+    val blockId: String get() = block.id
+
+    /** Select all pressed twice in an item's field (see selectAllTextKey). */
+    fun selectAllText(event: KeyEvent, selection: TextRange, length: Int): Boolean =
+        selectAllTextKey(event, selection, length, actions())
+
+    /** Keys that start, move or act on a text selection across blocks (see rangeKey). */
+    fun rangeKey(event: KeyEvent, field: RangeField): Boolean = rangeKey(event, field, actions())
 
     private fun update(mergeable: Boolean, change: MutableList<ItemListBlock>.() -> Unit) {
         actions().onListItemsChanged(items.toMutableList().apply(change), mergeable)
@@ -393,7 +414,7 @@ private class ListEditor(
 
     /** The writing rules of item [itemId]'s field: Enter and pasted lines go to the editor. */
     fun inputFor(itemId: String): BlockInput =
-        inputs.getOrPut(itemId) { BlockInput(BlockField.ListItem(itemId), actions) }
+        inputs.getOrPut(itemId) { BlockInput(BlockField.ListItem(itemId), defer, actions) }
 
     /** Backspace at the start of an item (see listBackspaceAtStart). */
     fun backspaceAtStart(itemId: String): Boolean = actions().onListBackspaceAtStart(itemId)
@@ -450,8 +471,11 @@ private fun RowScope.Marker(text: String, width: Dp, style: TextStyle, modifier:
         text = text,
         style = style.copy(fontSize = theme.fontSizes.list),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // The glyph hangs against the text: its right edge is one gap short of the text, as the checkbox's is.
+        textAlign = TextAlign.End,
         modifier = modifier
             .width(width)
+            .padding(end = markerGap(listFontDp()))
             .alignByBaseline(),
     )
 }

@@ -19,6 +19,7 @@ import com.pasich.encly.core.resources.note_export_pdf
 import com.pasich.encly.core.resources.note_print
 import com.pasich.encly.core.resources.note_text_use_default
 import com.pasich.encly.core.resources.note_unarchive
+import com.pasich.encly.core.resources.select_all
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.components.FontSizeSlider
@@ -39,6 +40,7 @@ enum class EditNoteBottomSheetAction {
     CLOSE_NO_SAVE,
     DUPLICATE,
     FIND,
+    SELECT_ALL,
     TRASH,
     EXPORT_MARKDOWN,
     EXPORT_PDF,
@@ -67,6 +69,7 @@ fun EditNoteBottomSheet(
     val note by viewModel.state.collectAsStateWithLifecycle()
     val override by viewModel.textOverride.collectAsStateWithLifecycle()
     val loadFailed by viewModel.contentLoadFailed.collectAsStateWithLifecycle()
+    val simpleEdit by viewModel.simpleEdit.collectAsStateWithLifecycle()
 
     if (isVisible) {
         AdaptiveSheet(onDismissRequest = onDismiss, modifier = modifier, scrollable = true) {
@@ -85,22 +88,24 @@ fun EditNoteBottomSheet(
                 contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
             )
             ArchiveRow(note = note.note, onAction = onAction, onDismiss = onDismiss)
-            EditorActionRows(canCopy = !loadFailed, documents = documents, onAction = onAction, onDismiss = onDismiss)
+            EditorActionRows(
+                rows = EditorRows(canCopy = !loadFailed, canSelect = !loadFailed && !simpleEdit, documents = documents),
+                onAction = onAction,
+                onDismiss = onDismiss,
+            )
         }
     }
 }
+
+/** Which of the optional rows of the sheet are offered. */
+private class EditorRows(val canCopy: Boolean, val canSelect: Boolean, val documents: Boolean)
 
 /**
  * Find, copy, export, duplicate, discard and delete: each runs its action and closes the sheet.
  * Copy as Markdown is hidden for a note whose content could not be read, like the export's no-op.
  */
 @Composable
-private fun EditorActionRows(
-    canCopy: Boolean,
-    documents: Boolean,
-    onAction: (EditNoteBottomSheetAction) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun EditorActionRows(rows: EditorRows, onAction: (EditNoteBottomSheetAction) -> Unit, onDismiss: () -> Unit) {
     fun run(action: EditNoteBottomSheetAction) {
         onAction(action)
         onDismiss()
@@ -110,12 +115,19 @@ private fun EditorActionRows(
         icon = EnclyIcons.Search,
         onClick = { run(EditNoteBottomSheetAction.FIND) },
     )
+    if (rows.canSelect) {
+        EnclySheetRow(
+            title = stringResource(Res.string.select_all),
+            icon = EnclyIcons.Checklist,
+            onClick = { run(EditNoteBottomSheetAction.SELECT_ALL) },
+        )
+    }
     EnclySheetRow(
         title = stringResource(Res.string.markdown_export),
         icon = EnclyIcons.Upload,
         onClick = { run(EditNoteBottomSheetAction.EXPORT_MARKDOWN) },
     )
-    if (documents) {
+    if (rows.documents) {
         EnclySheetRow(
             title = stringResource(Res.string.note_export_pdf),
             icon = EnclyIcons.Paper,
@@ -127,7 +139,7 @@ private fun EditorActionRows(
             onClick = { run(EditNoteBottomSheetAction.PRINT) },
         )
     }
-    if (canCopy) {
+    if (rows.canCopy) {
         EnclySheetRow(
             title = stringResource(Res.string.markdown_copy),
             icon = EnclyIcons.Copy,

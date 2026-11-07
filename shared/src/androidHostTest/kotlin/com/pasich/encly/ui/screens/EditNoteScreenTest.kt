@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isFocused
@@ -109,10 +110,12 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
     private fun field(index: Int) = rule.onAllNodes(hasSetTextAction())[index]
 
-    private fun tool(id: StringResource) = rule.onNode(hasContentDescription(str(id)) and hasClickAction())
+    private fun tool(id: StringResource) =
+        rule.onNode(hasContentDescription(str(id)) and hasClickAction() and !hasTestTag(LOCK_TOGGLE_TAG))
 
     private fun hasTool(label: String) =
-        rule.onAllNodes(hasContentDescription(label) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+        rule.onAllNodes(hasContentDescription(label) and hasClickAction() and !hasTestTag(LOCK_TOGGLE_TAG))
+            .fetchSemanticsNodes().isNotEmpty()
 
     private fun moreToolsToggles() =
         rule.onAllNodes(hasContentDescription(str(Res.string.block_more_tools))).fetchSemanticsNodes()
@@ -618,6 +621,9 @@ class EditNoteScreenTest : ComposeScreenTest() {
     }
 
     private companion object {
+        /** The lock toggle beside a checklist (the editor's own); the toolbar's lock is the tool. */
+        const val LOCK_TOGGLE_TAG = "checklist-lock-toggle"
+
         const val NOTE_ID = 91L
         const val LEAVE_MS = 1_000L
         const val FRAMES_TO_WATCH = 40

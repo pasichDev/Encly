@@ -69,6 +69,14 @@
     <string name="block_list">List</string>
     <string name="checklist_lock">Lock checklist</string>
     <string name="checklist_unlock">Unlock checklist</string>
+    <string name="block_select">Select block</string>
+    <string name="selection_count">Blocks selected: %1$d</string>
+    <string name="selection_close">Clear selection</string>
+    <string name="selection_copy">Copy</string>
+    <string name="selection_cut">Cut</string>
+    <string name="selection_delete">Delete selected blocks</string>
+    <string name="select_all">Select all</string>
+    <string name="selection_copied">Copied</string>
     <string name="block_move_down">Move block down</string>
     <string name="block_move_up">Move block up</string>
     <string name="block_numbered_list">Numbered list</string>

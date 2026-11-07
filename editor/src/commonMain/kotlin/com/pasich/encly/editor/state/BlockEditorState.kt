@@ -44,6 +44,19 @@ public class BlockEditorState(
     /** Which block the user is working in, and focus requests for the blocks. */
     public val selection: BlockSelection = BlockSelection(_blocks)
 
+    /** The blocks picked as whole blocks (block selection mode); see [SelectedBlocks]. */
+    public val pickedBlocks: SelectedBlocks = SelectedBlocks(_blocks)
+
+    /** The text selection that runs across blocks; see [TextRangeSelection]. */
+    public val textRange: TextRangeSelection = TextRangeSelection(_blocks)
+
+    init {
+        selection.onFieldFocused = {
+            pickedBlocks.clear()
+            textRange.clear()
+        }
+    }
+
     /** The slash picker: closes at any structural change, so it never outlives its paragraph. */
     public val slash: SlashPicker = SlashPicker()
 
@@ -75,6 +88,8 @@ public class BlockEditorState(
     public fun load(loaded: List<Block>) {
         slash.dismiss()
         find.close()
+        pickedBlocks.clear()
+        textRange.clear()
         _blocks.clear()
         _blocks.addAll(loaded)
         history.clear()
@@ -183,6 +198,8 @@ public class BlockEditorState(
      */
     private fun moveHistory(undo: Boolean) {
         slash.dismiss()
+        pickedBlocks.clear()
+        textRange.clear()
         val focused = selection.focusedBlockId.value
         val fields = history.fieldsOfNext(undo)
         val before = fields.map { it.second.value }
@@ -209,6 +226,7 @@ public class BlockEditorState(
 
     private fun afterChange() {
         if (_blocks.isEmpty()) _blocks.add(emptyNoteBlock())
+        pickedBlocks.prune()
         _canUndo.value = history.canUndo()
         _canRedo.value = history.canRedo()
     }

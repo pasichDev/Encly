@@ -3,12 +3,17 @@ package com.pasich.encly.editor.ui.blocks
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.placeCursorAtEnd
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.withFrameNanos
 import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.isLoneWebAddress
 import com.pasich.encly.editor.state.normalizeLineBreaks
 import com.pasich.encly.editor.state.textDiff
 import com.pasich.encly.editor.state.typedShortcut
 import com.pasich.encly.editor.ui.BlockActions
+import kotlinx.coroutines.launch
 
 /** Which field of a block a [BlockInput] watches: a paragraph, another text block, or a list item. */
 internal sealed interface BlockField {
@@ -37,14 +42,18 @@ internal sealed interface BlockField {
  * The editor applies each rule at once, in one undo step. When it declines (simple editing),
  * the line break stays in the text.
  */
-internal class BlockInput(private val field: BlockField, private val actions: () -> BlockActions) :
-    InputTransformation {
+internal class BlockInput(
+    private val field: BlockField,
+    private val defer: (() -> Unit) -> Unit = { it() },
+    private val actions: () -> BlockActions,
+) : InputTransformation {
     override fun TextFieldBuffer.transformInput() {
         val old = originalText.toString()
         val new = asCharSequence().toString()
         if (old == new) return
         val cursor = if (selection.collapsed) selection.start else -1
         val diff = textDiff(old, new, cursor)
+        if (actions().textRange.isCrossField) return replaceRange(diff.inserted)
         val lineBreak = LineBreak.of(old, diff)
         when {
             lineBreak != null -> {
@@ -71,6 +80,14 @@ internal class BlockInput(private val field: BlockField, private val actions: ()
         }
     }
 
+    // The selection across blocks is replaced once this edit is over: it moves the cursor and the text of the fields,
+    // which must not happen under an edit of one of them. The field itself keeps its text. Enter only deletes.
+    private fun TextFieldBuffer.replaceRange(inserted: String) {
+        revertAllChanges()
+        val typed = inserted.takeUnless { it == "\n" || it == "\r" }.orEmpty()
+        defer { actions().replaceTextRange(typed) }
+    }
+
     private fun onParagraphInsert(old: String, new: String, cursor: Int, inserted: String) {
         val shortcut = typedShortcut(new, cursor)
         when {
@@ -85,3 +102,20 @@ internal class BlockInput(private val field: BlockField, private val actions: ()
 
 /** The character that opens the slash picker in an empty paragraph. */
 private const val SLASH = "/"
+
+/** Runs a task a moment later, on the composition's own dispatcher: after the edit that asked for it is over. */
+@Composable
+internal fun rememberDefer(): (() -> Unit) -> Unit {
+    val scope = rememberCoroutineScope()
+    return remember(scope) {
+        { task ->
+            scope.launch { withFrameNanos { } }.invokeOnCompletion { cause ->
+                if (cause ==
+                    null
+                ) {
+                    task()
+                }
+            }
+        }
+    }
+}

@@ -1,5 +1,6 @@
 package com.pasich.encly.editor.theme
 
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,5 +33,24 @@ class NoteSpacingTest {
         for (size in 10..32) {
             assertEquals(true, EditorLineSpacing.DEFAULT.lineHeight(size.sp, normal).value >= size * 1.5f - 0.01f)
         }
+    }
+
+    @Test
+    fun aWholeListSitsInFromTheTextColumnByThreeQuartersOfItsFont() {
+        assertEquals(12f, listIndent(16.dp).value, 0.01f)
+        assertEquals(15f, listIndent(20.dp).value, 0.01f)
+    }
+
+    @Test
+    fun theIndentOfAListHasALowestAndAHighestValue() {
+        assertEquals(10f, listIndent(8.dp).value, 0.01f)
+        assertEquals(18f, listIndent(48.dp).value, 0.01f)
+    }
+
+    @Test
+    fun theGapAfterAMarkerFollowsTheFontWithinItsLimits() {
+        assertEquals(6f, markerGap(12.dp).value, 0.01f)
+        assertEquals(9f, markerGap(24.dp).value, 0.01f)
+        assertEquals(14f, markerGap(60.dp).value, 0.01f)
     }
 }

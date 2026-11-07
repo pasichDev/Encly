@@ -50,7 +50,8 @@ internal fun TextBlock(
         lineHeight = spacing.lineHeight(theme.fontSizes.textBlock, MaterialTheme.typography.bodyLarge.lineHeight),
     )
     val actions by rememberUpdatedState(blockActions)
-    val input = remember { BlockInput(BlockField.Paragraph) { actions } }
+    val defer = rememberDefer()
+    val input = remember { BlockInput(BlockField.Paragraph, defer) { actions } }
     val highlight = rememberFieldHighlight(blockActions.highlights, block.id)
     RegisterCaretAtX(blockActions, state, highlight)
 

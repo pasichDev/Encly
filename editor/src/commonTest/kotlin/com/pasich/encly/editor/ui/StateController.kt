@@ -1,6 +1,9 @@
 package com.pasich.encly.editor.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.pasich.encly.editor.EditorProvider
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockFactory
@@ -19,9 +23,11 @@ import com.pasich.encly.editor.model.TextualBlock
 import com.pasich.encly.editor.state.BlockEditorState
 import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.state.LineBreak
+import com.pasich.encly.editor.state.SelectedBlocks
 import com.pasich.encly.editor.state.Shortcut
 import com.pasich.encly.editor.state.SlashCommand
 import com.pasich.encly.editor.state.SlashPicker
+import com.pasich.encly.editor.state.TextRangeSelection
 import com.pasich.encly.editor.state.addBlockAfter
 import com.pasich.encly.editor.state.addBlockToEnd
 import com.pasich.encly.editor.state.applyShortcut
@@ -36,8 +42,11 @@ import com.pasich.encly.editor.state.listTypingStep
 import com.pasich.encly.editor.state.moveBlockOf
 import com.pasich.encly.editor.state.moveInteracted
 import com.pasich.encly.editor.state.pasteLink
+import com.pasich.encly.editor.state.replaceTextRange
+import com.pasich.encly.editor.state.textRangePlainText
 import com.pasich.encly.editor.state.toggleChecklistLock
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * An [EditorController] over a plain [BlockEditorState], doing what a note's view model does
@@ -51,6 +60,29 @@ internal class StateController(val state: BlockEditorState) : EditorController {
     override val blocks: List<Block> get() = state.blocks
 
     override val slashPicker: SlashPicker get() = state.slash
+
+    override val selectedBlocks: SelectedBlocks get() = state.pickedBlocks
+
+    override val interactedBlockId: StateFlow<String?> get() = state.selection.interactedBlockId
+
+    override val textRange: TextRangeSelection get() = state.textRange
+
+    /** Whether Select all is offered (false: a note in simple editing). */
+    var offersSelectAll = true
+
+    /** What was copied or cut from a text selection: Markdown or not, and the plain text. */
+    val copies = mutableListOf<Pair<Boolean, String>>()
+
+    override fun selectAllText(): Boolean = offersSelectAll.also { if (it) state.textRange.selectAll() }
+
+    override fun replaceTextRange(replacement: String): Boolean = state.replaceTextRange(replacement)
+
+    override fun copyTextRange(markdown: Boolean): Boolean {
+        copies += markdown to state.textRangePlainText()
+        return true
+    }
+
+    override fun cutTextRange(): Boolean = copyTextRange(markdown = true) && state.replaceTextRange("")
 
     override fun indexOfBlock(block: Block): Int = state.blocks.indexOfFirst { it.id == block.id }
 
@@ -150,6 +182,7 @@ internal fun EditorHarness(
     onOpenSheet: (BlockSheetKind, Block) -> Unit,
     isLocked: Boolean = false,
     afterBlocks: (@Composable () -> Unit)? = null,
+    bar: (@Composable () -> Unit)? = null,
 ) {
     val state = controller.state
     MaterialTheme {
@@ -164,8 +197,22 @@ internal fun EditorHarness(
                 state.selection.immediateFocus = { registry.focus(it) }
                 state.selection.requests.collect { registry.focusWhenComposed(it) }
             }
-            LazyColumn {
-                editorBlocks(host, state.blocks, isLocked, controller.editingLinks, afterBlocks)
+            val listState = rememberLazyListState()
+            val list: @Composable (Modifier) -> Unit = { modifier ->
+                LazyColumn(modifier, listState) {
+                    editorBlocks(host, state.blocks, isLocked, controller.editingLinks, afterBlocks)
+                }
+            }
+            Box {
+                if (bar == null) {
+                    list(Modifier)
+                } else {
+                    Column {
+                        list(Modifier.weight(1f))
+                        bar()
+                    }
+                }
+                TextRangeOverlay(host, listState)
             }
         }
     }

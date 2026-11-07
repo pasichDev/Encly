@@ -106,6 +106,7 @@ internal fun rememberBlockTextFieldState(text: StateFlow<String>, blockActions: 
 @Composable
 internal fun RegisterCaretAtX(blockActions: BlockActions, state: TextFieldState, highlight: FieldHighlight) {
     val actions by rememberUpdatedState(blockActions)
+    BindFieldRange(state, blockActions, highlight)
     DisposableEffect(state, highlight) {
         val unregister = actions.registerCaretAtX { x, fromBelow ->
             val offset = caretOffsetFor(highlight.geometry(), x, fromBelow, state.text.length)

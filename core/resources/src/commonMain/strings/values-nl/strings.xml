@@ -52,6 +52,14 @@
     <string name="block_list">Lijst</string>
     <string name="checklist_lock">Checklist vergrendelen</string>
     <string name="checklist_unlock">Checklist ontgrendelen</string>
+    <string name="block_select">Blok selecteren</string>
+    <string name="selection_count">Geselecteerde blokken: %1$d</string>
+    <string name="selection_close">Selectie wissen</string>
+    <string name="selection_copy">Kopiëren</string>
+    <string name="selection_cut">Knippen</string>
+    <string name="selection_delete">Geselecteerde blokken verwijderen</string>
+    <string name="select_all">Alles selecteren</string>
+    <string name="selection_copied">Gekopieerd</string>
     <string name="block_move_down">Blok omlaag verplaatsen</string>
     <string name="block_move_up">Blok omhoog verplaatsen</string>
     <string name="block_numbered_list">Genummerde lijst</string>

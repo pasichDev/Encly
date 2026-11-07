@@ -28,9 +28,11 @@ import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.state.FindState
 import com.pasich.encly.editor.state.FocusRequest
 import com.pasich.encly.editor.state.LineBreak
+import com.pasich.encly.editor.state.SelectedBlocks
 import com.pasich.encly.editor.state.Shortcut
 import com.pasich.encly.editor.state.SlashCommand
 import com.pasich.encly.editor.state.SlashPicker
+import com.pasich.encly.editor.state.TextRangeSelection
 import com.pasich.encly.editor.state.addBlockAfter
 import com.pasich.encly.editor.state.addBlockToEnd
 import com.pasich.encly.editor.state.applyShortcut
@@ -41,6 +43,7 @@ import com.pasich.encly.editor.state.backspaceAtStart
 import com.pasich.encly.editor.state.breakLine
 import com.pasich.encly.editor.state.canMoveInteracted
 import com.pasich.encly.editor.state.canRemoveInteracted
+import com.pasich.encly.editor.state.deleteSelectedBlocks
 import com.pasich.encly.editor.state.duplicateBlockOf
 import com.pasich.encly.editor.state.duplicateInteracted
 import com.pasich.encly.editor.state.focusFirstBlock
@@ -55,6 +58,8 @@ import com.pasich.encly.editor.state.moveBlockOf
 import com.pasich.encly.editor.state.moveInteracted
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.removeInteracted
+import com.pasich.encly.editor.state.replaceTextRange
+import com.pasich.encly.editor.state.textRangeBlocks
 import com.pasich.encly.editor.state.toggleChecklistLock
 import com.pasich.encly.presentation.editor.persistence.LoadNoteState
 import com.pasich.encly.presentation.editor.persistence.NoteCopyTitle
@@ -624,6 +629,40 @@ class EditNoteViewModel(
     fun removeInteractedBlock() {
         if (canEdit()) editor.removeInteracted()
     }
+
+    // --- block selection: whole blocks picked to copy, cut or delete -------------------------------
+
+    /** The blocks picked as whole blocks. Picking changes nothing in the note, so a locked or trashed note may. */
+    val selectedBlocks: SelectedBlocks get() = editor.pickedBlocks
+
+    /** Whether the note can be changed: cut and delete of picked blocks are offered only then. */
+    val canEditBlocks: Boolean get() = canEdit()
+
+    /** Picks every block of the note; false in simple editing, whose single field selects its own text. */
+    fun selectAllBlocks(): Boolean {
+        if (simpleEdit.value) return false
+        editor.pickedBlocks.selectAll()
+        return true
+    }
+
+    /** Selects the whole note's text across blocks; false in simple editing, whose single field selects its own. */
+    fun selectAllText(): Boolean {
+        if (simpleEdit.value) return false
+        editor.textRange.selectAll()
+        return true
+    }
+
+    /** The part of the note the text selection covers, as blocks of their own (for the clipboard). */
+    fun textRangeBlocks(): List<Block> = editor.textRangeBlocks()
+
+    /** The text selection that runs across blocks. */
+    val textRange: TextRangeSelection get() = editor.textRange
+
+    /** Replaces the cross-block text selection with [replacement] as one undo step; false when it cannot. */
+    fun replaceTextRange(replacement: String): Boolean = canEdit() && editor.replaceTextRange(replacement)
+
+    /** Removes the picked blocks as one undo step; does nothing in a locked or read-only note. */
+    fun deleteSelectedBlocks(): Boolean = canEdit() && editor.deleteSelectedBlocks()
 
     /** Locks or unlocks the checklist [block] (see toggleChecklistLock). */
     fun toggleChecklistLock(block: Block) {
