@@ -230,6 +230,8 @@ upload this key instead of letting Google generate one).
    `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` for **every** locale folder
    (`en-US`, `uk`, `de-DE`, `fr-FR`, `es-ES`, `it-IT`, `pl-PL`, `pt-PT`, `nl-NL`);
    `StoreMetadataTest` checks they exist and fit.
+   Add the version to `<releases>` in `desktopApp/packaging/flatpak/io.github.pasichdev.Encly.metainfo.xml`
+   too; the Flatpak build in CI refuses a version that is not listed there.
 4. Test the release APK on a device.
 5. Merge to `main`, then tag the merge commit `vX.Y.Z` and push the tag. The
    [release workflow](.github/workflows/release.yml) refuses a tag that does not match
