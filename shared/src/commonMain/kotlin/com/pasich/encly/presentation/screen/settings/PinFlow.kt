@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.pin_change_current_title
 import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_mismatch_retry
@@ -31,6 +32,7 @@ import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
+import com.pasich.encly.presentation.screen.pincode.PinSubmit
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import kotlinx.coroutines.launch
@@ -187,9 +189,6 @@ internal fun PinFlowScaffold(
 ) {
     BackHandler(enabled = state.step == PinStep.NEW || state.step == PinStep.CONFIRM) { state.back() }
     PinLockoutTicker(state.lockoutSeconds > 0L, actions.lockoutMillis) { state.lockoutSeconds = it }
-    LaunchedEffect(state.input.length) {
-        if (state.input.isFull) state.onPinComplete(actions)
-    }
     DisposableEffect(state) { onDispose { state.clear() } }
     PinFlowMessageEffect(state.message, state.snackbarHostState, onShow = { state.message = null })
 
@@ -205,6 +204,7 @@ internal fun PinFlowScaffold(
             PinFlowEntry(
                 text = pinFlowStepText(state, texts),
                 state = state,
+                onSubmit = { if (state.input.canSubmit) state.onPinComplete(actions) },
                 modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues),
             )
         }
@@ -213,7 +213,7 @@ internal fun PinFlowScaffold(
 
 /** Shows [message] once as a snackbar; [onShow] clears it. */
 @Composable
-private fun PinFlowMessageEffect(message: StringResource?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
+internal fun PinFlowMessageEffect(message: StringResource?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
     val messageText = message?.let { stringResource(it) }
     val currentOnShow by rememberUpdatedState(onShow)
     // Clearing the message restarts this effect, which must not cancel the snackbar it opened.
@@ -242,7 +242,7 @@ private fun pinFlowStepText(state: PinFlowState, texts: PinFlowTexts): PinStepTe
 }
 
 @Composable
-private fun PinFlowEntry(text: PinStepText, state: PinFlowState, modifier: Modifier = Modifier) {
+private fun PinFlowEntry(text: PinStepText, state: PinFlowState, onSubmit: () -> Unit, modifier: Modifier = Modifier) {
     val message = text.message
     PinEntryScaffold(
         title = stringResource(text.title),
@@ -259,6 +259,11 @@ private fun PinFlowEntry(text: PinStepText, state: PinFlowState, modifier: Modif
             shakeKey = state.shakeKey,
             enabled = state.keysEnabled,
             actions = PinEntryActions(onDigit = state::typeDigit, onBackspace = state.input::deleteLast),
+            submit = PinSubmit(
+                text = stringResource(Res.string.action_continue),
+                enabled = state.input.canSubmit,
+                onClick = onSubmit,
+            ),
         )
     }
 }

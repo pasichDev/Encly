@@ -7,8 +7,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.testutil.TestScreen
 import com.pasich.encly.testutil.answerCallback
@@ -113,11 +115,71 @@ class LockViewModelTest {
 
     @Test
     fun theRecoveryPhraseResetIsAskedOfTheSecurityLayer() {
-        `when`(security.canResetPinWithoutCurrent()).thenReturn(true)
+        `when`(security.recoveryStage()).thenReturn(RecoveryStage.MUST_SET_PIN)
         assertTrue(viewModel.mustResetPin())
+        assertEquals(RecoveryStage.MUST_SET_PIN, viewModel.recoveryStage())
 
-        `when`(security.canResetPinWithoutCurrent()).thenReturn(false)
+        // A choice is not a forced reset: the lock screen routes it to the keep-or-change page instead.
+        `when`(security.recoveryStage()).thenReturn(RecoveryStage.CHOOSE)
         assertFalse(viewModel.mustResetPin())
+        assertEquals(RecoveryStage.CHOOSE, viewModel.recoveryStage())
+
+        `when`(security.recoveryStage()).thenReturn(RecoveryStage.NONE)
+        assertFalse(viewModel.mustResetPin())
+    }
+
+    @Test
+    fun keepingThePinAfterRecoveryIsLeftToTheSecurityLayer() {
+        `when`(security.keepUnlockMethodsAfterRecovery()).thenReturn(true)
+
+        assertTrue(viewModel.keepAfterRecovery())
+
+        verify(security).keepUnlockMethodsAfterRecovery()
+    }
+
+    @Test
+    fun theLockScreenAsksWhichMethodsTheVaultHas() {
+        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = true, password = true))
+
+        assertEquals(UnlockMethods(pin = true, password = true), viewModel.unlockMethods())
+    }
+
+    @Test
+    fun theRightPasswordUnlocks() = runTest {
+        `when`(security.unlockWithPassword(PASSWORD.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+
+        assertEquals(PinUnlockResult.SUCCESS, password())
+        assertFalse(viewModel.busy.value)
+        assertFalse(sessionLock.locked.value)
+        verify(security, never()).unlockWithPin(anyCharArray())
+    }
+
+    @Test
+    fun aPasswordResultIsToldApartLikeAPinResult() = runTest {
+        `when`(security.unlockWithPassword(PASSWORD.toCharArray()))
+            .thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+            .thenReturn(VaultUnlockResult.LOCKED_OUT)
+            .thenReturn(VaultUnlockResult.PIN_KEY_LOST)
+            .thenReturn(VaultUnlockResult.DB_ERROR)
+
+        assertEquals(PinUnlockResult.WRONG_PIN, password())
+        assertEquals(PinUnlockResult.LOCKED_OUT, password())
+        assertEquals(PinUnlockResult.KEY_LOST, password())
+        assertEquals(PinUnlockResult.DB_ERROR, password())
+    }
+
+    @Test
+    fun aPasswordUnlockThatLandsInTheBackgroundIsClosedAgain() = runTest {
+        `when`(security.isLockable()).thenReturn(true)
+        doAnswer {
+            sessionLock.lockNow()
+            VaultUnlockResult.SUCCESS
+        }.`when`(security).unlockWithPassword(PASSWORD.toCharArray())
+
+        assertEquals(PinUnlockResult.BACKGROUNDED, password())
+
+        verify(security).lock()
+        assertTrue(sessionLock.locked.value)
     }
 
     @Test
@@ -396,6 +458,12 @@ class LockViewModelTest {
         return result.await()
     }
 
+    private suspend fun password(): PinUnlockResult {
+        val result = CompletableDeferred<PinUnlockResult>()
+        viewModel.authenticatePassword(PASSWORD.toCharArray()) { result.complete(it) }
+        return result.await()
+    }
+
     private suspend fun seed(words: CharArray): SeedUnlockResult {
         val result = CompletableDeferred<SeedUnlockResult>()
         viewModel.authenticateSeed(words) { result.complete(it) }
@@ -410,6 +478,7 @@ class LockViewModelTest {
 
     private companion object {
         const val PIN = "482915"
+        const val PASSWORD = "correct horse battery"
         const val WORDS = "one two three four five six seven eight nine ten eleven twelve"
         const val KEY_LENGTH = 32
         const val LOCKOUT_MS = 30_000L

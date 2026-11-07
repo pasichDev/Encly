@@ -152,6 +152,7 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        PinOnlyNote()
         Column(
             verticalArrangement = Arrangement.spacedBy(spacing.xxs),
             modifier = Modifier.fillMaxWidth().padding(top = spacing.s),

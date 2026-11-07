@@ -355,8 +355,8 @@ public final class com/pasich/encly/core/backup/ParsedBackup {
 }
 
 public final class com/pasich/encly/core/security/AuthSettings {
-	public fun <init> (Lcom/pasich/encly/core/security/AuthType;ZZZZZZ)V
-	public synthetic fun <init> (Lcom/pasich/encly/core/security/AuthType;ZZZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/pasich/encly/core/security/AuthType;ZZZZZZZZ)V
+	public synthetic fun <init> (Lcom/pasich/encly/core/security/AuthType;ZZZZZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/pasich/encly/core/security/AuthType;
 	public final fun component2 ()Z
 	public final fun component3 ()Z
@@ -364,13 +364,17 @@ public final class com/pasich/encly/core/security/AuthSettings {
 	public final fun component5 ()Z
 	public final fun component6 ()Z
 	public final fun component7 ()Z
-	public final fun copy (Lcom/pasich/encly/core/security/AuthType;ZZZZZZ)Lcom/pasich/encly/core/security/AuthSettings;
-	public static synthetic fun copy$default (Lcom/pasich/encly/core/security/AuthSettings;Lcom/pasich/encly/core/security/AuthType;ZZZZZZILjava/lang/Object;)Lcom/pasich/encly/core/security/AuthSettings;
+	public final fun component8 ()Z
+	public final fun component9 ()Z
+	public final fun copy (Lcom/pasich/encly/core/security/AuthType;ZZZZZZZZ)Lcom/pasich/encly/core/security/AuthSettings;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/security/AuthSettings;Lcom/pasich/encly/core/security/AuthType;ZZZZZZZZILjava/lang/Object;)Lcom/pasich/encly/core/security/AuthSettings;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAuthType ()Lcom/pasich/encly/core/security/AuthType;
 	public final fun getDuressPinTurnedOff ()Z
 	public final fun getHasDuressPin ()Z
+	public final fun getHasPassword ()Z
 	public final fun getHasPinSlot ()Z
+	public final fun getPasswordTurnedOff ()Z
 	public final fun getWipePinTurnedOff ()Z
 	public fun hashCode ()I
 	public final fun isBiometricEnabled ()Z
@@ -406,6 +410,7 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public static final field MAX_LOCKOUT_MS J
 	public static final field STRIKE_GRACE I
 	public fun <init> (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)V
+	public final fun changePassword ([C[B)Lcom/pasich/encly/core/security/PasswordChange;
 	public final fun changePin ([C[B)Lcom/pasich/encly/core/security/PinChange;
 	public final fun clearPendingWipe ()Z
 	public final fun configureDuressPin ([C[BLkotlin/jvm/functions/Function0;)Lcom/pasich/encly/core/security/DuressPinChange;
@@ -418,16 +423,24 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public final fun ensureWipeSlot ()Z
 	public final fun getAuthType ()Lcom/pasich/encly/core/security/AuthType;
 	public final fun hasDecoyVault ([B)Z
+	public final fun hasPasswordSlot ()Z
 	public final fun hasPinSlot ()Z
 	public final fun isAuthStrategy ()Lcom/pasich/encly/core/security/AuthStrategy;
 	public final fun isBiometricEnabled ()Z
 	public final fun markBiometricEnabled (Z)V
 	public final fun markWipeDatabaseCreated ()Z
+	public final fun passwordTurnedOff ()Z
 	public final fun pendingWipe ()Lcom/pasich/encly/core/security/WipeStage;
+	public final fun recoveryFollowUp ()Lcom/pasich/encly/core/security/RecoveryFollowUp;
 	public final fun remainingLockoutMillis ()J
 	public final fun removeDuressPin ()Z
+	public final fun removePassword ()Z
+	public final fun removePin ([B)Z
 	public final fun removeWipePin ()Z
+	public final fun unlockWithPassword ([C)Lcom/pasich/encly/core/security/PinUnlock;
 	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/PinUnlock;
+	public final fun verifyPasswordAuth ([CZ)Z
+	public static synthetic fun verifyPasswordAuth$default (Lcom/pasich/encly/core/security/AuthenticationManager;[CZILjava/lang/Object;)Z
 	public final fun verifyPinAuth ([CZ)Z
 	public static synthetic fun verifyPinAuth$default (Lcom/pasich/encly/core/security/AuthenticationManager;[CZILjava/lang/Object;)Z
 	public final fun wipe ()V
@@ -454,7 +467,10 @@ public final class com/pasich/encly/core/security/AuthenticationManager$MetroFac
 }
 
 public final class com/pasich/encly/core/security/AuthenticationManagerKt {
-	public static final field PIN_LENGTH I
+	public static final field MAX_PASSWORD_LENGTH I
+	public static final field MAX_PIN_LENGTH I
+	public static final field MIN_PASSWORD_LENGTH I
+	public static final field MIN_PIN_LENGTH I
 }
 
 public final class com/pasich/encly/core/security/AutoLock : com/pasich/encly/core/security/AutoLockPolicy {
@@ -680,6 +696,15 @@ public final class com/pasich/encly/core/security/NeverLocked : com/pasich/encly
 	public fun registerPreLockFlush (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
 }
 
+public final class com/pasich/encly/core/security/PasswordChange : java/lang/Enum {
+	public static final field FAILED Lcom/pasich/encly/core/security/PasswordChange;
+	public static final field INVALID Lcom/pasich/encly/core/security/PasswordChange;
+	public static final field SET Lcom/pasich/encly/core/security/PasswordChange;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/PasswordChange;
+	public static fun values ()[Lcom/pasich/encly/core/security/PasswordChange;
+}
+
 public final class com/pasich/encly/core/security/PinChange : java/lang/Enum {
 	public static final field FAILED Lcom/pasich/encly/core/security/PinChange;
 	public static final field IN_USE Lcom/pasich/encly/core/security/PinChange;
@@ -757,6 +782,23 @@ public final class com/pasich/encly/core/security/PinUnlock$WrongPin : com/pasic
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/pasich/encly/core/security/RecoveryFollowUp : java/lang/Enum {
+	public static final field KEEP_OR_CHANGE Lcom/pasich/encly/core/security/RecoveryFollowUp;
+	public static final field MUST_SET_PIN Lcom/pasich/encly/core/security/RecoveryFollowUp;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/RecoveryFollowUp;
+	public static fun values ()[Lcom/pasich/encly/core/security/RecoveryFollowUp;
+}
+
+public final class com/pasich/encly/core/security/RecoveryStage : java/lang/Enum {
+	public static final field CHOOSE Lcom/pasich/encly/core/security/RecoveryStage;
+	public static final field MUST_SET_PIN Lcom/pasich/encly/core/security/RecoveryStage;
+	public static final field NONE Lcom/pasich/encly/core/security/RecoveryStage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/RecoveryStage;
+	public static fun values ()[Lcom/pasich/encly/core/security/RecoveryStage;
+}
+
 public final class com/pasich/encly/core/security/RecoveryWords {
 	public static final field COUNT I
 	public static final field INSTANCE Lcom/pasich/encly/core/security/RecoveryWords;
@@ -798,6 +840,7 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun biometricStatus ()Lcom/pasich/encly/core/security/BiometricStatus;
 	public final fun canReauthWithBiometric ()Z
 	public final fun canResetPinWithoutCurrent ()Z
+	public final fun changePassword ([C)Lcom/pasich/encly/core/security/PasswordChange;
 	public final fun changePin ([C)Lcom/pasich/encly/core/security/PinChange;
 	public final fun commitInitialSetup ()Z
 	public final fun completePendingWipe ()V
@@ -825,20 +868,27 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun isLockable ()Z
 	public final fun isOnboardingShow ()Z
 	public final fun isValidRecoveryPhrase ([C)Z
+	public final fun keepUnlockMethodsAfterRecovery ()Z
 	public final fun lock ()V
 	public final fun openInitialVault ()Z
 	public final fun pinLockoutRemainingMillis ()J
+	public final fun recoveryStage ()Lcom/pasich/encly/core/security/RecoveryStage;
 	public final fun removeDuressPin ()Z
+	public final fun removePassword ()Z
+	public final fun removePin ()Z
 	public final fun removeWipePin ()Z
 	public final fun replaceRecoverySeed ([C)Z
 	public final fun requestBiometricKey (Lcom/pasich/encly/core/security/BiometricHost;Lkotlin/jvm/functions/Function1;)V
 	public final fun resolveInitialStatus ()Lcom/pasich/encly/core/security/InitialStatus;
 	public final fun setOnboardingShown ()Z
 	public final fun setSecurityStatus (Lcom/pasich/encly/core/security/InitialStatus;)V
+	public final fun unlockMethods ()Lcom/pasich/encly/core/security/UnlockMethods;
+	public final fun unlockWithPassword ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public final fun unlockWithRawKey ([BZ)Z
 	public static synthetic fun unlockWithRawKey$default (Lcom/pasich/encly/core/security/SecurityManager;[BZILjava/lang/Object;)Z
 	public final fun unlockWithSeed ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public final fun verifyPassword ([C)Z
 	public final fun verifyPin ([C)Z
 	public final fun verifySeed ([C)Z
 	public final fun wipeAndReset ()Z
@@ -938,6 +988,19 @@ public final class com/pasich/encly/core/security/SessionLockManager$MetroFactor
 
 public final class com/pasich/encly/core/security/SessionLockManagerKt {
 	public static final field LOCK_FLUSH_TIMEOUT_MS J
+}
+
+public final class com/pasich/encly/core/security/UnlockMethods {
+	public fun <init> (ZZ)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun copy (ZZ)Lcom/pasich/encly/core/security/UnlockMethods;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/security/UnlockMethods;ZZILjava/lang/Object;)Lcom/pasich/encly/core/security/UnlockMethods;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPassword ()Z
+	public final fun getPin ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/pasich/encly/core/security/VaultDatabase {

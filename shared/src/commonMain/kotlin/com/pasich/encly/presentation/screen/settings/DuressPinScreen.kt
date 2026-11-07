@@ -160,6 +160,7 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        PinOnlyNote()
         Text(
             text = info.statusText(),
             style = MaterialTheme.typography.titleSmall,

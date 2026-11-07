@@ -8,6 +8,7 @@ import com.pasich.encly.core.resources.security_erase_failed
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
@@ -46,6 +47,7 @@ class BackupViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         security = mock(SecurityManager::class.java)
+        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = true, password = false))
         sessionLock = SessionLockManager(security, screenshots = screenshots)
         viewModel = BackupViewModel(
             backupManager = BackupManager(

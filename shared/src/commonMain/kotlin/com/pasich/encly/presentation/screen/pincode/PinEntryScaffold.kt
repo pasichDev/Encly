@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
+import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyLogoMark
 import com.pasich.encly.presentation.designsystem.KeypadSize
@@ -191,8 +192,14 @@ class PinEntryActions(
 )
 
 /**
- * The PIN dots and the lock-size keypad. [error] turns the dots `error`; a new [shakeKey] shakes
- * them. [enabled] false (a lockout) dims and disables the keys.
+ * The button under a PIN keypad that submits what is typed. A PIN has no fixed length, so nothing is submitted by
+ * itself: [enabled] is true from the shortest PIN's length on.
+ */
+class PinSubmit(val text: String, val enabled: Boolean, val onClick: () -> Unit)
+
+/**
+ * The PIN dots and the lock-size keypad, and the [submit] button under them. [error] turns the dots `error`; a new
+ * [shakeKey] shakes them. [enabled] false (a lockout) dims and disables the keys and the button.
  */
 @Composable
 fun PinEntry(
@@ -202,6 +209,7 @@ fun PinEntry(
     error: Boolean = false,
     shakeKey: Int = 0,
     enabled: Boolean = true,
+    submit: PinSubmit? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         PinDots(
@@ -221,6 +229,18 @@ fun PinEntry(
             onBiometric = actions.onBiometric,
             onClear = actions.onClear,
         )
+        if (submit != null) {
+            EnclyButton(
+                text = submit.text,
+                onClick = submit.onClick,
+                enabled = enabled && submit.enabled,
+                modifier = Modifier.padding(
+                    start = EnclyTheme.spacing.gutter,
+                    end = EnclyTheme.spacing.gutter,
+                    top = EnclyTheme.spacing.l,
+                ),
+            )
+        }
     }
 }
 

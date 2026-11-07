@@ -24,8 +24,8 @@
 
     <string name="all">Wszystkie</string>
 
-    <string name="auth_method_pin_desc">Wymagany klucz dostępu. Stuknij, aby zmienić PIN.</string>
-    <string name="auth_method_pin_title">6-cyfrowy PIN</string>
+    <string name="auth_method_pin_desc">Od 6 do 12 cyfr. Stuknij, aby zmienić PIN.</string>
+    <string name="auth_method_pin_title">PIN</string>
     <string name="auth_title">Uwierzytelnianie</string>
 
     <string name="back">Wstecz</string>
@@ -127,7 +127,7 @@
     <string name="faq_change_pin_q">Jak zmienić PIN?</string>
     <string name="faq_db_key_a">Encly tworzy losowy 256-bitowy klucz bazy danych. PIN chroni osobny slot odblokowania AES-GCM, a biometria korzysta z klucza Android Keystore, który wymaga uwierzytelnienia przy każdym użyciu.</string>
     <string name="faq_db_key_q">Jak chroniony jest klucz bazy danych?</string>
-    <string name="faq_forgot_pin_a">Na ekranie blokady stuknij „Odzyskaj dostęp”, wpisz 12 słów i ustaw nowy PIN. Bez frazy odzyskiwania nie ma innej drogi: nikt, nawet twórca aplikacji, nie może go zresetować.</string>
+    <string name="faq_forgot_pin_a">Na ekranie blokady stuknij „Odzyskaj dostęp” i wpisz 12 słów. Jeśli twój PIN lub hasło nadal działa, możesz je zachować albo ustawić nowy PIN; jeśli nie, od razu ustawiasz nowy PIN. Bez frazy odzyskiwania nie ma innej drogi: nikt, nawet twórca aplikacji, nie może jej zresetować.</string>
     <string name="faq_forgot_pin_q">Co jeśli zapomnę PIN-u?</string>
     <string name="faq_language_a">Otwórz Ustawienia → Język i wybierz jeden z dostępnych języków albo „Domyślny systemu”, aby używać języka urządzenia. Zmiana działa od razu.</string>
     <string name="faq_language_q">Jak zmienić język?</string>
@@ -180,7 +180,7 @@
     <string name="lock_recover_access">Odzyskaj dostęp</string>
     <string name="lock_recovery_subtitle">Wpisz 12-wyrazową frazę odzyskiwania</string>
     <string name="lock_recovery_title">Odzyskiwanie</string>
-    <string name="lock_subtitle">Wpisz 6-cyfrowy PIN, aby kontynuować</string>
+    <string name="lock_subtitle">Wpisz PIN, aby kontynuować</string>
     <string name="lock_title">Odblokuj notatki</string>
     <string name="lock_unlocking">Odblokowywanie…</string>
     <string name="lock_use_recovery_phrase">Odzyskaj dostęp za pomocą frazy odzyskiwania</string>
@@ -228,12 +228,12 @@
     <string name="percent_value">%1$d%%</string>
 
     <string name="pin_change_confirm_subtitle">Wpisz PIN ponownie, aby go potwierdzić</string>
-    <string name="pin_change_confirm_title">Potwierdź 6-cyfrowy PIN</string>
+    <string name="pin_change_confirm_title">Potwierdź PIN</string>
     <string name="pin_change_current_subtitle">Potwierdź obecny PIN przed zmianą klucza dostępu</string>
     <string name="pin_change_current_title">Wpisz obecny PIN</string>
-    <string name="pin_change_new_subtitle">Wpisz nowy PIN, aby chronić swoje notatki</string>
+    <string name="pin_change_new_subtitle">Od 6 do 12 cyfr, aby chronić swoje notatki</string>
     <string name="pin_changed">PIN zmieniony</string>
-    <string name="pin_create_title">Utwórz 6-cyfrowy PIN</string>
+    <string name="pin_create_title">Utwórz PIN</string>
     <string name="pin_current_wrong">Obecny PIN jest nieprawidłowy</string>
     <string name="pin_delete_digit">Usuń cyfrę</string>
     <string name="pin_mismatch_retry">PIN-y nie są zgodne. Spróbuj ponownie.</string>
@@ -440,7 +440,6 @@
     <string name="appearance_preview_label">Podgląd</string>
     <string name="appearance_settings_subtitle">Motyw, tryb i czcionka</string>
     <string name="field_correct">Poprawnie</string>
-    <string name="pin_digits_entered">Wpisane cyfry: %1$d z %2$d</string>
     <string name="pin_unlock_with_fingerprint">Odblokuj odciskiem palca</string>
     <string name="onboarding_step_of">Krok %1$d z %2$d</string>
     <string name="onboarding_welcome_headline">Notatnik, który otworzysz tylko ty.</string>
@@ -453,8 +452,8 @@
     <string name="onboarding_fact_encrypted_desc">Twój sejf jest zamknięty kluczem, który masz tylko ty.</string>
     <string name="onboarding_get_started">Zaczynamy</string>
     <string name="onboarding_have_backup">Mam kopię zapasową</string>
-    <string name="onboarding_pin_title">Wybierz 6-cyfrowy PIN</string>
-    <string name="onboarding_pin_body">Odblokowuje Encly i chroni klucz do twojego sejfu. Nie da się go zresetować przez e-mail.</string>
+    <string name="onboarding_pin_title">Wybierz PIN</string>
+    <string name="onboarding_pin_body">Od 6 do 12 cyfr. Odblokowuje Encly i chroni klucz do twojego sejfu. Nie da się go zresetować przez e-mail.</string>
     <string name="onboarding_pin_again_title">Wpisz PIN jeszcze raz</string>
     <string name="onboarding_pin_again_body">Żebyśmy mieli pewność, że to ten właściwy.</string>
     <string name="onboarding_biometric_desc">PIN nadal działa jako zapasowy sposób</string>
@@ -697,4 +696,8 @@
     <string name="whats_new_row_desc">Zmiany w tej wersji</string>
     <string name="whats_new_dismiss">Rozumiem</string>
     <string name="trash_auto_delete_hint">Notatki są trwale usuwane po 28 dniach w koszu.</string>
+    <string name="faq_password_q">Czy mogę odblokowywać hasłem zamiast PIN-em?</string>
+    <string name="faq_password_a">Tak. W Ustawienia → Bezpieczeństwo → Hasło możesz dodać hasło z co najmniej 8 znaków, w dowolnym języku. Działa obok PIN-u: na ekranie blokady przełączasz się między nimi, a każde odblokowuje samodzielnie. Oba mają ten sam limit błędnych prób i tę samą ochronę kluczem urządzenia. PIN kasujący i PIN przymusowy pozostają wyłącznie kodami PIN. Możesz usunąć jedno z nich, dopóki drugie jest ustawione.</string>
+    <string name="faq_pin_length_q">Jak długi może być mój PIN?</string>
+    <string name="faq_pin_length_a">Od 6 do 12 cyfr, do wyboru. Krótszych PIN-ów nie oferujemy: blokada i klucz urządzenia ograniczają liczbę prób, a 6 cyfr to najkrótszy PIN, który przy tych ograniczeniach pozostaje bezpieczny. Ekran blokady nigdy nie pokazuje długości PIN-u: po wpisaniu stukasz „Odblokuj”, tak samo w przypadku PIN-u kasującego i przymusowego. PIN-y ustawione wcześniej działają bez zmian.</string>
 </resources>

@@ -140,6 +140,18 @@ final enum class com.pasich.encly.core.security/InitialStatus : kotlin/Enum<com.
     final fun values(): kotlin/Array<com.pasich.encly.core.security/InitialStatus> // com.pasich.encly.core.security/InitialStatus.values|values#static(){}[0]
 }
 
+final enum class com.pasich.encly.core.security/PasswordChange : kotlin/Enum<com.pasich.encly.core.security/PasswordChange> { // com.pasich.encly.core.security/PasswordChange|null[0]
+    enum entry FAILED // com.pasich.encly.core.security/PasswordChange.FAILED|null[0]
+    enum entry INVALID // com.pasich.encly.core.security/PasswordChange.INVALID|null[0]
+    enum entry SET // com.pasich.encly.core.security/PasswordChange.SET|null[0]
+
+    final val entries // com.pasich.encly.core.security/PasswordChange.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.pasich.encly.core.security/PasswordChange> // com.pasich.encly.core.security/PasswordChange.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.pasich.encly.core.security/PasswordChange // com.pasich.encly.core.security/PasswordChange.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.pasich.encly.core.security/PasswordChange> // com.pasich.encly.core.security/PasswordChange.values|values#static(){}[0]
+}
+
 final enum class com.pasich.encly.core.security/PinChange : kotlin/Enum<com.pasich.encly.core.security/PinChange> { // com.pasich.encly.core.security/PinChange|null[0]
     enum entry FAILED // com.pasich.encly.core.security/PinChange.FAILED|null[0]
     enum entry IN_USE // com.pasich.encly.core.security/PinChange.IN_USE|null[0]
@@ -163,6 +175,29 @@ final enum class com.pasich.encly.core.security/PinKeySlot : kotlin/Enum<com.pas
 
     final fun valueOf(kotlin/String): com.pasich.encly.core.security/PinKeySlot // com.pasich.encly.core.security/PinKeySlot.valueOf|valueOf#static(kotlin.String){}[0]
     final fun values(): kotlin/Array<com.pasich.encly.core.security/PinKeySlot> // com.pasich.encly.core.security/PinKeySlot.values|values#static(){}[0]
+}
+
+final enum class com.pasich.encly.core.security/RecoveryFollowUp : kotlin/Enum<com.pasich.encly.core.security/RecoveryFollowUp> { // com.pasich.encly.core.security/RecoveryFollowUp|null[0]
+    enum entry KEEP_OR_CHANGE // com.pasich.encly.core.security/RecoveryFollowUp.KEEP_OR_CHANGE|null[0]
+    enum entry MUST_SET_PIN // com.pasich.encly.core.security/RecoveryFollowUp.MUST_SET_PIN|null[0]
+
+    final val entries // com.pasich.encly.core.security/RecoveryFollowUp.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.pasich.encly.core.security/RecoveryFollowUp> // com.pasich.encly.core.security/RecoveryFollowUp.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.pasich.encly.core.security/RecoveryFollowUp // com.pasich.encly.core.security/RecoveryFollowUp.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.pasich.encly.core.security/RecoveryFollowUp> // com.pasich.encly.core.security/RecoveryFollowUp.values|values#static(){}[0]
+}
+
+final enum class com.pasich.encly.core.security/RecoveryStage : kotlin/Enum<com.pasich.encly.core.security/RecoveryStage> { // com.pasich.encly.core.security/RecoveryStage|null[0]
+    enum entry CHOOSE // com.pasich.encly.core.security/RecoveryStage.CHOOSE|null[0]
+    enum entry MUST_SET_PIN // com.pasich.encly.core.security/RecoveryStage.MUST_SET_PIN|null[0]
+    enum entry NONE // com.pasich.encly.core.security/RecoveryStage.NONE|null[0]
+
+    final val entries // com.pasich.encly.core.security/RecoveryStage.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<com.pasich.encly.core.security/RecoveryStage> // com.pasich.encly.core.security/RecoveryStage.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): com.pasich.encly.core.security/RecoveryStage // com.pasich.encly.core.security/RecoveryStage.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<com.pasich.encly.core.security/RecoveryStage> // com.pasich.encly.core.security/RecoveryStage.values|values#static(){}[0]
 }
 
 final enum class com.pasich.encly.core.security/VaultKind : kotlin/Enum<com.pasich.encly.core.security/VaultKind> { // com.pasich.encly.core.security/VaultKind|null[0]
@@ -656,7 +691,7 @@ final class com.pasich.encly.core.backup/ParsedBackup { // com.pasich.encly.core
 }
 
 final class com.pasich.encly.core.security/AuthSettings { // com.pasich.encly.core.security/AuthSettings|null[0]
-    constructor <init>(com.pasich.encly.core.security/AuthType, kotlin/Boolean, kotlin/Boolean, kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...) // com.pasich.encly.core.security/AuthSettings.<init>|<init>(com.pasich.encly.core.security.AuthType;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+    constructor <init>(com.pasich.encly.core.security/AuthType, kotlin/Boolean, kotlin/Boolean, kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...) // com.pasich.encly.core.security/AuthSettings.<init>|<init>(com.pasich.encly.core.security.AuthType;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
 
     final val authType // com.pasich.encly.core.security/AuthSettings.authType|{}authType[0]
         final fun <get-authType>(): com.pasich.encly.core.security/AuthType // com.pasich.encly.core.security/AuthSettings.authType.<get-authType>|<get-authType>(){}[0]
@@ -664,12 +699,16 @@ final class com.pasich.encly.core.security/AuthSettings { // com.pasich.encly.co
         final fun <get-duressPinTurnedOff>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.duressPinTurnedOff.<get-duressPinTurnedOff>|<get-duressPinTurnedOff>(){}[0]
     final val hasDuressPin // com.pasich.encly.core.security/AuthSettings.hasDuressPin|{}hasDuressPin[0]
         final fun <get-hasDuressPin>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.hasDuressPin.<get-hasDuressPin>|<get-hasDuressPin>(){}[0]
+    final val hasPassword // com.pasich.encly.core.security/AuthSettings.hasPassword|{}hasPassword[0]
+        final fun <get-hasPassword>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.hasPassword.<get-hasPassword>|<get-hasPassword>(){}[0]
     final val hasPinSlot // com.pasich.encly.core.security/AuthSettings.hasPinSlot|{}hasPinSlot[0]
         final fun <get-hasPinSlot>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.hasPinSlot.<get-hasPinSlot>|<get-hasPinSlot>(){}[0]
     final val isBiometricEnabled // com.pasich.encly.core.security/AuthSettings.isBiometricEnabled|{}isBiometricEnabled[0]
         final fun <get-isBiometricEnabled>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.isBiometricEnabled.<get-isBiometricEnabled>|<get-isBiometricEnabled>(){}[0]
     final val isUserCreatedSeedKey // com.pasich.encly.core.security/AuthSettings.isUserCreatedSeedKey|{}isUserCreatedSeedKey[0]
         final fun <get-isUserCreatedSeedKey>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.isUserCreatedSeedKey.<get-isUserCreatedSeedKey>|<get-isUserCreatedSeedKey>(){}[0]
+    final val passwordTurnedOff // com.pasich.encly.core.security/AuthSettings.passwordTurnedOff|{}passwordTurnedOff[0]
+        final fun <get-passwordTurnedOff>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.passwordTurnedOff.<get-passwordTurnedOff>|<get-passwordTurnedOff>(){}[0]
     final val wipePinTurnedOff // com.pasich.encly.core.security/AuthSettings.wipePinTurnedOff|{}wipePinTurnedOff[0]
         final fun <get-wipePinTurnedOff>(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.wipePinTurnedOff.<get-wipePinTurnedOff>|<get-wipePinTurnedOff>(){}[0]
 
@@ -680,7 +719,9 @@ final class com.pasich.encly.core.security/AuthSettings { // com.pasich.encly.co
     final fun component5(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.component5|component5(){}[0]
     final fun component6(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.component6|component6(){}[0]
     final fun component7(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.component7|component7(){}[0]
-    final fun copy(com.pasich.encly.core.security/AuthType = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): com.pasich.encly.core.security/AuthSettings // com.pasich.encly.core.security/AuthSettings.copy|copy(com.pasich.encly.core.security.AuthType;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun component8(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.component8|component8(){}[0]
+    final fun component9(): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.component9|component9(){}[0]
+    final fun copy(com.pasich.encly.core.security/AuthType = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): com.pasich.encly.core.security/AuthSettings // com.pasich.encly.core.security/AuthSettings.copy|copy(com.pasich.encly.core.security.AuthType;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.security/AuthSettings.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.pasich.encly.core.security/AuthSettings.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.pasich.encly.core.security/AuthSettings.toString|toString(){}[0]
@@ -689,6 +730,7 @@ final class com.pasich.encly.core.security/AuthSettings { // com.pasich.encly.co
 final class com.pasich.encly.core.security/AuthenticationManager { // com.pasich.encly.core.security/AuthenticationManager|null[0]
     constructor <init>(com.pasich.encly.core.security/VaultStore, com.pasich.encly.core.security/PinHardwareFactor, com.pasich.encly.core.security/LockoutClock) // com.pasich.encly.core.security/AuthenticationManager.<init>|<init>(com.pasich.encly.core.security.VaultStore;com.pasich.encly.core.security.PinHardwareFactor;com.pasich.encly.core.security.LockoutClock){}[0]
 
+    final fun changePassword(kotlin/CharArray, kotlin/ByteArray): com.pasich.encly.core.security/PasswordChange // com.pasich.encly.core.security/AuthenticationManager.changePassword|changePassword(kotlin.CharArray;kotlin.ByteArray){}[0]
     final fun changePin(kotlin/CharArray, kotlin/ByteArray): com.pasich.encly.core.security/PinChange // com.pasich.encly.core.security/AuthenticationManager.changePin|changePin(kotlin.CharArray;kotlin.ByteArray){}[0]
     final fun clearPendingWipe(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.clearPendingWipe|clearPendingWipe(){}[0]
     final fun configureDuressPin(kotlin/CharArray, kotlin/ByteArray, kotlin/Function0<kotlin/Boolean>): com.pasich.encly.core.security/DuressPinChange // com.pasich.encly.core.security/AuthenticationManager.configureDuressPin|configureDuressPin(kotlin.CharArray;kotlin.ByteArray;kotlin.Function0<kotlin.Boolean>){}[0]
@@ -701,16 +743,23 @@ final class com.pasich.encly.core.security/AuthenticationManager { // com.pasich
     final fun ensureWipeSlot(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.ensureWipeSlot|ensureWipeSlot(){}[0]
     final fun getAuthType(): com.pasich.encly.core.security/AuthType // com.pasich.encly.core.security/AuthenticationManager.getAuthType|getAuthType(){}[0]
     final fun hasDecoyVault(kotlin/ByteArray): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.hasDecoyVault|hasDecoyVault(kotlin.ByteArray){}[0]
+    final fun hasPasswordSlot(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.hasPasswordSlot|hasPasswordSlot(){}[0]
     final fun hasPinSlot(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.hasPinSlot|hasPinSlot(){}[0]
     final fun isAuthStrategy(): com.pasich.encly.core.security/AuthStrategy // com.pasich.encly.core.security/AuthenticationManager.isAuthStrategy|isAuthStrategy(){}[0]
     final fun isBiometricEnabled(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.isBiometricEnabled|isBiometricEnabled(){}[0]
     final fun markBiometricEnabled(kotlin/Boolean) // com.pasich.encly.core.security/AuthenticationManager.markBiometricEnabled|markBiometricEnabled(kotlin.Boolean){}[0]
     final fun markWipeDatabaseCreated(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.markWipeDatabaseCreated|markWipeDatabaseCreated(){}[0]
+    final fun passwordTurnedOff(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.passwordTurnedOff|passwordTurnedOff(){}[0]
     final fun pendingWipe(): com.pasich.encly.core.security/WipeStage? // com.pasich.encly.core.security/AuthenticationManager.pendingWipe|pendingWipe(){}[0]
+    final fun recoveryFollowUp(): com.pasich.encly.core.security/RecoveryFollowUp // com.pasich.encly.core.security/AuthenticationManager.recoveryFollowUp|recoveryFollowUp(){}[0]
     final fun remainingLockoutMillis(): kotlin/Long // com.pasich.encly.core.security/AuthenticationManager.remainingLockoutMillis|remainingLockoutMillis(){}[0]
     final fun removeDuressPin(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.removeDuressPin|removeDuressPin(){}[0]
+    final fun removePassword(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.removePassword|removePassword(){}[0]
+    final fun removePin(kotlin/ByteArray): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.removePin|removePin(kotlin.ByteArray){}[0]
     final fun removeWipePin(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.removeWipePin|removeWipePin(){}[0]
+    final fun unlockWithPassword(kotlin/CharArray): com.pasich.encly.core.security/PinUnlock // com.pasich.encly.core.security/AuthenticationManager.unlockWithPassword|unlockWithPassword(kotlin.CharArray){}[0]
     final fun unlockWithPin(kotlin/CharArray): com.pasich.encly.core.security/PinUnlock // com.pasich.encly.core.security/AuthenticationManager.unlockWithPin|unlockWithPin(kotlin.CharArray){}[0]
+    final fun verifyPasswordAuth(kotlin/CharArray, kotlin/Boolean = ...): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.verifyPasswordAuth|verifyPasswordAuth(kotlin.CharArray;kotlin.Boolean){}[0]
     final fun verifyPinAuth(kotlin/CharArray, kotlin/Boolean = ...): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.verifyPinAuth|verifyPinAuth(kotlin.CharArray;kotlin.Boolean){}[0]
     final fun wipe() // com.pasich.encly.core.security/AuthenticationManager.wipe|wipe(){}[0]
     final fun wipePinTurnedOff(): kotlin/Boolean // com.pasich.encly.core.security/AuthenticationManager.wipePinTurnedOff|wipePinTurnedOff(){}[0]
@@ -833,6 +882,7 @@ final class com.pasich.encly.core.security/SecurityManager { // com.pasich.encly
     final fun biometricStatus(): com.pasich.encly.core.security/BiometricStatus // com.pasich.encly.core.security/SecurityManager.biometricStatus|biometricStatus(){}[0]
     final fun canReauthWithBiometric(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.canReauthWithBiometric|canReauthWithBiometric(){}[0]
     final fun canResetPinWithoutCurrent(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.canResetPinWithoutCurrent|canResetPinWithoutCurrent(){}[0]
+    final fun changePassword(kotlin/CharArray): com.pasich.encly.core.security/PasswordChange // com.pasich.encly.core.security/SecurityManager.changePassword|changePassword(kotlin.CharArray){}[0]
     final fun changePin(kotlin/CharArray): com.pasich.encly.core.security/PinChange // com.pasich.encly.core.security/SecurityManager.changePin|changePin(kotlin.CharArray){}[0]
     final fun commitInitialSetup(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.commitInitialSetup|commitInitialSetup(){}[0]
     final fun completePendingWipe() // com.pasich.encly.core.security/SecurityManager.completePendingWipe|completePendingWipe(){}[0]
@@ -859,18 +909,25 @@ final class com.pasich.encly.core.security/SecurityManager { // com.pasich.encly
     final fun isLockable(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.isLockable|isLockable(){}[0]
     final fun isOnboardingShow(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.isOnboardingShow|isOnboardingShow(){}[0]
     final fun isValidRecoveryPhrase(kotlin/CharArray): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.isValidRecoveryPhrase|isValidRecoveryPhrase(kotlin.CharArray){}[0]
+    final fun keepUnlockMethodsAfterRecovery(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.keepUnlockMethodsAfterRecovery|keepUnlockMethodsAfterRecovery(){}[0]
     final fun lock() // com.pasich.encly.core.security/SecurityManager.lock|lock(){}[0]
     final fun openInitialVault(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.openInitialVault|openInitialVault(){}[0]
     final fun pinLockoutRemainingMillis(): kotlin/Long // com.pasich.encly.core.security/SecurityManager.pinLockoutRemainingMillis|pinLockoutRemainingMillis(){}[0]
+    final fun recoveryStage(): com.pasich.encly.core.security/RecoveryStage // com.pasich.encly.core.security/SecurityManager.recoveryStage|recoveryStage(){}[0]
     final fun removeDuressPin(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.removeDuressPin|removeDuressPin(){}[0]
+    final fun removePassword(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.removePassword|removePassword(){}[0]
+    final fun removePin(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.removePin|removePin(){}[0]
     final fun removeWipePin(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.removeWipePin|removeWipePin(){}[0]
     final fun replaceRecoverySeed(kotlin/CharArray): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.replaceRecoverySeed|replaceRecoverySeed(kotlin.CharArray){}[0]
     final fun requestBiometricKey(com.pasich.encly.core.security/BiometricHost, kotlin/Function1<kotlin/ByteArray?, kotlin/Unit>) // com.pasich.encly.core.security/SecurityManager.requestBiometricKey|requestBiometricKey(com.pasich.encly.core.security.BiometricHost;kotlin.Function1<kotlin.ByteArray?,kotlin.Unit>){}[0]
     final fun resolveInitialStatus(): com.pasich.encly.core.security/InitialStatus // com.pasich.encly.core.security/SecurityManager.resolveInitialStatus|resolveInitialStatus(){}[0]
     final fun setOnboardingShown(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.setOnboardingShown|setOnboardingShown(){}[0]
+    final fun unlockMethods(): com.pasich.encly.core.security/UnlockMethods // com.pasich.encly.core.security/SecurityManager.unlockMethods|unlockMethods(){}[0]
+    final fun unlockWithPassword(kotlin/CharArray): com.pasich.encly.core.security/VaultUnlockResult // com.pasich.encly.core.security/SecurityManager.unlockWithPassword|unlockWithPassword(kotlin.CharArray){}[0]
     final fun unlockWithPin(kotlin/CharArray): com.pasich.encly.core.security/VaultUnlockResult // com.pasich.encly.core.security/SecurityManager.unlockWithPin|unlockWithPin(kotlin.CharArray){}[0]
     final fun unlockWithRawKey(kotlin/ByteArray, kotlin/Boolean = ...): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.unlockWithRawKey|unlockWithRawKey(kotlin.ByteArray;kotlin.Boolean){}[0]
     final fun unlockWithSeed(kotlin/CharArray): com.pasich.encly.core.security/VaultUnlockResult // com.pasich.encly.core.security/SecurityManager.unlockWithSeed|unlockWithSeed(kotlin.CharArray){}[0]
+    final fun verifyPassword(kotlin/CharArray): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.verifyPassword|verifyPassword(kotlin.CharArray){}[0]
     final fun verifyPin(kotlin/CharArray): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.verifyPin|verifyPin(kotlin.CharArray){}[0]
     final fun verifySeed(kotlin/CharArray): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.verifySeed|verifySeed(kotlin.CharArray){}[0]
     final fun wipeAndReset(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.wipeAndReset|wipeAndReset(){}[0]
@@ -951,6 +1008,22 @@ final class com.pasich.encly.core.security/SessionLockManager : androidx.lifecyc
             final fun newInstance(com.pasich.encly.core.security/SecurityManager, com.pasich.encly.core.security/DeviceLockWatcher, com.pasich.encly.core.security/LockoutClock, com.pasich.encly.core.security/AutoLockPolicy, com.pasich.encly.core.platform/MainThreadTimer, com.pasich.encly.core.security/ScreenshotAllowance): com.pasich.encly.core.security/SessionLockManager // com.pasich.encly.core.security/SessionLockManager.MetroFactory.Companion.newInstance|newInstance(com.pasich.encly.core.security.SecurityManager;com.pasich.encly.core.security.DeviceLockWatcher;com.pasich.encly.core.security.LockoutClock;com.pasich.encly.core.security.AutoLockPolicy;com.pasich.encly.core.platform.MainThreadTimer;com.pasich.encly.core.security.ScreenshotAllowance){}[0]
         }
     }
+}
+
+final class com.pasich.encly.core.security/UnlockMethods { // com.pasich.encly.core.security/UnlockMethods|null[0]
+    constructor <init>(kotlin/Boolean, kotlin/Boolean) // com.pasich.encly.core.security/UnlockMethods.<init>|<init>(kotlin.Boolean;kotlin.Boolean){}[0]
+
+    final val password // com.pasich.encly.core.security/UnlockMethods.password|{}password[0]
+        final fun <get-password>(): kotlin/Boolean // com.pasich.encly.core.security/UnlockMethods.password.<get-password>|<get-password>(){}[0]
+    final val pin // com.pasich.encly.core.security/UnlockMethods.pin|{}pin[0]
+        final fun <get-pin>(): kotlin/Boolean // com.pasich.encly.core.security/UnlockMethods.pin.<get-pin>|<get-pin>(){}[0]
+
+    final fun component1(): kotlin/Boolean // com.pasich.encly.core.security/UnlockMethods.component1|component1(){}[0]
+    final fun component2(): kotlin/Boolean // com.pasich.encly.core.security/UnlockMethods.component2|component2(){}[0]
+    final fun copy(kotlin/Boolean = ..., kotlin/Boolean = ...): com.pasich.encly.core.security/UnlockMethods // com.pasich.encly.core.security/UnlockMethods.copy|copy(kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.security/UnlockMethods.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.pasich.encly.core.security/UnlockMethods.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.pasich.encly.core.security/UnlockMethods.toString|toString(){}[0]
 }
 
 final class com.pasich.encly.core.security/VaultStore { // com.pasich.encly.core.security/VaultStore|null[0]
@@ -1143,5 +1216,11 @@ final object com.pasich.encly.core.security/RecoveryWords { // com.pasich.encly.
 
 final const val com.pasich.encly.core.security/LOCK_FLUSH_TIMEOUT_MS // com.pasich.encly.core.security/LOCK_FLUSH_TIMEOUT_MS|{}LOCK_FLUSH_TIMEOUT_MS[0]
     final fun <get-LOCK_FLUSH_TIMEOUT_MS>(): kotlin/Long // com.pasich.encly.core.security/LOCK_FLUSH_TIMEOUT_MS.<get-LOCK_FLUSH_TIMEOUT_MS>|<get-LOCK_FLUSH_TIMEOUT_MS>(){}[0]
-final const val com.pasich.encly.core.security/PIN_LENGTH // com.pasich.encly.core.security/PIN_LENGTH|{}PIN_LENGTH[0]
-    final fun <get-PIN_LENGTH>(): kotlin/Int // com.pasich.encly.core.security/PIN_LENGTH.<get-PIN_LENGTH>|<get-PIN_LENGTH>(){}[0]
+final const val com.pasich.encly.core.security/MAX_PASSWORD_LENGTH // com.pasich.encly.core.security/MAX_PASSWORD_LENGTH|{}MAX_PASSWORD_LENGTH[0]
+    final fun <get-MAX_PASSWORD_LENGTH>(): kotlin/Int // com.pasich.encly.core.security/MAX_PASSWORD_LENGTH.<get-MAX_PASSWORD_LENGTH>|<get-MAX_PASSWORD_LENGTH>(){}[0]
+final const val com.pasich.encly.core.security/MAX_PIN_LENGTH // com.pasich.encly.core.security/MAX_PIN_LENGTH|{}MAX_PIN_LENGTH[0]
+    final fun <get-MAX_PIN_LENGTH>(): kotlin/Int // com.pasich.encly.core.security/MAX_PIN_LENGTH.<get-MAX_PIN_LENGTH>|<get-MAX_PIN_LENGTH>(){}[0]
+final const val com.pasich.encly.core.security/MIN_PASSWORD_LENGTH // com.pasich.encly.core.security/MIN_PASSWORD_LENGTH|{}MIN_PASSWORD_LENGTH[0]
+    final fun <get-MIN_PASSWORD_LENGTH>(): kotlin/Int // com.pasich.encly.core.security/MIN_PASSWORD_LENGTH.<get-MIN_PASSWORD_LENGTH>|<get-MIN_PASSWORD_LENGTH>(){}[0]
+final const val com.pasich.encly.core.security/MIN_PIN_LENGTH // com.pasich.encly.core.security/MIN_PIN_LENGTH|{}MIN_PIN_LENGTH[0]
+    final fun <get-MIN_PIN_LENGTH>(): kotlin/Int // com.pasich.encly.core.security/MIN_PIN_LENGTH.<get-MIN_PIN_LENGTH>|<get-MIN_PIN_LENGTH>(){}[0]

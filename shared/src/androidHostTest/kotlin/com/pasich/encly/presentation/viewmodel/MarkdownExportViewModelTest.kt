@@ -13,6 +13,7 @@ import com.pasich.encly.core.resources.pdf_export_done
 import com.pasich.encly.core.resources.print_done
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.export.MarkdownDocuments
@@ -62,6 +63,7 @@ class MarkdownExportViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         security = mock(SecurityManager::class.java)
+        `when`(security.unlockMethods()).thenReturn(UnlockMethods(pin = true, password = false))
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         documents = mock(MarkdownDocuments::class.java)
         doAnswer { invocation ->

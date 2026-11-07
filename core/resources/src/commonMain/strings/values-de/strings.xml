@@ -24,8 +24,8 @@
 
     <string name="all">Alle</string>
 
-    <string name="auth_method_pin_desc">Erforderlicher Zugangsschlüssel. Tippe, um deine PIN zu ändern.</string>
-    <string name="auth_method_pin_title">6-stellige PIN</string>
+    <string name="auth_method_pin_desc">6 bis 12 Ziffern. Tippe, um deine PIN zu ändern.</string>
+    <string name="auth_method_pin_title">PIN</string>
     <string name="auth_title">Anmeldung</string>
 
     <string name="back">Zurück</string>
@@ -127,7 +127,7 @@
     <string name="faq_change_pin_q">Wie ändere ich meine PIN?</string>
     <string name="faq_db_key_a">Encly erzeugt einen zufälligen 256-Bit-Datenbankschlüssel. Deine PIN schützt einen separaten AES-GCM-Entsperrslot, und die Biometrie nutzt einen Android-Keystore-Schlüssel, der bei jeder Verwendung eine Authentifizierung erfordert.</string>
     <string name="faq_db_key_q">Wie ist der Datenbankschlüssel geschützt?</string>
-    <string name="faq_forgot_pin_a">Tippe auf dem Sperrbildschirm auf „Zugang wiederherstellen“, gib deine 12 Wörter ein und lege eine neue PIN fest. Ohne Wiederherstellungsphrase gibt es keinen anderen Weg hinein: Niemand, auch nicht der Entwickler, kann sie zurücksetzen.</string>
+    <string name="faq_forgot_pin_a">Tippe auf dem Sperrbildschirm auf „Zugang wiederherstellen“ und gib deine 12 Wörter ein. Funktioniert deine PIN oder dein Passwort noch, kannst du sie behalten oder eine neue PIN festlegen; sonst legst du sofort eine neue PIN fest. Ohne Wiederherstellungsphrase gibt es keinen anderen Weg hinein: Niemand, auch nicht der Entwickler, kann sie zurücksetzen.</string>
     <string name="faq_forgot_pin_q">Was passiert, wenn ich meine PIN vergesse?</string>
     <string name="faq_language_a">Öffne Einstellungen → Sprache und wähle eine der verfügbaren Sprachen oder „Systemstandard“, um der Sprache deines Geräts zu folgen. Die Änderung gilt sofort.</string>
     <string name="faq_language_q">Wie ändere ich die Sprache?</string>
@@ -180,7 +180,7 @@
     <string name="lock_recover_access">Zugang wiederherstellen</string>
     <string name="lock_recovery_subtitle">Gib deine 12-Wörter-Wiederherstellungsphrase ein</string>
     <string name="lock_recovery_title">Wiederherstellung</string>
-    <string name="lock_subtitle">Gib deine 6-stellige PIN ein, um fortzufahren</string>
+    <string name="lock_subtitle">Gib deine PIN ein, um fortzufahren</string>
     <string name="lock_title">Notizen entsperren</string>
     <string name="lock_unlocking">Wird entsperrt…</string>
     <string name="lock_use_recovery_phrase">Zugang mit der Wiederherstellungsphrase wiederherstellen</string>
@@ -228,12 +228,12 @@
     <string name="percent_value">%1$d %%</string>
 
     <string name="pin_change_confirm_subtitle">Gib die PIN zur Bestätigung erneut ein</string>
-    <string name="pin_change_confirm_title">6-stellige PIN bestätigen</string>
+    <string name="pin_change_confirm_title">PIN bestätigen</string>
     <string name="pin_change_current_subtitle">Bestätige deine aktuelle PIN, bevor du deinen Zugangsschlüssel änderst</string>
     <string name="pin_change_current_title">Aktuelle PIN eingeben</string>
-    <string name="pin_change_new_subtitle">Gib eine neue PIN zum Schutz deiner Notizen ein</string>
+    <string name="pin_change_new_subtitle">6 bis 12 Ziffern zum Schutz deiner Notizen</string>
     <string name="pin_changed">PIN geändert</string>
-    <string name="pin_create_title">6-stellige PIN erstellen</string>
+    <string name="pin_create_title">PIN erstellen</string>
     <string name="pin_current_wrong">Die aktuelle PIN ist falsch</string>
     <string name="pin_delete_digit">Ziffer löschen</string>
     <string name="pin_mismatch_retry">Die PINs stimmen nicht überein. Bitte versuche es erneut.</string>
@@ -434,7 +434,6 @@
     <string name="appearance_preview_label">Vorschau</string>
     <string name="appearance_settings_subtitle">Design, Modus und Schrift</string>
     <string name="field_correct">Richtig</string>
-    <string name="pin_digits_entered">Eingegebene Ziffern: %1$d von %2$d</string>
     <string name="pin_unlock_with_fingerprint">Mit Fingerabdruck entsperren</string>
     <string name="onboarding_step_of">Schritt %1$d von %2$d</string>
     <string name="onboarding_welcome_headline">Ein Notizbuch, das nur du öffnen kannst.</string>
@@ -447,8 +446,8 @@
     <string name="onboarding_fact_encrypted_desc">Dein Tresor ist mit einem Schlüssel verschlossen, den nur du hast.</string>
     <string name="onboarding_get_started">Los geht\'s</string>
     <string name="onboarding_have_backup">Ich habe ein Backup</string>
-    <string name="onboarding_pin_title">Wähle eine 6-stellige PIN</string>
-    <string name="onboarding_pin_body">Sie entsperrt Encly und schützt den Schlüssel zu deinem Tresor. Es gibt keine E-Mail, um sie zurückzusetzen.</string>
+    <string name="onboarding_pin_title">Wähle eine PIN</string>
+    <string name="onboarding_pin_body">6 bis 12 Ziffern. Sie entsperrt Encly und schützt den Schlüssel zu deinem Tresor. Es gibt keine E-Mail, um sie zurückzusetzen.</string>
     <string name="onboarding_pin_again_title">Gib die PIN noch einmal ein</string>
     <string name="onboarding_pin_again_body">Damit wir wissen, dass es die richtige ist.</string>
     <string name="onboarding_biometric_desc">Die PIN funktioniert weiterhin als Ersatz</string>
@@ -685,4 +684,8 @@
     <string name="whats_new_row_desc">Die Änderungen dieser Version</string>
     <string name="whats_new_dismiss">Verstanden</string>
     <string name="trash_auto_delete_hint">Notizen werden nach 28 Tagen im Papierkorb endgültig gelöscht.</string>
+    <string name="faq_password_q">Kann ich statt mit einer PIN mit einem Passwort entsperren?</string>
+    <string name="faq_password_a">Ja. Unter Einstellungen → Sicherheit → Passwort kannst du ein Passwort mit mindestens 8 Zeichen in jeder Sprache hinzufügen. Es gilt neben deiner PIN: Auf dem Sperrbildschirm wechselst du zwischen beiden, und jedes entsperrt für sich. Beide teilen sich dasselbe Limit für Fehlversuche und denselben Schutz durch den Gerätschlüssel. Lösch-PIN und Zwangs-PIN bleiben reine PINs. Du kannst jedes der beiden entfernen, solange das andere festgelegt ist.</string>
+    <string name="faq_pin_length_q">Wie lang darf meine PIN sein?</string>
+    <string name="faq_pin_length_a">Zwischen 6 und 12 Ziffern, du entscheidest. Kürzere PINs werden nicht angeboten: Die Sperre und der Gerätschlüssel begrenzen die Zahl der Versuche, und 6 Ziffern sind die kürzeste PIN, die damit sicher bleibt. Der Sperrbildschirm zeigt nie, wie lang deine PIN ist: Du tippst auf „Entsperren“, wenn du fertig bist; das gilt auch für Lösch-PIN und Zwangs-PIN. PINs, die du vorher festgelegt hast, funktionieren unverändert.</string>
 </resources>

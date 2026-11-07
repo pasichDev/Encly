@@ -86,7 +86,7 @@ class ScreenshotAllowanceScreensTest : ComposeScreenTest() {
         waitForText(str(Res.string.backup_reauth_title))
         assertFalse(app.screenshots.allowed.value)
 
-        typePin("123456")
+        enterPin("123456")
         waitFor(describe = { "allowed=${app.screenshots.allowed.value}" }) { app.screenshots.allowed.value }
     }
 

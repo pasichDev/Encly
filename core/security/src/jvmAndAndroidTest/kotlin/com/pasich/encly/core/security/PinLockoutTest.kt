@@ -23,7 +23,7 @@ class PinLockoutTest {
     @Test
     fun onlySixDigitsAndAFullLengthKeyMakeAPinSlot() {
         assertFalse(manager.configurePin(pin("12345"), dek))
-        assertFalse(manager.configurePin(pin("1234567"), dek))
+        assertFalse(manager.configurePin(pin("1234567890123"), dek))
         assertFalse(manager.configurePin(pin("12345a"), dek))
         assertFalse(manager.configurePin(pin(PIN), ByteArray(DEK_LENGTH - 1)))
 

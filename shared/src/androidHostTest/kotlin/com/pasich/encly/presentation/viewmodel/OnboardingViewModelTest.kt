@@ -177,17 +177,45 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun thePinTakesSixDigitsAndContinueNeedsAllOfThem() {
+    fun thePinTakesSixToTwelveDigitsAndContinueNeedsAtLeastSix() {
         val vm = viewModel()
         vm.getStarted()
 
-        vm.typePin("1234567")
-        assertEquals(6, vm.state.pinLength)
-        vm.onPinBackspace()
+        vm.typePin("12345")
         vm.submitPin()
-
         assertEquals(5, vm.state.pinLength)
         assertFalse("five digits do not continue", vm.state.isConfirmingPin)
+
+        vm.typePin("67890123456")
+        assertEquals(12, vm.state.pinLength)
+    }
+
+    @Test
+    fun aPinLongerThanSixDigitsIsConfirmedWhole() {
+        val vm = viewModel()
+        vm.getStarted()
+
+        vm.typePin("12345678")
+        vm.submitPin()
+        assertTrue(vm.state.isConfirmingPin)
+        vm.typePin("12345678")
+        vm.submitPin()
+
+        assertEquals(OnboardingStep.RECOVERY_INFO, vm.state.step)
+    }
+
+    @Test
+    fun aLongerPinAndItsPrefixDoNotMatch() {
+        val vm = viewModel()
+        vm.getStarted()
+
+        vm.typePin("12345678")
+        vm.submitPin()
+        vm.typePin("123456")
+        vm.submitPin()
+
+        assertEquals(OnboardingStep.PIN, vm.state.step)
+        assertEquals(UiText.of(Res.string.pin_mismatch_retry), vm.state.pinError)
     }
 
     @Test

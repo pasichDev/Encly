@@ -16,9 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,8 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.backup_confirm_phrase_body
@@ -48,8 +44,6 @@ import com.pasich.encly.core.resources.backup_needs_phrase_body
 import com.pasich.encly.core.resources.backup_needs_phrase_title
 import com.pasich.encly.core.resources.backup_phrase_write_down
 import com.pasich.encly.core.resources.backup_phrase_written
-import com.pasich.encly.core.resources.backup_reauth_subtitle
-import com.pasich.encly.core.resources.backup_reauth_title
 import com.pasich.encly.core.resources.backup_replace
 import com.pasich.encly.core.resources.backup_replace_all
 import com.pasich.encly.core.resources.backup_replace_confirm_body
@@ -70,7 +64,6 @@ import com.pasich.encly.core.resources.security_recovery_replace_confirm_title
 import com.pasich.encly.core.resources.security_recovery_replace_title
 import com.pasich.encly.core.resources.security_recovery_replace_warning_body
 import com.pasich.encly.core.resources.security_recovery_replace_warning_title
-import com.pasich.encly.platform.LocalBiometricHost
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -82,7 +75,6 @@ import com.pasich.encly.presentation.designsystem.EnclyPillButton
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.LabelHeader
-import com.pasich.encly.presentation.designsystem.ProtectFromCapture
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.StepHeading
@@ -91,14 +83,7 @@ import com.pasich.encly.presentation.screen.onboarding.FooterSpec
 import com.pasich.encly.presentation.screen.onboarding.OnboardingFooter
 import com.pasich.encly.presentation.screen.onboarding.PhraseCheckFields
 import com.pasich.encly.presentation.screen.onboarding.allChecksCorrect
-import com.pasich.encly.presentation.screen.pincode.PinBuffer
-import com.pasich.encly.presentation.screen.pincode.PinEntry
-import com.pasich.encly.presentation.screen.pincode.PinEntryActions
-import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
-import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
-import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.BackupStep
-import com.pasich.encly.presentation.viewmodel.ReauthFlow
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
@@ -195,68 +180,6 @@ private fun MessageDialog(
         confirm = DialogAction(stringResource(confirm), onConfirm, destructive = destructive),
         dismiss = DialogAction(stringResource(Res.string.cancel), onDismiss),
     )
-}
-
-/**
- * Full-screen PIN entry (plus the fingerprint key, when enabled) before an export or import, run
- * by [reauth]; [onCancel] closes it. The one re-authentication every export goes through.
- */
-@Composable
-internal fun ReauthDialog(reauth: ReauthFlow, step: BackupStep.Reauth, onCancel: () -> Unit) {
-    // Before the Dialog: its own window takes the protection from the activity's when it is made.
-    ProtectFromCapture()
-    val host = LocalBiometricHost.current
-    // Wiped once submitted or when the dialog closes, never a String (see PinBuffer).
-    val input = remember { PinBuffer() }
-    DisposableEffect(input) { onDispose { input.clear() } }
-    var lockoutSeconds by remember { mutableLongStateOf(0L) }
-    // Keyed on the step too: a wrong PIN (a new step) may just have started a lockout.
-    PinLockoutTicker(step to (lockoutSeconds > 0L), reauth::pinLockoutRemainingMillis) {
-        lockoutSeconds = it
-    }
-    val lockedOut = lockoutSeconds > 0L
-    val error = step.error?.let { stringResource(it) }
-    Dialog(
-        onDismissRequest = onCancel,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        PinEntryScaffold(
-            title = stringResource(Res.string.backup_reauth_title),
-            subtitle = when {
-                lockedOut -> pinLockoutText(lockoutSeconds)
-                error != null -> error
-                else -> stringResource(Res.string.backup_reauth_subtitle)
-            },
-            subtitleIsError = lockedOut || error != null,
-            bodyAtBottom = true,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            PinEntry(
-                entered = input.length,
-                error = error != null && input.length == 0,
-                shakeKey = step.failures,
-                enabled = !lockedOut,
-                actions = PinEntryActions(
-                    onDigit = { digit ->
-                        if (!lockedOut) input.add(digit)
-                        // The flow wipes the PIN it is given.
-                        if (input.isFull) reauth.submitPin(input.take())
-                    },
-                    onBackspace = input::deleteLast,
-                    onBiometric = if (step.biometric && host != null) {
-                        { reauth.withBiometric(host) }
-                    } else {
-                        null
-                    },
-                ),
-            )
-            EnclyTextButton(
-                text = stringResource(Res.string.cancel),
-                onClick = onCancel,
-                modifier = Modifier.padding(top = EnclyTheme.spacing.l),
-            )
-        }
-    }
 }
 
 /**

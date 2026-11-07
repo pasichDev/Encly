@@ -39,7 +39,7 @@
         <item quantity="other">%d étiquettes</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Votre PIN ne peut plus déverrouiller Encly sur ce téléphone : sa clé matérielle a été réinitialisée. Utilisez votre phrase de récupération (ou votre empreinte), puis définissez un nouveau PIN.</string>
+    <string name="lock_pin_key_lost">Votre PIN et votre mot de passe ne peuvent plus déverrouiller Encly sur ce téléphone : leur clé matérielle a été réinitialisée. Utilisez votre phrase de récupération (ou votre empreinte), puis définissez un nouveau PIN.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Trop de tentatives. Réessayez dans %d minute</item>
         <item quantity="many">Trop de tentatives. Réessayez dans %d minutes</item>
@@ -100,7 +100,7 @@
     <string name="wipe_pin_remove">Désactiver le PIN d\'effacement</string>
     <string name="wipe_pin_current_subtitle">Confirmez votre PIN pour configurer le PIN d\'effacement</string>
     <string name="wipe_pin_new_title">Créez un PIN d\'effacement</string>
-    <string name="wipe_pin_new_subtitle">6 chiffres, différents de votre PIN</string>
+    <string name="wipe_pin_new_subtitle">6 à 12 chiffres, différents de votre PIN</string>
     <string name="wipe_pin_confirm_title">Confirmez le PIN d\'effacement</string>
     <string name="wipe_pin_confirm_subtitle">Saisissez à nouveau le PIN d\'effacement</string>
     <string name="wipe_pin_same_as_pin">Le PIN d\'effacement doit être différent de votre PIN</string>
@@ -122,7 +122,7 @@
     <string name="duress_pin_remove">Désactiver le PIN de contrainte</string>
     <string name="duress_pin_current_subtitle">Confirmez votre PIN pour configurer le PIN de contrainte</string>
     <string name="duress_pin_new_title">Créer un PIN de contrainte</string>
-    <string name="duress_pin_new_subtitle">6 chiffres, différents de votre PIN</string>
+    <string name="duress_pin_new_subtitle">6 à 12 chiffres, différents de votre PIN</string>
     <string name="duress_pin_confirm_title">Confirmer le PIN de contrainte</string>
     <string name="duress_pin_confirm_subtitle">Saisissez à nouveau le PIN de contrainte</string>
     <string name="duress_pin_same_as_pin">Le PIN de contrainte doit être différent de votre PIN</string>
@@ -136,4 +136,49 @@
     <string name="duress_pin_remove_confirm">Désactiver</string>
     <string name="security_previews_title">Afficher l\'aperçu des notes</string>
     <string name="security_previews_desc">La liste des notes affiche les premières lignes de chaque note. Désactivez-le pour n\'afficher que le titre, le libellé et la date ; la recherche trouve toujours le texte entier.</string>
+    <string name="pin_digits_count">Chiffres saisis : %1$d</string>
+    <string name="lock_unlock">Déverrouiller</string>
+    <string name="lock_use_password">Utiliser le mot de passe</string>
+    <string name="lock_use_pin">Utiliser le code PIN</string>
+    <string name="lock_password_subtitle">Saisissez votre mot de passe pour continuer</string>
+    <string name="lock_password_label">Mot de passe</string>
+    <string name="lock_wrong_password">Mot de passe incorrect</string>
+    <string name="password_title">Mot de passe</string>
+    <string name="password_intro">Un mot de passe est une autre façon de déverrouiller Encly, en plus de votre code PIN. Chacun ouvre le coffre à lui seul, et les échecs de l’un comme de l’autre comptent pour le même blocage. Utilisez au moins 8 caractères ; quelques mots à la suite fonctionnent bien.</string>
+    <string name="password_pin_only_note">Le PIN d\'effacement et le PIN de contrainte restent des codes PIN : un mot de passe ne peut être ni l’un ni l’autre.</string>
+    <string name="password_turned_off">La clé de l’appareil a été réinitialisée : le mot de passe ne fonctionnait plus et a été supprimé. Définissez-le à nouveau si vous en voulez un.</string>
+    <string name="password_set">Définir un mot de passe</string>
+    <string name="password_change">Modifier le mot de passe</string>
+    <string name="password_remove">Supprimer le mot de passe</string>
+    <string name="password_remove_confirm_title">Supprimer le mot de passe ?</string>
+    <string name="password_remove_confirm_body">Encly ne se déverrouillera plus qu’avec votre code PIN.</string>
+    <string name="password_remove_confirm">Supprimer</string>
+    <string name="password_removed">Mot de passe supprimé</string>
+    <string name="password_saved">Mot de passe enregistré</string>
+    <string name="password_failed">Impossible d\'enregistrer le mot de passe. Rien n’a été modifié.</string>
+    <string name="password_too_short">Utilisez de 8 à 128 caractères</string>
+    <string name="password_mismatch">Les mots de passe ne correspondent pas</string>
+    <string name="password_new_label">Nouveau mot de passe</string>
+    <string name="password_confirm_label">Répétez le mot de passe</string>
+    <string name="password_save">Enregistrer le mot de passe</string>
+    <string name="password_edit_title">Choisissez un mot de passe</string>
+    <string name="password_current_title">Saisissez votre mot de passe</string>
+    <string name="password_current_subtitle">Confirmez votre mot de passe avant de modifier le déverrouillage d’Encly</string>
+    <string name="password_current_wrong">Le mot de passe est incorrect</string>
+    <string name="pin_remove">Supprimer le code PIN</string>
+    <string name="pin_remove_confirm_title">Supprimer le code PIN ?</string>
+    <string name="pin_remove_confirm_body">Encly ne se déverrouillera plus qu’avec votre mot de passe. Le PIN d’effacement et le PIN de contrainte ont besoin d’un code PIN : ils sont donc désactivés aussi ; le coffre leurre garde ses notes. Saisissez votre mot de passe pour vérifier qu’il fonctionne.</string>
+    <string name="pin_remove_confirm">Supprimer le PIN</string>
+    <string name="pin_removed">Code PIN supprimé</string>
+    <string name="pin_remove_failed">Impossible de supprimer le code PIN. Rien n’a été modifié.</string>
+    <string name="password_row_on">Défini. Touchez pour le modifier ou le supprimer.</string>
+    <string name="password_row_off">Non défini. Ajoutez une autre façon de déverrouiller.</string>
+    <string name="password_row_turned_off">A cessé de fonctionner après la réinitialisation de la clé de l’appareil. Touchez pour le redéfinir.</string>
+    <string name="auth_method_pin_none">Aucun code PIN défini. Touchez pour en ajouter un.</string>
+    <string name="recovery_choice_title">Phrase de récupération acceptée</string>
+    <string name="recovery_choice_body_pin">Votre code PIN fonctionne toujours. Gardez-le ou définissez-en un nouveau.</string>
+    <string name="recovery_choice_body_password">Votre mot de passe fonctionne toujours. Gardez-le ou définissez un code PIN.</string>
+    <string name="recovery_keep_pin">Garder mon code PIN</string>
+    <string name="recovery_keep_password">Garder mon mot de passe</string>
+    <string name="recovery_set_new_pin">Définir un nouveau code PIN</string>
 </resources>

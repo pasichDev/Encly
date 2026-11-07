@@ -16,6 +16,7 @@ Encly does **not** derive the SQLCipher passphrase directly from a PIN or seed.
 ```
 DEK (random 256 bit) ── SQLCipher raw key
 ├─ PIN slot       AES-GCM(kek_pin)       kek_pin = HKDF(PBKDF2(pin, salt, 600k) ‖ HMAC_keystore(salt ‖ pin))
+├─ password slot  AES-GCM(kek_pw)        kek_pw = HKDF(PBKDF2(pw, salt', 600k) ‖ HMAC_keystore("encly/pw/hw/v1" ‖ salt' ‖ pw))
 ├─ biometric slot AES-GCM(keystore key)  auth-per-use, BIOMETRIC_STRONG CryptoObject
 ├─ recovery slot  AES-GCM(kek_rec)       kek_rec = HKDF(SHA-256(normalized 12 words), "encly/recovery/kek/v3")
 ├─ backup-key slot AES-GCM(HKDF(DEK))    holds backupRoot = HKDF(SHA-256(words), "encly/backup/root/v1")
@@ -27,7 +28,17 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
 
 ### PIN slot
 
-- The app requires a 6-digit PIN.
+- The PIN is 6 to 12 digits, the user's choice. Shorter PINs are not offered: the lockout and the
+  device-bound half below limit how many guesses anyone gets, and 6 digits is the shortest that
+  stays safe under those limits. The length is not stored anywhere: the KDF below is the same for
+  every length, so a PIN made when the PIN was fixed at 6 digits derives exactly the keys it did
+  (the golden tests pin that), and an attacker who copies the slot learns nothing about the length.
+  **The lock screen does not auto-submit and does not show how long the PIN is**: the dots start
+  at six rings and grow with each digit typed, and an *Unlock* button sends what was typed. A
+  stored length (to submit at it) would leak it, and would also make the wipe PIN and the duress
+  PIN, which may have another length than the PIN, impossible to enter. The wipe PIN and the
+  duress PIN follow the same 6 to 12 digit rule and the same KDF run, so nothing in the store or
+  on screen tells which of the three a PIN is.
 - The PIN KEK has two halves, mixed with HKDF-SHA256 (`info = "encly/pin/kek/v3"`, the slot's
   random 16-byte salt as HKDF salt):
   - **software:** PBKDF2-HMAC-SHA256 (600,000 iterations) of the PIN and the salt;
@@ -58,6 +69,58 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
   the only wipe is the optional **wipe PIN** below, and only when the user set one up.
 - Changing the PIN keeps the slot's salt (slots written before keep their own), so a wipe PIN
   set earlier keeps working.
+- The PIN can be removed (Settings → Security → Password) while a password is set, and only
+  then: one of PIN and password always remains. Removing it turns the wipe PIN and the duress
+  PIN off with it (they can only be opened by a PIN run): their slots become random bytes of the
+  same length, the decoy vault keeps its notes as it does after a PIN key reset. The screen asks
+  for the password first, which proves the password opens the vault before the PIN is gone.
+
+### Password slot
+
+An optional second way to unlock, next to the PIN or instead of it (Settings → Security →
+Password; set, change and remove each after re-authentication, with the PIN, or with the password
+when there is no PIN). It is the PIN's construction over its own salt and domain: no new primitive.
+
+- **Rules.** 8 to 128 characters (Unicode code points), any script, **NFC-normalised** before
+  use so the same word typed on another keyboard or platform is the same bytes. Text that is
+  plain Latin (every character below U+0300) is already NFC and is never turned into a String;
+  other text is normalised by the platform (`java.text.Normalizer`, Foundation), which cannot
+  promise to wipe the intermediate copy. A text field also holds its text as a String; both are
+  accepted limitations, as for the recovery words.
+- **KEK.** `kek_pw = HKDF-SHA256(ikm = PBKDF2-HMAC-SHA256(utf8(pw), salt', 600 000) ‖ hw,
+  salt = salt', info = "encly/pw/kek/v1")` with `hw = HMAC_device(slot, "encly/pw/hw/v1" ‖ salt' ‖
+  utf8(pw))`, the same device-bound factor, the same key slot (A or B) and the same number of
+  iterations as the PIN. The factor signs any bytes, so no platform needed a change: Android
+  Keystore, the desktop secret stores and the iOS Enclave factor all take the new input. The
+  domain tag keeps the input apart from the PIN's `salt ‖ digits`.
+- **Slot.** `pin.password.slot` = `version(1) ‖ salt'(16) ‖ IV(12) ‖ AES-GCM(DEK) ‖ tag`, AAD
+  `"encly/pw/slot/v1" ‖ version ‖ salt'`: the same 77 bytes as the PIN slot, with version 1 (the PIN
+  slot is 3) and an AAD of its own. A new salt is made every time the password is set. The
+  golden vectors in `CryptoGoldenTest` pin the slot, the KEK and a full chain with a Unicode password,
+  computed with an implementation independent of the code under test.
+- **Lockout and strikes are shared** with the PIN: the same durable counters, charged before the
+  KDF runs. Five wrong tries in any mix of PIN and password start the 30 s lockout; a right
+  password ends the misses like a right PIN. A device key that is gone or a Keystore failure is
+  reported and not counted, as for the PIN.
+- **PIN-only features.** The wipe PIN and the duress PIN stay PIN-only (the UI says so): a
+  password never opens a decoy vault and never erases. Inside a decoy session a password
+  re-check is counted and always refused, so a duress session cannot be used to test guesses at
+  the real password.
+- **The device key.** Both slots hang on the same key. A key that had to be made anew (see the
+  PIN slot) kills the other slot too; whichever is set in that session drops the dead one in the
+  same atomic write (a new PIN drops the password and Settings tells; a password set then drops
+  the PIN with its wipe and duress slots). A wipe-PIN erase moves the key to the other alias and
+  drops the password slot with the rest of the old vault.
+- **Old builds.** The slot is one more entry in the slot file, whose format did not change. An
+  older build never reads the key and ignores it. The entry lives under the `pin.` prefix on purpose:
+  an older build that wipes its PIN state drops it with the rest, so no password slot is left
+  behind for a vault that build re-creates. What an older build can still do to a vault with a
+  password: change the PIN (the password stays valid), or reset the key (the password then
+  stops working; the PIN works and the password can be set again). A vault whose PIN was removed
+  has no `pin.slot`: an older build then treats it as a vault with a lost PIN slot, so it
+  asks for the recovery phrase if there is one, and otherwise shows the damaged-vault screen,
+  which only wipes after an explicit confirmation. Nothing is lost by opening it with an older build
+  as long as nobody confirms the wipe; the newer build opens it as before.
 
 #### Desktop
 
@@ -147,7 +210,7 @@ and show me"), not against a forensic examination.
   costs a miss like a wrong guess, and the wipe and duress PIN cannot be set during a lockout.
 - **Same cost either way.** Each attempt runs PBKDF2 and the Keystore HMAC once, derives both
   KEKs and always tries both AES-GCM opens, without early exit.
-- **Rules.** 6 digits and different from the PIN (checked by opening the PIN slot with it).
+- **Rules.** 6 to 12 digits and different from the PIN (checked by opening the PIN slot with it).
   Changing the PIN to the wipe PIN turns the wipe PIN off (one PIN never opens both slots). A
   reset of the PIN's Keystore key (see above), or a new PIN set after that key was deleted and
   had to be created anew, turns it off too, since the slot can never open again; Settings then
@@ -251,7 +314,7 @@ meant for "open the app and show me", not against a forensic examination.
   PIN 4 times, type the duress PIN to reset the lockout, and repeat without limit. The cost is a
   tell after that many misses (a lockout sooner than the screen suggests), and a store-level
   one: lockout failures at 0 while `pin.strikes` is not shows a non-PIN unlock since the misses.
-- **Rules.** 6 digits, different from the PIN and from the wipe PIN (checked by opening their
+- **Rules.** 6 to 12 digits, different from the PIN and from the wipe PIN (checked by opening their
   slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
   the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
   Keystore key, or a PIN set with a new salt (after a recovery-phrase unlock when the PIN slot
@@ -320,6 +383,13 @@ Onboarding offers an optional BIP39 recovery slot.
 - The resulting recovery KEK wraps the same random DEK with AES-256-GCM.
 - Entering the correct recovery seed can therefore recover local database access even
   when the PIN is unavailable.
+- **After a recovery unlock** the PIN is no longer replaced by force. If a PIN slot or a password
+  slot still exists, is not locked out and its device key is not lost (probed with one HMAC; a
+  transient Keystore failure counts as not lost), the user chooses *Keep my PIN* (the default;
+  *password* when there is no PIN) or *Set a new PIN*. Only when no slot is left, the key is lost or a
+  lockout runs is a new PIN required before going on. *Keep* changes nothing in the store and
+  ends the session's permission to reset the PIN without the current one; the recovery phrase is
+  the proof of ownership either way, and the lockout is left alone (a new PIN ends it).
 
 Choosing "PIN only, no backups" during onboarding intentionally creates no recovery slot. One
 can be added later from an unlocked session (Settings → Security, or Settings → Backup before
@@ -690,7 +760,7 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - A rooted or fully compromised OS can observe process memory, UI input, or execute code
   in the app's security context. Encly cannot provide a trustworthy boundary against a
   hostile kernel / system image.
-- A numeric PIN has finite entropy (10^6 values). Off the device, a copied PIN slot is useless
+- A numeric PIN has finite entropy (10^6 to 10^12 values, by its length). Off the device, a copied PIN slot is useless
   without the Keystore factor. **On** a rooted device that is unlocked, an attacker can drive
   the Keystore key from the app's own security context: guesses then run at the secure
   hardware's HMAC speed (StrongBox is much slower than the TEE), the PBKDF2 half can be

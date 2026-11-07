@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockMethods
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.platform.ScreenBiometricHost
 import dev.zacsweers.metro.AppScope
@@ -28,9 +30,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
+ * The result of a PIN or a password attempt (WRONG_PIN: the wrong secret of either kind).
  * BACKGROUNDED: the credential was right, but the app left the foreground before the vault
  * finished opening, so SessionLockManager closed it again. The lock screen stays; no error.
- * KEY_LOST: the device-bound PIN key is gone; only the recovery phrase (or fingerprint) unlocks.
+ * KEY_LOST: the device-bound key is gone; only the recovery phrase (or fingerprint) unlocks.
  */
 enum class PinUnlockResult { SUCCESS, WRONG_PIN, LOCKED_OUT, KEY_LOST, DB_ERROR, BACKGROUNDED }
 enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED }
@@ -72,7 +75,16 @@ class LockViewModel(
      * Whether the open session was unlocked with the recovery phrase and still has no new PIN: whichever window the
      * vault was opened from, every lock screen then sends the user to set one before going on.
      */
-    fun mustResetPin(): Boolean = securityManager.canResetPinWithoutCurrent()
+    fun mustResetPin(): Boolean = securityManager.recoveryStage() == RecoveryStage.MUST_SET_PIN
+
+    /**
+     * What a session unlocked with the recovery phrase owes before Home: a new PIN, a choice between keeping the
+     * PIN and setting a new one, or nothing. Whichever window the vault was opened from, every lock screen asks.
+     */
+    fun recoveryStage(): RecoveryStage = securityManager.recoveryStage()
+
+    /** Which of the PIN and the password this vault has; the lock screen offers each that is set. */
+    fun unlockMethods(): UnlockMethods = securityManager.unlockMethods()
 
     /** Whether the session is closed (again); an unlock reveal then must not open Home. */
     fun isSessionLocked(): Boolean = sessionLockManager.locked.value
@@ -101,6 +113,25 @@ class LockViewModel(
             publish(result == PinUnlockResult.SUCCESS, result, PinUnlockResult.BACKGROUNDED)
         }
     }
+
+    /** Unlocks with [password], which is wiped. Counted and locked out together with the PIN. */
+    fun authenticatePassword(password: CharArray, onResult: (PinUnlockResult) -> Unit) {
+        launchUnlock(onResult) {
+            val result = withContext(Dispatchers.Default) {
+                when (securityManager.unlockWithPassword(password)) {
+                    VaultUnlockResult.SUCCESS -> PinUnlockResult.SUCCESS
+                    VaultUnlockResult.INVALID_CREDENTIAL -> PinUnlockResult.WRONG_PIN
+                    VaultUnlockResult.LOCKED_OUT -> PinUnlockResult.LOCKED_OUT
+                    VaultUnlockResult.PIN_KEY_LOST -> PinUnlockResult.KEY_LOST
+                    VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
+                }
+            }
+            publish(result == PinUnlockResult.SUCCESS, result, PinUnlockResult.BACKGROUNDED)
+        }
+    }
+
+    /** "Keep my PIN" after a recovery-phrase unlock that left the choice; see [RecoveryStage.CHOOSE]. */
+    fun keepAfterRecovery(): Boolean = securityManager.keepUnlockMethodsAfterRecovery()
 
     /** Unlocks with the recovery words (lower case, single spaces); [chars] is wiped afterwards. */
     fun authenticateSeed(chars: CharArray, onResult: (SeedUnlockResult) -> Unit) {

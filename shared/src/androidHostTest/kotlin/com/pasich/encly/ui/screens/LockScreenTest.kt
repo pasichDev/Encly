@@ -28,8 +28,9 @@ import com.pasich.encly.core.resources.lock_use_recovery_phrase
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
 import com.pasich.encly.core.resources.pin_delete_digit
-import com.pasich.encly.core.resources.pin_digits_entered
+import com.pasich.encly.core.resources.pin_digits_count
 import com.pasich.encly.core.resources.recovery_word_unknown
+import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.LockScreen
@@ -116,9 +117,9 @@ class LockScreenTest : ComposeScreenTest() {
         show()
 
         typePin("12")
-        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 2, 6)).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_count, 2)).assertExists()
         rule.onNodeWithContentDescription(str(Res.string.pin_delete_digit)).performClick()
-        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 1, 6)).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_count, 1)).assertExists()
     }
 
     @Test
@@ -126,10 +127,10 @@ class LockScreenTest : ComposeScreenTest() {
         `when`(app.security.unlockWithPin(anyCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
         show()
 
-        typePin("000000")
+        enterPin("000000")
 
         waitForText(str(Res.string.lock_wrong_pin))
-        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 0, 6)).assertExists()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_count, 0)).assertExists()
         assertEquals(NavRoutes.LockRoute.name, currentRoute())
     }
 
@@ -138,7 +139,7 @@ class LockScreenTest : ComposeScreenTest() {
         `when`(app.security.unlockWithPin(anyCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
         show()
 
-        typePin("123456")
+        enterPin("123456")
 
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
     }
@@ -218,8 +219,9 @@ class LockScreenTest : ComposeScreenTest() {
     }
 
     @Test
-    fun theRightPhraseAsksForANewPin() {
+    fun theRightPhraseAsksForANewPinWhenNoneCanBeUsed() {
         `when`(app.security.unlockWithSeed(anyChars())).thenReturn(VaultUnlockResult.SUCCESS)
+        `when`(app.security.recoveryStage()).thenReturn(RecoveryStage.MUST_SET_PIN)
         show()
         rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
         phraseCell(1).performTextReplacement(PHRASE)
@@ -277,7 +279,7 @@ class LockScreenTest : ComposeScreenTest() {
             VaultUnlockResult.INVALID_CREDENTIAL
         }
         showOverTheVault()
-        typePin("000000")
+        enterPin("000000")
         assertTrue(checking.await(WAIT_MS, TimeUnit.MILLISECONDS))
 
         pressBack()

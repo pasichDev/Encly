@@ -19,7 +19,7 @@ import com.pasich.encly.core.resources.onboarding_recovery_skip
 import com.pasich.encly.core.resources.onboarding_verify_confirm
 import com.pasich.encly.core.resources.onboarding_verify_show_again
 import com.pasich.encly.core.resources.restore
-import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
@@ -44,7 +44,7 @@ internal fun footerSpec(
         )
 
         OnboardingStep.PIN ->
-            FooterSpec(Res.string.action_continue, actions.pin.onSubmit, state.pinLength == PIN_LENGTH, busy)
+            FooterSpec(Res.string.action_continue, actions.pin.onSubmit, state.pinLength >= MIN_PIN_LENGTH, busy)
 
         OnboardingStep.RECOVERY_INFO -> FooterSpec(
             Res.string.onboarding_recovery_create,

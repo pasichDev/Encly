@@ -32,8 +32,8 @@ import com.pasich.encly.platform.LocalAppWindow
 import com.pasich.encly.platform.LocalBiometricHost
 import com.pasich.encly.platform.LocalDocumentPickers
 import com.pasich.encly.platform.LocalExternalLinks
-import com.pasich.encly.platform.LocalSensitiveClipboard
 import com.pasich.encly.platform.LocalKeyboardPrivacyOffered
+import com.pasich.encly.platform.LocalSensitiveClipboard
 import com.pasich.encly.platform.LocalToaster
 import com.pasich.encly.platform.ScreenBiometricHost
 import com.pasich.encly.presentation.navigation.EnclyApp

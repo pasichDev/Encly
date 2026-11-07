@@ -24,8 +24,8 @@
 
     <string name="all">Alle</string>
 
-    <string name="auth_method_pin_desc">Verplichte toegangssleutel. Tik om je pincode te wijzigen.</string>
-    <string name="auth_method_pin_title">Pincode van 6 cijfers</string>
+    <string name="auth_method_pin_desc">6 tot 12 cijfers. Tik om je pincode te wijzigen.</string>
+    <string name="auth_method_pin_title">Pincode</string>
     <string name="auth_title">Verificatie</string>
 
     <string name="back">Terug</string>
@@ -127,7 +127,7 @@
     <string name="faq_change_pin_q">Hoe wijzig ik mijn pincode?</string>
     <string name="faq_db_key_a">Encly maakt een willekeurige databasesleutel van 256 bits. Je pincode beschermt een afzonderlijk AES-GCM-ontgrendelslot en biometrie gebruikt een Android Keystore-sleutel die bij elk gebruik verificatie vereist.</string>
     <string name="faq_db_key_q">Hoe is de databasesleutel beveiligd?</string>
-    <string name="faq_forgot_pin_a">Tik op het vergrendelscherm op ‘Toegang herstellen’, voer je 12 woorden in en stel een nieuwe pincode in. Zonder herstelzin is er geen andere weg naar binnen: niemand, ook de ontwikkelaar niet, kan hem resetten.</string>
+    <string name="faq_forgot_pin_a">Tik op het vergrendelscherm op ‘Toegang herstellen’ en voer je 12 woorden in. Werkt je pincode of wachtwoord nog, dan kun je die behouden of een nieuwe pincode instellen; zo niet, dan stel je meteen een nieuwe pincode in. Zonder herstelzin is er geen andere weg naar binnen: niemand, ook de ontwikkelaar niet, kan hem resetten.</string>
     <string name="faq_forgot_pin_q">Wat als ik mijn pincode vergeet?</string>
     <string name="faq_language_a">Open Instellingen → Taal en kies een van de beschikbare talen, of \'Systeemstandaard\' om de taal van je apparaat te volgen. De wijziging gaat meteen in.</string>
     <string name="faq_language_q">Hoe wijzig ik de taal?</string>
@@ -180,7 +180,7 @@
     <string name="lock_recover_access">Toegang herstellen</string>
     <string name="lock_recovery_subtitle">Voer je herstelzin van 12 woorden in</string>
     <string name="lock_recovery_title">Herstel</string>
-    <string name="lock_subtitle">Voer je pincode van 6 cijfers in om door te gaan</string>
+    <string name="lock_subtitle">Voer je pincode in om door te gaan</string>
     <string name="lock_title">Ontgrendel je notities</string>
     <string name="lock_unlocking">Ontgrendelen…</string>
     <string name="lock_use_recovery_phrase">Toegang herstellen met je herstelzin</string>
@@ -228,12 +228,12 @@
     <string name="percent_value">%1$d%%</string>
 
     <string name="pin_change_confirm_subtitle">Voer de pincode nogmaals in om te bevestigen</string>
-    <string name="pin_change_confirm_title">Bevestig je pincode van 6 cijfers</string>
+    <string name="pin_change_confirm_title">Bevestig je pincode</string>
     <string name="pin_change_current_subtitle">Bevestig je huidige pincode voordat je je toegangssleutel wijzigt</string>
     <string name="pin_change_current_title">Voer je huidige pincode in</string>
-    <string name="pin_change_new_subtitle">Voer een nieuwe pincode in om je notities te beschermen</string>
+    <string name="pin_change_new_subtitle">6 tot 12 cijfers om je notities te beschermen</string>
     <string name="pin_changed">Pincode gewijzigd</string>
-    <string name="pin_create_title">Maak een pincode van 6 cijfers</string>
+    <string name="pin_create_title">Maak een pincode</string>
     <string name="pin_current_wrong">De huidige pincode is onjuist</string>
     <string name="pin_delete_digit">Cijfer wissen</string>
     <string name="pin_mismatch_retry">De pincodes komen niet overeen. Probeer het opnieuw.</string>
@@ -434,7 +434,6 @@
     <string name="appearance_preview_label">Voorbeeld</string>
     <string name="appearance_settings_subtitle">Thema, modus en lettertype</string>
     <string name="field_correct">Juist</string>
-    <string name="pin_digits_entered">Ingevoerde cijfers: %1$d van %2$d</string>
     <string name="pin_unlock_with_fingerprint">Ontgrendelen met vingerafdruk</string>
     <string name="onboarding_step_of">Stap %1$d van %2$d</string>
     <string name="onboarding_welcome_headline">Een notitieboek dat alleen jij kunt openen.</string>
@@ -447,8 +446,8 @@
     <string name="onboarding_fact_encrypted_desc">Je kluis is vergrendeld met een sleutel die alleen jij hebt.</string>
     <string name="onboarding_get_started">Aan de slag</string>
     <string name="onboarding_have_backup">Ik heb een back-up</string>
-    <string name="onboarding_pin_title">Kies een pincode van 6 cijfers</string>
-    <string name="onboarding_pin_body">Die ontgrendelt Encly en beschermt de sleutel van je kluis. Er is geen e-mail om hem te herstellen.</string>
+    <string name="onboarding_pin_title">Kies een pincode</string>
+    <string name="onboarding_pin_body">6 tot 12 cijfers. Die ontgrendelt Encly en beschermt de sleutel van je kluis. Er is geen e-mail om hem te herstellen.</string>
     <string name="onboarding_pin_again_title">Voer de pincode opnieuw in</string>
     <string name="onboarding_pin_again_body">Zo weten we zeker dat het de bedoelde is.</string>
     <string name="onboarding_biometric_desc">De pincode blijft werken als reserve</string>
@@ -685,4 +684,8 @@
     <string name="whats_new_row_desc">De wijzigingen in deze versie</string>
     <string name="whats_new_dismiss">Begrepen</string>
     <string name="trash_auto_delete_hint">Notities worden na 28 dagen in de prullenbak definitief verwijderd.</string>
+    <string name="faq_password_q">Kan ik met een wachtwoord ontgrendelen in plaats van met een pincode?</string>
+    <string name="faq_password_a">Ja. Onder Instellingen → Beveiliging → Wachtwoord kun je een wachtwoord van minstens 8 tekens toevoegen, in elke taal. Het werkt naast je pincode: op het vergrendelscherm wissel je tussen beide en elk ontgrendelt zelfstandig. Ze delen dezelfde limiet voor foute pogingen en dezelfde bescherming door de sleutel van het apparaat. De wis-pincode en de dwangpincode blijven pincodes. Je kunt een van beide verwijderen zolang de ander is ingesteld.</string>
+    <string name="faq_pin_length_q">Hoe lang mag mijn pincode zijn?</string>
+    <string name="faq_pin_length_a">Tussen 6 en 12 cijfers, naar keuze. Kortere pincodes worden niet aangeboden: de blokkade en de sleutel van het apparaat beperken het aantal pogingen, en 6 cijfers is het kortste dat daarmee veilig blijft. Het vergrendelscherm toont nooit hoe lang je pincode is: je tikt op ‘Ontgrendelen’ als je klaar bent, en hetzelfde geldt voor de wis-pincode en de dwangpincode. Pincodes die je eerder instelde, blijven gewoon werken.</string>
 </resources>

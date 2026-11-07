@@ -24,8 +24,8 @@
 
     <string name="all">Toutes</string>
 
-    <string name="auth_method_pin_desc">Clé d\'accès obligatoire. Appuyez pour modifier votre code PIN.</string>
-    <string name="auth_method_pin_title">Code PIN à 6 chiffres</string>
+    <string name="auth_method_pin_desc">6 à 12 chiffres. Appuyez pour modifier votre code PIN.</string>
+    <string name="auth_method_pin_title">Code PIN</string>
     <string name="auth_title">Authentification</string>
 
     <string name="back">Retour</string>
@@ -127,7 +127,7 @@
     <string name="faq_change_pin_q">Comment modifier mon code PIN ?</string>
     <string name="faq_db_key_a">Encly génère une clé de base de données aléatoire de 256 bits. Votre code PIN protège un emplacement de déverrouillage AES-GCM distinct, et la biométrie utilise une clé Android Keystore qui exige une authentification à chaque utilisation.</string>
     <string name="faq_db_key_q">Comment la clé de la base de données est-elle protégée ?</string>
-    <string name="faq_forgot_pin_a">Sur l’écran de verrouillage, touchez « Récupérer l’accès », saisissez vos 12 mots et définissez un nouveau code PIN. Sans phrase de récupération, il n’y a pas d’autre moyen d’entrer : personne, pas même le développeur, ne peut le réinitialiser.</string>
+    <string name="faq_forgot_pin_a">Sur l’écran de verrouillage, touchez « Récupérer l’accès » et saisissez vos 12 mots. Si votre code PIN ou votre mot de passe fonctionne encore, vous pouvez le garder ou définir un nouveau PIN ; sinon, vous définissez tout de suite un nouveau PIN. Sans phrase de récupération, il n’y a pas d’autre moyen d’entrer : personne, pas même le développeur, ne peut la réinitialiser.</string>
     <string name="faq_forgot_pin_q">Et si j\'oublie mon code PIN ?</string>
     <string name="faq_language_a">Ouvrez Paramètres → Langue et choisissez l\'une des langues disponibles, ou « Langue du système » pour suivre votre appareil. Le changement s\'applique immédiatement.</string>
     <string name="faq_language_q">Comment changer la langue ?</string>
@@ -180,7 +180,7 @@
     <string name="lock_recover_access">Récupérer l\'accès</string>
     <string name="lock_recovery_subtitle">Saisissez votre phrase de récupération de 12 mots</string>
     <string name="lock_recovery_title">Récupération</string>
-    <string name="lock_subtitle">Saisissez votre code PIN à 6 chiffres pour continuer</string>
+    <string name="lock_subtitle">Saisissez votre code PIN pour continuer</string>
     <string name="lock_title">Déverrouillez vos notes</string>
     <string name="lock_unlocking">Déverrouillage…</string>
     <string name="lock_use_recovery_phrase">Récupérer l\'accès avec votre phrase de récupération</string>
@@ -228,12 +228,12 @@
     <string name="percent_value">%1$d %%</string>
 
     <string name="pin_change_confirm_subtitle">Saisissez à nouveau le code PIN pour confirmer</string>
-    <string name="pin_change_confirm_title">Confirmez votre code PIN à 6 chiffres</string>
+    <string name="pin_change_confirm_title">Confirmez votre code PIN</string>
     <string name="pin_change_current_subtitle">Confirmez votre code PIN actuel avant de modifier votre clé d\'accès</string>
     <string name="pin_change_current_title">Saisissez votre code PIN actuel</string>
-    <string name="pin_change_new_subtitle">Saisissez un nouveau code PIN pour protéger vos notes</string>
+    <string name="pin_change_new_subtitle">6 à 12 chiffres pour protéger vos notes</string>
     <string name="pin_changed">Code PIN modifié</string>
-    <string name="pin_create_title">Créez un code PIN à 6 chiffres</string>
+    <string name="pin_create_title">Créez un code PIN</string>
     <string name="pin_current_wrong">Le code PIN actuel est incorrect</string>
     <string name="pin_delete_digit">Effacer le chiffre</string>
     <string name="pin_mismatch_retry">Les codes PIN ne correspondent pas. Veuillez réessayer.</string>
@@ -437,7 +437,6 @@
     <string name="appearance_preview_label">Aperçu</string>
     <string name="appearance_settings_subtitle">Thème, mode et police</string>
     <string name="field_correct">Correct</string>
-    <string name="pin_digits_entered">Chiffres saisis : %1$d sur %2$d</string>
     <string name="pin_unlock_with_fingerprint">Déverrouiller avec l\'empreinte</string>
     <string name="onboarding_step_of">Étape %1$d sur %2$d</string>
     <string name="onboarding_welcome_headline">Un carnet que vous seul pouvez ouvrir.</string>
@@ -450,8 +449,8 @@
     <string name="onboarding_fact_encrypted_desc">Votre coffre est verrouillé par une clé que vous seul détenez.</string>
     <string name="onboarding_get_started">Commencer</string>
     <string name="onboarding_have_backup">J\'ai une sauvegarde</string>
-    <string name="onboarding_pin_title">Choisissez un code PIN à 6 chiffres</string>
-    <string name="onboarding_pin_body">Il déverrouille Encly et protège la clé de votre coffre. Aucun e-mail ne permet de le réinitialiser.</string>
+    <string name="onboarding_pin_title">Choisissez un code PIN</string>
+    <string name="onboarding_pin_body">6 à 12 chiffres. Il déverrouille Encly et protège la clé de votre coffre. Aucun e-mail ne permet de le réinitialiser.</string>
     <string name="onboarding_pin_again_title">Saisissez à nouveau le code PIN</string>
     <string name="onboarding_pin_again_body">Pour être sûr que c\'est bien celui que vous vouliez.</string>
     <string name="onboarding_biometric_desc">Le code PIN reste disponible en secours</string>
@@ -691,4 +690,8 @@
     <string name="whats_new_row_desc">Les changements de cette version</string>
     <string name="whats_new_dismiss">Compris</string>
     <string name="trash_auto_delete_hint">Les notes sont supprimées définitivement après 28 jours dans la corbeille.</string>
+    <string name="faq_password_q">Puis-je déverrouiller avec un mot de passe plutôt qu’un code PIN ?</string>
+    <string name="faq_password_a">Oui. Dans Paramètres → Sécurité → Mot de passe, vous pouvez ajouter un mot de passe d’au moins 8 caractères, dans n’importe quelle langue. Il s’ajoute à votre code PIN : l’écran de verrouillage permet de passer de l’un à l’autre, et chacun déverrouille à lui seul. Les deux partagent la même limite d’essais erronés et la même protection par la clé de l’appareil. Le PIN d’effacement et le PIN de contrainte restent des codes PIN. Vous pouvez supprimer l’un des deux tant que l’autre est défini.</string>
+    <string name="faq_pin_length_q">Quelle longueur peut avoir mon code PIN ?</string>
+    <string name="faq_pin_length_a">Entre 6 et 12 chiffres, à votre choix. Les codes plus courts ne sont pas proposés : le blocage et la clé de l’appareil limitent le nombre d’essais, et 6 chiffres est le minimum qui reste sûr avec ces limites. L’écran de verrouillage n’indique jamais la longueur de votre code : vous touchez « Déverrouiller » quand vous avez fini, de même pour le PIN d’effacement et le PIN de contrainte. Les codes définis auparavant continuent de fonctionner tels quels.</string>
 </resources>

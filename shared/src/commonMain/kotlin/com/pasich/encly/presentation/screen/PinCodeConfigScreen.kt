@@ -37,6 +37,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.action_continue
+import com.pasich.encly.core.resources.lock_password_label
+import com.pasich.encly.core.resources.password_current_subtitle
+import com.pasich.encly.core.resources.password_current_title
+import com.pasich.encly.core.resources.password_current_wrong
 import com.pasich.encly.core.resources.pin_change_bar_title
 import com.pasich.encly.core.resources.pin_change_confirm_subtitle
 import com.pasich.encly.core.resources.pin_change_confirm_title
@@ -57,11 +62,16 @@ import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.screen.pincode.PasswordInput
+import com.pasich.encly.presentation.screen.pincode.PasswordStepScaffold
+import com.pasich.encly.presentation.screen.pincode.PasswordStepSubmit
+import com.pasich.encly.presentation.screen.pincode.PasswordStepText
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
+import com.pasich.encly.presentation.screen.pincode.PinSubmit
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
@@ -84,8 +94,11 @@ enum class PinAnimationState {
  * confirmation. Holds the screen state so the composable only renders it. The PINs are
  * CharArrays that are wiped once used, never Strings (see [PinBuffer]).
  */
-private class PinChangeState(val isReset: Boolean) {
+private class PinChangeState(val isReset: Boolean, val verifyWithPassword: Boolean = false) {
     var step by mutableIntStateOf(if (isReset) 1 else 0)
+
+    /** The password typed at step 0 of a vault that has no PIN to ask for (see [verifyWithPassword]). */
+    val password = PasswordInput()
 
     /** The new PIN typed at step 1, until the confirmation is compared with it. */
     private var firstPin: CharArray? = null
@@ -99,8 +112,14 @@ private class PinChangeState(val isReset: Boolean) {
     /** Changes on every wrong entry, so the dots shake again. */
     var shakeKey by mutableIntStateOf(0)
 
-    /** Digits are refused while the current PIN is locked out. */
+    /** Digits are refused while the current PIN (or password) is locked out. */
     val keysEnabled: Boolean get() = !(step == 0 && lockoutSeconds > 0L)
+
+    /** The password of step 0 is sent to be checked. */
+    fun onPasswordSubmit(viewModel: SecuritySettingsViewModel) {
+        if (!password.canSubmit || !keysEnabled) return
+        viewModel.verifyCurrentPassword(password.take()) { ok -> onCurrentPinChecked(ok, viewModel) }
+    }
 
     /** A digit on the keypad; refused during a lockout. */
     fun typeDigit(digit: Int) {
@@ -147,6 +166,7 @@ private class PinChangeState(val isReset: Boolean) {
     /** Typed or kept digits do not outlive the screen. */
     fun clear() {
         input.clear()
+        password.clear()
         firstPin?.let(SensitiveDataCleaner::clear)
         firstPin = null
     }
@@ -164,7 +184,7 @@ private class PinChangeState(val isReset: Boolean) {
             }
 
             else -> {
-                errorText = Res.string.pin_current_wrong
+                errorText = if (verifyWithPassword) Res.string.password_current_wrong else Res.string.pin_current_wrong
                 shakeKey++
             }
         }
@@ -188,7 +208,13 @@ fun PinCodeConfigScreen(
 ) {
     // After a recovery-phrase unlock the old PIN is forgotten: start at "new PIN", and do not
     // let the user leave without one.
-    val pinState = remember { PinChangeState(isReset = !securityViewModel.requiresCurrentPin()) }
+    val pinState = remember {
+        PinChangeState(
+            isReset = !securityViewModel.requiresCurrentPin(),
+            // A vault with no PIN is asked for its password before a PIN is added.
+            verifyWithPassword = !securityViewModel.hasPinSlot(),
+        )
+    }
 
     BackHandler(enabled = pinState.isReset) { }
     if (pinState.isReset && LocalSessionSharedAcrossWindows.current) {
@@ -198,11 +224,6 @@ fun PinCodeConfigScreen(
         pinState.lockoutSeconds = it
     }
 
-    LaunchedEffect(pinState.input.length) {
-        if (pinState.input.isFull && pinState.animationState == PinAnimationState.Entering) {
-            pinState.onPinComplete(securityViewModel)
-        }
-    }
     DisposableEffect(pinState) { onDispose { pinState.clear() } }
 
     LaunchedEffect(pinState.animationState) {
@@ -231,16 +252,11 @@ fun PinCodeConfigScreen(
                         },
                         label = "StepAnimation",
                     ) { currentStep ->
-                        MainPinContent(
-                            text = pinStepText(currentStep, pinState),
-                            entered = pinState.input.length,
-                            entry = PinEntryState(
-                                enabled = pinState.keysEnabled,
-                                shakeKey = pinState.shakeKey,
-                                compact = !pinState.isReset,
-                            ),
-                            onInput = pinState::typeDigit,
-                            onDelete = pinState.input::deleteLast,
+                        PinStepContent(
+                            step = currentStep,
+                            pinState = pinState,
+                            onSubmitPin = { pinState.onPinComplete(securityViewModel) },
+                            onSubmitPassword = { pinState.onPasswordSubmit(securityViewModel) },
                         )
                     }
                 } else {
@@ -249,6 +265,37 @@ fun PinCodeConfigScreen(
             }
         }
     }
+}
+
+/** The page of [step]: the password of a vault with no PIN, or the keypad of the PIN steps. */
+@Composable
+private fun PinStepContent(
+    step: Int,
+    pinState: PinChangeState,
+    onSubmitPin: () -> Unit,
+    onSubmitPassword: () -> Unit,
+) {
+    if (step == 0 && pinState.verifyWithPassword) {
+        CurrentPasswordContent(pinState, onSubmit = onSubmitPassword)
+        return
+    }
+    MainPinContent(
+        text = pinStepText(step, pinState),
+        entered = pinState.input.length,
+        entry = PinEntryState(
+            enabled = pinState.keysEnabled,
+            shakeKey = pinState.shakeKey,
+            compact = !pinState.isReset,
+            canSubmit = pinState.input.canSubmit,
+            onSubmit = {
+                if (pinState.animationState == PinAnimationState.Entering && pinState.input.canSubmit) {
+                    onSubmitPin()
+                }
+            },
+        ),
+        onInput = pinState::typeDigit,
+        onDelete = pinState.input::deleteLast,
+    )
 }
 
 private const val RESET_STILL_NEEDED_POLL_MS = 1_000L
@@ -309,7 +356,36 @@ private fun pinStepSubtitle(step: Int): StringResource = when (step) {
 data class PinStepText(val title: StringResource, val subtitle: StringResource, val message: String?)
 
 /** How the keypad of a PIN step behaves: off during a lockout, the shake, a compact top. */
-private class PinEntryState(val enabled: Boolean, val shakeKey: Int, val compact: Boolean)
+private class PinEntryState(
+    val enabled: Boolean,
+    val shakeKey: Int,
+    val compact: Boolean,
+    val canSubmit: Boolean,
+    val onSubmit: () -> Unit,
+)
+
+/** Step 0 for a vault with no PIN: its password is asked for before a PIN is added. */
+@Composable
+private fun CurrentPasswordContent(state: PinChangeState, onSubmit: () -> Unit) {
+    val lockedOut = state.lockoutSeconds > 0L
+    val error = state.errorText?.let { stringResource(it) }
+    PasswordStepScaffold(
+        text = PasswordStepText(
+            title = stringResource(Res.string.password_current_title),
+            subtitle = when {
+                lockedOut -> pinLockoutText(state.lockoutSeconds)
+                error != null -> error
+                else -> stringResource(Res.string.password_current_subtitle)
+            },
+            label = stringResource(Res.string.lock_password_label),
+            subtitleIsError = lockedOut || error != null,
+        ),
+        input = state.password,
+        submit = PasswordStepSubmit(stringResource(Res.string.action_continue), onSubmit),
+        enabled = !lockedOut,
+        onEdit = { state.errorText = null },
+    )
+}
 
 @Composable
 private fun MainPinContent(
@@ -336,6 +412,11 @@ private fun MainPinContent(
             actions = PinEntryActions(
                 onDigit = onInput,
                 onBackspace = onDelete,
+            ),
+            submit = PinSubmit(
+                text = stringResource(Res.string.action_continue),
+                enabled = entry.canSubmit,
+                onClick = entry.onSubmit,
             ),
         )
     }

@@ -36,7 +36,7 @@
         <item quantity="other">%d tags</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Je pincode kan Encly op deze telefoon niet meer ontgrendelen: de hardwaresleutel is gereset. Gebruik je herstelzin (of vingerafdruk) en stel daarna een nieuwe pincode in.</string>
+    <string name="lock_pin_key_lost">Je pincode en wachtwoord kunnen Encly op deze telefoon niet meer ontgrendelen: de hardwaresleutel is gereset. Gebruik je herstelzin (of vingerafdruk) en stel daarna een nieuwe pincode in.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Te veel pogingen. Probeer het over %d minuut opnieuw</item>
         <item quantity="other">Te veel pogingen. Probeer het over %d minuten opnieuw</item>
@@ -95,7 +95,7 @@
     <string name="wipe_pin_remove">Wis-pincode uitzetten</string>
     <string name="wipe_pin_current_subtitle">Bevestig je pincode om de wis-pincode in te stellen</string>
     <string name="wipe_pin_new_title">Maak een wis-pincode</string>
-    <string name="wipe_pin_new_subtitle">6 cijfers, anders dan je pincode</string>
+    <string name="wipe_pin_new_subtitle">6 tot 12 cijfers, anders dan je pincode</string>
     <string name="wipe_pin_confirm_title">Bevestig de wis-pincode</string>
     <string name="wipe_pin_confirm_subtitle">Voer de wis-pincode nogmaals in</string>
     <string name="wipe_pin_same_as_pin">De wis-pincode moet anders zijn dan je pincode</string>
@@ -117,7 +117,7 @@
     <string name="duress_pin_remove">Dwangpincode uitschakelen</string>
     <string name="duress_pin_current_subtitle">Bevestig je pincode om de dwangpincode in te stellen</string>
     <string name="duress_pin_new_title">Een dwangpincode maken</string>
-    <string name="duress_pin_new_subtitle">6 cijfers, anders dan je pincode</string>
+    <string name="duress_pin_new_subtitle">6 tot 12 cijfers, anders dan je pincode</string>
     <string name="duress_pin_confirm_title">Bevestig de dwangpincode</string>
     <string name="duress_pin_confirm_subtitle">Voer de dwangpincode nogmaals in</string>
     <string name="duress_pin_same_as_pin">De dwangpincode moet anders zijn dan je pincode</string>
@@ -131,4 +131,49 @@
     <string name="duress_pin_remove_confirm">Uitschakelen</string>
     <string name="security_previews_title">Notitievoorbeelden tonen</string>
     <string name="security_previews_desc">De notitielijst toont de eerste regels van elke notitie. Zet dit uit om alleen titel, label en datum te tonen; zoeken vindt nog steeds de volledige tekst.</string>
+    <string name="pin_digits_count">Ingevoerde cijfers: %1$d</string>
+    <string name="lock_unlock">Ontgrendelen</string>
+    <string name="lock_use_password">Wachtwoord gebruiken</string>
+    <string name="lock_use_pin">Pincode gebruiken</string>
+    <string name="lock_password_subtitle">Voer je wachtwoord in om door te gaan</string>
+    <string name="lock_password_label">Wachtwoord</string>
+    <string name="lock_wrong_password">Onjuist wachtwoord</string>
+    <string name="password_title">Wachtwoord</string>
+    <string name="password_intro">Een wachtwoord is een andere manier om Encly te ontgrendelen, naast je pincode. Elk van beide opent de kluis zelfstandig, en foute pogingen met een van beide tellen mee voor dezelfde blokkade. Gebruik minstens 8 tekens; een paar woorden achter elkaar werkt goed.</string>
+    <string name="password_pin_only_note">De wis-pincode en de dwangpincode blijven pincodes: een wachtwoord kan geen van beide zijn.</string>
+    <string name="password_turned_off">De sleutel van het apparaat is gereset, dus het wachtwoord werkte niet meer en is verwijderd. Stel het opnieuw in als je er een wilt.</string>
+    <string name="password_set">Wachtwoord instellen</string>
+    <string name="password_change">Wachtwoord wijzigen</string>
+    <string name="password_remove">Wachtwoord verwijderen</string>
+    <string name="password_remove_confirm_title">Wachtwoord verwijderen?</string>
+    <string name="password_remove_confirm_body">Encly ontgrendelt dan alleen nog met je pincode.</string>
+    <string name="password_remove_confirm">Verwijderen</string>
+    <string name="password_removed">Wachtwoord verwijderd</string>
+    <string name="password_saved">Wachtwoord opgeslagen</string>
+    <string name="password_failed">Kan het wachtwoord niet opslaan. Er is niets gewijzigd.</string>
+    <string name="password_too_short">Gebruik 8 tot 128 tekens</string>
+    <string name="password_mismatch">De wachtwoorden komen niet overeen</string>
+    <string name="password_new_label">Nieuw wachtwoord</string>
+    <string name="password_confirm_label">Herhaal het wachtwoord</string>
+    <string name="password_save">Wachtwoord opslaan</string>
+    <string name="password_edit_title">Kies een wachtwoord</string>
+    <string name="password_current_title">Voer je wachtwoord in</string>
+    <string name="password_current_subtitle">Bevestig je wachtwoord voordat je wijzigt hoe Encly ontgrendelt</string>
+    <string name="password_current_wrong">Het wachtwoord is onjuist</string>
+    <string name="pin_remove">Pincode verwijderen</string>
+    <string name="pin_remove_confirm_title">Pincode verwijderen?</string>
+    <string name="pin_remove_confirm_body">Encly ontgrendelt dan alleen nog met je wachtwoord. De wis-pincode en de dwangpincode hebben een pincode nodig en worden dus ook uitgeschakeld; de schijnkluis behoudt zijn notities. Typ je wachtwoord om te controleren of het werkt.</string>
+    <string name="pin_remove_confirm">Pincode verwijderen</string>
+    <string name="pin_removed">Pincode verwijderd</string>
+    <string name="pin_remove_failed">Kan de pincode niet verwijderen. Er is niets gewijzigd.</string>
+    <string name="password_row_on">Ingesteld. Tik om het te wijzigen of te verwijderen.</string>
+    <string name="password_row_off">Niet ingesteld. Voeg een andere manier om te ontgrendelen toe.</string>
+    <string name="password_row_turned_off">Werkt niet meer sinds de sleutel van het apparaat is gereset. Tik om het opnieuw in te stellen.</string>
+    <string name="auth_method_pin_none">Geen pincode ingesteld. Tik om er een toe te voegen.</string>
+    <string name="recovery_choice_title">Herstelzin geaccepteerd</string>
+    <string name="recovery_choice_body_pin">Je pincode werkt nog. Behoud hem of stel een nieuwe in.</string>
+    <string name="recovery_choice_body_password">Je wachtwoord werkt nog. Behoud het of stel een pincode in.</string>
+    <string name="recovery_keep_pin">Mijn pincode behouden</string>
+    <string name="recovery_keep_password">Mijn wachtwoord behouden</string>
+    <string name="recovery_set_new_pin">Nieuwe pincode instellen</string>
 </resources>

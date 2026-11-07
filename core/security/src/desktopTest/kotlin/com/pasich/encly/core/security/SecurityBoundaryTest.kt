@@ -11,8 +11,8 @@ import kotlin.test.assertTrue
  * the app (the database, the backup manager, resources, the DI graph). What a platform has to do is behind an
  * interface the core declares (KeyValueStore, VaultFileIo, VaultDatabase, PinHardwareFactor, BiometricManager,
  * LockoutClock, DeviceLockWatcher, MainThreadTimer, HandoffStagingSweeper) and implemented in `:app`, except
- * the two files in [JVM_FILES], which both JVM targets share and which are the only source files that may
- * name `java.io`. The module may depend on `:core:common` and `:core:crypto` only.
+ * the files in [JVM_FILES], which both JVM targets share and which are the only source files that may
+ * name `java.io` or `java.text`. The module may depend on `:core:common` and `:core:crypto` only.
  */
 class SecurityBoundaryTest {
     // Tests run with the module directory as the working directory.
@@ -59,7 +59,7 @@ class SecurityBoundaryTest {
     }
 
     @Test
-    fun onlyTwoJvmFilesTouchTheJvm() {
+    fun onlyTheListedJvmFilesTouchTheJvm() {
         val platformSets = File(moduleRoot, "src").listFiles().orEmpty().map { it.name }.filter { it.endsWith("Main") }
         assertEquals(listOf("commonMain", "iosMain", "jvmAndAndroidMain"), platformSets.sorted())
         val jvmFiles = File(moduleRoot, "src/jvmAndAndroidMain/kotlin").walkTopDown()
@@ -133,6 +133,7 @@ class SecurityBoundaryTest {
         val JVM_FILES = mapOf(
             "JvmVaultFileIo.kt" to "java.io and java.nio: the vault file's fsync and atomic replace",
             "JvmJsonBytes.kt" to "java.io byte-array streams so the plaintext payload can be wiped",
+            "JvmNormalizer.kt" to "java.text.Normalizer: NFC of a password has no common Kotlin equivalent",
         )
     }
 }

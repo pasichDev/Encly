@@ -87,11 +87,10 @@ public class SecurityManager(
     // The vault the last session of this process opened, so a switch moves [eraseEpoch].
     private var lastVault: VaultKind? = null
 
-    // True while the open session was unlocked with the recovery phrase and no new PIN has
-    // been set since. The user proved the vault's strongest secret, so they may replace a
-    // forgotten PIN without typing it.
+    // What the open session still owes after an unlock with the recovery phrase (see [RecoveryStage]). While it is
+    // not NONE the user proved the vault's strongest secret, so they may replace a forgotten PIN without typing it.
     @Volatile
-    private var sessionUnlockedWithRecovery = false
+    private var recoveryStage = RecoveryStage.NONE
 
     // Serializes what creates, opens or deletes the database file while a wipe-PIN erase is
     // pending: an unlock that replaces the database, and the erase's finish at startup (which a
@@ -156,7 +155,7 @@ public class SecurityManager(
         // A lost PIN slot is recoverable only when the user explicitly created a recovery slot.
         // The lock screen can unwrap the DEK with that seed; once unlocked, Settings can create
         // a fresh PIN around the live session DEK.
-        if (!authenticationManager.hasPinSlot() && !seedPhraseManager.hasRecoverySeed()) {
+        if (!hasUnlockSlot() && !seedPhraseManager.hasRecoverySeed()) {
             return InitialStatus.LOSS_CRYPTO
         }
         return InitialStatus.AUTH
@@ -186,9 +185,12 @@ public class SecurityManager(
      */
     private fun isCommittedWithoutFlag(): Boolean = !seedPhraseManager.hasBootstrapKey() &&
         seedPhraseManager.hasStoredSeed() &&
-        (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()) &&
+        (hasUnlockSlot() || seedPhraseManager.hasRecoverySeed()) &&
         // A wipe-PIN erase that has not created the empty database yet leaves none: the vault is still committed.
         (vaultDatabase.hasEncryptedDatabase() || authenticationManager.pendingWipe() != null)
+
+    /** A PIN or a password slot exists: something other than the recovery phrase can open the vault. */
+    private fun hasUnlockSlot(): Boolean = authenticationManager.hasPinSlot() || authenticationManager.hasPasswordSlot()
 
     /** True when first-run setup may (re)create the vault without destroying user data. */
     private fun isSafeToCreateVault(): Boolean = !vaultStore.isUnreadable() &&
@@ -238,16 +240,39 @@ public class SecurityManager(
             dek?.let(SensitiveDataCleaner::clear)
             SensitiveDataCleaner.clear(pin)
         }
-        if (change == PinChange.SET) sessionUnlockedWithRecovery = false
+        if (change == PinChange.SET) recoveryStage = RecoveryStage.NONE
         return change
     }
 
     /**
      * Whether a new PIN may be set without the current one: only in a session the recovery
-     * phrase unlocked (the PIN was forgotten), until a new PIN is set or the vault locks.
+     * phrase unlocked (the PIN was forgotten), until a new PIN is set, kept ([keepUnlockMethodsAfterRecovery])
+     * or the vault locks.
      */
     public fun canResetPinWithoutCurrent(): Boolean =
-        sessionUnlockedWithRecovery && sessionDek != null && !isDecoySession()
+        recoveryStage != RecoveryStage.NONE && sessionDek != null && !isDecoySession()
+
+    /**
+     * What the session unlocked with the recovery phrase still has to decide: [RecoveryStage.MUST_SET_PIN]
+     * when no PIN or password can be used any more (missing, lost key, locked out), [RecoveryStage.CHOOSE] when
+     * they can (keep them or set a new PIN), [RecoveryStage.NONE] otherwise.
+     */
+    public fun recoveryStage(): RecoveryStage = if (sessionDek != null && !isDecoySession()) {
+        recoveryStage
+    } else {
+        RecoveryStage.NONE
+    }
+
+    /**
+     * "Keep my PIN" after a recovery-phrase unlock that left the choice ([RecoveryStage.CHOOSE]): nothing
+     * is changed, and the permission to reset the PIN without the current one ends. False when there was no
+     * choice to make (a forced reset cannot be skipped).
+     */
+    public fun keepUnlockMethodsAfterRecovery(): Boolean {
+        if (recoveryStage != RecoveryStage.CHOOSE) return false
+        recoveryStage = RecoveryStage.NONE
+        return true
+    }
 
     /**
      * One PIN attempt from the lock screen; [pin] is wiped. The wipe PIN reports
@@ -301,9 +326,101 @@ public class SecurityManager(
         } finally {
             SensitiveDataCleaner.clear(dek)
         }
-        sessionUnlockedWithRecovery = opened
+        if (opened) {
+            // The unlock itself did not touch the PIN, the password or the lockout: whether they still serve
+            // is decided now, once, and the lock screen routes on it.
+            recoveryStage = when (authenticationManager.recoveryFollowUp()) {
+                RecoveryFollowUp.KEEP_OR_CHANGE -> RecoveryStage.CHOOSE
+                RecoveryFollowUp.MUST_SET_PIN -> RecoveryStage.MUST_SET_PIN
+            }
+        }
         return if (opened) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
     }
+
+    /**
+     * One password attempt from the lock screen; [password] is wiped. Counted and locked out together with the
+     * PIN, and answered like it ([VaultUnlockResult.PIN_KEY_LOST]: the device-bound key is gone, which takes the
+     * password with it). There is no wipe or duress password: those stay PIN-only.
+     */
+    public fun unlockWithPassword(password: CharArray): VaultUnlockResult {
+        val attempt = try {
+            authenticationManager.unlockWithPassword(password)
+        } finally {
+            SensitiveDataCleaner.clear(password)
+        }
+        return when (attempt) {
+            is PinUnlock.Success -> try {
+                if (unlockWithRawKey(attempt.dek)) VaultUnlockResult.SUCCESS else VaultUnlockResult.DB_ERROR
+            } finally {
+                SensitiveDataCleaner.clear(attempt.dek)
+            }
+
+            PinUnlock.WrongPin -> VaultUnlockResult.INVALID_CREDENTIAL
+
+            PinUnlock.LockedOut -> VaultUnlockResult.LOCKED_OUT
+
+            PinUnlock.KeyLost -> VaultUnlockResult.PIN_KEY_LOST
+
+            // The password slot never yields these; refused all the same.
+            is PinUnlock.Erased -> {
+                SensitiveDataCleaner.clear(attempt.dek)
+                VaultUnlockResult.DB_ERROR
+            }
+
+            is PinUnlock.Decoy -> {
+                SensitiveDataCleaner.clear(attempt.dek)
+                VaultUnlockResult.DB_ERROR
+            }
+
+            PinUnlock.Failed -> VaultUnlockResult.DB_ERROR
+        }
+    }
+
+    /**
+     * Re-authentication with the password of the open vault; counts like an unlock attempt. [password] is
+     * wiped. Never true in a decoy session.
+     */
+    public fun verifyPassword(password: CharArray): Boolean = try {
+        authenticationManager.verifyPasswordAuth(password, decoy = isDecoySession())
+    } finally {
+        SensitiveDataCleaner.clear(password)
+    }
+
+    /**
+     * Sets (or replaces) the password around the live DEK; [password] is wiped. Never in a decoy session: the
+     * slot holds the real vault's DEK. The caller checked who is asking.
+     */
+    public fun changePassword(password: CharArray): PasswordChange {
+        val dek = primarySessionKeyCopy()
+        return try {
+            if (dek == null) PasswordChange.FAILED else authenticationManager.changePassword(password, dek)
+        } finally {
+            dek?.let(SensitiveDataCleaner::clear)
+            SensitiveDataCleaner.clear(password)
+        }
+    }
+
+    /** Turns the password off; false while it is the only way in. Only in a session of the real vault. */
+    public fun removePassword(): Boolean = primarySessionOpen() && authenticationManager.removePassword()
+
+    /**
+     * Turns the PIN off, which also turns off the wipe PIN and the duress PIN; false while it is the only way in.
+     * Only in a session of the real vault.
+     */
+    public fun removePin(): Boolean {
+        val dek = primarySessionKeyCopy() ?: return false
+        return try {
+            authenticationManager.removePin(dek)
+        } finally {
+            SensitiveDataCleaner.clear(dek)
+        }
+    }
+
+    /** Which of the PIN and the password the lock screen and re-authentication can ask for. */
+    public fun unlockMethods(): UnlockMethods = UnlockMethods(
+        pin = authenticationManager.hasPinSlot(),
+        password = authenticationManager.hasPasswordSlot(),
+    )
 
     public fun requestBiometricKey(host: BiometricHost, onResult: (ByteArray?) -> Unit) {
         biometricManager.unlock(host, onResult)
@@ -626,7 +743,7 @@ public class SecurityManager(
      * background (SessionLockManager.onUnlocked) or fails.
      */
     public fun isLockable(): Boolean = (isOnboardingShown() || isCommittedWithoutFlag()) &&
-        (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed())
+        (hasUnlockSlot() || seedPhraseManager.hasRecoverySeed())
 
     public fun isDatabaseUnlocked(): Boolean = vaultDatabase.isDatabaseUnlocked()
 
@@ -692,7 +809,7 @@ public class SecurityManager(
         sessionDek?.let(SensitiveDataCleaner::clear)
         sessionDek = null
         sessionVault = null
-        sessionUnlockedWithRecovery = false
+        recoveryStage = RecoveryStage.NONE
     }
 
     /**
@@ -718,6 +835,8 @@ public class SecurityManager(
         isBiometricEnabled = isBiometricEnabled(),
         isUserCreatedSeedKey = seedPhraseManager.hasRecoverySeed(),
         hasPinSlot = authenticationManager.hasPinSlot(),
+        hasPassword = authenticationManager.hasPasswordSlot(),
+        passwordTurnedOff = authenticationManager.passwordTurnedOff(),
         wipePinTurnedOff = authenticationManager.wipePinTurnedOff(),
         hasDuressPin = hasDuressPin(),
         duressPinTurnedOff = duressPinTurnedOff(),
@@ -733,9 +852,28 @@ public data class AuthSettings(
     val isBiometricEnabled: Boolean,
     val isUserCreatedSeedKey: Boolean,
     val hasPinSlot: Boolean = authType == AuthType.PIN,
+    /** A password is set as another way in (or the only one). */
+    val hasPassword: Boolean = false,
+    /** The device key was reset and the password with it; setting it again brings it back. */
+    val passwordTurnedOff: Boolean = false,
     val wipePinTurnedOff: Boolean = false,
     /** The real vault has a duress PIN (known only in its own session). */
     val hasDuressPin: Boolean = false,
     /** A new PIN slot turned the duress PIN off; setting it again keeps the notes. */
     val duressPinTurnedOff: Boolean = false,
 )
+
+/** What a session unlocked with the recovery phrase still has to decide. */
+public enum class RecoveryStage {
+    /** Nothing: the session was not unlocked with the phrase, or what it owed is settled. */
+    NONE,
+
+    /** The PIN (or password) still serves: keep it, or set a new PIN. */
+    CHOOSE,
+
+    /** No PIN or password can be used (missing, lost key, locked out): a new PIN is set before going on. */
+    MUST_SET_PIN,
+}
+
+/** Which of the two ways to unlock with a secret the vault has set. */
+public data class UnlockMethods(val pin: Boolean, val password: Boolean)

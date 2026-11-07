@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.field_correct
@@ -70,6 +71,7 @@ fun EnclyTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
@@ -93,6 +95,7 @@ fun EnclyTextField(
             cursorBrush = SolidColor(colors.primary),
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
+            visualTransformation = visualTransformation,
             interactionSource = interactionSource,
             modifier = fieldModifier.fillMaxWidth(),
             decorationBox = { inner ->

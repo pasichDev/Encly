@@ -39,7 +39,7 @@
         <item quantity="other">%d etiquetas</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">Seu PIN não pode mais desbloquear o Encly neste telefone: a chave de hardware dele foi redefinida. Use sua frase de recuperação (ou impressão digital) e depois defina um novo PIN.</string>
+    <string name="lock_pin_key_lost">Seu PIN e sua senha não podem mais desbloquear o Encly neste telefone: a chave de hardware deles foi redefinida. Use sua frase de recuperação (ou impressão digital) e depois defina um novo PIN.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Muitas tentativas. Tente novamente em %d minuto</item>
         <item quantity="many">Muitas tentativas. Tente novamente em %d minutos</item>
@@ -100,7 +100,7 @@
     <string name="wipe_pin_remove">Desativar PIN de apagamento</string>
     <string name="wipe_pin_current_subtitle">Confirme seu PIN para configurar o PIN de apagamento</string>
     <string name="wipe_pin_new_title">Crie um PIN de apagamento</string>
-    <string name="wipe_pin_new_subtitle">6 dígitos, diferentes do seu PIN</string>
+    <string name="wipe_pin_new_subtitle">De 6 a 12 dígitos, diferentes do seu PIN</string>
     <string name="wipe_pin_confirm_title">Confirme o PIN de apagamento</string>
     <string name="wipe_pin_confirm_subtitle">Digite o PIN de apagamento de novo</string>
     <string name="wipe_pin_same_as_pin">O PIN de apagamento precisa ser diferente do seu PIN</string>
@@ -122,7 +122,7 @@
     <string name="duress_pin_remove">Desativar PIN de coação</string>
     <string name="duress_pin_current_subtitle">Confirme seu PIN para configurar o PIN de coação</string>
     <string name="duress_pin_new_title">Criar um PIN de coação</string>
-    <string name="duress_pin_new_subtitle">6 dígitos, diferentes do seu PIN</string>
+    <string name="duress_pin_new_subtitle">De 6 a 12 dígitos, diferentes do seu PIN</string>
     <string name="duress_pin_confirm_title">Confirmar o PIN de coação</string>
     <string name="duress_pin_confirm_subtitle">Digite o PIN de coação novamente</string>
     <string name="duress_pin_same_as_pin">O PIN de coação deve ser diferente do seu PIN</string>
@@ -136,4 +136,49 @@
     <string name="duress_pin_remove_confirm">Desativar</string>
     <string name="security_previews_title">Mostrar pré-visualização das notas</string>
     <string name="security_previews_desc">A lista de notas mostra as primeiras linhas de cada nota. Desative para mostrar só o título, a etiqueta e a data; a pesquisa continua a encontrar o texto completo.</string>
+    <string name="pin_digits_count">Dígitos inseridos: %1$d</string>
+    <string name="lock_unlock">Desbloquear</string>
+    <string name="lock_use_password">Usar senha</string>
+    <string name="lock_use_pin">Usar PIN</string>
+    <string name="lock_password_subtitle">Digite sua senha para continuar</string>
+    <string name="lock_password_label">Senha</string>
+    <string name="lock_wrong_password">Senha incorreta</string>
+    <string name="password_title">Senha</string>
+    <string name="password_intro">Uma senha é outra forma de desbloquear o Encly, além do PIN. Cada uma abre o cofre sozinha, e as tentativas erradas com qualquer uma contam para o mesmo bloqueio. Use pelo menos 8 caracteres; algumas palavras em sequência funcionam bem.</string>
+    <string name="password_pin_only_note">O PIN de apagamento e o PIN de coação continuam sendo apenas PINs: uma senha não pode ser nenhum dos dois.</string>
+    <string name="password_turned_off">A chave do dispositivo foi redefinida, então a senha parou de funcionar e foi removida. Defina-a de novo se quiser uma.</string>
+    <string name="password_set">Definir uma senha</string>
+    <string name="password_change">Alterar senha</string>
+    <string name="password_remove">Remover senha</string>
+    <string name="password_remove_confirm_title">Remover a senha?</string>
+    <string name="password_remove_confirm_body">O Encly será desbloqueado apenas com o PIN.</string>
+    <string name="password_remove_confirm">Remover</string>
+    <string name="password_removed">Senha removida</string>
+    <string name="password_saved">Senha salva</string>
+    <string name="password_failed">Não foi possível salvar a senha. Nada foi alterado.</string>
+    <string name="password_too_short">Use de 8 a 128 caracteres</string>
+    <string name="password_mismatch">As senhas não coincidem</string>
+    <string name="password_new_label">Nova senha</string>
+    <string name="password_confirm_label">Repita a senha</string>
+    <string name="password_save">Salvar senha</string>
+    <string name="password_edit_title">Escolha uma senha</string>
+    <string name="password_current_title">Digite sua senha</string>
+    <string name="password_current_subtitle">Confirme sua senha antes de mudar como o Encly é desbloqueado</string>
+    <string name="password_current_wrong">A senha está incorreta</string>
+    <string name="pin_remove">Remover PIN</string>
+    <string name="pin_remove_confirm_title">Remover o PIN?</string>
+    <string name="pin_remove_confirm_body">O Encly será desbloqueado apenas com a senha. O PIN de apagamento e o PIN de coação precisam de um PIN, então também serão desativados; o cofre isca mantém as notas. Digite sua senha para ter certeza de que funciona.</string>
+    <string name="pin_remove_confirm">Remover PIN</string>
+    <string name="pin_removed">PIN removido</string>
+    <string name="pin_remove_failed">Não foi possível remover o PIN. Nada foi alterado.</string>
+    <string name="password_row_on">Definida. Toque para alterar ou remover.</string>
+    <string name="password_row_off">Não definida. Adicione outra forma de desbloquear.</string>
+    <string name="password_row_turned_off">Parou de funcionar quando a chave do dispositivo foi redefinida. Toque para definir de novo.</string>
+    <string name="auth_method_pin_none">Nenhum PIN definido. Toque para adicionar um.</string>
+    <string name="recovery_choice_title">Frase de recuperação aceita</string>
+    <string name="recovery_choice_body_pin">Seu PIN ainda funciona. Mantenha-o ou defina um novo.</string>
+    <string name="recovery_choice_body_password">Sua senha ainda funciona. Mantenha-a ou defina um PIN.</string>
+    <string name="recovery_keep_pin">Manter meu PIN</string>
+    <string name="recovery_keep_password">Manter minha senha</string>
+    <string name="recovery_set_new_pin">Definir um novo PIN</string>
 </resources>

@@ -41,8 +41,8 @@
 
     <string name="all">All</string>
 
-    <string name="auth_method_pin_desc">Required access key. Tap to change your PIN.</string>
-    <string name="auth_method_pin_title">6-digit PIN</string>
+    <string name="auth_method_pin_desc">6 to 12 digits. Tap to change your PIN.</string>
+    <string name="auth_method_pin_title">PIN</string>
     <string name="auth_title">Authorization</string>
 
     <string name="back">Back</string>
@@ -144,7 +144,7 @@
     <string name="faq_change_pin_q">How do I change my PIN?</string>
     <string name="faq_db_key_a">Encly creates a random 256-bit database key. Your PIN protects a separate AES-GCM unlock slot, and biometrics use an auth-per-use Android Keystore key.</string>
     <string name="faq_db_key_q">How is the database key protected?</string>
-    <string name="faq_forgot_pin_a">On the lock screen, tap \"Recover access\", enter your 12 words and set a new PIN. Without a recovery phrase there is no other way in: nobody, not even the developer, can reset it.</string>
+    <string name="faq_forgot_pin_a">On the lock screen, tap \"Recover access\" and enter your 12 words. If your PIN or password still works, you can keep it or set a new PIN; if not, you set a new PIN right away. Without a recovery phrase there is no other way in: nobody, not even the developer, can reset it.</string>
     <string name="faq_forgot_pin_q">What if I forget my PIN?</string>
     <string name="faq_language_a">Open Settings → Language and pick one of the available languages, or \"System default\" to follow your device. The change applies right away.</string>
     <string name="faq_language_q">How do I change the language?</string>
@@ -197,7 +197,7 @@
     <string name="lock_recover_access">Recover access</string>
     <string name="lock_recovery_subtitle">Enter your 12-word recovery phrase</string>
     <string name="lock_recovery_title">Recovery</string>
-    <string name="lock_subtitle">Enter your 6-digit PIN to continue</string>
+    <string name="lock_subtitle">Enter your PIN to continue</string>
     <string name="lock_title">Unlock your notes</string>
     <string name="lock_unlocking">Unlocking…</string>
     <string name="lock_use_recovery_phrase">Recover access with your recovery phrase</string>
@@ -245,12 +245,12 @@
     <string name="percent_value">%1$d%%</string>
 
     <string name="pin_change_confirm_subtitle">Enter the PIN again to confirm</string>
-    <string name="pin_change_confirm_title">Confirm your 6-digit PIN</string>
+    <string name="pin_change_confirm_title">Confirm your PIN</string>
     <string name="pin_change_current_subtitle">Confirm your current PIN before changing your access key</string>
     <string name="pin_change_current_title">Enter your current PIN</string>
-    <string name="pin_change_new_subtitle">Enter a new PIN to protect your notes</string>
+    <string name="pin_change_new_subtitle">6 to 12 digits to protect your notes</string>
     <string name="pin_changed">PIN changed</string>
-    <string name="pin_create_title">Create a 6-digit PIN</string>
+    <string name="pin_create_title">Create a PIN</string>
     <string name="pin_current_wrong">Current PIN is incorrect</string>
     <string name="pin_delete_digit">Delete digit</string>
     <string name="pin_mismatch_retry">PINs don\'t match. Please try again.</string>
@@ -451,7 +451,6 @@
     <string name="appearance_preview_label">Preview</string>
     <string name="appearance_settings_subtitle">Theme, mode and font</string>
     <string name="field_correct">Correct</string>
-    <string name="pin_digits_entered">Digits entered: %1$d of %2$d</string>
     <string name="pin_unlock_with_fingerprint">Unlock with fingerprint</string>
     <string name="onboarding_step_of">Step %1$d of %2$d</string>
     <string name="font_sample" translatable="false">Aa</string>
@@ -465,8 +464,8 @@
     <string name="onboarding_fact_encrypted_desc">Your vault is locked with a key only you hold.</string>
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_have_backup">I have a backup</string>
-    <string name="onboarding_pin_title">Choose a 6-digit PIN</string>
-    <string name="onboarding_pin_body">It unlocks Encly and protects the key to your vault. There is no email to reset it.</string>
+    <string name="onboarding_pin_title">Choose a PIN</string>
+    <string name="onboarding_pin_body">6 to 12 digits. It unlocks Encly and protects the key to your vault. There is no email to reset it.</string>
     <string name="onboarding_pin_again_title">Enter the PIN again</string>
     <string name="onboarding_pin_again_body">So we know it\'s the one you meant.</string>
     <string name="onboarding_biometric_desc">The PIN still works as a fallback</string>
@@ -703,4 +702,8 @@
     <string name="whats_new_row_desc">The changes in this version</string>
     <string name="whats_new_dismiss">Got it</string>
     <string name="trash_auto_delete_hint">Notes are deleted for good after 28 days in the trash.</string>
+    <string name="faq_password_q">Can I unlock with a password instead of a PIN?</string>
+    <string name="faq_password_a">Yes. In Settings → Security → Password you can add a password of at least 8 characters, any language. It works next to your PIN: the lock screen lets you switch between them, and each one unlocks on its own. Both share the same limit on wrong attempts and the same protection by the device key. The wipe PIN and the duress PIN stay PIN-only. You can remove either one while the other is set.</string>
+    <string name="faq_pin_length_q">How long can my PIN be?</string>
+    <string name="faq_pin_length_a">Between 6 and 12 digits, your choice. Shorter PINs are not offered: the lockout and the device key limit how many guesses anyone gets, and 6 digits is the shortest that stays safe with those limits. The lock screen never shows how long your PIN is: you press Unlock when you are done, and the same goes for the wipe PIN and the duress PIN. PINs you set before this option keep working as they are.</string>
 </resources>

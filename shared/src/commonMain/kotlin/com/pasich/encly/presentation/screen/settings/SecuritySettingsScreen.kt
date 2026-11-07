@@ -21,8 +21,6 @@ import androidx.navigation.NavHostController
 import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.common.resolve
 import com.pasich.encly.core.resources.Res
-import com.pasich.encly.core.resources.auth_method_pin_desc
-import com.pasich.encly.core.resources.auth_method_pin_title
 import com.pasich.encly.core.resources.auth_title
 import com.pasich.encly.core.resources.security_biometric_available
 import com.pasich.encly.core.resources.security_biometric_not_enrolled
@@ -40,7 +38,6 @@ import com.pasich.encly.platform.LocalScreenshotAllowance
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
-import com.pasich.encly.presentation.designsystem.EnclyNavigationRow
 import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclySwitchRow
@@ -199,12 +196,12 @@ private fun SecurityRows(
         modifier = Modifier.padding(top = EnclyTheme.spacing.s),
     )
     EnclyGroup {
-        EnclyNavigationRow(
-            title = stringResource(Res.string.auth_method_pin_title),
-            supporting = stringResource(Res.string.auth_method_pin_desc),
-            icon = EnclyIcons.Key,
-            onClick = { actions.onOpen(NavRoutes.PinCodeConfig) },
-            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+        PinRow(hasPin = securityState.hasPinSlot, onClick = { actions.onOpen(NavRoutes.PinCodeConfig) })
+        EnclyGroupDivider()
+        PasswordRow(
+            hasPassword = securityState.hasPassword,
+            turnedOff = securityState.passwordTurnedOff,
+            onClick = { actions.onOpen(NavRoutes.PasswordRoute) },
         )
         if (securityState.authType != AuthType.NONE) {
             EnclyGroupDivider()

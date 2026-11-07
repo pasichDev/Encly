@@ -31,6 +31,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.action_continue
+import com.pasich.encly.core.resources.lock_unlock
 import com.pasich.encly.core.resources.recovery_word_cell
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.platform.AppInfo
@@ -213,6 +215,22 @@ abstract class ComposeScreenTest {
             rule.onNode(hasText(digit.toString()) and hasClickAction()).performClick()
             rule.waitForIdle()
         }
+    }
+
+    /**
+     * [typePin] and then the screen's submit button: nothing is sent by itself, a PIN has no fixed length. The lock
+     * screen's button says Unlock, every other PIN screen's says Continue.
+     */
+    protected fun enterPin(pin: String) {
+        typePin(pin)
+        val unlock = str(Res.string.lock_unlock)
+        val label = if (rule.onAllNodes(hasText(unlock)).fetchSemanticsNodes().isNotEmpty()) {
+            unlock
+        } else {
+            str(Res.string.action_continue)
+        }
+        rule.onNode(hasText(label) and hasClickAction()).performClick()
+        rule.waitForIdle()
     }
 
     /**

@@ -15,6 +15,7 @@ import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
+import com.pasich.encly.core.security.PasswordChange
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
@@ -85,6 +86,8 @@ class SecuritySettingsViewModel(
                 biometricEnable = authSettings.isBiometricEnabled,
                 biometricStatus = securityManager.biometricStatus(),
                 hasPinSlot = authSettings.hasPinSlot,
+                hasPassword = authSettings.hasPassword,
+                passwordTurnedOff = authSettings.passwordTurnedOff,
                 wipePinTurnedOff = authSettings.wipePinTurnedOff,
                 hasDuressPin = authSettings.hasDuressPin,
                 duressPinTurnedOff = authSettings.duressPinTurnedOff,
@@ -100,6 +103,53 @@ class SecuritySettingsViewModel(
     fun requiresCurrentPin(): Boolean = !securityManager.canResetPinWithoutCurrent()
 
     fun pinLockoutRemainingMillis(): Long = securityManager.pinLockoutRemainingMillis()
+
+    /** The vault has a PIN to ask for; without one (only a password) re-authentication asks for the password. */
+    fun hasPinSlot(): Boolean = securityManager.unlockMethods().pin
+
+    /** Checks [password] against the vault, counted with the PIN's attempts; [password] is wiped. */
+    fun verifyCurrentPassword(password: CharArray, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.Default) { securityManager.verifyPassword(password) }
+            onResult(ok)
+        }
+    }
+
+    /** Makes [password] the vault's password, replacing any earlier one; [password] is wiped. */
+    fun setPassword(password: CharArray, onResult: (PasswordChange) -> Unit) {
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.Default) { securityManager.changePassword(password) }
+            if (result == PasswordChange.SET) {
+                _uiState.value = _uiState.value.copy(hasPassword = true, passwordTurnedOff = false)
+            }
+            onResult(result)
+        }
+    }
+
+    /** Turns the password off; false while it is the only way in. */
+    fun removePassword(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(platformIoDispatcher) { securityManager.removePassword() }
+            if (ok) _uiState.value = _uiState.value.copy(hasPassword = false, passwordTurnedOff = false)
+            onResult(ok)
+        }
+    }
+
+    /**
+     * Turns the PIN off (and with it the wipe and duress PINs); false while it is the only way in. The password
+     * was just checked by the screen, which proves it still opens the vault.
+     */
+    fun removePin(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.Default) { securityManager.removePin() }
+            if (ok) {
+                _uiState.value = _uiState.value.copy(hasPinSlot = false)
+                // The wipe and duress PINs went with it; the decoy vault's notes stay for a new duress PIN.
+                refresh()
+            }
+            onResult(ok)
+        }
+    }
 
     /** Checks [pin] against the vault; [pin] is wiped. */
     fun verifyCurrentPin(pin: CharArray, onResult: (Boolean) -> Unit) {
@@ -129,7 +179,7 @@ class SecuritySettingsViewModel(
                 }
             }
             when (result) {
-                PinChange.SET -> _uiState.value = _uiState.value.copy(authType = AuthType.PIN)
+                PinChange.SET -> _uiState.value = _uiState.value.copy(authType = AuthType.PIN, hasPinSlot = true)
 
                 // The screen says why, next to the keypad.
                 PinChange.IN_USE -> Unit
@@ -235,6 +285,10 @@ class SecuritySettingsViewModel(
         val biometricStatus: BiometricStatus = BiometricStatus.UNAVAILABLE,
         /** A PIN slot exists, so a wipe PIN can be set next to it. */
         val hasPinSlot: Boolean = false,
+        /** A password is set, as another way in or the only one. */
+        val hasPassword: Boolean = false,
+        /** The device key was reset and the password with it; setting it again brings it back. */
+        val passwordTurnedOff: Boolean = false,
         /** The PIN key was reset and any wipe PIN with it; Settings asks to set it again. */
         val wipePinTurnedOff: Boolean = false,
         /** The real vault has a duress PIN. */

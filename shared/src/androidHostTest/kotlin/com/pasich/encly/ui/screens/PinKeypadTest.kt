@@ -7,8 +7,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.pin_delete_digit
-import com.pasich.encly.core.resources.pin_digits_entered
-import com.pasich.encly.presentation.designsystem.PIN_LENGTH
+import com.pasich.encly.core.resources.pin_digits_count
+import com.pasich.encly.core.security.MAX_PIN_LENGTH
 import com.pasich.encly.presentation.designsystem.PinKeypad
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.LockScreen
@@ -43,13 +43,13 @@ class PinKeypadTest : ComposeScreenTest() {
     }
 
     @Test
-    fun withoutAClearActionALongPressDeletesAWholePin() {
+    fun withoutAClearActionALongPressDeletesTheLongestPin() {
         var deleted = 0
         setScreen { PinKeypad(onDigit = {}, onBackspace = { deleted++ }) }
 
         delete().performTouchInput { longClick() }
 
-        assertEquals(PIN_LENGTH, deleted)
+        assertEquals(MAX_PIN_LENGTH, deleted)
     }
 
     @Test
@@ -68,11 +68,11 @@ class PinKeypadTest : ComposeScreenTest() {
         `when`(app.security.hasRecoverySeed()).thenReturn(true)
         setNavScreen(viewModels(app.lock()), route = NavRoutes.LockRoute.name) { nav -> LockScreen(nav) }
         typePin("123")
-        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 3, PIN_LENGTH)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_count, 3)).assertIsDisplayed()
 
         delete().performTouchInput { longClick() }
 
         rule.waitForIdle()
-        rule.onNodeWithContentDescription(str(Res.string.pin_digits_entered, 0, PIN_LENGTH)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(str(Res.string.pin_digits_count, 0)).assertIsDisplayed()
     }
 }

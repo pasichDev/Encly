@@ -86,7 +86,7 @@ class AuthenticationEdgeCasesTest {
 
     @Test
     fun malformedPinsAreRefusedEverywhere() {
-        listOf("12345", "1234567", "12345a", "").forEach { bad ->
+        listOf("12345", "1234567890123", "12345a", "").forEach { bad ->
             assertEquals(PinChange.FAILED, auth.changePin(bad.toCharArray(), dek))
             assertEquals(WipePinChange.FAILED, auth.configureWipePin(bad.toCharArray()))
             assertEquals(DuressPinChange.FAILED, duress(bad))

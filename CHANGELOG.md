@@ -11,6 +11,15 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+
+- Choose the length of your PIN: 6 to 12 digits, for the PIN, the wipe PIN and the duress PIN. PINs you already have keep working unchanged. The lock screen no longer sends the PIN by itself or shows how long it is: press Unlock when you have typed it ([#95](https://github.com/pasichDev/Encly/issues/95)).
+- Unlock with a password instead of, or next to, the PIN: Settings → Security → Password (8 to 128 characters, any language). The lock screen switches between them, both share the same limit on wrong attempts and the same protection by the phone's secure hardware. The wipe PIN and the duress PIN stay PIN-only. At least one of PIN and password always remains; the PIN can be removed once a password is set ([#95](https://github.com/pasichDev/Encly/issues/95)).
+
+### Changed
+
+- After you unlock with the recovery phrase, a PIN that still works is no longer replaced: choose "Keep my PIN" or "Set a new PIN". A new PIN is still required when the PIN or its key is lost, or while it is locked out ([#95](https://github.com/pasichDev/Encly/issues/95)).
+
 ## [2.4.0] - 2026-11-07
 
 versionCode 20400.

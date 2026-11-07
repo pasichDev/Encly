@@ -123,7 +123,7 @@ class MarkdownExportViewModel(
     fun confirmWarning() {
         if (state.step != BackupStep.ConfirmPlainExport && state.step !is BackupStep.ConfirmDocumentExport) return
         val biometric = securityManager.canReauthWithBiometric()
-        state.go(BackupStep.Reauth(BackupAction.EXPORT_MARKDOWN, biometric))
+        state.go(BackupStep.Reauth(BackupAction.EXPORT_MARKDOWN, biometric, methods = securityManager.unlockMethods()))
     }
 
     private fun proceed(action: BackupAction) {

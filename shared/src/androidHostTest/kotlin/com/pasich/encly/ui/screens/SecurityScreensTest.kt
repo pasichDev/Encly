@@ -152,7 +152,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(Res.string.security_recovery_missing)).performClick()
         waitForText(str(Res.string.backup_reauth_title))
-        typePin("123456")
+        enterPin("123456")
 
         waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.ShowNewPhrase }
         words.split(' ').forEach { word -> waitForText(word) }
@@ -170,7 +170,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(Res.string.security_recovery_missing)).performClick()
         waitForText(str(Res.string.backup_reauth_title))
-        typePin("123456")
+        enterPin("123456")
 
         waitForText(str(Res.string.backup_phrase_exists))
     }
@@ -197,7 +197,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
         showPinChange()
 
-        typePin("000000")
+        enterPin("000000")
 
         waitForText(str(Res.string.pin_current_wrong))
         rule.onNodeWithText(str(Res.string.pin_change_current_title)).assertIsDisplayed()
@@ -215,11 +215,11 @@ class SecurityScreensTest : ComposeScreenTest() {
         }
         showPinChange()
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.pin_create_title))
-        typePin("654321")
+        enterPin("654321")
         waitForText(str(Res.string.pin_change_confirm_title))
-        typePin("654321")
+        enterPin("654321")
 
         waitFor {
             rule.onAllNodesWithContentDescription(str(Res.string.pin_changed)).fetchSemanticsNodes().isNotEmpty()
@@ -259,11 +259,11 @@ class SecurityScreensTest : ComposeScreenTest() {
     fun aMismatchedConfirmationStartsTheNewPinAgain() {
         showPinChange()
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.pin_create_title))
-        typePin("111111")
+        enterPin("111111")
         waitForText(str(Res.string.pin_change_confirm_title))
-        typePin("222222")
+        enterPin("222222")
 
         waitForText(str(Res.string.pin_mismatch_retry))
         rule.onNodeWithText(str(Res.string.pin_create_title)).assertIsDisplayed()
@@ -305,7 +305,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         showWipePin(pinIsRight = false)
 
         rule.onNodeWithText(str(Res.string.wipe_pin_current_subtitle)).assertIsDisplayed()
-        typePin("000000")
+        enterPin("000000")
 
         waitForText(str(Res.string.pin_current_wrong))
         assertEquals(0, countText(str(Res.string.wipe_pin_set)))
@@ -324,15 +324,15 @@ class SecurityScreensTest : ComposeScreenTest() {
             WipePinChange.SET
         }
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.wipe_pin_intro))
         rule.onNodeWithText(str(Res.string.wipe_pin_backups)).assertIsDisplayed()
         scrollToText(str(Res.string.wipe_pin_set))
         rule.onNodeWithText(str(Res.string.wipe_pin_set)).performClick()
         waitForText(str(Res.string.wipe_pin_new_title))
-        typePin("864200")
+        enterPin("864200")
         waitForText(str(Res.string.wipe_pin_confirm_title))
-        typePin("864200")
+        enterPin("864200")
 
         waitForText(str(Res.string.wipe_pin_saved))
         assertEquals(listOf("864200"), saved)
@@ -344,13 +344,13 @@ class SecurityScreensTest : ComposeScreenTest() {
         showWipePin()
         `when`(app.security.configureWipePin(anyCharArray())).thenReturn(WipePinChange.SAME_AS_PIN)
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.wipe_pin_intro))
         scrollToText(str(Res.string.wipe_pin_set))
         rule.onNodeWithText(str(Res.string.wipe_pin_set)).performClick()
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.wipe_pin_confirm_title))
-        typePin("123456")
+        enterPin("123456")
 
         waitForText(str(Res.string.wipe_pin_same_as_pin))
         rule.onNodeWithText(str(Res.string.wipe_pin_new_title)).assertIsDisplayed()
@@ -361,7 +361,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         showWipePin()
         `when`(app.security.removeWipePin()).thenReturn(true)
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.wipe_pin_intro))
         scrollToText(str(Res.string.wipe_pin_remove))
         rule.onNodeWithText(str(Res.string.wipe_pin_remove)).performClick()
@@ -385,14 +385,14 @@ class SecurityScreensTest : ComposeScreenTest() {
 
     private fun enterDuressPin(result: DuressPinChange) {
         `when`(app.security.configureDuressPin(anyCharArray())).thenReturn(result)
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.duress_pin_intro))
         scrollToText(str(Res.string.duress_pin_set))
         rule.onNodeWithText(str(Res.string.duress_pin_set)).performClick()
         waitForText(str(Res.string.duress_pin_new_title))
-        typePin("864200")
+        enterPin("864200")
         waitForText(str(Res.string.duress_pin_confirm_title))
-        typePin("864200")
+        enterPin("864200")
     }
 
     @Test
@@ -411,7 +411,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
 
         rule.onNodeWithText(str(Res.string.duress_pin_current_subtitle)).assertIsDisplayed()
-        typePin("000000")
+        enterPin("000000")
 
         waitForText(str(Res.string.pin_current_wrong))
         assertEquals(0, countText(str(Res.string.duress_pin_set)))
@@ -459,7 +459,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         showDuressPin(isSet = true)
         `when`(app.security.removeDuressPin()).thenReturn(true)
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.duress_pin_intro))
         scrollToText(str(Res.string.duress_pin_remove))
         rule.onNodeWithText(str(Res.string.duress_pin_remove)).performClick()
@@ -475,11 +475,11 @@ class SecurityScreensTest : ComposeScreenTest() {
         `when`(app.security.changePin(anyCharArray())).thenReturn(PinChange.IN_USE)
         showPinChange()
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.pin_create_title))
-        typePin("654321")
+        enterPin("654321")
         waitForText(str(Res.string.pin_change_confirm_title))
-        typePin("654321")
+        enterPin("654321")
 
         waitForText(str(Res.string.pin_in_use))
     }
@@ -527,11 +527,11 @@ class SecurityScreensTest : ComposeScreenTest() {
         app.inDecoySession()
         showPinChange()
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.pin_create_title))
-        typePin("654321")
+        enterPin("654321")
         waitForText(str(Res.string.pin_change_confirm_title))
-        typePin("654321")
+        enterPin("654321")
 
         waitForText(str(Res.string.pin_update_failed))
         assertEquals(NavRoutes.PinCodeConfig.name, currentRoute())
@@ -542,13 +542,13 @@ class SecurityScreensTest : ComposeScreenTest() {
         app.inDecoySession()
         showWipePin()
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.wipe_pin_intro))
         scrollToText(str(Res.string.wipe_pin_set))
         rule.onNodeWithText(str(Res.string.wipe_pin_set)).performClick()
-        typePin("864200")
+        enterPin("864200")
         waitForText(str(Res.string.wipe_pin_confirm_title))
-        typePin("864200")
+        enterPin("864200")
 
         waitForText(str(Res.string.wipe_pin_failed))
     }
@@ -558,7 +558,7 @@ class SecurityScreensTest : ComposeScreenTest() {
         app.inDecoySession()
         showWipePin()
 
-        typePin("123456")
+        enterPin("123456")
         waitForText(str(Res.string.wipe_pin_intro))
         scrollToText(str(Res.string.wipe_pin_remove))
         rule.onNodeWithText(str(Res.string.wipe_pin_remove)).performClick()
@@ -583,7 +583,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         rule.runOnIdle { vault.start(BackupAction.ERASE) }
         waitForText(str(Res.string.backup_reauth_title))
-        typePin("123456")
+        enterPin("123456")
 
         waitForText(str(Res.string.security_erase_failed))
         assertEquals(false, vault.uiState.value.erased)
@@ -598,7 +598,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(Res.string.security_recovery_missing)).performClick()
         waitForText(str(Res.string.backup_reauth_title))
-        typePin("123456")
+        enterPin("123456")
         waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.ShowNewPhrase }
         rule.onNodeWithText(str(Res.string.backup_phrase_written)).performClick()
         waitFor(describe = { "${vault.uiState.value}" }) { vault.uiState.value.step is BackupStep.CheckNewPhrase }

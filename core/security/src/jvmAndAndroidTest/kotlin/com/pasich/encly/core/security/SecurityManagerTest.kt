@@ -242,6 +242,7 @@ class SecurityManagerTest {
         `when`(seed.unlockWithSeed(phrase)).thenReturn(ByteArray(32) { 5 })
         `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
         `when`(auth.changePin(anyCharArray(), anyByteArray())).thenReturn(PinChange.SET)
+        `when`(auth.recoveryFollowUp()).thenReturn(RecoveryFollowUp.MUST_SET_PIN)
 
         assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithSeed(phrase))
         assertTrue(manager.canResetPinWithoutCurrent())
@@ -257,6 +258,7 @@ class SecurityManagerTest {
         `when`(seed.unlockWithSeed(phrase)).thenReturn(ByteArray(32) { 5 })
         `when`(database.unlockDatabase(anyByteArray(), anyBoolean())).thenReturn(true)
         `when`(auth.unlockWithPin("123456".toCharArray())).thenReturn(PinUnlock.Success(ByteArray(32) { 5 }))
+        `when`(auth.recoveryFollowUp()).thenReturn(RecoveryFollowUp.KEEP_OR_CHANGE)
 
         manager.unlockWithSeed(phrase)
         manager.lock()

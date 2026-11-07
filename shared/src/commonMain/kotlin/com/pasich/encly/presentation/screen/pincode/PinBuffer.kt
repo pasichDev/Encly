@@ -4,7 +4,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.core.security.MAX_PIN_LENGTH
+import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.core.security.SensitiveDataCleaner
 
 /**
@@ -13,17 +14,20 @@ import com.pasich.encly.core.security.SensitiveDataCleaner
  */
 @Stable
 internal class PinBuffer {
-    private val digits = CharArray(PIN_LENGTH)
+    private val digits = CharArray(MAX_PIN_LENGTH)
 
     /** How many digits are typed. */
     var length by mutableIntStateOf(0)
         private set
 
-    val isFull: Boolean get() = length == PIN_LENGTH
+    val isFull: Boolean get() = length == MAX_PIN_LENGTH
 
-    /** Adds [digit] (0-9); ignored once the PIN is complete. Returns whether it was added. */
+    /** Enough digits are typed to be a PIN. Nothing is submitted by itself: the user presses the button. */
+    val canSubmit: Boolean get() = length >= MIN_PIN_LENGTH
+
+    /** Adds [digit] (0-9); ignored once the longest PIN is typed. Returns whether it was added. */
     fun add(digit: Int): Boolean {
-        if (length >= PIN_LENGTH || digit !in 0..MAX_DIGIT) return false
+        if (length >= MAX_PIN_LENGTH || digit !in 0..MAX_DIGIT) return false
         digits[length] = '0' + digit
         length++
         return true

@@ -67,7 +67,7 @@ class BackupScreenTest : ComposeScreenTest() {
     private fun openPhraseStep(vararg notes: Note = arrayOf(Note(title = "Plan", value = "[]", uid = "n-plan"))) {
         rule.onNode(hasText(str(Res.string.backup_import)) and hasClickAction()).performClick()
         waitForText(str(Res.string.backup_reauth_title))
-        typePin("123456")
+        enterPin("123456")
         waitFor(describe = { "${backup.uiState.value}" }) { step() == BackupStep.Idle && !backup.uiState.value.busy }
         val file = runBlocking { app.backupFile(words, *notes) }
         rule.runOnIdle { backup.importFlow.onFile(app.document("backup.enclybak", file)) }
@@ -233,7 +233,7 @@ class BackupScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(Res.string.backup_export)).performClick()
         waitForText(str(Res.string.backup_reauth_title))
-        typePin("123456")
+        enterPin("123456")
 
         waitForText(str(Res.string.backup_error_io))
         assertEquals(BackupStep.Idle, step())

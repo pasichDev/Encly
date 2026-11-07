@@ -14,7 +14,8 @@ import com.pasich.encly.core.resources.onboarding_error_seed_generation
 import com.pasich.encly.core.resources.onboarding_error_vault_creation
 import com.pasich.encly.core.resources.pin_mismatch_retry
 import com.pasich.encly.core.resources.pin_save_failed
-import com.pasich.encly.core.security.PIN_LENGTH
+import com.pasich.encly.core.security.MAX_PIN_LENGTH
+import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.domain.usecase.OnboardingUseCase
@@ -110,7 +111,7 @@ class OnboardingViewModel(
     private var recoverySeed: CharArray? = null
 
     /** Digits typed on the PIN screen; only the first [OnboardingUiState.pinLength] count. */
-    private val pinEntry = CharArray(PIN_LENGTH)
+    private val pinEntry = CharArray(MAX_PIN_LENGTH)
 
     /** The first PIN entry while the user types it again. */
     private var firstPin: CharArray? = null
@@ -172,7 +173,7 @@ class OnboardingViewModel(
 
     fun onPinDigit(digit: Int) {
         val length = _uiState.value.pinLength
-        if (length >= PIN_LENGTH || digit !in 0..MAX_DIGIT) return
+        if (length >= MAX_PIN_LENGTH || digit !in 0..MAX_DIGIT) return
         pinEntry[length] = '0' + digit
         _uiState.update { it.copy(pinLength = length + 1, pinError = null) }
     }
@@ -194,8 +195,8 @@ class OnboardingViewModel(
      */
     fun submitPin() {
         val state = _uiState.value
-        if (state.pinLength != PIN_LENGTH || state.isLoading) return
-        val entered = pinEntry.copyOf()
+        if (state.pinLength < MIN_PIN_LENGTH || state.isLoading) return
+        val entered = pinEntry.copyOf(state.pinLength)
         SensitiveDataCleaner.clear(pinEntry)
         val first = firstPin
         if (first == null) askPinAgain(entered) else confirmPin(first, entered, state.path)

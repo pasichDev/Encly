@@ -24,8 +24,8 @@
 
     <string name="all">Tutte</string>
 
-    <string name="auth_method_pin_desc">Chiave di accesso obbligatoria. Tocca per cambiare il PIN.</string>
-    <string name="auth_method_pin_title">PIN a 6 cifre</string>
+    <string name="auth_method_pin_desc">Da 6 a 12 cifre. Tocca per cambiare il PIN.</string>
+    <string name="auth_method_pin_title">PIN</string>
     <string name="auth_title">Autenticazione</string>
 
     <string name="back">Indietro</string>
@@ -127,7 +127,7 @@
     <string name="faq_change_pin_q">Come cambio il PIN?</string>
     <string name="faq_db_key_a">Encly genera una chiave del database casuale a 256 bit. Il PIN protegge uno slot di sblocco AES-GCM separato e la biometria usa una chiave Android Keystore che richiede l\'autenticazione a ogni utilizzo.</string>
     <string name="faq_db_key_q">Come è protetta la chiave del database?</string>
-    <string name="faq_forgot_pin_a">Nella schermata di blocco tocca «Recupera l’accesso», inserisci le 12 parole e imposta un nuovo PIN. Senza frase di recupero non c’è altro modo di entrare: nessuno, nemmeno lo sviluppatore, può reimpostarlo.</string>
+    <string name="faq_forgot_pin_a">Nella schermata di blocco tocca «Recupera l’accesso» e inserisci le 12 parole. Se il PIN o la password funzionano ancora, puoi tenerli o impostare un nuovo PIN; altrimenti imposti subito un nuovo PIN. Senza frase di recupero non c’è altro modo di entrare: nessuno, nemmeno lo sviluppatore, può reimpostarla.</string>
     <string name="faq_forgot_pin_q">Cosa succede se dimentico il PIN?</string>
     <string name="faq_language_a">Apri Impostazioni → Lingua e scegli una delle lingue disponibili, oppure «Predefinita di sistema» per usare la lingua del dispositivo. La modifica si applica subito.</string>
     <string name="faq_language_q">Come cambio la lingua?</string>
@@ -180,7 +180,7 @@
     <string name="lock_recover_access">Recupera l\'accesso</string>
     <string name="lock_recovery_subtitle">Inserisci la tua frase di recupero di 12 parole</string>
     <string name="lock_recovery_title">Recupero</string>
-    <string name="lock_subtitle">Inserisci il PIN a 6 cifre per continuare</string>
+    <string name="lock_subtitle">Inserisci il PIN per continuare</string>
     <string name="lock_title">Sblocca le tue note</string>
     <string name="lock_unlocking">Sblocco in corso…</string>
     <string name="lock_use_recovery_phrase">Recupera l\'accesso con la frase di recupero</string>
@@ -228,12 +228,12 @@
     <string name="percent_value">%1$d%%</string>
 
     <string name="pin_change_confirm_subtitle">Inserisci di nuovo il PIN per confermare</string>
-    <string name="pin_change_confirm_title">Conferma il PIN a 6 cifre</string>
+    <string name="pin_change_confirm_title">Conferma il PIN</string>
     <string name="pin_change_current_subtitle">Conferma il PIN attuale prima di cambiare la chiave di accesso</string>
     <string name="pin_change_current_title">Inserisci il PIN attuale</string>
-    <string name="pin_change_new_subtitle">Inserisci un nuovo PIN per proteggere le tue note</string>
+    <string name="pin_change_new_subtitle">Da 6 a 12 cifre per proteggere le tue note</string>
     <string name="pin_changed">PIN cambiato</string>
-    <string name="pin_create_title">Crea un PIN a 6 cifre</string>
+    <string name="pin_create_title">Crea un PIN</string>
     <string name="pin_current_wrong">Il PIN attuale non è corretto</string>
     <string name="pin_delete_digit">Cancella cifra</string>
     <string name="pin_mismatch_retry">I PIN non corrispondono. Riprova.</string>
@@ -437,7 +437,6 @@
     <string name="appearance_preview_label">Anteprima</string>
     <string name="appearance_settings_subtitle">Tema, modalità e carattere</string>
     <string name="field_correct">Corretto</string>
-    <string name="pin_digits_entered">Cifre inserite: %1$d di %2$d</string>
     <string name="pin_unlock_with_fingerprint">Sblocca con l\'impronta</string>
     <string name="onboarding_step_of">Passo %1$d di %2$d</string>
     <string name="onboarding_welcome_headline">Un taccuino che solo tu puoi aprire.</string>
@@ -450,8 +449,8 @@
     <string name="onboarding_fact_encrypted_desc">La tua cassaforte è chiusa con una chiave che hai solo tu.</string>
     <string name="onboarding_get_started">Inizia</string>
     <string name="onboarding_have_backup">Ho un backup</string>
-    <string name="onboarding_pin_title">Scegli un PIN di 6 cifre</string>
-    <string name="onboarding_pin_body">Sblocca Encly e protegge la chiave della tua cassaforte. Non c\'è un\'email per reimpostarlo.</string>
+    <string name="onboarding_pin_title">Scegli un PIN</string>
+    <string name="onboarding_pin_body">Da 6 a 12 cifre. Sblocca Encly e protegge la chiave della tua cassaforte. Non c\'è un\'email per reimpostarlo.</string>
     <string name="onboarding_pin_again_title">Inserisci di nuovo il PIN</string>
     <string name="onboarding_pin_again_body">Così sappiamo che è quello che volevi.</string>
     <string name="onboarding_biometric_desc">Il PIN resta disponibile come alternativa</string>
@@ -691,4 +690,8 @@
     <string name="whats_new_row_desc">Le novità di questa versione</string>
     <string name="whats_new_dismiss">Ho capito</string>
     <string name="trash_auto_delete_hint">Le note vengono eliminate definitivamente dopo 28 giorni nel cestino.</string>
+    <string name="faq_password_q">Posso sbloccare con una password invece del PIN?</string>
+    <string name="faq_password_a">Sì. In Impostazioni → Sicurezza → Password puoi aggiungere una password di almeno 8 caratteri, in qualsiasi lingua. Funziona accanto al PIN: la schermata di blocco permette di passare dal PIN alla password e viceversa, e ciascuno sblocca da solo. Condividono lo stesso limite di tentativi errati e la stessa protezione con la chiave del dispositivo. Il PIN di cancellazione e il PIN di coercizione restano solo PIN. Puoi rimuovere uno dei due finché l’altro è impostato.</string>
+    <string name="faq_pin_length_q">Quanto può essere lungo il PIN?</string>
+    <string name="faq_pin_length_a">Da 6 a 12 cifre, a tua scelta. PIN più corti non sono previsti: il blocco e la chiave del dispositivo limitano i tentativi, e 6 cifre è il minimo che resta sicuro con quei limiti. La schermata di blocco non mostra mai la lunghezza del PIN: tocchi «Sblocca» quando hai finito, e lo stesso vale per il PIN di cancellazione e il PIN di coercizione. I PIN impostati prima continuano a funzionare così come sono.</string>
 </resources>

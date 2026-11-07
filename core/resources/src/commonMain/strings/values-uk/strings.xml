@@ -24,8 +24,8 @@
 
     <string name="all">Всі</string>
 
-    <string name="auth_method_pin_desc">Обов\'язковий ключ доступу. Натисніть, щоб змінити PIN.</string>
-    <string name="auth_method_pin_title">6-значний PIN</string>
+    <string name="auth_method_pin_desc">Від 6 до 12 цифр. Натисніть, щоб змінити PIN.</string>
+    <string name="auth_method_pin_title">PIN</string>
     <string name="auth_title">Авторизація</string>
 
     <string name="back">Назад</string>
@@ -127,7 +127,7 @@
     <string name="faq_change_pin_q">Як змінити PIN?</string>
     <string name="faq_db_key_a">Encly створює випадковий 256-бітний ключ бази даних. PIN захищає окрему зашифровану (AES-GCM) копію цього ключа, а біометрія використовує ключ Android Keystore, який щоразу потребує підтвердження біометрією.</string>
     <string name="faq_db_key_q">Як захищений ключ бази даних?</string>
-    <string name="faq_forgot_pin_a">На екрані блокування натисніть «Відновити доступ», введіть 12 слів і задайте новий PIN. Без фрази відновлення іншого способу увійти немає: скинути його не може ніхто, навіть розробник.</string>
+    <string name="faq_forgot_pin_a">На екрані блокування натисніть «Відновити доступ» і введіть 12 слів. Якщо ваш PIN або пароль ще працює, його можна залишити або задати новий PIN; якщо ні, новий PIN задається одразу. Без фрази відновлення іншого способу увійти немає: скинути його не може ніхто, навіть розробник.</string>
     <string name="faq_forgot_pin_q">Що буде, якщо я забуду PIN?</string>
     <string name="faq_language_a">Відкрийте Налаштування → Мова та виберіть одну з доступних мов або «Як у системі», щоб використовувати мову пристрою. Зміна застосовується одразу.</string>
     <string name="faq_language_q">Як змінити мову?</string>
@@ -180,7 +180,7 @@
     <string name="lock_recover_access">Відновити доступ</string>
     <string name="lock_recovery_subtitle">Введіть фразу відновлення з 12 слів</string>
     <string name="lock_recovery_title">Відновлення</string>
-    <string name="lock_subtitle">Введіть 6-значний PIN для доступу</string>
+    <string name="lock_subtitle">Введіть PIN для доступу</string>
     <string name="lock_title">Розблокуйте нотатки</string>
     <string name="lock_unlocking">Розблокування…</string>
     <string name="lock_use_recovery_phrase">Відновити доступ за фразою відновлення</string>
@@ -228,12 +228,12 @@
     <string name="percent_value">%1$d%%</string>
 
     <string name="pin_change_confirm_subtitle">Повторно введіть PIN-код для підтвердження</string>
-    <string name="pin_change_confirm_title">Підтвердіть 6-значний PIN-код</string>
+    <string name="pin_change_confirm_title">Підтвердьте PIN-код</string>
     <string name="pin_change_current_subtitle">Підтвердіть поточний PIN перед зміною ключа доступу</string>
     <string name="pin_change_current_title">Введіть поточний PIN</string>
-    <string name="pin_change_new_subtitle">Введіть новий PIN-код для захисту нотаток</string>
+    <string name="pin_change_new_subtitle">Від 6 до 12 цифр для захисту нотаток</string>
     <string name="pin_changed">PIN змінено</string>
-    <string name="pin_create_title">Створіть 6-значний PIN-код</string>
+    <string name="pin_create_title">Створіть PIN-код</string>
     <string name="pin_current_wrong">Поточний PIN неправильний</string>
     <string name="pin_delete_digit">Стерти</string>
     <string name="pin_mismatch_retry">PIN-коди не збігаються. Спробуйте ще раз.</string>
@@ -440,7 +440,6 @@
     <string name="appearance_preview_label">Попередній перегляд</string>
     <string name="appearance_settings_subtitle">Тема, режим і шрифт</string>
     <string name="field_correct">Правильно</string>
-    <string name="pin_digits_entered">Введено цифр: %1$d з %2$d</string>
     <string name="pin_unlock_with_fingerprint">Розблокувати відбитком пальця</string>
     <string name="onboarding_step_of">Крок %1$d з %2$d</string>
     <string name="onboarding_welcome_headline">Записник, який можете відкрити лише ви.</string>
@@ -453,8 +452,8 @@
     <string name="onboarding_fact_encrypted_desc">Ваше сховище замкнене ключем, який є лише у вас.</string>
     <string name="onboarding_get_started">Почати</string>
     <string name="onboarding_have_backup">У мене є резервна копія</string>
-    <string name="onboarding_pin_title">Оберіть 6-значний PIN</string>
-    <string name="onboarding_pin_body">Він відмикає Encly і захищає ключ до вашого сховища. Скинути його через пошту неможливо.</string>
+    <string name="onboarding_pin_title">Оберіть PIN</string>
+    <string name="onboarding_pin_body">Від 6 до 12 цифр. Він відмикає Encly і захищає ключ до вашого сховища. Скинути його через пошту неможливо.</string>
     <string name="onboarding_pin_again_title">Введіть PIN ще раз</string>
     <string name="onboarding_pin_again_body">Щоб переконатися, що це саме той PIN.</string>
     <string name="onboarding_biometric_desc">PIN і далі працюватиме як запасний спосіб</string>
@@ -697,4 +696,8 @@
     <string name="whats_new_row_desc">Зміни в цій версії</string>
     <string name="whats_new_dismiss">Зрозуміло</string>
     <string name="trash_auto_delete_hint">Нотатки остаточно видаляються через 28 днів у кошику.</string>
+    <string name="faq_password_q">Чи можна розблоковувати паролем замість PIN?</string>
+    <string name="faq_password_a">Так. У Налаштування → Безпека → Пароль можна додати пароль щонайменше з 8 символів будь-якою мовою. Він працює поряд із PIN: на екрані блокування можна перемикатися між ними, і кожен розблоковує сам по собі. Обидва мають спільний ліміт помилкових спроб і той самий захист ключем пристрою. PIN для стирання та PIN під примусом залишаються лише PIN-кодами. Будь-який із двох можна видалити, поки задано інший.</string>
+    <string name="faq_pin_length_q">Якої довжини може бути PIN?</string>
+    <string name="faq_pin_length_a">Від 6 до 12 цифр на ваш вибір. Коротших PIN не пропонується: блокування й ключ пристрою обмежують кількість спроб, а 6 цифр — найкоротший PIN, що лишається безпечним за цих обмежень. Екран блокування ніколи не показує довжину вашого PIN: коли закінчите, натисніть «Розблокувати» — так само для PIN для стирання та PIN під примусом. PIN, задані раніше, працюють без змін.</string>
 </resources>

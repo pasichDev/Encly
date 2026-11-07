@@ -24,8 +24,8 @@
 
     <string name="all">الكل</string>
 
-    <string name="auth_method_pin_desc">مفتاح الدخول المطلوب. اضغط لتغيير رمز PIN.</string>
-    <string name="auth_method_pin_title">رمز PIN من 6 أرقام</string>
+    <string name="auth_method_pin_desc">من 6 إلى 12 رقمًا. اضغط لتغيير رمز PIN.</string>
+    <string name="auth_method_pin_title">رمز PIN</string>
     <string name="auth_title">المصادقة</string>
 
     <string name="back">رجوع</string>
@@ -118,7 +118,7 @@
     <string name="faq_change_pin_q">كيف أغيّر رمز PIN؟</string>
     <string name="faq_db_key_a">ينشئ Encly مفتاحًا عشوائيًا لقاعدة البيانات طوله 256 بت. يحمي رمز PIN خانة فتح منفصلة بتشفير AES-GCM، وتستخدم القياسات الحيوية مفتاحًا في Android Keystore يتطلب مصادقة عند كل استخدام.</string>
     <string name="faq_db_key_q">كيف يُحمى مفتاح قاعدة البيانات؟</string>
-    <string name="faq_forgot_pin_a">في شاشة القفل اضغط «استعادة الوصول»، وأدخل كلماتك الـ12، ثم عيّن رمز PIN جديدًا. بدون عبارة الاسترداد لا توجد وسيلة أخرى للدخول: لا أحد، ولا حتى المطوّر، يستطيع إعادة تعيينه.</string>
+    <string name="faq_forgot_pin_a">في شاشة القفل اضغط «استعادة الوصول» وأدخل كلماتك الـ12. إن كان رمز PIN أو كلمة المرور يعمل بعدُ فيمكنك الاحتفاظ به أو تعيين رمز PIN جديد، وإلا فتعيّن رمز PIN جديدًا فورًا. بدون عبارة الاسترداد لا توجد وسيلة أخرى للدخول: لا أحد، ولا حتى المطوّر، يستطيع إعادة تعيينها.</string>
     <string name="faq_forgot_pin_q">ماذا لو نسيت رمز PIN؟</string>
     <string name="faq_language_a">افتح الإعدادات ← اللغة واختر إحدى اللغات المتاحة، أو «افتراضي النظام» لاتّباع لغة جهازك. يُطبَّق التغيير فورًا.</string>
     <string name="faq_language_q">كيف أغيّر اللغة؟</string>
@@ -169,7 +169,7 @@
     <string name="lock_recover_access">استعادة الوصول</string>
     <string name="lock_recovery_subtitle">أدخل عبارة الاسترداد المكونة من 12 كلمة</string>
     <string name="lock_recovery_title">الاسترداد</string>
-    <string name="lock_subtitle">أدخل رمز PIN المكوّن من 6 أرقام للمتابعة</string>
+    <string name="lock_subtitle">أدخل رمز PIN للمتابعة</string>
     <string name="lock_title">افتح قفل ملاحظاتك</string>
     <string name="lock_unlocking">جارٍ فتح القفل…</string>
     <string name="lock_use_recovery_phrase">استعد الوصول بعبارة الاسترداد</string>
@@ -215,12 +215,12 @@
     <string name="percent_value">%1$d%%</string>
 
     <string name="pin_change_confirm_subtitle">أدخل رمز PIN مرة أخرى للتأكيد</string>
-    <string name="pin_change_confirm_title">أكّد رمز PIN المكوّن من 6 أرقام</string>
+    <string name="pin_change_confirm_title">أكّد رمز PIN</string>
     <string name="pin_change_current_subtitle">أكّد رمز PIN الحالي قبل تغيير مفتاح الدخول</string>
     <string name="pin_change_current_title">أدخل رمز PIN الحالي</string>
-    <string name="pin_change_new_subtitle">أدخل رمز PIN جديدًا لحماية ملاحظاتك</string>
+    <string name="pin_change_new_subtitle">من 6 إلى 12 رقمًا لحماية ملاحظاتك</string>
     <string name="pin_changed">تم تغيير رمز PIN</string>
-    <string name="pin_create_title">أنشئ رمز PIN من 6 أرقام</string>
+    <string name="pin_create_title">أنشئ رمز PIN</string>
     <string name="pin_current_wrong">رمز PIN الحالي غير صحيح</string>
     <string name="pin_delete_digit">حذف رقم</string>
     <string name="pin_mismatch_retry">الرمزان غير متطابقين. حاول مرة أخرى.</string>
@@ -427,7 +427,6 @@
     <string name="appearance_preview_label">معاينة</string>
     <string name="appearance_settings_subtitle">السمة والوضع والخط</string>
     <string name="field_correct">صحيح</string>
-    <string name="pin_digits_entered">الأرقام المُدخلة: %1$d من %2$d</string>
     <string name="pin_unlock_with_fingerprint">فتح القفل ببصمة الإصبع</string>
     <string name="onboarding_step_of">الخطوة %1$d من %2$d</string>
     <string name="onboarding_welcome_headline">دفتر ملاحظات لا يفتحه غيرك.</string>
@@ -440,8 +439,8 @@
     <string name="onboarding_fact_encrypted_desc">خزنتك مقفلة بمفتاح لا يملكه سواك.</string>
     <string name="onboarding_get_started">ابدأ</string>
     <string name="onboarding_have_backup">لديّ نسخة احتياطية</string>
-    <string name="onboarding_pin_title">اختر رمز PIN من 6 أرقام</string>
-    <string name="onboarding_pin_body">يفتح Encly ويحمي مفتاح خزنتك. لا يوجد بريد إلكتروني لإعادة تعيينه.</string>
+    <string name="onboarding_pin_title">اختر رمز PIN</string>
+    <string name="onboarding_pin_body">من 6 إلى 12 رقمًا. يفتح Encly ويحمي مفتاح خزنتك. لا يوجد بريد إلكتروني لإعادة تعيينه.</string>
     <string name="onboarding_pin_again_title">أدخل رمز PIN مرة أخرى</string>
     <string name="onboarding_pin_again_body">لنتأكد أنه الرمز الذي قصدته.</string>
     <string name="onboarding_biometric_desc">يبقى رمز PIN يعمل كبديل</string>
@@ -698,4 +697,8 @@
     <string name="selection_count">الكتل المحددة: %1$d</string>
     <string name="selection_cut">قص</string>
     <string name="selection_delete">حذف الكتل المحددة</string>
+    <string name="faq_password_q">هل يمكنني الفتح بكلمة مرور بدلًا من رمز PIN؟</string>
+    <string name="faq_password_a">نعم. في الإعدادات ← الأمان ← كلمة المرور يمكنك إضافة كلمة مرور من 8 أحرف على الأقل وبأي لغة. تعمل إلى جانب رمز PIN: تتيح لك شاشة القفل التبديل بينهما ويفتح كل منهما بمفرده. يتشاركان الحد نفسه للمحاولات الخاطئة والحماية نفسها بمفتاح الجهاز. يبقى رمز المسح ورمز الإكراه رمزَي PIN فقط. يمكنك إزالة أحدهما ما دام الآخر مُعيَّنًا.</string>
+    <string name="faq_pin_length_q">ما طول رمز PIN المسموح به؟</string>
+    <string name="faq_pin_length_a">من 6 إلى 12 رقمًا بحسب اختيارك. لا تُعرض رموز أقصر: فالقفل المؤقت ومفتاح الجهاز يحدّان من عدد المحاولات، و6 أرقام هي أقصر طول يبقى آمنًا مع هذه الحدود. لا تُظهر شاشة القفل طول رمزك أبدًا: تضغط «فتح القفل» عند الانتهاء، والأمر نفسه ينطبق على رمز المسح ورمز الإكراه. تبقى الرموز التي عيّنتها سابقًا تعمل كما هي.</string>
 </resources>

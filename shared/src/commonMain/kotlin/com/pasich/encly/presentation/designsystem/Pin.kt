@@ -35,13 +35,12 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.pin_delete_digit
-import com.pasich.encly.core.resources.pin_digits_entered
+import com.pasich.encly.core.resources.pin_digits_count
 import com.pasich.encly.core.resources.pin_unlock_with_fingerprint
+import com.pasich.encly.core.security.MAX_PIN_LENGTH
+import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
-
-/** PIN length of the vault. */
-const val PIN_LENGTH = 6
 
 /** Keys above the bottom row, row by row. */
 private const val KEYPAD_DIGITS = "123456789"
@@ -53,19 +52,17 @@ private const val SHAKE_DP = 8f
 private const val SHAKE_QUARTER_MS = 25
 
 /**
- * The PIN progress dots: filled `primary` for entered digits, a 2 dp `outline` ring otherwise.
- * [error] turns every dot `error`; each new [shakeKey] above zero shakes them once.
+ * The PIN progress dots: filled `primary` for entered digits, a 2 dp `outline` ring otherwise. A PIN is
+ * [MIN_PIN_LENGTH] to [MAX_PIN_LENGTH] digits long and the screen never says which: the row starts with
+ * the shortest PIN's rings and grows by one ring with every digit past them, so the dots show what has
+ * been typed and nothing about what is expected. [error] turns every dot `error`; each new [shakeKey]
+ * above zero shakes them once.
  */
 @Composable
-fun PinDots(
-    entered: Int,
-    modifier: Modifier = Modifier,
-    length: Int = PIN_LENGTH,
-    error: Boolean = false,
-    shakeKey: Int = 0,
-) {
+fun PinDots(entered: Int, modifier: Modifier = Modifier, error: Boolean = false, shakeKey: Int = 0) {
     val colors = MaterialTheme.colorScheme
-    val description = stringResource(Res.string.pin_digits_entered, entered, length)
+    val length = entered.coerceIn(MIN_PIN_LENGTH, MAX_PIN_LENGTH)
+    val description = stringResource(Res.string.pin_digits_count, entered)
     val shake = remember { Animatable(0f) }
     LaunchedEffect(shakeKey) {
         if (shakeKey == 0) return@LaunchedEffect
@@ -173,7 +170,7 @@ fun PinKeypad(
                     onLongClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         // No clear handler: delete once per digit a PIN can hold.
-                        onClear?.invoke() ?: repeat(PIN_LENGTH) { onBackspace() }
+                        onClear?.invoke() ?: repeat(MAX_PIN_LENGTH) { onBackspace() }
                     },
                 ) {
                     Icon(

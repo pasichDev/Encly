@@ -29,6 +29,7 @@ import com.pasich.encly.presentation.screen.LossReason
 import com.pasich.encly.presentation.screen.LossRecoveryScreen
 import com.pasich.encly.presentation.screen.MainRootScreen
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
+import com.pasich.encly.presentation.screen.RecoveryChoiceScreen
 import com.pasich.encly.presentation.screen.StorageUnreadableScreen
 import com.pasich.encly.presentation.screen.SupportScreen
 import com.pasich.encly.presentation.screen.TasksScreen
@@ -39,6 +40,7 @@ import com.pasich.encly.presentation.screen.importnotes.ImportNotesScreen
 import com.pasich.encly.presentation.screen.onboarding.OnboardingScreen
 import com.pasich.encly.presentation.screen.settings.AppearanceScreen
 import com.pasich.encly.presentation.screen.settings.DuressPinScreen
+import com.pasich.encly.presentation.screen.settings.PasswordScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
 import com.pasich.encly.presentation.screen.settings.SettingsScreen
 import com.pasich.encly.presentation.screen.settings.WipePinScreen
@@ -189,6 +191,14 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                 }
                 animationScreens(NavRoutes.PinCodeConfig.name) {
                     NavigationPage(navController, NavRoutes.SettingsRoute) { PinCodeConfigScreen(navController) }
+                }
+
+                animationScreens(NavRoutes.PasswordRoute.name) {
+                    NavigationPage(navController, NavRoutes.SettingsRoute) { PasswordScreen(navController) }
+                }
+
+                animationScreens(NavRoutes.RecoveryChoiceRoute.name) {
+                    CenteredContent { RecoveryChoiceScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.WipePinRoute.name) {

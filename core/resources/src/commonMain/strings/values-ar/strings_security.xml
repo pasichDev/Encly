@@ -48,7 +48,7 @@
         <item quantity="other">%d وسم</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
-    <string name="lock_pin_key_lost">لم يعد رمز PIN قادرًا على فتح Encly على هذا الهاتف: أُعيد تعيين مفتاحه العتادي. استخدم عبارة الاسترداد (أو بصمتك)، ثم عيّن رمز PIN جديدًا.</string>
+    <string name="lock_pin_key_lost">لم يعد رمز PIN وكلمة المرور قادرين على فتح Encly على هذا الهاتف: أُعيد تعيين مفتاحهما العتادي. استخدم عبارة الاسترداد (أو بصمتك)، ثم عيّن رمز PIN جديدًا.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="zero">محاولات كثيرة جدًا. أعد المحاولة بعد %d دقيقة</item>
         <item quantity="one">محاولات كثيرة جدًا. أعد المحاولة بعد %d دقيقة</item>
@@ -115,7 +115,7 @@
     <string name="wipe_pin_remove">إيقاف رمز المسح</string>
     <string name="wipe_pin_current_subtitle">أكّد رمز PIN لإعداد رمز المسح</string>
     <string name="wipe_pin_new_title">أنشئ رمز مسح</string>
-    <string name="wipe_pin_new_subtitle">6 أرقام، مختلفة عن رمز PIN</string>
+    <string name="wipe_pin_new_subtitle">من 6 إلى 12 رقمًا، مختلفة عن رمز PIN</string>
     <string name="wipe_pin_confirm_title">أكّد رمز المسح</string>
     <string name="wipe_pin_confirm_subtitle">أدخل رمز المسح مرة أخرى</string>
     <string name="wipe_pin_same_as_pin">يجب أن يختلف رمز المسح عن رمز PIN</string>
@@ -137,7 +137,7 @@
     <string name="duress_pin_remove">إيقاف رمز الإكراه</string>
     <string name="duress_pin_current_subtitle">أكّد رمز PIN لإعداد رمز الإكراه</string>
     <string name="duress_pin_new_title">أنشئ رمز إكراه</string>
-    <string name="duress_pin_new_subtitle">6 أرقام، مختلفة عن رمز PIN</string>
+    <string name="duress_pin_new_subtitle">من 6 إلى 12 رقمًا، مختلفة عن رمز PIN</string>
     <string name="duress_pin_confirm_title">أكّد رمز الإكراه</string>
     <string name="duress_pin_confirm_subtitle">أدخل رمز الإكراه مرة أخرى</string>
     <string name="duress_pin_same_as_pin">يجب أن يختلف رمز الإكراه عن رمز PIN</string>
@@ -151,4 +151,49 @@
     <string name="duress_pin_remove_confirm">إيقاف</string>
     <string name="security_previews_title">إظهار معاينات الملاحظات</string>
     <string name="security_previews_desc">تعرض قائمة الملاحظات أول أسطر كل ملاحظة. أوقفه لعرض العنوان والوسم والتاريخ فقط؛ ويظل البحث يجد النص الكامل.</string>
+    <string name="pin_digits_count">الأرقام المُدخلة: %1$d</string>
+    <string name="lock_unlock">فتح القفل</string>
+    <string name="lock_use_password">استخدام كلمة المرور</string>
+    <string name="lock_use_pin">استخدام رمز PIN</string>
+    <string name="lock_password_subtitle">أدخل كلمة المرور للمتابعة</string>
+    <string name="lock_password_label">كلمة المرور</string>
+    <string name="lock_wrong_password">كلمة المرور خاطئة</string>
+    <string name="password_title">كلمة المرور</string>
+    <string name="password_intro">كلمة المرور طريقة أخرى لفتح Encly إلى جانب رمز PIN. تفتح كل واحدة منهما الخزنة بمفردها، وتُحسب المحاولات الخاطئة بأي منهما ضمن القفل المؤقت نفسه. استخدم 8 أحرف على الأقل؛ وتصلح عدة كلمات متتابعة.</string>
+    <string name="password_pin_only_note">يبقى رمز المسح ورمز الإكراه رمزَي PIN فقط: لا يمكن أن تكون كلمة المرور أيًّا منهما.</string>
+    <string name="password_turned_off">أُعيد تعيين مفتاح الجهاز، فتوقفت كلمة المرور عن العمل وأُزيلت. عيّنها من جديد إن أردت واحدة.</string>
+    <string name="password_set">تعيين كلمة مرور</string>
+    <string name="password_change">تغيير كلمة المرور</string>
+    <string name="password_remove">إزالة كلمة المرور</string>
+    <string name="password_remove_confirm_title">إزالة كلمة المرور؟</string>
+    <string name="password_remove_confirm_body">سيُفتح Encly برمز PIN فقط.</string>
+    <string name="password_remove_confirm">إزالة</string>
+    <string name="password_removed">أُزيلت كلمة المرور</string>
+    <string name="password_saved">تم حفظ كلمة المرور</string>
+    <string name="password_failed">تعذّر حفظ كلمة المرور. لم يتغيّر شيء.</string>
+    <string name="password_too_short">استخدم من 8 إلى 128 حرفًا</string>
+    <string name="password_mismatch">كلمتا المرور غير متطابقتين</string>
+    <string name="password_new_label">كلمة مرور جديدة</string>
+    <string name="password_confirm_label">أعد كتابة كلمة المرور</string>
+    <string name="password_save">حفظ كلمة المرور</string>
+    <string name="password_edit_title">اختر كلمة مرور</string>
+    <string name="password_current_title">أدخل كلمة المرور</string>
+    <string name="password_current_subtitle">أكّد كلمة المرور قبل تغيير طريقة فتح Encly</string>
+    <string name="password_current_wrong">كلمة المرور غير صحيحة</string>
+    <string name="pin_remove">إزالة رمز PIN</string>
+    <string name="pin_remove_confirm_title">إزالة رمز PIN؟</string>
+    <string name="pin_remove_confirm_body">سيُفتح Encly بكلمة المرور فقط. يحتاج رمز المسح ورمز الإكراه إلى رمز PIN، لذا يتوقفان أيضًا؛ وتحتفظ الخزنة الوهمية بملاحظاتها. اكتب كلمة المرور للتأكد من أنها تعمل.</string>
+    <string name="pin_remove_confirm">إزالة PIN</string>
+    <string name="pin_removed">أُزيل رمز PIN</string>
+    <string name="pin_remove_failed">تعذّرت إزالة رمز PIN. لم يتغيّر شيء.</string>
+    <string name="password_row_on">مُعيَّنة. اضغط لتغييرها أو إزالتها.</string>
+    <string name="password_row_off">غير مُعيَّنة. أضف طريقة أخرى للفتح.</string>
+    <string name="password_row_turned_off">توقفت عن العمل عند إعادة تعيين مفتاح الجهاز. اضغط لتعيينها من جديد.</string>
+    <string name="auth_method_pin_none">لم يُعيَّن رمز PIN. اضغط لإضافته.</string>
+    <string name="recovery_choice_title">تم قبول عبارة الاسترداد</string>
+    <string name="recovery_choice_body_pin">رمز PIN لا يزال يعمل. احتفظ به أو عيّن رمزًا جديدًا.</string>
+    <string name="recovery_choice_body_password">كلمة المرور لا تزال تعمل. احتفظ بها أو عيّن رمز PIN.</string>
+    <string name="recovery_keep_pin">الاحتفاظ برمز PIN الخاص بي</string>
+    <string name="recovery_keep_password">الاحتفاظ بكلمة المرور الخاصة بي</string>
+    <string name="recovery_set_new_pin">تعيين رمز PIN جديد</string>
 </resources>
