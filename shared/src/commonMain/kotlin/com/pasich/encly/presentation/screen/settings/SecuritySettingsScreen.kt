@@ -36,6 +36,7 @@ import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.platform.LocalBiometricHost
+import com.pasich.encly.platform.LocalScreenshotAllowance
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -65,8 +66,7 @@ fun SecuritySettingsScreen(
     vaultViewModel: BackupViewModel = metroViewModel(),
 ) {
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
-    val strictKeyboard by securityViewModel.strictKeyboard.collectAsStateWithLifecycle()
-    val autoLockDelay by securityViewModel.autoLockDelay.collectAsStateWithLifecycle()
+    val options = rememberSecurityOptions(securityViewModel, vaultViewModel)
     val vaultState by vaultViewModel.uiState.collectAsStateWithLifecycle()
     val host = LocalBiometricHost.current
 
@@ -102,7 +102,7 @@ fun SecuritySettingsScreen(
             if (securityState.loaded) {
                 SecurityContent(
                     securityState = securityState,
-                    options = SecurityOptions(strictKeyboard = strictKeyboard, autoLock = autoLockDelay),
+                    options = options,
                     vaultBusy = vaultState.busy,
                     actions = SecurityActions(
                         onOpen = { route -> navController.navigate(route.name) },
@@ -132,8 +132,33 @@ private class SecurityActions(
     val onAutoLock: (AutoLockDelay) -> Unit,
 )
 
-/** The page's own preferences: strict keyboard privacy and the auto-lock delay. */
-private class SecurityOptions(val strictKeyboard: Boolean, val autoLock: AutoLockDelay)
+/** The page's own preferences: strict keyboard privacy, the auto-lock delay and the screenshots allowance. */
+private class SecurityOptions(
+    val strictKeyboard: Boolean,
+    val autoLock: AutoLockDelay,
+    val screenshots: ScreenshotsSetting?,
+)
+
+@Composable
+private fun rememberSecurityOptions(
+    securityViewModel: SecuritySettingsViewModel,
+    vaultViewModel: BackupViewModel,
+): SecurityOptions {
+    val strictKeyboard by securityViewModel.strictKeyboard.collectAsStateWithLifecycle()
+    val autoLockDelay by securityViewModel.autoLockDelay.collectAsStateWithLifecycle()
+    val screenshotsAllowed by securityViewModel.screenshotsAllowed.collectAsStateWithLifecycle()
+    // Only where the host can lift capture protection at all (Android); elsewhere the row is not shown.
+    val screenshotsOffered = LocalScreenshotAllowance.current != null
+    return SecurityOptions(
+        strictKeyboard = strictKeyboard,
+        autoLock = autoLockDelay,
+        screenshots = ScreenshotsSetting(
+            allowed = screenshotsAllowed,
+            onTurnOn = { vaultViewModel.start(BackupAction.ALLOW_SCREENSHOTS) },
+            onTurnOff = securityViewModel::stopAllowingScreenshots,
+        ).takeIf { screenshotsOffered },
+    )
+}
 
 @Composable
 private fun SecurityContent(
@@ -206,7 +231,11 @@ private fun SecurityRows(
             ReplacePhraseRow(busy = vaultBusy, onStart = actions.onVaultAction)
         }
     }
-    PrivacySection(strictKeyboard = options.strictKeyboard, onStrictKeyboard = actions.onStrictKeyboard)
+    PrivacySection(
+        strictKeyboard = options.strictKeyboard,
+        onStrictKeyboard = actions.onStrictKeyboard,
+        screenshots = options.screenshots,
+    )
     NotePreviewsSetting()
     ProtectionSection()
     EraseSection(busy = vaultBusy, onErase = { actions.onVaultAction(BackupAction.ERASE) })

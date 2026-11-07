@@ -133,7 +133,7 @@
     <string name="faq_saving_q">Hoe worden wijzigingen opgeslagen?</string>
     <string name="faq_screen_description">Notities, taken, lokale versleuteling en toegangsherstel, zonder cloudsynchronisatie.</string>
     <string name="faq_screen_subtitle">Antwoorden op de meest gestelde vragen</string>
-    <string name="faq_screenshots_a">Nee. Schermbeveiliging staat altijd aan: Encly blokkeert screenshots, schermopnames en onbeveiligde voorbeelden in de lijst met recente apps.</string>
+    <string name="faq_screenshots_a">Standaard niet. Schermbeveiliging staat aan: Encly blokkeert screenshots, schermopnames en onbeveiligde voorbeelden in de lijst met recente apps. Heb je er een nodig, dan heft Instellingen → Beveiliging → ‘Screenshots toestaan tot de app vergrendelt’ die op na je pincode; de vergrendel-, pincode- en herstelzinschermen blijven beveiligd, en de toestemming stopt zodra Encly vergrendelt.</string>
     <string name="faq_screenshots_q">Kan ik screenshots maken van Encly?</string>
     <string name="faq_section_basics">De basis</string>
     <string name="faq_section_security">Beveiliging en herstel</string>

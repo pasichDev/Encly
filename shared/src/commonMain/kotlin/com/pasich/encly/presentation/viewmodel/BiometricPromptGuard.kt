@@ -8,10 +8,15 @@ import androidx.lifecycle.LifecycleOwner
  * At most one biometric prompt at a time, for a ViewModel that outlives its activity.
  *
  * A second request while a prompt is open is ignored: a double tap must not stack prompts. The
- * guard is released by the prompt's answer, or when the activity that showed it is destroyed.
- * androidx.biometric drops the answer of a prompt whose activity is gone (BiometricPrompt resets
- * its callback on ON_DESTROY), so without that a rotation during a prompt would leave the guard
- * closed for good and the ViewModel, which survives the rotation, could never prompt again.
+ * guard is released by the prompt's answer, or when the activity that showed it stops.
+ * androidx.biometric 1.1 does not answer a prompt that cannot be shown or is cut off: its
+ * authenticate() only logs "Called after onSaveInstanceState()" and returns, with no callback,
+ * when the activity is already stopped; below Android 10 its fragment cancels the prompt
+ * internally on ON_STOP without telling the caller; and it drops the answer of a prompt whose
+ * activity is destroyed (BiometricPrompt resets its callback on ON_DESTROY). Without the release,
+ * a prompt started over a backgrounded window (the auto-lock firing in the background) or cut
+ * off by the app leaving the foreground would leave the guard closed for good: the lock screen's
+ * fingerprint button, in a ViewModel that survives all of it, could never start a prompt again.
  *
  * Main thread only, as the prompts themselves.
  */
@@ -26,12 +31,13 @@ internal class BiometricPromptGuard {
      * the activity's end meanwhile, and a newer prompt may be open), and the caller then drops it.
      */
     fun launch(host: LifecycleOwner, prompt: (release: () -> Boolean) -> Unit) {
-        // A destroyed activity can show no prompt, and would never release the guard.
-        if (current != null || host.lifecycle.currentState == Lifecycle.State.DESTROYED) return
+        // A stopped or destroyed activity shows no prompt (it would be cancelled unseen) and
+        // would not release the guard.
+        if (current != null || !host.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return
         val token = Any()
         current = token
         val observer = object : DefaultLifecycleObserver {
-            override fun onDestroy(owner: LifecycleOwner) {
+            override fun onStop(owner: LifecycleOwner) {
                 owner.lifecycle.removeObserver(this)
                 if (current === token) current = null
             }

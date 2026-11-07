@@ -17,6 +17,7 @@ import com.pasich.encly.core.resources.onboarding_verify_placeholder
 import com.pasich.encly.core.resources.onboarding_verify_wrong
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.FieldState
+import com.pasich.encly.presentation.designsystem.ProtectFromCapture
 import com.pasich.encly.presentation.viewmodel.AnswerState
 import com.pasich.encly.presentation.viewmodel.phraseAnswerState
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -35,6 +36,7 @@ internal fun PhraseCheckFields(
     enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    ProtectFromCapture()
     val focusManager = LocalFocusManager.current
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap)) {
         checks.forEachIndexed { position, (index, word) ->

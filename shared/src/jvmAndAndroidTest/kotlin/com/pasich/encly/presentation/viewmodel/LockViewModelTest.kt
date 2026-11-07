@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.viewmodel
 
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -239,6 +240,55 @@ class LockViewModelTest {
         val recreated = TestScreen()
         viewModel.authenticateBiometric(recreated.host) {}
         verify(security).requestBiometricKey(eqValue(recreated.biometric), anyCallback())
+    }
+
+    @Test
+    fun aPromptCutOffByTheAppLeavingTheForegroundLeavesTheButtonUsable() {
+        // androidx.biometric cancels a prompt whose activity stops, and never answers it.
+        viewModel.authenticateBiometric(screen.host) {}
+        assertTrue(viewModel.biometricInFlight)
+        screen.stop()
+        assertFalse(viewModel.biometricInFlight)
+
+        screen.resume()
+        viewModel.authenticateBiometric(screen.host) {}
+
+        verify(security, times(2)).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        assertTrue(viewModel.biometricInFlight)
+    }
+
+    @Test
+    fun aBackgroundedActivityGetsNoPromptAndTheNextOneIsNotBlocked() {
+        // The auto-lock fires in the background: the lock screen asks while the activity is stopped.
+        val backgrounded = TestScreen(Lifecycle.State.CREATED)
+        viewModel.authenticateBiometric(backgrounded.host) {}
+
+        verify(security, never()).requestBiometricKey(eqValue(backgrounded.biometric), anyCallback())
+        assertFalse(viewModel.biometricInFlight)
+
+        backgrounded.resume()
+        viewModel.authenticateBiometric(backgrounded.host) {}
+        verify(security).requestBiometricKey(eqValue(backgrounded.biometric), anyCallback())
+    }
+
+    @Test
+    fun anAnswerFromAPromptCutOffByAStopIsDroppedAndItsKeyWiped() {
+        val answer = arrayOfNulls<(ByteArray?) -> Unit>(1)
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            answer[0] = invocation.arguments.last() as (ByteArray?) -> Unit
+            null
+        }.`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        val results = mutableListOf<Boolean>()
+        viewModel.authenticateBiometric(screen.host) { results += it }
+        screen.stop()
+
+        val key = ByteArray(KEY_LENGTH) { 7 }
+        answer[0]!!(key)
+
+        assertTrue(results.isEmpty())
+        assertArrayEquals(ByteArray(KEY_LENGTH), key)
+        verify(security, never()).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
     }
 
     @Test

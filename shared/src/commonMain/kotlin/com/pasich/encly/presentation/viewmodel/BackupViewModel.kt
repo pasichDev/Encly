@@ -7,6 +7,7 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.backup_phrase_exists
 import com.pasich.encly.core.resources.security_erase_failed
+import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
@@ -38,6 +39,7 @@ class BackupViewModel(
     private val securityManager: SecurityManager,
     private val sessionLockManager: SessionLockManager,
     documents: BackupDocuments,
+    private val screenshots: ScreenshotAllowance,
 ) : ViewModel() {
 
     private val state = BackupFlowState(viewModelScope, backupManager.lastExportAt(), ::dropPending)
@@ -50,6 +52,9 @@ class BackupViewModel(
 
     /** The flow in progress, so a ready recovery phrase continues the right one. */
     private var action: BackupAction? = null
+
+    /** The session the re-authentication was started in (see [SessionLockManager.sessionGeneration]). */
+    private var reauthGeneration = 0L
 
     init {
         // A re-lock drops every plaintext buffer (a decrypted backup, new recovery words) at
@@ -70,6 +75,7 @@ class BackupViewModel(
     fun start(action: BackupAction) {
         dropPending()
         this.action = action
+        reauthGeneration = sessionLockManager.sessionGeneration
         val biometric = securityManager.canReauthWithBiometric()
         state.go(BackupStep.Reauth(action, biometric))
     }
@@ -81,6 +87,16 @@ class BackupViewModel(
             // The plaintext export has its own ViewModel; it never asks for a recovery phrase or
             // seals a backup, so nothing here may start it.
             action == BackupAction.EXPORT_MARKDOWN -> state.go(BackupStep.Idle)
+
+            // Nothing to continue with: the re-authentication was the confirmation.
+            action == BackupAction.ALLOW_SCREENSHOTS -> {
+                // The PIN is checked off the main thread: if the app locked meanwhile (it went to the background
+                // with no delay), this must not switch the allowance on after the lock that ended it.
+                if (!sessionLockManager.locked.value && sessionLockManager.sessionGeneration == reauthGeneration) {
+                    screenshots.allow()
+                }
+                state.go(BackupStep.Idle)
+            }
 
             // Held for five seconds on the security page, then re-authenticated: that is the
             // confirmation, so the erase runs straight away.
@@ -123,6 +139,8 @@ class BackupViewModel(
             val erased = withContext(platformIoDispatcher) { securityManager.wipeAndReset() }
             // A refused erase (see SecurityManager.wipeAndReset) must not be announced as done.
             if (erased) {
+                // A fresh vault starts protected, whatever the erased one allowed.
+                screenshots.revoke()
                 state.ui.update { it.copy(step = BackupStep.Idle, erased = true) }
             } else {
                 state.finish(BackupMessage.Text(Res.string.security_erase_failed))

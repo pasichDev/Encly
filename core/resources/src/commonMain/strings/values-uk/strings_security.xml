@@ -62,6 +62,10 @@
     <string name="security_privacy_section">Приватність</string>
     <string name="security_keyboard_strict_title">Сувора приватність клавіатури</string>
     <string name="security_keyboard_strict_desc">Просить клавіатуру не показувати підказки, не використовувати хмарне передбачення й не читати текст біля курсора. Вимикає автовиправлення, а деякі клавіатури ховають емодзі чи голосовий ввід.</string>
+    <string name="security_screenshots_title">Дозволити знімки екрана до блокування</string>
+    <string name="security_screenshots_desc">Знімки й запис екрана заблоковані, доки ви не дозволите їх тут. Вимикається саме, коли Encly блокується.</string>
+    <string name="security_screenshots_warning_title">Дозволити знімки екрана?</string>
+    <string name="security_screenshots_warning_body">Знімки екрана можуть потрапити в галерею та хмарні резервні копії разом із вашими нотатками. Екран блокування, введення PIN-коду та фраза відновлення залишаються захищеними. Дозвіл закінчується, коли Encly блокується.</string>
     <string name="auto_lock_title">Блокувати після виходу</string>
     <string name="auto_lock_desc">Скільки Encly лишається відкритим, коли ви переходите в інший застосунок. Вимкнення екрана чи блокування телефона завжди блокує його одразу.</string>
     <string name="auto_lock_immediately">Одразу</string>
@@ -69,6 +73,8 @@
     <string name="auto_lock_30s">Через 30 секунд</string>
     <string name="auto_lock_1m">Через 1 хвилину</string>
     <string name="auto_lock_2m">Через 2 хвилини</string>
+    <string name="auto_lock_5m">Через 5 хвилин</string>
+    <string name="auto_lock_10m">Через 10 хвилин</string>
     <string name="auto_lock_15m">Через 15 хвилин</string>
     <string name="auto_lock_30m">Через 30 хвилин</string>
     <string name="auto_lock_long_delay_warning">Довший час залишає сховище відкритим у фоні. Людина з доступом до розблокованого телефона може побачити ваші нотатки.</string>

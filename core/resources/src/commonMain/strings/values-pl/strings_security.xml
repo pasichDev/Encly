@@ -62,6 +62,10 @@
     <string name="security_privacy_section">Prywatność</string>
     <string name="security_keyboard_strict_title">Ścisła prywatność klawiatury</string>
     <string name="security_keyboard_strict_desc">Prosi klawiaturę o brak podpowiedzi, brak przewidywania w chmurze i nieodczytywanie tekstu wokół kursora. Wyłącza autokorektę, a niektóre klawiatury ukrywają emoji lub wprowadzanie głosowe.</string>
+    <string name="security_screenshots_title">Zezwól na zrzuty ekranu do zablokowania aplikacji</string>
+    <string name="security_screenshots_desc">Zrzuty i nagrywanie ekranu pozostają zablokowane, dopóki nie zezwolisz na nie tutaj. Opcja wyłącza się sama, gdy Encly się zablokuje.</string>
+    <string name="security_screenshots_warning_title">Zezwolić na zrzuty ekranu?</string>
+    <string name="security_screenshots_warning_body">Zrzuty ekranu mogą trafić do galerii i kopii zapasowych w chmurze razem z Twoimi notatkami. Ekran blokady, wpisywanie PIN-u i fraza odzyskiwania pozostają chronione. Zezwolenie kończy się, gdy Encly się zablokuje.</string>
     <string name="auto_lock_title">Blokuj po wyjściu</string>
     <string name="auto_lock_desc">Jak długo Encly pozostaje otwarty, gdy przełączasz się do innej aplikacji. Wyłączenie ekranu lub zablokowanie telefonu zawsze blokuje go od razu.</string>
     <string name="auto_lock_immediately">Od razu</string>
@@ -69,6 +73,8 @@
     <string name="auto_lock_30s">Po 30 sekundach</string>
     <string name="auto_lock_1m">Po 1 minucie</string>
     <string name="auto_lock_2m">Po 2 minutach</string>
+    <string name="auto_lock_5m">Po 5 minutach</string>
+    <string name="auto_lock_10m">Po 10 minutach</string>
     <string name="auto_lock_15m">Po 15 minutach</string>
     <string name="auto_lock_30m">Po 30 minutach</string>
     <string name="auto_lock_long_delay_warning">Dłuższy czas pozostawia sejf otwarty w tle. Osoba z dostępem do odblokowanego telefonu może zobaczyć Twoje notatki.</string>

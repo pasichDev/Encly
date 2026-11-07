@@ -16,6 +16,7 @@ import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.AuthenticationManager
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricManager
+import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SeedPhraseManager
 import com.pasich.encly.core.security.SessionLockManager
@@ -62,6 +63,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
@@ -90,6 +92,7 @@ interface ContributionsGraph : ViewModelGraph {
     val seedPhraseManager: SeedPhraseManager
     val biometricManager: BiometricManager
     val autoLock: AutoLock
+    val screenshotAllowance: ScreenshotAllowance
     val backupManager: BackupManager
     val notesRepository: NotesRepository
     val settingsRepository: SettingsRepository
@@ -133,6 +136,7 @@ class AppGraphTest {
         assertSame(graph.seedPhraseManager, graph.seedPhraseManager)
         assertSame(graph.biometricManager, graph.biometricManager)
         assertSame(graph.autoLock, graph.autoLock)
+        assertSame(graph.screenshotAllowance, graph.screenshotAllowance)
         assertSame(graph.backupManager, graph.backupManager)
         assertSame(graph.appFlags, graph.appFlags)
         assertSame(graph.applicationScope, graph.applicationScope)
@@ -143,6 +147,16 @@ class AppGraphTest {
         assertSame(graph.secureDatabaseManager, graph.databaseProvider)
         // The editor and the lock timers listen to this one: it must be the real lock manager.
         assertSame(graph.sessionLockManager, graph.vaultLockEvents)
+    }
+
+    @Test
+    fun theLockManagerEndsTheSameScreenshotAllowanceTheSettingsTurnOn() {
+        // Not a default the manager made for itself: this is the instance the UI and the window use.
+        graph.screenshotAllowance.allow()
+
+        graph.sessionLockManager.requireUnlock()
+
+        assertFalse(graph.screenshotAllowance.allowed.value)
     }
 
     @Test

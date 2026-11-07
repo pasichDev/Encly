@@ -13,6 +13,7 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.testutil.InMemoryKeyValueStore
@@ -51,6 +52,7 @@ class SecuritySettingsViewModelTest {
     private lateinit var security: SecurityManager
     private lateinit var viewModel: SecuritySettingsViewModel
     private val screen = TestScreen()
+    private val screenshots = ScreenshotAllowance()
 
     @Before
     fun setUp() {
@@ -65,9 +67,22 @@ class SecuritySettingsViewModelTest {
                 security,
                 KeyboardPrivacy(InMemoryKeyValueStore()),
                 AutoLock(InMemoryKeyValueStore()),
+                screenshots,
             )
         // The first load reads the mock on an IO thread; stubbing it meanwhile would race.
         runBlocking { viewModel.uiState.first { it.loaded } }
+    }
+
+    @Test
+    fun screenshotsAreBlockedUntilAllowedAndTurningThemOffEndsTheAllowance() {
+        assertFalse(viewModel.screenshotsAllowed.value)
+
+        screenshots.allow()
+        assertTrue(viewModel.screenshotsAllowed.value)
+
+        viewModel.stopAllowingScreenshots()
+        assertFalse(viewModel.screenshotsAllowed.value)
+        assertFalse(screenshots.capturable)
     }
 
     @After

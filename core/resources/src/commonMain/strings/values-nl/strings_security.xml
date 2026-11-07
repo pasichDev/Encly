@@ -52,6 +52,10 @@
     <string name="security_privacy_section">Privacy</string>
     <string name="security_keyboard_strict_title">Strikte toetsenbordprivacy</string>
     <string name="security_keyboard_strict_desc">Vraagt het toetsenbord om geen suggesties, geen voorspelling in de cloud en geen meelezen rond de cursor. Zet autocorrectie uit, en sommige toetsenborden verbergen emoji of spraakinvoer.</string>
+    <string name="security_screenshots_title">Screenshots toestaan tot de app vergrendelt</string>
+    <string name="security_screenshots_desc">Screenshots en schermopnamen blijven geblokkeerd tenzij je ze hier toestaat. Dit gaat vanzelf uit als Encly vergrendelt.</string>
+    <string name="security_screenshots_warning_title">Screenshots toestaan?</string>
+    <string name="security_screenshots_warning_body">Screenshots kunnen met je notities erin in je galerij en in cloudback-ups terechtkomen. Het vergrendelscherm, de pincode-invoer en de herstelzin blijven beschermd. De toestemming eindigt zodra Encly vergrendelt.</string>
     <string name="auto_lock_title">Vergrendelen na verlaten</string>
     <string name="auto_lock_desc">Hoelang Encly open blijft als je naar een andere app gaat. Het scherm uitzetten of de telefoon vergrendelen vergrendelt het altijd meteen.</string>
     <string name="auto_lock_immediately">Meteen</string>
@@ -59,6 +63,8 @@
     <string name="auto_lock_30s">Na 30 seconden</string>
     <string name="auto_lock_1m">Na 1 minuut</string>
     <string name="auto_lock_2m">Na 2 minuten</string>
+    <string name="auto_lock_5m">Na 5 minuten</string>
+    <string name="auto_lock_10m">Na 10 minuten</string>
     <string name="auto_lock_15m">Na 15 minuten</string>
     <string name="auto_lock_30m">Na 30 minuten</string>
     <string name="auto_lock_long_delay_warning">Bij een langere tijd blijft de kluis op de achtergrond open. Wie toegang heeft tot je ontgrendelde telefoon, kan je notities zien.</string>

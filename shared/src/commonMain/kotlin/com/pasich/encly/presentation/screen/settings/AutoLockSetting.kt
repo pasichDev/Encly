@@ -12,12 +12,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.auto_lock_10m
 import com.pasich.encly.core.resources.auto_lock_15m
 import com.pasich.encly.core.resources.auto_lock_15s
 import com.pasich.encly.core.resources.auto_lock_1m
 import com.pasich.encly.core.resources.auto_lock_2m
 import com.pasich.encly.core.resources.auto_lock_30m
 import com.pasich.encly.core.resources.auto_lock_30s
+import com.pasich.encly.core.resources.auto_lock_5m
 import com.pasich.encly.core.resources.auto_lock_desc
 import com.pasich.encly.core.resources.auto_lock_immediately
 import com.pasich.encly.core.resources.auto_lock_long_delay_warning
@@ -98,6 +100,8 @@ private fun AutoLockDelay.label(): StringResource = when (this) {
     AutoLockDelay.SECONDS_30 -> Res.string.auto_lock_30s
     AutoLockDelay.MINUTE_1 -> Res.string.auto_lock_1m
     AutoLockDelay.MINUTES_2 -> Res.string.auto_lock_2m
+    AutoLockDelay.MINUTES_5 -> Res.string.auto_lock_5m
+    AutoLockDelay.MINUTES_10 -> Res.string.auto_lock_10m
     AutoLockDelay.MINUTES_15 -> Res.string.auto_lock_15m
     AutoLockDelay.MINUTES_30 -> Res.string.auto_lock_30m
 }

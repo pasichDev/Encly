@@ -208,6 +208,34 @@ class AndroidHostServicesTest {
         assertFalse(window.isChangingConfigurations)
     }
 
+    @Test
+    fun theWindowIsOpenToCaptureOnlyWhileAllowedAndInFront() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val window = AndroidAppWindow(activity, activity.window.decorView)
+        fun secure() = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0
+
+        window.enforceSecure()
+        assertTrue(secure())
+
+        // Not in front yet (not resumed): still protected.
+        window.setCaptureAllowed(true)
+        assertTrue(secure())
+        window.setInForeground(true)
+        assertFalse(secure())
+        // The theme asserts the protection each frame; an allowance stays.
+        window.enforceSecure()
+        assertFalse(secure())
+
+        // Out of the foreground the recents snapshot must find it protected again.
+        window.setInForeground(false)
+        assertTrue(secure())
+        window.setInForeground(true)
+        assertFalse(secure())
+
+        window.setCaptureAllowed(false)
+        assertTrue(secure())
+    }
+
     private companion object {
         const val TOAST_WAIT_MS = 5_000L
         const val POLL_MS = 20L

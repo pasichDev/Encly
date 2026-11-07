@@ -26,7 +26,8 @@ fun AppTheme(themeViewModel: ThemeViewModel = metroViewModel(), content: @Compos
     SideEffect {
         window.setLightStatusBar(light = !isDarkTheme)
         // Defense in depth: the host sets this before the first frame, and the theme reasserts it for
-        // the Compose window. This is intentionally not user-configurable.
+        // the Compose window. The only exception is the temporary "Allow screenshots until the app locks",
+        // which the host keeps (see ScreenshotAllowance); it is never stored.
         window.enforceSecure()
     }
 

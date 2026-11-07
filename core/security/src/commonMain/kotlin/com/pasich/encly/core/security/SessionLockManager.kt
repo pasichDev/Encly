@@ -53,6 +53,7 @@ public class SessionLockManager(
     systemClock: LockoutClock = JvmMonotonicClock,
     private val autoLock: AutoLockPolicy = AutoLockPolicy.Immediately,
     private val mainThread: MainThreadTimer = MainThreadTimer.None,
+    private val screenshots: ScreenshotAllowance = ScreenshotAllowance(),
 ) : DefaultLifecycleObserver,
     VaultLockEvents {
 
@@ -128,6 +129,7 @@ public class SessionLockManager(
      */
     @MainThread
     public fun requireUnlock() {
+        screenshots.revoke()
         _locked.value = true
     }
 
@@ -229,6 +231,8 @@ public class SessionLockManager(
     private fun isOpenAndLockable(): Boolean = securityManager.isLockable() && securityManager.isDatabaseUnlocked()
 
     private fun relock() {
+        // The screenshot allowance ends with every lock, before anything else can show.
+        screenshots.revoke()
         securityManager.lock()
         _locked.value = true
     }

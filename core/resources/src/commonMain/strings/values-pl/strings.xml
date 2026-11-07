@@ -133,7 +133,7 @@
     <string name="faq_saving_q">Jak zapisywane są zmiany?</string>
     <string name="faq_screen_description">Notatki, zadania, lokalne szyfrowanie i odzyskiwanie dostępu – bez synchronizacji w chmurze.</string>
     <string name="faq_screen_subtitle">Odpowiedzi na najczęstsze pytania</string>
-    <string name="faq_screenshots_a">Nie. Ochrona ekranu jest zawsze włączona: Encly blokuje zrzuty ekranu, nagrywanie ekranu i niezabezpieczone podglądy na liście ostatnich aplikacji.</string>
+    <string name="faq_screenshots_a">Domyślnie nie. Ochrona ekranu jest włączona: Encly blokuje zrzuty ekranu, nagrywanie ekranu i niezabezpieczone podglądy na liście ostatnich aplikacji. Gdy potrzebujesz zrzutu, Ustawienia → Bezpieczeństwo → „Zezwól na zrzuty ekranu do zablokowania aplikacji” zdejmuje ją po podaniu PIN-u; ekrany blokady, PIN-u i frazy odzyskiwania pozostają chronione, a zgoda wyłącza się sama, gdy Encly się zablokuje.</string>
     <string name="faq_screenshots_q">Czy mogę robić zrzuty ekranu w Encly?</string>
     <string name="faq_section_basics">Podstawy</string>
     <string name="faq_section_security">Bezpieczeństwo i odzyskiwanie</string>

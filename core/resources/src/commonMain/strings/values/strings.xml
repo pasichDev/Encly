@@ -149,7 +149,7 @@
     <string name="faq_saving_q">How are changes saved?</string>
     <string name="faq_screen_description">Notes, tasks, local encryption and access recovery, with no cloud sync.</string>
     <string name="faq_screen_subtitle">Answers to the most common questions</string>
-    <string name="faq_screenshots_a">No. Screen protection is always on: Encly blocks screenshots, screen recording and unprotected previews in the recent apps list.</string>
+    <string name="faq_screenshots_a">Not by default. Screen protection is on: Encly blocks screenshots, screen recording and unprotected previews in the recent apps list. When you need one, Settings → Security → Allow screenshots until the app locks lifts it after your PIN; the lock, PIN and recovery phrase screens stay protected, and it switches itself off when Encly locks.</string>
     <string name="faq_screenshots_q">Can I take screenshots of Encly?</string>
     <string name="faq_section_basics">Basics</string>
     <string name="faq_section_security">Security and recovery</string>

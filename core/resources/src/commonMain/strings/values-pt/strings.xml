@@ -133,7 +133,7 @@
     <string name="faq_saving_q">Como as alterações são salvas?</string>
     <string name="faq_screen_description">Notas, tarefas, criptografia local e recuperação de acesso, sem sincronização na nuvem.</string>
     <string name="faq_screen_subtitle">Respostas às perguntas mais comuns</string>
-    <string name="faq_screenshots_a">Não. A proteção de tela está sempre ativa: o Encly bloqueia capturas de tela, gravação de tela e pré-visualizações sem proteção na lista de apps recentes.</string>
+    <string name="faq_screenshots_a">Não por padrão. A proteção de tela está ativa: o Encly bloqueia capturas de tela, gravação de tela e pré-visualizações sem proteção na lista de apps recentes. Se precisar de uma, Configurações → Segurança → «Permitir capturas de tela até o app bloquear» a remove após o seu PIN; as telas de bloqueio, PIN e frase de recuperação continuam protegidas, e a permissão se desliga quando o Encly bloqueia.</string>
     <string name="faq_screenshots_q">Posso fazer capturas de tela do Encly?</string>
     <string name="faq_section_basics">Noções básicas</string>
     <string name="faq_section_security">Segurança e recuperação</string>

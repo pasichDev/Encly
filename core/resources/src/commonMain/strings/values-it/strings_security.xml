@@ -57,6 +57,10 @@
     <string name="security_privacy_section">Privacy</string>
     <string name="security_keyboard_strict_title">Privacy rigorosa della tastiera</string>
     <string name="security_keyboard_strict_desc">Chiede alla tastiera nessun suggerimento, nessuna previsione nel cloud e nessuna lettura intorno al cursore. Disattiva la correzione automatica e alcune tastiere nascondono emoji o input vocale.</string>
+    <string name="security_screenshots_title">Consenti screenshot finché l’app non si blocca</string>
+    <string name="security_screenshots_desc">Screenshot e registrazione dello schermo restano bloccati a meno che tu non li consenta qui. Si disattiva da solo quando Encly si blocca.</string>
+    <string name="security_screenshots_warning_title">Consentire gli screenshot?</string>
+    <string name="security_screenshots_warning_body">Gli screenshot possono finire nella tua galleria e nei backup cloud, con le tue note. La schermata di blocco, l’inserimento del PIN e la frase di recupero restano protetti. Il permesso termina quando Encly si blocca.</string>
     <string name="auto_lock_title">Blocca dopo l’uscita</string>
     <string name="auto_lock_desc">Per quanto Encly resta aperto quando passi a un’altra app. Spegnere lo schermo o bloccare il telefono lo blocca sempre subito.</string>
     <string name="auto_lock_immediately">Subito</string>
@@ -64,6 +68,8 @@
     <string name="auto_lock_30s">Dopo 30 secondi</string>
     <string name="auto_lock_1m">Dopo 1 minuto</string>
     <string name="auto_lock_2m">Dopo 2 minuti</string>
+    <string name="auto_lock_5m">Dopo 5 minuti</string>
+    <string name="auto_lock_10m">Dopo 10 minuti</string>
     <string name="auto_lock_15m">Dopo 15 minuti</string>
     <string name="auto_lock_30m">Dopo 30 minuti</string>
     <string name="auto_lock_long_delay_warning">Un intervallo più lungo lascia aperto il vault in background. Chiunque abbia accesso al telefono sbloccato può vedere le tue note.</string>

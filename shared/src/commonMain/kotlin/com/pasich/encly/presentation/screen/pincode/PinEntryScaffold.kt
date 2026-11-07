@@ -37,6 +37,7 @@ import com.pasich.encly.presentation.designsystem.EnclyLogoMark
 import com.pasich.encly.presentation.designsystem.KeypadSize
 import com.pasich.encly.presentation.designsystem.PinDots
 import com.pasich.encly.presentation.designsystem.PinKeypad
+import com.pasich.encly.presentation.designsystem.ProtectFromCapture
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -87,6 +88,7 @@ fun PinEntryScaffold(
     footer: (@Composable ColumnScope.() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
+    ProtectFromCapture()
     val spacing = EnclyTheme.spacing
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(

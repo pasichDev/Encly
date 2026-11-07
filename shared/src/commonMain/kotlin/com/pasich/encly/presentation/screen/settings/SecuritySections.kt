@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.backup_needs_phrase_title
 import com.pasich.encly.core.resources.cancel
 import com.pasich.encly.core.resources.duress_pin_row_desc
@@ -45,6 +46,10 @@ import com.pasich.encly.core.resources.security_recovery_replace_desc
 import com.pasich.encly.core.resources.security_recovery_replace_title
 import com.pasich.encly.core.resources.security_recovery_set_desc
 import com.pasich.encly.core.resources.security_recovery_status_set
+import com.pasich.encly.core.resources.security_screenshots_desc
+import com.pasich.encly.core.resources.security_screenshots_title
+import com.pasich.encly.core.resources.security_screenshots_warning_body
+import com.pasich.encly.core.resources.security_screenshots_warning_title
 import com.pasich.encly.core.resources.wipe_pin_row_desc
 import com.pasich.encly.core.resources.wipe_pin_row_turned_off
 import com.pasich.encly.core.resources.wipe_pin_title
@@ -248,9 +253,22 @@ internal fun ReplacePhraseRow(busy: Boolean, onStart: (BackupAction) -> Unit) {
     )
 }
 
-/** Privacy options that are not about unlocking: strict keyboard privacy (off by default). */
+/**
+ * "Allow screenshots until the app locks": whether it is [allowed] now, [onTurnOn] to start it (after the
+ * warning; the caller re-authenticates) and [onTurnOff].
+ */
+internal class ScreenshotsSetting(val allowed: Boolean, val onTurnOn: () -> Unit, val onTurnOff: () -> Unit)
+
+/**
+ * Privacy options that are not about unlocking: strict keyboard privacy (off by default), and, where the host
+ * offers it ([screenshots]), the temporary permission to take screenshots.
+ */
 @Composable
-internal fun PrivacySection(strictKeyboard: Boolean, onStrictKeyboard: (Boolean) -> Unit) {
+internal fun PrivacySection(
+    strictKeyboard: Boolean,
+    onStrictKeyboard: (Boolean) -> Unit,
+    screenshots: ScreenshotsSetting? = null,
+) {
     SectionOverline(
         text = stringResource(Res.string.security_privacy_section),
         modifier = Modifier.padding(top = EnclyTheme.spacing.s),
@@ -264,5 +282,38 @@ internal fun PrivacySection(strictKeyboard: Boolean, onStrictKeyboard: (Boolean)
             onCheckedChange = onStrictKeyboard,
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
         )
+        if (screenshots != null) {
+            EnclyGroupDivider()
+            ScreenshotsRow(screenshots)
+        }
     }
+}
+
+/** The switch for [ScreenshotsSetting]: turning it on first shows what screenshots leave behind. */
+@Composable
+private fun ScreenshotsRow(setting: ScreenshotsSetting) {
+    var warning by rememberSaveable { mutableStateOf(false) }
+    if (warning) {
+        EnclyDialog(
+            title = stringResource(Res.string.security_screenshots_warning_title),
+            text = stringResource(Res.string.security_screenshots_warning_body),
+            onDismissRequest = { warning = false },
+            confirm = DialogAction(
+                stringResource(Res.string.action_continue),
+                {
+                    warning = false
+                    setting.onTurnOn()
+                },
+            ),
+            dismiss = DialogAction(stringResource(Res.string.cancel), { warning = false }),
+        )
+    }
+    EnclySwitchRow(
+        title = stringResource(Res.string.security_screenshots_title),
+        supporting = stringResource(Res.string.security_screenshots_desc),
+        icon = EnclyIcons.Eye,
+        checked = setting.allowed,
+        onCheckedChange = { on -> if (on) warning = true else setting.onTurnOff() },
+        modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
+    )
 }

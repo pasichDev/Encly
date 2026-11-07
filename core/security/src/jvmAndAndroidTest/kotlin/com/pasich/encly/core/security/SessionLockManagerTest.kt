@@ -18,12 +18,13 @@ class SessionLockManagerTest {
     private val owner = mock(LifecycleOwner::class.java)
     private lateinit var security: SecurityManager
     private lateinit var manager: SessionLockManager
+    private val screenshots = ScreenshotAllowance()
 
     @Before
     fun setUp() {
         security = mock(SecurityManager::class.java)
         `when`(security.isLockable()).thenReturn(true)
-        manager = SessionLockManager(security)
+        manager = SessionLockManager(security, screenshots = screenshots)
         manager.onStart(owner)
     }
 
@@ -329,6 +330,7 @@ class SessionLockManagerTest {
             autoLock = object : AutoLockPolicy {
                 override val delayMillis: Long = millis
             },
+            screenshots = screenshots,
         )
         manager.onStart(owner)
         withFakeTime()
@@ -413,6 +415,93 @@ class SessionLockManagerTest {
 
         verify(security).lock()
         assertTrue(manager.locked.value)
+    }
+
+    // --- the screenshot allowance ends with every lock ------------------------------------
+
+    @Test
+    fun leavingTheAppWithTheAllowanceOnEndsItWhenTheVaultLocks() {
+        withDelay(0)
+        screenshots.allow()
+
+        manager.onStop(owner)
+
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun theAllowanceSurvivesAShortTripOutOfTheApp() {
+        withDelay(15_000)
+        screenshots.allow()
+
+        manager.onStop(owner)
+        now += 10_000
+        manager.onStart(owner)
+
+        assertTrue(screenshots.allowed.value)
+    }
+
+    @Test
+    fun theAutoLockTimerEndsTheAllowanceInTheBackground() {
+        withDelay(15_000)
+        screenshots.allow()
+
+        manager.onStop(owner)
+        pendingTimer!!.invoke()
+
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun comingBackAfterTheDelayEndsTheAllowance() {
+        withDelay(30_000)
+        screenshots.allow()
+
+        manager.onStop(owner)
+        now += 31_000
+        manager.onStart(owner)
+
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun theScreenTurningOffEndsTheAllowance() {
+        withDelay(AutoLockDelay.MINUTES_30.millis)
+        screenshots.allow()
+
+        manager.onStop(owner)
+        watcher.screenOff()
+
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun lockNowEndsTheAllowance() {
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        screenshots.allow()
+
+        manager.lockNow()
+
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun aStartThatFindsTheVaultClosedStartsWithoutTheAllowance() {
+        screenshots.allow()
+
+        manager.requireUnlock()
+
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun anUnlockThatFinishesInTheBackgroundEndsTheAllowance() {
+        manager.onStop(owner)
+        screenshots.allow()
+
+        manager.onUnlocked()
+
+        assertFalse(screenshots.allowed.value)
     }
 
     private class FakeDeviceLock : DeviceLockWatcher {

@@ -5,6 +5,7 @@ import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.backup_phrase_exists
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.security_erase_failed
+import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
@@ -22,6 +23,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -36,17 +38,21 @@ class BackupViewModelTest {
 
     private lateinit var security: SecurityManager
     private lateinit var viewModel: BackupViewModel
+    private val screenshots = ScreenshotAllowance()
+    private lateinit var sessionLock: SessionLockManager
 
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         security = mock(SecurityManager::class.java)
+        sessionLock = SessionLockManager(security, screenshots = screenshots)
         viewModel = BackupViewModel(
             backupManager = BackupManager(security, InMemoryVaultDataStore(), InMemoryKeyValueStore()),
             phraseSetup = BackupPhraseSetup(security),
             securityManager = security,
-            sessionLockManager = SessionLockManager(security),
+            sessionLockManager = sessionLock,
             documents = BackupDocuments(FakeDocuments()),
+            screenshots = screenshots,
         )
         viewModel.start(BackupAction.IMPORT)
     }
@@ -169,6 +175,68 @@ class BackupViewModelTest {
         waitForStep { it == BackupStep.Idle && viewModel.uiState.value.erased }
         verify(security).wipeAndReset()
         assertTrue(viewModel.uiState.value.erased)
+    }
+
+    @Test
+    fun allowingScreenshotsNeedsReauthenticationAndNothingElse() {
+        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
+        assertEquals(BackupStep.Reauth(BackupAction.ALLOW_SCREENSHOTS, biometric = false), viewModel.uiState.value.step)
+        assertFalse(screenshots.allowed.value)
+
+        // A wrong PIN allows nothing.
+        viewModel.reauthFlow.submitPin("111111".toCharArray())
+        waitForStep { it is BackupStep.Reauth && it.error != null }
+        assertFalse(screenshots.allowed.value)
+
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle && screenshots.allowed.value }
+        assertTrue(screenshots.allowed.value)
+        // No recovery phrase, no export: the re-authentication was the whole flow.
+        assertNull(viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun aPinCheckThatEndsAfterTheAppLockedDoesNotAllowScreenshots() {
+        `when`(security.isLockable()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        // The app locks (no auto-lock delay) while the PIN is being checked.
+        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+            sessionLock.lockNow()
+            true
+        }
+        viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle }
+        assertTrue(sessionLock.locked.value)
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun erasingTheVaultEndsTheAllowance() {
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.wipeAndReset()).thenReturn(true)
+        screenshots.allow()
+        viewModel.start(BackupAction.ERASE)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle && viewModel.uiState.value.erased }
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun cancellingTheReauthenticationLeavesScreenshotsBlocked() {
+        viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
+
+        viewModel.cancel()
+
+        assertEquals(BackupStep.Idle, viewModel.uiState.value.step)
+        assertFalse(screenshots.allowed.value)
     }
 
     @Test

@@ -38,9 +38,10 @@ import org.jetbrains.compose.resources.StringResource
  * What a re-authenticated flow goes on to do. [CREATE_PHRASE], [REPLACE_PHRASE] and [ERASE]
  * start from Settings → Security; they share the re-authentication and phrase steps with
  * backups. [EXPORT_MARKDOWN] is the plaintext export, run by [MarkdownExportViewModel] (it needs
- * no recovery phrase and writes no encrypted backup).
+ * no recovery phrase and writes no encrypted backup). [ALLOW_SCREENSHOTS] is "Allow screenshots until the app
+ * locks": the re-authentication is the whole flow, then the allowance is on.
  */
-enum class BackupAction { EXPORT, EXPORT_MARKDOWN, IMPORT, CREATE_PHRASE, REPLACE_PHRASE, ERASE }
+enum class BackupAction { EXPORT, EXPORT_MARKDOWN, IMPORT, CREATE_PHRASE, REPLACE_PHRASE, ERASE, ALLOW_SCREENSHOTS }
 
 /** Where a backup or vault flow currently is. Each step is one dialog or system picker. */
 sealed interface BackupStep {

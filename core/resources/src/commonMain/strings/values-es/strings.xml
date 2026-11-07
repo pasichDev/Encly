@@ -133,7 +133,7 @@
     <string name="faq_saving_q">¿Cómo se guardan los cambios?</string>
     <string name="faq_screen_description">Notas, tareas, cifrado local y recuperación del acceso, sin sincronización en la nube.</string>
     <string name="faq_screen_subtitle">Respuestas a las preguntas más frecuentes</string>
-    <string name="faq_screenshots_a">No. La protección de pantalla está siempre activa: Encly bloquea las capturas de pantalla, la grabación de pantalla y las vistas previas sin proteger en la lista de aplicaciones recientes.</string>
+    <string name="faq_screenshots_a">No por defecto. La protección de pantalla está activa: Encly bloquea las capturas de pantalla, la grabación de pantalla y las vistas previas sin proteger en la lista de aplicaciones recientes. Si necesitas una, Ajustes → Seguridad → «Permitir capturas de pantalla hasta que la app se bloquee» la levanta tras tu PIN; las pantallas de bloqueo, PIN y frase de recuperación siguen protegidas, y el permiso se desactiva solo cuando Encly se bloquea.</string>
     <string name="faq_screenshots_q">¿Puedo hacer capturas de pantalla de Encly?</string>
     <string name="faq_section_basics">Lo básico</string>
     <string name="faq_section_security">Seguridad y recuperación</string>

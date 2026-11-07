@@ -3,19 +3,23 @@ package com.pasich.encly.platform
 import android.app.Application
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.R
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.security.ActivityBiometricHost
+import com.pasich.encly.core.security.ScreenshotAllowance
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,6 +44,7 @@ class AndroidHostProvideTest {
 
     private var scenario: ActivityScenario<ProvideHostActivity>? = null
     private val factory = mock(MetroViewModelFactory::class.java)
+    private val allowance = ScreenshotAllowance()
 
     @Before
     fun setUp() {
@@ -57,6 +62,7 @@ class AndroidHostProvideTest {
             locales = FakeLocales,
             info = AppInfo.Default,
             viewModelFactory = factory,
+            screenshots = allowance,
         )
     }
 
@@ -84,6 +90,55 @@ class AndroidHostProvideTest {
         assertSame(factory, seen.factory)
         val host = checkNotNull(activity)
         assertEquals(ScreenBiometricHost(ActivityBiometricHost(host), host), seen.biometric)
+        assertSame(allowance, seen.screenshots)
+    }
+
+    @Test
+    fun theWindowIsCapturableOnlyWhileScreenshotsAreAllowedAndNoSecretIsShowing() {
+        val launched = ActivityScenario.launch(ProvideHostActivity::class.java).also { scenario = it }
+        rule.waitForIdle()
+        var activity: ProvideHostActivity? = null
+        launched.onActivity { activity = it }
+        val window = checkNotNull(activity).window
+        fun secure() = window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0
+
+        // Protected from the first frame, and while nothing is allowed.
+        assertTrue(secure())
+
+        rule.runOnIdle { allowance.allow() }
+        assertFalse(secure())
+
+        // A PIN or recovery-words screen protects the window again, and gives it back when it goes.
+        val release = rule.runOnIdle { allowance.protect() }
+        assertTrue(secure())
+        rule.runOnIdle { release() }
+        assertFalse(secure())
+
+        // The theme re-asserts the protection on every frame; it must not undo the allowance.
+        rule.runOnIdle { checkNotNull(ProvideHostActivity.captured).window.enforceSecure() }
+        assertFalse(secure())
+
+        // Every lock ends it.
+        rule.runOnIdle { allowance.revoke() }
+        assertTrue(secure())
+    }
+
+    @Test
+    fun anAllowedWindowIsProtectedAgainOnceTheActivityLeavesTheForeground() {
+        val launched = ActivityScenario.launch(ProvideHostActivity::class.java).also { scenario = it }
+        rule.waitForIdle()
+        var activity: ProvideHostActivity? = null
+        launched.onActivity { activity = it }
+        val window = checkNotNull(activity).window
+        fun secure() = window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0
+        rule.runOnIdle { allowance.allow() }
+        assertFalse(secure())
+
+        launched.moveToState(Lifecycle.State.STARTED)
+        assertTrue(secure())
+
+        launched.moveToState(Lifecycle.State.RESUMED)
+        assertFalse(secure())
     }
 }
 
@@ -98,6 +153,7 @@ class SeenServices(
     val pickers: DocumentPickers,
     val biometric: ScreenBiometricHost?,
     val factory: MetroViewModelFactory?,
+    val screenshots: ScreenshotAllowance?,
 )
 
 class ProvideHostActivity : AppCompatActivity() {
@@ -122,6 +178,7 @@ class ProvideHostActivity : AppCompatActivity() {
             pickers = LocalDocumentPickers.current,
             biometric = LocalBiometricHost.current,
             factory = LocalMetroViewModelFactory.current,
+            screenshots = LocalScreenshotAllowance.current,
         )
     }
 

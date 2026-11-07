@@ -16,6 +16,7 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.WipePinChange
@@ -40,6 +41,7 @@ class SecuritySettingsViewModel(
     private val securityManager: SecurityManager,
     private val keyboardPrivacy: KeyboardPrivacy,
     private val autoLock: AutoLock,
+    private val screenshots: ScreenshotAllowance,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SecuritySettingsUiState())
@@ -60,6 +62,14 @@ class SecuritySettingsViewModel(
     val autoLockDelay: StateFlow<AutoLockDelay> = autoLock.delay
 
     fun setAutoLockDelay(delay: AutoLockDelay) = autoLock.setDelay(delay)
+
+    /**
+     * "Allow screenshots until the app locks" is on. Turning it on goes through re-authentication
+     * ([BackupAction.ALLOW_SCREENSHOTS]); turning it off needs none, and so does the next lock.
+     */
+    val screenshotsAllowed: StateFlow<Boolean> = screenshots.allowed
+
+    fun stopAllowingScreenshots() = screenshots.revoke()
 
     init {
         refresh()

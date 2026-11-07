@@ -34,6 +34,7 @@ private const val HIDDEN_WORD = "••••••"
  */
 @Composable
 fun WordGrid(words: List<String>, hidden: Boolean, modifier: Modifier = Modifier) {
+    ProtectFromCapture()
     val style = EnclyTheme.typography.dataLarge
     // No layout cache: the measured strings are recovery words.
     val measurer = rememberTextMeasurer(cacheSize = 0)

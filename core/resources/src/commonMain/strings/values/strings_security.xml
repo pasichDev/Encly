@@ -52,6 +52,10 @@
     <string name="security_privacy_section">Privacy</string>
     <string name="security_keyboard_strict_title">Strict keyboard privacy</string>
     <string name="security_keyboard_strict_desc">Asks the keyboard for no suggestions, no cloud prediction and no reading around the cursor. Turns off autocorrect, and some keyboards hide emoji or voice input.</string>
+    <string name="security_screenshots_title">Allow screenshots until the app locks</string>
+    <string name="security_screenshots_desc">Screenshots and screen recording stay blocked unless you allow them here. This switches itself off when Encly locks.</string>
+    <string name="security_screenshots_warning_title">Allow screenshots?</string>
+    <string name="security_screenshots_warning_body">Screenshots can end up in your gallery and in cloud backups, with your notes in them. The lock screen, PIN entry and recovery phrase stay protected. This ends when Encly locks.</string>
     <string name="auto_lock_title">Lock after leaving the app</string>
     <string name="auto_lock_desc">How long Encly stays open when you switch to another app. Turning off the screen or locking the phone always locks it at once.</string>
     <string name="auto_lock_immediately">Immediately</string>
@@ -59,6 +63,8 @@
     <string name="auto_lock_30s">After 30 seconds</string>
     <string name="auto_lock_1m">After 1 minute</string>
     <string name="auto_lock_2m">After 2 minutes</string>
+    <string name="auto_lock_5m">After 5 minutes</string>
+    <string name="auto_lock_10m">After 10 minutes</string>
     <string name="auto_lock_15m">After 15 minutes</string>
     <string name="auto_lock_30m">After 30 minutes</string>
     <string name="auto_lock_long_delay_warning">Longer delays leave your vault open in the background. Anyone with access to your unlocked phone may see your notes.</string>

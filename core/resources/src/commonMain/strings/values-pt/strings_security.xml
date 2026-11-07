@@ -57,6 +57,10 @@
     <string name="security_privacy_section">Privacidade</string>
     <string name="security_keyboard_strict_title">Privacidade rigorosa do teclado</string>
     <string name="security_keyboard_strict_desc">Pede ao teclado que não mostre sugestões, não use previsão na nuvem e não leia o texto ao redor do cursor. Desativa a correção automática, e alguns teclados ocultam emojis ou a entrada por voz.</string>
+    <string name="security_screenshots_title">Permitir capturas de tela até o app bloquear</string>
+    <string name="security_screenshots_desc">Capturas e gravação de tela continuam bloqueadas, a menos que você as permita aqui. Isso se desativa sozinho quando o Encly bloqueia.</string>
+    <string name="security_screenshots_warning_title">Permitir capturas de tela?</string>
+    <string name="security_screenshots_warning_body">As capturas de tela podem ir parar na sua galeria e em backups na nuvem, com as suas notas. A tela de bloqueio, a entrada do PIN e a frase de recuperação continuam protegidas. A permissão termina quando o Encly bloqueia.</string>
     <string name="auto_lock_title">Bloquear ao sair</string>
     <string name="auto_lock_desc">Quanto tempo o Encly fica aberto quando você muda para outro app. Desligar a tela ou bloquear o telefone sempre o bloqueia na hora.</string>
     <string name="auto_lock_immediately">Imediatamente</string>
@@ -64,6 +68,8 @@
     <string name="auto_lock_30s">Após 30 segundos</string>
     <string name="auto_lock_1m">Após 1 minuto</string>
     <string name="auto_lock_2m">Após 2 minutos</string>
+    <string name="auto_lock_5m">Após 5 minutos</string>
+    <string name="auto_lock_10m">Após 10 minutos</string>
     <string name="auto_lock_15m">Após 15 minutos</string>
     <string name="auto_lock_30m">Após 30 minutos</string>
     <string name="auto_lock_long_delay_warning">Um prazo maior deixa o cofre aberto em segundo plano. Quem tiver acesso ao telefone desbloqueado poderá ver suas notas.</string>

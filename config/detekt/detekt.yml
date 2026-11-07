@@ -98,6 +98,7 @@ Compose:
       - LocalToaster
       - LocalSensitiveClipboard
       - LocalBiometricHost
+      - LocalScreenshotAllowance
       - LocalAppLocales
       - LocalAppInfo
       - LocalNavigationRequests

@@ -10,6 +10,7 @@ import com.pasich.encly.core.resources.backup_phrase_added
 import com.pasich.encly.core.resources.backup_phrase_check_wrong
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.RecoveryWords
+import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.BackupDocuments
@@ -434,6 +435,7 @@ class BackupFlowsTest {
             securityManager = security,
             sessionLockManager = SessionLockManager(security),
             documents = documents,
+            screenshots = ScreenshotAllowance(),
         )
 
     private fun state() = viewModel.uiState.value

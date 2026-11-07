@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.lock_back_to_pin
@@ -51,6 +52,7 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
 
 /** The app's lock screen: unlocking opens Home (or the note that was open), see [leaveLockScreen]. */
@@ -138,8 +140,14 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
         }
     }
 
-    LaunchedEffect(Unit) {
-        if (biometricEnabled) promptBiometric()
+    // Once per lock screen, and only with the window in front: a lock screen that appears while the
+    // app is in the background (the auto-lock) would otherwise start a prompt the system cancels
+    // unseen. The fingerprint button stays available meanwhile and after.
+    LaunchedEffect(host) {
+        if (biometricEnabled && host != null) {
+            host.owner.lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
+            promptBiometric()
+        }
     }
 
     Box(modifier = modifier.fillMaxSize()) {

@@ -4,6 +4,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.LifecycleOwner
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.security.BiometricHost
+import com.pasich.encly.core.security.ScreenshotAllowance
 import kotlinx.io.files.Path
 import org.jetbrains.compose.resources.StringResource
 
@@ -56,7 +57,10 @@ interface AppWindow {
     /** True while the hosting Activity is being recreated (a rotation): not the user leaving the screen. */
     val isChangingConfigurations: Boolean
 
-    /** Re-asserts that the window cannot be captured (screenshots, recents, casting). */
+    /**
+     * Re-asserts that the window cannot be captured (screenshots, recents, casting), unless the user allowed
+     * screenshots until the next lock ([com.pasich.encly.core.security.ScreenshotAllowance]).
+     */
     fun enforceSecure()
 
     /** Dark icons on the status bar when [light] is true (a light page), light ones otherwise. */
@@ -144,6 +148,12 @@ val LocalSensitiveClipboard = staticCompositionLocalOf<SensitiveClipboard> { NoC
 
 /** The biometric host of the screen, or null where there is none (no prompt can be shown). */
 val LocalBiometricHost = staticCompositionLocalOf<ScreenBiometricHost?> { null }
+
+/**
+ * The temporary "Allow screenshots until the app locks", or null where the host does not offer it (the setting is
+ * hidden there and nothing is exempt from capture protection).
+ */
+val LocalScreenshotAllowance = staticCompositionLocalOf<ScreenshotAllowance?> { null }
 
 /** The in-app language controller. */
 val LocalAppLocales = staticCompositionLocalOf<AppLocaleController> { FixedLocale }

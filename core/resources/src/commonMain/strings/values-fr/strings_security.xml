@@ -57,6 +57,10 @@
     <string name="security_privacy_section">Confidentialité</string>
     <string name="security_keyboard_strict_title">Confidentialité stricte du clavier</string>
     <string name="security_keyboard_strict_desc">Demande au clavier de ne pas faire de suggestions, pas de prédiction dans le cloud et pas de lecture autour du curseur. Désactive la correction automatique, et certains claviers masquent les emoji ou la saisie vocale.</string>
+    <string name="security_screenshots_title">Autoriser les captures d’écran jusqu’au verrouillage</string>
+    <string name="security_screenshots_desc">Les captures et l’enregistrement d’écran restent bloqués tant que vous ne les autorisez pas ici. L’option se désactive d’elle-même quand Encly se verrouille.</string>
+    <string name="security_screenshots_warning_title">Autoriser les captures d’écran ?</string>
+    <string name="security_screenshots_warning_body">Les captures d’écran peuvent finir dans votre galerie et vos sauvegardes cloud, avec vos notes. L’écran de verrouillage, la saisie du PIN et la phrase de récupération restent protégés. L’autorisation prend fin au verrouillage d’Encly.</string>
     <string name="auto_lock_title">Verrouiller après la sortie</string>
     <string name="auto_lock_desc">Durée pendant laquelle Encly reste ouvert quand vous passez à une autre app. Éteindre l’écran ou verrouiller le téléphone le verrouille toujours aussitôt.</string>
     <string name="auto_lock_immediately">Immédiatement</string>
@@ -64,6 +68,8 @@
     <string name="auto_lock_30s">Après 30 secondes</string>
     <string name="auto_lock_1m">Après 1 minute</string>
     <string name="auto_lock_2m">Après 2 minutes</string>
+    <string name="auto_lock_5m">Après 5 minutes</string>
+    <string name="auto_lock_10m">Après 10 minutes</string>
     <string name="auto_lock_15m">Après 15 minutes</string>
     <string name="auto_lock_30m">Après 30 minutes</string>
     <string name="auto_lock_long_delay_warning">Un délai plus long laisse le coffre ouvert en arrière-plan. Toute personne ayant accès à votre téléphone déverrouillé peut voir vos notes.</string>

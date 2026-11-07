@@ -52,6 +52,10 @@
     <string name="security_privacy_section">Datenschutz</string>
     <string name="security_keyboard_strict_title">Strenger Tastatur-Datenschutz</string>
     <string name="security_keyboard_strict_desc">Bittet die Tastatur um keine Vorschläge, keine Cloud-Vorhersage und kein Mitlesen rund um den Cursor. Schaltet die Autokorrektur aus, und manche Tastaturen blenden Emojis oder Spracheingabe aus.</string>
+    <string name="security_screenshots_title">Screenshots erlauben, bis die App sperrt</string>
+    <string name="security_screenshots_desc">Screenshots und Bildschirmaufnahmen bleiben gesperrt, solange du sie hier nicht erlaubst. Die Option schaltet sich aus, sobald Encly sperrt.</string>
+    <string name="security_screenshots_warning_title">Screenshots erlauben?</string>
+    <string name="security_screenshots_warning_body">Screenshots können mitsamt deinen Notizen in der Galerie und in Cloud-Backups landen. Sperrbildschirm, PIN-Eingabe und Wiederherstellungsphrase bleiben geschützt. Die Erlaubnis endet, sobald Encly sperrt.</string>
     <string name="auto_lock_title">Sperren nach dem Verlassen</string>
     <string name="auto_lock_desc">Wie lange Encly offen bleibt, wenn du zu einer anderen App wechselst. Bildschirm aus oder Telefon sperren sperrt es immer sofort.</string>
     <string name="auto_lock_immediately">Sofort</string>
@@ -59,6 +63,8 @@
     <string name="auto_lock_30s">Nach 30 Sekunden</string>
     <string name="auto_lock_1m">Nach 1 Minute</string>
     <string name="auto_lock_2m">Nach 2 Minuten</string>
+    <string name="auto_lock_5m">Nach 5 Minuten</string>
+    <string name="auto_lock_10m">Nach 10 Minuten</string>
     <string name="auto_lock_15m">Nach 15 Minuten</string>
     <string name="auto_lock_30m">Nach 30 Minuten</string>
     <string name="auto_lock_long_delay_warning">Bei längeren Zeiten bleibt der Tresor im Hintergrund offen. Wer Zugriff auf dein entsperrtes Telefon hat, kann deine Notizen sehen.</string>

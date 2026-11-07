@@ -14,6 +14,7 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.core.security.WipePinChange
@@ -94,7 +95,8 @@ internal class TestApp {
     val markdownDocuments: MarkdownDocuments = mock(MarkdownDocuments::class.java)
     val store = InMemoryVaultDataStore()
     val backupManager = BackupManager(security, store, InMemoryKeyValueStore())
-    val sessionLock = SessionLockManager(security)
+    val screenshots = ScreenshotAllowance()
+    val sessionLock = SessionLockManager(security, screenshots = screenshots)
     val selectedTag = SelectedTagHolder()
     init {
         // The app is in the foreground, so a completed unlock is published, not re-locked.
@@ -228,6 +230,7 @@ internal class TestApp {
         security,
         KeyboardPrivacy(InMemoryKeyValueStore()),
         AutoLock(InMemoryKeyValueStore()),
+        screenshots,
     )
 
     fun backup() = BackupViewModel(
@@ -236,6 +239,7 @@ internal class TestApp {
         securityManager = security,
         sessionLockManager = sessionLock,
         documents = documents,
+        screenshots = screenshots,
     )
 
     fun markdownExport() = MarkdownExportViewModel(

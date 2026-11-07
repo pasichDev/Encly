@@ -133,7 +133,7 @@
     <string name="faq_saving_q">Comment les modifications sont-elles enregistrées ?</string>
     <string name="faq_screen_description">Notes, tâches, chiffrement local et récupération de l\'accès, sans synchronisation cloud.</string>
     <string name="faq_screen_subtitle">Réponses aux questions les plus courantes</string>
-    <string name="faq_screenshots_a">Non. La protection de l\'écran est toujours active : Encly bloque les captures d\'écran, l\'enregistrement de l\'écran et les aperçus non protégés dans la liste des applications récentes.</string>
+    <string name="faq_screenshots_a">Pas par défaut. La protection de l\'écran est active : Encly bloque les captures d\'écran, l\'enregistrement de l\'écran et les aperçus non protégés dans la liste des applications récentes. Si vous en avez besoin, Paramètres → Sécurité → « Autoriser les captures d’écran jusqu’au verrouillage » la lève après votre code PIN ; les écrans de verrouillage, de PIN et de phrase de récupération restent protégés, et l\'autorisation prend fin au verrouillage d\'Encly.</string>
     <string name="faq_screenshots_q">Puis-je faire des captures d\'écran d\'Encly ?</string>
     <string name="faq_section_basics">Les bases</string>
     <string name="faq_section_security">Sécurité et récupération</string>

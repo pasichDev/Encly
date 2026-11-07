@@ -188,6 +188,7 @@ fun RecoveryPhraseInput(
     onEdit: () -> Unit = {},
     onDone: () -> Unit = {},
 ) {
+    ProtectFromCapture()
     val requesters = remember(state.count) { List(state.count) { FocusRequester() } }
     val currentOnEdit by rememberUpdatedState(onEdit)
     val currentOnDone by rememberUpdatedState(onDone)

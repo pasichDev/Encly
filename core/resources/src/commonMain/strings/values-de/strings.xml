@@ -133,7 +133,7 @@
     <string name="faq_saving_q">Wie werden Änderungen gespeichert?</string>
     <string name="faq_screen_description">Notizen, Aufgaben, lokale Verschlüsselung und Zugangswiederherstellung – ohne Cloud-Synchronisierung.</string>
     <string name="faq_screen_subtitle">Antworten auf die häufigsten Fragen</string>
-    <string name="faq_screenshots_a">Nein. Der Bildschirmschutz ist immer aktiv: Encly blockiert Screenshots, Bildschirmaufnahmen und ungeschützte Vorschauen in der Liste der zuletzt verwendeten Apps.</string>
+    <string name="faq_screenshots_a">Standardmäßig nicht. Der Bildschirmschutz ist aktiv: Encly blockiert Screenshots, Bildschirmaufnahmen und ungeschützte Vorschauen in der Liste der zuletzt verwendeten Apps. Brauchst du einen, hebt Einstellungen → Sicherheit → „Screenshots erlauben, bis die App sperrt“ ihn nach deiner PIN auf; Sperr-, PIN- und Wiederherstellungsphrasen-Bildschirme bleiben geschützt, und die Freigabe endet, sobald Encly sperrt.</string>
     <string name="faq_screenshots_q">Kann ich Screenshots von Encly machen?</string>
     <string name="faq_section_basics">Grundlagen</string>
     <string name="faq_section_security">Sicherheit und Wiederherstellung</string>

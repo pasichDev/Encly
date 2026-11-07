@@ -82,6 +82,7 @@ import com.pasich.encly.presentation.designsystem.EnclyPillButton
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.LabelHeader
+import com.pasich.encly.presentation.designsystem.ProtectFromCapture
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.StepHeading
@@ -202,6 +203,8 @@ private fun MessageDialog(
  */
 @Composable
 internal fun ReauthDialog(reauth: ReauthFlow, step: BackupStep.Reauth, onCancel: () -> Unit) {
+    // Before the Dialog: its own window takes the protection from the activity's when it is made.
+    ProtectFromCapture()
     val host = LocalBiometricHost.current
     // Wiped once submitted or when the dialog closes, never a String (see PinBuffer).
     val input = remember { PinBuffer() }
