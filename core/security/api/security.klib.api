@@ -71,9 +71,11 @@ final enum class com.pasich.encly.core.security/AuthType : kotlin/Enum<com.pasic
 
 final enum class com.pasich.encly.core.security/AutoLockDelay : kotlin/Enum<com.pasich.encly.core.security/AutoLockDelay> { // com.pasich.encly.core.security/AutoLockDelay|null[0]
     enum entry IMMEDIATELY // com.pasich.encly.core.security/AutoLockDelay.IMMEDIATELY|null[0]
+    enum entry MINUTES_10 // com.pasich.encly.core.security/AutoLockDelay.MINUTES_10|null[0]
     enum entry MINUTES_15 // com.pasich.encly.core.security/AutoLockDelay.MINUTES_15|null[0]
     enum entry MINUTES_2 // com.pasich.encly.core.security/AutoLockDelay.MINUTES_2|null[0]
     enum entry MINUTES_30 // com.pasich.encly.core.security/AutoLockDelay.MINUTES_30|null[0]
+    enum entry MINUTES_5 // com.pasich.encly.core.security/AutoLockDelay.MINUTES_5|null[0]
     enum entry MINUTE_1 // com.pasich.encly.core.security/AutoLockDelay.MINUTE_1|null[0]
     enum entry SECONDS_15 // com.pasich.encly.core.security/AutoLockDelay.SECONDS_15|null[0]
     enum entry SECONDS_30 // com.pasich.encly.core.security/AutoLockDelay.SECONDS_30|null[0]
@@ -129,6 +131,7 @@ final enum class com.pasich.encly.core.security/InitialStatus : kotlin/Enum<com.
     enum entry NO // com.pasich.encly.core.security/InitialStatus.NO|null[0]
     enum entry ONBOARDING // com.pasich.encly.core.security/InitialStatus.ONBOARDING|null[0]
     enum entry SETUP_AUTH // com.pasich.encly.core.security/InitialStatus.SETUP_AUTH|null[0]
+    enum entry STORAGE_UNREADABLE // com.pasich.encly.core.security/InitialStatus.STORAGE_UNREADABLE|null[0]
 
     final val entries // com.pasich.encly.core.security/InitialStatus.entries|#static{}entries[0]
         final fun <get-entries>(): kotlin.enums/EnumEntries<com.pasich.encly.core.security/InitialStatus> // com.pasich.encly.core.security/InitialStatus.entries.<get-entries>|<get-entries>#static(){}[0]
@@ -327,6 +330,8 @@ abstract interface com.pasich.encly.core.security/VaultFileIo { // com.pasich.en
 abstract interface com.pasich.encly.core.security/VaultLockEvents { // com.pasich.encly.core.security/VaultLockEvents|null[0]
     abstract val locked // com.pasich.encly.core.security/VaultLockEvents.locked|{}locked[0]
         abstract fun <get-locked>(): kotlinx.coroutines.flow/StateFlow<kotlin/Boolean> // com.pasich.encly.core.security/VaultLockEvents.locked.<get-locked>|<get-locked>(){}[0]
+
+    open fun registerPreLockFlush(kotlin.coroutines/SuspendFunction0<kotlin/Unit>): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.security/VaultLockEvents.registerPreLockFlush|registerPreLockFlush(kotlin.coroutines.SuspendFunction0<kotlin.Unit>){}[0]
 }
 
 sealed interface com.pasich.encly.core.security/PinUnlock { // com.pasich.encly.core.security/PinUnlock|null[0]
@@ -461,7 +466,7 @@ final class com.pasich.encly.core.backup/BackupNote { // com.pasich.encly.core.b
 }
 
 final class com.pasich.encly.core.backup/BackupPayload { // com.pasich.encly.core.backup/BackupPayload|null[0]
-    constructor <init>(kotlin/Int = ..., kotlin/Long, kotlin.collections/List<com.pasich.encly.core.backup/BackupTag>, kotlin.collections/List<com.pasich.encly.core.backup/BackupNote>, kotlin.collections/List<com.pasich.encly.core.backup/BackupTask>) // com.pasich.encly.core.backup/BackupPayload.<init>|<init>(kotlin.Int;kotlin.Long;kotlin.collections.List<com.pasich.encly.core.backup.BackupTag>;kotlin.collections.List<com.pasich.encly.core.backup.BackupNote>;kotlin.collections.List<com.pasich.encly.core.backup.BackupTask>){}[0]
+    constructor <init>(kotlin/Int = ..., kotlin/Long, kotlin.collections/List<com.pasich.encly.core.backup/BackupTag>, kotlin.collections/List<com.pasich.encly.core.backup/BackupNote>, kotlin.collections/List<com.pasich.encly.core.backup/BackupTask>, kotlin.collections/Map<kotlin/String, kotlin/String> = ...) // com.pasich.encly.core.backup/BackupPayload.<init>|<init>(kotlin.Int;kotlin.Long;kotlin.collections.List<com.pasich.encly.core.backup.BackupTag>;kotlin.collections.List<com.pasich.encly.core.backup.BackupNote>;kotlin.collections.List<com.pasich.encly.core.backup.BackupTask>;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
 
     final val exportedAt // com.pasich.encly.core.backup/BackupPayload.exportedAt|{}exportedAt[0]
         final fun <get-exportedAt>(): kotlin/Long // com.pasich.encly.core.backup/BackupPayload.exportedAt.<get-exportedAt>|<get-exportedAt>(){}[0]
@@ -469,6 +474,8 @@ final class com.pasich.encly.core.backup/BackupPayload { // com.pasich.encly.cor
         final fun <get-notes>(): kotlin.collections/List<com.pasich.encly.core.backup/BackupNote> // com.pasich.encly.core.backup/BackupPayload.notes.<get-notes>|<get-notes>(){}[0]
     final val schema // com.pasich.encly.core.backup/BackupPayload.schema|{}schema[0]
         final fun <get-schema>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.schema.<get-schema>|<get-schema>(){}[0]
+    final val settings // com.pasich.encly.core.backup/BackupPayload.settings|{}settings[0]
+        final fun <get-settings>(): kotlin.collections/Map<kotlin/String, kotlin/String> // com.pasich.encly.core.backup/BackupPayload.settings.<get-settings>|<get-settings>(){}[0]
     final val tags // com.pasich.encly.core.backup/BackupPayload.tags|{}tags[0]
         final fun <get-tags>(): kotlin.collections/List<com.pasich.encly.core.backup/BackupTag> // com.pasich.encly.core.backup/BackupPayload.tags.<get-tags>|<get-tags>(){}[0]
     final val tasks // com.pasich.encly.core.backup/BackupPayload.tasks|{}tasks[0]
@@ -479,7 +486,8 @@ final class com.pasich.encly.core.backup/BackupPayload { // com.pasich.encly.cor
     final fun component3(): kotlin.collections/List<com.pasich.encly.core.backup/BackupTag> // com.pasich.encly.core.backup/BackupPayload.component3|component3(){}[0]
     final fun component4(): kotlin.collections/List<com.pasich.encly.core.backup/BackupNote> // com.pasich.encly.core.backup/BackupPayload.component4|component4(){}[0]
     final fun component5(): kotlin.collections/List<com.pasich.encly.core.backup/BackupTask> // com.pasich.encly.core.backup/BackupPayload.component5|component5(){}[0]
-    final fun copy(kotlin/Int = ..., kotlin/Long = ..., kotlin.collections/List<com.pasich.encly.core.backup/BackupTag> = ..., kotlin.collections/List<com.pasich.encly.core.backup/BackupNote> = ..., kotlin.collections/List<com.pasich.encly.core.backup/BackupTask> = ...): com.pasich.encly.core.backup/BackupPayload // com.pasich.encly.core.backup/BackupPayload.copy|copy(kotlin.Int;kotlin.Long;kotlin.collections.List<com.pasich.encly.core.backup.BackupTag>;kotlin.collections.List<com.pasich.encly.core.backup.BackupNote>;kotlin.collections.List<com.pasich.encly.core.backup.BackupTask>){}[0]
+    final fun component6(): kotlin.collections/Map<kotlin/String, kotlin/String> // com.pasich.encly.core.backup/BackupPayload.component6|component6(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Long = ..., kotlin.collections/List<com.pasich.encly.core.backup/BackupTag> = ..., kotlin.collections/List<com.pasich.encly.core.backup/BackupNote> = ..., kotlin.collections/List<com.pasich.encly.core.backup/BackupTask> = ..., kotlin.collections/Map<kotlin/String, kotlin/String> = ...): com.pasich.encly.core.backup/BackupPayload // com.pasich.encly.core.backup/BackupPayload.copy|copy(kotlin.Int;kotlin.Long;kotlin.collections.List<com.pasich.encly.core.backup.BackupTag>;kotlin.collections.List<com.pasich.encly.core.backup.BackupNote>;kotlin.collections.List<com.pasich.encly.core.backup.BackupTask>;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.backup/BackupPayload.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.pasich.encly.core.backup/BackupPayload.toString|toString(){}[0]
@@ -500,6 +508,8 @@ final class com.pasich.encly.core.backup/BackupPayload { // com.pasich.encly.cor
             final fun <get-SCHEMA_V2>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V2.<get-SCHEMA_V2>|<get-SCHEMA_V2>(){}[0]
         final const val SCHEMA_V3 // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V3|{}SCHEMA_V3[0]
             final fun <get-SCHEMA_V3>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V3.<get-SCHEMA_V3>|<get-SCHEMA_V3>(){}[0]
+        final const val SCHEMA_V4 // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V4|{}SCHEMA_V4[0]
+            final fun <get-SCHEMA_V4>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V4.<get-SCHEMA_V4>|<get-SCHEMA_V4>(){}[0]
         final const val SCHEMA_VERSION // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_VERSION|{}SCHEMA_VERSION[0]
             final fun <get-SCHEMA_VERSION>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_VERSION.<get-SCHEMA_VERSION>|<get-SCHEMA_VERSION>(){}[0]
 
@@ -786,6 +796,30 @@ final class com.pasich.encly.core.security/PinFactorException : kotlin/Exception
         final fun <get-lost>(): kotlin/Boolean // com.pasich.encly.core.security/PinFactorException.lost.<get-lost>|<get-lost>(){}[0]
 }
 
+final class com.pasich.encly.core.security/ScreenshotAllowance { // com.pasich.encly.core.security/ScreenshotAllowance|null[0]
+    constructor <init>() // com.pasich.encly.core.security/ScreenshotAllowance.<init>|<init>(){}[0]
+
+    final val allowed // com.pasich.encly.core.security/ScreenshotAllowance.allowed|{}allowed[0]
+        final fun <get-allowed>(): kotlinx.coroutines.flow/StateFlow<kotlin/Boolean> // com.pasich.encly.core.security/ScreenshotAllowance.allowed.<get-allowed>|<get-allowed>(){}[0]
+    final val capturable // com.pasich.encly.core.security/ScreenshotAllowance.capturable|{}capturable[0]
+        final fun <get-capturable>(): kotlin/Boolean // com.pasich.encly.core.security/ScreenshotAllowance.capturable.<get-capturable>|<get-capturable>(){}[0]
+
+    final fun allow() // com.pasich.encly.core.security/ScreenshotAllowance.allow|allow(){}[0]
+    final fun observe(kotlin/Function1<kotlin/Boolean, kotlin/Unit>): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.security/ScreenshotAllowance.observe|observe(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
+    final fun protect(): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.security/ScreenshotAllowance.protect|protect(){}[0]
+    final fun revoke() // com.pasich.encly.core.security/ScreenshotAllowance.revoke|revoke(){}[0]
+
+    final class MetroFactory : dev.zacsweers.metro.internal/Factory<com.pasich.encly.core.security/ScreenshotAllowance> { // com.pasich.encly.core.security/ScreenshotAllowance.MetroFactory|null[0]
+        final fun declarationMirror(): com.pasich.encly.core.security/ScreenshotAllowance // com.pasich.encly.core.security/ScreenshotAllowance.MetroFactory.declarationMirror|declarationMirror(){}[0]
+        final fun invoke(): com.pasich.encly.core.security/ScreenshotAllowance // com.pasich.encly.core.security/ScreenshotAllowance.MetroFactory.invoke|invoke(){}[0]
+
+        final object Companion { // com.pasich.encly.core.security/ScreenshotAllowance.MetroFactory.Companion|null[0]
+            final fun create(): com.pasich.encly.core.security/ScreenshotAllowance.MetroFactory // com.pasich.encly.core.security/ScreenshotAllowance.MetroFactory.Companion.create|create(){}[0]
+            final fun newInstance(): com.pasich.encly.core.security/ScreenshotAllowance // com.pasich.encly.core.security/ScreenshotAllowance.MetroFactory.Companion.newInstance|newInstance(){}[0]
+        }
+    }
+}
+
 final class com.pasich.encly.core.security/SecurityManager { // com.pasich.encly.core.security/SecurityManager|null[0]
     constructor <init>(com.pasich.encly.core.platform/KeyValueStore, com.pasich.encly.core.security/VaultStore, com.pasich.encly.core.security/SeedPhraseManager, com.pasich.encly.core.security/VaultDatabase, com.pasich.encly.core.security/AuthenticationManager, com.pasich.encly.core.security/BiometricManager, com.pasich.encly.core.security/HandoffStagingSweeper = ...) // com.pasich.encly.core.security/SecurityManager.<init>|<init>(com.pasich.encly.core.platform.KeyValueStore;com.pasich.encly.core.security.VaultStore;com.pasich.encly.core.security.SeedPhraseManager;com.pasich.encly.core.security.VaultDatabase;com.pasich.encly.core.security.AuthenticationManager;com.pasich.encly.core.security.BiometricManager;com.pasich.encly.core.security.HandoffStagingSweeper){}[0]
 
@@ -863,6 +897,7 @@ final class com.pasich.encly.core.security/SeedPhraseManager { // com.pasich.enc
     final fun createBackupKey(kotlin/CharArray, kotlin/ByteArray): kotlin/Boolean // com.pasich.encly.core.security/SeedPhraseManager.createBackupKey|createBackupKey(kotlin.CharArray;kotlin.ByteArray){}[0]
     final fun generateMnemonic(): kotlin/CharArray // com.pasich.encly.core.security/SeedPhraseManager.generateMnemonic|generateMnemonic(){}[0]
     final fun hasBackupKey(): kotlin/Boolean // com.pasich.encly.core.security/SeedPhraseManager.hasBackupKey|hasBackupKey(){}[0]
+    final fun hasBootstrapKey(): kotlin/Boolean // com.pasich.encly.core.security/SeedPhraseManager.hasBootstrapKey|hasBootstrapKey(){}[0]
     final fun hasRecoverySeed(): kotlin/Boolean // com.pasich.encly.core.security/SeedPhraseManager.hasRecoverySeed|hasRecoverySeed(){}[0]
     final fun hasStoredSeed(): kotlin/Boolean // com.pasich.encly.core.security/SeedPhraseManager.hasStoredSeed|hasStoredSeed(){}[0]
     final fun initializeVault(kotlin/CharArray?): kotlin/Boolean // com.pasich.encly.core.security/SeedPhraseManager.initializeVault|initializeVault(kotlin.CharArray?){}[0]
@@ -888,7 +923,7 @@ final class com.pasich.encly.core.security/SeedPhraseManager { // com.pasich.enc
 }
 
 final class com.pasich.encly.core.security/SessionLockManager : androidx.lifecycle/DefaultLifecycleObserver, com.pasich.encly.core.security/VaultLockEvents { // com.pasich.encly.core.security/SessionLockManager|null[0]
-    constructor <init>(com.pasich.encly.core.security/SecurityManager, com.pasich.encly.core.security/DeviceLockWatcher = ..., com.pasich.encly.core.security/LockoutClock = ..., com.pasich.encly.core.security/AutoLockPolicy = ..., com.pasich.encly.core.platform/MainThreadTimer = ...) // com.pasich.encly.core.security/SessionLockManager.<init>|<init>(com.pasich.encly.core.security.SecurityManager;com.pasich.encly.core.security.DeviceLockWatcher;com.pasich.encly.core.security.LockoutClock;com.pasich.encly.core.security.AutoLockPolicy;com.pasich.encly.core.platform.MainThreadTimer){}[0]
+    constructor <init>(com.pasich.encly.core.security/SecurityManager, com.pasich.encly.core.security/DeviceLockWatcher = ..., com.pasich.encly.core.security/LockoutClock = ..., com.pasich.encly.core.security/AutoLockPolicy = ..., com.pasich.encly.core.platform/MainThreadTimer = ..., com.pasich.encly.core.security/ScreenshotAllowance = ...) // com.pasich.encly.core.security/SessionLockManager.<init>|<init>(com.pasich.encly.core.security.SecurityManager;com.pasich.encly.core.security.DeviceLockWatcher;com.pasich.encly.core.security.LockoutClock;com.pasich.encly.core.security.AutoLockPolicy;com.pasich.encly.core.platform.MainThreadTimer;com.pasich.encly.core.security.ScreenshotAllowance){}[0]
 
     final val locked // com.pasich.encly.core.security/SessionLockManager.locked|{}locked[0]
         final fun <get-locked>(): kotlinx.coroutines.flow/StateFlow<kotlin/Boolean> // com.pasich.encly.core.security/SessionLockManager.locked.<get-locked>|<get-locked>(){}[0]
@@ -903,15 +938,16 @@ final class com.pasich.encly.core.security/SessionLockManager : androidx.lifecyc
     final fun onStop(androidx.lifecycle/LifecycleOwner) // com.pasich.encly.core.security/SessionLockManager.onStop|onStop(androidx.lifecycle.LifecycleOwner){}[0]
     final fun onUnlockAbandoned() // com.pasich.encly.core.security/SessionLockManager.onUnlockAbandoned|onUnlockAbandoned(){}[0]
     final fun onUnlocked(): kotlin/Boolean // com.pasich.encly.core.security/SessionLockManager.onUnlocked|onUnlocked(){}[0]
+    final fun registerPreLockFlush(kotlin.coroutines/SuspendFunction0<kotlin/Unit>): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.security/SessionLockManager.registerPreLockFlush|registerPreLockFlush(kotlin.coroutines.SuspendFunction0<kotlin.Unit>){}[0]
     final fun requireUnlock() // com.pasich.encly.core.security/SessionLockManager.requireUnlock|requireUnlock(){}[0]
 
     final class MetroFactory : dev.zacsweers.metro.internal/Factory<com.pasich.encly.core.security/SessionLockManager> { // com.pasich.encly.core.security/SessionLockManager.MetroFactory|null[0]
-        final fun declarationMirror(com.pasich.encly.core.security/SecurityManager, com.pasich.encly.core.security/DeviceLockWatcher, com.pasich.encly.core.security/LockoutClock, com.pasich.encly.core.security/AutoLockPolicy, com.pasich.encly.core.platform/MainThreadTimer): com.pasich.encly.core.security/SessionLockManager // com.pasich.encly.core.security/SessionLockManager.MetroFactory.declarationMirror|declarationMirror(com.pasich.encly.core.security.SecurityManager;com.pasich.encly.core.security.DeviceLockWatcher;com.pasich.encly.core.security.LockoutClock;com.pasich.encly.core.security.AutoLockPolicy;com.pasich.encly.core.platform.MainThreadTimer){}[0]
+        final fun declarationMirror(com.pasich.encly.core.security/SecurityManager, com.pasich.encly.core.security/DeviceLockWatcher, com.pasich.encly.core.security/LockoutClock, com.pasich.encly.core.security/AutoLockPolicy, com.pasich.encly.core.platform/MainThreadTimer, com.pasich.encly.core.security/ScreenshotAllowance): com.pasich.encly.core.security/SessionLockManager // com.pasich.encly.core.security/SessionLockManager.MetroFactory.declarationMirror|declarationMirror(com.pasich.encly.core.security.SecurityManager;com.pasich.encly.core.security.DeviceLockWatcher;com.pasich.encly.core.security.LockoutClock;com.pasich.encly.core.security.AutoLockPolicy;com.pasich.encly.core.platform.MainThreadTimer;com.pasich.encly.core.security.ScreenshotAllowance){}[0]
         final fun invoke(): com.pasich.encly.core.security/SessionLockManager // com.pasich.encly.core.security/SessionLockManager.MetroFactory.invoke|invoke(){}[0]
 
         final object Companion { // com.pasich.encly.core.security/SessionLockManager.MetroFactory.Companion|null[0]
-            final fun create(dev.zacsweers.metro/Provider<com.pasich.encly.core.security/SecurityManager>, dev.zacsweers.metro/Provider<com.pasich.encly.core.security/DeviceLockWatcher>, dev.zacsweers.metro/Provider<com.pasich.encly.core.security/LockoutClock>, dev.zacsweers.metro/Provider<com.pasich.encly.core.security/AutoLockPolicy>, dev.zacsweers.metro/Provider<com.pasich.encly.core.platform/MainThreadTimer>): com.pasich.encly.core.security/SessionLockManager.MetroFactory // com.pasich.encly.core.security/SessionLockManager.MetroFactory.Companion.create|create(dev.zacsweers.metro.Provider<com.pasich.encly.core.security.SecurityManager>;dev.zacsweers.metro.Provider<com.pasich.encly.core.security.DeviceLockWatcher>;dev.zacsweers.metro.Provider<com.pasich.encly.core.security.LockoutClock>;dev.zacsweers.metro.Provider<com.pasich.encly.core.security.AutoLockPolicy>;dev.zacsweers.metro.Provider<com.pasich.encly.core.platform.MainThreadTimer>){}[0]
-            final fun newInstance(com.pasich.encly.core.security/SecurityManager, com.pasich.encly.core.security/DeviceLockWatcher, com.pasich.encly.core.security/LockoutClock, com.pasich.encly.core.security/AutoLockPolicy, com.pasich.encly.core.platform/MainThreadTimer): com.pasich.encly.core.security/SessionLockManager // com.pasich.encly.core.security/SessionLockManager.MetroFactory.Companion.newInstance|newInstance(com.pasich.encly.core.security.SecurityManager;com.pasich.encly.core.security.DeviceLockWatcher;com.pasich.encly.core.security.LockoutClock;com.pasich.encly.core.security.AutoLockPolicy;com.pasich.encly.core.platform.MainThreadTimer){}[0]
+            final fun create(dev.zacsweers.metro/Provider<com.pasich.encly.core.security/SecurityManager>, dev.zacsweers.metro/Provider<com.pasich.encly.core.security/DeviceLockWatcher>, dev.zacsweers.metro/Provider<com.pasich.encly.core.security/LockoutClock>, dev.zacsweers.metro/Provider<com.pasich.encly.core.security/AutoLockPolicy>, dev.zacsweers.metro/Provider<com.pasich.encly.core.platform/MainThreadTimer>, dev.zacsweers.metro/Provider<com.pasich.encly.core.security/ScreenshotAllowance>): com.pasich.encly.core.security/SessionLockManager.MetroFactory // com.pasich.encly.core.security/SessionLockManager.MetroFactory.Companion.create|create(dev.zacsweers.metro.Provider<com.pasich.encly.core.security.SecurityManager>;dev.zacsweers.metro.Provider<com.pasich.encly.core.security.DeviceLockWatcher>;dev.zacsweers.metro.Provider<com.pasich.encly.core.security.LockoutClock>;dev.zacsweers.metro.Provider<com.pasich.encly.core.security.AutoLockPolicy>;dev.zacsweers.metro.Provider<com.pasich.encly.core.platform.MainThreadTimer>;dev.zacsweers.metro.Provider<com.pasich.encly.core.security.ScreenshotAllowance>){}[0]
+            final fun newInstance(com.pasich.encly.core.security/SecurityManager, com.pasich.encly.core.security/DeviceLockWatcher, com.pasich.encly.core.security/LockoutClock, com.pasich.encly.core.security/AutoLockPolicy, com.pasich.encly.core.platform/MainThreadTimer, com.pasich.encly.core.security/ScreenshotAllowance): com.pasich.encly.core.security/SessionLockManager // com.pasich.encly.core.security/SessionLockManager.MetroFactory.Companion.newInstance|newInstance(com.pasich.encly.core.security.SecurityManager;com.pasich.encly.core.security.DeviceLockWatcher;com.pasich.encly.core.security.LockoutClock;com.pasich.encly.core.security.AutoLockPolicy;com.pasich.encly.core.platform.MainThreadTimer;com.pasich.encly.core.security.ScreenshotAllowance){}[0]
         }
     }
 }
@@ -927,6 +963,7 @@ final class com.pasich.encly.core.security/VaultStore { // com.pasich.encly.core
     final fun getInt(kotlin/String, kotlin/Int): kotlin/Int // com.pasich.encly.core.security/VaultStore.getInt|getInt(kotlin.String;kotlin.Int){}[0]
     final fun getLong(kotlin/String, kotlin/Long): kotlin/Long // com.pasich.encly.core.security/VaultStore.getLong|getLong(kotlin.String;kotlin.Long){}[0]
     final fun isCorrupt(): kotlin/Boolean // com.pasich.encly.core.security/VaultStore.isCorrupt|isCorrupt(){}[0]
+    final fun isUnreadable(): kotlin/Boolean // com.pasich.encly.core.security/VaultStore.isUnreadable|isUnreadable(){}[0]
 
     final class Editor { // com.pasich.encly.core.security/VaultStore.Editor|null[0]
         final fun putBoolean(kotlin/String, kotlin/Boolean) // com.pasich.encly.core.security/VaultStore.Editor.putBoolean|putBoolean(kotlin.String;kotlin.Boolean){}[0]
@@ -1012,6 +1049,74 @@ final object com.pasich.encly.core.backup/BackupPayloadCodec { // com.pasich.enc
     final fun validate(com.pasich.encly.core.backup/BackupPayload) // com.pasich.encly.core.backup/BackupPayloadCodec.validate|validate(com.pasich.encly.core.backup.BackupPayload){}[0]
 }
 
+final object com.pasich.encly.core.backup/BackupSettings { // com.pasich.encly.core.backup/BackupSettings|null[0]
+    final const val APP_LANGUAGE // com.pasich.encly.core.backup/BackupSettings.APP_LANGUAGE|{}APP_LANGUAGE[0]
+        final fun <get-APP_LANGUAGE>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.APP_LANGUAGE.<get-APP_LANGUAGE>|<get-APP_LANGUAGE>(){}[0]
+    final const val AUTO_LOCK_DELAY // com.pasich.encly.core.backup/BackupSettings.AUTO_LOCK_DELAY|{}AUTO_LOCK_DELAY[0]
+        final fun <get-AUTO_LOCK_DELAY>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.AUTO_LOCK_DELAY.<get-AUTO_LOCK_DELAY>|<get-AUTO_LOCK_DELAY>(){}[0]
+    final const val FONT_SIZE // com.pasich.encly.core.backup/BackupSettings.FONT_SIZE|{}FONT_SIZE[0]
+        final fun <get-FONT_SIZE>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.FONT_SIZE.<get-FONT_SIZE>|<get-FONT_SIZE>(){}[0]
+    final const val FONT_STYLE // com.pasich.encly.core.backup/BackupSettings.FONT_STYLE|{}FONT_STYLE[0]
+        final fun <get-FONT_STYLE>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.FONT_STYLE.<get-FONT_STYLE>|<get-FONT_STYLE>(){}[0]
+    final const val IS_DYNAMIC_THEME // com.pasich.encly.core.backup/BackupSettings.IS_DYNAMIC_THEME|{}IS_DYNAMIC_THEME[0]
+        final fun <get-IS_DYNAMIC_THEME>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.IS_DYNAMIC_THEME.<get-IS_DYNAMIC_THEME>|<get-IS_DYNAMIC_THEME>(){}[0]
+    final const val IS_GRID_NOTE_LIST // com.pasich.encly.core.backup/BackupSettings.IS_GRID_NOTE_LIST|{}IS_GRID_NOTE_LIST[0]
+        final fun <get-IS_GRID_NOTE_LIST>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.IS_GRID_NOTE_LIST.<get-IS_GRID_NOTE_LIST>|<get-IS_GRID_NOTE_LIST>(){}[0]
+    final const val KEYBOARD_STRICT_PRIVACY // com.pasich.encly.core.backup/BackupSettings.KEYBOARD_STRICT_PRIVACY|{}KEYBOARD_STRICT_PRIVACY[0]
+        final fun <get-KEYBOARD_STRICT_PRIVACY>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.KEYBOARD_STRICT_PRIVACY.<get-KEYBOARD_STRICT_PRIVACY>|<get-KEYBOARD_STRICT_PRIVACY>(){}[0]
+    final const val MAX_ENTRIES // com.pasich.encly.core.backup/BackupSettings.MAX_ENTRIES|{}MAX_ENTRIES[0]
+        final fun <get-MAX_ENTRIES>(): kotlin/Int // com.pasich.encly.core.backup/BackupSettings.MAX_ENTRIES.<get-MAX_ENTRIES>|<get-MAX_ENTRIES>(){}[0]
+    final const val MAX_FONT_SIZE // com.pasich.encly.core.backup/BackupSettings.MAX_FONT_SIZE|{}MAX_FONT_SIZE[0]
+        final fun <get-MAX_FONT_SIZE>(): kotlin/Int // com.pasich.encly.core.backup/BackupSettings.MAX_FONT_SIZE.<get-MAX_FONT_SIZE>|<get-MAX_FONT_SIZE>(){}[0]
+    final const val MIN_FONT_SIZE // com.pasich.encly.core.backup/BackupSettings.MIN_FONT_SIZE|{}MIN_FONT_SIZE[0]
+        final fun <get-MIN_FONT_SIZE>(): kotlin/Int // com.pasich.encly.core.backup/BackupSettings.MIN_FONT_SIZE.<get-MIN_FONT_SIZE>|<get-MIN_FONT_SIZE>(){}[0]
+    final const val NOTE_LINE_SPACING // com.pasich.encly.core.backup/BackupSettings.NOTE_LINE_SPACING|{}NOTE_LINE_SPACING[0]
+        final fun <get-NOTE_LINE_SPACING>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.NOTE_LINE_SPACING.<get-NOTE_LINE_SPACING>|<get-NOTE_LINE_SPACING>(){}[0]
+    final const val SHOW_NOTE_PREVIEWS // com.pasich.encly.core.backup/BackupSettings.SHOW_NOTE_PREVIEWS|{}SHOW_NOTE_PREVIEWS[0]
+        final fun <get-SHOW_NOTE_PREVIEWS>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.SHOW_NOTE_PREVIEWS.<get-SHOW_NOTE_PREVIEWS>|<get-SHOW_NOTE_PREVIEWS>(){}[0]
+    final const val SHOW_TASKS // com.pasich.encly.core.backup/BackupSettings.SHOW_TASKS|{}SHOW_TASKS[0]
+        final fun <get-SHOW_TASKS>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.SHOW_TASKS.<get-SHOW_TASKS>|<get-SHOW_TASKS>(){}[0]
+    final const val SIMPLE_EDIT // com.pasich.encly.core.backup/BackupSettings.SIMPLE_EDIT|{}SIMPLE_EDIT[0]
+        final fun <get-SIMPLE_EDIT>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.SIMPLE_EDIT.<get-SIMPLE_EDIT>|<get-SIMPLE_EDIT>(){}[0]
+    final const val SORT // com.pasich.encly.core.backup/BackupSettings.SORT|{}SORT[0]
+        final fun <get-SORT>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.SORT.<get-SORT>|<get-SORT>(){}[0]
+    final const val SWIPE_ENABLED // com.pasich.encly.core.backup/BackupSettings.SWIPE_ENABLED|{}SWIPE_ENABLED[0]
+        final fun <get-SWIPE_ENABLED>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.SWIPE_ENABLED.<get-SWIPE_ENABLED>|<get-SWIPE_ENABLED>(){}[0]
+    final const val SWIPE_LEFT // com.pasich.encly.core.backup/BackupSettings.SWIPE_LEFT|{}SWIPE_LEFT[0]
+        final fun <get-SWIPE_LEFT>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.SWIPE_LEFT.<get-SWIPE_LEFT>|<get-SWIPE_LEFT>(){}[0]
+    final const val SWIPE_RIGHT // com.pasich.encly.core.backup/BackupSettings.SWIPE_RIGHT|{}SWIPE_RIGHT[0]
+        final fun <get-SWIPE_RIGHT>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.SWIPE_RIGHT.<get-SWIPE_RIGHT>|<get-SWIPE_RIGHT>(){}[0]
+    final const val THEME_PALETTE // com.pasich.encly.core.backup/BackupSettings.THEME_PALETTE|{}THEME_PALETTE[0]
+        final fun <get-THEME_PALETTE>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.THEME_PALETTE.<get-THEME_PALETTE>|<get-THEME_PALETTE>(){}[0]
+    final const val THEME_TYPE // com.pasich.encly.core.backup/BackupSettings.THEME_TYPE|{}THEME_TYPE[0]
+        final fun <get-THEME_TYPE>(): kotlin/String // com.pasich.encly.core.backup/BackupSettings.THEME_TYPE.<get-THEME_TYPE>|<get-THEME_TYPE>(){}[0]
+
+    final val FONT_STYLES // com.pasich.encly.core.backup/BackupSettings.FONT_STYLES|{}FONT_STYLES[0]
+        final fun <get-FONT_STYLES>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupSettings.FONT_STYLES.<get-FONT_STYLES>|<get-FONT_STYLES>(){}[0]
+    final val LANGUAGES // com.pasich.encly.core.backup/BackupSettings.LANGUAGES|{}LANGUAGES[0]
+        final fun <get-LANGUAGES>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupSettings.LANGUAGES.<get-LANGUAGES>|<get-LANGUAGES>(){}[0]
+    final val LINE_SPACINGS // com.pasich.encly.core.backup/BackupSettings.LINE_SPACINGS|{}LINE_SPACINGS[0]
+        final fun <get-LINE_SPACINGS>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupSettings.LINE_SPACINGS.<get-LINE_SPACINGS>|<get-LINE_SPACINGS>(){}[0]
+    final val SORT_OPTIONS // com.pasich.encly.core.backup/BackupSettings.SORT_OPTIONS|{}SORT_OPTIONS[0]
+        final fun <get-SORT_OPTIONS>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupSettings.SORT_OPTIONS.<get-SORT_OPTIONS>|<get-SORT_OPTIONS>(){}[0]
+    final val SWIPE_ACTIONS // com.pasich.encly.core.backup/BackupSettings.SWIPE_ACTIONS|{}SWIPE_ACTIONS[0]
+        final fun <get-SWIPE_ACTIONS>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupSettings.SWIPE_ACTIONS.<get-SWIPE_ACTIONS>|<get-SWIPE_ACTIONS>(){}[0]
+    final val THEME_PALETTES // com.pasich.encly.core.backup/BackupSettings.THEME_PALETTES|{}THEME_PALETTES[0]
+        final fun <get-THEME_PALETTES>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupSettings.THEME_PALETTES.<get-THEME_PALETTES>|<get-THEME_PALETTES>(){}[0]
+    final val THEME_TYPES // com.pasich.encly.core.backup/BackupSettings.THEME_TYPES|{}THEME_TYPES[0]
+        final fun <get-THEME_TYPES>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupSettings.THEME_TYPES.<get-THEME_TYPES>|<get-THEME_TYPES>(){}[0]
+    final val excluded // com.pasich.encly.core.backup/BackupSettings.excluded|{}excluded[0]
+        final fun <get-excluded>(): kotlin.collections/Map<kotlin/String, kotlin/String> // com.pasich.encly.core.backup/BackupSettings.excluded.<get-excluded>|<get-excluded>(){}[0]
+    final val included // com.pasich.encly.core.backup/BackupSettings.included|{}included[0]
+        final fun <get-included>(): kotlin.collections/Map<kotlin/String, com.pasich.encly.core.backup/BackupSettings.SettingKind> // com.pasich.encly.core.backup/BackupSettings.included.<get-included>|<get-included>(){}[0]
+
+    final fun accepted(kotlin.collections/Map<kotlin/String, kotlin/String>): kotlin.collections/Map<kotlin/String, kotlin/String> // com.pasich.encly.core.backup/BackupSettings.accepted|accepted(kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+
+    final class SettingKind { // com.pasich.encly.core.backup/BackupSettings.SettingKind|null[0]
+        final fun accepts(kotlin/String): kotlin/Boolean // com.pasich.encly.core.backup/BackupSettings.SettingKind.accepts|accepts(kotlin.String){}[0]
+    }
+}
+
 final object com.pasich.encly.core.security/JvmMonotonicClock : com.pasich.encly.core.security/LockoutClock { // com.pasich.encly.core.security/JvmMonotonicClock|null[0]
     final fun bootCount(): kotlin/Int // com.pasich.encly.core.security/JvmMonotonicClock.bootCount|bootCount(){}[0]
     final fun elapsedRealtime(): kotlin/Long // com.pasich.encly.core.security/JvmMonotonicClock.elapsedRealtime|elapsedRealtime(){}[0]
@@ -1035,5 +1140,7 @@ final object com.pasich.encly.core.security/RecoveryWords { // com.pasich.encly.
     final fun isWord(kotlin/String): kotlin/Boolean // com.pasich.encly.core.security/RecoveryWords.isWord|isWord(kotlin.String){}[0]
 }
 
+final const val com.pasich.encly.core.security/LOCK_FLUSH_TIMEOUT_MS // com.pasich.encly.core.security/LOCK_FLUSH_TIMEOUT_MS|{}LOCK_FLUSH_TIMEOUT_MS[0]
+    final fun <get-LOCK_FLUSH_TIMEOUT_MS>(): kotlin/Long // com.pasich.encly.core.security/LOCK_FLUSH_TIMEOUT_MS.<get-LOCK_FLUSH_TIMEOUT_MS>|<get-LOCK_FLUSH_TIMEOUT_MS>(){}[0]
 final const val com.pasich.encly.core.security/PIN_LENGTH // com.pasich.encly.core.security/PIN_LENGTH|{}PIN_LENGTH[0]
     final fun <get-PIN_LENGTH>(): kotlin/Int // com.pasich.encly.core.security/PIN_LENGTH.<get-PIN_LENGTH>|<get-PIN_LENGTH>(){}[0]

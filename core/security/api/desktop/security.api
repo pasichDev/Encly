@@ -138,20 +138,23 @@ public final class com/pasich/encly/core/backup/BackupPayload {
 	public static final field SCHEMA_V1 I
 	public static final field SCHEMA_V2 I
 	public static final field SCHEMA_V3 I
+	public static final field SCHEMA_V4 I
 	public static final field SCHEMA_VERSION I
-	public fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)V
+	public synthetic fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()J
 	public final fun component3 ()Ljava/util/List;
 	public final fun component4 ()Ljava/util/List;
 	public final fun component5 ()Ljava/util/List;
-	public final fun copy (IJLjava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/pasich/encly/core/backup/BackupPayload;
-	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupPayload;IJLjava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupPayload;
+	public final fun component6 ()Ljava/util/Map;
+	public final fun copy (IJLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)Lcom/pasich/encly/core/backup/BackupPayload;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupPayload;IJLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupPayload;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getExportedAt ()J
 	public final fun getNotes ()Ljava/util/List;
 	public final fun getSchema ()I
+	public final fun getSettings ()Ljava/util/Map;
 	public final fun getTags ()Ljava/util/List;
 	public final fun getTasks ()Ljava/util/List;
 	public fun hashCode ()I
@@ -193,6 +196,44 @@ public final class com/pasich/encly/core/backup/BackupSecret$RecoveryPhrase : co
 public final class com/pasich/encly/core/backup/BackupSecret$RecoveryRoot : com/pasich/encly/core/backup/BackupSecret {
 	public fun <init> ([B)V
 	public final fun getRoot ()[B
+}
+
+public final class com/pasich/encly/core/backup/BackupSettings {
+	public static final field APP_LANGUAGE Ljava/lang/String;
+	public static final field AUTO_LOCK_DELAY Ljava/lang/String;
+	public static final field FONT_SIZE Ljava/lang/String;
+	public static final field FONT_STYLE Ljava/lang/String;
+	public static final field INSTANCE Lcom/pasich/encly/core/backup/BackupSettings;
+	public static final field IS_DYNAMIC_THEME Ljava/lang/String;
+	public static final field IS_GRID_NOTE_LIST Ljava/lang/String;
+	public static final field KEYBOARD_STRICT_PRIVACY Ljava/lang/String;
+	public static final field MAX_ENTRIES I
+	public static final field MAX_FONT_SIZE I
+	public static final field MIN_FONT_SIZE I
+	public static final field NOTE_LINE_SPACING Ljava/lang/String;
+	public static final field SHOW_NOTE_PREVIEWS Ljava/lang/String;
+	public static final field SHOW_TASKS Ljava/lang/String;
+	public static final field SIMPLE_EDIT Ljava/lang/String;
+	public static final field SORT Ljava/lang/String;
+	public static final field SWIPE_ENABLED Ljava/lang/String;
+	public static final field SWIPE_LEFT Ljava/lang/String;
+	public static final field SWIPE_RIGHT Ljava/lang/String;
+	public static final field THEME_PALETTE Ljava/lang/String;
+	public static final field THEME_TYPE Ljava/lang/String;
+	public final fun accepted (Ljava/util/Map;)Ljava/util/Map;
+	public final fun getExcluded ()Ljava/util/Map;
+	public final fun getFONT_STYLES ()Ljava/util/List;
+	public final fun getIncluded ()Ljava/util/Map;
+	public final fun getLANGUAGES ()Ljava/util/List;
+	public final fun getLINE_SPACINGS ()Ljava/util/List;
+	public final fun getSORT_OPTIONS ()Ljava/util/List;
+	public final fun getSWIPE_ACTIONS ()Ljava/util/List;
+	public final fun getTHEME_PALETTES ()Ljava/util/List;
+	public final fun getTHEME_TYPES ()Ljava/util/List;
+}
+
+public final class com/pasich/encly/core/backup/BackupSettings$SettingKind {
+	public final fun accepts (Ljava/lang/String;)Z
 }
 
 public final class com/pasich/encly/core/backup/BackupSubtask {
@@ -440,9 +481,11 @@ public final class com/pasich/encly/core/security/AutoLock$MetroFactory$Companio
 public final class com/pasich/encly/core/security/AutoLockDelay : java/lang/Enum {
 	public static final field Companion Lcom/pasich/encly/core/security/AutoLockDelay$Companion;
 	public static final field IMMEDIATELY Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field MINUTES_10 Lcom/pasich/encly/core/security/AutoLockDelay;
 	public static final field MINUTES_15 Lcom/pasich/encly/core/security/AutoLockDelay;
 	public static final field MINUTES_2 Lcom/pasich/encly/core/security/AutoLockDelay;
 	public static final field MINUTES_30 Lcom/pasich/encly/core/security/AutoLockDelay;
+	public static final field MINUTES_5 Lcom/pasich/encly/core/security/AutoLockDelay;
 	public static final field MINUTE_1 Lcom/pasich/encly/core/security/AutoLockDelay;
 	public static final field SECONDS_15 Lcom/pasich/encly/core/security/AutoLockDelay;
 	public static final field SECONDS_30 Lcom/pasich/encly/core/security/AutoLockDelay;
@@ -576,6 +619,7 @@ public final class com/pasich/encly/core/security/InitialStatus : java/lang/Enum
 	public static final field NO Lcom/pasich/encly/core/security/InitialStatus;
 	public static final field ONBOARDING Lcom/pasich/encly/core/security/InitialStatus;
 	public static final field SETUP_AUTH Lcom/pasich/encly/core/security/InitialStatus;
+	public static final field STORAGE_UNREADABLE Lcom/pasich/encly/core/security/InitialStatus;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/InitialStatus;
 	public static fun values ()[Lcom/pasich/encly/core/security/InitialStatus;
@@ -633,6 +677,7 @@ public final class com/pasich/encly/core/security/Mnemonic {
 public final class com/pasich/encly/core/security/NeverLocked : com/pasich/encly/core/security/VaultLockEvents {
 	public static final field INSTANCE Lcom/pasich/encly/core/security/NeverLocked;
 	public fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun registerPreLockFlush (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
 }
 
 public final class com/pasich/encly/core/security/PinChange : java/lang/Enum {
@@ -720,6 +765,29 @@ public final class com/pasich/encly/core/security/RecoveryWords {
 	public final fun isWord (Ljava/lang/String;)Z
 }
 
+public final class com/pasich/encly/core/security/ScreenshotAllowance {
+	public fun <init> ()V
+	public final fun allow ()V
+	public final fun getAllowed ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getCapturable ()Z
+	public final fun observe (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
+	public final fun protect ()Lkotlin/jvm/functions/Function0;
+	public final fun revoke ()V
+}
+
+public final class com/pasich/encly/core/security/ScreenshotAllowance$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/ScreenshotAllowance$MetroFactory$Companion;
+	public static final fun create ()Lcom/pasich/encly/core/security/ScreenshotAllowance$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/ScreenshotAllowance;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance ()Lcom/pasich/encly/core/security/ScreenshotAllowance;
+}
+
+public final class com/pasich/encly/core/security/ScreenshotAllowance$MetroFactory$Companion {
+	public final fun create ()Lcom/pasich/encly/core/security/ScreenshotAllowance$MetroFactory;
+	public final fun newInstance ()Lcom/pasich/encly/core/security/ScreenshotAllowance;
+}
+
 public final class com/pasich/encly/core/security/SecurityManager {
 	public static final field Companion Lcom/pasich/encly/core/security/SecurityManager$Companion;
 	public fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;)V
@@ -802,6 +870,7 @@ public final class com/pasich/encly/core/security/SeedPhraseManager {
 	public final fun createBackupKey ([C[B)Z
 	public final fun generateMnemonic ()[C
 	public final fun hasBackupKey ()Z
+	public final fun hasBootstrapKey ()Z
 	public final fun hasRecoverySeed ()Z
 	public final fun hasStoredSeed ()Z
 	public final fun initializeVault ([C)Z
@@ -832,8 +901,8 @@ public final class com/pasich/encly/core/security/SeedPhraseManager$MetroFactory
 }
 
 public final class com/pasich/encly/core/security/SessionLockManager : androidx/lifecycle/DefaultLifecycleObserver, com/pasich/encly/core/security/VaultLockEvents {
-	public fun <init> (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;)V
-	public synthetic fun <init> (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;Lcom/pasich/encly/core/security/ScreenshotAllowance;)V
+	public synthetic fun <init> (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;Lcom/pasich/encly/core/security/ScreenshotAllowance;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun allowSystemPicker ()V
 	public final fun endSystemPicker ()V
 	public fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
@@ -847,21 +916,26 @@ public final class com/pasich/encly/core/security/SessionLockManager : androidx/
 	public fun onStop (Landroidx/lifecycle/LifecycleOwner;)V
 	public final fun onUnlockAbandoned ()V
 	public final fun onUnlocked ()Z
+	public fun registerPreLockFlush (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
 	public final fun requireUnlock ()V
 }
 
 public final class com/pasich/encly/core/security/SessionLockManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
 	public static final field Companion Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory$Companion;
-	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public static final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory;
 	public final fun invoke ()Lcom/pasich/encly/core/security/SessionLockManager;
 	public synthetic fun invoke ()Ljava/lang/Object;
-	public static final fun newInstance (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;)Lcom/pasich/encly/core/security/SessionLockManager;
+	public static final fun newInstance (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;Lcom/pasich/encly/core/security/ScreenshotAllowance;)Lcom/pasich/encly/core/security/SessionLockManager;
 }
 
 public final class com/pasich/encly/core/security/SessionLockManager$MetroFactory$Companion {
-	public final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory;
-	public final fun newInstance (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;)Lcom/pasich/encly/core/security/SessionLockManager;
+	public final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/SessionLockManager$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;Lcom/pasich/encly/core/security/ScreenshotAllowance;)Lcom/pasich/encly/core/security/SessionLockManager;
+}
+
+public final class com/pasich/encly/core/security/SessionLockManagerKt {
+	public static final field LOCK_FLUSH_TIMEOUT_MS J
 }
 
 public abstract interface class com/pasich/encly/core/security/VaultDatabase {
@@ -901,6 +975,11 @@ public final class com/pasich/encly/core/security/VaultKind : java/lang/Enum {
 
 public abstract interface class com/pasich/encly/core/security/VaultLockEvents {
 	public abstract fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun registerPreLockFlush (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/core/security/VaultLockEvents$DefaultImpls {
+	public static fun registerPreLockFlush (Lcom/pasich/encly/core/security/VaultLockEvents;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
 }
 
 public final class com/pasich/encly/core/security/VaultStore {
@@ -913,6 +992,7 @@ public final class com/pasich/encly/core/security/VaultStore {
 	public final fun getInt (Ljava/lang/String;I)I
 	public final fun getLong (Ljava/lang/String;J)J
 	public final fun isCorrupt ()Z
+	public final fun isUnreadable ()Z
 }
 
 public final class com/pasich/encly/core/security/VaultStore$Editor {
