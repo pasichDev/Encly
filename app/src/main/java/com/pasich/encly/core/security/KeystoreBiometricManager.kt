@@ -79,7 +79,7 @@ class KeystoreBiometricManager(
 
         val pending = PendingDek(dek)
         try {
-            pending.wipeWhenStopped(activity.lifecycle)
+            pending.wipeWhenDestroyed(activity.lifecycle)
             store.edit { remove(SLOT_KEY) }
             deleteKeyOnly()
             val key = generateAuthBoundKey()

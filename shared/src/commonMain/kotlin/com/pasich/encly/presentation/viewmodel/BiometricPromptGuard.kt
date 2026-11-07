@@ -23,12 +23,18 @@ import androidx.lifecycle.LifecycleOwner
 internal class BiometricPromptGuard {
     private var current: Any? = null
 
+    /**
+     * The prompt whose activity stopped while it was open. Its answer is still taken when no newer prompt
+     * started since: a prompt that some devices show over a stopped activity answers after the stop.
+     */
+    private var stopped: Any? = null
+
     val inFlight: Boolean get() = current != null
 
     /**
      * Runs [prompt] unless one is already open. [prompt] calls the `release` it is given with
-     * its answer; `release` returns false when that answer is stale (the guard was released by
-     * the activity's end meanwhile, and a newer prompt may be open), and the caller then drops it.
+     * its answer; `release` returns false when that answer is stale (its activity was destroyed,
+     * or a newer prompt started after its activity stopped), and the caller then drops it.
      */
     fun launch(host: LifecycleOwner, prompt: (release: () -> Boolean) -> Unit) {
         // A stopped or destroyed activity shows no prompt (it would be cancelled unseen) and
@@ -36,17 +42,28 @@ internal class BiometricPromptGuard {
         if (current != null || !host.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return
         val token = Any()
         current = token
+        stopped = null
         val observer = object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
+                // The button may start a new prompt now; this one's answer counts until then.
+                if (current === token) {
+                    current = null
+                    stopped = token
+                }
+            }
+
+            override fun onDestroy(owner: LifecycleOwner) {
                 owner.lifecycle.removeObserver(this)
                 if (current === token) current = null
+                if (stopped === token) stopped = null
             }
         }
         host.lifecycle.addObserver(observer)
         prompt {
             host.lifecycle.removeObserver(observer)
-            val mine = current === token
-            if (mine) current = null
+            val mine = current === token || stopped === token
+            if (current === token) current = null
+            if (stopped === token) stopped = null
             mine
         }
     }

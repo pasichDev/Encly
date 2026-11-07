@@ -48,26 +48,22 @@ class PendingDekTest {
     }
 
     @Test
-    fun anActivityThatStopsBeforeTheAnswerWipesTheCopy() {
+    fun aStoppedActivityKeepsTheCopyForALateAnswer() {
         val controller = Robolectric.buildActivity(FragmentActivity::class.java).create().start().resume()
         val pending = PendingDek(key())
-        var held: ByteArray? = null
-        pending.use { held = it }
-        pending.wipeWhenStopped(controller.get().lifecycle)
+        pending.wipeWhenDestroyed(controller.get().lifecycle)
 
-        controller.pause()
-        assertArrayEquals("a paused activity may still get the answer", key(), pending.use { it.copyOf() })
-        controller.stop()
+        // Some devices show the prompt over a stopped activity and answer after the stop.
+        controller.pause().stop()
 
-        assertNull(pending.use { it.copyOf() })
-        assertArrayEquals(ByteArray(32), held)
+        assertArrayEquals(key(), pending.use { it.copyOf() })
     }
 
     @Test
     fun anActivityDestroyedBeforeTheAnswerWipesTheCopy() {
         val controller = Robolectric.buildActivity(FragmentActivity::class.java).create()
         val pending = PendingDek(key())
-        pending.wipeWhenStopped(controller.get().lifecycle)
+        pending.wipeWhenDestroyed(controller.get().lifecycle)
 
         controller.destroy()
 
@@ -80,7 +76,7 @@ class PendingDekTest {
         val lifecycle = controller.get().lifecycle
         val before = lifecycle.observerCount
         val pending = PendingDek(key())
-        pending.wipeWhenStopped(lifecycle)
+        pending.wipeWhenDestroyed(lifecycle)
         assertEquals(before + 1, lifecycle.observerCount)
 
         pending.wipe()

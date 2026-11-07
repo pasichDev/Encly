@@ -272,19 +272,40 @@ class LockViewModelTest {
     }
 
     @Test
-    fun anAnswerFromAPromptCutOffByAStopIsDroppedAndItsKeyWiped() {
+    fun anAnswerAfterAStopIsTakenWhenNoNewerPromptStarted() {
         val answer = arrayOfNulls<(ByteArray?) -> Unit>(1)
         doAnswer { invocation ->
             @Suppress("UNCHECKED_CAST")
             answer[0] = invocation.arguments.last() as (ByteArray?) -> Unit
             null
         }.`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        `when`(security.unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())).thenReturn(true)
+        val results = mutableListOf<Boolean>()
+        viewModel.authenticateBiometric(screen.host) { results += it }
+        // Some devices show the prompt over a stopped activity; its answer still unlocks.
+        screen.stop()
+
+        answer[0]!!(ByteArray(KEY_LENGTH) { 7 })
+
+        verify(security, timeout(WAIT_MS)).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
+    }
+
+    @Test
+    fun anAnswerFromAStoppedPromptIsDroppedOnceANewerPromptStarted() {
+        val answers = mutableListOf<(ByteArray?) -> Unit>()
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            answers += invocation.arguments.last() as (ByteArray?) -> Unit
+            null
+        }.`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
         val results = mutableListOf<Boolean>()
         viewModel.authenticateBiometric(screen.host) { results += it }
         screen.stop()
+        screen.resume()
+        viewModel.authenticateBiometric(screen.host) { results += it }
 
         val key = ByteArray(KEY_LENGTH) { 7 }
-        answer[0]!!(key)
+        answers.first()(key)
 
         assertTrue(results.isEmpty())
         assertArrayEquals(ByteArray(KEY_LENGTH), key)
