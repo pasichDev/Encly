@@ -3,8 +3,9 @@ package com.pasich.encly.core.keystore
 import com.pasich.encly.core.security.PinKeySlot
 
 /**
- * The operating system's secret store, as far as the PIN factors need it ([DesktopPinFactor] on the desktop, the iOS
- * factor on iOS): one 32-byte secret per [PinKeySlot], which only the signed-in OS user can read back.
+ * The operating system's secret store, as far as the desktop PIN factor needs it ([DesktopPinFactor]): one 32-byte
+ * secret per [PinKeySlot], which only the signed-in OS user can read back. (iOS does not keep a secret at all, see
+ * IosPinFactor.)
  * Implementations never write the secret anywhere unprotected, never log it, and wipe every copy they hold once they
  * have handed it over.
  */

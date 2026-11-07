@@ -137,10 +137,15 @@ internal class IosBiometricManager(
         }
     }
 
+    /** True from [enroll] storing the fresh wrap key until the slot entry is written (or the enrolment failed). */
+    @Volatile
+    private var enrolling = false
+
     override fun hasSlot(): Boolean {
         if (!store.contains(SLOT_KEY)) {
-            // A Keychain item without its slot entry is left over from a wipe that only dropped the entries.
-            if (keychain.exists()) keychain.delete()
+            // A Keychain item without its slot entry is left over from a wipe that only dropped the entries, unless
+            // it is the wrap key of an enrolment that has not written its slot entry yet: that one must stay.
+            if (!enrolling && keychain.exists()) keychain.delete()
             return false
         }
         return keychain.exists()
@@ -152,6 +157,8 @@ internal class IosBiometricManager(
             return
         }
         val dekCopy = dek.copyOf()
+        // Set before the item is replaced, so a hasSlot() in the wait for Face ID cannot take it for a leftover.
+        enrolling = true
         store.edit { remove(SLOT_KEY) }
         keychain.delete()
         val fresh = Crypto.randomBytes(KEY_LENGTH)
@@ -160,6 +167,7 @@ internal class IosBiometricManager(
         if (!kept) {
             SensitiveDataCleaner.clear(dekCopy)
             disable()
+            enrolling = false
             onResult(false)
             return
         }
@@ -169,6 +177,7 @@ internal class IosBiometricManager(
             wrapKey?.let(SensitiveDataCleaner::clear)
             SensitiveDataCleaner.clear(dekCopy)
             if (!stored) disable()
+            enrolling = false
             onResult(stored)
         }
     }

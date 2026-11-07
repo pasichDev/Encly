@@ -5,6 +5,7 @@ package com.pasich.encly.ios.platform
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
@@ -46,15 +47,6 @@ internal class IosClipboardPolicy(private val timer: MainThreadTimer) {
             ),
         )
         arm(board)
-    }
-
-    /**
-     * Something copied by the system's own text editing (a field's copy or cut) is on the pasteboard now: it gets
-     * the same policy. Items that are not text are left to the system.
-     */
-    fun adoptCurrent() {
-        val text = UIPasteboard.generalPasteboard.string ?: return
-        copy(text)
     }
 
     /** Empties the pasteboard now, whatever it holds. */
@@ -104,17 +96,24 @@ internal class IosSensitiveClipboard(private val policy: IosClipboardPolicy) : S
 
 /**
  * A [Clipboard] that applies [IosClipboardPolicy] to everything the Compose text fields copy (the copy and cut of
- * the edit menu), so the policy covers the editor as well as the explicit copy buttons.
+ * the edit menu), so the policy covers the editor as well as the explicit copy buttons. The text goes to the
+ * pasteboard once, as the local-only, expiring item: the platform clipboard is never asked to write it first, so
+ * there is no moment at which the general pasteboard holds the plain item that Universal Clipboard could pick up.
+ * An entry with no text is dropped: nothing in Encly copies anything else.
  */
-private class SensitiveComposeClipboard(private val delegate: Clipboard, private val policy: IosClipboardPolicy) :
+@OptIn(ExperimentalComposeUiApi::class)
+internal class SensitiveComposeClipboard(private val delegate: Clipboard, private val policy: IosClipboardPolicy) :
     Clipboard {
     override val nativeClipboard: NativeClipboard get() = delegate.nativeClipboard
 
     override suspend fun getClipEntry(): ClipEntry? = delegate.getClipEntry()
 
     override suspend fun setClipEntry(clipEntry: ClipEntry?) {
-        delegate.setClipEntry(clipEntry)
-        if (clipEntry == null) policy.clearNow() else policy.adoptCurrent()
+        if (clipEntry == null) {
+            policy.clearNow()
+        } else if (clipEntry.hasPlainText()) {
+            clipEntry.getPlainText()?.let(policy::copy)
+        }
     }
 }
 

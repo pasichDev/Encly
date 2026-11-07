@@ -39,6 +39,15 @@ final object com.pasich.encly.core.crypto/Crypto { // com.pasich.encly.core.cryp
     final fun sha256(kotlin/ByteArray, kotlin/Int = ..., kotlin/Int = ...): kotlin/ByteArray // com.pasich.encly.core.crypto/Crypto.sha256|sha256(kotlin.ByteArray;kotlin.Int;kotlin.Int){}[0]
 }
 
+final object com.pasich.encly.core.crypto/P256Points { // com.pasich.encly.core.crypto/P256Points|null[0]
+    final const val POINT_BYTES // com.pasich.encly.core.crypto/P256Points.POINT_BYTES|{}POINT_BYTES[0]
+        final fun <get-POINT_BYTES>(): kotlin/Int // com.pasich.encly.core.crypto/P256Points.POINT_BYTES.<get-POINT_BYTES>|<get-POINT_BYTES>(){}[0]
+    final const val X_BYTES // com.pasich.encly.core.crypto/P256Points.X_BYTES|{}X_BYTES[0]
+        final fun <get-X_BYTES>(): kotlin/Int // com.pasich.encly.core.crypto/P256Points.X_BYTES.<get-X_BYTES>|<get-X_BYTES>(){}[0]
+
+    final fun fromX(kotlin/ByteArray): kotlin/ByteArray? // com.pasich.encly.core.crypto/P256Points.fromX|fromX(kotlin.ByteArray){}[0]
+}
+
 final object com.pasich.encly.core.security.bip39/Bip39Wordlist { // com.pasich.encly.core.security.bip39/Bip39Wordlist|null[0]
     final val words // com.pasich.encly.core.security.bip39/Bip39Wordlist.words|{}words[0]
         final fun <get-words>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.security.bip39/Bip39Wordlist.words.<get-words>|<get-words>(){}[0]

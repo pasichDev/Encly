@@ -156,8 +156,9 @@ val LocalBiometricHost = staticCompositionLocalOf<ScreenBiometricHost?> { null }
 val LocalScreenshotAllowance = staticCompositionLocalOf<ScreenshotAllowance?> { null }
 
 /**
- * Whether the host can restrain the system keyboard's learning (Android: strict keyboard privacy). The desktop has
- * no such keyboard and says no, so Settings does not show a switch that would do nothing.
+ * Whether the host can act on "Strict keyboard privacy" (Android turns text fields into password-like fields without
+ * suggestions). The desktop has no such keyboard, and iOS cannot ask for more than it always sets, so both say no and
+ * Settings does not show a switch that would do nothing.
  */
 val LocalKeyboardPrivacyOffered = staticCompositionLocalOf { true }
 

@@ -12,6 +12,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -23,14 +25,18 @@ import kotlinx.serialization.json.Json
  * Every change rewrites the whole file through [io] (a temp file, `F_FULLFSYNC`, an atomic rename), so a crash
  * leaves the old content or the new, never a mix. [edit] returns at once and writes in order on a background
  * thread; [commit] writes before it returns. A file that is absent starts as empty. A file that exists but cannot
- * be read or parsed fails closed: nothing is changed or written, so the file is never replaced by an empty state,
- * and every read tries the file again. Meanwhile reads give the defaults.
+ * be read (an I/O error, for example while protected data is unavailable) fails closed: nothing is changed or
+ * written, so the file is never replaced by an empty state, and every read tries the file again. Meanwhile reads
+ * give the defaults. A file that was read but does not parse is damaged for good, and the vault does not depend on
+ * these flags: it is moved aside (`<name>.damaged`, for a look) and the store starts empty. Only when it cannot be
+ * moved does it stay closed, as for an unreadable one.
  */
 internal class IosKeyValueStore(
     private val io: VaultFileIo,
+    private val moveAside: () -> Boolean,
     private val writer: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1)),
 ) : KeyValueStore {
-    constructor(path: String) : this(IosVaultFileIo(path))
+    constructor(path: String) : this(IosVaultFileIo(path), { moveToDamaged(path) })
 
     private val stateLock = SynchronizedObject()
     private val writeLock = SynchronizedObject()
@@ -85,8 +91,9 @@ internal class IosKeyValueStore(
         } catch (_: IOException) {
             null
         } catch (_: IllegalArgumentException) {
-            // Damaged JSON.
-            null
+            // Damaged JSON (a SerializationException is one too): nothing to wait for, and the flags are not worth
+            // a stuck store.
+            if (moveAside()) emptyMap() else null
         }
     }
 
@@ -113,6 +120,15 @@ internal class IosKeyValueStore(
     }
 
     private companion object {
+        const val ASIDE_SUFFIX = ".damaged"
+
+        fun moveToDamaged(path: String): Boolean = try {
+            SystemFileSystem.atomicMove(Path(path), Path(path + ASIDE_SUFFIX))
+            true
+        } catch (_: IOException) {
+            false
+        }
+
         val SERIALIZER = MapSerializer(String.serializer(), String.serializer())
     }
 }

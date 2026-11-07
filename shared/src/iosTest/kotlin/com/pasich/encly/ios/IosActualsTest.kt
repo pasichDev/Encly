@@ -121,11 +121,28 @@ class IosActualsTest {
     }
 
     @Test
-    fun aDamagedFlagsFileFailsClosedAndIsNeverOverwritten() {
+    fun aDamagedFlagsFileIsMovedAsideAndTheStoreStartsEmpty() {
+        val file = tempPath(".json").toString()
+        scratch += Path("$file.damaged")
+        val damaged = "{ not json".encodeToByteArray()
+        IosVaultFileIo(file).replace(damaged, null)
+
+        val store = IosKeyValueStore(file)
+
+        assertFalse(store.contains("a"))
+        assertContentEquals(damaged, IosVaultFileIo("$file.damaged").read())
+        assertFalse(IosVaultFileIo(file).exists())
+        assertTrue(store.commit { putString("a", "1") })
+        assertEquals("1", IosKeyValueStore(file).getString("a", null))
+        assertContentEquals(damaged, IosVaultFileIo("$file.damaged").read())
+    }
+
+    @Test
+    fun aDamagedFlagsFileThatCannotBeMovedFailsClosedAndIsNeverOverwritten() {
         val file = tempPath(".json").toString()
         val damaged = "{ not json".encodeToByteArray()
         IosVaultFileIo(file).replace(damaged, null)
-        val store = IosKeyValueStore(file)
+        val store = IosKeyValueStore(IosVaultFileIo(file), moveAside = { false })
 
         assertFalse(store.contains("a"))
         assertFalse(store.commit { putString("a", "1") })

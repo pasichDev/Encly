@@ -9,6 +9,7 @@ import com.pasich.encly.ios.di.DataFiles
 import com.pasich.encly.ios.di.IosAppGraph
 import com.pasich.encly.ios.di.IosEnvironment
 import com.pasich.encly.ios.platform.IosAppWindow
+import com.pasich.encly.ios.security.IosKeyboardPrivacy
 import com.pasich.encly.ios.storage.IosDataDirectory
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,8 @@ internal object IosHost {
 
     private fun start(graph: IosAppGraph) {
         graph.locales.syncAppleLanguages()
+        // Every text input asks the keyboard not to learn from what is typed; before any field can be focused.
+        IosKeyboardPrivacy.install()
         // The cover goes up before anything else can be drawn or snapshotted.
         graph.shield.install()
         // SessionLockManager follows the application: it is told when the app is left and when it is back.

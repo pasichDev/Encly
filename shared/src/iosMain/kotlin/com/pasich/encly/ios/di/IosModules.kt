@@ -77,7 +77,7 @@ internal object DataFiles {
  *
  * | Android (`:app`)                          | iOS                                                   |
  * |-------------------------------------------|-------------------------------------------------------|
- * | KeystorePinFactor                         | `environment.pinFactor` (`IosPinFactor`, the Keychain)|
+ * | KeystorePinFactor                         | `environment.pinFactor` (`IosPinFactor`, Enclave)     |
  * | KeystoreBiometricManager                  | [IosBiometricManager] (Keychain + biometryCurrentSet) |
  * | HandlerMainThreadTimer                    | [IosMainThreadTimer]                                  |
  * | SystemLockoutClock                        | [IosLockoutClock] (continuous clock, boot session)    |

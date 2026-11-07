@@ -32,6 +32,13 @@ An unsigned Simulator build has no application identifier, so the Keychain refus
 shows the screens, but cannot create a PIN. Build with `CODE_SIGN_IDENTITY=-` (ad-hoc signing) to try the whole
 flow; Face ID is `Features → Face ID → Enrolled` in the Simulator.
 
+## Decisions for the owner
+
+- **`ITSAppUsesNonExemptEncryption`** is deliberately not set in `Info.plist`. The app uses encryption (AES-256-GCM,
+  SQLCipher, PBKDF2, CryptoKit and the Secure Enclave) only to protect the user's own data on the device, which is
+  usually exempt from export documentation, but whether to answer "No" or to file the annual self-classification is
+  the owner's call. Until it is set, App Store Connect asks the export-compliance question for every build.
+
 ## What differs from Android
 
 See the table in the pull request description and `SECURITY.md`; in short: no way to block a screenshot (the

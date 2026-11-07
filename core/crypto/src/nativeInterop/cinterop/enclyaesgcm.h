@@ -20,4 +20,8 @@ int32_t encly_aes_gcm_open(const uint8_t *key, ptrdiff_t key_length,
                            const uint8_t *ciphertext, ptrdiff_t ciphertext_length,
                            uint8_t *out);
 
+/* x: 32 bytes, big endian. out receives the 65-byte uncompressed point (04 || X || Y). -1 when x is not the
+   abscissa of a P-256 point. */
+int32_t encly_p256_point_from_x(const uint8_t *x, ptrdiff_t x_length, uint8_t *out);
+
 #endif

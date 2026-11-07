@@ -1,9 +1,9 @@
 import CryptoKit
 import Foundation
 
-// AES-256-GCM for Kotlin/Native. CommonCrypto has no public GCM and CryptoKit is Swift-only, so this file
-// is the one Swift seam of the module: two C-callable functions (declared in enclyaesgcm.h) over
-// CryptoKit's AES.GCM. Everything else is Kotlin. Keys, nonces and data arrive as raw pointers into the
+// AES-256-GCM and P-256 point decoding for Kotlin/Native. CommonCrypto has no public GCM and CryptoKit is
+// Swift-only, so this file is the one Swift seam of the module: three C-callable functions (declared in
+// enclyaesgcm.h) over CryptoKit's AES.GCM and P256. Everything else is Kotlin. Keys, nonces and data arrive as raw pointers into the
 // caller's arrays and results are written into caller-owned buffers, so the Kotlin side can wipe them.
 // Fixed: 32-byte key, 12-byte nonce, 16-byte tag.
 
@@ -70,6 +70,27 @@ public func enclyAesGcmOpen(
         if let out = out { plain.copyBytes(to: out, count: bodyLength) }
         // The plaintext is the caller's secret: drop the copy CryptoKit made.
         plain.resetBytes(in: 0..<plain.count)
+        return 0
+    } catch {
+        return -1
+    }
+}
+
+/// Decodes the x coordinate `x` (32 bytes, big endian) into a point of the P-256 curve and writes it as
+/// ANSI X9.63 (`04 || X || Y`, 65 bytes) into `out`. Returns 0, or -1 when no curve point has that x (about
+/// half of all values) or `x` is not below the field prime. CryptoKit does the square root and the
+/// on-curve check; nothing is computed here.
+@_cdecl("encly_p256_point_from_x")
+public func enclyP256PointFromX(
+    _ x: UnsafePointer<UInt8>?, _ xLength: Int,
+    _ out: UnsafeMutablePointer<UInt8>?
+) -> Int32 {
+    guard xLength == 32, let x = x, let out = out else { return -1 }
+    do {
+        let key = try P256.KeyAgreement.PublicKey(compactRepresentation: view(x, xLength))
+        let point = key.x963Representation
+        guard point.count == 65 else { return -1 }
+        point.copyBytes(to: out, count: 65)
         return 0
     } catch {
         return -1

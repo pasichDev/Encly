@@ -123,13 +123,30 @@ internal class PickedCopies(private val directory: Path) {
         return folder
     }
 
-    /** Moves [source] (a file the system copied for the app) into [folder]; the new path. */
+    /**
+     * Moves [source] (a file the system copied for the app) into [folder]; the new path. A copy that cannot be moved
+     * would stay where [purge] never looks, so it is deleted and the pick is refused (null).
+     */
     @Suppress("ReturnCount") // Guards: a name and a path are needed.
     fun adopt(source: NSURL, folder: Path): String? {
-        val name = source.lastPathComponent ?: return null
+        val sourcePath = source.path ?: return null
+        val name = source.lastPathComponent
+        if (name == null) {
+            discard(sourcePath)
+            return null
+        }
+        return adopt(sourcePath, name, folder)
+    }
+
+    internal fun adopt(sourcePath: String, name: String, folder: Path): String? {
         val target = Path(folder, name).toString()
-        val moved = NSFileManager.defaultManager.moveItemAtPath(source.path ?: return null, target, null)
-        return if (moved) target else source.path
+        if (NSFileManager.defaultManager.moveItemAtPath(sourcePath, target, null)) return target
+        discard(sourcePath)
+        return null
+    }
+
+    private fun discard(path: String) {
+        NSFileManager.defaultManager.removeItemAtPath(path, null)
     }
 
     fun purge() {

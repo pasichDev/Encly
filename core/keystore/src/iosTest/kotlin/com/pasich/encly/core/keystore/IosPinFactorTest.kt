@@ -1,5 +1,6 @@
 package com.pasich.encly.core.keystore
 
+import com.pasich.encly.core.crypto.Crypto
 import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinKeySlot
 import kotlin.test.Test
@@ -8,93 +9,94 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The iOS factor over an in-memory store, so the states are tested without a Keychain. The HMAC golden values are
- * the ones DesktopPinFactorTest pins, computed with the JCA: the same secret and data give the same bytes on iOS.
+ * The iOS factor's states over a [FakeEnclave], so they are tested without a Keychain or a Secure Enclave. What the
+ * real key agreement does is in [PinFactorGoldenTest].
  */
 class IosPinFactorTest {
-    private val store = InMemorySecretStore()
-    private val factor = IosPinFactor(store)
+    private val enclave = FakeEnclave()
+    private val factor = IosPinFactor(enclave)
 
     private val salt = ByteArray(16) { (0xA0 + it).toByte() }
     private val pin = "482913".encodeToByteArray()
     private val data = salt + pin
 
     @Test
-    fun macIsHmacSha256OfTheDataUnderTheStoredSecretGolden() {
-        store.put(PinKeySlot.A, ByteArray(32) { it.toByte() })
-
-        val hw = factor.mac(PinKeySlot.A, data)
-
-        assertEquals(32, hw.size)
-        assertEquals("25b11968d03777c4e2519917fd8757ebaed13eeb6a9378e58e9fab63c4962f36", hw.toHex())
-    }
-
-    @Test
-    fun aSecondGoldenVectorWithAnotherSecret() {
-        store.put(PinKeySlot.B, ByteArray(32) { 0xFF.toByte() })
-
-        assertEquals(
-            "412acd40567e42ba035be3fd49c094c6cc015c5a9921e633e52bf0235e0f0755",
-            factor.mac(PinKeySlot.B, data).toHex(),
-        )
-    }
-
-    @Test
-    fun hmacHandlesEmptyKeyAndData() {
-        // RFC 4231 has no empty vector; HMAC-SHA256 of nothing under an empty key is a known constant.
-        assertEquals(
-            "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad",
-            hmacSha256(ByteArray(0), ByteArray(0)).toHex(),
-        )
-    }
-
-    @Test
     fun macIsDeterministicAndDependsOnTheData() {
         factor.ensureKey(PinKeySlot.A)
 
         val first = factor.mac(PinKeySlot.A, data)
+
+        assertEquals(32, first.size)
         assertContentEquals(first, factor.mac(PinKeySlot.A, data))
         assertFalse(first.contentEquals(factor.mac(PinKeySlot.A, salt + "482914".encodeToByteArray())))
+        assertFalse(first.contentEquals(factor.mac(PinKeySlot.A, "482913".encodeToByteArray() + salt)))
     }
 
     @Test
-    fun firstUseCreatesA32ByteSecretAndReportsIt() {
-        assertTrue(factor.ensureKey(PinKeySlot.A))
-        assertEquals(32, store.peek(PinKeySlot.A)!!.size)
-        assertFalse(factor.ensureKey(PinKeySlot.A))
-        assertNull(store.peek(PinKeySlot.B))
+    fun everyGuessIsAnAgreementOfTheEnclaveOnAPointOfItsOwn() {
+        factor.ensureKey(PinKeySlot.A)
+
+        factor.mac(PinKeySlot.A, data)
+        factor.mac(PinKeySlot.A, data)
+        factor.mac(PinKeySlot.A, salt + "000000".encodeToByteArray())
+
+        assertEquals(3, enclave.peers.size)
+        assertTrue(enclave.peers.all { it.size == 65 && it[0] == 4.toByte() })
+        assertContentEquals(enclave.peers[0], enclave.peers[1])
+        assertFalse(enclave.peers[0].contentEquals(enclave.peers[2]))
     }
 
     @Test
-    fun theSlotsHoldSeparateSecrets() {
+    fun theSameDataOnTheOtherSlotIsAnotherPointAndAnotherFactor() {
         factor.ensureKey(PinKeySlot.A)
         factor.ensureKey(PinKeySlot.B)
 
-        assertFalse(store.peek(PinKeySlot.A)!!.contentEquals(store.peek(PinKeySlot.B)!!))
-        assertFalse(factor.mac(PinKeySlot.A, data).contentEquals(factor.mac(PinKeySlot.B, data)))
+        val a = factor.mac(PinKeySlot.A, data)
+        val b = factor.mac(PinKeySlot.B, data)
+
+        assertFalse(a.contentEquals(b))
+        assertFalse(enclave.peers[0].contentEquals(enclave.peers[1]))
     }
 
     @Test
-    fun resetReplacesTheSecret() {
+    fun firstUseCreatesTheKeyAndReportsIt() {
+        assertTrue(factor.ensureKey(PinKeySlot.A))
+        assertTrue(enclave.has(PinKeySlot.A))
+        assertFalse(factor.ensureKey(PinKeySlot.A))
+        assertFalse(enclave.has(PinKeySlot.B))
+        assertEquals(1, enclave.created)
+    }
+
+    @Test
+    fun resetReplacesTheKey() {
         factor.ensureKey(PinKeySlot.A)
         val before = factor.mac(PinKeySlot.A, data)
 
         factor.reset(PinKeySlot.A)
 
         assertFalse(before.contentEquals(factor.mac(PinKeySlot.A, data)))
+        assertEquals(2, enclave.created)
     }
 
     @Test
-    fun macWithoutASecretIsLost() {
+    fun resetOfAMissingSlotCreatesIt() {
+        factor.reset(PinKeySlot.B)
+
+        assertTrue(enclave.has(PinKeySlot.B))
+        factor.mac(PinKeySlot.B, data)
+    }
+
+    @Test
+    fun macWithoutAKeyIsLostAndAsksNoOneButTheEnclave() {
         assertTrue(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.lost)
+        assertEquals(1, enclave.peers.size)
     }
 
     @Test
-    fun macAfterDeleteIsLostAndEnsureKeyMakesANewSecret() {
+    fun macAfterDeleteIsLostAndEnsureKeyMakesANewKey() {
         factor.ensureKey(PinKeySlot.A)
         val before = factor.mac(PinKeySlot.A, data)
 
@@ -106,88 +108,80 @@ class IosPinFactorTest {
     }
 
     @Test
-    fun aSecretOfTheWrongSizeIsLostForMacAndKeptByEnsureKey() {
-        store.put(PinKeySlot.A, ByteArray(7))
+    fun aKeyTheEnclaveCallsGoneIsLost() {
+        factor.ensureKey(PinKeySlot.A)
+        enclave.agreeFailure = SecretStoreException(lost = true, message = "gone")
 
         assertTrue(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.lost)
-        assertFalse(factor.ensureKey(PinKeySlot.A))
-        assertEquals(7, store.peek(PinKeySlot.A)!!.size)
+    }
 
-        factor.reset(PinKeySlot.A)
-        assertEquals(32, store.peek(PinKeySlot.A)!!.size)
+    @Test
+    fun anEnclaveThatIsBusyOrLockedIsNotLost() {
+        factor.ensureKey(PinKeySlot.A)
+        val locked = SecretStoreException(lost = false, message = "locked")
+        enclave.agreeFailure = locked
+
+        val failure = assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }
+
+        assertFalse(failure.lost)
+        assertEquals(locked, failure.cause)
+        enclave.agreeFailure = null
         factor.mac(PinKeySlot.A, data)
     }
 
     @Test
-    fun anUnreadableSecretIsLostForMacKeptByEnsureKeyAndReplacedByReset() {
+    fun anAgreementOfTheWrongSizeIsNotLostAndIsWiped() {
         factor.ensureKey(PinKeySlot.A)
-        val before = store.peek(PinKeySlot.A)!!.copyOf()
-        store.readFailure = SecretStoreException(lost = true, message = "does not decrypt")
-
-        assertTrue(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.lost)
-        assertFalse(factor.ensureKey(PinKeySlot.A))
-        assertContentEquals(before, store.peek(PinKeySlot.A))
-
-        factor.reset(PinKeySlot.A)
-        store.readFailure = null
-        assertFalse(before.contentEquals(store.peek(PinKeySlot.A)))
-        factor.mac(PinKeySlot.A, data)
-    }
-
-    @Test
-    fun anUnavailableStoreIsNotLost() {
-        factor.ensureKey(PinKeySlot.A)
-        val unavailable = SecretStoreException(lost = false, message = "locked")
-        store.readFailure = unavailable
+        enclave.agreementSize = 31
 
         assertFalse(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.lost)
-        assertFalse(assertFailsWith<PinFactorException> { factor.ensureKey(PinKeySlot.A) }.lost)
-        assertEquals(unavailable, assertFailsWith<PinFactorException> { factor.ensureKey(PinKeySlot.A) }.cause)
+
+        assertTrue(enclave.handedOut.all { copy -> copy.all { it == 0.toByte() } })
     }
 
     @Test
-    fun resetFailureIsNotLost() {
-        store.createFailure = SecretStoreException(lost = false, message = "full")
+    fun anEnclaveThatRefusesToMakeAKeyFailsSetupAndNeverFallsBack() {
+        enclave.createFailure = SecretStoreException(lost = false, message = "no Secure Enclave")
 
+        assertFalse(assertFailsWith<PinFactorException> { factor.ensureKey(PinKeySlot.A) }.lost)
         assertFalse(assertFailsWith<PinFactorException> { factor.reset(PinKeySlot.A) }.lost)
+        assertFalse(enclave.has(PinKeySlot.A))
+    }
+
+    @Test
+    fun anUnreadableLookupIsNotLost() {
+        enclave.existsFailure = SecretStoreException(lost = false, message = "locked")
+
         assertFalse(assertFailsWith<PinFactorException> { factor.ensureKey(PinKeySlot.A) }.lost)
     }
 
     @Test
     fun deleteNeverThrows() {
-        store.deleteFailure = SecretStoreException(lost = false, message = "locked")
+        enclave.deleteFailure = SecretStoreException(lost = false, message = "locked")
 
         factor.delete(PinKeySlot.A)
     }
 
     @Test
-    fun macWipesItsCopyOfTheSecretAndLeavesTheDataAlone() {
-        store.put(PinKeySlot.A, ByteArray(32) { it.toByte() })
+    fun macWipesThePointAndTheAgreementAndLeavesTheDataAlone() {
+        factor.ensureKey(PinKeySlot.A)
         val input = data.copyOf()
 
         factor.mac(PinKeySlot.A, input)
 
-        assertTrue(store.handedOut.all { copy -> copy.all { it == 0.toByte() } })
+        assertTrue(enclave.peerArrays.isNotEmpty() && enclave.peerArrays.all { it.all { b -> b == 0.toByte() } })
+        assertTrue(enclave.handedOut.isNotEmpty() && enclave.handedOut.all { it.all { b -> b == 0.toByte() } })
         assertContentEquals(data, input)
     }
 
     @Test
-    fun ensureKeyAndResetWipeTheSecretsTheyHandled() {
+    fun theFailurePathsWipeToo() {
         factor.ensureKey(PinKeySlot.A)
-        factor.ensureKey(PinKeySlot.A)
-        factor.reset(PinKeySlot.A)
-
-        assertTrue(store.handedOut.isNotEmpty())
-        assertTrue(store.handedOut.all { copy -> copy.all { it == 0.toByte() } })
-    }
-
-    @Test
-    fun macWipesTheSecretWhenTheSizeIsWrong() {
-        store.put(PinKeySlot.A, ByteArray(7) { 1 })
+        enclave.agreeFailure = SecretStoreException(lost = false, message = "locked")
 
         assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }
 
-        assertTrue(store.handedOut.all { copy -> copy.all { it == 0.toByte() } })
+        assertTrue(enclave.peerArrays.all { it.all { b -> b == 0.toByte() } })
     }
 
     @Test
@@ -197,8 +191,56 @@ class IosPinFactorTest {
     }
 
     @Test
-    fun createBuildsTheFactorOnTheKeychainWithoutTouchingIt() {
+    fun createBuildsTheFactorWithoutTouchingTheKeychain() {
         IosPinFactor.create()
+    }
+}
+
+/** A [PinEnclave] in memory: a key is a secret seed, and an agreement is a hash of the seed and the point. */
+internal class FakeEnclave : PinEnclave {
+    private val seeds = mutableMapOf<PinKeySlot, ByteArray>()
+
+    /** Every point [agree] was asked about, as it was then (the factor wipes its own array afterwards). */
+    val peers = mutableListOf<ByteArray>()
+
+    /** The very arrays [agree] was handed, so that a test can check that they were wiped. */
+    val peerArrays = mutableListOf<ByteArray>()
+
+    /** Every agreement [agree] returned. */
+    val handedOut = mutableListOf<ByteArray>()
+    var created = 0
+    var existsFailure: SecretStoreException? = null
+    var createFailure: SecretStoreException? = null
+    var deleteFailure: SecretStoreException? = null
+    var agreeFailure: SecretStoreException? = null
+    var agreementSize = AGREEMENT_BYTES
+
+    fun has(slot: PinKeySlot): Boolean = slot in seeds
+
+    override fun exists(slot: PinKeySlot): Boolean {
+        existsFailure?.let { throw it }
+        return slot in seeds
+    }
+
+    override fun create(slot: PinKeySlot) {
+        createFailure?.let { throw it }
+        seeds[slot] = Crypto.randomBytes(32)
+        created++
+    }
+
+    override fun delete(slot: PinKeySlot) {
+        deleteFailure?.let { throw it }
+        seeds.remove(slot)
+    }
+
+    override fun agree(slot: PinKeySlot, peer: ByteArray): ByteArray? {
+        peers += peer.copyOf()
+        peerArrays += peer
+        agreeFailure?.let { throw it }
+        val seed = seeds[slot] ?: return null
+        val agreement = Crypto.hkdfSha256(seed, "fake".encodeToByteArray(), peer, 32).copyOf(agreementSize)
+        handedOut += agreement
+        return agreement
     }
 }
 

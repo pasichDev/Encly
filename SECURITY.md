@@ -37,9 +37,11 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
 - That KEK wraps the DEK with **AES-256-GCM**. The slot is `version ‖ salt ‖ IV ‖ ciphertext`;
   the version and salt are authenticated as associated data (`"encly/pin/slot/v3"`).
 - No separate PIN hash is stored.
-- Because of the device-bound half, a copied slot cannot be attacked off the device: every PIN
-  guess needs this phone's secure hardware. PBKDF2 stays at full cost as defence in depth, for
-  the case where the Keystore key itself were ever extracted.
+- Because of the device-bound half, a copied slot cannot be attacked off the device: on Android
+  every PIN guess needs this phone's secure hardware (the iOS build gets the same property with
+  a different construction, see [iOS](#ios); the desktop build does not have it, see
+  [Desktop](#desktop)). PBKDF2 stays at full cost as defence in depth, for the case where the
+  Keystore key itself were ever extracted.
 - If the Keystore key is lost (a Keystore reset, a key the system invalidated), the PIN can no
   longer unlock. The lock screen says so and switches to the recovery phrase (or keeps
   fingerprint unlock); the vault without either routes to the damaged-vault screen. A new PIN
@@ -89,6 +91,41 @@ anyone who has the user's OS login (a DPAPI master key follows the Windows passw
 session password), can obtain it and then guess PINs off the machine against PBKDF2 alone. Full-disk
 encryption and a strong OS login are part of the desktop trust boundary. Secure Enclave and TPM-bound keys are
 not used yet; they would need a signed app (Apple) or extra platform work.
+
+#### iOS
+
+The device-bound half is computed by the **Secure Enclave** once per PIN guess, but not as an HMAC: the Enclave
+holds only EC keys and answers ECDH. Per PIN key slot the app makes a non-extractable **P-256** key inside the
+Enclave (`kSecAttrTokenIDSecureEnclave`, access control `privateKeyUsage` only, `WhenUnlockedThisDeviceOnly`:
+usable while the phone is unlocked, never in iCloud Keychain or a backup restored to another device, no
+biometry). For a guess, with `data = salt ‖ PIN`:
+
+```
+Q  = hash_to_curve("encly.ios.pin-factor.v2/hash-to-point" ‖ slot ‖ data)   (SHA-256, try-and-increment)
+Z  = x(d · Q)                                  one ECDH inside the Secure Enclave
+hw = HKDF-SHA256(Z, salt = info prefix, info = "encly.ios.pin-factor.v2/hw" ‖ data)   (32 bytes)
+```
+
+`hw` replaces the Android HMAC in the PIN KEK. Why this needs the Enclave for every guess: `Q` is a hash of the
+guess, so nobody knows its discrete logarithm, and `d · Q` cannot be computed without `d`, which exists only in the
+Enclave. Two simpler constructions were rejected because they let the PIN be searched without it: `Q = k·G`
+with `k` derived from the PIN gives `d·Q = k·(d·G)`, computable from the public key; and a fixed peer key with the
+PIN mixed in after the agreement gives a per-slot constant that one capture turns into an offline search.
+
+- A copy of the vault file, the Keychain and everything else on the phone except the Enclave does not let anyone test
+  PINs. The point `Q` is as sensitive as the PIN (10^6 SHA-256 calls recover the PIN from it) and is wiped after
+  use. Someone who can run code in the app while the phone is unlocked (a jailbreak, a debugger on a development
+  build) can still ask the Enclave one guess at a time; the guess rate is the Enclave's, not a GPU's, and the
+  app's lockout is not what protects against that attacker.
+- The Enclave key is gone when the phone is restored from a backup onto another one, or when iOS drops it (removing
+  the device passcode deletes `WhenUnlocked...` items). That is the lost-key state above: the PIN no longer
+  unlocks and the recovery phrase is needed.
+- **No Enclave, no PIN.** Every iPhone that runs iOS 15 has a Secure Enclave. If a device cannot make the key, setting
+  a PIN fails; the app never falls back to a software key on a device. The iOS Simulator has no Enclave and uses a
+  software key in the Keychain so that the app and its tests can run; that code is compiled only for the Simulator and
+  gives no protection against someone who can read the Mac.
+- Not verified on hardware by the test suite: the Enclave key itself (the Simulator cannot run it). The
+  construction is tested with software P-256 keys against values computed independently with CryptoKit.
 
 ### Wipe PIN
 
@@ -586,6 +623,14 @@ suggestions, use no cloud prediction and receive no surrounding text. The residu
 keyboard itself: it still receives every key it types, and a malicious or non-compliant IME can
 ignore all of these flags (see "Important limitations"). The cost is no autocorrect, and some
 keyboards hide emoji or voice input in password fields.
+
+On iOS every text input is Compose's `CMPTextInputView`, and the app makes it answer "no" for autocorrection,
+spell checking, smart quotes, smart dashes, smart insert/delete and inline predictions, whatever the field asked
+for: the system keyboard then has no suggestions to learn from. iOS has no "do not learn" flag and no
+password-like mode that fits a multi-line editor, so **Strict keyboard privacy** is not shown on iOS. Third-party
+keyboards are not loaded at all (the app refuses the keyboard extension point). This is applied by replacing those
+trait getters on that Compose view class at start; if a Compose upgrade renames the class, the test
+`IosKeyboardPrivacyTest` and the review of the upgrade must catch it.
 
 The app requests no `INTERNET` permission and performs no analytics or sync.
 
