@@ -9,8 +9,6 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -21,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
@@ -80,12 +80,15 @@ private fun rememberContainerBounds(
     val windowSize = LocalWindowInfo.current.containerSize
     val clip = remember(corner, windowSize) { cornerClip(corner, windowSize) }
     val state = with(sharedScope) { rememberSharedContentState(key = "note-$noteId") }
-    return with(sharedScope) {
+    val bounds = with(sharedScope) {
         Modifier.sharedBounds(
             sharedContentState = state,
             animatedVisibilityScope = visibility,
-            enter = if (end == ContainerEnd.EDITOR) fadeIn(ContainerFadeIn) else EnterTransition.None,
-            exit = if (end == ContainerEnd.EDITOR) fadeOut(ContainerFadeOut) else ExitTransition.None,
+            // No enter/exit here: fadeIn/fadeOut put the content in an offscreen layer for the whole
+            // fade, and in the overlay that layer is a new surface for Skia to keep on every frame the
+            // bounds change size. The editor's fade is drawn by [containerFade] without a layer.
+            enter = EnterTransition.None,
+            exit = ExitTransition.None,
             boundsTransform = containerBounds(visibility, end),
             resizeMode = if (end == ContainerEnd.CARD) {
                 SharedTransitionScope.ResizeMode.RemeasureToBounds
@@ -96,12 +99,54 @@ private fun rememberContainerBounds(
             clipInOverlayDuringTransition = clip,
         )
     }
+    return if (end == ContainerEnd.EDITOR) bounds.then(containerFade(visibility)) else bounds
 }
 
-private val ContainerFadeIn =
-    tween<Float>(CONTAINER_FADE_IN, delayMillis = CONTAINER_FADE_IN_DELAY, easing = LinearOutSlowInEasing)
+/**
+ * The editor's fade as it enters and leaves, on the destination's own transition clock: its
+ * `playTimeNanos` is read only when the layer is drawn (so a frame redraws the layer, nothing
+ * recomposes), it follows a seek of the transition (the predictive back gesture), and it adds no
+ * animation to the transition, so a leaving screen is never kept composed for it.
+ *
+ * The alpha is applied per draw call ([FADE_COMPOSITING]), not to the editor as one group: a group
+ * alpha needs an offscreen surface, and while the card grows its bounds (and so the overlay's
+ * layers) change size every frame. What differs from a group fade is only text over the editor's
+ * own background, which is drawn at the same alpha beside it instead of inside it, for 120-220 ms
+ * of a move that is already covered by the card's colour underneath.
+ */
+private fun containerFade(visibility: AnimatedVisibilityScope): Modifier = Modifier.graphicsLayer {
+    val transition = visibility.transition
+    alpha = containerFadeAlpha(
+        current = transition.currentState,
+        target = transition.targetState,
+        playTimeMillis = transition.playTimeNanos / NANOS_PER_MILLI,
+    )
+    compositingStrategy = FADE_COMPOSITING
+}
 
-private val ContainerFadeOut = tween<Float>(CONTAINER_FADE_OUT, easing = FastOutLinearInEasing)
+/** How the fade is composited: per draw call, never as an offscreen group (see [containerFade]). */
+internal val FADE_COMPOSITING = CompositingStrategy.ModulateAlpha
+
+private const val NANOS_PER_MILLI = 1_000_000f
+
+/**
+ * The editor's alpha at [playTimeMillis] into a change of the transition from [current] to [target].
+ * Entering it waits [CONTAINER_FADE_IN_DELAY] ms and then eases in over [CONTAINER_FADE_IN] ms; leaving
+ * it eases out over [CONTAINER_FADE_OUT] ms. At rest it is fully there or fully gone.
+ */
+internal fun containerFadeAlpha(current: EnterExitState, target: EnterExitState, playTimeMillis: Float): Float = when {
+    current == target -> if (target == EnterExitState.Visible) 1f else 0f
+
+    target == EnterExitState.Visible -> {
+        val progress = ((playTimeMillis - CONTAINER_FADE_IN_DELAY) / CONTAINER_FADE_IN).coerceIn(0f, 1f)
+        LinearOutSlowInEasing.transform(progress)
+    }
+
+    else -> {
+        val progress = (playTimeMillis / CONTAINER_FADE_OUT).coerceIn(0f, 1f)
+        1f - FastOutLinearInEasing.transform(progress)
+    }
+}
 
 /**
  * The bounds of the card growing into the editor, and of the editor shrinking back (quicker). The

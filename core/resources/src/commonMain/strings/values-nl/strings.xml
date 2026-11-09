@@ -488,6 +488,7 @@
     <string name="onboarding_ready_pin_title">Pincode ingesteld</string>
     <string name="onboarding_ready_pin_desc">Gevraagd telkens als Encly opent</string>
     <string name="onboarding_ready_biometric_title">Ontgrendelen met vingerafdruk aan</string>
+    <string name="onboarding_ready_biometric_retry">Vingerafdruk opnieuw proberen</string>
     <string name="onboarding_ready_biometric_desc">Wijzig dit in Instellingen, Beveiliging</string>
     <string name="onboarding_ready_phrase_title">Herstelzin gecontroleerd</string>
     <string name="onboarding_ready_phrase_desc">Bewaar het papier op een veilige plek</string>

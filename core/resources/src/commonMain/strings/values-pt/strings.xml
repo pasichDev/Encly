@@ -491,6 +491,7 @@
     <string name="onboarding_ready_pin_title">PIN definido</string>
     <string name="onboarding_ready_pin_desc">Pedido sempre que o Encly abre</string>
     <string name="onboarding_ready_biometric_title">Desbloqueio por digital ativado</string>
+    <string name="onboarding_ready_biometric_retry">Tentar a digital novamente</string>
     <string name="onboarding_ready_biometric_desc">Altere em Configurações, Segurança</string>
     <string name="onboarding_ready_phrase_title">Frase de recuperação conferida</string>
     <string name="onboarding_ready_phrase_desc">Guarde o papel em um lugar seguro</string>

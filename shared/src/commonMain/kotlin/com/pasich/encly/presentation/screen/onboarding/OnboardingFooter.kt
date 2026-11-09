@@ -13,6 +13,7 @@ import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.onboarding_get_started
 import com.pasich.encly.core.resources.onboarding_have_backup
 import com.pasich.encly.core.resources.onboarding_phrase_done
+import com.pasich.encly.core.resources.onboarding_ready_biometric_retry
 import com.pasich.encly.core.resources.onboarding_ready_open
 import com.pasich.encly.core.resources.onboarding_recovery_create
 import com.pasich.encly.core.resources.onboarding_recovery_skip
@@ -67,8 +68,14 @@ internal fun footerSpec(
             onSecondary = actions.onShowWordsAgain,
         )
 
-        OnboardingStep.READY ->
-            FooterSpec(Res.string.onboarding_ready_open, actions.onOpenNotebook, !state.biometricPending, finishing)
+        OnboardingStep.READY -> FooterSpec(
+            Res.string.onboarding_ready_open,
+            actions.onOpenNotebook,
+            !state.biometricPending,
+            finishing,
+            secondary = Res.string.onboarding_ready_biometric_retry.takeIf { state.biometricRetry },
+            onSecondary = actions.onRetryBiometric,
+        )
 
         OnboardingStep.RESTORE -> FooterSpec(
             Res.string.restore,

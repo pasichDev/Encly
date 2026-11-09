@@ -491,6 +491,7 @@
     <string name="onboarding_ready_pin_title">Code PIN défini</string>
     <string name="onboarding_ready_pin_desc">Demandé à chaque ouverture d\'Encly</string>
     <string name="onboarding_ready_biometric_title">Déverrouillage par empreinte activé</string>
+    <string name="onboarding_ready_biometric_retry">Réessayer l\'empreinte</string>
     <string name="onboarding_ready_biometric_desc">Modifiable dans Paramètres, Sécurité</string>
     <string name="onboarding_ready_phrase_title">Phrase de récupération vérifiée</string>
     <string name="onboarding_ready_phrase_desc">Gardez le papier en lieu sûr</string>

@@ -101,6 +101,9 @@ class OnboardingViewModel(
     )
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
+    /** The open fingerprint prompt, if any (see [BiometricPromptGuard]). */
+    private val biometricPrompt = BiometricPromptGuard()
+
     /** The encrypted backup picked for "Restore from backup". Ciphertext only. */
     private var restoreFile: ByteArray? = null
 
@@ -353,18 +356,41 @@ class OnboardingViewModel(
                 verificationWords = emptyList(),
                 userAnswers = emptyMap(),
                 isVerificationComplete = false,
-                biometricPending = it.biometricRequested && it.biometricAvailable,
+                biometricPending = it.step != OnboardingStep.READY && it.biometricRequested && it.biometricAvailable,
             )
         }
     }
 
-    /** Shows the system biometric prompt that adds the fingerprint slot. */
+    /**
+     * Shows the system biometric prompt that adds the fingerprint slot, once per Ready entry: the request is
+     * consumed here, so nothing that recomposes or resumes the screen can ask again. A cancel or a failure
+     * does not repeat the prompt; it leaves [OnboardingUiState.biometricRetry] for the button to try again.
+     */
     fun enrollBiometric(host: ScreenBiometricHost) {
         if (!_uiState.value.biometricPending) return
         _uiState.update { it.copy(biometricPending = false) }
-        onboardingUseCase.enrollBiometric(host.biometric) { ok ->
-            _uiState.update { it.copy(biometricEnabled = ok) }
+        showEnrolmentPrompt(host)
+    }
+
+    /** "Try the fingerprint again": one more prompt for one tap, never while a prompt is open. */
+    fun retryBiometric(host: ScreenBiometricHost) {
+        val state = _uiState.value
+        if (state.step != OnboardingStep.READY || !state.biometricRetry || biometricPrompt.inFlight) return
+        _uiState.update { it.copy(biometricRetry = false) }
+        showEnrolmentPrompt(host)
+    }
+
+    private fun showEnrolmentPrompt(host: ScreenBiometricHost) {
+        var shown = false
+        biometricPrompt.launch(host.owner) { release ->
+            shown = true
+            onboardingUseCase.enrollBiometric(host.biometric) { ok ->
+                release()
+                _uiState.update { it.copy(biometricEnabled = ok, biometricRetry = !ok) }
+            }
         }
+        // A window that cannot show a prompt (stopped) or one already open: the button stays to try again.
+        if (!shown && !biometricPrompt.inFlight) _uiState.update { it.copy(biometricRetry = true) }
     }
 
     /** No activity to show the prompt in: continue with the PIN only. */
@@ -508,6 +534,8 @@ class OnboardingViewModel(
         // Ready
         val biometricPending: Boolean = false,
         val biometricEnabled: Boolean = false,
+        /** The fingerprint prompt was cancelled or failed: Ready offers a button to try it again. */
+        val biometricRetry: Boolean = false,
     ) {
         /** The header's progress, or null on Welcome and Restore, which have none. */
         val progress: StepProgress?

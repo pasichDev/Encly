@@ -111,6 +111,7 @@ fun OnboardingScreen(
         onRestore = onRestore,
         onLanguage = { languageDialog = true },
         onOpenNotebook = { setupViewModel.finishSetup(onFinished) },
+        onRetryBiometric = { host?.let(viewModel::retryBiometric) },
     )
 
     LaunchedEffect(state.biometricPending) {

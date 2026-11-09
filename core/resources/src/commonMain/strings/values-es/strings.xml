@@ -491,6 +491,7 @@
     <string name="onboarding_ready_pin_title">PIN configurado</string>
     <string name="onboarding_ready_pin_desc">Se pide cada vez que abres Encly</string>
     <string name="onboarding_ready_biometric_title">Desbloqueo con huella activado</string>
+    <string name="onboarding_ready_biometric_retry">Probar la huella otra vez</string>
     <string name="onboarding_ready_biometric_desc">Cámbialo en Ajustes, Seguridad</string>
     <string name="onboarding_ready_phrase_title">Frase de recuperación comprobada</string>
     <string name="onboarding_ready_phrase_desc">Guarda el papel en un lugar seguro</string>

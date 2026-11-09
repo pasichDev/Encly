@@ -506,6 +506,7 @@
     <string name="onboarding_ready_pin_title">PIN set</string>
     <string name="onboarding_ready_pin_desc">Asked every time Encly opens</string>
     <string name="onboarding_ready_biometric_title">Fingerprint unlock on</string>
+    <string name="onboarding_ready_biometric_retry">Try fingerprint again</string>
     <string name="onboarding_ready_biometric_desc">Change it in Settings, Security</string>
     <string name="onboarding_ready_phrase_title">Recovery phrase checked</string>
     <string name="onboarding_ready_phrase_desc">Keep the paper somewhere safe</string>

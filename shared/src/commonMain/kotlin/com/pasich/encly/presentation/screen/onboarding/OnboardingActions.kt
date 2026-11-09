@@ -19,15 +19,18 @@ internal interface OnboardingActions {
     val restore: RestoreActions
     val onRestore: () -> Unit
     val onOpenNotebook: () -> Unit
+    val onRetryBiometric: () -> Unit
 }
 
 /** The actions of [viewModel], plus those the screen itself handles. */
+@Suppress("LongParameterList") // One callback per action only the screen can perform (host, picker, navigation).
 internal fun onboardingActions(
     viewModel: OnboardingViewModel,
     restore: RestoreActions,
     onRestore: () -> Unit,
     onLanguage: () -> Unit,
     onOpenNotebook: () -> Unit,
+    onRetryBiometric: () -> Unit,
 ): OnboardingActions = object : OnboardingActions {
     override val onBack = viewModel::back
     override val onLanguage = onLanguage
@@ -49,4 +52,5 @@ internal fun onboardingActions(
     override val restore = restore
     override val onRestore = onRestore
     override val onOpenNotebook = onOpenNotebook
+    override val onRetryBiometric = onRetryBiometric
 }

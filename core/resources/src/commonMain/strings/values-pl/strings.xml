@@ -494,6 +494,7 @@
     <string name="onboarding_ready_pin_title">PIN ustawiony</string>
     <string name="onboarding_ready_pin_desc">Pytamy o niego przy każdym otwarciu Encly</string>
     <string name="onboarding_ready_biometric_title">Odblokowanie odciskiem palca włączone</string>
+    <string name="onboarding_ready_biometric_retry">Spróbuj odcisku palca ponownie</string>
     <string name="onboarding_ready_biometric_desc">Zmienisz to w Ustawieniach, Bezpieczeństwo</string>
     <string name="onboarding_ready_phrase_title">Fraza odzyskiwania sprawdzona</string>
     <string name="onboarding_ready_phrase_desc">Przechowuj kartkę w bezpiecznym miejscu</string>

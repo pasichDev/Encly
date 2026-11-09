@@ -488,6 +488,7 @@
     <string name="onboarding_ready_pin_title">PIN festgelegt</string>
     <string name="onboarding_ready_pin_desc">Wird bei jedem Öffnen von Encly abgefragt</string>
     <string name="onboarding_ready_biometric_title">Entsperren per Fingerabdruck an</string>
+    <string name="onboarding_ready_biometric_retry">Fingerabdruck erneut versuchen</string>
     <string name="onboarding_ready_biometric_desc">Änderbar unter Einstellungen, Sicherheit</string>
     <string name="onboarding_ready_phrase_title">Wiederherstellungsphrase geprüft</string>
     <string name="onboarding_ready_phrase_desc">Bewahre das Papier sicher auf</string>

@@ -476,6 +476,7 @@
     <string name="onboarding_ready_pin_title">تم تعيين رمز PIN</string>
     <string name="onboarding_ready_pin_desc">يُطلب عند كل فتح لـ Encly</string>
     <string name="onboarding_ready_biometric_title">فتح القفل ببصمة الإصبع مفعّل</string>
+    <string name="onboarding_ready_biometric_retry">جرّب البصمة مرة أخرى</string>
     <string name="onboarding_ready_biometric_desc">غيّره من الإعدادات، الأمان</string>
     <string name="onboarding_ready_phrase_title">تم التحقق من عبارة الاسترداد</string>
     <string name="onboarding_ready_phrase_desc">احتفظ بالورقة في مكان آمن</string>

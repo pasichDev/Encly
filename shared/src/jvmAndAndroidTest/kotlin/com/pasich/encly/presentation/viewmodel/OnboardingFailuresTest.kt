@@ -36,6 +36,7 @@ import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
@@ -163,6 +164,73 @@ class OnboardingFailuresTest {
 
         assertTrue(vm.uiState.value.biometricEnabled)
         verify(security).enrollBiometric(eqValue(screen.biometric), anyCallback())
+    }
+
+    @Test
+    fun aCancelledFingerprintPromptIsNotShownAgainByItself() = runTest {
+        answerCallback(false).`when`(security).enrollBiometric(eqValue(screen.biometric), anyCallback())
+        val vm = readyWithBiometricPending()
+
+        vm.enrollBiometric(screen.host)
+        // What a resume of the screen or a recomposition would do: ask again.
+        screen.stop()
+        screen.resume()
+        vm.enrollBiometric(screen.host)
+
+        val state = vm.uiState.value
+        assertFalse(state.biometricPending)
+        assertFalse(state.biometricEnabled)
+        assertTrue(state.biometricRetry)
+        verify(security).enrollBiometric(eqValue(screen.biometric), anyCallback())
+    }
+
+    @Test
+    fun theRetryButtonShowsOnePromptPerTap() = runTest {
+        answerCallback(false).`when`(security).enrollBiometric(eqValue(screen.biometric), anyCallback())
+        val vm = readyWithBiometricPending()
+        vm.enrollBiometric(screen.host)
+
+        vm.retryBiometric(screen.host)
+
+        // One prompt for the first request, one for the tap; the cancelled tap offers the button again.
+        verify(security, times(2)).enrollBiometric(eqValue(screen.biometric), anyCallback())
+        assertTrue(vm.uiState.value.biometricRetry)
+    }
+
+    @Test
+    fun aTapWhileThePromptIsOpenIsIgnored() = runTest {
+        // The prompt never answers: it stays open.
+        val vm = readyWithBiometricPending()
+        vm.enrollBiometric(screen.host)
+
+        vm.retryBiometric(screen.host)
+
+        verify(security).enrollBiometric(eqValue(screen.biometric), anyCallback())
+        assertFalse(vm.uiState.value.biometricRetry)
+    }
+
+    @Test
+    fun aPromptThatCannotBeShownOffersTheButton() = runTest {
+        val vm = readyWithBiometricPending()
+        screen.stop()
+
+        vm.enrollBiometric(screen.host)
+
+        assertTrue(vm.uiState.value.biometricRetry)
+        verify(security, never()).enrollBiometric(eqValue(screen.biometric), anyCallback())
+    }
+
+    @Test
+    fun aSuccessfulRetryEnrolsTheFingerprint() = runTest {
+        answerCallback(false).`when`(security).enrollBiometric(eqValue(screen.biometric), anyCallback())
+        val vm = readyWithBiometricPending()
+        vm.enrollBiometric(screen.host)
+        answerCallback(true).`when`(security).enrollBiometric(eqValue(screen.biometric), anyCallback())
+
+        vm.retryBiometric(screen.host)
+
+        assertTrue(vm.uiState.value.biometricEnabled)
+        assertFalse(vm.uiState.value.biometricRetry)
     }
 
     @Test

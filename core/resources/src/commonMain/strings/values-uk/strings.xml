@@ -494,6 +494,7 @@
     <string name="onboarding_ready_pin_title">PIN задано</string>
     <string name="onboarding_ready_pin_desc">Запитується щоразу, коли відкривається Encly</string>
     <string name="onboarding_ready_biometric_title">Розблокування відбитком увімкнено</string>
+    <string name="onboarding_ready_biometric_retry">Спробувати відбиток ще раз</string>
     <string name="onboarding_ready_biometric_desc">Змінити можна в Налаштуваннях, розділ «Безпека»</string>
     <string name="onboarding_ready_phrase_title">Фразу відновлення перевірено</string>
     <string name="onboarding_ready_phrase_desc">Зберігайте папірець у надійному місці</string>
