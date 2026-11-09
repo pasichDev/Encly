@@ -59,6 +59,8 @@ Compose:
       - LocalFontStyle
       - LocalSimpleEdit
       - LocalFontStyles
+      # The theme's font set, reused by the editor instead of loading a second one (ui/theme/Type.kt).
+      - LocalThemeFonts
       # App-wide switches provided once by App: the note previews setting, and the locked vault that nothing may
       # be drawn over (presentation/navigation/EnclyApp.kt).
       - LocalShowNotePreviews

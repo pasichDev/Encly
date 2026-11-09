@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.sp
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.editor.model.BlockType
-import com.pasich.encly.ui.theme.fontSet
+import com.pasich.encly.ui.theme.sharedFontSet
 import com.pasich.encly.utils.FontSizeUtils
 
 /**
@@ -94,7 +94,7 @@ private fun rememberFontStylesOptimized(
     fontStyle: FontStyleType = LocalFontStyle.current,
 ): FontStyles {
     // The editor uses the app-wide font set (Settings → Appearance → Font).
-    val fonts = fontStyle.fontSet()
+    val fonts = fontStyle.sharedFontSet()
     return remember(baseFontSize, fonts) {
         try {
             FontStyles(

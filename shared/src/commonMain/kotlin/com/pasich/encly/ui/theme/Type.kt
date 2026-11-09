@@ -74,6 +74,22 @@ data class FontSet(val display: FontFamily, val body: FontFamily, val plex: Font
     }
 }
 
+/** The [FontSet] the theme built for [style], which anything under it asking for the same style reuses. */
+@Immutable
+class ThemeFonts(val style: FontStyleType, val set: FontSet)
+
+val LocalThemeFonts = staticCompositionLocalOf<ThemeFonts?> { null }
+
+/**
+ * [fontSet] of this style, reusing the theme's when it is the same style. A second set would load the
+ * same files again: its own families, and so its own typefaces.
+ */
+@Composable
+fun FontStyleType.sharedFontSet(): FontSet {
+    val themed = LocalThemeFonts.current
+    return if (themed != null && themed.style == this) themed.set else fontSet()
+}
+
 /** Editorial, Modern and Technical (design spec §2.2). */
 @Composable
 fun FontStyleType.fontSet(): FontSet {

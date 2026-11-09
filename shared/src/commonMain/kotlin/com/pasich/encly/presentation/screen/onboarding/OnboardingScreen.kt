@@ -4,8 +4,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -54,6 +52,8 @@ import com.pasich.encly.presentation.designsystem.LabelHeader
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.WelcomeHeader
 import com.pasich.encly.presentation.dialogs.LanguageDialog
+import com.pasich.encly.presentation.effects.FadeTiming
+import com.pasich.encly.presentation.effects.screenFade
 import com.pasich.encly.presentation.viewmodel.AuthSetupViewModel
 import com.pasich.encly.presentation.viewmodel.OnboardingPath
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
@@ -65,9 +65,8 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 import org.jetbrains.compose.resources.stringResource
 
 private const val SLIDE_MS = 500
-private const val FADE_IN_MS = 300
-private const val FADE_IN_DELAY_MS = 200
-private const val FADE_OUT_MS = 300
+private val StepFadeIn = FadeTiming(delayMillis = 200, durationMillis = 300, easing = FastOutSlowInEasing)
+private val StepFadeOut = FadeTiming(delayMillis = 0, durationMillis = 300, easing = FastOutSlowInEasing)
 
 /**
  * First run, in one scaffold: a header (wordmark, progress or label), the step, and a footer
@@ -239,14 +238,16 @@ private fun StepContent(
             slideIntoContainer(
                 towards = direction,
                 animationSpec = tween(SLIDE_MS, easing = FastOutSlowInEasing),
-            ) + fadeIn(tween(FADE_IN_MS, FADE_IN_DELAY_MS)) togetherWith slideOutOfContainer(
+            ) togetherWith slideOutOfContainer(
                 towards = direction,
                 animationSpec = tween(SLIDE_MS, easing = FastOutSlowInEasing),
-            ) + fadeOut(tween(FADE_OUT_MS))
+            )
         },
         label = "onboarding_step",
     ) { step ->
+        // The fade is drawn per draw call, not as fadeIn/fadeOut would: those put the step in an offscreen layer.
         val body = Modifier
+            .screenFade(this, enter = { StepFadeIn }, exit = { StepFadeOut })
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(bottom = EnclyTheme.spacing.l)

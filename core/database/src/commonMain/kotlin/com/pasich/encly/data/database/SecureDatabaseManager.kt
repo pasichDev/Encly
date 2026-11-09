@@ -50,10 +50,16 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
      */
     private var driver: SealiteDriver? = null
 
+    /** The pool-facing wrapper of [driver]; only to count the connections the pool opened. */
+    private var leanDriver: LeanDriver? = null
+
     /** A copy of the open database's key, only to check a repeated [unlockDatabase]; wiped in [reset]. */
     private var openKey: ByteArray? = null
 
     public fun isDatabaseUnlocked(): Boolean = isUnlocked
+
+    /** How many connections the open database's pool opened so far; 0 when closed. For tests. */
+    internal fun openedConnections(): Int = synchronized(lock) { leanDriver?.opened ?: 0 }
 
     public fun hasEncryptedDatabase(file: VaultFile = VaultFile.PRIMARY): Boolean =
         SQLCipherUtils.getDatabaseState(platform.databasePath(file)) == SQLCipherUtils.State.ENCRYPTED
@@ -112,9 +118,13 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
                 key.close()
             }
             openedDriver = newDriver
+            val lean = LeanDriver(newDriver)
+            // Room's pool opens up to four readers beside the writer in WAL mode, and offers no setting
+            // for it. A query runs on this context, and a connection is opened only for a query that
+            // runs, so the pool never holds more than QUERY_PARALLELISM readers (and one writer).
             val opened = VaultSchema.install(platform.databaseBuilder(path))
-                .setDriver(newDriver)
-                .setQueryCoroutineContext(Dispatchers.IO)
+                .setDriver(lean)
+                .setQueryCoroutineContext(Dispatchers.IO.limitedParallelism(QUERY_PARALLELISM))
                 .build()
             openedDatabase = opened
 
@@ -124,6 +134,7 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
 
             database = opened
             driver = newDriver
+            leanDriver = lean
             openKey = dek.copyOf()
             isUnlocked = true
             openFile = file
@@ -134,6 +145,7 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
             openedDatabase?.close()
             openedDriver?.close()
             database = null
+            leanDriver = null
             isUnlocked = false
             openFile = null
             lease = null
@@ -164,6 +176,7 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
         // After the database: closing the driver wipes its copy of the key.
         driver?.close()
         driver = null
+        leanDriver = null
         isUnlocked = false
         openFile = null
         openKey?.fill(0)
@@ -200,6 +213,9 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
         val FILE_SUFFIXES = listOf("", "-wal", "-shm", "-journal", ".lck")
     }
 }
+
+/** Queries that run at once, so the most readers the pool opens. A notes screen needs two. */
+internal const val QUERY_PARALLELISM = 2
 
 /**
  * Whether [a] and [b] hold the same bytes, in time that depends on their lengths only and not

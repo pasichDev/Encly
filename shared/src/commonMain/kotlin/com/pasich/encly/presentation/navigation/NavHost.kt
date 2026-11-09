@@ -66,10 +66,10 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                 // editor, none for the lock screen). Navigation's own default for the gesture (since 2.10)
                 // shrinks the leaving screen into the middle of the window.
                 predictivePopEnterTransition = {
-                    enterFor(initialState.destination.route, targetState.destination.route, forward = false)
+                    enterFor(forward = false)
                 },
                 predictivePopExitTransition = {
-                    exitFor(initialState.destination.route, targetState.destination.route, forward = false)
+                    exitFor(forward = false)
                 },
             ) {
                 animationScreens(NavRoutes.HomeRoute.name) {

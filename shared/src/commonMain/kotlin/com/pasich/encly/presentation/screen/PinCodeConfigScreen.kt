@@ -6,8 +6,6 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,6 +55,8 @@ import com.pasich.encly.platform.LocalSessionSharedAcrossWindows
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.effects.FadeTiming
+import com.pasich.encly.presentation.effects.screenFade
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry
@@ -74,6 +74,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 private const val PIN_SUCCESS_DELAY_MS = 1_000L
+private val StepFade = FadeTiming(delayMillis = 0, durationMillis = 300, easing = FastOutSlowInEasing)
 private const val SUCCESS_SCALE_MS = 500
 
 enum class PinAnimationState {
@@ -223,16 +224,19 @@ fun PinCodeConfigScreen(
                     AnimatedContent(
                         targetState = pinState.step,
                         transitionSpec = {
-                            (slideIntoContainer(SlideDirection.Start) + fadeIn())
-                                .togetherWith(slideOutOfContainer(SlideDirection.Start) + fadeOut())
+                            slideIntoContainer(SlideDirection.Start)
+                                .togetherWith(slideOutOfContainer(SlideDirection.Start))
                         },
                         label = "StepAnimation",
                     ) { currentStep ->
-                        PinStepContent(
-                            step = currentStep,
-                            pinState = pinState,
-                            onSubmitPin = { pinState.onPinComplete(securityViewModel) },
-                        )
+                        // Drawn per draw call: fadeIn/fadeOut would put the step in an offscreen layer.
+                        Box(Modifier.screenFade(this, enter = { StepFade }, exit = { StepFade })) {
+                            PinStepContent(
+                                step = currentStep,
+                                pinState = pinState,
+                                onSubmitPin = { pinState.onPinComplete(securityViewModel) },
+                            )
+                        }
                     }
                 } else {
                     SuccessAnimation()
