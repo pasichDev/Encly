@@ -122,7 +122,7 @@ notes from other apps). The only string left in the Android resources is the lau
 
 **Translating on Weblate (recommended):** the project is on
 [Hosted Weblate](https://hosted.weblate.org/projects/encly/), one component per file (*App*,
-*Security*, *Handoff*). Sign in, pick a language and translate in the browser; no Git or Android
+*Security*, *Handoff*, *Import*). Sign in, pick a language and translate in the browser; no Git or Android
 Studio needed. English source strings can only be changed in this repository, not on Weblate.
 Weblate collects the changes and opens a pull request from its `weblate-translations` branch;
 it never pushes to `main`. That pull request runs the same CI as any other, so it is merged only
@@ -138,7 +138,7 @@ only change the text. If a Weblate pull request is open, say so in yours; Weblat
 `core/resources/src/commonMain/strings/` (file mask
 `core/resources/src/commonMain/strings/values-*/strings.xml`, template
 `.../values/strings.xml`, and the same for `strings_security.xml`, `strings_handoff.xml` and
-`strings_import.xml`); the components must point there after the move from `app/src/main/res/`.
+`strings_import.xml`, one component each).
 Weblate pulls `main` on every push (GitHub webhook
 `https://hosted.weblate.org/hooks/github/`). Merge its pull request like any other, preferably
 before changing the same strings in a branch of your own; on a conflict, merge `main` first,
