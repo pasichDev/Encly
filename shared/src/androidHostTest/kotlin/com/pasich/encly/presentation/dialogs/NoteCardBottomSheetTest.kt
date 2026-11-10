@@ -16,7 +16,7 @@ import com.pasich.encly.core.resources.save
 import com.pasich.encly.core.resources.tap_again_to_delete
 import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.ui.screens.ComposeScreenTest
 import com.pasich.encly.ui.screens.TestApp
@@ -30,15 +30,17 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     private val actions = mutableListOf<NoteAction>()
     private var dismissed = 0
 
+    private val tags = listOf(Tag(id = 1, nameTag = "Work"), Tag(id = 2, nameTag = "Home"))
+
     private fun show(
         note: Note = Note(id = 5, title = "Groceries", date = 1_700_000_000_000L),
         visible: Boolean = true,
     ) {
-        app.tags.tags.value = listOf(Tag(id = 1, nameTag = "Work"), Tag(id = 2, nameTag = "Home"))
+        app.tags.tags.value = tags
         setScreen(viewModels(app.tagList())) {
             NoteCardBottomSheet(
                 isVisible = visible,
-                item = NoteWithTag(note, null),
+                item = NoteWithTags(note, tags.filter { it.id in note.tagIds }),
                 onAction = { actions += it },
                 onDismiss = { dismissed++ },
             )
@@ -92,14 +94,22 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     }
 
     @Test
-    fun aTagChipMovesTheNoteToThatTagAndNoTagClearsIt() {
-        show(Note(id = 5, title = "Groceries", tagId = 2))
+    fun tagChipsToggleTheirTagAndNoTagClearsThemAll() {
+        show(Note(id = 5, title = "Groceries", tagIds = setOf(2)))
         waitForText("Work")
 
         rule.onNodeWithText("Work").performClick()
+        rule.onNodeWithText("Home").performClick()
         rule.onNodeWithText(str(Res.string.no_tag)).performClick()
 
-        assertEquals(listOf(NoteAction.ChangeTag(1), NoteAction.ChangeTag(0)), actions)
+        assertEquals(
+            listOf(
+                NoteAction.ChangeTag(1, tagged = true),
+                NoteAction.ChangeTag(2, tagged = false),
+                NoteAction.ChangeTag(0, tagged = false),
+            ),
+            actions,
+        )
     }
 
     @Test

@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -30,10 +31,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.note_tags_more
 import com.pasich.encly.core.resources.notes_section_pinned
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.noteColorStyle
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -44,9 +47,12 @@ const val DIMMED_CARD_ALPHA = 0.7f
 
 private val MetaIcon = 14.dp
 
-/** The meta line of a note card: tag, relative date and checklist progress; each is optional. */
+/** The meta line of a note card: the note's tags, relative date and checklist progress; each is optional. */
 @Immutable
-data class NoteCardMeta(val tag: String? = null, val date: String? = null, val progress: String? = null)
+data class NoteCardMeta(val tags: List<String> = emptyList(), val date: String? = null, val progress: String? = null)
+
+/** How many of a note's tags its card names; the rest are counted ("+2"). */
+const val CARD_TAGS_SHOWN = 2
 
 /**
  * A note card (design spec §3.3): `surfaceContainer`, radius 16, padding 16, no border or shadow.
@@ -179,7 +185,7 @@ private fun NoteMetaLine(meta: NoteCardMeta, muted: Color) {
             .fillMaxWidth()
             .padding(top = EnclyTheme.spacing.xxs),
     ) {
-        meta.tag?.let { MetaItem(icon = EnclyIcons.Tag, text = it, color = muted) }
+        if (meta.tags.isNotEmpty()) CardTags(meta.tags, muted)
         meta.date?.let { Text(text = it, style = style, color = muted, maxLines = 1) }
         Spacer(modifier = Modifier.weight(1f))
         meta.progress?.let {
@@ -188,6 +194,28 @@ private fun NoteMetaLine(meta: NoteCardMeta, muted: Color) {
                 text = it,
                 color = MaterialTheme.colorScheme.primary,
                 weight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+/** The first [CARD_TAGS_SHOWN] tags by name, then how many more there are ("+2", read as "2 more tags"). */
+@Composable
+private fun CardTags(tags: List<String>, color: Color) {
+    val more = tags.size - CARD_TAGS_SHOWN
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
+    ) {
+        MetaItem(icon = EnclyIcons.Tag, text = tags.take(CARD_TAGS_SHOWN).joinToString(", "), color = color)
+        if (more > 0) {
+            val description = pluralStringResource(Res.plurals.note_tags_more, more, more)
+            Text(
+                text = "+$more",
+                style = EnclyTheme.typography.meta,
+                color = color,
+                maxLines = 1,
+                modifier = Modifier.semantics { contentDescription = description },
             )
         }
     }

@@ -63,7 +63,7 @@ internal fun EditorBlockSheets(sheet: BlockSheetState, canEdit: Boolean) {
     )
 }
 
-/** Chooses the note's tag; "Manage tags" leaves for the tags screen ([onManageTags]). */
+/** Chooses the note's tags (the sheet stays open); "Manage tags" leaves for the tags screen ([onManageTags]). */
 @Composable
 internal fun EditorTagSheet(
     onManageTags: () -> Unit,
@@ -75,11 +75,8 @@ internal fun EditorTagSheet(
     val noteState by viewModel.state.collectAsState()
     NoteTagSheet(
         tags = tagState.listTags,
-        selectedTagId = noteState.note.tagId,
-        onSelect = { tagId ->
-            viewModel.updateTagNote(tagId)
-            onDismiss()
-        },
+        selectedTagIds = noteState.note.tagIds,
+        onToggle = viewModel::toggleTagNote,
         onManageTags = onManageTags,
         onDismiss = onDismiss,
     )

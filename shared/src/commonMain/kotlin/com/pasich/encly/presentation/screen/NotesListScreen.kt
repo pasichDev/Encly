@@ -45,7 +45,7 @@ import com.pasich.encly.core.resources.notes_section_pinned
 import com.pasich.encly.core.resources.search_nothing_matches
 import com.pasich.encly.core.resources.show_all_notes
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.domain.model.SwipeSettings
@@ -169,7 +169,7 @@ internal class NoteSheetState {
 @Composable
 internal fun NoteActionsSheet(
     sheet: NoteSheetState,
-    observeNote: (Long) -> Flow<NoteWithTag?>,
+    observeNote: (Long) -> Flow<NoteWithTags?>,
     onEvent: (NoteListEvent) -> Unit,
     onEdit: (Note) -> Unit,
     onDuplicate: (Note) -> Unit,
@@ -193,7 +193,7 @@ internal fun NoteActionsSheet(
         }
     }
 
-    val item = live ?: sheet.active?.noteWithTag ?: return
+    val item = live ?: sheet.active?.noteWithTags ?: return
     NoteCardBottomSheet(
         isVisible = sheet.visible,
         item = item,

@@ -727,4 +727,10 @@
     <string name="toolbar_tool_show">Pokaż narzędzie</string>
     <string name="toolbar_move_up">W górę</string>
     <string name="toolbar_move_down">W dół</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">jeszcze %1$d etykieta</item>
+        <item quantity="few">jeszcze %1$d etykiety</item>
+        <item quantity="many">jeszcze %1$d etykiet</item>
+        <item quantity="other">jeszcze %1$d etykiety</item>
+    </plurals>
 </resources>

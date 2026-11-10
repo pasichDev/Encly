@@ -82,7 +82,7 @@ fun NoteItem(
             title = note.title,
             excerpt = preview,
             meta = NoteCardMeta(
-                tag = item?.tag?.nameTag,
+                tags = item?.tags?.map { it.nameTag }.orEmpty(),
                 date = note.date.takeIf { it > 0L }?.let { formatCardDate(Instant.fromEpochMilliseconds(it)) },
             ),
             excerptLines = excerptLines,

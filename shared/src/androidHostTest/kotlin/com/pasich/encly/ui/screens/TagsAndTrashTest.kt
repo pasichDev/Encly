@@ -32,7 +32,7 @@ import com.pasich.encly.core.resources.trash_auto_delete_hint
 import com.pasich.encly.core.resources.trash_hint
 import com.pasich.encly.core.resources.trash_selected
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.EditTagScreen
@@ -72,8 +72,8 @@ class TagsAndTrashTest : ComposeScreenTest() {
         val work = Tag(id = 1, nameTag = "Work")
         app.withTags(work, Tag(id = 2, nameTag = "Home", isVisible = false, position = 1))
         app.notes.allNotesWithTags.value = listOf(
-            NoteWithTag(Note(id = 1, title = "a", tagId = 1), work),
-            NoteWithTag(Note(id = 2, title = "b", tagId = 1), work),
+            NoteWithTags(Note(id = 1, title = "a", tagIds = setOf(1)), listOf(work)),
+            NoteWithTags(Note(id = 2, title = "b", tagIds = setOf(1)), listOf(work)),
         )
         showTags()
 

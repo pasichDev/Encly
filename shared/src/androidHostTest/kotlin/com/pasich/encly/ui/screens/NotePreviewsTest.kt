@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -12,7 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.security_previews_title
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.model.NoteListItem
 import com.pasich.encly.editor.codec.BlockConverter
@@ -39,12 +40,28 @@ class NotePreviewsTest : ComposeScreenTest() {
     )
 
     private fun showCard(show: Boolean) {
-        val item = NoteListItem.of(NoteWithTag(note(1, "Groceries", "milk and bread"), Tag(id = 1, nameTag = "Home")))
+        val home = Tag(id = 1, nameTag = "Home")
+        val item = NoteListItem.of(NoteWithTags(note(1, "Groceries", "milk and bread"), listOf(home)))
         setScreen {
             CompositionLocalProvider(LocalShowNotePreviews provides show) {
                 NoteItem(onItemClick = {}, onItemLongClick = {}, item = item)
             }
         }
+    }
+
+    @Test
+    fun aCardNamesTwoTagsAndCountsTheRest() {
+        val tags = listOf(
+            Tag(id = 1, nameTag = "Home"),
+            Tag(id = 2, nameTag = "Work", position = 1),
+            Tag(id = 3, nameTag = "Trips", position = 2),
+        )
+        val item = NoteListItem.of(NoteWithTags(note(1, "Groceries", "milk"), tags))
+        setScreen { NoteItem(onItemClick = {}, onItemLongClick = {}, item = item) }
+
+        rule.onNodeWithText("Home, Work").assertIsDisplayed()
+        rule.onNodeWithText("+1").assertIsDisplayed()
+        assertEquals(0, rule.onAllNodesWithText("Trips").fetchSemanticsNodes().size)
     }
 
     @Test
@@ -66,7 +83,8 @@ class NotePreviewsTest : ComposeScreenTest() {
 
     @Test
     fun aDescriptionIsAPreviewToo() {
-        val item = NoteListItem.of(NoteWithTag(note(1, "Plan", "body").copy(description = "A short summary"), null))
+        val summarized = note(1, "Plan", "body").copy(description = "A short summary")
+        val item = NoteListItem.of(NoteWithTags(summarized, emptyList()))
         setScreen {
             CompositionLocalProvider(LocalShowNotePreviews provides false) {
                 NoteItem(onItemClick = {}, onItemLongClick = {}, item = item)

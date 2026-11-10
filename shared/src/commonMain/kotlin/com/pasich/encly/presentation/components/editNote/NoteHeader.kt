@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.pasich.encly.core.resources.Res
@@ -31,17 +32,17 @@ import com.pasich.encly.utils.noteInstant
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The note's overline (design spec §4.4): "PERSONAL · TODAY 9:40 AM", the tag and when the note
+ * The note's overline (design spec §4.4): "PERSONAL · WORK · TODAY 9:40 AM", every tag of the note and when it
  * was last edited; only the date without a tag. [notSaved] adds a persistent "Not saved" in
  * `error`, announced politely, after a save failed.
  */
 @Composable
-fun NoteOverline(tagName: String?, date: Long, notSaved: Boolean, modifier: Modifier = Modifier) {
+fun NoteOverline(tagNames: List<String>, date: Long, notSaved: Boolean, modifier: Modifier = Modifier) {
     val edited = formatNoteDate(noteInstant(date))
     val style = MaterialTheme.typography.labelSmall
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = listOfNotNull(tagName, edited).joinToString(OVERLINE_SEPARATOR).uppercase(),
+            text = (tagNames + edited).joinToString(OVERLINE_SEPARATOR).uppercase(),
             style = style,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -63,15 +64,16 @@ fun NoteOverline(tagName: String?, date: Long, notSaved: Boolean, modifier: Modi
 private const val OVERLINE_SEPARATOR = " · "
 
 /**
- * Chooses the note's tag: "No tag" and every tag, the current one checked, then a way to
- * create or manage tags ([onManageTags]). Dismissible without choosing.
+ * Chooses the note's tags: "No tag" and every tag, the note's ones checked, then a way to
+ * create or manage tags ([onManageTags]). A tap puts a tag on or takes it off ([onToggle]) and the
+ * sheet stays open for the next one; "No tag" ([onToggle] with 0) takes every tag off.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteTagSheet(
     tags: List<Tag>,
-    selectedTagId: Long?,
-    onSelect: (Long) -> Unit,
+    selectedTagIds: Set<Long>,
+    onToggle: (Long) -> Unit,
     onManageTags: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -79,18 +81,22 @@ fun NoteTagSheet(
     EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier, title = stringResource(Res.string.edit_tags)) {
         // Many tags scroll; the manage row below stays in view.
         Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+            val untagged = selectedTagIds.isEmpty()
             EnclySheetRow(
                 title = stringResource(Res.string.no_tag),
-                onClick = { onSelect(0L) },
-                selected = selectedTagId == null || selectedTagId == 0L,
+                onClick = { onToggle(0L) },
+                selected = untagged,
                 muted = true,
+                modifier = Modifier.semantics { selected = untagged },
             )
             tags.forEach { tag ->
+                val checked = tag.id in selectedTagIds
                 EnclySheetRow(
                     title = tag.nameTag,
                     icon = EnclyIcons.Tag,
-                    onClick = { onSelect(tag.id) },
-                    selected = selectedTagId == tag.id,
+                    onClick = { onToggle(tag.id) },
+                    selected = checked,
+                    modifier = Modifier.semantics { selected = checked },
                 )
             }
         }

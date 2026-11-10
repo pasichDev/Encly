@@ -131,6 +131,6 @@ internal fun NoteAction.toEvent(note: Note): NoteListEvent? = when (this) {
     is NoteAction.Pin -> NoteListEvent.PinNote(note, pinned)
     is NoteAction.Archive -> NoteListEvent.ArchiveNote(note, archived)
     is NoteAction.ChangeColor -> NoteListEvent.ChangeColor(note, color)
-    is NoteAction.ChangeTag -> NoteListEvent.ChangeTag(note = note, idTag = tagId)
+    is NoteAction.ChangeTag -> NoteListEvent.ChangeTag(note = note, idTag = tagId, tagged = tagged)
     is NoteAction.ChangeDescription -> NoteListEvent.ChangeDescription(note = note, description = description)
 }

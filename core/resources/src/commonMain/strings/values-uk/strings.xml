@@ -727,4 +727,10 @@
     <string name="toolbar_tool_show">Показати інструмент</string>
     <string name="toolbar_move_up">Вгору</string>
     <string name="toolbar_move_down">Вниз</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">ще %1$d мітка</item>
+        <item quantity="few">ще %1$d мітки</item>
+        <item quantity="many">ще %1$d міток</item>
+        <item quantity="other">ще %1$d мітки</item>
+    </plurals>
 </resources>

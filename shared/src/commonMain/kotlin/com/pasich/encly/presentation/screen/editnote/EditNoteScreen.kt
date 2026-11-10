@@ -473,7 +473,7 @@ private fun EditorTitle(
     )
 }
 
-/** The overline: the note's tag and when it was edited, and "Not saved" after a failed save. */
+/** The overline: the note's tags and when it was edited, and "Not saved" after a failed save. */
 @Composable
 private fun EditorOverline(
     modifier: Modifier = Modifier,
@@ -483,12 +483,13 @@ private fun EditorOverline(
     // Read through derived state: a title keystroke or a save does not recompose the overline.
     val noteState = viewModel.state.collectAsState()
     val status = viewModel.status.collectAsState()
-    val meta by remember(noteState) { derivedStateOf { noteState.value.note.let { it.tagId to it.date } } }
+    val meta by remember(noteState) { derivedStateOf { noteState.value.note.let { it.tagIds to it.date } } }
     val notSaved by remember(status) { derivedStateOf { status.value == SaveStatusNote.FAILED } }
     val tagState by tagViewModel.state.collectAsState()
-    val (tagId, date) = meta
+    val (tagIds, date) = meta
     NoteOverline(
-        tagName = tagState.listTags.firstOrNull { it.id == tagId }?.nameTag,
+        // In the tags' own order, the one of the tags screen.
+        tagNames = tagState.listTags.filter { it.id in tagIds }.map { it.nameTag },
         date = date,
         notSaved = notSaved,
         modifier = modifier.padding(

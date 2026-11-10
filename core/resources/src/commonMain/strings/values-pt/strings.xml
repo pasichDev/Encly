@@ -721,4 +721,9 @@
     <string name="toolbar_tool_show">Mostrar ferramenta</string>
     <string name="toolbar_move_up">Subir</string>
     <string name="toolbar_move_down">Descer</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">mais %1$d etiqueta</item>
+        <item quantity="many">mais %1$d etiquetas</item>
+        <item quantity="other">mais %1$d etiquetas</item>
+    </plurals>
 </resources>

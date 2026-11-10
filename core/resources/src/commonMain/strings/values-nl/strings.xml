@@ -715,4 +715,8 @@
     <string name="toolbar_tool_show">Hulpmiddel tonen</string>
     <string name="toolbar_move_up">Omhoog</string>
     <string name="toolbar_move_down">Omlaag</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">nog %1$d label</item>
+        <item quantity="other">nog %1$d labels</item>
+    </plurals>
 </resources>

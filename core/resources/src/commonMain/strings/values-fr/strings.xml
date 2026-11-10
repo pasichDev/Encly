@@ -721,4 +721,9 @@
     <string name="toolbar_tool_show">Afficher l\'outil</string>
     <string name="toolbar_move_up">Monter</string>
     <string name="toolbar_move_down">Descendre</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">%1$d autre libellé</item>
+        <item quantity="many">%1$d autres libellés</item>
+        <item quantity="other">%1$d autres libellés</item>
+    </plurals>
 </resources>

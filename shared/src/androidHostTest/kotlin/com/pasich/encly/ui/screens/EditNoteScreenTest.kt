@@ -616,7 +616,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         waitForText("Travel")
         rule.onNode(hasText("Travel") and hasClickAction()).performClick()
 
-        waitFor { editor.state.value.note.tagId == 4L }
+        waitFor { 4L in editor.state.value.note.tagIds }
         waitForText("TRAVEL", substring = true)
     }
 

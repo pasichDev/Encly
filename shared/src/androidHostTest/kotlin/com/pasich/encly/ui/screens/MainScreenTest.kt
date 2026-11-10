@@ -40,7 +40,7 @@ import com.pasich.encly.core.resources.tap_again_to_delete
 import com.pasich.encly.core.resources.task_add
 import com.pasich.encly.core.resources.task_filter_all
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.repository.NotesRepository
@@ -110,7 +110,7 @@ class MainScreenTest : ComposeScreenTest() {
     @Test
     fun aFailedReadIsAnErrorNeverAnEmptyVault() {
         val failing = object : NotesRepository by TestNotesRepository() {
-            override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = flow { throw IOException("vault closed") }
+            override fun getAllNotesWithTag(): Flow<List<NoteWithTags>> = flow { throw IOException("vault closed") }
         }
         show(failing)
 
@@ -122,7 +122,7 @@ class MainScreenTest : ComposeScreenTest() {
     @Test
     fun whileLoadingNeitherEmptyNorErrorIsShown() {
         val slow = object : NotesRepository by TestNotesRepository() {
-            override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = MutableSharedFlow()
+            override fun getAllNotesWithTag(): Flow<List<NoteWithTags>> = MutableSharedFlow()
         }
         show(slow)
 

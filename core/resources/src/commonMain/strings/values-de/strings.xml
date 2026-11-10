@@ -715,4 +715,8 @@
     <string name="toolbar_tool_show">Werkzeug einblenden</string>
     <string name="toolbar_move_up">Nach oben</string>
     <string name="toolbar_move_down">Nach unten</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">%1$d weiteres Label</item>
+        <item quantity="other">%1$d weitere Labels</item>
+    </plurals>
 </resources>

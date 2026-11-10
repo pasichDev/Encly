@@ -721,4 +721,9 @@
     <string name="toolbar_tool_show">Mostra strumento</string>
     <string name="toolbar_move_up">Su</string>
     <string name="toolbar_move_down">Giù</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">%1$d altra etichetta</item>
+        <item quantity="many">altre %1$d etichette</item>
+        <item quantity="other">altre %1$d etichette</item>
+    </plurals>
 </resources>

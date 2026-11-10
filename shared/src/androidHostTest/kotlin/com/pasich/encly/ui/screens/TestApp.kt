@@ -28,7 +28,7 @@ import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.export.MarkdownDocuments
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.model.EditorToolbar
@@ -114,7 +114,8 @@ internal class TestApp {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     fun withNotes(vararg notes: Note, tag: Tag? = null) = apply {
-        this.notes.allNotesWithTags.value = notes.map { NoteWithTag(note = it, tag = tag) }
+        this.notes.allNotesWithTags.value =
+            notes.map { NoteWithTags(it.copy(tagIds = setOfNotNull(tag?.id)), listOfNotNull(tag)) }
     }
 
     fun withTags(vararg tags: Tag) = apply { this.tags.tags.value = tags.toList() }

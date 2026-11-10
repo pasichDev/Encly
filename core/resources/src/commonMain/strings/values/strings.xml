@@ -733,4 +733,8 @@
     <string name="toolbar_tool_show">Show tool</string>
     <string name="toolbar_move_up">Move up</string>
     <string name="toolbar_move_down">Move down</string>
+    <plurals name="note_tags_more">
+        <item quantity="one">%1$d more tag</item>
+        <item quantity="other">%1$d more tags</item>
+    </plurals>
 </resources>

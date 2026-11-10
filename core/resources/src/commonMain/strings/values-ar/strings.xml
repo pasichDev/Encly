@@ -728,4 +728,12 @@
     <string name="toolbar_tool_show">إظهار الأداة</string>
     <string name="toolbar_move_up">أعلى</string>
     <string name="toolbar_move_down">أسفل</string>
+    <plurals name="note_tags_more">
+        <item quantity="zero">%1$d وسم آخر</item>
+        <item quantity="one">%1$d وسم آخر</item>
+        <item quantity="two">%1$d وسمان آخران</item>
+        <item quantity="few">%1$d وسوم أخرى</item>
+        <item quantity="many">%1$d وسمًا آخر</item>
+        <item quantity="other">%1$d وسم آخر</item>
+    </plurals>
 </resources>

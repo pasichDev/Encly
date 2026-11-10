@@ -44,7 +44,7 @@ import com.pasich.encly.core.resources.note_unpin
 import com.pasich.encly.core.resources.save
 import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyChip
@@ -69,7 +69,9 @@ sealed class NoteAction {
     data class Pin(val pinned: Boolean) : NoteAction()
     data class Archive(val archived: Boolean) : NoteAction()
     data class ChangeColor(val color: NoteColor) : NoteAction()
-    data class ChangeTag(val tagId: Long) : NoteAction()
+
+    /** Puts the tag [tagId] on the note or takes it off ([tagged]); 0 takes every tag off. */
+    data class ChangeTag(val tagId: Long, val tagged: Boolean = true) : NoteAction()
     data class ChangeDescription(val description: String) : NoteAction()
 }
 
@@ -81,7 +83,7 @@ sealed class NoteAction {
 @Composable
 fun NoteCardBottomSheet(
     isVisible: Boolean,
-    item: NoteWithTag,
+    item: NoteWithTags,
     onAction: (NoteAction) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -98,7 +100,10 @@ fun NoteCardBottomSheet(
             scrollable = true,
         ) {
             NoteActionHeader(item)
-            TagChips(selectedTagId = item.note.tagId ?: 0L, onSelect = { onAction(NoteAction.ChangeTag(it)) })
+            TagChips(
+                selectedTagIds = item.tags.mapTo(HashSet()) { it.id },
+                onToggle = { tagId, tagged -> onAction(NoteAction.ChangeTag(tagId, tagged)) },
+            )
             ColorChoices(
                 selected = NoteColor.fromKey(item.note.color),
                 onSelect = { onAction(NoteAction.ChangeColor(it)) },
@@ -167,7 +172,7 @@ private fun ColorChoices(selected: NoteColor, onSelect: (NoteColor) -> Unit) {
 
 /** Title and last edit: the sheet's heading. */
 @Composable
-private fun NoteActionHeader(item: NoteWithTag) {
+private fun NoteActionHeader(item: NoteWithTags) {
     Column(
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
         modifier = Modifier.fillMaxWidth(),
@@ -187,11 +192,14 @@ private fun NoteActionHeader(item: NoteWithTag) {
     }
 }
 
-/** "No tag" and every tag as chips; the selected one is the note's tag. */
+/**
+ * "No tag" and every tag as chips that toggle: the selected ones are the note's tags, a tap puts a tag on or takes it
+ * off, and "No tag" takes every tag off.
+ */
 @Composable
 private fun TagChips(
-    selectedTagId: Long,
-    onSelect: (Long) -> Unit,
+    selectedTagIds: Set<Long>,
+    onToggle: (tagId: Long, tagged: Boolean) -> Unit,
     tagListViewModel: TagListViewModel = metroViewModel(),
 ) {
     val state by tagListViewModel.state.collectAsState()
@@ -206,12 +214,13 @@ private fun TagChips(
         item {
             EnclyChip(
                 label = stringResource(Res.string.no_tag),
-                selected = selectedTagId == 0L,
-                onClick = { onSelect(0L) },
+                selected = selectedTagIds.isEmpty(),
+                onClick = { if (selectedTagIds.isNotEmpty()) onToggle(0L, false) },
             )
         }
         items(state.listTags, key = { it.id }) { tag ->
-            EnclyChip(label = tag.nameTag, selected = selectedTagId == tag.id, onClick = { onSelect(tag.id) })
+            val tagged = tag.id in selectedTagIds
+            EnclyChip(label = tag.nameTag, selected = tagged, onClick = { onToggle(tag.id, !tagged) })
         }
     }
 }
