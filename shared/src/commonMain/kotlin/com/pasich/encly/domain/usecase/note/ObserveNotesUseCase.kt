@@ -9,7 +9,6 @@ import com.pasich.encly.domain.repository.NotesRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
@@ -38,10 +37,11 @@ class ObserveNotesUseCase(
 
             tagId == null -> repository.getAllNotesWithTag().map { all -> all.filter { it.isShown() } }
 
-            else -> combine(repository.getNotesByTagId(tagId), repository.getArchivedNotesByTagId(tagId)) { live, old ->
-                // A hidden tag's archived notes are in no other list (the archive leaves hidden tags
-                // out too), so its own view is the way to unarchive them. A visible tag's are in the archive.
-                live + old.filter { it.tag?.isVisible == false }
+            // A hidden tag's archived notes are in no other list (the archive leaves hidden tags out
+            // too), so its own view is the way to unarchive them. A visible tag's are in the archive.
+            // One read for both: two flows combined could hold a note that is being archived twice.
+            else -> repository.getNotesOfTagWithArchived(tagId).map { all ->
+                all.filter { !it.note.isArchived || it.tag?.isVisible == false }
             }
         }
         return notes.map { list -> list.toSortedItems(sortOption) }.flowOn(dispatcher)

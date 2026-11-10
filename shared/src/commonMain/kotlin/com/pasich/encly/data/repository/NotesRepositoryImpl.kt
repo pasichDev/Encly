@@ -24,8 +24,8 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
 
     override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = daoFlow { dao().getArchivedNotesWithTags() }
 
-    override fun getArchivedNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> =
-        daoFlow { dao().getArchivedNotesByTagId(tagId) }
+    override fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTag>> =
+        daoFlow { dao().getNotesOfTagWithArchived(tagId) }
 
     override fun observeNote(noteId: Long): Flow<NoteWithTag?> = daoFlow { dao().observeNoteWithTag(noteId) }
 

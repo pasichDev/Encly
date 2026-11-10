@@ -156,10 +156,10 @@ public abstract interface class com/pasich/encly/data/database/dao/NotesDao {
 	public abstract fun deleteTrashedBefore (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getAllNotes ()Lkotlinx/coroutines/flow/Flow;
 	public abstract fun getAllNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
-	public abstract fun getArchivedNotesByTagId (J)Lkotlinx/coroutines/flow/Flow;
 	public abstract fun getArchivedNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
 	public abstract fun getNoteById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getNotesByTagId (Ljava/lang/Long;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getNotesOfTagWithArchived (J)Lkotlinx/coroutines/flow/Flow;
 	public abstract fun getTrashNotes ()Lkotlinx/coroutines/flow/Flow;
 	public abstract fun insertNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun observeNoteWithTag (J)Lkotlinx/coroutines/flow/Flow;
@@ -181,10 +181,10 @@ public final class com/pasich/encly/data/database/dao/NotesDao_Impl : com/pasich
 	public fun deleteTrashedBefore (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getAllNotes ()Lkotlinx/coroutines/flow/Flow;
 	public fun getAllNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
-	public fun getArchivedNotesByTagId (J)Lkotlinx/coroutines/flow/Flow;
 	public fun getArchivedNotesWithTags ()Lkotlinx/coroutines/flow/Flow;
 	public fun getNoteById (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getNotesByTagId (Ljava/lang/Long;)Lkotlinx/coroutines/flow/Flow;
+	public fun getNotesOfTagWithArchived (J)Lkotlinx/coroutines/flow/Flow;
 	public fun getTrashNotes ()Lkotlinx/coroutines/flow/Flow;
 	public fun insertNote (Lcom/pasich/encly/data/model/Note;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun observeNoteWithTag (J)Lkotlinx/coroutines/flow/Flow;

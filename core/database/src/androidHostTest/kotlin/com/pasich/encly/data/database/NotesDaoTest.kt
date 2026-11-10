@@ -257,7 +257,7 @@ class NotesDaoTest {
     }
 
     @Test
-    fun aTagsArchivedNotesAreReadByTag() = runBlocking {
+    fun aTagsNotesAreReadWithItsArchivedOnesInOneQuery() = runBlocking {
         insert("live", tagId = TAG)
         insert("old", tagId = TAG) { isArchived = true }
         insert("trashed", tagId = TAG) {
@@ -266,7 +266,7 @@ class NotesDaoTest {
         }
         insert("other", tagId = OTHER_TAG) { isArchived = true }
 
-        assertEquals(listOf("old"), titles(dao.getArchivedNotesByTagId(TAG)))
+        assertEquals(listOf("live", "old"), titles(dao.getNotesOfTagWithArchived(TAG)))
     }
 
     @Test

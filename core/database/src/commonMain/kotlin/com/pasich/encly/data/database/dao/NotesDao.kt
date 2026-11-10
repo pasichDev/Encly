@@ -34,10 +34,13 @@ public interface NotesDao {
     )
     public fun getNotesByTagId(tagId: Long?): Flow<List<NoteWithTag>>
 
-    /** The archived notes (not in the trash) of one tag: the way to a hidden tag's archived notes. */
+    /**
+     * The notes (not in the trash) of one tag, archived ones included: the way to a hidden tag's
+     * archived notes. One query, so a note being archived or unarchived is never read twice.
+     */
     @Transaction
-    @Query("SELECT * FROM notes WHERE isTrash = 0 AND isArchived = 1 AND tagId = :tagId")
-    public fun getArchivedNotesByTagId(tagId: Long): Flow<List<NoteWithTag>>
+    @Query("SELECT * FROM notes WHERE isTrash = 0 AND tagId = :tagId")
+    public fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTag>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE id = :noteId")

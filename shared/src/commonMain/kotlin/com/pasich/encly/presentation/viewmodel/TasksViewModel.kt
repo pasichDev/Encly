@@ -207,14 +207,12 @@ class TasksViewModel(
 
     private fun observeTasks() {
         tasksJob = viewModelScope.launch {
-            combine(
-                tasksRepository.getAllActiveTasks(),
-                tasksRepository.getAllCompletedTasks(),
-                tasksRepository.getActiveTasksCount(),
-                tasksRepository.getCompletedTasksCount(),
-                tasksRepository.observeSubtasks(),
-            ) { activeTasks, completedTasks, activeCount, completedCount, subtasks ->
-                TaskFilterEngine.reduce(_uiState.value, activeTasks, completedTasks, activeCount, completedCount)
+            // Open and done tasks come from one query: two queries combined could hold a task that
+            // was just checked or unchecked in both lists at once, and the list keys tasks by id.
+            combine(tasksRepository.getAllTasks(), tasksRepository.observeSubtasks()) { tasks, subtasks ->
+                val (completedTasks, activeTasks) = tasks.partition { it.isCompleted }
+                val doneNewestFirst = completedTasks.sortedByDescending { it.completedDate }
+                TaskFilterEngine.reduce(_uiState.value, activeTasks, doneNewestFirst, activeTasks.size, completedTasks.size)
                     .copy(subtasks = subtasks.groupBy { it.taskId })
             }.catch {
                 // The vault closed under the list (locked; [clearOnLock] resets the screen right

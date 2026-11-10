@@ -65,6 +65,27 @@ class TasksViewModelTest {
     }
 
     @Test
+    fun aTaskBeingCheckedOrUncheckedIsNeverInBothListsAtOnce() = runTest(dispatcher) {
+        advanceUntilIdle()
+        // Every state the screen sees: the list keys tasks by id, so a task in both the open and
+        // the done list at once crashes it.
+        val states = mutableListOf<TasksUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect(states::add) }
+
+        viewModel.toggleTaskCompletion(taskId = 1, isCompleted = true)
+        advanceUntilIdle()
+        viewModel.toggleTaskCompletion(taskId = 3, isCompleted = false)
+        advanceUntilIdle()
+
+        assertTrue(states.size > 1)
+        states.forEach { state ->
+            val open = state.activeTasks.map { it.id }.toSet()
+            assertTrue(state.completedTasks.none { it.id in open }, "a task is in both lists: $state")
+        }
+        assertEquals(listOf(2L, 3L), viewModel.uiState.value.activeTasks.map { it.id })
+    }
+
+    @Test
     fun aReadFailingAfterTheVaultClosedKeepsTheListInsteadOfCrashing() = runTest(dispatcher) {
         advanceUntilIdle()
 

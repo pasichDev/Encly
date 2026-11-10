@@ -13,7 +13,7 @@ interface NotesRepository {
     fun getAllNotesWithTag(): Flow<List<NoteWithTag>>
     fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>>
     fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>>
-    fun getArchivedNotesByTagId(tagId: Long): Flow<List<NoteWithTag>>
+    fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTag>>
     fun getTrashNotes(): Flow<List<Note>>
 
     /** The note as stored now (null once it is gone), following every change to it. */

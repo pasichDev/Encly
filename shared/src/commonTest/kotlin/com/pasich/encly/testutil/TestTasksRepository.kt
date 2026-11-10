@@ -37,7 +37,7 @@ internal class TestTasksRepository(initial: List<Task> = emptyList(), initialSub
         tasks.map { list -> read { list.filter { it.isCompleted } } }
 
     private fun <T> read(block: () -> T): T = if (failReads) error("Database session expired") else block()
-    override fun getAllTasks(): Flow<List<Task>> = tasks
+    override fun getAllTasks(): Flow<List<Task>> = tasks.map { list -> read { list } }
     override fun getActiveTasksCount(): Flow<Int> = getAllActiveTasks().map { it.size }
     override fun getCompletedTasksCount(): Flow<Int> = getAllCompletedTasks().map { it.size }
 

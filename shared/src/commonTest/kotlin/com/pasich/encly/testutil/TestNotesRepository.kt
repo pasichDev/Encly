@@ -73,8 +73,10 @@ internal class TestNotesRepository : NotesRepository {
 
     override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = archivedNotesWithTags
 
-    override fun getArchivedNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> =
-        archivedNotesWithTags.map { list -> list.filter { it.note.tagId == tagId } }
+    override fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTag>> =
+        combine(tagFlow(tagId), archivedNotesWithTags) { live, archived ->
+            live + archived.filter { it.note.tagId == tagId }
+        }
 
     override fun observeNote(noteId: Long): Flow<NoteWithTag?> = combine(allNotesWithTags, archivedNotesWithTags) {
             a,
