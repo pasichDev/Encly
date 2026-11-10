@@ -1,6 +1,7 @@
 Encly 3.0.0
 • PIN od 6 do 12 cyfr; PIN zostaje po odblokowaniu frazą.
 • Zaznaczanie przez wiele akapitów; tabele, bloki kodu, zagnieżdżone listy, przeciąganie.
+• Kilka etykiet na notatkę.
 • Własny pasek narzędzi; ukrywanie tekstu notatek na listach.
 • Arabski i układ od prawej do lewej; ustawienia w kopii.
 • Odcisk palca działa po blokadzie w tle.

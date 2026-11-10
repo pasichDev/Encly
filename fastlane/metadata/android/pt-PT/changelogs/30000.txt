@@ -1,6 +1,7 @@
 Encly 3.0.0
 • PIN de 6 a 12 dígitos; o PIN mantém-se após desbloquear com a frase.
 • Seleção entre parágrafos; tabelas, blocos de código, listas aninhadas, arrastar itens.
+• Várias etiquetas por nota.
 • Barra de ferramentas à sua medida; ocultar o texto das notas.
 • Árabe e esquema da direita para a esquerda; definições na cópia.
 • A impressão digital funciona após bloqueio em segundo plano.

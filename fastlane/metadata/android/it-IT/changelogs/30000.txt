@@ -1,6 +1,7 @@
 Encly 3.0.0
 • PIN da 6 a 12 cifre; il PIN resta dopo lo sblocco con la frase.
 • Selezione tra più paragrafi; tabelle, blocchi di codice, elenchi annidati, trascinamento.
+• Più etichette per nota.
 • Barra degli strumenti personalizzabile; nascondi il testo delle note.
 • Arabo e layout da destra a sinistra; impostazioni nel backup.
 • L'impronta funziona dopo il blocco in background.

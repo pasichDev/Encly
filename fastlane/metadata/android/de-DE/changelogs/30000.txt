@@ -1,6 +1,7 @@
 Encly 3.0.0
 • PIN mit 6–12 Ziffern; PIN bleibt nach Entsperren mit der Wiederherstellungsphrase.
 • Text über Absätze markieren; Tabellen, Codeblöcke, verschachtelte Listen, Einträge ziehen.
+• Mehrere Labels pro Notiz.
 • Eigene Werkzeugleiste; Notiztext in Listen ausblenden.
 • Arabisch und Rechts-nach-links; Einstellungen im Backup.
 • Fingerabdruck klappt nach Sperre im Hintergrund.
