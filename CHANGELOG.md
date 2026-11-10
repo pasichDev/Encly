@@ -48,6 +48,7 @@ versionCode 30000.
 ### Fixed
 
 - Fingerprint unlock did not start, and its button did nothing, after Encly locked itself in the background ([#104](https://github.com/pasichDev/Encly/issues/104)).
+- Checking or unchecking a task, or archiving a note in a hidden tag's view, could close the app.
 - A new note lost its creation date at the first autosave. Notes that already lost it now sort by their last edit ([#103](https://github.com/pasichDev/Encly/issues/103)).
 - Stepping through matches in Find in note now scrolls to each match, also inside long paragraphs and lists ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Scrolling over a list no longer leaves its toolbar button active ([#76](https://github.com/pasichDev/Encly/issues/76)).
