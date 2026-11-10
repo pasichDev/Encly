@@ -15,10 +15,12 @@ public interface TagsDao {
     @Query("SELECT * FROM tags")
     public fun getTags(): Flow<List<Tag>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // ABORT, never REPLACE: a replace deletes the old row first, and with it (the foreign key cascades) every
+    // note's link to the tag.
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun addTags(tags: List<Tag>): List<Long>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun addTag(tag: Tag): Long
 
     @Update
@@ -30,12 +32,13 @@ public interface TagsDao {
     @Delete
     public suspend fun deleteTag(tag: Tag): Int
 
-    @Query("UPDATE notes SET tagId = NULL WHERE tagId = :tagId")
+    @Query("DELETE FROM note_tags WHERE tagId = :tagId")
     public suspend fun detachNotesFromTag(tagId: Long): Int
 
     /**
-     * Deletes [tag] and, in the same transaction, makes its notes untagged, so no note keeps
-     * pointing at a tag that no longer exists (and hidden-tag notes do not linger hidden).
+     * Deletes [tag] and, in the same transaction, takes it off its notes; they keep their other tags. The foreign
+     * key cascades the links too; they are deleted explicitly all the same, so no note keeps pointing at a tag
+     * that no longer exists (and stays hidden by it).
      */
     @Transaction
     public suspend fun deleteTagDetachingNotes(tag: Tag): Int {

@@ -39,6 +39,11 @@ public object VaultSchema {
     /** Database version that added the time a note went to the trash. */
     private const val VERSION_WITH_TRASH_TIME = 7
 
+    /** Database version that moved a note's tag into `note_tags`, so a note can have several. */
+    private const val VERSION_WITH_NOTE_TAGS = 8
+
+    private const val NOTES = "notes"
+
     private fun triggers(table: String) = listOf(
         "CREATE TRIGGER IF NOT EXISTS `${table}_uid_on_insert` AFTER INSERT ON `$table` " +
             "WHEN NEW.uid = '' BEGIN " +
@@ -162,13 +167,78 @@ public object VaultSchema {
     }
 
     /**
+     * 7 -> 8: a note can have several tags. The links move to the new `note_tags` table (one row per note and
+     * tag, both foreign keys cascading, an index on `tagId`) and `notes.tagId` goes. Every note keeps the tag it
+     * had; a `tagId` that names no tag (left by an old version) was no tag on screen and is dropped, so the
+     * foreign key check Room runs after the migration passes.
+     *
+     * `notes` is rebuilt without the column, like [MIGRATION_2_3] (SQLite only has `DROP COLUMN` from 3.35),
+     * keeping every other column, the uid index and the uid triggers. The links are first copied to a plain
+     * table and only written to `note_tags` once `notes` is rebuilt, so nothing depends on whether foreign keys
+     * are enforced while the migration runs (a `DROP TABLE` of a parent would otherwise cascade). The
+     * AUTOINCREMENT counter of `notes` is carried over, so the id of a deleted note is never given out again.
+     * The statements match Room's export of version 8 (core/database/schemas), which the schema test checks.
+     */
+    public val MIGRATION_7_8: Migration = object : Migration(VERSION_WITH_TRASH_TIME, VERSION_WITH_NOTE_TAGS) {
+        override fun migrate(connection: SQLiteConnection) {
+            val columns = "`id`, `title`, `value`, `description`, `date`, `dateCreate`, `isTrash`, `uid`, " +
+                "`isPinned`, `isArchived`, `color`, `textSize`, `lineSpacing`, `trashedAt`"
+            connection.execSQL("DROP TABLE IF EXISTS `note_tags_carry`")
+            connection.execSQL(
+                "CREATE TABLE `note_tags_carry` AS SELECT `id` AS `noteId`, `tagId` FROM `$NOTES` " +
+                    "WHERE `tagId` IS NOT NULL AND `tagId` IN (SELECT `id` FROM `tags`)",
+            )
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `notes_new` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, " +
+                    "`value` TEXT NOT NULL, `description` TEXT NOT NULL, `date` INTEGER NOT NULL, " +
+                    "`dateCreate` INTEGER NOT NULL, `isTrash` INTEGER NOT NULL, `uid` TEXT NOT NULL DEFAULT '', " +
+                    "`isPinned` INTEGER NOT NULL DEFAULT 0, `isArchived` INTEGER NOT NULL DEFAULT 0, " +
+                    "`color` TEXT NOT NULL DEFAULT 'none', `textSize` INTEGER, `lineSpacing` INTEGER, " +
+                    "`trashedAt` INTEGER)",
+            )
+            connection.execSQL("INSERT INTO `notes_new` ($columns) SELECT $columns FROM `$NOTES`")
+            // The rename below carries this row over to `notes`.
+            connection.execSQL("DELETE FROM sqlite_sequence WHERE name = 'notes_new'")
+            connection.execSQL(
+                "INSERT INTO sqlite_sequence (name, seq) SELECT 'notes_new', seq FROM sqlite_sequence " +
+                    "WHERE name = '$NOTES'",
+            )
+            connection.execSQL("DROP TABLE `$NOTES`")
+            connection.execSQL("ALTER TABLE `notes_new` RENAME TO `$NOTES`")
+            connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_notes_uid` ON `$NOTES` (`uid`)")
+            triggers(NOTES).forEach(connection::execSQL)
+
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `note_tags` (`noteId` INTEGER NOT NULL, `tagId` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`noteId`, `tagId`), " +
+                    "FOREIGN KEY(`noteId`) REFERENCES `notes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , " +
+                    "FOREIGN KEY(`tagId`) REFERENCES `tags`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_note_tags_tagId` ON `note_tags` (`tagId`)")
+            connection.execSQL(
+                "INSERT OR IGNORE INTO `note_tags` (`noteId`, `tagId`) SELECT `noteId`, `tagId` FROM `note_tags_carry`",
+            )
+            connection.execSQL("DROP TABLE `note_tags_carry`")
+        }
+    }
+
+    /**
      * Adds every migration and the trigger callback to a vault database builder, and nothing
      * destructive: Room's default (`requireMigration`) makes a missing migration fail loudly
      * instead of recreating the tables, which would erase every note. List each new migration
      * here explicitly.
      */
     public fun <T : RoomDatabase> install(builder: RoomDatabase.Builder<T>): RoomDatabase.Builder<T> = builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+        .addMigrations(
+            MIGRATION_1_2,
+            MIGRATION_2_3,
+            MIGRATION_3_4,
+            MIGRATION_4_5,
+            MIGRATION_5_6,
+            MIGRATION_6_7,
+            MIGRATION_7_8,
+        )
         .addCallback(CALLBACK)
 
     /** Installs the triggers on a freshly created database. */

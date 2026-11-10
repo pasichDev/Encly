@@ -231,8 +231,39 @@ class AppDatabaseSchemaTest {
                 VaultSchema.MIGRATION_4_5,
                 VaultSchema.MIGRATION_5_6,
                 VaultSchema.MIGRATION_6_7,
+                VaultSchema.MIGRATION_7_8,
             ),
         ).close()
+    }
+
+    @Test
+    fun migrate7To8MovesEachNotesTagIntoNoteTags() {
+        helper.createDatabase(7).use { db ->
+            VaultSchema.createTriggers(db)
+            db.execSQL("INSERT INTO tags (id, name, visibility, position, uid) VALUES (1, 'Work', 1, 0, 'tag-uid')")
+            db.execSQL(
+                "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                    "VALUES (1, 'Tagged', '[]', 'd', 20, 10, 1, 0, 'tagged-uid')",
+            )
+            db.execSQL(
+                "INSERT INTO notes (id, title, value, description, date, dateCreate, tagId, isTrash, uid) " +
+                    "VALUES (2, 'Dangling', '[]', 'd', 20, 10, 9, 0, 'dangling-uid')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(8, listOf(VaultSchema.MIGRATION_7_8)).use { db ->
+            db.prepare("SELECT noteId, tagId FROM note_tags ORDER BY noteId").use { s ->
+                assertTrue(s.step())
+                assertEquals(1, s.getLong(0).toInt())
+                assertEquals(1, s.getLong(1).toInt())
+                assertTrue(!s.step())
+            }
+            db.prepare("SELECT title, uid FROM notes WHERE id = 2").use { s ->
+                assertTrue(s.step())
+                assertEquals("Dangling", s.getText(0))
+                assertEquals("dangling-uid", s.getText(1))
+            }
+        }
     }
 
     private companion object {

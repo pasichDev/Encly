@@ -9,7 +9,6 @@ import com.pasich.encly.data.model.Tag
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,12 +37,12 @@ class TagsDaoTest {
     fun deletingATagUntagsItsNotesAndLeavesOthersAlone() = runBlocking {
         val work = db.tagsDao().addTag(Tag(nameTag = "Work"))
         val home = db.tagsDao().addTag(Tag(nameTag = "Home"))
-        val workNote = db.notesDao().insertNote(Note(title = "w", tagId = work))
-        val homeNote = db.notesDao().insertNote(Note(title = "h", tagId = home))
+        val workNote = db.notesDao().insertNoteWithTags(Note(title = "w", tagIds = setOf(work)))
+        val homeNote = db.notesDao().insertNoteWithTags(Note(title = "h", tagIds = setOf(work, home)))
 
         assertEquals(1, db.tagsDao().deleteTagDetachingNotes(Tag(id = work, nameTag = "Work")))
 
-        assertNull(db.notesDao().getNoteById(workNote)?.tagId)
-        assertEquals(home, db.notesDao().getNoteById(homeNote)?.tagId)
+        assertEquals(emptyList<Long>(), db.notesDao().getNoteWithTags(workNote)?.tags?.map { it.id })
+        assertEquals(listOf(home), db.notesDao().getNoteWithTags(homeNote)?.tags?.map { it.id })
     }
 }

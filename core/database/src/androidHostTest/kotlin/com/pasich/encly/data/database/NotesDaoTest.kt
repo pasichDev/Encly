@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -36,6 +36,7 @@ class NotesDaoTest {
             Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
                 .allowMainThreadQueries(),
         ).build()
+        runBlocking { db.tagsDao().addTags(listOf(Tag(id = TAG, nameTag = "X"), Tag(id = OTHER_TAG, nameTag = "Y"))) }
     }
 
     @After
@@ -43,10 +44,12 @@ class NotesDaoTest {
         db.close()
     }
 
-    private suspend fun insert(title: String, tagId: Long? = null, block: Note.() -> Unit = {}): Long =
-        dao.insertNote(Note(title = title, tagId = tagId).apply(block))
+    private suspend fun insert(title: String, vararg tagIds: Long, block: Note.() -> Unit = {}): Long =
+        dao.insertNoteWithTags(Note(title = title, tagIds = tagIds.toSet()).apply(block))
 
-    private suspend fun titles(flow: Flow<List<NoteWithTag>>) = flow.first().map { it.note.title }.sorted()
+    private suspend fun titles(flow: Flow<List<NoteWithTags>>) = flow.first().map { it.note.title }.sorted()
+
+    private suspend fun tagsOf(id: Long) = checkNotNull(dao.getNoteWithTags(id)).tags.map { it.id }.toSet()
 
     @Test
     fun aNewNoteIsNotPinnedNotArchivedAndHasNoColour() = runBlocking {
@@ -71,12 +74,74 @@ class NotesDaoTest {
     }
 
     @Test
-    fun aTagFilterLeavesOutArchivedNotes() = runBlocking {
-        insert("kept", tagId = TAG)
-        insert("archived", tagId = TAG) { isArchived = true }
-        insert("other", tagId = OTHER_TAG)
+    fun aNoteWithSeveralTagsIsListedOnceInEachOfItsTagsAndOnceInTheMainList() = runBlocking {
+        insert("both", TAG, OTHER_TAG)
+        insert("one", TAG)
 
-        assertEquals(listOf("kept"), titles(dao.getNotesByTagId(TAG)))
+        assertEquals(listOf("both", "one"), titles(dao.getNotesOfTagWithArchived(TAG)))
+        assertEquals(listOf("both"), titles(dao.getNotesOfTagWithArchived(OTHER_TAG)))
+        assertEquals(listOf("both", "one"), titles(dao.getAllNotesWithTags()))
+        val both = dao.getAllNotesWithTags().first().single { it.note.title == "both" }
+        assertEquals(setOf("X", "Y"), both.tags.map { it.nameTag }.toSet())
+    }
+
+    @Test
+    fun tagChangesTouchOnlyTheTagsNamed() = runBlocking {
+        val id = insert("note", TAG)
+
+        dao.changeNoteTags(id, added = listOf(OTHER_TAG, TAG), removed = emptyList())
+        assertEquals(setOf(TAG, OTHER_TAG), tagsOf(id))
+        dao.changeNoteTags(id, added = emptyList(), removed = listOf(TAG))
+        assertEquals(setOf(OTHER_TAG), tagsOf(id))
+        dao.setNoteTags(id, listOf(TAG))
+        assertEquals(setOf(TAG), tagsOf(id))
+        dao.clearNoteTags(id)
+        assertEquals(emptySet<Long>(), tagsOf(id))
+    }
+
+    @Test
+    fun deletingATagOrANoteDeletesItsLinksAndTheNoteKeepsItsOtherTags() = runBlocking {
+        val kept = insert("kept", TAG, OTHER_TAG)
+        val gone = insert("gone", TAG)
+
+        db.tagsDao().deleteTagDetachingNotes(Tag(id = TAG, nameTag = "X"))
+        assertEquals(setOf(OTHER_TAG), tagsOf(kept))
+        assertEquals(emptySet<Long>(), tagsOf(gone))
+
+        dao.deleteNoteById(kept)
+        assertEquals(emptyList<Any>(), db.backupDao().allNoteTags())
+    }
+
+    @Test
+    fun tagCountsCountArchivedNotesButNotTrashedOnes() = runBlocking {
+        insert("live", TAG, OTHER_TAG)
+        insert("archived", TAG) { isArchived = true }
+        insert("trashed", TAG) { isTrash = true }
+
+        val counts = dao.observeTagNoteCounts().first().associate { it.tagId to it.count }
+        assertEquals(mapOf(TAG to 2, OTHER_TAG to 1), counts)
+    }
+
+    @Test
+    fun anEditedSaveChangesTheTagsWithTheRowAndNotWithoutIt() = runBlocking {
+        val id = insert("note", TAG)
+
+        val rows = dao.saveEdited(
+            id, "new", "[]", false, "", 0L, false, false, false, "none", false, null, false, null,
+            addTags = listOf(OTHER_TAG),
+            removeTags = listOf(TAG),
+        )
+        assertEquals(1, rows)
+        assertEquals(setOf(OTHER_TAG), tagsOf(id))
+        assertEquals("new", dao.getNoteById(id)?.title)
+
+        val missing = dao.saveEdited(
+            999, "x", "[]", false, "", 0L, false, false, false, "none", false, null, false, null,
+            addTags = listOf(TAG),
+            removeTags = emptyList(),
+        )
+        assertEquals(0, missing)
+        assertEquals(emptyList<Any>(), db.backupDao().noteTagsOf(999))
     }
 
     @Test
@@ -113,7 +178,7 @@ class NotesDaoTest {
 
         // ...and the editor, which opened the note before, saves its text and the colour it changed.
         dao.updateEdited(
-            id, "edited", "new", false, "", 0L, false, null, false, false, true, "teal", false, null, false, null,
+            id, "edited", "new", false, "", 0L, false, false, true, "teal", false, null, false, null,
         )
 
         val stored = checkNotNull(dao.getNoteById(id))
@@ -132,7 +197,7 @@ class NotesDaoTest {
         }
 
         dao.updateEdited(
-            id, "note", "text", false, "", 0L, false, null, false, true, false, "none", false, null, false, null,
+            id, "note", "text", false, "", 0L, false, true, false, "none", false, null, false, null,
         )
 
         // The editor never wrote the pin (its flag is off), and the archive is not its column at all.
@@ -146,7 +211,7 @@ class NotesDaoTest {
         val id = insert("note") { isArchived = true }
 
         dao.updateEdited(
-            id, "note", "", false, "", 0L, false, null, true, true, false, "none", false, null, false, null,
+            id, "note", "", false, "", 0L, true, true, false, "none", false, null, false, null,
         )
 
         assertEquals(false, checkNotNull(dao.getNoteById(id)).isPinned)
@@ -160,13 +225,13 @@ class NotesDaoTest {
         }
 
         dao.updateEdited(
-            id, "note", "same", false, "", 99L, false, null, false, false, false, "none", false, null, false, null,
+            id, "note", "same", false, "", 99L, false, false, false, "none", false, null, false, null,
         )
         assertEquals(5L, checkNotNull(dao.getNoteById(id)).date)
         assertEquals("summary", checkNotNull(dao.getNoteById(id)).description)
 
         dao.updateEdited(
-            id, "note", "changed", true, "", 99L, false, null, false, false, false, "none", false, null, false, null,
+            id, "note", "changed", true, "", 99L, false, false, false, "none", false, null, false, null,
         )
         assertEquals(99L, checkNotNull(dao.getNoteById(id)).date)
         assertEquals("", checkNotNull(dao.getNoteById(id)).description)
@@ -179,7 +244,7 @@ class NotesDaoTest {
         assertTrue(uid.isNotEmpty())
 
         dao.updateEdited(
-            id, "again", "x", false, "", 0L, false, null, false, false, false, "none", false, null, false, null,
+            id, "again", "x", false, "", 0L, false, false, false, "none", false, null, false, null,
         )
 
         assertEquals(uid, checkNotNull(dao.getNoteById(id)).uid)
@@ -200,22 +265,20 @@ class NotesDaoTest {
 
     @Test
     fun aColourWrittenAfterATagChangeKeepsTheNewTag() = runBlocking {
-        db.tagsDao().addTags(listOf(Tag(id = TAG, nameTag = "X"), Tag(id = OTHER_TAG, nameTag = "Y")))
-        val id = insert("note", tagId = TAG)
+        val id = insert("note", TAG)
         // What a stale sheet holds: the note as read in tag X's view.
         val stale = checkNotNull(dao.getNoteById(id))
 
-        dao.updateTagId(id, OTHER_TAG)
+        dao.changeNoteTags(id, added = listOf(OTHER_TAG), removed = listOf(TAG))
         dao.updateColor(stale.id, "teal")
 
-        val stored = checkNotNull(dao.getNoteById(id))
-        assertEquals(OTHER_TAG, stored.tagId)
-        assertEquals("teal", stored.color)
+        assertEquals(setOf(OTHER_TAG), tagsOf(id))
+        assertEquals("teal", checkNotNull(dao.getNoteById(id)).color)
     }
 
     @Test
     fun everySingleColumnWriteLeavesTheOtherColumnsAlone() = runBlocking {
-        val id = insert("note", tagId = TAG) {
+        val id = insert("note", TAG) {
             description = "d"
             color = "red"
             isPinned = true
@@ -225,8 +288,8 @@ class NotesDaoTest {
         dao.updateDescription(id, "new")
         dao.updateColor(id, "blue")
         assertEquals(before.copy(description = "new", color = "blue"), dao.getNoteById(id))
-        dao.updateTagId(id, null)
-        assertEquals(before.copy(description = "new", color = "blue", tagId = null), dao.getNoteById(id))
+        dao.clearNoteTags(id)
+        assertEquals(before.copy(description = "new", color = "blue"), dao.getNoteById(id))
     }
 
     @Test
@@ -258,26 +321,25 @@ class NotesDaoTest {
 
     @Test
     fun aTagsNotesAreReadWithItsArchivedOnesInOneQuery() = runBlocking {
-        insert("live", tagId = TAG)
-        insert("old", tagId = TAG) { isArchived = true }
-        insert("trashed", tagId = TAG) {
+        insert("live", TAG)
+        insert("old", TAG) { isArchived = true }
+        insert("trashed", TAG) {
             isArchived = true
             isTrash = true
         }
-        insert("other", tagId = OTHER_TAG) { isArchived = true }
+        insert("other", OTHER_TAG) { isArchived = true }
 
         assertEquals(listOf("live", "old"), titles(dao.getNotesOfTagWithArchived(TAG)))
     }
 
     @Test
-    fun aNoteCanBeObservedByIdWithItsTag() = runBlocking {
-        db.tagsDao().addTags(listOf(Tag(id = TAG, nameTag = "X")))
-        val id = insert("note", tagId = TAG) { isArchived = true }
+    fun aNoteCanBeObservedByIdWithItsTags() = runBlocking {
+        val id = insert("note", TAG, OTHER_TAG) { isArchived = true }
 
-        val live = checkNotNull(dao.observeNoteWithTag(id).first())
+        val live = checkNotNull(dao.observeNoteWithTags(id).first())
 
-        assertEquals("X", live.tag?.nameTag)
-        assertEquals(null, dao.observeNoteWithTag(999).first())
+        assertEquals(setOf("X", "Y"), live.tags.map { it.nameTag }.toSet())
+        assertEquals(null, dao.observeNoteWithTags(999).first())
     }
 
     @Test

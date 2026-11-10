@@ -133,6 +133,8 @@ class DesktopMigrationTest {
         assertEquals(UID_LENGTH, checkNotNull(db.notesDao().getNoteById(fresh)).uid.length)
         db.tasksDao().appendSubtask(1, "step")
         assertEquals(1, db.tasksDao().getSubtasks(1).size)
+        // The note's tag came all the way through to note_tags.
+        assertEquals(listOf("Work"), checkNotNull(db.notesDao().getNoteWithTags(1)).tags.map { it.nameTag })
     }
 
     @Test
@@ -209,6 +211,74 @@ class DesktopMigrationTest {
         assertTrue(stamp != null && stamp >= before - 1_000 && stamp <= before + 60_000, "stamp $stamp")
         assertNull(db.notesDao().getNoteById(2)?.trashedAt)
         assertEquals(DB_VERSION, userVersion(db))
+    }
+
+    /** Tagged, untagged and dangling notes of [version] (6 or 7: the same rows, 7 adds `trashedAt`). */
+    private fun taggedNotes(version: Int): Array<String> {
+        val columns = "id, title, value, description, date, dateCreate, tagId, isTrash, uid, isPinned, isArchived, " +
+            "color, textSize, lineSpacing" + if (version >= 7) ", trashedAt" else ""
+        val trashedAt = if (version >= 7) ", 77" else ""
+        return arrayOf(
+            "INSERT INTO tags (id, name, visibility, position, uid) VALUES (1, 'Work', 1, 0, 'tag-1')",
+            "INSERT INTO tags (id, name, visibility, position, uid) VALUES (2, 'Secret', 0, 1, 'tag-2')",
+            "INSERT INTO notes ($columns) VALUES (1, 'Work note', '[]', 'd', 20, 10, 1, 0, 'n-1', 1, 0, 'red', 18, 2" +
+                (if (version >= 7) ", NULL" else "") + ")",
+            "INSERT INTO notes ($columns) VALUES (2, 'Secret note', '[]', '', 20, 10, 2, 1, 'n-2', 0, 1, 'none', " +
+                "NULL, NULL$trashedAt)",
+            "INSERT INTO notes ($columns) VALUES (3, 'Untagged', '[]', '', 20, 10, NULL, 0, 'n-3', 0, 0, 'none', " +
+                "NULL, NULL" + (if (version >= 7) ", NULL" else "") + ")",
+            // A tag deleted by an old version without untagging its note.
+            "INSERT INTO notes ($columns) VALUES (4, 'Dangling', '[]', '', 20, 10, 99, 0, 'n-4', 0, 0, 'none', " +
+                "NULL, NULL" + (if (version >= 7) ", NULL" else "") + ")",
+            // A deleted note: its id must never come back.
+            "INSERT INTO notes ($columns) VALUES (40, 'Deleted', '[]', '', 20, 10, NULL, 0, 'n-40', 0, 0, 'none', " +
+                "NULL, NULL" + (if (version >= 7) ", NULL" else "") + ")",
+            "DELETE FROM notes WHERE id = 40",
+        )
+    }
+
+    private suspend fun assertTaggedNotesMigrated(db: AppDatabase) {
+        val notes = db.notesDao()
+        suspend fun names(id: Long) = checkNotNull(notes.getNoteWithTags(id)).tags.map { it.nameTag }
+        assertEquals(listOf("Work"), names(1))
+        assertEquals(listOf("Secret"), names(2))
+        assertEquals(emptyList<String>(), names(3))
+        assertEquals(emptyList<String>(), names(4))
+        val work = checkNotNull(notes.getNoteById(1))
+        assertEquals("n-1", work.uid)
+        assertEquals(true, work.isPinned)
+        assertEquals("red", work.color)
+        assertEquals(18, work.textSize)
+        assertEquals(2, work.lineSpacing)
+        val secret = checkNotNull(notes.getNoteById(2))
+        assertEquals(true, secret.isTrash)
+        assertEquals(true, secret.isArchived)
+        assertTrue(secret.trashedAt != null)
+        assertEquals(DB_VERSION, userVersion(db))
+        // The uid trigger is back on the rebuilt table, and the id counter kept its place.
+        val fresh = notes.insertNoteWithTags(com.pasich.encly.data.model.Note(title = "new", tagIds = setOf(1, 2)))
+        assertEquals(41L, fresh)
+        assertEquals(UID_LENGTH, checkNotNull(notes.getNoteById(fresh)).uid.length)
+        val inWork = notes.getNotesOfTagWithArchived(1).first().map { it.note.title }.sorted()
+        assertEquals(listOf("Work note", "new"), inWork)
+    }
+
+    @Suppress("SpreadOperator") // A handful of rows, once.
+    @Test
+    fun anEncryptedVersion7VaultKeepsEveryNotesTagInTheNewLinks() = runBlocking {
+        writeEncryptedVersion(7, *taggedNotes(7))
+
+        assertTrue(manager.unlockDatabase(KEY))
+        assertTaggedNotesMigrated(manager.getDatabase(checkNotNull(manager.captureLease())))
+    }
+
+    @Suppress("SpreadOperator") // A handful of rows, once.
+    @Test
+    fun anEncryptedVersion6VaultKeepsEveryNotesTagThroughBothMigrations() = runBlocking {
+        writeEncryptedVersion(6, *taggedNotes(6))
+
+        assertTrue(manager.unlockDatabase(KEY))
+        assertTaggedNotesMigrated(manager.getDatabase(checkNotNull(manager.captureLease())))
     }
 
     private companion object {

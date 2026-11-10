@@ -20,7 +20,6 @@ public data class Note(
     var description: String = "",
     var date: Long = 0L,
     var dateCreate: Long = 0L,
-    var tagId: Long? = null,
     @Ignore var isChecked: Boolean = false,
     var isTrash: Boolean = false,
     @ColumnInfo(defaultValue = "''")
@@ -41,6 +40,12 @@ public data class Note(
      * note 28 days after this; a trashed note without it (an imported one) gets the time of the next check.
      */
     var trashedAt: Long? = null,
+    /**
+     * The ids of the note's tags, as the editor holds them. Not a column: the links live in `note_tags`
+     * ([NoteTag]), and a note read straight from `notes` has none here. Only a read that loads the links
+     * (the repository's) fills it, and only a write that stores the links saves it.
+     */
+    @Ignore var tagIds: Set<Long> = emptySet(),
 ) {
 
     /**
@@ -63,12 +68,12 @@ public data class Note(
         /** The stored key of "no colour"; the palette lives in `domain.model.NoteColor`. */
         public const val NO_COLOR: String = "none"
 
-        public fun new(title: String, value: String, tagId: Long? = null): Note = Note(
+        public fun new(title: String, value: String, tagIds: Set<Long> = emptySet()): Note = Note(
             title = title,
             value = value,
             date = nowMillis(),
             dateCreate = nowMillis(),
-            tagId = tagId,
+            tagIds = tagIds,
         )
     }
 }

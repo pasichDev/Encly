@@ -52,7 +52,7 @@ class VaultMigrationTest {
      * The database of [version] as Room created it from its exported [schemaPath], with one note
      * written the way that version wrote it ([noteSql] inserts it).
      */
-    private fun createVersion(version: Int, schemaPath: String, noteSql: String) {
+    private fun createVersion(version: Int, schemaPath: String, vararg rowsSql: String) {
         val schema = Json.parseToJsonElement(File(schemaPath).readText()).jsonObject.getValue("database").jsonObject
         val statements = buildList {
             schema.getValue("entities").jsonArray.forEach { entity ->
@@ -72,7 +72,7 @@ class VaultMigrationTest {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             statements.forEach(db::execSQL)
                             VaultSchema.triggerStatements().forEach(db::execSQL)
-                            db.execSQL(noteSql)
+                            rowsSql.forEach(db::execSQL)
                         }
 
                         override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
@@ -174,6 +174,66 @@ class VaultMigrationTest {
         }
     }
 
+    private fun open() = VaultSchema.install(Room.databaseBuilder(context, AppDatabase::class.java, name))
+        .setDriver(AndroidSQLiteDriver())
+        .build()
+
+    /** A tagged, an untagged and a dangling note (its tag was deleted by an old version without untagging it). */
+    private fun taggedRows(trashedAt: Boolean): Array<String> {
+        val columns = "id, title, value, description, date, dateCreate, tagId, isTrash, uid" +
+            if (trashedAt) ", trashedAt" else ""
+        val end = if (trashedAt) ", NULL)" else ")"
+        return arrayOf(
+            "INSERT INTO tags (id, name, visibility, position, uid) VALUES (1, 'Work', 1, 0, 'tag-1')",
+            "INSERT INTO tags (id, name, visibility, position, uid) VALUES (2, 'Secret', 0, 1, 'tag-2')",
+            "INSERT INTO notes ($columns) VALUES (1, 'Work note', '[]', 'd', 20, 10, 1, 0, 'n-1'$end",
+            "INSERT INTO notes ($columns) VALUES (2, 'Secret note', '[]', 'd', 20, 10, 2, 0, 'n-2'$end",
+            "INSERT INTO notes ($columns) VALUES (3, 'Untagged', '[]', 'd', 20, 10, NULL, 0, 'n-3'$end",
+            "INSERT INTO notes ($columns) VALUES (4, 'Dangling', '[]', 'd', 20, 10, 99, 0, 'n-4'$end",
+        )
+    }
+
+    private suspend fun assertTagsKept(db: AppDatabase) {
+        suspend fun names(id: Long) = checkNotNull(db.notesDao().getNoteWithTags(id)).tags.map { it.nameTag }
+        assertEquals(listOf("Work"), names(1))
+        assertEquals(listOf("Secret"), names(2))
+        assertEquals(emptyList<String>(), names(3))
+        assertEquals(emptyList<String>(), names(4))
+        assertEquals("n-1", db.notesDao().getNoteById(1)?.uid)
+        assertEquals(DB_VERSION, db.userVersion())
+        val counts = db.notesDao().observeTagNoteCounts().first().associate { it.tagId to it.count }
+        assertEquals(mapOf(1L to 1, 2L to 1), counts)
+    }
+
+    @Suppress("SpreadOperator") // A handful of rows, once.
+    @Test
+    fun aVersion7VaultKeepsEveryNotesTag() = runBlocking {
+        createVersion(7, SCHEMA_7, *taggedRows(trashedAt = true))
+
+        val db = open()
+        try {
+            assertTagsKept(db)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Suppress("SpreadOperator") // A handful of rows, once.
+    @Test
+    fun aVersion6VaultKeepsEveryNotesTagThroughBothMigrations() = runBlocking {
+        createVersion(6, SCHEMA_6, *taggedRows(trashedAt = false))
+
+        val db = open()
+        try {
+            assertTagsKept(db)
+            // The uid triggers are back on the rebuilt notes table.
+            val id = db.notesDao().insertNote(com.pasich.encly.data.model.Note(title = "New"))
+            assertEquals(32, checkNotNull(db.notesDao().getNoteById(id)).uid.length)
+        } finally {
+            db.close()
+        }
+    }
+
     private suspend fun AppDatabase.userVersion(): Int = useReaderConnection { connection ->
         connection.usePrepared("PRAGMA user_version") {
             it.step()
@@ -182,6 +242,7 @@ class VaultMigrationTest {
     }
 
     private companion object {
+        const val SCHEMA_7 = "schemas/com.pasich.encly.data.database.AppDatabase/7.json"
         const val SCHEMA_6 = "schemas/com.pasich.encly.data.database.AppDatabase/6.json"
         const val SCHEMA_5 = "schemas/com.pasich.encly.data.database.AppDatabase/5.json"
         const val SCHEMA_4 = "schemas/com.pasich.encly.data.database.AppDatabase/4.json"

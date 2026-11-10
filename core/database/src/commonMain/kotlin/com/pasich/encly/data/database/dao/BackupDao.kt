@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
@@ -22,8 +23,14 @@ public interface BackupDao {
     @Query("SELECT * FROM tags ORDER BY id")
     public suspend fun allTags(): List<Tag>
 
-    @Query("SELECT * FROM tags WHERE id = :tagId")
-    public suspend fun tagById(tagId: Long): Tag?
+    @Query("SELECT * FROM note_tags ORDER BY noteId, tagId")
+    public suspend fun allNoteTags(): List<NoteTag>
+
+    @Query("SELECT * FROM note_tags WHERE noteId = :noteId ORDER BY tagId")
+    public suspend fun noteTagsOf(noteId: Long): List<NoteTag>
+
+    @Query("SELECT * FROM tags WHERE id IN (SELECT tagId FROM note_tags WHERE noteId = :noteId) ORDER BY id")
+    public suspend fun tagsOfNote(noteId: Long): List<Tag>
 
     @Query("SELECT * FROM tasks ORDER BY id")
     public suspend fun allTasks(): List<Task>
@@ -38,6 +45,9 @@ public interface BackupDao {
     public suspend fun insertTag(tag: Tag): Long
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
+    public suspend fun insertNoteTag(link: NoteTag)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insertTask(task: Task): Long
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
@@ -45,6 +55,9 @@ public interface BackupDao {
 
     @Query("DELETE FROM notes")
     public suspend fun deleteAllNotes()
+
+    @Query("DELETE FROM note_tags")
+    public suspend fun deleteAllNoteTags()
 
     @Query("DELETE FROM tags")
     public suspend fun deleteAllTags()

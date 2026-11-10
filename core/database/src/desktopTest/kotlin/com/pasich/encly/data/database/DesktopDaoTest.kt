@@ -12,7 +12,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** The DAO transactions and the entity helpers, against a real encrypted vault on the desktop. */
@@ -39,14 +38,43 @@ class DesktopDaoTest {
     fun deletingATagUntagsItsNotesAndLeavesOthersAlone() = runBlocking {
         val work = db.tagsDao().addTag(Tag(nameTag = "Work"))
         val home = db.tagsDao().addTag(Tag(nameTag = "Home"))
-        val inWork = db.notesDao().insertNote(Note(title = "w", tagId = work))
-        val inHome = db.notesDao().insertNote(Note(title = "h", tagId = home))
+        val inWork = db.notesDao().insertNoteWithTags(Note(title = "w", tagIds = setOf(work)))
+        val inBoth = db.notesDao().insertNoteWithTags(Note(title = "b", tagIds = setOf(work, home)))
+        val inHome = db.notesDao().insertNoteWithTags(Note(title = "h", tagIds = setOf(home)))
 
         db.tagsDao().deleteTagDetachingNotes(Tag(id = work, nameTag = "Work"))
 
-        assertNull(checkNotNull(db.notesDao().getNoteById(inWork)).tagId)
-        assertEquals(home, checkNotNull(db.notesDao().getNoteById(inHome)).tagId)
+        assertEquals(emptySet<Long>(), tagIdsOf(inWork))
+        assertEquals(setOf(home), tagIdsOf(inBoth))
+        assertEquals(setOf(home), tagIdsOf(inHome))
     }
+
+    @Test
+    fun theDatabaseCascadesTheLinksOfADeletedTagOrNote() = runBlocking {
+        val work = db.tagsDao().addTag(Tag(nameTag = "Work"))
+        val home = db.tagsDao().addTag(Tag(nameTag = "Home"))
+        val note = db.notesDao().insertNoteWithTags(Note(title = "n", tagIds = setOf(work, home)))
+        val other = db.notesDao().insertNoteWithTags(Note(title = "o", tagIds = setOf(home)))
+
+        // The plain delete, without the explicit unlinking: the foreign key alone must remove the link.
+        db.tagsDao().deleteTag(Tag(id = work, nameTag = "Work"))
+        assertEquals(setOf(home), tagIdsOf(note))
+
+        db.notesDao().deleteNoteById(note)
+        assertEquals(listOf(other), db.backupDao().allNoteTags().map { it.noteId })
+    }
+
+    @Test
+    fun aLinkToATagThatDoesNotExistIsRefused() = runBlocking {
+        val note = db.notesDao().insertNote(Note(title = "n"))
+
+        val linked = runCatching { db.notesDao().changeNoteTags(note, added = listOf(404L), removed = emptyList()) }
+        assertTrue(linked.isFailure)
+        assertEquals(emptySet<Long>(), tagIdsOf(note))
+    }
+
+    private suspend fun tagIdsOf(noteId: Long) =
+        checkNotNull(db.notesDao().getNoteWithTags(noteId)).tags.map { it.id }.toSet()
 
     @Test
     fun subtasksAreAppendedRestoredAndReplacedInOrder() = runBlocking {
@@ -79,9 +107,9 @@ class DesktopDaoTest {
 
     @Test
     fun theHelpersOfNotesAndTasksFillTheirDefaults() {
-        val note = Note.new("title", "[]", tagId = 3)
+        val note = Note.new("title", "[]", tagIds = setOf(3))
         assertTrue(note.date > 0 && note.dateCreate > 0)
-        assertEquals(3L, note.tagId)
+        assertEquals(setOf(3L), note.tagIds)
         assertEquals(Note.NO_COLOR, note.color)
 
         val task = Task.new("t", description = "d", priority = 2, categoryId = 5)
