@@ -44,7 +44,6 @@
     <string name="import_loss_pinned">Angeheftete Notizen, die nicht angeheftet bleiben: %1$d</string>
     <string name="import_loss_archived">Archivierte Notizen, die als normale Notizen ankommen: %1$d</string>
     <string name="import_loss_colors">Nicht übernommene Notizfarben: %1$d</string>
-    <string name="import_loss_tags">Verworfene zusätzliche Tags (eine Notiz hat ein Tag): %1$d</string>
     <string name="import_loss_todos">Aufgaben-Notizen, die als normale Notizen importiert werden: %1$d</string>
     <string name="import_loss_unsupported">Übersprungene verschlüsselte oder nicht unterstützte Einträge: %1$d</string>
     <string name="import_loss_files">Nicht verwendbare Dateien: %1$d</string>

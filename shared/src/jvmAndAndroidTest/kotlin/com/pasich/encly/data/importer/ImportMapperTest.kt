@@ -92,16 +92,18 @@ class ImportMapperTest {
     }
 
     @Test
-    fun theFirstTagIsKeptNamesAreMatchedAndCutLikeTheTagEditor() {
+    fun everyTagIsKeptOnceNamesAreMatchedAndCutLikeTheTagEditor() {
         val plan = map(
-            note("a", "x", tags = listOf("  Work   Stuff ", "second")),
+            note("a", "x", tags = listOf("  Work   Stuff ", "second", "WORK STUFF")),
             note("b", "x2", tags = listOf("work stuff")),
             note("c", "x3", tags = listOf("a".repeat(40))),
         )
-        assertEquals(listOf("Work Stuff", "a".repeat(20)), plan.payload.tags.map { it.name })
-        val uids = plan.payload.notes.map { it.tagUid }
-        assertEquals(uids[0], uids[1])
-        assertNotEquals(uids[0], uids[2])
+        assertEquals(listOf("Work Stuff", "second", "a".repeat(20)), plan.payload.tags.map { it.name })
+        val uids = plan.payload.notes.map { it.tagUids }
+        assertEquals(2, uids[0].size)
+        assertEquals(uids[0].first(), uids[1].single())
+        assertNotEquals(uids[0].first(), uids[2].single())
+        assertEquals(listOf("Work Stuff", "second"), plan.rows.first().tags)
     }
 
     @Test
@@ -110,7 +112,7 @@ class ImportMapperTest {
         store.insertTag(com.pasich.encly.data.model.Tag(nameTag = "WORK", position = 0, uid = "existing"))
         BackupImporter.import(ImportFixtures.ready(keepFiles).payload, ImportMode.MERGE, store, TagMatch.UID_OR_NAME)
         assertEquals(1, store.tags.size)
-        assertEquals(store.tags.single().id, store.notes.first { it.title == "A" }.tagId)
+        assertEquals(setOf(store.tags.single().id), store.tagIdsOf(store.notes.first { it.title == "A" }.id))
     }
 
     @Test
@@ -216,6 +218,6 @@ class ImportMapperTest {
             note("B", "b", key = "2", tags = listOf("home")),
             note("C", "c", key = "3", tags = listOf("work")),
         )
-        assertEquals(listOf("Work", "home", "Work"), plan.rows.map { it.tag })
+        assertEquals(listOf(listOf("Work"), listOf("home"), listOf("Work")), plan.rows.map { it.tags })
     }
 }

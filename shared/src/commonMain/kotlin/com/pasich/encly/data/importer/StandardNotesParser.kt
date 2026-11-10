@@ -70,7 +70,7 @@ internal object StandardNotesParser {
             val content = ImportText.obj(item["content"])
             val uuid = ImportText.string(item["uuid"])
             if (content != null) {
-                // Alphabetical, so the tag Encly keeps does not depend on the order of the file.
+                // Alphabetical, so the tags' order does not depend on the order of the file.
                 val tags = ImportText.names(tagsByNote[uuid].orEmpty().sortedBy { it.lowercase() })
                 context.add(note(uuid, item, content, tags))
             }
@@ -113,7 +113,6 @@ internal object StandardNotesParser {
             losses = ImportLosses(
                 pinned = if (flag(app, content, "pinned")) 1 else 0,
                 archived = if (flag(app, content, "archived")) 1 else 0,
-                extraTags = (tags.size - 1).coerceAtLeast(0),
             ),
         )
     }

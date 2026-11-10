@@ -14,8 +14,8 @@ import kotlinx.serialization.json.JsonObject
  * folder, so the Takeout ZIP and the loose files give the same note).
  *
  * Brought over: title, text (paragraphs), checklist items with their state (`listContent`),
- * the first label as the tag, trash state, timestamps (microseconds). Counted as losses:
- * attachments, pinned, archived, colors, further labels. HTML duplicates and media files are
+ * the labels as the tags, trash state, timestamps (microseconds). Counted as losses:
+ * attachments, pinned, archived, colors. HTML duplicates and media files are
  * ignored.
  */
 internal object KeepParser {
@@ -61,7 +61,6 @@ internal object KeepParser {
                 pinned = if (ImportText.bool(json["isPinned"]) == true) 1 else 0,
                 archived = if (ImportText.bool(json["isArchived"]) == true) 1 else 0,
                 colors = if (color != null && !color.equals(DEFAULT_COLOR, ignoreCase = true)) 1 else 0,
-                extraTags = (tags.size - 1).coerceAtLeast(0),
             ),
         )
     }

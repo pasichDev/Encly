@@ -221,11 +221,11 @@ private fun NoteRow(note: ReviewNote, checked: Boolean, expandedText: String?, a
     }
 }
 
-/** Badges and date on one line: checklist, tag, in trash, already in the vault, then the date. */
+/** Badges and date on one line: checklist, tags, in trash, already in the vault, then the date. */
 @Composable
 private fun badges(note: ReviewNote): String = buildList {
     if (note.hasChecklist) add(stringResource(Res.string.import_badge_checklist))
-    note.tag?.let { add("#$it") }
+    note.tags.forEach { add("#$it") }
     if (note.trashed) add(stringResource(Res.string.import_badge_trash))
     if (note.existing) add(stringResource(Res.string.import_badge_in_vault))
     add(formatNoteDate(Instant.fromEpochMilliseconds(note.date)))

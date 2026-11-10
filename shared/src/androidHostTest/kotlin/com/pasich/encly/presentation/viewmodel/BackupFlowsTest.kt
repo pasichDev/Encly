@@ -19,6 +19,7 @@ import com.pasich.encly.data.backup.BackupPhraseSetup
 import com.pasich.encly.data.backup.ImportSummary
 import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.platform.DocumentRef
@@ -89,7 +90,8 @@ class BackupFlowsTest {
         source = InMemoryVaultDataStore()
         runBlocking {
             source.insertTag(Tag(nameTag = "Work", uid = "t-work"))
-            source.insertNote(Note(title = "Plan", value = "[]", uid = "n-plan", tagId = 1))
+            val plan = source.insertNote(Note(title = "Plan", value = "[]", uid = "n-plan"))
+            source.insertNoteTag(NoteTag(plan, 1))
             source.insertNote(Note(title = "Ideas", value = "[]", uid = "n-ideas"))
             source.insertTask(Task(title = "Call", uid = "k-call"))
         }
@@ -187,7 +189,7 @@ class BackupFlowsTest {
         assertEquals(listOf("Work"), target.tags.map { it.nameTag })
         assertEquals(listOf("Call"), target.tasks.map { it.title })
         val plan = target.notes.single { it.uid == "n-plan" }
-        assertEquals("the note keeps its tag", target.tags.single().id, plan.tagId)
+        assertEquals("the note keeps its tag", setOf(target.tags.single().id), target.tagIdsOf(plan.id))
     }
 
     @Test

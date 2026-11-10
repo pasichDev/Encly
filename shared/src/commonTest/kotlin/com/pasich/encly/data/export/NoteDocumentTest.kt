@@ -9,7 +9,6 @@ import com.pasich.encly.editor.model.LinkDataBlock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class NoteDocumentTest {
     private fun text(value: String) = Block.TextBlock(text = MutableStateFlow(value))
@@ -55,31 +54,33 @@ class NoteDocumentTest {
     }
 
     @Test
-    fun aNoteBecomesADocumentWithItsTitleAndTag() {
+    fun aNoteBecomesADocumentWithItsTitleAndTags() {
         val json = BlockConverter.blocksToJson(listOf(text("Body")))
         val note = Note(id = 1, title = "  Plan ", value = json)
 
-        val document = NoteDocument.of(note, tagName = " Work ", untitled = "Untitled", unreadable = "Unreadable")
+        val tags = listOf(" Work ", " ", "Home")
+        val document = NoteDocument.of(note, tags, untitled = "Untitled", unreadable = "Unreadable")
 
         assertEquals("Plan", document.title)
-        assertEquals("Work", document.tag)
+        assertEquals(listOf("Work", "Home"), document.tags)
         assertEquals(listOf(DocumentBlock.Paragraph("Body")), document.blocks)
     }
 
     @Test
     fun aNoteWithoutATitleOrTagIsNamedAndUntagged() {
-        val document = NoteDocument.of(Note(id = 1, title = " ", value = "[]"), null, "Untitled", "Unreadable")
+        val document = NoteDocument.of(Note(id = 1, title = " ", value = "[]"), emptyList(), "Untitled", "Unreadable")
 
         assertEquals("Untitled", document.title)
-        assertNull(document.tag)
+        assertEquals(emptyList<String>(), document.tags)
         assertEquals(emptyList(), document.blocks)
     }
 
     @Test
     fun aNoteThatCannotBeReadSaysSo() {
-        val document = NoteDocument.of(Note(id = 1, title = "T", value = "{not json"), "", "Untitled", "Unreadable")
+        val unreadable = Note(id = 1, title = "T", value = "{not json")
+        val document = NoteDocument.of(unreadable, listOf(""), "Untitled", "Unreadable")
 
         assertEquals(listOf(DocumentBlock.Paragraph("Unreadable")), document.blocks)
-        assertNull(document.tag)
+        assertEquals(emptyList<String>(), document.tags)
     }
 }

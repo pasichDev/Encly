@@ -7,6 +7,7 @@ import androidx.room.useWriterConnection
 import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
@@ -38,6 +39,7 @@ class RoomVaultDataStore private constructor(
                     tags = db.backupDao().allTags(),
                     tasks = db.backupDao().allTasks(),
                     subtasks = db.backupDao().allSubtasks(),
+                    noteTags = db.backupDao().allNoteTags(),
                 )
             }
         }
@@ -47,8 +49,12 @@ class RoomVaultDataStore private constructor(
         db.useReaderConnection {
             it.deferredTransaction {
                 val note = db.notesDao().getNoteById(noteId)
-                val tag = note?.tagId?.let { db.backupDao().tagById(it) }
-                VaultSnapshot(listOfNotNull(note), listOfNotNull(tag), emptyList())
+                VaultSnapshot(
+                    notes = listOfNotNull(note),
+                    tags = if (note == null) emptyList() else db.backupDao().tagsOfNote(noteId),
+                    tasks = emptyList(),
+                    noteTags = if (note == null) emptyList() else db.backupDao().noteTagsOf(noteId),
+                )
             }
         }
     }
@@ -58,6 +64,8 @@ class RoomVaultDataStore private constructor(
 
     override suspend fun deleteAll() {
         val dao = database().backupDao()
+        // The foreign keys would cascade the links with their notes; deleted explicitly all the same.
+        dao.deleteAllNoteTags()
         dao.deleteAllNotes()
         // The foreign key would cascade them with their tasks; deleted explicitly all the same.
         dao.deleteAllSubtasks()
@@ -68,6 +76,8 @@ class RoomVaultDataStore private constructor(
     override suspend fun insertTag(tag: Tag): Long = database().backupDao().insertTag(tag)
 
     override suspend fun insertNote(note: Note): Long = database().backupDao().insertNote(note)
+
+    override suspend fun insertNoteTag(link: NoteTag) = database().backupDao().insertNoteTag(link)
 
     override suspend fun insertTask(task: Task): Long = database().backupDao().insertTask(task)
 

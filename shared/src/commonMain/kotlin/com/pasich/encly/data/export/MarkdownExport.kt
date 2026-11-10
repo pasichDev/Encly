@@ -28,13 +28,12 @@ object MarkdownExport {
     }
 
     internal fun writeAll(snapshot: VaultSnapshot, labels: MarkdownLabels, zip: ZipEntrySink) {
-        val tagNames = snapshot.tags.associate { it.id to it.nameTag }
         val names = MarkdownFileNames(reserved = listOf(TASKS_FILE))
         zip.putText(TASKS_FILE, null, MarkdownTasks.render(snapshot.tasks, snapshot.subtasks, snapshot.tags, labels))
         snapshot.notes.filterNot { it.isTrash }.forEach { note ->
             val folder = if (note.isArchived) ARCHIVE_FOLDER else ""
             val name = names.next(note.title, labels.untitled, folder)
-            zip.putText(name, note.date, MarkdownNotes.render(note, tagNames[note.tagId], labels))
+            zip.putText(name, note.date, MarkdownNotes.render(note, snapshot.tagNamesOf(note.id), labels))
         }
         zip.finish()
     }
@@ -42,10 +41,11 @@ object MarkdownExport {
     /** The note [noteId] as one `.md` document; false when the vault has no such note (or it is in the trash). */
     fun writeNote(snapshot: VaultSnapshot, noteId: Long, labels: MarkdownLabels, out: Sink): Boolean {
         val note = snapshot.notes.firstOrNull { it.id == noteId && !it.isTrash } ?: return false
-        val tagName = snapshot.tags.firstOrNull { it.id == note.tagId }?.nameTag
-        out.write(MarkdownNotes.render(note, tagName, labels).encodeToByteArray())
+        out.write(MarkdownNotes.render(note, snapshot.tagNamesOf(note.id), labels).encodeToByteArray())
         return true
     }
+
+    private fun VaultSnapshot.tagNamesOf(noteId: Long) = tagsOf(noteId).map { it.nameTag }
 
     private fun ZipEntrySink.putText(name: String, time: Long?, text: String) =
         put(name, time?.takeIf { it >= ZIP_EPOCH_MILLIS }, text.encodeToByteArray())

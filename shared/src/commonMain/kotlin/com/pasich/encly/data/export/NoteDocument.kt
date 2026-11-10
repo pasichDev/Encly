@@ -33,24 +33,24 @@ sealed interface DocumentBlock {
 }
 
 /**
- * One note as a document for paper or PDF: [title], the [tag] it carries and the [blocks] that are not blank.
+ * One note as a document for paper or PDF: [title], the [tags] it carries and the [blocks] that are not blank.
  * It holds plaintext and is built from the stored note only inside an authenticated export (see
  * `MarkdownExportViewModel`); nothing keeps it afterwards.
  */
-class NoteDocument(val title: String, val tag: String?, val blocks: List<DocumentBlock>) {
+class NoteDocument(val title: String, val tags: List<String>, val blocks: List<DocumentBlock>) {
     companion object {
         private const val H1_TO_H4 = 4
 
         /**
-         * The document of [note]. [tagName] is its tag, if any; a note whose stored content cannot be read gets
-         * [unreadable] as its only paragraph, and a note without a title [untitled].
+         * The document of [note]. [tagNames] are its tags, in their order; a note whose stored content cannot be read
+         * gets [unreadable] as its only paragraph, and a note without a title [untitled].
          */
-        fun of(note: Note, tagName: String?, untitled: String, unreadable: String): NoteDocument {
+        fun of(note: Note, tagNames: List<String>, untitled: String, unreadable: String): NoteDocument {
             val parsed = BlockConverter.jsonToBlocksOrNull(note.value)
             val blocks = parsed?.let(::fromBlocks) ?: listOf(DocumentBlock.Paragraph(unreadable))
             return NoteDocument(
                 title = note.title.trim().ifEmpty { untitled },
-                tag = tagName?.trim()?.takeIf { it.isNotEmpty() },
+                tags = tagNames.map { it.trim() }.filter { it.isNotEmpty() },
                 blocks = blocks,
             )
         }

@@ -50,8 +50,8 @@ class ImportPlan(val payload: BackupPayload, val preview: ImportPreview, val row
  *   The same export imports to the same uids, so a second import adds nothing; two notes with
  *   equal text but different titles or paths stay two notes.
  * - Tags are matched by name against the vault ([com.pasich.encly.data.backup.TagMatch.UID_OR_NAME]).
- *   Encly has one tag per note, so the first of a note's tags is used. Names are cut to
- *   [MAX_TAG_NAME] characters, as the tag editor does.
+ *   A note gets every one of its tags (two names that are one tag here, "Work" and "work", give it
+ *   once). Names are cut to [MAX_TAG_NAME] characters, as the tag editor does.
  * - A missing creation or edit date becomes the other one, or [now].
  */
 object ImportMapper {
@@ -78,7 +78,7 @@ object ImportMapper {
                 duplicates++
                 continue
             }
-            val tagUid = note.tags.firstNotNullOfOrNull { tag(it, tags, tagNames) }
+            val tagUids = note.tags.mapNotNull { tag(it, tags, tagNames) }.distinct()
             val edited = note.edited ?: note.created ?: now
             notes += BackupNote(
                 uid = uid,
@@ -87,15 +87,15 @@ object ImportMapper {
                 description = "",
                 date = edited,
                 dateCreate = note.created ?: edited,
-                tagUid = tagUid,
+                tagUids = tagUids,
                 isTrash = note.trashed,
             )
-            rows += ImportReview.row(uid, note, tagUid?.let(tagNames::get), edited)
+            rows += ImportReview.row(uid, note, tagUids.mapNotNull(tagNames::get), edited)
             losses += note.losses
             if (note.blocks.any { it is Block.ListBlock && it.blockType == BlockType.LIST_CHECK }) checklists++
             if (note.trashed) trashed++
         }
-        val usedTagUids = notes.mapNotNullTo(HashSet()) { it.tagUid }
+        val usedTagUids = notes.flatMapTo(HashSet()) { it.tagUids }
         val payload = BackupPayload(
             exportedAt = now,
             tags = tags.values.filter { it.uid in usedTagUids }.mapIndexed { index, tag -> tag.copy(position = index) },

@@ -28,15 +28,16 @@ class MarkdownLabels(val untitled: String, val unreadable: String, val tasks: St
  * a title with a colon, a quote or a line break cannot break out of its line.
  */
 object MarkdownNotes {
-    /** [tagName] is the note's tag, if any. */
-    fun render(note: Note, tagName: String?, labels: MarkdownLabels): String {
+    /** [tagNames] are the note's tags, in their order. */
+    fun render(note: Note, tagNames: List<String>, labels: MarkdownLabels): String {
         val title = note.title.trim()
         val blocks = BlockConverter.jsonToBlocksOrNull(note.value)
         val body = blocks?.let(MarkdownBlocks::render) ?: MarkdownText.escapeInline(labels.unreadable)
         return buildString {
             append("---\n")
             append("title: ").append(quoted(title.ifEmpty { labels.untitled })).append('\n')
-            if (!tagName.isNullOrBlank()) append("tags: [").append(quoted(tagName.trim())).append("]\n")
+            val tags = tagNames.map { it.trim() }.filter { it.isNotEmpty() }
+            if (tags.isNotEmpty()) append("tags: [").append(tags.joinToString(", ") { quoted(it) }).append("]\n")
             if (note.dateCreate > 0L) append("created: ").append(iso(note.dateCreate)).append('\n')
             if (note.date > 0L) append("updated: ").append(iso(note.date)).append('\n')
             if (note.description.isNotBlank()) {

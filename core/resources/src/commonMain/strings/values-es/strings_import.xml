@@ -44,7 +44,6 @@
     <string name="import_loss_pinned">Notas fijadas que no seguirán fijadas: %1$d</string>
     <string name="import_loss_archived">Notas archivadas que llegan como notas normales: %1$d</string>
     <string name="import_loss_colors">Colores de nota que no se conservan: %1$d</string>
-    <string name="import_loss_tags">Etiquetas extra descartadas (una nota tiene una etiqueta): %1$d</string>
     <string name="import_loss_todos">Notas de tareas importadas como notas normales: %1$d</string>
     <string name="import_loss_unsupported">Elementos cifrados o no compatibles omitidos: %1$d</string>
     <string name="import_loss_files">Archivos que no se pudieron usar: %1$d</string>

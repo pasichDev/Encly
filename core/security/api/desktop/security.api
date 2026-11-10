@@ -83,8 +83,8 @@ public final class com/pasich/encly/core/backup/BackupKeys {
 
 public final class com/pasich/encly/core/backup/BackupNote {
 	public static final field Companion Lcom/pasich/encly/core/backup/BackupNote$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/util/List;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/util/List;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()Z
 	public final fun component11 ()Ljava/lang/String;
@@ -95,18 +95,18 @@ public final class com/pasich/encly/core/backup/BackupNote {
 	public final fun component4 ()Ljava/lang/String;
 	public final fun component5 ()J
 	public final fun component6 ()J
-	public final fun component7 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Z
 	public final fun component9 ()Z
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/pasich/encly/core/backup/BackupNote;
-	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupNote;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupNote;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/util/List;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/pasich/encly/core/backup/BackupNote;
+	public static synthetic fun copy$default (Lcom/pasich/encly/core/backup/BackupNote;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJLjava/util/List;ZZZLjava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/pasich/encly/core/backup/BackupNote;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Ljava/lang/String;
 	public final fun getDate ()J
 	public final fun getDateCreate ()J
 	public final fun getDescription ()Ljava/lang/String;
 	public final fun getLineSpacing ()Ljava/lang/Integer;
-	public final fun getTagUid ()Ljava/lang/String;
+	public final fun getTagUids ()Ljava/util/List;
 	public final fun getTextSize ()Ljava/lang/Integer;
 	public final fun getTitle ()Ljava/lang/String;
 	public final fun getUid ()Ljava/lang/String;
@@ -139,6 +139,7 @@ public final class com/pasich/encly/core/backup/BackupPayload {
 	public static final field SCHEMA_V2 I
 	public static final field SCHEMA_V3 I
 	public static final field SCHEMA_V4 I
+	public static final field SCHEMA_V5 I
 	public static final field SCHEMA_VERSION I
 	public fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)V
 	public synthetic fun <init> (IJLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

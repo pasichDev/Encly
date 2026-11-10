@@ -57,7 +57,7 @@ class KeepParserTest {
             ),
         )
         assertTrue(note.trashed)
-        assertEquals(ImportLosses(attachments = 2, pinned = 1, archived = 1, colors = 1, extraTags = 1), note.losses)
+        assertEquals(ImportLosses(attachments = 2, pinned = 1, archived = 1, colors = 1), note.losses)
         assertEquals(listOf("A", "B"), note.tags)
     }
 

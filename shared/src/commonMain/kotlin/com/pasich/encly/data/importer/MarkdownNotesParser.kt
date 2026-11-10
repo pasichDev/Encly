@@ -77,7 +77,7 @@ internal object MarkdownNotesParser {
             tags = tags,
             created = ImportTime.parse(doc.firstValue("created_at", "created", "date")),
             edited = ImportTime.parse(doc.firstValue("updated_at", "updated", "modified")),
-            losses = losses(doc, tags.size, notesnook, archivedFolder = ARCHIVE_DIR in dirs),
+            losses = losses(doc, notesnook, archivedFolder = ARCHIVE_DIR in dirs),
         )
     }
 
@@ -106,12 +106,10 @@ internal object MarkdownNotesParser {
     private fun sameName(title: String, fileTitle: String): Boolean =
         title.lowercase().replace(SEPARATORS, " ").trim() == fileTitle.lowercase().replace(SEPARATORS, " ").trim()
 
-    /** Notesnook's extras that Encly has no counterpart for, and labels beyond the first. */
-    private fun losses(doc: MarkdownDocument, tagCount: Int, notesnook: Boolean, archivedFolder: Boolean) =
-        ImportLosses(
-            pinned = if (notesnook && doc.flag("pinned")) 1 else 0,
-            archived = if (archivedFolder || (notesnook && doc.flag("archived"))) 1 else 0,
-            colors = if (notesnook && doc.value("color") != null) 1 else 0,
-            extraTags = (tagCount - 1).coerceAtLeast(0),
-        )
+    /** Notesnook's extras that Encly has no counterpart for. */
+    private fun losses(doc: MarkdownDocument, notesnook: Boolean, archivedFolder: Boolean) = ImportLosses(
+        pinned = if (notesnook && doc.flag("pinned")) 1 else 0,
+        archived = if (archivedFolder || (notesnook && doc.flag("archived"))) 1 else 0,
+        colors = if (notesnook && doc.value("color") != null) 1 else 0,
+    )
 }

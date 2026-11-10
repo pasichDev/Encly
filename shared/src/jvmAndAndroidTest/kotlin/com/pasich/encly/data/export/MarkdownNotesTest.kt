@@ -15,7 +15,7 @@ class MarkdownNotesTest {
 
     private val labels = MarkdownLabels("Untitled", "Cannot read", "Tasks", emptyMap())
 
-    private fun render(note: Note, tag: String? = null) = MarkdownNotes.render(note, tag, labels)
+    private fun render(note: Note, tag: String? = null) = MarkdownNotes.render(note, listOfNotNull(tag), labels)
 
     @Test
     fun timesKeepTheirMillisecondsAndDropNothingElse() {
@@ -89,6 +89,15 @@ class MarkdownNotesTest {
     }
 
     @Test
+    fun everyTagReadsBackWholeEvenWithACommaOrAQuote() {
+        val tags = listOf("Work", "Home, Inc", "a \"q\"")
+        val markdown = MarkdownNotes.render(Note(title = "Plan", value = "[]"), tags, labels)
+
+        assertTrue(markdown, markdown.contains("tags: [\"Work\", \"Home, Inc\", \"a \\\"q\\\"\"]\n"))
+        assertEquals(tags, Frontmatter.split(markdown).list("tags"))
+    }
+
+    @Test
     fun aNoteWithoutATitleIsCalledUntitledButGetsNoHeading() {
         val markdown = render(Note(value = "[]"))
 
@@ -140,7 +149,7 @@ class MarkdownNotesTest {
         val note = Note(title = "Plan", value = "[]")
         assertEquals(
             "# Plan\n",
-            MarkdownNotes.render(note, null, labels).substringAfter("---\n\n"),
+            MarkdownNotes.render(note, emptyList(), labels).substringAfter("---\n\n"),
         )
         assertEquals("# Plan\n", MarkdownNotes.renderBody(note.title, emptyList()))
     }

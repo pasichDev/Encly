@@ -17,7 +17,8 @@ data class ReviewNote(
     /** About one line of the first text, no markup. */
     val snippet: String,
     val hasChecklist: Boolean,
-    val tag: String?,
+    /** The note's tags by name, in order. */
+    val tags: List<String>,
     val trashed: Boolean,
     val date: Long,
     /** A note with this uid is already in the vault, so importing it would add nothing. */
@@ -30,12 +31,12 @@ object ImportReview {
     private const val BODY_CHARS = 4000
     private val WHITESPACE = Regex("""\s+""")
 
-    internal fun row(uid: String, note: ImportedNote, tag: String?, date: Long) = ReviewNote(
+    internal fun row(uid: String, note: ImportedNote, tags: List<String>, date: Long) = ReviewNote(
         uid = uid,
         title = note.title.trim(),
         snippet = snippet(note.blocks),
         hasChecklist = note.blocks.any { it is Block.ListBlock && it.blockType == BlockType.LIST_CHECK },
-        tag = tag,
+        tags = tags,
         trashed = note.trashed,
         date = date,
     )
@@ -93,7 +94,7 @@ object ImportReview {
      */
     fun selection(payload: BackupPayload, selected: Set<String>): BackupPayload {
         val notes = payload.notes.filter { it.uid in selected }
-        val used = notes.mapNotNullTo(HashSet()) { it.tagUid }
+        val used = notes.flatMapTo(HashSet()) { it.tagUids }
         val tags = payload.tags.filter { it.uid in used }.mapIndexed { index, tag -> tag.copy(position = index) }
         return payload.copy(tags = tags, notes = notes).also(BackupPayloadCodec::validate)
     }

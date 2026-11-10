@@ -8,7 +8,7 @@ import com.pasich.encly.editor.codec.MarkdownBlockMapper
  * 6 note-tag link. Joplin's own *Markdown* exports have no metadata block and are read as
  * generic Markdown instead.
  *
- * A note gets its explicit Joplin tags (alphabetical, the first is kept), else its notebook's
+ * A note gets its explicit Joplin tags (alphabetical), else its notebook's
  * name. To-do notes arrive as ordinary notes and are counted. Resources (attachments) stay behind.
  */
 internal object JoplinParser {
@@ -68,7 +68,7 @@ internal object JoplinParser {
         for (note in items.filter { it.type == TYPE_NOTE }) {
             val explicit = ImportText.names(tagsByNote[note.id].orEmpty().sortedBy { it.lowercase() })
             val notebook = folders[note.props["parent_id"]]?.let { ImportText.names(listOf(it)) }.orEmpty()
-            context.add(note(note, explicit.ifEmpty { notebook }, explicit.size))
+            context.add(note(note, explicit.ifEmpty { notebook }))
         }
         return context.result()
     }
@@ -81,7 +81,7 @@ internal object JoplinParser {
             .groupBy({ it.first }, { it.second })
     }
 
-    private fun note(note: Item, tags: List<String>, explicitCount: Int) = ImportedNote(
+    private fun note(note: Item, tags: List<String>) = ImportedNote(
         sourceKey = note.id,
         title = note.title,
         blocks = MarkdownBlockMapper.toBlocks(note.body),
@@ -89,10 +89,7 @@ internal object JoplinParser {
         created = time(note, "user_created_time", "created_time"),
         edited = time(note, "user_updated_time", "updated_time"),
         trashed = time(note, "deleted_time") != null,
-        losses = ImportLosses(
-            extraTags = (explicitCount - 1).coerceAtLeast(0),
-            todos = if (note.props["is_todo"] == "1") 1 else 0,
-        ),
+        losses = ImportLosses(todos = if (note.props["is_todo"] == "1") 1 else 0),
     )
 
     private fun time(item: Item, vararg keys: String): Long? =

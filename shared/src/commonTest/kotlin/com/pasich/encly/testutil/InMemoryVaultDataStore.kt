@@ -3,6 +3,7 @@ package com.pasich.encly.testutil
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
@@ -16,6 +17,10 @@ internal class InMemoryVaultDataStore : VaultDataStore {
     val tags = mutableListOf<Tag>()
     val tasks = mutableListOf<Task>()
     val subtasks = mutableListOf<Subtask>()
+    val noteTags = mutableListOf<NoteTag>()
+
+    /** The ids of note [noteId]'s tags. */
+    fun tagIdsOf(noteId: Long): Set<Long> = noteTags.filter { it.noteId == noteId }.mapTo(HashSet()) { it.tagId }
 
     /** Makes the n-th insert (1-based, counted across tables) fail, like a constraint error. */
     var failOnInsert: Int? = null
@@ -27,11 +32,13 @@ internal class InMemoryVaultDataStore : VaultDataStore {
         tags = tags.map { it.copy() },
         tasks = tasks.toList(),
         subtasks = subtasks.toList(),
+        noteTags = noteTags.toList(),
     )
 
     override suspend fun <R> inTransaction(block: suspend () -> R): R {
         val saved = Triple(notes.toList(), tags.toList(), tasks.toList())
         val savedSubtasks = subtasks.toList()
+        val savedNoteTags = noteTags.toList()
         return try {
             block()
         } catch (e: RuntimeException) {
@@ -39,11 +46,13 @@ internal class InMemoryVaultDataStore : VaultDataStore {
             restore(tags, saved.second)
             restore(tasks, saved.third)
             restore(subtasks, savedSubtasks)
+            restore(noteTags, savedNoteTags)
             throw e
         }
     }
 
     override suspend fun deleteAll() {
+        noteTags.clear()
         notes.clear()
         tags.clear()
         tasks.clear()
@@ -60,6 +69,13 @@ internal class InMemoryVaultDataStore : VaultDataStore {
         val id = nextInsert(note.uid, notes.map { it.uid })
         notes += note.copy(id = id, uid = note.uid.ifBlank { "note-$id" })
         return id
+    }
+
+    override suspend fun insertNoteTag(link: NoteTag) {
+        val linked = notes.any { it.id == link.noteId } && tags.any { it.id == link.tagId }
+        check(linked) { "FOREIGN KEY constraint failed" }
+        check(link !in noteTags) { "UNIQUE constraint failed: note_tags" }
+        noteTags += link
     }
 
     override suspend fun insertTask(task: Task): Long {

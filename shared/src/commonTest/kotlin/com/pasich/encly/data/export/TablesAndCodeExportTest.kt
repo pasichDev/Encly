@@ -81,7 +81,7 @@ class TablesAndCodeExportTest {
             value = BlockConverter.blocksToJson(listOf(code("a\n  b"), table(listOf("x", "y"), listOf("z", "")))),
         )
 
-        val document = NoteDocument.of(note, tagName = null, untitled = "Untitled", unreadable = "?")
+        val document = NoteDocument.of(note, tagNames = emptyList(), untitled = "Untitled", unreadable = "?")
 
         assertEquals(
             listOf(DocumentBlock.Paragraph("a\n  b"), DocumentBlock.Paragraph("x | y\nz | ")),

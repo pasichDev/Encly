@@ -185,7 +185,7 @@ class BackupManagerTest {
         exportedAt = 0,
         tags = emptyList(),
         notes = listOf(
-            BackupNote("n-new", "New", "[]", "", 1L, 1L, tagUid = null, isTrash = false),
+            BackupNote("n-new", "New", "[]", "", 1L, 1L, isTrash = false),
         ),
         tasks = emptyList(),
         settings = settings,

@@ -52,7 +52,7 @@ class StandardNotesParserTest {
         assertTrue(n.trashed)
         assertEquals(1_714_647_600_000L, n.edited)
         assertEquals(1_714_557_600_000L, n.created)
-        assertEquals(ImportLosses(pinned = 1, archived = 1, extraTags = 1), n.losses)
+        assertEquals(ImportLosses(pinned = 1, archived = 1), n.losses)
     }
 
     @Test
@@ -227,7 +227,6 @@ class JoplinParserTest {
         assertEquals(2, parsed.notes.size)
         val shopping = parsed.notes.first { it.title == "Shopping" }
         assertEquals(listOf("alpha", "zeta"), shopping.tags)
-        assertEquals(1, shopping.losses.extraTags)
         assertEquals(1, shopping.losses.todos)
         assertTrue(shopping.trashed)
         assertEquals(1_704_326_400_000L, shopping.edited)
@@ -315,7 +314,7 @@ class MarkdownNotesParserTest {
         val plan = parsed.notes.first { it.title == "Plan \"A\"" }
         assertEquals(listOf("x", "y"), plan.tags)
         assertEquals(listOf("check:[x] done"), describe(plan.blocks))
-        assertEquals(ImportLosses(pinned = 1, colors = 1, extraTags = 1), plan.losses)
+        assertEquals(ImportLosses(pinned = 1, colors = 1), plan.losses)
         assertEquals(1_704_067_200_000L, plan.created)
         val old = parsed.notes.first { it.title == "Old" }
         assertEquals(listOf("Work"), old.tags)

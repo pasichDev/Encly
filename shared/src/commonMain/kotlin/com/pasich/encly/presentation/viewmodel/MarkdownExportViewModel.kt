@@ -243,8 +243,7 @@ class MarkdownExportViewModel(
     private fun documentOf(snapshot: VaultSnapshot, noteId: Long, labels: MarkdownLabels): NoteDocument {
         val note = snapshot.notes.firstOrNull { it.id == noteId && !it.isTrash }
             ?: throw BackupException(BackupError.IO)
-        val tagName = snapshot.tags.firstOrNull { it.id == note.tagId }?.nameTag
-        return NoteDocument.of(note, tagName, labels.untitled, labels.unreadable)
+        return NoteDocument.of(note, snapshot.tagsOf(note.id).map { it.nameTag }, labels.untitled, labels.unreadable)
     }
 
     /** Prints the note: read through the authenticated session, handed to the printer's dialog, then forgotten. */

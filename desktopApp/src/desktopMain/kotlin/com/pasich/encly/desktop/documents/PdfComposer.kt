@@ -51,7 +51,9 @@ internal class PdfComposer(
     fun compose(note: NoteDocument) {
         newPage()
         paragraph(note.title, PageStyle.TITLE_SIZE, bold = true, color = PageStyle.INK)
-        note.tag?.let { paragraph(it, PageStyle.META_SIZE, color = PageStyle.QUIET) }
+        if (note.tags.isNotEmpty()) {
+            paragraph(note.tags.joinToString(", "), PageStyle.META_SIZE, color = PageStyle.QUIET)
+        }
         y -= PageStyle.BLOCK_GAP
         note.blocks.forEach { block ->
             draw(block)

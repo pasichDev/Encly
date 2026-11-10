@@ -2,12 +2,15 @@ package com.pasich.encly.data.backup
 
 import com.pasich.encly.core.backup.BackupCipher
 import com.pasich.encly.core.backup.BackupError
+import com.pasich.encly.core.backup.BackupNote
 import com.pasich.encly.core.backup.BackupPayload
 import com.pasich.encly.core.backup.BackupPayloadCodec
 import com.pasich.encly.core.backup.BackupSecret
+import com.pasich.encly.core.backup.BackupTag
 import com.pasich.encly.core.backup.assertError
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
@@ -49,18 +52,20 @@ class BackupImporterTest {
 
     private suspend fun seededVault() = InMemoryVaultDataStore().apply {
         val work = insertTag(Tag(nameTag = "Work", isVisible = true, position = 0, uid = "tag-work"))
-        insertTag(Tag(nameTag = "Hidden", isVisible = false, position = 1, uid = "tag-hidden"))
-        insertNote(
+        val hidden = insertTag(Tag(nameTag = "Hidden", isVisible = false, position = 1, uid = "tag-hidden"))
+        val plan = insertNote(
             Note(
                 title = "Plan",
                 value = allBlocks,
                 description = "d",
                 date = 20,
                 dateCreate = 10,
-                tagId = work,
                 uid = "n-plan",
             ),
         )
+        // Two tags on one note.
+        insertNoteTag(NoteTag(plan, work))
+        insertNoteTag(NoteTag(plan, hidden))
         insertNote(Note(title = "Old", value = "[]", date = 5, dateCreate = 1, isTrash = true, uid = "n-old"))
         insertTask(
             Task(
@@ -197,7 +202,7 @@ class BackupImporterTest {
             tags = emptyList(),
             notes = listOf(
                 com.pasich.encly.core.backup.BackupNote(
-                    "n1", "t", "[]", "", 1, 1, null, false, isPinned = true, isArchived = true,
+                    "n1", "t", "[]", "", 1, 1, emptyList(), false, isPinned = true, isArchived = true,
                 ),
             ),
             tasks = emptyList(),
@@ -245,6 +250,33 @@ class BackupImporterTest {
         assertEquals(localWork, target.tasks.single { it.uid == "k-call" }.categoryId)
         // Merged tags go after the device's own tags.
         assertEquals(2, target.tags.single { it.uid == "tag-hidden" }.position)
+    }
+
+    @Test
+    fun aNoteKeepsEveryTagThroughExportAndImport() = runTest {
+        val target = InMemoryVaultDataStore()
+
+        BackupImporter.import(open(export(seededVault())), ImportMode.MERGE, target)
+
+        val plan = target.notes.single { it.uid == "n-plan" }
+        assertEquals(target.tags.map { it.id }.toSet(), target.tagIdsOf(plan.id))
+        assertEquals(emptySet<Long>(), target.tagIdsOf(target.notes.single { it.uid == "n-old" }.id))
+    }
+
+    @Test
+    fun twoBackupTagsThatAreOneTagHereLinkTheNoteOnce() = runTest {
+        val payload = BackupPayload(
+            exportedAt = 1,
+            tags = listOf(BackupTag("a", "Work", true, 0), BackupTag("b", "work", true, 1)),
+            notes = listOf(BackupNote("n", "N", "[]", "", 1, 1, tagUids = listOf("a", "b"), isTrash = false)),
+            tasks = emptyList(),
+        )
+        val target = InMemoryVaultDataStore()
+
+        BackupImporter.import(payload, ImportMode.MERGE, target, TagMatch.UID_OR_NAME)
+
+        assertEquals(1, target.tags.size)
+        assertEquals(setOf(target.tags.single().id), target.tagIdsOf(target.notes.single().id))
     }
 
     @Test
@@ -319,7 +351,7 @@ class BackupImporterTest {
                     it.description,
                     it.date,
                     it.dateCreate,
-                    tagUid[it.tagId],
+                    store.tagIdsOf(it.id).map(tagUid::get).toSet(),
                     it.isTrash,
                 )
             }.toSet(),

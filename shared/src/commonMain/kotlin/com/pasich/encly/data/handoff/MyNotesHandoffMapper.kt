@@ -51,7 +51,7 @@ object MyNotesHandoffMapper {
                 description = "",
                 date = note.date,
                 dateCreate = note.date,
-                tagUid = note.tag?.let(tags::uidForName),
+                tagUids = listOfNotNull(note.tag?.let(tags::uidForName)),
                 isTrash = note.isTrash,
             )
         }

@@ -34,6 +34,9 @@ import kotlinx.serialization.json.jsonObject
  *   file has none and restores exactly as before. An app that reads only schema 4 reports a
  *   schema-5 file as [BackupError.UNSUPPORTED_VERSION] ("update the app"): its strict reader
  *   cannot skip a section, and it never half-restores.
+ * - 6: a note carries the uids of all its tags as `tagUids` (a list, empty for a note without any) instead of one
+ *   `tagUid`. A file of schema 1 to 5 is read with its note's one tag (or none) as the list. An app that reads only
+ *   schema 5 reports a schema-6 file as [BackupError.UNSUPPORTED_VERSION].
  */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -52,7 +55,7 @@ public data class BackupPayload(
     val settings: Map<String, String> = emptyMap(),
 ) {
     public companion object {
-        public const val SCHEMA_VERSION: Int = 5
+        public const val SCHEMA_VERSION: Int = 6
 
         /** Tasks carried a `reminderDate`, dropped on import. */
         public const val SCHEMA_V1: Int = 1
@@ -65,6 +68,9 @@ public data class BackupPayload(
 
         /** The file carried no preferences; it is imported with none. */
         public const val SCHEMA_V4: Int = 4
+
+        /** A note carried one `tagUid` (or null), not the list `tagUids`. */
+        public const val SCHEMA_V5: Int = 5
     }
 }
 
@@ -73,7 +79,8 @@ public data class BackupTag(val uid: String, val name: String, val visible: Bool
 
 /**
  * [value] is the note's serialized block list, carried verbatim so every block type survives.
- * [color] is a stable palette key (`none`, `red`, ...), never a colour value.
+ * [color] is a stable palette key (`none`, `red`, ...), never a colour value. [tagUids] are the uids of the note's
+ * tags, each at most once, in the order of the tags.
  */
 @Serializable
 public data class BackupNote(
@@ -83,7 +90,7 @@ public data class BackupNote(
     val description: String,
     val date: Long,
     val dateCreate: Long,
-    val tagUid: String?,
+    val tagUids: List<String> = emptyList(),
     val isTrash: Boolean,
     val isPinned: Boolean = false,
     val isArchived: Boolean = false,
@@ -111,6 +118,66 @@ public data class BackupTask(
 /** A task's checklist item. Its task is the [BackupTask] that holds it; [uid]s are vault-wide unique. */
 @Serializable
 public data class BackupSubtask(val uid: String, val title: String, val isCompleted: Boolean, val position: Int)
+
+/**
+ * A file of schema 1 to 5 as it is read: the shape of the current schema, but a note carries one [LegacyNote.tagUid].
+ * Decoded as strictly as the current one, then turned into it ([toCurrent]).
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+private class LegacyPayload(
+    val schema: Int,
+    val exportedAt: Long,
+    val tags: List<BackupTag>,
+    val notes: List<LegacyNote>,
+    val tasks: List<BackupTask>,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val settings: Map<String, String> = emptyMap(),
+) {
+    fun toCurrent() = BackupPayload(
+        schema = BackupPayload.SCHEMA_VERSION,
+        exportedAt = exportedAt,
+        tags = tags,
+        notes = notes.map { it.toCurrent() },
+        tasks = tasks,
+        settings = settings,
+    )
+}
+
+/** A note of schema 1 to 5: [tagUid] its one tag, or null. */
+@Suppress("LongParameterList") // One parameter per key of the file's note.
+@Serializable
+private class LegacyNote(
+    val uid: String,
+    val title: String,
+    val value: String,
+    val description: String,
+    val date: Long,
+    val dateCreate: Long,
+    val tagUid: String?,
+    val isTrash: Boolean,
+    val isPinned: Boolean = false,
+    val isArchived: Boolean = false,
+    val color: String = "none",
+    val textSize: Int? = null,
+    val lineSpacing: Int? = null,
+) {
+    fun toCurrent() = BackupNote(
+        uid = uid,
+        title = title,
+        value = value,
+        description = description,
+        date = date,
+        dateCreate = dateCreate,
+        tagUids = listOfNotNull(tagUid),
+        isTrash = isTrash,
+        isPinned = isPinned,
+        isArchived = isArchived,
+        color = color,
+        textSize = textSize,
+        lineSpacing = lineSpacing,
+    )
+}
 
 /** UTF-8 JSON encoding of [BackupPayload] with strict validation on the way in. */
 @OptIn(ExperimentalSerializationApi::class)
@@ -158,14 +225,17 @@ public object BackupPayloadCodec {
             when (schema) {
                 in BackupPayload.SCHEMA_V1..BackupPayload.SCHEMA_V3 -> {
                     val tree = decodeStream(json, JsonElement.serializer(), plaintext)
-                    json.decodeFromJsonElement(BackupPayload.serializer(), upgrade(tree.jsonObject, schema))
+                    val upgraded = upgrade(tree.jsonObject, schema)
+                    json.decodeFromJsonElement(LegacyPayload.serializer(), upgraded).toCurrent()
                 }
 
-                // The shape of the current schema without the section: decoded strictly in one pass (the
-                // commonest file, up to the size limit), not through a JSON tree.
-                BackupPayload.SCHEMA_V4 -> decodeStream(json, BackupPayload.serializer(), plaintext).also {
+                // Schema 4 and 5 are the shape of [LegacyPayload] (4 without the section): decoded strictly in one
+                // pass (the commonest files, up to the size limit), not through a JSON tree.
+                BackupPayload.SCHEMA_V4 -> decodeStream(json, LegacyPayload.serializer(), plaintext).also {
                     require(it.settings.isEmpty()) { "Unexpected settings in schema $schema" }
-                }.copy(schema = BackupPayload.SCHEMA_VERSION)
+                }.toCurrent()
+
+                BackupPayload.SCHEMA_V5 -> decodeStream(json, LegacyPayload.serializer(), plaintext).toCurrent()
 
                 else -> decodeStream(json, BackupPayload.serializer(), plaintext)
             }
@@ -175,10 +245,10 @@ public object BackupPayloadCodec {
     }
 
     /**
-     * Schema 1 to 3 -> current (schema 4 needs no tree: see [decode]). 1 -> 2 drops each task's
-     * `reminderDate`; 2 -> 3 gives each task an empty `subtasks` list; 3 -> 4 leaves notes to the
+     * Schema 1 to 3 -> the shape of schema 5, [LegacyPayload] (schema 4 needs no tree: see [decode]). 1 -> 2 drops
+     * each task's `reminderDate`; 2 -> 3 gives each task an empty `subtasks` list; 3 -> 4 leaves notes to the
      * defaults of the new fields (unpinned, not archived, no colour); 4 -> 5 leaves `settings`
-     * empty. Everything else is unchanged. A
+     * empty. Everything else is unchanged; 5 -> 6 (the note's tag as a list) is [LegacyPayload.toCurrent]. A
      * key an older schema did not have (`subtasks` in 1 or 2, a note's pin, archive or colour in
      * 1 to 3, `settings` in 1 to 4) fails like any other unknown key.
      */
@@ -197,7 +267,7 @@ public object BackupPayloadCodec {
         }
         require(SETTINGS_KEY !in old) { "Unexpected settings in schema $schema" }
         return JsonObject(
-            old + ("schema" to JsonPrimitive(BackupPayload.SCHEMA_VERSION)) +
+            old + ("schema" to JsonPrimitive(BackupPayload.SCHEMA_V5)) +
                 (tasks?.let { mapOf(TASKS_KEY to JsonArray(it)) }.orEmpty()),
         )
     }
@@ -220,13 +290,17 @@ public object BackupPayloadCodec {
             uniqueValidUids(payload.notes.map { it.uid }) &&
             uniqueValidUids(payload.tasks.map { it.uid }) &&
             uniqueValidUids(payload.tasks.flatMap { task -> task.subtasks.map { it.uid } }) &&
-            payload.notes.all { it.tagUid == null || it.tagUid in tagUids } &&
+            payload.notes.all { validNoteTags(it, tagUids) } &&
             payload.notes.all(::validNoteStyle) &&
             payload.tasks.all {
                 it.priority in PRIORITIES && (it.categoryTagUid == null || it.categoryTagUid in tagUids)
             }
         if (!valid) throw BackupException(BackupError.INVALID_PAYLOAD)
     }
+
+    /** Every tag of the note is a tag of the file, and none is listed twice. */
+    private fun validNoteTags(note: BackupNote, tagUids: Set<String>): Boolean =
+        note.tagUids.all { it in tagUids } && note.tagUids.toSet().size == note.tagUids.size
 
     /** A note's colour key and its own text size and line spacing are within what the app can show. */
     private fun validNoteStyle(note: BackupNote): Boolean =

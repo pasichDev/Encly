@@ -104,7 +104,7 @@ class ImportNotesScreenTest : ComposeScreenTest() {
         title = title,
         snippet = "snippet of $title",
         hasChecklist = uid == "a",
-        tag = if (uid == "a") "home" else null,
+        tags = if (uid == "a") listOf("home") else emptyList(),
         trashed = trashed,
         date = 1_700_000_000_000,
         existing = existing,

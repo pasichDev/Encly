@@ -13,6 +13,7 @@ import com.pasich.encly.data.backup.BackupMapper
 import com.pasich.encly.data.backup.NoBackupPreferences
 import com.pasich.encly.data.backup.PendingRestore
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.InMemoryVaultDataStore
@@ -59,7 +60,8 @@ class RestoreFromBackupTest {
     private suspend fun backupFile(): ByteArray {
         val source = InMemoryVaultDataStore().apply {
             val tag = insertTag(Tag(nameTag = "Work", uid = "tag-work"))
-            insertNote(Note(title = "Plan", value = "[]", tagId = tag, uid = "n-plan"))
+            val plan = insertNote(Note(title = "Plan", value = "[]", uid = "n-plan"))
+            insertNoteTag(NoteTag(plan, tag))
         }
         val plaintext = BackupPayloadCodec.encode(BackupMapper.toPayload(source.snapshot(), exportedAt = 1))
         return BackupCipher.seal(plaintext, BackupSecret.RecoveryPhrase(words.copyOf()))
@@ -78,7 +80,7 @@ class RestoreFromBackupTest {
 
         assertTrue(pending.apply())
         assertEquals(listOf("n-plan"), store.notes.map { it.uid })
-        assertEquals(store.tags.single().id, store.notes.single().tagId)
+        assertEquals(setOf(store.tags.single().id), store.tagIdsOf(store.notes.single().id))
     }
 
     @Test

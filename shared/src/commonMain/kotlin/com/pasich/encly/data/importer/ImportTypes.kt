@@ -141,8 +141,6 @@ data class ImportLosses(
     val pinned: Int = 0,
     val archived: Int = 0,
     val colors: Int = 0,
-    /** Labels beyond the first: Encly has one tag per note. */
-    val extraTags: Int = 0,
     /** Joplin to-do notes arrive as ordinary notes. */
     val todos: Int = 0,
 ) {
@@ -151,7 +149,6 @@ data class ImportLosses(
         pinned + other.pinned,
         archived + other.archived,
         colors + other.colors,
-        extraTags + other.extraTags,
         todos + other.todos,
     )
 
@@ -174,7 +171,7 @@ data class ImportedNote(
     val sourceKey: String?,
     val title: String,
     val blocks: List<Block>,
-    /** Tag names in order of preference; Encly keeps the first. */
+    /** Tag names, in order; the note gets every one of them. */
     val tags: List<String> = emptyList(),
     val created: Long? = null,
     val edited: Long? = null,

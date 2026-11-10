@@ -55,17 +55,18 @@ class NoteDocumentsPdfTest {
 
     private fun pagesOf(pdf: ByteArray): Int = Loader.loadPDF(pdf).use { it.numberOfPages }
 
-    private fun note(vararg blocks: DocumentBlock, title: String = "Title", tag: String? = null) =
-        NoteDocument(title, tag, blocks.toList())
+    private fun note(vararg blocks: DocumentBlock, title: String = "Title", tags: List<String> = emptyList()) =
+        NoteDocument(title, tags, blocks.toList())
 
     @Test
-    fun theFileIsAPdfWithTheTitleTagAndText() {
-        val pdf = pdfOf(note(DocumentBlock.Paragraph("Buy bread and milk"), title = "Groceries", tag = "Home"))
+    fun theFileIsAPdfWithTheTitleTagsAndText() {
+        val paragraph = DocumentBlock.Paragraph("Buy bread and milk")
+        val pdf = pdfOf(note(paragraph, title = "Groceries", tags = listOf("Home", "Weekly")))
 
         assertTrue(String(pdf, 0, 5, Charsets.ISO_8859_1) == "%PDF-")
         val text = textOf(pdf)
         assertTrue("Groceries" in text, text)
-        assertTrue("Home" in text, text)
+        assertTrue("Home, Weekly" in text, text)
         assertTrue("Buy bread and milk" in text, text)
     }
 

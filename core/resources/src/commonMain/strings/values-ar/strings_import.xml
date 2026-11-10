@@ -46,7 +46,6 @@
     <string name="import_loss_pinned">ملاحظات مثبّتة لن تبقى مثبّتة: %1$d</string>
     <string name="import_loss_archived">ملاحظات مؤرشفة تصل كملاحظات عادية: %1$d</string>
     <string name="import_loss_colors">ألوان ملاحظات لم تُحفظ: %1$d</string>
-    <string name="import_loss_tags">وسوم إضافية أُسقطت (للملاحظة وسم واحد): %1$d</string>
     <string name="import_loss_todos">ملاحظات مهام استُوردت كملاحظات عادية: %1$d</string>
     <string name="import_loss_unsupported">عناصر مشفرة أو غير مدعومة تم تخطيها: %1$d</string>
     <string name="import_loss_files">ملفات تعذّر استخدامها: %1$d</string>

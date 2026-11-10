@@ -10,7 +10,7 @@ class BackupPayloadCodecTest {
         exportedAt = 1_700_000_000_000,
         tags = listOf(tag),
         notes = listOf(
-            BackupNote("n1", "Title", "[]", "desc", 2L, 1L, tagUid = "t1", isTrash = true),
+            BackupNote("n1", "Title", "[]", "desc", 2L, 1L, tagUids = listOf("t1"), isTrash = true),
         ),
         tasks = listOf(
             BackupTask(
@@ -188,21 +188,62 @@ class BackupPayloadCodecTest {
     /**
      * The key names of a backup file are its format: backups written by the release build must
      * be readable by any other build, so none of them may follow a (renamable) property name.
-     * This is the schema-4 vector, kept byte for byte: a payload without preferences encodes
-     * exactly as the schema-4 app wrote it, apart from the schema number.
+     * This is the schema-6 vector, kept byte for byte: the schema-4 file with the note's tags as a list.
      */
     @Test
     fun encodedKeyNamesArePinned() {
-        assertEquals(schema4Json(), BackupPayloadCodec.encode(withSubtasks.copy(schema = 4)).decodeToString())
+        assertEquals(schema6Json(), BackupPayloadCodec.encode(withSubtasks).decodeToString())
     }
 
-    /** The schema-5 vector: the same file plus the `settings` section, last, in the order given. */
+    /** The same file plus the `settings` section, last, in the order given. */
     @Test
     fun encodedSettingsSectionIsPinned() {
-        val expected = schema4Json().replaceFirst("\"schema\":4", "\"schema\":5").removeSuffix("}") +
+        val expected = schema6Json().removeSuffix("}") +
             ""","settings":{"theme_type":"DARK","font_size":"18","is_grid_note_list":"true"}}"""
 
         assertEquals(expected, BackupPayloadCodec.encode(withSettings).decodeToString())
+    }
+
+    @Test
+    fun schema5BackupDecodesWithItsSettingsAndTheNotesOneTagAsAList() {
+        val json = schema4Json().replaceFirst("\"schema\":4", "\"schema\":5").removeSuffix("}") +
+            ""","settings":{"theme_type":"DARK","font_size":"18","is_grid_note_list":"true"}}"""
+
+        val decoded = BackupPayloadCodec.decode(json.encodeToByteArray())
+
+        assertEquals(withSettings, decoded)
+        assertEquals(listOf("t1"), decoded.notes.single().tagUids)
+    }
+
+    @Test
+    fun schema5NoteWithoutATagHasNone() {
+        val json = schema4Json().replaceFirst("\"schema\":4", "\"schema\":5")
+            .replace("\"tagUid\":\"t1\"", "\"tagUid\":null")
+
+        assertEquals(emptyList<String>(), BackupPayloadCodec.decode(json.encodeToByteArray()).notes.single().tagUids)
+    }
+
+    @Test
+    fun schema5BackupWithTheTagListIsInvalidAndSchema6WithOneTagIsInvalid() {
+        // Each schema has its own key: a file that mixes them is malformed, not a newer one.
+        val schema5 = schema4Json().replaceFirst("\"schema\":4", "\"schema\":5")
+            .replace("\"tagUid\":\"t1\"", "\"tagUids\":[\"t1\"]")
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(schema5.encodeToByteArray()) }
+
+        val schema6 = schema6Json().replace("\"tagUids\":[\"t1\"]", "\"tagUid\":\"t1\"")
+        assertError(BackupError.INVALID_PAYLOAD) { BackupPayloadCodec.decode(schema6.encodeToByteArray()) }
+    }
+
+    @Test
+    fun aNoteWithSeveralTagsRoundTrips() {
+        val second = BackupTag(uid = "t2", name = "Home", visible = false, position = 1)
+        val tagged = payload.copy(
+            tags = listOf(tag, second),
+            notes = payload.notes.map { it.copy(tagUids = listOf("t2", "t1")) } +
+                payload.notes.single().copy(uid = "n2", tagUids = emptyList()),
+        )
+
+        assertEquals(tagged, BackupPayloadCodec.decode(BackupPayloadCodec.encode(tagged)))
     }
 
     @Test
@@ -235,7 +276,7 @@ class BackupPayloadCodecTest {
     fun aSchemaAboveTheKnownOneIsUnsupportedEvenWithASettingsSection() {
         // How a reader treats a file newer than itself: the schema number is read first, before any field,
         // so a section it does not know is "update the app", never "damaged". An app that reads 4 does
-        // exactly this to a schema-5 file; this build is shown the same with 6.
+        // exactly this to a schema-5 file; this build is shown the same with the schema after its own.
         val future = withSettings.copy(schema = BackupPayload.SCHEMA_VERSION + 1)
 
         assertError(BackupError.UNSUPPORTED_VERSION) { BackupPayloadCodec.decode(BackupPayloadCodec.encode(future)) }
@@ -277,6 +318,10 @@ class BackupPayloadCodecTest {
         """"subtasks":[{"uid":"s1","title":"Milk","isCompleted":true,"position":0},""" +
         """{"uid":"s2","title":"Bread","isCompleted":false,"position":1}]}]}"""
 
+    /** [withSubtasks] as this app writes it (schema 6): the schema-4 file with the note's tags as a list. */
+    private fun schema6Json(): String = schema4Json().replaceFirst("\"schema\":4", "\"schema\":6")
+        .replace("\"tagUid\":\"t1\"", "\"tagUids\":[\"t1\"]")
+
     /** [withSubtasks] as the schema-3 app wrote it: notes had no pin, archive or colour. */
     private fun schema3Json(): String = """{"schema":3,"exportedAt":1700000000000,""" +
         """"tags":[{"uid":"t1","name":"Work","visible":true,"position":0}],""" +
@@ -294,7 +339,10 @@ class BackupPayloadCodecTest {
 
     @Test
     fun linksMustPointAtTagsInTheBackup() {
-        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(tagUid = "missing") }))
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(tagUids = listOf("missing")) }))
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(tagUids = listOf("t1", "missing")) }))
+        // A tag at most once per note.
+        assertInvalid(payload.copy(notes = payload.notes.map { it.copy(tagUids = listOf("t1", "t1")) }))
         assertInvalid(payload.copy(tasks = payload.tasks.map { it.copy(categoryTagUid = "missing") }))
     }
 

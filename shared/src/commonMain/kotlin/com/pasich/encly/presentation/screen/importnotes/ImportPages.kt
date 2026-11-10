@@ -35,7 +35,6 @@ import com.pasich.encly.core.resources.import_loss_colors
 import com.pasich.encly.core.resources.import_loss_files
 import com.pasich.encly.core.resources.import_loss_nested
 import com.pasich.encly.core.resources.import_loss_pinned
-import com.pasich.encly.core.resources.import_loss_tags
 import com.pasich.encly.core.resources.import_loss_todos
 import com.pasich.encly.core.resources.import_loss_unsupported
 import com.pasich.encly.core.resources.import_section_supported
@@ -111,7 +110,6 @@ internal fun lossLines(preview: ImportPreview): List<String> {
         if (losses.pinned > 0) add(stringResource(Res.string.import_loss_pinned, losses.pinned))
         if (losses.archived > 0) add(stringResource(Res.string.import_loss_archived, losses.archived))
         if (losses.colors > 0) add(stringResource(Res.string.import_loss_colors, losses.colors))
-        if (losses.extraTags > 0) add(stringResource(Res.string.import_loss_tags, losses.extraTags))
         if (losses.todos > 0) add(stringResource(Res.string.import_loss_todos, losses.todos))
         if (preview.unsupported > 0) add(stringResource(Res.string.import_loss_unsupported, preview.unsupported))
         if (preview.filesSkipped > 0) add(stringResource(Res.string.import_loss_files, preview.filesSkipped))

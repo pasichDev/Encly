@@ -44,7 +44,6 @@
     <string name="import_loss_pinned">Przypięte notatki, które nie pozostaną przypięte: %1$d</string>
     <string name="import_loss_archived">Zarchiwizowane notatki, które trafią jako zwykłe: %1$d</string>
     <string name="import_loss_colors">Kolory notatek, które nie zostaną zachowane: %1$d</string>
-    <string name="import_loss_tags">Pominięte dodatkowe tagi (notatka ma jeden tag): %1$d</string>
     <string name="import_loss_todos">Notatki-zadania zaimportowane jako zwykłe notatki: %1$d</string>
     <string name="import_loss_unsupported">Pominięte elementy zaszyfrowane lub nieobsługiwane: %1$d</string>
     <string name="import_loss_files">Pliki, których nie dało się użyć: %1$d</string>

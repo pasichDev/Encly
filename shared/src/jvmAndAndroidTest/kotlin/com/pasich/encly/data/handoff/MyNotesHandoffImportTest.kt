@@ -57,11 +57,11 @@ class MyNotesHandoffImportTest {
         val payload = result.payload
         val plan = payload.notes.first { it.uid == "note-a" }
         assertEquals("Plan", plan.title)
-        assertEquals("mynotes:tag:1", plan.tagUid)
+        assertEquals(listOf("mynotes:tag:1"), plan.tagUids)
         assertEquals(1_700_000_000_000L, plan.dateCreate)
         val trashed = payload.notes.first { it.uid == "note-b" }
         assertTrue(trashed.isTrash)
-        assertNull(trashed.tagUid)
+        assertEquals(emptyList<String>(), trashed.tagUids)
         assertTrue(BlockConverter.jsonToBlocks(trashed.value).single() is Block.TextBlock)
 
         val milk = payload.tasks.first { it.uid == "mynotes:task:1" }
@@ -107,8 +107,8 @@ class MyNotesHandoffImportTest {
         assertEquals(listOf("work", "Ideas", "Shopping"), store.tags.map { it.nameTag })
         assertEquals(2, summary.tagsAdded)
         val ideas = store.tags.first { it.nameTag == "Ideas" }.id
-        assertEquals(work, store.notes.first { it.uid == "n1" }.tagId)
-        assertEquals(ideas, store.notes.first { it.uid == "n2" }.tagId)
+        assertEquals(setOf(work), store.tagIdsOf(store.notes.first { it.uid == "n1" }.id))
+        assertEquals(setOf(ideas), store.tagIdsOf(store.notes.first { it.uid == "n2" }.id))
         assertEquals(ideas, store.tasks.first { it.uid == "k1" }.categoryId)
         assertNull(store.tasks.first { it.uid == "k2" }.categoryId)
 

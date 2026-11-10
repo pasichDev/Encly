@@ -99,7 +99,7 @@ class ImportNotesViewModelTest {
         val rows = vm.preview().review.rows
         assertEquals(listOf("One", "Two", "Three"), rows.map { it.title })
         assertEquals("first", rows[0].snippet)
-        assertEquals("Work", rows[0].tag)
+        assertEquals(listOf("Work"), rows[0].tags)
         assertEquals(listOf(false, false, true), rows.map { it.trashed })
     }
 
@@ -185,7 +185,7 @@ class ImportNotesViewModelTest {
         vm.confirm()
 
         assertEquals(listOf("work", "Home"), store.tags.map { it.nameTag })
-        assertEquals(store.tags.first().id, store.notes.first { it.title == "One" }.tagId)
+        assertEquals(setOf(store.tags.first().id), store.tagIdsOf(store.notes.first { it.title == "One" }.id))
     }
 
     @Test

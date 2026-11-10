@@ -2,6 +2,7 @@ package com.pasich.encly.data.export
 
 import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
@@ -134,16 +135,20 @@ class MarkdownExportTest {
     }
 
     @Test
-    fun theTagsAreInTheFrontMatterAndHiddenTagsAreIncluded() {
+    fun theTagsAreInTheFrontMatterInTheirOrderAndHiddenTagsAreIncluded() {
         val files = exportAll(
             VaultSnapshot(
-                notes = listOf(note(1, "Secret plan", text("x")) { tagId = 7 }),
-                tags = listOf(Tag(id = 7, nameTag = "Private", isVisible = false)),
+                notes = listOf(note(1, "Secret plan", text("x"))),
+                tags = listOf(
+                    Tag(id = 7, nameTag = "Private", isVisible = false, position = 1),
+                    Tag(id = 8, nameTag = "Work"),
+                ),
                 tasks = emptyList(),
+                noteTags = listOf(NoteTag(1, 7), NoteTag(1, 8)),
             ),
         )
 
-        assertTrue(files.getValue("Secret plan.md").contains("tags: [\"Private\"]\n"))
+        assertTrue(files.getValue("Secret plan.md").contains("tags: [\"Work\", \"Private\"]\n"))
     }
 
     @Test
@@ -223,7 +228,7 @@ class MarkdownExportTest {
         val items = MutableStateFlow(listOf(ItemListBlock("x", isCheck = true)))
         val markdown = MarkdownNotes.render(
             note(1, "All", text("t"), Block.ListBlock(items, BlockType.LIST_CHECK), Block.SeparatorBlock()),
-            null,
+            emptyList(),
             labels,
         )
 
@@ -243,7 +248,7 @@ class MarkdownExportTest {
     private fun goldenSnapshot(): VaultSnapshot {
         val notes = listOf(
             note(1, "Groceries", text("milk")),
-            note(2, "\u041f\u0440\u0438\u0432\u0456\u0442", text("emoji \uD83D lone surrogate")) { tagId = 7 },
+            note(2, "\u041f\u0440\u0438\u0432\u0456\u0442", text("emoji \uD83D lone surrogate")),
             note(3, "Old", text("b")) { isArchived = true },
             note(4, "Same", text("1")) { date = EPOCH_1980 },
             note(5, "Same", text("2")) { date = EPOCH_1980 - 1 },
@@ -251,7 +256,7 @@ class MarkdownExportTest {
         )
         val tags = listOf(Tag(id = 7, nameTag = "Home"))
         val tasks = listOf(Task(id = 1, title = "Buy milk", priority = 1, position = 0))
-        return VaultSnapshot(notes, tags, tasks)
+        return VaultSnapshot(notes, tags, tasks, noteTags = listOf(NoteTag(2, 7)))
     }
 
     private fun goldenZip(snapshot: VaultSnapshot): ByteArray {
@@ -264,7 +269,7 @@ class MarkdownExportTest {
             }
             fun render(id: Long): String {
                 val note = snapshot.notes.first { it.id == id }
-                return MarkdownNotes.render(note, snapshot.tags.firstOrNull { it.id == note.tagId }?.nameTag, labels)
+                return MarkdownNotes.render(note, snapshot.tagsOf(note.id).map { it.nameTag }, labels)
             }
             put("tasks.md", null, MarkdownTasks.render(snapshot.tasks, snapshot.subtasks, snapshot.tags, labels))
             put("Groceries.md", 1_700_000_000_000, render(1))
@@ -308,7 +313,7 @@ class MarkdownExportTest {
         MarkdownExport.writeNote(snapshot, 1, labels, out)
 
         assertArrayEquals(
-            MarkdownNotes.render(snapshot.notes.single(), null, labels).toByteArray(Charsets.UTF_8),
+            MarkdownNotes.render(snapshot.notes.single(), emptyList(), labels).toByteArray(Charsets.UTF_8),
             out.readByteArray(),
         )
     }

@@ -7,6 +7,7 @@ import com.pasich.encly.core.backup.BackupSubtask
 import com.pasich.encly.core.backup.BackupTag
 import com.pasich.encly.core.backup.BackupTask
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
@@ -64,7 +65,7 @@ object BackupMapper {
                     description = note.description,
                     date = note.date,
                     dateCreate = note.dateCreate,
-                    tagUid = note.tagId?.let(tagUidById::get),
+                    tagUids = snapshot.tagsOf(note.id).map { it.uid },
                     isTrash = note.isTrash,
                     isPinned = note.isPinned,
                     isArchived = note.isArchived,
@@ -119,7 +120,11 @@ object BackupImporter {
 
             val noteUids = existing.notes.mapTo(HashSet()) { it.uid }
             val newNotes = payload.notes.filter { it.uid !in noteUids }
-            newNotes.forEach { store.insertNote(it.toEntity(tagIds)) }
+            newNotes.forEach { note ->
+                val noteId = store.insertNote(note.toEntity())
+                // Two backup tags can be one tag here (matched by name): each link is written once.
+                note.tagUids.mapNotNull(tagIds::get).distinct().forEach { store.insertNoteTag(NoteTag(noteId, it)) }
+            }
 
             val taskIds = existing.tasks.associate { it.uid to it.id }
             val newTasks = payload.tasks.filter { it.uid !in taskIds }
@@ -222,13 +227,12 @@ object BackupImporter {
     /** Two tag names are the same tag for [TagMatch.UID_OR_NAME] when their keys are equal. */
     fun tagNameKey(name: String): String = name.trim().lowercase()
 
-    private fun BackupNote.toEntity(tagIds: Map<String, Long>) = Note(
+    private fun BackupNote.toEntity() = Note(
         title = title,
         value = value,
         description = description,
         date = date,
         dateCreate = dateCreate,
-        tagId = tagUid?.let(tagIds::get),
         isTrash = isTrash,
         uid = uid,
         // An archived note is never pinned, whatever the file says.

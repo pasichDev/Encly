@@ -44,7 +44,6 @@
     <string name="import_loss_pinned">Закріплених нотаток, які більше не будуть закріплені: %1$d</string>
     <string name="import_loss_archived">Архівних нотаток, що стануть звичайними: %1$d</string>
     <string name="import_loss_colors">Кольорів нотаток не збережено: %1$d</string>
-    <string name="import_loss_tags">Зайвих тегів відкинуто (нотатка має лише один тег): %1$d</string>
     <string name="import_loss_todos">Нотаток-завдань, імпортованих як звичайні нотатки: %1$d</string>
     <string name="import_loss_unsupported">Зашифрованих або непідтримуваних елементів пропущено: %1$d</string>
     <string name="import_loss_files">Файлів, які не вдалося використати: %1$d</string>

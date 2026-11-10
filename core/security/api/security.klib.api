@@ -427,7 +427,7 @@ final class com.pasich.encly.core.backup/BackupHeader { // com.pasich.encly.core
 }
 
 final class com.pasich.encly.core.backup/BackupNote { // com.pasich.encly.core.backup/BackupNote|null[0]
-    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/Long, kotlin/Long, kotlin/String?, kotlin/Boolean, kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int? = ..., kotlin/Int? = ...) // com.pasich.encly.core.backup/BackupNote.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.Long;kotlin.String?;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Int?;kotlin.Int?){}[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/Long, kotlin/Long, kotlin.collections/List<kotlin/String> = ..., kotlin/Boolean, kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int? = ..., kotlin/Int? = ...) // com.pasich.encly.core.backup/BackupNote.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.Long;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Int?;kotlin.Int?){}[0]
 
     final val color // com.pasich.encly.core.backup/BackupNote.color|{}color[0]
         final fun <get-color>(): kotlin/String // com.pasich.encly.core.backup/BackupNote.color.<get-color>|<get-color>(){}[0]
@@ -445,8 +445,8 @@ final class com.pasich.encly.core.backup/BackupNote { // com.pasich.encly.core.b
         final fun <get-isTrash>(): kotlin/Boolean // com.pasich.encly.core.backup/BackupNote.isTrash.<get-isTrash>|<get-isTrash>(){}[0]
     final val lineSpacing // com.pasich.encly.core.backup/BackupNote.lineSpacing|{}lineSpacing[0]
         final fun <get-lineSpacing>(): kotlin/Int? // com.pasich.encly.core.backup/BackupNote.lineSpacing.<get-lineSpacing>|<get-lineSpacing>(){}[0]
-    final val tagUid // com.pasich.encly.core.backup/BackupNote.tagUid|{}tagUid[0]
-        final fun <get-tagUid>(): kotlin/String? // com.pasich.encly.core.backup/BackupNote.tagUid.<get-tagUid>|<get-tagUid>(){}[0]
+    final val tagUids // com.pasich.encly.core.backup/BackupNote.tagUids|{}tagUids[0]
+        final fun <get-tagUids>(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupNote.tagUids.<get-tagUids>|<get-tagUids>(){}[0]
     final val textSize // com.pasich.encly.core.backup/BackupNote.textSize|{}textSize[0]
         final fun <get-textSize>(): kotlin/Int? // com.pasich.encly.core.backup/BackupNote.textSize.<get-textSize>|<get-textSize>(){}[0]
     final val title // com.pasich.encly.core.backup/BackupNote.title|{}title[0]
@@ -466,10 +466,10 @@ final class com.pasich.encly.core.backup/BackupNote { // com.pasich.encly.core.b
     final fun component4(): kotlin/String // com.pasich.encly.core.backup/BackupNote.component4|component4(){}[0]
     final fun component5(): kotlin/Long // com.pasich.encly.core.backup/BackupNote.component5|component5(){}[0]
     final fun component6(): kotlin/Long // com.pasich.encly.core.backup/BackupNote.component6|component6(){}[0]
-    final fun component7(): kotlin/String? // com.pasich.encly.core.backup/BackupNote.component7|component7(){}[0]
+    final fun component7(): kotlin.collections/List<kotlin/String> // com.pasich.encly.core.backup/BackupNote.component7|component7(){}[0]
     final fun component8(): kotlin/Boolean // com.pasich.encly.core.backup/BackupNote.component8|component8(){}[0]
     final fun component9(): kotlin/Boolean // com.pasich.encly.core.backup/BackupNote.component9|component9(){}[0]
-    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Long = ..., kotlin/Long = ..., kotlin/String? = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int? = ..., kotlin/Int? = ...): com.pasich.encly.core.backup/BackupNote // com.pasich.encly.core.backup/BackupNote.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.Long;kotlin.String?;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Int?;kotlin.Int?){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Long = ..., kotlin/Long = ..., kotlin.collections/List<kotlin/String> = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/String = ..., kotlin/Int? = ..., kotlin/Int? = ...): com.pasich.encly.core.backup/BackupNote // com.pasich.encly.core.backup/BackupNote.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.Long;kotlin.Long;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.String;kotlin.Int?;kotlin.Int?){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.backup/BackupNote.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.pasich.encly.core.backup/BackupNote.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.pasich.encly.core.backup/BackupNote.toString|toString(){}[0]
@@ -484,6 +484,8 @@ final class com.pasich.encly.core.backup/BackupNote { // com.pasich.encly.core.b
     }
 
     final object Companion { // com.pasich.encly.core.backup/BackupNote.Companion|null[0]
+        final val $childSerializers // com.pasich.encly.core.backup/BackupNote.Companion.$childSerializers|{}$childSerializers[0]
+
         final fun serializer(): kotlinx.serialization/KSerializer<com.pasich.encly.core.backup/BackupNote> // com.pasich.encly.core.backup/BackupNote.Companion.serializer|serializer(){}[0]
     }
 }
@@ -533,6 +535,8 @@ final class com.pasich.encly.core.backup/BackupPayload { // com.pasich.encly.cor
             final fun <get-SCHEMA_V3>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V3.<get-SCHEMA_V3>|<get-SCHEMA_V3>(){}[0]
         final const val SCHEMA_V4 // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V4|{}SCHEMA_V4[0]
             final fun <get-SCHEMA_V4>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V4.<get-SCHEMA_V4>|<get-SCHEMA_V4>(){}[0]
+        final const val SCHEMA_V5 // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V5|{}SCHEMA_V5[0]
+            final fun <get-SCHEMA_V5>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_V5.<get-SCHEMA_V5>|<get-SCHEMA_V5>(){}[0]
         final const val SCHEMA_VERSION // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_VERSION|{}SCHEMA_VERSION[0]
             final fun <get-SCHEMA_VERSION>(): kotlin/Int // com.pasich.encly.core.backup/BackupPayload.Companion.SCHEMA_VERSION.<get-SCHEMA_VERSION>|<get-SCHEMA_VERSION>(){}[0]
 

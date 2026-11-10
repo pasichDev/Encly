@@ -46,7 +46,6 @@
     <string name="import_loss_pinned">Pinned notes that will not stay pinned: %1$d</string>
     <string name="import_loss_archived">Archived notes that arrive as normal notes: %1$d</string>
     <string name="import_loss_colors">Note colours not kept: %1$d</string>
-    <string name="import_loss_tags">Extra tags dropped (a note has one tag): %1$d</string>
     <string name="import_loss_todos">To-do notes imported as ordinary notes: %1$d</string>
     <string name="import_loss_unsupported">Encrypted or unsupported entries skipped: %1$d</string>
     <string name="import_loss_files">Files that could not be used: %1$d</string>

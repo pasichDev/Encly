@@ -33,7 +33,7 @@ class RealExportsTest {
                 "encly-home",
                 1792006977756,
                 1792006990486,
-                losses = ImportLosses(extraTags = 1),
+                moreTags = 1,
             ),
             ExpectedNote(
                 prefix + "Pinned reminder",
@@ -104,8 +104,8 @@ class RealExportsTest {
         val plan = ImportFixtures.ready(source("backup.zip" to zip!!))
         assertEquals(ImportSource.STANDARD_NOTES, plan.preview.source)
         assertEquals(6, plan.preview.notes)
-        // Only tags a note uses are created (the third has to be unused by the single-tag rule).
-        assertEquals(2, plan.payload.tags.size)
+        // Every tag of every note is created: a note keeps all of its tags.
+        assertEquals(3, plan.payload.tags.size)
         assertEquals(1, plan.preview.trashed)
         assertEquals(1, plan.preview.losses.pinned)
         assertEquals(1, plan.preview.losses.archived)
@@ -131,8 +131,8 @@ class RealExportsTest {
             describe(BlockConverter.jsonToBlocks(meeting.value)),
         )
         val tagNames = plan.payload.tags.associate { it.uid to it.name }
-        assertEquals("home", tagNames[groceries.tagUid])
-        assertEquals("important", tagNames[meeting.tagUid])
+        assertEquals("home", tagNames[groceries.tagUids.first()])
+        assertEquals("important", tagNames[meeting.tagUids.first()])
         val ideas = plan.payload.notes.first { it.title == "Ідеї 💡" }
         assertEquals(
             listOf("text:Перша думка.", "text:Друга думка."),
@@ -176,12 +176,14 @@ class RealExportsTest {
                 "important",
                 t("2026-10-14T19:32:53.807Z"),
                 t("2026-10-14T19:32:53.807Z"),
-                losses = ImportLosses(extraTags = 1),
+                moreTags = 1,
             ),
             ExpectedNote(
                 "Call the bank",
                 emptyList(),
-                "Work",
+                // The notebook "Work" is the tag "work" that another note carries (one tag per name, the first
+                // spelling wins).
+                "work",
                 t("2026-10-14T19:32:55.989Z"),
                 t("2026-10-14T19:32:56.506Z"),
                 losses = ImportLosses(todos = 1),
@@ -189,7 +191,9 @@ class RealExportsTest {
             ExpectedNote(
                 "Renew passport",
                 emptyList(),
-                "Work",
+                // The notebook "Work" is the tag "work" that another note carries (one tag per name, the first
+                // spelling wins).
+                "work",
                 t("2026-10-14T19:32:57.013Z"),
                 t("2026-10-14T19:32:57.013Z"),
                 losses = ImportLosses(todos = 1),
@@ -255,10 +259,10 @@ class RealExportsTest {
         assertEquals(ImportSource.MARKDOWN, plan.preview.source)
         val tagNames = plan.payload.tags.associate { it.uid to it.name }
         val groceries = plan.payload.notes.first { it.title == "Groceries" }
-        assertEquals("home", tagNames[groceries.tagUid])
+        assertEquals("home", tagNames[groceries.tagUids.first()])
         assertEquals(ms("2026-10-14T19:32:48Z"), groceries.dateCreate)
         val meeting = plan.payload.notes.first { it.title == "Meeting notes" }
-        assertEquals("important", tagNames[meeting.tagUid])
+        assertEquals("important", tagNames[meeting.tagUids.first()])
         assertEquals(ms("2026-10-14T19:32:53Z"), meeting.date)
         val ideas = plan.payload.notes.first { it.title == "Ідеї 💡" }
         assertEquals(
@@ -266,6 +270,6 @@ class RealExportsTest {
             describe(BlockConverter.jsonToBlocks(ideas.value)),
         )
         // Notes without tags get their folder as the tag.
-        assertEquals("Work", tagNames[plan.payload.notes.first { it.title == "Call the bank" }.tagUid])
+        assertEquals("Work", tagNames[plan.payload.notes.first { it.title == "Call the bank" }.tagUids.first()])
     }
 }

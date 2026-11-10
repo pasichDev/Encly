@@ -44,7 +44,6 @@
     <string name="import_loss_pinned">Vastgezette notities die niet vastgezet blijven: %1$d</string>
     <string name="import_loss_archived">Gearchiveerde notities die als gewone notities aankomen: %1$d</string>
     <string name="import_loss_colors">Notitiekleuren die niet blijven: %1$d</string>
-    <string name="import_loss_tags">Extra tags weggelaten (een notitie heeft één tag): %1$d</string>
     <string name="import_loss_todos">Takennotities geïmporteerd als gewone notities: %1$d</string>
     <string name="import_loss_unsupported">Versleutelde of niet-ondersteunde items overgeslagen: %1$d</string>
     <string name="import_loss_files">Bestanden die niet bruikbaar waren: %1$d</string>

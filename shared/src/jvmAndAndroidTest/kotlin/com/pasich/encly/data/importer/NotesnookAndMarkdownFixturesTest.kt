@@ -49,7 +49,7 @@ class NotesnookAndMarkdownFixturesTest {
                     "work",
                     local(14, 22, 48),
                     local(14, 22, 48),
-                    losses = ImportLosses(extraTags = 1),
+                    moreTags = 1,
                 ),
                 ExpectedNote("Ідеї 💡", ideas, null, local(14, 22, 49), local(14, 22, 49)),
                 ExpectedNote(
@@ -166,7 +166,7 @@ class NotesnookAndMarkdownFixturesTest {
                     "work",
                     ImportFixtures.NOW,
                     ImportFixtures.NOW,
-                    losses = ImportLosses(extraTags = 1),
+                    moreTags = 1,
                 ),
                 ExpectedNote(
                     "Ідеї 💡",
