@@ -39,7 +39,7 @@ kotlinxIo = "0.9.1"
 # SynchronizedObject and synchronized {} for common code (the locks of :core:security); the Gradle plugin is not used.
 atomicfu = "0.33.0"
 sqlcipher = "4.20.0"
-sealite = "1.0.0"
+sealite = "1.0.1"
 sqliteKtx = "2.7.1"
 iconsLucide = "1.1.0"
 # The OS secret stores behind :core:keystore on the desktop: DPAPI and the Keychain through JNA, the freedesktop
