@@ -1,7 +1,7 @@
 package com.pasich.encly.domain.usecase.note
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.testutil.TestNotesRepository
@@ -20,7 +20,7 @@ import java.io.IOException
 
 class NoteUseCasesTest {
     private val repository = TestNotesRepository()
-    private val note = Note(id = 4, title = "Plan", description = "old", tagId = 1)
+    private val note = Note(id = 4, title = "Plan", description = "old", tagIds = setOf(1))
 
     @Test
     fun trashAndRestoreChangeOnlyTheTrashFlag() = runTest {
@@ -59,7 +59,7 @@ class NoteUseCasesTest {
     fun trashingAnArchivedNoteKeepsItArchivedSoRestoringReturnsItToTheArchive() = runTest {
         val useCase = UpdateNoteTrashStatusUseCase(repository)
         val archived = note.copy(isArchived = true)
-        repository.archivedNotesWithTags.value = listOf(NoteWithTag(archived, null))
+        repository.archivedNotesWithTags.value = listOf(NoteWithTags(archived, emptyList()))
 
         useCase(archived, isTrash = true)
         useCase(archived.copy(isTrash = true), isTrash = false)
@@ -79,11 +79,15 @@ class NoteUseCasesTest {
     @Test
     fun theTagAndTheDescriptionAreWrittenAlone() = runTest {
         UpdateNoteTagUseCase(repository)(note, tagId = 9)
+        UpdateNoteTagUseCase(repository)(note, tagId = 1, tagged = false)
         UpdateNoteTagUseCase(repository)(note, tagId = 0)
         UpdateNoteDescriptionUseCase(repository)(note, "new")
 
-        // One column each: nothing else of the (possibly stale) note is written back.
-        assertEquals(listOf("tag:4=9", "tag:4=null", "description:4=new"), repository.columnWrites)
+        // One write each, one tag at a time: nothing else of the (possibly stale) note is written back.
+        assertEquals(
+            listOf("tag:4=9", "untag:4=1", "tag:4=null", "description:4=new"),
+            repository.columnWrites,
+        )
         assertEquals(0, repository.updateCalls)
     }
 

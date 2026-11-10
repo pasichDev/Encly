@@ -2,7 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.repository.NotesRepository
@@ -116,7 +116,7 @@ class NoteListViewModelTest {
     @Test
     fun aFailedReadIsShownAsAnErrorNotAsAnEmptyVault() = runTest {
         val failing = object : NotesRepository by TestNotesRepository() {
-            override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = flow { throw IOException("vault closed") }
+            override fun getAllNotesWithTag(): Flow<List<NoteWithTags>> = flow { throw IOException("vault closed") }
         }
         val settings = mock(SettingsRepository::class.java)
         `when`(settings.getSortNotes).thenReturn(MutableStateFlow(NoteSortOption.UPDATED_DESC))
@@ -214,15 +214,15 @@ class NoteListViewModelTest {
         assertEquals(second, viewModel.scrollToTopRequest.value)
     }
 
-    private fun noteWithTitle(id: Long, title: String, tag: Tag? = null): NoteWithTag = NoteWithTag(
-        note = Note(
+    private fun noteWithTitle(id: Long, title: String, tag: Tag? = null): NoteWithTags = NoteWithTags(
+        Note(
             id = id,
             title = title,
             date = id,
             dateCreate = id,
-            tagId = tag?.id,
+            tagIds = setOfNotNull(tag?.id),
         ),
-        tag = tag,
+        listOfNotNull(tag),
     )
 
     private companion object {

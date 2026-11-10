@@ -1,7 +1,7 @@
 package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.TagsRepository
 import com.pasich.encly.domain.usecase.tag.ReorderTagsUseCase
@@ -46,10 +46,10 @@ class TagListViewModelTest {
 
     @Test
     fun theNoteCountOfATagIncludesItsArchivedNotes() = runTest(dispatcher) {
-        notes.allNotesWithTags.value = listOf(NoteWithTag(Note(id = 1, tagId = 1), null))
+        notes.allNotesWithTags.value = listOf(NoteWithTags(Note(id = 1), listOf(Tag(id = 1))))
         notes.archivedNotesWithTags.value = listOf(
-            NoteWithTag(Note(id = 2, tagId = 1, isArchived = true), null),
-            NoteWithTag(Note(id = 3, tagId = 2, isArchived = true), null),
+            NoteWithTags(Note(id = 2, isArchived = true), listOf(Tag(id = 1))),
+            NoteWithTags(Note(id = 3, isArchived = true), listOf(Tag(id = 2))),
         )
         val viewModel = viewModel()
         val counts = backgroundScope.launch { viewModel.noteCounts.collect { } }
@@ -166,16 +166,18 @@ class TagListViewModelTest {
     @Test
     fun noteCountsAreByTag() = runTest(dispatcher) {
         notes.allNotesWithTags.value = listOf(
-            NoteWithTag(Note(id = 1, tagId = 1), null),
-            NoteWithTag(Note(id = 2, tagId = 1), null),
-            NoteWithTag(Note(id = 3, tagId = 2), null),
-            NoteWithTag(Note(id = 4), null),
+            NoteWithTags(Note(id = 1), listOf(Tag(id = 1))),
+            NoteWithTags(Note(id = 2), listOf(Tag(id = 1))),
+            NoteWithTags(Note(id = 3), listOf(Tag(id = 2))),
+            NoteWithTags(Note(id = 4), emptyList()),
+            // A note with two tags counts in each of them.
+            NoteWithTags(Note(id = 5), listOf(Tag(id = 1), Tag(id = 2))),
         )
         val viewModel = viewModel()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.noteCounts.collect {} }
         advanceUntilIdle()
 
-        assertEquals(mapOf(1L to 2, 2L to 1), viewModel.noteCounts.value)
+        assertEquals(mapOf(1L to 3, 2L to 2), viewModel.noteCounts.value)
     }
 
     private class FakeTagsRepository(initial: List<Tag>) : TagsRepository {

@@ -7,7 +7,7 @@ import com.pasich.encly.data.database.dao.NotesDao
 import com.pasich.encly.data.database.dao.TagsDao
 import com.pasich.encly.data.database.dao.TasksDao
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
 import kotlinx.coroutines.CompletableDeferred
@@ -82,15 +82,19 @@ class DaoRepositoriesTest {
     @Test
     fun noteReadsAndDeletesGoThroughTheDao() = runBlocking {
         val note = Note(id = 5, title = "n")
-        val withTag = listOf(NoteWithTag(note, Tag(id = 1)))
-        `when`(notesDao.getAllNotesWithTags()).thenReturn(flowOf(withTag))
-        `when`(notesDao.getNotesByTagId(1)).thenReturn(flowOf(withTag))
-        `when`(notesDao.getNoteById(5)).thenReturn(note)
+        // The tags come sorted by their order, and their ids on the note.
+        val stored = listOf(NoteWithTags(note, listOf(Tag(id = 2, position = 1), Tag(id = 1, position = 0))))
+        val sorted = listOf(Tag(id = 1), Tag(id = 2, position = 1))
+        val withTag = listOf(NoteWithTags(note.copy(tagIds = setOf(1, 2)), sorted))
+        `when`(notesDao.getAllNotesWithTags()).thenReturn(flowOf(stored))
+        `when`(notesDao.getNotesOfTagWithArchived(1)).thenReturn(flowOf(stored))
+        `when`(notesDao.getNoteWithTags(5)).thenReturn(NoteWithTags(note, emptyList()))
         `when`(notesDao.deleteNoteById(5)).thenReturn(1)
         `when`(notesDao.deleteNoteById(6)).thenReturn(0)
 
         assertEquals(withTag, notes.getAllNotesWithTag().first())
-        assertEquals(withTag, notes.getNotesByTagId(1).first())
+        assertEquals(withTag, notes.getNotesOfTagWithArchived(1).first())
+        assertEquals(listOf(1L, 2L), notes.getAllNotesWithTag().first().single().note.tagIds.toList())
         assertEquals(note, notes.getNoteById(5))
         assertNull(notes.getNoteById(6))
         assertTrue(notes.deleteNoteById(5).isSuccess)

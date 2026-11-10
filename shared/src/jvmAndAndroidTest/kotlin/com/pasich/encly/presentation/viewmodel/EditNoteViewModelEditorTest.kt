@@ -2,7 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
@@ -168,7 +168,7 @@ class EditNoteViewModelEditorTest {
         advanceUntilIdle()
 
         assertEquals(-1L, viewModel.state.value.note.id)
-        assertNull(viewModel.state.value.note.tagId)
+        assertEquals(emptySet<Long>(), viewModel.state.value.note.tagIds)
     }
 
     // --- block identity and indices -------------------------------------------------------
@@ -409,16 +409,20 @@ class EditNoteViewModelEditorTest {
     }
 
     @Test
-    fun choosingNoTagStoresNoTag() = runTest {
+    fun tagsToggleOneByOneAndNoTagTakesThemAllOff() = runTest {
         val repository = repositoryWith(storedNote(text("body")))
         val viewModel = createViewModel(repository, noteId = NOTE_ID)
         advanceUntilIdle()
 
-        viewModel.updateTagNote(TAG_ID)
-        assertEquals(TAG_ID, viewModel.state.value.note.tagId)
-        viewModel.updateTagNote(0L)
+        viewModel.toggleTagNote(TAG_ID)
+        assertEquals(setOf(TAG_ID), viewModel.state.value.note.tagIds)
+        viewModel.toggleTagNote(OTHER_TAG_ID)
+        assertEquals(setOf(TAG_ID, OTHER_TAG_ID), viewModel.state.value.note.tagIds)
+        viewModel.toggleTagNote(TAG_ID)
+        assertEquals(setOf(OTHER_TAG_ID), viewModel.state.value.note.tagIds)
+        viewModel.toggleTagNote(0L)
 
-        assertNull(viewModel.state.value.note.tagId)
+        assertEquals(emptySet<Long>(), viewModel.state.value.note.tagIds)
     }
 
     @Test
@@ -482,7 +486,7 @@ class EditNoteViewModelEditorTest {
     }
 
     private fun repositoryWith(note: Note) = TestNotesRepository().apply {
-        allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+        allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
         insertResult = INSERTED_ID
     }
 
@@ -528,5 +532,6 @@ class EditNoteViewModelEditorTest {
         const val DEFAULT_FONT_SIZE = 16
         const val SAVED_URL = "https://example.com/saved"
         const val TAG_ID = 5L
+        const val OTHER_TAG_ID = 6L
     }
 }

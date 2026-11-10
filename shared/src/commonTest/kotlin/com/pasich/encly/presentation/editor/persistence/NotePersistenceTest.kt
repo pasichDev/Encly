@@ -1,7 +1,7 @@
 package com.pasich.encly.presentation.editor.persistence
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.editor.codec.BlockConverter
@@ -91,15 +91,15 @@ class NotePersistenceTest {
     @Test
     fun aSavedEditMovesTheShownDateAndDropsAnImportedSummary() = runTest(dispatcher) {
         repository.allNotesWithTags.value = listOf(
-            NoteWithTag(
-                note = Note(
+            NoteWithTags(
+                Note(
                     id = NOTE_ID,
                     title = "title",
                     value = BlockConverter.blocksToJson(listOf(text("body"))),
                     description = "imported summary",
                     date = OLD_DATE,
                 ),
-                tag = null,
+                emptyList(),
             ),
         )
         val persistence = persistence(loading = true)
@@ -117,15 +117,15 @@ class NotePersistenceTest {
     @Test
     fun anUnchangedNoteKeepsItsDateAndSummary() = runTest(dispatcher) {
         repository.allNotesWithTags.value = listOf(
-            NoteWithTag(
-                note = Note(
+            NoteWithTags(
+                Note(
                     id = NOTE_ID,
                     title = "title",
                     value = BlockConverter.blocksToJson(listOf(text("body"))),
                     description = "imported summary",
                     date = OLD_DATE,
                 ),
-                tag = null,
+                emptyList(),
             ),
         )
         val persistence = persistence(loading = true)
@@ -148,7 +148,7 @@ class NotePersistenceTest {
         assertTrue(persistence.hasChanges())
 
         blocks = listOf(text("body"))
-        persistence.updateNote { it.copy(tagId = TAG_ID) }
+        persistence.updateNote { it.copy(tagIds = setOf(TAG_ID)) }
         assertTrue(persistence.hasChanges())
     }
 
@@ -241,7 +241,7 @@ class NotePersistenceTest {
 
         assertEquals(-1L, persistence.state.value.note.id)
         assertEquals("title (копія)", persistence.state.value.note.title)
-        assertNull(persistence.state.value.note.tagId)
+        assertEquals(emptySet<Long>(), persistence.state.value.note.tagIds)
     }
 
     @Test
@@ -259,7 +259,7 @@ class NotePersistenceTest {
     @Test
     fun unreadableContentIsNotOverwritten() = runTest(dispatcher) {
         repository.allNotesWithTags.value =
-            listOf(NoteWithTag(note = Note(id = NOTE_ID, title = "t", value = "{not json"), tag = null))
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "t", value = "{not json"), emptyList()))
         val persistence = persistence(loading = true)
 
         // Reported as not loaded, so the editor stays read-only; the title is still shown.
@@ -275,7 +275,7 @@ class NotePersistenceTest {
     @Test
     fun duplicatingUnreadableContentCopiesTheStoredText() = runTest(dispatcher) {
         repository.allNotesWithTags.value =
-            listOf(NoteWithTag(note = Note(id = NOTE_ID, title = "t", value = "{not json"), tag = null))
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "t", value = "{not json"), emptyList()))
         val persistence = persistence(loading = true)
         assertFalse(persistence.load(NOTE_ID, isCopy = false) { blocks = it })
 
@@ -288,7 +288,7 @@ class NotePersistenceTest {
     @Test
     fun aCopyOfUnreadableContentIsReportedAndNeverInserted() = runTest(dispatcher) {
         repository.allNotesWithTags.value =
-            listOf(NoteWithTag(note = Note(id = NOTE_ID, title = "t", value = "{not json"), tag = null))
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "t", value = "{not json"), emptyList()))
         val persistence = persistence(loading = true)
 
         assertFalse(persistence.load(NOTE_ID, isCopy = true) { blocks = it })
@@ -372,7 +372,7 @@ class NotePersistenceTest {
         // Another window saves new text.
         val other = BlockConverter.blocksToJson(listOf(text("from the other window")))
         repository.allNotesWithTags.value =
-            listOf(NoteWithTag(Note(id = NOTE_ID, title = "title", value = other), null))
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "title", value = other), emptyList()))
         persistence.resume { blocks = it }
 
         assertEquals("from the other window", (blocks.single() as Block.TextBlock).text.value)
@@ -491,19 +491,19 @@ class NotePersistenceTest {
 
         val firstSave = async { persistence.save() }
         runCurrent() // the insert is in flight
-        persistence.updateNote { it.copy(title = "draft", tagId = TAG_ID) }
+        persistence.updateNote { it.copy(title = "draft", tagIds = setOf(TAG_ID)) }
         gate.complete(Unit)
         assertTrue(firstSave.await())
 
         val note = persistence.state.value.note
         assertEquals(INSERTED_ID, note.id)
         assertEquals("draft", note.title)
-        assertEquals(TAG_ID, note.tagId)
+        assertEquals(setOf(TAG_ID), note.tagIds)
 
         // The later changes are not in the database yet, so the next save writes them.
         assertTrue(persistence.save())
         assertEquals("draft", repository.updatedNotes.single().title)
-        assertEquals(TAG_ID, repository.updatedNotes.single().tagId)
+        assertEquals(setOf(TAG_ID), repository.updatedNotes.single().tagIds)
     }
 
     @Test
@@ -515,11 +515,38 @@ class NotePersistenceTest {
         passQuietTime()
         assertEquals(0, repository.updateCalls)
 
-        persistence.updateNote { it.copy(tagId = TAG_ID) }
+        persistence.updateNote { it.copy(tagIds = setOf(TAG_ID)) }
         passQuietTime()
 
-        assertEquals(TAG_ID, repository.updatedNotes.single().tagId)
+        assertEquals(setOf(TAG_ID), repository.updatedNotes.single().tagIds)
         assertEquals(BlockConverter.blocksToJson(listOf(text("body"))), repository.updatedNotes.single().value)
+    }
+
+    @Test
+    fun aSaveCarriesTheTagsWithTheBaseTheyChangedFrom() = runTest(dispatcher) {
+        storeNote(text("body"), tagIds = setOf(1L, 2L))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertEquals(setOf(1L, 2L), persistence.state.value.note.tagIds)
+
+        persistence.updateNote { it.copy(tagIds = it.tagIds - 1L + 3L) }
+        assertTrue(persistence.hasChanges())
+        assertTrue(persistence.save())
+
+        // The repository writes the difference: 3 on, 1 off, and 2 (untouched here) as it is stored.
+        assertEquals(setOf(2L, 3L), repository.updatedNotes.single().tagIds)
+        assertEquals(setOf(1L, 2L), repository.updateBases.single()?.tagIds)
+    }
+
+    @Test
+    fun aCopyKeepsTheTagsOfItsOriginal() = runTest(dispatcher) {
+        storeNote(text("body"), tagIds = setOf(1L, 2L))
+        val persistence = persistence(loading = true)
+
+        persistence.load(NOTE_ID, isCopy = true) { blocks = it }
+        assertTrue(persistence.save())
+
+        assertEquals(setOf(1L, 2L), repository.insertedNotes.single().tagIds)
     }
 
     // --- autosave -----------------------------------------------------------------------------
@@ -629,9 +656,9 @@ class NotePersistenceTest {
     @Test
     fun aCopyKeepsTheColourButIsNeitherPinnedNorArchived() = runTest(dispatcher) {
         repository.allNotesWithTags.value = listOf(
-            NoteWithTag(
+            NoteWithTags(
                 Note(id = NOTE_ID, title = "t", value = "[]", isPinned = true, isArchived = true, color = "pink"),
-                null,
+                emptyList(),
             ),
         )
         val persistence = persistence(loading = true)
@@ -665,14 +692,15 @@ class NotePersistenceTest {
         loading = loading,
     )
 
-    private fun storeNote(vararg content: Block, isTrash: Boolean = false) {
+    private fun storeNote(vararg content: Block, isTrash: Boolean = false, tagIds: Set<Long> = emptySet()) {
         val note = Note(
             id = NOTE_ID,
             title = "title",
             value = BlockConverter.blocksToJson(content.toList()),
             isTrash = isTrash,
+            tagIds = tagIds,
         )
-        repository.allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+        repository.allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
     }
 
     private fun text(value: String) = Block.TextBlock(MutableStateFlow(value))

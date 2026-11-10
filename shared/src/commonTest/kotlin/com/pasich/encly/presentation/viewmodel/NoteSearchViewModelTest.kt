@@ -1,7 +1,7 @@
 package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
 import com.pasich.encly.testutil.TestNotesRepository
@@ -55,7 +55,13 @@ class NoteSearchViewModelTest {
     @Test
     fun notesUnderAHiddenTagAreNotSearched() = runTest(dispatcher) {
         val hidden = Tag(id = 3, nameTag = "Secret", isVisible = false)
-        repository.allNotesWithTags.value = listOf(note(1, text = "plan", tag = hidden), note(2, text = "plan"))
+        val visible = Tag(id = 4, nameTag = "Work")
+        repository.allNotesWithTags.value = listOf(
+            note(1, text = "plan", tag = hidden),
+            note(2, text = "plan"),
+            // A visible tag does not bring a note with a hidden one back into search.
+            note(3, text = "plan", tag = visible).let { it.copy(tags = it.tags + hidden) },
+        )
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.results.collect {} }
 
@@ -68,7 +74,7 @@ class NoteSearchViewModelTest {
     @Test
     fun typingIsDebouncedAndMarkersDoNotMatchEveryChecklist() = runTest(dispatcher) {
         repository.allNotesWithTags.value = listOf(
-            NoteWithTag(Note(id = 1, title = "list", value = CHECKED_MILK), null),
+            NoteWithTags(Note(id = 1, title = "list", value = CHECKED_MILK), emptyList()),
         )
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.results.collect {} }
@@ -88,15 +94,15 @@ class NoteSearchViewModelTest {
 
     private fun createViewModel() = NoteSearchViewModel(ObserveNotesUseCase(repository, dispatcher), dispatcher)
 
-    private fun note(id: Long, text: String, tag: Tag? = null) = NoteWithTag(
-        note = Note(
+    private fun note(id: Long, text: String, tag: Tag? = null) = NoteWithTags(
+        Note(
             id = id,
             title = "note $id",
             value = """[{"blockType":"TEXT","text":"$text"}]""",
             date = id,
-            tagId = tag?.id,
+            tagIds = setOfNotNull(tag?.id),
         ),
-        tag = tag,
+        listOfNotNull(tag),
     )
 
     private companion object {

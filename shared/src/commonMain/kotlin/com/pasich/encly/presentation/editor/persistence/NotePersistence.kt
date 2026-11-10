@@ -399,7 +399,7 @@ class NotePersistence(
     suspend fun hasChanges(): Boolean {
         val (note, backup) = _state.value.let { it.note to it.backupNote }
         if (note.id != backup.id) return true
-        return note.title != backup.title || note.tagId != backup.tagId ||
+        return note.title != backup.title || note.tagIds != backup.tagIds ||
             note.isPinned != backup.isPinned || note.color != backup.color ||
             note.textSize != backup.textSize || note.lineSpacing != backup.lineSpacing ||
             snapshotOf(note, contentJson()) != openedSnapshot
@@ -411,7 +411,7 @@ class NotePersistence(
         val content = contentToKeep(currentNote)
         withContext(ioDispatcher) {
             notesRepository.insertNote(
-                Note.new(title = copyTitle(currentNote.title), value = content, tagId = currentNote.tagId)
+                Note.new(title = copyTitle(currentNote.title), value = content, tagIds = currentNote.tagIds)
                     .copy(
                         color = currentNote.color,
                         textSize = currentNote.textSize,
@@ -441,13 +441,13 @@ class NotePersistence(
 }
 
 private fun snapshotOf(note: Note, blocksJson: String): String =
-    "${note.title}\u0000${note.tagId}\u0000${note.isPinned}\u0000${note.color}\u0000" +
+    "${note.title}\u0000${note.tagIds.sorted()}\u0000${note.isPinned}\u0000${note.color}\u0000" +
         "${note.textSize}\u0000${note.lineSpacing}\u0000$blocksJson"
 
 /** What besides the content makes the editor differ from the stored note; the autosave watches it. */
 private data class NoteMeta(
     val title: String,
-    val tagId: Long?,
+    val tagIds: Set<Long>,
     val isPinned: Boolean,
     val color: String,
     val textSize: Int?,
@@ -456,10 +456,10 @@ private data class NoteMeta(
 
 /** Whether [other] holds the same title, content and organizing columns (the editor's, not the trash state). */
 private fun Note.sameAs(other: Note): Boolean = id == other.id && title == other.title && value == other.value &&
-    tagId == other.tagId && isPinned == other.isPinned && color == other.color &&
+    tagIds == other.tagIds && isPinned == other.isPinned && color == other.color &&
     textSize == other.textSize && lineSpacing == other.lineSpacing && date == other.date
 
-private fun Note.metaKey() = NoteMeta(title, tagId, isPinned, color, textSize, lineSpacing)
+private fun Note.metaKey() = NoteMeta(title, tagIds, isPinned, color, textSize, lineSpacing)
 
 /**
  * Stores [note] with [blocksJson] as its content, writing only what differs from [base] (the row as the editor last
@@ -503,7 +503,7 @@ private fun List<Block>.frozen(): List<Block> = map { block ->
 
 /** The row a new note is first stored as: stamped with its creation time, which is never set again. */
 private fun newDraft(note: Note, blocksJson: String): Note =
-    Note.new(title = note.title, value = blocksJson, tagId = note.tagId)
+    Note.new(title = note.title, value = blocksJson, tagIds = note.tagIds)
         .copy(isPinned = note.isPinned, color = note.color, textSize = note.textSize, lineSpacing = note.lineSpacing)
 
 /** Inserts [draft] as a new row; returns its id, or null. */
@@ -512,8 +512,8 @@ private suspend fun NotesRepository.insertDraft(draft: Note): Long? = insertNote
     ?.takeIf { it > 0L }
 
 /**
- * [this] note as a new, unsaved copy (id = -1) titled [copyTitle]. "No tag" stays null: it has
- * exactly one representation. The copy keeps the colour but starts unpinned and unarchived.
+ * [this] note as a new, unsaved copy (id = -1) titled [copyTitle]. The copy keeps the tags and the colour but
+ * starts unpinned and unarchived.
  */
 private fun Note.asCopy(copyTitle: String): Note = copy(
     id = -1,

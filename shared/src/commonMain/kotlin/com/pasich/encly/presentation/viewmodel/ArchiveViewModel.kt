@@ -76,7 +76,7 @@ class ArchiveViewModel(
     private suspend fun execute(event: NoteListEvent): Boolean = when (event) {
         is NoteListEvent.ArchiveNote -> updateNoteArchiveStatusUseCase(event.note, event.archived).isSuccess
         is NoteListEvent.NoteToTrash -> updateNoteTrashStatusUseCase(event.note, true).isSuccess
-        is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag).isSuccess
+        is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag, event.tagged).isSuccess
         is NoteListEvent.ChangeDescription -> updateNoteDescriptionUseCase(event.note, event.description).isSuccess
         is NoteListEvent.ChangeColor -> updateNoteColorUseCase(event.note, event.color).isSuccess
         is NoteListEvent.SelectTag, is NoteListEvent.ToggleNoteSort, is NoteListEvent.PinNote -> false

@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -81,12 +80,11 @@ class TagListViewModel(
 
     /**
      * How many notes (not in the trash, archived ones included) carry each tag, by tag id. Read
-     * only by the tags screen: deleting a tag untags its archived notes too.
+     * only by the tags screen: deleting a tag untags its archived notes too. One query, so a note
+     * being archived is never counted twice.
      */
     val noteCounts: StateFlow<Map<Long, Int>> =
-        combine(notesRepository.getAllNotesWithTag(), notesRepository.getArchivedNotesWithTag()) { live, archived ->
-            (live + archived).mapNotNull { it.note.tagId }.groupingBy { it }.eachCount()
-        }
+        notesRepository.tagNoteCounts()
             .catch { emit(emptyMap()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
 

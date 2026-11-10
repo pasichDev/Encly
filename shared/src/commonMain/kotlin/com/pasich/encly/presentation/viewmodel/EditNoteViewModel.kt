@@ -302,7 +302,7 @@ class EditNoteViewModel(
             noteId != -1L -> loadNote(noteId, isCopy = false)
 
             // A new note created from a tag's list starts in that tag.
-            addTag != 0L -> persistence.updateNote { it.copy(tagId = addTag) }
+            addTag != 0L -> persistence.updateNote { it.copy(tagIds = setOf(addTag)) }
         }
         persistence.startAutosave(viewModelScope, editor.contentChanges)
         // A lock writes what the autosave still waits for before it closes the vault, then ends editing: nothing
@@ -417,12 +417,20 @@ class EditNoteViewModel(
     }
 
     /**
-     * Moves the note to tag [tagId]. The editor shows it at once; it is stored like a title
-     * change, by the autosave or the save on leaving, together with the editor's content.
+     * Puts the tag [tagId] on the note, or takes it off when the note has it; 0 ("No tag") takes every tag off. The
+     * editor shows it at once; it is stored like a title change, by the autosave or the save on leaving, together
+     * with the editor's content.
      */
-    fun updateTagNote(tagId: Long) {
-        // "No tag" (0) is stored as null, its only representation.
-        persistence.updateNote { it.copy(tagId = tagId.takeIf { id -> id > 0L }) }
+    fun toggleTagNote(tagId: Long) {
+        persistence.updateNote { note ->
+            note.copy(
+                tagIds = when {
+                    tagId <= 0L -> emptySet()
+                    tagId in note.tagIds -> note.tagIds - tagId
+                    else -> note.tagIds + tagId
+                },
+            )
+        }
     }
 
     /** Sets this note's own text size; the default in Settings stays as it is. */

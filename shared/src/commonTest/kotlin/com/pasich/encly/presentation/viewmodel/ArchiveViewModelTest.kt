@@ -2,7 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
@@ -51,7 +51,7 @@ class ArchiveViewModelTest {
     }
 
     private fun archived(id: Long, date: Long) =
-        NoteWithTag(Note(id = id, title = "n$id", date = date, isArchived = true), null)
+        NoteWithTags(Note(id = id, title = "n$id", date = date, isArchived = true), emptyList())
 
     @Test
     fun showsTheArchivedNotesNewestFirst() = runTest(dispatcher) {

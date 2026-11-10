@@ -1,7 +1,7 @@
 package com.pasich.encly.domain.usecase.note
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.NoteListItem
@@ -27,7 +27,7 @@ class ObserveNotesUseCaseTest {
     @Test
     fun aDatabaseReadFailureFailsTheFlowInsteadOfEmittingNoNotes() = runTest {
         val failing = object : NotesRepository by TestNotesRepository() {
-            override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = flow { throw IOException("vault closed") }
+            override fun getAllNotesWithTag(): Flow<List<NoteWithTags>> = flow { throw IOException("vault closed") }
         }
 
         val emitted = mutableListOf<List<NoteListItem>>()
@@ -113,9 +113,9 @@ class ObserveNotesUseCaseTest {
         assertEquals(listOf(3L, 2L), archived.map { it.note.id })
     }
 
-    private fun archivedWithTag(id: Long, tag: Tag) = NoteWithTag(
-        Note(id = id, title = "a$id", date = id, tagId = tag.id, isArchived = true),
-        tag,
+    private fun archivedWithTag(id: Long, tag: Tag) = NoteWithTags(
+        Note(id = id, title = "a$id", date = id, tagIds = setOf(tag.id), isArchived = true),
+        listOf(tag),
     )
 
     @Test
@@ -153,6 +153,47 @@ class ObserveNotesUseCaseTest {
     }
 
     @Test
+    fun aNoteWithAHiddenTagShowsOnlyInTheHiddenTagsViewNotInItsVisibleTagsOrTheLists() = runTest {
+        val visible = Tag(id = 5, nameTag = "Work", position = 1)
+        val hidden = Tag(id = 6, nameTag = "Private", isVisible = false, position = 0)
+        val both = NoteWithTags(Note(id = 1, title = "both", date = 10, tagIds = setOf(5, 6)), listOf(hidden, visible))
+        val workOnly = noteWithTag(id = 2, date = 5, tag = visible)
+        val repository = TestNotesRepository().apply {
+            allNotesWithTags.value = listOf(both, workOnly)
+            tagFlow(5).value = listOf(both, workOnly)
+            tagFlow(6).value = listOf(both)
+        }
+        val useCase = ObserveNotesUseCase(repository, StandardTestDispatcher(testScheduler))
+
+        assertEquals(listOf(2L), useCase(null, NoteSortOption.UPDATED_DESC).first().map { it.note.id })
+        assertEquals(listOf(2L), useCase(5, NoteSortOption.UPDATED_DESC).first().map { it.note.id })
+        val inHidden = useCase(6, NoteSortOption.UPDATED_DESC).first()
+        assertEquals(listOf(1L), inHidden.map { it.note.id })
+        // The item carries every tag of the note.
+        assertEquals(listOf("Private", "Work"), inHidden.single().tags.map { it.nameTag })
+    }
+
+    @Test
+    fun theArchiveLeavesOutANoteWithAnyHiddenTag() = runTest {
+        val visible = Tag(id = 5, nameTag = "Work")
+        val hidden = Tag(id = 6, nameTag = "Private", isVisible = false)
+        val repository = TestNotesRepository().apply {
+            archivedNotesWithTags.value = listOf(
+                NoteWithTags(Note(id = 1, date = 1, isArchived = true), listOf(visible, hidden)),
+                NoteWithTags(Note(id = 2, date = 2, isArchived = true), listOf(visible)),
+            )
+        }
+
+        val archived = ObserveNotesUseCase(repository, StandardTestDispatcher(testScheduler))(
+            tagId = null,
+            sortOption = NoteSortOption.UPDATED_DESC,
+            archived = true,
+        ).first()
+
+        assertEquals(listOf(2L), archived.map { it.note.id })
+    }
+
+    @Test
     fun oneUnreadableNoteDoesNotTakeTheListDown() = runTest {
         val repository = TestNotesRepository().apply {
             allNotesWithTags.value = listOf(
@@ -177,16 +218,16 @@ class ObserveNotesUseCaseTest {
         value: String = "",
         pinned: Boolean = false,
         title: String = "n$id",
-    ) = NoteWithTag(
-        note = Note(
+    ) = NoteWithTags(
+        Note(
             id = id,
             title = title,
             value = value,
             date = date,
             dateCreate = date,
-            tagId = tag?.id,
+            tagIds = setOfNotNull(tag?.id),
             isPinned = pinned,
         ),
-        tag = tag,
+        listOfNotNull(tag),
     )
 }

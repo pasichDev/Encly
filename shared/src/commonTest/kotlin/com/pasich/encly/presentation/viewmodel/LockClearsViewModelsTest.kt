@@ -3,7 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
 import com.pasich.encly.domain.usecase.note.ObserveNotesUseCase
@@ -91,7 +91,7 @@ class LockClearsViewModelsTest {
         locked.value = true
         advanceUntilIdle()
         locked.value = false
-        repository.allNotesWithTags.value = listOf(NoteWithTag(Note(id = 1, title = "Shopping"), null))
+        repository.allNotesWithTags.value = listOf(NoteWithTags(Note(id = 1, title = "Shopping"), emptyList()))
         val decoy = noteList(holder)
         advanceUntilIdle()
 
@@ -145,7 +145,10 @@ class LockClearsViewModelsTest {
     @Test
     fun theSearchQueryAndResultsAreClearedByALock() = runTest(dispatcher) {
         repository.allNotesWithTags.value = listOf(
-            NoteWithTag(Note(id = 1, title = "salary", value = """[{"blockType":"TEXT","text":"salary 100"}]"""), null),
+            NoteWithTags(
+                Note(id = 1, title = "salary", value = """[{"blockType":"TEXT","text":"salary 100"}]"""),
+                emptyList(),
+            ),
         )
         val viewModel = NoteSearchViewModel(ObserveNotesUseCase(repository, dispatcher), dispatcher, lockEvents)
         viewModel.onQueryChange("salary")

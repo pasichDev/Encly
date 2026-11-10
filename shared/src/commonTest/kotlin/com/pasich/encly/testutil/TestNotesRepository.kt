@@ -1,7 +1,7 @@
 package com.pasich.encly.testutil
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.repository.NotesRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 internal class TestNotesRepository : NotesRepository {
-    val allNotesWithTags = MutableStateFlow<List<NoteWithTag>>(emptyList())
+    val allNotesWithTags = MutableStateFlow<List<NoteWithTags>>(emptyList())
 
     /** The id an insert returns; zero or less makes the insert fail. */
     var insertResult: Long = DEFAULT_INSERT_ID
@@ -20,15 +20,13 @@ internal class TestNotesRepository : NotesRepository {
     var updateCalls: Int = 0
         private set
 
-    private val notesByTag = mutableMapOf<Long, MutableStateFlow<List<NoteWithTag>>>()
+    private val notesByTag = mutableMapOf<Long, MutableStateFlow<List<NoteWithTags>>>()
 
-    fun tagFlow(tagId: Long): MutableStateFlow<List<NoteWithTag>> = notesByTag.getOrPut(tagId) {
+    fun tagFlow(tagId: Long): MutableStateFlow<List<NoteWithTags>> = notesByTag.getOrPut(tagId) {
         MutableStateFlow(emptyList())
     }
 
-    override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = allNotesWithTags
-
-    override fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> = tagFlow(tagId)
+    override fun getAllNotesWithTag(): Flow<List<NoteWithTags>> = allNotesWithTags
 
     override suspend fun getNoteById(noteId: Long): Note? = allNotesWithTags.value.firstOrNull {
         it.note.id == noteId
@@ -69,16 +67,16 @@ internal class TestNotesRepository : NotesRepository {
         return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
     }
 
-    val archivedNotesWithTags = MutableStateFlow<List<NoteWithTag>>(emptyList())
+    val archivedNotesWithTags = MutableStateFlow<List<NoteWithTags>>(emptyList())
 
-    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = archivedNotesWithTags
+    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTags>> = archivedNotesWithTags
 
-    override fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTag>> =
+    override fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTags>> =
         combine(tagFlow(tagId), archivedNotesWithTags) { live, archived ->
-            live + archived.filter { it.note.tagId == tagId }
+            live + archived.filter { item -> item.tags.any { it.id == tagId } }
         }
 
-    override fun observeNote(noteId: Long): Flow<NoteWithTag?> = combine(allNotesWithTags, archivedNotesWithTags) {
+    override fun observeNote(noteId: Long): Flow<NoteWithTags?> = combine(allNotesWithTags, archivedNotesWithTags) {
             a,
             b,
         ->
@@ -97,7 +95,15 @@ internal class TestNotesRepository : NotesRepository {
 
     override suspend fun setColor(noteId: Long, color: String) = column("color:$noteId=$color")
 
-    override suspend fun setTag(noteId: Long, tagId: Long?) = column("tag:$noteId=$tagId")
+    override suspend fun setTagged(noteId: Long, tagId: Long, tagged: Boolean) =
+        column(if (tagged) "tag:$noteId=$tagId" else "untag:$noteId=$tagId")
+
+    override suspend fun clearTags(noteId: Long) = column("tag:$noteId=null")
+
+    /** What [tagNoteCounts] gives: every note of the list and the archive, counted per tag. */
+    override fun tagNoteCounts(): Flow<Map<Long, Int>> = combine(allNotesWithTags, archivedNotesWithTags) { a, b ->
+        (a + b).flatMap { item -> item.tags.map { it.id } }.groupingBy { it }.eachCount()
+    }
 
     override suspend fun setDescription(noteId: Long, description: String) = column("description:$noteId=$description")
 

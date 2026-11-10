@@ -152,7 +152,7 @@ class NoteListViewModel(
 
         is NoteListEvent.ChangeColor -> updateNoteColorUseCase(event.note, event.color).isSuccess
 
-        is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag).isSuccess
+        is NoteListEvent.ChangeTag -> updateNoteTagUseCase(event.note, event.idTag, event.tagged).isSuccess
 
         is NoteListEvent.ChangeDescription -> updateNoteDescriptionUseCase(event.note, event.description).isSuccess
 
@@ -175,7 +175,9 @@ sealed class NoteListEvent {
     data class PinNote(val note: Note, val pinned: Boolean) : NoteListEvent()
     data class ArchiveNote(val note: Note, val archived: Boolean) : NoteListEvent()
     data class ChangeColor(val note: Note, val color: NoteColor) : NoteListEvent()
-    data class ChangeTag(val note: Note, val idTag: Long) : NoteListEvent()
+
+    /** Puts the tag [idTag] on the note or takes it off ([tagged]); 0 takes every tag off. */
+    data class ChangeTag(val note: Note, val idTag: Long, val tagged: Boolean = true) : NoteListEvent()
     data class ChangeDescription(val note: Note, val description: String) : NoteListEvent()
     data class ToggleNoteSort(val option: NoteSortOption) : NoteListEvent()
 }

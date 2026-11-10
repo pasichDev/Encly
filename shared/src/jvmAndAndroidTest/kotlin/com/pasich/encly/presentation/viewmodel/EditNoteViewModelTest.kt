@@ -2,7 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.FontStyleType
 import com.pasich.encly.domain.repository.SettingsRepository
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
@@ -73,7 +73,7 @@ class EditNoteViewModelTest {
     fun titleOnlyEmptyBlockPayloadIsValidAndDoesNotTriggerCorruptionGuard() = runTest {
         val note = Note(id = EXISTING_NOTE_ID, title = "title only", value = "[]")
         val repository = TestNotesRepository().apply {
-            allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+            allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
         }
         val viewModel = createViewModel(repository, noteId = EXISTING_NOTE_ID)
 
@@ -88,7 +88,7 @@ class EditNoteViewModelTest {
     fun malformedStoredBlockJsonTriggersCorruptionGuard() = runTest {
         val note = Note(id = EXISTING_NOTE_ID, title = "broken", value = "{not-json")
         val repository = TestNotesRepository().apply {
-            allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+            allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
         }
         val viewModel = createViewModel(repository, noteId = EXISTING_NOTE_ID)
 

@@ -4,7 +4,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteLineSpacing
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
@@ -61,7 +61,7 @@ class EditNoteViewModelComfortTest {
         value = BlockConverter.blocksToJson(listOf(Block.TextBlock(MutableStateFlow("the cat sat")))),
     )
     private val repository = TestNotesRepository().apply {
-        allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+        allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
         insertResult = INSERTED_ID
     }
 
@@ -150,7 +150,7 @@ class EditNoteViewModelComfortTest {
     @Test
     fun aNoteStoredWithItsOwnTextOpensWithIt() = runTest(dispatcher) {
         repository.allNotesWithTags.value = listOf(
-            NoteWithTag(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), null),
+            NoteWithTags(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), emptyList()),
         )
         val viewModel = viewModel()
         collectingText(viewModel)
@@ -165,7 +165,7 @@ class EditNoteViewModelComfortTest {
     fun useDefaultReturnsTheNoteToTheDefaults() = runTest(dispatcher) {
         settings.fontSizeFlow.value = 18
         repository.allNotesWithTags.value = listOf(
-            NoteWithTag(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), null),
+            NoteWithTags(note.copy(textSize = 30, lineSpacing = NoteLineSpacing.COMFORTABLE.ordinal), emptyList()),
         )
         val viewModel = viewModel()
         collectingText(viewModel)

@@ -2,7 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteListItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,7 +10,7 @@ import kotlin.test.assertNull
 
 class NoteListEmptyStateTest {
 
-    private val note = NoteListItem(NoteWithTag(Note(id = 1, title = "a"), null), preview = "", searchText = "")
+    private val note = NoteListItem(NoteWithTags(Note(id = 1, title = "a"), emptyList()), preview = "", searchText = "")
 
     @Test
     fun anEmptyVaultSaysNoNotes() {

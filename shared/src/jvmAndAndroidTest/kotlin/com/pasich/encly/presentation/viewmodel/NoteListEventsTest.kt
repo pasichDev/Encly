@@ -1,7 +1,7 @@
 package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.enums.NoteSortOption
 import com.pasich.encly.domain.model.NoteColor
@@ -45,7 +45,7 @@ class NoteListEventsTest {
             entry(Note(id = 1, title = "Older", date = 10, dateCreate = 30)),
             entry(Note(id = 2, title = "Newer", date = 20, dateCreate = 10)),
             entry(
-                Note(id = 3, title = "Hidden", date = 30, tagId = HIDDEN_TAG),
+                Note(id = 3, title = "Hidden", date = 30, tagIds = setOf(HIDDEN_TAG)),
                 Tag(id = HIDDEN_TAG, isVisible = false),
             ),
         )
@@ -126,7 +126,7 @@ class NoteListEventsTest {
     fun anActionOnAStaleNoteWritesOnlyItsOwnColumn() = runTest(dispatcher) {
         advanceUntilIdle()
         // The sheet still holds the note as read in tag 7's view; its tag was changed to 4 since.
-        val stale = note(1).copy(tagId = 7)
+        val stale = note(1).copy(tagIds = setOf(7))
 
         viewModel.onEvent(NoteListEvent.ChangeTag(stale, idTag = WORK_TAG))
         viewModel.onEvent(NoteListEvent.ChangeColor(stale, NoteColor.TEAL))
@@ -192,7 +192,7 @@ class NoteListEventsTest {
 
     private fun note(id: Long) = repository.allNotesWithTags.value.single { it.note.id == id }.note
 
-    private fun entry(note: Note, tag: Tag? = null) = NoteWithTag(note = note, tag = tag)
+    private fun entry(note: Note, tag: Tag? = null) = NoteWithTags(note, listOfNotNull(tag))
 
     private companion object {
         const val HIDDEN_TAG = 9L

@@ -2,7 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.editor.codec.BlockConverter
@@ -52,7 +52,7 @@ class EditNoteViewModelSelectionTest {
         ),
     )
     private val repository = TestNotesRepository().apply {
-        allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+        allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
     }
     private val clipboard = FakeClipboard()
 

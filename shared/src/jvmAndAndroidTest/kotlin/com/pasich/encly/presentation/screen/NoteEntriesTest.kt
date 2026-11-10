@@ -5,7 +5,7 @@ import com.pasich.encly.core.resources.main_drawer_archive
 import com.pasich.encly.core.resources.notes_section_other
 import com.pasich.encly.core.resources.notes_section_pinned
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteListItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -13,7 +13,7 @@ import org.junit.Test
 class NoteEntriesTest {
 
     private fun item(id: Long, pinned: Boolean = false, archived: Boolean = false) = NoteListItem(
-        NoteWithTag(Note(id = id, isPinned = pinned, isArchived = archived), null),
+        NoteWithTags(Note(id = id, isPinned = pinned, isArchived = archived), emptyList()),
         preview = null,
         searchText = "",
     )

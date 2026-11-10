@@ -66,12 +66,23 @@ class RepositoryImplTest {
 
     @Test
     fun anEditSavesOnlyTheColumnsItChanged() = runBlocking {
-        val base = Note(id = NOTE_ID, title = "t", value = "v", date = 1L, color = "teal", isPinned = true)
-        val edited = base.copy(value = "w", tagId = 3L)
-        // The title and content go; the tag changed; the pin, colour and sizes are left to whatever the row holds.
+        val base =
+            Note(
+                id = NOTE_ID,
+                title = "t",
+                value = "v",
+                date = 1L,
+                color = "teal",
+                isPinned = true,
+                tagIds = setOf(1, 2),
+            )
+        val edited = base.copy(value = "w", tagIds = setOf(2, 3))
+        // The title and content go; tag 3 on and tag 1 off (2 untouched); the pin, colour and sizes are left to
+        // whatever the row holds.
         `when`(
-            notesDao.updateEdited(
-                NOTE_ID, "t", "w", false, "", 1L, true, 3L, false, true, false, "teal", false, null, false, null,
+            notesDao.saveEdited(
+                NOTE_ID, "t", "w", false, "", 1L, false, true, false, "teal", false, null, false, null,
+                setOf(3L), setOf(1L),
             ),
         ).thenReturn(1)
 
@@ -80,12 +91,8 @@ class RepositoryImplTest {
 
     @Test
     fun withoutABaseEveryColumnIsWritten() = runBlocking {
-        val note = Note(id = NOTE_ID, title = "t", value = "v", date = 1L)
-        `when`(
-            notesDao.updateEdited(
-                NOTE_ID, "t", "v", true, "", 1L, true, null, true, false, true, "none", true, null, true, null,
-            ),
-        ).thenReturn(1)
+        val note = Note(id = NOTE_ID, title = "t", value = "v", date = 1L, tagIds = setOf(4))
+        `when`(notesDao.updateEditedWithAllTags(note)).thenReturn(1)
 
         assertTrue(NotesRepositoryImpl(provider).updateEdited(note, null).isSuccess)
     }
@@ -93,7 +100,7 @@ class RepositoryImplTest {
     @Test
     fun aStorageExceptionBecomesAFailureNotACrash() = runBlocking {
         val note = Note(id = NOTE_ID)
-        `when`(notesDao.insertNote(note)).thenAnswer { throw IOException("disk") }
+        `when`(notesDao.insertNoteWithTags(note)).thenAnswer { throw IOException("disk") }
 
         assertTrue(NotesRepositoryImpl(provider).insertNote(note).exceptionOrNull() is IOException)
     }
@@ -112,7 +119,7 @@ class RepositoryImplTest {
         locked = false
         lease = DatabaseLease()
         val note = Note(title = "new session")
-        `when`(notesDao.insertNote(note)).thenReturn(NOTE_ID)
+        `when`(notesDao.insertNoteWithTags(note)).thenReturn(NOTE_ID)
 
         assertTrue(stale.insertNote(note).isFailure)
         assertEquals(NOTE_ID, NotesRepositoryImpl(provider).insertNote(note).getOrNull())

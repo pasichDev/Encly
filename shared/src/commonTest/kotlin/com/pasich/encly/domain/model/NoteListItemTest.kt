@@ -1,7 +1,7 @@
 package com.pasich.encly.domain.model
 
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -39,6 +39,7 @@ class NoteListItemTest {
         assertFalse(item.matches("1."))
     }
 
-    private fun item(title: String = "", description: String = "", value: String = "") =
-        NoteListItem.of(NoteWithTag(Note(id = 1, title = title, description = description, value = value), null))
+    private fun item(title: String = "", description: String = "", value: String = "") = NoteListItem.of(
+        NoteWithTags(Note(id = 1, title = title, description = description, value = value), emptyList()),
+    )
 }

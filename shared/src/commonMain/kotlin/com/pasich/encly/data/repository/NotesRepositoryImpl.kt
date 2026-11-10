@@ -3,10 +3,12 @@ package com.pasich.encly.data.repository
 import com.pasich.encly.data.database.DatabaseLease
 import com.pasich.encly.data.database.DatabaseProvider
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
+import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.NotesRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 private const val TAG = "NotesRepository"
 
@@ -18,23 +20,38 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
 
     private fun dao() = databaseProvider.getDatabase(lease ?: error("Vault locked")).notesDao()
 
-    override fun getAllNotesWithTag(): Flow<List<NoteWithTag>> = daoFlow { dao().getAllNotesWithTags() }
+    override fun getAllNotesWithTag(): Flow<List<NoteWithTags>> =
+        daoFlow { dao().getAllNotesWithTags() }.map { it.map(NoteWithTags::normalized) }
 
-    override fun getNotesByTagId(tagId: Long): Flow<List<NoteWithTag>> = daoFlow { dao().getNotesByTagId(tagId) }
+    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTags>> =
+        daoFlow { dao().getArchivedNotesWithTags() }.map { it.map(NoteWithTags::normalized) }
 
-    override fun getArchivedNotesWithTag(): Flow<List<NoteWithTag>> = daoFlow { dao().getArchivedNotesWithTags() }
+    override fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTags>> =
+        daoFlow { dao().getNotesOfTagWithArchived(tagId) }.map { it.map(NoteWithTags::normalized) }
 
-    override fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTag>> =
-        daoFlow { dao().getNotesOfTagWithArchived(tagId) }
+    override fun observeNote(noteId: Long): Flow<NoteWithTags?> =
+        daoFlow { dao().observeNoteWithTags(noteId) }.map { it?.normalized() }
 
-    override fun observeNote(noteId: Long): Flow<NoteWithTag?> = daoFlow { dao().observeNoteWithTag(noteId) }
+    override fun tagNoteCounts(): Flow<Map<Long, Int>> =
+        daoFlow { dao().observeTagNoteCounts() }.map { counts -> counts.associate { it.tagId to it.count } }
 
     override suspend fun setColor(noteId: Long, color: String): Result<Unit> = storageWrite(TAG, "setColor") {
         dao().updateColor(noteId, color).requireRows()
     }
 
-    override suspend fun setTag(noteId: Long, tagId: Long?): Result<Unit> = storageWrite(TAG, "setTag") {
-        dao().updateTagId(noteId, tagId).requireRows()
+    override suspend fun setTagged(noteId: Long, tagId: Long, tagged: Boolean): Result<Unit> =
+        storageWrite(TAG, "setTagged") {
+            // A tag that is already on (or off) is not a failure: the note is as asked.
+            if (tagged) {
+                dao().changeNoteTags(noteId, added = listOf(tagId), removed = emptyList())
+            } else {
+                dao().changeNoteTags(noteId, added = emptyList(), removed = listOf(tagId))
+            }
+        }
+
+    override suspend fun clearTags(noteId: Long): Result<Unit> = storageWrite(TAG, "clearTags") {
+        dao().clearNoteTags(noteId)
+        Unit
     }
 
     override suspend fun setDescription(noteId: Long, description: String): Result<Unit> =
@@ -51,30 +68,34 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
 
     override fun getTrashNotes(): Flow<List<Note>> = daoFlow { dao().getTrashNotes() }
 
-    override suspend fun getNoteById(noteId: Long): Note? = dao().getNoteById(noteId)
+    override suspend fun getNoteById(noteId: Long): Note? = dao().getNoteWithTags(noteId)?.normalized()?.note
 
     override suspend fun insertNote(note: Note): Result<Long> = storageWrite(TAG, "insertNote") {
-        dao().insertNote(note)
+        dao().insertNoteWithTags(note)
     }
 
     override suspend fun updateEdited(note: Note, base: Note?): Result<Unit> = storageWrite(TAG, "updateEdited") {
-        dao().updateEdited(
+        if (base == null) {
+            // Nothing to diff against: the note gets exactly the editor's tags, in the transaction of the row.
+            return@storageWrite dao().updateEditedWithAllTags(note).requireRows()
+        }
+        dao().saveEdited(
             noteId = note.id,
             title = note.title,
             value = note.value,
-            stamp = base == null || note.date != base.date || note.description != base.description,
+            stamp = note.date != base.date || note.description != base.description,
             description = note.description,
             date = note.date,
-            setTag = base == null || note.tagId != base.tagId,
-            tagId = note.tagId,
-            setPinned = base == null || note.isPinned != base.isPinned,
+            setPinned = note.isPinned != base.isPinned,
             pinned = note.isPinned,
-            setColor = base == null || note.color != base.color,
+            setColor = note.color != base.color,
             color = note.color,
-            setTextSize = base == null || note.textSize != base.textSize,
+            setTextSize = note.textSize != base.textSize,
             textSize = note.textSize,
-            setLineSpacing = base == null || note.lineSpacing != base.lineSpacing,
+            setLineSpacing = note.lineSpacing != base.lineSpacing,
             lineSpacing = note.lineSpacing,
+            addTags = note.tagIds - base.tagIds,
+            removeTags = base.tagIds - note.tagIds,
         ).requireRows()
     }
 
@@ -96,3 +117,11 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
         dao().deleteTrashedBefore(cutoff)
     }
 }
+
+/** The tags in their display order (position, then id), and their ids on the note as well. */
+internal fun NoteWithTags.normalized(): NoteWithTags {
+    val sorted = tags.sortedWith(TAG_ORDER)
+    return NoteWithTags(note.copy(tagIds = sorted.mapTo(LinkedHashSet()) { it.id }), sorted)
+}
+
+internal val TAG_ORDER: Comparator<Tag> = compareBy<Tag>({ it.position }, { it.id })

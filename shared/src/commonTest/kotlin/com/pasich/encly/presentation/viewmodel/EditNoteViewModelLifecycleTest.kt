@@ -3,7 +3,7 @@ package com.pasich.encly.presentation.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteWithTag
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.editor.codec.BlockConverter
@@ -51,7 +51,7 @@ class EditNoteViewModelLifecycleTest {
         val viewModel = viewModel(SavedStateHandle(mapOf("addTag" to TAG_ID)))
         advanceUntilIdle()
 
-        assertEquals(TAG_ID, viewModel.state.value.note.tagId)
+        assertEquals(setOf(TAG_ID), viewModel.state.value.note.tagIds)
         assertTrue(viewModel.isNewNote)
     }
 
@@ -211,7 +211,7 @@ class EditNoteViewModelLifecycleTest {
             title = "Renamed elsewhere",
             value = BlockConverter.blocksToJson(listOf(Block.TextBlock(MutableStateFlow("new text")))),
         )
-        repository.allNotesWithTags.value = listOf(NoteWithTag(note = saved, tag = null))
+        repository.allNotesWithTags.value = listOf(NoteWithTags(saved, emptyList()))
         advanceUntilIdle()
 
         assertEquals("Renamed elsewhere", viewModel.state.value.note.title)
@@ -303,7 +303,7 @@ class EditNoteViewModelLifecycleTest {
             value = BlockConverter.blocksToJson(listOf(Block.TextBlock(MutableStateFlow("body")))),
             isTrash = isTrash,
         )
-        repository.allNotesWithTags.value = listOf(NoteWithTag(note = note, tag = null))
+        repository.allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
     }
 
     private fun viewModel(handle: SavedStateHandle) = EditNoteViewModel(
