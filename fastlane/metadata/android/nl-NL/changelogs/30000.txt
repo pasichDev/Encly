@@ -1,5 +1,4 @@
 Encly 3.0.0
-• Nu ook op Windows, macOS, Linux en iPhone.
 • Pincode van 6–12 cijfers; pincode blijft na ontgrendelen met de herstelzin.
 • Tekst over alinea's selecteren; tabellen, codeblokken, geneste lijsten, items slepen.
 • Eigen werkbalk; notitietekst in lijsten verbergen.

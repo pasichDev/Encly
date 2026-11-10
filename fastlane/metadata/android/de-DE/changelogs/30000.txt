@@ -1,5 +1,4 @@
 Encly 3.0.0
-• Jetzt auch für Windows, macOS, Linux und iPhone.
 • PIN mit 6–12 Ziffern; PIN bleibt nach Entsperren mit der Wiederherstellungsphrase.
 • Text über Absätze markieren; Tabellen, Codeblöcke, verschachtelte Listen, Einträge ziehen.
 • Eigene Werkzeugleiste; Notiztext in Listen ausblenden.

@@ -1,5 +1,4 @@
 Encly 3.0.0
-• Now also on Windows, macOS, Linux and iPhone.
 • PIN of 6–12 digits; keep your PIN after a recovery unlock.
 • Select text across paragraphs; tables, code blocks, nested lists, drag items into place.
 • Arrange your own toolbar; hide note text in lists.

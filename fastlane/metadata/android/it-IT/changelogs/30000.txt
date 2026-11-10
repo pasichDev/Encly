@@ -1,5 +1,4 @@
 Encly 3.0.0
-• Ora anche su Windows, macOS, Linux e iPhone.
 • PIN da 6 a 12 cifre; il PIN resta dopo lo sblocco con la frase.
 • Selezione tra più paragrafi; tabelle, blocchi di codice, elenchi annidati, trascinamento.
 • Barra degli strumenti personalizzabile; nascondi il testo delle note.
