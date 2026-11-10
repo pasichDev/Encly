@@ -1,0 +1,184 @@
+package com.pasich.encly.data.repository
+
+import com.pasich.encly.data.database.AppDatabase
+import com.pasich.encly.data.database.DatabaseLease
+import com.pasich.encly.data.database.DatabaseProvider
+import com.pasich.encly.data.database.dao.NotesDao
+import com.pasich.encly.data.database.dao.TagsDao
+import com.pasich.encly.data.database.dao.TasksDao
+import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Tag
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import java.io.IOException
+
+/** Repositories report failures as a Result or a failing flow: never a sentinel 0/false. */
+class RepositoryImplTest {
+    private val notesDao = mock(NotesDao::class.java)
+    private val tagsDao = mock(TagsDao::class.java)
+    private val tasksDao = mock(TasksDao::class.java)
+    private val database = mock(AppDatabase::class.java).also {
+        `when`(it.notesDao()).thenReturn(notesDao)
+        `when`(it.tagsDao()).thenReturn(tagsDao)
+        `when`(it.tasksDao()).thenReturn(tasksDao)
+    }
+    private var locked = false
+    private var lease = DatabaseLease()
+    private val provider = object : DatabaseProvider {
+        override fun captureLease(): DatabaseLease? = if (locked) null else lease
+
+        override fun getDatabase(lease: DatabaseLease): AppDatabase {
+            if (locked || lease !== this@RepositoryImplTest.lease) error("vault locked")
+            return database
+        }
+    }
+
+    @Test
+    fun updatingZeroRowsIsAFailure() = runBlocking {
+        `when`(notesDao.updateTrashed(NOTE_ID, true, TRASHED_AT)).thenReturn(0)
+
+        assertTrue(NotesRepositoryImpl(provider).setTrashed(NOTE_ID, true, TRASHED_AT).isFailure)
+    }
+
+    @Test
+    fun updatingARowSucceeds() = runBlocking {
+        `when`(notesDao.updateTrashed(NOTE_ID, true, TRASHED_AT)).thenReturn(1)
+
+        assertTrue(NotesRepositoryImpl(provider).setTrashed(NOTE_ID, true, TRASHED_AT).isSuccess)
+    }
+
+    @Test
+    fun restoringWritesNoTrashTime() = runBlocking {
+        `when`(notesDao.updateTrashed(NOTE_ID, false, null)).thenReturn(1)
+
+        assertTrue(NotesRepositoryImpl(provider).setTrashed(NOTE_ID, false, TRASHED_AT).isSuccess)
+    }
+
+    @Test
+    fun anEditSavesOnlyTheColumnsItChanged() = runBlocking {
+        val base =
+            Note(
+                id = NOTE_ID,
+                title = "t",
+                value = "v",
+                date = 1L,
+                color = "teal",
+                isPinned = true,
+                tagIds = setOf(1, 2),
+            )
+        val edited = base.copy(value = "w", tagIds = setOf(2, 3))
+        // The title and content go; tag 3 on and tag 1 off (2 untouched); the pin, colour and sizes are left to
+        // whatever the row holds.
+        `when`(
+            notesDao.saveEdited(
+                NOTE_ID, "t", "w", false, "", 1L, false, true, false, "teal", false, null, false, null,
+                setOf(3L), setOf(1L),
+            ),
+        ).thenReturn(1)
+
+        assertTrue(NotesRepositoryImpl(provider).updateEdited(edited, base).isSuccess)
+    }
+
+    @Test
+    fun withoutABaseEveryColumnIsWritten() = runBlocking {
+        val note = Note(id = NOTE_ID, title = "t", value = "v", date = 1L, tagIds = setOf(4))
+        `when`(notesDao.updateEditedWithAllTags(note)).thenReturn(1)
+
+        assertTrue(NotesRepositoryImpl(provider).updateEdited(note, null).isSuccess)
+    }
+
+    @Test
+    fun aStorageExceptionBecomesAFailureNotACrash() = runBlocking {
+        val note = Note(id = NOTE_ID)
+        `when`(notesDao.insertNoteWithTags(note)).thenAnswer { throw IOException("disk") }
+
+        assertTrue(NotesRepositoryImpl(provider).insertNote(note).exceptionOrNull() is IOException)
+    }
+
+    @Test
+    fun aLockedVaultFailsTheWriteInsteadOfThrowing() = runBlocking {
+        locked = true
+
+        assertTrue(TasksRepositoryImpl(provider).deleteTaskById(TASK_ID).isFailure)
+    }
+
+    @Test
+    fun repositoryCreatedWhileLockedCannotAttachToALaterOpening() = runBlocking {
+        locked = true
+        val stale = NotesRepositoryImpl(provider)
+        locked = false
+        lease = DatabaseLease()
+        val note = Note(title = "new session")
+        `when`(notesDao.insertNoteWithTags(note)).thenReturn(NOTE_ID)
+
+        assertTrue(stale.insertNote(note).isFailure)
+        assertEquals(NOTE_ID, NotesRepositoryImpl(provider).insertNote(note).getOrNull())
+    }
+
+    @Test
+    fun cancellationIsRethrownNotReportedAsAFailure() {
+        val cancellation = CancellationException("cancelled")
+        runBlocking { `when`(notesDao.updateTrashed(NOTE_ID, true, TRASHED_AT)).thenAnswer { throw cancellation } }
+
+        val thrown = runCatching {
+            runBlocking { NotesRepositoryImpl(provider).setTrashed(NOTE_ID, true, TRASHED_AT) }
+        }.exceptionOrNull()
+
+        assertSame(cancellation, thrown)
+    }
+
+    @Test
+    fun aLockedVaultFailsInsideTheFlowWhereTheScreenHandlesIt() = runBlocking {
+        locked = true
+        // Requesting the flow must not throw; collecting it fails.
+        val flow = NotesRepositoryImpl(provider).getTrashNotes()
+
+        assertTrue(runCatching { flow.first() }.exceptionOrNull() is IllegalStateException)
+    }
+
+    @Test
+    fun deletingATagAlsoUntagsItsNotesInOneTransaction(): Unit = runBlocking {
+        val tag = Tag(id = TAG_ID, nameTag = "Work")
+        `when`(tagsDao.deleteTagDetachingNotes(tag)).thenReturn(1)
+
+        assertTrue(TagsRepositoryImpl(provider).deleteTag(tag).isSuccess)
+
+        verify(tagsDao).deleteTagDetachingNotes(tag)
+        verify(tagsDao, never()).deleteTag(tag)
+    }
+
+    @Test
+    fun reorderingFailsUnlessEveryTagIsUpdated() = runBlocking {
+        val tags = listOf(Tag(id = 1, nameTag = "a"), Tag(id = 2, nameTag = "b"))
+        `when`(tagsDao.updateTags(tags)).thenReturn(1)
+
+        assertTrue(TagsRepositoryImpl(provider).updateTags(tags).isFailure)
+        assertTrue(TagsRepositoryImpl(provider).updateTags(emptyList()).isSuccess)
+    }
+
+    @Test
+    fun tagsComeInTheirDisplayOrder() = runBlocking {
+        `when`(tagsDao.getTags()).thenReturn(
+            flowOf(listOf(Tag(id = 1, nameTag = "b", position = 2), Tag(id = 2, nameTag = "a", position = 0))),
+        )
+
+        assertEquals(listOf(2L, 1L), TagsRepositoryImpl(provider).getTags().first().map { it.id })
+    }
+
+    private companion object {
+        const val NOTE_ID = 5L
+        const val TRASHED_AT = 1_000L
+        const val TAG_ID = 8L
+        const val TASK_ID = 3L
+    }
+}

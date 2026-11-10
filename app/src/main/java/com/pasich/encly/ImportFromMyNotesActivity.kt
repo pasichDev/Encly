@@ -21,6 +21,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
+import com.pasich.encly.core.di.appGraph
+import com.pasich.encly.core.locale.AppLocales
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.handoff.AndroidPackageSignatures
@@ -29,18 +31,18 @@ import com.pasich.encly.data.handoff.HandoffLaunch
 import com.pasich.encly.data.handoff.HandoffRequest
 import com.pasich.encly.data.handoff.MyNotesCallerVerifier
 import com.pasich.encly.domain.repository.SettingsRepository
-import com.pasich.encly.presentation.components.SecureTextInputBoundary
-import com.pasich.encly.presentation.components.SensitiveClipboardBoundary
+import com.pasich.encly.platform.AndroidHostServices
+import com.pasich.encly.platform.DocumentRef
 import com.pasich.encly.presentation.screen.handoff.ImportFromMyNotesScreen
 import com.pasich.encly.presentation.viewmodel.HandoffStep
 import com.pasich.encly.presentation.viewmodel.ImportFromMyNotesViewModel
 import com.pasich.encly.ui.theme.AppTheme
-import dagger.hilt.android.AndroidEntryPoint
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import javax.inject.Inject
 
 /**
  * Receives the one-way hand-off from My Notes (pasichDev/Encly#46): My Notes starts it with
@@ -59,7 +61,6 @@ import javax.inject.Inject
  * [EXTRA_SKIPPED]; or `RESULT_CANCELED` with the string extra [EXTRA_REASON]
  * ([HandoffError.reason]).
  */
-@AndroidEntryPoint
 class ImportFromMyNotesActivity : AppCompatActivity() {
 
     @Inject
@@ -71,12 +72,21 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
     @Inject
     lateinit var keyboardPrivacy: KeyboardPrivacy
 
-    private val viewModel: ImportFromMyNotesViewModel by viewModels()
+    @Inject
+    lateinit var viewModelFactory: MetroViewModelFactory
+
+    @Inject
+    lateinit var hostServices: AndroidHostServices
+
+    // Not the default factory: BiometricPrompt and others create their own ViewModels from it.
+    private val viewModel: ImportFromMyNotesViewModel by viewModels { viewModelFactory }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        appGraph.inject(this)
         // As in MainActivity: protected before the first frame.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         super.onCreate(savedInstanceState)
+        AppLocales.syncDefaultLocale()
         protectWindow()
 
         val refused = HandoffRequest.check(launch()) { authority ->
@@ -104,22 +114,20 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
             themeReady = true
         }
         lifecycleScope.launch { viewModel.step.collect(::publishResult) }
-        viewModel.start(uri)
+        viewModel.start(DocumentRef(uri.toString()))
 
         setContent {
             if (!themeReady) return@setContent
             val strictKeyboard by keyboardPrivacy.strict.collectAsState()
-            AppTheme {
-                SecureTextInputBoundary(strict = strictKeyboard) {
-                    SensitiveClipboardBoundary {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
-                                .windowInsetsPadding(WindowInsets.statusBars),
-                        ) {
-                            ImportFromMyNotesScreen(onClose = ::finish)
-                        }
+            hostServices.Provide(this, strictKeyboard) {
+                AppTheme {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                            .windowInsetsPadding(WindowInsets.statusBars),
+                    ) {
+                        ImportFromMyNotesScreen(onClose = ::finish)
                     }
                 }
             }

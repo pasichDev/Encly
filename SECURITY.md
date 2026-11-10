@@ -27,7 +27,17 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
 
 ### PIN slot
 
-- The app requires a 6-digit PIN.
+- The PIN is 6 to 12 digits, the user's choice. Shorter PINs are not offered: the lockout and the
+  device-bound half below limit how many guesses anyone gets, and 6 digits is the shortest that
+  stays safe under those limits. The length is not stored anywhere: the KDF below is the same for
+  every length, so a PIN made when the PIN was fixed at 6 digits derives exactly the keys it did
+  (the golden tests pin that), and an attacker who copies the slot learns nothing about the length.
+  **The lock screen does not auto-submit and does not show how long the PIN is**: the dots start
+  at six rings and grow with each digit typed, and an *Unlock* button sends what was typed. A
+  stored length (to submit at it) would leak it, and would also make the wipe PIN and the duress
+  PIN, which may have another length than the PIN, impossible to enter. The wipe PIN and the
+  duress PIN follow the same 6 to 12 digit rule and the same KDF run, so nothing in the store or
+  on screen tells which of the three a PIN is.
 - The PIN KEK has two halves, mixed with HKDF-SHA256 (`info = "encly/pin/kek/v3"`, the slot's
   random 16-byte salt as HKDF salt):
   - **software:** PBKDF2-HMAC-SHA256 (600,000 iterations) of the PIN and the salt;
@@ -37,9 +47,11 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
 - That KEK wraps the DEK with **AES-256-GCM**. The slot is `version ‖ salt ‖ IV ‖ ciphertext`;
   the version and salt are authenticated as associated data (`"encly/pin/slot/v3"`).
 - No separate PIN hash is stored.
-- Because of the device-bound half, a copied slot cannot be attacked off the device: every PIN
-  guess needs this phone's secure hardware. PBKDF2 stays at full cost as defence in depth, for
-  the case where the Keystore key itself were ever extracted.
+- Because of the device-bound half, a copied slot cannot be attacked off the device: on Android
+  every PIN guess needs this phone's secure hardware (the iOS build gets the same property with
+  a different construction, see [iOS](#ios); the desktop build does not have it, see
+  [Desktop](#desktop)). PBKDF2 stays at full cost as defence in depth, for the case where the
+  Keystore key itself were ever extracted.
 - If the Keystore key is lost (a Keystore reset, a key the system invalidated), the PIN can no
   longer unlock. The lock screen says so and switches to the recovery phrase (or keeps
   fingerprint unlock); the vault without either routes to the damaged-vault screen. A new PIN
@@ -56,6 +68,81 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
   the only wipe is the optional **wipe PIN** below, and only when the user set one up.
 - Changing the PIN keeps the slot's salt (slots written before keep their own), so a wipe PIN
   set earlier keeps working.
+- **Downgrade and PIN length.** A PIN longer than 6 digits cannot be entered in versions before 3.0.0:
+  their keypad submits at the sixth digit, so every attempt with a longer PIN is a counted miss and
+  the lockout escalates, until the user turns to the recovery phrase. Upgrading again changes nothing:
+  the PIN and its slot are untouched. A PIN of 6 digits works in every version.
+- **Leftover entries.** Development builds briefly wrote a `pin.password.slot` entry (and
+  `pin.password.notice`). No release reads or writes them. A vault file that has them opens with its PIN
+  as before; the entries are ignored and dropped by the next PIN write or erase.
+
+#### Desktop
+
+The desktop build (in development) computes the same device-bound half, `HMAC-SHA256(deviceSecret, salt ‖ PIN)`,
+with a different key store. The `deviceSecret` is 32 random bytes from `SecureRandom`, created once per OS user
+(and once per PIN key slot) and kept **only** in the operating system's secret store of that user. Encly's own
+files never hold it unprotected, and it is never logged.
+
+| OS | Where the secret lives |
+|---|---|
+| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\Encly\` (local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
+| macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
+| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure ("unlock your keyring"), not a lost key. |
+
+The second PIN key slot (used after a wipe-PIN unlock) keeps its own secret under the same names with a `-b` suffix.
+
+On Windows the DPAPI blob and the vault are in the local profile (`%LOCALAPPDATA%`), never the roaming one. In a domain,
+DPAPI master keys can be recovered with the domain's backup key, so domain administrators can obtain the secret of a
+domain user; that is part of the desktop trust boundary below. On macOS the data folder is excluded from Time Machine
+(the sticky `com.apple.metadata:com_apple_backup_excludeItem` attribute, set at every start).
+
+A secret that is missing or can no longer be read is the same state as a lost Keystore key above: the PIN no
+longer unlocks and the recovery phrase is needed. A store that is only locked or not running is a temporary
+failure, not a lost key.
+
+Difference from Android: this key is **software-bound to the OS user account, not hardware-bound**. It does not
+sit in a StrongBox or TEE, and the secret store releases it to any process running as the same user (macOS may
+ask the user on the first read by another program; DPAPI and the Secret Service do not). A copied vault slot is
+still useless on its own, since the secret never leaves the user's account, but malware running as the user, or
+anyone who has the user's OS login (a DPAPI master key follows the Windows password, the login keyring the
+session password), can obtain it and then guess PINs off the machine against PBKDF2 alone. Full-disk
+encryption and a strong OS login are part of the desktop trust boundary. Secure Enclave and TPM-bound keys are
+not used yet; they would need a signed app (Apple) or extra platform work.
+
+#### iOS
+
+The device-bound half is computed by the **Secure Enclave** once per PIN guess, but not as an HMAC: the Enclave
+holds only EC keys and answers ECDH. Per PIN key slot the app makes a non-extractable **P-256** key inside the
+Enclave (`kSecAttrTokenIDSecureEnclave`, access control `privateKeyUsage` only, `WhenUnlockedThisDeviceOnly`:
+usable while the phone is unlocked, never in iCloud Keychain or a backup restored to another device, no
+biometry). For a guess, with `data = salt ‖ PIN`:
+
+```
+Q  = hash_to_curve("encly.ios.pin-factor.v2/hash-to-point" ‖ slot ‖ data)   (SHA-256, try-and-increment)
+Z  = x(d · Q)                                  one ECDH inside the Secure Enclave
+hw = HKDF-SHA256(Z, salt = info prefix, info = "encly.ios.pin-factor.v2/hw" ‖ data)   (32 bytes)
+```
+
+`hw` replaces the Android HMAC in the PIN KEK. Why this needs the Enclave for every guess: `Q` is a hash of the
+guess, so nobody knows its discrete logarithm, and `d · Q` cannot be computed without `d`, which exists only in the
+Enclave. Two simpler constructions were rejected because they let the PIN be searched without it: `Q = k·G`
+with `k` derived from the PIN gives `d·Q = k·(d·G)`, computable from the public key; and a fixed peer key with the
+PIN mixed in after the agreement gives a per-slot constant that one capture turns into an offline search.
+
+- A copy of the vault file, the Keychain and everything else on the phone except the Enclave does not let anyone test
+  PINs. The point `Q` is as sensitive as the PIN (10^6 SHA-256 calls recover the PIN from it) and is wiped after
+  use. Someone who can run code in the app while the phone is unlocked (a jailbreak, a debugger on a development
+  build) can still ask the Enclave one guess at a time; the guess rate is the Enclave's, not a GPU's, and the
+  app's lockout is not what protects against that attacker.
+- The Enclave key is gone when the phone is restored from a backup onto another one, or when iOS drops it (removing
+  the device passcode deletes `WhenUnlocked...` items). That is the lost-key state above: the PIN no longer
+  unlocks and the recovery phrase is needed.
+- **No Enclave, no PIN.** Every iPhone that runs iOS 15 has a Secure Enclave. If a device cannot make the key, setting
+  a PIN fails; the app never falls back to a software key on a device. The iOS Simulator has no Enclave and uses a
+  software key in the Keychain so that the app and its tests can run; that code is compiled only for the Simulator and
+  gives no protection against someone who can read the Mac.
+- Not verified on hardware by the test suite: the Enclave key itself (the Simulator cannot run it). The
+  construction is tested with software P-256 keys against values computed independently with CryptoKit.
 
 ### Wipe PIN
 
@@ -77,7 +164,7 @@ and show me"), not against a forensic examination.
   costs a miss like a wrong guess, and the wipe and duress PIN cannot be set during a lockout.
 - **Same cost either way.** Each attempt runs PBKDF2 and the Keystore HMAC once, derives both
   KEKs and always tries both AES-GCM opens, without early exit.
-- **Rules.** 6 digits and different from the PIN (checked by opening the PIN slot with it).
+- **Rules.** 6 to 12 digits and different from the PIN (checked by opening the PIN slot with it).
   Changing the PIN to the wipe PIN turns the wipe PIN off (one PIN never opens both slots). A
   reset of the PIN's Keystore key (see above), or a new PIN set after that key was deleted and
   had to be created anew, turns it off too, since the slot can never open again; Settings then
@@ -181,7 +268,7 @@ meant for "open the app and show me", not against a forensic examination.
   PIN 4 times, type the duress PIN to reset the lockout, and repeat without limit. The cost is a
   tell after that many misses (a lockout sooner than the screen suggests), and a store-level
   one: lockout failures at 0 while `pin.strikes` is not shows a non-PIN unlock since the misses.
-- **Rules.** 6 digits, different from the PIN and from the wipe PIN (checked by opening their
+- **Rules.** 6 to 12 digits, different from the PIN and from the wipe PIN (checked by opening their
   slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
   the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
   Keystore key, or a PIN set with a new salt (after a recovery-phrase unlock when the PIN slot
@@ -250,6 +337,12 @@ Onboarding offers an optional BIP39 recovery slot.
 - The resulting recovery KEK wraps the same random DEK with AES-256-GCM.
 - Entering the correct recovery seed can therefore recover local database access even
   when the PIN is unavailable.
+- **After a recovery unlock** the PIN is no longer replaced by force. If the PIN slot still exists, is
+  not locked out and its device key is not lost (probed with one HMAC; a transient Keystore failure
+  counts as not lost), the user chooses *Keep my PIN* (the default) or *Set a new PIN*. Only when the
+  slot is missing, the key is lost or a lockout runs is a new PIN required before going on. *Keep* changes nothing in the store and
+  ends the session's permission to reset the PIN without the current one; the recovery phrase is
+  the proof of ownership either way, and the lockout is left alone (a new PIN ends it).
 
 Choosing "PIN only, no backups" during onboarding intentionally creates no recovery slot. One
 can be added later from an unlocked session (Settings → Security, or Settings → Backup before
@@ -283,8 +376,22 @@ description, completion, created/completed dates, priority, order). Records carr
 stable random `uid`; links between them (note → tag, task → tag) are stored as uids, never as
 per-device database ids.
 
-A backup **never** contains the DEK, the PIN or biometric slots, lockout state, the recovery
-seed, the backup key, or app settings.
+It also carries the user's display and behaviour preferences (theme, palette, fonts, text size
+and spacing, list layout, sort order, swipe actions, language, auto-lock delay, strict keyboard
+privacy, note previews). They come from an explicit allow-list (`BackupSettings` in
+`:core:security`); a test fails for any preference key the app uses that is on neither the
+allow-list nor the documented exclusion list. A restore reads each value separately: an unknown
+key or a value outside the allowed set is ignored, and preferences are applied only after the
+notes were imported, and only by "replace all" and the first-run restore (a merge keeps the
+preferences of the install it lands in).
+
+A backup **never** contains the DEK, the PIN or biometric slots, lockout state, onboarding or
+vault-commit flags, the screenshot allowance, the recovery seed, the backup key, or any other
+state of the install or the vault.
+
+Payload schema 5 added the preferences section. A schema-4 file restores exactly as before. An app
+that reads only schema 4 reports a schema-5 file as "unsupported version, update the app": its
+strict reader cannot skip a section, and it never half-restores or reports the file as damaged.
 
 ### Key: the recovery seed, not a separate password
 
@@ -540,6 +647,14 @@ keyboard itself: it still receives every key it types, and a malicious or non-co
 ignore all of these flags (see "Important limitations"). The cost is no autocorrect, and some
 keyboards hide emoji or voice input in password fields.
 
+On iOS every text input is Compose's `CMPTextInputView`, and the app makes it answer "no" for autocorrection,
+spell checking, smart quotes, smart dashes, smart insert/delete and inline predictions, whatever the field asked
+for: the system keyboard then has no suggestions to learn from. iOS has no "do not learn" flag and no
+password-like mode that fits a multi-line editor, so **Strict keyboard privacy** is not shown on iOS. Third-party
+keyboards are not loaded at all (the app refuses the keyboard extension point). This is applied by replacing those
+trait getters on that Compose view class at start; if a Compose upgrade renames the class, the test
+`IosKeyboardPrivacyTest` and the review of the upgrade must catch it.
+
 The app requests no `INTERNET` permission and performs no analytics or sync.
 
 ## Platform storage
@@ -598,7 +713,7 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - A rooted or fully compromised OS can observe process memory, UI input, or execute code
   in the app's security context. Encly cannot provide a trustworthy boundary against a
   hostile kernel / system image.
-- A numeric PIN has finite entropy (10^6 values). Off the device, a copied PIN slot is useless
+- A numeric PIN has finite entropy (10^6 to 10^12 values, by its length). Off the device, a copied PIN slot is useless
   without the Keystore factor. **On** a rooted device that is unlocked, an attacker can drive
   the Keystore key from the app's own security context: guesses then run at the secure
   hardware's HMAC speed (StrongBox is much slower than the TEE), the PBKDF2 half can be

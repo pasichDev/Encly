@@ -1,0 +1,8 @@
+Encly 3.0.0
+• Pincode van 6–12 cijfers; pincode blijft na ontgrendelen met de herstelzin.
+• Tekst over alinea's selecteren; tabellen, codeblokken, geneste lijsten, items slepen.
+• Meerdere labels per notitie.
+• Eigen werkbalk; notitietekst in lijsten verbergen.
+• Arabisch en rechts-naar-links; instellingen in de back-up.
+• Vingerafdruk werkt na vergrendeling op de achtergrond.
+• De prullenbak leegt zich na 28 dagen.

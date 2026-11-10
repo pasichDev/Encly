@@ -2,6 +2,7 @@ package com.pasich.encly.core.security
 
 import android.os.Looper
 import androidx.lifecycle.LifecycleOwner
+import com.pasich.encly.core.platform.HandlerMainThreadTimer
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,6 +30,7 @@ class SessionLockTimerTest {
         autoLock = object : AutoLockPolicy {
             override val delayMillis = DELAY_MS
         },
+        mainThread = HandlerMainThreadTimer(),
     )
 
     private fun pass(ms: Long) = shadowOf(Looper.getMainLooper()).idleFor(ms, TimeUnit.MILLISECONDS)

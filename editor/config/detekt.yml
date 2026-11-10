@@ -1,0 +1,26 @@
+# Editor-only detekt rules, layered on config/detekt/detekt.yml. The module is a library, so every
+# public class and function carries KDoc (explicit API mode already requires its visibility and types).
+# Enum entries and the properties of token classes (spacing, font sizes) are named by their type's KDoc;
+# the property rule would make each of them repeat it.
+#
+# detekt's own defaults leave tests out of the style, complexity and comments rules for the source sets
+# it knows (test, commonTest, jvmTest, ...). The module's `androidHostTest` and `desktopTest` are not
+# among them, so they are named here.
+comments:
+  excludes: &tests ['**/commonTest/**', '**/androidHostTest/**', '**/desktopTest/**']
+  UndocumentedPublicClass:
+    active: true
+    searchInNestedClass: true
+    searchInInnerClass: true
+    searchInInnerObject: true
+    searchInInnerInterface: true
+  UndocumentedPublicFunction:
+    active: true
+  UndocumentedPublicProperty:
+    active: false
+
+complexity:
+  excludes: *tests
+
+style:
+  excludes: *tests

@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$15</ID>
+    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$256</ID>
+    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$30_000L</ID>
+    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$5</ID>
+    <ID>MagicNumber:AuthenticationManager.kt$AuthenticationManager$60_000L</ID>
+    <ID>ReturnCount:SecurityManager.kt$SecurityManager$private fun initializeSecurity(): InitialStatus</ID>
+    <ID>TooManyFunctions:AuthenticationManager.kt$AuthenticationManager</ID>
+    <ID>TooManyFunctions:SecurityManager.kt$SecurityManager</ID>
+    <ID>TooManyFunctions:SeedPhraseManager.kt$SeedPhraseManager</ID>
+  </CurrentIssues>
+</SmellBaseline>

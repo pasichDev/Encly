@@ -9,61 +9,33 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import com.pasich.encly.core.di.appGraph
+import com.pasich.encly.core.locale.AppLocales
+import com.pasich.encly.core.security.BiometricTextSource
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.domain.repository.SettingsRepository
-import com.pasich.encly.presentation.components.SecureTextInputBoundary
-import com.pasich.encly.presentation.components.SensitiveClipboardBoundary
-import com.pasich.encly.presentation.effects.LocalUnlockReveal
-import com.pasich.encly.presentation.effects.UnlockRevealOverlay
-import com.pasich.encly.presentation.effects.UnlockRevealState
-import com.pasich.encly.presentation.navigation.AppNavHost
-import com.pasich.encly.presentation.navigation.LocalEraseEpoch
-import com.pasich.encly.presentation.navigation.NavRoutes
-import com.pasich.encly.presentation.navigation.RelockReturn
-import com.pasich.encly.presentation.navigation.SessionResume
-import com.pasich.encly.ui.theme.AppTheme
-import dagger.hilt.android.AndroidEntryPoint
+import com.pasich.encly.platform.AndroidHostServices
+import com.pasich.encly.presentation.navigation.EnclyApp
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import javax.inject.Inject
 
 /**
  * AppCompatActivity (a FragmentActivity, as BiometricPrompt needs) so the in-app language set
  * through AppCompatDelegate.setApplicationLocales is applied on every API level, not only on
  * Android 13+ where the framework does it.
  */
-@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     @Inject
@@ -78,7 +50,14 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var keyboardPrivacy: KeyboardPrivacy
 
+    @Inject
+    lateinit var biometricTexts: BiometricTextSource
+
+    @Inject
+    lateinit var hostServices: AndroidHostServices
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        appGraph.inject(this)
         // Encly always renders protected content. Apply FLAG_SECURE before the splash/content
         // lifecycle starts so screenshots, screen recording, casting and recents snapshots
         // cannot capture an unprotected first frame.
@@ -87,6 +66,8 @@ class MainActivity : AppCompatActivity() {
         stripNavigationExtras(intent)
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // The strings follow the process's default locale: put the in-app language there before composing.
+        AppLocales.syncDefaultLocale()
         // After super.onCreate: touching decorView earlier builds the window with the splash
         // theme, which has an action bar, instead of Theme.Encly.
         protectWindow()
@@ -113,38 +94,21 @@ class MainActivity : AppCompatActivity() {
             // A committed vault that is not open starts locked, before the first frame, so a back
             // stack restored after process death is replaced by the lock screen, never shown.
             if (status == InitialStatus.AUTH) sessionLockManager.requireUnlock()
+            // The system biometric prompt is built outside any coroutine: give it finished texts first.
+            biometricTexts.refresh()
             initialStatus = status
         }
 
         setContent {
-            val destination = initialStatus?.let(::startRoute) ?: return@setContent
-            val navController = rememberNavController()
-
-            // Auto re-lock. Collected without a lifecycle gate so the value is already true in
-            // the first frame after returning from the background. That frame still composes
-            // the pre-lock destination (e.g. an open note), so the shield below covers the
-            // NavHost until the lock screen is the only visible entry. Navigation itself runs
-            // after the frame, from this effect.
-            val locked by sessionLockManager.locked.collectAsState()
+            // Auto re-lock and the navigation guards live in the shared UI (EnclyApp).
             val strictKeyboard by keyboardPrivacy.strict.collectAsState()
-            LockRouteGuard(navController, securityManager::isDatabaseUnlocked)
-            SessionResumeGuard(navController, sessionLockManager)
-            val visibleEntries by navController.visibleEntries.collectAsState()
-            val shielded = locked && visibleEntries.any {
-                it.destination.route != NavRoutes.LockRoute.name
+            hostServices.Provide(this, strictKeyboard) {
+                EnclyApp(
+                    startStatus = initialStatus,
+                    securityManager = securityManager,
+                    sessionLockManager = sessionLockManager,
+                )
             }
-            LaunchedEffect(locked) {
-                if (locked) navController.showLockScreen()
-            }
-
-            App(
-                navController = navController,
-                startDestination = destination.name,
-                eraseEpoch = securityManager::eraseEpoch,
-                shielded = shielded,
-                locked = locked,
-                strictKeyboard = strictKeyboard,
-            )
         }
     }
 
@@ -170,204 +134,10 @@ internal fun Activity.protectWindow() {
     }
 }
 
-/** Where the app starts for [status]; null while there is nothing to show yet. */
-private fun startRoute(status: InitialStatus): NavRoutes? = when (status) {
-    InitialStatus.MAIN -> NavRoutes.HomeRoute
-
-    // PIN setup is part of onboarding, which restarts until the vault is committed.
-    InitialStatus.ONBOARDING, InitialStatus.SETUP_AUTH -> NavRoutes.OnboardingRoute
-
-    InitialStatus.LOSS_DATABASE, InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute
-
-    InitialStatus.AUTH -> NavRoutes.LockRoute
-
-    InitialStatus.LEGACY_VAULT -> NavRoutes.LegacyVaultRoute
-
-    InitialStatus.NO -> null
-}
-
-/**
- * Central route guard: whatever tries to show a vault screen while the database is closed (a
- * back stack restored after process death, a stale navigation) is sent to the lock screen.
- * Navigating from inside the listener is deferred to the next main-thread turn.
- */
-@Composable
-private fun LockRouteGuard(navController: NavHostController, isDatabaseUnlocked: () -> Boolean) {
-    val view = LocalView.current
-    val currentIsDatabaseUnlocked by rememberUpdatedState(isDatabaseUnlocked)
-    DisposableEffect(navController) {
-        val guard = NavController.OnDestinationChangedListener { _, destination, _ ->
-            if (isProtectedRoute(destination.route) && !currentIsDatabaseUnlocked()) {
-                view.post { navController.showLockScreen() }
-            }
-        }
-        navController.addOnDestinationChangedListener(guard)
-        onDispose { navController.removeOnDestinationChangedListener(guard) }
-    }
-}
-
-/**
- * Coming back to the foreground after the vault was unlocked on another lock screen (see
- * [SessionResume.afterStop]) rebuilds the back stack instead of showing screens of a session
- * that ended. Runs on ON_START itself, before the first frame and the re-lock effect.
- */
-@Composable
-private fun SessionResumeGuard(navController: NavHostController, sessionLockManager: SessionLockManager) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, navController) {
-        var stoppedAt: Long? = null
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_STOP -> stoppedAt = sessionLockManager.sessionGeneration
-
-                Lifecycle.Event.ON_START -> {
-                    val resume = SessionResume.afterStop(
-                        stoppedAt = stoppedAt,
-                        generation = sessionLockManager.sessionGeneration,
-                        locked = sessionLockManager.locked.value,
-                    )
-                    stoppedAt = null
-                    when (resume) {
-                        SessionResume.KEEP -> Unit
-
-                        SessionResume.LOCK_SCREEN -> navController.showLockScreen(keepNote = false)
-
-                        SessionResume.HOME -> navController.navigate(NavRoutes.HomeRoute.name) {
-                            popUpTo(navController.graph.id) { inclusive = true }
-                        }
-                    }
-                }
-
-                else -> Unit
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-}
-
 /** Navigation's own deep-link extras; the exported launcher activity must not honour them. */
 private const val NAV_EXTRA_PREFIX = "android-support-nav:controller:"
 
 private fun stripNavigationExtras(intent: Intent?) {
     val extras = intent?.extras ?: return
     extras.keySet().filter { it.startsWith(NAV_EXTRA_PREFIX) }.forEach(intent::removeExtra)
-}
-
-/** Screens that are reachable without an open vault; every other route shows vault content. */
-private val PUBLIC_ROUTES = setOf(
-    NavRoutes.LockRoute.name,
-    NavRoutes.OnboardingRoute.name,
-    NavRoutes.LossDataRoute.name,
-    NavRoutes.LegacyVaultRoute.name,
-)
-
-private fun isProtectedRoute(route: String?): Boolean = route != null && route !in PUBLIC_ROUTES
-
-/** The editor's "opened from the trash, read-only" navigation argument (see AppNavHost). */
-private const val EDIT_NOTE_READ_ONLY_ARG = "isReadTrashOnly"
-
-/**
- * Replaces every screen with the lock screen after a background re-lock, remembering the note
- * that was open (see [RelockReturn]) with the erase epoch of the vault it was opened in, so the
- * unlock returns to it only in that vault. Without [keepNote], or from any other screen,
- * whatever was remembered before is forgotten.
- */
-private fun NavHostController.showLockScreen(keepNote: Boolean = true) {
-    val editor = currentBackStackEntry?.takeIf { keepNote }
-    val returnRoute = editor?.let { entry ->
-        RelockReturn.routeFor(
-            destinationRoute = entry.destination.route,
-            openNoteId = entry.savedStateHandle.get<Long>(RelockReturn.OPEN_NOTE_ID),
-            readOnly = entry.arguments?.getBoolean(EDIT_NOTE_READ_ONLY_ARG) == true,
-        )
-    }
-    val returnEpoch = editor?.savedStateHandle?.get<Long>(RelockReturn.OPEN_NOTE_EPOCH)
-    navigate(NavRoutes.LockRoute.name) {
-        // Drop every screen/ViewModel backed by the now-closed Room instance.
-        // Unlock starts a fresh Home graph with fresh DAO flows.
-        popUpTo(graph.id) {
-            inclusive = false
-        }
-        launchSingleTop = true
-    }
-    val lockState = currentBackStackEntry?.savedStateHandle ?: return
-    if (returnRoute != null && returnEpoch != null) {
-        lockState[RelockReturn.RETURN_ROUTE] = returnRoute
-        lockState[RelockReturn.RETURN_EPOCH] = returnEpoch
-    } else {
-        lockState.remove<String>(RelockReturn.RETURN_ROUTE)
-        lockState.remove<Long>(RelockReturn.RETURN_EPOCH)
-    }
-}
-
-@Composable
-fun App(
-    navController: NavHostController,
-    startDestination: String,
-    eraseEpoch: () -> Long,
-    modifier: Modifier = Modifier,
-    shielded: Boolean = false,
-    locked: Boolean = false,
-    strictKeyboard: Boolean = false,
-) {
-    AppTheme {
-        SecureTextInputBoundary(strict = strictKeyboard) {
-            SensitiveClipboardBoundary {
-                // Edge-to-edge is forced on Android 15+/targetSdk 36. The window is painted with
-                // the same Compose background the screens use; every screen draws under the
-                // transparent status bar and pads its own top inset (its top bar does), so it
-                // paints that band itself and the band moves with the screen in a transition.
-                Box(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background),
-                ) {
-                    val unlockReveal = remember { UnlockRevealState() }
-                    // A re-lock during the reveal ends it: no deferred navigation into the vault,
-                    // no reveal left covering the lock screen.
-                    LaunchedEffect(locked) { if (locked) unlockReveal.cancel() }
-                    CompositionLocalProvider(LocalUnlockReveal provides unlockReveal) {
-                        // The whole app layer moves with the unlock reveal: it slides in from the
-                        // right and pushes the logo colour out (see UnlockRevealOverlay).
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer { translationX = unlockReveal.contentOffset * size.width }
-                                .background(MaterialTheme.colorScheme.background),
-                        ) {
-                            CompositionLocalProvider(LocalEraseEpoch provides eraseEpoch) {
-                                AppNavHost(
-                                    navController = navController,
-                                    startDestination = startDestination,
-                                )
-                            }
-                        }
-                    }
-                    UnlockRevealOverlay(unlockReveal)
-                    if (shielded) LockShield()
-                }
-            }
-        }
-    }
-}
-
-/**
- * Opaque, input-swallowing cover drawn above the NavHost while a re-locked session is still
- * composing protected screens. Plaintext from before the lock is never drawn or tappable.
- */
-@Composable
-private fun LockShield() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        awaitPointerEvent().changes.forEach { it.consume() }
-                    }
-                }
-            },
-    )
 }

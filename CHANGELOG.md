@@ -11,6 +11,50 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+
+- Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
+- Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
+
+## [3.0.0] - 2026-11-07
+
+versionCode 30000.
+
+### Added
+
+- Choose the length of your PIN: 6 to 12 digits, for the PIN, the wipe PIN and the duress PIN. PINs you already have keep working unchanged. The lock screen no longer sends the PIN by itself or shows how long it is: press Unlock when you have typed it ([#95](https://github.com/pasichDev/Encly/issues/95)).
+- Arabic, and right-to-left layouts in every screen; each paragraph and list item of a note follows the direction of its own text ([#105](https://github.com/pasichDev/Encly/issues/105)).
+- Backups carry your settings (appearance, lists, editor, language and privacy preferences); a full restore applies them after the notes. Security state never leaves the vault ([#93](https://github.com/pasichDev/Encly/issues/93)).
+- Select text across paragraphs, lists and headings, like in a document: drag, use the handles or Shift with the arrow keys, or press Select all twice. Typing, pasting or deleting over a selection is one undo step, and copies go through the protected clipboard. Whole blocks can also be picked from their left edge ([#83](https://github.com/pasichDev/Encly/issues/83)).
+- Give a note several tags: pick as many as you like in the note's sheet or the editor, and the note appears in the view of each one. Notes keep the tag they have, backups carry every tag, and a note with a hidden tag stays out of every list but that tag's own view ([#109](https://github.com/pasichDev/Encly/issues/109)).
+- Nested lists up to three levels (Tab and Shift+Tab), and list items that can be dragged into place ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Tables, code blocks, and a toolbar you can arrange yourself in Settings → Appearance ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- A lock button next to a checklist while you work in it, and lists indented under their heading ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Settings → Security → "Show note previews": when off, the notes list, the grid and search results show only the title, tag and date; search still matches the text inside notes ([#105](https://github.com/pasichDev/Encly/issues/105)).
+- Settings → Security → "Allow screenshots until the app locks": after your PIN or biometrics and a warning, screenshots and screen recording are allowed until Encly locks. The lock, PIN and recovery phrase screens stay protected, and the setting is never stored ([#94](https://github.com/pasichDev/Encly/issues/94)).
+- Sort notes by title, A to Z or Z to A, in the language's alphabetical order.
+- Auto-lock after 5 or 10 minutes ([#98](https://github.com/pasichDev/Encly/issues/98)).
+- Notes are deleted for good after 28 days in the trash, the same way "Delete forever" does. Notes already in the trash start their 28 days with this update ([#97](https://github.com/pasichDev/Encly/issues/97)).
+- After an update, the first unlock shows what changed in that version, once; Settings → About keeps it ([#105](https://github.com/pasichDev/Encly/issues/105)).
+
+### Changed
+
+- The unlock animation takes half as long, and is skipped when animations are turned off in the system settings.
+- After you unlock with the recovery phrase, a PIN that still works is no longer replaced: choose "Keep my PIN" or "Set a new PIN". A new PIN is still required when the PIN or its key is lost, or while it is locked out ([#95](https://github.com/pasichDev/Encly/issues/95)).
+- Encly is rebuilt on a Kotlin Multiplatform core ([#92](https://github.com/pasichDev/Encly/pull/92)). The encrypted database now opens through the Sealite driver (SQLCipher 4.20). Vaults, recovery phrases, backups and notes from earlier versions open unchanged.
+- Opening and closing a note is quicker ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Find in note highlights matches more strongly ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Backspace at the start of a list item joins it into the item above, so holding delete runs through a list without stopping ([#76](https://github.com/pasichDev/Encly/issues/76)).
+
+### Fixed
+
+- Fingerprint unlock did not start, and its button did nothing, after Encly locked itself in the background ([#104](https://github.com/pasichDev/Encly/issues/104)).
+- Checking or unchecking a task, or archiving a note in a hidden tag's view, could close the app.
+- A new note lost its creation date at the first autosave. Notes that already lost it now sort by their last edit ([#103](https://github.com/pasichDev/Encly/issues/103)).
+- Stepping through matches in Find in note now scrolls to each match, also inside long paragraphs and lists ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- Scrolling over a list no longer leaves its toolbar button active ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- The gap below a quote matches the gap above it ([#76](https://github.com/pasichDev/Encly/issues/76)).
+
 ## [2.3.1] - 2026-10-27
 
 versionCode 20301.

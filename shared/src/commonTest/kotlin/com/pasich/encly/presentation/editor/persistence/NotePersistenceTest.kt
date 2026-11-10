@@ -1,0 +1,714 @@
+package com.pasich.encly.presentation.editor.persistence
+
+import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteWithTags
+import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
+import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
+import com.pasich.encly.editor.codec.BlockConverter
+import com.pasich.encly.editor.model.Block
+import com.pasich.encly.testutil.TestNotesRepository
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class NotePersistenceTest {
+    private val dispatcher = StandardTestDispatcher()
+    private val repository = TestNotesRepository().apply { insertResult = INSERTED_ID }
+    private var blocks: List<Block> = listOf(Block.TextBlock())
+
+    // --- saving -------------------------------------------------------------------------------
+
+    @Test
+    fun aNewNoteIsInsertedOnceAndThenUpdated() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "draft") }
+
+        assertTrue(persistence.save())
+        assertEquals(INSERTED_ID, persistence.state.value.note.id)
+        assertTrue(persistence.save())
+
+        assertEquals(1, repository.insertCalls)
+        assertEquals(1, repository.updateCalls)
+        assertEquals(SaveStatusNote.SAVED, persistence.status.value)
+    }
+
+    @Test
+    fun theCreationTimeSurvivesTheAutosavesAfterTheFirstInsert() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "draft") }
+
+        assertTrue(persistence.save())
+        val created = repository.insertedNotes.single().dateCreate
+        assertTrue(created > 0L)
+        assertEquals(created, persistence.state.value.note.dateCreate)
+
+        blocks = listOf(text("more"))
+        assertTrue(persistence.save())
+
+        assertEquals(created, repository.updatedNotes.single().dateCreate)
+    }
+
+    @Test
+    fun aBlankNewNoteIsNotStored() = runTest(dispatcher) {
+        val persistence = persistence()
+        blocks = listOf(text("  \n "), Block.LinkBlock())
+
+        assertTrue(persistence.save())
+
+        assertEquals(0, repository.insertCalls)
+    }
+
+    @Test
+    fun aFailedInsertIsReportedAndLeavesTheNoteNew() = runTest(dispatcher) {
+        repository.insertResult = 0L
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "draft") }
+
+        assertFalse(persistence.save())
+
+        assertEquals(-1L, persistence.state.value.note.id)
+        // The editor keeps saying so until a save succeeds.
+        assertEquals(SaveStatusNote.FAILED, persistence.status.value)
+        repository.insertResult = INSERTED_ID
+        assertTrue(persistence.save())
+        assertEquals(SaveStatusNote.SAVED, persistence.status.value)
+    }
+
+    @Test
+    fun aSavedEditMovesTheShownDateAndDropsAnImportedSummary() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTags(
+                Note(
+                    id = NOTE_ID,
+                    title = "title",
+                    value = BlockConverter.blocksToJson(listOf(text("body"))),
+                    description = "imported summary",
+                    date = OLD_DATE,
+                ),
+                emptyList(),
+            ),
+        )
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("body, edited"))
+
+        assertTrue(persistence.save())
+
+        val stored = repository.updatedNotes.single()
+        assertTrue(stored.date > OLD_DATE)
+        assertEquals("", stored.description)
+        assertEquals(stored.date, persistence.state.value.note.date)
+    }
+
+    @Test
+    fun anUnchangedNoteKeepsItsDateAndSummary() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTags(
+                Note(
+                    id = NOTE_ID,
+                    title = "title",
+                    value = BlockConverter.blocksToJson(listOf(text("body"))),
+                    description = "imported summary",
+                    date = OLD_DATE,
+                ),
+                emptyList(),
+            ),
+        )
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+
+        assertTrue(persistence.save())
+
+        assertEquals(OLD_DATE, repository.updatedNotes.single().date)
+        assertEquals("imported summary", repository.updatedNotes.single().description)
+    }
+
+    @Test
+    fun changesAreWhatDiscardWouldUndo() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertFalse(persistence.hasChanges())
+
+        blocks = listOf(text("body, edited"))
+        assertTrue(persistence.hasChanges())
+
+        blocks = listOf(text("body"))
+        persistence.updateNote { it.copy(tagIds = setOf(TAG_ID)) }
+        assertTrue(persistence.hasChanges())
+    }
+
+    @Test
+    fun aNewNoteWithoutTitleOrContentIsABlankDraft() = runTest(dispatcher) {
+        val persistence = persistence()
+        assertTrue(persistence.isBlankDraft)
+
+        blocks = listOf(text("x"))
+        assertFalse(persistence.isBlankDraft)
+    }
+
+    @Test
+    fun anEmptyTableOrCodeBlockIsContentTheUserMadeNotABlankDraft() = runTest(dispatcher) {
+        val persistence = persistence()
+
+        blocks = listOf(Block.TableBlock())
+        assertFalse(persistence.isBlankDraft)
+
+        blocks = listOf(Block.CodeBlock())
+        assertFalse(persistence.isBlankDraft)
+    }
+
+    @Test
+    fun nothingIsSavedWhileTheNoteIsLoading() = runTest(dispatcher) {
+        val persistence = persistence(loading = true)
+        persistence.updateNote { it.copy(title = "typed before the note arrived") }
+
+        assertTrue(persistence.save())
+
+        assertEquals(0, repository.insertCalls)
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
+    fun aReadOnlyNoteIsNeverSaved() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true, readOnly = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("edited"))
+
+        assertTrue(persistence.save())
+
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
+    fun aSuspendedEditorWritesNothingUntilItIsLifted() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("edited"))
+
+        // Another window edits the note: whatever this editor holds must not overwrite it.
+        persistence.suspended = true
+        assertTrue(persistence.save())
+        assertFalse(persistence.moveToTrash())
+        assertFalse(persistence.setArchived(true))
+        assertFalse(persistence.restoreFromTrash())
+        assertFalse(persistence.discard())
+        assertFalse(persistence.delete())
+        assertEquals(0, repository.updateCalls)
+        assertTrue(repository.deletedIds.isEmpty())
+
+        persistence.suspended = false
+        assertTrue(persistence.save())
+        assertEquals(1, repository.updateCalls)
+    }
+
+    // --- loading ------------------------------------------------------------------------------
+
+    @Test
+    fun loadingShowsTheBlocksAndKeepsTheNoteId() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+
+        assertTrue(persistence.load(NOTE_ID, isCopy = false) { blocks = it })
+
+        assertEquals("body", (blocks.single() as Block.TextBlock).text.value)
+        assertEquals(NOTE_ID, persistence.state.value.note.id)
+        assertEquals(SaveStatusNote.OLD, persistence.status.value)
+    }
+
+    @Test
+    fun aCopyIsANewUntaggedNote() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+
+        persistence.load(NOTE_ID, isCopy = true) { blocks = it }
+
+        assertEquals(-1L, persistence.state.value.note.id)
+        assertEquals("title (копія)", persistence.state.value.note.title)
+        assertEquals(emptySet<Long>(), persistence.state.value.note.tagIds)
+    }
+
+    @Test
+    fun aMissingNoteIsReportedAndNeverSaved() = runTest(dispatcher) {
+        val persistence = persistence(loading = true)
+
+        assertFalse(persistence.load(NOTE_ID, isCopy = false) { blocks = it })
+        persistence.updateNote { it.copy(title = "x") }
+        persistence.save()
+
+        assertTrue(persistence.contentLoadFailed.value)
+        assertEquals(0, repository.insertCalls)
+    }
+
+    @Test
+    fun unreadableContentIsNotOverwritten() = runTest(dispatcher) {
+        repository.allNotesWithTags.value =
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "t", value = "{not json"), emptyList()))
+        val persistence = persistence(loading = true)
+
+        // Reported as not loaded, so the editor stays read-only; the title is still shown.
+        assertFalse(persistence.load(NOTE_ID, isCopy = false) { blocks = it })
+        assertEquals("t", persistence.state.value.note.title)
+        blocks = listOf(text("edited"))
+        persistence.save()
+
+        assertTrue(persistence.contentLoadFailed.value)
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
+    fun duplicatingUnreadableContentCopiesTheStoredText() = runTest(dispatcher) {
+        repository.allNotesWithTags.value =
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "t", value = "{not json"), emptyList()))
+        val persistence = persistence(loading = true)
+        assertFalse(persistence.load(NOTE_ID, isCopy = false) { blocks = it })
+
+        persistence.duplicate()
+
+        // The editor shows nothing it could read, so its empty blocks must not become the copy.
+        assertEquals("{not json", repository.insertedNotes.single().value)
+    }
+
+    @Test
+    fun aCopyOfUnreadableContentIsReportedAndNeverInserted() = runTest(dispatcher) {
+        repository.allNotesWithTags.value =
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "t", value = "{not json"), emptyList()))
+        val persistence = persistence(loading = true)
+
+        assertFalse(persistence.load(NOTE_ID, isCopy = true) { blocks = it })
+        blocks = listOf(text("typed"))
+        persistence.save()
+
+        assertEquals(0, repository.insertCalls)
+    }
+
+    // --- closing: trash, discard, delete ------------------------------------------------------
+
+    @Test
+    fun aSaveAfterTrashCannotBringTheNoteBack() = runTest(dispatcher) {
+        storeNote(text("original"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("edited"))
+
+        assertTrue(persistence.moveToTrash())
+        persistence.save()
+
+        // What was typed is stored first, then the trash columns are written; nothing after the close.
+        assertEquals(2, repository.updateCalls)
+        assertFalse(repository.updatedNotes.first().isTrash)
+        assertEquals(BlockConverter.blocksToJson(listOf(text("edited"))), repository.updatedNotes.first().value)
+        assertTrue(repository.updatedNotes.last().isTrash)
+        assertTrue(persistence.state.value.note.isTrash)
+    }
+
+    @Test
+    fun trashingAnUntouchedNoteWritesTheTrashColumnsOnly() = runTest(dispatcher) {
+        storeNote(text("original"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+
+        assertTrue(persistence.moveToTrash())
+
+        assertEquals(1, repository.updateCalls)
+        assertTrue(repository.updatedNotes.single().isTrash)
+        assertTrue(repository.updateBases.isEmpty())
+    }
+
+    @Test
+    fun aSaveWritesOnlyAgainstTheRowTheEditorLastSaw() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("body, edited"))
+
+        assertTrue(persistence.save())
+
+        // The base is the note as loaded (not trashed, not archived, no pin): the repository diffs against it.
+        val base = checkNotNull(repository.updateBases.single())
+        assertEquals("title", base.title)
+        assertEquals(BlockConverter.blocksToJson(listOf(text("body"))), base.value)
+    }
+
+    @Test
+    fun releasingSavesTheLastChangesAndThenWritesNothing() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("typed just before"))
+
+        assertTrue(persistence.release())
+
+        assertEquals(BlockConverter.blocksToJson(blocks), repository.updatedNotes.single().value)
+        // Released: an autosave or a last-chance save finds nothing to do.
+        blocks = listOf(text("typed after"))
+        assertTrue(persistence.save())
+        assertEquals(1, repository.updateCalls)
+    }
+
+    @Test
+    fun anEditorThatRegainsTheNoteShowsWhatWasSavedMeanwhile() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertTrue(persistence.release())
+
+        // Another window saves new text.
+        val other = BlockConverter.blocksToJson(listOf(text("from the other window")))
+        repository.allNotesWithTags.value =
+            listOf(NoteWithTags(Note(id = NOTE_ID, title = "title", value = other), emptyList()))
+        persistence.resume { blocks = it }
+
+        assertEquals("from the other window", (blocks.single() as Block.TextBlock).text.value)
+        // Editing resumed on top of the fresh text: nothing is pending, and a change is saved again.
+        assertTrue(persistence.save(onlyIfChanged = true))
+        assertEquals(0, repository.updateCalls)
+        blocks = listOf(text("and mine"))
+        assertTrue(persistence.save())
+        assertEquals(1, repository.updateCalls)
+    }
+
+    @Test
+    fun anEditorThatRegainsAnUnchangedNoteKeepsWhatItHolds() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertTrue(persistence.release())
+        var reloaded = false
+
+        persistence.resume { reloaded = true }
+
+        assertFalse(reloaded)
+    }
+
+    @Test
+    fun aViewOfANoteEditedElsewhereFollowsWhatTheOtherWindowSaves() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        persistence.suspended = true
+
+        val saved = Note(
+            id = NOTE_ID,
+            title = "renamed",
+            value = BlockConverter.blocksToJson(listOf(text("new text"))),
+        )
+        persistence.showStored(saved) { blocks = it }
+
+        assertEquals("new text", (blocks.single() as Block.TextBlock).text.value)
+        assertEquals("renamed", persistence.state.value.note.title)
+    }
+
+    @Test
+    fun anEditorThatIsNotSuspendedIgnoresTheStoredNote() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        var shown = false
+
+        persistence.showStored(Note(id = NOTE_ID, title = "other", value = "[]")) { shown = true }
+
+        assertFalse(shown)
+        assertEquals("title", persistence.state.value.note.title)
+    }
+
+    @Test
+    fun restoringTakesTheNoteOutOfTheTrash() = runTest(dispatcher) {
+        storeNote(text("original"), isTrash = true)
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+
+        assertTrue(persistence.restoreFromTrash())
+
+        assertFalse(repository.updatedNotes.single().isTrash)
+        assertNull(repository.updatedNotes.single().trashedAt)
+    }
+
+    @Test
+    fun discardPutsBackTheOpenedNoteAndBlocksLaterSaves() = runTest(dispatcher) {
+        storeNote(text("original"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        blocks = listOf(text("edited"))
+
+        assertTrue(persistence.discard())
+        persistence.save()
+
+        assertEquals(BlockConverter.blocksToJson(listOf(text("original"))), repository.updatedNotes.single().value)
+    }
+
+    @Test
+    fun discardingAnAutosavedNewNoteDeletesIt() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "draft") }
+        persistence.save()
+
+        assertTrue(persistence.discard())
+
+        assertEquals(listOf(INSERTED_ID), repository.deletedIds)
+    }
+
+    @Test
+    fun deletingANewNoteTouchesNothing() = runTest(dispatcher) {
+        val persistence = persistence()
+
+        assertTrue(persistence.delete())
+
+        assertTrue(repository.deletedIds.isEmpty())
+    }
+
+    @Test
+    fun aDuplicateIsStoredAsACopy() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "note") }
+
+        assertEquals(INSERTED_ID, persistence.duplicate())
+        assertEquals("note (копія)", repository.insertedNotes.single().title)
+    }
+
+    @Test
+    fun titleAndTagChangedWhileTheFirstInsertRunsAreKeptAndStored() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.insertGate = gate
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "dra") }
+
+        val firstSave = async { persistence.save() }
+        runCurrent() // the insert is in flight
+        persistence.updateNote { it.copy(title = "draft", tagIds = setOf(TAG_ID)) }
+        gate.complete(Unit)
+        assertTrue(firstSave.await())
+
+        val note = persistence.state.value.note
+        assertEquals(INSERTED_ID, note.id)
+        assertEquals("draft", note.title)
+        assertEquals(setOf(TAG_ID), note.tagIds)
+
+        // The later changes are not in the database yet, so the next save writes them.
+        assertTrue(persistence.save())
+        assertEquals("draft", repository.updatedNotes.single().title)
+        assertEquals(setOf(TAG_ID), repository.updatedNotes.single().tagIds)
+    }
+
+    @Test
+    fun aTagChangeAloneIsAutosaved() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        persistence.startAutosave(backgroundScope, contentChangesOf(MutableStateFlow(Unit)))
+        passQuietTime()
+        assertEquals(0, repository.updateCalls)
+
+        persistence.updateNote { it.copy(tagIds = setOf(TAG_ID)) }
+        passQuietTime()
+
+        assertEquals(setOf(TAG_ID), repository.updatedNotes.single().tagIds)
+        assertEquals(BlockConverter.blocksToJson(listOf(text("body"))), repository.updatedNotes.single().value)
+    }
+
+    @Test
+    fun aSaveCarriesTheTagsWithTheBaseTheyChangedFrom() = runTest(dispatcher) {
+        storeNote(text("body"), tagIds = setOf(1L, 2L))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        assertEquals(setOf(1L, 2L), persistence.state.value.note.tagIds)
+
+        persistence.updateNote { it.copy(tagIds = it.tagIds - 1L + 3L) }
+        assertTrue(persistence.hasChanges())
+        assertTrue(persistence.save())
+
+        // The repository writes the difference: 3 on, 1 off, and 2 (untouched here) as it is stored.
+        assertEquals(setOf(2L, 3L), repository.updatedNotes.single().tagIds)
+        assertEquals(setOf(1L, 2L), repository.updateBases.single()?.tagIds)
+    }
+
+    @Test
+    fun aCopyKeepsTheTagsOfItsOriginal() = runTest(dispatcher) {
+        storeNote(text("body"), tagIds = setOf(1L, 2L))
+        val persistence = persistence(loading = true)
+
+        persistence.load(NOTE_ID, isCopy = true) { blocks = it }
+        assertTrue(persistence.save())
+
+        assertEquals(setOf(1L, 2L), repository.insertedNotes.single().tagIds)
+    }
+
+    // --- autosave -----------------------------------------------------------------------------
+
+    @Test
+    fun autosaveWritesOnceAfterTheQuietTime() = runTest(dispatcher) {
+        val changes = MutableSharedFlow<Unit>(replay = 1)
+        val persistence = persistence()
+        persistence.startAutosave(backgroundScope, changes)
+        changes.emit(Unit)
+
+        persistence.updateNote { it.copy(title = "a") }
+        runCurrent()
+        persistence.updateNote { it.copy(title = "ab") }
+        advanceTimeBy(AUTOSAVE_DEBOUNCE_MS - 1)
+        runCurrent()
+        assertEquals(0, repository.insertCalls)
+
+        advanceTimeBy(2)
+        runCurrent()
+        assertEquals(1, repository.insertCalls)
+    }
+
+    @Test
+    fun openingANoteAutosavesNothingButTheFirstEditIsSaved() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val body = MutableStateFlow("body")
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = listOf(Block.TextBlock(body)) }
+        persistence.startAutosave(backgroundScope, contentChangesOf(body))
+        passQuietTime()
+        assertEquals(0, repository.updateCalls)
+
+        body.value = "body, edited"
+        passQuietTime()
+
+        assertEquals(1, repository.updateCalls)
+    }
+
+    @Test
+    fun autosaveStopsWhenTheEditorCloses() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.startAutosave(backgroundScope, contentChangesOf(MutableStateFlow(Unit)))
+        persistence.updateNote { it.copy(title = "draft") }
+
+        persistence.close()
+        passQuietTime()
+
+        assertEquals(0, repository.insertCalls)
+    }
+
+    // --- pin, archive and colour ----------------------------------------------------------------
+
+    @Test
+    fun aNewNoteKeepsItsPinAndColourWhenFirstStored() = runTest(dispatcher) {
+        val persistence = persistence()
+        persistence.updateNote { it.copy(title = "draft", isPinned = true, color = "teal") }
+
+        assertTrue(persistence.save())
+
+        val inserted = repository.insertedNotes.single()
+        assertTrue(inserted.isPinned)
+        assertEquals("teal", inserted.color)
+    }
+
+    @Test
+    fun aChangedPinOrColourIsAutosavedAlthoughTheContentIsTheSame() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { }
+        val changes = MutableStateFlow(0)
+        persistence.startAutosave(backgroundScope, contentChangesOf(changes))
+        passQuietTime()
+        assertEquals(0, repository.updateCalls)
+
+        persistence.updateNote { it.copy(isPinned = true) }
+        passQuietTime()
+        persistence.updateNote { it.copy(color = "blue") }
+        passQuietTime()
+
+        assertEquals(listOf(true, true), repository.updatedNotes.map { it.isPinned })
+        assertEquals(listOf("none", "blue"), repository.updatedNotes.map { it.color })
+    }
+
+    @Test
+    fun archivingUnpinsAndClosesTheEditor() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { }
+        persistence.updateNote { it.copy(isPinned = true) }
+
+        assertTrue(persistence.setArchived(true))
+
+        assertEquals(listOf("archived:$NOTE_ID=true"), repository.columnWrites)
+        assertFalse(persistence.state.value.note.isPinned)
+        // Closed: a later save cannot write the note again.
+        assertTrue(persistence.save())
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
+    fun aNewUnsavedNoteCannotBeArchived() = runTest(dispatcher) {
+        assertFalse(persistence().setArchived(true))
+        assertEquals(0, repository.updateCalls)
+    }
+
+    @Test
+    fun aCopyKeepsTheColourButIsNeitherPinnedNorArchived() = runTest(dispatcher) {
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTags(
+                Note(id = NOTE_ID, title = "t", value = "[]", isPinned = true, isArchived = true, color = "pink"),
+                emptyList(),
+            ),
+        )
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = true) { }
+
+        val copy = persistence.state.value.note
+        assertEquals(-1L, copy.id)
+        assertFalse(copy.isPinned)
+        assertFalse(copy.isArchived)
+        assertEquals("pink", copy.color)
+    }
+
+    // The autosave runs in backgroundScope, whose timers advanceUntilIdle() does not wait for.
+    private fun TestScope.passQuietTime() {
+        advanceTimeBy(AUTOSAVE_DEBOUNCE_MS + 1)
+        runCurrent()
+    }
+
+    private fun contentChangesOf(flow: MutableStateFlow<*>) = flow {
+        flow.collect { emit(Unit) }
+    }
+
+    private fun persistence(loading: Boolean = false, readOnly: Boolean = false) = NotePersistence(
+        notesRepository = repository,
+        updateNoteTrashStatusUseCase = UpdateNoteTrashStatusUseCase(repository),
+        updateNoteArchiveStatusUseCase = UpdateNoteArchiveStatusUseCase(repository),
+        ioDispatcher = dispatcher,
+        readOnly = readOnly,
+        blocks = { blocks },
+        copyTitle = { "$it (копія)" },
+        loading = loading,
+    )
+
+    private fun storeNote(vararg content: Block, isTrash: Boolean = false, tagIds: Set<Long> = emptySet()) {
+        val note = Note(
+            id = NOTE_ID,
+            title = "title",
+            value = BlockConverter.blocksToJson(content.toList()),
+            isTrash = isTrash,
+            tagIds = tagIds,
+        )
+        repository.allNotesWithTags.value = listOf(NoteWithTags(note, emptyList()))
+    }
+
+    private fun text(value: String) = Block.TextBlock(MutableStateFlow(value))
+
+    private companion object {
+        const val NOTE_ID = 91L
+        const val INSERTED_ID = 73L
+        const val TAG_ID = 5L
+        const val OLD_DATE = 1_000L
+    }
+}

@@ -1,0 +1,8 @@
+Encly 3.0.0
+• PIN de 6 a 12 dígitos; el PIN se mantiene tras desbloquear con la frase.
+• Selección entre párrafos; tablas, bloques de código, listas anidadas, arrastrar elementos.
+• Varias etiquetas por nota.
+• Barra de herramientas a tu gusto; ocultar el texto de las notas.
+• Árabe y diseño de derecha a izquierda; ajustes en la copia.
+• La huella funciona tras el bloqueo en segundo plano.
+• La papelera se vacía a los 28 días.

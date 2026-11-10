@@ -1,0 +1,219 @@
+package com.pasich.encly.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.pasich.encly.core.di.ApplicationScope
+import com.pasich.encly.core.di.platformIoDispatcher
+import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.RecoveryStage
+import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.VaultUnlockResult
+import com.pasich.encly.platform.ScreenBiometricHost
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/**
+ * The result of a PIN attempt.
+ * BACKGROUNDED: the credential was right, but the app left the foreground before the vault
+ * finished opening, so SessionLockManager closed it again. The lock screen stays; no error.
+ * KEY_LOST: the device-bound PIN key is gone; only the recovery phrase (or fingerprint) unlocks.
+ * DEVICE_LOCKED: the credential was right, but the operating system reports the screen as locked, so the vault was
+ * closed again; the lock screen says so.
+ */
+enum class PinUnlockResult { SUCCESS, WRONG_PIN, LOCKED_OUT, KEY_LOST, DB_ERROR, BACKGROUNDED, DEVICE_LOCKED }
+enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED, DEVICE_LOCKED }
+
+@ContributesIntoMap(AppScope::class, binding<ViewModel>())
+@ViewModelKey
+@Suppress("TooManyFunctions") // One small entry point per unlock factor and capability.
+@Inject
+class LockViewModel(
+    private val securityManager: SecurityManager,
+    private val sessionLockManager: SessionLockManager,
+    /** Where the rest of a wipe-PIN erase runs once the vault is open; outlives this screen. */
+    @param:ApplicationScope private val appScope: CoroutineScope,
+) : ViewModel() {
+
+    private val _busy = MutableStateFlow(false)
+    val busy: StateFlow<Boolean> = _busy.asStateFlow()
+
+    /** The open biometric prompt, if any (see [BiometricPromptGuard]). */
+    private val biometricPrompt = BiometricPromptGuard()
+
+    /** A biometric prompt is open; a new request is ignored meanwhile. */
+    val biometricInFlight: Boolean get() = biometricPrompt.inFlight
+
+    fun strategy(): AuthStrategy = securityManager.authStrategy()
+
+    fun isSeedStrategy(): Boolean = strategy() == AuthStrategy.SEED_PHRASE ||
+        strategy() == AuthStrategy.SEED_PHRASE_BIOMETRIC
+
+    fun biometricEnabled(): Boolean = securityManager.isBiometricEnabled()
+    fun biometricAvailable(): Boolean = securityManager.biometricAvailable()
+    fun recoveryAvailable(): Boolean = securityManager.hasRecoverySeed()
+    fun lockoutRemainingMillis(): Long = securityManager.pinLockoutRemainingMillis()
+
+    /** Whether the session is closed; changes when any lock screen of the host unlocks or the vault locks. */
+    val sessionLocked: StateFlow<Boolean> get() = sessionLockManager.locked
+
+    /**
+     * Whether the open session was unlocked with the recovery phrase and still has no new PIN: whichever window the
+     * vault was opened from, every lock screen then sends the user to set one before going on.
+     */
+    fun mustResetPin(): Boolean = securityManager.recoveryStage() == RecoveryStage.MUST_SET_PIN
+
+    /**
+     * What a session unlocked with the recovery phrase owes before Home: a new PIN, a choice between keeping the
+     * PIN and setting a new one, or nothing. Whichever window the vault was opened from, every lock screen asks.
+     */
+    fun recoveryStage(): RecoveryStage = securityManager.recoveryStage()
+
+    /** Whether the session is closed (again); an unlock reveal then must not open Home. */
+    fun isSessionLocked(): Boolean = sessionLockManager.locked.value
+
+    /**
+     * Whether the note remembered at the re-lock under [savedEpoch] may be reopened: only in the
+     * vault it was in. After a wipe-PIN erase (here or on another lock screen) it does not
+     * exist, and an empty editor would give the erase away.
+     */
+    fun canReopenNote(savedEpoch: Long?): Boolean = savedEpoch != null && savedEpoch == securityManager.eraseEpoch()
+
+    /** Unlocks with [pin], which is wiped. */
+    fun authenticatePin(pin: CharArray, onResult: (PinUnlockResult) -> Unit) {
+        launchUnlock(onResult) {
+            val result = withContext(Dispatchers.Default) {
+                when (securityManager.unlockWithPin(pin)) {
+                    VaultUnlockResult.SUCCESS -> PinUnlockResult.SUCCESS
+                    VaultUnlockResult.INVALID_CREDENTIAL -> PinUnlockResult.WRONG_PIN
+                    VaultUnlockResult.LOCKED_OUT -> PinUnlockResult.LOCKED_OUT
+                    VaultUnlockResult.PIN_KEY_LOST -> PinUnlockResult.KEY_LOST
+                    VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
+                }
+            }
+            // The rest of a wipe-PIN erase (if that was one) runs while the vault is revealed.
+            if (result == PinUnlockResult.SUCCESS) appScope.launch { securityManager.completePendingWipe() }
+            publish(
+                result == PinUnlockResult.SUCCESS,
+                result,
+                PinUnlockResult.BACKGROUNDED,
+                PinUnlockResult.DEVICE_LOCKED,
+            )
+        }
+    }
+
+    /** "Keep my PIN" after a recovery-phrase unlock that left the choice; see [RecoveryStage.CHOOSE]. */
+    fun keepAfterRecovery(): Boolean = securityManager.keepUnlockMethodsAfterRecovery()
+
+    /** Unlocks with the recovery words (lower case, single spaces); [chars] is wiped afterwards. */
+    fun authenticateSeed(chars: CharArray, onResult: (SeedUnlockResult) -> Unit) {
+        launchUnlock(onResult) {
+            val result = withContext(Dispatchers.Default) {
+                try {
+                    when (securityManager.unlockWithSeed(chars)) {
+                        VaultUnlockResult.SUCCESS -> SeedUnlockResult.SUCCESS
+                        VaultUnlockResult.INVALID_CREDENTIAL -> SeedUnlockResult.WRONG_SEED
+                        else -> SeedUnlockResult.DB_ERROR
+                    }
+                } finally {
+                    SensitiveDataCleaner.clear(chars)
+                }
+            }
+            publish(
+                result == SeedUnlockResult.SUCCESS,
+                result,
+                SeedUnlockResult.BACKGROUNDED,
+                SeedUnlockResult.DEVICE_LOCKED,
+            )
+        }
+    }
+
+    /**
+     * Unlocks with the biometric slot. Ignored while a prompt is open; an answer that arrives
+     * after the prompt's activity was destroyed (the screen it would report to is gone) is dropped
+     * and its key wiped.
+     */
+    fun authenticateBiometric(host: ScreenBiometricHost, onResult: (Boolean) -> Unit) {
+        biometricPrompt.launch(host.owner) { release ->
+            securityManager.requestBiometricKey(host.biometric) { dek ->
+                if (!release()) {
+                    dek?.let(SensitiveDataCleaner::clear)
+                    return@requestBiometricKey
+                }
+                if (dek == null) {
+                    onResult(false)
+                    return@requestBiometricKey
+                }
+                launchUnlock(onResult) {
+                    val ok = withContext(platformIoDispatcher) {
+                        try {
+                            securityManager.unlockWithRawKey(dek)
+                        } finally {
+                            SensitiveDataCleaner.clear(dek)
+                        }
+                    }
+                    publish(ok, ok, false, false)
+                }
+            }
+        }
+    }
+
+    /**
+     * Runs an unlock to its end even if this ViewModel is cleared meanwhile (the KDF and the
+     * database open cannot be interrupted anyway). An unlock that completes for a cleared
+     * ViewModel has no screen left to navigate into the vault, so it is closed again
+     * ([SessionLockManager.onUnlockAbandoned]) instead of staying open in the background.
+     */
+    private fun <T> launchUnlock(onResult: (T) -> Unit, unlock: suspend UnlockScope.() -> T) {
+        // Read where the unlock starts: a lock that comes in while the key is being checked is then not lost.
+        val lockRequests = sessionLockManager.lockRequests()
+        val job = viewModelScope.launch {
+            val owner = coroutineContext.job
+            _busy.value = true
+            val result = withContext(NonCancellable) { UnlockScope(owner, lockRequests).unlock() }
+            // A cleared screen gets no result: the unlock was already closed again.
+            ensureActive()
+            _busy.value = false
+            onResult(result)
+        }
+        job.invokeOnCompletion { _busy.value = false }
+    }
+
+    /** What an unlock body can see: whether its ViewModel is still alive. */
+    private inner class UnlockScope(private val owner: Job, private val lockRequests: Long) {
+        /**
+         * The unlock [succeeded]: publish it if the app is in front and the screen still
+         * exists, otherwise close the vault again and report [backgrounded], or [deviceLocked] when the
+         * operating system's lock is what refused it.
+         */
+        fun <T> publish(succeeded: Boolean, result: T, backgrounded: T, deviceLocked: T): T = when {
+            !succeeded -> result
+
+            !owner.isActive -> {
+                sessionLockManager.onUnlockAbandoned()
+                backgrounded
+            }
+
+            sessionLockManager.onUnlocked(lockRequests) -> result
+
+            sessionLockManager.isDeviceLocked() -> deviceLocked
+
+            else -> backgrounded
+        }
+    }
+}

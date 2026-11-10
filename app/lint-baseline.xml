@@ -57,17 +57,6 @@
     </issue>
 
     <issue
-        id="Typos"
-        message="&quot;seit dem&quot; is a common misspelling; did you mean &quot;seitdem&quot;?"
-        errorLine1="    &lt;string name=&quot;note_discard_confirm_message&quot;>Alles, was du seit dem Öffnen dieser Notiz geändert hast, geht verloren. Das kann nicht rückgängig gemacht werden.&lt;/string>"
-        errorLine2="                                                              ^">
-        <location
-            file="src/main/res/values-de/strings.xml"
-            line="538"
-            column="63"/>
-    </issue>
-
-    <issue
         id="ObsoleteSdkInt"
         message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
         <location

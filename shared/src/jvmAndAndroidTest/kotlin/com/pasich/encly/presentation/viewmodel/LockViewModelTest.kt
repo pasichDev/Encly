@@ -1,0 +1,458 @@
+package com.pasich.encly.presentation.viewmodel
+
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
+import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.DeviceLockWatcher
+import com.pasich.encly.core.security.RecoveryStage
+import com.pasich.encly.core.security.SecurityManager
+import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.VaultUnlockResult
+import com.pasich.encly.testutil.TestScreen
+import com.pasich.encly.testutil.answerCallback
+import com.pasich.encly.testutil.anyByteArray
+import com.pasich.encly.testutil.anyCallback
+import com.pasich.encly.testutil.anyCharArray
+import com.pasich.encly.testutil.eqValue
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.timeout
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
+
+/** The lock screen: PIN, recovery words and biometric unlock, and an unlock that lands in the background. */
+@OptIn(ExperimentalCoroutinesApi::class)
+class LockViewModelTest {
+    private lateinit var security: SecurityManager
+    private lateinit var sessionLock: SessionLockManager
+    private lateinit var viewModel: LockViewModel
+    private val screen = TestScreen()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        security = mock(SecurityManager::class.java)
+        sessionLock = SessionLockManager(security)
+        sessionLock.onStart(mock(LifecycleOwner::class.java))
+        viewModel = LockViewModel(security, sessionLock, CoroutineScope(Dispatchers.Default))
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun theRightPinUnlocks() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+
+        assertEquals(PinUnlockResult.SUCCESS, pin())
+        assertFalse(viewModel.busy.value)
+        assertFalse(sessionLock.locked.value)
+    }
+
+    @Test
+    fun theRestOfAWipePinEraseRunsAfterThePinUnlockedAndOnlyThen() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+        pin()
+        verify(security, never()).completePendingWipe()
+
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        assertEquals(PinUnlockResult.SUCCESS, pin())
+
+        // On the application scope, off the unlock's path.
+        verify(security, timeout(WAIT_MS)).completePendingWipe()
+    }
+
+    @Test
+    fun aNoteIsReopenedOnlyInTheVaultItWasRememberedIn() {
+        `when`(security.eraseEpoch()).thenReturn(7L)
+
+        assertTrue(viewModel.canReopenNote(7L))
+        assertFalse("an erase changed the epoch", viewModel.canReopenNote(6L))
+        assertFalse("nothing remembered", viewModel.canReopenNote(null))
+    }
+
+    @Test
+    fun aLockThatCameWhileThePinWasBeingCheckedIsNotLostToTheUnlock() = runTest {
+        // The OS locks the session (or the idle lock fires) during the PBKDF2 run: nothing is open yet to close.
+        `when`(security.isLockable()).thenReturn(true)
+        doAnswer {
+            sessionLock.lockNow()
+            VaultUnlockResult.SUCCESS
+        }.`when`(security).unlockWithPin(PIN.toCharArray())
+
+        assertEquals(PinUnlockResult.BACKGROUNDED, pin())
+
+        verify(security).lock()
+        assertTrue(sessionLock.locked.value)
+    }
+
+    @Test
+    fun aRightPinWhileTheDeviceIsLockedIsRefusedAndSaysWhy() = runTest {
+        val deviceLocked = object : DeviceLockWatcher {
+            override fun isDeviceLocked(): Boolean = true
+
+            override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit = {}
+        }
+        val guarded = SessionLockManager(security, deviceLock = deviceLocked)
+        guarded.onStart(mock(LifecycleOwner::class.java))
+        val locked = LockViewModel(security, guarded, CoroutineScope(Dispatchers.Default))
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        `when`(security.unlockWithSeed(WORDS.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        val pin = CompletableDeferred<PinUnlockResult>()
+        val seed = CompletableDeferred<SeedUnlockResult>()
+
+        locked.authenticatePin(PIN.toCharArray()) { pin.complete(it) }
+        locked.authenticateSeed(WORDS.toCharArray()) { seed.complete(it) }
+
+        assertEquals(PinUnlockResult.DEVICE_LOCKED, pin.await())
+        assertEquals(SeedUnlockResult.DEVICE_LOCKED, seed.await())
+        assertTrue(guarded.locked.value)
+    }
+
+    @Test
+    fun theRecoveryPhraseResetIsAskedOfTheSecurityLayer() {
+        `when`(security.recoveryStage()).thenReturn(RecoveryStage.MUST_SET_PIN)
+        assertTrue(viewModel.mustResetPin())
+        assertEquals(RecoveryStage.MUST_SET_PIN, viewModel.recoveryStage())
+
+        // A choice is not a forced reset: the lock screen routes it to the keep-or-change page instead.
+        `when`(security.recoveryStage()).thenReturn(RecoveryStage.CHOOSE)
+        assertFalse(viewModel.mustResetPin())
+        assertEquals(RecoveryStage.CHOOSE, viewModel.recoveryStage())
+
+        `when`(security.recoveryStage()).thenReturn(RecoveryStage.NONE)
+        assertFalse(viewModel.mustResetPin())
+    }
+
+    @Test
+    fun keepingThePinAfterRecoveryIsLeftToTheSecurityLayer() {
+        `when`(security.keepUnlockMethodsAfterRecovery()).thenReturn(true)
+
+        assertTrue(viewModel.keepAfterRecovery())
+
+        verify(security).keepUnlockMethodsAfterRecovery()
+    }
+
+    @Test
+    fun aWrongPinAndABrokenVaultAreToldApart() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+        assertEquals(PinUnlockResult.WRONG_PIN, pin())
+
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.DB_ERROR)
+        assertEquals(PinUnlockResult.DB_ERROR, pin())
+
+        verify(security, never()).lock()
+    }
+
+    @Test
+    fun aPinUnlockThatFinishesInTheBackgroundClosesTheVaultAgain() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.SUCCESS)
+        sessionLock.onStop(mock(LifecycleOwner::class.java))
+
+        assertEquals(PinUnlockResult.BACKGROUNDED, pin())
+        verify(security).lock()
+        assertTrue(sessionLock.locked.value)
+    }
+
+    @Test
+    fun anUnlockThatFinishesAfterTheScreenIsGoneClosesTheVaultAgain() {
+        // The PIN check (KDF) is running when the lock screen's ViewModel is cleared.
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        `when`(security.unlockWithPin(anyCharArray())).thenAnswer {
+            entered.countDown()
+            release.await(5, TimeUnit.SECONDS)
+            VaultUnlockResult.SUCCESS
+        }
+        `when`(security.isLockable()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        val store = ViewModelStore()
+        val owned = ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel as T
+            },
+        )[LockViewModel::class]
+        var published: PinUnlockResult? = null
+
+        owned.authenticatePin(PIN.toCharArray()) { published = it }
+        assertTrue(entered.await(5, TimeUnit.SECONDS))
+        store.clear()
+        release.countDown()
+
+        verify(security, timeout(5_000)).lock()
+        assertTrue(sessionLock.locked.value)
+        assertEquals("nothing navigates into the vault", null, published)
+    }
+
+    @Test
+    fun aLostPinKeyAndALockoutAreReported() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.PIN_KEY_LOST)
+        assertEquals(PinUnlockResult.KEY_LOST, pin())
+
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.LOCKED_OUT)
+        assertEquals(PinUnlockResult.LOCKED_OUT, pin())
+    }
+
+    @Test
+    fun theRecoveryWordsUnlockAndAreWipedAfterwards() = runTest {
+        `when`(security.unlockWithSeed(ArgumentMatchers.any(CharArray::class.java) ?: CharArray(0)))
+            .thenReturn(VaultUnlockResult.SUCCESS)
+        val words = WORDS.toCharArray()
+
+        assertEquals(SeedUnlockResult.SUCCESS, seed(words))
+        assertArrayEquals(CharArray(words.size), words)
+    }
+
+    @Test
+    fun wrongRecoveryWordsAreReportedAndStillWiped() = runTest {
+        `when`(security.unlockWithSeed(ArgumentMatchers.any(CharArray::class.java) ?: CharArray(0)))
+            .thenReturn(VaultUnlockResult.INVALID_CREDENTIAL)
+        val words = WORDS.toCharArray()
+
+        assertEquals(SeedUnlockResult.WRONG_SEED, seed(words))
+        assertArrayEquals(CharArray(words.size), words)
+
+        `when`(security.unlockWithSeed(ArgumentMatchers.any(CharArray::class.java) ?: CharArray(0)))
+            .thenReturn(VaultUnlockResult.DB_ERROR)
+        assertEquals(SeedUnlockResult.DB_ERROR, seed(WORDS.toCharArray()))
+    }
+
+    @Test
+    fun aSeedUnlockThatFinishesInTheBackgroundIsNotPublished() = runTest {
+        `when`(security.unlockWithSeed(ArgumentMatchers.any(CharArray::class.java) ?: CharArray(0)))
+            .thenReturn(VaultUnlockResult.SUCCESS)
+        sessionLock.onStop(mock(LifecycleOwner::class.java))
+
+        assertEquals(SeedUnlockResult.BACKGROUNDED, seed(WORDS.toCharArray()))
+    }
+
+    @Test
+    fun aBiometricKeyUnlocksAndIsWiped() = runTest {
+        val key = ByteArray(KEY_LENGTH) { 7 }
+        answerCallback<ByteArray?>(
+            key,
+        ).`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        `when`(security.unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())).thenReturn(true)
+
+        assertTrue(biometric())
+        assertArrayEquals(ByteArray(KEY_LENGTH), key)
+    }
+
+    @Test
+    fun aCancelledPromptOrARejectedKeyDoesNotUnlock() = runTest {
+        answerCallback<ByteArray?>(
+            null,
+        ).`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        assertFalse(biometric())
+        verify(security, never()).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
+
+        answerCallback<ByteArray?>(ByteArray(KEY_LENGTH)).`when`(security)
+            .requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        `when`(security.unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())).thenReturn(false)
+        assertFalse(biometric())
+    }
+
+    @Test
+    fun aSecondBiometricRequestWhileOneIsOpenIsIgnored() {
+        // The prompt never answers: the first request stays in flight.
+        viewModel.authenticateBiometric(screen.host) {}
+        viewModel.authenticateBiometric(screen.host) {}
+
+        verify(security, times(1)).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        assertTrue(viewModel.biometricInFlight)
+    }
+
+    @Test
+    fun aRotationDuringThePromptReleasesItForTheRecreatedScreen() {
+        viewModel.authenticateBiometric(screen.host) {}
+        assertTrue(viewModel.biometricInFlight)
+
+        // androidx.biometric drops the answer of a prompt whose activity is gone: without this the
+        // ViewModel, which outlives the rotation, would never prompt again.
+        screen.destroy()
+
+        assertFalse(viewModel.biometricInFlight)
+        val recreated = TestScreen()
+        viewModel.authenticateBiometric(recreated.host) {}
+        verify(security).requestBiometricKey(eqValue(recreated.biometric), anyCallback())
+    }
+
+    @Test
+    fun aPromptCutOffByTheAppLeavingTheForegroundLeavesTheButtonUsable() {
+        // androidx.biometric cancels a prompt whose activity stops, and never answers it.
+        viewModel.authenticateBiometric(screen.host) {}
+        assertTrue(viewModel.biometricInFlight)
+        screen.stop()
+        assertFalse(viewModel.biometricInFlight)
+
+        screen.resume()
+        viewModel.authenticateBiometric(screen.host) {}
+
+        verify(security, times(2)).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        assertTrue(viewModel.biometricInFlight)
+    }
+
+    @Test
+    fun aBackgroundedActivityGetsNoPromptAndTheNextOneIsNotBlocked() {
+        // The auto-lock fires in the background: the lock screen asks while the activity is stopped.
+        val backgrounded = TestScreen(Lifecycle.State.CREATED)
+        viewModel.authenticateBiometric(backgrounded.host) {}
+
+        verify(security, never()).requestBiometricKey(eqValue(backgrounded.biometric), anyCallback())
+        assertFalse(viewModel.biometricInFlight)
+
+        backgrounded.resume()
+        viewModel.authenticateBiometric(backgrounded.host) {}
+        verify(security).requestBiometricKey(eqValue(backgrounded.biometric), anyCallback())
+    }
+
+    @Test
+    fun anAnswerAfterAStopIsTakenWhenNoNewerPromptStarted() {
+        val answer = arrayOfNulls<(ByteArray?) -> Unit>(1)
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            answer[0] = invocation.arguments.last() as (ByteArray?) -> Unit
+            null
+        }.`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        `when`(security.unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())).thenReturn(true)
+        val results = mutableListOf<Boolean>()
+        viewModel.authenticateBiometric(screen.host) { results += it }
+        // Some devices show the prompt over a stopped activity; its answer still unlocks.
+        screen.stop()
+
+        answer[0]!!(ByteArray(KEY_LENGTH) { 7 })
+
+        verify(security, timeout(WAIT_MS)).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
+    }
+
+    @Test
+    fun anAnswerFromAStoppedPromptIsDroppedOnceANewerPromptStarted() {
+        val answers = mutableListOf<(ByteArray?) -> Unit>()
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            answers += invocation.arguments.last() as (ByteArray?) -> Unit
+            null
+        }.`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        val results = mutableListOf<Boolean>()
+        viewModel.authenticateBiometric(screen.host) { results += it }
+        screen.stop()
+        screen.resume()
+        viewModel.authenticateBiometric(screen.host) { results += it }
+
+        val key = ByteArray(KEY_LENGTH) { 7 }
+        answers.first()(key)
+
+        assertTrue(results.isEmpty())
+        assertArrayEquals(ByteArray(KEY_LENGTH), key)
+        verify(security, never()).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
+    }
+
+    @Test
+    fun aLateAnswerFromTheDestroyedActivityIsDroppedAndItsKeyWiped() {
+        val answer = arrayOfNulls<(ByteArray?) -> Unit>(1)
+        doAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            answer[0] = invocation.arguments.last() as (ByteArray?) -> Unit
+            null
+        }.`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        val results = mutableListOf<Boolean>()
+        viewModel.authenticateBiometric(screen.host) { results += it }
+        screen.destroy()
+
+        val key = ByteArray(KEY_LENGTH) { 7 }
+        answer[0]!!(key)
+
+        assertTrue(results.isEmpty())
+        assertArrayEquals(ByteArray(KEY_LENGTH), key)
+        verify(security, never()).unlockWithRawKey(anyByteArray(), ArgumentMatchers.anyBoolean())
+    }
+
+    @Test
+    fun aDestroyedActivityGetsNoPrompt() {
+        screen.destroy()
+
+        viewModel.authenticateBiometric(screen.host) {}
+
+        verify(security, never()).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        assertFalse(viewModel.biometricInFlight)
+    }
+
+    @Test
+    fun theStrategyDecidesWhichFormTheLockScreenShows() {
+        `when`(security.authStrategy()).thenReturn(AuthStrategy.SEED_PHRASE_BIOMETRIC)
+        assertTrue(viewModel.isSeedStrategy())
+        `when`(security.authStrategy()).thenReturn(AuthStrategy.SEED_PHRASE)
+        assertTrue(viewModel.isSeedStrategy())
+        `when`(security.authStrategy()).thenReturn(AuthStrategy.PIN_BIOMETRIC)
+        assertFalse(viewModel.isSeedStrategy())
+        assertEquals(AuthStrategy.PIN_BIOMETRIC, viewModel.strategy())
+    }
+
+    @Test
+    fun theLockScreenAsksTheVaultWhatItCanOffer() {
+        `when`(security.isBiometricEnabled()).thenReturn(true)
+        `when`(security.biometricAvailable()).thenReturn(false)
+        `when`(security.hasRecoverySeed()).thenReturn(true)
+        `when`(security.pinLockoutRemainingMillis()).thenReturn(LOCKOUT_MS)
+
+        assertTrue(viewModel.biometricEnabled())
+        assertFalse(viewModel.biometricAvailable())
+        assertTrue(viewModel.recoveryAvailable())
+        assertEquals(LOCKOUT_MS, viewModel.lockoutRemainingMillis())
+    }
+
+    private suspend fun pin(): PinUnlockResult {
+        val result = CompletableDeferred<PinUnlockResult>()
+        viewModel.authenticatePin(PIN.toCharArray()) { result.complete(it) }
+        return result.await()
+    }
+
+    private suspend fun seed(words: CharArray): SeedUnlockResult {
+        val result = CompletableDeferred<SeedUnlockResult>()
+        viewModel.authenticateSeed(words) { result.complete(it) }
+        return result.await()
+    }
+
+    private suspend fun biometric(): Boolean {
+        val result = CompletableDeferred<Boolean>()
+        viewModel.authenticateBiometric(screen.host) { result.complete(it) }
+        return result.await()
+    }
+
+    private companion object {
+        const val PIN = "482915"
+        const val WORDS = "one two three four five six seven eight nine ten eleven twelve"
+        const val KEY_LENGTH = 32
+        const val LOCKOUT_MS = 30_000L
+        const val WAIT_MS = 5_000L
+    }
+}

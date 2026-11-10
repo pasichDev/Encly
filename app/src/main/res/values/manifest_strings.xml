@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The only strings Android itself reads: the launcher label in AndroidManifest.xml. Every string the
+     UI shows lives in :core:resources (core/resources/src/commonMain/composeResources). -->
+<resources>
+    <string name="app_name" translatable="false">Encly</string>
+</resources>

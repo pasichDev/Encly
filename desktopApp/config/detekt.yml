@@ -1,0 +1,29 @@
+# Desktop-module detekt rules, layered on config/detekt/detekt.yml. The tests are scenarios, not production
+# code, so the rules that police how production code spends time or throws do not apply to them, and their
+# names are sentences in backticks.
+naming:
+  FunctionNaming:
+    excludes: &tests
+      - '**/desktopTest/**'
+
+complexity:
+  excludes: *tests
+  TooManyFunctions:
+    # The dependency binding lists, the commands interface and the key-value store are many small members by
+    # design (one binding or one command each).
+    thresholdInClasses: 15
+    thresholdInInterfaces: 15
+    thresholdInObjects: 15
+  LongParameterList:
+    # DesktopEnvironment lists everything the OS provides; it is the one place where tests swap it.
+    constructorThreshold: 12
+    ignoreDefaultParameters: true
+
+style:
+  excludes: *tests
+
+performance:
+  excludes: *tests
+
+exceptions:
+  excludes: *tests

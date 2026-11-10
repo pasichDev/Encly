@@ -6,7 +6,7 @@ PRIVÉ PAR CONCEPTION
 • Pas de compte, pas d'inscription, pas d'analyse, pas de publicité, pas d'achats intégrés.
 • Vraiment hors ligne : Encly ne demande pas la permission INTERNET et ne peut donc envoyer vos notes nulle part.
 • Notes chiffrées : base SQLCipher (AES-256) sous une clé aléatoire de 256 bits.
-• Notes protégées par code : un code PIN à 6 chiffres lié au matériel sécurisé du téléphone, plus empreinte ou visage en option (biométrie forte uniquement).
+• Notes protégées par code : un code PIN de 6 à 12 chiffres, lié au matériel sécurisé du téléphone, plus empreinte ou visage en option (biométrie forte uniquement).
 • Verrouillage automatique : après la sortie (15 secondes par défaut, ou immédiatement) ou dès que l'écran s'éteint, la base est fermée et la clé effacée de la mémoire.
 • Captures d'écran, enregistrement d'écran et aperçu dans les applis récentes sont bloqués. La sauvegarde cloud d'Android est désactivée.
 
@@ -26,7 +26,7 @@ UN BLOC-NOTES SÛR ET AGRÉABLE
 OPEN SOURCE
 • Encly est open source (Apache-2.0) : chacun peut vérifier ce qu'elle fait.
 • Fonctionne sans les services Google Play. Android 8.0 ou plus récent.
-• 9 langues : français, anglais, ukrainien, allemand, espagnol, italien, polonais, portugais et néerlandais. Choisissez une langue pour Encly seule dans Paramètres → Langue.
+• 10 langues : français, anglais, ukrainien, allemand, espagnol, italien, polonais, portugais, néerlandais et arabe. Choisissez une langue pour Encly seule dans Paramètres → Langue.
 
 Encly : des notes chiffrées qui restent à vous.
 

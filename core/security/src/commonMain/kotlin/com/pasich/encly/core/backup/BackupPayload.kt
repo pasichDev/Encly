@@ -1,0 +1,313 @@
+package com.pasich.encly.core.backup
+
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+
+/**
+ * The decrypted backup content. Records reference each other by their stable `uid`, never by
+ * the per-device autoincrement ids. It deliberately holds no vault material: no DEK, PIN or
+ * biometric slot, recovery phrase or backup key.
+ *
+ * Decoding is strict: an unknown key is rejected as [BackupError.INVALID_PAYLOAD]. So **every**
+ * change to these classes (a new field, even an optional one) must bump [SCHEMA_VERSION]; an
+ * older app then reports such a file as [BackupError.UNSUPPORTED_VERSION] ("update the app")
+ * instead of "damaged". Keep reading every older schema: see [BackupPayloadCodec.decode].
+ *
+ * Schema history:
+ * - 1: first format; tasks carried a `reminderDate`.
+ * - 2: task reminders removed from the app, so tasks no longer carry `reminderDate`.
+ * - 3: each task carries its `subtasks` (a list, empty for a task without any).
+ * - 4: each note carries `isPinned`, `isArchived`, a `color` key and its own `textSize` and
+ *   `lineSpacing` (null: the default). An app that reads only schema 3 reports such a file as
+ *   [BackupError.UNSUPPORTED_VERSION], it does not fail on the keys.
+ * - 5: the file carries the user's preferences as `settings` (see [BackupSettings]). A schema-4
+ *   file has none and restores exactly as before. An app that reads only schema 4 reports a
+ *   schema-5 file as [BackupError.UNSUPPORTED_VERSION] ("update the app"): its strict reader
+ *   cannot skip a section, and it never half-restores.
+ * - 6: a note carries the uids of all its tags as `tagUids` (a list, empty for a note without any) instead of one
+ *   `tagUid`. A file of schema 1 to 5 is read with its note's one tag (or none) as the list. An app that reads only
+ *   schema 5 reports a schema-6 file as [BackupError.UNSUPPORTED_VERSION].
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+public data class BackupPayload(
+    val schema: Int = SCHEMA_VERSION,
+    val exportedAt: Long,
+    val tags: List<BackupTag>,
+    val notes: List<BackupNote>,
+    val tasks: List<BackupTask>,
+    /**
+     * Preferences by storage key, values as strings (see [BackupSettings]). Not part of the
+     * vault, so it is never validated into a failure: a restore keeps what it understands.
+     * Empty (and left out of the file) when there are none.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val settings: Map<String, String> = emptyMap(),
+) {
+    public companion object {
+        public const val SCHEMA_VERSION: Int = 6
+
+        /** Tasks carried a `reminderDate`, dropped on import. */
+        public const val SCHEMA_V1: Int = 1
+
+        /** Tasks had no sub-tasks; they are imported with none. */
+        public const val SCHEMA_V2: Int = 2
+
+        /** Notes had no pin, archive or colour; they are imported unpinned, not archived, uncoloured. */
+        public const val SCHEMA_V3: Int = 3
+
+        /** The file carried no preferences; it is imported with none. */
+        public const val SCHEMA_V4: Int = 4
+
+        /** A note carried one `tagUid` (or null), not the list `tagUids`. */
+        public const val SCHEMA_V5: Int = 5
+    }
+}
+
+@Serializable
+public data class BackupTag(val uid: String, val name: String, val visible: Boolean, val position: Int)
+
+/**
+ * [value] is the note's serialized block list, carried verbatim so every block type survives.
+ * [color] is a stable palette key (`none`, `red`, ...), never a colour value. [tagUids] are the uids of the note's
+ * tags, each at most once, in the order of the tags.
+ */
+@Serializable
+public data class BackupNote(
+    val uid: String,
+    val title: String,
+    val value: String,
+    val description: String,
+    val date: Long,
+    val dateCreate: Long,
+    val tagUids: List<String> = emptyList(),
+    val isTrash: Boolean,
+    val isPinned: Boolean = false,
+    val isArchived: Boolean = false,
+    val color: String = "none",
+    /** The note's own text size, or null for the default. */
+    val textSize: Int? = null,
+    /** The note's own line spacing (an ordinal of NoteLineSpacing), or null for the default. */
+    val lineSpacing: Int? = null,
+)
+
+@Serializable
+public data class BackupTask(
+    val uid: String,
+    val title: String,
+    val description: String?,
+    val isCompleted: Boolean,
+    val createdDate: Long,
+    val completedDate: Long?,
+    val priority: Int,
+    val categoryTagUid: String?,
+    val position: Int,
+    val subtasks: List<BackupSubtask>,
+)
+
+/** A task's checklist item. Its task is the [BackupTask] that holds it; [uid]s are vault-wide unique. */
+@Serializable
+public data class BackupSubtask(val uid: String, val title: String, val isCompleted: Boolean, val position: Int)
+
+/**
+ * A file of schema 1 to 5 as it is read: the shape of the current schema, but a note carries one [LegacyNote.tagUid].
+ * Decoded as strictly as the current one, then turned into it ([toCurrent]).
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+private class LegacyPayload(
+    val schema: Int,
+    val exportedAt: Long,
+    val tags: List<BackupTag>,
+    val notes: List<LegacyNote>,
+    val tasks: List<BackupTask>,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val settings: Map<String, String> = emptyMap(),
+) {
+    fun toCurrent() = BackupPayload(
+        schema = BackupPayload.SCHEMA_VERSION,
+        exportedAt = exportedAt,
+        tags = tags,
+        notes = notes.map { it.toCurrent() },
+        tasks = tasks,
+        settings = settings,
+    )
+}
+
+/** A note of schema 1 to 5: [tagUid] its one tag, or null. */
+@Suppress("LongParameterList") // One parameter per key of the file's note.
+@Serializable
+private class LegacyNote(
+    val uid: String,
+    val title: String,
+    val value: String,
+    val description: String,
+    val date: Long,
+    val dateCreate: Long,
+    val tagUid: String?,
+    val isTrash: Boolean,
+    val isPinned: Boolean = false,
+    val isArchived: Boolean = false,
+    val color: String = "none",
+    val textSize: Int? = null,
+    val lineSpacing: Int? = null,
+) {
+    fun toCurrent() = BackupNote(
+        uid = uid,
+        title = title,
+        value = value,
+        description = description,
+        date = date,
+        dateCreate = dateCreate,
+        tagUids = listOfNotNull(tagUid),
+        isTrash = isTrash,
+        isPinned = isPinned,
+        isArchived = isArchived,
+        color = color,
+        textSize = textSize,
+        lineSpacing = lineSpacing,
+    )
+}
+
+/** UTF-8 JSON encoding of [BackupPayload] with strict validation on the way in. */
+@OptIn(ExperimentalSerializationApi::class)
+public object BackupPayloadCodec {
+    public const val MAX_UID_LENGTH: Int = 64
+    public const val MAX_COLOR_LENGTH: Int = 32
+    private const val REMINDER_DATE_KEY = "reminderDate"
+    private const val TASKS_KEY = "tasks"
+    private const val SUBTASKS_KEY = "subtasks"
+    private const val NOTES_KEY = "notes"
+    private const val SETTINGS_KEY = "settings"
+    private val NOTE_ORGANIZING_KEYS = listOf("isPinned", "isArchived", "color", "textSize", "lineSpacing")
+    private val PRIORITIES = 0..2
+    private const val MIN_TEXT_SIZE = 10
+    private const val MAX_TEXT_SIZE = 32
+    private const val LINE_SPACING_COUNT = 3
+    private val TEXT_SIZES = MIN_TEXT_SIZE..MAX_TEXT_SIZE
+    private val LINE_SPACINGS = 0 until LINE_SPACING_COUNT
+
+    private val json = Json {
+        encodeDefaults = true
+        explicitNulls = true
+        ignoreUnknownKeys = false
+    }
+
+    /** Reads only `schema`, skipping everything else, before the strict decode. */
+    private val schemaJson = Json { ignoreUnknownKeys = true }
+
+    @Serializable
+    private class SchemaProbe(val schema: Int = BackupPayload.SCHEMA_VERSION)
+
+    /** The returned buffer is plaintext: the caller must wipe it once it has been sealed. */
+    public fun encode(payload: BackupPayload): ByteArray = json.encodeToWipedBytes(BackupPayload.serializer(), payload)
+
+    /**
+     * A payload from a newer schema is [BackupError.UNSUPPORTED_VERSION]: it authenticated, so
+     * it is intact, and this app merely cannot read it. Anything else malformed is
+     * [BackupError.INVALID_PAYLOAD]. An older schema is upgraded to the current one before the
+     * strict decode, so it is validated exactly like a current file.
+     */
+    public fun decode(plaintext: ByteArray): BackupPayload {
+        val schema = invalidPayloadOn { decodeStream(schemaJson, SchemaProbe.serializer(), plaintext).schema }
+        if (schema > BackupPayload.SCHEMA_VERSION) throw BackupException(BackupError.UNSUPPORTED_VERSION)
+        val payload = invalidPayloadOn {
+            when (schema) {
+                in BackupPayload.SCHEMA_V1..BackupPayload.SCHEMA_V3 -> {
+                    val tree = decodeStream(json, JsonElement.serializer(), plaintext)
+                    val upgraded = upgrade(tree.jsonObject, schema)
+                    json.decodeFromJsonElement(LegacyPayload.serializer(), upgraded).toCurrent()
+                }
+
+                // Schema 4 and 5 are the shape of [LegacyPayload] (4 without the section): decoded strictly in one
+                // pass (the commonest files, up to the size limit), not through a JSON tree.
+                BackupPayload.SCHEMA_V4 -> decodeStream(json, LegacyPayload.serializer(), plaintext).also {
+                    require(it.settings.isEmpty()) { "Unexpected settings in schema $schema" }
+                }.toCurrent()
+
+                BackupPayload.SCHEMA_V5 -> decodeStream(json, LegacyPayload.serializer(), plaintext).toCurrent()
+
+                else -> decodeStream(json, BackupPayload.serializer(), plaintext)
+            }
+        }
+        validate(payload)
+        return payload
+    }
+
+    /**
+     * Schema 1 to 3 -> the shape of schema 5, [LegacyPayload] (schema 4 needs no tree: see [decode]). 1 -> 2 drops
+     * each task's `reminderDate`; 2 -> 3 gives each task an empty `subtasks` list; 3 -> 4 leaves notes to the
+     * defaults of the new fields (unpinned, not archived, no colour); 4 -> 5 leaves `settings`
+     * empty. Everything else is unchanged; 5 -> 6 (the note's tag as a list) is [LegacyPayload.toCurrent]. A
+     * key an older schema did not have (`subtasks` in 1 or 2, a note's pin, archive or colour in
+     * 1 to 3, `settings` in 1 to 4) fails like any other unknown key.
+     */
+    private fun upgrade(old: JsonObject, schema: Int): JsonObject {
+        val tasks = old[TASKS_KEY]?.jsonArray?.map { element ->
+            val task = element.jsonObject.let { if (schema == BackupPayload.SCHEMA_V1) it - REMINDER_DATE_KEY else it }
+            if (schema < BackupPayload.SCHEMA_V3) {
+                require(SUBTASKS_KEY !in task) { "Unexpected sub-tasks in schema $schema" }
+                JsonObject(task + (SUBTASKS_KEY to JsonArray(emptyList())))
+            } else {
+                element
+            }
+        }
+        old[NOTES_KEY]?.jsonArray?.forEach { note ->
+            require(NOTE_ORGANIZING_KEYS.none { it in note.jsonObject }) { "Unexpected note field in schema $schema" }
+        }
+        require(SETTINGS_KEY !in old) { "Unexpected settings in schema $schema" }
+        return JsonObject(
+            old + ("schema" to JsonPrimitive(BackupPayload.SCHEMA_V5)) +
+                (tasks?.let { mapOf(TASKS_KEY to JsonArray(it)) }.orEmpty()),
+        )
+    }
+
+    private fun <T> decodeStream(format: Json, deserializer: DeserializationStrategy<T>, bytes: ByteArray): T =
+        format.decodeFromBytes(deserializer, bytes)
+
+    private inline fun <T> invalidPayloadOn(block: () -> T): T = try {
+        block()
+    } catch (e: SerializationException) {
+        throw BackupException(BackupError.INVALID_PAYLOAD, e)
+    } catch (e: IllegalArgumentException) {
+        throw BackupException(BackupError.INVALID_PAYLOAD, e)
+    }
+
+    public fun validate(payload: BackupPayload) {
+        val tagUids = payload.tags.map { it.uid }.toSet()
+        val valid = payload.schema == BackupPayload.SCHEMA_VERSION &&
+            uniqueValidUids(payload.tags.map { it.uid }) &&
+            uniqueValidUids(payload.notes.map { it.uid }) &&
+            uniqueValidUids(payload.tasks.map { it.uid }) &&
+            uniqueValidUids(payload.tasks.flatMap { task -> task.subtasks.map { it.uid } }) &&
+            payload.notes.all { validNoteTags(it, tagUids) } &&
+            payload.notes.all(::validNoteStyle) &&
+            payload.tasks.all {
+                it.priority in PRIORITIES && (it.categoryTagUid == null || it.categoryTagUid in tagUids)
+            }
+        if (!valid) throw BackupException(BackupError.INVALID_PAYLOAD)
+    }
+
+    /** Every tag of the note is a tag of the file, and none is listed twice. */
+    private fun validNoteTags(note: BackupNote, tagUids: Set<String>): Boolean =
+        note.tagUids.all { it in tagUids } && note.tagUids.toSet().size == note.tagUids.size
+
+    /** A note's colour key and its own text size and line spacing are within what the app can show. */
+    private fun validNoteStyle(note: BackupNote): Boolean =
+        note.color.isNotBlank() && note.color.length <= MAX_COLOR_LENGTH &&
+            (note.textSize == null || note.textSize in TEXT_SIZES) &&
+            (note.lineSpacing == null || note.lineSpacing in LINE_SPACINGS)
+
+    private fun uniqueValidUids(uids: List<String>): Boolean =
+        uids.all { it.isNotBlank() && it.length <= MAX_UID_LENGTH } && uids.toSet().size == uids.size
+}

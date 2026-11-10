@@ -21,3 +21,9 @@ keystore.properties
 *.jks
 *.keystore
 *.p12
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+/iosApp/build/
