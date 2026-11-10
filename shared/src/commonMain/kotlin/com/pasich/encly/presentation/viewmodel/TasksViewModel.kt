@@ -212,7 +212,13 @@ class TasksViewModel(
             combine(tasksRepository.getAllTasks(), tasksRepository.observeSubtasks()) { tasks, subtasks ->
                 val (completedTasks, activeTasks) = tasks.partition { it.isCompleted }
                 val doneNewestFirst = completedTasks.sortedByDescending { it.completedDate }
-                TaskFilterEngine.reduce(_uiState.value, activeTasks, doneNewestFirst, activeTasks.size, completedTasks.size)
+                TaskFilterEngine.reduce(
+                    _uiState.value,
+                    activeTasks,
+                    doneNewestFirst,
+                    activeTasks.size,
+                    completedTasks.size,
+                )
                     .copy(subtasks = subtasks.groupBy { it.taskId })
             }.catch {
                 // The vault closed under the list (locked; [clearOnLock] resets the screen right
