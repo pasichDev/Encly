@@ -79,6 +79,7 @@ import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.Segment
 import com.pasich.encly.presentation.designsystem.ThemeSwatch
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.AppearanceViewModel
 import com.pasich.encly.presentation.viewmodel.ModeNote
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -110,7 +111,7 @@ fun AppearanceScreen(
         ),
         supportsDynamicColor = viewModel.supportsDynamicColors(),
         actions = AppearanceActions(
-            onBack = { navController.popBackStack() },
+            onBack = { navController.popBack() },
             onPalette = viewModel::selectPalette,
             onMode = viewModel::selectMode,
             onDynamicColor = viewModel::setDynamicColor,

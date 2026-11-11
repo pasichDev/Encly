@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -76,12 +77,13 @@ import com.pasich.encly.core.resources.tags_empty_desc
 import com.pasich.encly.core.resources.tags_empty_title
 import com.pasich.encly.core.resources.tags_hint
 import com.pasich.encly.data.model.Tag
+import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyButton
+import com.pasich.encly.presentation.designsystem.EnclyButtonPair
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyListRow
-import com.pasich.encly.presentation.designsystem.EnclySheetRow
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclySwitchRow
 import com.pasich.encly.presentation.designsystem.EnclyTextField
@@ -92,13 +94,14 @@ import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.groupRowShape
 import com.pasich.encly.presentation.dialogs.AdaptiveSheet
 import com.pasich.encly.presentation.dialogs.RequestDeleteTagsDialog
-import com.pasich.encly.presentation.dialogs.rememberSheetDismisser
+import com.pasich.encly.presentation.dialogs.rememberSheetCloser
 import com.pasich.encly.presentation.viewmodel.TAG_NAME_MAX_LENGTH
 import com.pasich.encly.presentation.viewmodel.TagListEvent
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.presentation.viewmodel.TagOperationFailure
 import com.pasich.encly.presentation.viewmodel.hasTagNamed
 import com.pasich.encly.presentation.viewmodel.normalizeTagName
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import org.jetbrains.compose.resources.StringResource
@@ -148,8 +151,10 @@ fun EditTagScreen(
                 onMove = { from, to -> viewModel.onEvent(TagListEvent.ReorderTagsLive(from = from, to = to)) },
                 onMoveDone = { viewModel.onEvent(TagListEvent.ReorderTags(it)) },
             ),
+            // Consumed, or the keyboard's inset would add the navigation bar's a second time.
             modifier = Modifier
                 .padding(padding)
+                .consumeWindowInsets(padding)
                 .imePadding(),
         )
     }
@@ -399,7 +404,7 @@ private fun NewTagField(taken: (String) -> Boolean, onCreate: (String, (Boolean)
             keyboardOptions = TagNameKeyboard,
             keyboardActions = KeyboardActions(onDone = { create() }),
         )
-        AnimatedVisibility(visible = name.isNotEmpty()) {
+        AnimatedVisibility(visible = name.isNotEmpty(), enter = EnclyMotion.Unfold, exit = EnclyMotion.Fold) {
             EnclyButton(
                 text = stringResource(Res.string.tag_add),
                 onClick = ::create,
@@ -423,7 +428,7 @@ private class TagSheetActions(
 @Composable
 private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActions) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val dismiss = rememberSheetDismisser(sheetState, actions.onDismiss)
+    val close = rememberSheetCloser(sheetState, onDismiss = actions.onDismiss)
     var text by remember(tag.id) { mutableStateOf(tag.nameTag) }
     val name = normalizeTagName(text)
     val isTaken = name.isNotEmpty() && taken(name)
@@ -432,7 +437,7 @@ private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActi
     fun save() {
         if (!canSave) return
         actions.onRename(tag.copy(nameTag = name)) { saved ->
-            if (saved) dismiss()
+            if (saved) close {}
         }
     }
 
@@ -457,19 +462,11 @@ private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActi
             checked = tag.isVisible,
             onCheckedChange = { actions.onToggleVisible() },
         )
-        EnclySheetRow(
-            title = stringResource(Res.string.delete_tag),
-            icon = EnclyIcons.Trash,
-            destructive = true,
-            onClick = actions.onDelete,
-        )
-        EnclyButton(
-            text = stringResource(Res.string.save),
-            onClick = ::save,
-            enabled = canSave,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = EnclyTheme.spacing.s),
+        EnclyButtonPair(
+            // The sheet slides away before the confirmation takes its place.
+            destructive = DialogAction(stringResource(Res.string.delete_tag), { close(actions.onDelete) }),
+            confirm = DialogAction(stringResource(Res.string.save), ::save, enabled = canSave),
+            modifier = Modifier.padding(top = EnclyTheme.spacing.s),
         )
     }
 }

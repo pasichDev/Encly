@@ -1,6 +1,9 @@
 package com.pasich.encly.presentation.designsystem
 
-/** A dialog button: a text button in `primary`, or in `error` when [destructive]. */
+/**
+ * A button by what it says and does. In a dialog: a text button in `primary`, or in `error` when
+ * [destructive]; in an [EnclyButtonPair] its place says which of the two it is.
+ */
 class DialogAction(
     val text: String,
     val onClick: () -> Unit,

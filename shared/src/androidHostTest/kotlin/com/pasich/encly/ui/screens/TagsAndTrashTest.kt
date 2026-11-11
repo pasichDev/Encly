@@ -4,10 +4,13 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -28,9 +31,17 @@ import com.pasich.encly.core.resources.tag_show_in_list
 import com.pasich.encly.core.resources.tags_empty_desc
 import com.pasich.encly.core.resources.tags_empty_title
 import com.pasich.encly.core.resources.tags_hint
-import com.pasich.encly.core.resources.trash_auto_delete_hint
-import com.pasich.encly.core.resources.trash_hint
+import com.pasich.encly.core.resources.trash_days_left
+import com.pasich.encly.core.resources.trash_empty
+import com.pasich.encly.core.resources.trash_empty_confirm
+import com.pasich.encly.core.resources.trash_first_in_days
+import com.pasich.encly.core.resources.trash_keep
+import com.pasich.encly.core.resources.trash_notes_count
+import com.pasich.encly.core.resources.trash_section_later
+import com.pasich.encly.core.resources.trash_section_soon
 import com.pasich.encly.core.resources.trash_selected
+import com.pasich.encly.core.resources.trash_summary
+import com.pasich.encly.core.resources.trash_summary_same
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
@@ -38,6 +49,7 @@ import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.EditTagScreen
 import com.pasich.encly.presentation.screen.trash.TrashScreen
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TagsAndTrashTest : ComposeScreenTest() {
@@ -143,15 +155,119 @@ class TagsAndTrashTest : ComposeScreenTest() {
         assertBodyNotEmpty(minTexts = 2)
     }
 
+    /** Notes trashed so many days ago, in the order given. */
+    private fun trashedDaysAgo(vararg notes: Pair<String, Int?>) {
+        val now = System.currentTimeMillis()
+        app.notes.trashNotes.value = notes.mapIndexed { index, (title, daysAgo) ->
+            // An hour over the day, so the count does not tip while the test runs.
+            Note(
+                id = index + 1L,
+                title = title,
+                value = "[]",
+                isTrash = true,
+                trashedAt = daysAgo?.let {
+                    now - it * DAY -
+                        HOUR
+                },
+            )
+        }
+    }
+
     @Test
-    fun trashedNotesAreListedWithTheHint() {
-        trashed("Old plan", "Draft")
+    fun trashedNotesAreListedUnderALineThatSaysWhenTheyGo() {
+        trashedDaysAgo("Shopping" to 0, "Trip plan" to 25, "Books" to 14)
         showTrash()
 
+        waitForText("Trip plan")
+        val notes = plural(Res.plurals.trash_notes_count, 3, 3)
+        val first = plural(Res.plurals.trash_first_in_days, 3, 3)
+        rule.onNodeWithText(str(Res.string.trash_summary, notes, first, 28)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.trash_section_soon, 1).uppercase()).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.trash_section_later, 2).uppercase()).assertIsDisplayed()
+        // Each note says the days it has left.
+        rule.onNodeWithContentDescription(plural(Res.plurals.trash_days_left, 3, 3)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(plural(Res.plurals.trash_days_left, 14, 14)).assertIsDisplayed()
+        rule.onNodeWithContentDescription(plural(Res.plurals.trash_days_left, 28, 28)).assertIsDisplayed()
+    }
+
+    @Test
+    fun theNoteThatGoesFirstIsListedFirst() {
+        trashedDaysAgo("Shopping" to 0, "Trip plan" to 25, "Books" to 14)
+        showTrash()
+        waitForText("Trip plan")
+
+        val tops = listOf("Trip plan", "Books", "Shopping").map { title ->
+            rule.onNode(hasText(title) and hasClickAction()).getBoundsInRoot().top
+        }
+        assertEquals(tops.sorted(), tops)
+    }
+
+    @Test
+    fun notesThatAllGoTheSameDaySayItOnce() {
+        trashedDaysAgo("Shopping" to 2, "Books" to 2)
+        showTrash()
+
+        waitForText("Shopping")
+        val notes = plural(Res.plurals.trash_notes_count, 2, 2)
+        val left = plural(Res.plurals.trash_days_left, 26, 26)
+        rule.onNodeWithText(str(Res.string.trash_summary_same, notes, left)).assertIsDisplayed()
+    }
+
+    @Test
+    fun aNoteWithoutATrashTimeIsListedLaterWithTheWholeRetention() {
+        trashedDaysAgo("Imported" to null)
+        showTrash()
+
+        waitForText("Imported")
+        rule.onNodeWithText(str(Res.string.trash_section_later, 1).uppercase()).assertIsDisplayed()
+        rule.onNodeWithContentDescription(plural(Res.plurals.trash_days_left, 28, 28)).assertIsDisplayed()
+        // No date to show: the row is the days and the title.
+        assertTrue(rule.onAllNodesWithText("Imported").fetchSemanticsNodes().size == 1)
+    }
+
+    @Test
+    fun emptyOpensAConfirmationThatCountsTheNotesAndKeepLeavesThem() {
+        trashed("Old plan", "Draft")
+        showTrash()
         waitForText("Old plan")
-        rule.onNodeWithText("Draft").assertIsDisplayed()
-        rule.onNodeWithText(str(Res.string.trash_hint)).assertIsDisplayed()
-        rule.onNodeWithText(str(Res.string.trash_auto_delete_hint)).assertIsDisplayed()
+
+        rule.onNodeWithText(str(Res.string.trash_empty)).performClick()
+
+        waitForText(plural(Res.plurals.trash_empty_confirm, 2, 2, 28))
+        rule.onNodeWithText(str(Res.string.trash_keep)).performClick()
+        rule.waitForIdle()
+        assertTrue(app.notes.deletedIds.isEmpty())
+        rule.onNodeWithText("Old plan").assertIsDisplayed()
+    }
+
+    @Test
+    fun confirmingEmptiesTheTrash() {
+        trashed("Old plan", "Draft")
+        showTrash()
+        waitForText("Old plan")
+        rule.onNodeWithText(str(Res.string.trash_empty)).performClick()
+        waitForText(str(Res.string.trash_keep))
+
+        // The red button of the pair, not the text action in the bar under the dialog.
+        rule.onAllNodes(hasText(str(Res.string.trash_empty)) and hasClickAction()).onLast().performClick()
+
+        waitFor { app.notes.deletedIds.toSet() == setOf(1L, 2L) }
+    }
+
+    @Test
+    fun deletingTheSelectionForGoodAsksFirst() {
+        trashed("Old plan", "Draft")
+        showTrash()
+        waitForText("Old plan")
+        rule.onNode(hasText("Old plan") and hasClickAction()).performTouchInput { longClick() }
+        waitForText(plural(Res.plurals.trash_selected, 1, 1))
+
+        rule.onNodeWithContentDescription(str(Res.string.delete_forever)).performClick()
+        waitForText(str(Res.string.trash_keep))
+        assertTrue(app.notes.deletedIds.isEmpty())
+        rule.onNode(hasText(str(Res.string.delete_forever)) and hasClickAction()).performClick()
+
+        waitFor { app.notes.deletedIds == listOf(1L) }
     }
 
     @Test
@@ -190,5 +306,10 @@ class TagsAndTrashTest : ComposeScreenTest() {
 
         waitFor { currentRoute() == TestRoutes.EDIT_NOTE }
         assertEquals(true, rule.runOnIdle { nav.currentBackStackEntry?.arguments?.getBoolean("isReadTrashOnly") })
+    }
+
+    private companion object {
+        const val HOUR = 60L * 60 * 1000
+        const val DAY = 24 * HOUR
     }
 }

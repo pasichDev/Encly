@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyListState
@@ -171,7 +172,8 @@ fun MainScreen(
     ) { padding ->
         // The Scaffold has no top bar slot, so `padding` carries the status bar; consuming it
         // keeps the notes bar below from padding the same inset again.
-        Column(modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
+        // Above the keyboard too: the last matches of a search are not left under it.
+        Column(modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
             NotesTopBar(
                 onMenu = drawerState?.let { drawer -> { scope.launch { drawer.open() } } },
                 onLockNow = lockNowViewModel::lockNow,

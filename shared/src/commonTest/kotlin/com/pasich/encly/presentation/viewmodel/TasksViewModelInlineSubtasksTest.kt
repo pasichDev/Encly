@@ -25,8 +25,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Sub-tasks edited on the Tasks list itself: open/closed trees, the inline "Add sub-task" field,
- * renaming and deleting a sub-task in place (with Undo), and saving on backgrounding.
+ * Steps edited on the Tasks list itself: which tasks show all their steps, the inline "+ Step" field,
+ * renaming, moving and deleting a step in place (with Undo), and saving on backgrounding.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TasksViewModelInlineSubtasksTest {
@@ -61,67 +61,63 @@ class TasksViewModelInlineSubtasksTest {
         TasksViewModel(repository, UpdateTaskStatusUseCase(repository), savedStateHandle = savedState)
 
     @Test
-    fun treesAreClosedAtFirstAndATapTogglesOne() = runTest(dispatcher) {
+    fun noTaskHasAChoiceAtFirstAndTheCountButtonRecordsOne() = runTest(dispatcher) {
         advanceUntilIdle()
-        assertEquals(emptySet<Long>(), viewModel.expandedTaskIds.value)
+        assertEquals(emptyMap<Long, Boolean>(), viewModel.stepsChosen.value)
 
-        viewModel.toggleSubtasks(1)
-        viewModel.toggleSubtasks(2)
-        assertEquals(setOf(1L, 2L), viewModel.expandedTaskIds.value)
+        viewModel.setStepsOpen(1, false)
+        viewModel.setStepsOpen(2, true)
+        assertEquals(mapOf(1L to false, 2L to true), viewModel.stepsChosen.value)
 
-        viewModel.toggleSubtasks(1)
-        assertEquals(setOf(2L), viewModel.expandedTaskIds.value)
+        viewModel.setStepsOpen(1, true)
+        assertEquals(mapOf(1L to true, 2L to true), viewModel.stepsChosen.value)
     }
 
     @Test
-    fun openTreesSurviveARecreatedViewModelAndListUpdates() = runTest(dispatcher) {
+    fun theChoicesSurviveARecreatedViewModelAndListUpdates() = runTest(dispatcher) {
         advanceUntilIdle()
-        viewModel.toggleSubtasks(1)
+        viewModel.setStepsOpen(1, false)
+        viewModel.setStepsOpen(2, true)
 
         val recreated = newViewModel()
         advanceUntilIdle()
-        assertEquals(setOf(1L), recreated.expandedTaskIds.value)
+        assertEquals(mapOf(1L to false, 2L to true), recreated.stepsChosen.value)
 
         repository.tasks.value += Task(id = 3, title = "New")
         repository.subtasks.value += Subtask(id = 20, taskId = 3, title = "x", uid = "u20")
         advanceUntilIdle()
-        assertEquals(setOf(1L), recreated.expandedTaskIds.value)
+        assertEquals(mapOf(1L to false, 2L to true), recreated.stepsChosen.value)
     }
 
     @Test
-    fun aTaskThatIsGoneIsDroppedFromTheOpenTrees() = runTest(dispatcher) {
+    fun aTaskThatIsGoneIsDroppedFromTheChoices() = runTest(dispatcher) {
         advanceUntilIdle()
-        viewModel.toggleSubtasks(1)
-        viewModel.toggleSubtasks(2)
+        viewModel.setStepsOpen(1, false)
+        viewModel.setStepsOpen(2, true)
 
         viewModel.deleteTask(repository.tasks.value.single { it.id == 2L })
         advanceUntilIdle()
 
-        assertEquals(setOf(1L), viewModel.expandedTaskIds.value)
-        assertEquals(longArrayOf(1L).toList(), savedState.get<LongArray>("expandedTaskIds")?.toList())
+        assertEquals(mapOf(1L to false), viewModel.stepsChosen.value)
         // Ids restored from the saved state of tasks that no longer exist are dropped once loaded.
-        savedState["expandedTaskIds"] = longArrayOf(1L, 99L)
+        savedState["openedStepsTaskIds"] = longArrayOf(99L)
         val recreated = newViewModel()
         advanceUntilIdle()
-        assertEquals(setOf(1L), recreated.expandedTaskIds.value)
+        assertEquals(mapOf(1L to false), recreated.stepsChosen.value)
     }
 
     @Test
-    fun backFoldsTheTreeOpenedLastAmongTheVisibleOnes() = runTest(dispatcher) {
-        repository.tasks.value += Task(id = 3, title = "Read")
+    fun foldingATasksStepsSavesItsOpenField() = runTest(dispatcher) {
         advanceUntilIdle()
-        viewModel.toggleSubtasks(2)
-        viewModel.toggleSubtasks(1)
-        viewModel.toggleSubtasks(3)
+        viewModel.startAddingSubtask(1)
+        viewModel.onInlineTextChange("Butter")
 
-        assertTrue(viewModel.collapseLastExpanded(visible = setOf(1L, 2L)))
-        assertEquals(setOf(2L, 3L), viewModel.expandedTaskIds.value)
-        assertTrue(viewModel.collapseLastExpanded(visible = setOf(1L, 2L)))
-        assertEquals(setOf(3L), viewModel.expandedTaskIds.value)
-        assertFalse(viewModel.collapseLastExpanded(visible = setOf(1L, 2L)))
-        // The order survives the saved state.
-        viewModel.toggleSubtasks(1)
-        assertEquals(listOf(3L, 1L), newViewModel().expandedTaskIds.value.toList())
+        viewModel.setStepsOpen(1, false)
+        advanceUntilIdle()
+
+        assertNull(viewModel.inlineEdit)
+        assertEquals("Butter", shop.last().title)
+        assertEquals(false, viewModel.stepsChosen.value[1L])
     }
 
     @Test
@@ -173,32 +169,49 @@ class TasksViewModelInlineSubtasksTest {
     }
 
     @Test
-    fun completingOrReopeningATaskKeepsItsTreeOpen() = runTest(dispatcher) {
+    fun theArrowsMoveTheStepBeingRenamedAndKeepItsFieldOpen() = runTest(dispatcher) {
         advanceUntilIdle()
-        viewModel.toggleSubtasks(1)
-        val shopTask = repository.tasks.value.single { it.id == 1L }
+        val eggs = shop[1]
+        viewModel.startRenamingSubtask(eggs)
+        viewModel.onInlineTextChange("Brown eggs")
 
-        // The lists arrive one by one: for a moment the task is in neither.
-        repository.tasks.value = repository.tasks.value.filterNot { it.id == 1L }
-        advanceUntilIdle()
-        repository.tasks.value += shopTask.copy(isCompleted = true, completedDate = 1L)
+        viewModel.moveInlineSubtask(up = false)
         advanceUntilIdle()
 
-        assertEquals(setOf(1L), viewModel.expandedTaskIds.value)
-        assertEquals(longArrayOf(1L).toList(), savedState.get<LongArray>("expandedTaskIds")?.toList())
+        assertEquals(listOf("Milk", "Bread", "Eggs"), shop.map { it.title })
+        assertEquals(
+            InlineSubtaskEdit(InlineSubtaskTarget.Rename(1, eggs.id), "Brown eggs", eggs),
+            viewModel.inlineEdit,
+        )
+        // Every step is shown, so the moved one cannot slip out of sight.
+        assertEquals(true, viewModel.stepsChosen.value[1L])
+
+        viewModel.moveInlineSubtask(up = true)
+        viewModel.moveInlineSubtask(up = true)
+        advanceUntilIdle()
+        assertEquals(listOf("Eggs", "Milk", "Bread"), shop.map { it.title })
+
+        // At the top there is nowhere further up.
+        viewModel.moveInlineSubtask(up = true)
+        advanceUntilIdle()
+        assertEquals(listOf("Eggs", "Milk", "Bread"), shop.map { it.title })
+        assertEquals("u11", shop[0].uid)
     }
 
     @Test
-    fun clearingTheDoneTasksForgetsTheirTrees() = runTest(dispatcher) {
-        repository.tasks.value = repository.tasks.value.map { if (it.id == 2L) it.copy(isCompleted = true) else it }
+    fun deletingAStepFromItsRowOffersUndo() = runTest(dispatcher) {
+        val deletions = collect<Subtask> { viewModel.subtaskDeletions.collect(it::add) }
         advanceUntilIdle()
-        viewModel.toggleSubtasks(1)
-        viewModel.toggleSubtasks(2)
+        val eggs = shop[1]
 
-        viewModel.clearCompletedTasks {}
+        viewModel.deleteSubtask(eggs)
         advanceUntilIdle()
 
-        assertEquals(setOf(1L), viewModel.expandedTaskIds.value)
+        assertEquals(listOf("Milk", "Bread"), shop.map { it.title })
+        assertEquals(listOf(eggs), deletions)
+        viewModel.restoreSubtask(eggs)
+        advanceUntilIdle()
+        assertEquals(listOf("Milk", "Eggs", "Bread"), shop.map { it.title })
     }
 
     @Test
@@ -206,7 +219,7 @@ class TasksViewModelInlineSubtasksTest {
         advanceUntilIdle()
         viewModel.startAddingSubtask(1)
         assertEquals(InlineSubtaskTarget.Add(1), viewModel.inlineEdit?.target)
-        assertTrue(1L in viewModel.expandedTaskIds.value)
+        assertEquals(true, viewModel.stepsChosen.value[1L])
 
         viewModel.onInlineTextChange("  Butter ")
         viewModel.submitInlineEdit()
@@ -284,7 +297,7 @@ class TasksViewModelInlineSubtasksTest {
         viewModel.startAddingSubtask(1)
         viewModel.onInlineTextChange("Butter")
 
-        viewModel.toggleSubtasks(2)
+        viewModel.toggleSubtask(shop[1], true)
         advanceUntilIdle()
 
         assertNull(viewModel.inlineEdit)
@@ -306,7 +319,7 @@ class TasksViewModelInlineSubtasksTest {
     }
 
     @Test
-    fun aRenameLeftBlankDeletesTheSubtaskAndUndoPutsItBack() = runTest(dispatcher) {
+    fun aRenameLeftBlankKeepsTheOldTitle() = runTest(dispatcher) {
         val deletions = collect<Subtask> { viewModel.subtaskDeletions.collect(it::add) }
         advanceUntilIdle()
         val eggs = shop[1]
@@ -316,17 +329,13 @@ class TasksViewModelInlineSubtasksTest {
         viewModel.closeInlineEdit(InlineSubtaskTarget.Rename(1, eggs.id))
         advanceUntilIdle()
 
-        assertEquals(listOf("Milk", "Bread"), shop.map { it.title })
-        assertEquals(listOf(eggs), deletions)
-
-        viewModel.restoreSubtask(eggs)
-        advanceUntilIdle()
+        assertNull(viewModel.inlineEdit)
         assertEquals(listOf("Milk", "Eggs", "Bread"), shop.map { it.title })
-        assertEquals("u11", shop[1].uid)
+        assertTrue(deletions.isEmpty())
     }
 
     @Test
-    fun theCrossDeletesTheSubtaskBeingRenamedWithUndo() = runTest(dispatcher) {
+    fun theBarsDeleteRemovesTheStepBeingRenamedWithUndo() = runTest(dispatcher) {
         val deletions = collect<Subtask> { viewModel.subtaskDeletions.collect(it::add) }
         advanceUntilIdle()
         val milk = shop[0]

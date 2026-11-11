@@ -8,6 +8,8 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -16,6 +18,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
@@ -47,15 +50,16 @@ import com.pasich.encly.core.resources.dialog_title
 import com.pasich.encly.core.resources.duplicate
 import com.pasich.encly.core.resources.edit_tags
 import com.pasich.encly.core.resources.editor_lock
+import com.pasich.encly.core.resources.font_size_title
 import com.pasich.encly.core.resources.markdown_export
 import com.pasich.encly.core.resources.markdown_export_warning_title
 import com.pasich.encly.core.resources.more_options
 import com.pasich.encly.core.resources.note_archive
 import com.pasich.encly.core.resources.note_color_teal
-import com.pasich.encly.core.resources.note_color_title
 import com.pasich.encly.core.resources.note_discard_all_changes
 import com.pasich.encly.core.resources.note_discard_confirm_message
 import com.pasich.encly.core.resources.note_discard_confirm_title
+import com.pasich.encly.core.resources.note_line_spacing_title
 import com.pasich.encly.core.resources.note_load_failed
 import com.pasich.encly.core.resources.note_pin
 import com.pasich.encly.core.resources.note_text_use_default
@@ -72,6 +76,7 @@ import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.presentation.dialogs.EDIT_NOTE_SHEET_TAG
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.editnote.EditNoteScreen
@@ -392,24 +397,76 @@ class EditNoteScreenTest : ComposeScreenTest() {
         rule.onNodeWithText(str(Res.string.markdown_export)).assertExists()
         // Pinning orders the notes list, so it is offered there, not inside a note.
         assertEquals(0, countText(str(Res.string.note_pin)))
-        // Section headings are drawn in capitals.
-        rule.onNodeWithText(str(Res.string.note_color_title).uppercase()).assertExists()
         rule.onNodeWithContentDescription(str(Res.string.note_color_teal)).assertExists()
+        rule.onNodeWithText(str(Res.string.font_size_title)).assertExists()
+        rule.onNodeWithText(str(Res.string.note_line_spacing_title)).assertExists()
     }
 
     @Test
-    fun useDefaultTextAppearsOnlyWhileTheNoteHasItsOwn() {
+    fun aLockedNoteReachesItsTextSettingsThroughTheMoreMenuAndThereIsNoAaButton() {
+        stored(text("body"))
+        open(NOTE_ID)
+        assertEquals(0, countText("Aa"))
+        rule.runOnIdle { editor.toggleLockEditor() }
+        rule.waitForIdle()
+        assertEquals(0, countText("Aa"))
+
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+
+        waitForText(str(Res.string.font_size_title))
+        rule.onNodeWithContentDescription(str(Res.string.note_color_teal)).assertExists()
+    }
+
+    private fun resetButtons() = rule.onAllNodes(hasContentDescription(str(Res.string.note_text_use_default)))
+
+    private fun sheetSize() = rule.onNodeWithTag(EDIT_NOTE_SHEET_TAG).fetchSemanticsNode().size
+
+    @Test
+    fun theResetButtonsAreAlwaysThereAndTheSheetKeepsItsSizeAsTheyComeToLife() {
         stored(text("body"))
         open(NOTE_ID)
         rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
         waitForText(str(Res.string.note_archive))
-        assertEquals(0, countText(str(Res.string.note_text_use_default)))
+        rule.waitForIdle()
+        // One per row, size then spacing, both idle while the note follows the defaults.
+        assertEquals(2, resetButtons().fetchSemanticsNodes().size)
+        resetButtons()[0].assertIsNotEnabled()
+        resetButtons()[1].assertIsNotEnabled()
+        val before = sheetSize()
 
         rule.runOnIdle { editor.updateNoteLineSpacing(com.pasich.encly.domain.model.NoteLineSpacing.COMFORTABLE) }
+        waitFor { editor.textOverride.value.spacing != null }
+        rule.waitForIdle()
 
-        waitForText(str(Res.string.note_text_use_default))
-        rule.onNodeWithText(str(Res.string.note_text_use_default)).performScrollTo().performClick()
-        waitFor { countText(str(Res.string.note_text_use_default)) == 0 }
+        resetButtons()[0].assertIsNotEnabled()
+        resetButtons()[1].assertIsEnabled()
+        assertEquals("no row came or went", before, sheetSize())
+
+        resetButtons()[1].performClick()
+        waitFor { !editor.textOverride.value.isSet }
+        rule.waitForIdle()
+        resetButtons()[1].assertIsNotEnabled()
+        assertEquals(before, sheetSize())
+        assertEquals("the sheet stays open for the text controls", 1, countText(str(Res.string.note_archive)))
+    }
+
+    @Test
+    fun resettingTheSizeLeavesTheNotesOwnSpacing() {
+        stored(text("body"))
+        open(NOTE_ID)
+        rule.runOnIdle {
+            editor.updateFontSize(22)
+            editor.updateNoteLineSpacing(com.pasich.encly.domain.model.NoteLineSpacing.COMFORTABLE)
+        }
+        rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
+        waitForText(str(Res.string.note_archive))
+        waitFor { editor.textOverride.value.size == 22 }
+        rule.waitForIdle()
+
+        resetButtons()[0].performClick()
+
+        waitFor { editor.textOverride.value.size == null }
+        assertEquals(com.pasich.encly.domain.model.NoteLineSpacing.COMFORTABLE, editor.textOverride.value.spacing)
     }
 
     @Test
@@ -419,7 +476,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
         waitForText(str(Res.string.note_archive))
-        rule.onNodeWithText(str(Res.string.note_archive)).performScrollTo().performClick()
+        rule.onNodeWithText(str(Res.string.note_archive)).performClick()
 
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
         assertEquals(listOf("archived:$NOTE_ID=true"), app.notes.columnWrites)
@@ -433,7 +490,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
         rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
 
         waitForText(str(Res.string.note_unarchive))
-        rule.onNodeWithText(str(Res.string.note_unarchive)).performScrollTo().performClick()
+        rule.onNodeWithText(str(Res.string.note_unarchive)).performClick()
         waitFor { currentRoute() == NavRoutes.HomeRoute.name }
         assertEquals(listOf("archived:$NOTE_ID=false"), app.notes.columnWrites)
     }
@@ -461,7 +518,7 @@ class EditNoteScreenTest : ComposeScreenTest() {
 
         rule.onNodeWithContentDescription(str(Res.string.more_options)).performClick()
         waitForText(str(Res.string.markdown_export))
-        rule.onNodeWithText(str(Res.string.markdown_export)).performScrollTo().performClick()
+        rule.onNodeWithText(str(Res.string.markdown_export)).performClick()
 
         waitForText(str(Res.string.markdown_export_warning_title))
         assertEquals(0, countText(str(Res.string.backup_reauth_title)))

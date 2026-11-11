@@ -14,7 +14,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -51,8 +50,10 @@ import com.pasich.encly.domain.model.ToolbarTool
 import com.pasich.encly.presentation.components.editNote.toBlockTool
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
+import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyToolButton
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.EditorToolbarViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -74,7 +75,7 @@ fun EditorToolbarScreen(
     EditorToolbarContent(
         layout = layout,
         actions = ToolbarActions(
-            onBack = { navController.popBackStack() },
+            onBack = { navController.popBack() },
             onMove = viewModel::move,
             onToggle = viewModel::toggle,
             onReset = viewModel::reset,
@@ -113,9 +114,11 @@ private fun EditorToolbarContent(layout: ToolbarLayout, actions: ToolbarActions,
                 title = stringResource(Res.string.settings_editor_toolbar),
                 onBack = actions.onBack,
                 actions = {
-                    TextButton(onClick = actions.onReset, enabled = layout != ToolbarLayout.DEFAULT) {
-                        Text(stringResource(Res.string.toolbar_reset))
-                    }
+                    EnclyTextButton(
+                        text = stringResource(Res.string.toolbar_reset),
+                        onClick = actions.onReset,
+                        enabled = layout != ToolbarLayout.DEFAULT,
+                    )
                 },
             )
         },

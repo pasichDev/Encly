@@ -60,7 +60,6 @@
     <string name="cancel">إلغاء</string>
 
     <string name="clean_permanent_message">هل تريد حقًا حذف هذه الملاحظات نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
-    <string name="clean_trash_message">هل تريد حقًا تفريغ سلة المحذوفات نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
     <string name="clean_trash_title">تفريغ سلة المحذوفات؟</string>
 
     <string name="clear">مسح</string>
@@ -302,7 +301,6 @@
     <string name="task_filter_all">كل المهام</string>
     <string name="task_filter_completed">المكتملة</string>
     <string name="task_new_placeholder">مهمة جديدة</string>
-    <string name="task_progress_title">التقدم</string>
     <string name="task_status_update_failed">تعذّر تغيير حالة المهمة. حاول مرة أخرى.</string>
     <string name="task_update_failed">تعذّر تحديث المهمة. حاول مرة أخرى.</string>
 
@@ -512,13 +510,16 @@
     <string name="task_empty_desc">اضغط «مهمة جديدة» لإضافة أولى مهامك.</string>
     <string name="task_all_done_title">تم كل شيء</string>
     <string name="task_done_section">المنجزة · %1$d</string>
+    <string name="task_section_in_work">قيد التنفيذ · %1$d</string>
+    <string name="task_section_next">التالية · %1$d</string>
+    <string name="step_add">خطوة</string>
+    <string name="subtasks_show">إظهار المهام الفرعية</string>
+    <string name="subtasks_hide">إخفاء المهام الفرعية</string>
     <string name="empty_notes_tagged">لا توجد ملاحظات بالوسم «%1$s»</string>
     <string name="empty_notes_tagged_desc">تظهر هنا الملاحظات التي تمنحها هذا الوسم.</string>
     <string name="show_all_notes">إظهار كل الملاحظات</string>
     <string name="empty_trash_title">سلة المحذوفات فارغة</string>
-    <string name="trash_hint">اضغط على ملاحظة لقراءتها. اضغط مطولًا للتحديد.</string>
     <string name="delete_forever">حذف نهائيًا</string>
-    <string name="empty_trash_action">تفريغ السلة</string>
     <string name="search_notes">بحث في الملاحظات</string>
     <string name="settings_notes_and_tasks">الملاحظات والمهام</string>
     <string name="settings_about_desc">الإصدار وسياسة الخصوصية والتواصل</string>
@@ -564,7 +565,7 @@
     <string name="faq_note_actions_q">ماذا يفعل الضغط المطوّل على ملاحظة؟</string>
     <string name="faq_note_actions_a">يفتح إجراءات الملاحظة: تغيير وسمها، وإضافة وصف قصير يظهر على البطاقة، وتكرار الملاحظة، أو نقلها إلى سلة المحذوفات.</string>
     <string name="faq_trash_q">كيف أستعيد ملاحظة محذوفة؟</string>
-    <string name="faq_trash_a">تذهب الملاحظات المحذوفة إلى «سلة المحذوفات» في القائمة. ومنها يمكنك استعادة الملاحظة أو حذفها نهائيًا. لا يفرغ Encly السلة من تلقاء نفسه.</string>
+    <string name="faq_trash_a">تذهب الملاحظات المحذوفة إلى «سلة المحذوفات» في القائمة. ومنها يمكنك استعادة الملاحظة أو حذفها نهائيًا. تُحذف الملاحظة التي تبقى في السلة نهائيًا بعد 28 يومًا من نقلها إليها، فاستعدها قبل ذلك إن كنت ما زلت تحتاجها.</string>
     <string name="faq_lock_note_q">ماذا يفعل «قفل التحرير»؟</string>
     <string name="faq_lock_note_a">يجعل الملاحظة للقراءة فقط حتى لا تتغير بالخطأ. ما زال بإمكانك تحديد النص ونسخه. شغّله أو أوقفه من قائمة المحرر.</string>
     <string name="faq_backup_q">كيف تعمل النسخ الاحتياطية؟</string>
@@ -580,13 +581,7 @@
     <string name="subtask_delete">حذف المهمة الفرعية</string>
     <string name="subtasks_all_done">كل المهام الفرعية منجزة</string>
     <string name="subtasks_complete_task">إكمال المهمة</string>
-    <string name="subtasks_show">إظهار المهام الفرعية</string>
-    <string name="subtasks_hide">إخفاء المهام الفرعية</string>
-    <string name="subtasks_state_shown">موسّعة</string>
-    <string name="subtasks_state_hidden">مطوية</string>
     <string name="subtask_deleted">تم حذف المهمة الفرعية</string>
-    <string name="subtask_next_step">الخطوة التالية: %1$s</string>
-    <string name="subtask_first_step">الخطوة الأولى</string>
     <plurals name="subtasks_done_summary">
         <item quantity="zero">المهام الفرعية المنجزة: %1$d من %2$d</item>
         <item quantity="one">المهام الفرعية المنجزة: %1$d من %2$d</item>
@@ -693,7 +688,6 @@
     <string name="whats_new_title">ما الجديد</string>
     <string name="whats_new_row_desc">التغييرات في هذا الإصدار</string>
     <string name="whats_new_dismiss">فهمت</string>
-    <string name="trash_auto_delete_hint">تُحذف الملاحظات نهائيًا بعد 28 يومًا في سلة المحذوفات.</string>
     <string name="block_select">تحديد الكتلة</string>
     <string name="list_item_reorder">إعادة ترتيب العنصر</string>
     <string name="list_item_move_up">نقل العنصر لأعلى</string>
@@ -735,5 +729,55 @@
         <item quantity="few">%1$d وسوم أخرى</item>
         <item quantity="many">%1$d وسمًا آخر</item>
         <item quantity="other">%1$d وسم آخر</item>
+    </plurals>
+    <string name="trash_section_soon">ستختفي خلال أسبوع · %1$d</string>
+    <string name="trash_section_later">لاحقًا · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s، والأخيرة بعد %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">ستختفي الأولى اليوم</string>
+    <string name="trash_last_day">اليوم الأخير</string>
+    <string name="trash_today_unit">اليوم</string>
+    <string name="trash_deleted_on">حُذفت: %1$s</string>
+    <string name="trash_keep">إبقاء</string>
+    <string name="trash_empty">تفريغ</string>
+    <plurals name="trash_notes_count">
+        <item quantity="zero">%d ملاحظة</item>
+        <item quantity="one">%d ملاحظة</item>
+        <item quantity="two">%d ملاحظتان</item>
+        <item quantity="few">%d ملاحظات</item>
+        <item quantity="many">%d ملاحظة</item>
+        <item quantity="other">%d ملاحظة</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="zero">ستختفي الأولى بعد %d يوم</item>
+        <item quantity="one">ستختفي الأولى بعد %d يوم</item>
+        <item quantity="two">ستختفي الأولى بعد %d يوم</item>
+        <item quantity="few">ستختفي الأولى بعد %d أيام</item>
+        <item quantity="many">ستختفي الأولى بعد %d يومًا</item>
+        <item quantity="other">ستختفي الأولى بعد %d يوم</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="zero">بقي %d يوم</item>
+        <item quantity="one">بقي %d يوم</item>
+        <item quantity="two">بقي %d يوم</item>
+        <item quantity="few">بقيت %d أيام</item>
+        <item quantity="many">بقي %d يومًا</item>
+        <item quantity="other">بقي %d يوم</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="zero">يوم</item>
+        <item quantity="one">يوم</item>
+        <item quantity="two">يومان</item>
+        <item quantity="few">أيام</item>
+        <item quantity="many">يومًا</item>
+        <item quantity="other">يوم</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="zero">ستُحذف %1$d ملاحظة نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
+        <item quantity="one">ستُحذف %1$d ملاحظة نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
+        <item quantity="two">ستُحذف %1$d ملاحظة نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
+        <item quantity="few">ستُحذف %1$d ملاحظات نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
+        <item quantity="many">ستُحذف %1$d ملاحظة نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
+        <item quantity="other">ستُحذف %1$d ملاحظة نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
     </plurals>
 </resources>

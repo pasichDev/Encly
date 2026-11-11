@@ -29,6 +29,7 @@ import com.pasich.encly.data.importer.ImportSource
 import com.pasich.encly.presentation.designsystem.EnclyCard
 import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -40,7 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun SourceCard(source: ImportSource, modifier: Modifier = Modifier) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val turn by animateFloatAsState(if (expanded) CHEVRON_TURN else 0f, label = "chevron")
+    val turn by animateFloatAsState(if (expanded) CHEVRON_TURN else 0f, EnclyMotion.medium(), label = "chevron")
     EnclyCard(modifier = modifier, style = EnclyCardStyle.OUTLINED, onClick = { expanded = !expanded }) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -67,7 +68,7 @@ internal fun SourceCard(source: ImportSource, modifier: Modifier = Modifier) {
                     .rotate(turn),
             )
         }
-        AnimatedVisibility(visible = expanded) {
+        AnimatedVisibility(visible = expanded, enter = EnclyMotion.Unfold, exit = EnclyMotion.Fold) {
             Column(
                 modifier = Modifier.padding(
                     start = EnclyTheme.spacing.tileSmall + EnclyTheme.spacing.rowGap,

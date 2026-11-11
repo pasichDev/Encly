@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.focus.FocusRequester
@@ -24,12 +25,14 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pasich.encly.editor.focus.BlockFocusRegistry
 import com.pasich.encly.editor.ui.FindHighlights
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
+import com.pasich.encly.presentation.effects.LocalNavAnimatedVisibilityScope
 import com.pasich.encly.presentation.pane.ActiveEditor
 import com.pasich.encly.presentation.pane.EditorPane
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private const val INITIAL_FOCUS_FRAMES = 5
@@ -99,13 +102,19 @@ private const val NEAR_ITEMS = 2
 /** An item just below the screen is revealed by this fraction of the screen's height. */
 private const val REVEAL_FRACTION = 4
 
-/** A new note starts in its title with the keyboard up: once, not again after a restore. */
+/**
+ * A new note starts in its title with the keyboard up: once, not again after a restore. The keyboard is
+ * asked for when the editor has arrived, not while it is on its way in: rising under the screen's own
+ * transition it resizes the editor on every frame of it, in the frames that already compose the screen.
+ */
 @Composable
 internal fun FocusNewNoteTitle(titleFocus: FocusRequester, viewModel: EditNoteViewModel = metroViewModel()) {
     val keyboardController = LocalSoftwareKeyboardController.current
+    val arriving = LocalNavAnimatedVisibilityScope.current?.transition
     var done by rememberSaveable { mutableStateOf(!viewModel.isNewNote) }
     LaunchedEffect(done) {
         if (done) return@LaunchedEffect
+        if (arriving != null) snapshotFlow { arriving.currentState == arriving.targetState }.first { it }
         repeat(INITIAL_FOCUS_FRAMES) {
             withFrameNanos { }
             if (runCatching { titleFocus.requestFocus() }.isSuccess) {

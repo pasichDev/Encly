@@ -1,7 +1,7 @@
 package com.pasich.encly.presentation.components.tasks
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -12,18 +12,15 @@ import androidx.compose.ui.Modifier
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.percent_value
 import com.pasich.encly.core.resources.task_progress_summary
-import com.pasich.encly.core.resources.task_progress_title
-import com.pasich.encly.presentation.designsystem.EnclyCard
-import com.pasich.encly.presentation.designsystem.EnclyCardStyle
 import com.pasich.encly.presentation.designsystem.EnclyProgressTrack
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 private const val PERCENT = 100f
-private const val PROGRESS_ANIMATION_MS = 250
 
-/** Task progress: an outlined card with the share done, a continuous track and the counts. */
+/** Task progress on one line: how many are done, a continuous track, and the share done. */
 @Composable
 fun TaskProgressCard(
     completionPercentage: Int,
@@ -33,24 +30,14 @@ fun TaskProgressCard(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = completionPercentage / PERCENT,
-        animationSpec = tween(durationMillis = PROGRESS_ANIMATION_MS),
+        animationSpec = EnclyMotion.medium(),
         label = "progress",
     )
-    EnclyCard(modifier = modifier, style = EnclyCardStyle.OUTLINED) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(Res.string.task_progress_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = stringResource(Res.string.percent_value, completionPercentage),
-                style = EnclyTheme.typography.dataSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        EnclyProgressTrack(progress = animatedProgress)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
+        modifier = modifier,
+    ) {
         Text(
             text = pluralStringResource(
                 Res.plurals.task_progress_summary,
@@ -58,8 +45,14 @@ fun TaskProgressCard(
                 completedTasksCount,
                 totalTasksCount,
             ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        EnclyProgressTrack(progress = animatedProgress, modifier = Modifier.weight(1f))
+        Text(
+            text = stringResource(Res.string.percent_value, completionPercentage),
+            style = EnclyTheme.typography.dataSmall,
+            color = MaterialTheme.colorScheme.primary,
         )
     }
 }

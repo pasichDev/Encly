@@ -172,10 +172,19 @@ class EditNoteViewModelComfortTest {
         advanceUntilIdle()
         assertEquals(30, viewModel.fontSize.value)
 
-        viewModel.useDefaultText()
+        viewModel.useDefaultTextSize()
         advanceUntilIdle()
 
         assertEquals(18, viewModel.fontSize.value)
+        assertEquals(
+            "the spacing is still the note's own",
+            NoteLineSpacing.COMFORTABLE,
+            viewModel.textOverride.value.spacing,
+        )
+
+        viewModel.useDefaultLineSpacing()
+        advanceUntilIdle()
+
         assertFalse(viewModel.textOverride.value.isSet)
         assertTrue(viewModel.saveNote())
         assertNull(repository.updatedNotes.last().textSize)

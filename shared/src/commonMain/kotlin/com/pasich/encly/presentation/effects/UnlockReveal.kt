@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.effects
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import com.pasich.encly.shared.resources.Res
 import com.pasich.encly.shared.resources.ic_launcher_foreground
+import com.pasich.encly.ui.theme.EnclyMotion
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.hypot
 import kotlin.math.max
@@ -48,11 +48,11 @@ private const val GLYPH_OUT = 0.25f
 /** The tile's corner radius as a share of its width, as on the lock screen's logo (20 of 64 dp). */
 private const val TILE_CORNER = 20f / 64f
 
-/** The design system's standard curve: a quick start that settles gently, no overshoot. */
-private val UnlockEasing = CubicBezierEasing(a = 0.3f, b = 0f, c = 0.2f, d = 1f)
+/** A gentle start that settles slowly, no overshoot. */
+private val UnlockEasing = EnclyMotion.Standard
 
-/** Material's emphasized decelerate: the list glides in fast and settles slowly into place. */
-private val PushEasing = CubicBezierEasing(a = 0.05f, b = 0.7f, c = 0.1f, d = 1f)
+/** The list glides in fast and settles slowly into place. */
+private val PushEasing = EnclyMotion.Enter
 
 /** The short reveal: the lock screen fades out, then the app fades in. */
 internal const val QUICK_OUT_MS = 100

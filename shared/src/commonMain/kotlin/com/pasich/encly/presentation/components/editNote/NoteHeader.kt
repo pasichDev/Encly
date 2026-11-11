@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
+import com.pasich.encly.presentation.dialogs.rememberSheetCloser
 import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.noteInstant
 import org.jetbrains.compose.resources.stringResource
@@ -78,7 +80,15 @@ fun NoteTagSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    EnclyBottomSheet(onDismissRequest = onDismiss, modifier = modifier, title = stringResource(Res.string.edit_tags)) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // Leaving for the tags screen, the sheet slides away first.
+    val close = rememberSheetCloser(sheetState, alwaysSheet = true, onDismiss = onDismiss)
+    EnclyBottomSheet(
+        onDismissRequest = onDismiss,
+        modifier = modifier,
+        sheetState = sheetState,
+        title = stringResource(Res.string.edit_tags),
+    ) {
         // Many tags scroll; the manage row below stays in view.
         Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
             val untagged = selectedTagIds.isEmpty()
@@ -104,7 +114,7 @@ fun NoteTagSheet(
         EnclySheetRow(
             title = stringResource(if (tags.isEmpty()) Res.string.create_new_tag else Res.string.tags_manage),
             icon = if (tags.isEmpty()) EnclyIcons.Plus else EnclyIcons.Edit,
-            onClick = onManageTags,
+            onClick = { close(onManageTags) },
         )
     }
 }

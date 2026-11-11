@@ -443,9 +443,14 @@ class EditNoteViewModel(
         if (!readOnly) persistence.updateNote { it.copy(lineSpacing = value.ordinal) }
     }
 
-    /** "Use default": the note follows the text size and line spacing of Settings again. */
-    fun useDefaultText() {
-        if (!readOnly) persistence.updateNote { it.copy(textSize = null, lineSpacing = null) }
+    /** "Use default" for the size: the note follows the text size of Settings again; its own line spacing stays. */
+    fun useDefaultTextSize() {
+        if (!readOnly) persistence.updateNote { it.copy(textSize = null) }
+    }
+
+    /** "Use default" for the spacing: the note follows the line spacing of Settings again; its own size stays. */
+    fun useDefaultLineSpacing() {
+        if (!readOnly) persistence.updateNote { it.copy(lineSpacing = null) }
     }
 
     /** Locks or unlocks the editor. A note that could not be read, or one in the trash, stays locked. */

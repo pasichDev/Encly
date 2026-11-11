@@ -7,20 +7,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -34,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
@@ -65,13 +71,14 @@ fun EnclyBottomSheet(
     title: String? = null,
     showHandle: Boolean = true,
     scrollable: Boolean = false,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         shape = SheetShape,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = containerColor,
         contentColor = MaterialTheme.colorScheme.onSurface,
         tonalElevation = 0.dp,
         dragHandle = if (showHandle) {
@@ -81,8 +88,9 @@ fun EnclyBottomSheet(
         },
         // No Modifier.shadow here: its clipping graphics layer sits outside the sheet's offset
         // animation and cut the whole content away, leaving an empty sheet.
-        modifier = modifier,
+        modifier = modifier.slideWithKeyboard(sheetState),
     ) {
+        HideKeyboardWithSheet(sheetState)
         val scroll = rememberScrollState()
         Box {
             Column(
@@ -122,6 +130,138 @@ private fun SheetHandle() {
             .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(2.dp)),
     )
 }
+
+/** The gap between the groups of a grouped sheet. */
+val SheetGroupGap = 10.dp
+
+/** The height of a row of a sheet group. */
+val SheetGroupRowHeight = 48.dp
+
+/**
+ * One inset group of a grouped sheet: a `surfaceContainerLowest` card (radius 16) on a `surfaceContainer`
+ * sheet, its rows ([EnclySheetGroupRow]) parted by hairlines ([EnclySheetGroupDivider]).
+ */
+@Composable
+fun EnclySheetGroup(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(content = content)
+    }
+}
+
+/** The hairline between two rows of an [EnclySheetGroup]. */
+@Composable
+fun EnclySheetGroupDivider(modifier: Modifier = Modifier) {
+    HorizontalDivider(
+        thickness = EnclyTheme.spacing.hairline,
+        color = MaterialTheme.colorScheme.outlineVariant,
+        modifier = modifier.padding(start = EnclyTheme.spacing.m),
+    )
+}
+
+/**
+ * A 48 dp row of an [EnclySheetGroup]: an optional leading [icon] in `primary` (`error` when [destructive]),
+ * the [title], then at the end a muted [value] (one line, with [valueDot] before it), a check when [selected]
+ * and a chevron when the row leads on ([chevron]). With [confirmFirst] the first tap only arms the action
+ * ("Tap again to delete") for five seconds.
+ */
+@Suppress("LongParameterList") // A design-system row: independent optional slots.
+@Composable
+fun EnclySheetGroupRow(
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    value: String? = null,
+    valueDot: Color? = null,
+    chevron: Boolean = false,
+    selected: Boolean = false,
+    destructive: Boolean = false,
+    confirmFirst: Boolean = false,
+) {
+    var armed by remember { mutableStateOf(false) }
+    LaunchedEffect(armed) {
+        if (armed) {
+            delay(CONFIRM_WINDOW_MS)
+            armed = false
+        }
+    }
+    val (accent, titleColor) = sheetRowColors(enabled = true, destructive = destructive)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = SheetGroupRowHeight)
+            .enclyInteractive()
+            .clickable(role = Role.Button) {
+                if (confirmFirst && !armed) {
+                    armed = true
+                } else {
+                    armed = false
+                    onClick()
+                }
+            }
+            .padding(horizontal = EnclyTheme.spacing.m),
+    ) {
+        if (icon != null || armed) SheetRowLeading(armed = armed, icon = icon, tint = accent)
+        Text(
+            text = if (armed) stringResource(Res.string.tap_again_to_delete) else title,
+            style = MaterialTheme.typography.labelLarge,
+            color = titleColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = if (value == null) Modifier.weight(1f) else Modifier,
+        )
+        SheetGroupRowEnd(value, valueDot, selected, chevron)
+    }
+}
+
+/** The end of a group row: its value (with its dot), a check when selected, a chevron when it leads on. */
+@Composable
+private fun RowScope.SheetGroupRowEnd(value: String?, valueDot: Color?, selected: Boolean, chevron: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    if (value != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs, Alignment.End),
+            modifier = Modifier.weight(1f),
+        ) {
+            if (valueDot != null) {
+                Box(modifier = Modifier.size(ValueDotSize).background(valueDot, CircleShape))
+            }
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+    if (selected) {
+        Icon(
+            EnclyIcons.Check,
+            contentDescription = null,
+            tint = colors.primary,
+            modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+        )
+    }
+    if (chevron) {
+        Icon(
+            EnclyIcons.Chevron,
+            contentDescription = null,
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
+        )
+    }
+}
+
+private val ValueDotSize = 10.dp
 
 /**
  * A sheet action row: leading icon in `primary` (`error` when [destructive]), the title in

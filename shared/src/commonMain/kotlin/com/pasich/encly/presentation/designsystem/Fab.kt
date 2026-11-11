@@ -27,7 +27,7 @@ fun EnclyFab(
     destructive: Boolean = false,
 ) {
     val colors = MaterialTheme.colorScheme
-    val shape = MaterialTheme.shapes.large
+    val shape = EnclyButtonShape
     val shadow = EnclyTheme.colors.shadow
     // Collapsed to its icon, the FAB names itself on a long press; expanded, its text does.
     EnclyTooltip(if (expanded) "" else text) {

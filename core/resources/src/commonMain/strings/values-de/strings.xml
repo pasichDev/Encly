@@ -74,7 +74,6 @@
 
 
     <string name="clean_permanent_message">Möchtest du diese Notizen wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.</string>
-    <string name="clean_trash_message">Möchtest du den Papierkorb wirklich endgültig leeren? Das kann nicht rückgängig gemacht werden.</string>
     <string name="clean_trash_title">Papierkorb leeren?</string>
 
     <string name="clear">Leeren</string>
@@ -325,7 +324,6 @@
     <string name="task_filter_all">Alle Aufgaben</string>
     <string name="task_filter_completed">Erledigt</string>
     <string name="task_new_placeholder">Neue Aufgabe</string>
-    <string name="task_progress_title">Fortschritt</string>
     <string name="task_status_update_failed">Der Status der Aufgabe konnte nicht geändert werden. Bitte versuche es erneut.</string>
     <string name="task_update_failed">Die Aufgabe konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
 
@@ -520,13 +518,16 @@
     <string name="task_empty_desc">Tippe auf „Neue Aufgabe“, um die erste anzulegen.</string>
     <string name="task_all_done_title">Alles erledigt</string>
     <string name="task_done_section">Erledigt · %1$d</string>
+    <string name="task_section_in_work">In Arbeit · %1$d</string>
+    <string name="task_section_next">Als Nächstes · %1$d</string>
+    <string name="step_add">Schritt</string>
+    <string name="subtasks_show">Unteraufgaben anzeigen</string>
+    <string name="subtasks_hide">Unteraufgaben ausblenden</string>
     <string name="empty_notes_tagged">Keine Notizen mit dem Tag „%1$s“</string>
     <string name="empty_notes_tagged_desc">Notizen mit diesem Tag erscheinen hier.</string>
     <string name="show_all_notes">Alle Notizen zeigen</string>
     <string name="empty_trash_title">Der Papierkorb ist leer</string>
-    <string name="trash_hint">Tippe auf eine Notiz, um sie zu lesen. Lange drücken zum Auswählen.</string>
     <string name="delete_forever">Endgültig löschen</string>
-    <string name="empty_trash_action">Papierkorb leeren</string>
     <string name="search_notes">Notizen durchsuchen</string>
     <string name="settings_notes_and_tasks">Notizen und Aufgaben</string>
     <string name="settings_about_desc">Version, Datenschutz und Kontakt</string>
@@ -568,7 +569,7 @@
     <string name="faq_note_actions_q">Was bewirkt langes Drücken auf eine Notiz?</string>
     <string name="faq_note_actions_a">Es öffnet die Aktionen der Notiz: Label ändern, eine kurze Beschreibung für die Karte hinzufügen, die Notiz duplizieren oder in den Papierkorb verschieben.</string>
     <string name="faq_trash_q">Wie bekomme ich eine gelöschte Notiz zurück?</string>
-    <string name="faq_trash_a">Gelöschte Notizen landen im Papierkorb im Menü. Dort kannst du eine Notiz wiederherstellen oder endgültig löschen. Encly leert den Papierkorb nie von selbst.</string>
+    <string name="faq_trash_a">Gelöschte Notizen landen im Papierkorb im Menü. Dort kannst du eine Notiz wiederherstellen oder endgültig löschen. Eine Notiz, die im Papierkorb bleibt, wird 28 Tage nach dem Verschieben endgültig gelöscht. Stelle sie vorher wieder her, wenn du sie noch brauchst.</string>
     <string name="faq_lock_note_q">Was macht „Bearbeitung sperren“?</string>
     <string name="faq_lock_note_a">Die Notiz wird schreibgeschützt, damit sie nicht versehentlich geändert wird. Text lässt sich weiterhin markieren und kopieren. Ein- und ausschalten kannst du es im Menü des Editors.</string>
     <string name="faq_backup_q">Wie funktionieren Backups?</string>
@@ -584,13 +585,7 @@
     <string name="subtask_delete">Unteraufgabe löschen</string>
     <string name="subtasks_all_done">Alle Unteraufgaben sind erledigt</string>
     <string name="subtasks_complete_task">Aufgabe erledigen</string>
-    <string name="subtasks_show">Unteraufgaben anzeigen</string>
-    <string name="subtasks_hide">Unteraufgaben ausblenden</string>
-    <string name="subtasks_state_shown">Ausgeklappt</string>
-    <string name="subtasks_state_hidden">Eingeklappt</string>
     <string name="subtask_deleted">Unteraufgabe gelöscht</string>
-    <string name="subtask_next_step">Nächster Schritt: %1$s</string>
-    <string name="subtask_first_step">Erster Schritt</string>
     <plurals name="subtasks_done_summary">
         <item quantity="one">%1$d von %2$d Unteraufgabe erledigt</item>
         <item quantity="other">%1$d von %2$d Unteraufgaben erledigt</item>
@@ -693,7 +688,6 @@
     <string name="whats_new_title">Neuigkeiten</string>
     <string name="whats_new_row_desc">Die Änderungen dieser Version</string>
     <string name="whats_new_dismiss">Verstanden</string>
-    <string name="trash_auto_delete_hint">Notizen werden nach 28 Tagen im Papierkorb endgültig gelöscht.</string>
     <string name="faq_pin_length_q">Wie lang darf meine PIN sein?</string>
     <string name="faq_pin_length_a">Zwischen 6 und 12 Ziffern, du entscheidest. Kürzere PINs werden nicht angeboten: Die Sperre und der Gerätschlüssel begrenzen die Zahl der Versuche, und 6 Ziffern sind die kürzeste PIN, die damit sicher bleibt. Der Sperrbildschirm zeigt nie, wie lang deine PIN ist: Du tippst auf „Entsperren“, wenn du fertig bist; das gilt auch für Lösch-PIN und Zwangs-PIN. PINs, die du vorher festgelegt hast, funktionieren unverändert.</string>
     <string name="block_code">Code</string>
@@ -718,5 +712,35 @@
     <plurals name="note_tags_more">
         <item quantity="one">%1$d weiteres Label</item>
         <item quantity="other">%1$d weitere Labels</item>
+    </plurals>
+    <string name="trash_section_soon">Verschwinden in einer Woche · %1$d</string>
+    <string name="trash_section_later">Später · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s, die letzte in %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">Die erste verschwindet heute</string>
+    <string name="trash_last_day">Letzter Tag</string>
+    <string name="trash_today_unit">heute</string>
+    <string name="trash_deleted_on">Gelöscht: %1$s</string>
+    <string name="trash_keep">Behalten</string>
+    <string name="trash_empty">Leeren</string>
+    <plurals name="trash_notes_count">
+        <item quantity="one">%d Notiz</item>
+        <item quantity="other">%d Notizen</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="one">Die erste verschwindet in %d Tag</item>
+        <item quantity="other">Die erste verschwindet in %d Tagen</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="one">Noch %d Tag</item>
+        <item quantity="other">Noch %d Tage</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="one">Tag</item>
+        <item quantity="other">Tage</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="one">%1$d Notiz wird endgültig gelöscht, ohne die %2$d Tage abzuwarten. Das kann nicht rückgängig gemacht werden.</item>
+        <item quantity="other">%1$d Notizen werden endgültig gelöscht, ohne die %2$d Tage abzuwarten. Das kann nicht rückgängig gemacht werden.</item>
     </plurals>
 </resources>

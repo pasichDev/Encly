@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -49,6 +50,23 @@ fun EnclyNoteColorPicker(
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
     ) {
         items(NoteColor.entries, key = { it.key }) { color ->
+            ColorSwatch(color = color, selected = color == selected, onClick = { onSelect(color) })
+        }
+    }
+}
+
+/**
+ * Every [NoteColor] swatch at once, wrapping onto as many lines as the width needs: for a page that has
+ * the room, where the row of [EnclyNoteColorPicker] would scroll.
+ */
+@Composable
+fun EnclyNoteColorGrid(selected: NoteColor, onSelect: (NoteColor) -> Unit, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+    ) {
+        NoteColor.entries.forEach { color ->
             ColorSwatch(color = color, selected = color == selected, onClick = { onSelect(color) })
         }
     }

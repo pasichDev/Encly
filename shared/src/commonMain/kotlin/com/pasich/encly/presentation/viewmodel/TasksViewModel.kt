@@ -64,7 +64,8 @@ enum class TaskOperationFailure {
 }
 
 /** SavedStateHandle key of the tasks whose sub-task tree is open. */
-private const val KEY_EXPANDED_TASKS = "expandedTaskIds"
+private const val KEY_OPENED_STEPS = "openedStepsTaskIds"
+private const val KEY_CLOSED_STEPS = "closedStepsTaskIds"
 
 /** How many open tasks the notes screen previews. */
 const val HOME_WIDGET_TASKS = 2
@@ -152,12 +153,15 @@ class TasksViewModel(
     val completionOffers: SharedFlow<Long> = _completionOffers.asSharedFlow()
 
     /**
-     * Tasks whose sub-task tree is open on the list (all closed at first). Kept in the saved
-     * state, so a rotation keeps them open; a task deleted here is dropped from it.
+     * The tasks whose steps the user opened (true) or folded (false) on the list with the count button; a
+     * task not in it follows its section (open while in progress, folded to its next step otherwise). Kept
+     * in the saved state, so a rotation keeps the choices; a task that is gone is dropped from it.
      */
-    private val _expandedTaskIds =
-        MutableStateFlow(savedStateHandle.get<LongArray>(KEY_EXPANDED_TASKS)?.toSet().orEmpty())
-    val expandedTaskIds: StateFlow<Set<Long>> = _expandedTaskIds.asStateFlow()
+    private val _stepsChosen = MutableStateFlow(
+        savedStateHandle.get<LongArray>(KEY_OPENED_STEPS)?.toList().orEmpty().associateWith { true } +
+            savedStateHandle.get<LongArray>(KEY_CLOSED_STEPS)?.toList().orEmpty().associateWith { false },
+    )
+    val stepsChosen: StateFlow<Map<Long, Boolean>> = _stepsChosen.asStateFlow()
 
     /**
      * The one inline sub-task field open on the list, or null. Compose state rather than a flow,
@@ -186,9 +190,6 @@ class TasksViewModel(
     private val subtaskMutex = Mutex()
 
     private var tasksJob: Job? = null
-
-    /** Whether the open trees restored from the saved state were checked against the first list. */
-    private var restoredTreesChecked = false
 
     init {
         observeTasks()
@@ -226,10 +227,7 @@ class TasksViewModel(
                 AppLogger.e(TAG, "Tasks read failed")
             }.collect { newState ->
                 _uiState.value = newState
-                if (!restoredTreesChecked) {
-                    restoredTreesChecked = true
-                    forgetTreesOtherThan(newState)
-                }
+                forgetStepsOfGoneTasks(newState)
                 dropGoneListState(newState)
             }
         }
@@ -252,38 +250,59 @@ class TasksViewModel(
         if (gone) inlineEdit = null
     }
 
-    private fun setExpanded(ids: Set<Long>) {
-        _expandedTaskIds.value = ids
-        savedStateHandle[KEY_EXPANDED_TASKS] = ids.toLongArray()
+    private fun setStepsChosen(chosen: Map<Long, Boolean>) {
+        _stepsChosen.value = chosen
+        savedStateHandle[KEY_OPENED_STEPS] = chosen.filterValues { it }.keys.toLongArray()
+        savedStateHandle[KEY_CLOSED_STEPS] = chosen.filterValues { !it }.keys.toLongArray()
     }
 
-    /** Opens or closes the task's sub-task tree on the list. The set keeps the order they opened in. */
-    fun toggleSubtasks(taskId: Long) {
+    /** The count button of a task on the list: shows all its steps ([open]), or folds them to the next one. */
+    fun setStepsOpen(taskId: Long, open: Boolean) {
         commitInlineEdit()
-        val expanded = _expandedTaskIds.value
-        setExpanded(if (taskId in expanded) expanded - taskId else expanded + taskId)
+        setStepsChosen(_stepsChosen.value + (taskId to open))
     }
 
     /**
-     * Back on the list: folds the tree opened last among [visible] (the tasks the list shows
-     * now). False when none of them is open, so Back can leave the screen.
-     */
-    fun collapseLastExpanded(visible: Set<Long>): Boolean {
-        val last = _expandedTaskIds.value.lastOrNull { it in visible } ?: return false
-        commitInlineEdit()
-        setExpanded(_expandedTaskIds.value - last)
-        return true
-    }
-
-    /**
-     * Drag or "Move up/down" in a task's open tree: moves the sub-task [movedId] to where
+     * "Move up/down" on a step of the list (TalkBack's action): moves the sub-task [movedId] to where
      * [targetId] is in the stored order, keeping each row's identity. Ids rather than positions,
      * so a row deleted (or added) meanwhile cannot make another one move. [onFailed] runs when
-     * nothing was stored (a row is gone, or the write failed), so the tree can show the stored
-     * order again.
+     * nothing was stored (a row is gone, or the write failed).
      */
     fun moveSubtask(taskId: Long, movedId: Long, targetId: Long, onFailed: () -> Unit = {}) {
         commitInlineEdit()
+        storeMove(taskId, movedId, targetId, onFailed)
+    }
+
+    /**
+     * The arrows of the bar above the keyboard: moves the step being renamed one place up or down among
+     * its task's steps. The field stays open, with what is typed in it.
+     */
+    fun moveInlineSubtask(up: Boolean) {
+        val target = inlineEdit?.target as? InlineSubtaskTarget.Rename ?: return
+        // Every step shown: the one being moved must not slip out of sight with the field in it.
+        setStepsChosen(_stepsChosen.value + (target.taskId to true))
+        launchSubtaskWrite {
+            // Its neighbour is read from the stored order, inside the lock: a second tap that comes before the
+            // list has caught up moves it one more place, not to the same place again.
+            val rows = tasksRepository.getSubtasks(target.taskId).getOrNull() ?: return@launchSubtaskWrite
+            val index = rows.indexOfFirst { it.id == target.subtaskId }
+            val neighbour = rows.getOrNull(if (up) index - 1 else index + 1)
+            val moved = neighbour?.takeIf { index >= 0 }?.let { SubtaskDrafts.moveById(rows, target.subtaskId, it.id) }
+            if (moved != null && moved != rows && tasksRepository.saveSubtasks(target.taskId, moved).isFailure) {
+                failed(TaskOperationFailure.UPDATE)
+            }
+        }
+    }
+
+    /** "Delete" on a step of the list (TalkBack's action): deletes it, with Undo. */
+    fun deleteSubtask(subtask: Subtask) {
+        commitInlineEdit()
+        launchSubtaskWrite {
+            if (!deleteSubtaskWithUndo(subtask)) failed(TaskOperationFailure.UPDATE)
+        }
+    }
+
+    private fun storeMove(taskId: Long, movedId: Long, targetId: Long, onFailed: () -> Unit) {
         launchSubtaskWrite {
             val rows = tasksRepository.getSubtasks(taskId).getOrNull()
             val moved = rows?.let { SubtaskDrafts.moveById(it, movedId, targetId) }
@@ -305,7 +324,7 @@ class TasksViewModel(
         val target = InlineSubtaskTarget.Add(taskId)
         if (inlineEdit?.target == target) return
         commitInlineEdit()
-        setExpanded(_expandedTaskIds.value + taskId)
+        setStepsChosen(_stepsChosen.value + (taskId to true))
         inlineEdit = InlineSubtaskEdit(target, text = "")
     }
 
@@ -337,9 +356,8 @@ class TasksViewModel(
 
     /**
      * Closes the field for [target] (it lost focus, the user tapped elsewhere or pressed Back)
-     * and saves it: a new title is added, a rename is stored, and a rename left blank deletes the
-     * sub-task (with Undo). A blank new sub-task is simply dropped. Ignored when the field open
-     * now is another one.
+     * and saves it: a new title is added, a rename is stored, and a rename left blank keeps the old
+     * title. A blank new sub-task is simply dropped. Ignored when the field open now is another one.
      */
     fun closeInlineEdit(target: InlineSubtaskTarget) {
         val edit = inlineEdit?.takeIf { it.target == target } ?: return
@@ -392,7 +410,8 @@ class TasksViewModel(
                 original == null -> title.isNotEmpty() &&
                     tasksRepository.addSubtask(edit.target.taskId, title).isFailure
 
-                title.isEmpty() -> !deleteSubtaskWithUndo(original)
+                // A rename left blank keeps the old title: deleting is the bar's own button.
+                title.isEmpty() -> false
 
                 title != original.title -> tasksRepository.renameSubtask(original.id, title).isFailure
 
@@ -704,15 +723,15 @@ class TasksViewModel(
         }
     }
 
-    private fun forgetTreesOtherThan(state: TasksUiState) {
+    private fun forgetStepsOfGoneTasks(state: TasksUiState) {
         val ids = (state.activeTasks + state.completedTasks).mapTo(HashSet()) { it.id }
-        val expanded = _expandedTaskIds.value
-        if (!ids.containsAll(expanded)) setExpanded(expanded.filterTo(LinkedHashSet()) { it in ids })
+        val chosen = _stepsChosen.value
+        if (!ids.containsAll(chosen.keys)) setStepsChosen(chosen.filterKeys { it in ids })
     }
 
     private fun forgetTrees(taskIds: Set<Long>) {
-        val expanded = _expandedTaskIds.value
-        if (expanded.any { it in taskIds }) setExpanded(expanded.filterNotTo(LinkedHashSet()) { it in taskIds })
+        val chosen = _stepsChosen.value
+        if (chosen.keys.any { it in taskIds }) setStepsChosen(chosen.filterKeys { it !in taskIds })
     }
 
     fun onFilterSelected(filter: TaskFilter) {

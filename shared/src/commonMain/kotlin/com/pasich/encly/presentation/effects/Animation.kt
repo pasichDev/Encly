@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -19,8 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
+import com.pasich.encly.ui.theme.EnclyMotion
 
-private const val AXIS_DURATION = 300
+private const val AXIS_DURATION = EnclyMotion.LONG_MS
 private const val AXIS_FADE_IN = 210
 private const val AXIS_FADE_IN_DELAY = 60
 private const val AXIS_FADE_OUT = 120
@@ -28,8 +28,8 @@ private const val AXIS_FADE_OUT = 120
 /** How far a screen travels on the shared X axis: an eighth of the width. */
 private const val AXIS_SHIFT_FRACTION = 8
 
-/** Material's emphasized decelerate: screens arrive fast and settle gently. */
-private val AxisEasing = CubicBezierEasing(a = 0.05f, b = 0.7f, c = 0.1f, d = 1f)
+/** Screens arrive fast and settle gently. */
+private val AxisEasing = EnclyMotion.Enter
 
 /**
  * Shared X axis (Material motion): going forward, the new screen slides in from the end side as it
@@ -164,4 +164,13 @@ private const val NANOS_PER_MILLI_F = 1_000_000f
  * The easing of the container transform's bounds and shape: Material's emphasized curve, which
  * starts gently and settles slowly, unlike the axis curve's sharp start.
  */
-val ContainerEasing = CubicBezierEasing(a = 0.2f, b = 0f, c = 0f, d = 1f)
+val ContainerEasing = EnclyMotion.Standard
+
+/**
+ * The fades of a step that slides inside a screen (onboarding, the PIN change): the old step is gone
+ * early in the slide and the new one comes in behind it, both within [EnclyMotion.LONG_MS].
+ */
+internal object StepFade {
+    val In = FadeTiming(delayMillis = 50, durationMillis = 250, easing = EnclyMotion.Standard)
+    val Out = FadeTiming(delayMillis = 0, durationMillis = EnclyMotion.SHORT_MS, easing = EnclyMotion.Standard)
+}

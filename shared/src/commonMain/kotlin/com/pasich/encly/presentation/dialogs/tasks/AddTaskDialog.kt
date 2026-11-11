@@ -14,14 +14,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -40,22 +38,22 @@ import com.pasich.encly.core.resources.task_edit_placeholder
 import com.pasich.encly.core.resources.task_new_placeholder
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.presentation.components.tasks.PriorityValues
+import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyButton
+import com.pasich.encly.presentation.designsystem.EnclyButtonPair
 import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.EnclyScrollbar
-import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.dialogs.AdaptiveSheet
+import com.pasich.encly.presentation.dialogs.FocusWithSheet
 import com.pasich.encly.presentation.viewmodel.SubtaskDraft
 import com.pasich.encly.presentation.viewmodel.TaskDraft
 import com.pasich.encly.ui.theme.EnclyTheme
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 private const val TASK_TITLE_MAX_LENGTH = 100
 private const val TASK_DESCRIPTION_MAX_LENGTH = 150
-private const val INITIAL_FOCUS_DELAY_MS = 300L
 
 /** [subtasks] is the checklist to save, null while an edited task's one has not loaded. */
 private data class TaskEditorState(
@@ -152,11 +150,8 @@ fun AddTaskDialog(
 
     AdaptiveSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         TaskEditorContent(state, titleFocusRequester, actions, checklist)
-    }
-
-    LaunchedEffect(Unit) {
-        delay(INITIAL_FOCUS_DELAY_MS)
-        titleFocusRequester.requestFocus()
+        // A new task starts with its title; a task opened to look at, tick or delete keeps its footer in view.
+        if (editTask == null) FocusWithSheet(titleFocusRequester)
     }
 }
 
@@ -228,19 +223,15 @@ private fun PriorityChips(selected: Int, onSelect: (Int) -> Unit) {
 
 @Composable
 private fun TaskEditorFooter(state: TaskEditorState, actions: TaskEditorActions) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        actions.onDelete?.let { onDelete ->
-            EnclyTextButton(text = stringResource(Res.string.task_delete), onClick = onDelete, destructive = true)
-        }
-        EnclyButton(
-            text = stringResource(if (state.isEditMode) Res.string.save else Res.string.add),
-            onClick = actions.onSubmit,
-            enabled = state.title.isNotBlank(),
-            modifier = Modifier.weight(1f),
+    val submit = stringResource(if (state.isEditMode) Res.string.save else Res.string.add)
+    val canSubmit = state.title.isNotBlank()
+    val onDelete = actions.onDelete
+    if (onDelete == null) {
+        EnclyButton(text = submit, onClick = actions.onSubmit, enabled = canSubmit)
+    } else {
+        EnclyButtonPair(
+            destructive = DialogAction(stringResource(Res.string.task_delete), onDelete),
+            confirm = DialogAction(submit, actions.onSubmit, enabled = canSubmit),
         )
     }
 }

@@ -53,13 +53,42 @@ fun EnclyDialog(
     )
 }
 
+/**
+ * A dialog that asks before something is destroyed, its two answers as buttons of the same size
+ * ([EnclyButtonPair]): [destructive] in red, then [keep], the primary one, which leaves things as they are.
+ * Dismissing it any other way is [keep].
+ */
+@Composable
+fun EnclyChoiceDialog(
+    title: String,
+    text: String,
+    destructive: DialogAction,
+    keep: DialogAction,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    AlertDialog(
+        onDismissRequest = keep.onClick,
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraLarge,
+        containerColor = colors.surfaceContainerHigh,
+        titleContentColor = colors.onSurface,
+        textContentColor = colors.onSurfaceVariant,
+        tonalElevation = 0.dp,
+        title = { Text(text = title, style = EnclyTheme.typography.dialogTitle) },
+        text = { Text(text = text, style = MaterialTheme.typography.bodyMedium) },
+        confirmButton = { EnclyButtonPair(destructive = destructive, confirm = keep) },
+    )
+}
+
 @Composable
 private fun DialogButton(action: DialogAction) {
     val colors = MaterialTheme.colorScheme
     TextButton(
         onClick = action.onClick,
         enabled = action.enabled,
-        modifier = Modifier.enclyInteractiveRound(action.enabled),
+        shape = EnclyButtonShape,
+        modifier = Modifier.enclyInteractive(EnclyButtonShape, action.enabled),
         colors = ButtonDefaults.textButtonColors(
             contentColor = if (action.destructive) colors.error else colors.primary,
         ),

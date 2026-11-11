@@ -40,6 +40,7 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.FactRow
 import com.pasich.encly.presentation.designsystem.StepHeading
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -58,7 +59,7 @@ fun SupportScreen(navController: NavHostController, modifier: Modifier = Modifie
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            EnclyTopBar(title = stringResource(Res.string.support_title), onBack = { navController.popBackStack() })
+            EnclyTopBar(title = stringResource(Res.string.support_title), onBack = { navController.popBack() })
         },
     ) { padding ->
         Column(

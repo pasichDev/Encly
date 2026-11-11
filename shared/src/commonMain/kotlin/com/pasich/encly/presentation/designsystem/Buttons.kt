@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,9 +17,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -29,7 +33,16 @@ internal const val DISABLED_CONTENT_ALPHA = 0.38f
 internal const val DISABLED_CONTAINER_ALPHA = 0.12f
 
 /**
- * The primary action of a screen: full width, 52 dp, fully round, `primary` / `onPrimary`.
+ * The corner of every button, filled, tonal, outlined or text: the FAB's (design spec §3.1, radius 18).
+ * Chips, segments, icon buttons and the keypad stay fully round.
+ */
+val EnclyButtonShape: Shape
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.shapes.large
+
+/**
+ * The primary action of a screen: full width, 52 dp, the button corner, `primary` / `onPrimary`.
  * [loading] replaces the label with a progress indicator and blocks taps.
  */
 @Composable
@@ -42,41 +55,102 @@ fun EnclyButton(
     trailingIcon: ImageVector? = null,
 ) {
     val colors = MaterialTheme.colorScheme
+    FilledButton(
+        onClick = onClick,
+        container = colors.primary,
+        content = colors.onPrimary,
+        modifier = modifier,
+        enabled = enabled,
+        loading = loading,
+    ) {
+        ButtonLabel(text = text, trailingIcon = trailingIcon)
+    }
+}
+
+/**
+ * A destructive action and the one that confirms its sheet, side by side ("Delete task" · "Save"): two
+ * halves of the same height and corner, [EnclyTheme.spacing.s] apart, the destructive one first in red
+ * (`error`, or `errorContainer` in a dark scheme), the confirming one the primary button. Each label keeps
+ * to one line.
+ */
+@Composable
+fun EnclyButtonPair(destructive: DialogAction, confirm: DialogAction, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    // Red in both modes: a dark scheme's `error` is a pale pink that reads as a second primary beside Save,
+    // so there the deep `errorContainer` is the fill.
+    val pale = colors.error.luminance() > PALE_FILL_LUMINANCE
+    Row(horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s), modifier = modifier.fillMaxWidth()) {
+        FilledButton(
+            onClick = destructive.onClick,
+            container = if (pale) colors.errorContainer else colors.error,
+            content = if (pale) colors.onErrorContainer else colors.onError,
+            modifier = Modifier.weight(1f),
+            enabled = destructive.enabled,
+            padding = PairPadding,
+        ) {
+            ButtonLabel(text = destructive.text, trailingIcon = null)
+        }
+        FilledButton(
+            onClick = confirm.onClick,
+            container = colors.primary,
+            content = colors.onPrimary,
+            modifier = Modifier.weight(1f),
+            enabled = confirm.enabled,
+            padding = PairPadding,
+        ) {
+            ButtonLabel(text = confirm.text, trailingIcon = null)
+        }
+    }
+}
+
+/** Above this a fill is too light to carry a destructive button by itself. */
+private const val PALE_FILL_LUMINANCE = 0.4f
+
+/** Half-width buttons give their labels the room a full-width one spends on its sides. */
+private val PairPadding = PaddingValues(horizontal = 12.dp)
+
+@Composable
+private fun FilledButton(
+    onClick: () -> Unit,
+    container: Color,
+    content: Color,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    loading: Boolean = false,
+    padding: PaddingValues = ButtonDefaults.ContentPadding,
+    label: @Composable () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
     Button(
         onClick = onClick,
         enabled = enabled && !loading,
-        shape = CircleShape,
+        shape = EnclyButtonShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = colors.primary,
-            contentColor = colors.onPrimary,
+            containerColor = container,
+            contentColor = content,
             disabledContainerColor = if (loading) {
-                colors.primary
+                container
             } else {
                 colors.onSurface.copy(
                     alpha = DISABLED_CONTAINER_ALPHA,
                 )
             },
-            disabledContentColor = if (loading) {
-                colors.onPrimary
-            } else {
-                colors.onSurface.copy(
-                    alpha = DISABLED_CONTENT_ALPHA,
-                )
-            },
+            disabledContentColor = if (loading) content else colors.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA),
         ),
+        contentPadding = padding,
         modifier = modifier
-            .enclyInteractiveRound(enabled && !loading)
+            .enclyInteractive(EnclyButtonShape, enabled && !loading)
             .fillMaxWidth()
             .heightIn(min = EnclyTheme.spacing.buttonHeight),
     ) {
         if (loading) {
             CircularProgressIndicator(
-                color = colors.onPrimary,
+                color = content,
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(EnclyTheme.spacing.iconSmall),
             )
         } else {
-            ButtonLabel(text = text, trailingIcon = trailingIcon)
+            label()
         }
     }
 }
@@ -87,7 +161,13 @@ private fun ButtonLabel(text: String, trailingIcon: ImageVector?) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
     ) {
-        Text(text = text, style = EnclyTheme.typography.buttonPrimary)
+        Text(
+            text = text,
+            style = EnclyTheme.typography.buttonPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
         if (trailingIcon != null) {
             Icon(trailingIcon, contentDescription = null, modifier = Modifier.size(EnclyTheme.spacing.iconSmall))
         }
@@ -100,13 +180,13 @@ fun EnclyTonalButton(text: String, onClick: () -> Unit, modifier: Modifier = Mod
     Button(
         onClick = onClick,
         enabled = enabled,
-        shape = CircleShape,
+        shape = EnclyButtonShape,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ),
         modifier = modifier
-            .enclyInteractiveRound(enabled)
+            .enclyInteractive(EnclyButtonShape, enabled)
             .fillMaxWidth()
             .heightIn(min = EnclyTheme.spacing.buttonHeight),
     ) {
@@ -132,7 +212,7 @@ fun EnclyTextButton(
     TextButton(
         onClick = onClick,
         enabled = enabled,
-        shape = CircleShape,
+        shape = EnclyButtonShape,
         colors = ButtonDefaults.textButtonColors(
             contentColor = when {
                 destructive -> colors.error
@@ -140,7 +220,10 @@ fun EnclyTextButton(
                 else -> colors.primary
             },
         ),
-        modifier = modifier.enclyInteractiveRound(enabled).heightIn(min = EnclyTheme.spacing.textButtonHeight),
+        modifier = modifier.enclyInteractive(
+            EnclyButtonShape,
+            enabled,
+        ).heightIn(min = EnclyTheme.spacing.textButtonHeight),
     ) {
         if (icon != null) {
             Icon(
@@ -155,7 +238,7 @@ fun EnclyTextButton(
     }
 }
 
-/** An outlined pill ("Hide words"): 44 dp, 1 dp `outlineVariant` border, optional leading icon. */
+/** An outlined button ("Hide words"): 44 dp, the button corner, 1 dp `outlineVariant` border, optional leading icon. */
 @Composable
 fun EnclyPillButton(
     text: String,
@@ -167,11 +250,14 @@ fun EnclyPillButton(
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        shape = CircleShape,
+        shape = EnclyButtonShape,
         border = BorderStroke(EnclyTheme.spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
         contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.m),
-        modifier = modifier.enclyInteractiveRound(enabled).heightIn(min = EnclyTheme.spacing.textButtonHeight),
+        modifier = modifier.enclyInteractive(
+            EnclyButtonShape,
+            enabled,
+        ).heightIn(min = EnclyTheme.spacing.textButtonHeight),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

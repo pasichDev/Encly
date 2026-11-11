@@ -74,7 +74,6 @@
 
 
     <string name="clean_permanent_message">Czy na pewno chcesz trwale usunąć te notatki? Tej operacji nie można cofnąć.</string>
-    <string name="clean_trash_message">Czy na pewno chcesz trwale opróżnić kosz? Tej operacji nie można cofnąć.</string>
     <string name="clean_trash_title">Opróżnić kosz?</string>
 
     <string name="clear">Wyczyść</string>
@@ -325,7 +324,6 @@
     <string name="task_filter_all">Wszystkie zadania</string>
     <string name="task_filter_completed">Wykonane</string>
     <string name="task_new_placeholder">Nowe zadanie</string>
-    <string name="task_progress_title">Postęp</string>
     <string name="task_status_update_failed">Nie udało się zmienić stanu zadania. Spróbuj ponownie.</string>
     <string name="task_update_failed">Nie udało się zaktualizować zadania. Spróbuj ponownie.</string>
 
@@ -528,13 +526,16 @@
     <string name="task_empty_desc">Stuknij Nowe zadanie, aby dodać pierwsze.</string>
     <string name="task_all_done_title">Wszystko zrobione</string>
     <string name="task_done_section">Zrobione · %1$d</string>
+    <string name="task_section_in_work">W toku · %1$d</string>
+    <string name="task_section_next">Następne · %1$d</string>
+    <string name="step_add">Krok</string>
+    <string name="subtasks_show">Pokaż podzadania</string>
+    <string name="subtasks_hide">Ukryj podzadania</string>
     <string name="empty_notes_tagged">Brak notatek z tagiem „%1$s”</string>
     <string name="empty_notes_tagged_desc">Tutaj pojawią się notatki z tym tagiem.</string>
     <string name="show_all_notes">Pokaż wszystkie notatki</string>
     <string name="empty_trash_title">Kosz jest pusty</string>
-    <string name="trash_hint">Stuknij notatkę, aby ją przeczytać. Przytrzymaj, aby zaznaczyć.</string>
     <string name="delete_forever">Usuń na zawsze</string>
-    <string name="empty_trash_action">Opróżnij kosz</string>
     <string name="search_notes">Szukaj notatek</string>
     <string name="settings_notes_and_tasks">Notatki i zadania</string>
     <string name="settings_about_desc">Wersja, polityka prywatności i kontakt</string>
@@ -578,7 +579,7 @@
     <string name="faq_note_actions_q">Co robi długie naciśnięcie notatki?</string>
     <string name="faq_note_actions_a">Otwiera akcje notatki: zmianę etykiety, dodanie krótkiego opisu widocznego na karcie, duplikowanie notatki lub przeniesienie jej do kosza.</string>
     <string name="faq_trash_q">Jak odzyskać usuniętą notatkę?</string>
-    <string name="faq_trash_a">Usunięte notatki trafiają do Kosza w menu. Tam możesz przywrócić notatkę lub usunąć ją na zawsze. Encly nigdy sam nie opróżnia kosza.</string>
+    <string name="faq_trash_a">Usunięte notatki trafiają do Kosza w menu. Tam możesz przywrócić notatkę lub usunąć ją na zawsze. Notatka, która zostaje w koszu, jest trwale usuwana 28 dni po przeniesieniu do niego, więc przywróć ją wcześniej, jeśli jest jeszcze potrzebna.</string>
     <string name="faq_lock_note_q">Co robi „Zablokuj edycję”?</string>
     <string name="faq_lock_note_a">Ustawia notatkę tylko do odczytu, żeby nie zmienić jej przypadkiem. Tekst nadal można zaznaczyć i skopiować. Włączysz i wyłączysz to w menu edytora.</string>
     <string name="faq_backup_q">Jak działają kopie zapasowe?</string>
@@ -594,13 +595,7 @@
     <string name="subtask_delete">Usuń podzadanie</string>
     <string name="subtasks_all_done">Wszystkie podzadania wykonane</string>
     <string name="subtasks_complete_task">Wykonaj zadanie</string>
-    <string name="subtasks_show">Pokaż podzadania</string>
-    <string name="subtasks_hide">Ukryj podzadania</string>
-    <string name="subtasks_state_shown">Rozwinięte</string>
-    <string name="subtasks_state_hidden">Zwinięte</string>
     <string name="subtask_deleted">Podzadanie usunięte</string>
-    <string name="subtask_next_step">Następny krok: %1$s</string>
-    <string name="subtask_first_step">Pierwszy krok</string>
     <plurals name="subtasks_done_summary">
         <item quantity="one">Wykonano %1$d z %2$d podzadania</item>
         <item quantity="few">Wykonano %1$d z %2$d podzadań</item>
@@ -705,7 +700,6 @@
     <string name="whats_new_title">Co nowego</string>
     <string name="whats_new_row_desc">Zmiany w tej wersji</string>
     <string name="whats_new_dismiss">Rozumiem</string>
-    <string name="trash_auto_delete_hint">Notatki są trwale usuwane po 28 dniach w koszu.</string>
     <string name="faq_pin_length_q">Jak długi może być mój PIN?</string>
     <string name="faq_pin_length_a">Od 6 do 12 cyfr, do wyboru. Krótszych PIN-ów nie oferujemy: blokada i klucz urządzenia ograniczają liczbę prób, a 6 cyfr to najkrótszy PIN, który przy tych ograniczeniach pozostaje bezpieczny. Ekran blokady nigdy nie pokazuje długości PIN-u: po wpisaniu stukasz „Odblokuj”, tak samo w przypadku PIN-u kasującego i przymusowego. PIN-y ustawione wcześniej działają bez zmian.</string>
     <string name="block_code">Kod</string>
@@ -732,5 +726,45 @@
         <item quantity="few">jeszcze %1$d etykiety</item>
         <item quantity="many">jeszcze %1$d etykiet</item>
         <item quantity="other">jeszcze %1$d etykiety</item>
+    </plurals>
+    <string name="trash_section_soon">Znikną w ciągu tygodnia · %1$d</string>
+    <string name="trash_section_later">Później · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s, ostatnia za %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">Pierwsza zniknie dzisiaj</string>
+    <string name="trash_last_day">Ostatni dzień</string>
+    <string name="trash_today_unit">dzisiaj</string>
+    <string name="trash_deleted_on">Usunięto: %1$s</string>
+    <string name="trash_keep">Zostaw</string>
+    <string name="trash_empty">Opróżnij</string>
+    <plurals name="trash_notes_count">
+        <item quantity="one">%d notatka</item>
+        <item quantity="few">%d notatki</item>
+        <item quantity="many">%d notatek</item>
+        <item quantity="other">%d notatki</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="one">Pierwsza zniknie za %d dzień</item>
+        <item quantity="few">Pierwsza zniknie za %d dni</item>
+        <item quantity="many">Pierwsza zniknie za %d dni</item>
+        <item quantity="other">Pierwsza zniknie za %d dnia</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="one">Został %d dzień</item>
+        <item quantity="few">Zostały %d dni</item>
+        <item quantity="many">Zostało %d dni</item>
+        <item quantity="other">Zostało %d dnia</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="one">dzień</item>
+        <item quantity="few">dni</item>
+        <item quantity="many">dni</item>
+        <item quantity="other">dnia</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="one">%1$d notatka zostanie usunięta na zawsze, bez czekania %2$d dni. Tej operacji nie można cofnąć.</item>
+        <item quantity="few">%1$d notatki zostaną usunięte na zawsze, bez czekania %2$d dni. Tej operacji nie można cofnąć.</item>
+        <item quantity="many">%1$d notatek zostanie usuniętych na zawsze, bez czekania %2$d dni. Tej operacji nie można cofnąć.</item>
+        <item quantity="other">%1$d notatki zostanie usunięte na zawsze, bez czekania %2$d dni. Tej operacji nie można cofnąć.</item>
     </plurals>
 </resources>

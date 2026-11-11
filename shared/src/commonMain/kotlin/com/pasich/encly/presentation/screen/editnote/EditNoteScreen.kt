@@ -85,6 +85,7 @@ import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.MarkdownExportTarget
 import com.pasich.encly.presentation.viewmodel.MarkdownExportViewModel
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.noteColorStyle
 import com.pasich.encly.utils.currentLanguageTag
@@ -272,7 +273,7 @@ private fun rememberPageColor(viewModel: EditNoteViewModel = metroViewModel()): 
     val target = remember(colorKey, scheme) {
         noteColorStyle(NoteColor.fromKey(colorKey), scheme)?.page ?: scheme.surface
     }
-    return animateColorAsState(target, label = "pageColor").value
+    return animateColorAsState(target, EnclyMotion.medium(), label = "pageColor").value
 }
 
 /** Which of the editor's sheets and dialogs are open. */
@@ -345,8 +346,7 @@ private fun EditorOverlays(
         onAction = { action ->
             when (action) {
                 EditNoteBottomSheetAction.CLOSE_NO_SAVE -> exits.discardOrConfirm {
-                    overlays.isDiscardDialogVisible =
-                        true
+                    overlays.isDiscardDialogVisible = true
                 }
 
                 EditNoteBottomSheetAction.DUPLICATE -> exits.duplicate()

@@ -71,6 +71,7 @@ import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.StepHeading
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -130,7 +131,7 @@ fun FaqScreen(navController: NavHostController, modifier: Modifier = Modifier) {
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            EnclyTopBar(title = stringResource(Res.string.about_faq_title), onBack = { navController.popBackStack() })
+            EnclyTopBar(title = stringResource(Res.string.about_faq_title), onBack = { navController.popBack() })
         },
     ) { padding ->
         Column(

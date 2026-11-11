@@ -74,7 +74,6 @@
 
 
     <string name="clean_permanent_message">Vuoi davvero eliminare definitivamente queste note? L\'operazione non può essere annullata.</string>
-    <string name="clean_trash_message">Vuoi davvero svuotare definitivamente il cestino? L\'operazione non può essere annullata.</string>
     <string name="clean_trash_title">Svuotare il cestino?</string>
 
     <string name="clear">Cancella</string>
@@ -325,7 +324,6 @@
     <string name="task_filter_all">Tutte le attività</string>
     <string name="task_filter_completed">Completate</string>
     <string name="task_new_placeholder">Nuova attività</string>
-    <string name="task_progress_title">Avanzamento</string>
     <string name="task_status_update_failed">Impossibile cambiare lo stato dell\'attività. Riprova.</string>
     <string name="task_update_failed">Impossibile aggiornare l\'attività. Riprova.</string>
 
@@ -524,13 +522,16 @@
     <string name="task_empty_desc">Tocca Nuova attività per aggiungere la prima.</string>
     <string name="task_all_done_title">Tutto fatto</string>
     <string name="task_done_section">Completate · %1$d</string>
+    <string name="task_section_in_work">In corso · %1$d</string>
+    <string name="task_section_next">Prossime · %1$d</string>
+    <string name="step_add">Passo</string>
+    <string name="subtasks_show">Mostra sottoattività</string>
+    <string name="subtasks_hide">Nascondi sottoattività</string>
     <string name="empty_notes_tagged">Nessuna nota con il tag «%1$s»</string>
     <string name="empty_notes_tagged_desc">Qui compariranno le note con questo tag.</string>
     <string name="show_all_notes">Mostra tutte le note</string>
     <string name="empty_trash_title">Il cestino è vuoto</string>
-    <string name="trash_hint">Tocca una nota per leggerla. Tieni premuto per selezionare.</string>
     <string name="delete_forever">Elimina per sempre</string>
-    <string name="empty_trash_action">Svuota cestino</string>
     <string name="search_notes">Cerca note</string>
     <string name="settings_notes_and_tasks">Note e attività</string>
     <string name="settings_about_desc">Versione, privacy e contatti</string>
@@ -573,7 +574,7 @@
     <string name="faq_note_actions_q">Cosa fa una pressione prolungata su una nota?</string>
     <string name="faq_note_actions_a">Apre le azioni della nota: cambiare l’etichetta, aggiungere una breve descrizione mostrata sulla scheda, duplicare la nota o spostarla nel cestino.</string>
     <string name="faq_trash_q">Come recupero una nota eliminata?</string>
-    <string name="faq_trash_a">Le note eliminate finiscono nel Cestino del menu. Lì puoi ripristinare una nota o eliminarla per sempre. Encly non svuota mai il cestino da solo.</string>
+    <string name="faq_trash_a">Le note eliminate finiscono nel Cestino del menu. Lì puoi ripristinare una nota o eliminarla per sempre. Una nota che resta nel cestino viene eliminata definitivamente 28 giorni dopo esservi stata spostata: ripristinala prima, se ti serve ancora.</string>
     <string name="faq_lock_note_q">Cosa fa «Blocca la modifica»?</string>
     <string name="faq_lock_note_a">Rende la nota di sola lettura, così non la modifichi per sbaglio. Puoi comunque selezionare e copiare il testo. Si attiva e disattiva dal menu dell’editor.</string>
     <string name="faq_backup_q">Come funzionano i backup?</string>
@@ -589,13 +590,7 @@
     <string name="subtask_delete">Elimina sottoattività</string>
     <string name="subtasks_all_done">Tutte le sottoattività sono completate</string>
     <string name="subtasks_complete_task">Completa l\'attività</string>
-    <string name="subtasks_show">Mostra sottoattività</string>
-    <string name="subtasks_hide">Nascondi sottoattività</string>
-    <string name="subtasks_state_shown">Espanso</string>
-    <string name="subtasks_state_hidden">Compresso</string>
     <string name="subtask_deleted">Sottoattività eliminata</string>
-    <string name="subtask_next_step">Prossimo passo: %1$s</string>
-    <string name="subtask_first_step">Primo passo</string>
     <plurals name="subtasks_done_summary">
         <item quantity="one">%1$d di %2$d sottoattività completata</item>
         <item quantity="many">%1$d di %2$d sottoattività completate</item>
@@ -699,7 +694,6 @@
     <string name="whats_new_title">Novità</string>
     <string name="whats_new_row_desc">Le novità di questa versione</string>
     <string name="whats_new_dismiss">Ho capito</string>
-    <string name="trash_auto_delete_hint">Le note vengono eliminate definitivamente dopo 28 giorni nel cestino.</string>
     <string name="faq_pin_length_q">Quanto può essere lungo il PIN?</string>
     <string name="faq_pin_length_a">Da 6 a 12 cifre, a tua scelta. PIN più corti non sono previsti: il blocco e la chiave del dispositivo limitano i tentativi, e 6 cifre è il minimo che resta sicuro con quei limiti. La schermata di blocco non mostra mai la lunghezza del PIN: tocchi «Sblocca» quando hai finito, e lo stesso vale per il PIN di cancellazione e il PIN di coercizione. I PIN impostati prima continuano a funzionare così come sono.</string>
     <string name="block_code">Codice</string>
@@ -725,5 +719,40 @@
         <item quantity="one">%1$d altra etichetta</item>
         <item quantity="many">altre %1$d etichette</item>
         <item quantity="other">altre %1$d etichette</item>
+    </plurals>
+    <string name="trash_section_soon">Spariscono entro una settimana · %1$d</string>
+    <string name="trash_section_later">Più tardi · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s, l\'ultima tra %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">La prima sparisce oggi</string>
+    <string name="trash_last_day">Ultimo giorno</string>
+    <string name="trash_today_unit">oggi</string>
+    <string name="trash_deleted_on">Eliminata: %1$s</string>
+    <string name="trash_keep">Mantieni</string>
+    <string name="trash_empty">Svuota</string>
+    <plurals name="trash_notes_count">
+        <item quantity="one">%d nota</item>
+        <item quantity="many">%d note</item>
+        <item quantity="other">%d note</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="one">La prima sparisce tra %d giorno</item>
+        <item quantity="many">La prima sparisce tra %d giorni</item>
+        <item quantity="other">La prima sparisce tra %d giorni</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="one">Resta %d giorno</item>
+        <item quantity="many">Restano %d giorni</item>
+        <item quantity="other">Restano %d giorni</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="one">giorno</item>
+        <item quantity="many">giorni</item>
+        <item quantity="other">giorni</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="one">%1$d nota verrà eliminata per sempre senza attendere i %2$d giorni. L\'operazione non può essere annullata.</item>
+        <item quantity="many">%1$d note verranno eliminate per sempre senza attendere i %2$d giorni. L\'operazione non può essere annullata.</item>
+        <item quantity="other">%1$d note verranno eliminate per sempre senza attendere i %2$d giorni. L\'operazione non può essere annullata.</item>
     </plurals>
 </resources>

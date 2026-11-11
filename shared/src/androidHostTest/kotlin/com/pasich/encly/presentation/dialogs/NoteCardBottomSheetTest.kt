@@ -1,29 +1,51 @@
 package com.pasich.encly.presentation.dialogs
 
+import androidx.activity.ComponentDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.pasich.encly.core.resources.Res
-import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.core.resources.back
 import com.pasich.encly.core.resources.delete
 import com.pasich.encly.core.resources.duplicate
 import com.pasich.encly.core.resources.edit
+import com.pasich.encly.core.resources.main_drawer_tags
 import com.pasich.encly.core.resources.no_tag
+import com.pasich.encly.core.resources.note_archive
+import com.pasich.encly.core.resources.note_color_none
+import com.pasich.encly.core.resources.note_color_teal
+import com.pasich.encly.core.resources.note_color_title
 import com.pasich.encly.core.resources.note_description_placeholder
+import com.pasich.encly.core.resources.note_pin
+import com.pasich.encly.core.resources.note_unarchive
+import com.pasich.encly.core.resources.note_unpin
 import com.pasich.encly.core.resources.save
 import com.pasich.encly.core.resources.tap_again_to_delete
+import com.pasich.encly.core.resources.task_description_placeholder
 import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
+import com.pasich.encly.domain.model.NoteColor
+import com.pasich.encly.domain.model.NoteListItem
+import com.pasich.encly.presentation.screen.NoteActionsSheet
+import com.pasich.encly.presentation.screen.NoteSheetState
 import com.pasich.encly.ui.screens.ComposeScreenTest
 import com.pasich.encly.ui.screens.TestApp
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.robolectric.shadows.ShadowDialog
 
-/** The long-press sheet of a note: what it shows, which action each row reports, and the description editor. */
+/**
+ * The long-press sheet of a note: its rows and their values, the pages the tags, colour and description
+ * rows lead to (and the way back), and which action each row reports.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 class NoteCardBottomSheetTest : ComposeScreenTest() {
     private val app by lazy { TestApp() }
@@ -47,6 +69,22 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
         }
     }
 
+    private fun openPage(title: String) {
+        rule.onNodeWithText(title).performClick()
+        rule.waitForIdle()
+        assertEquals("the rows made way for the page", 0, countText(str(Res.string.duplicate)))
+    }
+
+    private fun pageHeight() = rule.onNodeWithTag(NOTE_SHEET_PAGE_TAG).fetchSemanticsNode().size.height
+
+    /** The system's Back, as the sheet's own window gets it. */
+    private fun pressBack() {
+        rule.runOnUiThread {
+            (ShadowDialog.getLatestDialog() as ComponentDialog).onBackPressedDispatcher.onBackPressed()
+        }
+        rule.waitForIdle()
+    }
+
     @Test
     fun aHiddenSheetShowsNothing() {
         show(visible = false)
@@ -55,13 +93,52 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     }
 
     @Test
-    fun theSheetShowsTheTitleTheTagChipsAndTheRows() {
+    fun aPlainNoteShowsItsRowsWithNothingSetYet() {
         show()
 
         assertEquals(1, countText("Groceries"))
-        waitForText("Work")
-        listOf("Home", str(Res.string.no_tag), str(Res.string.edit), str(Res.string.duplicate), str(Res.string.delete))
-            .forEach { assertEquals(it, 1, countText(it)) }
+        listOf(
+            str(Res.string.main_drawer_tags),
+            str(Res.string.no_tag),
+            str(Res.string.note_color_title),
+            str(Res.string.note_color_none),
+            str(Res.string.task_description_placeholder),
+            str(Res.string.note_description_placeholder),
+            str(Res.string.edit),
+            str(Res.string.note_pin),
+            str(Res.string.note_archive),
+            str(Res.string.duplicate),
+            str(Res.string.delete),
+        ).forEach { assertEquals(it, 1, countText(it)) }
+    }
+
+    @Test
+    fun theRowsShowTheNotesTagsColourAndTheFirstLineOfItsDescription() {
+        show(
+            Note(
+                id = 5,
+                title = "Groceries",
+                tagIds = setOf(1, 2),
+                color = NoteColor.TEAL.key,
+                description = "Weekly shop\nand the market",
+                isPinned = true,
+            ),
+        )
+
+        assertEquals(1, countText("Work, Home"))
+        assertEquals(1, countText(str(Res.string.note_color_teal)))
+        assertEquals(1, countText("Weekly shop"))
+        assertEquals(0, countText(str(Res.string.note_description_placeholder)))
+        assertEquals("a pinned note offers Unpin", 1, countText(str(Res.string.note_unpin)))
+    }
+
+    @Test
+    fun anArchivedNoteOffersUnarchiveAndNoPin() {
+        show(Note(id = 5, title = "Groceries", isArchived = true))
+
+        assertEquals(1, countText(str(Res.string.note_unarchive)))
+        assertEquals(0, countText(str(Res.string.note_pin)))
+        assertEquals(0, countText(str(Res.string.note_archive)))
     }
 
     @Test
@@ -94,8 +171,9 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     }
 
     @Test
-    fun tagChipsToggleTheirTagAndNoTagClearsThemAll() {
+    fun theTagsPageTogglesEachTagAtOnceAndNoTagClearsThemAll() {
         show(Note(id = 5, title = "Groceries", tagIds = setOf(2)))
+        openPage(str(Res.string.main_drawer_tags))
         waitForText("Work")
 
         rule.onNodeWithText("Work").performClick()
@@ -110,29 +188,63 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
             ),
             actions,
         )
+        assertEquals("the page stays open for the next tag", 0, countText(str(Res.string.duplicate)))
     }
 
     @Test
-    fun theDescriptionRowShowsItsPlaceholderWhenEmptyAndTheTextWhenNot() {
-        show(Note(id = 5, title = "Groceries", description = "Weekly shop"))
-        assertEquals(1, countText("Weekly shop"))
-        assertEquals(0, countText(str(Res.string.note_description_placeholder)))
-    }
-
-    @Test
-    fun anEmptyDescriptionShowsThePlaceholder() {
+    fun theColourPageAppliesASwatchAtOnce() {
         show()
+        openPage(str(Res.string.note_color_title))
 
-        assertEquals(1, countText(str(Res.string.note_description_placeholder)))
+        rule.onNodeWithContentDescription(str(Res.string.note_color_teal)).performClick()
+
+        assertEquals(listOf<NoteAction>(NoteAction.ChangeColor(NoteColor.TEAL)), actions)
     }
 
     @Test
-    fun savingADescriptionReportsItTrimmedAndLeavesEditing() {
+    fun thePagesBackButtonReturnsToTheRows() {
         show()
+        openPage(str(Res.string.note_color_title))
 
-        rule.onNodeWithText(str(Res.string.note_description_placeholder)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.back)).performClick()
         rule.waitForIdle()
-        assertEquals("the other rows make way for the field", 0, countText(str(Res.string.duplicate)))
+
+        assertEquals(1, countText(str(Res.string.duplicate)))
+        assertEquals(0, dismissed)
+    }
+
+    @Test
+    fun systemBackOnAPageReturnsToTheRowsAndKeepsTheSheetOpen() {
+        show()
+        openPage(str(Res.string.main_drawer_tags))
+
+        pressBack()
+
+        assertEquals("back on the rows", 1, countText(str(Res.string.duplicate)))
+        assertEquals("the sheet was not closed", 0, dismissed)
+        assertEquals(1, countText("Groceries"))
+    }
+
+    @Test
+    fun everyPageIsAsHighAsTheRows() {
+        show(Note(id = 5, title = "Groceries", tagIds = setOf(2)))
+        val rows = pageHeight()
+
+        listOf(Res.string.main_drawer_tags, Res.string.note_color_title, Res.string.task_description_placeholder)
+            .forEach { page ->
+                openPage(str(page))
+                assertEquals(str(page), rows, pageHeight())
+                rule.onNodeWithContentDescription(str(Res.string.back)).performClick()
+                rule.waitForIdle()
+                assertEquals("back from ${str(page)}", rows, pageHeight())
+            }
+    }
+
+    @Test
+    fun savingADescriptionReportsItTrimmedAndReturnsToTheRows() {
+        show()
+        openPage(str(Res.string.task_description_placeholder))
+
         rule.onNode(hasSetTextAction()).performTextInput("  Buy milk  ")
         rule.onNodeWithText(str(Res.string.save)).performClick()
         rule.waitForIdle()
@@ -142,17 +254,48 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
     }
 
     @Test
-    fun cancellingTheDescriptionEditReportsNothing() {
+    fun goingBackFromTheDescriptionReportsNothing() {
         show(Note(id = 5, title = "Groceries", description = "Weekly shop"))
+        openPage(str(Res.string.task_description_placeholder))
 
-        rule.onNodeWithText("Weekly shop").performClick()
-        rule.waitForIdle()
         rule.onNode(hasSetTextAction()).performTextInput(" and more")
-        rule.onNodeWithText(str(Res.string.cancel)).performClick()
+        rule.onNodeWithContentDescription(str(Res.string.back)).performClick()
         rule.waitForIdle()
 
         assertEquals(emptyList<NoteAction>(), actions)
         assertEquals(1, countText("Weekly shop"))
         assertEquals(1, countText(str(Res.string.duplicate)))
+    }
+
+    @Test
+    fun anActionRowRunsOnlyOnceTheSheetHasSlidAway() {
+        val edited = mutableListOf<Long>()
+        val note = Note(id = 5, title = "Groceries", date = 1L)
+        app.tags.tags.value = tags
+        setScreen(viewModels(app.tagList())) {
+            val sheet =
+                remember { NoteSheetState().apply { open(NoteListItem(NoteWithTags(note, emptyList()), null, "")) } }
+            NoteActionsSheet(
+                sheet = sheet,
+                observeNote = { flowOf(NoteWithTags(note, emptyList())) },
+                onEvent = {},
+                onEdit = { edited += it.id },
+                onDuplicate = {},
+            )
+        }
+        rule.mainClock.autoAdvance = false
+
+        rule.onNodeWithText(str(Res.string.edit)).performClick()
+        rule.waitForIdle()
+        repeat(2) { rule.mainClock.advanceTimeByFrame() }
+
+        assertEquals("nothing runs under the sheet", emptyList<Long>(), edited)
+        assertEquals("the sheet is still there, sliding away", 1, countText("Groceries"))
+
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+
+        assertEquals(listOf(5L), edited)
+        assertEquals(0, countText("Groceries"))
     }
 }

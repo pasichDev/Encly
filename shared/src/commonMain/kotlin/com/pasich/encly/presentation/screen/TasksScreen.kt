@@ -1,6 +1,8 @@
 package com.pasich.encly.presentation.screen
 
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,15 +25,20 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.done
 import com.pasich.encly.core.resources.main_drawer_tasks
+import com.pasich.encly.core.resources.subtask_delete
 import com.pasich.encly.core.resources.subtask_deleted
 import com.pasich.encly.core.resources.subtasks_all_done
 import com.pasich.encly.core.resources.subtasks_complete_task
+import com.pasich.encly.core.resources.tag_move_down
+import com.pasich.encly.core.resources.tag_move_up
 import com.pasich.encly.core.resources.task_add
 import com.pasich.encly.core.resources.task_clear_completed_failed
 import com.pasich.encly.core.resources.task_create_failed
@@ -40,13 +47,21 @@ import com.pasich.encly.core.resources.task_deleted
 import com.pasich.encly.core.resources.task_status_update_failed
 import com.pasich.encly.core.resources.task_update_failed
 import com.pasich.encly.core.resources.undo
+import com.pasich.encly.data.model.Task
 import com.pasich.encly.platform.LocalAppWindow
 import com.pasich.encly.presentation.designsystem.EnclyFab
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
+import com.pasich.encly.presentation.designsystem.EnclyStepBar
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.StepBarActions
+import com.pasich.encly.presentation.designsystem.StepBarLabels
 import com.pasich.encly.presentation.dialogs.RequestCleanCompleteTaskDialog
+import com.pasich.encly.presentation.dialogs.SheetUntilHidden
 import com.pasich.encly.presentation.dialogs.tasks.AddTaskDialog
+import com.pasich.encly.presentation.dialogs.tasks.SubtaskListState
+import com.pasich.encly.presentation.navigation.popBack
+import com.pasich.encly.presentation.viewmodel.InlineSubtaskTarget
 import com.pasich.encly.presentation.viewmodel.TaskOperationFailure
 import com.pasich.encly.presentation.viewmodel.TasksUiState
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
@@ -58,8 +73,8 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The tasks screen: progress, filter chips, the open tasks and, below them, a "Done" section
- * with its "Clear" action. [openNewTask] opens the new-task sheet on arrival (the home card's
+ * The tasks screen: progress, filter chips, and the rail of tasks by state ("In progress", "Up next" and
+ * "Done" with its "Clear" action). [openNewTask] opens the new-task sheet on arrival (the home card's
  * "New task" link).
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,11 +92,10 @@ fun TasksScreen(
     OpenOnArrival(openNewTask, viewModel::showAddTaskDialog)
     LaunchedEffect(viewModel) { showTaskMessages(viewModel, snackbarHostState) }
     val listState = rememberTasksListState(uiState)
-    val list = TasksListState(uiState, viewModel.expandedTaskIds.collectAsState().value, viewModel.inlineEdit)
+    val list = TasksListState(uiState, viewModel.stepsChosen.collectAsState().value, viewModel.inlineEdit)
     val itemActions = remember(viewModel) { taskItemActions(viewModel) }
     // Backgrounding re-locks the vault and drops this screen: save the inline field first (see OnPause).
     OnPause(viewModel::flushInlineEditForBackground)
-    FoldTreesOnBack(list, viewModel::collapseLastExpanded)
 
     Scaffold(
         modifier = modifier,
@@ -92,7 +106,7 @@ fun TasksScreen(
                 title = stringResource(Res.string.main_drawer_tasks),
                 onBack = {
                     viewModel.commitInlineEdit()
-                    navController.popBackStack()
+                    navController.popBack()
                 },
             )
         },
@@ -100,6 +114,7 @@ fun TasksScreen(
             // Out of the way of the keyboard and the inline field while one is open.
             if (list.inlineEdit == null) TasksFab(listState, viewModel::showAddTaskDialog)
         },
+        bottomBar = { StepBar(list) },
     ) { padding ->
         TasksList(
             state = listState,
@@ -113,18 +128,7 @@ fun TasksScreen(
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         )
 
-        if (viewModel.showAddTaskDialog.collectAsState().value) {
-            AddTaskDialog(
-                onDismiss = viewModel::hideAddTaskDialog,
-                onAddTask = viewModel::addTask,
-                editTask = viewModel.editingTask.collectAsState().value,
-                onEditTask = viewModel::editTask,
-                onBackgroundSave = viewModel::saveDraftForBackground,
-                onDeleteTask = viewModel::deleteTask,
-                subtasks = viewModel.checklist,
-                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            )
-        }
+        TaskSheet()
         RequestCleanCompleteTaskDialog(
             showDialog = confirmClear,
             onDismiss = { confirmClear = false },
@@ -133,11 +137,79 @@ fun TasksScreen(
     }
 }
 
+/**
+ * The new-task or edit-task sheet. The ViewModel closes it once a save or a delete went through, and clears
+ * what it was showing in the same breath: the sheet keeps the task and checklist it had while it slides away.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TaskSheet(viewModel: TasksViewModel = metroViewModel()) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val visible by viewModel.showAddTaskDialog.collectAsState()
+    val editing by viewModel.editingTask.collectAsState()
+    val shown = remember { ShownTask() }
+    if (visible) {
+        shown.task = editing
+        shown.checklist = viewModel.checklist
+    }
+    SheetUntilHidden(visible = visible, sheetState = sheetState) {
+        AddTaskDialog(
+            onDismiss = viewModel::hideAddTaskDialog,
+            onAddTask = viewModel::addTask,
+            editTask = shown.task,
+            onEditTask = viewModel::editTask,
+            onBackgroundSave = viewModel::saveDraftForBackground,
+            onDeleteTask = viewModel::deleteTask,
+            subtasks = shown.checklist,
+            sheetState = sheetState,
+        )
+    }
+}
+
+/** What the task sheet showed last while it was open. */
+private class ShownTask {
+    var task: Task? = null
+    var checklist: SubtaskListState? = null
+}
+
 /** "New task", extended while the list is at its top. */
 @Composable
 private fun TasksFab(listState: LazyListState, onClick: () -> Unit) {
     val expanded by remember(listState) { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
     EnclyFab(text = stringResource(Res.string.task_add), icon = EnclyIcons.Plus, expanded = expanded, onClick = onClick)
+}
+
+/**
+ * The bar of the inline step field, on top of the keyboard while one is open (at the bottom of the window
+ * where there is no on-screen keyboard): "Done" always; for a step being renamed also move up, move down
+ * (moving a step opens all its task's steps, so it stays in sight) and delete.
+ */
+@Composable
+private fun StepBar(list: TasksListState, viewModel: TasksViewModel = metroViewModel()) {
+    val edit = list.inlineEdit ?: return
+    val focusManager = LocalFocusManager.current
+    val rename = edit.target as? InlineSubtaskTarget.Rename
+    val steps = list.ui.subtasks[edit.target.taskId].orEmpty()
+    val index = steps.indexOfFirst { it.id == rename?.subtaskId }
+    EnclyStepBar(
+        actions = StepBarActions(
+            onMoveUp = { viewModel.moveInlineSubtask(up = true) }.takeIf { index > 0 },
+            onMoveDown = { viewModel.moveInlineSubtask(up = false) }.takeIf { index in 0 until steps.lastIndex },
+            onDelete = viewModel::deleteInlineSubtask.takeIf { rename != null },
+            onDone = {
+                viewModel.commitInlineEdit()
+                focusManager.clearFocus()
+            },
+        ),
+        labels = StepBarLabels(
+            moveUp = stringResource(Res.string.tag_move_up),
+            moveDown = stringResource(Res.string.tag_move_down),
+            delete = stringResource(Res.string.subtask_delete),
+            done = stringResource(Res.string.done),
+        ),
+        showStepTools = rename != null,
+        modifier = Modifier.imePadding().navigationBarsPadding(),
+    )
 }
 
 /**

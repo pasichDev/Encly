@@ -50,6 +50,7 @@ import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclyTonalButton
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupStep
@@ -103,7 +104,7 @@ fun BackupScreen(
         Scaffold(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
-                EnclyTopBar(title = stringResource(Res.string.backup_title), onBack = { navController.popBackStack() })
+                EnclyTopBar(title = stringResource(Res.string.backup_title), onBack = { navController.popBack() })
             },
             snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         ) { padding ->

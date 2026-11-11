@@ -31,6 +31,7 @@ import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.screen.NoteActionsSheet
 import com.pasich.encly.presentation.screen.NoteSheetState
 import com.pasich.encly.presentation.viewmodel.ArchiveState
@@ -72,7 +73,7 @@ fun ArchiveScreen(
         topBar = {
             EnclyTopBar(
                 title = stringResource(Res.string.main_drawer_archive),
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBack() },
             )
         },
     ) { padding ->

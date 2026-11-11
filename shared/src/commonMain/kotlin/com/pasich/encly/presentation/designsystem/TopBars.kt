@@ -1,7 +1,6 @@
 package com.pasich.encly.presentation.designsystem
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,10 +34,9 @@ import com.pasich.encly.core.resources.back
 import com.pasich.encly.core.resources.close
 import com.pasich.encly.core.resources.more_options
 import com.pasich.encly.core.resources.onboarding_step_of
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
-
-private const val PROGRESS_ANIMATION_MS = 250
 
 /** The back icon button every bar uses. */
 @Composable
@@ -196,7 +194,7 @@ fun EnclyProgressHeader(step: Int, totalSteps: Int, modifier: Modifier = Modifie
 private fun ProgressSegment(done: Boolean, modifier: Modifier = Modifier) {
     val color by animateColorAsState(
         targetValue = if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-        animationSpec = tween(PROGRESS_ANIMATION_MS),
+        animationSpec = EnclyMotion.medium(),
         label = "progress",
     )
     Box(

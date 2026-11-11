@@ -64,6 +64,7 @@ import com.pasich.encly.presentation.designsystem.ToolSizes
 import com.pasich.encly.presentation.designsystem.ToolStyle
 import com.pasich.encly.presentation.effects.rememberImeVisible
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
@@ -112,7 +113,7 @@ fun NoteBottomBar(
 
             else -> AnimatedContent(
                 targetState = showMore,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                transitionSpec = { fadeIn(EnclyMotion.short()) togetherWith fadeOut(EnclyMotion.short()) },
                 modifier = Modifier.weight(1f),
                 label = "toolbar",
             ) { more ->

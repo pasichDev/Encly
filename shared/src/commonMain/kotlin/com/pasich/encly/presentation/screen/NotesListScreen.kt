@@ -1,9 +1,8 @@
 package com.pasich.encly.presentation.screen
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,24 +57,21 @@ import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.dialogs.NoteAction
 import com.pasich.encly.presentation.dialogs.NoteCardBottomSheet
+import com.pasich.encly.presentation.dialogs.rememberSheetCloser
 import com.pasich.encly.presentation.viewmodel.NoteListEvent
 import com.pasich.encly.presentation.viewmodel.NoteListEvent.ChangeTag
 import com.pasich.encly.presentation.viewmodel.NoteListState
 import com.pasich.encly.presentation.viewmodel.NoteListViewModel
 import com.pasich.encly.presentation.viewmodel.NoteSearchViewModel
 import com.pasich.encly.presentation.viewmodel.NotesEmptyState
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
-import com.pasich.encly.ui.theme.LocalWidthClass
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-private const val SHEET_CLEAR_DELAY_MS = 200L
-private const val FADE_MS = 300
 private const val SKELETON_CARDS = 4
 
 /** A grid card shows more of its note than a list card. */
@@ -162,6 +157,11 @@ internal class NoteSheetState {
         active = item
         visible = true
     }
+
+    fun close() {
+        visible = false
+        active = null
+    }
 }
 
 /** A note's actions: edit, pin, archive, duplicate, delete, its tag and description. */
@@ -174,24 +174,15 @@ internal fun NoteActionsSheet(
     onEdit: (Note) -> Unit,
     onDuplicate: (Note) -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    // A wide window shows the actions as a dialog: there is no sheet to slide away.
-    val wide = LocalWidthClass.current.isWide
 
     // The sheet shows the note as stored now, not as the list held it when the sheet opened: a tag
     // changed here moves the note out of this list, and the next action must still act on the right row.
     val activeId = sheet.active?.note?.id
     val live by remember(activeId) { activeId?.let(observeNote) ?: emptyFlow() }.collectAsState(initial = null)
 
-    fun close() {
-        sheet.visible = false
-        scope.launch {
-            if (!wide) bottomSheetState.hide()
-            delay(SHEET_CLEAR_DELAY_MS)
-            sheet.active = null
-        }
-    }
+    // The sheet slides away before it leaves the composition, and before its action runs.
+    val close = rememberSheetCloser(bottomSheetState, onDismiss = sheet::close)
 
     val item = live ?: sheet.active?.noteWithTags ?: return
     NoteCardBottomSheet(
@@ -199,15 +190,18 @@ internal fun NoteActionsSheet(
         item = item,
         sheetState = bottomSheetState,
         onAction = { action ->
-            when (action) {
-                NoteAction.Edit -> onEdit(item.note)
-                NoteAction.Duplicate -> onDuplicate(item.note)
-                else -> action.toEvent(item.note)?.let(onEvent)
+            val run = {
+                when (action) {
+                    NoteAction.Edit -> onEdit(item.note)
+                    NoteAction.Duplicate -> onDuplicate(item.note)
+                    else -> action.toEvent(item.note)?.let(onEvent)
+                }
+                Unit
             }
             // Changing the tag, the colour or the description keeps the sheet open.
-            if (action.closesSheet()) close()
+            if (action.closesSheet()) close(run) else run()
         },
-        onDismiss = ::close,
+        onDismiss = sheet::close,
     )
 }
 
@@ -399,8 +393,10 @@ private fun NotesEmptyOrFailed(state: NoteListState, onShowAll: () -> Unit) {
     val empty = state.emptyState
     AnimatedVisibility(
         visible = failure != null || empty != null,
-        enter = fadeIn(animationSpec = tween(durationMillis = FADE_MS)),
-        exit = fadeOut(animationSpec = tween(durationMillis = FADE_MS)),
+        enter = fadeIn(EnclyMotion.long()),
+        // It leaves at once: fading, it kept its place above the first notes for the length of the fade (they then
+        // jumped up), showing "No notes yet" on the way, since by then nothing says which empty state it was.
+        exit = ExitTransition.None,
     ) {
         when {
             failure != null -> EnclyEmptyState(

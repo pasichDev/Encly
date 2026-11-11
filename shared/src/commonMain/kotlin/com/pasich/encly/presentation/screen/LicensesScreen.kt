@@ -29,6 +29,7 @@ import com.pasich.encly.presentation.designsystem.EnclyListRow
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.StepHeading
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -82,7 +83,7 @@ fun LicensesScreen(navController: NavHostController, modifier: Modifier = Modifi
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            EnclyTopBar(title = stringResource(Res.string.licenses_title), onBack = { navController.popBackStack() })
+            EnclyTopBar(title = stringResource(Res.string.licenses_title), onBack = { navController.popBack() })
         },
     ) { padding ->
         Column(

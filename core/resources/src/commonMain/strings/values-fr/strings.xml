@@ -74,7 +74,6 @@
 
 
     <string name="clean_permanent_message">Voulez-vous vraiment supprimer définitivement ces notes ? Cette action est irréversible.</string>
-    <string name="clean_trash_message">Voulez-vous vraiment vider définitivement la corbeille ? Cette action est irréversible.</string>
     <string name="clean_trash_title">Vider la corbeille ?</string>
 
     <string name="clear">Effacer</string>
@@ -325,7 +324,6 @@
     <string name="task_filter_all">Toutes les tâches</string>
     <string name="task_filter_completed">Terminées</string>
     <string name="task_new_placeholder">Nouvelle tâche</string>
-    <string name="task_progress_title">Progression</string>
     <string name="task_status_update_failed">Impossible de modifier l\'état de la tâche. Veuillez réessayer.</string>
     <string name="task_update_failed">Impossible de mettre à jour la tâche. Veuillez réessayer.</string>
 
@@ -524,13 +522,16 @@
     <string name="task_empty_desc">Touchez Nouvelle tâche pour ajouter la première.</string>
     <string name="task_all_done_title">Tout est fait</string>
     <string name="task_done_section">Terminées · %1$d</string>
+    <string name="task_section_in_work">En cours · %1$d</string>
+    <string name="task_section_next">À suivre · %1$d</string>
+    <string name="step_add">Étape</string>
+    <string name="subtasks_show">Afficher les sous-tâches</string>
+    <string name="subtasks_hide">Masquer les sous-tâches</string>
     <string name="empty_notes_tagged">Aucune note avec l’étiquette « %1$s »</string>
     <string name="empty_notes_tagged_desc">Les notes portant cette étiquette apparaîtront ici.</string>
     <string name="show_all_notes">Afficher toutes les notes</string>
     <string name="empty_trash_title">La corbeille est vide</string>
-    <string name="trash_hint">Touchez une note pour la lire. Appui long pour sélectionner.</string>
     <string name="delete_forever">Supprimer définitivement</string>
-    <string name="empty_trash_action">Vider la corbeille</string>
     <string name="search_notes">Rechercher des notes</string>
     <string name="settings_notes_and_tasks">Notes et tâches</string>
     <string name="settings_about_desc">Version, confidentialité et contact</string>
@@ -573,7 +574,7 @@
     <string name="faq_note_actions_q">Que fait un appui long sur une note ?</string>
     <string name="faq_note_actions_a">Il ouvre les actions de la note : changer son libellé, ajouter une courte description affichée sur la carte, dupliquer la note ou la mettre à la corbeille.</string>
     <string name="faq_trash_q">Comment récupérer une note supprimée ?</string>
-    <string name="faq_trash_a">Les notes supprimées vont dans la Corbeille du menu. Vous pouvez y restaurer une note ou la supprimer définitivement. Encly ne vide jamais la corbeille de lui-même.</string>
+    <string name="faq_trash_a">Les notes supprimées vont dans la Corbeille du menu. Vous pouvez y restaurer une note ou la supprimer définitivement. Une note laissée dans la corbeille est supprimée définitivement 28 jours après y avoir été placée ; restaurez-la avant si vous en avez encore besoin.</string>
     <string name="faq_lock_note_q">Que fait « Verrouiller la modification » ?</string>
     <string name="faq_lock_note_a">La note passe en lecture seule pour éviter toute modification accidentelle. Vous pouvez toujours sélectionner et copier le texte. Activez-le ou désactivez-le depuis le menu de l’éditeur.</string>
     <string name="faq_backup_q">Comment fonctionnent les sauvegardes ?</string>
@@ -589,13 +590,7 @@
     <string name="subtask_delete">Supprimer la sous-tâche</string>
     <string name="subtasks_all_done">Toutes les sous-tâches sont terminées</string>
     <string name="subtasks_complete_task">Terminer la tâche</string>
-    <string name="subtasks_show">Afficher les sous-tâches</string>
-    <string name="subtasks_hide">Masquer les sous-tâches</string>
-    <string name="subtasks_state_shown">Développé</string>
-    <string name="subtasks_state_hidden">Réduit</string>
     <string name="subtask_deleted">Sous-tâche supprimée</string>
-    <string name="subtask_next_step">Prochaine étape : %1$s</string>
-    <string name="subtask_first_step">Première étape</string>
     <plurals name="subtasks_done_summary">
         <item quantity="one">%1$d sur %2$d sous-tâche terminée</item>
         <item quantity="many">%1$d sur %2$d sous-tâches terminées</item>
@@ -699,7 +694,6 @@
     <string name="whats_new_title">Nouveautés</string>
     <string name="whats_new_row_desc">Les changements de cette version</string>
     <string name="whats_new_dismiss">Compris</string>
-    <string name="trash_auto_delete_hint">Les notes sont supprimées définitivement après 28 jours dans la corbeille.</string>
     <string name="faq_pin_length_q">Quelle longueur peut avoir mon code PIN ?</string>
     <string name="faq_pin_length_a">Entre 6 et 12 chiffres, à votre choix. Les codes plus courts ne sont pas proposés : le blocage et la clé de l’appareil limitent le nombre d’essais, et 6 chiffres est le minimum qui reste sûr avec ces limites. L’écran de verrouillage n’indique jamais la longueur de votre code : vous touchez « Déverrouiller » quand vous avez fini, de même pour le PIN d’effacement et le PIN de contrainte. Les codes définis auparavant continuent de fonctionner tels quels.</string>
     <string name="block_code">Code</string>
@@ -725,5 +719,40 @@
         <item quantity="one">%1$d autre libellé</item>
         <item quantity="many">%1$d autres libellés</item>
         <item quantity="other">%1$d autres libellés</item>
+    </plurals>
+    <string name="trash_section_soon">Disparaissent d\'ici une semaine · %1$d</string>
+    <string name="trash_section_later">Plus tard · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s, la dernière dans %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">La première disparaît aujourd\'hui</string>
+    <string name="trash_last_day">Dernier jour</string>
+    <string name="trash_today_unit">aujourd\'hui</string>
+    <string name="trash_deleted_on">Supprimée : %1$s</string>
+    <string name="trash_keep">Garder</string>
+    <string name="trash_empty">Vider</string>
+    <plurals name="trash_notes_count">
+        <item quantity="one">%d note</item>
+        <item quantity="many">%d notes</item>
+        <item quantity="other">%d notes</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="one">La première disparaît dans %d jour</item>
+        <item quantity="many">La première disparaît dans %d jours</item>
+        <item quantity="other">La première disparaît dans %d jours</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="one">%d jour restant</item>
+        <item quantity="many">%d jours restants</item>
+        <item quantity="other">%d jours restants</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="one">jour</item>
+        <item quantity="many">jours</item>
+        <item quantity="other">jours</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="one">%1$d note sera supprimée définitivement sans attendre les %2$d jours. Cette action est irréversible.</item>
+        <item quantity="many">%1$d notes seront supprimées définitivement sans attendre les %2$d jours. Cette action est irréversible.</item>
+        <item quantity="other">%1$d notes seront supprimées définitivement sans attendre les %2$d jours. Cette action est irréversible.</item>
     </plurals>
 </resources>

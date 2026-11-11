@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.designsystem
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -58,6 +59,7 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.collapse
 import com.pasich.encly.core.resources.expand
 import com.pasich.encly.presentation.effects.shimmerEffect
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -132,11 +134,13 @@ fun EnclyHoldToConfirmButton(
     var holding by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (holding) 1f else 0f,
-        animationSpec = tween(durationMillis = if (holding) holdMillis else 0),
+        // Time passing: the bar fills evenly.
+        animationSpec = tween(durationMillis = if (holding) holdMillis else 0, easing = LinearEasing),
         label = "hold",
         finishedListener = { if (it >= 1f) onConfirm() },
     )
     val colors = MaterialTheme.colorScheme
+    val shape = EnclyButtonShape
     // This button has no ripple, so the pointer's hover is shown with the Material state layer by hand.
     val hoverSource = remember { MutableInteractionSource() }
     val hovered by hoverSource.collectIsHoveredAsState()
@@ -145,10 +149,10 @@ fun EnclyHoldToConfirmButton(
         modifier = modifier
             .fillMaxWidth()
             .height(EnclyTheme.spacing.buttonHeight)
-            .clip(CircleShape)
+            .clip(shape)
             .background(colors.errorContainer)
             .background(if (hovered) colors.onErrorContainer.copy(alpha = HOVER_LAYER_ALPHA) else Color.Transparent)
-            .enclyInteractive(CircleShape)
+            .enclyInteractive(shape)
             .hoverable(hoverSource)
             .semantics {
                 role = Role.Button
@@ -189,7 +193,7 @@ fun EnclyHoldToConfirmButton(
 @Composable
 fun EnclyExpandableRow(question: String, answer: String, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
-    val turn by animateFloatAsState(if (expanded) CHEVRON_TURN else 0f, label = "chevron")
+    val turn by animateFloatAsState(if (expanded) CHEVRON_TURN else 0f, EnclyMotion.medium(), label = "chevron")
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -217,7 +221,7 @@ fun EnclyExpandableRow(question: String, answer: String, modifier: Modifier = Mo
                     .rotate(turn),
             )
         }
-        AnimatedVisibility(visible = expanded) {
+        AnimatedVisibility(visible = expanded, enter = EnclyMotion.Unfold, exit = EnclyMotion.Fold) {
             Text(
                 text = answer,
                 style = MaterialTheme.typography.bodyMedium,

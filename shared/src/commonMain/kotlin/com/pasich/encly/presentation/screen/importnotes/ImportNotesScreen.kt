@@ -23,6 +23,7 @@ import com.pasich.encly.core.resources.import_title
 import com.pasich.encly.platform.LocalDocumentPickers
 import com.pasich.encly.platform.PickerUnavailableException
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.viewmodel.ImportNotesViewModel
 import com.pasich.encly.presentation.viewmodel.ImportStep
@@ -63,7 +64,7 @@ fun ImportNotesScreen(
     ImportNotesContent(
         step = step,
         actions = actions,
-        onBack = { navController.popBackStack() },
+        onBack = { navController.popBack() },
         modifier = modifier,
     )
 }

@@ -74,7 +74,6 @@
 
 
     <string name="clean_permanent_message">Quer mesmo excluir estas notas permanentemente? Esta ação não pode ser desfeita.</string>
-    <string name="clean_trash_message">Quer mesmo esvaziar a lixeira permanentemente? Esta ação não pode ser desfeita.</string>
     <string name="clean_trash_title">Esvaziar a lixeira?</string>
 
     <string name="clear">Limpar</string>
@@ -325,7 +324,6 @@
     <string name="task_filter_all">Todas as tarefas</string>
     <string name="task_filter_completed">Concluídas</string>
     <string name="task_new_placeholder">Nova tarefa</string>
-    <string name="task_progress_title">Progresso</string>
     <string name="task_status_update_failed">Não foi possível alterar o status da tarefa. Tente novamente.</string>
     <string name="task_update_failed">Não foi possível atualizar a tarefa. Tente novamente.</string>
 
@@ -524,13 +522,16 @@
     <string name="task_empty_desc">Toque em Nova tarefa para adicionar a primeira.</string>
     <string name="task_all_done_title">Tudo feito</string>
     <string name="task_done_section">Concluídas · %1$d</string>
+    <string name="task_section_in_work">Em curso · %1$d</string>
+    <string name="task_section_next">A seguir · %1$d</string>
+    <string name="step_add">Passo</string>
+    <string name="subtasks_show">Mostrar subtarefas</string>
+    <string name="subtasks_hide">Ocultar subtarefas</string>
     <string name="empty_notes_tagged">Nenhuma nota com a etiqueta «%1$s»</string>
     <string name="empty_notes_tagged_desc">As notas com esta etiqueta aparecem aqui.</string>
     <string name="show_all_notes">Mostrar todas as notas</string>
     <string name="empty_trash_title">A lixeira está vazia</string>
-    <string name="trash_hint">Toque numa nota para a ler. Mantenha premido para selecionar.</string>
     <string name="delete_forever">Eliminar de vez</string>
-    <string name="empty_trash_action">Esvaziar lixeira</string>
     <string name="search_notes">Pesquisar notas</string>
     <string name="settings_notes_and_tasks">Notas e tarefas</string>
     <string name="settings_about_desc">Versão, privacidade e contacto</string>
@@ -573,7 +574,7 @@
     <string name="faq_note_actions_q">O que faz um toque longo numa nota?</string>
     <string name="faq_note_actions_a">Abre as ações da nota: mudar a etiqueta, adicionar uma descrição curta mostrada no cartão, duplicar a nota ou movê-la para a lixeira.</string>
     <string name="faq_trash_q">Como recupero uma nota excluída?</string>
-    <string name="faq_trash_a">As notas excluídas vão para a Lixeira no menu. Lá você pode restaurar uma nota ou excluí-la para sempre. O Encly nunca esvazia a lixeira sozinho.</string>
+    <string name="faq_trash_a">As notas excluídas vão para a Lixeira no menu. Lá você pode restaurar uma nota ou excluí-la para sempre. Uma nota que fica na lixeira é excluída definitivamente 28 dias depois de ser movida para lá; restaure-a antes, se ainda precisar dela.</string>
     <string name="faq_lock_note_q">O que faz \"Bloquear edição\"?</string>
     <string name="faq_lock_note_a">Deixa a nota somente leitura para que não seja alterada por engano. Você ainda pode selecionar e copiar o texto. Ative ou desative no menu do editor.</string>
     <string name="faq_backup_q">Como funcionam os backups?</string>
@@ -589,13 +590,7 @@
     <string name="subtask_delete">Excluir subtarefa</string>
     <string name="subtasks_all_done">Todas as subtarefas estão concluídas</string>
     <string name="subtasks_complete_task">Concluir tarefa</string>
-    <string name="subtasks_show">Mostrar subtarefas</string>
-    <string name="subtasks_hide">Ocultar subtarefas</string>
-    <string name="subtasks_state_shown">Expandido</string>
-    <string name="subtasks_state_hidden">Recolhido</string>
     <string name="subtask_deleted">Subtarefa excluída</string>
-    <string name="subtask_next_step">Próximo passo: %1$s</string>
-    <string name="subtask_first_step">Primeiro passo</string>
     <plurals name="subtasks_done_summary">
         <item quantity="one">%1$d de %2$d subtarefa concluída</item>
         <item quantity="many">%1$d de %2$d subtarefas concluídas</item>
@@ -699,7 +694,6 @@
     <string name="whats_new_title">Novidades</string>
     <string name="whats_new_row_desc">As alterações desta versão</string>
     <string name="whats_new_dismiss">Entendi</string>
-    <string name="trash_auto_delete_hint">As notas são eliminadas definitivamente após 28 dias na lixeira.</string>
     <string name="faq_pin_length_q">Qual pode ser o tamanho do meu PIN?</string>
     <string name="faq_pin_length_a">Entre 6 e 12 dígitos, à sua escolha. PINs mais curtos não são oferecidos: o bloqueio e a chave do dispositivo limitam as tentativas, e 6 dígitos é o mínimo que continua seguro com esses limites. A tela de bloqueio nunca mostra o tamanho do seu PIN: você toca em «Desbloquear» quando terminar, e o mesmo vale para o PIN de apagamento e o PIN de coação. Os PINs definidos antes continuam funcionando como estão.</string>
     <string name="block_code">Código</string>
@@ -725,5 +719,40 @@
         <item quantity="one">mais %1$d etiqueta</item>
         <item quantity="many">mais %1$d etiquetas</item>
         <item quantity="other">mais %1$d etiquetas</item>
+    </plurals>
+    <string name="trash_section_soon">Desaparecem em uma semana · %1$d</string>
+    <string name="trash_section_later">Mais tarde · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s, a última em %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">A primeira desaparece hoje</string>
+    <string name="trash_last_day">Último dia</string>
+    <string name="trash_today_unit">hoje</string>
+    <string name="trash_deleted_on">Excluída: %1$s</string>
+    <string name="trash_keep">Manter</string>
+    <string name="trash_empty">Esvaziar</string>
+    <plurals name="trash_notes_count">
+        <item quantity="one">%d nota</item>
+        <item quantity="many">%d notas</item>
+        <item quantity="other">%d notas</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="one">A primeira desaparece em %d dia</item>
+        <item quantity="many">A primeira desaparece em %d dias</item>
+        <item quantity="other">A primeira desaparece em %d dias</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="one">Resta %d dia</item>
+        <item quantity="many">Restam %d dias</item>
+        <item quantity="other">Restam %d dias</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="one">dia</item>
+        <item quantity="many">dias</item>
+        <item quantity="other">dias</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="one">%1$d nota será excluída para sempre, sem esperar os %2$d dias. Esta ação não pode ser desfeita.</item>
+        <item quantity="many">%1$d notas serão excluídas para sempre, sem esperar os %2$d dias. Esta ação não pode ser desfeita.</item>
+        <item quantity="other">%1$d notas serão excluídas para sempre, sem esperar os %2$d dias. Esta ação não pode ser desfeita.</item>
     </plurals>
 </resources>

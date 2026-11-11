@@ -74,7 +74,6 @@
 
 
     <string name="clean_permanent_message">Ви дійсно хочете видалити ці нотатки назавжди? Цю дію не можна буде скасувати.</string>
-    <string name="clean_trash_message">Ви дійсно хочете назавжди очистити кошик? Цю дію не можна буде скасувати.</string>
     <string name="clean_trash_title">Очистити кошик?</string>
 
     <string name="clear">Очистити</string>
@@ -325,7 +324,6 @@
     <string name="task_filter_all">Всі завдання</string>
     <string name="task_filter_completed">Виконані</string>
     <string name="task_new_placeholder">Нове завдання</string>
-    <string name="task_progress_title">Прогрес виконання</string>
     <string name="task_status_update_failed">Не вдалося змінити стан завдання. Спробуйте ще раз.</string>
     <string name="task_update_failed">Не вдалося оновити завдання. Спробуйте ще раз.</string>
 
@@ -528,13 +526,16 @@
     <string name="task_empty_desc">Натисніть «Нове завдання», щоб додати перше.</string>
     <string name="task_all_done_title">Усе виконано</string>
     <string name="task_done_section">Виконано · %1$d</string>
+    <string name="task_section_in_work">У роботі · %1$d</string>
+    <string name="task_section_next">Далі · %1$d</string>
+    <string name="step_add">Крок</string>
+    <string name="subtasks_show">Показати підзавдання</string>
+    <string name="subtasks_hide">Сховати підзавдання</string>
     <string name="empty_notes_tagged">Немає нотаток з тегом «%1$s»</string>
     <string name="empty_notes_tagged_desc">Тут з’являться нотатки з цим тегом.</string>
     <string name="show_all_notes">Показати всі нотатки</string>
     <string name="empty_trash_title">Кошик порожній</string>
-    <string name="trash_hint">Натисніть нотатку, щоб прочитати. Утримуйте, щоб вибрати.</string>
     <string name="delete_forever">Видалити назавжди</string>
-    <string name="empty_trash_action">Очистити кошик</string>
     <string name="search_notes">Пошук нотаток</string>
     <string name="settings_notes_and_tasks">Нотатки й завдання</string>
     <string name="settings_about_desc">Версія, політика конфіденційності й контакти</string>
@@ -578,7 +579,7 @@
     <string name="faq_note_actions_q">Що робить довге натискання на нотатку?</string>
     <string name="faq_note_actions_a">Відкриває дії з нотаткою: змінити мітку, додати короткий опис на картці, дублювати нотатку або перемістити її в кошик.</string>
     <string name="faq_trash_q">Як повернути видалену нотатку?</string>
-    <string name="faq_trash_a">Видалені нотатки потрапляють у Кошик у меню. Там нотатку можна відновити або видалити назавжди. Encly ніколи не очищає кошик сам.</string>
+    <string name="faq_trash_a">Видалені нотатки потрапляють у Кошик у меню. Там нотатку можна відновити або видалити назавжди. Нотатка, що лишилась у кошику, видаляється остаточно через 28 днів після переміщення туди, тож відновіть її раніше, якщо вона ще потрібна.</string>
     <string name="faq_lock_note_q">Що робить «Заблокувати редагування»?</string>
     <string name="faq_lock_note_a">Робить нотатку лише для читання, щоб її не змінити випадково. Текст однаково можна виділити й скопіювати. Вмикається й вимикається в меню редактора.</string>
     <string name="faq_backup_q">Як працюють резервні копії?</string>
@@ -594,13 +595,7 @@
     <string name="subtask_delete">Видалити підзавдання</string>
     <string name="subtasks_all_done">Усі підзавдання виконано</string>
     <string name="subtasks_complete_task">Завершити завдання</string>
-    <string name="subtasks_show">Показати підзавдання</string>
-    <string name="subtasks_hide">Сховати підзавдання</string>
-    <string name="subtasks_state_shown">Розгорнуто</string>
-    <string name="subtasks_state_hidden">Згорнуто</string>
     <string name="subtask_deleted">Підзавдання видалено</string>
-    <string name="subtask_next_step">Наступний крок: %1$s</string>
-    <string name="subtask_first_step">Перший крок</string>
     <plurals name="subtasks_done_summary">
         <item quantity="one">%1$d з %2$d підзавдання виконано</item>
         <item quantity="few">%1$d з %2$d підзавдань виконано</item>
@@ -705,7 +700,6 @@
     <string name="whats_new_title">Що нового</string>
     <string name="whats_new_row_desc">Зміни в цій версії</string>
     <string name="whats_new_dismiss">Зрозуміло</string>
-    <string name="trash_auto_delete_hint">Нотатки остаточно видаляються через 28 днів у кошику.</string>
     <string name="faq_pin_length_q">Якої довжини може бути PIN?</string>
     <string name="faq_pin_length_a">Від 6 до 12 цифр на ваш вибір. Коротших PIN не пропонується: блокування й ключ пристрою обмежують кількість спроб, а 6 цифр — найкоротший PIN, що лишається безпечним за цих обмежень. Екран блокування ніколи не показує довжину вашого PIN: коли закінчите, натисніть «Розблокувати» — так само для PIN для стирання та PIN під примусом. PIN, задані раніше, працюють без змін.</string>
     <string name="block_code">Код</string>
@@ -732,5 +726,45 @@
         <item quantity="few">ще %1$d мітки</item>
         <item quantity="many">ще %1$d міток</item>
         <item quantity="other">ще %1$d мітки</item>
+    </plurals>
+    <string name="trash_section_soon">Зникнуть за тиждень · %1$d</string>
+    <string name="trash_section_later">Пізніше · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s, остання за %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">Перша зникне сьогодні</string>
+    <string name="trash_last_day">Останній день</string>
+    <string name="trash_today_unit">сьогодні</string>
+    <string name="trash_deleted_on">Видалено: %1$s</string>
+    <string name="trash_keep">Залишити</string>
+    <string name="trash_empty">Очистити</string>
+    <plurals name="trash_notes_count">
+        <item quantity="one">%d нотатка</item>
+        <item quantity="few">%d нотатки</item>
+        <item quantity="many">%d нотаток</item>
+        <item quantity="other">%d нотатки</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="one">Перша зникне за %d день</item>
+        <item quantity="few">Перша зникне за %d дні</item>
+        <item quantity="many">Перша зникне за %d днів</item>
+        <item quantity="other">Перша зникне за %d дня</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="one">Лишився %d день</item>
+        <item quantity="few">Лишилось %d дні</item>
+        <item quantity="many">Лишилось %d днів</item>
+        <item quantity="other">Лишилось %d дня</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="one">день</item>
+        <item quantity="few">дні</item>
+        <item quantity="many">днів</item>
+        <item quantity="other">дня</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="one">%1$d нотатку буде видалено назавжди, не чекаючи %2$d днів. Цю дію не можна буде скасувати.</item>
+        <item quantity="few">%1$d нотатки буде видалено назавжди, не чекаючи %2$d днів. Цю дію не можна буде скасувати.</item>
+        <item quantity="many">%1$d нотаток буде видалено назавжди, не чекаючи %2$d днів. Цю дію не можна буде скасувати.</item>
+        <item quantity="other">%1$d нотатки буде видалено назавжди, не чекаючи %2$d днів. Цю дію не можна буде скасувати.</item>
     </plurals>
 </resources>

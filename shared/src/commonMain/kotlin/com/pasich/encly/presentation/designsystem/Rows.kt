@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /** Switch colours of the design system: `primary` track when on, `surfaceContainerHigh` when off. */
@@ -288,6 +289,7 @@ private fun SegmentButton(
     val colors = MaterialTheme.colorScheme
     val container by animateColorAsState(
         targetValue = if (selected) colors.primaryContainer else Color.Transparent,
+        animationSpec = EnclyMotion.short(),
         label = "segment",
     )
     val content = when {

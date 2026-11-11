@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
@@ -55,7 +54,7 @@ import com.pasich.encly.platform.LocalSessionSharedAcrossWindows
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
-import com.pasich.encly.presentation.effects.FadeTiming
+import com.pasich.encly.presentation.effects.StepFade
 import com.pasich.encly.presentation.effects.screenFade
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
@@ -67,6 +66,7 @@ import com.pasich.encly.presentation.screen.pincode.PinSubmit
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
@@ -74,7 +74,6 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 private const val PIN_SUCCESS_DELAY_MS = 1_000L
-private val StepFade = FadeTiming(delayMillis = 0, durationMillis = 300, easing = FastOutSlowInEasing)
 private const val SUCCESS_SCALE_MS = 500
 
 enum class PinAnimationState {
@@ -224,13 +223,13 @@ fun PinCodeConfigScreen(
                     AnimatedContent(
                         targetState = pinState.step,
                         transitionSpec = {
-                            slideIntoContainer(SlideDirection.Start)
-                                .togetherWith(slideOutOfContainer(SlideDirection.Start))
+                            slideIntoContainer(SlideDirection.Start, EnclyMotion.long())
+                                .togetherWith(slideOutOfContainer(SlideDirection.Start, EnclyMotion.long()))
                         },
                         label = "StepAnimation",
                     ) { currentStep ->
                         // Drawn per draw call: fadeIn/fadeOut would put the step in an offscreen layer.
-                        Box(Modifier.screenFade(this, enter = { StepFade }, exit = { StepFade })) {
+                        Box(Modifier.screenFade(this, enter = { StepFade.In }, exit = { StepFade.Out })) {
                             PinStepContent(
                                 step = currentStep,
                                 pinState = pinState,
@@ -377,7 +376,7 @@ private fun SuccessAnimation() {
     LaunchedEffect(Unit) {
         scale.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = SUCCESS_SCALE_MS, easing = FastOutSlowInEasing),
+            animationSpec = tween(durationMillis = SUCCESS_SCALE_MS, easing = EnclyMotion.Enter),
         )
     }
 

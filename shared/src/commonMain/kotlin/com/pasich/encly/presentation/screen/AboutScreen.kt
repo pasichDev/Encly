@@ -64,6 +64,7 @@ import com.pasich.encly.presentation.designsystem.EnclyWordmark
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.dialogs.WhatsNewSheet
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.currentLanguageTag
 import com.pasich.encly.whatsnew.Changelogs
@@ -80,7 +81,7 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { EnclyTopBar(title = stringResource(Res.string.about), onBack = { navController.popBackStack() }) },
+        topBar = { EnclyTopBar(title = stringResource(Res.string.about), onBack = { navController.popBack() }) },
     ) { padding ->
         Column(
             modifier = Modifier

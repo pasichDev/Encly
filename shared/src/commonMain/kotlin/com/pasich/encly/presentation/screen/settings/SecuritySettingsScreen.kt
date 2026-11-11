@@ -47,6 +47,7 @@ import com.pasich.encly.presentation.designsystem.EnclySwitchRow
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.screen.backup.BackupDialogs
 import com.pasich.encly.presentation.screen.backup.rememberBackupDialogActions
 import com.pasich.encly.presentation.viewmodel.BackupAction
@@ -93,7 +94,7 @@ fun SecuritySettingsScreen(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
                 EnclyTopBar(title = stringResource(Res.string.security_title), onBack = {
-                    navController.popBackStack()
+                    navController.popBack()
                 })
             },
             snackbarHost = { EnclySnackbarHost(snackbarHostState) },

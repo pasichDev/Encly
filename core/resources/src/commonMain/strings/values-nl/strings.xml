@@ -74,7 +74,6 @@
 
 
     <string name="clean_permanent_message">Weet je zeker dat je deze notities definitief wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
-    <string name="clean_trash_message">Weet je zeker dat je de prullenbak definitief wilt legen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="clean_trash_title">Prullenbak legen?</string>
 
     <string name="clear">Wissen</string>
@@ -325,7 +324,6 @@
     <string name="task_filter_all">Alle taken</string>
     <string name="task_filter_completed">Voltooid</string>
     <string name="task_new_placeholder">Nieuwe taak</string>
-    <string name="task_progress_title">Voortgang</string>
     <string name="task_status_update_failed">Kan de status van de taak niet wijzigen. Probeer het opnieuw.</string>
     <string name="task_update_failed">Kan de taak niet bijwerken. Probeer het opnieuw.</string>
 
@@ -520,13 +518,16 @@
     <string name="task_empty_desc">Tik op Nieuwe taak om je eerste toe te voegen.</string>
     <string name="task_all_done_title">Alles klaar</string>
     <string name="task_done_section">Klaar · %1$d</string>
+    <string name="task_section_in_work">Bezig · %1$d</string>
+    <string name="task_section_next">Hierna · %1$d</string>
+    <string name="step_add">Stap</string>
+    <string name="subtasks_show">Subtaken tonen</string>
+    <string name="subtasks_hide">Subtaken verbergen</string>
     <string name="empty_notes_tagged">Geen notities met de tag ‘%1$s’</string>
     <string name="empty_notes_tagged_desc">Notities met deze tag verschijnen hier.</string>
     <string name="show_all_notes">Alle notities tonen</string>
     <string name="empty_trash_title">De prullenbak is leeg</string>
-    <string name="trash_hint">Tik op een notitie om te lezen. Houd ingedrukt om te selecteren.</string>
     <string name="delete_forever">Definitief verwijderen</string>
-    <string name="empty_trash_action">Prullenbak legen</string>
     <string name="search_notes">Notities zoeken</string>
     <string name="settings_notes_and_tasks">Notities en taken</string>
     <string name="settings_about_desc">Versie, privacybeleid en contact</string>
@@ -568,7 +569,7 @@
     <string name="faq_note_actions_q">Wat doet lang drukken op een notitie?</string>
     <string name="faq_note_actions_a">Het opent de acties van de notitie: het label wijzigen, een korte beschrijving op de kaart toevoegen, de notitie dupliceren of naar de prullenbak verplaatsen.</string>
     <string name="faq_trash_q">Hoe krijg ik een verwijderde notitie terug?</string>
-    <string name="faq_trash_a">Verwijderde notities gaan naar de Prullenbak in het menu. Daar kun je een notitie herstellen of definitief verwijderen. Encly leegt de prullenbak nooit vanzelf.</string>
+    <string name="faq_trash_a">Verwijderde notities gaan naar de Prullenbak in het menu. Daar kun je een notitie herstellen of definitief verwijderen. Een notitie die in de prullenbak blijft, wordt 28 dagen nadat ze erheen is verplaatst definitief verwijderd. Herstel haar eerder als je haar nog nodig hebt.</string>
     <string name="faq_lock_note_q">Wat doet ‘Bewerken vergrendelen’?</string>
     <string name="faq_lock_note_a">De notitie wordt alleen-lezen, zodat je hem niet per ongeluk wijzigt. Je kunt de tekst nog steeds selecteren en kopiëren. Zet het aan of uit via het menu van de editor.</string>
     <string name="faq_backup_q">Hoe werken back-ups?</string>
@@ -584,13 +585,7 @@
     <string name="subtask_delete">Subtaak verwijderen</string>
     <string name="subtasks_all_done">Alle subtaken zijn klaar</string>
     <string name="subtasks_complete_task">Taak voltooien</string>
-    <string name="subtasks_show">Subtaken tonen</string>
-    <string name="subtasks_hide">Subtaken verbergen</string>
-    <string name="subtasks_state_shown">Uitgevouwen</string>
-    <string name="subtasks_state_hidden">Samengevouwen</string>
     <string name="subtask_deleted">Subtaak verwijderd</string>
-    <string name="subtask_next_step">Volgende stap: %1$s</string>
-    <string name="subtask_first_step">Eerste stap</string>
     <plurals name="subtasks_done_summary">
         <item quantity="one">%1$d van %2$d subtaak voltooid</item>
         <item quantity="other">%1$d van %2$d subtaken voltooid</item>
@@ -693,7 +688,6 @@
     <string name="whats_new_title">Wat is er nieuw</string>
     <string name="whats_new_row_desc">De wijzigingen in deze versie</string>
     <string name="whats_new_dismiss">Begrepen</string>
-    <string name="trash_auto_delete_hint">Notities worden na 28 dagen in de prullenbak definitief verwijderd.</string>
     <string name="faq_pin_length_q">Hoe lang mag mijn pincode zijn?</string>
     <string name="faq_pin_length_a">Tussen 6 en 12 cijfers, naar keuze. Kortere pincodes worden niet aangeboden: de blokkade en de sleutel van het apparaat beperken het aantal pogingen, en 6 cijfers is het kortste dat daarmee veilig blijft. Het vergrendelscherm toont nooit hoe lang je pincode is: je tikt op ‘Ontgrendelen’ als je klaar bent, en hetzelfde geldt voor de wis-pincode en de dwangpincode. Pincodes die je eerder instelde, blijven gewoon werken.</string>
     <string name="block_code">Code</string>
@@ -718,5 +712,35 @@
     <plurals name="note_tags_more">
         <item quantity="one">nog %1$d label</item>
         <item quantity="other">nog %1$d labels</item>
+    </plurals>
+    <string name="trash_section_soon">Verdwijnen binnen een week · %1$d</string>
+    <string name="trash_section_later">Later · %1$d</string>
+    <string name="trash_summary">%1$s. %2$s, de laatste over %3$d.</string>
+    <string name="trash_summary_same">%1$s. %2$s.</string>
+    <string name="trash_first_today">De eerste verdwijnt vandaag</string>
+    <string name="trash_last_day">Laatste dag</string>
+    <string name="trash_today_unit">vandaag</string>
+    <string name="trash_deleted_on">Verwijderd: %1$s</string>
+    <string name="trash_keep">Bewaren</string>
+    <string name="trash_empty">Legen</string>
+    <plurals name="trash_notes_count">
+        <item quantity="one">%d notitie</item>
+        <item quantity="other">%d notities</item>
+    </plurals>
+    <plurals name="trash_first_in_days">
+        <item quantity="one">De eerste verdwijnt over %d dag</item>
+        <item quantity="other">De eerste verdwijnt over %d dagen</item>
+    </plurals>
+    <plurals name="trash_days_left">
+        <item quantity="one">Nog %d dag</item>
+        <item quantity="other">Nog %d dagen</item>
+    </plurals>
+    <plurals name="trash_days_unit">
+        <item quantity="one">dag</item>
+        <item quantity="other">dagen</item>
+    </plurals>
+    <plurals name="trash_empty_confirm">
+        <item quantity="one">%1$d notitie wordt definitief verwijderd, zonder de %2$d dagen af te wachten. Dit kan niet ongedaan worden gemaakt.</item>
+        <item quantity="other">%1$d notities worden definitief verwijderd, zonder de %2$d dagen af te wachten. Dit kan niet ongedaan worden gemaakt.</item>
     </plurals>
 </resources>

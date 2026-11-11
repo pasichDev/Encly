@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.pasich.encly.core.resources.Res
@@ -23,9 +24,12 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WhatsNewSheet(notes: ReleaseNotes, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val dismiss = rememberSheetDismisser(sheetState, onDismiss)
     AdaptiveSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
+        sheetState = sheetState,
         title = stringResource(Res.string.whats_new_title),
         scrollable = true,
     ) {
@@ -44,7 +48,7 @@ fun WhatsNewSheet(notes: ReleaseNotes, onDismiss: () -> Unit, modifier: Modifier
             }
             EnclyButton(
                 text = stringResource(Res.string.whats_new_dismiss),
-                onClick = onDismiss,
+                onClick = dismiss,
                 modifier = Modifier.padding(top = EnclyTheme.spacing.s),
             )
         }

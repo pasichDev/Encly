@@ -17,9 +17,8 @@ import com.pasich.encly.core.resources.note_pin
 import com.pasich.encly.core.resources.note_unarchive
 import com.pasich.encly.core.resources.note_unpin
 import com.pasich.encly.core.resources.subtask_add
-import com.pasich.encly.core.resources.subtask_first_step
-import com.pasich.encly.core.resources.subtasks_show
 import com.pasich.encly.core.resources.swipe_choice_delete
+import com.pasich.encly.core.resources.task_delete
 import com.pasich.encly.core.resources.task_edit_placeholder
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Task
@@ -183,10 +182,8 @@ class PointerMenusTest : ComposeScreenTest() {
         rule.onNodeWithText("Call mum").performMouseInput { rightClick() }
         rule.waitForIdle()
 
-        rule.onNodeWithText(str(Res.string.task_edit_placeholder)).assertExists()
-        rule.onNodeWithText(str(Res.string.subtask_add)).assertExists()
-        // Picking the first one opens the task's tree, as a tap on the row does.
-        rule.onNodeWithText(str(Res.string.subtasks_show)).performClick()
-        waitForText(str(Res.string.subtask_first_step))
+        // Picking it opens the task's sheet, as a tap on the row does.
+        rule.onNodeWithText(str(Res.string.task_edit_placeholder)).performClick()
+        waitForText(str(Res.string.task_delete))
     }
 }

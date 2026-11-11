@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Task
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.platform.LocalAppWindow
@@ -25,7 +26,6 @@ import com.pasich.encly.testutil.ActivityTestWindow
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,7 +36,7 @@ import org.robolectric.annotation.Config
 
 /**
  * The Tasks screen in a real activity that is recreated (a rotation) or sent to the background
- * while a new sub-task is being typed into the list's inline field.
+ * while a new step is being typed into the list's inline field (under a task in progress).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = Application::class, qualifiers = "w411dp-h891dp-xxhdpi")
@@ -52,6 +52,9 @@ class TasksScreenRecreationTest {
     @Before
     fun setUp() {
         app.withTasks(Task(id = 1, title = "Shop"))
+        // In progress: only such a task has the "+ Step" row the field takes the place of.
+        app.tasks.subtasks.value =
+            listOf(Subtask(id = 10, taskId = 1, title = "Eggs", isCompleted = true, position = 0))
         tasks = app.tasksVm()
         TasksHostActivity.viewModels = FakeViewModels(tasks)
         shadowOf(context.packageManager).addOrUpdateActivity(
@@ -82,7 +85,7 @@ class TasksScreenRecreationTest {
         rule.waitForIdle()
 
         // Nothing half-typed was saved, and the field is still open with what was typed.
-        assertTrue(app.tasks.subtasks.value.isEmpty())
+        assertEquals(listOf("Eggs"), app.tasks.subtasks.value.map { it.title })
         assertEquals(InlineSubtaskTarget.Add(1), tasks.inlineEdit?.target)
         assertEquals("Mil", tasks.inlineEdit?.text)
     }
@@ -92,7 +95,7 @@ class TasksScreenRecreationTest {
         checkNotNull(scenario).moveToState(Lifecycle.State.CREATED)
         rule.waitForIdle()
 
-        assertEquals(listOf("Mil"), app.tasks.subtasks.value.map { it.title })
+        assertEquals(listOf("Eggs", "Mil"), app.tasks.subtasks.value.map { it.title })
     }
 }
 

@@ -32,6 +32,7 @@ import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.dialogs.SwipeActionDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -75,7 +76,7 @@ fun SettingsScreen(
         topBar = {
             EnclyTopBar(
                 title = stringResource(Res.string.main_drawer_settings),
-                onBack = { navController?.popBackStack() },
+                onBack = { navController?.popBack() },
             )
         },
     ) { padding ->
