@@ -9,7 +9,7 @@ ksp = "2.3.12"
 hilt = "2.60.1"
 detekt = "1.23.8"
 kover = "0.9.11"
-spotless = "8.10.4"
+spotless = "8.11.0"
 # ktlint and the Compose detekt rules are tool artifacts, not app dependencies (see build.gradle.kts).
 ktlint = "1.8.0"
 # 0.4.x is the line built against detekt 1.23.x; 0.5+ needs detekt 2.x.
