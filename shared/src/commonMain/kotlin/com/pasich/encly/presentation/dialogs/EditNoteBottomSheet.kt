@@ -155,7 +155,8 @@ internal fun EditNoteBottomSheet(
     val closeAndRun: (EditNoteBottomSheetAction) -> Unit = { action -> close { onAction(action) } }
 
     if (isVisible) {
-        AdaptiveSheet(onDismissRequest = onDismiss, modifier = modifier, sheetState = sheetState) {
+        // Scrolls only when the window is too short for it (split screen, large font): its height never changes.
+        AdaptiveSheet(onDismissRequest = onDismiss, modifier = modifier, sheetState = sheetState, scrollable = true) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
                 modifier = Modifier.testTag(EDIT_NOTE_SHEET_TAG),

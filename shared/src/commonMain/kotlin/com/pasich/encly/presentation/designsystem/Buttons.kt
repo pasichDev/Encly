@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -70,8 +71,8 @@ fun EnclyButton(
 /**
  * A destructive action and the one that confirms its sheet, side by side ("Delete task" · "Save"): two
  * halves of the same height and corner, [EnclyTheme.spacing.s] apart, the destructive one first in red
- * (`error`, or `errorContainer` in a dark scheme), the confirming one the primary button. Each label keeps
- * to one line.
+ * (`error`, or `errorContainer` in a dark scheme), the confirming one the primary button. A label that does
+ * not fit half the width wraps to a second line instead of losing its end ("Delete forever" in French).
  */
 @Composable
 fun EnclyButtonPair(destructive: DialogAction, confirm: DialogAction, modifier: Modifier = Modifier) {
@@ -88,7 +89,7 @@ fun EnclyButtonPair(destructive: DialogAction, confirm: DialogAction, modifier: 
             enabled = destructive.enabled,
             padding = PairPadding,
         ) {
-            ButtonLabel(text = destructive.text, trailingIcon = null)
+            ButtonLabel(text = destructive.text, trailingIcon = null, maxLines = PAIR_LABEL_LINES)
         }
         FilledButton(
             onClick = confirm.onClick,
@@ -98,10 +99,13 @@ fun EnclyButtonPair(destructive: DialogAction, confirm: DialogAction, modifier: 
             enabled = confirm.enabled,
             padding = PairPadding,
         ) {
-            ButtonLabel(text = confirm.text, trailingIcon = null)
+            ButtonLabel(text = confirm.text, trailingIcon = null, maxLines = PAIR_LABEL_LINES)
         }
     }
 }
+
+/** A paired label wraps rather than ellipsizes. */
+private const val PAIR_LABEL_LINES = 2
 
 /** Above this a fill is too light to carry a destructive button by itself. */
 private const val PALE_FILL_LUMINANCE = 0.4f
@@ -156,7 +160,7 @@ private fun FilledButton(
 }
 
 @Composable
-private fun ButtonLabel(text: String, trailingIcon: ImageVector?) {
+private fun ButtonLabel(text: String, trailingIcon: ImageVector?, maxLines: Int = 1) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
@@ -164,8 +168,9 @@ private fun ButtonLabel(text: String, trailingIcon: ImageVector?) {
         Text(
             text = text,
             style = EnclyTheme.typography.buttonPrimary,
-            maxLines = 1,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f, fill = false),
         )
         if (trailingIcon != null) {

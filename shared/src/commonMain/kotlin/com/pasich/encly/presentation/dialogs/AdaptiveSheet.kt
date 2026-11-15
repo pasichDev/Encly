@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.pasich.encly.editor.ui.components.ProtectDialogWindow
 import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -68,6 +69,8 @@ fun AdaptiveSheet(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    // A sheet is its own window above the lock shield: nothing of it is composed while the vault is locked.
+    if (LocalVaultLocked.current) return
     if (LocalWidthClass.current.isWide) {
         SheetDialog(onDismissRequest, title, containerColor, modifier, content)
     } else {
@@ -93,6 +96,7 @@ private fun SheetDialog(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        ProtectDialogWindow()
         BoxWithConstraints(
             modifier = modifier.fillMaxWidth().padding(EnclyTheme.spacing.m),
             contentAlignment = Alignment.Center,
@@ -171,7 +175,8 @@ fun SheetUntilHidden(visible: Boolean, sheetState: SheetState, content: @Composa
     }
     // Only a sheet this call has shown: a restored state alone never brings one back.
     val slidingAway = opening > 0 && !hidden && !locked && sheetState.isVisible
-    if (visible || slidingAway) {
+    // A sheet is its own window above the lock shield: nothing of it stays composed once the vault locks.
+    if (!locked && (visible || slidingAway)) {
         key(opening) { content() }
     }
 }
