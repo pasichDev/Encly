@@ -75,6 +75,12 @@ public sealed interface PinUnlock {
      */
     public data object KeyLost : PinUnlock
 
+    /**
+     * The store of the device-bound PIN key is locked or not running (a desktop keyring); nothing was counted.
+     * The key is not gone: unlocking the store and trying again works. Android never reports it.
+     */
+    public data object KeyStoreUnavailable : PinUnlock
+
     /** The attempt could not be made (Keystore or storage failure); nothing was counted. */
     public data object Failed : PinUnlock
 }
@@ -108,6 +114,9 @@ public enum class PinChange {
 
     /** The new PIN is the duress PIN: one PIN never opens two slots. */
     IN_USE,
+
+    /** The store of the PIN's device-bound key is locked or not running (a desktop keyring); try again when open. */
+    KEY_STORE_UNAVAILABLE,
     FAILED,
 }
 
@@ -209,9 +218,9 @@ public class AuthenticationManager(
                 keyReset = true
                 derivePinKeys(pin, salt, keySlot)
             }
-        } catch (_: PinFactorException) {
+        } catch (e: PinFactorException) {
             SensitiveDataCleaner.clear(salt)
-            return PinChange.FAILED
+            return if (e.unavailable) PinChange.KEY_STORE_UNAVAILABLE else PinChange.FAILED
         }
         return try {
             // Same key and salt: a duress slot this PIN opens would make it open two vaults.
@@ -316,7 +325,11 @@ public class AuthenticationManager(
                 } catch (e: PinFactorException) {
                     // Not a guess: the hardware never answered. Give the attempt back.
                     refundAttempt(previous)
-                    return if (e.lost) PinUnlock.KeyLost else PinUnlock.Failed
+                    return when {
+                        e.lost -> PinUnlock.KeyLost
+                        e.unavailable -> PinUnlock.KeyStoreUnavailable
+                        else -> PinUnlock.Failed
+                    }
                 }
                 try {
                     checkSlots(pin, parsed, keys, Check(purpose, previous.strikes))

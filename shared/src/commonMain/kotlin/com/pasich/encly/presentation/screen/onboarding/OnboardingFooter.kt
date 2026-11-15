@@ -21,6 +21,7 @@ import com.pasich.encly.core.resources.onboarding_verify_confirm
 import com.pasich.encly.core.resources.onboarding_verify_show_again
 import com.pasich.encly.core.resources.restore
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
@@ -114,7 +115,7 @@ internal fun OnboardingFooter(spec: FooterSpec, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(EnclyTheme.spacing.textButtonHeight))
         } else {
             EnclyTextButton(
-                text = stringResource(secondary),
+                text = hostString(secondary),
                 onClick = spec.onSecondary,
                 enabled = !spec.loading,
                 muted = spec.secondaryMuted,

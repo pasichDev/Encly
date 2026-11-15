@@ -24,7 +24,8 @@ import javax.crypto.spec.SecretKeySpec
  *   unreadable counts as existing (like an invalidated Android key): [mac] reports it as lost, and
  *   [reset] replaces it.
  * - [mac] with no secret in the store, or one of the wrong size, fails with `PinFactorException(lost = true)`;
- *   any other failure of the store (locked, not running, I/O) is `lost = false` and may be transient.
+ *   any other failure of the store (locked, not running, I/O) is `lost = false` and may be transient. A store that
+ *   is locked or not running (a [SecretStoreUnavailableException] cause) also sets `unavailable = true`.
  * - [delete] never throws.
  *
  * Every copy of the secret that this class controls is wiped after use. The JCA `Mac` and the native
@@ -40,7 +41,7 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
             // Like an invalidated Android key: it is there, so it is not replaced here. [mac] reports it as
             // lost and the caller decides (a PIN change resets it; an unlock goes to the recovery phrase).
             if (e.lost) return false
-            throw PinFactorException(lost = false, cause = e)
+            throw e.toFactorException()
         }
         if (existing != null) {
             SensitiveDataCleaner.clear(existing)
@@ -56,7 +57,7 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
             store.delete(slot)
             SensitiveDataCleaner.clear(store.create(slot))
         } catch (e: SecretStoreException) {
-            throw PinFactorException(lost = false, cause = e)
+            throw e.toFactorException(lost = false)
         }
     }
 
@@ -65,7 +66,7 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
         val secret = try {
             store.read(slot)
         } catch (e: SecretStoreException) {
-            throw PinFactorException(lost = e.lost, cause = e)
+            throw e.toFactorException()
         } ?: throw PinFactorException(lost = true)
         try {
             if (secret.size != SecretStore.SECRET_SIZE) throw PinFactorException(lost = true)
@@ -82,6 +83,16 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
             // Documented: delete never throws.
         }
     }
+
+    /**
+     * A store that is not usable right now (a locked or missing Secret Service) is reported as `unavailable`, so
+     * the screen can ask the user to unlock the keyring instead of showing a generic failure.
+     */
+    private fun SecretStoreException.toFactorException(lost: Boolean = this.lost) = PinFactorException(
+        lost = lost,
+        cause = this,
+        unavailable = !lost && cause is SecretStoreUnavailableException,
+    )
 
     private fun hmacSha256(secret: ByteArray, data: ByteArray): ByteArray = try {
         Mac.getInstance(HMAC_ALGORITHM).run {

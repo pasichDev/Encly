@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -12,7 +13,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -20,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,7 +39,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.pasich.encly.editor.EditorString
+import com.pasich.encly.editor.LocalEditorSheetsAsDialogs
 import com.pasich.encly.editor.LocalEditorStrings
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import kotlinx.coroutines.delay
@@ -47,10 +55,13 @@ private val SheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
 private val HandleWidth = 32.dp
 private val HandleHeight = 4.dp
 private val HandleRadius = 2.dp
+private val DialogMaxWidth = 480.dp
+private const val DIALOG_MAX_HEIGHT_FRACTION = 0.85f
 
 /**
  * The editor's bottom sheet: top corners 16, `surfaceContainerLow`, a 32×4 handle in
- * `outlineVariant` and a gutter. [title] is shown in titleLarge above [content].
+ * `outlineVariant` and a gutter. [title] is shown in titleLarge above [content]. In a wide window (see
+ * `EditorProvider`) it is a centred dialog of the same content instead, and [sheetState] is not used.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +72,10 @@ internal fun EditorSheet(
     title: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    if (LocalEditorSheetsAsDialogs.current) {
+        EditorSheetDialog(onDismissRequest, title, modifier, content)
+        return
+    }
     val spacing = LocalEditorTheme.current.spacing
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -89,6 +104,49 @@ internal fun EditorSheet(
                 )
             }
             content()
+        }
+    }
+}
+
+@Composable
+private fun EditorSheetDialog(
+    onDismissRequest: () -> Unit,
+    title: String?,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val spacing = LocalEditorTheme.current.spacing
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        ProtectDialogWindow()
+        BoxWithConstraints(
+            modifier = modifier.fillMaxWidth().padding(spacing.m),
+            contentAlignment = Alignment.Center,
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                tonalElevation = 0.dp,
+                modifier = Modifier
+                    .widthIn(max = DialogMaxWidth)
+                    .fillMaxWidth()
+                    .heightIn(max = maxHeight * DIALOG_MAX_HEIGHT_FRACTION),
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(spacing.xs),
+                    modifier = Modifier.verticalScroll(rememberScrollState()).padding(spacing.gutter),
+                ) {
+                    if (title != null) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(bottom = spacing.xs),
+                        )
+                    }
+                    content()
+                }
+            }
         }
     }
 }

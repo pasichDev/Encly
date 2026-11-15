@@ -3,12 +3,14 @@
 package com.pasich.encly.ios.security
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.useContents
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSOperationQueue
 import platform.QuartzCore.CATransaction
 import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationDidBecomeActiveNotification
+import platform.UIKit.UIApplicationDidEnterBackgroundNotification
 import platform.UIKit.UIApplicationWillResignActiveNotification
 import platform.UIKit.UIColor
 import platform.UIKit.UIFont
@@ -31,7 +33,10 @@ import platform.UIKit.systemBackgroundColor
  * of screenshots, recordings, casts and the recents snapshot. iOS gives an app no way to refuse a screenshot, but
  * the other three can be covered:
  * - the app switcher snapshot: the system takes it when the app goes to the background, and the cover is up from
- *   `willResignActive` on, before that, so the snapshot shows the cover and not a note;
+ *   `willResignActive` on, before that, so the snapshot shows the cover and not a note. On an iPad where the app
+ *   shares the screen (Split View, Slide Over, a Stage Manager window) `willResignActive` also fires when the user
+ *   just works in the other app while Encly stays on screen; there the cover waits for `didEnterBackground`
+ *   (still before the snapshot) so that the visible app is not blanked;
  * - screen recording, AirPlay and wired mirroring (`UIScreen.isCaptured`): while the screen is captured the cover
  *   hides the content from the captured stream too (and from the user's own screen, as black frames do on Android);
  * - the cover is a window of its own above every other window, so it also covers a document picker or any other
@@ -45,6 +50,7 @@ import platform.UIKit.systemBackgroundColor
 internal class PrivacyShield {
     private var cover: UIWindow? = null
     private var inactive = false
+    private var backgrounded = false
     private var installed = false
 
     /** Starts watching the application and the screen capture state. */
@@ -56,8 +62,13 @@ internal class PrivacyShield {
             inactive = true
             enforce()
         }
+        center.addObserverForName(UIApplicationDidEnterBackgroundNotification, null, NSOperationQueue.mainQueue) {
+            backgrounded = true
+            enforce()
+        }
         center.addObserverForName(UIApplicationDidBecomeActiveNotification, null, NSOperationQueue.mainQueue) {
             inactive = false
+            backgrounded = false
             enforce()
         }
         center.addObserverForName(UIScreenCapturedDidChangeNotification, null, NSOperationQueue.mainQueue) {
@@ -69,7 +80,21 @@ internal class PrivacyShield {
 
     /** Shows or hides the cover for the current state. */
     fun enforce() {
-        if (inactive || screenIsCaptured()) show() else hide()
+        if (shouldCover()) show() else hide()
+    }
+
+    private fun shouldCover(): Boolean {
+        if (backgrounded || screenIsCaptured()) return true
+        return inactive && !sharesTheScreen()
+    }
+
+    /** True when the app's scene is a window beside another app (iPad Split View, Slide Over, Stage Manager). */
+    private fun sharesTheScreen(): Boolean {
+        val scene = UIApplication.sharedApplication.connectedScenes.filterIsInstance<UIWindowScene>().firstOrNull()
+            ?: return false
+        val screen = UIScreen.mainScreen.bounds.useContents { size.width to size.height }
+        val own = scene.coordinateSpace.bounds.useContents { size.width to size.height }
+        return own != screen
     }
 
     private fun screenIsCaptured(): Boolean = UIScreen.mainScreen.captured

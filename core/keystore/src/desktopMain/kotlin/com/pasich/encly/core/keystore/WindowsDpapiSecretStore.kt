@@ -18,9 +18,9 @@ import java.security.SecureRandom
 
 /**
  * Windows: the secret is encrypted with DPAPI (`CryptProtectData`, user scope, no UI) and the blob is kept in
- * `%LOCALAPPDATA%\Encly\` (the app's data folder; never the roaming `%APPDATA%`, which is copied to profile
- * servers and other machines). Only the same Windows user can unprotect it, so the file is useless to anyone who
- * copies it away.
+ * `%LOCALAPPDATA%\pasichdev\Encly\` (the app's data folder, which is not the install folder; never the roaming
+ * `%APPDATA%`, which is copied to profile servers and other machines). Only the same Windows user can unprotect it,
+ * so the file is useless to anyone who copies it away.
  *
  * The blob is bound to an Encly-specific entropy as well, so another program of the same user cannot unprotect
  * it by calling `CryptUnprotectData` without knowing it. That is defence against a careless program, not against
@@ -129,7 +129,7 @@ internal class WindowsDpapiSecretStore(
             } else {
                 Paths.get(System.getProperty("user.home"), "AppData", "Local")
             }
-            return base.resolve("Encly")
+            return base.resolve("pasichdev").resolve("Encly")
         }
     }
 }

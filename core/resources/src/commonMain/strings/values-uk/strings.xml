@@ -244,6 +244,7 @@
     <string name="pin_mismatch_retry">PIN-коди не збігаються. Спробуйте ще раз.</string>
     <string name="pin_save_failed">Не вдалося зберегти PIN</string>
     <string name="pin_update_failed">Не вдалося оновити PIN. Спробуйте ще раз.</string>
+    <string name="key_store_unavailable">Розблокуйте системне сховище ключів і спробуйте ще раз</string>
 
 
     <string name="press_to_edit">Натисніть, щоб почати редагування…</string>
@@ -692,6 +693,8 @@
     <string name="menu_help">Довідка</string>
     <string name="menu_exit">Вийти</string>
     <string name="menu_minimize">Згорнути</string>
+    <string name="menu_close_window">Закрити вікно</string>
+    <string name="drop_unreadable">Encly не зміг прочитати перетягнутий файл. Виберіть його через «Імпорт» або «Резервна копія» в меню «Файл».</string>
     <string name="menu_new_window">Нове вікно</string>
     <string name="note_open_in_new_window">Відкрити в новому вікні</string>
     <string name="note_export_pdf">Експортувати як PDF</string>
@@ -780,4 +783,33 @@
         <item quantity="many">%1$d нотаток буде видалено назавжди, не чекаючи %2$d днів. Цю дію не можна буде скасувати.</item>
         <item quantity="other">%1$d нотатки буде видалено назавжди, не чекаючи %2$d днів. Цю дію не можна буде скасувати.</item>
     </plurals>
+
+    <!-- Wording for the iOS and desktop apps: their own biometrics, key stores and devices. See HostTexts. -->
+    <string name="pin_unlock_with_biometric_named">Розблокувати через %1$s</string>
+    <string name="lock_biometric_invalidated_named">Біометрію на цьому пристрої змінено. Розблокуйте PIN-кодом і знову ввімкніть вхід через %1$s у налаштуваннях.</string>
+    <string name="security_biometric_not_enrolled_named">%1$s не налаштовано. Налаштуйте його в системних налаштуваннях.</string>
+    <string name="onboarding_ready_biometric_title_named">Розблокування через %1$s увімкнено</string>
+    <string name="onboarding_ready_biometric_retry_named">Спробувати %1$s ще раз</string>
+    <string name="security_encryption_pin_plain_named">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і %1$s, якщо ввімкнено).</string>
+    <string name="security_encryption_seed_plain_named">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і %1$s, якщо ввімкнено), а якщо ви забудете PIN, то фраза відновлення.</string>
+    <string name="lock_pin_key_lost_named">Ваш PIN більше не може розблокувати Encly на цьому пристрої: його апаратний ключ скинуто. Скористайтеся фразою відновлення (або %1$s), а потім задайте новий PIN.</string>
+    <string name="security_protection_slots_desc_named">PIN, фраза відновлення й %1$s відкривають кожен свій зашифрований слот. %1$s потрібен щоразу.</string>
+    <string name="duress_pin_real_vault_named">Ваше справжнє сховище лишається заблокованим і недоторканим. На відміну від PIN для стирання, PIN під примусом нічого не стирає. %1$s та фраза відновлення завжди відкривають справжнє сховище.</string>
+    <string name="wipe_pin_biometric_warning_named">Розблокування біометрією лишається ввімкненим: вас можуть змусити скористатися %1$s. Вимкніть його, якщо це для вас ризик.</string>
+    <string name="security_encryption_pin_plain_nobio">Ваші нотатки зашифровано. Їх відкриває ваш PIN.</string>
+    <string name="security_encryption_seed_plain_nobio">Ваші нотатки зашифровано. Їх відкриває ваш PIN, а якщо ви забудете PIN, то фраза відновлення.</string>
+    <string name="lock_pin_key_lost_desktop">Ваш PIN більше не може розблокувати Encly на цьому комп’ютері: секрет у системній в’язці ключів зник або був скинутий. Скористайтеся фразою відновлення, а потім задайте новий PIN.</string>
+    <string name="security_protection_slots_desc_nobio">PIN і фраза відновлення відкривають кожен свій зашифрований слот.</string>
+    <string name="duress_pin_real_vault_nobio">Ваше справжнє сховище лишається заблокованим і недоторканим. На відміну від PIN для стирання, PIN під примусом нічого не стирає. Фраза відновлення завжди відкриває справжнє сховище.</string>
+    <string name="security_protection_pin_title_device">PIN прив’язаний до цього пристрою</string>
+    <string name="security_protection_pin_desc_ios">PIN змішується з ключем у Secure Enclave цього пристрою, тож його не підібрати деінде.</string>
+    <string name="security_protection_pin_desc_desktop">PIN змішується із секретом у системній в’язці ключів, тож скопійоване сховище не підібрати деінде. Захист такий самий надійний, як ваш обліковий запис на комп’ютері.</string>
+    <string name="faq_db_key_a_ios">Encly створює випадковий 256-бітний ключ бази даних. PIN захищає окрему зашифровану (AES-GCM) копію цього ключа, а %1$s використовує ключ у Keychain, який щоразу потребує підтвердження.</string>
+    <string name="faq_db_key_a_desktop">Encly створює випадковий 256-бітний ключ бази даних. PIN захищає окрему зашифровану (AES-GCM) копію цього ключа і змішується із секретом у системній в’язці ключів.</string>
+    <string name="auto_lock_desc_device">Скільки Encly лишається відкритим, коли ви переходите в інший застосунок. Вимкнення екрана чи блокування пристрою завжди блокує його одразу.</string>
+    <string name="import_intro_device">Перенесіть нотатки з іншого застосунку. Оберіть його експорт, а Encly сам розпізнає формат. Усе залишається на цьому пристрої, нічого не завантажується.</string>
+    <string name="import_error_no_picker_device">На цьому пристрої немає застосунку для вибору файлів, який може використати Encly.</string>
+    <string name="faq_swipe_a_other">За замовчуванням свайп нотатки праворуч закріплює або відкріплює її, а ліворуч — архівує. У Налаштування → Дії свайпом можна вибрати для кожного напрямку: закріпити, архівувати, наступний колір, перемістити в кошик (завжди з підтвердженням) або нічого, а також вимкнути свайпи.</string>
+    <string name="faq_theme_a_other">У Налаштування → Зовнішній вигляд виберіть одну з п’яти тем, світлий, темний чи системний режим, один із трьох стилів шрифту та розмір тексту.</string>
+    <string name="faq_language_a_ios">Відкрийте Налаштування → Мова та виберіть одну з доступних мов або «Як у системі», щоб використовувати мову пристрою. Зміна застосується під час наступного запуску Encly.</string>
 </resources>

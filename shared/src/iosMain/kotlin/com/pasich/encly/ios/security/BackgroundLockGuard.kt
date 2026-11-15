@@ -6,6 +6,9 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIBackgroundTaskIdentifier
 import platform.UIKit.UIBackgroundTaskInvalid
 
+/** The longest auto-lock delay iOS lets the app keep: the background task it grants runs out after about this. */
+internal const val IOS_MAX_AUTO_LOCK_MILLIS = 30_000L
+
 /**
  * Keeps the auto-lock honest while the app is in the background. iOS suspends an app a few seconds after it enters
  * the background; a suspended process runs no timer and receives no notification, so the lock manager's delay timer
@@ -16,7 +19,8 @@ import platform.UIKit.UIBackgroundTaskInvalid
  * and the device-lock signal work as on Android. The task is ended as soon as the vault is closed or the app comes
  * back. If iOS takes the task away first (about half a minute), the expiration handler closes the vault before the
  * app is suspended. This is the one explicit difference from Android: an auto-lock delay longer than the time iOS
- * grants locks at the end of that time, never later. That is stricter, never weaker.
+ * grants locks at the end of that time, never later (so iOS offers no delay beyond [IOS_MAX_AUTO_LOCK_MILLIS]).
+ * That is stricter, never weaker.
  */
 internal class BackgroundLockGuard(
     private val isVaultOpen: () -> Boolean,

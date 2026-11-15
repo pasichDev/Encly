@@ -27,7 +27,7 @@ class AppDirectoriesTest {
     @Test
     fun `windows uses LOCALAPPDATA and never the roaming profile`() {
         assertEquals(
-            Paths.get("C:\\Users\\a\\AppData\\Local", "Encly"),
+            Paths.get("C:\\Users\\a\\AppData\\Local", "pasichdev", "Encly"),
             AppDirectories.dataDirectory(
                 DesktopOs.WINDOWS,
                 env("LOCALAPPDATA" to "C:\\Users\\a\\AppData\\Local", "APPDATA" to "C:\\roaming"),
@@ -35,11 +35,11 @@ class AppDirectoriesTest {
             ),
         )
         assertEquals(
-            Paths.get("home", "AppData", "Local", "Encly"),
+            Paths.get("home", "AppData", "Local", "pasichdev", "Encly"),
             AppDirectories.dataDirectory(DesktopOs.WINDOWS, env("LOCALAPPDATA" to " ", "APPDATA" to "r"), "home"),
         )
         assertEquals(
-            Paths.get("home", "AppData", "Local", "Encly"),
+            Paths.get("home", "AppData", "Local", "pasichdev", "Encly"),
             AppDirectories.dataDirectory(DesktopOs.WINDOWS, env("APPDATA" to "C:\\roaming"), "home"),
         )
     }

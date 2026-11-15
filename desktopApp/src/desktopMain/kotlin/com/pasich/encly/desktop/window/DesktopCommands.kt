@@ -57,6 +57,9 @@ interface DesktopCommands {
 
     fun minimise()
 
+    /** Close this window; the last one closing ends the app. */
+    fun closeWindow()
+
     fun quit()
 }
 
@@ -71,6 +74,7 @@ class DefaultDesktopCommands(
     private val onMinimise: () -> Unit,
     private val onQuit: () -> Unit,
     private val openWindow: () -> Unit = {},
+    private val onCloseWindow: () -> Unit = {},
 ) : DesktopCommands {
     override fun newNote() {
         navigation.request(AppCommand.NewNote)
@@ -108,6 +112,8 @@ class DefaultDesktopCommands(
 
     override fun minimise() = onMinimise()
 
+    override fun closeWindow() = onCloseWindow()
+
     override fun quit() = onQuit()
 
     private fun open(route: String) {
@@ -133,8 +139,8 @@ data class Accelerator(
  * either the menu's ([menuOwned]: the menu registers its chord, built from the map's own key, and the host
  * declines it) or the host's (the menu registers nothing for it), never both: on a Mac the menu bar is native and
  * takes its chords before any key reaches the window, so a chord both sides took would run twice or not at all.
- * The chords below that are not in the map (new window, print, PDF, import, backup, settings, minimise, quit) are the
- * menu's alone: none of them is a chord the map answers, so the host never runs one.
+ * The chords below that are not in the map (new window, print, PDF, import, backup, settings, minimise, close
+ * window, quit) are the menu's alone: none of them is a chord the map answers, so the host never runs one.
  */
 object DesktopShortcuts {
     /** The commands whose accelerators the menu registers; the keyboard host declines them. */
@@ -166,6 +172,9 @@ object DesktopShortcuts {
 
     fun minimise(os: DesktopOs) = primary(os, Key.M)
 
+    /** Shift is on it because the plain chord is the key map's Close tab (W), which the window host owns. */
+    fun closeWindow(os: DesktopOs) = primary(os, Key.W, shift = true)
+
     fun quit(os: DesktopOs) = primary(os, Key.Q)
 
     /** The chords only the menu has, which the key map does not know. */
@@ -177,6 +186,7 @@ object DesktopShortcuts {
         backup(os),
         settings(os),
         minimise(os),
+        closeWindow(os),
         quit(os),
     )
 }

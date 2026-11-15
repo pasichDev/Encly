@@ -522,11 +522,13 @@ public abstract interface class com/pasich/encly/core/security/BiometricManager 
 	public static final field SLOT_PREFIX Ljava/lang/String;
 	public abstract fun authenticate (Lcom/pasich/encly/core/security/BiometricHost;Lcom/pasich/encly/core/security/BiometricManager$BiometricType;Lcom/pasich/encly/core/security/BiometricManager$BiometricCallback;Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;)V
 	public static synthetic fun authenticate$default (Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/BiometricHost;Lcom/pasich/encly/core/security/BiometricManager$BiometricType;Lcom/pasich/encly/core/security/BiometricManager$BiometricCallback;Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;ILjava/lang/Object;)V
+	public fun cancelPendingEnrolment ()V
 	public abstract fun disable ()V
 	public abstract fun enroll (Lcom/pasich/encly/core/security/BiometricHost;[BLkotlin/jvm/functions/Function1;)V
 	public abstract fun hasSlot ()Z
 	public abstract fun isStrongBiometricAvailable ()Z
 	public abstract fun strongBiometricStatus ()Lcom/pasich/encly/core/security/BiometricStatus;
+	public fun takeInvalidated ()Z
 	public abstract fun unlock (Lcom/pasich/encly/core/security/BiometricHost;Lkotlin/jvm/functions/Function1;)V
 }
 
@@ -557,6 +559,8 @@ public final class com/pasich/encly/core/security/BiometricManager$Companion {
 
 public final class com/pasich/encly/core/security/BiometricManager$DefaultImpls {
 	public static synthetic fun authenticate$default (Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/BiometricHost;Lcom/pasich/encly/core/security/BiometricManager$BiometricType;Lcom/pasich/encly/core/security/BiometricManager$BiometricCallback;Lcom/pasich/encly/core/security/BiometricManager$PromptConfig;ILjava/lang/Object;)V
+	public static fun cancelPendingEnrolment (Lcom/pasich/encly/core/security/BiometricManager;)V
+	public static fun takeInvalidated (Lcom/pasich/encly/core/security/BiometricManager;)Z
 }
 
 public final class com/pasich/encly/core/security/BiometricManager$PromptConfig {
@@ -592,12 +596,18 @@ public final class com/pasich/encly/core/security/BiometricStatus$Companion {
 
 public abstract interface class com/pasich/encly/core/security/DeviceLockWatcher {
 	public abstract fun isDeviceLocked ()Z
+	public fun isScreenOn ()Z
 	public abstract fun watchScreenOff (Lkotlin/jvm/functions/Function0;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/core/security/DeviceLockWatcher$DefaultImpls {
+	public static fun isScreenOn (Lcom/pasich/encly/core/security/DeviceLockWatcher;)Z
 }
 
 public final class com/pasich/encly/core/security/DeviceLockWatcher$None : com/pasich/encly/core/security/DeviceLockWatcher {
 	public static final field INSTANCE Lcom/pasich/encly/core/security/DeviceLockWatcher$None;
 	public fun isDeviceLocked ()Z
+	public fun isScreenOn ()Z
 	public fun watchScreenOff (Lkotlin/jvm/functions/Function0;)Lkotlin/jvm/functions/Function0;
 }
 
@@ -689,6 +699,7 @@ public final class com/pasich/encly/core/security/NeverLocked : com/pasich/encly
 public final class com/pasich/encly/core/security/PinChange : java/lang/Enum {
 	public static final field FAILED Lcom/pasich/encly/core/security/PinChange;
 	public static final field IN_USE Lcom/pasich/encly/core/security/PinChange;
+	public static final field KEY_STORE_UNAVAILABLE Lcom/pasich/encly/core/security/PinChange;
 	public static final field SET Lcom/pasich/encly/core/security/PinChange;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/PinChange;
@@ -696,9 +707,10 @@ public final class com/pasich/encly/core/security/PinChange : java/lang/Enum {
 }
 
 public final class com/pasich/encly/core/security/PinFactorException : java/lang/Exception {
-	public fun <init> (ZLjava/lang/Throwable;)V
-	public synthetic fun <init> (ZLjava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLjava/lang/Throwable;Z)V
+	public synthetic fun <init> (ZLjava/lang/Throwable;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getLost ()Z
+	public final fun getUnavailable ()Z
 }
 
 public abstract interface class com/pasich/encly/core/security/PinHardwareFactor {
@@ -739,6 +751,13 @@ public final class com/pasich/encly/core/security/PinUnlock$Failed : com/pasich/
 
 public final class com/pasich/encly/core/security/PinUnlock$KeyLost : com/pasich/encly/core/security/PinUnlock {
 	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$KeyLost;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$KeyStoreUnavailable : com/pasich/encly/core/security/PinUnlock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$KeyStoreUnavailable;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -850,6 +869,7 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun isValidRecoveryPhrase ([C)Z
 	public final fun keepUnlockMethodsAfterRecovery ()Z
 	public final fun lock ()V
+	public final fun markRestorePending ()Z
 	public final fun openInitialVault ()Z
 	public final fun pinLockoutRemainingMillis ()J
 	public final fun recoveryStage ()Lcom/pasich/encly/core/security/RecoveryStage;
@@ -860,6 +880,7 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun resolveInitialStatus ()Lcom/pasich/encly/core/security/InitialStatus;
 	public final fun setOnboardingShown ()Z
 	public final fun setSecurityStatus (Lcom/pasich/encly/core/security/InitialStatus;)V
+	public final fun takeBiometricInvalidated ()Z
 	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public final fun unlockWithRawKey ([BZ)Z
 	public static synthetic fun unlockWithRawKey$default (Lcom/pasich/encly/core/security/SecurityManager;[BZILjava/lang/Object;)Z
@@ -931,6 +952,7 @@ public final class com/pasich/encly/core/security/SessionLockManager : androidx/
 	public final fun allowSystemPicker ()V
 	public final fun endSystemPicker ()V
 	public fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getLocking ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getSessionGeneration ()J
 	public final fun isDeviceLocked ()Z
 	public final fun lockNow ()V
@@ -1035,6 +1057,7 @@ public final class com/pasich/encly/core/security/VaultStore$Editor {
 public final class com/pasich/encly/core/security/VaultUnlockResult : java/lang/Enum {
 	public static final field DB_ERROR Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field INVALID_CREDENTIAL Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static final field KEY_STORE_UNAVAILABLE Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field LOCKED_OUT Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field PIN_KEY_LOST Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field SUCCESS Lcom/pasich/encly/core/security/VaultUnlockResult;

@@ -224,8 +224,9 @@ class DesktopCommandsAndShortcutsTest {
         }
         rig.commands.setTheme(com.pasich.encly.domain.model.ThemeType.DARK)
         rig.commands.minimise()
+        rig.commands.closeWindow()
         rig.commands.quit()
-        assertEquals(listOf("minimise", "quit"), rig.events)
+        assertEquals(listOf("minimise", "close", "quit"), rig.events)
         assertEquals(listOf(com.pasich.encly.domain.model.ThemeType.DARK), rig.themes)
     }
 

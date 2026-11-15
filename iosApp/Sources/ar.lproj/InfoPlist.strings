@@ -1,0 +1,2 @@
+/* Shown by the system when Encly asks to use Face ID. */
+"NSFaceIDUsageDescription" = "يستخدم Encly خاصية Face ID لفتح ملاحظاتك دون كتابة رمز PIN أو كلمة المرور. تبقى بيانات وجهك على هذا الجهاز، ويظل رمز PIN أو كلمة المرور يعمل كالمعتاد.";

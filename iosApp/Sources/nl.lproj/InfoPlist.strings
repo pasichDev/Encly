@@ -1,0 +1,2 @@
+/* Shown by the system when Encly asks to use Face ID. */
+"NSFaceIDUsageDescription" = "Encly gebruikt Face ID om je notities te ontgrendelen zonder pincode of wachtwoord in te typen. Je gezichtsgegevens blijven op dit apparaat en je pincode of wachtwoord blijft gewoon werken.";

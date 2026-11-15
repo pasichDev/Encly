@@ -223,6 +223,12 @@ class LockViewModelTest {
     }
 
     @Test
+    fun anUnavailableKeyStoreIsReported() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.KEY_STORE_UNAVAILABLE)
+        assertEquals(PinUnlockResult.KEY_STORE_UNAVAILABLE, pin())
+    }
+
+    @Test
     fun theRecoveryWordsUnlockAndAreWipedAfterwards() = runTest {
         `when`(security.unlockWithSeed(ArgumentMatchers.any(CharArray::class.java) ?: CharArray(0)))
             .thenReturn(VaultUnlockResult.SUCCESS)

@@ -244,6 +244,7 @@
     <string name="pin_mismatch_retry">Les codes PIN ne correspondent pas. Veuillez réessayer.</string>
     <string name="pin_save_failed">Impossible d\'enregistrer le code PIN</string>
     <string name="pin_update_failed">Impossible de mettre à jour le code PIN. Veuillez réessayer.</string>
+    <string name="key_store_unavailable">Déverrouillez le trousseau de clés du système et réessayez</string>
 
 
     <string name="press_to_edit">Appuyez pour commencer à écrire…</string>
@@ -686,6 +687,8 @@
     <string name="menu_help">Aide</string>
     <string name="menu_exit">Quitter</string>
     <string name="menu_minimize">Réduire</string>
+    <string name="menu_close_window">Fermer la fenêtre</string>
+    <string name="drop_unreadable">Encly n’a pas pu lire le fichier déposé. Choisissez-le avec Importer ou Sauvegarde dans le menu Fichier.</string>
     <string name="menu_new_window">Nouvelle fenêtre</string>
     <string name="note_open_in_new_window">Ouvrir dans une nouvelle fenêtre</string>
     <string name="note_export_pdf">Exporter en PDF</string>
@@ -767,4 +770,33 @@
         <item quantity="many">%1$d notes seront supprimées définitivement sans attendre les %2$d jours. Cette action est irréversible.</item>
         <item quantity="other">%1$d notes seront supprimées définitivement sans attendre les %2$d jours. Cette action est irréversible.</item>
     </plurals>
+
+    <!-- Wording for the iOS and desktop apps: their own biometrics, key stores and devices. See HostTexts. -->
+    <string name="pin_unlock_with_biometric_named">Déverrouiller avec %1$s</string>
+    <string name="lock_biometric_invalidated_named">La biométrie de cet appareil a changé. Déverrouillez avec votre code PIN, puis réactivez %1$s dans les réglages.</string>
+    <string name="security_biometric_not_enrolled_named">%1$s n\'est pas configuré. Configurez-le dans les réglages système.</string>
+    <string name="onboarding_ready_biometric_title_named">Déverrouillage par %1$s activé</string>
+    <string name="onboarding_ready_biometric_retry_named">Réessayer %1$s</string>
+    <string name="security_encryption_pin_plain_named">Vos notes sont chiffrées. Votre code PIN (et %1$s, s\'il est activé) les déverrouille.</string>
+    <string name="security_encryption_seed_plain_named">Vos notes sont chiffrées. Votre code PIN (et %1$s, s\'il est activé) les déverrouille, et votre phrase de récupération si vous oubliez le PIN.</string>
+    <string name="lock_pin_key_lost_named">Votre PIN ne peut plus déverrouiller Encly sur cet appareil : sa clé matérielle a été réinitialisée. Utilisez votre phrase de récupération (ou %1$s), puis définissez un nouveau PIN.</string>
+    <string name="security_protection_slots_desc_named">Le PIN, la phrase de récupération et %1$s ouvrent chacun leur propre emplacement chiffré. %1$s est requis à chaque fois.</string>
+    <string name="duress_pin_real_vault_named">Votre vrai coffre reste verrouillé et intact. Contrairement au PIN d\'effacement, le PIN de contrainte n\'efface rien. %1$s et votre phrase de récupération ouvrent toujours le vrai coffre.</string>
+    <string name="wipe_pin_biometric_warning_named">Le déverrouillage biométrique reste actif : quelqu\'un peut vous forcer à utiliser %1$s. Désactivez-le si c\'est un risque pour vous.</string>
+    <string name="security_encryption_pin_plain_nobio">Vos notes sont chiffrées. Votre code PIN les déverrouille.</string>
+    <string name="security_encryption_seed_plain_nobio">Vos notes sont chiffrées. Votre code PIN les déverrouille, et votre phrase de récupération si vous oubliez le PIN.</string>
+    <string name="lock_pin_key_lost_desktop">Votre PIN ne peut plus déverrouiller Encly sur cet ordinateur : le secret du trousseau du système est absent ou a été réinitialisé. Utilisez votre phrase de récupération, puis définissez un nouveau PIN.</string>
+    <string name="security_protection_slots_desc_nobio">Le PIN et la phrase de récupération ouvrent chacun leur propre emplacement chiffré.</string>
+    <string name="duress_pin_real_vault_nobio">Votre vrai coffre reste verrouillé et intact. Contrairement au PIN d\'effacement, le PIN de contrainte n\'efface rien. Votre phrase de récupération ouvre toujours le vrai coffre.</string>
+    <string name="security_protection_pin_title_device">Un PIN lié à cet appareil</string>
+    <string name="security_protection_pin_desc_ios">Votre code PIN est combiné à une clé de la Secure Enclave de cet appareil : impossible de le deviner ailleurs.</string>
+    <string name="security_protection_pin_desc_desktop">Votre code PIN est combiné à un secret du trousseau de votre système : impossible de deviner ailleurs un coffre copié. Il est aussi sûr que votre compte utilisateur.</string>
+    <string name="faq_db_key_a_ios">Encly crée une clé de base de données aléatoire de 256 bits. Votre PIN protège un emplacement de déverrouillage AES-GCM séparé, et %1$s utilise une clé du trousseau qui exige une authentification à chaque usage.</string>
+    <string name="faq_db_key_a_desktop">Encly crée une clé de base de données aléatoire de 256 bits. Votre PIN protège un emplacement de déverrouillage AES-GCM séparé et est combiné à un secret du trousseau de votre système.</string>
+    <string name="auto_lock_desc_device">Durée pendant laquelle Encly reste ouvert quand vous passez à une autre app. Éteindre l’écran ou verrouiller l’appareil le verrouille toujours aussitôt.</string>
+    <string name="import_intro_device">Récupérez vos notes d\'une autre application. Choisissez son export et Encly reconnaît le format tout seul. Tout reste sur cet appareil ; rien n\'est envoyé.</string>
+    <string name="import_error_no_picker_device">Cet appareil n\'a pas d\'application de sélection de fichiers qu\'Encly puisse utiliser.</string>
+    <string name="faq_swipe_a_other">Par défaut, balayer une note vers la droite l\'épingle ou la désépingle, et vers la gauche l\'archive. Dans Paramètres → Actions par balayage, vous choisissez pour chaque direction : épingler, archiver, couleur suivante, mettre à la corbeille (avec confirmation) ou rien, ou vous désactivez les balayages.</string>
+    <string name="faq_theme_a_other">Dans Paramètres → Apparence, choisissez l’un des cinq thèmes, le mode clair, sombre ou système, l’un des trois styles de police et la taille du texte.</string>
+    <string name="faq_language_a_ios">Ouvrez Paramètres → Langue et choisissez l\'une des langues disponibles, ou « Langue du système » pour suivre votre appareil. Le changement s\'applique au prochain lancement d\'Encly.</string>
 </resources>

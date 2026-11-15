@@ -33,15 +33,20 @@ enum class DesktopOs {
  * the window state and the cache. One directory per OS user, in the place the OS reserves for it.
  */
 object AppDirectories {
+    // Under the vendor folder, not `%LOCALAPPDATA%\Encly`: that is where a per-user Windows installer puts the app by
+    // default, and an upgrade or uninstall of the app must never be able to remove the vault.
+    private const val WINDOWS_VENDOR = "pasichdev"
     private const val WINDOWS_NAME = "Encly"
     private const val MACOS_NAME = "Encly"
     private const val LINUX_NAME = "encly"
 
     /**
      * The data directory for [os]. Pure: [env] answers environment variables and [home] is the user's home.
-     * - Windows: `%LOCALAPPDATA%\Encly` (the same folder the DPAPI blob of the PIN factor lives in). Local, not
-     *   the roaming `%APPDATA%`: a roaming profile is copied to the profile server and to every machine the user
-     *   signs in to, and the vault and the PIN's device secret must stay on this one;
+     * - Windows: `%LOCALAPPDATA%\pasichdev\Encly` (the same folder the DPAPI blob of the PIN factor lives in). Local,
+     *   not the roaming `%APPDATA%`: a roaming profile is copied to the profile server and to every machine the user
+     *   signs in to, and the vault and the PIN's device secret must stay on this one. Not the install folder
+     *   (`%LOCALAPPDATA%\Programs\Encly`, see `installationPath` in `desktopApp/build.gradle.kts`): the installer owns
+     *   that one and may replace or remove it;
      * - macOS: `~/Library/Application Support/Encly`;
      * - Linux: `$XDG_DATA_HOME/encly`, or `~/.local/share/encly` when it is unset, empty or not absolute (the
      *   XDG specification says a relative value is invalid and must be ignored).
@@ -49,7 +54,8 @@ object AppDirectories {
     fun dataDirectory(os: DesktopOs, env: (String) -> String?, home: String): Path = when (os) {
         DesktopOs.WINDOWS -> {
             val appData = env("LOCALAPPDATA")?.takeIf { it.isNotBlank() }
-            (appData?.let(Paths::get) ?: Paths.get(home, "AppData", "Local")).resolve(WINDOWS_NAME)
+            val localAppData = appData?.let(Paths::get) ?: Paths.get(home, "AppData", "Local")
+            localAppData.resolve(WINDOWS_VENDOR).resolve(WINDOWS_NAME)
         }
 
         DesktopOs.MACOS -> Paths.get(home, "Library", "Application Support", MACOS_NAME)

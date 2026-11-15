@@ -9,12 +9,15 @@ import kotlinx.io.RawSink
 import kotlinx.io.RawSource
 import kotlinx.io.asSink
 import kotlinx.io.asSource
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
 
 /** The [DocumentRef] of a picked file or folder: the desktop names a document by its absolute path. */
 fun Path.toDocumentRef(): DocumentRef = DocumentRef(toAbsolutePath().normalize().toString())
@@ -28,8 +31,11 @@ fun Path.toDocumentRef(): DocumentRef = DocumentRef(toAbsolutePath().normalize()
 class DesktopDocuments : PlatformDocuments {
     override fun openRead(doc: DocumentRef): RawSource? = path(doc)?.let { Files.newInputStream(it).asSource() }
 
-    // Replaces the content, as Android's "wt" mode does; creates the file if the dialog did not.
+    // Replaces the content, as Android's "wt" mode does; creates the file if the dialog did not. A file made here is
+    // for its owner only (a plaintext export must not be world-readable under a permissive umask); one that
+    // already exists keeps the permissions it has.
     override fun openWrite(doc: DocumentRef): RawSink? = path(doc)?.let {
+        createOwnerOnlyIfMissing(it)
         Files.newOutputStream(
             it,
             StandardOpenOption.CREATE,
@@ -49,10 +55,32 @@ class DesktopDocuments : PlatformDocuments {
         return FolderTree(base, maxEntries)
     }
 
+    /**
+     * Creates [target] with `rw-------` where the file system has POSIX permissions (macOS, Linux). Anywhere else,
+     * or when [target] is there already, nothing happens and the write below behaves as before.
+     */
+    private fun createOwnerOnlyIfMissing(target: Path) {
+        if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) return
+        try {
+            val parent = target.toAbsolutePath().parent
+            if (parent != null && Files.getFileStore(parent).supportsFileAttributeView("posix")) {
+                Files.createFile(target, PosixFilePermissions.asFileAttribute(OWNER_ONLY))
+            }
+        } catch (_: FileAlreadyExistsException) {
+            // Made by someone else in the meantime: it is written to like any existing file.
+        } catch (_: IOException) {
+            // No such folder or no right to create here: the write below fails with the proper error.
+        }
+    }
+
     private fun path(doc: DocumentRef): Path? = try {
         Paths.get(doc.value)
     } catch (_: InvalidPathException) {
         null
+    }
+
+    private companion object {
+        val OWNER_ONLY: Set<PosixFilePermission> = PosixFilePermissions.fromString("rw-------")
     }
 
     private class FolderTree(private val root: Path, private val maxEntries: Int) : DocumentTree {

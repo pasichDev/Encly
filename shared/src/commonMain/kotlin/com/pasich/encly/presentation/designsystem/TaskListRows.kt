@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,10 +36,10 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.platform.vaultTextKeyboardOptions
 import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -321,7 +320,7 @@ fun EnclyStepField(
             singleLine = true,
             cursorBrush = SolidColor(colors.primary),
             // No suggestions or learning, as for every other vault text.
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction),
+            keyboardOptions = vaultTextKeyboardOptions(imeAction),
             keyboardActions = KeyboardActions { onImeAction() },
             modifier = Modifier
                 .weight(1f)

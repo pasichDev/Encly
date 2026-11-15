@@ -27,6 +27,8 @@ import com.pasich.encly.core.resources.auto_lock_title
 import com.pasich.encly.core.resources.cancel
 import com.pasich.encly.core.resources.done
 import com.pasich.encly.core.security.AutoLockDelay
+import com.pasich.encly.platform.LocalMaxAutoLockMillis
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -61,7 +63,10 @@ internal fun AutoLockRow(current: AutoLockDelay, onSelect: (AutoLockDelay) -> Un
 
 @Composable
 private fun AutoLockDialog(current: AutoLockDelay, onDismiss: () -> Unit, onConfirm: (AutoLockDelay) -> Unit) {
-    var selected by rememberSaveable { mutableStateOf(current) }
+    val max = LocalMaxAutoLockMillis.current
+    val offered = AutoLockDelay.entries.filter { max == null || it.millis <= max }
+    // A stored delay the host cannot honour is shown as the longest one it can.
+    var selected by rememberSaveable { mutableStateOf(if (current in offered) current else offered.last()) }
     EnclyDialog(
         title = stringResource(Res.string.auto_lock_title),
         onDismissRequest = onDismiss,
@@ -70,12 +75,12 @@ private fun AutoLockDialog(current: AutoLockDelay, onDismiss: () -> Unit, onConf
     ) {
         Column(modifier = Modifier.selectableGroup()) {
             Text(
-                text = stringResource(Res.string.auto_lock_desc),
+                text = hostString(Res.string.auto_lock_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = EnclyTheme.spacing.xs),
             )
-            AutoLockDelay.entries.forEach { delay ->
+            offered.forEach { delay ->
                 EnclyRadioRow(
                     title = stringResource(delay.label()),
                     selected = delay == selected,

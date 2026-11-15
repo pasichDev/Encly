@@ -39,6 +39,7 @@ import com.pasich.encly.core.resources.pin_digits_count
 import com.pasich.encly.core.resources.pin_unlock_with_fingerprint
 import com.pasich.encly.core.security.MAX_PIN_LENGTH
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -152,7 +153,7 @@ fun PinKeypad(
                     ) {
                         Icon(
                             imageVector = EnclyIcons.Fingerprint,
-                            contentDescription = stringResource(Res.string.pin_unlock_with_fingerprint),
+                            contentDescription = hostString(Res.string.pin_unlock_with_fingerprint),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(28.dp),
                         )

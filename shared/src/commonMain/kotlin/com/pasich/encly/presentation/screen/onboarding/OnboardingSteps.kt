@@ -78,6 +78,7 @@ import com.pasich.encly.core.resources.onboarding_welcome_headline
 import com.pasich.encly.core.resources.onboarding_welcome_sub
 import com.pasich.encly.core.resources.pin_unlock_with_fingerprint
 import com.pasich.encly.core.resources.recovery_phrase_entry_label
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DoneRow
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -241,7 +242,7 @@ private fun BiometricCallout(checked: Boolean, onCheckedChange: (Boolean) -> Uni
         modifier = modifier.fillMaxWidth(),
     ) {
         EnclySwitchRow(
-            title = stringResource(Res.string.pin_unlock_with_fingerprint),
+            title = hostString(Res.string.pin_unlock_with_fingerprint),
             supporting = stringResource(Res.string.onboarding_biometric_desc),
             icon = EnclyIcons.Fingerprint,
             checked = checked,
@@ -360,7 +361,7 @@ internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) 
                 )
                 if (state.biometricEnabled) {
                     DoneRow(
-                        stringResource(Res.string.onboarding_ready_biometric_title),
+                        hostString(Res.string.onboarding_ready_biometric_title),
                         stringResource(Res.string.onboarding_ready_biometric_desc),
                     )
                 }

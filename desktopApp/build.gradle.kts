@@ -93,7 +93,19 @@ compose.desktop {
 
         // No --add-opens is needed: the macOS window is reached through the Objective-C runtime, not through
         // AWT's private peer classes. Nothing here opens a network connection.
-        jvmArgs += listOf("-Dfile.encoding=UTF-8", "-Dapple.awt.application.name=Encly")
+        //
+        // -XX:+DisableAttachMechanism: another process of the same user cannot attach to the running JVM (jcmd, a
+        // debugger or an agent loaded through the Attach API), which on macOS would run its code inside the process
+        // the Keychain item of the PIN factor trusts and read the key from the heap while the vault is open.
+        //
+        // -Dapple.awt.application.appearance=system: the macOS window chrome (title bar) follows the system's light
+        // or dark appearance instead of staying light over a dark app.
+        jvmArgs += listOf(
+            "-Dfile.encoding=UTF-8",
+            "-Dapple.awt.application.name=Encly",
+            "-Dapple.awt.application.appearance=system",
+            "-XX:+DisableAttachMechanism",
+        )
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)
@@ -110,8 +122,10 @@ compose.desktop {
 
             // The JDK modules the app needs beyond the defaults; `suggestRuntimeModules` lists what is missing.
             // java.desktop (AWT, Swing), java.prefs and java.naming come with the defaults of Compose.
+            // `java.instrument` is not among them on purpose: it is what loads a `-javaagent`, so without it an
+            // agent named in JAVA_TOOL_OPTIONS cannot be loaded into the app. Nothing of the app uses
+            // java.lang.instrument.
             modules(
-                "java.instrument",
                 "jdk.unsupported",
                 "java.management",
                 "java.sql",
@@ -136,6 +150,10 @@ compose.desktop {
                 menu = true
                 shortcut = true
                 perUserInstall = true
+                // `--install-dir`, relative to %LOCALAPPDATA%: the app goes to %LOCALAPPDATA%\Programs\Encly, away
+                // from the vault and the DPAPI blob in %LOCALAPPDATA%\pasichdev\Encly (see AppDirectories). The
+                // default would be %LOCALAPPDATA%\Encly, and an installer upgrade or uninstall may remove that.
+                installationPath = "Programs\\Encly"
                 // Fixed, so a new version upgrades the installed one instead of installing beside it.
                 upgradeUuid = "6f1d0c52-3b0e-4b46-9a7e-2f5d7c9b4e18"
             }

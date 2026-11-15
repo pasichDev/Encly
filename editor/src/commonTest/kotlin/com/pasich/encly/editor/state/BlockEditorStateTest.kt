@@ -194,7 +194,8 @@ class BlockEditorStateTest {
 
         editor.addBlock(heading)
 
-        assertEquals(listOf<Block>(heading), editor.blocks)
+        // A snapshot list is compared by its content, as a plain list (Kotlin/Native does not do it for us).
+        assertEquals(listOf<Block>(heading), editor.blocks.toList())
         assertEquals(FocusRequest(heading.id), editor.selection.requests.first())
     }
 
@@ -326,7 +327,7 @@ class BlockEditorStateTest {
 
         editor.removeBlock(editor.blocks[1], BlockRemoveAction.REMOVE)
         editor.removeBlock(full, BlockRemoveAction.REMOVE)
-        assertEquals(listOf<Block>(full), editor.blocks)
+        assertEquals(listOf<Block>(full), editor.blocks.toList())
     }
 
     @Test

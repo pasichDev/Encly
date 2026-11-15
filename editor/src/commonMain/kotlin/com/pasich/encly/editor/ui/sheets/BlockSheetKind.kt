@@ -1,16 +1,19 @@
 package com.pasich.encly.editor.ui.sheets
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.LocalEditorClipboard
+import com.pasich.encly.editor.LocalEditorSheetsAsDialogs
 import com.pasich.encly.editor.LocalEditorStrings
 import com.pasich.encly.editor.LocalLinkOpener
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.state.BlockRemoveAction
 import com.pasich.encly.editor.ui.EditorController
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /** The sheets a block can open: a saved link's, or the one of every other block (a separator's). */
@@ -36,13 +39,12 @@ public fun EditorBlockSheet(
     val clipboard = LocalEditorClipboard.current
     val linkOpener = LocalLinkOpener.current
     val scope = rememberCoroutineScope()
+    val asDialog = LocalEditorSheetsAsDialogs.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val block = blockId?.let { id -> controller.blocks.firstOrNull { it.id == id } }
     if (block == null || kind == null) return
 
-    fun dismiss() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion { onClose() }
-    }
+    fun dismiss() = closeSheet(asDialog, scope, sheetState, onClose)
 
     fun onAction(action: ActionBlockDialog) {
         val link = (block as? Block.LinkBlock)?.block?.value?.url.orEmpty()
@@ -78,4 +80,10 @@ public fun EditorBlockSheet(
             onAction = ::onAction,
         )
     }
+}
+
+/** Closes the sheet and then calls [onClose]: a bottom sheet slides away first, a dialog has nothing to slide. */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun closeSheet(asDialog: Boolean, scope: CoroutineScope, sheetState: SheetState, onClose: () -> Unit) {
+    if (asDialog) onClose() else scope.launch { sheetState.hide() }.invokeOnCompletion { onClose() }
 }

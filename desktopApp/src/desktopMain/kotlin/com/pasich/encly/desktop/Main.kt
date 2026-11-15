@@ -11,13 +11,17 @@ import com.pasich.encly.desktop.storage.AppDirectories
 import com.pasich.encly.desktop.storage.DesktopOs
 import com.pasich.encly.desktop.window.EnclyWindows
 import dev.zacsweers.metro.createGraphFactory
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.awt.GraphicsEnvironment
 import java.awt.Taskbar
 import java.io.IOException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.imageio.ImageIO
 import javax.swing.JOptionPane
+import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
@@ -40,8 +44,11 @@ fun main(args: Array<String>) {
     // Kept out of the OS's backups (Time Machine) every start, in case the attribute was lost with a restored folder.
     NativeBackupExclusion.forOs(os).exclude(dataDirectory)
     // Held until the process ends: the OS releases the lock with it.
-    val instance = SingleInstanceLock.tryAcquire(dataDirectory)
-        ?: fail("Encly is already running.", exitCode = 0)
+    val instance = try {
+        SingleInstanceLock.tryAcquire(dataDirectory)
+    } catch (e: IOException) {
+        fail("Encly cannot open its lock file in its data folder: ${e.message}")
+    } ?: handOverToRunningInstance(dataDirectory, LaunchFiles.fromArguments(args))
 
     val pinFactor = createPinFactor(dataDirectory)
     val environment = DesktopEnvironment.system(os, dataDirectory, pinFactor)
@@ -49,14 +56,43 @@ fun main(args: Array<String>) {
     startServices(graph)
     setDockIcon()
 
+    // A second start asks this one to come to the front and to take its files; they wait for the windows here.
+    val activations = Channel<List<Path>>(Channel.UNLIMITED)
+    val channel = InstanceChannel.listen(dataDirectory) { files -> activations.trySend(files) }
+    val ending = AtomicBoolean(false)
+    // Windows logoff or shutdown, SIGTERM and `flatpak kill` end the process without the app's own exit: the vault is
+    // still locked and the clipboard wiped, as far as the system lets this run.
+    Runtime.getRuntime().addShutdownHook(
+        Thread({ if (ending.compareAndSet(false, true)) runCatching { shutdown(graph) } }, "encly-shutdown"),
+    )
+
     val launchFiles = LaunchFiles.fromArguments(args)
     application(exitProcessOnExit = true) {
-        EnclyWindows(graph, launchFiles) {
-            shutdown(graph)
+        EnclyWindows(graph, launchFiles, activations.receiveAsFlow()) {
+            if (ending.compareAndSet(false, true)) shutdown(graph)
+            channel?.close()
             instance.close()
             exitApplication()
         }
     }
+}
+
+/**
+ * A second start of Encly: the first one is asked to come to the front and to take [files]. Without a first one that
+ * answers (it is still starting, or has no channel), the user is told in a plain message, not as an error, and the
+ * files that were not opened are named.
+ */
+private fun handOverToRunningInstance(dataDirectory: Path, files: List<Path>): Nothing {
+    if (InstanceChannel.send(dataDirectory, files)) exitProcess(0)
+    val message = buildString {
+        append("Encly is already running.")
+        if (files.isNotEmpty()) append(" Drop the file on its window to open it.")
+    }
+    System.err.println(message)
+    if (!GraphicsEnvironment.isHeadless()) {
+        runCatching { JOptionPane.showMessageDialog(null, message, APP_NAME, JOptionPane.INFORMATION_MESSAGE) }
+    }
+    exitProcess(0)
 }
 
 /** The PIN's device-bound key lives in the OS secret store; without one there is no PIN, so the app cannot run. */
@@ -74,9 +110,15 @@ private fun startServices(graph: DesktopAppGraph) {
     // The OS locking the screen locks the vault, whether Encly is in front or not.
     graph.deviceLockWatcher.onLocked { graph.sessionLockManager.lockNow() }
     // A file dialog of the portal lives in another process and stays on screen over any lock (the OS's, the idle
-    // lock, "Lock now"): close it when the vault closes.
+    // lock, "Lock now"): close it when the vault closes. So does a clip of Encly's that is still on the clipboard,
+    // as on Android; the wiper lives on the UI thread, like its timer.
     graph.applicationScope.launch {
-        graph.sessionLockManager.locked.collect { locked -> if (locked) graph.environment.fileDialogs.cancelAll() }
+        graph.sessionLockManager.locked.collect { locked ->
+            if (locked) {
+                graph.environment.fileDialogs.cancelAll()
+                SwingUtilities.invokeLater { graph.clipboardWiper.wipeIfStillHeld() }
+            }
+        }
     }
     graph.deviceLockWatcher.start()
     // A My Notes hand-off (plaintext) that a killed process left in the cache; off the UI thread.

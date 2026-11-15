@@ -1,6 +1,10 @@
 package com.pasich.encly.platform
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.LifecycleOwner
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.security.BiometricHost
@@ -161,6 +165,53 @@ val LocalScreenshotAllowance = staticCompositionLocalOf<ScreenshotAllowance?> { 
  * Settings does not show a switch that would do nothing.
  */
 val LocalKeyboardPrivacyOffered = staticCompositionLocalOf { true }
+
+/**
+ * The keyboard type of free-text vault fields (note text, task and tag names). Android asks for `Password`, which is
+ * how its keyboards are told not to learn or suggest. Compose on iOS and the desktop turns `Password` into a secure,
+ * ASCII-only input (dots, no dictation, no other scripts), so those hosts provide `Text`; the keyboard-learning
+ * traits are then set by the host itself (see SECURITY.md).
+ */
+val LocalVaultTextKeyboardType = staticCompositionLocalOf { KeyboardType.Password }
+
+/** Options for a free-text vault field, by [LocalVaultTextKeyboardType]. */
+@Composable
+fun vaultTextKeyboardOptions(imeAction: ImeAction = ImeAction.Default): KeyboardOptions {
+    val type = LocalVaultTextKeyboardType.current
+    return if (type == KeyboardType.Password) {
+        KeyboardOptions(keyboardType = type, imeAction = imeAction)
+    } else {
+        KeyboardOptions(keyboardType = type, autoCorrectEnabled = false, imeAction = imeAction)
+    }
+}
+
+/**
+ * The longest auto-lock delay the host can really honour, in milliseconds; null when there is no limit. iOS suspends
+ * the app about half a minute after it leaves the screen and locks the vault then, so it offers no longer delay
+ * (Android and the desktop keep running and offer them all).
+ */
+val LocalMaxAutoLockMillis = staticCompositionLocalOf<Long?> { null }
+
+/** The system the app runs on, for the few texts that must name it (Android unless the host says otherwise). */
+enum class HostPlatform { ANDROID, IOS, DESKTOP }
+
+/** The host's platform. */
+val LocalHostPlatform = staticCompositionLocalOf { HostPlatform.ANDROID }
+
+/** What the texts call the host's biometric unlock, or whether they mention one at all. */
+sealed interface BiometricWording {
+    /** The Android wording: a fingerprint. */
+    data object Fingerprint : BiometricWording
+
+    /** A named method of the host, such as "Face ID" or "Touch ID". */
+    data class Named(val name: String) : BiometricWording
+
+    /** The host has no biometric unlock: the texts do not mention one and its switch is not shown. */
+    data object None : BiometricWording
+}
+
+/** How the texts name the host's biometric unlock. */
+val LocalBiometricWording = staticCompositionLocalOf<BiometricWording> { BiometricWording.Fingerprint }
 
 /** A third-party work a host ships besides the ones every host does: its name, its licence and where to read both. */
 class OpenSourceNotice(val name: String, val license: String, val url: String)

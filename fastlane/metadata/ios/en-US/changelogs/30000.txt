@@ -1,0 +1,4 @@
+Encly 3.0.0
+• The first release for iPhone and iPad: encrypted notes and tasks, tags, a PIN of 6–12 digits and Face ID / Touch ID unlock.
+• The vault locks when you leave the app; your notes never leave the device.
+• Encrypted backups with a 12-word recovery phrase, and import from other note apps.

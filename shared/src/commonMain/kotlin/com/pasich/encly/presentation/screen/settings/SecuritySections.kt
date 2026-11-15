@@ -54,6 +54,7 @@ import com.pasich.encly.core.resources.wipe_pin_row_desc
 import com.pasich.encly.core.resources.wipe_pin_row_turned_off
 import com.pasich.encly.core.resources.wipe_pin_title
 import com.pasich.encly.platform.LocalKeyboardPrivacyOffered
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyGroup
@@ -88,15 +89,15 @@ internal fun ProtectionSection(modifier: Modifier = Modifier) {
             )
             EnclyGroupDivider()
             EnclyListRow(
-                title = stringResource(Res.string.security_protection_pin_title),
-                supporting = stringResource(Res.string.security_protection_pin_desc),
+                title = hostString(Res.string.security_protection_pin_title),
+                supporting = hostString(Res.string.security_protection_pin_desc),
                 icon = EnclyIcons.Shield,
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
             )
             EnclyGroupDivider()
             EnclyListRow(
                 title = stringResource(Res.string.security_protection_slots_title),
-                supporting = stringResource(Res.string.security_protection_slots_desc),
+                supporting = hostString(Res.string.security_protection_slots_desc),
                 icon = EnclyIcons.Fingerprint,
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
             )

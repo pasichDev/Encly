@@ -17,7 +17,8 @@ internal actual fun platformPinEnclave(service: String): PinEnclave = SecureEncl
  * be exported, not even by this process, and every use is a call into the Enclave. Access control is
  * `privateKeyUsage` only, with `WhenUnlockedThisDeviceOnly`: usable while the device is unlocked, never
  * synchronized, never in a backup restored to another device, and no biometry (a changed Face ID must not
- * invalidate the PIN). Removing the device passcode makes iOS drop the key, which reads as `lost`.
+ * invalidate the PIN). Removing the device passcode does not drop it (only `WhenPasscodeSet...` items such as the
+ * biometric one go); a key that is gone for any other reason reads as `lost`.
  */
 internal class SecureEnclavePinEnclave(service: String) : SecKeyPinEnclave(service) {
     override val refusal: String = "Secure Enclave key refused (Encly never falls back to a software key on a device)"

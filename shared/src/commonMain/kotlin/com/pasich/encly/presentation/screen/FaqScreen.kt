@@ -65,6 +65,10 @@ import com.pasich.encly.core.resources.faq_trash_a
 import com.pasich.encly.core.resources.faq_trash_q
 import com.pasich.encly.core.resources.faq_vault_damaged_a
 import com.pasich.encly.core.resources.faq_vault_damaged_q
+import com.pasich.encly.platform.BiometricWording
+import com.pasich.encly.platform.LocalBiometricWording
+import com.pasich.encly.platform.LocalScreenshotAllowance
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyExpandableRow
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -78,6 +82,10 @@ import org.jetbrains.compose.resources.stringResource
 
 /** One FAQ section: its title and its question/answer pairs. */
 private class FaqSection(val title: StringResource, val items: List<Pair<StringResource, StringResource>>)
+
+/** Answers about screenshots and biometrics, shown only where the host has what they talk about. */
+private val screenshotItem = Res.string.faq_screenshots_q
+private val biometricsItem = Res.string.faq_biometrics_q
 
 private val faqSections = listOf(
     FaqSection(
@@ -150,13 +158,22 @@ fun FaqScreen(navController: NavHostController, modifier: Modifier = Modifier) {
                 Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
                     SectionOverline(stringResource(section.title))
                     EnclyGroup {
-                        section.items.forEachIndexed { index, (question, answer) ->
-                            if (index > 0) EnclyGroupDivider()
-                            EnclyExpandableRow(question = stringResource(question), answer = stringResource(answer))
-                        }
+                        section.items.filter { (question, _) -> offered(question) }
+                            .forEachIndexed { index, (question, answer) ->
+                                if (index > 0) EnclyGroupDivider()
+                                EnclyExpandableRow(question = stringResource(question), answer = hostString(answer))
+                            }
                     }
                 }
             }
         }
     }
+}
+
+/** False for a question about something this host does not have: screenshots to allow, biometrics to turn on. */
+@Composable
+private fun offered(question: StringResource): Boolean = when (question) {
+    screenshotItem -> LocalScreenshotAllowance.current != null
+    biometricsItem -> LocalBiometricWording.current != BiometricWording.None
+    else -> true
 }

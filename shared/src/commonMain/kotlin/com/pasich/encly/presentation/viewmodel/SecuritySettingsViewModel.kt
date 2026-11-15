@@ -7,6 +7,7 @@ import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
 import com.pasich.encly.core.resources.biometric_enroll_failed
+import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.AuthType
@@ -137,6 +138,10 @@ class SecuritySettingsViewModel(
                 PinChange.FAILED ->
                     _uiState.value =
                         _uiState.value.copy(error = UiText.of(Res.string.pin_update_failed))
+
+                PinChange.KEY_STORE_UNAVAILABLE ->
+                    _uiState.value =
+                        _uiState.value.copy(error = UiText.of(Res.string.key_store_unavailable))
             }
             onResult(result)
         }

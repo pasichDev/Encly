@@ -244,6 +244,7 @@
     <string name="pin_mismatch_retry">Die PINs stimmen nicht überein. Bitte versuche es erneut.</string>
     <string name="pin_save_failed">Die PIN konnte nicht gespeichert werden</string>
     <string name="pin_update_failed">Die PIN konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
+    <string name="key_store_unavailable">Entsperre den System-Schlüsselbund und versuche es erneut</string>
 
 
     <string name="press_to_edit">Tippe, um mit dem Bearbeiten zu beginnen…</string>
@@ -680,6 +681,8 @@
     <string name="menu_help">Hilfe</string>
     <string name="menu_exit">Beenden</string>
     <string name="menu_minimize">Minimieren</string>
+    <string name="menu_close_window">Fenster schließen</string>
+    <string name="drop_unreadable">Encly konnte die abgelegte Datei nicht lesen. Wähle sie stattdessen im Menü „Datei“ unter „Importieren“ oder „Backup“ aus.</string>
     <string name="menu_new_window">Neues Fenster</string>
     <string name="note_open_in_new_window">In neuem Fenster öffnen</string>
     <string name="note_export_pdf">Als PDF exportieren</string>
@@ -754,4 +757,33 @@
         <item quantity="one">%1$d Notiz wird endgültig gelöscht, ohne die %2$d Tage abzuwarten. Das kann nicht rückgängig gemacht werden.</item>
         <item quantity="other">%1$d Notizen werden endgültig gelöscht, ohne die %2$d Tage abzuwarten. Das kann nicht rückgängig gemacht werden.</item>
     </plurals>
+
+    <!-- Wording for the iOS and desktop apps: their own biometrics, key stores and devices. See HostTexts. -->
+    <string name="pin_unlock_with_biometric_named">Mit %1$s entsperren</string>
+    <string name="lock_biometric_invalidated_named">Die Biometrie auf diesem Gerät hat sich geändert. Entsperre mit deiner PIN und aktiviere %1$s danach in den Einstellungen erneut.</string>
+    <string name="security_biometric_not_enrolled_named">%1$s ist nicht eingerichtet. Richte es in den Systemeinstellungen ein.</string>
+    <string name="onboarding_ready_biometric_title_named">Entsperren per %1$s an</string>
+    <string name="onboarding_ready_biometric_retry_named">%1$s erneut versuchen</string>
+    <string name="security_encryption_pin_plain_named">Deine Notizen sind verschlüsselt. Deine PIN (und %1$s, falls aktiviert) entsperrt sie.</string>
+    <string name="security_encryption_seed_plain_named">Deine Notizen sind verschlüsselt. Deine PIN (und %1$s, falls aktiviert) entsperrt sie, und wenn du die PIN vergisst, deine Wiederherstellungsphrase.</string>
+    <string name="lock_pin_key_lost_named">Deine PIN kann Encly auf diesem Gerät nicht mehr entsperren: Der Hardware-Schlüssel der PIN wurde zurückgesetzt. Nutze deine Wiederherstellungsphrase (oder %1$s) und lege dann eine neue PIN fest.</string>
+    <string name="security_protection_slots_desc_named">PIN, Wiederherstellungsphrase und %1$s öffnen je einen eigenen verschlüsselten Slot. %1$s wird jedes Mal verlangt.</string>
+    <string name="duress_pin_real_vault_named">Dein echter Tresor bleibt gesperrt und unberührt. Anders als die Lösch-PIN löscht die Zwangs-PIN nichts. %1$s und deine Wiederherstellungsphrase öffnen immer den echten Tresor.</string>
+    <string name="wipe_pin_biometric_warning_named">Biometrisches Entsperren bleibt an: Jemand kann dich zwingen, %1$s zu benutzen. Schalte es aus, wenn das für dich ein Risiko ist.</string>
+    <string name="security_encryption_pin_plain_nobio">Deine Notizen sind verschlüsselt. Deine PIN entsperrt sie.</string>
+    <string name="security_encryption_seed_plain_nobio">Deine Notizen sind verschlüsselt. Deine PIN entsperrt sie, und wenn du die PIN vergisst, deine Wiederherstellungsphrase.</string>
+    <string name="lock_pin_key_lost_desktop">Deine PIN kann Encly auf diesem Computer nicht mehr entsperren: Das Geheimnis im Schlüsselbund des Systems fehlt oder wurde zurückgesetzt. Nutze deine Wiederherstellungsphrase und lege dann eine neue PIN fest.</string>
+    <string name="security_protection_slots_desc_nobio">PIN und Wiederherstellungsphrase öffnen je einen eigenen verschlüsselten Slot.</string>
+    <string name="duress_pin_real_vault_nobio">Dein echter Tresor bleibt gesperrt und unberührt. Anders als die Lösch-PIN löscht die Zwangs-PIN nichts. Deine Wiederherstellungsphrase öffnet immer den echten Tresor.</string>
+    <string name="security_protection_pin_title_device">Eine PIN, an dieses Gerät gebunden</string>
+    <string name="security_protection_pin_desc_ios">Deine PIN wird mit einem Schlüssel in der Secure Enclave dieses Geräts verknüpft und kann nirgendwo sonst erraten werden.</string>
+    <string name="security_protection_pin_desc_desktop">Deine PIN wird mit einem Geheimnis im Schlüsselbund deines Systems verknüpft, sodass ein kopierter Tresor nirgendwo sonst erraten werden kann. Sie ist so sicher wie dein Benutzerkonto.</string>
+    <string name="faq_db_key_a_ios">Encly erzeugt einen zufälligen 256-Bit-Datenbankschlüssel. Deine PIN schützt einen separaten AES-GCM-Entsperrslot, und %1$s nutzt einen Schlüssel im Schlüsselbund, der bei jeder Verwendung eine Authentifizierung erfordert.</string>
+    <string name="faq_db_key_a_desktop">Encly erzeugt einen zufälligen 256-Bit-Datenbankschlüssel. Deine PIN schützt einen separaten AES-GCM-Entsperrslot und wird mit einem Geheimnis im Schlüsselbund deines Systems verknüpft.</string>
+    <string name="auto_lock_desc_device">Wie lange Encly offen bleibt, wenn du zu einer anderen App wechselst. Bildschirm aus oder Gerät sperren sperrt es immer sofort.</string>
+    <string name="import_intro_device">Hole Notizen aus einer anderen App. Wähle deren Export, Encly erkennt das Format selbst. Alles bleibt auf diesem Gerät, nichts wird hochgeladen.</string>
+    <string name="import_error_no_picker_device">Auf diesem Gerät gibt es keine Datei-Auswahl-App, die Encly nutzen kann.</string>
+    <string name="faq_swipe_a_other">Standardmäßig heftet ein Wisch nach rechts eine Notiz an oder löst sie, ein Wisch nach links archiviert sie. Unter Einstellungen → Wischaktionen kannst du für jede Richtung Anheften, Archivieren, nächste Farbe, In den Papierkorb (fragt immer nach) oder nichts wählen oder das Wischen ausschalten.</string>
+    <string name="faq_theme_a_other">Unter Einstellungen → Darstellung wählst du eines von fünf Designs, hellen, dunklen oder System-Modus, einen von drei Schriftstilen und die Textgröße.</string>
+    <string name="faq_language_a_ios">Öffne Einstellungen → Sprache und wähle eine der verfügbaren Sprachen oder „Systemstandard“, um der Sprache deines Geräts zu folgen. Die Änderung gilt beim nächsten Start von Encly.</string>
 </resources>

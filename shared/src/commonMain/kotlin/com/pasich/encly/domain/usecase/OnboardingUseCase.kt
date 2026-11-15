@@ -4,6 +4,7 @@ import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.suspendRunCatching
 import com.pasich.encly.core.security.BiometricHost
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupManager
@@ -68,8 +69,8 @@ class OnboardingUseCase(
     fun discardRestore() = pendingRestore.clear()
 
     /** Sets the PIN slot of the vault just created (not committed yet). [pin] is wiped in every case. */
-    fun configurePin(pin: CharArray): Boolean = try {
-        securityManager.configurePin(pin.copyOf())
+    fun configurePin(pin: CharArray): PinChange = try {
+        securityManager.changePin(pin.copyOf())
     } finally {
         SensitiveDataCleaner.clear(pin)
     }

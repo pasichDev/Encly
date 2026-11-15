@@ -33,10 +33,21 @@ import kotlinx.coroutines.withContext
  * BACKGROUNDED: the credential was right, but the app left the foreground before the vault
  * finished opening, so SessionLockManager closed it again. The lock screen stays; no error.
  * KEY_LOST: the device-bound PIN key is gone; only the recovery phrase (or fingerprint) unlocks.
+ * KEY_STORE_UNAVAILABLE: the store of that key is locked or not running (a desktop keyring); nothing was counted,
+ * the PIN works again once the user has unlocked it. Android never reports it.
  * DEVICE_LOCKED: the credential was right, but the operating system reports the screen as locked, so the vault was
  * closed again; the lock screen says so.
  */
-enum class PinUnlockResult { SUCCESS, WRONG_PIN, LOCKED_OUT, KEY_LOST, DB_ERROR, BACKGROUNDED, DEVICE_LOCKED }
+enum class PinUnlockResult {
+    SUCCESS,
+    WRONG_PIN,
+    LOCKED_OUT,
+    KEY_LOST,
+    KEY_STORE_UNAVAILABLE,
+    DB_ERROR,
+    BACKGROUNDED,
+    DEVICE_LOCKED,
+}
 enum class SeedUnlockResult { SUCCESS, WRONG_SEED, DB_ERROR, BACKGROUNDED, DEVICE_LOCKED }
 
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
@@ -111,6 +122,7 @@ class LockViewModel(
                     VaultUnlockResult.INVALID_CREDENTIAL -> PinUnlockResult.WRONG_PIN
                     VaultUnlockResult.LOCKED_OUT -> PinUnlockResult.LOCKED_OUT
                     VaultUnlockResult.PIN_KEY_LOST -> PinUnlockResult.KEY_LOST
+                    VaultUnlockResult.KEY_STORE_UNAVAILABLE -> PinUnlockResult.KEY_STORE_UNAVAILABLE
                     VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
                 }
             }

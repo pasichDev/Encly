@@ -56,6 +56,8 @@ class DropRouter(
     private val navigation: NavigationRequests,
     private val post: (() -> Unit) -> Unit = { SwingUtilities.invokeLater(it) },
     private val clock: () -> Long = { System.nanoTime() / NANOS_PER_MILLI },
+    /** A dropped path this process cannot read (a host path outside the Flatpak sandbox): the user is told. */
+    private val onUnreadable: () -> Unit = {},
 ) {
     private enum class Target { ONE_FILE, MANY_FILES, FOLDER }
 
@@ -78,11 +80,14 @@ class DropRouter(
         register(Target.FOLDER) { accept(it.firstOrNull()) }
 
     /**
-     * Routes [files]. Backups win over notes, notes over a folder; anything else is ignored. Returns whether
-     * something was routed.
+     * Routes [files]. Backups win over notes, notes over a folder; anything else is ignored. A path this process
+     * cannot read is not routed (a sandboxed app is dropped the host's path, not the file): [onUnreadable] says so,
+     * since routing it would fail later without a word. Returns whether something was routed.
      */
     fun drop(files: List<Path>): Boolean {
-        val kinds = files.associateWith(DroppedKind::of)
+        val (readable, unreadable) = files.partition(Files::isReadable)
+        if (unreadable.isNotEmpty()) onUnreadable()
+        val kinds = readable.associateWith(DroppedKind::of)
         val backup = kinds.entries.firstOrNull { it.value == DroppedKind.BACKUP }
         val notes = kinds.filterValues { it == DroppedKind.NOTES }.keys
         val folder = kinds.entries.firstOrNull { it.value == DroppedKind.FOLDER }
@@ -126,6 +131,19 @@ class DropRouter(
 }
 
 /**
+ * The path a save dialog returned, with the extension of [suggestedName] when the user's name lacks it: a renamed
+ * backup keeps `.enclybak` (which the restore and the file association go by), an export its `.md`, `.zip` or `.pdf`.
+ * The name the user typed is kept when the longer one is taken, since the dialog only asked about overwriting that.
+ */
+internal fun Path.withExtensionOf(suggestedName: String): Path {
+    val extension = suggestedName.substringAfterLast('.', "")
+    val name = fileName?.toString().orEmpty()
+    if (extension.isEmpty() || name.isEmpty() || name.endsWith(".$extension", ignoreCase = true)) return this
+    val longer = resolveSibling("$name.$extension")
+    return if (Files.exists(longer)) this else longer
+}
+
+/**
  * The document dialogs of the desktop: the OS's own dialogs ([FileDialogs]) behind the pickers the screens
  * remember, and the registration of those pickers with [DropRouter] so that a dropped file answers them too.
  */
@@ -135,7 +153,7 @@ class DesktopDocumentPickers(private val dialogs: FileDialogs, private val drops
         val current by rememberUpdatedState(onPick)
         return remember(dialogs) {
             PickerLauncher { suggestedName ->
-                dialogs.save(suggestedName) { current(it?.toDocumentRef()) }
+                dialogs.save(suggestedName) { current(it?.withExtensionOf(suggestedName)?.toDocumentRef()) }
             }
         }
     }

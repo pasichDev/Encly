@@ -244,6 +244,7 @@
     <string name="pin_mismatch_retry">Os PINs não coincidem. Tente novamente.</string>
     <string name="pin_save_failed">Não foi possível salvar o PIN</string>
     <string name="pin_update_failed">Não foi possível atualizar o PIN. Tente novamente.</string>
+    <string name="key_store_unavailable">Desbloqueie o chaveiro do sistema e tente novamente</string>
 
 
     <string name="press_to_edit">Toque para começar a editar…</string>
@@ -686,6 +687,8 @@
     <string name="menu_help">Ajuda</string>
     <string name="menu_exit">Sair</string>
     <string name="menu_minimize">Minimizar</string>
+    <string name="menu_close_window">Fechar janela</string>
+    <string name="drop_unreadable">O Encly não conseguiu ler o ficheiro largado. Escolha-o com Importar ou Cópia de segurança no menu Ficheiro.</string>
     <string name="menu_new_window">Nova janela</string>
     <string name="note_open_in_new_window">Abrir numa nova janela</string>
     <string name="note_export_pdf">Exportar como PDF</string>
@@ -767,4 +770,33 @@
         <item quantity="many">%1$d notas serão excluídas para sempre, sem esperar os %2$d dias. Esta ação não pode ser desfeita.</item>
         <item quantity="other">%1$d notas serão excluídas para sempre, sem esperar os %2$d dias. Esta ação não pode ser desfeita.</item>
     </plurals>
+
+    <!-- Wording for the iOS and desktop apps: their own biometrics, key stores and devices. See HostTexts. -->
+    <string name="pin_unlock_with_biometric_named">Desbloquear com %1$s</string>
+    <string name="lock_biometric_invalidated_named">A biometria neste dispositivo mudou. Desbloqueie com o PIN e ative %1$s novamente nas configurações.</string>
+    <string name="security_biometric_not_enrolled_named">%1$s não está configurado. Configure-o nas configurações do sistema.</string>
+    <string name="onboarding_ready_biometric_title_named">Desbloqueio com %1$s ativado</string>
+    <string name="onboarding_ready_biometric_retry_named">Tentar %1$s novamente</string>
+    <string name="security_encryption_pin_plain_named">Suas notas estão criptografadas. Seu PIN (e %1$s, se ativado) as desbloqueia.</string>
+    <string name="security_encryption_seed_plain_named">Suas notas estão criptografadas. Seu PIN (e %1$s, se ativado) as desbloqueia, e sua frase de recuperação se você esquecer o PIN.</string>
+    <string name="lock_pin_key_lost_named">Seu PIN não pode mais desbloquear o Encly neste dispositivo: a chave de hardware dele foi redefinida. Use sua frase de recuperação (ou %1$s) e depois defina um novo PIN.</string>
+    <string name="security_protection_slots_desc_named">PIN, frase de recuperação e %1$s abrem, cada um, o seu próprio compartimento criptografado. %1$s é necessário a cada vez.</string>
+    <string name="duress_pin_real_vault_named">Seu cofre real continua bloqueado e intacto. Diferente do PIN de apagamento, o PIN de coação não apaga nada. %1$s e sua frase de recuperação sempre abrem o cofre real.</string>
+    <string name="wipe_pin_biometric_warning_named">O desbloqueio biométrico continua ativado: alguém pode forçar você a usar %1$s. Desative-o se isso for um risco para você.</string>
+    <string name="security_encryption_pin_plain_nobio">Suas notas estão criptografadas. Seu PIN as desbloqueia.</string>
+    <string name="security_encryption_seed_plain_nobio">Suas notas estão criptografadas. Seu PIN as desbloqueia, e sua frase de recuperação se você esquecer o PIN.</string>
+    <string name="lock_pin_key_lost_desktop">Seu PIN não pode mais desbloquear o Encly neste computador: o segredo no chaveiro do sistema está ausente ou foi redefinido. Use sua frase de recuperação e depois defina um novo PIN.</string>
+    <string name="security_protection_slots_desc_nobio">PIN e frase de recuperação abrem, cada um, o seu próprio compartimento criptografado.</string>
+    <string name="duress_pin_real_vault_nobio">Seu cofre real continua bloqueado e intacto. Diferente do PIN de apagamento, o PIN de coação não apaga nada. Sua frase de recuperação sempre abre o cofre real.</string>
+    <string name="security_protection_pin_title_device">Um PIN vinculado a este dispositivo</string>
+    <string name="security_protection_pin_desc_ios">O seu PIN é combinado com uma chave da Secure Enclave deste dispositivo, por isso não pode ser adivinhado em nenhum outro lugar.</string>
+    <string name="security_protection_pin_desc_desktop">O seu PIN é combinado com um segredo do chaveiro do sistema, por isso um cofre copiado não pode ser adivinhado em nenhum outro lugar. É tão seguro quanto a sua conta de usuário.</string>
+    <string name="faq_db_key_a_ios">O Encly cria uma chave de banco de dados aleatória de 256 bits. Seu PIN protege um compartimento de desbloqueio AES-GCM separado, e %1$s usa uma chave do chaveiro que exige autenticação a cada uso.</string>
+    <string name="faq_db_key_a_desktop">O Encly cria uma chave de banco de dados aleatória de 256 bits. Seu PIN protege um compartimento de desbloqueio AES-GCM separado e é combinado com um segredo do chaveiro do sistema.</string>
+    <string name="auto_lock_desc_device">Quanto tempo o Encly fica aberto quando você muda para outro app. Desligar a tela ou bloquear o dispositivo sempre o bloqueia na hora.</string>
+    <string name="import_intro_device">Traga notas de outro app. Escolha a exportação dele e o Encly reconhece o formato sozinho. Tudo fica neste dispositivo; nada é enviado.</string>
+    <string name="import_error_no_picker_device">Este dispositivo não tem um app seletor de arquivos que o Encly possa usar.</string>
+    <string name="faq_swipe_a_other">Por padrão, deslizar uma nota para a direita a fixa ou desafixa, e para a esquerda a arquiva. Em Configurações → Ações de deslizar, você escolhe para cada direção: fixar, arquivar, próxima cor, mover para a lixeira (sempre pergunta) ou nada, ou desativa os deslizes.</string>
+    <string name="faq_theme_a_other">Em Configurações → Aparência escolha um de cinco temas, modo claro, escuro ou do sistema, um de três estilos de fonte e o tamanho do texto.</string>
+    <string name="faq_language_a_ios">Abra Configurações → Idioma e escolha um dos idiomas disponíveis, ou \"Padrão do sistema\" para seguir o idioma do dispositivo. A mudança é aplicada na próxima vez que você abrir o Encly.</string>
 </resources>

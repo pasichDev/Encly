@@ -20,6 +20,7 @@ import com.pasich.encly.desktop.platform.DroppedKind
 import com.pasich.encly.desktop.platform.FileFilters
 import com.pasich.encly.desktop.platform.GatedFileDialogs
 import com.pasich.encly.desktop.platform.toDocumentRef
+import com.pasich.encly.desktop.platform.withExtensionOf
 import com.pasich.encly.desktop.security.DesktopAppLifecycle
 import com.pasich.encly.platform.DocumentRef
 import com.pasich.encly.platform.NavigationRequests
@@ -106,6 +107,26 @@ class DocumentsTest {
         val ref = temp.newFile("a.md").toPath().also { Files.writeString(it, "a long old content") }.toDocumentRef()
         documents.openWrite(ref)!!.buffered().use { it.write("new".encodeToByteArray()) }
         assertEquals("new", Files.readString(Path.of(ref.value)))
+    }
+
+    @Test
+    fun `a new file is for its owner only and an existing one keeps its permissions`() {
+        org.junit.Assume.assumeTrue(
+            "needs POSIX permissions",
+            temp.root.toPath().fileSystem.supportedFileAttributeViews().contains("posix"),
+        )
+        val created = temp.root.toPath().resolve("export.md")
+        documents.openWrite(created.toDocumentRef())!!.buffered().use { it.write("x".encodeToByteArray()) }
+        assertEquals(
+            java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"),
+            Files.getPosixFilePermissions(created),
+        )
+
+        val existing = temp.newFile("shared.md").toPath()
+        val shared = java.nio.file.attribute.PosixFilePermissions.fromString("rw-rw-r--")
+        Files.setPosixFilePermissions(existing, shared)
+        documents.openWrite(existing.toDocumentRef())!!.buffered().use { it.write("y".encodeToByteArray()) }
+        assertEquals(shared, Files.getPosixFilePermissions(existing))
     }
 
     @Test
@@ -202,6 +223,36 @@ class FileFiltersAndKindsTest {
     }
 }
 
+class SaveExtensionTest {
+    @get:Rule
+    val temp = TemporaryFolder()
+
+    private fun path(name: String): Path = temp.root.toPath().resolve(name)
+
+    @Test
+    fun `a name without the suggested extension gets it`() {
+        assertEquals(path("mine.enclybak"), path("mine").withExtensionOf("encly-backup.enclybak"))
+        assertEquals(path("report.v2.pdf"), path("report.v2").withExtensionOf("note.pdf"))
+    }
+
+    @Test
+    fun `a name that already has it is kept, in any case`() {
+        assertEquals(path("mine.enclybak"), path("mine.enclybak").withExtensionOf("x.enclybak"))
+        assertEquals(path("MINE.ENCLYBAK"), path("MINE.ENCLYBAK").withExtensionOf("x.enclybak"))
+    }
+
+    @Test
+    fun `a suggestion without an extension changes nothing`() {
+        assertEquals(path("mine"), path("mine").withExtensionOf("notes"))
+    }
+
+    @Test
+    fun `the longer name is not taken when a file already has it`() {
+        temp.newFile("mine.enclybak")
+        assertEquals(path("mine"), path("mine").withExtensionOf("x.enclybak"))
+    }
+}
+
 class DropRouterTest {
     @get:Rule
     val temp = TemporaryFolder()
@@ -261,6 +312,23 @@ class DropRouterTest {
         router.drop(listOf(file("a.md"), backup))
         assertEquals(backup.toDocumentRef(), one)
         assertTrue(many.isEmpty())
+    }
+
+    @Test
+    fun `a path that cannot be read is told to the user and not routed`() {
+        var told = 0
+        val strict = DropRouter(navigation, post = { it() }, clock = { now }, onUnreadable = { told++ })
+        val missing = temp.root.toPath().resolve("host-only.enclybak")
+        assertFalse(strict.drop(listOf(missing)))
+        assertEquals(1, told)
+        assertTrue(requested().isEmpty())
+        // A readable file in the same drop is still routed.
+        var picked: DocumentRef? = null
+        strict.registerOneFile { picked = it }
+        val backup = file("vault.enclybak")
+        assertTrue(strict.drop(listOf(missing, backup)))
+        assertEquals(2, told)
+        assertEquals(backup.toDocumentRef(), picked)
     }
 
     @Test

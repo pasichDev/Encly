@@ -1,8 +1,10 @@
 package com.pasich.encly.ios
 
+import androidx.compose.ui.uikit.OnFocusBehavior
 import androidx.compose.ui.window.ComposeUIViewController
 import com.pasich.encly.core.keystore.BiometricKeychain
 import com.pasich.encly.core.keystore.IosPinFactor
+import com.pasich.encly.core.security.IosVaultFileIo
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.core.security.PinKeySlot
 import com.pasich.encly.ios.di.DataFiles
@@ -15,8 +17,9 @@ import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
+import platform.UIKit.UIKeyboardWillShowNotification
 import platform.UIKit.UIViewController
 
 /**
@@ -33,7 +36,8 @@ public fun MainViewController(): UIViewController {
         view = { host?.view },
         statusBar = { darkContent -> host?.setDarkStatusBarContent(darkContent) },
     )
-    val content = ComposeUIViewController { IosApp(graph, window) }
+    val content =
+        ComposeUIViewController(configure = { onFocusBehavior = OnFocusBehavior.DoNothing }) { IosApp(graph, window) }
     return HostViewController(content).also { host = it }
 }
 
@@ -57,7 +61,9 @@ internal object IosHost {
      * loses its Keystore keys with the app; this gives a reinstall the same clean start.
      */
     private fun dropOrphanedKeychainItems(dataDirectory: String, pinFactor: PinHardwareFactor) {
-        if (SystemFileSystem.exists(Path("$dataDirectory/${DataFiles.VAULT_STATE}"))) return
+        // Only "no such file" counts as no vault: any other answer (a locked or unreadable directory) is "unknown",
+        // and a deletion that cannot be undone is not made on a guess (IosVaultFileIo.exists treats those as there).
+        if (IosVaultFileIo("$dataDirectory/${DataFiles.VAULT_STATE}").exists()) return
         PinKeySlot.entries.forEach(pinFactor::delete)
         BiometricKeychain().delete()
     }
@@ -65,7 +71,16 @@ internal object IosHost {
     private fun start(graph: IosAppGraph) {
         graph.locales.syncAppleLanguages()
         // Every text input asks the keyboard not to learn from what is typed; before any field can be focused.
-        IosKeyboardPrivacy.install()
+        IosKeyboardPrivacy.report(IosKeyboardPrivacy.install())
+        // The Kotlin text input classes may register with the ObjC runtime only when the first field is
+        // created: patch them again when the keyboard appears (idempotent, cheap).
+        NSNotificationCenter.defaultCenter.addObserverForName(
+            UIKeyboardWillShowNotification,
+            null,
+            NSOperationQueue.mainQueue,
+        ) {
+            IosKeyboardPrivacy.install()
+        }
         // The cover goes up before anything else can be drawn or snapshotted.
         graph.shield.install()
         // SessionLockManager follows the application: it is told when the app is left and when it is back.
@@ -82,7 +97,12 @@ internal object IosHost {
                 if (locked) {
                     graph.scopes.releaseAll()
                     graph.pickedCopies.purge()
-                    withContext(Dispatchers.Main) { graph.backgroundLockGuard.end() }
+                    withContext(Dispatchers.Main) {
+                        // Encly's own clip does not outlive the unlocked session (as on Android); while the
+                        // background task is still held.
+                        graph.clipboardPolicy.wipeIfStillHeld()
+                        graph.backgroundLockGuard.end()
+                    }
                 }
             }
         }

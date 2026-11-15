@@ -5,6 +5,7 @@ import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
 import com.pasich.encly.domain.usecase.note.PurgeExpiredTrashUseCase
 import com.pasich.encly.domain.usecase.note.TRASH_RETENTION_MILLIS
 import com.pasich.encly.platform.AppInfo
+import com.pasich.encly.platform.HostPlatform
 import com.pasich.encly.presentation.viewmodel.StartupViewModel
 import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.TestNotesRepository
@@ -168,6 +169,26 @@ class WhatsNewTest {
         assertEquals(10, BundledChangelogs.notes.size)
         assertNotNull(Changelogs.current("uk"))
         assertTrue(BundledChangelogs.notes.getValue("uk").startsWith(Changelogs.current("uk")!!.heading))
+    }
+
+    @Test
+    fun iosAndDesktopReadTheirOwnNotesNeverThePlayOnes() {
+        val root = listOf(File(".."), File(".")).first { File(it, "version.properties").isFile }
+        fun bundled(platform: String): Map<String, String> =
+            File(root, "fastlane/metadata/$platform").listFiles().orEmpty()
+                .map { File(it, "changelogs/${BundledChangelogs.VERSION_CODE}.txt") }
+                .filter { it.isFile }
+                .associate { it.parentFile.parentFile.name to it.readText().trim() }
+
+        assertEquals(BundledChangelogs.notes, Changelogs.bundledFor(HostPlatform.ANDROID))
+        assertEquals(bundled("ios"), Changelogs.bundledFor(HostPlatform.IOS))
+        assertEquals(bundled("desktop"), Changelogs.bundledFor(HostPlatform.DESKTOP))
+        listOf(HostPlatform.IOS, HostPlatform.DESKTOP).forEach { platform ->
+            val own = Changelogs.bundledFor(platform)
+            assertTrue("$platform has notes for this version", own.isNotEmpty())
+            own.forEach { (folder, text) -> assertTrue("$platform $folder", text != BundledChangelogs.notes[folder]) }
+            assertNotNull(Changelogs.current("uk", platform))
+        }
     }
 
     private fun startup(version: String, repository: TestNotesRepository = TestNotesRepository()) = StartupViewModel(

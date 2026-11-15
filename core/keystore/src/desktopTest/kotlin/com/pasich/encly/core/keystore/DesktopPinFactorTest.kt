@@ -146,6 +146,30 @@ class DesktopPinFactorTest {
     }
 
     @Test
+    fun aStoreThatIsLockedOrNotRunningIsFlaggedUnavailable() {
+        factor.ensureKey(PinKeySlot.A)
+        val locked = SecretStoreException(
+            lost = false,
+            message = "locked",
+            cause = SecretStoreUnavailableException("The Secret Service needs the user to unlock the keyring first"),
+        )
+        store.readFailure = locked
+        assertTrue(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.unavailable)
+        assertTrue(assertFailsWith<PinFactorException> { factor.ensureKey(PinKeySlot.A) }.unavailable)
+
+        store.readFailure = null
+        store.createFailure = locked
+        assertTrue(assertFailsWith<PinFactorException> { factor.reset(PinKeySlot.A) }.unavailable)
+
+        // A plain failure and a lost secret are not "unavailable".
+        store.createFailure = null
+        store.readFailure = SecretStoreException(lost = false, message = "I/O")
+        assertFalse(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.unavailable)
+        store.readFailure = SecretStoreException(lost = true, message = "does not decrypt")
+        assertFalse(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.unavailable)
+    }
+
+    @Test
     fun resetFailureIsNotLost() {
         store.createFailure = SecretStoreException(lost = false, message = "full")
 

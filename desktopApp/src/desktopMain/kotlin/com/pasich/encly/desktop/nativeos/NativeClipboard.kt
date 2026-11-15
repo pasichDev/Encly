@@ -23,12 +23,12 @@ import java.util.concurrent.atomic.AtomicReference
 // AWT has no way to say that, so the clip is written with the OS's own calls. JNA glue: it only runs against the real
 // OS and is excluded from the coverage gate (the code that chooses between it and AWT is tested with a fake).
 
-/** The sensitive clipboard writer of [os], or null where the OS has no such markers (Linux) or can't be set up. */
+/** The sensitive clipboard writer of [os], or null where it can't be set up. */
 object NativeClipboard {
     fun forOs(os: DesktopOs): ClipboardWriter? = when (os) {
         DesktopOs.MACOS -> MacPasteboard.create()
         DesktopOs.WINDOWS -> WindowsClipboard.create()
-        DesktopOs.LINUX -> null
+        DesktopOs.LINUX -> LinuxClipboard.create()
     }
 }
 

@@ -54,21 +54,24 @@ internal class IosMainThreadTimer : MainThreadTimer {
  * auto-lock delay cannot be cut short by sleeping or by setting the date. [bootCount] is derived from the
  * boot-session UUID the kernel makes at every boot, so the lockout also knows a reboot happened.
  */
-internal class IosLockoutClock : LockoutClock {
-    private val bootId: Int = readBootSession()?.hashCode() ?: -1
+internal class IosLockoutClock(
+    bootSession: String? = readBootSession(),
+    private val nanos: () -> ULong = { clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW.convert()) },
+) : LockoutClock {
+    private val bootId: Int = bootSession?.hashCode() ?: -1
 
-    override fun elapsedRealtime(): Long =
-        (clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW.convert()) / NANOS_PER_MILLI).toLong()
+    override fun elapsedRealtime(): Long = (nanos() / NANOS_PER_MILLI).toLong()
 
     override fun bootCount(): Int = bootId
+}
 
-    private fun readBootSession(): String? = memScoped {
-        val buffer = ByteArray(BOOT_ID_BUFFER)
-        val size = alloc<size_tVar>()
-        size.value = buffer.size.convert()
-        val status = buffer.usePinned {
-            sysctlbyname("kern.bootsessionuuid", it.addressOf(0), size.ptr, null, 0.convert())
-        }
-        if (status != 0) null else buffer.toKString()
+/** The kernel's UUID of this boot, or null when it cannot be read. */
+internal fun readBootSession(): String? = memScoped {
+    val buffer = ByteArray(BOOT_ID_BUFFER)
+    val size = alloc<size_tVar>()
+    size.value = buffer.size.convert()
+    val status = buffer.usePinned {
+        sysctlbyname("kern.bootsessionuuid", it.addressOf(0), size.ptr, null, 0.convert())
     }
+    if (status != 0) null else buffer.toKString()
 }

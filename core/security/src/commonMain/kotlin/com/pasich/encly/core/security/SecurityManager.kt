@@ -48,6 +48,9 @@ public enum class VaultUnlockResult {
      * can no longer unlock on this device. The recovery phrase (or fingerprint) still can.
      */
     PIN_KEY_LOST,
+
+    /** The store of the device-bound PIN key is locked or not running (a desktop keyring); the attempt was refunded. */
+    KEY_STORE_UNAVAILABLE,
     DB_ERROR,
 }
 
@@ -324,6 +327,8 @@ public class SecurityManager(
             PinUnlock.LockedOut -> VaultUnlockResult.LOCKED_OUT
 
             PinUnlock.KeyLost -> VaultUnlockResult.PIN_KEY_LOST
+
+            PinUnlock.KeyStoreUnavailable -> VaultUnlockResult.KEY_STORE_UNAVAILABLE
 
             PinUnlock.Failed -> VaultUnlockResult.DB_ERROR
         }

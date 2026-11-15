@@ -190,6 +190,48 @@ class SensitiveClipWriterTest {
     }
 }
 
+class LinuxClipboardTest {
+    private val board = Clipboard("test")
+    private val writer = com.pasich.encly.desktop.nativeos.LinuxClipboard { board }
+
+    @Test
+    fun `the text goes out with the password manager hint`() {
+        assertTrue(writer.write("secret note"))
+
+        assertEquals("secret note", board.getData(DataFlavor.stringFlavor))
+        val hint = com.pasich.encly.desktop.nativeos.LinuxClipboard.HINT_FLAVOR
+        assertTrue(board.isDataFlavorAvailable(hint))
+        val bytes = (board.getData(hint) as java.io.InputStream).readBytes()
+        assertEquals("secret", String(bytes, Charsets.US_ASCII))
+    }
+
+    @Test
+    fun `the hint is mapped to the native name klipper and copyq look for`() {
+        val map = java.awt.datatransfer.SystemFlavorMap.getDefaultFlavorMap() as java.awt.datatransfer.SystemFlavorMap
+        assertTrue(
+            com.pasich.encly.desktop.nativeos.LinuxClipboard.HINT_TARGET in
+                map.getNativesForFlavor(com.pasich.encly.desktop.nativeos.LinuxClipboard.HINT_FLAVOR),
+        )
+    }
+
+    @Test
+    fun `the wiper still recognises and empties the clip`() {
+        val timer = ManualTimer()
+        val wiper = ClipboardWiper({ board }, timer, writer = writer)
+
+        assertTrue(wiper.writeSensitive("secret note"))
+        wiper.wipeIfStillHeld()
+
+        assertEquals("", board.getData(DataFlavor.stringFlavor))
+        assertFalse(board.isDataFlavorAvailable(com.pasich.encly.desktop.nativeos.LinuxClipboard.HINT_FLAVOR))
+    }
+
+    @Test
+    fun `no clipboard means no write`() {
+        assertFalse(com.pasich.encly.desktop.nativeos.LinuxClipboard { null }.write("x"))
+    }
+}
+
 /**
  * The marked clipboard against the real OS clipboard of the machine. It overwrites the user's clipboard, so it runs
  * only on its own OS and only when `ENCLY_NATIVE_IT=1` is set.

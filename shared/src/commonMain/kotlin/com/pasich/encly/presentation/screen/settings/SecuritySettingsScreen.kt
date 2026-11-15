@@ -35,8 +35,11 @@ import com.pasich.encly.core.resources.security_title
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.platform.BiometricWording
 import com.pasich.encly.platform.LocalBiometricHost
+import com.pasich.encly.platform.LocalBiometricWording
 import com.pasich.encly.platform.LocalScreenshotAllowance
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -188,7 +191,7 @@ private fun SecurityRows(
 ) {
     EncryptionStatusCard(
         title = stringResource(Res.string.security_encryption_active),
-        text = stringResource(
+        text = hostString(
             if (securityState.isUserCreatedSeedKey) {
                 Res.string.security_encryption_seed_plain
             } else {
@@ -208,7 +211,8 @@ private fun SecurityRows(
             onClick = { actions.onOpen(NavRoutes.PinCodeConfig) },
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
         )
-        if (securityState.authType != AuthType.NONE) {
+        // A host without biometrics (the desktop) shows no switch that could never be turned on.
+        if (securityState.authType != AuthType.NONE && LocalBiometricWording.current != BiometricWording.None) {
             EnclyGroupDivider()
             BiometricSetting(securityState, actions.onBiometric)
         }
@@ -286,20 +290,30 @@ private fun BiometricSetting(
 ) {
     EnclySwitchRow(
         title = stringResource(Res.string.security_biometric_title),
-        supporting = stringResource(
-            when (securityState.biometricStatus) {
-                BiometricStatus.AVAILABLE -> Res.string.security_biometric_available
-
-                // The sensor is there: say what is missing, not that the device cannot do it.
-                BiometricStatus.NOT_ENROLLED -> Res.string.security_biometric_not_enrolled
-
-                BiometricStatus.UNAVAILABLE -> Res.string.security_biometric_unavailable
-            },
-        ),
+        supporting = biometricStatusText(securityState.biometricStatus),
         icon = EnclyIcons.Fingerprint,
         checked = securityState.biometricEnable,
         enabled = securityState.isBiometricAvailable,
         onCheckedChange = onToggle,
         modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
     )
+}
+
+@Composable
+private fun biometricStatusText(status: BiometricStatus): String {
+    val wording = LocalBiometricWording.current
+    return when (status) {
+        // A named method (Face ID) says its own name; Android says "Fingerprint".
+        BiometricStatus.AVAILABLE ->
+            if (wording is BiometricWording.Named) {
+                wording.name
+            } else {
+                stringResource(Res.string.security_biometric_available)
+            }
+
+        // The sensor is there: say what is missing, not that the device cannot do it.
+        BiometricStatus.NOT_ENROLLED -> hostString(Res.string.security_biometric_not_enrolled)
+
+        BiometricStatus.UNAVAILABLE -> stringResource(Res.string.security_biometric_unavailable)
+    }
 }

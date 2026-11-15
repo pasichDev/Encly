@@ -319,6 +319,16 @@ class SecurityManagerTest {
     }
 
     @Test
+    fun anUnavailableKeyStoreIsReportedAndThePinIsWiped() {
+        val typed = "123456".toCharArray()
+        `when`(auth.unlockWithPin(typed)).thenReturn(PinUnlock.KeyStoreUnavailable)
+
+        assertEquals(VaultUnlockResult.KEY_STORE_UNAVAILABLE, manager.unlockWithPin(typed))
+        assertTrue(typed.all { it == '\u0000' })
+        verify(database, never()).unlockDatabase(anyByteArray(), anyBoolean())
+    }
+
+    @Test
     fun aRunningLockoutIsReportedAsSuch() {
         `when`(auth.unlockWithPin(anyCharArray())).thenReturn(PinUnlock.LockedOut)
 

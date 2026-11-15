@@ -85,9 +85,9 @@ files never hold it unprotected, and it is never logged.
 
 | OS | Where the secret lives |
 |---|---|
-| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\Encly\` (local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
+| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\pasichdev\Encly\` (the data folder, not the install folder `%LOCALAPPDATA%\Programs\Encly`, so an upgrade or uninstall of the app does not touch it; local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
 | macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
-| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure ("unlock your keyring"), not a lost key. |
+| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure, not a lost key: the lock screen, the PIN setup in onboarding and the PIN change in Settings say "Unlock your system keyring and try again", and the PIN attempt that met it is not counted. Encly does not ask the keyring to unlock itself. |
 
 The second PIN key slot (used after a wipe-PIN unlock) keeps its own secret under the same names with a `-b` suffix.
 
@@ -108,6 +108,25 @@ anyone who has the user's OS login (a DPAPI master key follows the Windows passw
 session password), can obtain it and then guess PINs off the machine against PBKDF2 alone. Full-disk
 encryption and a strong OS login are part of the desktop trust boundary. Secure Enclave and TPM-bound keys are
 not used yet; they would need a signed app (Apple) or extra platform work.
+
+**The desktop process.** The app starts its JVM with `-XX:+DisableAttachMechanism`, so another process of the same user
+cannot attach to it (the Attach API: `jcmd`, a debugger, an agent) and run code inside the process that the macOS
+Keychain item trusts. The packaged runtime does not contain `java.instrument`, so an agent named in
+`JAVA_TOOL_OPTIONS` cannot be loaded either. What this does not stop: the environment variable can still add other JVM
+options, and code running as the same user can read the process in other ways, so it remains part of the desktop trust
+boundary above (it can act as Encly). The signed macOS app keeps the `disable-library-validation` entitlement: JNA,
+Skiko and the SQLCipher driver extract their native libraries at run time into a cache, where they are not signed
+with the team ID. Shipping them signed inside the `.app` (and loading them from there only) is the way to drop it; it
+is not done yet.
+
+**Quit, lock and clipboard.** Cmd+Q, the Dock's Quit and a logout on macOS end the app the same way the menu's Exit
+does (the editors are saved, the vault is locked and the clipboard is emptied of Encly's clip). A clip of Encly's that is
+still on the clipboard is also cleared when the vault locks, not only after 60 seconds. On Windows and macOS a copy is
+marked so that clipboard history, cloud sync and Universal Clipboard leave it out. On Linux it carries the
+`x-kde-passwordManagerHint` target, which Klipper and CopyQ honour; GPaste and other clipboard managers may still keep
+a copy that the wipe cannot reach. A plaintext export (Markdown, PDF) and a backup file that Encly creates on macOS or
+Linux are readable by their owner only (`0600`); a file that the save dialog had already created keeps its permissions.
+Once written, the file is outside Encly's control.
 
 #### iOS
 
@@ -134,9 +153,10 @@ PIN mixed in after the agreement gives a per-slot constant that one capture turn
   use. Someone who can run code in the app while the phone is unlocked (a jailbreak, a debugger on a development
   build) can still ask the Enclave one guess at a time; the guess rate is the Enclave's, not a GPU's, and the
   app's lockout is not what protects against that attacker.
-- The Enclave key is gone when the phone is restored from a backup onto another one, or when iOS drops it (removing
-  the device passcode deletes `WhenUnlocked...` items). That is the lost-key state above: the PIN no longer
-  unlocks and the recovery phrase is needed.
+- The Enclave key is gone when the phone is restored from a backup onto another one or the Enclave key is otherwise
+  lost. That is the lost-key state above: the PIN no longer unlocks and the recovery phrase is needed. Removing the
+  device passcode does not drop this key (`WhenUnlockedThisDeviceOnly` does not need a passcode); it deletes the
+  biometric item (`WhenPasscodeSetThisDeviceOnly`), so Face ID unlock ends and the PIN still works.
 - **No Enclave, no PIN.** Every iPhone that runs iOS 15 has a Secure Enclave. If a device cannot make the key, setting
   a PIN fails; the app never falls back to a software key on a device. The iOS Simulator has no Enclave and uses a
   software key in the Keychain so that the app and its tests can run; that code is compiled only for the Simulator and
@@ -667,13 +687,37 @@ keyboard itself: it still receives every key it types, and a malicious or non-co
 ignore all of these flags (see "Important limitations"). The cost is no autocorrect, and some
 keyboards hide emoji or voice input in password fields.
 
-On iOS every text input is Compose's `CMPTextInputView`, and the app makes it answer "no" for autocorrection,
-spell checking, smart quotes, smart dashes, smart insert/delete and inline predictions, whatever the field asked
-for: the system keyboard then has no suggestions to learn from. iOS has no "do not learn" flag and no
-password-like mode that fits a multi-line editor, so **Strict keyboard privacy** is not shown on iOS. Third-party
-keyboards are not loaded at all (the app refuses the keyboard extension point). This is applied by replacing those
-trait getters on that Compose view class at start; if a Compose upgrade renames the class, the test
-`IosKeyboardPrivacyTest` and the review of the upgrade must catch it.
+On iOS every text input is a Kotlin subclass of Compose's `CMPTextInputView`. At start, and again each time the
+keyboard appears (the subclasses may register with the Objective-C runtime late), the app walks the class list and
+replaces the trait getters on `CMPTextInputView` and on every class that descends from it, so they answer "no" for
+autocorrection, spell checking, smart quotes, smart dashes, smart insert/delete and inline predictions, and "none"
+for Writing Tools, whatever the field asked for: the system keyboard then has no suggestions to learn from. Free
+text fields use the plain text keyboard type there (Compose would turn the Android `Password` type into secure,
+ASCII-only entry), with autocorrection off. iOS has no "do not learn" flag and no password-like mode that fits a
+multi-line editor, so **Strict keyboard privacy** is not shown on iOS. Third-party keyboards are not loaded at all
+(the app refuses the keyboard extension point). If a Compose upgrade renames the class, the startup log line
+"keyboard privacy patched ..." shows fewer replacements than expected, and the review of the upgrade must catch it.
+Not verified on a device: that the system keyboard honours every trait.
+
+**iOS host behaviour.** What Android does with window flags and services, the iOS build does as follows.
+- *Screenshots and recordings.* iOS cannot refuse a screenshot taken by the user; the vault is locked whenever the
+  app is left, so nothing is exposed beyond what was on screen. While the screen is captured (recording, AirPlay,
+  mirroring) a cover window hides the content, from the user's own screen as well.
+- *App switcher snapshot.* A cover window above every other window goes up on `willResignActive`, before the system
+  snapshot. On an iPad where the app shares the screen (Split View, Slide Over, Stage Manager), `willResignActive`
+  also fires when the user only works in the other app while Encly stays visible; there the cover is raised at
+  `didEnterBackground` (still before the snapshot) so that the visible app is not blanked. Capture still covers it.
+- *Background.* iOS suspends an app seconds after it leaves the screen. A background task keeps the auto-lock timer
+  and the device-lock signal running; when iOS takes it back (about 30 s) the vault locks. An auto-lock delay longer
+  than that therefore locks at about 30 s; the delay choices above that are not offered on iOS.
+- *Pasteboard.* Encly's copies are `localOnly` (no Universal Clipboard) and carry an expiration date of 60 s; a timer
+  clears the pasteboard if it is still Encly's, and the clip is cleared when the vault locks.
+- *Backups.* The data directory is excluded from iCloud and iTunes/Finder backups.
+- *No device passcode.* Face ID unlock is not available (its Keychain item needs a passcode); the PIN works. The
+  Keychain and Enclave items are `ThisDeviceOnly` and not synced.
+- *Face ID.* A changed Face ID enrolment or a dropped item ends biometric unlock and the lock screen says so, as on
+  Android.
+- *Apple-silicon Macs.* The app opts out of running as an iPhone/iPad app on a Mac (the desktop app is the Mac build).
 
 The app requests no `INTERNET` permission and performs no analytics or sync.
 

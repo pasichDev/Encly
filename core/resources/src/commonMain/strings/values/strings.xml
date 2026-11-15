@@ -261,6 +261,7 @@
     <string name="pin_mismatch_retry">PINs don\'t match. Please try again.</string>
     <string name="pin_save_failed">Couldn\'t save the PIN</string>
     <string name="pin_update_failed">Couldn\'t update the PIN. Please try again.</string>
+    <string name="key_store_unavailable">Unlock your system keyring and try again</string>
 
 
     <string name="press_to_edit">Tap to start editing…</string>
@@ -698,6 +699,8 @@
     <string name="menu_help">Help</string>
     <string name="menu_exit">Exit</string>
     <string name="menu_minimize">Minimize</string>
+    <string name="menu_close_window">Close window</string>
+    <string name="drop_unreadable">Encly could not read the dropped file. Choose it with Import or Backup in the File menu instead.</string>
     <string name="menu_new_window">New window</string>
     <string name="note_open_in_new_window">Open in new window</string>
     <string name="note_export_pdf">Export as PDF</string>
@@ -772,4 +775,33 @@
         <item quantity="one">%1$d note will be deleted for good without waiting %2$d days. This can\'t be undone.</item>
         <item quantity="other">%1$d notes will be deleted for good without waiting %2$d days. This can\'t be undone.</item>
     </plurals>
+
+    <!-- Wording for the iOS and desktop apps: their own biometrics, key stores and devices. See HostTexts. -->
+    <string name="pin_unlock_with_biometric_named">Unlock with %1$s</string>
+    <string name="lock_biometric_invalidated_named">The biometrics on this device changed. Unlock with your PIN, then turn %1$s unlock on again in Settings.</string>
+    <string name="security_biometric_not_enrolled_named">%1$s is not set up. Set it up in system settings.</string>
+    <string name="onboarding_ready_biometric_title_named">%1$s unlock on</string>
+    <string name="onboarding_ready_biometric_retry_named">Try %1$s again</string>
+    <string name="security_encryption_pin_plain_named">Your notes are encrypted. Your PIN (and %1$s, if it is on) unlocks them.</string>
+    <string name="security_encryption_seed_plain_named">Your notes are encrypted. Your PIN (and %1$s, if it is on) unlocks them, and your recovery phrase does if you forget the PIN.</string>
+    <string name="lock_pin_key_lost_named">Your PIN can no longer unlock Encly on this device: its hardware key was reset. Use your recovery phrase (or %1$s), then set a new PIN.</string>
+    <string name="security_protection_slots_desc_named">PIN, recovery phrase and %1$s each open their own encrypted slot. %1$s is needed every time.</string>
+    <string name="duress_pin_real_vault_named">Your real vault stays locked and untouched. Unlike the wipe PIN, the duress PIN doesn\'t erase anything. %1$s and your recovery phrase always open the real vault.</string>
+    <string name="wipe_pin_biometric_warning_named">Biometric unlock stays on: someone can force you to use %1$s. Turn it off if that is a risk for you.</string>
+    <string name="security_encryption_pin_plain_nobio">Your notes are encrypted. Your PIN unlocks them.</string>
+    <string name="security_encryption_seed_plain_nobio">Your notes are encrypted. Your PIN unlocks them, and your recovery phrase does if you forget the PIN.</string>
+    <string name="lock_pin_key_lost_desktop">Your PIN can no longer unlock Encly on this computer: its secret in the system keychain is missing or was reset. Use your recovery phrase, then set a new PIN.</string>
+    <string name="security_protection_slots_desc_nobio">PIN and recovery phrase each open their own encrypted slot.</string>
+    <string name="duress_pin_real_vault_nobio">Your real vault stays locked and untouched. Unlike the wipe PIN, the duress PIN doesn\'t erase anything. Your recovery phrase always opens the real vault.</string>
+    <string name="security_protection_pin_title_device">A PIN bound to this device</string>
+    <string name="security_protection_pin_desc_ios">Your PIN is mixed with a key in this device\'s Secure Enclave, so it can\'t be guessed anywhere else.</string>
+    <string name="security_protection_pin_desc_desktop">Your PIN is mixed with a secret in your system\'s keychain, so a copied vault can\'t be guessed anywhere else. It is as safe as your computer account.</string>
+    <string name="faq_db_key_a_ios">Encly creates a random 256-bit database key. Your PIN protects a separate AES-GCM unlock slot, and %1$s uses a Keychain key that needs it on every use.</string>
+    <string name="faq_db_key_a_desktop">Encly creates a random 256-bit database key. Your PIN protects a separate AES-GCM unlock slot and is mixed with a secret kept in your system\'s keychain.</string>
+    <string name="auto_lock_desc_device">How long Encly stays open when you switch to another app. Turning off the screen or locking the device always locks it at once.</string>
+    <string name="import_intro_device">Bring in notes from another app. Choose its export and Encly recognises the format itself. Everything stays on this device; nothing is uploaded.</string>
+    <string name="import_error_no_picker_device">This device has no file picker app that Encly can use.</string>
+    <string name="faq_swipe_a_other">By default, swiping a note right pins or unpins it and swiping left archives it. In Settings → Swipe actions you can choose pin, archive, next color, move to trash (always asks first) or nothing for each direction, or turn swipes off.</string>
+    <string name="faq_theme_a_other">In Settings → Appearance choose one of five themes, light, dark or system mode, one of three font styles and the text size.</string>
+    <string name="faq_language_a_ios">Open Settings → Language and pick one of the available languages, or \"System default\" to follow your device. The change applies the next time you open Encly.</string>
 </resources>

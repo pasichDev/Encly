@@ -149,7 +149,7 @@ public class BlockEditorState(
         history.removeBlock(index)
         afterChange()
         if (!refocus) return
-        val above = (index - 1 downTo 0).firstOrNull { it < _blocks.size && _blocks[it].canTakeFocus() }
+        val above = (index - 1 downTo 0).firstOrNull { _blocks[it].canTakeFocus() }
         if (above != null) {
             selection.focusAt(above, cursorToEnd = true)
         } else {

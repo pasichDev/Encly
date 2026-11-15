@@ -7,6 +7,7 @@ import com.pasich.encly.core.resources.onboarding_error_initialization
 import com.pasich.encly.core.resources.onboarding_error_seed_generation
 import com.pasich.encly.core.resources.onboarding_error_vault_creation
 import com.pasich.encly.core.security.Mnemonic
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
@@ -53,7 +54,7 @@ class OnboardingFailuresTest {
         security = mock(SecurityManager::class.java)
         `when`(security.generateMnemonicCode()).thenAnswer { words.copyOf() }
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
-        `when`(security.configurePin(anyCharArray())).thenReturn(true)
+        `when`(security.changePin(anyCharArray())).thenReturn(PinChange.SET)
     }
 
     @After
@@ -71,7 +72,7 @@ class OnboardingFailuresTest {
 
         assertEquals(OnboardingStep.RECOVERY_INFO, state.step)
         assertEquals(UiText.of(Res.string.onboarding_error_initialization), state.error)
-        verify(security, never()).configurePin(anyCharArray())
+        verify(security, never()).changePin(anyCharArray())
     }
 
     @Test

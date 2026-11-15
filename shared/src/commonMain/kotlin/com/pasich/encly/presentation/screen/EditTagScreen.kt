@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +44,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -77,6 +75,7 @@ import com.pasich.encly.core.resources.tags_empty_desc
 import com.pasich.encly.core.resources.tags_empty_title
 import com.pasich.encly.core.resources.tags_hint
 import com.pasich.encly.data.model.Tag
+import com.pasich.encly.platform.vaultTextKeyboardOptions
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyButtonPair
@@ -114,9 +113,6 @@ import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private const val SKELETON_ROWS = 3
-
-/** Keyboard for tag names: no suggestions or learning, as for every other vault text. */
-private val TagNameKeyboard = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done)
 
 /**
  * The tags screen: a field that creates a tag, then the tags as one grouped list (icon, name,
@@ -402,7 +398,8 @@ private fun NewTagField(taken: (String) -> Boolean, onCreate: (String, (Boolean)
             onValueChange = { text = it.take(TAG_NAME_MAX_LENGTH) },
             label = stringResource(Res.string.create_new_tag),
             state = if (isTaken) FieldState.Error(stringResource(Res.string.tag_name_taken)) else FieldState.Default,
-            keyboardOptions = TagNameKeyboard,
+            // Keyboard for tag names: no suggestions or learning, as for every other vault text.
+            keyboardOptions = vaultTextKeyboardOptions(ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { create() }),
         )
         AnimatedVisibility(visible = name.isNotEmpty(), enter = EnclyMotion.Unfold, exit = EnclyMotion.Fold) {
@@ -454,7 +451,8 @@ private fun TagSheet(tag: Tag, taken: (String) -> Boolean, actions: TagSheetActi
             onValueChange = { text = it.take(TAG_NAME_MAX_LENGTH) },
             label = stringResource(Res.string.tag_name_label),
             state = if (isTaken) FieldState.Error(stringResource(Res.string.tag_name_taken)) else FieldState.Default,
-            keyboardOptions = TagNameKeyboard,
+            // Keyboard for tag names: no suggestions or learning, as for every other vault text.
+            keyboardOptions = vaultTextKeyboardOptions(ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { save() }),
         )
         EnclySwitchRow(

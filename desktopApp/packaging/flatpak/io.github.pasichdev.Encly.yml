@@ -13,7 +13,9 @@ command: encly
 finish-args:
   # No --share=network: the app makes no network connection (PRIVACY.md, desktopApp/README.md).
   # No --filesystem: files are picked through the FileChooser portal (the app already uses it on Linux) and
-  # reach the sandbox through the document portal, also the ones a file manager opens with %f.
+  # reach the sandbox through the document portal, also the ones a file manager opens with %f. A file dropped
+  # on the window is not one of these: the sandbox is given the host's path, which it cannot read, so the app
+  # tells the user to use Import or Backup in the File menu (see DropRouter).
   #
   # Display. The bundled Java runtime draws through X11 only (AWT has no Wayland backend), so on a Wayland
   # session it runs through XWayland. `fallback-x11` would withhold X11 there and the app would not start.

@@ -55,7 +55,7 @@ internal fun BlockEditorState.listPasteText(item: ListItemAt, head: String, line
     }
     // In an empty item the first line is read like the others (its mark is no text); after text it joins as typed.
     val first = if (head.isBlank()) listItemText(pasted.first()) else null
-    val kept = head + (first?.value ?: pasted.first())
+    val kept = head + if (first != null) first.value else pasted.first()
     // A ticked or open mark in the pasted first line sets the state of a checklist item it lands in.
     val ticked = first != null && here.kindIn(list.blockType) == BlockType.LIST_CHECK
     val isCheck = if (ticked) first.isCheck else here.isCheck

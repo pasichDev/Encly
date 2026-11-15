@@ -22,7 +22,7 @@ One private directory per OS user. It is created `rwx------` where POSIX permiss
 
 | OS | Directory |
 |---|---|
-| Windows | `%LOCALAPPDATA%\Encly` (local, never the roaming profile) |
+| Windows | `%LOCALAPPDATA%\pasichdev\Encly` (local, never the roaming profile, and not the install folder `%LOCALAPPDATA%\Programs\Encly`) |
 | macOS | `~/Library/Application Support/Encly` |
 | Linux | `$XDG_DATA_HOME/encly`, else `~/.local/share/encly` |
 
@@ -40,7 +40,7 @@ in the registry (Windows) or a plist outside this directory (macOS).
 
 The device-bound half of the PIN key is not in this directory: it lives in the OS secret store (Windows DPAPI,
 the macOS login Keychain, the freedesktop Secret Service). See `SECURITY.md`, "Desktop". On Windows the blob of
-DPAPI sits in `%LOCALAPPDATA%\Encly` too: the roaming `%APPDATA%` is copied to profile servers and to every machine
+DPAPI sits in `%LOCALAPPDATA%\pasichdev\Encly` too: the roaming `%APPDATA%` is copied to profile servers and to every machine
 the user signs in to, which would take the vault and the PIN's device secret off this device. Windows has no POSIX
 modes; the folder keeps the ACL it inherits from `%LOCALAPPDATA%` (the user, SYSTEM and Administrators), which is the
 same boundary DPAPI gives the secret. Encly does not rewrite ACLs.
@@ -58,8 +58,11 @@ same boundary DPAPI gives the secret. Encly does not rewrite ACLs.
 | PIN lockout on `elapsedRealtime` and boot count | the OS uptime (including sleep) and the boot id (Linux `boot_id`, macOS `kern.bootsessionuuid`), so restarting the app does not shorten a lockout; Windows has no boot id, the uptime comparison covers it | |
 | biometrics | none yet | Windows Hello, Touch ID and fprintd are not wired in |
 
-A second Encly of the same user exits at start (a file lock in the data directory). A backup file given to it is not
-handed to the first one; drop it on the open window.
+A second Encly of the same user exits at start (a file lock in the data directory). Before it exits it asks the first
+one, over a Unix-domain socket in the same directory (`.instance.sock`, owner only, no network), to come to the front
+and to take the files it was given; only paths travel, and the first checks them like its own arguments. Where no
+socket can be made (a path too long for one) or the first one does not answer, the second shows a plain message
+(not an error) and a file it was given is to be dropped on the open window.
 
 ## The window
 
@@ -92,10 +95,14 @@ handed to the first one; drop it on the open window.
   file the user picked and nowhere else; it is not touched on the way by the network or a temp file;
 - files dropped on the window, or a backup opened from the file manager, go to the same flows as the file dialogs:
   a `.enclybak` answers the restore or import-backup picker, notes (`.md`, `.zip`, `.txt`, `.json`, `.jex`, `.html`)
-  and folders answer the import screen's pickers; with none open, the matching screen is opened first;
+  and folders answer the import screen's pickers; with none open, the matching screen is opened first. A path the
+  app cannot read (in the Flatpak sandbox a drop is the host's path, which the sandbox does not have) is not routed:
+  a message points to Import and Backup in the File menu, whose dialogs go through the portal;
 - file dialogs are the OS's: AWT's native dialogs on macOS and Windows, the freedesktop portal on Linux (the desktop's
   own dialog, with the AWT dialog as fallback);
-- the theme follows the OS light and dark mode; a language change recomposes the app (it returns to the home screen);
+- the theme follows the OS light and dark mode on macOS and Windows; on Linux the System choice follows what the
+  runtime reports, which is light on many desktops (GNOME and KDE settings are not read yet), so pick Light or Dark
+  there; the native title bar and, on Windows, the menu strip keep the OS's own look; a language change recomposes the app (it returns to the home screen);
 - the app icon is the brand mark.
 
 ## Packaging

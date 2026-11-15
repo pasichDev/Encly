@@ -56,6 +56,10 @@ kotlin {
         getByName("desktopTest").dependencies {
             implementation(libs.kotlinx.serialization.json)
         }
+        getByName("iosTest").dependencies {
+            // Reads the exported schemas to write the vault files of earlier versions.
+            implementation(libs.kotlinx.serialization.json)
+        }
         getByName("androidHostTest").dependencies {
             implementation(libs.junit)
             implementation(libs.androidx.test.core)
@@ -92,6 +96,12 @@ configurations.configureEach {
 // migration tests can validate upgrades against them.
 room {
     schemaDirectory("$projectDir/schemas")
+}
+
+// The iOS migration tests write the vault of an earlier version from its exported schema; the simulator process
+// reads the folder from the host file system, and `simctl spawn` hands it on only as `SIMCTL_CHILD_<name>`.
+tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest>().configureEach {
+    environment("SIMCTL_CHILD_ENCLY_SCHEMAS_DIR", "$projectDir/schemas")
 }
 
 // The device tests' MigrationTestHelper reads the exported schemas as assets of the test app, at the

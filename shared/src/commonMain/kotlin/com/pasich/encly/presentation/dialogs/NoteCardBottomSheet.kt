@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +39,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.delete
@@ -60,6 +58,7 @@ import com.pasich.encly.core.resources.untitled
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteColor
+import com.pasich.encly.platform.vaultTextKeyboardOptions
 import com.pasich.encly.presentation.designsystem.EnclyBackButton
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -414,7 +413,7 @@ private fun DescriptionPage(
             onValueChange = { text = it },
             label = stringResource(Res.string.note_description_placeholder),
             fieldModifier = Modifier.focusRequester(focus),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = vaultTextKeyboardOptions(),
             singleLine = false,
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
         )

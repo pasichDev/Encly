@@ -23,6 +23,7 @@ import com.pasich.encly.core.resources.lock_unlock
 import com.pasich.encly.core.resources.lock_unlocking
 import com.pasich.encly.core.resources.lock_use_recovery_phrase
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
@@ -105,8 +106,8 @@ private fun PinLockContent(form: LockFormState, capabilities: LockCapabilities, 
         // The sub-heading slot carries the lockout countdown or the last error.
         subtitle = when {
             form.lockedOut -> pinLockoutText(form.lockoutSeconds)
-            shownError != null -> stringResource(shownError)
-            capabilities.biometricInvalidated -> stringResource(Res.string.lock_biometric_invalidated)
+            shownError != null -> hostString(shownError)
+            capabilities.biometricInvalidated -> hostString(Res.string.lock_biometric_invalidated)
             else -> stringResource(Res.string.lock_subtitle)
         },
         subtitleIsError = form.lockedOut || shownError != null,
@@ -202,7 +203,7 @@ private fun SeedLockContent(
         RecoveryPhraseInput(
             state = form.phrase,
             enabled = !busy,
-            error = form.phraseError?.let { stringResource(it) },
+            error = form.phraseError?.let { hostString(it) },
             onEdit = form::onPhraseEdited,
             onDone = submit,
             modifier = Modifier

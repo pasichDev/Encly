@@ -129,7 +129,6 @@ internal class TestApp {
     fun withWorkingVault(phrase: String) = apply {
         `when`(security.generateMnemonicCode()).thenAnswer { phrase.toCharArray() }
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
-        `when`(security.configurePin(anyCharArray())).thenReturn(true)
         `when`(security.changePin(anyCharArray())).thenReturn(PinChange.SET)
         `when`(security.verifyPin(anyCharArray())).thenReturn(true)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {

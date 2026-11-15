@@ -17,7 +17,7 @@ public final class com/pasich/encly/editor/EditorLogger$None : com/pasich/encly/
 }
 
 public final class com/pasich/encly/editor/EditorServicesKt {
-	public static final fun EditorProvider (Lcom/pasich/encly/editor/EditorStrings;Lcom/pasich/encly/editor/theme/EditorTheme;Lcom/pasich/encly/editor/EditorClipboard;Lcom/pasich/encly/editor/LinkOpener;Lcom/pasich/encly/editor/EditorLogger;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun EditorProvider (Lcom/pasich/encly/editor/EditorStrings;Lcom/pasich/encly/editor/theme/EditorTheme;Lcom/pasich/encly/editor/EditorClipboard;Lcom/pasich/encly/editor/LinkOpener;Lcom/pasich/encly/editor/EditorLogger;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun getLocalEditorStrings ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
@@ -66,6 +66,7 @@ public final class com/pasich/encly/editor/EditorString : java/lang/Enum {
 	public static final field TABLE_ADD_ROW Lcom/pasich/encly/editor/EditorString;
 	public static final field TABLE_CELL_OPTIONS Lcom/pasich/encly/editor/EditorString;
 	public static final field TABLE_HEADER_ROW Lcom/pasich/encly/editor/EditorString;
+	public static final field TABLE_MENU_OPEN Lcom/pasich/encly/editor/EditorString;
 	public static final field TABLE_REMOVE_COLUMN Lcom/pasich/encly/editor/EditorString;
 	public static final field TABLE_REMOVE_ROW Lcom/pasich/encly/editor/EditorString;
 	public static final field TAP_AGAIN_TO_DELETE Lcom/pasich/encly/editor/EditorString;
@@ -460,6 +461,7 @@ public final class com/pasich/encly/editor/state/BlockEditingKt {
 	public static final fun applyShortcut (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Lcom/pasich/encly/editor/state/Shortcut;)Z
 	public static final fun backspaceAtStart (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;)Z
 	public static final fun breakLine (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Lcom/pasich/encly/editor/state/LineBreak;)Ljava/lang/String;
+	public static final fun commitLink (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Lcom/pasich/encly/editor/model/LinkDataBlock;)Z
 	public static final fun pasteLink (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Ljava/lang/String;Lcom/pasich/encly/editor/model/LinkDataBlock;)Z
 }
 
@@ -500,6 +502,7 @@ public final class com/pasich/encly/editor/state/BlockEditorToolbarKt {
 	public static final fun moveBlockOf (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/lang/String;Z)V
 	public static final fun moveInteracted (Lcom/pasich/encly/editor/state/BlockEditorState;Z)V
 	public static final fun removeInteracted (Lcom/pasich/encly/editor/state/BlockEditorState;)V
+	public static final fun requestFocus (Lcom/pasich/encly/editor/state/BlockEditorState;Lcom/pasich/encly/editor/state/FocusRequest;)V
 }
 
 public final class com/pasich/encly/editor/state/BlockRemoveAction : java/lang/Enum {
@@ -530,6 +533,7 @@ public final class com/pasich/encly/editor/state/BlockSelection {
 public final class com/pasich/encly/editor/state/BlockToolsKt {
 	public static final fun applyTool (Lcom/pasich/encly/editor/state/BlockEditorState;Lcom/pasich/encly/editor/model/BlockType;Z)V
 	public static synthetic fun applyTool$default (Lcom/pasich/encly/editor/state/BlockEditorState;Lcom/pasich/encly/editor/model/BlockType;ZILjava/lang/Object;)V
+	public static final fun exactType (Lcom/pasich/encly/editor/model/Block;)Lcom/pasich/encly/editor/model/BlockType;
 	public static final fun focusFirstBlock (Lcom/pasich/encly/editor/state/BlockEditorState;)V
 	public static final fun focusWorkingBlock (Lcom/pasich/encly/editor/state/BlockEditorState;)V
 	public static final fun getHEADING_TOOL ()Lcom/pasich/encly/editor/model/BlockType;
@@ -559,19 +563,21 @@ public final class com/pasich/encly/editor/state/FindMatch {
 public final class com/pasich/encly/editor/state/FindState {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (ZLjava/lang/String;Ljava/util/List;I)V
-	public synthetic fun <init> (ZLjava/lang/String;Ljava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLjava/lang/String;Ljava/util/List;II)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/util/List;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/util/List;
 	public final fun component4 ()I
-	public final fun copy (ZLjava/lang/String;Ljava/util/List;I)Lcom/pasich/encly/editor/state/FindState;
-	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/FindState;ZLjava/lang/String;Ljava/util/List;IILjava/lang/Object;)Lcom/pasich/encly/editor/state/FindState;
+	public final fun component5 ()I
+	public final fun copy (ZLjava/lang/String;Ljava/util/List;II)Lcom/pasich/encly/editor/state/FindState;
+	public static synthetic fun copy$default (Lcom/pasich/encly/editor/state/FindState;ZLjava/lang/String;Ljava/util/List;IIILjava/lang/Object;)Lcom/pasich/encly/editor/state/FindState;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCurrent ()I
 	public final fun getCurrentMatch ()Lcom/pasich/encly/editor/state/FindMatch;
 	public final fun getMatches ()Ljava/util/List;
 	public final fun getQuery ()Ljava/lang/String;
+	public final fun getRevealRequest ()I
 	public fun hashCode ()I
 	public final fun isOpen ()Z
 	public fun toString ()Ljava/lang/String;
@@ -965,8 +971,8 @@ public final class com/pasich/encly/editor/theme/EditorFontSizes {
 public final class com/pasich/encly/editor/theme/EditorIcons {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;)V
-	public synthetic fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;)V
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class com/pasich/encly/editor/theme/EditorLineSpacing : java/lang/Enum {
@@ -1118,6 +1124,7 @@ public abstract interface class com/pasich/encly/editor/ui/EditorController {
 	public abstract fun removeBlock (Lcom/pasich/encly/editor/model/Block;Lcom/pasich/encly/editor/state/BlockRemoveAction;)V
 	public abstract fun replaceBlock (ILcom/pasich/encly/editor/model/Block;)Z
 	public abstract fun replaceTextRange (Ljava/lang/String;)Z
+	public abstract fun requestFocus (Lcom/pasich/encly/editor/state/FocusRequest;)V
 	public abstract fun selectAllText ()Z
 	public abstract fun toggleChecklistLock (Lcom/pasich/encly/editor/model/Block;)V
 }
@@ -1168,6 +1175,10 @@ public final class com/pasich/encly/editor/ui/components/ComposableSingletons$Ed
 	public static final field INSTANCE Lcom/pasich/encly/editor/ui/components/ComposableSingletons$EditorSheetKt;
 	public fun <init> ()V
 	public final fun getLambda$1043769206$Encly_editor ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/pasich/encly/editor/ui/components/ProtectDialogWindow_desktopKt {
+	public static final fun ProtectDialogWindow (Landroidx/compose/runtime/Composer;I)V
 }
 
 public final class com/pasich/encly/editor/ui/sheets/BlockSheetKind : java/lang/Enum {

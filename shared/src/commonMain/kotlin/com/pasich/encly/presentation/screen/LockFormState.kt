@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.error_database_open
+import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.lock_device_locked
 import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.lock_wrong_pin
@@ -88,6 +89,8 @@ internal class LockFormState {
             }
 
             PinUnlockResult.DB_ERROR -> pinError = Res.string.error_database_open
+
+            PinUnlockResult.KEY_STORE_UNAVAILABLE -> pinError = Res.string.key_store_unavailable
 
             PinUnlockResult.DEVICE_LOCKED -> pinError = Res.string.lock_device_locked
 

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,7 +29,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.subtask_add
@@ -41,6 +39,7 @@ import com.pasich.encly.core.resources.tag_drag_handle
 import com.pasich.encly.core.resources.tag_move_down
 import com.pasich.encly.core.resources.tag_move_up
 import com.pasich.encly.data.model.Subtask
+import com.pasich.encly.platform.vaultTextKeyboardOptions
 import com.pasich.encly.presentation.designsystem.CheckboxSize
 import com.pasich.encly.presentation.designsystem.EnclyCheckbox
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -277,7 +276,7 @@ private fun SubtaskTextField(
         singleLine = true,
         cursorBrush = SolidColor(colors.primary),
         // Same keyboard as the task's own fields.
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+        keyboardOptions = vaultTextKeyboardOptions(ImeAction.Done),
         // The "add" field keeps the keyboard open, so several sub-tasks go in one after another.
         keyboardActions = KeyboardActions(onDone = { onImeAction?.invoke() ?: defaultKeyboardAction(ImeAction.Done) }),
         modifier = modifier,

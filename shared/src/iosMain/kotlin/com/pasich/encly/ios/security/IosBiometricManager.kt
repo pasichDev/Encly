@@ -34,6 +34,9 @@ import kotlinx.cinterop.value
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import platform.Foundation.NSError
+import platform.LocalAuthentication.LABiometryTypeFaceID
+import platform.LocalAuthentication.LABiometryTypeOpticID
+import platform.LocalAuthentication.LABiometryTypeTouchID
 import platform.LocalAuthentication.LAContext
 import platform.LocalAuthentication.LAErrorAppCancel
 import platform.LocalAuthentication.LAErrorBiometryNotEnrolled
@@ -141,6 +144,10 @@ internal class IosBiometricManager(
     @Volatile
     private var enrolling = false
 
+    /** Set when [unlock] found the slot dropped or damaged; read once through [takeInvalidated]. */
+    @Volatile
+    private var invalidated = false
+
     override fun hasSlot(): Boolean {
         if (!store.contains(SLOT_KEY)) {
             // A Keychain item without its slot entry is left over from a wipe that only dropped the entries, unless
@@ -195,7 +202,10 @@ internal class IosBiometricManager(
             if (wrapKey == null) {
                 SensitiveDataCleaner.clear(slot)
                 // A dropped item is what Android's KeyPermanentlyInvalidatedException is: the slot is over.
-                if (error?.gone == true) disable()
+                if (error?.gone == true) {
+                    invalidated = true
+                    disable()
+                }
                 onResult(null)
                 return@readWrapKey
             }
@@ -208,7 +218,10 @@ internal class IosBiometricManager(
             SensitiveDataCleaner.clear(wrapKey)
             SensitiveDataCleaner.clear(slot)
             // A slot that the key does not open is damaged for good.
-            if (dek == null) disable()
+            if (dek == null) {
+                invalidated = true
+                disable()
+            }
             onResult(dek)
         }
     }
@@ -273,6 +286,12 @@ internal class IosBiometricManager(
         }
     }
 
+    override fun takeInvalidated(): Boolean {
+        val was = invalidated
+        invalidated = false
+        return was
+    }
+
     override fun disable() {
         store.edit { removePrefix(BiometricManager.SLOT_PREFIX) }
         keychain.delete()
@@ -318,5 +337,22 @@ internal class IosBiometricManager(
         const val ERROR_UNAVAILABLE = 12
 
         val CANCELLED = setOf(LAErrorUserCancel, LAErrorSystemCancel, LAErrorAppCancel, LAErrorUserFallback)
+    }
+}
+
+/**
+ * What this device calls its biometric unlock, for the texts: "Face ID", "Touch ID" or "Optic ID" by
+ * `LAContext.biometryType` (which is filled only after the policy was evaluated once). A device that reports no type
+ * (no sensor, or the system does not say) gets both names, so no text promises a sensor it may not have.
+ */
+@OptIn(ExperimentalForeignApi::class)
+internal fun biometryDisplayName(): String {
+    val context = LAContext()
+    context.canEvaluatePolicy(LAPolicyDeviceOwnerAuthenticationWithBiometrics, null)
+    return when (context.biometryType) {
+        LABiometryTypeFaceID -> "Face ID"
+        LABiometryTypeTouchID -> "Touch ID"
+        LABiometryTypeOpticID -> "Optic ID"
+        else -> "Face ID / Touch ID"
     }
 }

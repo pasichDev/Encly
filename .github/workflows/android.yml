@@ -619,12 +619,14 @@ jobs:
           :shared:compileKotlinIosSimulatorArm64
           :shared:compileKotlinIosArm64
 
-      - name: iOS tests (crypto, security, key store, shared)
+      - name: iOS tests (crypto, security, key store, database, editor, shared)
         run: >-
           ./gradlew
           :core:crypto:iosSimulatorArm64Test
           :core:security:iosSimulatorArm64Test
           :core:keystore:iosSimulatorArm64Test
+          :core:database:iosSimulatorArm64Test
+          :editor:iosSimulatorArm64Test
           :shared:iosSimulatorArm64Test
 
       # On a Mac the klib dump of the public API is made from the real iOS klibs (elsewhere it is

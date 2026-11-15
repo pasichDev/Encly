@@ -37,6 +37,7 @@ import com.pasich.encly.core.resources.wipe_pin_title
 import com.pasich.encly.core.resources.wipe_pin_turned_off
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.platform.LocalBiometricHost
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -141,7 +142,7 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
         EnclyCallout(text = stringResource(Res.string.wipe_pin_backups))
         if (info.biometricOn) {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
-                EnclyCallout(text = stringResource(Res.string.wipe_pin_biometric_warning), tone = CalloutTone.WARNING)
+                EnclyCallout(text = hostString(Res.string.wipe_pin_biometric_warning), tone = CalloutTone.WARNING)
                 EnclyTextButton(
                     text = stringResource(Res.string.wipe_pin_biometric_off),
                     onClick = actions.onBiometricOff,

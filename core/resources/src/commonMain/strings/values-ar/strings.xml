@@ -226,6 +226,7 @@
     <string name="pin_mismatch_retry">الرمزان غير متطابقين. حاول مرة أخرى.</string>
     <string name="pin_save_failed">تعذّر حفظ رمز PIN</string>
     <string name="pin_update_failed">تعذّر تحديث رمز PIN. حاول مرة أخرى.</string>
+    <string name="key_store_unavailable">افتح قفل سلسلة المفاتيح في النظام وحاول مرة أخرى</string>
 
     <string name="press_to_edit">اضغط لبدء التحرير…</string>
 
@@ -680,6 +681,8 @@
     <string name="menu_help">مساعدة</string>
     <string name="menu_exit">خروج</string>
     <string name="menu_minimize">تصغير</string>
+    <string name="menu_close_window">إغلاق النافذة</string>
+    <string name="drop_unreadable">تعذّر على Encly قراءة الملف الذي تم إسقاطه. اخترْه بدلاً من ذلك عبر «استيراد» أو «نسخ احتياطي» من قائمة «ملف».</string>
     <string name="menu_new_window">نافذة جديدة</string>
     <string name="note_open_in_new_window">فتح في نافذة جديدة</string>
     <string name="note_export_pdf">تصدير بصيغة PDF</string>
@@ -795,4 +798,33 @@
         <item quantity="many">ستُحذف %1$d ملاحظة نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
         <item quantity="other">ستُحذف %1$d ملاحظة نهائيًا دون انتظار %2$d يومًا. لا يمكن التراجع عن ذلك.</item>
     </plurals>
+
+    <!-- Wording for the iOS and desktop apps: their own biometrics, key stores and devices. See HostTexts. -->
+    <string name="pin_unlock_with_biometric_named">فتح القفل عبر %1$s</string>
+    <string name="lock_biometric_invalidated_named">تغيّرت بيانات القياسات الحيوية على هذا الجهاز. افتح القفل برمز PIN ثم فعّل %1$s مجددًا من الإعدادات.</string>
+    <string name="security_biometric_not_enrolled_named">لم يتم إعداد %1$s. أعدّه من إعدادات النظام.</string>
+    <string name="onboarding_ready_biometric_title_named">فتح القفل عبر %1$s مفعّل</string>
+    <string name="onboarding_ready_biometric_retry_named">جرّب %1$s مرة أخرى</string>
+    <string name="security_encryption_pin_plain_named">ملاحظاتك مشفرة. يفتحها رمز PIN (و%1$s إن كان مفعّلًا).</string>
+    <string name="security_encryption_seed_plain_named">ملاحظاتك مشفرة. يفتحها رمز PIN (و%1$s إن كان مفعّلًا)، وتفتحها عبارة الاسترداد إن نسيت رمز PIN.</string>
+    <string name="lock_pin_key_lost_named">لم يعد رمز PIN قادرًا على فتح Encly على هذا الجهاز: أُعيد تعيين مفتاحه العتادي. استخدم عبارة الاسترداد (أو %1$s)، ثم عيّن رمز PIN جديدًا.</string>
+    <string name="security_protection_slots_desc_named">رمز PIN وعبارة الاسترداد و%1$s يفتح كل منها خانته المشفرة الخاصة. يلزم %1$s في كل مرة.</string>
+    <string name="duress_pin_real_vault_named">تبقى خزنتك الحقيقية مقفلة ولا تُمسّ. وعلى خلاف رمز المسح، لا يمسح رمز الإكراه شيئًا. ويفتح %1$s وعبارة الاسترداد الخزنة الحقيقية دائمًا.</string>
+    <string name="wipe_pin_biometric_warning_named">يبقى فتح القفل بالقياسات الحيوية مفعّلًا: قد يجبرك أحدهم على استخدام %1$s. أوقفه إن كان ذلك يمثل خطرًا عليك.</string>
+    <string name="security_encryption_pin_plain_nobio">ملاحظاتك مشفرة. يفتحها رمز PIN.</string>
+    <string name="security_encryption_seed_plain_nobio">ملاحظاتك مشفرة. يفتحها رمز PIN، وتفتحها عبارة الاسترداد إن نسيت رمز PIN.</string>
+    <string name="lock_pin_key_lost_desktop">لم يعد رمز PIN قادرًا على فتح Encly على هذا الكمبيوتر: السر المحفوظ في سلسلة مفاتيح النظام مفقود أو أُعيد تعيينه. استخدم عبارة الاسترداد، ثم عيّن رمز PIN جديدًا.</string>
+    <string name="security_protection_slots_desc_nobio">رمز PIN وعبارة الاسترداد يفتح كل منهما خانته المشفرة الخاصة.</string>
+    <string name="duress_pin_real_vault_nobio">تبقى خزنتك الحقيقية مقفلة ولا تُمسّ. وعلى خلاف رمز المسح، لا يمسح رمز الإكراه شيئًا. وتفتح عبارة الاسترداد الخزنة الحقيقية دائمًا.</string>
+    <string name="security_protection_pin_title_device">رمز PIN مرتبط بهذا الجهاز</string>
+    <string name="security_protection_pin_desc_ios">يُمزج رمز PIN بمفتاح في Secure Enclave بهذا الجهاز، فلا يمكن تخمينه في أي مكان آخر.</string>
+    <string name="security_protection_pin_desc_desktop">يُمزج رمز PIN بسر محفوظ في سلسلة مفاتيح النظام، فلا يمكن تخمينه على نسخة منقولة من الخزنة في أي مكان آخر. وهو آمن بقدر أمان حسابك على الكمبيوتر.</string>
+    <string name="faq_db_key_a_ios">ينشئ Encly مفتاح قاعدة بيانات عشوائيًا بطول 256 بت. يحمي رمز PIN خانة فتح AES-GCM منفصلة، ويستخدم %1$s مفتاحًا في سلسلة المفاتيح يتطلب المصادقة عند كل استخدام.</string>
+    <string name="faq_db_key_a_desktop">ينشئ Encly مفتاح قاعدة بيانات عشوائيًا بطول 256 بت. يحمي رمز PIN خانة فتح AES-GCM منفصلة ويُمزج بسر محفوظ في سلسلة مفاتيح النظام.</string>
+    <string name="auto_lock_desc_device">المدة التي يبقى فيها Encly مفتوحًا عند التبديل إلى تطبيق آخر. إطفاء الشاشة أو قفل الجهاز يقفله دائمًا فورًا.</string>
+    <string name="import_intro_device">استورد ملاحظات من تطبيق آخر. اختر ملف التصدير الخاص به وسيتعرّف Encly على التنسيق بنفسه. كل شيء يبقى على هذا الجهاز؛ ولا يُرفع شيء.</string>
+    <string name="import_error_no_picker_device">لا يوجد على هذا الجهاز تطبيق لاختيار الملفات يستطيع Encly استخدامه.</string>
+    <string name="faq_swipe_a_other">افتراضيًا، سحب الملاحظة لليسار يثبّتها أو يلغي تثبيتها، وسحبها لليمين يؤرشفها. في الإعدادات ← إجراءات السحب يمكنك اختيار التثبيت أو الأرشفة أو اللون التالي أو النقل إلى سلة المحذوفات (يسأل دائمًا أولًا) أو لا شيء لكل اتجاه، أو إيقاف السحب.</string>
+    <string name="faq_theme_a_other">في الإعدادات ← المظهر اختر إحدى السمات الخمس، والوضع الفاتح أو الداكن أو وضع النظام، وأحد أنماط الخطوط الثلاثة، وحجم النص.</string>
+    <string name="faq_language_a_ios">افتح الإعدادات ← اللغة واختر إحدى اللغات المتاحة، أو «افتراضي النظام» لاتّباع لغة جهازك. يُطبَّق التغيير عند فتح Encly في المرة التالية.</string>
 </resources>

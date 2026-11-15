@@ -48,13 +48,12 @@ import platform.UIKit.endEditing
 internal class IosExternalLinks : ExternalLinks {
     @Suppress("ReturnCount") // Guards: no address, a scheme that may not leave the app.
     override fun openUrl(url: String, chooser: Boolean): Boolean {
-        val target = parse(url) ?: return false
-        if (target.scheme?.lowercase() !in WEB_SCHEMES) return false
+        val target = parseExternalUrl(url)?.takeIf { mayLeaveApp(it) } ?: return false
         return open(target)
     }
 
     override fun writeMail(address: String): Boolean {
-        val target = parse("mailto:$address") ?: return false
+        val target = parseExternalUrl("mailto:$address") ?: return false
         return open(target)
     }
 
@@ -64,13 +63,15 @@ internal class IosExternalLinks : ExternalLinks {
         application.openURL(target, options = emptyMap<Any?, Any?>(), completionHandler = null)
         return true
     }
-
-    private fun parse(text: String): NSURL? = NSURL.URLWithString(text.trim())?.takeIf { it.scheme != null }
-
-    private companion object {
-        val WEB_SCHEMES = setOf("https", "http", "mailto")
-    }
 }
+
+private val WEB_SCHEMES = setOf("https", "http", "mailto")
+
+/** [text] as an address with a scheme, or null when it is not one. */
+internal fun parseExternalUrl(text: String): NSURL? = NSURL.URLWithString(text.trim())?.takeIf { it.scheme != null }
+
+/** Whether [url] may leave the app: only `https`, `http` and `mailto`, whatever the case of the scheme. */
+internal fun mayLeaveApp(url: NSURL): Boolean = url.scheme?.lowercase() in WEB_SCHEMES
 
 /**
  * What the window offers the UI. [view] is the root view of the host, painted behind the content, and [statusBar]

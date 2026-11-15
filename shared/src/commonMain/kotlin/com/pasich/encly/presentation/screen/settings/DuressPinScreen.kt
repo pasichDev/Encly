@@ -44,6 +44,7 @@ import com.pasich.encly.core.resources.duress_pin_title
 import com.pasich.encly.core.resources.duress_pin_turned_off
 import com.pasich.encly.core.resources.pin_in_use
 import com.pasich.encly.core.security.DuressPinChange
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyButton
@@ -155,7 +156,7 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        EnclyCallout(text = stringResource(Res.string.duress_pin_real_vault))
+        EnclyCallout(text = hostString(Res.string.duress_pin_real_vault))
         Text(
             text = stringResource(Res.string.duress_pin_limits),
             style = MaterialTheme.typography.bodyMedium,

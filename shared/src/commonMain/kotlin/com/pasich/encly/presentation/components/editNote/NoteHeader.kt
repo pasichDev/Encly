@@ -24,11 +24,12 @@ import com.pasich.encly.core.resources.no_tag
 import com.pasich.encly.core.resources.note_not_saved
 import com.pasich.encly.core.resources.tags_manage
 import com.pasich.encly.data.model.Tag
-import com.pasich.encly.presentation.designsystem.EnclyBottomSheet
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySheetRow
+import com.pasich.encly.presentation.dialogs.AdaptiveSheet
 import com.pasich.encly.presentation.dialogs.rememberSheetCloser
+import com.pasich.encly.ui.theme.LocalWidthClass
 import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.noteInstant
 import org.jetbrains.compose.resources.stringResource
@@ -81,16 +82,19 @@ fun NoteTagSheet(
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    // Leaving for the tags screen, the sheet slides away first.
-    val close = rememberSheetCloser(sheetState, alwaysSheet = true, onDismiss = onDismiss)
-    EnclyBottomSheet(
+    // Leaving for the tags screen, the sheet slides away first (a dialog in a wide window has nothing to slide).
+    val close = rememberSheetCloser(sheetState, onDismiss = onDismiss)
+    val wide = LocalWidthClass.current.isWide
+    val listScroll = rememberScrollState()
+    AdaptiveSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
         sheetState = sheetState,
         title = stringResource(Res.string.edit_tags),
     ) {
-        // Many tags scroll; the manage row below stays in view.
-        Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+        // Many tags scroll; the manage row below stays in view. A dialog scrolls as a whole instead.
+        val listModifier = if (wide) Modifier else Modifier.weight(1f, fill = false).verticalScroll(listScroll)
+        Column(modifier = listModifier) {
             val untagged = selectedTagIds.isEmpty()
             EnclySheetRow(
                 title = stringResource(Res.string.no_tag),

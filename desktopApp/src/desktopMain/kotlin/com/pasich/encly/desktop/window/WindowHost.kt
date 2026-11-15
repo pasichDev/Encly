@@ -42,6 +42,7 @@ import com.pasich.encly.core.resources.licenses_title
 import com.pasich.encly.core.resources.lock_now
 import com.pasich.encly.core.resources.main_drawer_faq
 import com.pasich.encly.core.resources.main_drawer_settings
+import com.pasich.encly.core.resources.menu_close_window
 import com.pasich.encly.core.resources.menu_exit
 import com.pasich.encly.core.resources.menu_file
 import com.pasich.encly.core.resources.menu_help
@@ -68,7 +69,9 @@ import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.navigation.NavRoutes
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -93,10 +96,17 @@ private const val SAVE_WAIT_MILLIS = 3_000L
 /**
  * Encly's windows. The first one opens at once; "New window" and "Open in new window" add more, all showing the
  * same vault behind the same lock (see [DesktopWindows]). [launchFiles] are the backup or notes files the OS started
- * the app with; the first window takes them. [onExit] ends the app: the last window closing, or Quit.
+ * the app with; the first window takes them. A second start of the app comes through [activations] (the files it was
+ * given, maybe none): the window that was active last comes to the front and takes them. [onExit] ends the app: the
+ * last window closing, or Quit.
  */
 @Composable
-fun ApplicationScope.EnclyWindows(graph: DesktopAppGraph, launchFiles: List<Path>, onExit: () -> Unit) {
+fun ApplicationScope.EnclyWindows(
+    graph: DesktopAppGraph,
+    launchFiles: List<Path>,
+    activations: Flow<List<Path>> = emptyFlow(),
+    onExit: () -> Unit,
+) {
     val environment = graph.environment
     val foreground = remember { WindowForeground(graph.lifecycle) }
     // The frames of this app, to tell the focus moving between them from the app being left.
@@ -139,6 +149,8 @@ fun ApplicationScope.EnclyWindows(graph: DesktopAppGraph, launchFiles: List<Path
             }
         }
     }
+
+    ActivationEffect(activations, windows, graph.sessionLockManager.locked) { delay(FIRST_FRAME_MILLIS) }
 
     windows.sessions.forEach { session ->
         key(session.id) {
@@ -198,6 +210,7 @@ private fun ApplicationScope.EnclyWindow(
             onMinimise = { state.isMinimized = true },
             onQuit = onQuit,
             openWindow = { windows.open() },
+            onCloseWindow = { windows.close(session.id) },
         )
     }
     session.commands = commands
@@ -220,6 +233,7 @@ private fun ApplicationScope.EnclyWindow(
 
         DisposableEffect(composeWindow) {
             frames.add(composeWindow)
+            session.frame = composeWindow
             environment.dialogParent.frame = composeWindow
             val listener = object : WindowAdapter() {
                 override fun windowOpened(e: WindowEvent) {
@@ -246,6 +260,7 @@ private fun ApplicationScope.EnclyWindow(
             onDispose {
                 composeWindow.removeWindowListener(listener)
                 frames.remove(composeWindow)
+                if (session.frame === composeWindow) session.frame = null
                 if (environment.dialogParent.frame === composeWindow) environment.dialogParent.frame = null
             }
         }
@@ -254,6 +269,8 @@ private fun ApplicationScope.EnclyWindow(
             snapshotFlow { Triple(state.size, state.position, state.placement) }
                 .debounce(SAVE_DEBOUNCE_MILLIS)
                 .collect {
+                    // A window left in full screen keeps the place it had before: its bounds now are the display's.
+                    if (state.placement == WindowPlacement.Fullscreen) return@collect
                     val maximised = state.placement == WindowPlacement.Maximized
                     val bounds = composeWindow.bounds.let { WindowBounds(it.x, it.y, it.width, it.height) }
                     store.save(bounds, maximised)
@@ -270,7 +287,10 @@ private fun ApplicationScope.EnclyWindow(
 
         LaunchedEffect(session) { openStartNote(graph, session) }
 
-        EnclyMenuBar(os, shortcuts, commands, session)
+        // The menu titles are read when the bar is composed: a new language needs a new bar (the app below is keyed
+        // on the same revision, see DesktopApp).
+        val languageRevision by graph.locales.revision.collectAsState()
+        key(languageRevision) { EnclyMenuBar(os, shortcuts, commands, session) }
 
         val appWindow = remember(composeWindow) {
             DesktopAppWindow(environment.captureExclusion, windowProvider = { composeWindow })
@@ -314,8 +334,9 @@ private fun Modifier.dropFiles(onDrop: (List<Path>) -> Boolean): Modifier = drag
 )
 
 /**
- * The OS's own hooks: the About and Preferences items of the macOS app menu, and files opened with the app. There is
- * one of each for the process, so they act on the window that was active last ([DesktopWindows.focused]).
+ * The OS's own hooks: the About and Preferences items of the macOS app menu, files opened with the app, and the
+ * macOS Quit (Cmd+Q, the Dock menu, logout). There is one of each for the process, so they act on the window that
+ * was active last ([DesktopWindows.focused]).
  */
 private fun installOsHandlers(windows: DesktopWindows, onFiles: (List<Path>) -> Unit) {
     if (!Desktop.isDesktopSupported()) return
@@ -333,6 +354,15 @@ private fun installOsHandlers(windows: DesktopWindows, onFiles: (List<Path>) -> 
     runCatching {
         if (desktop.isSupported(Desktop.Action.APP_OPEN_FILE)) {
             desktop.setOpenFileHandler { event -> onFiles(event.files.map(File::toPath)) }
+        }
+    }
+    runCatching {
+        if (desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
+            // The JDK's default Quit is System.exit, which skips the orderly end: the editors are not closed and
+            // saved, the vault is not locked and the clipboard is not wiped. Quit the way the menu's Exit does.
+            // The response is left unanswered on purpose: cancelling it would also cancel a macOS logout or restart
+            // that asked the app to quit, and the process ends by itself once the editors have saved.
+            desktop.setQuitHandler { _, _ -> windows.closeAll() }
         }
     }
 }
@@ -370,6 +400,11 @@ private fun FrameWindowScope.EnclyMenuBar(
                 stringResource(Res.string.menu_minimize),
                 shortcut = DesktopShortcuts.minimise(os).toKeyShortcut(),
                 onClick = commands::minimise,
+            )
+            Item(
+                stringResource(Res.string.menu_close_window),
+                shortcut = DesktopShortcuts.closeWindow(os).toKeyShortcut(),
+                onClick = commands::closeWindow,
             )
         }
         Menu(stringResource(Res.string.menu_help)) {

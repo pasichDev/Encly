@@ -5,9 +5,11 @@ package com.pasich.encly.ios
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ExportObjCClass
+import platform.UIKit.UIColor
 import platform.UIKit.UIStatusBarStyle
 import platform.UIKit.UIStatusBarStyleDarkContent
 import platform.UIKit.UIStatusBarStyleLightContent
+import platform.UIKit.UIUserInterfaceStyle
 import platform.UIKit.UIViewAutoresizingFlexibleHeight
 import platform.UIKit.UIViewAutoresizingFlexibleWidth
 import platform.UIKit.UIViewController
@@ -25,6 +27,14 @@ internal class HostViewController(private val content: UIViewController) :
 
     override fun viewDidLoad() {
         super.viewDidLoad()
+        // The launch screen's colour, until the theme paints the real one: no flash between the two.
+        // (the LaunchBackground asset, in code: the app's default light and dark page colours).
+        view.backgroundColor =
+            if (traitCollection.userInterfaceStyle == UIUserInterfaceStyle.UIUserInterfaceStyleDark) {
+                UIColor(red = DARK_RED, green = DARK_GREEN, blue = DARK_BLUE, alpha = 1.0)
+            } else {
+                UIColor(red = LIGHT_RED, green = LIGHT_GREEN, blue = LIGHT_BLUE, alpha = 1.0)
+            }
         addChildViewController(content)
         content.view.setFrame(view.bounds)
         content.view.autoresizingMask = UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
@@ -41,3 +51,11 @@ internal class HostViewController(private val content: UIViewController) :
         setNeedsStatusBarAppearanceUpdate()
     }
 }
+
+// 0xF7F3EA and 0x1C1915 over 255: the default theme's page colours, as in the LaunchBackground asset.
+private const val LIGHT_RED = 247.0 / 255
+private const val LIGHT_GREEN = 243.0 / 255
+private const val LIGHT_BLUE = 234.0 / 255
+private const val DARK_RED = 28.0 / 255
+private const val DARK_GREEN = 25.0 / 255
+private const val DARK_BLUE = 21.0 / 255

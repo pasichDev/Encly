@@ -46,6 +46,7 @@ import com.pasich.encly.core.resources.import_stat_trashed
 import com.pasich.encly.data.importer.ImportLosses
 import com.pasich.encly.data.importer.ImportPreview
 import com.pasich.encly.data.importer.ImportSource
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
@@ -62,7 +63,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun StartPage(actions: ImportNotesActions) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.section)) {
         Text(
-            text = stringResource(Res.string.import_intro),
+            text = hostString(Res.string.import_intro),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -145,7 +146,7 @@ internal fun DonePage(result: ImportResult, actions: ImportNotesActions) {
 
 @Composable
 internal fun FailedPage(failure: ImportFailure, actions: ImportNotesActions) {
-    StepHeading(title = stringResource(Res.string.import_error_title), body = stringResource(errorText(failure)))
+    StepHeading(title = stringResource(Res.string.import_error_title), body = hostString(errorText(failure)))
     EnclyButton(text = stringResource(Res.string.import_choose_again), onClick = actions.onCancel)
 }
 

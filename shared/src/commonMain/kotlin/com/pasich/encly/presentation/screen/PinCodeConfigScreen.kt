@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.action_continue
+import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.pin_change_bar_title
 import com.pasich.encly.core.resources.pin_change_confirm_subtitle
 import com.pasich.encly.core.resources.pin_change_confirm_title
@@ -139,6 +140,7 @@ private class PinChangeState(val isReset: Boolean) {
                     PinChange.SET -> animationState = PinAnimationState.SuccessAnimation
                     PinChange.IN_USE -> restartNewPin(Res.string.pin_in_use)
                     PinChange.FAILED -> restartNewPin(Res.string.pin_update_failed)
+                    PinChange.KEY_STORE_UNAVAILABLE -> restartNewPin(Res.string.key_store_unavailable)
                 }
             }
         } else {

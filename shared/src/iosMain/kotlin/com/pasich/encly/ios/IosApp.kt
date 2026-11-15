@@ -1,20 +1,22 @@
 package com.pasich.encly.ios
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -24,17 +26,25 @@ import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.ios.di.IosAppGraph
 import com.pasich.encly.ios.platform.SensitiveClipboardBoundary
 import com.pasich.encly.ios.platform.ToastHost
+import com.pasich.encly.ios.security.IOS_MAX_AUTO_LOCK_MILLIS
 import com.pasich.encly.ios.security.IosBiometricHost
+import com.pasich.encly.ios.security.biometryDisplayName
 import com.pasich.encly.platform.AppWindow
+import com.pasich.encly.platform.BiometricWording
+import com.pasich.encly.platform.HostPlatform
 import com.pasich.encly.platform.LocalAppInfo
 import com.pasich.encly.platform.LocalAppLocales
 import com.pasich.encly.platform.LocalAppWindow
 import com.pasich.encly.platform.LocalBiometricHost
+import com.pasich.encly.platform.LocalBiometricWording
 import com.pasich.encly.platform.LocalDocumentPickers
 import com.pasich.encly.platform.LocalExternalLinks
+import com.pasich.encly.platform.LocalHostPlatform
 import com.pasich.encly.platform.LocalKeyboardPrivacyOffered
+import com.pasich.encly.platform.LocalMaxAutoLockMillis
 import com.pasich.encly.platform.LocalSensitiveClipboard
 import com.pasich.encly.platform.LocalToaster
+import com.pasich.encly.platform.LocalVaultTextKeyboardType
 import com.pasich.encly.platform.ScreenBiometricHost
 import com.pasich.encly.presentation.navigation.EnclyApp
 import com.pasich.encly.ui.theme.AppTheme
@@ -70,18 +80,22 @@ internal fun IosApp(graph: IosAppGraph, appWindow: AppWindow, modifier: Modifier
     }
 
     IosHostServices(graph, appWindow) {
-        // iOS cannot switch the language of a running app, but a new key makes every screen read its strings again.
-        val revision by graph.locales.revision.collectAsState()
+        // iOS cannot switch the language of a running app: a chosen language applies at the next start, so the
+        // screens are not rebuilt (that would only reset the navigation to the launch route).
         Box(modifier.fillMaxSize()) {
-            key(revision) {
-                EnclyApp(
-                    startStatus = startStatus,
-                    securityManager = graph.securityManager,
-                    sessionLockManager = graph.sessionLockManager,
-                )
-            }
+            EnclyApp(
+                startStatus = startStatus,
+                securityManager = graph.securityManager,
+                sessionLockManager = graph.sessionLockManager,
+            )
             AppTheme {
-                ToastHost(graph.toaster, Modifier.align(Alignment.BottomCenter).padding(EnclyTheme.spacing.m))
+                ToastHost(
+                    graph.toaster,
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .windowInsetsPadding(WindowInsets.safeDrawing)
+                        .padding(EnclyTheme.spacing.m),
+                )
             }
         }
     }
@@ -97,6 +111,7 @@ internal fun IosHostServices(graph: IosAppGraph, appWindow: AppWindow, content: 
     }
     DisposableEffect(viewModelStoreOwner) { onDispose { viewModelStoreOwner.viewModelStore.clear() } }
     val biometricHost = remember(graph) { ScreenBiometricHost(IosBiometricHost, graph.lifecycle) }
+    val biometricName = remember(graph) { biometryDisplayName() }
     CompositionLocalProvider(
         LocalViewModelStoreOwner provides viewModelStoreOwner,
         LocalLifecycleOwner provides graph.lifecycle,
@@ -109,6 +124,10 @@ internal fun IosHostServices(graph: IosAppGraph, appWindow: AppWindow, content: 
         LocalAppLocales provides graph.locales,
         LocalAppInfo provides graph.appInfo,
         LocalKeyboardPrivacyOffered provides false,
+        LocalVaultTextKeyboardType provides KeyboardType.Text,
+        LocalMaxAutoLockMillis provides IOS_MAX_AUTO_LOCK_MILLIS,
+        LocalHostPlatform provides HostPlatform.IOS,
+        LocalBiometricWording provides BiometricWording.Named(biometricName),
         LocalDocumentPickers provides graph.pickers,
     ) {
         SensitiveClipboardBoundary(graph.clipboardPolicy, content)

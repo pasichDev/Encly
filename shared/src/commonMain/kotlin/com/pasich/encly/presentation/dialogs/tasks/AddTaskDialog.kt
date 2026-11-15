@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -37,6 +35,7 @@ import com.pasich.encly.core.resources.task_description_placeholder
 import com.pasich.encly.core.resources.task_edit_placeholder
 import com.pasich.encly.core.resources.task_new_placeholder
 import com.pasich.encly.data.model.Task
+import com.pasich.encly.platform.vaultTextKeyboardOptions
 import com.pasich.encly.presentation.components.tasks.PriorityValues
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyButton
@@ -182,7 +181,7 @@ private fun TaskEditorContent(
                 label = stringResource(
                     if (state.isEditMode) Res.string.task_edit_placeholder else Res.string.task_new_placeholder,
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                keyboardOptions = vaultTextKeyboardOptions(ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { descriptionFocus.requestFocus() }),
                 fieldModifier = Modifier.focusRequester(titleFocusRequester),
             )
@@ -191,7 +190,7 @@ private fun TaskEditorContent(
                 onValueChange = actions.onDescriptionChange,
                 label = stringResource(Res.string.task_description_placeholder),
                 textStyle = MaterialTheme.typography.bodyMedium,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardOptions = vaultTextKeyboardOptions(ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { actions.onSubmit() }),
                 fieldModifier = Modifier.focusRequester(descriptionFocus),
             )

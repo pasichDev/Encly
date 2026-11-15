@@ -4,6 +4,7 @@ import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
 import com.pasich.encly.core.resources.biometric_enroll_failed
+import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.AuthSettings
@@ -142,6 +143,15 @@ class SecuritySettingsViewModelTest {
 
         assertFalse(activate("444444"))
         assertEquals(UiText.of(Res.string.pin_update_failed), viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun aLockedKeyringIsNamedWhenANewPinIsStored() = runTest {
+        viewModel.uiState.first { it.loaded }
+        `when`(security.changePin("666666".toCharArray())).thenReturn(PinChange.KEY_STORE_UNAVAILABLE)
+
+        assertFalse(activate("666666"))
+        assertEquals(UiText.of(Res.string.key_store_unavailable), viewModel.uiState.value.error)
     }
 
     @Test

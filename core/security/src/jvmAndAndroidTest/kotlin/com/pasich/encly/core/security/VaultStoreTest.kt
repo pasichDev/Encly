@@ -6,8 +6,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.attribute.PosixFilePermissions
 
 /** The slot file: atomic replacement, damage detection, and the way out of damage. */
 class VaultStoreTest {
@@ -190,6 +194,26 @@ class VaultStoreTest {
         assertEquals(1, store.getInt("x", 0))
         assertTrue(store.edit { putInt("x", 3) })
         assertEquals(3, VaultStore(io).getInt("x", 0))
+    }
+
+    @Test
+    fun aFolderThatCannotBeSearchedIsUnreadableNotAFirstRun() {
+        val folder = file.parentFile
+        assertTrue(VaultStore(file).edit { putInt("x", 1) })
+        val posix = Paths.get(folder.path).fileSystem.supportedFileAttributeViews().contains("posix")
+        Assume.assumeTrue("needs POSIX permissions", posix)
+        Files.setPosixFilePermissions(folder.toPath(), emptySet())
+        try {
+            // A superuser can search it anyway, and then there is nothing to show.
+            Assume.assumeFalse("permissions do not apply to this user", File(folder, file.name).exists())
+
+            val store = VaultStore(file)
+
+            assertTrue(store.isUnreadable())
+            assertFalse(store.isCorrupt())
+        } finally {
+            Files.setPosixFilePermissions(folder.toPath(), PosixFilePermissions.fromString("rwx------"))
+        }
     }
 
     @Test

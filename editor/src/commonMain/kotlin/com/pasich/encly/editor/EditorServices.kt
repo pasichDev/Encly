@@ -80,13 +80,20 @@ internal val LocalEditorClipboard = staticCompositionLocalOf<EditorClipboard> { 
 /** How the editor opens a link; see [LinkOpener]. */
 internal val LocalLinkOpener = staticCompositionLocalOf<LinkOpener> { LinkOpener.None }
 
+/**
+ * Whether the editor's block sheets (a link's, a separator's) show as a centred dialog instead of a bottom sheet:
+ * for a wide window, where a sheet would stretch across the whole width. See [EditorProvider].
+ */
+internal val LocalEditorSheetsAsDialogs = staticCompositionLocalOf { false }
+
 /** Where the editor reports failures; see [EditorLogger]. */
 internal val LocalEditorLogger = staticCompositionLocalOf<EditorLogger> { EditorLogger.None }
 
 /**
  * Provides everything the editor needs from its host above [content]: [strings], [theme], and the
  * [clipboard], [linkOpener] and [logger] its sheets and focus handling call. Each has an inert
- * default, so [content] may also be shown with only what the host cares about.
+ * default, so [content] may also be shown with only what the host cares about. With [sheetsAsDialogs] the block
+ * sheets are centred dialogs, as the host does for its own sheets in a wide window.
  */
 @Composable
 public fun EditorProvider(
@@ -95,6 +102,7 @@ public fun EditorProvider(
     clipboard: EditorClipboard = EditorClipboard.None,
     linkOpener: LinkOpener = LinkOpener.None,
     logger: EditorLogger = EditorLogger.None,
+    sheetsAsDialogs: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
@@ -103,6 +111,7 @@ public fun EditorProvider(
         LocalEditorClipboard provides clipboard,
         LocalLinkOpener provides linkOpener,
         LocalEditorLogger provides logger,
+        LocalEditorSheetsAsDialogs provides sheetsAsDialogs,
         LocalSlashLabels provides rememberSlashLabels(strings),
         content = content,
     )

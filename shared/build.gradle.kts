@@ -45,6 +45,11 @@ val generateChangelogs = tasks.register<GenerateChangelogs>("generateChangelogs"
     changelogs.from(
         fileTree(rootProject.file("fastlane/metadata/android")) { include("*/changelogs/$appVersionCode.txt") },
     )
+    hostChangelogs.from(
+        fileTree(rootProject.file("fastlane/metadata")) {
+            include("ios/*/changelogs/$appVersionCode.txt", "desktop/*/changelogs/$appVersionCode.txt")
+        },
+    )
     output.set(layout.buildDirectory.dir("generated/changelogs/kotlin"))
 }
 

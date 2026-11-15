@@ -143,6 +143,7 @@ final enum class com.pasich.encly.core.security/InitialStatus : kotlin/Enum<com.
 final enum class com.pasich.encly.core.security/PinChange : kotlin/Enum<com.pasich.encly.core.security/PinChange> { // com.pasich.encly.core.security/PinChange|null[0]
     enum entry FAILED // com.pasich.encly.core.security/PinChange.FAILED|null[0]
     enum entry IN_USE // com.pasich.encly.core.security/PinChange.IN_USE|null[0]
+    enum entry KEY_STORE_UNAVAILABLE // com.pasich.encly.core.security/PinChange.KEY_STORE_UNAVAILABLE|null[0]
     enum entry SET // com.pasich.encly.core.security/PinChange.SET|null[0]
 
     final val entries // com.pasich.encly.core.security/PinChange.entries|#static{}entries[0]
@@ -202,6 +203,7 @@ final enum class com.pasich.encly.core.security/VaultKind : kotlin/Enum<com.pasi
 final enum class com.pasich.encly.core.security/VaultUnlockResult : kotlin/Enum<com.pasich.encly.core.security/VaultUnlockResult> { // com.pasich.encly.core.security/VaultUnlockResult|null[0]
     enum entry DB_ERROR // com.pasich.encly.core.security/VaultUnlockResult.DB_ERROR|null[0]
     enum entry INVALID_CREDENTIAL // com.pasich.encly.core.security/VaultUnlockResult.INVALID_CREDENTIAL|null[0]
+    enum entry KEY_STORE_UNAVAILABLE // com.pasich.encly.core.security/VaultUnlockResult.KEY_STORE_UNAVAILABLE|null[0]
     enum entry LOCKED_OUT // com.pasich.encly.core.security/VaultUnlockResult.LOCKED_OUT|null[0]
     enum entry PIN_KEY_LOST // com.pasich.encly.core.security/VaultUnlockResult.PIN_KEY_LOST|null[0]
     enum entry SUCCESS // com.pasich.encly.core.security/VaultUnlockResult.SUCCESS|null[0]
@@ -261,6 +263,8 @@ abstract interface com.pasich.encly.core.security/BiometricManager { // com.pasi
     abstract fun isStrongBiometricAvailable(): kotlin/Boolean // com.pasich.encly.core.security/BiometricManager.isStrongBiometricAvailable|isStrongBiometricAvailable(){}[0]
     abstract fun strongBiometricStatus(): com.pasich.encly.core.security/BiometricStatus // com.pasich.encly.core.security/BiometricManager.strongBiometricStatus|strongBiometricStatus(){}[0]
     abstract fun unlock(com.pasich.encly.core.security/BiometricHost, kotlin/Function1<kotlin/ByteArray?, kotlin/Unit>) // com.pasich.encly.core.security/BiometricManager.unlock|unlock(com.pasich.encly.core.security.BiometricHost;kotlin.Function1<kotlin.ByteArray?,kotlin.Unit>){}[0]
+    open fun cancelPendingEnrolment() // com.pasich.encly.core.security/BiometricManager.cancelPendingEnrolment|cancelPendingEnrolment(){}[0]
+    open fun takeInvalidated(): kotlin/Boolean // com.pasich.encly.core.security/BiometricManager.takeInvalidated|takeInvalidated(){}[0]
 
     final enum class BiometricType : kotlin/Enum<com.pasich.encly.core.security/BiometricManager.BiometricType> { // com.pasich.encly.core.security/BiometricManager.BiometricType|null[0]
         enum entry APP_UNLOCK // com.pasich.encly.core.security/BiometricManager.BiometricType.APP_UNLOCK|null[0]
@@ -313,6 +317,7 @@ abstract interface com.pasich.encly.core.security/BiometricManager { // com.pasi
 abstract interface com.pasich.encly.core.security/DeviceLockWatcher { // com.pasich.encly.core.security/DeviceLockWatcher|null[0]
     abstract fun isDeviceLocked(): kotlin/Boolean // com.pasich.encly.core.security/DeviceLockWatcher.isDeviceLocked|isDeviceLocked(){}[0]
     abstract fun watchScreenOff(kotlin/Function0<kotlin/Unit>): kotlin/Function0<kotlin/Unit> // com.pasich.encly.core.security/DeviceLockWatcher.watchScreenOff|watchScreenOff(kotlin.Function0<kotlin.Unit>){}[0]
+    open fun isScreenOn(): kotlin/Boolean // com.pasich.encly.core.security/DeviceLockWatcher.isScreenOn|isScreenOn(){}[0]
 
     final object None : com.pasich.encly.core.security/DeviceLockWatcher { // com.pasich.encly.core.security/DeviceLockWatcher.None|null[0]
         final fun isDeviceLocked(): kotlin/Boolean // com.pasich.encly.core.security/DeviceLockWatcher.None.isDeviceLocked|isDeviceLocked(){}[0]
@@ -389,6 +394,12 @@ sealed interface com.pasich.encly.core.security/PinUnlock { // com.pasich.encly.
         final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.security/PinUnlock.KeyLost.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // com.pasich.encly.core.security/PinUnlock.KeyLost.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // com.pasich.encly.core.security/PinUnlock.KeyLost.toString|toString(){}[0]
+    }
+
+    final object KeyStoreUnavailable : com.pasich.encly.core.security/PinUnlock { // com.pasich.encly.core.security/PinUnlock.KeyStoreUnavailable|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.security/PinUnlock.KeyStoreUnavailable.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.core.security/PinUnlock.KeyStoreUnavailable.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.core.security/PinUnlock.KeyStoreUnavailable.toString|toString(){}[0]
     }
 
     final object LockedOut : com.pasich.encly.core.security/PinUnlock { // com.pasich.encly.core.security/PinUnlock.LockedOut|null[0]
@@ -818,10 +829,12 @@ final class com.pasich.encly.core.security/KeyboardPrivacy { // com.pasich.encly
 }
 
 final class com.pasich.encly.core.security/PinFactorException : kotlin/Exception { // com.pasich.encly.core.security/PinFactorException|null[0]
-    constructor <init>(kotlin/Boolean, kotlin/Throwable? = ...) // com.pasich.encly.core.security/PinFactorException.<init>|<init>(kotlin.Boolean;kotlin.Throwable?){}[0]
+    constructor <init>(kotlin/Boolean, kotlin/Throwable? = ..., kotlin/Boolean = ...) // com.pasich.encly.core.security/PinFactorException.<init>|<init>(kotlin.Boolean;kotlin.Throwable?;kotlin.Boolean){}[0]
 
     final val lost // com.pasich.encly.core.security/PinFactorException.lost|{}lost[0]
         final fun <get-lost>(): kotlin/Boolean // com.pasich.encly.core.security/PinFactorException.lost.<get-lost>|<get-lost>(){}[0]
+    final val unavailable // com.pasich.encly.core.security/PinFactorException.unavailable|{}unavailable[0]
+        final fun <get-unavailable>(): kotlin/Boolean // com.pasich.encly.core.security/PinFactorException.unavailable.<get-unavailable>|<get-unavailable>(){}[0]
 }
 
 final class com.pasich.encly.core.security/ScreenshotAllowance { // com.pasich.encly.core.security/ScreenshotAllowance|null[0]
@@ -889,6 +902,7 @@ final class com.pasich.encly.core.security/SecurityManager { // com.pasich.encly
     final fun isValidRecoveryPhrase(kotlin/CharArray): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.isValidRecoveryPhrase|isValidRecoveryPhrase(kotlin.CharArray){}[0]
     final fun keepUnlockMethodsAfterRecovery(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.keepUnlockMethodsAfterRecovery|keepUnlockMethodsAfterRecovery(){}[0]
     final fun lock() // com.pasich.encly.core.security/SecurityManager.lock|lock(){}[0]
+    final fun markRestorePending(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.markRestorePending|markRestorePending(){}[0]
     final fun openInitialVault(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.openInitialVault|openInitialVault(){}[0]
     final fun pinLockoutRemainingMillis(): kotlin/Long // com.pasich.encly.core.security/SecurityManager.pinLockoutRemainingMillis|pinLockoutRemainingMillis(){}[0]
     final fun recoveryStage(): com.pasich.encly.core.security/RecoveryStage // com.pasich.encly.core.security/SecurityManager.recoveryStage|recoveryStage(){}[0]
@@ -898,6 +912,7 @@ final class com.pasich.encly.core.security/SecurityManager { // com.pasich.encly
     final fun requestBiometricKey(com.pasich.encly.core.security/BiometricHost, kotlin/Function1<kotlin/ByteArray?, kotlin/Unit>) // com.pasich.encly.core.security/SecurityManager.requestBiometricKey|requestBiometricKey(com.pasich.encly.core.security.BiometricHost;kotlin.Function1<kotlin.ByteArray?,kotlin.Unit>){}[0]
     final fun resolveInitialStatus(): com.pasich.encly.core.security/InitialStatus // com.pasich.encly.core.security/SecurityManager.resolveInitialStatus|resolveInitialStatus(){}[0]
     final fun setOnboardingShown(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.setOnboardingShown|setOnboardingShown(){}[0]
+    final fun takeBiometricInvalidated(): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.takeBiometricInvalidated|takeBiometricInvalidated(){}[0]
     final fun unlockWithPin(kotlin/CharArray): com.pasich.encly.core.security/VaultUnlockResult // com.pasich.encly.core.security/SecurityManager.unlockWithPin|unlockWithPin(kotlin.CharArray){}[0]
     final fun unlockWithRawKey(kotlin/ByteArray, kotlin/Boolean = ...): kotlin/Boolean // com.pasich.encly.core.security/SecurityManager.unlockWithRawKey|unlockWithRawKey(kotlin.ByteArray;kotlin.Boolean){}[0]
     final fun unlockWithSeed(kotlin/CharArray): com.pasich.encly.core.security/VaultUnlockResult // com.pasich.encly.core.security/SecurityManager.unlockWithSeed|unlockWithSeed(kotlin.CharArray){}[0]
@@ -957,6 +972,8 @@ final class com.pasich.encly.core.security/SessionLockManager : androidx.lifecyc
 
     final val locked // com.pasich.encly.core.security/SessionLockManager.locked|{}locked[0]
         final fun <get-locked>(): kotlinx.coroutines.flow/StateFlow<kotlin/Boolean> // com.pasich.encly.core.security/SessionLockManager.locked.<get-locked>|<get-locked>(){}[0]
+    final val locking // com.pasich.encly.core.security/SessionLockManager.locking|{}locking[0]
+        final fun <get-locking>(): kotlinx.coroutines.flow/StateFlow<kotlin/Boolean> // com.pasich.encly.core.security/SessionLockManager.locking.<get-locking>|<get-locking>(){}[0]
 
     final var sessionGeneration // com.pasich.encly.core.security/SessionLockManager.sessionGeneration|{}sessionGeneration[0]
         final fun <get-sessionGeneration>(): kotlin/Long // com.pasich.encly.core.security/SessionLockManager.sessionGeneration.<get-sessionGeneration>|<get-sessionGeneration>(){}[0]

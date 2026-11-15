@@ -91,6 +91,7 @@ import com.pasich.encly.presentation.designsystem.Code
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.Table
 import com.pasich.encly.ui.theme.EnclyTheme
+import com.pasich.encly.ui.theme.LocalWidthClass
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -113,6 +114,8 @@ internal fun AppEditorProvider(fontStyles: FontStyles, lineSpacing: NoteLineSpac
         clipboard = remember(clipboard, toaster) { AppEditorClipboard(clipboard, toaster) },
         linkOpener = remember(links, toaster) { LinkOpener { url -> openNoteLink(links, toaster, url) } },
         logger = AppEditorLogger,
+        // As the app's own sheets: a centred dialog in a wide window, a bottom sheet in a compact one.
+        sheetsAsDialogs = LocalWidthClass.current.isWide,
         content = content,
     )
 }

@@ -45,5 +45,13 @@ public interface PinHardwareFactor {
  * The factor failed. [lost] means the key is gone for good (deleted, or invalidated by the
  * system): the PIN slot can never be opened again on this device and only the recovery phrase
  * (or the biometric slot) still unlocks. Otherwise the failure may be transient.
+ *
+ * [unavailable] (only with `lost = false`) means the store that holds the key is not usable right now but is
+ * expected to come back once the user acts, e.g. a locked desktop keyring. The attempt that met it is not a guess,
+ * and the screen can say what to do. Android never sets it.
  */
-public class PinFactorException(public val lost: Boolean, cause: Throwable? = null) : Exception(cause)
+public class PinFactorException(
+    public val lost: Boolean,
+    cause: Throwable? = null,
+    public val unavailable: Boolean = false,
+) : Exception(cause)

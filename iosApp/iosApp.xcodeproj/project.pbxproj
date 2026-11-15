@@ -96,6 +96,15 @@
 			knownRegions = (
 				en,
 				Base,
+				ar,
+				de,
+				es,
+				fr,
+				it,
+				nl,
+				pl,
+				pt,
+				uk,
 			);
 			mainGroup = A10000000000000000000005;
 			minimizedProjectReferenceProxies = 1;
@@ -155,7 +164,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# One source of truth for the version, as on Android and the desktop: version.properties.\n# CFBundleShortVersionString = MAJOR.MINOR.PATCH, CFBundleVersion = MAJOR*10000 + MINOR*100 + PATCH.\nprops=\"$SRCROOT/../version.properties\"\nmajor=$(sed -n 's/^VERSION_MAJOR=//p' \"$props\" | tr -d ' \\r')\nminor=$(sed -n 's/^VERSION_MINOR=//p' \"$props\" | tr -d ' \\r')\npatch=$(sed -n 's/^VERSION_PATCH=//p' \"$props\" | tr -d ' \\r')\nplist=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $major.$minor.$patch\" \"$plist\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $((major * 10000 + minor * 100 + patch))\" \"$plist\"\n";
+			shellScript = "# One source of truth for the version, as on Android and the desktop: version.properties.\n# CFBundleShortVersionString = MAJOR.MINOR.PATCH, CFBundleVersion = MAJOR*10000 + MINOR*100 + PATCH, unless BUILD_NUMBER (a build setting or an environment\n# variable, e.g. the CI run number) is a positive integer: App Store Connect needs a unique build per upload.\nprops=\"$SRCROOT/../version.properties\"\nmajor=$(sed -n 's/^VERSION_MAJOR=//p' \"$props\" | tr -d ' \\r')\nminor=$(sed -n 's/^VERSION_MINOR=//p' \"$props\" | tr -d ' \\r')\npatch=$(sed -n 's/^VERSION_PATCH=//p' \"$props\" | tr -d ' \\r')\nplist=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $major.$minor.$patch\" \"$plist\"\nbuild=$((major * 10000 + minor * 100 + patch))\ncase \"$BUILD_NUMBER\" in\n  \"\"|*[!0-9]*|0*) ;;\n  *) build=\"$BUILD_NUMBER\" ;;\nesac\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $build\" \"$plist\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -243,6 +252,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -277,6 +287,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

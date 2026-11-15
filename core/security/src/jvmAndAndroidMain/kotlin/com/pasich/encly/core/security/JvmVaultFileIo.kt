@@ -19,7 +19,10 @@ import java.nio.file.StandardOpenOption
 public fun VaultStore(file: File): VaultStore = VaultStore(JvmVaultFileIo(file))
 
 public class JvmVaultFileIo(private val file: File) : VaultFileIo {
-    override fun exists(): Boolean = file.exists()
+    // `File.exists()` is false for any error, an unreadable directory included. Only a file that is known not to be
+    // there is absent: a state that cannot be told counts as there, so the read that follows fails and the store is
+    // reported unreadable, not as a first run.
+    override fun exists(): Boolean = !Files.notExists(file.toPath())
 
     override fun read(): ByteArray = file.readBytes()
 

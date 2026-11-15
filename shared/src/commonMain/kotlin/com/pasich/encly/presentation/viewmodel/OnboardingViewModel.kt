@@ -9,6 +9,7 @@ import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
+import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.onboarding_error_initialization
 import com.pasich.encly.core.resources.onboarding_error_seed_generation
 import com.pasich.encly.core.resources.onboarding_error_vault_creation
@@ -16,6 +17,7 @@ import com.pasich.encly.core.resources.pin_mismatch_retry
 import com.pasich.encly.core.resources.pin_save_failed
 import com.pasich.encly.core.security.MAX_PIN_LENGTH
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
+import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.domain.usecase.OnboardingUseCase
@@ -339,10 +341,19 @@ class OnboardingViewModel(
      */
     private suspend fun reachReady() {
         val pin = chosenPin
-        val configured = pin != null &&
+        val change = if (pin == null) {
+            PinChange.FAILED
+        } else {
             withContext(Dispatchers.Default) { onboardingUseCase.configurePin(pin.copyOf()) }
-        if (!configured) {
-            _uiState.update { it.copy(isLoading = false, error = UiText.of(Res.string.pin_save_failed)) }
+        }
+        if (change != PinChange.SET) {
+            // A locked desktop keyring says so; every other failure is the generic one.
+            val message = if (change == PinChange.KEY_STORE_UNAVAILABLE) {
+                Res.string.key_store_unavailable
+            } else {
+                Res.string.pin_save_failed
+            }
+            _uiState.update { it.copy(isLoading = false, error = UiText.of(message)) }
             return
         }
         chosenPin?.let(SensitiveDataCleaner::clear)

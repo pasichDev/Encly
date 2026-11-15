@@ -244,6 +244,7 @@
     <string name="pin_mismatch_retry">PIN-y nie są zgodne. Spróbuj ponownie.</string>
     <string name="pin_save_failed">Nie udało się zapisać PIN-u</string>
     <string name="pin_update_failed">Nie udało się zaktualizować PIN-u. Spróbuj ponownie.</string>
+    <string name="key_store_unavailable">Odblokuj systemowy pęk kluczy i spróbuj ponownie</string>
 
 
     <string name="press_to_edit">Stuknij, aby zacząć edycję…</string>
@@ -692,6 +693,8 @@
     <string name="menu_help">Pomoc</string>
     <string name="menu_exit">Zakończ</string>
     <string name="menu_minimize">Minimalizuj</string>
+    <string name="menu_close_window">Zamknij okno</string>
+    <string name="drop_unreadable">Encly nie mógł odczytać upuszczonego pliku. Wybierz go przez Importuj lub Kopia zapasowa w menu Plik.</string>
     <string name="menu_new_window">Nowe okno</string>
     <string name="note_open_in_new_window">Otwórz w nowym oknie</string>
     <string name="note_export_pdf">Eksportuj jako PDF</string>
@@ -780,4 +783,33 @@
         <item quantity="many">%1$d notatek zostanie usuniętych na zawsze, bez czekania %2$d dni. Tej operacji nie można cofnąć.</item>
         <item quantity="other">%1$d notatki zostanie usunięte na zawsze, bez czekania %2$d dni. Tej operacji nie można cofnąć.</item>
     </plurals>
+
+    <!-- Wording for the iOS and desktop apps: their own biometrics, key stores and devices. See HostTexts. -->
+    <string name="pin_unlock_with_biometric_named">Odblokuj przez %1$s</string>
+    <string name="lock_biometric_invalidated_named">Dane biometryczne na tym urządzeniu uległy zmianie. Odblokuj PIN-em, a potem ponownie włącz %1$s w ustawieniach.</string>
+    <string name="security_biometric_not_enrolled_named">Nie skonfigurowano %1$s. Zrób to w ustawieniach systemu.</string>
+    <string name="onboarding_ready_biometric_title_named">Odblokowanie przez %1$s włączone</string>
+    <string name="onboarding_ready_biometric_retry_named">Spróbuj %1$s jeszcze raz</string>
+    <string name="security_encryption_pin_plain_named">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN (i %1$s, jeśli włączono).</string>
+    <string name="security_encryption_seed_plain_named">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN (i %1$s, jeśli włączono), a gdy zapomnisz PIN, fraza odzyskiwania.</string>
+    <string name="lock_pin_key_lost_named">Twój PIN nie może już odblokować Encly na tym urządzeniu: jego klucz sprzętowy został zresetowany. Użyj frazy odzyskiwania (lub %1$s), a potem ustaw nowy PIN.</string>
+    <string name="security_protection_slots_desc_named">PIN, fraza odzyskiwania i %1$s otwierają każde swój zaszyfrowany slot. Za każdym razem wymagane jest %1$s.</string>
+    <string name="duress_pin_real_vault_named">Twój prawdziwy sejf pozostaje zablokowany i nietknięty. W przeciwieństwie do PIN-u kasującego PIN przymusowy niczego nie usuwa. %1$s i fraza odzyskiwania zawsze otwierają prawdziwy sejf.</string>
+    <string name="wipe_pin_biometric_warning_named">Odblokowanie biometryczne pozostaje włączone: ktoś może zmusić cię do użycia %1$s. Wyłącz je, jeśli to dla ciebie ryzyko.</string>
+    <string name="security_encryption_pin_plain_nobio">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN.</string>
+    <string name="security_encryption_seed_plain_nobio">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN, a gdy zapomnisz PIN, fraza odzyskiwania.</string>
+    <string name="lock_pin_key_lost_desktop">Twój PIN nie może już odblokować Encly na tym komputerze: sekretu w systemowym pęku kluczy brakuje albo został zresetowany. Użyj frazy odzyskiwania, a potem ustaw nowy PIN.</string>
+    <string name="security_protection_slots_desc_nobio">PIN i fraza odzyskiwania otwierają każde swój zaszyfrowany slot.</string>
+    <string name="duress_pin_real_vault_nobio">Twój prawdziwy sejf pozostaje zablokowany i nietknięty. W przeciwieństwie do PIN-u kasującego PIN przymusowy niczego nie usuwa. Fraza odzyskiwania zawsze otwiera prawdziwy sejf.</string>
+    <string name="security_protection_pin_title_device">PIN powiązany z tym urządzeniem</string>
+    <string name="security_protection_pin_desc_ios">PIN jest łączony z kluczem w Secure Enclave tego urządzenia, więc nie da się go odgadnąć nigdzie indziej.</string>
+    <string name="security_protection_pin_desc_desktop">PIN jest łączony z sekretem w systemowym pęku kluczy, więc skopiowanego sejfu nie da się odgadnąć nigdzie indziej. Jest tak bezpieczny, jak Twoje konto użytkownika.</string>
+    <string name="faq_db_key_a_ios">Encly tworzy losowy 256-bitowy klucz bazy danych. Twój PIN chroni osobny slot odblokowania AES-GCM, a %1$s używa klucza w pęku kluczy, który przy każdym użyciu wymaga uwierzytelnienia.</string>
+    <string name="faq_db_key_a_desktop">Encly tworzy losowy 256-bitowy klucz bazy danych. Twój PIN chroni osobny slot odblokowania AES-GCM i jest łączony z sekretem w systemowym pęku kluczy.</string>
+    <string name="auto_lock_desc_device">Jak długo Encly pozostaje otwarty, gdy przełączasz się do innej aplikacji. Wyłączenie ekranu lub zablokowanie urządzenia zawsze blokuje go od razu.</string>
+    <string name="import_intro_device">Przenieś notatki z innej aplikacji. Wybierz jej eksport, a Encly sam rozpozna format. Wszystko zostaje na tym urządzeniu, nic nie jest wysyłane.</string>
+    <string name="import_error_no_picker_device">Na tym urządzeniu nie ma aplikacji do wybierania plików, której Encly mógłby użyć.</string>
+    <string name="faq_swipe_a_other">Domyślnie przesunięcie notatki w prawo przypina ją lub odpina, a w lewo archiwizuje. W Ustawienia → Gesty przesunięcia możesz wybrać dla każdego kierunku: przypnij, archiwizuj, następny kolor, przenieś do kosza (zawsze z pytaniem) lub nic, a także wyłączyć przesuwanie.</string>
+    <string name="faq_theme_a_other">W Ustawienia → Wygląd wybierz jeden z pięciu motywów, tryb jasny, ciemny lub systemowy, jeden z trzech stylów czcionki i rozmiar tekstu.</string>
+    <string name="faq_language_a_ios">Otwórz Ustawienia → Język i wybierz jeden z dostępnych języków albo „Domyślny systemu”, aby używać języka urządzenia. Zmiana zaczyna obowiązywać przy następnym uruchomieniu Encly.</string>
 </resources>

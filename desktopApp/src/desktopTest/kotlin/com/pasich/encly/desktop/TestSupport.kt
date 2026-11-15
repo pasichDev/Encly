@@ -118,6 +118,7 @@ class CommandsRig {
         onMinimise = { events += "minimise" },
         onQuit = { events += "quit" },
         openWindow = { events += "window" },
+        onCloseWindow = { events += "close" },
     )
 
     /** The screens asked for so far, in order. */

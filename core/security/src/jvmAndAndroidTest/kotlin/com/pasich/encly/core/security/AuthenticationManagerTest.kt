@@ -96,6 +96,29 @@ class AuthenticationManagerTest {
     }
 
     @Test
+    fun anUnavailableKeyStoreIsReportedAndTheAttemptIsRefunded() {
+        assertTrue(manager.configurePin(pin("123456"), ByteArray(32) { 7 }))
+        factor.unavailable = true
+
+        repeat(AuthenticationManager.MAX_ATTEMPTS + 2) {
+            assertEquals(PinUnlock.KeyStoreUnavailable, manager.unlockWithPin(pin("123456")))
+        }
+        assertEquals(0L, manager.remainingLockoutMillis())
+        factor.unavailable = false
+        assertTrue(manager.unlockWithPin(pin("123456")) is PinUnlock.Success)
+    }
+
+    @Test
+    fun aPinCannotBeSetWhileTheKeyStoreIsUnavailable() {
+        factor.unavailable = true
+        assertEquals(PinChange.KEY_STORE_UNAVAILABLE, manager.changePin(pin("123456"), ByteArray(32) { 7 }))
+        assertFalse(manager.hasPinSlot())
+
+        factor.unavailable = false
+        assertEquals(PinChange.SET, manager.changePin(pin("123456"), ByteArray(32) { 7 }))
+    }
+
+    @Test
     fun aNewPinAfterKeyLossGetsAFreshKey() {
         // Unlocked with the recovery phrase after the Keystore key was invalidated.
         assertTrue(manager.configurePin(pin("123456"), ByteArray(32) { 7 }))

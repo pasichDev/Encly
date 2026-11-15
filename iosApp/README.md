@@ -24,7 +24,9 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator 
 ```
 
 The version is written into the app from `version.properties` by the last build phase, so a release bumps one file
-for Android, the desktop and iOS. Only arm64 is built (Apple silicon simulators and every supported device).
+for Android, the desktop and iOS. `CFBundleVersion` is derived from it too; set `BUILD_NUMBER` (an environment
+variable or `xcodebuild BUILD_NUMBER=...`, e.g. the CI run number) to a positive integer to upload the same version
+more than once. Only arm64 is built (Apple silicon simulators and every supported device).
 
 ## Running on the Simulator
 

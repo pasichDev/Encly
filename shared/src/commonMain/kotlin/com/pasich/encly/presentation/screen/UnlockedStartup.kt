@@ -4,11 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.pasich.encly.platform.LocalHostPlatform
 import com.pasich.encly.presentation.dialogs.WhatsNewSheet
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.presentation.viewmodel.StartupViewModel
 import com.pasich.encly.utils.currentLanguageTag
+import com.pasich.encly.whatsnew.Changelogs
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
@@ -19,7 +21,8 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 @Composable
 internal fun UnlockedStartup(viewModel: StartupViewModel = metroViewModel()) {
     val languageTag = currentLanguageTag()
-    LaunchedEffect(viewModel) { viewModel.onUnlocked(languageTag) }
+    val bundled = Changelogs.bundledFor(LocalHostPlatform.current)
+    LaunchedEffect(viewModel) { viewModel.onUnlocked(languageTag, bundled) }
     val due by viewModel.whatsNewDue.collectAsState()
     val revealing = LocalUnlockReveal.current?.running == true
     val locked = LocalVaultLocked.current

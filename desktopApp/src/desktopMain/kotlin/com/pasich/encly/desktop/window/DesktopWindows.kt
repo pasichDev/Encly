@@ -1,6 +1,8 @@
 package com.pasich.encly.desktop.window
 
 import androidx.compose.runtime.mutableStateListOf
+import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.drop_unreadable
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.desktop.platform.DesktopDocumentPickers
 import com.pasich.encly.desktop.platform.DesktopEnvironment
@@ -12,6 +14,7 @@ import com.pasich.encly.platform.NavigationRequests
 import com.pasich.encly.platform.NoteEditClaims
 import com.pasich.encly.platform.NoteEditRegistry
 import com.pasich.encly.platform.NoteWindows
+import com.pasich.encly.platform.ToastDuration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -62,9 +65,13 @@ class WindowServices(
             claims: NoteEditClaims? = null,
         ): WindowServices {
             val navigation = NavigationRequests()
-            val drops = DropRouter(navigation)
+            val toaster = DesktopToaster()
+            val drops = DropRouter(
+                navigation,
+                onUnreadable = { toaster.show(Res.string.drop_unreadable, ToastDuration.LONG) },
+            )
             val pickers = DesktopDocumentPickers(GatedFileDialogs(environment.fileDialogs, lifecycle), drops)
-            return WindowServices(navigation, drops, pickers, noteWindows, claims)
+            return WindowServices(navigation, drops, pickers, noteWindows, claims, toaster)
         }
     }
 }
@@ -90,6 +97,10 @@ class WindowSession(
     /** What the menu of this window does; set by the window host once its window exists. */
     @Volatile
     var commands: DesktopCommands? = null
+
+    /** The AWT window of this session, once it exists; what a second launch of the app brings to the front. */
+    @Volatile
+    var frame: java.awt.Window? = null
 }
 
 /**

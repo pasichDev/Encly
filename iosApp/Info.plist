@@ -4,6 +4,19 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ar</string>
+		<string>de</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>it</string>
+		<string>nl</string>
+		<string>pl</string>
+		<string>pt</string>
+		<string>uk</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Encly</string>
 	<key>CFBundleExecutable</key>
@@ -27,14 +40,17 @@
 		<string>mailto</string>
 	</array>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Encly uses Face ID to unlock your notes without typing the PIN. Your face never leaves the device and the PIN always works.</string>
+	<string>Encly uses Face ID to unlock your notes without typing your PIN or password. Your face data stays on this device, and your PIN or password still works.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
 	<key>UILaunchScreen</key>
-	<dict/>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
 	<key>UIRequiresFullScreen</key>
 	<false/>
 	<key>UISupportedInterfaceOrientations</key>

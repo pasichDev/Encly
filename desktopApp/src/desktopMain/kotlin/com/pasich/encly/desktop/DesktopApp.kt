@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
@@ -29,12 +30,16 @@ import com.pasich.encly.desktop.platform.ToastHost
 import com.pasich.encly.desktop.window.DesktopShortcuts
 import com.pasich.encly.desktop.window.WindowServices
 import com.pasich.encly.platform.AppWindow
+import com.pasich.encly.platform.BiometricWording
+import com.pasich.encly.platform.HostPlatform
 import com.pasich.encly.platform.LocalAppInfo
 import com.pasich.encly.platform.LocalAppLocales
 import com.pasich.encly.platform.LocalAppWindow
+import com.pasich.encly.platform.LocalBiometricWording
 import com.pasich.encly.platform.LocalDocumentPickers
 import com.pasich.encly.platform.LocalExternalLinks
 import com.pasich.encly.platform.LocalExtraLicenses
+import com.pasich.encly.platform.LocalHostPlatform
 import com.pasich.encly.platform.LocalKeyboardPrivacyOffered
 import com.pasich.encly.platform.LocalNavigationRequests
 import com.pasich.encly.platform.LocalNoteDocumentRenderer
@@ -43,6 +48,7 @@ import com.pasich.encly.platform.LocalNoteWindows
 import com.pasich.encly.platform.LocalSensitiveClipboard
 import com.pasich.encly.platform.LocalSessionSharedAcrossWindows
 import com.pasich.encly.platform.LocalToaster
+import com.pasich.encly.platform.LocalVaultTextKeyboardType
 import com.pasich.encly.presentation.designsystem.EnclyShortcuts
 import com.pasich.encly.presentation.navigation.EnclyApp
 import com.pasich.encly.presentation.viewmodel.SelectedTagHolder
@@ -146,6 +152,10 @@ fun DesktopHostServices(
         LocalExternalLinks provides graph.externalLinks,
         LocalExtraLicenses provides DesktopLicenses.notices,
         LocalKeyboardPrivacyOffered provides false,
+        LocalHostPlatform provides HostPlatform.DESKTOP,
+        // No biometric unlock on the desktop: its switch and every text about it stay out.
+        LocalBiometricWording provides BiometricWording.None,
+        LocalVaultTextKeyboardType provides KeyboardType.Text,
         LocalToaster provides services.toaster,
         LocalSensitiveClipboard provides graph.clipboard,
         LocalAppLocales provides graph.locales,

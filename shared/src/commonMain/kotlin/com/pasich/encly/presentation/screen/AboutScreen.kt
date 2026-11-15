@@ -51,6 +51,7 @@ import com.pasich.encly.platform.AppInfo
 import com.pasich.encly.platform.ExternalLinks
 import com.pasich.encly.platform.LocalAppInfo
 import com.pasich.encly.platform.LocalExternalLinks
+import com.pasich.encly.platform.LocalHostPlatform
 import com.pasich.encly.platform.LocalToaster
 import com.pasich.encly.platform.ToastDuration
 import com.pasich.encly.platform.Toaster
@@ -77,7 +78,8 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
     val toaster = LocalToaster.current
     // The notes of this build, in the app's language; a build with no changelog has no entry.
     val languageTag = currentLanguageTag()
-    val whatsNew = remember(languageTag) { Changelogs.current(languageTag) }
+    val platform = LocalHostPlatform.current
+    val whatsNew = remember(languageTag, platform) { Changelogs.current(languageTag, platform) }
     var whatsNewOpen by remember { mutableStateOf(false) }
     Scaffold(
         modifier = modifier,

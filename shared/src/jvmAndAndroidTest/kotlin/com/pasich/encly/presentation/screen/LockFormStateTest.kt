@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.screen
 
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.lock_device_locked
 import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.lock_wrong_pin
@@ -81,6 +82,15 @@ class LockFormStateTest {
 
         assertEquals(Res.string.lock_device_locked, form.pinError)
         assertEquals(Res.string.lock_device_locked, form.phraseError)
+        assertFalse(form.lockedOut)
+    }
+
+    @Test
+    fun anUnavailableKeyStoreAsksToUnlockTheKeyringAndKeepsThePad() {
+        form.onPinResult(PinUnlockResult.KEY_STORE_UNAVAILABLE, lockoutRemainingMillis = 0L)
+
+        assertEquals(Res.string.key_store_unavailable, form.pinError)
+        assertNull(form.phraseError)
         assertFalse(form.lockedOut)
     }
 

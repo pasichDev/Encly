@@ -13,7 +13,7 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * A [PinHardwareFactor] with software HMAC keys standing in for the Keystore ones, one per
  * [PinKeySlot]. [lost] and [failing] simulate an invalidated key and a transient Keystore error
- * (for every slot), [failingSlots] one for some slots only; [failingReset] a key that cannot be
+ * (for every slot), [unavailable] a locked desktop keyring, [failingSlots] one for some slots only; [failingReset] a key that cannot be
  * generated. [delete] removes a key the way the system can, so [ensureKey] then reports a new
  * one. [calls] counts MACs, i.e. PIN guesses that reached the "hardware".
  */
@@ -22,6 +22,9 @@ internal class FakePinFactor : PinHardwareFactor {
     var lost = false
     var failing = false
     var failingReset = false
+
+    /** The store of the keys is locked or not running (a desktop keyring): every MAC and reset fails as such. */
+    var unavailable = false
 
     /** Slots whose MAC fails like a transient Keystore error, while the others still work. */
     var failingSlots: Set<PinKeySlot> = emptySet()
@@ -40,6 +43,7 @@ internal class FakePinFactor : PinHardwareFactor {
 
     override fun reset(slot: PinKeySlot) {
         keys.remove(slot)
+        if (unavailable) throw PinFactorException(lost = false, unavailable = true)
         if (failingReset) throw PinFactorException(lost = false)
         keys[slot] = ByteArray(32).also { SecureRandom().nextBytes(it) }
         lost = false
@@ -47,6 +51,7 @@ internal class FakePinFactor : PinHardwareFactor {
     }
 
     override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray {
+        if (unavailable) throw PinFactorException(lost = false, unavailable = true)
         if (failing || slot in failingSlots) throw PinFactorException(lost = false)
         val current = keys[slot]
         if (lost || current == null) throw PinFactorException(lost = true)

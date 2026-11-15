@@ -12,6 +12,7 @@ import kotlinx.cinterop.toKString
 import kotlinx.cinterop.usePinned
 import kotlinx.io.IOException
 import platform.Foundation.NSFileManager
+import platform.posix.ENOENT
 import platform.posix.F_FULLFSYNC
 import platform.posix.O_CREAT
 import platform.posix.O_RDONLY
@@ -38,7 +39,9 @@ import platform.posix.write
  * is a [IOException].
  */
 public class IosVaultFileIo(private val path: String) : VaultFileIo {
-    override fun exists(): Boolean = platform.posix.access(path, platform.posix.F_OK) == 0
+    // Only "no such file" is absent. A state that cannot be told (EACCES, EIO, ...) counts as there, so the read that
+    // follows fails and the store is reported unreadable, not as a first run.
+    override fun exists(): Boolean = platform.posix.access(path, platform.posix.F_OK) == 0 || errno != ENOENT
 
     override fun read(): ByteArray {
         val fd = open(path, O_RDONLY)
