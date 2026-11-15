@@ -185,6 +185,7 @@
     <string name="lock_recovery_subtitle">Gib deine 12-Wörter-Wiederherstellungsphrase ein</string>
     <string name="lock_recovery_title">Wiederherstellung</string>
     <string name="lock_subtitle">Gib deine PIN ein, um fortzufahren</string>
+    <string name="lock_biometric_invalidated">Die Fingerabdrücke auf diesem Gerät haben sich geändert. Entsperre mit deiner PIN und aktiviere die Entsperrung per Fingerabdruck danach in den Einstellungen erneut.</string>
     <string name="lock_title">Notizen entsperren</string>
     <string name="lock_unlocking">Wird entsperrt…</string>
     <string name="lock_use_recovery_phrase">Zugang mit der Wiederherstellungsphrase wiederherstellen</string>
@@ -303,6 +304,9 @@
 
     <string name="tag_create_failed">Das Label konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
     <string name="tag_delete_failed">Das Label konnte nicht gelöscht werden. Bitte versuche es erneut.</string>
+    <string name="trash_restore_failed">Die Notizen konnten nicht wiederhergestellt werden. Bitte versuche es erneut.</string>
+    <string name="trash_delete_failed">Die Notizen konnten nicht gelöscht werden. Bitte versuche es erneut.</string>
+    <string name="note_action_failed">Die Notiz konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
     <string name="tag_edit">Label bearbeiten</string>
     <string name="tag_hidden">Ausgeblendetes Label</string>
     <string name="tag_name_taken">Ein Label mit diesem Namen gibt es bereits</string>
@@ -338,6 +342,7 @@
     <string name="undo">Rückgängig</string>
 
     <string name="untitled">Ohne Titel</string>
+    <string name="trash_hidden_note">Versteckte Notiz</string>
 
     <string name="view_switch_to_grid">Zur Rasteransicht wechseln</string>
     <string name="view_switch_to_list">Zur Listenansicht wechseln</string>
@@ -413,6 +418,7 @@
     <string name="link_blocked">Nur Web-Links (http, https) und E-Mail-Links können gespeichert oder geöffnet werden.</string>
     <string name="notes_load_failed_title">Notizen konnten nicht gelesen werden</string>
     <string name="tags_load_failed_title">Labels konnten nicht gelesen werden</string>
+    <string name="tasks_load_failed_title">Aufgaben konnten nicht gelesen werden</string>
     <string name="notes_load_failed_desc">Deine Notizen sind weiterhin verschlüsselt auf diesem Gerät gespeichert. Schließe Encly und öffne es erneut, um es noch einmal zu versuchen.</string>
     <string name="pin_reset_subtitle">Du hast Encly mit deiner Wiederherstellungsphrase entsperrt. Lege eine neue PIN fest, um fortzufahren.</string>
     <string name="task_delete">Aufgabe löschen</string>
@@ -698,6 +704,7 @@
     <string name="table_remove_column">Spalte löschen</string>
     <string name="table_header_row">Kopfzeile</string>
     <string name="table_cell_options">Zellenoptionen</string>
+    <string name="table_menu_open">Tabellenmenü öffnen</string>
     <string name="settings_editor_toolbar">Editor-Werkzeugleiste</string>
     <string name="settings_editor_toolbar_desc">Werkzeuge auswählen und anordnen</string>
     <string name="toolbar_hint">Zum Umordnen am Griff ziehen. Das Auge blendet ein Werkzeug aus oder wieder ein. Werkzeuge unter „Weiteres Menü“ liegen hinter dem Pfeil.</string>
@@ -715,7 +722,7 @@
     </plurals>
     <string name="trash_section_soon">Verschwinden in einer Woche · %1$d</string>
     <string name="trash_section_later">Später · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s, die letzte in %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s, %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">Die erste verschwindet heute</string>
     <string name="trash_last_day">Letzter Tag</string>
@@ -730,6 +737,10 @@
     <plurals name="trash_first_in_days">
         <item quantity="one">Die erste verschwindet in %d Tag</item>
         <item quantity="other">Die erste verschwindet in %d Tagen</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="one">die letzte in %d Tag</item>
+        <item quantity="other">die letzte in %d Tagen</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="one">Noch %d Tag</item>

@@ -46,6 +46,7 @@ public class EditorIcons(
     internal val grip: ImageVector = DefaultIcons.Grip,
     internal val code: ImageVector = DefaultIcons.Code,
     internal val table: ImageVector = DefaultIcons.Table,
+    internal val more: ImageVector = DefaultIcons.More,
 )
 
 private const val STROKE = 1.75f
@@ -55,6 +56,10 @@ private const val GRIP_DOTS = "M8.4 6.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0
     "a1.1 1.1 0 1 0 -2.2 0zM8.4 12a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM13.4 12a1.1 1.1 0 1 0 2.2 0" +
     "a1.1 1.1 0 1 0 -2.2 0zM8.4 17.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM13.4 17.5a1.1 1.1 0 1 0 2.2 0" +
     "a1.1 1.1 0 1 0 -2.2 0z"
+
+// Three dots in a row: the overflow menu of a block.
+private const val MORE_DOTS = "M4.9 12a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0zM10.9 12a1.1 1.1 0 1 0 2.2 0" +
+    "a1.1 1.1 0 1 0 -2.2 0zM16.9 12a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0z"
 private val Ink = SolidColor(Color.Black)
 
 @Suppress("LongMethod") // The path data of every default icon, in one place.
@@ -167,6 +172,8 @@ private object DefaultIcons {
     )
 
     val Grip = icon("Grip", dots = GRIP_DOTS)
+
+    val More = icon("More", dots = MORE_DOTS)
 
     val Code = icon("Code", "M8 8l-4 4 4 4", "M16 8l4 4-4 4", "M13.5 6l-3 12")
 

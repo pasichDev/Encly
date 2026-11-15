@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -28,10 +29,13 @@ import com.pasich.encly.presentation.components.swipe.rememberSwipeContext
 import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.designsystem.EnclyEmptyState
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.NoteSkeleton
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.openRoute
 import com.pasich.encly.presentation.navigation.popBack
+import com.pasich.encly.presentation.screen.NoteActionFailures
 import com.pasich.encly.presentation.screen.NoteActionsSheet
 import com.pasich.encly.presentation.screen.NoteSheetState
 import com.pasich.encly.presentation.viewmodel.ArchiveState
@@ -57,19 +61,22 @@ fun ArchiveScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val swipe by settingsViewModel.swipeSettings.collectAsStateWithLifecycle()
     val sheet = remember { NoteSheetState() }
-    fun edit(noteId: Long) = navController.navigate("${NavRoutes.EditNoteRoute.name}/$noteId")
+    val snackbarHostState = remember { SnackbarHostState() }
+    NoteActionFailures(viewModel.actionFailures, snackbarHostState)
+    fun edit(noteId: Long) = navController.openRoute("${NavRoutes.EditNoteRoute.name}/$noteId")
 
     NoteActionsSheet(
         sheet = sheet,
         observeNote = viewModel::observeNote,
         onEvent = viewModel::onEvent,
         onEdit = { edit(it.id) },
-        onDuplicate = { navController.navigate("${NavRoutes.EditNoteRoute.name}/-1?copySource=${it.id}") },
+        onDuplicate = { navController.openRoute("${NavRoutes.EditNoteRoute.name}/-1?copySource=${it.id}") },
     )
 
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
+        snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         topBar = {
             EnclyTopBar(
                 title = stringResource(Res.string.main_drawer_archive),

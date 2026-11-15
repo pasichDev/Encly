@@ -6,6 +6,7 @@ import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
 import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.state.BlockRemoveAction
+import com.pasich.encly.editor.state.FocusRequest
 import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.SelectedBlocks
 import com.pasich.encly.editor.state.Shortcut
@@ -51,6 +52,9 @@ public interface EditorController {
 
     /** Position of [block]; -1 when it is not in the note (any more). */
     public fun indexOfBlock(block: Block): Int
+
+    /** Focuses the block of [request] when its field is not composed yet (it is off screen). */
+    public fun requestFocus(request: FocusRequest)
 
     /** [block] got focus. */
     public fun onBlockFocused(block: Block)

@@ -95,6 +95,7 @@ import com.pasich.encly.presentation.designsystem.groupRowShape
 import com.pasich.encly.presentation.dialogs.AdaptiveSheet
 import com.pasich.encly.presentation.dialogs.RequestDeleteTagsDialog
 import com.pasich.encly.presentation.dialogs.rememberSheetCloser
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.TAG_NAME_MAX_LENGTH
 import com.pasich.encly.presentation.viewmodel.TagListEvent
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
@@ -140,7 +141,7 @@ fun EditTagScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         topBar = {
-            EnclyTopBar(title = stringResource(Res.string.main_drawer_tags), onBack = navController::popBackStack)
+            EnclyTopBar(title = stringResource(Res.string.main_drawer_tags), onBack = { navController.popBack() })
         },
     ) { padding ->
         TagsContent(

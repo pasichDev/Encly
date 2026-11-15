@@ -8,6 +8,7 @@ import com.pasich.encly.core.di.AppGraphOwner
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.security.HandoffStagingSweeper
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.platform.SensitiveClip
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +41,8 @@ class MyApplication :
         } catch (e: Exception) {
             AppLogger.e("MyApplication", "Failed to initialize application", e)
         }
+        // Encly's own clipboard clip: cleared at a lock, at a foreground after the background hid it, after a kill.
+        SensitiveClip.install(this, sessionLockManager.locked, appScope)
         // A My Notes hand-off (plaintext) that a killed process left in the cache; off the main thread.
         appScope.launch { handoffStaging.sweep() }
     }

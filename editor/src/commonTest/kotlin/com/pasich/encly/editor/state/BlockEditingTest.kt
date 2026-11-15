@@ -165,6 +165,41 @@ class BlockEditingTest {
     }
 
     @Test
+    fun linesPastedIntoAnEmptyItemAreAllReadWithoutTheirMarks() {
+        val list = list(BlockType.LIST_BULLET, "")
+        editor.load(listOf(list))
+
+        editor.listLineBreak(list.id, list.items.value.single().id, paste("", 0, "- eggs\n- flour"))
+
+        assertEquals(listOf("eggs", "flour"), list.items.value.map { it.value })
+    }
+
+    @Test
+    fun aTrailingLineBreakInAPasteMidItemStaysInTheItem() {
+        val list = list(BlockType.LIST_BULLET, "milk tea")
+        editor.load(listOf(list))
+        val item = list.items.value.single()
+
+        val kept = editor.listLineBreak(list.id, item.id, paste("milk tea", 4, "eggs\n"))
+
+        assertEquals("milkeggs tea", kept)
+        assertEquals(listOf("milkeggs tea"), list.items.value.map { it.value })
+    }
+
+    @Test
+    fun aCopiedNestedChecklistKeepsItsLevelsAndTicks() {
+        val list = list(BlockType.LIST_CHECK, "")
+        editor.load(listOf(list))
+        val item = list.items.value.single()
+
+        editor.listLineBreak(list.id, item.id, paste("", 0, "[x] parent\n  [ ] child\n    [x] grandchild"))
+
+        assertEquals(listOf("parent", "child", "grandchild"), list.items.value.map { it.value })
+        assertEquals(listOf(0, 1, 2), list.items.value.map { it.level })
+        assertEquals(listOf(true, false, true), list.items.value.map { it.isCheck })
+    }
+
+    @Test
     fun aLoneAddressPastedIntoAnEmptyParagraphBecomesALinkAndUndoGivesTheTextBack() {
         val block = Block.TextBlock()
         editor.load(listOf(block))

@@ -47,11 +47,13 @@ class SessionLockFlushTest {
 
         manager.lockNow()
         assertFalse(manager.locked.value)
+        assertTrue(manager.locking.value)
         scope.advanceTimeBy(250)
         scope.runCurrent()
 
         assertEquals(listOf("saved", "closed"), events)
         assertTrue(manager.locked.value)
+        assertFalse(manager.locking.value)
     }
 
     @Test

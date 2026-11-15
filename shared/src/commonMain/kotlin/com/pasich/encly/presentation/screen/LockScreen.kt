@@ -101,9 +101,12 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
     // [LockExits.onBack], or nowhere: by default Back never leaves the lock screen.
     BackHandler(enabled = true) { onLockBack(busy, form, exits.onBack) }
 
-    val biometricEnabled = remember {
+    val biometricInvalidated by viewModel.biometricInvalidated.collectAsState()
+    val biometricUsable = remember {
         viewModel.biometricEnabled() && viewModel.biometricAvailable()
     }
+    // Off for good once the slot was found invalidated by a new fingerprint.
+    val biometricEnabled = biometricUsable && !biometricInvalidated
 
     fun goHome() = exits.onUnlock(viewModel::isSessionLocked)
 
@@ -135,6 +138,7 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
         capabilities = LockCapabilities(
             biometricEnabled = biometricEnabled && host != null,
             recoveryAvailable = viewModel.recoveryAvailable(),
+            biometricInvalidated = biometricInvalidated,
         ),
         actions = LockActions(
             checks = LockChecks(

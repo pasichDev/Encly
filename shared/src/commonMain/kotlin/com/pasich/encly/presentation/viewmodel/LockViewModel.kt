@@ -53,6 +53,14 @@ class LockViewModel(
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
+    private val _biometricInvalidated = MutableStateFlow(false)
+
+    /**
+     * A new fingerprint was enrolled on the device, so the biometric slot is gone: the lock screen hides the
+     * fingerprint button and says to unlock with the PIN and turn fingerprint unlock on again.
+     */
+    val biometricInvalidated: StateFlow<Boolean> = _biometricInvalidated.asStateFlow()
+
     /** The open biometric prompt, if any (see [BiometricPromptGuard]). */
     private val biometricPrompt = BiometricPromptGuard()
 
@@ -156,6 +164,7 @@ class LockViewModel(
                     return@requestBiometricKey
                 }
                 if (dek == null) {
+                    if (securityManager.takeBiometricInvalidated()) _biometricInvalidated.value = true
                     onResult(false)
                     return@requestBiometricKey
                 }

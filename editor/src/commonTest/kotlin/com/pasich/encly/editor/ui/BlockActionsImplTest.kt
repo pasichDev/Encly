@@ -115,7 +115,8 @@ class BlockActionsImplTest {
     @Test
     fun cursorKeysMoveToTheNextFieldOnlyWhereThereIsOne() {
         val a = actions(paragraph)
-        assertFalse(a.navigate(CaretMove.Down(null)))
+        // The next field is not composed (off screen): the key still goes there, once it is scrolled to.
+        assertTrue(a.navigate(CaretMove.Down(null)))
         registry.registerFocusTarget(next.id) { }
         assertTrue(a.navigate(CaretMove.Down(null)))
         assertFalse(actions(paragraph).navigate(CaretMove.Up(null)))

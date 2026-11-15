@@ -185,6 +185,7 @@
     <string name="lock_recovery_subtitle">Wpisz 12-wyrazową frazę odzyskiwania</string>
     <string name="lock_recovery_title">Odzyskiwanie</string>
     <string name="lock_subtitle">Wpisz PIN, aby kontynuować</string>
+    <string name="lock_biometric_invalidated">Odciski palców na tym urządzeniu uległy zmianie. Odblokuj PIN-em, a potem ponownie włącz odblokowanie odciskiem palca w ustawieniach.</string>
     <string name="lock_title">Odblokuj notatki</string>
     <string name="lock_unlocking">Odblokowywanie…</string>
     <string name="lock_use_recovery_phrase">Odzyskaj dostęp za pomocą frazy odzyskiwania</string>
@@ -303,6 +304,9 @@
 
     <string name="tag_create_failed">Nie udało się zapisać etykiety. Spróbuj ponownie.</string>
     <string name="tag_delete_failed">Nie udało się usunąć etykiety. Spróbuj ponownie.</string>
+    <string name="trash_restore_failed">Nie udało się przywrócić notatek. Spróbuj ponownie.</string>
+    <string name="trash_delete_failed">Nie udało się usunąć notatek. Spróbuj ponownie.</string>
+    <string name="note_action_failed">Nie udało się zaktualizować notatki. Spróbuj ponownie.</string>
     <string name="tag_edit">Edytuj etykietę</string>
     <string name="tag_hidden">Ukryta etykieta</string>
     <string name="tag_name_taken">Etykieta o tej nazwie już istnieje</string>
@@ -338,6 +342,7 @@
     <string name="undo">Cofnij</string>
 
     <string name="untitled">Bez tytułu</string>
+    <string name="trash_hidden_note">Ukryta notatka</string>
 
     <string name="view_switch_to_grid">Przełącz na widok siatki</string>
     <string name="view_switch_to_list">Przełącz na widok listy</string>
@@ -419,6 +424,7 @@
     <string name="link_blocked">Zapisywać i otwierać można tylko linki internetowe (http, https) i e-mailowe.</string>
     <string name="notes_load_failed_title">Nie udało się odczytać notatek</string>
     <string name="tags_load_failed_title">Nie udało się odczytać etykiet</string>
+    <string name="tasks_load_failed_title">Nie udało się odczytać zadań</string>
     <string name="notes_load_failed_desc">Notatki nadal są zapisane w postaci zaszyfrowanej na tym urządzeniu. Zamknij Encly i otwórz ponownie, aby spróbować jeszcze raz.</string>
     <string name="pin_reset_subtitle">Odblokowano Encly frazą odzyskiwania. Ustaw nowy PIN, aby kontynuować.</string>
     <string name="task_delete">Usuń zadanie</string>
@@ -710,6 +716,7 @@
     <string name="table_remove_column">Usuń kolumnę</string>
     <string name="table_header_row">Wiersz nagłówka</string>
     <string name="table_cell_options">Opcje komórki</string>
+    <string name="table_menu_open">Otwórz menu tabeli</string>
     <string name="settings_editor_toolbar">Pasek edytora</string>
     <string name="settings_editor_toolbar_desc">Wybierz i ułóż narzędzia</string>
     <string name="toolbar_hint">Przeciągnij uchwyt, aby zmienić kolejność. Oko ukrywa narzędzie lub je przywraca. Narzędzia z sekcji „Więcej” są za strzałką.</string>
@@ -729,7 +736,7 @@
     </plurals>
     <string name="trash_section_soon">Znikną w ciągu tygodnia · %1$d</string>
     <string name="trash_section_later">Później · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s, ostatnia za %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s, %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">Pierwsza zniknie dzisiaj</string>
     <string name="trash_last_day">Ostatni dzień</string>
@@ -748,6 +755,12 @@
         <item quantity="few">Pierwsza zniknie za %d dni</item>
         <item quantity="many">Pierwsza zniknie za %d dni</item>
         <item quantity="other">Pierwsza zniknie za %d dnia</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="one">ostatnia za %d dzień</item>
+        <item quantity="few">ostatnia za %d dni</item>
+        <item quantity="many">ostatnia za %d dni</item>
+        <item quantity="other">ostatnia za %d dnia</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="one">Został %d dzień</item>

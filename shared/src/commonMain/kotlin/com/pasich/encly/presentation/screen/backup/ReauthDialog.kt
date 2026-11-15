@@ -16,9 +16,11 @@ import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.backup_reauth_subtitle
 import com.pasich.encly.core.resources.backup_reauth_title
 import com.pasich.encly.core.resources.cancel
+import com.pasich.encly.editor.ui.components.ProtectDialogWindow
 import com.pasich.encly.platform.LocalBiometricHost
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.ProtectFromCapture
+import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
@@ -37,6 +39,8 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 internal fun ReauthDialog(reauth: ReauthFlow, step: BackupStep.Reauth, onCancel: () -> Unit) {
+    // Its own window, above the lock shield: nothing of it is composed while the vault is locked.
+    if (LocalVaultLocked.current) return
     // Before the Dialog: its own window takes the protection from the activity's when it is made.
     ProtectFromCapture()
     var lockoutSeconds by remember { mutableLongStateOf(0L) }
@@ -55,6 +59,7 @@ internal fun ReauthDialog(reauth: ReauthFlow, step: BackupStep.Reauth, onCancel:
         onDismissRequest = onCancel,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        ProtectDialogWindow()
         ReauthPinEntry(
             reauth = reauth,
             step = step,
@@ -88,6 +93,7 @@ private fun ReauthPinEntry(reauth: ReauthFlow, step: BackupStep.Reauth, entry: R
         title = stringResource(Res.string.backup_reauth_title),
         subtitle = entry.subtitle,
         subtitleIsError = entry.subtitleIsError,
+        subtitleTicks = entry.lockedOut,
         bodyAtBottom = true,
         modifier = Modifier.fillMaxSize(),
     ) {

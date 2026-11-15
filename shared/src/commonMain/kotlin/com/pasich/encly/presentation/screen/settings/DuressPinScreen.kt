@@ -51,6 +51,7 @@ import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyScrollColumn
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -83,7 +84,7 @@ fun DuressPinScreen(
             verify = securityViewModel::verifyCurrentPin,
             lockoutMillis = securityViewModel::pinLockoutRemainingMillis,
             save = { pin -> securityViewModel.setDuressPin(pin) { result -> state.onDuressPinResult(result) } },
-            close = { navController.popBackStack() },
+            close = { navController.popBack() },
         )
     }
 

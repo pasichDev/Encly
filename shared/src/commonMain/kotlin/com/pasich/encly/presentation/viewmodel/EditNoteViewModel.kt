@@ -45,6 +45,7 @@ import com.pasich.encly.editor.state.breakLine
 import com.pasich.encly.editor.state.canMoveInteracted
 import com.pasich.encly.editor.state.canRemoveInteracted
 import com.pasich.encly.editor.state.canReplaceTextRange
+import com.pasich.encly.editor.state.commitLink
 import com.pasich.encly.editor.state.deleteSelectedBlocks
 import com.pasich.encly.editor.state.duplicateBlockOf
 import com.pasich.encly.editor.state.duplicateInteracted
@@ -64,6 +65,7 @@ import com.pasich.encly.editor.state.pasteCopied
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.removeInteracted
 import com.pasich.encly.editor.state.replaceTextRange
+import com.pasich.encly.editor.state.requestFocus
 import com.pasich.encly.editor.state.shiftListItem
 import com.pasich.encly.editor.state.tableTypingStep
 import com.pasich.encly.editor.state.textRangeBlocks
@@ -320,10 +322,10 @@ class EditNoteViewModel(
         // while the app is in the background and this screen is not composed.
         clearOnLock(lockEvents) {
             followStored?.cancel()
-            persistence.close()
+            // Closes the editor and drops the note it holds (title, content, backup, snapshots).
+            persistence.wipe()
             // Also closes the find bar and the slash picker: no query or match survives a lock.
             editor.load(emptyList())
-            persistence.updateNote { it.copy(title = "") }
         }
     }
 
@@ -465,6 +467,9 @@ class EditNoteViewModel(
 
     /** Position of [block] in the editor, by identity; -1 when it is no longer there. */
     fun indexOfBlock(block: Block): Int = editor.blocks.indexOfFirst { it.id == block.id }
+
+    /** Focuses the block of [request], a cursor key's target that is not composed yet. */
+    fun requestFocus(request: FocusRequest) = editor.requestFocus(request)
 
     /** The field of [block] (for a list: one of its items) took focus. */
     fun onBlockFocused(block: Block) = editor.selection.onFocused(block.id)
@@ -620,6 +625,9 @@ class EditNoteViewModel(
     fun onLinkChanged(block: Block.LinkBlock, newLink: LinkDataBlock) {
         if (!canEdit()) return
         _editingLinkIds.update { it - block.id }
+        // A new card (no address yet) hands the cursor to the paragraph after it, so the keyboard stays up and the
+        // user goes on writing. Editing a saved card keeps the cursor where it is.
+        if (block.block.value.url.isBlank() && editor.commitLink(block.id, newLink)) return
         editor.changeValue(block.id, block.block, newLink, mergeable = false)
     }
 

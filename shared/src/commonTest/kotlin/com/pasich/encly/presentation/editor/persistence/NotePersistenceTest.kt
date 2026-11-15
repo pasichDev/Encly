@@ -6,6 +6,8 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteArchiveStatusUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.editor.codec.BlockConverter
 import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.testutil.TestNotesRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -89,7 +91,7 @@ class NotePersistenceTest {
     }
 
     @Test
-    fun aSavedEditMovesTheShownDateAndDropsAnImportedSummary() = runTest(dispatcher) {
+    fun aSavedEditMovesTheShownDateAndKeepsTheDescription() = runTest(dispatcher) {
         repository.allNotesWithTags.value = listOf(
             NoteWithTags(
                 Note(
@@ -110,8 +112,30 @@ class NotePersistenceTest {
 
         val stored = repository.updatedNotes.single()
         assertTrue(stored.date > OLD_DATE)
-        assertEquals("", stored.description)
+        assertEquals("imported summary", stored.description)
         assertEquals(stored.date, persistence.state.value.note.date)
+    }
+
+    @Test
+    fun aColourChangeOnALegacyListNoteKeepsItsDateAndSummary() = runTest(dispatcher) {
+        val list = Block.ListBlock(MutableStateFlow(listOf(ItemListBlock("milk"))), blockType = BlockType.LIST_CHECK)
+        val legacy = BlockConverter.blocksToJson(listOf(list)).replace("LIST_CHECK", "LIST")
+        repository.allNotesWithTags.value = listOf(
+            NoteWithTags(
+                Note(id = NOTE_ID, title = "title", value = legacy, description = "imported summary", date = OLD_DATE),
+                emptyList(),
+            ),
+        )
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        persistence.updateNote { it.copy(color = "teal") }
+
+        assertTrue(persistence.save())
+
+        val stored = repository.updatedNotes.single()
+        assertEquals("teal", stored.color)
+        assertEquals(OLD_DATE, stored.date)
+        assertEquals("imported summary", stored.description)
     }
 
     @Test

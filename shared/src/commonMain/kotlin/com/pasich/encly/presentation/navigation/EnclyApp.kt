@@ -102,19 +102,25 @@ fun EnclyApp(
     // after the frame, from this effect.
     val locked by sessionLockManager.locked.collectAsState()
     val scope = rememberCoroutineScope()
+    // A lock still waiting for the editors' saves: nothing may show or run meanwhile (SessionLockManager.locking).
+    val locking by sessionLockManager.locking.collectAsState()
     val currentLocked by rememberUpdatedState(locked)
+    val currentLocking by rememberUpdatedState(locking)
     val router = remember(navController, scope, sessionLockManager) {
         AppCommandRouter(scope, sessionLockManager::lockNow) { navController.startNewNote() }
     }
     // A command is run only with the vault open: never from the lock screen, never in the shielded frame.
-    val commandsAllowed = remember(securityManager) { { !currentLocked && securityManager.isDatabaseUnlocked() } }
+    val commandsAllowed = remember(securityManager) {
+        { !currentLocked && !currentLocking && securityManager.isDatabaseUnlocked() }
+    }
     LockRouteGuard(navController, securityManager::isDatabaseUnlocked)
     HostNavigationRequests(navController, router, commandsAllowed)
     SessionResumeGuard(navController, sessionLockManager)
     val visibleEntries by navController.visibleEntries.collectAsState()
-    val shielded = locked && visibleEntries.any {
-        it.destination.route != NavRoutes.LockRoute.name
-    }
+    // An empty list is the first frame of a restored back stack: shielded as well.
+    val shielded = (locked || locking) && (
+        visibleEntries.isEmpty() || visibleEntries.any { it.destination.route != NavRoutes.LockRoute.name }
+        )
     LaunchedEffect(locked) {
         if (locked) navController.showLockScreen()
     }

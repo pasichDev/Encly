@@ -1,8 +1,11 @@
 package com.pasich.encly.editor.state
 
 import com.pasich.encly.editor.model.Block
+import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.model.MAX_LIST_LEVEL
 import com.pasich.encly.editor.model.alongside
+import com.pasich.encly.editor.model.kindIn
 import com.pasich.encly.editor.model.normalizedLevels
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -35,31 +38,58 @@ internal fun BlockEditorState.itemAt(listId: String, itemId: String): ListItemAt
 
 /**
  * Pasted [lines] in an item, after its text [head] and before its [tail]: the first joins it, the others become
- * items after it. One line stays in the item.
+ * items after it. One line stays in the item. Blank lines at either end are dropped, so a copied line that ends in a
+ * line break stays in the item. In an empty item the first line is read like the others (its list mark is not kept as
+ * text); after text it joins the text as typed.
  */
 internal fun BlockEditorState.listPasteText(item: ListItemAt, head: String, lines: List<String>, tail: String): String {
     val (index, list, at) = item
     val items = list.items.value
-    val rest = lines.drop(1)
-    val kept = head + lines.first()
     val here = items[at]
+    // Blank lines at the end are only the copied text's line break. At the start they are dropped in an empty item;
+    // after text a leading line break is the user's: the pasted lines start on a new item.
+    val pasted = if (head.isBlank()) trimBlankLines(lines) else lines.dropLastWhile { it.isBlank() }
+    if (pasted.isEmpty()) {
+        selection.focusAt(index, caret = head.length, itemId = here.id)
+        return head + tail
+    }
+    // In an empty item the first line is read like the others (its mark is no text); after text it joins as typed.
+    val first = if (head.isBlank()) listItemText(pasted.first()) else null
+    val kept = head + (first?.value ?: pasted.first())
+    // A ticked or open mark in the pasted first line sets the state of a checklist item it lands in.
+    val ticked = first != null && here.kindIn(list.blockType) == BlockType.LIST_CHECK
+    val isCheck = if (ticked) first.isCheck else here.isCheck
+    val rest = pasted.drop(1)
+    val newItems = items.toMutableList()
+    val whole: String
+    val caretItem: ItemListBlock
+    var caret = kept.length
     if (rest.isEmpty()) {
-        val whole = kept + tail
-        batch { setValue(list.id, list.items, items.toMutableList().apply { this[at] = here.copy(value = whole) }) }
-        selection.focusAt(index, caret = kept.length, itemId = here.id)
-        return whole
+        whole = kept + tail
+        newItems[at] = here.copy(value = whole, isCheck = isCheck)
+        caretItem = newItems[at]
+    } else {
+        // Pasted lines go in at the level of the item they are pasted into, nested as deep under it as they were
+        // under the first line.
+        val base = if (first != null) indentLevel(pasted.first()) else 0
+        val placed = rest.filterIndexed { i, line -> i == rest.lastIndex || line.isNotBlank() }
+            .map { line -> placedAlongside(here, listItemText(line), base) }
+        val lastLine = placed.last()
+        caretItem = lastLine.copy(value = lastLine.value + tail)
+        caret = lastLine.value.length
+        whole = kept
+        newItems[at] = here.copy(value = kept, isCheck = isCheck)
+        newItems.addAll(at + 1, placed.dropLast(1) + caretItem)
     }
-    // Pasted lines go in at the level of the item they are pasted into.
-    val middle = rest.dropLast(1).filter { it.isNotBlank() }.map { listItemText(it).alongside(here) }
-    val lastLine = listItemText(rest.last()).alongside(here)
-    val last = lastLine.copy(value = lastLine.value + tail)
-    val newItems = items.toMutableList().apply {
-        this[at] = items[at].copy(value = kept)
-        addAll(at + 1, middle + last)
-    }
-    batch { setValue(list.id, list.items, newItems) }
-    selection.focusAt(index, caret = lastLine.value.length, itemId = last.id)
-    return kept
+    batch { setValue(list.id, list.items, newItems.normalizedLevels(list.blockType)) }
+    selection.focusAt(index, caret = caret, itemId = caretItem.id)
+    return whole
+}
+
+/** The pasted item [read] placed under [here]: at its level, nested as deep as it was nested past [base] levels. */
+private fun placedAlongside(here: ItemListBlock, read: ItemListBlock, base: Int): ItemListBlock {
+    val deeper = (read.level - base).coerceAtLeast(0)
+    return read.alongside(here).copy(level = (here.level + deeper).coerceAtMost(MAX_LIST_LEVEL))
 }
 
 private fun BlockEditorState.listEnter(where: ListItemAt, head: String, tail: String): String {

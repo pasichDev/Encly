@@ -29,8 +29,11 @@ import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -56,6 +59,11 @@ class NoteListViewModel(
     private val updateNoteDescriptionUseCase: UpdateNoteDescriptionUseCase,
     lockEvents: VaultLockEvents = NeverLocked,
 ) : ViewModel() {
+
+    private val _actionFailures = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Emits when a note action (a sheet action or a swipe) did not go through, so the screen tells the user. */
+    val actionFailures: SharedFlow<Unit> = _actionFailures.asSharedFlow()
 
     private val _state = MutableStateFlow(NoteListState())
     val state: StateFlow<NoteListState> get() = _state
@@ -135,7 +143,9 @@ class NoteListViewModel(
     }
 
     /** Carries out [event]; false when its write failed (a swipe then springs the card back). */
-    suspend fun perform(event: NoteListEvent): Boolean = viewModelScope.async { execute(event) }.await()
+    suspend fun perform(event: NoteListEvent): Boolean = viewModelScope.async {
+        execute(event).also { done -> if (!done) _actionFailures.emit(Unit) }
+    }.await()
 
     // The write runs in the ViewModel's scope: a card that leaves the screen mid-write cannot cancel it.
     private suspend fun execute(event: NoteListEvent): Boolean = when (event) {

@@ -49,8 +49,10 @@ import com.pasich.encly.core.resources.list_item_outdent
 import com.pasich.encly.core.resources.redo
 import com.pasich.encly.core.resources.undo
 import com.pasich.encly.domain.model.ToolbarLayout
+import com.pasich.encly.domain.model.ToolbarTool
 import com.pasich.encly.domain.model.toolbarScale
 import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.state.exactType
 import com.pasich.encly.editor.state.toolType
 import com.pasich.encly.platform.LocalAppWindow
 import com.pasich.encly.presentation.designsystem.EnclyEditorToolbar
@@ -92,6 +94,9 @@ fun NoteBottomBar(
     val activeTool by remember(viewModel) {
         derivedStateOf { viewModel.blocks.firstOrNull { it.id == interactedBlockId }?.toolType() }
     }
+    val activeExactType by remember(viewModel) {
+        derivedStateOf { viewModel.blocks.firstOrNull { it.id == interactedBlockId }?.exactType() }
+    }
     val checklistLock = rememberChecklistLock(viewModel, interactedBlockId)
     val blockFocused = viewModel.focusedBlockId.collectAsState().value != null
     val anchor = rememberKeyboardAnchor()
@@ -131,8 +136,12 @@ fun NoteBottomBar(
                         tools = RowTools(
                             layout = layout,
                             activeTool = activeTool,
+                            activeExactType = activeExactType,
                             onApply = toolApplier(checklistLock) { type ->
                                 keepingKeyboard { viewModel.applyTool(type) }
+                            },
+                            onApplyExact = toolApplier(checklistLock) { type ->
+                                keepingKeyboard { viewModel.applyTool(type, exact = true) }
                             },
                         ),
                         history = history,
@@ -145,8 +154,18 @@ fun NoteBottomBar(
     }
 }
 
-/** The tools of the row: the user's [layout], the [activeTool] of the block in use, and how to [onApply] one. */
-private class RowTools(val layout: ToolbarLayout, val activeTool: BlockType?, val onApply: ((BlockType) -> Unit)?)
+/**
+ * The tools of the row: the user's [layout], the [activeTool] of the block in use (and its [activeExactType], which
+ * the heading-level and Text tools compare against), and how to apply one: [onApply] for the tools that act on the
+ * kind of block, [onApplyExact] for the ones that name a type.
+ */
+private class RowTools(
+    val layout: ToolbarLayout,
+    val activeTool: BlockType?,
+    val activeExactType: BlockType?,
+    val onApply: ((BlockType) -> Unit)?,
+    val onApplyExact: ((BlockType) -> Unit)?,
+)
 
 /** The block-tools toggle, the block tools (the active one marked), then undo and redo. */
 @Composable
@@ -162,10 +181,12 @@ private fun MainTools(tools: RowTools, history: HistoryTools, onMore: () -> Unit
         Spacer(Modifier.width(EnclyTheme.spacing.xs))
         tools.layout.main.forEach { entry ->
             val tool = entry.toBlockTool()
+            // A level tool or Text names its type: "Heading 3" on an H3 is active, and on an H2 makes an H3.
+            val exact = entry.headingLevel != null || entry == ToolbarTool.TEXT
             BlockToolButton(
                 tool = tool,
-                active = tool.type == tools.activeTool,
-                onClick = tools.onApply?.let { apply -> { apply(tool.type) } },
+                active = tool.type == if (exact) tools.activeExactType else tools.activeTool,
+                onClick = (if (exact) tools.onApplyExact else tools.onApply)?.let { apply -> { apply(tool.type) } },
             )
         }
         EnclyToolbarRule()

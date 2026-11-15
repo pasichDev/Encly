@@ -48,6 +48,7 @@ import com.pasich.encly.core.resources.table_add_column
 import com.pasich.encly.core.resources.table_add_row
 import com.pasich.encly.core.resources.table_cell_options
 import com.pasich.encly.core.resources.table_header_row
+import com.pasich.encly.core.resources.table_menu_open
 import com.pasich.encly.core.resources.table_remove_column
 import com.pasich.encly.core.resources.table_remove_row
 import com.pasich.encly.core.resources.tap_again_to_delete
@@ -209,6 +210,7 @@ internal fun EditorString.resource(): StringResource = when (this) {
     EditorString.TABLE_REMOVE_COLUMN -> Res.string.table_remove_column
     EditorString.TABLE_HEADER_ROW -> Res.string.table_header_row
     EditorString.TABLE_CELL_OPTIONS -> Res.string.table_cell_options
+    EditorString.TABLE_MENU_OPEN -> Res.string.table_menu_open
 }
 
 /**

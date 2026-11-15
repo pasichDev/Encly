@@ -97,6 +97,17 @@ class TasksViewModelTest {
     }
 
     @Test
+    fun aFirstReadThatFailsEndsLoadingAsAnErrorNotAnEndlessSkeleton() = runTest(dispatcher) {
+        repository.failReads = true
+        val failing = TasksViewModel(repository, UpdateTaskStatusUseCase(repository))
+        advanceUntilIdle()
+
+        val state = failing.uiState.value
+        assertFalse(state.isLoading)
+        assertTrue(state.loadFailed)
+    }
+
+    @Test
     fun anEmptyListIsLoadedNotLoading() = runTest(dispatcher) {
         repository.tasks.value = emptyList()
         advanceUntilIdle()

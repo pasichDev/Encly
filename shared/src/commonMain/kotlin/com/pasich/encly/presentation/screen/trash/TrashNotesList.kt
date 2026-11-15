@@ -31,7 +31,9 @@ import com.pasich.encly.core.resources.trash_days_unit
 import com.pasich.encly.core.resources.trash_deleted_on
 import com.pasich.encly.core.resources.trash_first_in_days
 import com.pasich.encly.core.resources.trash_first_today
+import com.pasich.encly.core.resources.trash_hidden_note
 import com.pasich.encly.core.resources.trash_last_day
+import com.pasich.encly.core.resources.trash_last_in_days
 import com.pasich.encly.core.resources.trash_notes_count
 import com.pasich.encly.core.resources.trash_section_later
 import com.pasich.encly.core.resources.trash_section_soon
@@ -112,16 +114,25 @@ fun TrashNotesList(
                 countdown = countdown,
                 rows = TrashRows(
                     selecting = state.canCheck,
+                    hiddenIds = state.hiddenIds,
                     onOpen = onItemClick,
-                    onToggle = { index -> trashViewModel.onEvent(TrashListEvent.ToggleCheckItem(index)) },
+                    onToggle = { noteId -> trashViewModel.onEvent(TrashListEvent.ToggleCheckItem(noteId)) },
                 ),
             )
         }
     }
 }
 
-/** What the rows do: [onToggle] selects or unselects the note at an index, [onOpen] opens it to read. */
-private class TrashRows(val selecting: Boolean, val onOpen: (Int, Note) -> Unit, val onToggle: (Int) -> Unit)
+/**
+ * What the rows do: [onToggle] selects or unselects the note with an id, [onOpen] opens it to read. A note in
+ * [hiddenIds] carries a hidden tag, so its row shows a placeholder, not its title.
+ */
+private class TrashRows(
+    val selecting: Boolean,
+    val hiddenIds: Set<Long>,
+    val onOpen: (Int, Note) -> Unit,
+    val onToggle: (Long) -> Unit,
+)
 
 /** The summary line and the two sections. */
 private fun LazyListScope.trashCountdownRows(countdown: TrashCountdown, rows: TrashRows) {
@@ -165,11 +176,14 @@ private fun LazyListScope.trashSection(
         val note = entry.note
         EnclyCountdownRow(
             countdown = countdownOf(entry.daysLeft),
-            title = note.title.ifBlank { stringResource(Res.string.untitled) },
+            title = when {
+                note.id in rows.hiddenIds -> stringResource(Res.string.trash_hidden_note)
+                else -> note.title.ifBlank { stringResource(Res.string.untitled) }
+            },
             supporting = note.trashedAt?.let { stringResource(Res.string.trash_deleted_on, trashedDate(it)) },
             selected = note.isChecked.takeIf { rows.selecting },
-            onClick = { if (rows.selecting) rows.onToggle(entry.index) else rows.onOpen(entry.index, note) },
-            onLongClick = { if (!rows.selecting) rows.onToggle(entry.index) },
+            onClick = { if (rows.selecting) rows.onToggle(note.id) else rows.onOpen(entry.index, note) },
+            onLongClick = { if (!rows.selecting) rows.onToggle(note.id) },
             modifier = Modifier.animateItem(),
         )
     }
@@ -183,7 +197,7 @@ private fun trashedDate(millis: Long): String {
     return if (day == RelativeDay.OTHER) formatCardDate(instant) else formatNoteDate(instant)
 }
 
-/** "8 notes. The first disappears in 3 days, the last in 28." */
+/** "8 notes. The first disappears in 3 days, the last in 28 days." */
 @Composable
 private fun trashSummary(countdown: TrashCountdown): String {
     val notes = pluralStringResource(Res.plurals.trash_notes_count, countdown.count, countdown.count)
@@ -197,7 +211,8 @@ private fun trashSummary(countdown: TrashCountdown): String {
         } else {
             pluralStringResource(Res.plurals.trash_first_in_days, first, first)
         }
-        stringResource(Res.string.trash_summary, notes, firstGoes, last)
+        val lastGoes = pluralStringResource(Res.plurals.trash_last_in_days, last, last)
+        stringResource(Res.string.trash_summary, notes, firstGoes, lastGoes)
     }
 }
 

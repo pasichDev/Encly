@@ -1,7 +1,7 @@
 package com.pasich.encly.core.di
 
 import android.content.Context
-import com.pasich.encly.core.platform.HandlerMainThreadTimer
+import com.pasich.encly.core.platform.AlarmMainThreadTimer
 import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.platform.MainThreadTimer
 import com.pasich.encly.core.platform.SharedPreferencesKeyValueStore
@@ -66,7 +66,7 @@ interface SecurityBindingsModule {
     fun bindBiometricManager(manager: KeystoreBiometricManager): BiometricManager
 
     @Binds
-    fun bindMainThreadTimer(timer: HandlerMainThreadTimer): MainThreadTimer
+    fun bindMainThreadTimer(timer: AlarmMainThreadTimer): MainThreadTimer
 
     @Binds
     fun bindLockoutClock(clock: SystemLockoutClock): LockoutClock

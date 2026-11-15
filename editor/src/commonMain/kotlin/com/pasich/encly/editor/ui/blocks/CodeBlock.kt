@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -43,8 +45,9 @@ import com.pasich.encly.editor.ui.BlockActions
 internal const val CODE_TAB = "    "
 
 /**
- * Keyboard of a code field: no capital letters, no autocorrect. Suggestions are the keyboard's own to
- * offer; the app already asks keyboards not to learn from what is typed (SecureTextInputBoundary).
+ * Keyboard of a code field: no capital letters, no autocorrect. A multi-line field is autocorrected by some keyboards
+ * whatever this says, so the field also asks for no suggestions (NoSuggestionsInput); the app already asks keyboards
+ * not to learn from what is typed (SecureTextInputBoundary).
  */
 internal val CodeKeyboard: KeyboardOptions = KeyboardOptions(
     capitalization = KeyboardCapitalization.None,
@@ -53,6 +56,9 @@ internal val CodeKeyboard: KeyboardOptions = KeyboardOptions(
 )
 
 /**
+ * [focusRequester] and [fieldModifier] reach the code's text field, [modifier] the card around it (a tap anywhere on
+ * the card focuses the field).
+ *
  * Code, in a monospace face on a tonal card. It reads left to right whatever the app's language is, keeps
  * every space, tab and line break as typed (Enter adds a line, never a block), and Tab types [CODE_TAB].
  * Its placeholder shows only while it is [showPlaceholder] (focused) and empty.
@@ -61,7 +67,9 @@ internal val CodeKeyboard: KeyboardOptions = KeyboardOptions(
 internal fun CodeBlock(
     block: Block.CodeBlock,
     blockActions: BlockActions,
+    focusRequester: FocusRequester,
     modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
     isLocked: Boolean = false,
     showPlaceholder: Boolean = true,
 ) {
@@ -80,38 +88,43 @@ internal fun CodeBlock(
     RegisterCaretAtX(blockActions, state, highlight)
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        BasicTextField(
-            state = state,
-            readOnly = isLocked,
-            inputTransformation = input,
-            textStyle = style,
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            keyboardOptions = CodeKeyboard,
-            onTextLayout = highlight.onTextLayout,
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(vertical = theme.spacing.xs)
-                .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium)
-                .padding(horizontal = theme.spacing.fieldGap, vertical = theme.spacing.m)
-                .then(highlight.modifier)
-                .codeTabKey(state, enabled = !isLocked)
-                .textBlockKeys(state, blockActions, highlight),
-            decorator = { innerTextField ->
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (showPlaceholder && state.text.isEmpty()) {
-                        Text(
-                            text = LocalEditorStrings.current.text(EditorString.BLOCK_CODE),
-                            style = style.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                    alpha = EDITOR_PLACEHOLDER_ALPHA,
+        NoSuggestionsInput {
+            BasicTextField(
+                state = state,
+                readOnly = isLocked,
+                inputTransformation = input,
+                textStyle = style,
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = CodeKeyboard,
+                onTextLayout = highlight.onTextLayout,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(vertical = theme.spacing.xs)
+                    .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium)
+                    .tapCardToFocus(state, focusRequester)
+                    .padding(horizontal = theme.spacing.fieldGap, vertical = theme.spacing.m)
+                    .then(fieldModifier)
+                    .focusRequester(focusRequester)
+                    .then(highlight.modifier)
+                    .codeTabKey(state, enabled = !isLocked)
+                    .textBlockKeys(state, blockActions, highlight),
+                decorator = { innerTextField ->
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        if (showPlaceholder && state.text.isEmpty()) {
+                            Text(
+                                text = LocalEditorStrings.current.text(EditorString.BLOCK_CODE),
+                                style = style.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                        alpha = EDITOR_PLACEHOLDER_ALPHA,
+                                    ),
                                 ),
-                            ),
-                        )
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
-                }
-            },
-        )
+                },
+            )
+        }
     }
 }
 
@@ -121,8 +134,9 @@ internal fun CodeBlock(
  */
 internal fun Modifier.codeTabKey(state: TextFieldState, enabled: Boolean): Modifier = onPreviewKeyEvent { event ->
     val plain = !(event.isShiftPressed || event.isCtrlPressed || event.isAltPressed || event.isMetaPressed)
-    val tab = event.key == Key.Tab && plain
-    if (tab && event.type == KeyEventType.KeyDown && enabled) {
+    // A read-only block leaves Tab to the focus traversal.
+    val tab = event.key == Key.Tab && plain && enabled
+    if (tab && event.type == KeyEventType.KeyDown) {
         state.edit {
             val at = selection.min
             replace(at, selection.max, CODE_TAB)

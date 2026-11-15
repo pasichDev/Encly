@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import com.pasich.encly.core.di.ApplicationContext
 import dev.zacsweers.metro.AppScope
@@ -17,6 +18,9 @@ import dev.zacsweers.metro.SingleIn
 class SystemDeviceLockWatcher(@param:ApplicationContext private val context: Context) : DeviceLockWatcher {
     override fun isDeviceLocked(): Boolean =
         context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked == true
+
+    // Treated as on when the service is missing, so the check never locks on a guess.
+    override fun isScreenOn(): Boolean = context.getSystemService(PowerManager::class.java)?.isInteractive != false
 
     override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit {
         val receiver = object : BroadcastReceiver() {

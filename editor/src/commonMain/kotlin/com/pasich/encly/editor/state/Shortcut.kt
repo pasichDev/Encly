@@ -78,11 +78,22 @@ private val LONE_WEB_ADDRESS = Regex("^https?://[^\\s\\\\]+$", RegexOption.IGNOR
 /** Whether [line] is a web address and nothing else: pasted alone, it becomes a link card. */
 internal fun isLoneWebAddress(line: String): Boolean = LONE_WEB_ADDRESS.matches(line.trim())
 
-/** A pasted line as a list item's text: without a list mark of its own. */
+/**
+ * A pasted line as a list item's text: without a list mark of its own. Leading indentation before a mark (two
+ * spaces or a tab a level, as [plainText][com.pasich.encly.editor.state.plainText] writes nested items) is the item's
+ * level; a line with no mark keeps its text as it is, at level 0.
+ */
 internal fun listItemText(line: String): ItemListBlock {
-    val shortcut = leadingShortcut(line)?.takeIf { it.type in LIST_TYPES } ?: return ItemListBlock(line)
-    return ItemListBlock(line.removePrefix(shortcut.marker), shortcut.checked)
+    val indent = line.takeWhile { it == ' ' || it == '\t' }
+    val body = line.substring(indent.length)
+    val shortcut = leadingShortcut(body)?.takeIf { it.type in LIST_TYPES } ?: return ItemListBlock(line)
+    return ItemListBlock(body.removePrefix(shortcut.marker), shortcut.checked, level = levelOf(indent))
 }
+
+/** The nesting level of [line]'s indentation, when it has a list mark. */
+internal fun indentLevel(line: String): Int = listItemText(line).level
+
+private fun levelOf(indent: String): Int = indent.sumOf { if (it == '\t') 2 else 1 } / 2
 
 private val LIST_TYPES = setOf(BlockType.LIST_BULLET, BlockType.LIST_NUMBER, BlockType.LIST_CHECK)
 

@@ -27,8 +27,9 @@ private val URL_SCHEME = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:")
 private val WEB_PREFIX = Regex("^https?://", RegexOption.IGNORE_CASE)
 private const val MAILTO = "mailto:"
 
-// Letters and digits of any script, dots and hyphens: a host name, nothing that decodes to one.
-private val HOST_NAME = Regex("^[\\p{L}\\p{N}.-]+$")
+// Letters, combining marks (Devanagari, Thai, ...) and digits of any script, dots and hyphens: a host name,
+// nothing that decodes to one.
+private val HOST_NAME = Regex("^[\\p{L}\\p{M}\\p{N}.-]+$")
 private val IPV6_HOST = Regex("^\\[[0-9a-fA-F:.]+]$")
 private val PORT = Regex(":\\d{1,5}$")
 

@@ -4,6 +4,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.Subtask
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.data.model.Task
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
 import java.nio.file.Files
@@ -65,12 +66,35 @@ class DesktopDaoTest {
     }
 
     @Test
-    fun aLinkToATagThatDoesNotExistIsRefused() = runBlocking {
+    fun aLinkToATagThatDoesNotExistIsSkippedAndTheRestIsKept() = runBlocking {
+        val real = db.tagsDao().addTag(Tag(nameTag = "Real"))
         val note = db.notesDao().insertNote(Note(title = "n"))
 
-        val linked = runCatching { db.notesDao().changeNoteTags(note, added = listOf(404L), removed = emptyList()) }
-        assertTrue(linked.isFailure)
-        assertEquals(emptySet<Long>(), tagIdsOf(note))
+        // A tag deleted while an editor still held its id must not fail the save: the dead id is skipped.
+        db.notesDao().changeNoteTags(note, added = listOf(404L, real), removed = emptyList())
+        assertEquals(setOf(real), tagIdsOf(note))
+
+        db.notesDao().setNoteTags(note, listOf(404L, real))
+        assertEquals(setOf(real), tagIdsOf(note))
+
+        val created = db.notesDao().insertNoteWithTags(Note(title = "c", tagIds = setOf(404L, real)))
+        assertEquals(setOf(real), tagIdsOf(created))
+    }
+
+    @Test
+    fun emptyingTheTrashDeletesOnlyTrashedNotes() = runBlocking {
+        val kept = db.notesDao().insertNote(Note(title = "kept"))
+        val a = db.notesDao().insertNote(Note(title = "a", isTrash = true, trashedAt = 1L))
+        val b = db.notesDao().insertNote(Note(title = "b", isTrash = true, trashedAt = 2L))
+        val c = db.notesDao().insertNote(Note(title = "c", isTrash = true, trashedAt = 3L))
+
+        // A selected note that was restored meanwhile is not trashed and stays.
+        assertEquals(2, db.notesDao().deleteTrashedNotes(listOf(a, b, kept)))
+        assertEquals(listOf(c), db.notesDao().getTrashNotes().first().map { it.id })
+
+        assertEquals(1, db.notesDao().deleteAllTrashed())
+        assertEquals(emptyList<Long>(), db.notesDao().getTrashNotes().first().map { it.id })
+        assertEquals(1, db.notesDao().getAllNotes().first().size)
     }
 
     private suspend fun tagIdsOf(noteId: Long) =

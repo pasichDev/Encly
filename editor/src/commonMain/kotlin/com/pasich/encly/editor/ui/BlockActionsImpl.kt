@@ -128,10 +128,11 @@ internal class BlockActionsImpl(
         } else {
             focusRegistry.nextFocusableBlock(block.id)
         }
-        // Only a field that is on screen can be focused; otherwise the key stays with the field.
-        val moved = target != null && focusRegistry.focus(move.requestFor(target.id))
-        if (moved) controller.onBlockFocused(target!!)
-        return moved
+        if (target == null) return false
+        val request = move.requestFor(target.id)
+        // A field off screen is not composed: the request is carried out once the editor has scrolled to it.
+        if (focusRegistry.focus(request)) controller.onBlockFocused(target) else controller.requestFocus(request)
+        return true
     }
 
     override fun registerCaretAtX(callback: (Float, Boolean) -> Unit): () -> Unit =

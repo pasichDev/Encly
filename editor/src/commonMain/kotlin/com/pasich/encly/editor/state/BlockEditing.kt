@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // One small function per editing command.
+
 package com.pasich.encly.editor.state
 
 import com.pasich.encly.editor.model.Block
@@ -197,6 +199,22 @@ public fun BlockEditorState.pasteLink(blockId: String, pasted: String, link: Lin
     if (block == null || block.text.value.isNotEmpty()) return false
     changeValue(block.id, block.text, pasted, mergeable = false)
     replaceWithBlockAndParagraph(index, Block.LinkBlock(MutableStateFlow(link)))
+    return true
+}
+
+/**
+ * Sets the address of link card [blockId] to [link] and moves the cursor on, so the user can go on writing: the
+ * paragraph after the card takes focus, one being added first unless there is one. One undo step. False when the
+ * block is not a link card.
+ */
+public fun BlockEditorState.commitLink(blockId: String, link: LinkDataBlock): Boolean {
+    val index = indexOf(blockId)
+    val block = blocks.getOrNull(index) as? Block.LinkBlock ?: return false
+    batch {
+        setValue(block.id, block.block, link)
+        if (blocks.getOrNull(index + 1) !is Block.TextBlock) addBlock(index + 1, Block.TextBlock())
+    }
+    selection.focusAt(index + 1, caret = 0)
     return true
 }
 

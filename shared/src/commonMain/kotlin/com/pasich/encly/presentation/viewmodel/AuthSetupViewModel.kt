@@ -56,7 +56,8 @@ class AuthSetupViewModel(
      * vault setup just opened and before onboarding is committed. If that import fails,
      * nothing is committed and the vault is closed again; [FinishResult.restoreFailed] asks the
      * user to retry (the backup stays staged) or to [skipRestore]. A process killed meanwhile
-     * restarts onboarding instead of opening an empty vault.
+     * leaves a restore-pending marker ([SecurityManager.markRestorePending]): the next start does not
+     * count that vault as committed, deletes it and restarts onboarding instead of opening an empty one.
      */
     fun finishSetup(onResult: (FinishResult) -> Unit) {
         _restoreFailed.value = false
@@ -121,8 +122,11 @@ class AuthSetupViewModel(
     }
 
     private suspend fun openRestoreAndCommit(): SetupOutcome {
-        // A failed open keeps a staged restore for a retry of this same setup.
-        if (!securityManager.openInitialVault()) return SetupOutcome.FAILED
+        // Before the vault exists: a kill during the import must not leave a committed empty or partial vault.
+        // A failed mark or open keeps a staged restore for a retry of this same setup.
+        val opened = (!pendingRestore.isStaged || securityManager.markRestorePending()) &&
+            securityManager.openInitialVault()
+        if (!opened) return SetupOutcome.FAILED
         val outcome = when {
             !pendingRestore.apply() -> SetupOutcome.RESTORE_FAILED
             !securityManager.commitInitialSetup() -> SetupOutcome.FAILED

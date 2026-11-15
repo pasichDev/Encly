@@ -282,6 +282,26 @@ class LockViewModelTest {
     }
 
     @Test
+    fun aKeyInvalidatedByANewFingerprintIsReportedForTheLockScreen() = runTest {
+        answerCallback<ByteArray?>(null).`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+        `when`(security.takeBiometricInvalidated()).thenReturn(true)
+
+        assertFalse(viewModel.biometricInvalidated.value)
+        assertFalse(biometric())
+
+        assertTrue(viewModel.biometricInvalidated.value)
+    }
+
+    @Test
+    fun aCancelledPromptDoesNotReportAnInvalidatedKey() = runTest {
+        answerCallback<ByteArray?>(null).`when`(security).requestBiometricKey(eqValue(screen.biometric), anyCallback())
+
+        assertFalse(biometric())
+
+        assertFalse(viewModel.biometricInvalidated.value)
+    }
+
+    @Test
     fun aSecondBiometricRequestWhileOneIsOpenIsIgnored() {
         // The prompt never answers: the first request stays in flight.
         viewModel.authenticateBiometric(screen.host) {}

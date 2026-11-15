@@ -32,6 +32,7 @@ import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.dialogs.SwipeActionDialog
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.openRoute
 import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.SettingsEvent
 import com.pasich.encly.presentation.viewmodel.SettingsViewModel
@@ -61,12 +62,12 @@ fun SettingsScreen(
         simpleEdit = simpleEdit,
         swipe = swipeSettings,
         navigation = SettingsNavigation(
-            onAppearance = { navController?.navigate(NavRoutes.AppearanceRoute.name) },
-            onSecurity = { navController?.navigate(NavRoutes.SecuritySettingsRoute.name) },
-            onBackup = { navController?.navigate(NavRoutes.BackupRoute.name) },
-            onImportNotes = { navController?.navigate(NavRoutes.ImportNotesRoute.name) },
-            onAbout = { navController?.navigate(NavRoutes.AboutRoute.name) },
-            onFaq = { navController?.navigate(NavRoutes.FaqRoute.name) },
+            onAppearance = { navController?.openRoute(NavRoutes.AppearanceRoute.name) },
+            onSecurity = { navController?.openRoute(NavRoutes.SecuritySettingsRoute.name) },
+            onBackup = { navController?.openRoute(NavRoutes.BackupRoute.name) },
+            onImportNotes = { navController?.openRoute(NavRoutes.ImportNotesRoute.name) },
+            onAbout = { navController?.openRoute(NavRoutes.AboutRoute.name) },
+            onFaq = { navController?.openRoute(NavRoutes.FaqRoute.name) },
         ),
     )
 

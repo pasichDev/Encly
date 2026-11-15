@@ -85,6 +85,18 @@ class PendingDekTest {
         assertNull(pending.use { it.copyOf() })
     }
 
+    @Test
+    fun aRecreationForAConfigurationChangeKeepsTheCopy() {
+        val controller = Robolectric.buildActivity(FragmentActivity::class.java).create().start().resume()
+        val pending = PendingDek(key())
+        pending.wipeWhenDestroyed(controller.get().lifecycle)
+
+        // The prompt survives the recreation and answers later: the copy must still be there.
+        controller.configurationChange()
+
+        assertArrayEquals(key(), pending.use { it.copyOf() })
+    }
+
     private val androidx.lifecycle.Lifecycle.observerCount: Int
         get() = (this as androidx.lifecycle.LifecycleRegistry).observerCount
 }

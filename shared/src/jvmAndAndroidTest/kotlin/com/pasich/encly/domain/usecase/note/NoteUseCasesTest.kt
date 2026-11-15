@@ -5,13 +5,11 @@ import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.testutil.TestNotesRepository
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -119,26 +117,24 @@ class NoteUseCasesTest {
     }
 
     @Test
-    fun emptyingStopsAtTheFirstFailedDelete() = runTest {
+    fun aFailedEmptyingIsReturnedAndKeepsTheTrash() = runTest {
+        repository.trashNotes.value = listOf(Note(id = 1, isTrash = true), Note(id = 2, isTrash = true))
+        repository.trashDeleteFails = true
+
+        val result = CleanTrashNotesUseCase(repository)()
+
+        assertTrue(result.isFailure)
+        assertEquals(2, repository.trashNotes.value.size)
+    }
+
+    @Test
+    fun emptyingIsOneWriteNotOnePerNote() = runTest {
         val notes = mock(NotesRepository::class.java)
-        `when`(notes.getTrashNotes()).thenReturn(flowOf(listOf(Note(id = 1), Note(id = 2), Note(id = 3))))
-        `when`(notes.deleteNoteById(1)).thenReturn(Result.success(Unit))
-        `when`(notes.deleteNoteById(2)).thenReturn(Result.failure(IOException("disk")))
+        `when`(notes.deleteAllTrashed()).thenReturn(Result.failure(IOException("disk")))
 
         val result = CleanTrashNotesUseCase(notes)()
 
         assertTrue(result.exceptionOrNull() is IOException)
-        verify(notes, never()).deleteNoteById(3)
-    }
-
-    @Test
-    fun aTrashThatCannotBeReadIsAFailureAndDeletesNothing() = runTest {
-        val notes = mock(NotesRepository::class.java)
-        `when`(notes.getTrashNotes()).thenReturn(flow { throw IllegalStateException("vault locked") })
-
-        val result = CleanTrashNotesUseCase(notes)()
-
-        assertFalse(result.isSuccess)
-        assertTrue(result.exceptionOrNull() is IllegalStateException)
+        verify(notes, never()).deleteNoteById(anyLong())
     }
 }

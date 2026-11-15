@@ -2,6 +2,7 @@ package com.pasich.encly.testutil
 
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTags
+import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.NotesRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -115,12 +116,37 @@ internal class TestNotesRepository : NotesRepository {
 
     override fun getTrashNotes(): Flow<List<Note>> = trashNotes
 
+    /** The tags of the trashed notes, by note id. */
+    val trashTags = MutableStateFlow<Map<Long, List<Tag>>>(emptyMap())
+
+    override fun getTrashNotesWithTag(): Flow<List<NoteWithTags>> = combine(trashNotes, trashTags) { notes, tags ->
+        notes.map { NoteWithTags(it, tags[it.id].orEmpty()) }
+    }
+
     /** Every id passed to [deleteNoteById], in call order. */
     val deletedIds = mutableListOf<Long>()
 
     override suspend fun deleteNoteById(id: Long): Result<Unit> {
         deletedIds += id
         return Result.success(Unit)
+    }
+
+    /** Set to make [deleteAllTrashed] and [deleteTrashedNotes] fail without deleting anything. */
+    var trashDeleteFails = false
+
+    override suspend fun deleteAllTrashed(): Result<Int> {
+        if (trashDeleteFails) return Result.failure(IllegalStateException("disk"))
+        val gone = trashNotes.value
+        deletedIds += gone.map { it.id }
+        trashNotes.value = emptyList()
+        return Result.success(gone.size)
+    }
+
+    override suspend fun deleteTrashedNotes(ids: Collection<Long>): Result<Int> {
+        if (trashDeleteFails) return Result.failure(IllegalStateException("disk"))
+        deletedIds += ids
+        trashNotes.value = trashNotes.value.filterNot { it.id in ids }
+        return Result.success(ids.size)
     }
 
     override suspend fun stampUntimedTrash(at: Long): Result<Unit> {

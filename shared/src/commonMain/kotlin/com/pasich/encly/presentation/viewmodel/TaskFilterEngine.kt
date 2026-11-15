@@ -54,8 +54,9 @@ internal object TaskFilterEngine {
         val selectedPriorityFilter = current.selectedPriorityFilter
             ?.takeIf { selected -> priorityFilters.any { it.id == selected.id } }
 
+        // The done tasks keep the order they arrive in (newest completion first), never re-sorted by priority.
         val filteredTasks = if (selectedCompletedFilter != null) {
-            completedTasks.sortedByDescending { it.priority }
+            completedTasks
         } else {
             filterTasks(activeTasks, selectedPriorityFilter)
         }
@@ -71,7 +72,7 @@ internal object TaskFilterEngine {
         val totalTasks = activeCount + completedCount
         return TasksUiState(
             activeTasks = activeTasks.sortedByDescending { it.priority },
-            completedTasks = completedTasks.sortedByDescending { it.priority },
+            completedTasks = completedTasks,
             filteredActiveTasks = filteredTasks,
             activeTasksCount = activeCount,
             completedTasksCount = completedCount,
@@ -114,7 +115,7 @@ internal object TaskFilterEngine {
                 selectedActiveFilter = null,
                 selectedPriorityFilter = null,
                 selectedCompletedFilter = filter,
-                filteredActiveTasks = current.completedTasks.sortedByDescending { it.priority },
+                filteredActiveTasks = current.completedTasks,
             )
         }
     }

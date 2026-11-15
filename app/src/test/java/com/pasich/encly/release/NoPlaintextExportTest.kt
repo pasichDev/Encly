@@ -63,6 +63,7 @@ class NoPlaintextExportTest {
         // The support e-mail link (a mailto: ACTION_SENDTO) and SensitiveClip's own writes.
         listOf(
             OTHER_FILE to "val intent = Intent(Intent.ACTION_SENDTO).apply {",
+            AWAY_ALARM to "alarms.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pending)",
             SENSITIVE_CLIP to "clipboard.setPrimaryClip(clip)",
             SENSITIVE_CLIP to "delegate.setClipEntry(clipEntry)",
             BACKUP_SCREEN to "pickers.rememberCreateDocument(BackupFormat.MIME_TYPE, onExportTarget)",
@@ -84,6 +85,7 @@ class NoPlaintextExportTest {
     private companion object {
         val SCANNED = setOf("kt", "java", "xml")
         const val SENSITIVE_CLIP = "app/src/main/java/com/pasich/encly/platform/SensitiveClip.kt"
+        const val AWAY_ALARM = "app/src/main/java/com/pasich/encly/core/platform/AlarmMainThreadTimer.kt"
         const val IOS_CLIP = "shared/src/iosMain/kotlin/com/pasich/encly/ios/platform/IosClipboard.kt"
         const val IOS_PICKERS = "shared/src/iosMain/kotlin/com/pasich/encly/ios/platform/IosDocumentPickers.kt"
         const val PICKERS = "app/src/main/java/com/pasich/encly/platform/AndroidDocumentPickers.kt"
@@ -99,7 +101,7 @@ class NoPlaintextExportTest {
             "share sheet" to Rule(Regex("""ACTION_SEND(?!TO)\w*|android\.intent\.action\.SEND(?!TO)\w*""")),
             "FileProvider" to Rule(Regex("""\bFileProvider\b""")),
             "notification" to Rule(Regex("""\bNotificationCompat\b|\bPOST_NOTIFICATIONS\b""")),
-            "alarm" to Rule(Regex("""\bAlarmManager\b""")),
+            "alarm" to Rule(Regex("""\bAlarmManager\b"""), allowedIn = setOf(AWAY_ALARM)),
             "clipboard write" to Rule(
                 Regex("""\bsetPrimaryClip\b|\bsetClipEntry\b|\bLocalClipboardManager\b"""),
                 allowedIn = setOf(SENSITIVE_CLIP, IOS_CLIP),

@@ -11,6 +11,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.pasich.encly.editor.ui.components.ProtectDialogWindow
+import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.ui.theme.EnclyTheme
 
 /**
@@ -28,6 +30,8 @@ fun EnclyDialog(
     text: String? = null,
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
+    // Its own window, above the lock shield: nothing of it is composed while the vault is locked.
+    if (LocalVaultLocked.current) return
     val colors = MaterialTheme.colorScheme
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -48,7 +52,10 @@ fun EnclyDialog(
                 }
             }
         },
-        confirmButton = { DialogButton(confirm) },
+        confirmButton = {
+            ProtectDialogWindow()
+            DialogButton(confirm)
+        },
         dismissButton = dismiss?.let { action -> { DialogButton(action) } },
     )
 }
@@ -66,6 +73,7 @@ fun EnclyChoiceDialog(
     keep: DialogAction,
     modifier: Modifier = Modifier,
 ) {
+    if (LocalVaultLocked.current) return
     val colors = MaterialTheme.colorScheme
     AlertDialog(
         onDismissRequest = keep.onClick,
@@ -77,7 +85,10 @@ fun EnclyChoiceDialog(
         tonalElevation = 0.dp,
         title = { Text(text = title, style = EnclyTheme.typography.dialogTitle) },
         text = { Text(text = text, style = MaterialTheme.typography.bodyMedium) },
-        confirmButton = { EnclyButtonPair(destructive = destructive, confirm = keep) },
+        confirmButton = {
+            ProtectDialogWindow()
+            EnclyButtonPair(destructive = destructive, confirm = keep)
+        },
     )
 }
 

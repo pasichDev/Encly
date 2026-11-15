@@ -185,15 +185,7 @@ internal fun PinStep(state: OnboardingUiState, actions: PinActions, modifier: Mo
             )
             Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s)) {
                 PinDots(entered = state.pinLength, error = state.pinError != null)
-                val error = state.pinError?.asString()
-                if (error != null) {
-                    Text(
-                        text = error,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                    )
-                }
+                PinError(state.pinError?.asString(), Modifier.align(Alignment.CenterHorizontally))
             }
         }
         PinKeypad(

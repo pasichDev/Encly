@@ -169,6 +169,7 @@
     <string name="lock_recovery_subtitle">أدخل عبارة الاسترداد المكونة من 12 كلمة</string>
     <string name="lock_recovery_title">الاسترداد</string>
     <string name="lock_subtitle">أدخل رمز PIN للمتابعة</string>
+    <string name="lock_biometric_invalidated">تغيّرت البصمات المسجّلة على هذا الجهاز. افتح القفل برمز PIN ثم فعّل الفتح بالبصمة مجددًا من الإعدادات.</string>
     <string name="lock_title">افتح قفل ملاحظاتك</string>
     <string name="lock_unlocking">جارٍ فتح القفل…</string>
     <string name="lock_use_recovery_phrase">استعد الوصول بعبارة الاسترداد</string>
@@ -280,6 +281,9 @@
 
     <string name="tag_create_failed">تعذّر حفظ الوسم. حاول مرة أخرى.</string>
     <string name="tag_delete_failed">تعذّر حذف الوسم. حاول مرة أخرى.</string>
+    <string name="trash_restore_failed">تعذّر استعادة الملاحظات. حاول مرة أخرى.</string>
+    <string name="trash_delete_failed">تعذّر حذف الملاحظات. حاول مرة أخرى.</string>
+    <string name="note_action_failed">تعذّر تحديث الملاحظة. حاول مرة أخرى.</string>
     <string name="tag_edit">تعديل الوسم</string>
     <string name="tag_hidden">وسم مخفي</string>
     <string name="tag_name_taken">يوجد وسم بهذا الاسم بالفعل</string>
@@ -314,6 +318,7 @@
     <string name="undo">تراجع</string>
 
     <string name="untitled">بلا عنوان</string>
+    <string name="trash_hidden_note">ملاحظة مخفية</string>
 
     <string name="view_switch_to_grid">التبديل إلى عرض الشبكة</string>
     <string name="view_switch_to_list">التبديل إلى عرض القائمة</string>
@@ -401,6 +406,7 @@
     <string name="link_blocked">لا يمكن حفظ أو فتح إلا روابط الويب (http وhttps) والبريد الإلكتروني.</string>
     <string name="notes_load_failed_title">تعذّرت قراءة ملاحظاتك</string>
     <string name="tags_load_failed_title">تعذّرت قراءة وسومك</string>
+    <string name="tasks_load_failed_title">تعذّرت قراءة مهامك</string>
     <string name="notes_load_failed_desc">ما زالت ملاحظاتك مخزنة مشفرة على هذا الجهاز. أغلق Encly وافتحه مرة أخرى لإعادة المحاولة.</string>
     <string name="pin_reset_subtitle">فتحت Encly بعبارة الاسترداد. عيّن رمز PIN جديدًا للمتابعة.</string>
     <string name="task_delete">حذف المهمة</string>
@@ -711,6 +717,7 @@
     <string name="table_remove_column">حذف العمود</string>
     <string name="table_header_row">صف الرأس</string>
     <string name="table_cell_options">خيارات الخلية</string>
+    <string name="table_menu_open">فتح قائمة الجدول</string>
     <string name="settings_editor_toolbar">شريط أدوات المحرر</string>
     <string name="settings_editor_toolbar_desc">اختر الأدوات ورتّبها</string>
     <string name="toolbar_hint">اسحب المقبض لإعادة الترتيب. تخفي العين الأداة أو تعيدها. أدوات «المزيد» خلف السهم.</string>
@@ -732,7 +739,7 @@
     </plurals>
     <string name="trash_section_soon">ستختفي خلال أسبوع · %1$d</string>
     <string name="trash_section_later">لاحقًا · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s، والأخيرة بعد %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s، %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">ستختفي الأولى اليوم</string>
     <string name="trash_last_day">اليوم الأخير</string>
@@ -755,6 +762,14 @@
         <item quantity="few">ستختفي الأولى بعد %d أيام</item>
         <item quantity="many">ستختفي الأولى بعد %d يومًا</item>
         <item quantity="other">ستختفي الأولى بعد %d يوم</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="zero">والأخيرة بعد %d يوم</item>
+        <item quantity="one">والأخيرة بعد %d يوم</item>
+        <item quantity="two">والأخيرة بعد %d يوم</item>
+        <item quantity="few">والأخيرة بعد %d أيام</item>
+        <item quantity="many">والأخيرة بعد %d يومًا</item>
+        <item quantity="other">والأخيرة بعد %d يوم</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="zero">بقي %d يوم</item>

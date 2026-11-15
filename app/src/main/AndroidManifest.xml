@@ -73,6 +73,12 @@
             </intent-filter>
         </activity>
 
+        <!-- The auto-lock alarm (AlarmMainThreadTimer): wakes a frozen background process to close the vault.
+             Not exported: only the app's own PendingIntent reaches it. -->
+        <receiver
+            android:name=".core.platform.AwayLockReceiver"
+            android:exported="false" />
+
         <!-- Stores the in-app language chosen in Settings on Android 12 and lower (Android 13+
              stores it in the framework). Disabled: it only carries the metadata. -->
         <service

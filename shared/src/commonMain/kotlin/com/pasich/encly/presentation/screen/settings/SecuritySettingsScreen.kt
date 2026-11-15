@@ -47,6 +47,7 @@ import com.pasich.encly.presentation.designsystem.EnclySwitchRow
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.openRoute
 import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.screen.backup.BackupDialogs
 import com.pasich.encly.presentation.screen.backup.rememberBackupDialogActions
@@ -106,7 +107,7 @@ fun SecuritySettingsScreen(
                     options = options,
                     vaultBusy = vaultState.busy,
                     actions = SecurityActions(
-                        onOpen = { route -> navController.navigate(route.name) },
+                        onOpen = { route -> navController.openRoute(route.name) },
                         onBiometric = { enabled ->
                             if (host != null) securityViewModel.toggleBiometric(host, enabled)
                         },

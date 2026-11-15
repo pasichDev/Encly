@@ -19,6 +19,9 @@ interface NotesRepository {
     fun getNotesOfTagWithArchived(tagId: Long): Flow<List<NoteWithTags>>
     fun getTrashNotes(): Flow<List<Note>>
 
+    /** The notes in the trash with their tags. */
+    fun getTrashNotesWithTag(): Flow<List<NoteWithTags>>
+
     /** The note as stored now (null once it is gone), following every change to it. */
     fun observeNote(noteId: Long): Flow<NoteWithTags?>
 
@@ -64,6 +67,15 @@ interface NotesRepository {
     /** Moves the note to the trash ([at]: when) or back, writing those two columns only. */
     suspend fun setTrashed(noteId: Long, trashed: Boolean, at: Long?): Result<Unit>
     suspend fun deleteNoteById(id: Long): Result<Unit>
+
+    /** Deletes for good every note in the trash, in one write: all of them go or none. The number deleted. */
+    suspend fun deleteAllTrashed(): Result<Int>
+
+    /**
+     * Deletes for good the notes among [ids] that are in the trash, in one write. A note restored meanwhile is not in
+     * the trash any more and is kept. The number deleted.
+     */
+    suspend fun deleteTrashedNotes(ids: Collection<Long>): Result<Int>
 
     /** Gives the trashed notes that have no trash time (imported ones) [at], so the trash can age them. */
     suspend fun stampUntimedTrash(at: Long): Result<Unit>

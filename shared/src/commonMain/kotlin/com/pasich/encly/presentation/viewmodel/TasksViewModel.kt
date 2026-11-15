@@ -103,6 +103,8 @@ data class TasksUiState(
     /** Sub-tasks by task id, in their order; a task without sub-tasks has no entry. */
     val subtasks: Map<Long, List<Subtask>> = emptyMap(),
     val isLoading: Boolean = true,
+    /** The first read failed: shown as an error, not as skeleton rows that never end. */
+    val loadFailed: Boolean = false,
 )
 
 /**
@@ -225,6 +227,8 @@ class TasksViewModel(
                 // The vault closed under the list (locked; [clearOnLock] resets the screen right
                 // after). Keep what is shown rather than crash or blank it as an empty list.
                 AppLogger.e(TAG, "Tasks read failed")
+                // Before anything was shown there is nothing to keep: an error, not a skeleton for ever.
+                if (_uiState.value.isLoading) _uiState.value = _uiState.value.copy(isLoading = false, loadFailed = true)
             }.collect { newState ->
                 _uiState.value = newState
                 forgetStepsOfGoneTasks(newState)
@@ -527,6 +531,9 @@ class TasksViewModel(
             }
             val rows = SubtaskDrafts.toSubtasks(id, subtasks)
             if (rows.isNotEmpty() && tasksRepository.saveSubtasks(id, rows).isFailure) {
+                // The task is stored: the sheet stays open on it, so Save again updates it instead of inserting a
+                // second copy.
+                _editingTask.value = task.copy(id = id)
                 _operationFailures.emit(TaskOperationFailure.CREATE)
                 return@launch
             }

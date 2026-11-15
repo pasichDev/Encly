@@ -107,6 +107,11 @@ class NotePersistence(
     // The note as the editor opened it, for [hasChanges].
     private var openedSnapshot: String = persistedSnapshot
 
+    // The opened note's content as this codec writes it (an older note may store the same blocks with other spelling,
+    // like the legacy "LIST" type), so a save compares like with like and a colour or pin change alone never counts
+    // as an edit of the text.
+    private var openedJson: String = "[]"
+
     private var autosaveJob: Job? = null
 
     /**
@@ -159,9 +164,11 @@ class NotePersistence(
         parsed?.takeIf { it.isNotEmpty() }?.let(showBlocks)
         val shown = if (isCopy) note.asCopy(copyTitle(note.title)) else note
         _state.value = LoadNoteState(note = shown, backupNote = shown)
-        persistedSnapshot = snapshotOf(shown, contentJson())
+        val shownJson = contentJson()
+        persistedSnapshot = snapshotOf(shown, shownJson)
         persistedNote = shown
         openedSnapshot = persistedSnapshot
+        openedJson = shownJson
         loaded = true
         _status.value = SaveStatusNote.OLD
         // Unreadable content: the note (its title) is shown, but the editor stays read-only.
@@ -220,11 +227,17 @@ class NotePersistence(
         val saved = suspendRunCatching {
             if (currentNote.id != -1L) {
                 val stored = withContext(ioDispatcher) {
-                    notesRepository.updateStored(currentNote, persistedNote, _state.value.backupNote, blocksJson)
+                    notesRepository.updateStored(
+                        currentNote,
+                        persistedNote,
+                        _state.value.backupNote,
+                        openedJson,
+                        blocksJson,
+                    )
                 }
                 // The editor shows when the note was last edited.
                 stored?.let { note ->
-                    updateNote { it.copy(date = note.date, description = note.description) }
+                    if (!closed) updateNote { it.copy(date = note.date, description = note.description) }
                     persistedNote = note
                 }
                 stored != null
@@ -236,8 +249,10 @@ class NotePersistence(
                 // every later save writes the whole row, so a note that still said 0 here would
                 // wipe it on the first autosave.
                 insertedId?.let { id ->
-                    updateNote {
-                        it.copy(id = id, value = blocksJson, date = draft.date, dateCreate = draft.dateCreate)
+                    if (!closed) {
+                        updateNote {
+                            it.copy(id = id, value = blocksJson, date = draft.date, dateCreate = draft.dateCreate)
+                        }
                     }
                     persistedNote = draft.copy(id = id)
                 }
@@ -245,7 +260,10 @@ class NotePersistence(
             }
         }.onFailure { AppLogger.e(TAG, "Note persistence failed", it) }.getOrDefault(false)
 
-        if (saved) persistedSnapshot = snapshot
+        if (saved) {
+            persistedSnapshot = snapshot
+            openedJson = blocksJson
+        }
         _status.value = if (saved) SaveStatusNote.SAVED else SaveStatusNote.FAILED
         return saved
     }
@@ -300,9 +318,11 @@ class NotePersistence(
         if (parsed == null) return
         showBlocks(parsed)
         _state.value = LoadNoteState(note = stored, backupNote = stored)
-        persistedSnapshot = snapshotOf(stored, contentJson())
+        val storedJson = contentJson()
+        persistedSnapshot = snapshotOf(stored, storedJson)
         persistedNote = stored
         openedSnapshot = persistedSnapshot
+        openedJson = storedJson
     }
 
     /**
@@ -438,6 +458,19 @@ class NotePersistence(
         closed = true
         autosaveJob?.cancel()
     }
+
+    /**
+     * [close], and drops everything this editor holds of the note (title, content, the backup and the snapshots), so no
+     * decrypted text stays in memory after a vault lock. A save that was already running writes nothing back here.
+     */
+    fun wipe() {
+        close()
+        _state.value = LoadNoteState()
+        persistedNote = Note(id = -1)
+        persistedSnapshot = ""
+        openedSnapshot = ""
+        openedJson = ""
+    }
 }
 
 private fun snapshotOf(note: Note, blocksJson: String): String =
@@ -463,14 +496,20 @@ private fun Note.metaKey() = NoteMeta(title, tagIds, isPinned, color, textSize, 
 
 /**
  * Stores [note] with [blocksJson] as its content, writing only what differs from [base] (the row as the editor last
- * saw it); returns the stored note, or null. Its date
- * moves forward only when the title or content differ from [backup], the note as the editor
- * opened it, and then an imported summary ([Note.description]) no longer describes it.
+ * saw it); returns the stored note, or null. Its date moves forward only when the title differs from [backup], the
+ * note as the editor opened it, or the content from [openedJson] (the opened content as this codec writes it). The
+ * card description ([Note.description]) is written by the user (or imported) and an edit never clears it.
  */
-private suspend fun NotesRepository.updateStored(note: Note, base: Note, backup: Note, blocksJson: String): Note? {
-    val changed = backup.hasContentChanged(blocksJson, note.title)
+private suspend fun NotesRepository.updateStored(
+    note: Note,
+    base: Note,
+    backup: Note,
+    openedJson: String,
+    blocksJson: String,
+): Note? {
+    val changed = note.title != backup.title || blocksJson != openedJson
     val stored = if (changed) {
-        note.copy(value = blocksJson, date = Clock.System.now().toEpochMilliseconds(), description = "")
+        note.copy(value = blocksJson, date = Clock.System.now().toEpochMilliseconds())
     } else {
         note.copy(value = blocksJson)
     }

@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.lock_back_to_pin
+import com.pasich.encly.core.resources.lock_biometric_invalidated
 import com.pasich.encly.core.resources.lock_recover_access
 import com.pasich.encly.core.resources.lock_recovery_subtitle
 import com.pasich.encly.core.resources.lock_recovery_title
@@ -39,7 +40,12 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
 /** What the lock screen offers besides the form on show: the fingerprint key and the recovery phrase. */
-internal data class LockCapabilities(val biometricEnabled: Boolean, val recoveryAvailable: Boolean)
+internal data class LockCapabilities(
+    val biometricEnabled: Boolean,
+    val recoveryAvailable: Boolean,
+    /** The fingerprint slot was dropped because a new fingerprint was enrolled; the subtitle says so. */
+    val biometricInvalidated: Boolean = false,
+)
 
 /** The checks of a secret the lock screen can send; each wipes what it is given. */
 internal class LockChecks(
@@ -100,9 +106,11 @@ private fun PinLockContent(form: LockFormState, capabilities: LockCapabilities, 
         subtitle = when {
             form.lockedOut -> pinLockoutText(form.lockoutSeconds)
             shownError != null -> stringResource(shownError)
+            capabilities.biometricInvalidated -> stringResource(Res.string.lock_biometric_invalidated)
             else -> stringResource(Res.string.lock_subtitle)
         },
         subtitleIsError = form.lockedOut || shownError != null,
+        subtitleTicks = form.lockedOut,
         busy = busy,
     ) {
         PinEntry(

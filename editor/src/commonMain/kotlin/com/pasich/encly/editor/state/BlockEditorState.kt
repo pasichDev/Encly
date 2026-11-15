@@ -148,7 +148,15 @@ public class BlockEditorState(
         slash.dismiss()
         history.removeBlock(index)
         afterChange()
-        if (refocus) selection.focusAt(_blocks.previousFocusableIndex(index), cursorToEnd = true)
+        if (!refocus) return
+        val above = (index - 1 downTo 0).firstOrNull { it < _blocks.size && _blocks[it].canTakeFocus() }
+        if (above != null) {
+            selection.focusAt(above, cursorToEnd = true)
+        } else {
+            // Nothing focusable above: the block that moved up into this index takes focus, caret at its start.
+            val below = (index.coerceAtLeast(0).._blocks.lastIndex).firstOrNull { _blocks[it].canTakeFocus() }
+            selection.focusAt(below ?: _blocks.previousFocusableIndex(index), caret = 0)
+        }
     }
 
     /**
@@ -178,9 +186,20 @@ public class BlockEditorState(
     internal fun moveBlock(fromIndex: Int, toIndex: Int) {
         if (fromIndex !in _blocks.indices || toIndex !in _blocks.indices) return
         slash.dismiss()
+        val hadFocus = selection.focusedBlockId.value == _blocks[fromIndex].id
         history.moveBlock(fromIndex, toIndex)
         afterChange()
-        selection.focusAt(toIndex)
+        val id = _blocks[toIndex].id
+        if (hadFocus) {
+            // A list keeps the item the cursor was in, and every block the cursor's place.
+            val list = _blocks[toIndex] as? Block.ListBlock
+            val item = selection.itemOf(id)?.takeIf { i -> list == null || list.items.value.any { it.id == i } }
+            val caret = selection.caretOf(id)?.takeIf { list == null || item != null }
+            selection.focusAt(toIndex, cursorToEnd = caret == null, caret = caret, itemId = item)
+        } else {
+            // A hidden keyboard stays hidden; the block only becomes the one the user works on.
+            selection.onInteraction(id)
+        }
     }
 
     /**

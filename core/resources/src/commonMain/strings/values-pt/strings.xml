@@ -185,6 +185,7 @@
     <string name="lock_recovery_subtitle">Digite sua frase de recuperação de 12 palavras</string>
     <string name="lock_recovery_title">Recuperação</string>
     <string name="lock_subtitle">Digite seu PIN para continuar</string>
+    <string name="lock_biometric_invalidated">As impressões digitais neste dispositivo mudaram. Desbloqueie com o PIN e ative novamente o desbloqueio por impressão digital nas configurações.</string>
     <string name="lock_title">Desbloqueie suas notas</string>
     <string name="lock_unlocking">Desbloqueando…</string>
     <string name="lock_use_recovery_phrase">Recuperar o acesso com a frase de recuperação</string>
@@ -303,6 +304,9 @@
 
     <string name="tag_create_failed">Não foi possível salvar a etiqueta. Tente novamente.</string>
     <string name="tag_delete_failed">Não foi possível excluir a etiqueta. Tente novamente.</string>
+    <string name="trash_restore_failed">Não foi possível restaurar as notas. Tente novamente.</string>
+    <string name="trash_delete_failed">Não foi possível excluir as notas. Tente novamente.</string>
+    <string name="note_action_failed">Não foi possível atualizar a nota. Tente novamente.</string>
     <string name="tag_edit">Editar etiqueta</string>
     <string name="tag_hidden">Etiqueta oculta</string>
     <string name="tag_name_taken">Já existe uma etiqueta com este nome</string>
@@ -338,6 +342,7 @@
     <string name="undo">Desfazer</string>
 
     <string name="untitled">Sem título</string>
+    <string name="trash_hidden_note">Nota oculta</string>
 
     <string name="view_switch_to_grid">Mudar para visualização em grade</string>
     <string name="view_switch_to_list">Mudar para visualização em lista</string>
@@ -416,6 +421,7 @@
     <string name="link_blocked">Só é possível salvar ou abrir links da web (http, https) e de e-mail.</string>
     <string name="notes_load_failed_title">Não foi possível ler suas notas</string>
     <string name="tags_load_failed_title">Não foi possível ler suas etiquetas</string>
+    <string name="tasks_load_failed_title">Não foi possível ler suas tarefas</string>
     <string name="notes_load_failed_desc">Suas notas continuam guardadas e criptografadas neste dispositivo. Feche o Encly e abra de novo para tentar outra vez.</string>
     <string name="pin_reset_subtitle">Você desbloqueou o Encly com a frase de recuperação. Defina um novo PIN para continuar.</string>
     <string name="task_delete">Excluir tarefa</string>
@@ -704,6 +710,7 @@
     <string name="table_remove_column">Excluir coluna</string>
     <string name="table_header_row">Linha de cabeçalho</string>
     <string name="table_cell_options">Opções da célula</string>
+    <string name="table_menu_open">Abrir o menu da tabela</string>
     <string name="settings_editor_toolbar">Barra do editor</string>
     <string name="settings_editor_toolbar_desc">Escolha e ordene as ferramentas</string>
     <string name="toolbar_hint">Arraste a alça para reordenar. O olho oculta uma ferramenta ou a traz de volta. As ferramentas de «Mais opções» ficam atrás da seta.</string>
@@ -722,7 +729,7 @@
     </plurals>
     <string name="trash_section_soon">Desaparecem em uma semana · %1$d</string>
     <string name="trash_section_later">Mais tarde · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s, a última em %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s, %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">A primeira desaparece hoje</string>
     <string name="trash_last_day">Último dia</string>
@@ -739,6 +746,11 @@
         <item quantity="one">A primeira desaparece em %d dia</item>
         <item quantity="many">A primeira desaparece em %d dias</item>
         <item quantity="other">A primeira desaparece em %d dias</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="one">a última em %d dia</item>
+        <item quantity="many">a última em %d dias</item>
+        <item quantity="other">a última em %d dias</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="one">Resta %d dia</item>

@@ -161,6 +161,29 @@ class TasksViewModelSubtasksTest {
     }
 
     @Test
+    fun aFailedStepSaveKeepsTheStoredTaskSoSavingAgainDoesNotInsertACopy() = runTest(dispatcher) {
+        advanceUntilIdle()
+        val before = repository.tasks.value.size
+        repository.failSubtasks = true
+        viewModel.showAddTaskDialog()
+
+        val steps = listOf(SubtaskDraft(key = -1, title = "Tickets"))
+        viewModel.addTask("Trip", null, priority = 0, subtasks = steps)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.showAddTaskDialog.value)
+        val trip = repository.tasks.value.single { it.title == "Trip" }
+        assertEquals(trip.id, viewModel.editingTask.value?.id)
+
+        repository.failSubtasks = false
+        viewModel.editTask(trip.id, "Trip", null, priority = 0, subtasks = steps)
+        advanceUntilIdle()
+
+        assertEquals(before + 1, repository.tasks.value.size)
+        assertEquals(listOf("Tickets"), repository.subtasks.value.filter { it.taskId == trip.id }.map { it.title })
+    }
+
+    @Test
     fun editingWithoutALoadedChecklistLeavesItAlone() = runTest(dispatcher) {
         advanceUntilIdle()
         viewModel.editTask(1, "Shop!", null, priority = 0)

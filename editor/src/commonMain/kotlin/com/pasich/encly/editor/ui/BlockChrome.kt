@@ -36,6 +36,7 @@ import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.LocalEditorStrings
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
+import com.pasich.encly.editor.theme.BlockBleed
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.ui.blocks.BlockSelectAllIme
 import com.pasich.encly.editor.ui.blocks.ReorderHandleWidth
@@ -157,12 +158,14 @@ private fun BoxScope.ChecklistLockToggle(block: Block, controller: EditorControl
     val strings = LocalEditorStrings.current
     val icons = LocalEditorTheme.current.icons
     val colors = MaterialTheme.colorScheme
+    // The list sits inside the block's page padding and bleed; the lock is measured from the chrome edge.
+    val contentEndInset = LocalEditorTheme.current.spacing.m + BlockBleed
     EditorTooltip(
         label = strings.text(if (locked) EditorString.CHECKLIST_UNLOCK else EditorString.CHECKLIST_LOCK),
         // Beside the drag handle of the first item, not over it.
         modifier = Modifier
             .align(Alignment.TopEnd)
-            .padding(end = if (items.size > 1 && !locked) ReorderHandleWidth else 0.dp),
+            .padding(end = contentEndInset + if (items.size > 1 && !locked) ReorderHandleWidth else 0.dp),
     ) {
         Surface(
             onClick = { controller.toggleChecklistLock(checklist) },

@@ -23,6 +23,7 @@ import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.model.TextualBlock
 import com.pasich.encly.editor.state.BlockEditorState
 import com.pasich.encly.editor.state.BlockRemoveAction
+import com.pasich.encly.editor.state.FocusRequest
 import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.SelectedBlocks
 import com.pasich.encly.editor.state.Shortcut
@@ -46,6 +47,7 @@ import com.pasich.encly.editor.state.moveListItem
 import com.pasich.encly.editor.state.pasteCopied
 import com.pasich.encly.editor.state.pasteLink
 import com.pasich.encly.editor.state.replaceTextRange
+import com.pasich.encly.editor.state.requestFocus
 import com.pasich.encly.editor.state.shiftListItem
 import com.pasich.encly.editor.state.tableTypingStep
 import com.pasich.encly.editor.state.textRangePlainText
@@ -90,6 +92,8 @@ internal class StateController(val state: BlockEditorState) : EditorController {
     override fun cutTextRange(): Boolean = copyTextRange(markdown = true) && state.replaceTextRange("")
 
     override fun indexOfBlock(block: Block): Int = state.blocks.indexOfFirst { it.id == block.id }
+
+    override fun requestFocus(request: FocusRequest) = state.requestFocus(request)
 
     override fun onBlockFocused(block: Block) = state.selection.onFocused(block.id)
 

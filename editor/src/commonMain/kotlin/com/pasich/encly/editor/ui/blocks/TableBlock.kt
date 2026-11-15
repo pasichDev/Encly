@@ -25,6 +25,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -53,9 +54,18 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.CollectionItemInfo
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collectionInfo
+import androidx.compose.ui.semantics.collectionItemInfo
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.LocalEditorStrings
@@ -182,16 +192,25 @@ internal fun TableBlock(
         { cellId: String, text: String -> change(block.table.value.withCell(cellId, text), true) }
     }
     Column(modifier = modifier.fillMaxWidth()) {
-        if (!isLocked) CellMenu(commands, table.header, modifier = Modifier.align(Alignment.End))
+        if (!isLocked) CellMenu(commands, table, modifier = Modifier.align(Alignment.End))
         Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-            Column(modifier = Modifier.border(CellBorder, MaterialTheme.colorScheme.outlineVariant)) {
+            Column(
+                modifier = Modifier
+                    .border(CellBorder, MaterialTheme.colorScheme.outlineVariant)
+                    .semantics {
+                        collectionInfo = CollectionInfo(
+                            rowCount = table.rows.size,
+                            columnCount = table.rows.firstOrNull()?.cells?.size ?: 0,
+                        )
+                    },
+            ) {
                 table.rows.forEachIndexed { rowIndex, row ->
                     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                        row.cells.forEach { cell ->
+                        row.cells.forEachIndexed { columnIndex, cell ->
                             key(cell.id) {
                                 TableCellField(
                                     cell = cell,
-                                    isHeader = table.header && rowIndex == 0,
+                                    position = CellPosition(rowIndex, columnIndex, table.header && rowIndex == 0),
                                     context = context,
                                     onValue = onCell,
                                     isLocked = isLocked,
@@ -238,6 +257,9 @@ private class TableCommands(
     }
 }
 
+/** Where a cell sits in its table (zero-based) and whether it is in the header row. */
+private data class CellPosition(val row: Int, val column: Int, val isHeader: Boolean)
+
 /** What a cell needs of its table. */
 private class CellContext(
     val block: Block.TableBlock,
@@ -278,17 +300,19 @@ internal class CellValues(private val table: StateFlow<TableData>) {
 
 /** The small button at the table's end that opens the menu of row, column and header commands. */
 @Composable
-private fun CellMenu(commands: TableCommands, header: Boolean, modifier: Modifier = Modifier) {
+private fun CellMenu(commands: TableCommands, table: TableData, modifier: Modifier = Modifier) {
     val strings = LocalEditorStrings.current
     val theme = LocalEditorTheme.current
     var open by remember { mutableStateOf(false) }
     Box(modifier) {
         Icon(
-            theme.icons.grip,
+            theme.icons.more,
             contentDescription = strings.text(EditorString.TABLE_CELL_OPTIONS),
             modifier = Modifier
                 .testTag(TABLE_MENU_TAG)
-                .clickable { open = true }
+                .clickable(role = Role.Button, onClickLabel = strings.text(EditorString.TABLE_MENU_OPEN)) {
+                    open = true
+                }
                 .padding(MenuButtonPadding)
                 .size(theme.spacing.iconMedium),
         )
@@ -301,15 +325,19 @@ private fun CellMenu(commands: TableCommands, header: Boolean, modifier: Modifie
                 open = false
                 commands.addColumn()
             }
-            MenuRow(strings.text(EditorString.TABLE_REMOVE_ROW)) {
+            MenuRow(strings.text(EditorString.TABLE_REMOVE_ROW), enabled = table.rows.size > 1, destructive = true) {
                 open = false
                 commands.removeRow()
             }
-            MenuRow(strings.text(EditorString.TABLE_REMOVE_COLUMN)) {
+            MenuRow(
+                strings.text(EditorString.TABLE_REMOVE_COLUMN),
+                enabled = (table.rows.firstOrNull()?.cells?.size ?: 0) > 1,
+                destructive = true,
+            ) {
                 open = false
                 commands.removeColumn()
             }
-            MenuRow(strings.text(EditorString.TABLE_HEADER_ROW), checked = header) {
+            MenuRow(strings.text(EditorString.TABLE_HEADER_ROW), checked = table.header) {
                 open = false
                 commands.toggleHeader()
             }
@@ -318,10 +346,23 @@ private fun CellMenu(commands: TableCommands, header: Boolean, modifier: Modifie
 }
 
 @Composable
-private fun MenuRow(label: String, checked: Boolean = false, onClick: () -> Unit) {
+private fun MenuRow(
+    label: String,
+    checked: Boolean = false,
+    enabled: Boolean = true,
+    destructive: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
     DropdownMenuItem(
         text = { Text(label, style = MaterialTheme.typography.labelLarge) },
         onClick = onClick,
+        enabled = enabled,
+        colors = if (destructive) {
+            MenuDefaults.itemColors(textColor = colors.error, trailingIconColor = colors.error)
+        } else {
+            MenuDefaults.itemColors()
+        },
         trailingIcon = { if (checked) Icon(LocalEditorTheme.current.icons.check, contentDescription = null) },
     )
 }
@@ -330,7 +371,7 @@ private fun MenuRow(label: String, checked: Boolean = false, onClick: () -> Unit
 @Composable
 private fun TableCellField(
     cell: TableCell,
-    isHeader: Boolean,
+    position: CellPosition,
     context: CellContext,
     onValue: (cellId: String, text: String) -> Unit,
     isLocked: Boolean,
@@ -350,6 +391,7 @@ private fun TableCellField(
     val input = remember(context.commands) {
         CellInput(context.defer, { actions }) { context.commands.enter(cell.id) }
     }
+    val isHeader = position.isHeader
     val style = cellTextStyle(isHeader)
     val background = if (isHeader) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surface
     ReadingDirection(text = { state.text }) {
@@ -360,6 +402,10 @@ private fun TableCellField(
                 .fillMaxHeight()
                 .border(CellBorder, MaterialTheme.colorScheme.outlineVariant)
                 .background(background)
+                .semantics {
+                    collectionItemInfo = CollectionItemInfo(position.row, 1, position.column, 1)
+                    if (isHeader) heading()
+                }
                 .padding(theme.spacing.xs),
             contentAlignment = Alignment.CenterStart,
         ) {
@@ -381,7 +427,7 @@ private fun TableCellField(
                         }
                     }
                     .then(highlight.modifier)
-                    .cellKeys(cell.id, state, context, highlight),
+                    .cellKeys(cell.id, state, context, highlight, LocalLayoutDirection.current),
             )
         }
     }
@@ -436,11 +482,18 @@ private fun Modifier.cellKeys(
     state: TextFieldState,
     context: CellContext,
     highlight: FieldHighlight,
+    layoutDirection: LayoutDirection,
 ): Modifier = onPreviewKeyEvent { event ->
     val selection = state.selection
     val line = if (event.isArrow()) caretLine(highlight.geometry(), state.text.length, selection.end) else null
     val commands = context.commands
     val actions = context.blockActions
+
+    // Moves to the cell on the side [key] points to; the cursor lands at the near edge of it.
+    fun stepSideways(key: Key): Boolean {
+        val step = sideStep(key, layoutDirection)
+        return commands.step(cellId, step, caret = if (step == CellStep.PREVIOUS) Int.MAX_VALUE else 0)
+    }
     tabKey(event, cellId, context) ?: (
         rangeKey(event, rangeField(context.block.id, cellId, selection, line), actions) ||
             selectAllTextKey(event, selection, state.text.length, actions) ||
@@ -456,13 +509,11 @@ private fun Modifier.cellKeys(
                     commands.step(cellId, CellStep.DOWN, caret = 0) ||
                         actions.navigate(CaretMove.Down(line?.x))
                 },
-                onNavigateLeft = {
-                    commands.step(cellId, CellStep.PREVIOUS, caret = Int.MAX_VALUE) ||
-                        actions.navigate(CaretMove.Left)
-                },
-                onNavigateRight = {
-                    commands.step(cellId, CellStep.NEXT, caret = 0) || actions.navigate(CaretMove.Right)
-                },
+                // Left and Right here follow the text's direction; the cell that takes the cursor follows the key and
+                // the layout: Left is the cell on the screen's left, which is the one before it only in a
+                // left-to-right layout.
+                onNavigateLeft = { stepSideways(event.key) || actions.navigate(CaretMove.Left) },
+                onNavigateRight = { stepSideways(event.key) || actions.navigate(CaretMove.Right) },
                 line = line,
             )
         )

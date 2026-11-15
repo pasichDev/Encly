@@ -185,6 +185,7 @@
     <string name="lock_recovery_subtitle">Inserisci la tua frase di recupero di 12 parole</string>
     <string name="lock_recovery_title">Recupero</string>
     <string name="lock_subtitle">Inserisci il PIN per continuare</string>
+    <string name="lock_biometric_invalidated">Le impronte su questo dispositivo sono cambiate. Sblocca con il PIN, poi riattiva lo sblocco con impronta nelle impostazioni.</string>
     <string name="lock_title">Sblocca le tue note</string>
     <string name="lock_unlocking">Sblocco in corso…</string>
     <string name="lock_use_recovery_phrase">Recupera l\'accesso con la frase di recupero</string>
@@ -303,6 +304,9 @@
 
     <string name="tag_create_failed">Impossibile salvare l\'etichetta. Riprova.</string>
     <string name="tag_delete_failed">Impossibile eliminare l\'etichetta. Riprova.</string>
+    <string name="trash_restore_failed">Impossibile ripristinare le note. Riprova.</string>
+    <string name="trash_delete_failed">Impossibile eliminare le note. Riprova.</string>
+    <string name="note_action_failed">Impossibile aggiornare la nota. Riprova.</string>
     <string name="tag_edit">Modifica etichetta</string>
     <string name="tag_hidden">Etichetta nascosta</string>
     <string name="tag_name_taken">Esiste già un\'etichetta con questo nome</string>
@@ -338,6 +342,7 @@
     <string name="undo">Annulla</string>
 
     <string name="untitled">Senza titolo</string>
+    <string name="trash_hidden_note">Nota nascosta</string>
 
     <string name="view_switch_to_grid">Passa alla vista a griglia</string>
     <string name="view_switch_to_list">Passa alla vista a elenco</string>
@@ -416,6 +421,7 @@
     <string name="link_blocked">Si possono salvare o aprire solo link web (http, https) ed email.</string>
     <string name="notes_load_failed_title">Impossibile leggere le note</string>
     <string name="tags_load_failed_title">Impossibile leggere le etichette</string>
+    <string name="tasks_load_failed_title">Impossibile leggere le attività</string>
     <string name="notes_load_failed_desc">Le note sono ancora salvate e cifrate su questo dispositivo. Chiudi Encly e riaprilo per riprovare.</string>
     <string name="pin_reset_subtitle">Hai sbloccato Encly con la frase di recupero. Imposta un nuovo PIN per continuare.</string>
     <string name="task_delete">Elimina attività</string>
@@ -704,6 +710,7 @@
     <string name="table_remove_column">Elimina colonna</string>
     <string name="table_header_row">Riga di intestazione</string>
     <string name="table_cell_options">Opzioni cella</string>
+    <string name="table_menu_open">Apri il menu della tabella</string>
     <string name="settings_editor_toolbar">Barra dell\'editor</string>
     <string name="settings_editor_toolbar_desc">Scegli e ordina gli strumenti</string>
     <string name="toolbar_hint">Trascina la maniglia per riordinare. L\'occhio nasconde uno strumento o lo ripristina. Gli strumenti in «Altro menu» stanno dietro la freccia.</string>
@@ -722,7 +729,7 @@
     </plurals>
     <string name="trash_section_soon">Spariscono entro una settimana · %1$d</string>
     <string name="trash_section_later">Più tardi · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s, l\'ultima tra %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s, %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">La prima sparisce oggi</string>
     <string name="trash_last_day">Ultimo giorno</string>
@@ -739,6 +746,11 @@
         <item quantity="one">La prima sparisce tra %d giorno</item>
         <item quantity="many">La prima sparisce tra %d giorni</item>
         <item quantity="other">La prima sparisce tra %d giorni</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="one">l\'ultima tra %d giorno</item>
+        <item quantity="many">l\'ultima tra %d giorni</item>
+        <item quantity="other">l\'ultima tra %d giorni</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="one">Resta %d giorno</item>

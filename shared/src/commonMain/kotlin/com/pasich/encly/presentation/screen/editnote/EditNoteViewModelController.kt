@@ -10,6 +10,7 @@ import com.pasich.encly.editor.model.ItemListBlock
 import com.pasich.encly.editor.model.LinkDataBlock
 import com.pasich.encly.editor.model.TableData
 import com.pasich.encly.editor.state.BlockRemoveAction
+import com.pasich.encly.editor.state.FocusRequest
 import com.pasich.encly.editor.state.LineBreak
 import com.pasich.encly.editor.state.SelectedBlocks
 import com.pasich.encly.editor.state.Shortcut
@@ -56,6 +57,8 @@ internal class EditNoteViewModelController(
             viewModel.replaceTextRange("")
 
     override fun indexOfBlock(block: Block): Int = viewModel.indexOfBlock(block)
+
+    override fun requestFocus(request: FocusRequest) = viewModel.requestFocus(request)
 
     override fun onBlockFocused(block: Block) = viewModel.onBlockFocused(block)
 

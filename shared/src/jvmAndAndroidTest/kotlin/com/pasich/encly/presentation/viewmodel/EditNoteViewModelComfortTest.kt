@@ -269,6 +269,23 @@ class EditNoteViewModelComfortTest {
     }
 
     @Test
+    fun theNoteTextIsGoneFromTheStateWhenTheVaultLocks() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.note.value.contains("the cat sat"))
+
+        locked.value = true
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        listOf(state.note, state.backupNote).forEach {
+            assertEquals("", it.title)
+            assertEquals("", it.value)
+            assertEquals("", it.description)
+        }
+    }
+
+    @Test
     fun textTypedJustBeforeALockIsSavedBeforeTheVaultCloses() = runTest(dispatcher) {
         val viewModel = viewModel()
         advanceUntilIdle()

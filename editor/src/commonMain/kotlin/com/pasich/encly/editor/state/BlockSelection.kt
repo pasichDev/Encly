@@ -125,9 +125,16 @@ public class BlockSelection(private val blocks: List<Block>) {
 
     /**
      * Focuses the block now at [index] once its field is composed, the cursor at [caret] (else at
-     * the end with [cursorToEnd]); [itemId] picks a list's item.
+     * the end with [cursorToEnd]); [itemId] picks a list's item. [caretX] and [fromBelow] are a cursor key's arrival.
      */
-    internal fun focusAt(index: Int, cursorToEnd: Boolean = false, caret: Int? = null, itemId: String? = null) {
+    internal fun focusAt(
+        index: Int,
+        cursorToEnd: Boolean = false,
+        caret: Int? = null,
+        itemId: String? = null,
+        caretX: Float? = null,
+        fromBelow: Boolean = false,
+    ) {
         val block = blocks.getOrNull(index) ?: return
         val blockId = block.id
         // A block with no field to focus (a separator, a locked checklist) never takes focus, so the field that
@@ -136,7 +143,7 @@ public class BlockSelection(private val blocks: List<Block>) {
         caret?.let { carets[blockId] = it }
         // The item asked for is where the cursor now is, before its field reports it back.
         itemId?.let { listItems[blockId] = it }
-        val request = FocusRequest(blockId, cursorToEnd, caret, itemId)
+        val request = FocusRequest(blockId, cursorToEnd, caret, itemId, caretX, fromBelow)
         immediateFocus?.invoke(request)
         focusRequests.trySend(request)
     }

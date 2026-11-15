@@ -10,3 +10,13 @@ import androidx.navigation.NavHostController
  */
 fun NavHostController.popBack(): Boolean =
     currentBackStackEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED && popBackStack()
+
+/**
+ * Opens [route] from a screen's own row, once: a second tap while the screen is still leaving does nothing
+ * (the screen on top is no longer resumed), and a tap on a screen that is already open is not pushed again.
+ */
+fun NavHostController.openRoute(route: String) {
+    if (currentBackStackEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED) {
+        navigate(route) { launchSingleTop = true }
+    }
+}

@@ -2,9 +2,7 @@ package com.pasich.encly
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,6 +21,7 @@ import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.domain.repository.SettingsRepository
+import com.pasich.encly.editor.ui.components.applyWindowPrivacy
 import com.pasich.encly.platform.AndroidHostServices
 import com.pasich.encly.presentation.navigation.EnclyApp
 import dev.zacsweers.metro.Inject
@@ -122,22 +121,14 @@ class MainActivity : AppCompatActivity() {
  * Window-level privacy: no autofill service sees any field (notes are not form data), the
  * content is marked sensitive for accessibility services that are not accessibility tools
  * (TalkBack still reads it), and other apps' overlays are hidden while Encly is in front.
- * Every activity calls it after super.onCreate, next to FLAG_SECURE set before it.
+ * Every activity calls it after super.onCreate, next to FLAG_SECURE set before it. Dialog windows get
+ * the same through ProtectDialogWindow.
  */
-internal fun Activity.protectWindow() {
-    window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        window.decorView.setAccessibilityDataSensitive(View.ACCESSIBILITY_DATA_SENSITIVE_YES)
-    }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        window.setHideOverlayWindows(true)
-    }
-}
+internal fun Activity.protectWindow() = window.applyWindowPrivacy()
 
-/** Navigation's own deep-link extras; the exported launcher activity must not honour them. */
-private const val NAV_EXTRA_PREFIX = "android-support-nav:controller:"
-
+/** The exported launcher activity takes no extras: nav deep-link extras must not pick a screen. */
 private fun stripNavigationExtras(intent: Intent?) {
-    val extras = intent?.extras ?: return
-    extras.keySet().filter { it.startsWith(NAV_EXTRA_PREFIX) }.forEach(intent::removeExtra)
+    // Below API 33 reading any extra unparcels all of them eagerly, so a foreign Parcelable the process
+    // cannot load would crash the exported launcher: drop the extras without reading them.
+    intent?.replaceExtras(null as Bundle?)
 }

@@ -16,15 +16,19 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 
@@ -67,15 +71,20 @@ class NoteSearchViewModel(
         }
     }
 
-    @OptIn(FlowPreview::class)
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     private fun search(dispatcher: CoroutineDispatcher) {
-        searchJob = combine(_query.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }, notes) { query, all ->
-            val needle = query.trim()
-            SearchResults(
-                query = needle,
-                notes = if (needle.isEmpty()) emptyList() else all.filter { it.matches(needle) },
-            )
-        }
+        // With nothing typed the notes are not even read: they are collected only while a query is shown.
+        searchJob = _query
+            .debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }
+            .map { it.trim() }
+            .distinctUntilChanged()
+            .flatMapLatest { needle ->
+                if (needle.isEmpty()) {
+                    flowOf(SearchResults())
+                } else {
+                    notes.map { all -> SearchResults(query = needle, notes = all.filter { it.matches(needle) }) }
+                }
+            }
             .flowOn(dispatcher)
             .onEach { _results.value = it }
             .launchIn(viewModelScope)

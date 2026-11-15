@@ -26,13 +26,16 @@ public fun BlockEditorState.focusWorkingBlock() {
     val target = if (blocks[index].canTakeFocus()) index else blocks.previousFocusableIndex(index)
     val block = blocks[target]
     if (block.canTakeFocus()) {
-        // A list's items keep their own cursors; its field target puts it at the end.
-        val caret = selection.caretOf(block.id).takeIf { block !is Block.ListBlock }
+        // A list goes back to the item the cursor was in, if that item is still there.
+        val item = (block as? Block.ListBlock)?.let { list ->
+            selection.itemOf(list.id)?.takeIf { id -> list.items.value.any { it.id == id } }
+        }
+        val caret = selection.caretOf(block.id)?.takeIf { block !is Block.ListBlock || item != null }
         // A table goes back to the cell the cursor was in, if that cell is still there.
         val cell = (block as? Block.TableBlock)?.let { table ->
             selection.itemOf(table.id)?.takeIf { table.table.value.cell(it) != null }
         }
-        selection.focusAt(target, cursorToEnd = true, caret = caret, itemId = cell)
+        selection.focusAt(target, cursorToEnd = caret == null, caret = caret, itemId = cell ?: item)
     } else {
         focusFirstBlock()
     }
@@ -124,7 +127,8 @@ private fun convertText(block: Block, text: String, tool: BlockType): Block? = w
     BlockType.SEPARATOR, BlockType.TABLE -> null
 }
 
-private fun Block.exactType(): BlockType? = when (this) {
+/** The exact type of [this] block for the level tools: a paragraph is TEXT and a heading its own level. */
+public fun Block.exactType(): BlockType? = when (this) {
     is Block.TextBlock -> BlockType.TEXT
     is Block.HBlock -> blockType
     else -> toolType()

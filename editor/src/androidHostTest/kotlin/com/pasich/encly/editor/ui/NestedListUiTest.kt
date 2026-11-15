@@ -16,6 +16,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
@@ -396,5 +397,17 @@ class NestedListUiTest {
         }
         rule.waitForIdle()
         assertEquals(listOf("b", "a", "c"), order())
+    }
+
+    @Test
+    fun theChecklistLockDoesNotCoverTheFirstItemsDragHandle() {
+        show(list(BlockType.LIST_CHECK, row("a"), row("b")))
+        fields()[0].performClick()
+        rule.waitForIdle()
+
+        val lock = bounds(rule.onNodeWithTag(CHECKLIST_LOCK_TAG))
+        val handle = bounds(handles()[0])
+
+        assertTrue(!lock.overlaps(handle), "lock $lock covers handle $handle")
     }
 }

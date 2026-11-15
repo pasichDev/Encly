@@ -185,6 +185,7 @@
     <string name="lock_recovery_subtitle">Voer je herstelzin van 12 woorden in</string>
     <string name="lock_recovery_title">Herstel</string>
     <string name="lock_subtitle">Voer je pincode in om door te gaan</string>
+    <string name="lock_biometric_invalidated">De vingerafdrukken op dit apparaat zijn gewijzigd. Ontgrendel met je pincode en zet ontgrendelen met vingerafdruk daarna opnieuw aan in de instellingen.</string>
     <string name="lock_title">Ontgrendel je notities</string>
     <string name="lock_unlocking">Ontgrendelen…</string>
     <string name="lock_use_recovery_phrase">Toegang herstellen met je herstelzin</string>
@@ -303,6 +304,9 @@
 
     <string name="tag_create_failed">Kan het label niet opslaan. Probeer het opnieuw.</string>
     <string name="tag_delete_failed">Kan het label niet verwijderen. Probeer het opnieuw.</string>
+    <string name="trash_restore_failed">Kan de notities niet herstellen. Probeer het opnieuw.</string>
+    <string name="trash_delete_failed">Kan de notities niet verwijderen. Probeer het opnieuw.</string>
+    <string name="note_action_failed">Kan de notitie niet bijwerken. Probeer het opnieuw.</string>
     <string name="tag_edit">Label bewerken</string>
     <string name="tag_hidden">Verborgen label</string>
     <string name="tag_name_taken">Er bestaat al een label met deze naam</string>
@@ -338,6 +342,7 @@
     <string name="undo">Ongedaan maken</string>
 
     <string name="untitled">Zonder titel</string>
+    <string name="trash_hidden_note">Verborgen notitie</string>
 
     <string name="view_switch_to_grid">Naar rasterweergave</string>
     <string name="view_switch_to_list">Naar lijstweergave</string>
@@ -413,6 +418,7 @@
     <string name="link_blocked">Alleen weblinks (http, https) en e-maillinks kunnen worden opgeslagen of geopend.</string>
     <string name="notes_load_failed_title">Kan je notities niet lezen</string>
     <string name="tags_load_failed_title">Kan je labels niet lezen</string>
+    <string name="tasks_load_failed_title">Kan je taken niet lezen</string>
     <string name="notes_load_failed_desc">Je notities staan nog steeds versleuteld op dit apparaat. Sluit Encly en open het opnieuw om het nog eens te proberen.</string>
     <string name="pin_reset_subtitle">Je hebt Encly ontgrendeld met je herstelzin. Stel een nieuwe pincode in om door te gaan.</string>
     <string name="task_delete">Taak verwijderen</string>
@@ -698,6 +704,7 @@
     <string name="table_remove_column">Kolom verwijderen</string>
     <string name="table_header_row">Koprij</string>
     <string name="table_cell_options">Celopties</string>
+    <string name="table_menu_open">Tabelmenu openen</string>
     <string name="settings_editor_toolbar">Editorwerkbalk</string>
     <string name="settings_editor_toolbar_desc">Kies en orden de hulpmiddelen</string>
     <string name="toolbar_hint">Sleep het handvat om te herordenen. Het oog verbergt een hulpmiddel of toont het weer. Hulpmiddelen onder “Meer menu” zitten achter de pijl.</string>
@@ -715,7 +722,7 @@
     </plurals>
     <string name="trash_section_soon">Verdwijnen binnen een week · %1$d</string>
     <string name="trash_section_later">Later · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s, de laatste over %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s, %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">De eerste verdwijnt vandaag</string>
     <string name="trash_last_day">Laatste dag</string>
@@ -730,6 +737,10 @@
     <plurals name="trash_first_in_days">
         <item quantity="one">De eerste verdwijnt over %d dag</item>
         <item quantity="other">De eerste verdwijnt over %d dagen</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="one">de laatste over %d dag</item>
+        <item quantity="other">de laatste over %d dagen</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="one">Nog %d dag</item>

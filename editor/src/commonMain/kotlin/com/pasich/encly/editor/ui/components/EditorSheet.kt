@@ -72,6 +72,7 @@ internal fun EditorSheet(
         dragHandle = { SheetHandle() },
         modifier = modifier,
     ) {
+        ProtectDialogWindow()
         Column(
             verticalArrangement = Arrangement.spacedBy(spacing.xs),
             modifier = Modifier

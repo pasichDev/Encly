@@ -128,7 +128,7 @@ class BlockActionsTest {
         val b = text("b")
         val c = text("c")
         editor.load(listOf(a, b, c))
-        editor.selection.onInteraction(b.id)
+        editor.selection.onFocused(b.id)
 
         editor.moveInteracted(up = true)
         assertEquals(listOf("b", "a", "c"), texts())

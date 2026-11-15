@@ -185,7 +185,8 @@ jobs:
           workload_identity_provider: ${{ vars.PLAY_WIF_PROVIDER }}
           service_account: ${{ vars.PLAY_SERVICE_ACCOUNT }}
 
-      - name: Upload to Google Play (production, 100%)
+      # Staged rollout: the share is raised by hand in Play Console.
+      - name: Upload to Google Play (production, 10% staged rollout)
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
@@ -193,6 +194,7 @@ jobs:
           releaseFiles: play/app-play-release.aab
           releaseName: ${{ needs.build.outputs.name }}
           track: production
-          status: completed
+          status: inProgress
+          userFraction: 0.1
           mappingFile: play/mapping.txt
           whatsNewDirectory: play/whatsnew

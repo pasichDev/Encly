@@ -64,6 +64,7 @@ import com.pasich.encly.presentation.designsystem.EnclyWordmark
 import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.dialogs.WhatsNewSheet
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.openRoute
 import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.utils.currentLanguageTag
@@ -97,7 +98,11 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
                 text = stringResource(Res.string.about_encryption_note),
                 icon = EnclyIcons.Lock,
             )
-            DeveloperActionsSection(links, toaster, onSupport = { navController.navigate(NavRoutes.SupportRoute.name) })
+            DeveloperActionsSection(
+                links,
+                toaster,
+                onSupport = { navController.openRoute(NavRoutes.SupportRoute.name) },
+            )
             EnclyGroup {
                 if (whatsNew != null) {
                     EnclyNavigationRow(
@@ -113,7 +118,7 @@ fun AboutScreen(navController: NavHostController, modifier: Modifier = Modifier)
                     title = stringResource(Res.string.licenses_title),
                     supporting = stringResource(Res.string.licenses_row_desc),
                     icon = EnclyIcons.File,
-                    onClick = { navController.navigate(NavRoutes.LicensesRoute.name) },
+                    onClick = { navController.openRoute(NavRoutes.LicensesRoute.name) },
                     modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
                 )
             }

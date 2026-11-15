@@ -101,6 +101,18 @@ class SecurityManagerLifecycleTest {
     }
 
     @Test
+    fun anUnexpectedStartupFailureRoutesToTheRetryScreenNotTheWipeOnlyOne() {
+        committedVault()
+        `when`(database.hasEncryptedDatabase()).thenThrow(IllegalStateException("boom"))
+        val restarted = restarted()
+
+        assertEquals(InitialStatus.STORAGE_UNREADABLE, restarted.resolveInitialStatus())
+
+        Mockito.doReturn(true).`when`(database).hasEncryptedDatabase()
+        assertEquals(InitialStatus.AUTH, restarted.resolveInitialStatus())
+    }
+
+    @Test
     fun anEncryptedDatabaseWithoutVaultMetadataIsALegacyVault() {
         `when`(database.hasEncryptedDatabase()).thenReturn(true)
 
@@ -425,6 +437,39 @@ class SecurityManagerLifecycleTest {
         assertEquals(InitialStatus.AUTH, next.resolveInitialStatus())
         assertFalse(next.initializeNewVault(null))
         verify(database, never()).wipe()
+    }
+
+    @Test
+    fun aSetupKilledMidRestoreRestartsOnboardingAndNeverKeepsTheHalfBuiltVault() {
+        assertTrue(manager.initializeNewVault(null))
+        assertTrue(manager.configurePin(PIN.toCharArray()))
+        assertTrue(manager.markRestorePending())
+        assertTrue(manager.openInitialVault())
+        `when`(database.hasEncryptedDatabase()).thenReturn(true)
+
+        val next = restarted()
+
+        assertEquals(InitialStatus.ONBOARDING, next.resolveInitialStatus())
+        assertFalse(next.isLockable())
+        clearInvocations(database)
+        assertTrue(next.initializeNewVault(null))
+        verify(database).wipe()
+    }
+
+    @Test
+    fun aCommittedRestoreClearsItsMarkerSoTheVaultStaysCommitted() {
+        assertTrue(manager.initializeNewVault(null))
+        assertTrue(manager.configurePin(PIN.toCharArray()))
+        assertTrue(manager.markRestorePending())
+        assertTrue(manager.openInitialVault())
+        assertTrue(manager.commitInitialSetup())
+        `when`(database.hasEncryptedDatabase()).thenReturn(true)
+        prefs.commit { clear() }
+
+        val next = restarted()
+
+        assertEquals(InitialStatus.AUTH, next.resolveInitialStatus())
+        assertFalse(next.initializeNewVault(null))
     }
 
     @Test

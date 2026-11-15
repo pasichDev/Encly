@@ -338,6 +338,40 @@ class SessionLockManagerTest {
     }
 
     @Test
+    fun aScreenThatIsAlreadyOffAtStopLocksWhateverTheDelay() {
+        withDelay(15_000)
+        watcher.screenOn = false
+
+        manager.onStop(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+        assertFalse(watcher.watching)
+    }
+
+    @Test
+    fun aKeyguardThatIsUpAtStopLocksWhateverTheDelay() {
+        withDelay(15_000)
+        watcher.locked = true
+
+        manager.onStop(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun aScreenThatIsAlreadyOffAtStopEndsThePickerGraceToo() {
+        withDelay(15_000)
+        manager.allowSystemPicker()
+        watcher.screenOn = false
+
+        manager.onStop(owner)
+
+        verify(security).lock()
+    }
+
+    @Test
     fun comingBackWithinTheAutoLockDelayKeepsTheVaultOpen() {
         withDelay(15_000)
 
@@ -564,10 +598,13 @@ class SessionLockManagerTest {
 
     private class FakeDeviceLock : DeviceLockWatcher {
         var locked = false
+        var screenOn = true
         var watching = false
         private var onScreenOff: (() -> Unit)? = null
 
         override fun isDeviceLocked(): Boolean = locked
+
+        override fun isScreenOn(): Boolean = screenOn
 
         override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit {
             watching = true

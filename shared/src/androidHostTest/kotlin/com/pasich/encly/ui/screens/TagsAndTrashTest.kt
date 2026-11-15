@@ -35,7 +35,9 @@ import com.pasich.encly.core.resources.trash_days_left
 import com.pasich.encly.core.resources.trash_empty
 import com.pasich.encly.core.resources.trash_empty_confirm
 import com.pasich.encly.core.resources.trash_first_in_days
+import com.pasich.encly.core.resources.trash_hidden_note
 import com.pasich.encly.core.resources.trash_keep
+import com.pasich.encly.core.resources.trash_last_in_days
 import com.pasich.encly.core.resources.trash_notes_count
 import com.pasich.encly.core.resources.trash_section_later
 import com.pasich.encly.core.resources.trash_section_soon
@@ -181,7 +183,8 @@ class TagsAndTrashTest : ComposeScreenTest() {
         waitForText("Trip plan")
         val notes = plural(Res.plurals.trash_notes_count, 3, 3)
         val first = plural(Res.plurals.trash_first_in_days, 3, 3)
-        rule.onNodeWithText(str(Res.string.trash_summary, notes, first, 28)).assertIsDisplayed()
+        val last = plural(Res.plurals.trash_last_in_days, 28, 28)
+        rule.onNodeWithText(str(Res.string.trash_summary, notes, first, last)).assertIsDisplayed()
         rule.onNodeWithText(str(Res.string.trash_section_soon, 1).uppercase()).assertIsDisplayed()
         rule.onNodeWithText(str(Res.string.trash_section_later, 2).uppercase()).assertIsDisplayed()
         // Each note says the days it has left.
@@ -211,6 +214,17 @@ class TagsAndTrashTest : ComposeScreenTest() {
         val notes = plural(Res.plurals.trash_notes_count, 2, 2)
         val left = plural(Res.plurals.trash_days_left, 26, 26)
         rule.onNodeWithText(str(Res.string.trash_summary_same, notes, left)).assertIsDisplayed()
+    }
+
+    @Test
+    fun aTrashedNoteWithAHiddenTagShowsAPlaceholderInsteadOfItsTitle() {
+        trashed("Secret plan", "Shopping")
+        app.notes.trashTags.value = mapOf(1L to listOf(Tag(id = 1, nameTag = "Private", isVisible = false)))
+        showTrash()
+
+        waitForText("Shopping")
+        rule.onNodeWithText(str(Res.string.trash_hidden_note)).assertIsDisplayed()
+        rule.onNodeWithText("Secret plan").assertDoesNotExist()
     }
 
     @Test

@@ -103,6 +103,23 @@ class NoteFindTest {
     }
 
     @Test
+    fun onlyASearchOrAStepAsksToRevealTheMatchNotARefresh() {
+        val find = NoteFind().apply { open() }
+        find.search("cat", blocks)
+        val afterSearch = find.state.value.revealRequest
+        find.next()
+        val afterNext = find.state.value.revealRequest
+        find.previous()
+        val afterPrevious = find.state.value.revealRequest
+
+        paragraph.text.value = "a cat. The cat sat. The CAT slept."
+        find.refresh(blocks)
+
+        assertTrue(afterSearch < afterNext && afterNext < afterPrevious)
+        assertEquals(afterPrevious, find.state.value.revealRequest)
+    }
+
+    @Test
     fun closingForgetsTheQueryAndEveryMatch() {
         val find = NoteFind().apply { open() }
         find.search("cat", blocks)

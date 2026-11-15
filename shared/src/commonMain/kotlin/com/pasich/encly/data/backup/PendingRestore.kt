@@ -10,8 +10,10 @@ import kotlin.concurrent.Volatile
 /**
  * A backup decrypted by onboarding's "Restore from backup", held in memory until first-run
  * setup has created the PIN and opened the new vault. It is imported before onboarding is
- * committed, so a process killed meanwhile leaves no committed (empty) vault: onboarding simply
- * starts over. It is never written anywhere else.
+ * committed, and setup marks the vault restore-pending first (see
+ * [com.pasich.encly.core.security.SecurityManager.markRestorePending]), so a process killed
+ * meanwhile leaves no committed (empty or partial) vault: the next start deletes it and
+ * onboarding starts over. The payload itself is never written anywhere.
  */
 @SingleIn(AppScope::class)
 @Inject

@@ -6,6 +6,7 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.notes_load_failed_desc
 import com.pasich.encly.core.resources.notes_load_failed_title
 import com.pasich.encly.core.resources.tags_load_failed_title
+import com.pasich.encly.core.resources.tasks_load_failed_title
 
 /** The read errors the list screens show. */
 internal object ListLoadErrors {
@@ -16,6 +17,11 @@ internal object ListLoadErrors {
 
     val TAGS = LoadError(
         title = UiText.of(Res.string.tags_load_failed_title),
+        message = UiText.of(Res.string.notes_load_failed_desc),
+    )
+
+    val TASKS = LoadError(
+        title = UiText.of(Res.string.tasks_load_failed_title),
         message = UiText.of(Res.string.notes_load_failed_desc),
     )
 }

@@ -2,6 +2,7 @@ package com.pasich.encly.domain.usecase.note
 
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.repository.NotesRepository
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import com.pasich.encly.testutil.TestNotesRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -15,7 +16,8 @@ import org.mockito.Mockito.`when`
 
 class TrashExpiryTest {
     private val repository = TestNotesRepository()
-    private val purge = PurgeExpiredTrashUseCase(repository)
+    private val flags = InMemoryKeyValueStore()
+    private val purge = PurgeExpiredTrashUseCase(repository, flags)
 
     private fun trashed(id: Long, trashedAt: Long?) = Note(id = id, isTrash = true, trashedAt = trashedAt)
 
@@ -59,7 +61,10 @@ class TrashExpiryTest {
 
         assertTrue(repository.deletedIds.isEmpty())
         assertEquals(NOW, repository.trashNotes.value.single().trashedAt)
-        // Twenty-eight days and a moment later it is gone.
+        // Twenty-eight days and a moment later, on the unlocks of the days in between, it is gone.
+        var day = 1
+        while (day < TRASH_RETENTION_DAYS) purge(NOW + DAY * day++).getOrThrow()
+        assertTrue(repository.deletedIds.isEmpty())
         assertEquals(1, purge(NOW + TRASH_RETENTION_MILLIS + 1).getOrNull())
         assertEquals(listOf(1L), repository.deletedIds)
     }
@@ -105,7 +110,7 @@ class TrashExpiryTest {
         val notes = mock(NotesRepository::class.java)
         `when`(notes.stampUntimedTrash(NOW)).thenReturn(Result.failure(IllegalStateException("disk")))
 
-        assertTrue(PurgeExpiredTrashUseCase(notes)(NOW).isFailure)
+        assertTrue(PurgeExpiredTrashUseCase(notes, flags)(NOW).isFailure)
         verify(notes, never()).deleteTrashedBefore(anyLong())
     }
 
@@ -116,10 +121,61 @@ class TrashExpiryTest {
         `when`(notes.deleteTrashedBefore(NOW - TRASH_RETENTION_MILLIS))
             .thenReturn(Result.failure(IllegalStateException("vault locked")))
 
-        assertTrue(PurgeExpiredTrashUseCase(notes)(NOW).isFailure)
+        assertTrue(PurgeExpiredTrashUseCase(notes, flags)(NOW).isFailure)
+    }
+
+    @Test
+    fun aClockJumpedForwardDeletesOnlyTwoDaysFurtherPerUnlock() = runTest {
+        purge(NOW)
+        repository.trashNotes.value = listOf(
+            trashed(1, NOW - 10 * DAY),
+            trashed(2, NOW + 3 * DAY),
+            trashed(3, NOW + 20 * DAY),
+        )
+
+        // A year ahead: without the cap all three are older than 28 days.
+        assertEquals(0, purge(NOW + 365 * DAY).getOrNull())
+        assertEquals(listOf(NOW + 2 * DAY - TRASH_RETENTION_MILLIS), repository.purgeCutoffs.takeLast(1))
+        assertTrue(repository.deletedIds.isEmpty())
+    }
+
+    @Test
+    fun theCutoffAdvancesTwoDaysPerUnlockAfterAJump() = runTest {
+        purge(NOW)
+        purge(NOW + 365 * DAY)
+        purge(NOW + 365 * DAY)
+
+        assertEquals(
+            listOf(NOW, NOW + 2 * DAY, NOW + 4 * DAY).map { it - TRASH_RETENTION_MILLIS },
+            repository.purgeCutoffs,
+        )
+    }
+
+    @Test
+    fun aClockSetBackBeforeTheLastPurgeSkipsIt() = runTest {
+        purge(NOW)
+        repository.trashNotes.value = listOf(trashed(1, NOW - TRASH_RETENTION_MILLIS * 2))
+
+        assertEquals(0, purge(NOW - 1).getOrNull())
+
+        assertTrue(repository.deletedIds.isEmpty())
+        assertEquals(1, repository.purgeCutoffs.size)
+    }
+
+    @Test
+    fun aFailedDeleteDoesNotMoveTheLastPurge() = runTest {
+        val notes = mock(NotesRepository::class.java)
+        `when`(notes.stampUntimedTrash(NOW)).thenReturn(Result.success(Unit))
+        `when`(notes.deleteTrashedBefore(NOW - TRASH_RETENTION_MILLIS))
+            .thenReturn(Result.failure(IllegalStateException("vault locked")))
+
+        PurgeExpiredTrashUseCase(notes, flags)(NOW)
+
+        assertEquals(0L, flags.getLong("trash_last_purge_at", 0L))
     }
 
     private companion object {
+        const val DAY = 24L * 60 * 60 * 1000
         const val NOW = 2_000_000_000_000L
     }
 }

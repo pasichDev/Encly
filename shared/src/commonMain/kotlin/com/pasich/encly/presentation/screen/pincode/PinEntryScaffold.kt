@@ -31,6 +31,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
@@ -68,7 +71,8 @@ fun AuthLoading(message: String, modifier: Modifier = Modifier) {
 
 /**
  * The layout of every PIN and recovery screen (design spec §4.2): a centred column 96 dp from the
- * top with the logo (or [icon]'s tile), the headline and a sub-heading ([subtitleIsError] turns it `error`),
+ * top with the logo (or [icon]'s tile), the headline and a sub-heading ([subtitleIsError] turns it `error` and
+ * announces it to a screen reader, unless [subtitleTicks]: a countdown),
  * then the caller's [body] (dots and keypad, or the phrase field). It scrolls on short screens.
  * [footer] (the recovery screen's buttons) stays pinned under the scrolling part, above the
  * keyboard, so a primary action is never hidden behind the IME. [compact] trades the 96 dp top
@@ -82,6 +86,7 @@ fun PinEntryScaffold(
     subtitle: String,
     modifier: Modifier = Modifier,
     subtitleIsError: Boolean = false,
+    subtitleTicks: Boolean = false,
     icon: ImageVector? = null,
     compact: Boolean = false,
     busy: Boolean = false,
@@ -116,7 +121,11 @@ fun PinEntryScaffold(
                     PinEntryHeader(
                         title = title,
                         subtitle = subtitle,
-                        subtitleIsError = subtitleIsError,
+                        subtitleTone = when {
+                            !subtitleIsError -> SubtitleTone.Normal
+                            subtitleTicks -> SubtitleTone.Error
+                            else -> SubtitleTone.AnnouncedError
+                        },
                         icon = icon,
                         busy = busy,
                     )
@@ -136,11 +145,14 @@ fun PinEntryScaffold(
     }
 }
 
+/** How the sub-heading of a PIN screen reads: plain, an error, or an error a screen reader announces. */
+private enum class SubtitleTone { Normal, Error, AnnouncedError }
+
 @Composable
 private fun PinEntryHeader(
     title: String,
     subtitle: String,
-    subtitleIsError: Boolean,
+    subtitleTone: SubtitleTone,
     icon: ImageVector?,
     busy: Boolean,
 ) {
@@ -172,12 +184,19 @@ private fun PinEntryHeader(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyLarge,
-            color = if (subtitleIsError) {
+            color = if (subtitleTone != SubtitleTone.Normal) {
                 MaterialTheme.colorScheme.error
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
             textAlign = TextAlign.Center,
+            // A wrong PIN is read out by a screen reader as it appears; a lockout countdown changes every
+            // second, so it would be read again at each tick.
+            modifier = if (subtitleTone == SubtitleTone.AnnouncedError) {
+                Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            } else {
+                Modifier
+            },
         )
     }
 }

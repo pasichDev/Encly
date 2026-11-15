@@ -74,6 +74,26 @@ class SensitiveClipTest {
     }
 
     @Test
+    fun aLockClearsEnclysOwnClipAtOnce() {
+        SensitiveClip.copy(clipboard, "label", "secret")
+
+        SensitiveClip.onVaultLocked(clipboard)
+
+        assertTrue(clipboard.primaryClip == null || clipboard.primaryClip?.getItemAt(0)?.text.isNullOrEmpty())
+    }
+
+    @Test
+    fun aLockLeavesSomethingCopiedElsewhereAlone() {
+        SensitiveClip.copy(clipboard, "label", "secret")
+        passMillis(10)
+        clipboard.setPrimaryClip(ClipData.newPlainText("other", "from elsewhere"))
+
+        SensitiveClip.onVaultLocked(clipboard)
+
+        assertEquals("from elsewhere", clipboard.primaryClip?.getItemAt(0)?.text.toString())
+    }
+
+    @Test
     fun clearEmptiesTheClipboardAtOnce() {
         clipboard.setPrimaryClip(ClipData.newPlainText("l", "x"))
 

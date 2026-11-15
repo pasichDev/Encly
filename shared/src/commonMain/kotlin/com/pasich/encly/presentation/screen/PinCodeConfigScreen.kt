@@ -57,6 +57,7 @@ import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.effects.StepFade
 import com.pasich.encly.presentation.effects.screenFade
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
@@ -215,7 +216,7 @@ fun PinCodeConfigScreen(
             if (!pinState.isReset) {
                 EnclyTopBar(
                     title = stringResource(Res.string.pin_change_bar_title),
-                    onBack = { navController.popBackStack() },
+                    onBack = { navController.popBack() },
                 )
             }
             Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
@@ -294,8 +295,9 @@ private fun NavHostController.finishPinChange(isReset: Boolean) {
         navigate(NavRoutes.HomeRoute.name) {
             popUpTo(NavRoutes.PinCodeConfig.name) { inclusive = true }
         }
-    } else {
-        popBackStack()
+    } else if (currentBackStackEntry?.destination?.route == NavRoutes.PinCodeConfig.name) {
+        // Not a Back that already left the screen: that would pop the one beneath it.
+        popBack()
     }
 }
 
@@ -303,6 +305,7 @@ private fun NavHostController.finishPinChange(isReset: Boolean) {
 private fun pinStepText(step: Int, state: PinChangeState): PinStepText {
     val lockout = state.lockoutSeconds.takeIf { it > 0L && step == 0 }?.let { pinLockoutText(it) }
     return PinStepText(
+        ticking = lockout != null,
         title = pinStepTitle(step),
         subtitle = if (state.isReset && step == 1) Res.string.pin_reset_subtitle else pinStepSubtitle(step),
         message = lockout ?: state.errorText?.let { stringResource(it) },
@@ -322,7 +325,13 @@ private fun pinStepSubtitle(step: Int): StringResource = when (step) {
 }
 
 /** What a PIN step shows: its title and subtitle, and an error or lockout message. */
-data class PinStepText(val title: StringResource, val subtitle: StringResource, val message: String?)
+data class PinStepText(
+    val title: StringResource,
+    val subtitle: StringResource,
+    val message: String?,
+    /** The message is a lockout countdown that changes every second. */
+    val ticking: Boolean = false,
+)
 
 /** How the keypad of a PIN step behaves: off during a lockout, the shake, a compact top. */
 private class PinEntryState(
@@ -347,6 +356,7 @@ private fun MainPinContent(
         // An error or the lockout countdown takes the sub-heading slot, as on the lock screen.
         subtitle = message ?: stringResource(text.subtitle),
         subtitleIsError = message != null,
+        subtitleTicks = text.ticking,
         compact = entry.compact,
         bodyAtBottom = true,
     ) {

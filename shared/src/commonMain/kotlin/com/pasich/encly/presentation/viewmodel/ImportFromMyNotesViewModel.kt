@@ -87,6 +87,23 @@ class ImportFromMyNotesViewModel(
     private var started = false
     private var handoff: HandoffImport? = null
 
+    /** [SessionLockManager.lockRequests] when [handoff] was read: any lock since then makes it stale. */
+    private var handoffLockRequests = 0L
+
+    init {
+        // Every lock, not only the first: the decoded notes must not outlive the session they were read in.
+        viewModelScope.launch {
+            sessionLockManager.locked.collect { locked -> if (locked) dropOnLock() }
+        }
+    }
+
+    private fun dropOnLock() {
+        handoff = null
+        if (_step.value is HandoffStep.Preview || _step.value is HandoffStep.Reading) {
+            _step.value = HandoffStep.Failed(HandoffError.FAILED)
+        }
+    }
+
     /**
      * Starts the hand-off of [source] once; a recreated activity calls it again and is ignored. One
      * that already finished before the process was killed shows its counts again instead of
@@ -111,9 +128,15 @@ class ImportFromMyNotesViewModel(
     }
 
     /** Imports the previewed data in one transaction; nothing is written on failure. */
+    @Suppress("ReturnCount") // The guards of the confirmation, each ending it.
     fun confirm() {
         val pending = handoff ?: return
         if (_step.value !is HandoffStep.Preview) return
+        if (sessionLockManager.lockRequests() != handoffLockRequests) {
+            // The vault was locked since the preview: never import it into whatever is open now.
+            dropOnLock()
+            return
+        }
         _step.value = HandoffStep.Importing
         viewModelScope.launch {
             _step.value = try {
@@ -180,9 +203,16 @@ class ImportFromMyNotesViewModel(
     }
 
     private suspend fun read(source: DocumentRef): HandoffStep = try {
+        val lockRequests = sessionLockManager.lockRequests()
         val loaded = withContext(ioDispatcher) { staging.load { documents.openRead(source) } }
-        handoff = loaded
-        HandoffStep.Preview(loaded.preview)
+        if (sessionLockManager.lockRequests() != lockRequests) {
+            // Locked while the file was being read: the notes are dropped, never previewed.
+            HandoffStep.Failed(HandoffError.FAILED)
+        } else {
+            handoff = loaded
+            handoffLockRequests = lockRequests
+            HandoffStep.Preview(loaded.preview)
+        }
     } catch (e: HandoffException) {
         HandoffStep.Failed(e.error)
     } catch (_: BackupException) {

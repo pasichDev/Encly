@@ -146,7 +146,10 @@ public object BackupSettings {
      */
     public val excluded: Map<String, String> = linkedMapOf(
         "onboarding_shown_v3" to "vault-commit flag: setup is finished on this install only",
+        "setup.restore_pending" to
+            "first-run setup marker: a staged restore is being imported into this install's vault",
         "whats_new_last_seen_version" to "what's-new marker of this install",
+        "trash_last_purge_at" to "when the trash was last emptied of old notes on this install",
         "backup_last_export_at" to "describes an export made from this install",
         "appearance_migrated_v1" to "one-time migration marker of this install",
         "window_width" to "device-bound desktop window geometry",

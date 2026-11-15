@@ -356,7 +356,8 @@ private fun BlockContent(
         is Block.CodeBlock -> CodeBlock(
             block,
             blockActions,
-            modifier = fieldModifier,
+            focusRequester,
+            fieldModifier = modifier,
             isLocked = isLocked,
             showPlaceholder = state.showPlaceholder,
         )

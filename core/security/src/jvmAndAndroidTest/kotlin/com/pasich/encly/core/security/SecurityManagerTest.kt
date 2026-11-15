@@ -288,11 +288,11 @@ class SecurityManagerTest {
     }
 
     @Test
-    fun aStorageFailureAtStartupRoutesToTheDamagedVaultScreenInsteadOfCrashing() {
+    fun aStorageFailureAtStartupRoutesToTheRetryScreenInsteadOfCrashing() {
         commitVault()
         `when`(auth.hasPinSlot()).thenThrow(IllegalStateException("keystore"))
 
-        assertEquals(InitialStatus.LOSS_CRYPTO, manager.resolveInitialStatus())
+        assertEquals(InitialStatus.STORAGE_UNREADABLE, manager.resolveInitialStatus())
     }
 
     @Test

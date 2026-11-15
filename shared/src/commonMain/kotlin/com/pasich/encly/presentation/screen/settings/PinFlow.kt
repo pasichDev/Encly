@@ -226,7 +226,13 @@ private fun PinFlowMessageEffect(message: StringResource?, snackbarHostState: Sn
 }
 
 /** A PIN step's title and subtitle, and an error or lockout message. */
-private class PinStepText(val title: StringResource, val subtitle: StringResource, val message: String?)
+private class PinStepText(
+    val title: StringResource,
+    val subtitle: StringResource,
+    val message: String?,
+    /** The message is a lockout countdown that changes every second. */
+    val ticking: Boolean = false,
+)
 
 @Composable
 private fun pinFlowStepText(state: PinFlowState, texts: PinFlowTexts): PinStepText {
@@ -235,8 +241,15 @@ private fun pinFlowStepText(state: PinFlowState, texts: PinFlowTexts): PinStepTe
         ?.let { pinLockoutText(it) }
     val error = state.errorText?.let { stringResource(it) }
     return when (state.step) {
-        PinStep.VERIFY -> PinStepText(Res.string.pin_change_current_title, texts.currentSubtitle, lockout ?: error)
+        PinStep.VERIFY -> PinStepText(
+            Res.string.pin_change_current_title,
+            texts.currentSubtitle,
+            lockout ?: error,
+            ticking = lockout != null,
+        )
+
         PinStep.CONFIRM -> PinStepText(texts.confirmTitle, texts.confirmSubtitle, error)
+
         else -> PinStepText(texts.newTitle, texts.newSubtitle, error)
     }
 }
@@ -249,6 +262,7 @@ private fun PinFlowEntry(text: PinStepText, state: PinFlowState, onSubmit: () ->
         // An error or the lockout countdown takes the sub-heading slot, as on the lock screen.
         subtitle = message ?: stringResource(text.subtitle),
         subtitleIsError = message != null,
+        subtitleTicks = text.ticking,
         compact = true,
         bodyAtBottom = true,
         modifier = modifier,

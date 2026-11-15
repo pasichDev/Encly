@@ -7,7 +7,10 @@ import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.testutil.TestNotesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -72,11 +75,11 @@ class TrashViewModelActionsTest {
     fun togglingTwiceUnselectsAndOutOfRangeIsIgnored() = runTest(dispatcher) {
         advanceUntilIdle()
 
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(2L))
         assertEquals(1, viewModel.state.value.checkedCount)
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1))
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(7))
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(-1))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(2L))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(7L))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(-1L))
 
         assertEquals(0, viewModel.state.value.checkedCount)
         assertFalse(viewModel.state.value.canCheck)
@@ -84,7 +87,7 @@ class TrashViewModelActionsTest {
 
     @Test
     fun selectingBeforeTheTrashLoadedDoesNothing() {
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(0))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1L))
 
         assertEquals(LoadState.Loading, viewModel.state.value.notesLoad)
         assertEquals(0, viewModel.state.value.checkedCount)
@@ -93,8 +96,8 @@ class TrashViewModelActionsTest {
     @Test
     fun restoreTakesOnlyTheSelectedNotesOutOfTheTrash() = runTest(dispatcher) {
         advanceUntilIdle()
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(0))
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(2))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1L))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(3L))
 
         viewModel.onEvent(TrashListEvent.RestoreNotes())
         advanceUntilIdle()
@@ -108,7 +111,7 @@ class TrashViewModelActionsTest {
     @Test
     fun deleteForeverRemovesOnlyTheSelectedNotes() = runTest(dispatcher) {
         advanceUntilIdle()
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(2L))
 
         viewModel.onEvent(TrashListEvent.CleanNotes())
         advanceUntilIdle()
@@ -130,7 +133,7 @@ class TrashViewModelActionsTest {
     @Test
     fun emptyTrashDeletesEveryTrashedNote() = runTest(dispatcher) {
         advanceUntilIdle()
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(0))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1L))
 
         viewModel.onEvent(TrashListEvent.CleanAll())
         advanceUntilIdle()
@@ -148,5 +151,70 @@ class TrashViewModelActionsTest {
         advanceUntilIdle()
 
         assertTrue(repository.deletedIds.isEmpty())
+    }
+
+    @Test
+    fun aFailedRestoreKeepsTheNotesSelectedAndReportsIt() = runTest(dispatcher) {
+        val failures = mutableListOf<TrashOperationFailure>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.operationFailures.toList(failures) }
+        advanceUntilIdle()
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1L))
+        repository.columnWriteResult = false
+        repository.updateResult = false
+
+        viewModel.onEvent(TrashListEvent.RestoreNotes())
+        advanceUntilIdle()
+
+        assertEquals(listOf(TrashOperationFailure.RESTORE), failures)
+        assertEquals(1, viewModel.state.value.checkedCount)
+    }
+
+    @Test
+    fun aFailedDeleteForeverKeepsTheSelectionAndReportsIt() = runTest(dispatcher) {
+        val failures = mutableListOf<TrashOperationFailure>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.operationFailures.toList(failures) }
+        advanceUntilIdle()
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(2L))
+        repository.trashDeleteFails = true
+
+        viewModel.onEvent(TrashListEvent.CleanNotes())
+        advanceUntilIdle()
+
+        assertEquals(listOf(TrashOperationFailure.DELETE), failures)
+        assertEquals(1, viewModel.state.value.checkedCount)
+        assertEquals(3, viewModel.state.value.notes.size)
+    }
+
+    @Test
+    fun aFailedEmptyTrashReportsItAndKeepsTheNotes() = runTest(dispatcher) {
+        val failures = mutableListOf<TrashOperationFailure>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.operationFailures.toList(failures) }
+        advanceUntilIdle()
+        repository.trashDeleteFails = true
+
+        viewModel.onEvent(TrashListEvent.CleanAll())
+        advanceUntilIdle()
+
+        assertEquals(listOf(TrashOperationFailure.DELETE), failures)
+        assertEquals(3, viewModel.state.value.notes.size)
+    }
+
+    @Test
+    fun theSelectionSurvivesTheTableBeingReEmittedAndDropsNotesThatAreGone() = runTest(dispatcher) {
+        advanceUntilIdle()
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1L))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(2L))
+
+        repository.trashNotes.value = repository.trashNotes.value.filterNot { it.id == 1L }.map { it.copy(title = "x") }
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(1, state.checkedCount)
+        assertEquals(listOf(2L), state.notes.filter { it.isChecked }.map { it.id })
+
+        viewModel.onEvent(TrashListEvent.CleanNotes())
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L), repository.deletedIds)
     }
 }

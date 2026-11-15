@@ -75,6 +75,18 @@ class LinkUrlTest {
     }
 
     @Test
+    fun aHostInAScriptWithCombiningMarksIsShownInPunycode() {
+        listOf(
+            "https://\u0939\u093F\u0928\u094D\u0926\u0940.\u092D\u093E\u0930\u0924",
+            "https://\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35.\u0E44\u0E17\u0E22",
+        )
+            .forEach { url ->
+                val link = parseNoteLink(url) as NoteLink.Web
+                assertTrue(link.host.startsWith("xn--"), link.host)
+            }
+    }
+
+    @Test
     fun theCardShowsTheHostTheLinkOpens() {
         val link = buildLinkData("example.com/docs?page=2")!!
 

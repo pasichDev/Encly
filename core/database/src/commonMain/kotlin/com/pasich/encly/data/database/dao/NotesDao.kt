@@ -7,10 +7,12 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.pasich.encly.data.model.Note
-import com.pasich.encly.data.model.NoteTag
 import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.TagNoteCount
 import kotlinx.coroutines.flow.Flow
+
+/** Ids per delete statement: well under SQLite's limit of bound variables. */
+private const val TRASH_DELETE_CHUNK = 500
 
 @Suppress("TooManyFunctions") // Reads per list, and one write per note column.
 @Dao
@@ -56,6 +58,11 @@ public interface NotesDao {
     @Query("SELECT * FROM notes WHERE isTrash = 1")
     public fun getTrashNotes(): Flow<List<Note>>
 
+    /** The trashed notes with their tags, so the trash can tell a note with a hidden tag. */
+    @Transaction
+    @Query("SELECT * FROM notes WHERE isTrash = 1")
+    public fun getTrashNotesWithTags(): Flow<List<NoteWithTags>>
+
     @Query("SELECT * FROM notes WHERE id = :noteId")
     public suspend fun getNoteById(noteId: Long): Note?
 
@@ -64,9 +71,15 @@ public interface NotesDao {
     @Query("UPDATE notes SET color = :color WHERE id = :noteId")
     public suspend fun updateColor(noteId: Long, color: String): Int
 
-    /** Links that exist already are kept as they are. */
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    public suspend fun insertNoteTags(links: List<NoteTag>)
+    /**
+     * Links the note to the tags in [tagIds] that still exist; links that exist already are kept as they are. A tag
+     * deleted meanwhile (an editor still holds its id) is skipped: `OnConflictStrategy.IGNORE` does not ignore a
+     * foreign key violation, so a plain insert of the dead id would fail every later save of the note.
+     */
+    @Query(
+        "INSERT OR IGNORE INTO note_tags(noteId, tagId) SELECT :noteId, id FROM tags WHERE id IN (:tagIds)",
+    )
+    public suspend fun insertNoteTags(noteId: Long, tagIds: List<Long>)
 
     @Query("DELETE FROM note_tags WHERE noteId = :noteId AND tagId IN (:tagIds)")
     public suspend fun deleteNoteTags(noteId: Long, tagIds: List<Long>): Int
@@ -84,14 +97,14 @@ public interface NotesDao {
     @Transaction
     public suspend fun changeNoteTags(noteId: Long, added: Collection<Long>, removed: Collection<Long>) {
         if (removed.isNotEmpty()) deleteNoteTags(noteId, removed.toList())
-        if (added.isNotEmpty()) insertNoteTags(added.map { NoteTag(noteId, it) })
+        if (added.isNotEmpty()) insertNoteTags(noteId, added.toList())
     }
 
     /** Makes [tagIds] exactly the note's tags. */
     @Transaction
     public suspend fun setNoteTags(noteId: Long, tagIds: Collection<Long>) {
         deleteNoteTagsExcept(noteId, tagIds.toList())
-        if (tagIds.isNotEmpty()) insertNoteTags(tagIds.map { NoteTag(noteId, it) })
+        if (tagIds.isNotEmpty()) insertNoteTags(noteId, tagIds.toList())
     }
 
     @Query("UPDATE notes SET description = :description WHERE id = :noteId")
@@ -203,6 +216,19 @@ public interface NotesDao {
     @Query("DELETE FROM notes WHERE isTrash = 1 AND trashedAt IS NOT NULL AND trashedAt < :cutoff")
     public suspend fun deleteTrashedBefore(cutoff: Long): Int
 
+    /** Empties the trash in one statement (one write, one table invalidation). Returns the number of rows deleted. */
+    @Query("DELETE FROM notes WHERE isTrash = 1")
+    public suspend fun deleteAllTrashed(): Int
+
+    /** Deletes the trashed notes among [ids]; a note restored since is not in the trash and stays. */
+    @Query("DELETE FROM notes WHERE isTrash = 1 AND id IN (:ids)")
+    public suspend fun deleteTrashedByIds(ids: List<Long>): Int
+
+    /** [deleteTrashedByIds] in chunks that stay under SQLite's variable limit, in one transaction. */
+    @Transaction
+    public suspend fun deleteTrashedNotes(ids: Collection<Long>): Int =
+        ids.chunked(TRASH_DELETE_CHUNK).sumOf { deleteTrashedByIds(it) }
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     public suspend fun insertNote(note: Note): Long
 
@@ -210,7 +236,7 @@ public interface NotesDao {
     @Transaction
     public suspend fun insertNoteWithTags(note: Note): Long {
         val id = insertNote(note)
-        if (note.tagIds.isNotEmpty()) insertNoteTags(note.tagIds.map { NoteTag(id, it) })
+        if (note.tagIds.isNotEmpty()) insertNoteTags(id, note.tagIds.toList())
         return id
     }
 

@@ -1,17 +1,20 @@
 package com.pasich.encly.editor.focus
 
+import androidx.compose.runtime.MonotonicFrameClock
+import androidx.compose.runtime.withFrameNanos
 import com.pasich.encly.editor.EditorLogger
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.state.FocusRequest
 import com.pasich.encly.editor.state.canTakeFocus
 import kotlinx.coroutines.delay
+import kotlin.coroutines.coroutineContext
 
 /** How many frames' worth of retries a new block gets to compose before focusing it. */
 private const val FOCUS_RETRIES = 5
 private const val FOCUS_RETRY_DELAY_MS = 50L
 
 /** Retries before scrolling: a new block on screen needs no scroll, only its first frames. */
-private const val COMPOSE_WAITS = 1
+private const val COMPOSE_WAITS = 2
 
 private const val TAG = "BlockFocusRegistry"
 
@@ -94,15 +97,26 @@ public class BlockFocusRegistry(
      * lazy list off screen is not composed at all, so [bringIntoView] then scrolls to it.
      */
     public suspend fun focusWhenComposed(request: FocusRequest, bringIntoView: suspend (String) -> Unit = {}) {
-        if (focusWithin(request, attempts = 1 + COMPOSE_WAITS)) return
+        if (focusWithin(request, attempts = 1 + COMPOSE_WAITS, byFrame = true)) return
         bringIntoView(request.blockId)
         if (!focusWithin(request, attempts = FOCUS_RETRIES)) logger.warn(TAG, "Focus target never appeared")
     }
 
-    /** Tries [request] up to [attempts] times, a short wait apart; whether it was carried out. */
-    private suspend fun focusWithin(request: FocusRequest, attempts: Int): Boolean {
+    /**
+     * Tries [request] up to [attempts] times; whether it was carried out. A block just added composes within a
+     * frame, so [byFrame] waits for the next frame between tries (focus lands before the next key), else a short
+     * delay (after a scroll, which takes longer).
+     */
+    private suspend fun focusWithin(request: FocusRequest, attempts: Int, byFrame: Boolean = false): Boolean {
         repeat(attempts) { attempt ->
-            if (attempt > 0) delay(FOCUS_RETRY_DELAY_MS)
+            if (attempt > 0) {
+                // Without a frame clock (a plain coroutine, as in tests) there is no frame to wait for.
+                if (byFrame && coroutineContext[MonotonicFrameClock] != null) {
+                    withFrameNanos { }
+                } else {
+                    delay(FOCUS_RETRY_DELAY_MS)
+                }
+            }
             if (focus(request)) return true
         }
         return false

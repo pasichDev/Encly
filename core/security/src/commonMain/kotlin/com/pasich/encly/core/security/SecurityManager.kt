@@ -73,6 +73,9 @@ public class SecurityManager(
     public companion object {
         private const val TAG = "SecurityManager"
         private const val ONBOARDING_SHOWN_KEY = "onboarding_shown_v3"
+
+        /** In [VaultStore]: first-run setup is importing a staged restore into the vault it just opened. */
+        private const val RESTORE_PENDING_KEY = "setup.restore_pending"
         private const val DEK_LENGTH = 32
     }
 
@@ -110,8 +113,8 @@ public class SecurityManager(
     public var securityStatus: InitialStatus = InitialStatus.NO
 
     /**
-     * Never throws: vault storage that cannot be read (a damaged state file, a storage or
-     * Keystore failure) routes to the damaged-vault screen instead of crash-looping the app.
+     * Never throws: a damaged state file routes to the damaged-vault screen, and storage or Keystore
+     * that cannot be read right now routes to the retry screen, instead of crash-looping the app.
      */
     @Suppress("TooGenericExceptionCaught") // Any startup failure must route, never crash-loop.
     public fun resolveInitialStatus(): InitialStatus {
@@ -122,7 +125,11 @@ public class SecurityManager(
             initializeSecurity()
         } catch (e: Exception) {
             AppLogger.e(TAG, "Vault state could not be read", e)
-            InitialStatus.LOSS_CRYPTO
+            // An unexpected failure is not proof that the vault is damaged, and the damaged-vault screen can only
+            // wipe: offer the retry screen. The retry must run the once-per-process startup repair again, which the
+            // failed attempt may not have reached.
+            startupFinished.store(false)
+            InitialStatus.STORAGE_UNREADABLE
         }
         securityStatus = status
         return status
@@ -137,6 +144,10 @@ public class SecurityManager(
             if (!appFlags.commit { putBoolean(ONBOARDING_SHOWN_KEY, true) }) {
                 AppLogger.w(TAG, "The onboarding flag of a committed vault could not be repaired")
             }
+        } else if (isRestorePending()) {
+            // A kill between the commit flag and the marker's removal: the restore had finished. Left in place, the
+            // marker would make a later loss of the flag read this committed vault as a half-built one.
+            vaultStore.edit { remove(RESTORE_PENDING_KEY) }
         }
         // Vaults from before the wipe PIN get their decoy wipe slot; no PIN needed, nothing shown.
         authenticationManager.ensureWipeSlot()
@@ -181,9 +192,12 @@ public class SecurityManager(
      * and the slots first and the database last, and holds the bootstrap key in memory until the commit,
      * so an onboarding killed at any earlier step (no seed, no slot, or no database yet: nothing to lose) and
      * the one still
-     * running in this process do not match, and restart.
+     * running in this process do not match, and restart. A vault marked restore-pending (see [markRestorePending])
+     * never matches either: setup was killed after it opened the vault and before the staged backup was imported and
+     * committed, so the vault is empty or partial and must be rebuilt, not kept.
      */
-    private fun isCommittedWithoutFlag(): Boolean = !seedPhraseManager.hasBootstrapKey() &&
+    private fun isCommittedWithoutFlag(): Boolean = !isRestorePending() &&
+        !seedPhraseManager.hasBootstrapKey() &&
         seedPhraseManager.hasStoredSeed() &&
         (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()) &&
         // A wipe-PIN erase that has not created the empty database yet leaves none: the vault is still committed.
@@ -336,6 +350,17 @@ public class SecurityManager(
 
     public fun requestBiometricKey(host: BiometricHost, onResult: (ByteArray?) -> Unit) {
         biometricManager.unlock(host, onResult)
+    }
+
+    /**
+     * True once after [requestBiometricKey] found the fingerprint slot invalidated by a newly enrolled fingerprint.
+     * The slot is gone already; this also records that biometric unlock is off, so the lock screen can say why the
+     * fingerprint button went away. Reading it resets it.
+     */
+    public fun takeBiometricInvalidated(): Boolean {
+        if (!biometricManager.takeInvalidated()) return false
+        authenticationManager.markBiometricEnabled(false)
+        return true
     }
 
     public fun enrollBiometric(host: BiometricHost, onResult: (Boolean) -> Unit) {
@@ -609,10 +634,22 @@ public class SecurityManager(
     public fun finishInitialSetup(): Boolean = openInitialVault() && commitInitialSetup()
 
     /**
+     * Records, durably, that a staged restore is about to be imported into the vault [openInitialVault] creates.
+     * Call it before [openInitialVault] when a restore is staged; [commitInitialSetup] clears it. A process killed in
+     * between leaves the marker behind, and startup then does not treat that vault as committed (the database may
+     * already exist while the import is missing or half done): it deletes it and starts onboarding over.
+     * Returns false when the marker could not be written; setup must not go on then.
+     */
+    public fun markRestorePending(): Boolean = vaultStore.edit { putBoolean(RESTORE_PENDING_KEY, true) }
+
+    private fun isRestorePending(): Boolean = vaultStore.getBoolean(RESTORE_PENDING_KEY, false)
+
+    /**
      * First half of [finishInitialSetup]: opens (creating) the new vault with the bootstrap DEK
      * once a PIN slot exists, without committing onboarding. Lets a staged restore be imported
      * before the vault counts as set up; until [commitInitialSetup], a killed process simply
-     * starts onboarding over.
+     * starts onboarding over (a staged restore sets [markRestorePending] first, so that holds once the
+     * database exists too).
      */
     public fun openInitialVault(): Boolean {
         val dek = if (authenticationManager.hasPinSlot()) {
@@ -631,7 +668,11 @@ public class SecurityManager(
     /** Second half of [finishInitialSetup]: commits onboarding and drops the bootstrap DEK. */
     public fun commitInitialSetup(): Boolean {
         val finalized = setOnboardingShown()
-        if (finalized) seedPhraseManager.clearBootstrapKey()
+        if (finalized) {
+            // After the flag, never before: a kill between the two leaves a flagged vault, which startup trusts.
+            if (isRestorePending()) vaultStore.edit { remove(RESTORE_PENDING_KEY) }
+            seedPhraseManager.clearBootstrapKey()
+        }
         return finalized
     }
 
@@ -644,6 +685,7 @@ public class SecurityManager(
         synchronized(databaseLock) {
             vaultDatabase.reset()
             clearSessionKey()
+            biometricManager.cancelPendingEnrolment()
             securityStatus = InitialStatus.AUTH
         }
     }
@@ -691,6 +733,8 @@ public class SecurityManager(
         appFlags.commit { remove(ONBOARDING_SHOWN_KEY) }
         // A damaged state file cannot be edited slot by slot; a new vault starts from none.
         if (vaultStore.isCorrupt()) vaultStore.clear()
+        // The marker of a setup that was killed mid-restore; the new vault has none.
+        if (isRestorePending()) vaultStore.edit { remove(RESTORE_PENDING_KEY) }
         securityStatus = InitialStatus.ONBOARDING
         return seedPhraseManager.initializeVault(recoverySeed)
     }

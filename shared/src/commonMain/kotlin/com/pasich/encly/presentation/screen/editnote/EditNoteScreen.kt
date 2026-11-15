@@ -76,8 +76,10 @@ import com.pasich.encly.presentation.dialogs.EditNoteBottomSheetAction
 import com.pasich.encly.presentation.editor.persistence.SaveStatusNote
 import com.pasich.encly.presentation.effects.ContainerEnd
 import com.pasich.encly.presentation.effects.rememberNoteContainerModifier
+import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.navigation.RelockReturn
+import com.pasich.encly.presentation.navigation.openRoute
 import com.pasich.encly.presentation.pane.EditorPane
 import com.pasich.encly.presentation.screen.backup.MarkdownExportHost
 import com.pasich.encly.presentation.viewmodel.DocumentFormat
@@ -170,13 +172,16 @@ fun EditNoteScreen(
         lineSpacing = lineSpacing,
     ) {
         // Inside the provider: the block sheets are the editor's, and read its strings and theme.
-        EditorOverlays(
-            overlays = overlays,
-            exits = exits,
-            documents = documents,
-            onManageTags = { navController.navigate(NavRoutes.EditTagRoute.name) },
-            onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
-        )
+        // The editor's sheets and dialogs are windows above the lock shield: none is composed while locked.
+        if (!LocalVaultLocked.current) {
+            EditorOverlays(
+                overlays = overlays,
+                exits = exits,
+                documents = documents,
+                onManageTags = { navController.openRoute(NavRoutes.EditTagRoute.name) },
+                onMessage = { text -> scope.launch { snackbarHostState.showSnackbar(text) } },
+            )
+        }
         EditorScaffold(
             actions = EditorBarActions(
                 onBack = exits::back,

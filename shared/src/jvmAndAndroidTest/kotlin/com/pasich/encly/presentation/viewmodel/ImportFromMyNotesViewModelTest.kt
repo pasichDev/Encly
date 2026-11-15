@@ -123,4 +123,18 @@ class ImportFromMyNotesViewModelTest {
 
         assertTrue(File(cacheDir, "mynotes-handoff").list().isNullOrEmpty())
     }
+
+    @Test
+    fun aLockDropsThePreviewedNotesAndTheyAreNeverImportedAfterwards() {
+        `when`(security.isLockable()).thenReturn(true)
+        val zip = handoffZip(temp.newFolder("source"), handoff(notes = listOf(note("n1"))))
+        val viewModel = viewModel()
+        viewModel.start(doc(zip))
+        assertTrue(viewModel.step.value is HandoffStep.Preview)
+
+        sessionLock.lockNow()
+        viewModel.confirm()
+
+        assertTrue(viewModel.step.value is HandoffStep.Failed)
+    }
 }

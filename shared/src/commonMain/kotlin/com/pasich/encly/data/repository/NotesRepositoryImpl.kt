@@ -68,6 +68,9 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
 
     override fun getTrashNotes(): Flow<List<Note>> = daoFlow { dao().getTrashNotes() }
 
+    override fun getTrashNotesWithTag(): Flow<List<NoteWithTags>> =
+        daoFlow { dao().getTrashNotesWithTags() }.map { it.map(NoteWithTags::normalized) }
+
     override suspend fun getNoteById(noteId: Long): Note? = dao().getNoteWithTags(noteId)?.normalized()?.note
 
     override suspend fun insertNote(note: Note): Result<Long> = storageWrite(TAG, "insertNote") {
@@ -105,6 +108,17 @@ class NotesRepositoryImpl(private val databaseProvider: DatabaseProvider) : Note
     override suspend fun deleteNoteById(id: Long): Result<Unit> = storageWrite(TAG, "deleteNoteById") {
         dao().deleteNoteById(id).requireRows()
     }
+
+    override suspend fun deleteAllTrashed(): Result<Int> = storageWrite(TAG, "deleteAllTrashed") {
+        // Any number of rows, none included: an empty trash is not a failed write.
+        dao().deleteAllTrashed()
+    }
+
+    override suspend fun deleteTrashedNotes(ids: Collection<Long>): Result<Int> =
+        storageWrite(TAG, "deleteTrashedNotes") {
+            // Any number of rows, none included: notes restored meanwhile are not a failed write.
+            dao().deleteTrashedNotes(ids)
+        }
 
     override suspend fun stampUntimedTrash(at: Long): Result<Unit> = storageWrite(TAG, "stampUntimedTrash") {
         // Any number of rows, none included: an empty trash is not a failed write.

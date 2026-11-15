@@ -2,6 +2,8 @@ package com.pasich.encly.core.security
 
 import android.content.Context
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
@@ -48,6 +50,13 @@ class KeystoreBiometricManager(
         private const val AUTH_PER_USE_SECONDS = 0
     }
 
+    /** Set when [unlock] found the key invalidated by a new enrolment; read once through [takeInvalidated]. */
+    @Volatile
+    private var invalidated = false
+
+    /** The DEK copy of the enrolment whose prompt is open; main thread only. */
+    private var pendingEnrolment: PendingDek? = null
+
     private val keyStore by lazy {
         KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
     }
@@ -78,6 +87,8 @@ class KeystoreBiometricManager(
         }
 
         val pending = PendingDek(dek)
+        pendingEnrolment?.wipe()
+        pendingEnrolment = pending
         try {
             pending.wipeWhenDestroyed(activity.lifecycle)
             store.edit { remove(SLOT_KEY) }
@@ -97,18 +108,21 @@ class KeystoreBiometricManager(
                         false
                     } finally {
                         pending.wipe()
+                        if (pendingEnrolment === pending) pendingEnrolment = null
                     }
                     if (!stored) disable()
                     onResult(stored)
                 },
                 onFailure = {
                     pending.wipe()
+                    if (pendingEnrolment === pending) pendingEnrolment = null
                     deleteKeyOnly()
                     onResult(false)
                 },
             )
         } catch (_: Exception) {
             pending.wipe()
+            if (pendingEnrolment === pending) pendingEnrolment = null
             disable()
             onResult(false)
         }
@@ -190,11 +204,19 @@ class KeystoreBiometricManager(
                 },
             )
         } catch (_: KeyPermanentlyInvalidatedException) {
+            SensitiveDataCleaner.clear(combined)
             disable()
+            invalidated = true
             onResult(null)
         } catch (_: Exception) {
             onResult(null)
         }
+    }
+
+    override fun takeInvalidated(): Boolean {
+        val was = invalidated
+        invalidated = false
+        return was
     }
 
     /** Generic re-auth prompt for settings actions that do not themselves release a key. */
@@ -338,6 +360,22 @@ class KeystoreBiometricManager(
 
     override fun disable() {
         store.edit { removePrefix(BiometricManager.SLOT_PREFIX) }
+        deleteKeyOnly()
+    }
+
+    /** A lock can come from any thread; the copy and its lifecycle observer belong to the main thread. */
+    override fun cancelPendingEnrolment() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            cancelPendingEnrolmentOnMain()
+        } else {
+            Handler(Looper.getMainLooper()).post(::cancelPendingEnrolmentOnMain)
+        }
+    }
+
+    private fun cancelPendingEnrolmentOnMain() {
+        val pending = pendingEnrolment ?: return
+        pendingEnrolment = null
+        pending.wipe()
         deleteKeyOnly()
     }
 }

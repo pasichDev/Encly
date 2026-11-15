@@ -8,6 +8,7 @@ import com.pasich.encly.core.AppLogger
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.UnrecoverableKeyException
@@ -32,6 +33,9 @@ class KeystorePinFactor : PinHardwareFactor {
         val exists = try {
             keyStore.containsAlias(alias(slot))
         } catch (e: GeneralSecurityException) {
+            throw PinFactorException(lost = false, cause = e)
+        } catch (e: IOException) {
+            // KeyStore.load can fail with a checked IOException.
             throw PinFactorException(lost = false, cause = e)
         } catch (e: RuntimeException) {
             throw PinFactorException(lost = false, cause = e)
@@ -58,6 +62,8 @@ class KeystorePinFactor : PinHardwareFactor {
             throw PinFactorException(lost = true, cause = e)
         } catch (e: GeneralSecurityException) {
             throw PinFactorException(lost = false, cause = e)
+        } catch (e: IOException) {
+            throw PinFactorException(lost = false, cause = e)
         } ?: throw PinFactorException(lost = true)
         return try {
             Mac.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256).run {
@@ -79,6 +85,8 @@ class KeystorePinFactor : PinHardwareFactor {
         try {
             if (keyStore.containsAlias(alias)) keyStore.deleteEntry(alias)
         } catch (e: GeneralSecurityException) {
+            AppLogger.w(TAG, "PIN factor key could not be deleted", e)
+        } catch (e: IOException) {
             AppLogger.w(TAG, "PIN factor key could not be deleted", e)
         } catch (e: RuntimeException) {
             AppLogger.w(TAG, "PIN factor key could not be deleted", e)

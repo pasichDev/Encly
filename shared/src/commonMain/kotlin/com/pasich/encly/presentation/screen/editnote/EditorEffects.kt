@@ -169,11 +169,13 @@ internal fun ScrollToFindMatch(
     blocksStart: Int,
     viewModel: EditNoteViewModel = metroViewModel(),
 ) {
-    val current = remember(viewModel) { viewModel.find.map { it.currentMatch }.distinctUntilChanged() }
-    val match by current.collectAsState(initial = null)
+    // Keyed on the user's requests, not on the match: a refresh while typing can move the current index onto another
+    // match, and the note must not scroll away from the caret for that.
+    val request = remember(viewModel) { viewModel.find.map { it.revealRequest }.distinctUntilChanged() }
+    val revealRequest by request.collectAsState(initial = 0)
     val currentBlocksStart by rememberUpdatedState(blocksStart)
-    LaunchedEffect(match) {
-        val found = match ?: return@LaunchedEffect
+    LaunchedEffect(revealRequest) {
+        val found = viewModel.find.value.currentMatch ?: return@LaunchedEffect
         val index = viewModel.blocks.indexOfFirst { it.id == found.blockId }
         if (index >= 0) listState.reveal(currentBlocksStart + index)
         highlights.reveal(found)

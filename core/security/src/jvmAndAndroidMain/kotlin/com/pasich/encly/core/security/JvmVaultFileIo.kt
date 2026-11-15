@@ -3,9 +3,11 @@ package com.pasich.encly.core.security
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.channels.FileChannel
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 
 /*
  * The Android/JVM side of VaultFileIo.kt: the vault file on java.io and java.nio, the only place
@@ -45,9 +47,26 @@ public class JvmVaultFileIo(private val file: File) : VaultFileIo {
             } catch (_: AtomicMoveNotSupportedException) {
                 if (!temp.renameTo(file)) throw IOException("rename failed")
             }
+            syncParentDirectory()
         } catch (e: IOException) {
             temp.delete()
             throw e
+        }
+    }
+
+    /**
+     * Makes the rename durable: until the directory is synced it can be lost to a power cut, and an older vault state
+     * (a charged PIN failure counter rolled back) would come back. Best effort: where a directory cannot be opened
+     * or synced (Windows), the rename is as durable as the platform makes it.
+     */
+    private fun syncParentDirectory() {
+        val parent = file.absoluteFile.parentFile ?: return
+        try {
+            FileChannel.open(parent.toPath(), StandardOpenOption.READ).use { it.force(true) }
+        } catch (_: IOException) {
+            // Directories cannot be opened here.
+        } catch (_: UnsupportedOperationException) {
+            // Same.
         }
     }
 

@@ -79,6 +79,7 @@ import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.Segment
 import com.pasich.encly.presentation.designsystem.ThemeSwatch
 import com.pasich.encly.presentation.navigation.NavRoutes
+import com.pasich.encly.presentation.navigation.openRoute
 import com.pasich.encly.presentation.navigation.popBack
 import com.pasich.encly.presentation.viewmodel.AppearanceViewModel
 import com.pasich.encly.presentation.viewmodel.ModeNote
@@ -116,7 +117,7 @@ fun AppearanceScreen(
             onMode = viewModel::selectMode,
             onDynamicColor = viewModel::setDynamicColor,
             onFontStyle = viewModel::selectFontStyle,
-            onEditorToolbar = { navController.navigate(NavRoutes.EditorToolbarRoute.name) },
+            onEditorToolbar = { navController.openRoute(NavRoutes.EditorToolbarRoute.name) },
         ),
         modifier = modifier,
     )

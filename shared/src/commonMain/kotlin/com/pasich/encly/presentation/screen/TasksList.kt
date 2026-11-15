@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.IntOffset
+import com.pasich.encly.core.common.asString
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.clear
 import com.pasich.encly.core.resources.task_add
@@ -51,6 +52,7 @@ import com.pasich.encly.presentation.designsystem.EnclyScrollbar
 import com.pasich.encly.presentation.designsystem.EnclyTaskSection
 import com.pasich.encly.presentation.designsystem.RowSkeleton
 import com.pasich.encly.presentation.viewmodel.InlineSubtaskEdit
+import com.pasich.encly.presentation.viewmodel.ListLoadErrors
 import com.pasich.encly.presentation.viewmodel.TaskFilter
 import com.pasich.encly.presentation.viewmodel.TasksUiState
 import com.pasich.encly.presentation.viewmodel.TasksViewModel
@@ -153,15 +155,24 @@ internal fun TasksList(
     }
 }
 
-/** The list: a skeleton while loading, else progress, chips and the rail's sections. */
-private fun LazyListScope.tasksContent(list: TasksListState, parts: RowParts, callbacks: TasksListCallbacks) {
-    val ui = list.ui
-    if (ui.isLoading) {
-        items(SKELETON_ROWS) { RowSkeleton(modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter)) }
-        return
-    }
-    if (ui.totalTasksCount == 0) {
-        item {
+/** What stands in for the list while it is loading, failed or empty; false once there are tasks to show. */
+private fun LazyListScope.tasksPlaceholder(ui: TasksUiState, callbacks: TasksListCallbacks): Boolean {
+    when {
+        ui.isLoading -> items(SKELETON_ROWS) {
+            RowSkeleton(modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter))
+        }
+
+        ui.loadFailed -> item(key = "failed") {
+            EnclyEmptyState(
+                icon = EnclyIcons.Checklist,
+                title = ListLoadErrors.TASKS.title.asString(),
+                body = ListLoadErrors.TASKS.message.asString(),
+                error = true,
+                modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter),
+            )
+        }
+
+        ui.totalTasksCount == 0 -> item {
             EnclyEmptyState(
                 icon = EnclyIcons.Checklist,
                 title = stringResource(Res.string.task_empty_title),
@@ -171,8 +182,16 @@ private fun LazyListScope.tasksContent(list: TasksListState, parts: RowParts, ca
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter),
             )
         }
-        return
+
+        else -> return false
     }
+    return true
+}
+
+/** The list: a skeleton while loading, else progress, chips and the rail's sections. */
+private fun LazyListScope.tasksContent(list: TasksListState, parts: RowParts, callbacks: TasksListCallbacks) {
+    val ui = list.ui
+    if (tasksPlaceholder(ui, callbacks)) return
     progressAndFilters(ui, callbacks.onFilter)
     val sections = taskSections(ui)
     if (ui.selectedCompletedFilter == null && sections.inWork.isEmpty() && sections.next.isEmpty()) {

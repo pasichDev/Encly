@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.core.common.LoadState
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.domain.repository.TagsRepository
@@ -44,7 +45,7 @@ class ListLoadStateViewModelTest {
     @Test
     fun aFailedTrashReadIsAnErrorNotAnEmptyTrash() = runTest {
         val failing = object : NotesRepository by TestNotesRepository() {
-            override fun getTrashNotes(): Flow<List<Note>> = flow { throw IOException("vault closed") }
+            override fun getTrashNotesWithTag(): Flow<List<NoteWithTags>> = flow { throw IOException("vault closed") }
         }
 
         val viewModel = trashViewModel(failing)
@@ -66,7 +67,7 @@ class ListLoadStateViewModelTest {
     @Test
     fun selectingInAFailedTrashKeepsTheError() = runTest {
         val failing = object : NotesRepository by TestNotesRepository() {
-            override fun getTrashNotes(): Flow<List<Note>> = flow { throw IOException("vault closed") }
+            override fun getTrashNotesWithTag(): Flow<List<NoteWithTags>> = flow { throw IOException("vault closed") }
         }
         val viewModel = trashViewModel(failing)
         advanceUntilIdle()

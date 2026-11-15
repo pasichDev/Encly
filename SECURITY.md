@@ -313,7 +313,9 @@ Biometric unlock is optional.
   versions use the equivalent per-use biometric validity configuration.
 - The DEK can only be wrapped/unwrapped through a `BiometricPrompt.CryptoObject`
   carrying the authenticated Cipher.
-- The biometric key is invalidated when biometric enrollment changes.
+- The biometric key is invalidated when biometric enrollment changes. The lock screen then drops the
+  fingerprint button, marks biometric unlock off and says to unlock with the PIN and turn it on
+  again in Settings.
 
 A successful biometric prompt by itself is therefore insufficient to open the
 database. The authenticated cryptographic operation must release the DEK.
@@ -445,8 +447,11 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   first, then creates the new vault with those words as its recovery seed, and writes the
   backup once the mandatory PIN setup has opened the vault — **before** onboarding is
   committed. If the import fails, nothing is committed and the vault is closed; the user can
-  retry or continue with an empty vault. A process killed meanwhile restarts onboarding rather
-  than opening an empty vault. Until then the decrypted payload is held in memory only, and an
+  retry or continue with an empty vault. Before the new vault is opened for a staged restore, a
+  restore-pending marker is written to the vault state file and cleared only by the commit. A
+  process killed in between leaves the marker, and the next start does not count that vault as
+  committed even though its database exists: it is deleted and onboarding starts over, rather
+  than opening an empty or half-restored vault. Until then the decrypted payload is held in memory only, and an
   uncommitted setup vault is not re-locked by backgrounding (setup closes it itself if it
   finishes in the background).
 - The system file picker is another app, so the process briefly goes to the background.
@@ -582,13 +587,22 @@ generic Markdown/TXT (Obsidian, Markor).
 ## Session lifecycle
 
 - The database is not considered committed until mandatory PIN setup succeeds.
-- Interrupted first-run setup restarts onboarding and discards incomplete vault slots.
+- Interrupted first-run setup restarts onboarding and discards incomplete vault slots, including a
+  vault whose staged restore had not been committed (restore-pending marker).
 - When the app backgrounds, SQLCipher is closed and Encly's in-memory DEK copy is
   zeroized, after the user's auto-lock delay (Settings → Security: immediately, 15 s by
-  default, 30 s, 1 min or 2 min; measured on `elapsedRealtime`, so deep sleep counts). The
-  screen turning off or the device locking closes it at once, whatever the delay. ViewModels
-  holding decrypted content (notes list, tasks, editor, a decrypted backup, new recovery
-  words) drop it at that moment, not only when the UI resumes.
+  default, 30 s, 1 min, 2 min, 5 min, 10 min, 15 min or 30 min). The screen being off or the
+  keyguard being up when the app is found stopped closes it at once, whatever the delay or a
+  picker grace, and so does the screen turning off during the delay. Android 14+ freezes a cached
+  app about ten seconds after it left the screen, and a frozen process runs no handler timer and
+  hears no screen-off broadcast. The delay is therefore also set as an inexact `AlarmManager`
+  wake-up alarm (`setAndAllowWhileIdle`, no exact-alarm permission) that is delivered to a
+  non-exported receiver, which closes the vault on the main thread. The system may deliver an
+  inexact alarm a little late (up to minutes in Doze), never early, so the vault can stay open
+  a short while past the chosen delay while the app is frozen. The alarm is cancelled when the
+  app comes back or the vault locks. When the app comes back, the elapsed time is measured again
+  on `elapsedRealtime` (deep sleep counts) and the vault is closed if the delay ran out. ViewModels holding decrypted content (notes list, tasks, editor,
+  a decrypted backup, new recovery words) drop it at that moment, not only when the UI resumes.
 - Within the delay the vault stays open in the background: the DEK and decrypted content are
   in memory, and the recents thumbnail is still blocked by `FLAG_SECURE`. Choose
   "Immediately" to close it the moment Encly leaves the screen.
@@ -617,7 +631,8 @@ generic Markdown/TXT (Obsidian, Markor).
 
 Encly intentionally leaves out system-visible plaintext features:
 
-- no notifications at all: no notification permission, channel, alarm or scheduled work;
+- no notifications at all: no notification permission, channel or scheduled work, and no alarm that shows or
+  reads note content (the only alarm is the auto-lock wake-up above, which carries no data);
 - no seed clipboard, file, Drive, or generic share export (encrypted backups never contain the
   seed; see "Encrypted backups");
 - no share sheet and no plaintext note share flow: the only plaintext path is the Markdown
@@ -628,9 +643,14 @@ Encly intentionally leaves out system-visible plaintext features:
 
 **Clipboard.** Everything Encly puts on the clipboard (a text-field copy, a copied link) is
 marked sensitive (`ClipDescription.EXTRA_IS_SENSITIVE`, honoured from Android 13) and cleared
-after 60 seconds unless something else was copied since. When the system hides the clipboard
-from a backgrounded app, the clear happens without that check. A recovery phrase pasted into
-the 12 cells is removed from the clipboard right away.
+after 60 seconds unless something else was copied since. Only Encly's own clip is cleared: it is
+recognised by the timestamp of its description. From Android 10 the system hides that description
+from an app that is not in front, so a clear that falls due in the background is not done blindly:
+the stamp stays pending and the next time Encly comes to the foreground it clears the clip if the
+clipboard still carries it. The clip is also cleared when the vault locks (at the next foreground
+if the lock happened in the background), and a pending stamp survives a killed process in a small
+preferences file (a timestamp only, no content, excluded from every backup), so the next start
+clears it. A recovery phrase pasted into the 12 cells is removed from the clipboard right away.
 
 **Autofill, accessibility, overlays.** The window excludes itself and all its fields from
 autofill services. On Android 14+ its content is marked accessibility-data-sensitive, so only
@@ -740,7 +760,8 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   no-personalized-learning flag (and, with strict keyboard privacy, a password-type field
   without suggestions), but an IME sees every key typed and may ignore these requests.
 - Clipboard clearing is best effort: a clipboard manager or another app may read or keep a
-  clip during its 60 seconds.
+  clip during its 60 seconds, and while Encly is in the background (or after it was killed) the
+  clip stays until Encly is next in front, because Android hides the clipboard from it.
 
 ## Distribution and signing
 

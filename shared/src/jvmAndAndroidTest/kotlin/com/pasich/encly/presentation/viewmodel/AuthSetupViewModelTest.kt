@@ -43,6 +43,7 @@ class AuthSetupViewModelTest {
     fun setUp() = runTest {
         Dispatchers.setMain(StandardTestDispatcher())
         security = mock(SecurityManager::class.java)
+        `when`(security.markRestorePending()).thenReturn(true)
         `when`(security.openInitialVault()).thenReturn(true)
         `when`(security.commitInitialSetup()).thenAnswer {
             notesWhenCommitted = store.notes.size
@@ -77,6 +78,7 @@ class AuthSetupViewModelTest {
         assertFalse(result.restoreFailed)
         assertEquals("committed only once the notes are in", 1, notesWhenCommitted)
         val order = inOrder(security)
+        order.verify(security).markRestorePending()
         order.verify(security).openInitialVault()
         order.verify(security).commitInitialSetup()
     }

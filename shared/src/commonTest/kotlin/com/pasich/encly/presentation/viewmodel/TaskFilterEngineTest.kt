@@ -101,6 +101,25 @@ class TaskFilterEngineTest {
     }
 
     @Test
+    fun theDoneTasksKeepTheOrderTheyArriveInWhateverTheirPriority() {
+        val newestLow = Task(id = 5, title = "newest", priority = 0, isCompleted = true)
+        val olderHigh = Task(id = 6, title = "older", priority = 2, isCompleted = true)
+        val loaded = TaskFilterEngine.reduce(TasksUiState(), listOf(high), listOf(newestLow, olderHigh), 1, 2)
+        assertEquals(listOf(newestLow, olderHigh), loaded.completedTasks)
+
+        val chip = loaded.availableFilters.first { it.type == TaskFilter.Type.COMPLETED }
+        assertEquals(listOf(newestLow, olderHigh), TaskFilterEngine.select(loaded, chip).filteredActiveTasks)
+        val reloaded = TaskFilterEngine.reduce(
+            TaskFilterEngine.select(loaded, chip),
+            listOf(high),
+            listOf(newestLow, olderHigh),
+            1,
+            2,
+        )
+        assertEquals(listOf(newestLow, olderHigh), reloaded.filteredActiveTasks)
+    }
+
+    @Test
     fun noTasksIsZeroPercent() {
         assertEquals(0, TaskFilterEngine.completionPercentage(0, 0))
     }

@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.data.model.Note
+import com.pasich.encly.data.model.Tag
 import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
 import com.pasich.encly.domain.usecase.note.UpdateNoteTrashStatusUseCase
 import com.pasich.encly.testutil.TestNotesRepository
@@ -46,8 +47,8 @@ class TrashViewModelTest {
         val viewModel = viewModel()
         advanceUntilIdle()
 
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(0))
-        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(1L))
+        viewModel.onEvent(TrashListEvent.ToggleCheckItem(2L))
         assertTrue(viewModel.state.value.canCheck)
         assertEquals(2, viewModel.state.value.checkedCount)
 
@@ -60,5 +61,18 @@ class TrashViewModelTest {
         assertEquals(listOf(1L, 2L), state.notes.map { it.id })
         assertTrue(state.notes.none { it.isChecked })
         assertTrue(repository.deletedIds.isEmpty())
+    }
+
+    @Test
+    fun aNoteWithAHiddenTagIsMarkedHidden() = runTest(dispatcher) {
+        repository.trashTags.value = mapOf(
+            1L to listOf(Tag(id = 5, nameTag = "Open"), Tag(id = 6, nameTag = "Private", isVisible = false)),
+            2L to listOf(Tag(id = 5, nameTag = "Open")),
+        )
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertEquals(setOf(1L), viewModel.state.value.hiddenIds)
+        assertEquals(listOf(1L, 2L), viewModel.state.value.notes.map { it.id })
     }
 }

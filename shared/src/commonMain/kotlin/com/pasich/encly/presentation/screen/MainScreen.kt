@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +52,7 @@ import com.pasich.encly.presentation.components.HomeTaskWidget
 import com.pasich.encly.presentation.designsystem.EnclyFab
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclySearchField
+import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
 import com.pasich.encly.presentation.designsystem.IconWithTooltip
 import com.pasich.encly.presentation.dialogs.NotesSortBottomSheet
@@ -125,6 +127,7 @@ private fun CompactMainRoot(navController: NavHostController, modifier: Modifier
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongMethod") // The notes screen: its list, search, FAB and snackbars wired in one place.
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -163,9 +166,11 @@ fun MainScreen(
         ViewOptionsSheet(isGrid, mainListStateViewModel::updateGridNoteList) { viewOptionsVisible = false }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
+        snackbarHost = { EnclySnackbarHost(snackbarHostState) },
         floatingActionButton = {
             NewNoteFab(expanded = atTop, onClick = { notes.newNote(noteListViewModel.state.value.selectedTag) })
         },
@@ -188,6 +193,7 @@ fun MainScreen(
                 onItemClick = { note -> notes.editNote(note.id) },
                 onSecondActionClick = { note -> notes.editNote(-1, "?copySource=${note.id}") },
                 tabs = notes.tabs(),
+                snackbarHostState = snackbarHostState,
                 header = {
                     NotesHeader(
                         query = query,

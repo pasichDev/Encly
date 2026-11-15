@@ -135,4 +135,20 @@ class SheetClosingTest : ComposeScreenTest() {
 
         assertEquals("gone as the vault locked, with no slide", 0, countText("Content"))
     }
+
+    @Test
+    fun anOpenSheetIsGoneAsTheVaultLocks() {
+        setScreen {
+            CompositionLocalProvider(LocalVaultLocked provides locked) {
+                AdaptiveSheet(onDismissRequest = {}) { Text("Content") }
+            }
+        }
+        rule.waitForIdle()
+        assertEquals(1, countText("Content"))
+
+        locked = true
+        rule.waitForIdle()
+
+        assertEquals("a sheet is a window above the lock shield and must not stay", 0, countText("Content"))
+    }
 }

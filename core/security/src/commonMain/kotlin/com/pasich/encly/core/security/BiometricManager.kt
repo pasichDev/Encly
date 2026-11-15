@@ -44,6 +44,12 @@ public interface BiometricManager {
      */
     public fun unlock(host: BiometricHost, onResult: (ByteArray?) -> Unit)
 
+    /**
+     * True once after an [unlock] found the slot's key permanently invalidated (a new fingerprint was enrolled on the
+     * device): the slot was removed and the unlock answered null. Reading it resets it. False by default.
+     */
+    public fun takeInvalidated(): Boolean = false
+
     /** Generic re-auth prompt for settings actions that do not themselves release a key. */
     public fun authenticate(
         host: BiometricHost,
@@ -54,6 +60,12 @@ public interface BiometricManager {
 
     /** Removes the slot and the key behind it. */
     public fun disable()
+
+    /**
+     * Drops the DEK copy that an enrolment still waiting for its prompt holds, and its key: the vault was locked, so
+     * a late answer of the prompt must enrol nothing. Safe from any thread; nothing happens by default.
+     */
+    public fun cancelPendingEnrolment() {}
 
     public companion object {
         /** The [VaultStore] key prefix of the slot's entries. */

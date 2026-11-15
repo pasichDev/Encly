@@ -90,7 +90,7 @@ public data class EditorFontFamilies(
     val body: FontFamily = FontFamily.Default,
 )
 
-private val BlockBleed = 8.dp
+internal val BlockBleed = 8.dp
 private val BlockInset = 4.dp
 
 /**

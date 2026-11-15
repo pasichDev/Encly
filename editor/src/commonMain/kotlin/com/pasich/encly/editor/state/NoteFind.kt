@@ -29,6 +29,11 @@ public data class FindState(
     /** Where the query was found, in note order. */
     public val matches: List<FindMatch> = emptyList(),
     val current: Int = -1,
+    /**
+     * Counts the times the user asked to see the current match (a new query, next, previous). A refresh after the
+     * text changed does not count: typing never scrolls the note to another match.
+     */
+    val revealRequest: Int = 0,
 ) {
     /** The matches of each field, for drawing. */
     internal val byField: Map<String, List<FindMatch>> by lazy(LazyThreadSafetyMode.NONE) {
@@ -98,7 +103,14 @@ public class NoteFind {
     /** Searches [blocks] for [query]; the first match becomes the current one. */
     public fun search(query: String, blocks: List<Block>) {
         val matches = findMatches(blocks, query)
-        _state.update { it.copy(query = query, matches = matches, current = if (matches.isEmpty()) -1 else 0) }
+        _state.update {
+            it.copy(
+                query = query,
+                matches = matches,
+                current = if (matches.isEmpty()) -1 else 0,
+                revealRequest = it.revealRequest + 1,
+            )
+        }
     }
 
     /**
@@ -125,7 +137,11 @@ public class NoteFind {
     private fun step(delta: Int) {
         _state.update { now ->
             val size = now.matches.size
-            if (size == 0) now else now.copy(current = ((now.current + delta) % size + size) % size)
+            if (size == 0) {
+                now
+            } else {
+                now.copy(current = ((now.current + delta) % size + size) % size, revealRequest = now.revealRequest + 1)
+            }
         }
     }
 }

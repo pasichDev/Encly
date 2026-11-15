@@ -185,6 +185,7 @@
     <string name="lock_recovery_subtitle">Введіть фразу відновлення з 12 слів</string>
     <string name="lock_recovery_title">Відновлення</string>
     <string name="lock_subtitle">Введіть PIN для доступу</string>
+    <string name="lock_biometric_invalidated">Відбитки на пристрої змінилися. Розблокуйте PIN-кодом і знову ввімкніть вхід за відбитком у налаштуваннях.</string>
     <string name="lock_title">Розблокуйте нотатки</string>
     <string name="lock_unlocking">Розблокування…</string>
     <string name="lock_use_recovery_phrase">Відновити доступ за фразою відновлення</string>
@@ -303,6 +304,9 @@
 
     <string name="tag_create_failed">Не вдалося зберегти мітку. Спробуйте ще раз.</string>
     <string name="tag_delete_failed">Не вдалося видалити мітку. Спробуйте ще раз.</string>
+    <string name="trash_restore_failed">Не вдалося відновити нотатки. Спробуйте ще раз.</string>
+    <string name="trash_delete_failed">Не вдалося видалити нотатки. Спробуйте ще раз.</string>
+    <string name="note_action_failed">Не вдалося оновити нотатку. Спробуйте ще раз.</string>
     <string name="tag_edit">Редагувати мітку</string>
     <string name="tag_hidden">Прихована мітка</string>
     <string name="tag_name_taken">Мітка з такою назвою вже існує</string>
@@ -338,6 +342,7 @@
     <string name="undo">Скасувати дію</string>
 
     <string name="untitled">Без назви</string>
+    <string name="trash_hidden_note">Прихована нотатка</string>
 
     <string name="view_switch_to_grid">Перемкнути на сітку</string>
     <string name="view_switch_to_list">Перемкнути на список</string>
@@ -419,6 +424,7 @@
     <string name="link_blocked">Зберігати й відкривати можна лише вебпосилання (http, https) та адреси пошти.</string>
     <string name="notes_load_failed_title">Не вдалося прочитати нотатки</string>
     <string name="tags_load_failed_title">Не вдалося прочитати мітки</string>
+    <string name="tasks_load_failed_title">Не вдалося прочитати завдання</string>
     <string name="notes_load_failed_desc">Нотатки й далі зберігаються на пристрої в зашифрованому вигляді. Закрийте Encly і відкрийте знову, щоб повторити спробу.</string>
     <string name="pin_reset_subtitle">Ви розблокували Encly фразою відновлення. Щоб продовжити, задайте новий PIN-код.</string>
     <string name="task_delete">Видалити завдання</string>
@@ -710,6 +716,7 @@
     <string name="table_remove_column">Видалити стовпець</string>
     <string name="table_header_row">Рядок заголовка</string>
     <string name="table_cell_options">Параметри клітинки</string>
+    <string name="table_menu_open">Відкрити меню таблиці</string>
     <string name="settings_editor_toolbar">Панель редактора</string>
     <string name="settings_editor_toolbar_desc">Оберіть інструменти та їхній порядок</string>
     <string name="toolbar_hint">Перетягуйте за ручку, щоб змінити порядок. Око ховає інструмент або повертає його. Інструменти з розділу «Додаткове меню» ховаються за стрілкою.</string>
@@ -729,7 +736,7 @@
     </plurals>
     <string name="trash_section_soon">Зникнуть за тиждень · %1$d</string>
     <string name="trash_section_later">Пізніше · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s, остання за %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s, %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">Перша зникне сьогодні</string>
     <string name="trash_last_day">Останній день</string>
@@ -748,6 +755,12 @@
         <item quantity="few">Перша зникне за %d дні</item>
         <item quantity="many">Перша зникне за %d днів</item>
         <item quantity="other">Перша зникне за %d дня</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="one">остання за %d день</item>
+        <item quantity="few">остання за %d дні</item>
+        <item quantity="many">остання за %d днів</item>
+        <item quantity="other">остання за %d дня</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="one">Лишився %d день</item>

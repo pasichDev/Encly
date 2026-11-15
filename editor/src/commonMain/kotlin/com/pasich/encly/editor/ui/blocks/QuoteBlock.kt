@@ -76,6 +76,7 @@ internal fun QuoteBlock(
             .padding(vertical = spacing.xs)
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.shapes.medium)
+            .tapCardToFocus(state, focusRequester)
             .padding(horizontal = spacing.fieldGap, vertical = spacing.m),
     ) {
         QuoteMark()

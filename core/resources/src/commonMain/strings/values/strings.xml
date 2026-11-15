@@ -202,6 +202,7 @@
     <string name="lock_recovery_subtitle">Enter your 12-word recovery phrase</string>
     <string name="lock_recovery_title">Recovery</string>
     <string name="lock_subtitle">Enter your PIN to continue</string>
+    <string name="lock_biometric_invalidated">Fingerprints changed on this device. Unlock with your PIN, then turn fingerprint unlock on again in Settings.</string>
     <string name="lock_title">Unlock your notes</string>
     <string name="lock_unlocking">Unlocking…</string>
     <string name="lock_use_recovery_phrase">Recover access with your recovery phrase</string>
@@ -320,6 +321,9 @@
 
     <string name="tag_create_failed">Couldn\'t save the tag. Please try again.</string>
     <string name="tag_delete_failed">Couldn\'t delete the tag. Please try again.</string>
+    <string name="trash_restore_failed">Couldn\'t restore the notes. Please try again.</string>
+    <string name="trash_delete_failed">Couldn\'t delete the notes. Please try again.</string>
+    <string name="note_action_failed">Couldn\'t update the note. Please try again.</string>
     <string name="tag_edit">Edit tag</string>
     <string name="tag_hidden">Hidden tag</string>
     <string name="tag_name_taken">A tag with this name already exists</string>
@@ -355,6 +359,7 @@
     <string name="undo">Undo</string>
 
     <string name="untitled">Untitled</string>
+    <string name="trash_hidden_note">Hidden note</string>
 
     <string name="view_switch_to_grid">Switch to grid view</string>
     <string name="view_switch_to_list">Switch to list view</string>
@@ -430,6 +435,7 @@
     <string name="link_blocked">Only web (http, https) and email links can be saved or opened.</string>
     <string name="notes_load_failed_title">Couldn\'t read your notes</string>
     <string name="tags_load_failed_title">Couldn\'t read your tags</string>
+    <string name="tasks_load_failed_title">Couldn\'t read your tasks</string>
     <string name="notes_load_failed_desc">Your notes are still stored encrypted on this device. Close Encly and open it again to retry.</string>
     <string name="pin_reset_subtitle">You unlocked Encly with your recovery phrase. Set a new PIN to continue.</string>
     <string name="task_delete">Delete task</string>
@@ -716,6 +722,7 @@
     <string name="table_remove_column">Delete column</string>
     <string name="table_header_row">Header row</string>
     <string name="table_cell_options">Cell options</string>
+    <string name="table_menu_open">Open table menu</string>
     <string name="settings_editor_toolbar">Editor toolbar</string>
     <string name="settings_editor_toolbar_desc">Choose and order the editing tools</string>
     <string name="toolbar_hint">Drag the handle to reorder. Tap the eye to hide a tool or bring it back. Tools under “More menu” sit behind the chevron.</string>
@@ -733,7 +740,7 @@
     </plurals>
     <string name="trash_section_soon">Gone within a week · %1$d</string>
     <string name="trash_section_later">Later · %1$d</string>
-    <string name="trash_summary">%1$s. %2$s, the last in %3$d.</string>
+    <string name="trash_summary">%1$s. %2$s, %3$s.</string>
     <string name="trash_summary_same">%1$s. %2$s.</string>
     <string name="trash_first_today">The first disappears today</string>
     <string name="trash_last_day">Last day</string>
@@ -748,6 +755,10 @@
     <plurals name="trash_first_in_days">
         <item quantity="one">The first disappears in %d day</item>
         <item quantity="other">The first disappears in %d days</item>
+    </plurals>
+    <plurals name="trash_last_in_days">
+        <item quantity="one">the last in %d day</item>
+        <item quantity="other">the last in %d days</item>
     </plurals>
     <plurals name="trash_days_left">
         <item quantity="one">%d day left</item>

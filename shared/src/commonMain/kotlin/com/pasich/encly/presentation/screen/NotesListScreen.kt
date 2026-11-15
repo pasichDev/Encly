@@ -19,9 +19,11 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +40,7 @@ import com.pasich.encly.core.resources.empty_notes_desc
 import com.pasich.encly.core.resources.empty_notes_tagged
 import com.pasich.encly.core.resources.empty_notes_tagged_desc
 import com.pasich.encly.core.resources.main_drawer_archive
+import com.pasich.encly.core.resources.note_action_failed
 import com.pasich.encly.core.resources.notes_section_other
 import com.pasich.encly.core.resources.notes_section_pinned
 import com.pasich.encly.core.resources.search_nothing_matches
@@ -70,6 +73,7 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 private const val SKELETON_CARDS = 4
@@ -99,10 +103,12 @@ fun NotesList(
     onSecondActionClick: (Note) -> Unit = {},
     tabs: NotesTabs? = null,
     header: @Composable () -> Unit = {},
+    snackbarHostState: SnackbarHostState? = null,
     noteListViewModel: NoteListViewModel = metroViewModel(),
 ) {
     val state by noteListViewModel.state.collectAsStateWithLifecycle()
     val sheet = remember { NoteSheetState() }
+    NoteActionFailures(noteListViewModel.actionFailures, snackbarHostState)
 
     NoteActionsSheet(
         sheet = sheet,
@@ -144,6 +150,15 @@ fun NotesList(
         NotesGrid(content, gridScrollState, NotesTop(header, status), modifier)
     } else {
         NotesColumn(content, listScrollState, NotesTop(header, status), modifier)
+    }
+}
+
+/** Tells the user, in [snackbarHostState] (when the screen has one), that a note action did not go through. */
+@Composable
+internal fun NoteActionFailures(failures: Flow<Unit>, snackbarHostState: SnackbarHostState?) {
+    if (snackbarHostState == null) return
+    LaunchedEffect(failures, snackbarHostState) {
+        failures.collect { snackbarHostState.showSnackbar(getString(Res.string.note_action_failed)) }
     }
 }
 

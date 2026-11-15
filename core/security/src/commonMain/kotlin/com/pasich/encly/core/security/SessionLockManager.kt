@@ -60,10 +60,13 @@ public object NeverLocked : VaultLockEvents {
  * unlock must unwrap the DEK again through the PIN, auth-bound biometric, or recovery slot.
  *
  * It waits the user's auto-lock delay first ([AutoLockPolicy], 15 s by default, "immediately"
- * possible), and a backup import's system file picker (another app) gets its own short grace:
- * see [allowSystemPicker]. Both are measured on `elapsedRealtime` (deep sleep counts), end
- * the moment the screen turns off or the device locks, and are re-checked when the app comes
- * back.
+ * possible), and a system file picker (another app) gets its own short grace: see
+ * [allowSystemPicker]. A screen that is already off (or a keyguard that is up) at ON_STOP locks
+ * at once, and a screen-off later ends both. Both are measured on `elapsedRealtime` (deep sleep
+ * counts) when the app comes back. The in-background timer ([MainThreadTimer]) is not trusted to run on its own:
+ * a cached app is frozen on Android 14+ and its handler callbacks and context-registered receivers stop, so the
+ * Android timer also sets a wake-up alarm for the same delay that calls [onAwayTimeout] on the main thread; cancelling
+ * the timer (on return or lock) cancels both.
  */
 @OptIn(ExperimentalAtomicApi::class)
 @SingleIn(AppScope::class)
@@ -80,6 +83,7 @@ public class SessionLockManager(
     VaultLockEvents {
 
     private val _locked = MutableStateFlow(false)
+    private val _locking = MutableStateFlow(false)
 
     private class PreLockFlush(val run: suspend () -> Unit)
 
@@ -94,6 +98,13 @@ public class SessionLockManager(
      * [lockRequests] and [onUnlocked].
      */
     private val lockRequestCount = AtomicLong(0L)
+
+    /**
+     * True while a lock waits for the editors' saves (at most [LOCK_FLUSH_TIMEOUT_MS]) and [locked] is not set yet:
+     * [locked] stays false then so the editors can still read and save their content. The UI must already show
+     * nothing and take no commands.
+     */
+    public val locking: StateFlow<Boolean> = _locking.asStateFlow()
 
     /** Emits true when the app was re-locked in the background and must show the lock screen. */
     override val locked: StateFlow<Boolean> = _locked.asStateFlow()
@@ -147,7 +158,9 @@ public class SessionLockManager(
      * open instead of re-locking it, for at most [PICKER_MAX_AWAY_MS]. Turning the screen off
      * or locking the device ends the grace at once.
      *
-     * Export does not need this: its file is sealed before the picker opens.
+     * Used by the backup import, the Markdown export (its plaintext file is written after the picker returns, up to
+     * [PICKER_MAX_AWAY_MS]) and the notes import pickers. The grace never survives a screen that is already off or a
+     * keyguard that is up at ON_STOP, and the screen turning off later ends it at once.
      */
     @MainThread
     public fun allowSystemPicker() {
@@ -182,10 +195,18 @@ public class SessionLockManager(
         if (graceBroken(stoppedAt, lockedAway) && isOpenAndLockable()) relock()
     }
 
+    @Suppress("ReturnCount") // The guards of a stop, each ending it.
     override fun onStop(owner: LifecycleOwner) {
         foreground = false
         val requestedAt = systemPickerRequestedAt
         systemPickerRequestedAt = NONE
+        // ON_STOP comes about 700 ms after the activity stopped, so a screen-off broadcast sent meanwhile (or a
+        // keyguard that came up) is already gone: neither the delay nor the picker grace may keep the vault open.
+        // The watchers of suspend() only hear a screen-off that comes later.
+        if (!deviceLock.isScreenOn() || deviceLock.isDeviceLocked()) {
+            if (isOpenAndLockable()) relock()
+            return
+        }
         val now = clock()
         if (requestedAt != NONE && now - requestedAt in 0..PICKER_LAUNCH_WINDOW_MS) {
             suspend(now, PICKER_MAX_AWAY_MS)
@@ -302,6 +323,7 @@ public class SessionLockManager(
         }
         // A lock already waiting for the editors covers this one.
         if (!flushing.compareAndSet(false, true)) return
+        _locking.value = true
         lockScope.launch {
             try {
                 // The saves run in jobs of their own, so a save stuck in the database cannot hold the lock past
@@ -312,6 +334,7 @@ public class SessionLockManager(
                 withTimeoutOrNull(LOCK_FLUSH_TIMEOUT_MS) { saves.joinAll() }
             } finally {
                 closeVault()
+                _locking.value = false
                 flushing.store(false)
             }
         }

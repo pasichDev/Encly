@@ -51,10 +51,17 @@ public fun BlockEditorState.interactedBlockPosition(): Int = when (selection.int
     else -> BLOCK_IN_MIDDLE
 }
 
+/** Focuses the block of [request], however far off screen it is: it is scrolled to and focused once composed. */
+public fun BlockEditorState.requestFocus(request: FocusRequest) {
+    val index = indexOf(request.blockId)
+    if (index < 0) return
+    with(request) { selection.focusAt(index, cursorToEnd, caret, itemId, caretX, fromBelow) }
+}
+
 /** Focuses the trailing text block, adding one first unless the note already ends in one. */
 public fun BlockEditorState.addBlockToEnd() {
     if (blocks.lastOrNull() is Block.TextBlock) {
-        selection.focusAt(blocks.lastIndex)
+        selection.focusAt(blocks.lastIndex, cursorToEnd = true)
     } else {
         addBlockAfter(blocks.lastIndex, Block.TextBlock())
     }

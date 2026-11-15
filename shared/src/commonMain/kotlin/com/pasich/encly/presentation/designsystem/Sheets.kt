@@ -44,6 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.tap_again_to_delete
+import com.pasich.encly.editor.ui.components.ProtectDialogWindow
+import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.ui.theme.EnclyTheme
 import com.pasich.encly.ui.theme.SheetShape
 import kotlinx.coroutines.delay
@@ -74,6 +76,8 @@ fun EnclyBottomSheet(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    // Its own window, above the lock shield: nothing of it is composed while the vault is locked.
+    if (LocalVaultLocked.current) return
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
@@ -90,6 +94,7 @@ fun EnclyBottomSheet(
         // animation and cut the whole content away, leaving an empty sheet.
         modifier = modifier.slideWithKeyboard(sheetState),
     ) {
+        ProtectDialogWindow()
         HideKeyboardWithSheet(sheetState)
         val scroll = rememberScrollState()
         Box {

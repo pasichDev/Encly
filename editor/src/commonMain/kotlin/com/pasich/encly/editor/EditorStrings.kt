@@ -74,6 +74,7 @@ public enum class EditorString(internal val english: String) {
     TABLE_REMOVE_COLUMN("Delete column"),
     TABLE_HEADER_ROW("Header row"),
     TABLE_CELL_OPTIONS("Cell options"),
+    TABLE_MENU_OPEN("Open table menu"),
 }
 
 /**
