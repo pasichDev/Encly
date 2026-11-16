@@ -5,4 +5,4 @@ Encly 3.0.0
 • Barre d'outils personnalisable ; masquer le texte des notes.
 • Arabe et mise en page de droite à gauche ; réglages dans la sauvegarde.
 • L'empreinte marche après un verrouillage en arrière-plan.
-• La corbeille se vide après 28 jours.
+• Tâches groupées par état ; la corbeille décompte 28 jours avant suppression.

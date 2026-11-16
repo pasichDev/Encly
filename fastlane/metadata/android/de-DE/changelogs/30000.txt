@@ -5,4 +5,4 @@ Encly 3.0.0
 • Eigene Werkzeugleiste; Notiztext in Listen ausblenden.
 • Arabisch und Rechts-nach-links; Einstellungen im Backup.
 • Fingerabdruck klappt nach Sperre im Hintergrund.
-• Papierkorb leert sich nach 28 Tagen.
+• Aufgaben nach Status; der Papierkorb zählt 28 Tage bis zum Löschen herunter.

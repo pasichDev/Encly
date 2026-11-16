@@ -5,4 +5,4 @@ Encly 3.0.0
 • Własny pasek narzędzi; ukrywanie tekstu notatek na listach.
 • Arabski i układ od prawej do lewej; ustawienia w kopii.
 • Odcisk palca działa po blokadzie w tle.
-• Kosz opróżnia się po 28 dniach.
+• Zadania według stanu; kosz odlicza 28 dni do usunięcia.

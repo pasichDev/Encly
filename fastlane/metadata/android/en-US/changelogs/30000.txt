@@ -5,4 +5,4 @@ Encly 3.0.0
 • Arrange your own toolbar; hide note text in lists.
 • Arabic and right-to-left layouts; settings travel with backups.
 • Fingerprint unlock works after a background lock; notes keep their creation date.
-• The trash empties itself after 28 days.
+• Tasks grouped by state; the trash counts down 28 days to deletion.

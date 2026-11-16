@@ -36,6 +36,7 @@ versionCode 30000.
 - Auto-lock after 5 or 10 minutes ([#98](https://github.com/pasichDev/Encly/issues/98)).
 - Notes are deleted for good after 28 days in the trash, the same way "Delete forever" does. Notes already in the trash start their 28 days with this update ([#97](https://github.com/pasichDev/Encly/issues/97)).
 - After an update, the first unlock shows what changed in that version, once; Settings → About keeps it ([#105](https://github.com/pasichDev/Encly/issues/105)).
+- The trash shows how many days each note has left before it is deleted; notes with a hidden tag show there as "Hidden note".
 
 ### Changed
 
@@ -45,6 +46,10 @@ versionCode 30000.
 - Opening and closing a note is quicker ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Find in note highlights matches more strongly ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Backspace at the start of a list item joins it into the item above, so holding delete runs through a list without stopping ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- A new look for tasks: grouped into to do, in progress and done, with the progress of their steps; editing a task no longer opens the keyboard by itself.
+- Sheets and dialogs move with the keyboard, hide when Encly locks, and the note sheet groups its actions; Delete and Save sit side by side in one row.
+- Encly locks at once when the screen turns off, and on Android 14 and later the auto-lock delay also ends while the app sleeps in the background.
+- Copied note text is cleared only if it is still Encly's own copy, also when Encly locks or was closed by the system.
 
 ### Fixed
 
@@ -54,6 +59,9 @@ versionCode 30000.
 - Stepping through matches in Find in note now scrolls to each match, also inside long paragraphs and lists ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Scrolling over a list no longer leaves its toolbar button active ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - The gap below a quote matches the gap above it ([#76](https://github.com/pasichDev/Encly/issues/76)).
+- A task or note could appear twice for a moment while it changed state, and the app could close ([#110](https://github.com/pasichDev/Encly/pull/110)).
+- Pressing Back twice quickly could close two screens at once.
+- After new fingerprints were added to the phone, the fingerprint button did nothing; the lock screen now says to unlock with the PIN and turn fingerprint unlock on again.
 
 ## [2.3.1] - 2026-10-27
 

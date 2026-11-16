@@ -5,4 +5,4 @@ Encly 3.0.0
 • Eigen werkbalk; notitietekst in lijsten verbergen.
 • Arabisch en rechts-naar-links; instellingen in de back-up.
 • Vingerafdruk werkt na vergrendeling op de achtergrond.
-• De prullenbak leegt zich na 28 dagen.
+• Taken per status; de prullenbak telt 28 dagen af tot verwijderen.

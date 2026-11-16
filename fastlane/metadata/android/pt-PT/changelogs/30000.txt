@@ -5,4 +5,4 @@ Encly 3.0.0
 • Barra de ferramentas à sua medida; ocultar o texto das notas.
 • Árabe e esquema da direita para a esquerda; definições na cópia.
 • A impressão digital funciona após bloqueio em segundo plano.
-• O lixo esvazia-se após 28 dias.
+• Tarefas por estado; o lixo conta 28 dias até à eliminação.

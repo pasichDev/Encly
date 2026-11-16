@@ -5,4 +5,4 @@ Encly 3.0.0
 • Barra de herramientas a tu gusto; ocultar el texto de las notas.
 • Árabe y diseño de derecha a izquierda; ajustes en la copia.
 • La huella funciona tras el bloqueo en segundo plano.
-• La papelera se vacía a los 28 días.
+• Tareas agrupadas por estado; la papelera cuenta 28 días hasta el borrado.
