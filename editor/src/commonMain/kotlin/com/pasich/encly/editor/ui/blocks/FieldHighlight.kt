@@ -11,13 +11,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
@@ -27,9 +31,16 @@ import com.pasich.encly.editor.focus.geometry
 import com.pasich.encly.editor.state.TextPoint
 import com.pasich.encly.editor.state.TextRangeSelection
 import com.pasich.encly.editor.ui.FindHighlights
+import kotlin.math.roundToInt
 
 private const val MATCH_ALPHA = 0.4f
 private const val CURRENT_MATCH_ALPHA = 0.65f
+
+/**
+ * The middle of a text field's first line. A block's grip lines up with it; where a block holds several fields (a
+ * list, a table) the topmost one counts.
+ */
+internal val FirstLineCenter = HorizontalAlignmentLine { a, b -> minOf(a, b) }
 
 /**
  * What one text field shows and tells beyond its text: the Find matches and the part a text selection across
@@ -147,6 +158,16 @@ internal class FieldHighlight(
     }
 
     val modifier: Modifier = Modifier
+        .layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints)
+            // The field has just laid its text out. Its result is read unobserved: the field writes it on every
+            // measure, and observing it here would measure the field again without end.
+            val measured = layout
+            val result = Snapshot.withoutReadObservation { measured?.invoke() }?.takeIf { it.lineCount > 0 }
+            val center = result?.let { ((it.getLineTop(0) + it.getLineBottom(0)) / 2).roundToInt() }
+            val lines = center?.let { mapOf<AlignmentLine, Int>(FirstLineCenter to it) }
+            layout(placeable.width, placeable.height, lines.orEmpty()) { placeable.place(0, 0) }
+        }
         .bringIntoViewRequester(bringIntoView)
         .onGloballyPositioned { coordinates = it }
         .drawBehind {

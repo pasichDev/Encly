@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,8 +17,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,10 +30,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.LocalEditorStrings
@@ -39,6 +45,7 @@ import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.editor.theme.BlockBleed
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.ui.blocks.BlockSelectAllIme
+import com.pasich.encly.editor.ui.blocks.FirstLineCenter
 import com.pasich.encly.editor.ui.blocks.ReorderHandleWidth
 import com.pasich.encly.editor.ui.components.EditorTooltip
 import com.pasich.encly.editor.ui.components.editorInteractive
@@ -49,6 +56,9 @@ internal const val CHECKLIST_LOCK_TAG = "checklist-lock-toggle"
 /** The width of the strip at a block's start (the page gutter) that a long press selects the block from. */
 private val HandleWidth = 24.dp
 private val GripSize = 18.dp
+
+/** Where the grip stands in a block with no text to line it up with. */
+private val GripTop = 4.dp
 private val LockSize = 28.dp
 private val HighlightInset = 8.dp
 private val HighlightRadius = 8.dp
@@ -73,23 +83,35 @@ internal fun BlockChrome(
     val ids by selection.ids.collectAsState()
     val picked = block.id in ids
     val picking = ids.isNotEmpty()
+    val firstLine = remember { mutableIntStateOf(NO_LINE) }
     BlockSelectAllIme(onSelectAll = controller::selectAllText) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .pickedBackground(picked, MaterialTheme.colorScheme.primary.copy(alpha = HIGHLIGHT_ALPHA))
-                .semantics { selected = picked },
+                .semantics { selected = picked }
+                .readFirstLine(firstLine),
         ) {
             content()
             if (picking) {
                 PickOverlay(picked) { selection.toggle(block.id) }
             } else {
                 val worksOn = controller.interactedBlockId.collectAsState().value == block.id
-                BlockHandle(worksOn) { selection.select(block.id) }
+                BlockHandle(worksOn, { firstLine.intValue }) { selection.select(block.id) }
                 if (worksOn && !isLocked) ChecklistLockToggle(block, controller)
             }
         }
     }
+}
+
+private const val NO_LINE = -1
+
+/** Keeps in [into] where the middle of the block's first line of text is ([NO_LINE] for a block without text). */
+private fun Modifier.readFirstLine(into: MutableIntState): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val line = placeable[FirstLineCenter]
+    into.intValue = if (line == AlignmentLine.Unspecified) NO_LINE else line
+    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
 }
 
 /** Draws [color] behind a picked block, a little inside the page edges. */
@@ -123,9 +145,12 @@ private fun BoxScope.PickOverlay(picked: Boolean, onToggle: () -> Unit) {
     )
 }
 
-/** The strip at the start of a block that a long press picks the block from; [marked] draws a grip in it. */
+/**
+ * The strip at the start of a block that a long press picks the block from; [marked] draws a grip in it, level with
+ * the middle of the block's first line of text ([firstLine]), or near the top of a block without text.
+ */
 @Composable
-private fun BoxScope.BlockHandle(marked: Boolean, onSelect: () -> Unit) {
+private fun BoxScope.BlockHandle(marked: Boolean, firstLine: () -> Int, onSelect: () -> Unit) {
     // The strip is as tall as the block: an outer box takes the block's size, which a child cannot ask for.
     Box(Modifier.matchParentSize()) {
         Box(
@@ -139,7 +164,14 @@ private fun BoxScope.BlockHandle(marked: Boolean, onSelect: () -> Unit) {
                     LocalEditorTheme.current.icons.grip,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = GRIP_ALPHA),
-                    modifier = Modifier.align(Alignment.TopCenter).padding(top = 4.dp).size(GripSize),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset {
+                            val line = firstLine()
+                            val top = if (line == NO_LINE) GripTop.roundToPx() else line - GripSize.roundToPx() / 2
+                            IntOffset(0, top.coerceAtLeast(0))
+                        }
+                        .size(GripSize),
                 )
             }
         }
