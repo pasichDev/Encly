@@ -171,7 +171,9 @@ class MarkdownBlockMapperTest {
         val started = TimeSource.Monotonic.markNow()
         MarkdownBlockMapper.toBlocks("[".repeat(200_000))
         MarkdownBlockMapper.toBlocks("[[a|".repeat(50_000))
-        assertTrue(started.elapsedNow() < 1.seconds, "took ${started.elapsedNow()}")
+        // A quadratic match on these inputs takes minutes; the bound leaves room for a debug Kotlin/Native build on a
+        // shared CI simulator, where the linear match alone has taken over a second.
+        assertTrue(started.elapsedNow() < 10.seconds, "took ${started.elapsedNow()}")
     }
 
     @Test
