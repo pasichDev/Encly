@@ -19,8 +19,8 @@ import com.pasich.encly.editor.ui.components.ProtectDialogWindow
 import com.pasich.encly.platform.LocalBiometricHost
 import com.pasich.encly.presentation.designsystem.DialogSystemBarsLikeApp
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
-import com.pasich.encly.presentation.designsystem.edgeToEdgeDialogProperties
 import com.pasich.encly.presentation.designsystem.ProtectFromCapture
+import com.pasich.encly.presentation.designsystem.edgeToEdgeDialogProperties
 import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry

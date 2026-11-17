@@ -137,8 +137,9 @@ private fun Block.shape(): String = when (this) {
 
     is Block.HBlock -> "H:$blockType:${text.value}"
 
-    is Block.ListBlock -> "L:$blockType:${locked.value}:" +
-        items.value.joinToString("|") { "${it.value},${it.isCheck},${it.level},${it.kind}" }
+    is Block.ListBlock ->
+        "L:$blockType:${locked.value}:" +
+            items.value.joinToString("|") { "${it.value},${it.isCheck},${it.level},${it.kind}" }
 
     else -> "?:$id"
 }
