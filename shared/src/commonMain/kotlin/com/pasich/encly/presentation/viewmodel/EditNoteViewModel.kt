@@ -55,6 +55,7 @@ import com.pasich.encly.editor.state.indexOf
 import com.pasich.encly.editor.state.interactedBlockPosition
 import com.pasich.encly.editor.state.interactedListItem
 import com.pasich.encly.editor.state.isBlankNote
+import com.pasich.encly.editor.state.isUntouchedTemplate
 import com.pasich.encly.editor.state.listBackspaceAtStart
 import com.pasich.encly.editor.state.listLineBreak
 import com.pasich.encly.editor.state.listTypingStep
@@ -139,6 +140,7 @@ class EditNoteViewModel(
         blocks = { editor.blocks },
         copyTitle = copyTitle,
         loading = noteId != -1L || copySource != -1L,
+        isUntouchedTemplate = { editor.isUntouchedTemplate() },
     )
 
     val state: StateFlow<LoadNoteState> get() = persistence.state

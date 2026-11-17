@@ -452,6 +452,65 @@ class EditNoteViewModelComfortTest {
     }
 
     @Test
+    fun aNewNoteLeftAsAnUntouchedTemplateIsNotSavedOnLeaveAutosaveOrLock() = runTest(dispatcher) {
+        val viewModel = viewModel(noteId = -1L)
+        collecting(viewModel)
+        advanceUntilIdle()
+
+        viewModel.applyTemplate(NoteTemplate.MEETING.blocks { "H $it" })
+        assertTrue(viewModel.isBlankDraft)
+
+        assertTrue(viewModel.saveNote()) // Back
+        lockFlush?.invoke() // the vault locks
+        advanceTimeBy(10_000) // the autosave
+        advanceUntilIdle()
+
+        assertEquals(0, repository.insertCalls)
+        assertEquals(-1L, viewModel.state.value.note.id)
+    }
+
+    @Test
+    fun aTemplateNoteWithOneTypedCharacterIsSavedLikeAnyNote() = runTest(dispatcher) {
+        val viewModel = viewModel(noteId = -1L)
+        collecting(viewModel)
+        advanceUntilIdle()
+        viewModel.applyTemplate(NoteTemplate.MEETING.blocks { "H $it" })
+
+        // The first empty paragraph of the meeting template is in its notes section; type into a list item.
+        val paragraph = viewModel.blocks.filterIsInstance<Block.TextBlock>().first()
+        viewModel.onBlockTextChanged(paragraph, "x")
+        assertFalse(viewModel.isBlankDraft)
+
+        assertTrue(viewModel.saveNote())
+        assertEquals(1, repository.insertCalls)
+    }
+
+    @Test
+    fun editingTheTitleOfATemplateNoteSavesIt() = runTest(dispatcher) {
+        val viewModel = viewModel(noteId = -1L)
+        collecting(viewModel)
+        advanceUntilIdle()
+        viewModel.applyTemplate(NoteTemplate.JOURNAL.blocks { "H $it" })
+
+        viewModel.updateTitle("Monday")
+
+        assertFalse(viewModel.isBlankDraft)
+        assertTrue(viewModel.saveNote())
+        assertEquals(1, repository.insertCalls)
+    }
+
+    @Test
+    fun anExistingNoteIsNeverADiscardableDraft() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        collecting(viewModel)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isBlankDraft)
+        viewModel.updateTitle("")
+        assertFalse(viewModel.isBlankDraft)
+    }
+
+    @Test
     fun duplicateAndDeleteOfABlockAreOneUndoStepEach() = runTest(dispatcher) {
         val viewModel = viewModel()
         advanceUntilIdle()

@@ -66,6 +66,9 @@ public class BlockEditorState(
     // What the last copy or cut put on the clipboard; in memory only, forgotten when a note is loaded (the lock too).
     private var copied: CopiedBlocks? = null
 
+    // What the blocks looked like right after a template was applied (see isUntouchedTemplate); null otherwise.
+    internal var templateShapes: List<String>? = null
+
     private val _canUndo = MutableStateFlow(false)
 
     /** Whether there is an edit to undo. */
@@ -94,6 +97,7 @@ public class BlockEditorState(
         pickedBlocks.clear()
         textRange.clear()
         copied = null
+        templateShapes = null
         _blocks.clear()
         _blocks.addAll(loaded)
         history.clear()

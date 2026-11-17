@@ -684,6 +684,7 @@ public final class com/pasich/encly/editor/state/NoteTemplatesKt {
 	public static final fun applyTemplate (Lcom/pasich/encly/editor/state/BlockEditorState;Ljava/util/List;)Z
 	public static final fun blocks (Lcom/pasich/encly/editor/state/NoteTemplate;Lkotlin/jvm/functions/Function1;)Ljava/util/List;
 	public static final fun isBlankNote (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
+	public static final fun isUntouchedTemplate (Lcom/pasich/encly/editor/state/BlockEditorState;)Z
 }
 
 public final class com/pasich/encly/editor/state/PasteEditingKt {

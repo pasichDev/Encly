@@ -98,6 +98,16 @@ public fun BlockEditorState.isBlankNote(): Boolean =
     (blocks.singleOrNull() as? Block.TextBlock)?.let { it.text.value.isEmpty() } == true
 
 /**
+ * Whether the note is still exactly what [applyTemplate] made of it: the same blocks with the same
+ * text, list rows, checks and lock, nothing typed, added, removed or toggled. Compared by value, not
+ * by history, so typing and then undoing or deleting back to the template text counts as untouched
+ * again, and undoing the template away (back to a blank note) is not a template at all (see [isBlankNote]).
+ * A note that was loaded from storage is never one.
+ */
+public fun BlockEditorState.isUntouchedTemplate(): Boolean =
+    templateShapes?.let { applied -> blocks.map { it.shape() } == applied } == true
+
+/**
  * Starts the blank note from [template]: its blocks take the place of the empty paragraph, as
  * one undo step (undo gives the blank note back), and the first empty field after the first
  * heading takes focus. Does nothing, and returns false, unless the note is still blank.
@@ -108,6 +118,7 @@ public fun BlockEditorState.applyTemplate(template: List<Block>): Boolean {
         replaceBlock(0, template.first())
         template.drop(1).forEachIndexed { i, block -> addBlock(1 + i, block) }
     }
+    templateShapes = template.map { it.shape() }
     val target = template.indexOfFirst { it.isEmptyField() }.takeIf { it >= 0 } ?: template.lastIndex
     selection.focusAt(target, caret = 0, itemId = template[target].firstItemId())
     return true
@@ -117,4 +128,17 @@ private fun Block.isEmptyField(): Boolean = when (this) {
     is Block.TextBlock -> text.value.isEmpty()
     is Block.ListBlock -> items.value.all { it.value.isEmpty() }
     else -> false
+}
+
+// A block's content as a comparable string. Only the kinds a template makes have one; any other block
+// gets its unique id, so it never equals what the template made.
+private fun Block.shape(): String = when (this) {
+    is Block.TextBlock -> "T:${text.value}"
+
+    is Block.HBlock -> "H:$blockType:${text.value}"
+
+    is Block.ListBlock -> "L:$blockType:${locked.value}:" +
+        items.value.joinToString("|") { "${it.value},${it.isCheck},${it.level},${it.kind}" }
+
+    else -> "?:$id"
 }

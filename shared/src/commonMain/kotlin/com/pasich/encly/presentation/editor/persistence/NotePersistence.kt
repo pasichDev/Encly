@@ -66,6 +66,8 @@ class NotePersistence(
     private val blocks: () -> List<Block>,
     private val copyTitle: NoteCopyTitle,
     loading: Boolean = false,
+    // True while the content is only a template as it was applied, with nothing typed into it.
+    private val isUntouchedTemplate: () -> Boolean = { false },
 ) {
     private val _state = MutableStateFlow(LoadNoteState())
     val state: StateFlow<LoadNoteState> = _state.asStateFlow()
@@ -407,10 +409,13 @@ class NotePersistence(
         ok
     }
 
-    /** Whether the editor holds nothing to keep: a new note without a title or content. */
+    /**
+     * Whether the editor holds nothing to keep: a new note without a title and with no content, or with only an
+     * untouched template (its headings are not the user's words). Any edit makes it a note to keep.
+     */
     val isBlankDraft: Boolean
         get() = _state.value.note.let { it.id == -1L && it.title.isBlank() } &&
-            blocks().none { it.hasContent() || it is Block.CodeBlock || it is Block.TableBlock }
+            (blocks().none(::isUserContent) || isUntouchedTemplate())
 
     /**
      * Whether the note differs from how the editor opened it (its title, tag or content), or a
@@ -515,6 +520,9 @@ private suspend fun NotesRepository.updateStored(
     }
     return stored.takeIf { updateEdited(it, base).isSuccess }
 }
+
+private fun isUserContent(block: Block): Boolean =
+    block.hasContent() || block is Block.CodeBlock || block is Block.TableBlock
 
 /** A copy of the blocks holding their current values, to serialize away from the editor. */
 private fun List<Block>.frozen(): List<Block> = map { block ->

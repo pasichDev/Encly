@@ -104,4 +104,77 @@ class NoteTemplatesTest {
         assertNotNull(request)
         assertEquals(blocks[1].id, request?.blockId)
     }
+
+    @Test
+    fun aTemplateAsAppliedIsUntouchedAndABlankOrLoadedNoteIsNot() {
+        assertFalse(editor.isUntouchedTemplate())
+
+        editor.applyTemplate(NoteTemplate.MEETING.blocks(::resolve))
+        assertTrue(editor.isUntouchedTemplate())
+
+        editor.undo()
+        assertFalse(editor.isUntouchedTemplate())
+        editor.redo()
+        assertTrue(editor.isUntouchedTemplate())
+
+        editor.load(NoteTemplate.MEETING.blocks(::resolve))
+        assertFalse(editor.isUntouchedTemplate())
+    }
+
+    @Test
+    fun anyEditOfAnAppliedTemplateMakesItATouchedNote() {
+        fun fresh(): BlockEditorState = BlockEditorState { 0L }.also {
+            it.applyTemplate(NoteTemplate.MEETING.blocks(::resolve))
+        }
+
+        // Typing into a heading, a paragraph, a list row.
+        fresh().let { e ->
+            (e.blocks.first() as Block.HBlock).text.value += "!"
+            assertFalse(e.isUntouchedTemplate())
+        }
+        fresh().let { e ->
+            (e.blocks.filterIsInstance<Block.TextBlock>().first()).text.value = "x"
+            assertFalse(e.isUntouchedTemplate())
+        }
+        fresh().let { e ->
+            val list = e.blocks.filterIsInstance<Block.ListBlock>().first()
+            list.items.value = listOf(list.items.value.first().copy(value = "a"))
+            assertFalse(e.isUntouchedTemplate())
+        }
+        // Checking an item, locking a checklist, a list row added.
+        fresh().let { e ->
+            val list = e.blocks.filterIsInstance<Block.ListBlock>().last()
+            list.items.value = listOf(list.items.value.first().copy(isCheck = true))
+            assertFalse(e.isUntouchedTemplate())
+        }
+        fresh().let { e ->
+            e.blocks.filterIsInstance<Block.ListBlock>().last().locked.value = true
+            assertFalse(e.isUntouchedTemplate())
+        }
+        fresh().let { e ->
+            val list = e.blocks.filterIsInstance<Block.ListBlock>().first()
+            list.items.value = list.items.value + list.items.value.first().copy(id = "new")
+            assertFalse(e.isUntouchedTemplate())
+        }
+        // A block added, or one of another kind in its place.
+        fresh().let { e ->
+            e.addBlock(Block.TextBlock())
+            assertFalse(e.isUntouchedTemplate())
+        }
+        fresh().let { e ->
+            e.replaceBlock(1, Block.QuoteBlock())
+            assertFalse(e.isUntouchedTemplate())
+        }
+    }
+
+    @Test
+    fun typingAndDeletingBackToTheTemplateTextIsUntouchedAgain() {
+        editor.applyTemplate(NoteTemplate.JOURNAL.blocks(::resolve))
+        val paragraph = editor.blocks.filterIsInstance<Block.TextBlock>().first()
+
+        paragraph.text.value = "x"
+        assertFalse(editor.isUntouchedTemplate())
+        paragraph.text.value = ""
+        assertTrue(editor.isUntouchedTemplate())
+    }
 }
