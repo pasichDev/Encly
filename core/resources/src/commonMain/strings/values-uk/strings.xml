@@ -214,6 +214,7 @@
     <string name="note_add">Нова нотатка</string>
     <string name="note_delete_failed">Не вдалося видалити нотатку</string>
     <string name="note_description_placeholder">Опис…</string>
+    <string name="note_description_none">Без опису</string>
     <string name="note_discard_all_changes">Скасувати всі зміни</string>
     <string name="note_discard_failed">Не вдалося скасувати зміни</string>
     <string name="note_duplicate_failed">Не вдалося створити копію</string>
@@ -535,7 +536,7 @@
     <string name="task_done_section">Виконано · %1$d</string>
     <string name="task_section_in_work">У роботі · %1$d</string>
     <string name="task_section_next">Далі · %1$d</string>
-    <string name="step_add">Крок</string>
+    <string name="step_add">Підзавдання</string>
     <string name="subtasks_show">Показати підзавдання</string>
     <string name="subtasks_hide">Сховати підзавдання</string>
     <string name="empty_notes_tagged">Немає нотаток з тегом «%1$s»</string>
@@ -559,7 +560,7 @@
     <string name="tag_add">Додати тег</string>
     <string name="tag_name_label">Назва</string>
     <string name="tag_show_in_list">Показувати в списку нотаток</string>
-    <string name="tag_show_in_list_desc">Прихований тег зберігає нотатки, але не має фільтра</string>
+    <string name="tag_show_in_list_desc">Коли тег прихований, його нотатки не показуються в списку, лише під його приглушеним фільтром</string>
     <string name="tag_drag_handle">Перетягніть, щоб змінити порядок</string>
     <string name="tag_move_up">Перемістити вгору</string>
     <string name="tag_move_down">Перемістити вниз</string>

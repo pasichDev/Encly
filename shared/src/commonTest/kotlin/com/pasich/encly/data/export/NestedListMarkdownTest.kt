@@ -109,7 +109,7 @@ class NestedListMarkdownTest {
         val mixed = list(BlockType.LIST_BULLET, row("p"), row("q", 1, BlockType.LIST_NUMBER))
 
         assertEquals(
-            "1. a\n  1. b\n  2. c\n2. d\n[x] x\n  [ ] y\n- p\n  1. q",
+            "1. a\n  1. b\n  2. c\n2. d\n☑ x\n  ☐ y\n• p\n  1. q",
             NotesTextFormatter.blocksToPlainText(listOf(numbers, checks, mixed)),
         )
     }

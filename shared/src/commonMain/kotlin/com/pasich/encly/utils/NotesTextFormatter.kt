@@ -13,6 +13,10 @@ import com.pasich.encly.editor.model.numbers
  * Utility class for formatting note text.
  */
 object NotesTextFormatter {
+    private const val CHECKED = "\u2611"
+    private const val UNCHECKED = "\u2610"
+    private const val BULLET = "\u2022"
+    private const val SEPARATOR = "\u2014\u2014\u2014"
 
     /**
      * Plain text of a note's stored blocks, or null when they cannot be read (damaged, or
@@ -45,9 +49,11 @@ object NotesTextFormatter {
     }.filter { it.isNotBlank() }.joinToString("\n")
 
     /**
-     * Converts a list of blocks into plain text without Markdown formatting, one block or list item
-     * per line. Blank paragraphs (the blank lines a note keeps between its sections) are skipped and
-     * no empty line separates blocks, so a card's short excerpt never spends a line on nothing.
+     * The excerpt a note card shows: its blocks as plain text, one block or list item per line, written for reading
+     * rather than as Markdown: a checklist item starts with a box (☐ open, ☑ done), a bullet with "•", a numbered
+     * item with its number, and a separator is a short rule. Blank paragraphs (the blank lines a note keeps between
+     * its sections) are skipped and no empty line separates blocks, so a card's short excerpt never spends a line on
+     * nothing.
      */
     fun blocksToPlainText(blocks: List<Block>): String {
         val text = StringBuilder()
@@ -77,7 +83,7 @@ object NotesTextFormatter {
                 }
 
                 is Block.SeparatorBlock -> {
-                    text.append("---------------------")
+                    text.append(SEPARATOR)
                     text.append("\n")
                 }
 
@@ -92,14 +98,9 @@ object NotesTextFormatter {
                     val numbers = items.numbers(block.blockType)
                     items.forEachIndexed { index, item ->
                         val marker = when (item.kindIn(block.blockType)) {
-                            // For checkboxes, use [x] or [ ]
-                            BlockType.LIST_CHECK -> if (item.isCheck) "[x]" else "[ ]"
-
-                            // Leave numbered lists as they are
+                            BlockType.LIST_CHECK -> if (item.isCheck) CHECKED else UNCHECKED
                             BlockType.LIST_NUMBER -> "${numbers[index]}."
-
-                            // For bulleted lists, use a hyphen
-                            else -> "-"
+                            else -> BULLET
                         }
                         text.append("  ".repeat(item.level)).append("$marker ${item.value}\n")
                     }

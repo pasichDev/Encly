@@ -214,6 +214,7 @@
     <string name="note_add">Nouvelle note</string>
     <string name="note_delete_failed">Impossible de supprimer la note</string>
     <string name="note_description_placeholder">Description…</string>
+    <string name="note_description_none">Sans description</string>
     <string name="note_discard_all_changes">Annuler toutes les modifications</string>
     <string name="note_discard_failed">Impossible d\'annuler les modifications</string>
     <string name="note_duplicate_failed">Impossible de créer une copie</string>
@@ -531,7 +532,7 @@
     <string name="task_done_section">Terminées · %1$d</string>
     <string name="task_section_in_work">En cours · %1$d</string>
     <string name="task_section_next">À suivre · %1$d</string>
-    <string name="step_add">Étape</string>
+    <string name="step_add">Sous-tâche</string>
     <string name="subtasks_show">Afficher les sous-tâches</string>
     <string name="subtasks_hide">Masquer les sous-tâches</string>
     <string name="empty_notes_tagged">Aucune note avec l’étiquette « %1$s »</string>
@@ -555,7 +556,7 @@
     <string name="tag_add">Ajouter l’étiquette</string>
     <string name="tag_name_label">Nom</string>
     <string name="tag_show_in_list">Afficher dans la liste des notes</string>
-    <string name="tag_show_in_list_desc">Une étiquette masquée garde ses notes mais n’a pas de filtre</string>
+    <string name="tag_show_in_list_desc">Masquée, ses notes restent hors de la liste et n’apparaissent que sous son filtre grisé</string>
     <string name="tag_drag_handle">Faire glisser pour réordonner</string>
     <string name="tag_move_up">Monter</string>
     <string name="tag_move_down">Descendre</string>

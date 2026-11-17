@@ -214,6 +214,7 @@
     <string name="note_add">Nowa notatka</string>
     <string name="note_delete_failed">Nie udało się usunąć notatki</string>
     <string name="note_description_placeholder">Opis…</string>
+    <string name="note_description_none">Bez opisu</string>
     <string name="note_discard_all_changes">Odrzuć wszystkie zmiany</string>
     <string name="note_discard_failed">Nie udało się odrzucić zmian</string>
     <string name="note_duplicate_failed">Nie udało się utworzyć kopii</string>
@@ -535,7 +536,7 @@
     <string name="task_done_section">Zrobione · %1$d</string>
     <string name="task_section_in_work">W toku · %1$d</string>
     <string name="task_section_next">Następne · %1$d</string>
-    <string name="step_add">Krok</string>
+    <string name="step_add">Podzadanie</string>
     <string name="subtasks_show">Pokaż podzadania</string>
     <string name="subtasks_hide">Ukryj podzadania</string>
     <string name="empty_notes_tagged">Brak notatek z tagiem „%1$s”</string>
@@ -559,7 +560,7 @@
     <string name="tag_add">Dodaj tag</string>
     <string name="tag_name_label">Nazwa</string>
     <string name="tag_show_in_list">Pokazuj na liście notatek</string>
-    <string name="tag_show_in_list_desc">Ukryty tag zachowuje notatki, ale nie ma filtra</string>
+    <string name="tag_show_in_list_desc">Gdy tag jest ukryty, jego notatki nie pojawiają się na liście, tylko pod jego przygaszonym filtrem</string>
     <string name="tag_drag_handle">Przeciągnij, aby zmienić kolejność</string>
     <string name="tag_move_up">Przenieś wyżej</string>
     <string name="tag_move_down">Przenieś niżej</string>

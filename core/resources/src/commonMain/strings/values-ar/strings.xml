@@ -197,6 +197,7 @@
     <string name="note_add">ملاحظة جديدة</string>
     <string name="note_delete_failed">تعذّر حذف الملاحظة</string>
     <string name="note_description_placeholder">الوصف…</string>
+    <string name="note_description_none">بلا وصف</string>
     <string name="note_discard_all_changes">تجاهل كل التغييرات</string>
     <string name="note_discard_failed">تعذّر تجاهل التغييرات</string>
     <string name="note_duplicate_failed">تعذّر إنشاء نسخة</string>
@@ -519,7 +520,7 @@
     <string name="task_done_section">المنجزة · %1$d</string>
     <string name="task_section_in_work">قيد التنفيذ · %1$d</string>
     <string name="task_section_next">التالية · %1$d</string>
-    <string name="step_add">خطوة</string>
+    <string name="step_add">مهمة فرعية</string>
     <string name="subtasks_show">إظهار المهام الفرعية</string>
     <string name="subtasks_hide">إخفاء المهام الفرعية</string>
     <string name="empty_notes_tagged">لا توجد ملاحظات بالوسم «%1$s»</string>
@@ -543,7 +544,7 @@
     <string name="tag_add">إضافة وسم</string>
     <string name="tag_name_label">الاسم</string>
     <string name="tag_show_in_list">إظهار في قائمة الملاحظات</string>
-    <string name="tag_show_in_list_desc">الوسم المخفي يحتفظ بملاحظاته لكن لا تظهر له شريحة تصفية</string>
+    <string name="tag_show_in_list_desc">عند إخفاء الوسم لا تظهر ملاحظاته في القائمة، بل تحت شريحة التصفية الباهتة فقط</string>
     <string name="tag_drag_handle">اسحب لإعادة الترتيب</string>
     <string name="tag_move_up">نقل لأعلى</string>
     <string name="tag_move_down">نقل لأسفل</string>

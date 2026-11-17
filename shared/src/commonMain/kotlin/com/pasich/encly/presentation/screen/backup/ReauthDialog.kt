@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.backup_reauth_subtitle
@@ -18,7 +17,9 @@ import com.pasich.encly.core.resources.backup_reauth_title
 import com.pasich.encly.core.resources.cancel
 import com.pasich.encly.editor.ui.components.ProtectDialogWindow
 import com.pasich.encly.platform.LocalBiometricHost
+import com.pasich.encly.presentation.designsystem.DialogSystemBarsLikeApp
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.edgeToEdgeDialogProperties
 import com.pasich.encly.presentation.designsystem.ProtectFromCapture
 import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
@@ -57,9 +58,11 @@ internal fun ReauthDialog(reauth: ReauthFlow, step: BackupStep.Reauth, onCancel:
     }
     Dialog(
         onDismissRequest = onCancel,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        // Edge to edge: the scaffold paints its own surface under the system bars and pads its content by the insets.
+        properties = edgeToEdgeDialogProperties(),
     ) {
         ProtectDialogWindow()
+        DialogSystemBarsLikeApp()
         ReauthPinEntry(
             reauth = reauth,
             step = step,

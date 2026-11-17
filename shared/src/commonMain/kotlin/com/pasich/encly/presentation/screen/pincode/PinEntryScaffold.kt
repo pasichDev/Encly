@@ -41,6 +41,7 @@ import com.pasich.encly.presentation.designsystem.EnclyLogoMark
 import com.pasich.encly.presentation.designsystem.KeypadSize
 import com.pasich.encly.presentation.designsystem.PinDots
 import com.pasich.encly.presentation.designsystem.PinKeypad
+import com.pasich.encly.presentation.designsystem.PinnedFooter
 import com.pasich.encly.presentation.designsystem.ProtectFromCapture
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -133,13 +134,7 @@ fun PinEntryScaffold(
                 }
             }
             if (footer != null) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(spacing.xxs),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = spacing.gutter, end = spacing.gutter, top = spacing.s, bottom = spacing.l),
-                    content = footer,
-                )
+                PinnedFooter(restBottom = spacing.l, content = footer)
             }
         }
     }

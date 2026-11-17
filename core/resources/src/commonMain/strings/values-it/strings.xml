@@ -214,6 +214,7 @@
     <string name="note_add">Nuova nota</string>
     <string name="note_delete_failed">Impossibile eliminare la nota</string>
     <string name="note_description_placeholder">Descrizione…</string>
+    <string name="note_description_none">Nessuna descrizione</string>
     <string name="note_discard_all_changes">Annulla tutte le modifiche</string>
     <string name="note_discard_failed">Impossibile annullare le modifiche</string>
     <string name="note_duplicate_failed">Impossibile creare una copia</string>
@@ -531,7 +532,7 @@
     <string name="task_done_section">Completate · %1$d</string>
     <string name="task_section_in_work">In corso · %1$d</string>
     <string name="task_section_next">Prossime · %1$d</string>
-    <string name="step_add">Passo</string>
+    <string name="step_add">Sottoattività</string>
     <string name="subtasks_show">Mostra sottoattività</string>
     <string name="subtasks_hide">Nascondi sottoattività</string>
     <string name="empty_notes_tagged">Nessuna nota con il tag «%1$s»</string>
@@ -555,7 +556,7 @@
     <string name="tag_add">Aggiungi tag</string>
     <string name="tag_name_label">Nome</string>
     <string name="tag_show_in_list">Mostra nell’elenco delle note</string>
-    <string name="tag_show_in_list_desc">Un tag nascosto mantiene le note ma non ha un filtro</string>
+    <string name="tag_show_in_list_desc">Se nascosto, le sue note restano fuori dall’elenco e compaiono solo nel suo filtro attenuato</string>
     <string name="tag_drag_handle">Trascina per riordinare</string>
     <string name="tag_move_up">Sposta su</string>
     <string name="tag_move_down">Sposta giù</string>

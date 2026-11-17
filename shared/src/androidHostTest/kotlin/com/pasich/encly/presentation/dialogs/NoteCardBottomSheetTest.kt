@@ -20,6 +20,7 @@ import com.pasich.encly.core.resources.note_archive
 import com.pasich.encly.core.resources.note_color_none
 import com.pasich.encly.core.resources.note_color_teal
 import com.pasich.encly.core.resources.note_color_title
+import com.pasich.encly.core.resources.note_description_none
 import com.pasich.encly.core.resources.note_description_placeholder
 import com.pasich.encly.core.resources.note_pin
 import com.pasich.encly.core.resources.note_unarchive
@@ -103,13 +104,14 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
             str(Res.string.note_color_title),
             str(Res.string.note_color_none),
             str(Res.string.task_description_placeholder),
-            str(Res.string.note_description_placeholder),
+            str(Res.string.note_description_none),
             str(Res.string.edit),
             str(Res.string.note_pin),
             str(Res.string.note_archive),
             str(Res.string.duplicate),
             str(Res.string.delete),
         ).forEach { assertEquals(it, 1, countText(it)) }
+        assertEquals(0, countText(str(Res.string.note_description_placeholder)))
     }
 
     @Test
@@ -128,6 +130,7 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
         assertEquals(1, countText("Work, Home"))
         assertEquals(1, countText(str(Res.string.note_color_teal)))
         assertEquals(1, countText("Weekly shop"))
+        assertEquals(0, countText(str(Res.string.note_description_none)))
         assertEquals(0, countText(str(Res.string.note_description_placeholder)))
         assertEquals("a pinned note offers Unpin", 1, countText(str(Res.string.note_unpin)))
     }

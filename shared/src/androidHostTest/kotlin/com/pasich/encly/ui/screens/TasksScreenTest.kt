@@ -29,6 +29,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import com.pasich.encly.core.resources.Res
@@ -136,6 +137,44 @@ class TasksScreenTest : ComposeScreenTest() {
         waitFor { app.tasks.tasks.value.any { it.title == "Water the plants" } }
         waitForText("Water the plants")
         assertTrue(rule.onAllNodesWithText(str(Res.string.add)).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun aLongTaskTitleWrapsOverSeveralLinesInsteadOfShowingOnlyItsEnd() {
+        show()
+        waitForText(str(Res.string.task_empty_title))
+        rule.onAllNodesWithText(str(Res.string.task_add)).onFirst().performClick()
+        rule.waitForIdle()
+        val title = { rule.onAllNodes(hasSetTextAction())[0] }
+
+        title().performTextInput("Buy groceries for the weekend trip and pick up the parcel from the post office")
+        rule.waitForIdle()
+
+        // The host's text measurement does not wrap at the real glyph widths, so the field's layout rules are
+        // checked rather than its pixel height: it wraps (soft wrap on) over more than the one line of a
+        // single-line field.
+        val layouts = mutableListOf<TextLayoutResult>()
+        title().fetchSemanticsNode().config.getOrNull(SemanticsActions.GetTextLayoutResult)!!.action!!(layouts)
+        val input = layouts.single().layoutInput
+        assertTrue("the title wraps", input.softWrap)
+        assertTrue("the title takes several lines, not one: ${input.maxLines}", input.maxLines > 1)
+    }
+
+    @Test
+    fun enterInTheTaskTitleMovesOnAndNeverBreaksTheTitleIntoTwoLines() {
+        show()
+        waitForText(str(Res.string.task_empty_title))
+        rule.onAllNodesWithText(str(Res.string.task_add)).onFirst().performClick()
+        rule.waitForIdle()
+        val title = { rule.onAllNodes(hasSetTextAction())[0] }
+
+        title().performTextInput("Water\nthe plants")
+        rule.waitForIdle()
+        rule.onNodeWithText("Water the plants").assertIsDisplayed()
+
+        title().performImeAction()
+        rule.waitForIdle()
+        rule.onAllNodes(hasSetTextAction())[1].assertIsFocused()
     }
 
     @Test

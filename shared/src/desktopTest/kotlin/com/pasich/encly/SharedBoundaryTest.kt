@@ -190,6 +190,8 @@ class SharedBoundaryTest {
             "com/pasich/encly/presentation/designsystem/PlatformKeys.android.kt" to
                 "a hardware keyboard uses Ctrl as the command key",
             "com/pasich/encly/ui/theme/PointerFirst.android.kt" to "touch first: no mouse and keyboard density",
+            "com/pasich/encly/presentation/designsystem/EdgeToEdgeDialog.android.kt" to
+                "a full-screen dialog draws under the system bars (DialogProperties.decorFitsSystemWindows)",
         )
 
         /** The desktop actuals. */
@@ -205,6 +207,8 @@ class SharedBoundaryTest {
             "com/pasich/encly/presentation/designsystem/PlatformKeys.desktop.kt" to
                 "os.name decides whether the command key is Meta (macOS) or Ctrl",
             "com/pasich/encly/ui/theme/PointerFirst.desktop.kt" to "mouse and keyboard first: the desktop density",
+            "com/pasich/encly/presentation/designsystem/EdgeToEdgeDialog.desktop.kt" to
+                "no system bars under a dialog window on the desktop",
         )
     }
 }

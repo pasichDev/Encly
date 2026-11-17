@@ -46,7 +46,7 @@ versionCode 30000.
 - Opening and closing a note is quicker ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Find in note highlights matches more strongly ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - Backspace at the start of a list item joins it into the item above, so holding delete runs through a list without stopping ([#76](https://github.com/pasichDev/Encly/issues/76)).
-- A new look for tasks: grouped into to do, in progress and done, with the progress of their steps; editing a task no longer opens the keyboard by itself.
+- A new look for tasks: grouped into to do, in progress and done, with the progress of their sub-tasks; editing a task no longer opens the keyboard by itself.
 - Sheets and dialogs move with the keyboard, hide when Encly locks, and the note sheet groups its actions; Delete and Save sit side by side in one row.
 - Encly locks at once when the screen turns off, and on Android 14 and later the auto-lock delay also ends while the app sleeps in the background.
 - Copied note text is cleared only if it is still Encly's own copy, also when Encly locks or was closed by the system.

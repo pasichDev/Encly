@@ -4,7 +4,15 @@ import android.app.Activity
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -157,6 +165,39 @@ class LockScreenTest : ComposeScreenTest() {
 
         assertEquals(PHRASE.split(' '), phraseCells())
         rule.onNodeWithText(str(Res.string.lock_recover_access)).assertIsEnabled()
+    }
+
+    @Test
+    fun withTheKeyboardOpenTheRecoveryCellsScrollAboveTheButton() {
+        show()
+        rule.onNodeWithText(str(Res.string.lock_use_recovery_phrase)).performClick()
+        phraseCell(1).performClick()
+        showIme()
+
+        // The "back to PIN" text action sits under the button.
+        assertFieldClearOfButton(
+            phraseCell(12),
+            rule.onNodeWithText(str(Res.string.lock_recover_access)),
+            maxGapBelowButtonDp = BUTTON_GAP_DP + TEXT_ACTION_DP,
+        )
+    }
+
+    @Test
+    fun theRecoveryLinkIsCentredSoItStaysSoWhenItWraps() {
+        `when`(app.security.hasRecoverySeed()).thenReturn(true)
+        setNavScreen(viewModels(app.lock()), route = NavRoutes.LockRoute.name) { nav ->
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
+                LockScreen(nav)
+            }
+        }
+
+        // The test font is too narrow to wrap this line, so the alignment it would wrap with is what is checked.
+        val link = rule.onNode(hasText(str(Res.string.lock_use_recovery_phrase)), useUnmergedTree = true)
+        val layouts = mutableListOf<TextLayoutResult>()
+        link.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+
+        assertEquals(TextAlign.Center, layouts.single().layoutInput.style.textAlign)
     }
 
     @Test

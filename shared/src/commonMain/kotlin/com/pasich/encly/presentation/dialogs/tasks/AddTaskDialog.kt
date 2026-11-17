@@ -22,6 +22,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -52,7 +57,11 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
 private const val TASK_TITLE_MAX_LENGTH = 100
+private const val TASK_TITLE_MAX_LINES = 4
 private const val TASK_DESCRIPTION_MAX_LENGTH = 150
+
+/** A title is one paragraph: a pasted line break becomes a space. */
+private fun String.withoutLineBreaks() = replace("\r\n", " ").replace('\n', ' ').replace('\r', ' ')
 
 /** [subtasks] is the checklist to save, null while an edited task's one has not loaded. */
 private data class TaskEditorState(
@@ -125,7 +134,7 @@ fun AddTaskDialog(
         }
     }
     val actions = TaskEditorActions(
-        onTitleChange = { title = it.take(TASK_TITLE_MAX_LENGTH) },
+        onTitleChange = { title = it.withoutLineBreaks().take(TASK_TITLE_MAX_LENGTH) },
         onDescriptionChange = { description = it.take(TASK_DESCRIPTION_MAX_LENGTH) },
         onPrioritySelect = { selectedPriority = it },
         onSubmit = { submitTask(state, submit) },
@@ -183,7 +192,17 @@ private fun TaskEditorContent(
                 ),
                 keyboardOptions = vaultTextKeyboardOptions(ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { descriptionFocus.requestFocus() }),
-                fieldModifier = Modifier.focusRequester(titleFocusRequester),
+                // A title wraps over a few lines (then scrolls) rather than showing only its end; Enter still
+                // moves on to the description and never lands in the title.
+                singleLine = false,
+                maxLines = TASK_TITLE_MAX_LINES,
+                fieldModifier = Modifier
+                    .focusRequester(titleFocusRequester)
+                    .onPreviewKeyEvent { event ->
+                        val enter = event.key == Key.Enter || event.key == Key.NumPadEnter
+                        if (enter && event.type == KeyEventType.KeyDown) descriptionFocus.requestFocus()
+                        enter
+                    },
             )
             EnclyTextField(
                 value = state.description,

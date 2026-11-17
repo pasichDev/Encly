@@ -48,6 +48,7 @@ import com.pasich.encly.core.resources.main_drawer_tags
 import com.pasich.encly.core.resources.no_tag
 import com.pasich.encly.core.resources.note_archive
 import com.pasich.encly.core.resources.note_color_title
+import com.pasich.encly.core.resources.note_description_none
 import com.pasich.encly.core.resources.note_description_placeholder
 import com.pasich.encly.core.resources.note_pin
 import com.pasich.encly.core.resources.note_unarchive
@@ -247,7 +248,7 @@ private fun NoteSettingRows(item: NoteWithTags, onPage: (NoteSheetPage) -> Unit)
             title = stringResource(Res.string.task_description_placeholder),
             icon = EnclyIcons.Comment,
             value = item.note.description.lineSequence().firstOrNull { it.isNotBlank() }?.trim()
-                ?: stringResource(Res.string.note_description_placeholder),
+                ?: stringResource(Res.string.note_description_none),
             chevron = true,
             onClick = { onPage(NoteSheetPage.DESCRIPTION) },
         )

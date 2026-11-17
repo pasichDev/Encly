@@ -216,6 +216,39 @@ class OnboardingScreenTest : ComposeScreenTest() {
         assertTrue(!completed)
     }
 
+    @Test
+    fun withTheKeyboardOpenTheCheckFieldsScrollAboveConfirm() {
+        show()
+        primary(Res.string.onboarding_get_started).performClick()
+        choosePin()
+        waitForText(str(Res.string.onboarding_recovery_title))
+        primary(Res.string.onboarding_recovery_create).performClick()
+        waitForText(str(Res.string.onboarding_phrase_title))
+        primary(Res.string.onboarding_phrase_done).performClick()
+        waitForText(str(Res.string.onboarding_verify_title))
+
+        val fields = rule.onAllNodes(hasSetTextAction())
+        fields[0].performClick()
+        showIme()
+
+        val last = fields[fields.fetchSemanticsNodes().lastIndex]
+        // "Show the words again" sits under Confirm.
+        val confirm = primary(Res.string.onboarding_verify_confirm)
+        assertFieldClearOfButton(last, confirm, maxGapBelowButtonDp = BUTTON_GAP_DP + TEXT_ACTION_DP)
+    }
+
+    @Test
+    fun withTheKeyboardOpenTheRestoreCellsScrollAboveRestore() {
+        show()
+        primary(Res.string.onboarding_have_backup).performClick()
+        waitForText(str(Res.string.onboarding_restore_title))
+
+        phraseCell(1).performClick()
+        showIme()
+
+        assertFieldClearOfButton(phraseCell(12), primary(Res.string.restore))
+    }
+
     private fun pickBackup() {
         val file = runBlocking { app.backupFile(words, Note(title = "Plan", value = "[]", uid = "n-plan")) }
         rule.runOnIdle { onboarding.onRestoreFilePicked(app.document("notes.enclybak", file)) }

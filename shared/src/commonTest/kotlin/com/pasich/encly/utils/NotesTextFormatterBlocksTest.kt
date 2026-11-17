@@ -44,7 +44,7 @@ class NotesTextFormatterBlocksTest {
     @Test
     fun aSeparatorIsALineOfDashes() {
         assertEquals(
-            "a\n---------------------\nb",
+            "a\n———\nb",
             NotesTextFormatter.blocksToPlainText(listOf(text("a"), Block.SeparatorBlock(), text("b"))),
         )
     }
@@ -56,7 +56,7 @@ class NotesTextFormatterBlocksTest {
         val bullets = list(BlockType.LIST_BULLET, ItemListBlock("x"), ItemListBlock("y"))
 
         assertEquals(
-            "[x] done\n[ ] open\n1. first\n2. second\n- x\n- y",
+            "☑ done\n☐ open\n1. first\n2. second\n• x\n• y",
             NotesTextFormatter.blocksToPlainText(listOf(checked, numbered, bullets)),
         )
     }

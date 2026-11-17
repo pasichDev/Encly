@@ -1,11 +1,6 @@
 package com.pasich.encly.presentation.screen.onboarding
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.pasich.encly.core.resources.Res
@@ -24,10 +19,10 @@ import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.PinnedFooter
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
-import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
 internal fun footerSpec(
@@ -93,27 +88,15 @@ internal fun footerSpec(
  */
 @Composable
 internal fun OnboardingFooter(spec: FooterSpec, modifier: Modifier = Modifier) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                start = EnclyTheme.spacing.gutter,
-                end = EnclyTheme.spacing.gutter,
-                top = EnclyTheme.spacing.s,
-                bottom = EnclyTheme.spacing.stepGap,
-            ),
-    ) {
+    val secondary = spec.secondary
+    PinnedFooter(modifier = modifier, reserveTextRow = secondary == null) {
         EnclyButton(
             text = stringResource(spec.primary),
             onClick = spec.onPrimary,
             enabled = spec.enabled,
             loading = spec.loading,
         )
-        val secondary = spec.secondary
-        if (secondary == null) {
-            Spacer(modifier = Modifier.height(EnclyTheme.spacing.textButtonHeight))
-        } else {
+        if (secondary != null) {
             EnclyTextButton(
                 text = hostString(secondary),
                 onClick = spec.onSecondary,

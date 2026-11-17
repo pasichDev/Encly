@@ -231,6 +231,7 @@
     <string name="note_add">New note</string>
     <string name="note_delete_failed">Couldn\'t delete the note</string>
     <string name="note_description_placeholder">Description…</string>
+    <string name="note_description_none">No description</string>
     <string name="note_discard_all_changes">Discard all changes</string>
     <string name="note_discard_failed">Couldn\'t discard changes</string>
     <string name="note_duplicate_failed">Couldn\'t create a copy</string>
@@ -545,7 +546,7 @@
     <string name="task_done_section">Done · %1$d</string>
     <string name="task_section_in_work">In progress · %1$d</string>
     <string name="task_section_next">Up next · %1$d</string>
-    <string name="step_add">Step</string>
+    <string name="step_add">Sub-task</string>
     <string name="subtasks_show">Show sub-tasks</string>
     <string name="subtasks_hide">Hide sub-tasks</string>
     <string name="empty_notes_tagged">No notes tagged “%1$s”</string>
@@ -569,7 +570,7 @@
     <string name="tag_add">Add tag</string>
     <string name="tag_name_label">Name</string>
     <string name="tag_show_in_list">Show in the notes list</string>
-    <string name="tag_show_in_list_desc">A hidden tag keeps its notes but gets no filter chip</string>
+    <string name="tag_show_in_list_desc">When hidden, its notes stay out of the notes list and show only under its dimmed chip</string>
     <string name="tag_drag_handle">Drag to reorder</string>
     <string name="tag_move_up">Move up</string>
     <string name="tag_move_down">Move down</string>

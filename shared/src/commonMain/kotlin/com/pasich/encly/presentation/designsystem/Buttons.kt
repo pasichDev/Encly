@@ -239,7 +239,8 @@ fun EnclyTextButton(
                     .size(EnclyTheme.spacing.iconSmall),
             )
         }
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
+        // Centred, so a label that wraps at a large font scale keeps the screen's alignment.
+        Text(text = text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
     }
 }
 

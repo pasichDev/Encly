@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 
@@ -20,6 +21,9 @@ fun HighlightedText(
     modifier: Modifier = Modifier,
     maxLines: Int = Int.MAX_VALUE,
 ) {
+    // User text: its own first strong character sets the paragraph direction (Latin text in an RTL UI keeps its
+    // ellipsis at the end), while TextAlign.Start from the theme keeps Arabic text on the right.
+    val style = style.copy(textDirection = TextDirection.Content)
     if (searchQuery.isBlank()) {
         Text(
             text = text,

@@ -214,6 +214,7 @@
     <string name="note_add">Nieuwe notitie</string>
     <string name="note_delete_failed">Kan de notitie niet verwijderen</string>
     <string name="note_description_placeholder">Beschrijving…</string>
+    <string name="note_description_none">Geen beschrijving</string>
     <string name="note_discard_all_changes">Alle wijzigingen negeren</string>
     <string name="note_discard_failed">Kan de wijzigingen niet negeren</string>
     <string name="note_duplicate_failed">Kan geen kopie maken</string>
@@ -527,7 +528,7 @@
     <string name="task_done_section">Klaar · %1$d</string>
     <string name="task_section_in_work">Bezig · %1$d</string>
     <string name="task_section_next">Hierna · %1$d</string>
-    <string name="step_add">Stap</string>
+    <string name="step_add">Subtaak</string>
     <string name="subtasks_show">Subtaken tonen</string>
     <string name="subtasks_hide">Subtaken verbergen</string>
     <string name="empty_notes_tagged">Geen notities met de tag ‘%1$s’</string>
@@ -551,7 +552,7 @@
     <string name="tag_add">Tag toevoegen</string>
     <string name="tag_name_label">Naam</string>
     <string name="tag_show_in_list">Tonen in de notitielijst</string>
-    <string name="tag_show_in_list_desc">Een verborgen tag houdt zijn notities maar krijgt geen filter</string>
+    <string name="tag_show_in_list_desc">Verborgen blijven de notities buiten de lijst en staan ze alleen onder het gedimde filter</string>
     <string name="tag_drag_handle">Sleep om te ordenen</string>
     <string name="tag_move_up">Omhoog</string>
     <string name="tag_move_down">Omlaag</string>

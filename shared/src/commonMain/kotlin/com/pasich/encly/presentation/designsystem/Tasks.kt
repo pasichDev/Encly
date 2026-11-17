@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -194,7 +195,7 @@ private fun TaskRowText(
         Text(
             text = title,
             style = (if (large) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium)
-                .copy(textDecoration = done),
+                .copy(textDecoration = done, textDirection = TextDirection.Content),
             color = if (checked) colors.onSurfaceVariant else colors.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -202,7 +203,8 @@ private fun TaskRowText(
         if (!description.isNullOrBlank()) {
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall.copy(textDecoration = done),
+                style = MaterialTheme.typography.bodySmall
+                    .copy(textDecoration = done, textDirection = TextDirection.Content),
                 color = colors.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

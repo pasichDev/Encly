@@ -214,6 +214,7 @@
     <string name="note_add">Neue Notiz</string>
     <string name="note_delete_failed">Die Notiz konnte nicht gelöscht werden</string>
     <string name="note_description_placeholder">Beschreibung…</string>
+    <string name="note_description_none">Keine Beschreibung</string>
     <string name="note_discard_all_changes">Alle Änderungen verwerfen</string>
     <string name="note_discard_failed">Die Änderungen konnten nicht verworfen werden</string>
     <string name="note_duplicate_failed">Die Kopie konnte nicht erstellt werden</string>
@@ -527,7 +528,7 @@
     <string name="task_done_section">Erledigt · %1$d</string>
     <string name="task_section_in_work">In Arbeit · %1$d</string>
     <string name="task_section_next">Als Nächstes · %1$d</string>
-    <string name="step_add">Schritt</string>
+    <string name="step_add">Unteraufgabe</string>
     <string name="subtasks_show">Unteraufgaben anzeigen</string>
     <string name="subtasks_hide">Unteraufgaben ausblenden</string>
     <string name="empty_notes_tagged">Keine Notizen mit dem Tag „%1$s“</string>
@@ -551,7 +552,7 @@
     <string name="tag_add">Tag hinzufügen</string>
     <string name="tag_name_label">Name</string>
     <string name="tag_show_in_list">In der Notizliste zeigen</string>
-    <string name="tag_show_in_list_desc">Ein ausgeblendeter Tag behält seine Notizen, aber keinen Filter-Chip</string>
+    <string name="tag_show_in_list_desc">Ausgeblendet bleiben seine Notizen aus der Liste und erscheinen nur unter seinem abgeblendeten Filter-Chip</string>
     <string name="tag_drag_handle">Ziehen zum Sortieren</string>
     <string name="tag_move_up">Nach oben</string>
     <string name="tag_move_down">Nach unten</string>

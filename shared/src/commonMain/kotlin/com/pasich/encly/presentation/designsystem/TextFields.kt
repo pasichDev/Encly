@@ -54,7 +54,8 @@ sealed interface FieldState {
  * A labelled single-line field (design spec §3.3): label above, 52 dp field with radius 12.
  * Rest: 1 dp `outline`. Focused: 2 dp `onSurface`. [FieldState.Valid]: 1 dp `primary` and a
  * trailing "Correct". [FieldState.Error]: 2 dp `error` and the message below. [fieldModifier]
- * reaches the text field itself (a FocusRequester), [modifier] the whole block.
+ * reaches the text field itself (a FocusRequester), [modifier] the whole block. With `singleLine = false` the
+ * field wraps and grows up to [maxLines] lines, then scrolls.
  */
 @Composable
 fun EnclyTextField(
@@ -70,6 +71,7 @@ fun EnclyTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
+    maxLines: Int = 1,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
@@ -89,6 +91,7 @@ fun EnclyTextField(
             onValueChange = onValueChange,
             enabled = enabled,
             singleLine = singleLine,
+            maxLines = if (singleLine) 1 else maxLines,
             textStyle = textStyle.copy(color = textColor),
             cursorBrush = SolidColor(colors.primary),
             keyboardOptions = keyboardOptions,

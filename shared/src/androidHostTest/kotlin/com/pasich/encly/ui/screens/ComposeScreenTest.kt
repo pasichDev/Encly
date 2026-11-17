@@ -6,11 +6,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import android.view.View
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -19,6 +24,9 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -279,7 +287,56 @@ abstract class ComposeScreenTest {
         rule.waitForIdle()
     }
 
+    /**
+     * Shows the soft keyboard to the layout: sends [heightDp] of visible IME insets to the Compose view,
+     * as the system does, so `imePadding` and `WindowInsets.isImeVisible` see an open keyboard.
+     */
+    protected fun showIme(heightDp: Int = IME_HEIGHT_DP) {
+        val view = rule.onRoot().fetchSemanticsNode().root as View
+        val px = (heightDp * view.resources.displayMetrics.density).toInt()
+        val insets = WindowInsetsCompat.Builder()
+            .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, px))
+            .setVisible(WindowInsetsCompat.Type.ime(), true)
+            .build()
+        rule.runOnUiThread { ViewCompat.dispatchApplyWindowInsets(view, insets) }
+        rule.waitForIdle()
+    }
+
+    protected fun SemanticsNodeInteraction.rootBounds(): Rect = fetchSemanticsNode().boundsInRoot
+
+    /**
+     * The contract of "content, then a button pinned above the keyboard": every scrolling area ends above
+     * [button], and [field], scrolled to, is shown and does not touch the button.
+     */
+    protected fun assertFieldClearOfButton(
+        field: SemanticsNodeInteraction,
+        button: SemanticsNodeInteraction,
+        maxGapBelowButtonDp: Int = BUTTON_GAP_DP,
+    ) {
+        val top = button.rootBounds().top
+        val window = rule.onRoot().fetchSemanticsNode()
+        val keyboardTop = window.boundsInRoot.bottom - IME_HEIGHT_DP * context.resources.displayMetrics.density
+        // Proves the fake keyboard reached the layout: without it the button would sit lower.
+        val end = button.rootBounds().bottom
+        assertTrue("the button ends at $end, in the keyboard that starts at $keyboardTop", end <= keyboardTop)
+        rule.onAllNodes(hasScrollAction()).fetchSemanticsNodes().forEach { area ->
+            val areaEnd = area.boundsInRoot.bottom
+            assertTrue("a scrolling area ends at $areaEnd, below the button's top $top", areaEnd <= top)
+        }
+        // No dead room under the button: what the footer does not need while typing belongs to the form.
+        val gap = keyboardTop - button.rootBounds().bottom
+        val allowed = maxGapBelowButtonDp * context.resources.displayMetrics.density
+        assertTrue("the button floats $gap px above the keyboard, more than $allowed", gap <= allowed)
+        field.performScrollTo().assertIsDisplayed()
+        rule.waitForIdle()
+        val bottom = field.rootBounds().bottom
+        assertTrue("the field ends at $bottom, under the button that starts at $top", bottom <= top)
+    }
+
     protected companion object {
+        const val IME_HEIGHT_DP = 300
+        const val BUTTON_GAP_DP = 24
+        const val TEXT_ACTION_DP = 44
         const val WAIT_MS = 5_000L
         const val PHRASE_WORDS = 12
         const val FRAME_MS = 16L
