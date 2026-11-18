@@ -209,7 +209,7 @@ upload this key instead of letting Google generate one).
   workflows pin the certificate.
 - Store screenshots and feature graphics are in place for every locale, in
   `fastlane/metadata/android/<locale>/images/` (8 phone screenshots, 1080×1920, demo data only,
-  plus a 1024×500 `featureGraphic.png`). Keep all 9 locales in step when you replace them.
+  plus a 1024×500 `featureGraphic.png`). Keep all 10 locales in step when you replace them.
 - The privacy policy the app and both store listings link to is published at
   <https://pasichdev.xyz/apps/encly/privacy-policy/>; keep it in step with `PRIVACY.md`.
 - Make the repository public, then enable **Settings → Code security → Private vulnerability
@@ -244,7 +244,7 @@ upload this key instead of letting Google generate one).
    with `SHA256SUMS` (signed as `SHA256SUMS.asc` when the GPG secrets are set) and the R8
    mapping files.
 6. Google Play: the same tag runs [Publish to Google Play](.github/workflows/publish-play.yml),
-   which builds and signs the `play` bundle and publishes it to production for 100% of users,
+   which builds and signs the `play` bundle and publishes it to production as a staged rollout to 10% of users (raise it in Play Console),
    with the R8 mapping file (so Play Console shows readable crash stack traces) and the release
    notes from step 3. To re-run it, start the workflow by hand from the tag.
 7. F-Droid picks the new tag up by itself (`AutoUpdateMode: Version`), usually within a few days.

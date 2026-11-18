@@ -1,7 +1,8 @@
 name: Publish to Google Play
 
-# A release tag vX.Y.Z publishes the signed `play` bundle to the Google Play PRODUCTION track,
-# rolled out to 100% of users, with the R8 mapping file and the release notes.
+# A release tag vX.Y.Z publishes the signed `play` bundle to the Google Play PRODUCTION track
+# as a staged rollout to 10% of users (raise or halt it in Play Console), with the R8 mapping file
+# and the release notes.
 # It can be re-run by hand (Actions -> "Publish to Google Play" -> Run workflow, choosing the tag
 # under "Use workflow from"); a run from a branch fails.
 #

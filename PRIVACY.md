@@ -1,6 +1,6 @@
 # Privacy Policy
 
-_Effective: 2026-09-25 · Applies to Encly 2.0.0 and later (Android, package `com.pasich.encly`)._
+_Effective: 2026-11-18 · Applies to Encly 2.0.0 and later (Android, package `com.pasich.encly`)._
 
 Encly is an offline notes and tasks app. This policy explains what happens to your data.
 The short version: **everything stays on your device, encrypted, and nobody (including the

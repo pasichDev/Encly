@@ -1,8 +1,8 @@
 Encly 3.0.0
 • PIN de 6 à 12 chiffres ; le PIN reste après un déverrouillage par phrase.
-• Sélection sur plusieurs paragraphes ; tableaux, code, listes imbriquées, éléments à glisser.
+• Sélection entre paragraphes ; tableaux, code, listes imbriquées, glisser les éléments.
 • Plusieurs libellés par note.
 • Barre d'outils personnalisable ; masquer le texte des notes.
-• Arabe et mise en page de droite à gauche ; réglages dans la sauvegarde.
-• L'empreinte marche après un verrouillage en arrière-plan.
-• Tâches groupées par état ; la corbeille décompte 28 jours avant suppression.
+• Arabe et droite à gauche ; réglages dans la sauvegarde.
+• L'empreinte marche après verrouillage en arrière-plan ; les notes gardent leur date de création.
+• Tâches par état ; la corbeille décompte 28 jours avant suppression.

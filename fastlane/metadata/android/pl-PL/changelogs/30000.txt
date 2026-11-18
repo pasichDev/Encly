@@ -4,5 +4,5 @@ Encly 3.0.0
 • Kilka etykiet na notatkę.
 • Własny pasek narzędzi; ukrywanie tekstu notatek na listach.
 • Arabski i układ od prawej do lewej; ustawienia w kopii.
-• Odcisk palca działa po blokadzie w tle.
+• Odcisk palca działa po blokadzie w tle; notatki zachowują datę utworzenia.
 • Zadania według stanu; kosz odlicza 28 dni do usunięcia.

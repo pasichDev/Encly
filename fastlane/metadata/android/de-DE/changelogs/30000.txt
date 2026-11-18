@@ -4,5 +4,5 @@ Encly 3.0.0
 • Mehrere Labels pro Notiz.
 • Eigene Werkzeugleiste; Notiztext in Listen ausblenden.
 • Arabisch und Rechts-nach-links; Einstellungen im Backup.
-• Fingerabdruck klappt nach Sperre im Hintergrund.
-• Aufgaben nach Status; der Papierkorb zählt 28 Tage bis zum Löschen herunter.
+• Fingerabdruck klappt nach Sperre im Hintergrund; Notizen behalten ihr Erstelldatum.
+• Aufgaben nach Status; Papierkorb zählt 28 Tage bis zum Löschen.

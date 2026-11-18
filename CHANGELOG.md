@@ -16,7 +16,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 - Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
 - Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
 
-## [3.0.0] - 2026-11-07
+## [3.0.0] - 2026-11-18
 
 versionCode 30000.
 
@@ -61,6 +61,7 @@ versionCode 30000.
 - The gap below a quote matches the gap above it ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - A task or note could appear twice for a moment while it changed state, and the app could close ([#110](https://github.com/pasichDev/Encly/pull/110)).
 - Pressing Back twice quickly could close two screens at once.
+- A new note started from a template and left without any changes stayed in the list with only the outline; it is now dropped like a blank note.
 - After new fingerprints were added to the phone, the fingerprint button did nothing; the lock screen now says to unlock with the PIN and turn fingerprint unlock on again.
 
 ## [2.3.1] - 2026-10-27
