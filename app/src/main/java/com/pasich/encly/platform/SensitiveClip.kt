@@ -1,5 +1,6 @@
 package com.pasich.encly.platform
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
@@ -16,6 +17,7 @@ import androidx.compose.ui.platform.AndroidClipboard
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.core.content.edit
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -187,18 +189,18 @@ object SensitiveClip {
 
     private fun persist(entry: Pending) = synchronized(lock) {
         pending = entry
-        prefs?.edit()
-            ?.putLong(KEY_STAMP, entry.stamp)
-            ?.putLong(KEY_COPIED_AT, entry.copiedAt)
-            ?.putBoolean(KEY_DUE, entry.due)
-            ?.apply()
+        prefs?.edit {
+            putLong(KEY_STAMP, entry.stamp)
+            putLong(KEY_COPIED_AT, entry.copiedAt)
+            putBoolean(KEY_DUE, entry.due)
+        }
     }
 
     /** Drops the pending record if it is the one for [stamp]; a newer copy keeps its own. */
     private fun forget(stamp: Long) = synchronized(lock) {
         if (pending?.stamp != stamp) return@synchronized
         pending = null
-        prefs?.edit()?.clear()?.apply()
+        prefs?.edit { clear() }
     }
 
     private fun timestampOf(clipboard: ClipboardManager): Long? = try {
@@ -212,8 +214,10 @@ object SensitiveClip {
  * A [Clipboard] that applies [SensitiveClip] to everything set through it. It must be an
  * [AndroidClipboard]: Compose's text toolbar reads the system clipboard through
  * `Clipboard.nativeClipboardManager`, which throws for any other [Clipboard], so a plain
- * wrapper crashed the app on every text selection.
+ * wrapper crashed the app on every text selection. Compose marks the interface as visible for tests, yet it is the
+ * only way to keep that native clipboard reachable.
  */
+@SuppressLint("VisibleForTests")
 private class SensitiveComposeClipboard(private val delegate: Clipboard) : AndroidClipboard {
     override val clipboardManager: ClipboardManager get() = delegate.nativeClipboard
 

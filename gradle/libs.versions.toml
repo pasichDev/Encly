@@ -6,13 +6,13 @@
 agp = "9.5.1"
 kotlin = "2.4.21"
 ksp = "2.3.13"
-metro = "1.5.0"
+metro = "1.6.0"
 detekt = "1.23.8"
 kover = "0.9.11"
-dokka = "2.2.0"
+dokka = "2.3.0"
 # Compose Multiplatform, used by the :editor module; the app keeps the androidx BOM below.
 composeMultiplatform = "1.12.2"
-spotless = "8.10.4"
+spotless = "8.11.0"
 # ktlint and the Compose detekt rules are tool artifacts, not app dependencies (see build.gradle.kts).
 ktlint = "1.8.0"
 # 0.4.x is the line built against detekt 1.23.x; 0.5+ needs detekt 2.x.
@@ -33,9 +33,9 @@ coroutines = "1.11.0"
 biometric = "1.1.0"
 reorderable = "3.1.0"
 datastore = "1.3.0"
-serializationJson = "1.12.0"
+serializationJson = "1.13.0"
 datetime = "0.8.0"
-kotlinxIo = "0.9.1"
+kotlinxIo = "0.9.3"
 # SynchronizedObject and synchronized {} for common code (the locks of :core:security); the Gradle plugin is not used.
 atomicfu = "0.33.0"
 sqlcipher = "4.20.0"
@@ -45,19 +45,19 @@ iconsLucide = "1.1.0"
 # The OS secret stores behind :core:keystore on the desktop: DPAPI and the Keychain through JNA, the freedesktop
 # Secret Service through D-Bus.
 jna = "5.19.1"
-dbusJava = "5.1.1"
-slf4j = "2.0.17"
+dbusJava = "5.2.2"
+slf4j = "2.0.20"
 # The desktop PDF writer and printer (Apache-2.0): builds the document in memory, with no network code.
-pdfbox = "3.0.5"
+pdfbox = "3.0.8"
 # Arabic letter shaping and the bidirectional algorithm for the PDF (Unicode License): PDFBox has neither.
-icu4j = "78.3"
+icu4j = "79.1"
 
 junit = "4.13.2"
 androidxTestCore = "1.7.0"
 androidxTestRunner = "1.7.0"
 androidxTestExtJunit = "1.3.0"
 mockito = "5.24.0"
-robolectric = "4.17"
+robolectric = "4.18"
 
 [libraries]
 # Gradle plugins on the classpath of build-logic (the convention plugins apply them).
