@@ -9,7 +9,8 @@ ksp = "2.3.13"
 metro = "1.6.0"
 detekt = "1.23.8"
 kover = "0.9.11"
-dokka = "2.3.0"
+# 2.3.0 fails the docs build on Linux CI: it warns about `@Composable` in the iOS sources there.
+dokka = "2.2.0"
 # Compose Multiplatform, used by the :editor module; the app keeps the androidx BOM below.
 composeMultiplatform = "1.12.2"
 spotless = "8.11.0"
