@@ -18,6 +18,7 @@ import com.pasich.encly.testutil.InMemoryVaultDataStore
 import com.pasich.encly.testutil.anyCharArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -219,6 +220,25 @@ class BackupViewModelTest {
 
         waitForStep { it == BackupStep.Idle }
         assertTrue(sessionLock.locked.value)
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun aPinCheckThatEndsWhileALockWaitsForTheEditorsDoesNotAllowScreenshots() {
+        `when`(security.isLockable()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        // An editor is saving: the lock revokes the allowance at once but closes the vault only after the save.
+        sessionLock.registerPreLockFlush { awaitCancellation() }
+        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+            sessionLock.lockNow()
+            true
+        }
+        viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        // The lock is still waiting for the save here (up to a second), so `locked` alone would not refuse it.
+        waitForStep { it == BackupStep.Idle }
         assertFalse(screenshots.allowed.value)
     }
 

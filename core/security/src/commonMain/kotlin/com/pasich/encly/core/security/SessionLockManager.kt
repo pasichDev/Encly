@@ -279,6 +279,9 @@ public class SessionLockManager(
             relock()
             return false
         }
+        // A new session starts protected: an allowance that slipped in after the lock that ended the last one
+        // (it is revoked when a lock starts, and the vault can close up to a second later) does not reach this one.
+        screenshots.revoke()
         sessionGeneration++
         _locked.value = false
         return true
@@ -341,8 +344,12 @@ public class SessionLockManager(
     }
 
     private fun closeVault() {
-        securityManager.lock()
-        _locked.value = true
+        try {
+            securityManager.lock()
+        } finally {
+            // Published even if closing the vault failed: the UI must not go on showing an open session.
+            _locked.value = true
+        }
     }
 
     private companion object {

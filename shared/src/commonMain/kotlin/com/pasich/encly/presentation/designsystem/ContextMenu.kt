@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import com.pasich.encly.editor.ui.components.protectedPopupProperties
 
 /**
  * A menu that opens at the pointer on a right click (the secondary mouse button) on [content], or on the
@@ -84,6 +85,8 @@ private fun ContextMenuPopup(entries: List<MenuEntry>, offset: DpOffset, onDismi
         expanded = true,
         onDismissRequest = onDismiss,
         offset = offset,
+        // Follows the app's capture protection while it is open, as the dialogs and the sheets do.
+        properties = protectedPopupProperties(),
         // Esc closes the menu from any row, also where the platform's popup does not do it itself.
         modifier = Modifier.onKeyEvent { event ->
             (event.key == Key.Escape && event.type == KeyEventType.KeyDown).also { if (it) onDismiss() }

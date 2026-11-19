@@ -31,6 +31,8 @@ import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.locale.AppLocales
 import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.ScreenshotAllowance
+import com.pasich.encly.editor.ui.components.LocalWindowCapture
+import com.pasich.encly.editor.ui.components.WindowCapture
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
@@ -73,6 +75,7 @@ class AndroidHostServices(
             LocalSensitiveClipboard provides clipboard,
             LocalBiometricHost provides biometricHost,
             LocalScreenshotAllowance provides screenshots,
+            LocalWindowCapture provides remember(screenshots) { AllowanceWindowCapture(screenshots) },
             LocalAppLocales provides locales,
             LocalAppInfo provides info,
             LocalDocumentPickers provides AndroidDocumentPickers,
@@ -82,6 +85,16 @@ class AndroidHostServices(
             }
         }
     }
+}
+
+/**
+ * [ScreenshotAllowance] for the windows of dialogs, sheets and menus, which the Activity's window flag does not
+ * reach once they are open: they are protected again the moment the allowance ends or a secret is on screen.
+ */
+private class AllowanceWindowCapture(private val screenshots: ScreenshotAllowance) : WindowCapture {
+    override val capturable: Boolean get() = screenshots.capturable
+
+    override fun observe(observer: (capturable: Boolean) -> Unit): () -> Unit = screenshots.observe(observer)
 }
 
 /**

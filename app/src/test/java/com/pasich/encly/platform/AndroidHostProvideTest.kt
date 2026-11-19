@@ -3,11 +3,15 @@ package com.pasich.encly.platform
 import android.app.Application
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -15,6 +19,7 @@ import com.pasich.encly.R
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.security.ActivityBiometricHost
 import com.pasich.encly.core.security.ScreenshotAllowance
+import com.pasich.encly.editor.ui.components.ProtectDialogWindow
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import org.junit.After
@@ -56,6 +61,8 @@ class AndroidHostProvideTest {
             },
         )
         ProvideHostActivity.captured = null
+        ProvideHostActivity.showDialog = false
+        ProvideHostActivity.dialogWindow = null
         ProvideHostActivity.services = AndroidHostServices(
             toaster = FakeToaster,
             clipboard = FakeClipboard,
@@ -124,6 +131,31 @@ class AndroidHostProvideTest {
     }
 
     @Test
+    fun anOpenDialogIsProtectedAgainTheMomentTheAllowanceEnds() {
+        ProvideHostActivity.showDialog = true
+        ActivityScenario.launch(ProvideHostActivity::class.java).also { scenario = it }
+        rule.waitForIdle()
+        fun secure() = checkNotNull(ProvideHostActivity.dialogWindow).attributes.flags and
+            WindowManager.LayoutParams.FLAG_SECURE != 0
+
+        // Opened with nothing allowed: protected, as the Activity's window is.
+        assertTrue(secure())
+
+        rule.runOnIdle { allowance.allow() }
+        assertFalse(secure())
+
+        // A secret on screen protects the open dialog too, and gives it back when it goes.
+        val release = rule.runOnIdle { allowance.protect() }
+        assertTrue(secure())
+        rule.runOnIdle { release() }
+        assertFalse(secure())
+
+        // A lock ends the allowance: the dialog that was open through it is not left capturable.
+        rule.runOnIdle { allowance.revoke() }
+        assertTrue(secure())
+    }
+
+    @Test
     fun anAllowedWindowIsProtectedAgainOnceTheActivityLeavesTheForeground() {
         val launched = ActivityScenario.launch(ProvideHostActivity::class.java).also { scenario = it }
         rule.waitForIdle()
@@ -180,11 +212,23 @@ class ProvideHostActivity : AppCompatActivity() {
             factory = LocalMetroViewModelFactory.current,
             screenshots = LocalScreenshotAllowance.current,
         )
+        if (showDialog) {
+            Dialog(onDismissRequest = {}) {
+                ProtectDialogWindow()
+                dialogWindow = (LocalView.current.parent as DialogWindowProvider).window
+            }
+        }
     }
 
     companion object {
         var services: AndroidHostServices? = null
         var captured: SeenServices? = null
+
+        /** Whether the content also shows a dialog, as the app's dialogs and sheets are shown. */
+        var showDialog = false
+
+        /** The window of that dialog. */
+        var dialogWindow: Window? = null
     }
 }
 

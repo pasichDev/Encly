@@ -2,6 +2,7 @@ package com.pasich.encly.data.database
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -10,6 +11,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.doThrow
+import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -64,6 +67,32 @@ class SecureDatabaseManagerTest {
 
         assertFalse(manager.isDatabaseUnlocked())
         assertNull(manager.captureLease())
+    }
+
+    /** Sets the private [name] field: the state of an open database, without the native library to open one. */
+    private fun setField(name: String, value: Any?) =
+        SecureDatabaseManager::class.java.getDeclaredField(name).apply { isAccessible = true }.set(manager, value)
+
+    @Test
+    fun aDatabaseThatFailsToCloseStillLosesItsKeyAndIsNoLongerOpen() {
+        val database = mock(AppDatabase::class.java)
+        doThrow(IllegalStateException("close failed")).`when`(database).close()
+        val key = ByteArray(32) { 9 }
+        setField("database", database)
+        setField("openKey", key)
+        setField("openFile", VaultFile.PRIMARY)
+        setField("lease", DatabaseLease())
+        setField("isUnlocked", true)
+        assertTrue(manager.isDatabaseUnlocked())
+
+        assertThrows(IllegalStateException::class.java) { manager.reset() }
+
+        assertArrayEquals("the key copy is wiped", ByteArray(32), key)
+        assertFalse(manager.isDatabaseUnlocked())
+        assertNull(manager.captureLease())
+        assertTrue("and the files can be deleted: nothing counts as open", manager.wipeIfClosed())
+        // Nothing is left to close: the next reset has nothing to throw.
+        manager.reset()
     }
 
     @Test

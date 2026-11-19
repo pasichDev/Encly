@@ -131,6 +131,41 @@ class DuressPinTest {
     }
 
     @Test
+    fun aCleanUnlockLeavesTheSameStoreShapeWhicheverPinOpenedIt() {
+        assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+        val otherStore = tempVaultStore()
+        val other = AuthenticationManager(otherStore, FakePinFactor(), FakeLockoutClock())
+        assertTrue(other.configurePin(pin(PIN), dek))
+        assertEquals(DuressPinChange.SET_NEW_VAULT, other.configureDuressPin(pin(DURESS_PIN), dek) { true })
+
+        assertTrue(auth.unlockWithPin(pin(DURESS_PIN)) is PinUnlock.Decoy)
+        assertTrue(other.unlockWithPin(pin(PIN)) is PinUnlock.Success)
+
+        assertEquals(shape(otherStore), shape(store))
+        assertFalse("no zero left behind by the duress PIN", store.contains(STRIKES))
+        // The same after a PIN check inside each session, and after the PIN follows the duress PIN.
+        assertTrue(auth.verifyPinAuth(pin(DURESS_PIN), decoy = true))
+        assertTrue(other.verifyPinAuth(pin(PIN)))
+        assertEquals(shape(otherStore), shape(store))
+        assertTrue(auth.unlockWithPin(pin(PIN)) is PinUnlock.Success)
+        assertEquals(shape(otherStore), shape(store))
+    }
+
+    @Test
+    fun aStoreAnOlderBuildLeftWithZeroStrikesOpensAndLosesTheEntry() {
+        assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
+        // What a duress unlock without a miss wrote before: the entry present, at zero.
+        store.edit { putInt(STRIKES, 0) }
+
+        assertTrue(auth.unlockWithPin(pin(DURESS_PIN)) is PinUnlock.Decoy)
+
+        assertFalse(store.contains(STRIKES))
+        store.edit { putInt(STRIKES, 0) }
+        assertTrue(auth.unlockWithPin(pin(PIN)) is PinUnlock.Success)
+        assertFalse(store.contains(STRIKES))
+    }
+
+    @Test
     fun theDuressPinBetweenGuessesNeverBuysUnlimitedGuessesAtThePin() {
         assertEquals(DuressPinChange.SET_NEW_VAULT, auth.configureDuressPin(pin(DURESS_PIN), dek) { true })
         val free = AuthenticationManager.MAX_ATTEMPTS - 1

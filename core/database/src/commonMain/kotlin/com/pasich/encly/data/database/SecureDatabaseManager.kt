@@ -169,18 +169,29 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
         }
     }
 
+    /**
+     * Closes the open database and wipes its key. A close that throws is passed on, but only after everything
+     * else was done: the driver's copy of the key and [openKey] are wiped and the database is no longer open,
+     * whatever the close did.
+     */
     public fun reset(): Unit = synchronized(lock) {
         lease = null
-        database?.close()
-        database = null
-        // After the database: closing the driver wipes its copy of the key.
-        driver?.close()
-        driver = null
-        leanDriver = null
         isUnlocked = false
-        openFile = null
-        openKey?.fill(0)
-        openKey = null
+        try {
+            database?.close()
+        } finally {
+            database = null
+            try {
+                // After the database: closing the driver wipes its copy of the key.
+                driver?.close()
+            } finally {
+                driver = null
+                leanDriver = null
+                openFile = null
+                openKey?.fill(0)
+                openKey = null
+            }
+        }
     }
 
     /** Closes and deletes both databases: the real vault's and the decoy vault's. */
@@ -207,8 +218,9 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
         const val DEK_LENGTH = 32
 
         /**
-         * The database file itself, the SQLite side files beside it and Room's lock file (which the
-         * desktop and iOS targets keep next to the database; Android keeps it elsewhere).
+         * The database file itself, the SQLite side files beside it and Room's lock file. With a driver Room
+         * keeps the lock file next to the database on every target (`<database>.lck`; on Android the path is
+         * resolved with `getDatabasePath`, which leaves the absolute path it is given as it is).
          */
         val FILE_SUFFIXES = listOf("", "-wal", "-shm", "-journal", ".lck")
     }

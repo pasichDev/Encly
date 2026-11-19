@@ -91,6 +91,7 @@ import com.pasich.encly.editor.state.toggleHeader
 import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.theme.lineHeight
 import com.pasich.encly.editor.ui.BlockActions
+import com.pasich.encly.editor.ui.components.protectedPopupProperties
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -316,7 +317,11 @@ private fun CellMenu(commands: TableCommands, table: TableData, modifier: Modifi
                 .padding(MenuButtonPadding)
                 .size(theme.spacing.iconMedium),
         )
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            properties = protectedPopupProperties(),
+        ) {
             MenuRow(strings.text(EditorString.TABLE_ADD_ROW)) {
                 open = false
                 commands.addRow()

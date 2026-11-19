@@ -117,6 +117,21 @@ class BackupManagerTest {
     }
 
     @Test
+    fun theDecoyVaultIsNotToldWhenTheRealOneWasLastBackedUp() {
+        manager.recordExport()
+        assertEquals(1L, manager.lastExportAt())
+
+        `when`(security.isDecoySession()).thenReturn(true)
+        manager.clock = { 2L }
+
+        assertNull("the real vault's date is not shown in the decoy vault", manager.lastExportAt())
+        manager.recordExport()
+
+        `when`(security.isDecoySession()).thenReturn(false)
+        assertEquals("and the decoy vault never moves it", 1L, manager.lastExportAt())
+    }
+
+    @Test
     fun theBackupCarriesOnlyTheAllowListedPreferences() = runTest {
         preferences.values = mapOf("theme_type" to "DARK", "pin.slot" to "secret", "onboarding_shown_v3" to "true")
 

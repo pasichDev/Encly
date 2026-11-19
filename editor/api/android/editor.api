@@ -1183,6 +1183,19 @@ public final class com/pasich/encly/editor/ui/components/ProtectDialogWindow_and
 	public static final fun applyWindowPrivacy (Landroid/view/Window;)V
 }
 
+public abstract interface class com/pasich/encly/editor/ui/components/WindowCapture {
+	public abstract fun getCapturable ()Z
+	public abstract fun observe (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
+}
+
+public final class com/pasich/encly/editor/ui/components/WindowCaptureKt {
+	public static final fun getLocalWindowCapture ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class com/pasich/encly/editor/ui/components/WindowCapture_androidKt {
+	public static final fun protectedPopupProperties (ZLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/window/PopupProperties;
+}
+
 public final class com/pasich/encly/editor/ui/sheets/BlockSheetKind : java/lang/Enum {
 	public static final field LINK Lcom/pasich/encly/editor/ui/sheets/BlockSheetKind;
 	public static final field OTHER Lcom/pasich/encly/editor/ui/sheets/BlockSheetKind;

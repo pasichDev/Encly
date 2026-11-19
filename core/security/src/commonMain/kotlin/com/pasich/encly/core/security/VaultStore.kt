@@ -99,6 +99,13 @@ public class VaultStore(private val io: VaultFileIo) {
         written
     }
 
+    /**
+     * Drops every entry in one atomic, durable write: the file stays, with nothing in it. Unlike
+     * [clear] (an unlink, which a power loss may undo) it is on disk when this returns. False,
+     * and nothing changed, when the file is damaged, cannot be read or cannot be written.
+     */
+    internal fun eraseEntries(): Boolean = edit { removePrefix("") }
+
     /** Deletes the file (damaged or not) and forgets everything. */
     public fun clear(): Boolean = synchronized(lock) {
         cache?.values?.forEach(SensitiveDataCleaner::clear)

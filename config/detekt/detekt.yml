@@ -79,6 +79,9 @@ Compose:
       - LocalEditorLogger
       - LocalEditorSheetsAsDialogs
       - LocalSlashLabels
+      # Whether the host's windows may be captured, provided once by the host so that the windows of dialogs,
+      # sheets and menus follow it while they are open (editor/ui/components/WindowCapture.kt).
+      - LocalWindowCapture
       # Theme tokens Material's theme does not carry (ui/theme), read through EnclyTheme.
       - LocalEnclyColors
       - LocalEnclyTypography

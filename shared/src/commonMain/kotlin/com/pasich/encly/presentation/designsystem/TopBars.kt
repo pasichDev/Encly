@@ -34,6 +34,7 @@ import com.pasich.encly.core.resources.back
 import com.pasich.encly.core.resources.close
 import com.pasich.encly.core.resources.more_options
 import com.pasich.encly.core.resources.onboarding_step_of
+import com.pasich.encly.editor.ui.components.protectedPopupProperties
 import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
@@ -81,6 +82,8 @@ fun EnclyOverflowMenu(items: List<OverflowAction>, modifier: Modifier = Modifier
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            // Follows the app's capture protection while it is open, as the dialogs and the sheets do.
+            properties = protectedPopupProperties(),
             shape = MaterialTheme.shapes.small,
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 0.dp,

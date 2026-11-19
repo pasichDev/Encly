@@ -117,9 +117,19 @@ class BackupManager(
         if (securityManager.isDecoySession()) throw BackupException(BackupError.IO)
     }
 
-    fun lastExportAt(): Long? = secureStoragePrefs.getLong(LAST_EXPORT_KEY, 0L).takeIf { it > 0L }
+    /**
+     * When the real vault was last exported, or null if never. The decoy vault has no backups and is told nothing
+     * of the real one's: there the answer is always null.
+     */
+    fun lastExportAt(): Long? = if (securityManager.isDecoySession()) {
+        null
+    } else {
+        secureStoragePrefs.getLong(LAST_EXPORT_KEY, 0L).takeIf { it > 0L }
+    }
 
+    /** Notes that an export was written now. Nothing is recorded in the decoy vault, where no export can succeed. */
     fun recordExport() {
+        if (securityManager.isDecoySession()) return
         secureStoragePrefs.edit { putLong(LAST_EXPORT_KEY, clock()) }
     }
 

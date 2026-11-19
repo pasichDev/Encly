@@ -684,14 +684,19 @@ public class SecurityManager(
     /**
      * Closes the vault and drops the session key. Serialized with the open ([unlockWithRawKey]): a lock never lands
      * between the database being opened and its key being recorded, which would leave a key with no database to
-     * close it. It can therefore wait for an open in progress.
+     * close it. It can therefore wait for an open in progress. A database that fails to close still leaves no
+     * session key behind; the failure is passed on.
      */
     public fun lock() {
         synchronized(databaseLock) {
-            vaultDatabase.reset()
-            clearSessionKey()
-            biometricManager.cancelPendingEnrolment()
-            securityStatus = InitialStatus.AUTH
+            try {
+                vaultDatabase.reset()
+            } finally {
+                // Whatever closing the database did: the session key never outlives the lock.
+                clearSessionKey()
+                biometricManager.cancelPendingEnrolment()
+                securityStatus = InitialStatus.AUTH
+            }
         }
     }
 
@@ -776,15 +781,27 @@ public class SecurityManager(
     /**
      * Erases everything: both vaults, every key slot. Never from a decoy session, where it
      * changes nothing and returns false.
+     *
+     * Keys before data, as in the wipe-PIN erase: every slot goes in one atomic write, then the
+     * Keystore keys, and only then the database files. A kill before that write leaves the vault
+     * as it was; a kill after it leaves no way to a DEK beside whatever is left of the databases,
+     * and the next start shows the damaged-vault screen ([InitialStatus.LOSS_CRYPTO]), whose only
+     * action is this erase again.
      */
     public fun wipeAndReset(): Boolean {
         if (isDecoySession()) return false
-        vaultDatabase.wipe()
-        clearSessionKey()
-        biometricManager.disable()
-        authenticationManager.wipe()
-        seedPhraseManager.wipe()
-        // Also the way out of a damaged state file, which the per-slot wipes above cannot edit.
+        // A state file that cannot be edited (damaged, or not readable now) is deleted instead.
+        if (!vaultStore.eraseEntries()) vaultStore.clear()
+        try {
+            biometricManager.disable()
+            authenticationManager.wipe()
+            seedPhraseManager.wipe()
+        } finally {
+            // Whatever a key deletion throws, the databases still go.
+            vaultDatabase.wipe()
+            clearSessionKey()
+        }
+        // The empty state file goes too; a new vault starts from none.
         vaultStore.clear()
         appFlags.commit { clear() }
         securityStatus = InitialStatus.ONBOARDING

@@ -10,12 +10,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.Mockito
 import org.mockito.Mockito.clearInvocations
+import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.doNothing
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -280,6 +284,20 @@ class SecurityManagerLifecycleTest {
         assertFalse(manager.createBackupKey(phrase.copyOf()))
         assertFalse(manager.canResetPinWithoutCurrent())
         verify(database).reset()
+    }
+
+    @Test
+    fun aDatabaseThatFailsToCloseStillLeavesNoSessionKeyBehind() {
+        val phrase = committedVault()
+        assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithSeed(phrase.copyOf()))
+        assertNotNull(manager.copyBackupRootKey())
+        doThrow(IllegalStateException("close failed")).`when`(database).reset()
+
+        assertThrows(IllegalStateException::class.java) { manager.lock() }
+
+        assertEquals(InitialStatus.AUTH, manager.securityStatus)
+        assertNull("the session key was wiped all the same", manager.copyBackupRootKey())
+        assertFalse(manager.canResetPinWithoutCurrent())
     }
 
     @Test
@@ -563,6 +581,78 @@ class SecurityManagerLifecycleTest {
 
         assertEquals(InitialStatus.AUTH, locked.resolveInitialStatus())
         assertFalse(file.readBytes().isEmpty())
+    }
+
+    // --- "Erase all data": keys before data -------------------------------------------------
+
+    @Test
+    fun erasingEverythingDestroysEveryKeyBeforeTheDatabaseAndAKillThereEndsInTheEraseScreen() {
+        committedVault()
+        assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithPin(PIN.toCharArray()))
+        var keysLeft: Set<String>? = null
+        var pinKeysLeft: List<PinKeySlot>? = null
+        var biometricGone = false
+        // The process dies as the database files are about to go.
+        doAnswer {
+            keysLeft = VaultStore(file).keys()
+            pinKeysLeft = PinKeySlot.entries.filter(pinFactor::hasKey)
+            biometricGone = disableCalls > 0
+            throw IllegalStateException("killed")
+        }.`when`(database).wipe()
+
+        assertThrows(IllegalStateException::class.java) { manager.wipeAndReset() }
+
+        assertEquals("no slot is on disk when the database goes", emptySet<String>(), keysLeft)
+        assertEquals(emptyList<PinKeySlot>(), pinKeysLeft)
+        assertTrue(biometricGone)
+        // The database is still there and the flags still say "committed": nothing opens it.
+        val restarted = restarted()
+        assertEquals(InitialStatus.LOSS_CRYPTO, restarted.resolveInitialStatus())
+        assertEquals(VaultUnlockResult.INVALID_CREDENTIAL, restarted.unlockWithPin(PIN.toCharArray()))
+
+        // The screen's one action finishes the erase.
+        doNothing().`when`(database).wipe()
+        `when`(database.hasEncryptedDatabase()).thenReturn(false)
+        assertTrue(restarted.wipeAndReset())
+
+        assertFalse(file.exists())
+        assertEquals(InitialStatus.ONBOARDING, restarted().resolveInitialStatus())
+    }
+
+    @Test
+    fun anEraseOfEverythingKilledBeforeItsFirstWriteLandsLeavesTheVaultAsItWas() {
+        committedVault()
+        assertEquals(VaultUnlockResult.SUCCESS, manager.unlockWithPin(PIN.toCharArray()))
+        clearInvocations(database)
+        // The temp file is written; the process dies before it replaces the state file.
+        store.beforeRename = { throw IllegalStateException("killed") }
+
+        assertThrows(IllegalStateException::class.java) { manager.wipeAndReset() }
+
+        verify(database, never()).wipe()
+        assertTrue(pinFactor.hasKey(PinKeySlot.A))
+        val restarted = restarted()
+        assertEquals(InitialStatus.AUTH, restarted.resolveInitialStatus())
+        assertEquals(VaultUnlockResult.SUCCESS, restarted.unlockWithPin(PIN.toCharArray()))
+    }
+
+    @Test
+    fun anEraseOfEverythingKilledAfterTheDatabaseWentEndsInTheEraseScreenToo() {
+        committedVault()
+        clearInvocations(database)
+        // The flags file outlives the kill: its clearing is the last step.
+        val flags = object : KeyValueStore by prefs {
+            override fun commit(block: KeyValueStore.Editor.() -> Unit): Boolean = throw IllegalStateException("killed")
+        }
+
+        assertThrows(IllegalStateException::class.java) { restarted(flags = flags).wipeAndReset() }
+
+        verify(database).wipe()
+        `when`(database.hasEncryptedDatabase()).thenReturn(false)
+        val restarted = restarted()
+        assertEquals(InitialStatus.LOSS_CRYPTO, restarted.resolveInitialStatus())
+        assertTrue(restarted.wipeAndReset())
+        assertEquals(InitialStatus.ONBOARDING, restarted().resolveInitialStatus())
     }
 
     private companion object {

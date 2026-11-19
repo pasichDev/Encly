@@ -656,10 +656,12 @@ public class AuthenticationManager(
 
             // The running lockout ends as on the PIN, but the misses since the PIN was last right
             // stay: typing the duress PIN between guesses never buys more guesses at the PIN.
+            // With no such miss the entry goes, as on the PIN: a zero left behind would be written
+            // by the duress PIN alone and so tell which PIN was typed last.
             is PinUnlock.Decoy -> {
                 store.edit {
                     removePrefix(LOCKOUT_PREFIX)
-                    putInt(STRIKES_KEY, check.strikes)
+                    if (check.strikes == 0) remove(STRIKES_KEY) else putInt(STRIKES_KEY, check.strikes)
                 }
                 matched
             }

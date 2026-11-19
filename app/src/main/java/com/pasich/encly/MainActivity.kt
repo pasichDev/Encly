@@ -115,6 +115,19 @@ class MainActivity : AppCompatActivity() {
         stripNavigationExtras(intent)
         super.onNewIntent(intent)
     }
+
+    /**
+     * Swiping the app out of Recents (or Back out of it, where that still finishes the activity:
+     * Android 11 and older) closes the vault at once instead of after the auto-lock delay. Removing
+     * the task finishes this activity; when the system kills the process first, the open vault,
+     * which is memory only, is gone with it. A recreation (rotation, theme, language, a resized
+     * window) and an activity the system destroys to get memory back are not finishing and keep
+     * the vault open; so does a file picker on top, which never finishes this activity.
+     */
+    override fun onDestroy() {
+        if (isFinishing && !isChangingConfigurations) sessionLockManager.lockNow()
+        super.onDestroy()
+    }
 }
 
 /**

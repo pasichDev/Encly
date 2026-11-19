@@ -4,9 +4,11 @@ import androidx.lifecycle.LifecycleOwner
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.times
@@ -63,6 +65,16 @@ class SessionLockManagerTest {
         manager.lockNow()
 
         verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun aVaultThatFailsToCloseIsStillPublishedAsLocked() {
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        doThrow(IllegalStateException("close failed")).`when`(security).lock()
+
+        assertThrows(IllegalStateException::class.java) { manager.lockNow() }
+
         assertTrue(manager.locked.value)
     }
 
@@ -534,6 +546,16 @@ class SessionLockManagerTest {
         screenshots.allow()
 
         manager.onUnlocked()
+
+        assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun aPublishedUnlockStartsItsSessionWithoutTheAllowance() {
+        // Switched on after the lock that should have ended it (a re-authentication that finished late).
+        screenshots.allow()
+
+        assertTrue(manager.onUnlocked())
 
         assertFalse(screenshots.allowed.value)
     }

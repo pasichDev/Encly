@@ -3,6 +3,7 @@ package com.pasich.encly.editor.ui.components
 import android.os.Build
 import android.view.View
 import android.view.Window
+import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
@@ -30,13 +31,24 @@ private fun applyWindowPrivacy(decor: View, window: Window?) {
     }
 }
 
-/** Applies [applyWindowPrivacy] to the dialog window this content is shown in. */
+/**
+ * Applies [applyWindowPrivacy] to the dialog window this content is shown in, and keeps that window protected
+ * from capture whenever the host's windows are ([LocalWindowCapture]): a dialog only takes the main window's
+ * protection as it opens, so one that is open when the host protects its windows again would stay capturable.
+ */
 @Composable
 public actual fun ProtectDialogWindow() {
     val view = LocalView.current
-    DisposableEffect(view) {
+    val capture = LocalWindowCapture.current
+    DisposableEffect(view, capture) {
         val window = (view.parent as? DialogWindowProvider)?.window
         if (window != null) applyWindowPrivacy(window.decorView, window) else applyWindowPrivacy(view.rootView, null)
-        onDispose { }
+        val stop = if (window != null) capture?.observe { window.setSecure(!it) } else null
+        onDispose { stop?.invoke() }
     }
+}
+
+private fun Window.setSecure(secure: Boolean) {
+    val flag = WindowManager.LayoutParams.FLAG_SECURE
+    if (secure) addFlags(flag) else clearFlags(flag)
 }

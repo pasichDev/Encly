@@ -59,7 +59,7 @@ class KeystorePinFactor : PinHardwareFactor {
         val key = try {
             keyStore.getKey(alias(slot), null) as? SecretKey
         } catch (e: UnrecoverableKeyException) {
-            throw PinFactorException(lost = true, cause = e)
+            throw PinFactorException(lost = !isKeystoreError(e), cause = e)
         } catch (e: GeneralSecurityException) {
             throw PinFactorException(lost = false, cause = e)
         } catch (e: IOException) {
@@ -133,6 +133,18 @@ class KeystorePinFactor : PinHardwareFactor {
         return builder.build()
     }
 
+    /**
+     * Whether [e], thrown by `KeyStore.getKey`, only passes on an error of the Keystore service: a system or
+     * binder failure, a daemon that was restarting. The platform wraps every such error in an
+     * [UnrecoverableKeyException] whose cause is its own `android.security.KeyStoreException`
+     * (`AndroidKeyStoreProvider.loadAndroidKeyStoreKeyFromKeystore`), and says nothing about the key, which may
+     * well be intact: that is a failure to retry, not a lost key. A key that is gone comes back as null instead,
+     * and a key the system invalidated as an [UnrecoverableKeyException] with no cause
+     * (`AndroidKeyStoreSpi.engineGetKey`); both stay lost.
+     */
+    private fun isKeystoreError(e: UnrecoverableKeyException): Boolean =
+        generateSequence(e.cause) { it.cause }.take(MAX_CAUSES).any { it.javaClass.name == KEYSTORE_ERROR }
+
     private data class Options(val strongBox: Boolean, val unlockedOnly: Boolean)
 
     private companion object {
@@ -143,6 +155,15 @@ class KeystorePinFactor : PinHardwareFactor {
         const val KEY_ALIAS_A = "encly_pin_factor_v3"
         const val KEY_ALIAS_B = "encly_pin_factor_v3b"
         const val HMAC_KEY_BITS = 256
+
+        /**
+         * The platform's own Keystore error. By name: the class is public only from API 33, and is the cause
+         * of a failed `getKey` on every version.
+         */
+        const val KEYSTORE_ERROR = "android.security.KeyStoreException"
+
+        /** A cause chain is never this long; a bound, should one ever loop. */
+        const val MAX_CAUSES = 8
 
         fun alias(slot: PinKeySlot): String = when (slot) {
             PinKeySlot.A -> KEY_ALIAS_A

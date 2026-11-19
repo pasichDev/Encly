@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
-import androidx.compose.ui.window.PopupProperties
 import com.pasich.encly.editor.EditorString
 import com.pasich.encly.editor.EditorStrings
 import com.pasich.encly.editor.LocalEditorStrings
@@ -31,6 +30,7 @@ import com.pasich.encly.editor.theme.LocalEditorTheme
 import com.pasich.encly.editor.ui.SlashActions
 import com.pasich.encly.editor.ui.components.CommandMenuItem
 import com.pasich.encly.editor.ui.components.EditorCommandMenu
+import com.pasich.encly.editor.ui.components.protectedPopupProperties
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -82,7 +82,7 @@ private fun OpenSlashMenu(field: TextFieldState, slash: SlashActions, modifier: 
         popupPositionProvider = position,
         onDismissRequest = { currentSlash.dismiss() },
         // Not focusable: the keyboard and the caret stay in the paragraph.
-        properties = PopupProperties(focusable = false),
+        properties = protectedPopupProperties(focusable = false),
     ) {
         EditorCommandMenu(
             items = menu.matches.map { CommandMenuItem(it.icon(icons), labels.getValue(it)) },

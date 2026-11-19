@@ -53,8 +53,8 @@ class BackupViewModel(
     /** The flow in progress, so a ready recovery phrase continues the right one. */
     private var action: BackupAction? = null
 
-    /** The session the re-authentication was started in (see [SessionLockManager.sessionGeneration]). */
-    private var reauthGeneration = 0L
+    /** The session the re-authentication was started in, and the lock requests there had been by then. */
+    private var reauthSession = SessionMark(generation = 0L, lockRequests = 0L)
 
     init {
         // A re-lock drops every plaintext buffer (a decrypted backup, new recovery words) at
@@ -75,7 +75,7 @@ class BackupViewModel(
     fun start(action: BackupAction) {
         dropPending()
         this.action = action
-        reauthGeneration = sessionLockManager.sessionGeneration
+        reauthSession = sessionLockManager.mark()
         val biometric = securityManager.canReauthWithBiometric()
         state.go(BackupStep.Reauth(action, biometric))
     }
@@ -91,8 +91,10 @@ class BackupViewModel(
             // Nothing to continue with: the re-authentication was the confirmation.
             action == BackupAction.ALLOW_SCREENSHOTS -> {
                 // The PIN is checked off the main thread: if the app locked meanwhile (it went to the background
-                // with no delay), this must not switch the allowance on after the lock that ended it.
-                if (!sessionLockManager.locked.value && sessionLockManager.sessionGeneration == reauthGeneration) {
+                // with no delay), this must not switch the allowance on after the lock that ended it. A lock that
+                // still waits for the editors' saves has not set `locked` yet, so the lock requests are compared
+                // too, as an unlock does (SessionLockManager.onUnlocked).
+                if (!sessionLockManager.locked.value && sessionLockManager.mark() == reauthSession) {
                     screenshots.allow()
                 }
                 state.go(BackupStep.Idle)
@@ -186,3 +188,11 @@ class BackupViewModel(
         importFlow.drop()
     }
 }
+
+/**
+ * Where a session stands: which one it is ([SessionLockManager.sessionGeneration]) and how many locks were asked
+ * for so far ([SessionLockManager.lockRequests]). Equal marks mean the same session with no lock in between.
+ */
+private data class SessionMark(val generation: Long, val lockRequests: Long)
+
+private fun SessionLockManager.mark() = SessionMark(sessionGeneration, lockRequests())

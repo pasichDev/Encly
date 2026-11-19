@@ -7,6 +7,9 @@ import androidx.compose.runtime.Composable
  * elsewhere): no autofill service sees its fields, accessibility tools that are not accessibility
  * services get no data, and other apps' overlays are hidden. A dialog has a window of its own, so
  * what the activity sets on its window does not reach it. Call it at the top of its content.
+ *
+ * The window also follows the host's capture protection while it is open, where the host provides a
+ * [LocalWindowCapture].
  */
 @Composable
 public expect fun ProtectDialogWindow()
