@@ -196,8 +196,12 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
 
     /** Closes and deletes both databases: the real vault's and the decoy vault's. */
     public fun wipe(): Unit = synchronized(lock) {
-        reset()
-        VaultFile.entries.forEach(::deleteDatabaseFiles)
+        try {
+            reset()
+        } finally {
+            // Whatever closing did: an erase still deletes the files.
+            VaultFile.entries.forEach(::deleteDatabaseFiles)
+        }
     }
 
     /**

@@ -656,8 +656,11 @@ generic Markdown/TXT (Obsidian, Markor).
 - The PIN typed on the lock screen is kept in a `CharArray` that is wiped after the attempt
   (never a `String`); unlock DEK copies are wiped after use. While open, the database accepts a
   second unlock call only with the same key, compared in constant time.
-- `FLAG_SECURE` is applied before the first Activity frame and cannot be disabled in
-  settings.
+- `FLAG_SECURE` is applied before the first Activity frame and is on by default. Since 3.0 the
+  user can allow screenshots until the app next locks (Settings → Security, after the PIN or a
+  biometric): the allowance lives in memory only, ends at every lock and never survives a
+  restart, open dialogs and sheets follow it, and the screens that show secrets (PIN entry, the
+  recovery phrase) stay protected whatever it says.
 - **Erase all data** (Settings → Security, danger zone) is held for 5 seconds, confirmed in a
   dialog, then re-authenticated with the PIN or a Class 3 biometric. It closes and deletes the
   database, every key slot, the lockout state, Encly's Keystore keys (both PIN factor aliases and

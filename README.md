@@ -44,7 +44,8 @@ backup and, only when you ask for it, a readable Markdown export that is not enc
   (editor fonts are bundled). The only links out (privacy policy, issue tracker, email, the
   open-source license pages, a note's link block and, in the `play` flavor, the store page or, in
   the `fdroid` flavor, the Ko-fi donation page) open in another app and only when you tap them.
-- 🛡️ **Protected UI** — `FLAG_SECURE` is enforced from the first Activity frame.
+- 🛡️ **Protected UI** — `FLAG_SECURE` is on from the first Activity frame; screenshots can be allowed
+  only until the next lock, after the PIN or a biometric.
 - 🌍 **10 languages** — pick one in Settings → Language, independently of the system language;
   Arabic is laid out right to left.
 

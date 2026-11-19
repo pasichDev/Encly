@@ -797,9 +797,12 @@ public class SecurityManager(
             authenticationManager.wipe()
             seedPhraseManager.wipe()
         } finally {
-            // Whatever a key deletion throws, the databases still go.
-            vaultDatabase.wipe()
-            clearSessionKey()
+            // Whatever a key deletion throws, the databases still go, and the session key with them.
+            try {
+                vaultDatabase.wipe()
+            } finally {
+                clearSessionKey()
+            }
         }
         // The empty state file goes too; a new vault starts from none.
         vaultStore.clear()

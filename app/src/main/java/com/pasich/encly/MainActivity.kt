@@ -12,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import com.pasich.encly.core.di.appGraph
 import com.pasich.encly.core.locale.AppLocales
@@ -65,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         stripNavigationExtras(intent)
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        lockWhenTheTaskIsRemoved()
         // The strings follow the process's default locale: put the in-app language there before composing.
         AppLocales.syncDefaultLocale()
         // After super.onCreate: touching decorView earlier builds the window with the splash
@@ -111,11 +114,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        stripNavigationExtras(intent)
-        super.onNewIntent(intent)
-    }
-
     /**
      * Swiping the app out of Recents (or Back out of it, where that still finishes the activity:
      * Android 11 and older) closes the vault at once instead of after the auto-lock delay. Removing
@@ -123,10 +121,24 @@ class MainActivity : AppCompatActivity() {
      * which is memory only, is gone with it. A recreation (rotation, theme, language, a resized
      * window) and an activity the system destroys to get memory back are not finishing and keep
      * the vault open; so does a file picker on top, which never finishes this activity.
+     *
+     * An observer and not `onDestroy()`: observers hear ON_DESTROY newest first, so this one runs
+     * before the activity clears its ViewModels. An open editor is then still registered for the
+     * save that precedes every lock; from `onDestroy()` the vault would close under that save.
      */
-    override fun onDestroy() {
-        if (isFinishing && !isChangingConfigurations) sessionLockManager.lockNow()
-        super.onDestroy()
+    private fun lockWhenTheTaskIsRemoved() {
+        lifecycle.addObserver(
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_DESTROY && isFinishing && !isChangingConfigurations) {
+                    sessionLockManager.lockNow()
+                }
+            },
+        )
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        stripNavigationExtras(intent)
+        super.onNewIntent(intent)
     }
 }
 
