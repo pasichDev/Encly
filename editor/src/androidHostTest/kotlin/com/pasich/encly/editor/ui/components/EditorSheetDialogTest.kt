@@ -132,7 +132,7 @@ class EditorSheetDialogTest {
         rule.setContent {
             // As the host does: its main window is protected whenever its windows may not be captured.
             val host = LocalContext.current as Activity
-            remember { host.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE) }
+            remember(host) { host.window.also { it.addFlags(WindowManager.LayoutParams.FLAG_SECURE) } }
             CompositionLocalProvider(LocalWindowCapture provides FakeCapture(initial = false)) {
                 Dialog(onDismissRequest = {}) {
                     ProtectDialogWindow()

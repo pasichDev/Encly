@@ -28,10 +28,12 @@ import com.pasich.encly.platform.ToastDuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.io.buffered
 import kotlinx.io.readByteArray
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.awt.Frame
+import java.awt.GraphicsEnvironment
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -78,7 +80,9 @@ class ExternalLinksTest {
 
     @Test
     fun `the AWT opener never throws on a headless machine`() {
-        // Headless CI has no browser: the answer is false (or true on a desktop), never an exception.
+        // Headless CI has no browser: the answer is false, never an exception. On a developer's desktop
+        // the call would really open the browser on every test run, so it runs on CI or headless only.
+        assumeTrue(System.getenv("CI") != null || GraphicsEnvironment.isHeadless())
         AwtLinkOpener.open(URI("https://example.org")).let { }
     }
 }
