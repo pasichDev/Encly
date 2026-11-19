@@ -1,7 +1,7 @@
 # Security
 
 Encly is a local encrypted notes application. This document describes the security model of
-Encly 2.0 (vault format v3), its trust boundaries, and known limitations.
+Encly 3.0 (vault format v3), its trust boundaries, and known limitations.
 
 ## Key hierarchy
 
@@ -242,7 +242,11 @@ and show me"), not against a forensic examination.
   filesystem journal, two snapshots taken before and after, or simply an empty vault on a phone
   where Encly was used for years. On a rooted, unlocked phone PIN guessing through the Keystore
   (see "Important limitations") finds the wipe PIN as well. Overwriting files on flash is not
-  reliable, which is why the erase relies on deleting keys first.
+  reliable, which is why the erase relies on deleting keys first. That crypto-erase covers the PIN
+  path only: it destroys the PIN's Keystore key, but the recovery slot of the previous state file
+  needs nothing but the 12 words. The old file is unlinked, not overwritten, so someone who holds
+  a previously written recovery phrase and can carve the deleted state file and database out of
+  flash could still recover the erased vault.
 - **Downgrade.** Older builds ignore the new store entries and keep opening a vault that never
   used the wipe PIN. After a wipe has happened (the PIN key moved to the second alias), an older
   build only knows the first alias: the PIN reports a lost key there and cannot unlock. A PIN
@@ -287,7 +291,10 @@ meant for "open the app and show me", not against a forensic examination.
   decoy vault. Without that, someone who was given the duress PIN could guess at the real
   PIN 4 times, type the duress PIN to reset the lockout, and repeat without limit. The cost is a
   tell after that many misses (a lockout sooner than the screen suggests), and a store-level
-  one: lockout failures at 0 while `pin.strikes` is not shows a non-PIN unlock since the misses.
+  one: after misses, a duress unlock leaves `pin.strikes` in the state file with no lockout
+  failures, which a real PIN unlock never does, so anyone who can read the app's private files
+  can then see that a duress PIN exists and that the last unlock was a non-PIN one. A duress
+  unlock with no misses before it leaves the same entries as a real PIN unlock.
 - **Rules.** 6 to 12 digits, different from the PIN and from the wipe PIN (checked by opening their
   slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
   the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
@@ -375,8 +382,13 @@ seed that the user writes down and confirms.
 after PIN or biometric re-authentication, and a confirmation) generates 12 new words, shows
 them and checks three of them. Only then are the recovery slot and the backup-key slot rewritten
 for the new words, in one atomic write that drops the old recovery slot. The old words then
-open nothing on this device. Backups exported before still open **only with the old words**
-(their key derives from them); the UI says so before and during the replacement.
+open nothing in the state file as it is now. The database key is **not** rotated (replacing the
+phrase, like changing the PIN, re-wraps the same DEK), so someone who kept an earlier copy of
+`vault_state_v3.bin` and has the old words can still open that copy's recovery slot and read any
+later copy of the database. Replacing the phrase therefore does not protect data against anyone
+who already copied the state file; it limits what the old words open from now on. Backups
+exported before still open **only with the old words** (their key derives from them); the UI says
+so before and during the replacement.
 
 ## Encrypted backups
 
@@ -619,13 +631,19 @@ generic Markdown/TXT (Obsidian, Markor).
   wake-up alarm (`setAndAllowWhileIdle`, no exact-alarm permission) that is delivered to a
   non-exported receiver, which closes the vault on the main thread. The system may deliver an
   inexact alarm a little late (up to minutes in Doze), never early, so the vault can stay open
-  a short while past the chosen delay while the app is frozen. The alarm is cancelled when the
+  a short while past the chosen delay while the app is frozen. The alarm replaces the timer only, not the screen-off signal: if the screen turns off while the
+  process is already frozen (Android 14+, about ten seconds after leaving), Encly does not hear
+  it. The vault then closes when the delay ends (the alarm) or when the app is next in front after the delay, not
+  at the moment the screen went off, and coming back inside the delay on an unlocked phone finds it
+  still open. The longer the delay, the longer that window; "Immediately" and a screen that is
+  already off when Encly stops are not affected. The alarm is cancelled when the
   app comes back or the vault locks. When the app comes back, the elapsed time is measured again
   on `elapsedRealtime` (deep sleep counts) and the vault is closed if the delay ran out. ViewModels holding decrypted content (notes list, tasks, editor,
   a decrypted backup, new recovery words) drop it at that moment, not only when the UI resumes.
 - Within the delay the vault stays open in the background: the DEK and decrypted content are
   in memory, and the recents thumbnail is still blocked by `FLAG_SECURE`. Choose
-  "Immediately" to close it the moment Encly leaves the screen.
+  "Immediately" to close it the moment Encly leaves the screen. Swiping Encly away from Recents
+  closes the vault at once, whatever the delay.
 - The next foreground entry must unwrap the DEK again through PIN, biometric, or
   recovery.
 - A process started with a committed, closed vault starts in the locked state, and a central
@@ -784,7 +802,11 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   computed off the device, and the lockout file can be reset. A device that has never been
   unlocked since boot, or is locked (API 28+), refuses the key entirely. Where StrongBox is
   missing the key lives in the TEE; on devices without hardware-backed Keystore it is software
-  only.
+  only. Encly does not read back which protection level the key got, and falls back to weaker
+  key options without telling the user. Offline, the PIN is therefore protected by the hardware
+  keystore, not by PBKDF2 (which adds only about 19 bits, the size of a 6-digit PIN): a longer PIN (8 to 12
+  digits are supported) is the better choice, most of all on a device without a hardware-backed
+  Keystore.
 - The lockout is enforced by the app, not by the secure hardware.
 - The wipe PIN (see "Wipe PIN") and the duress PIN (see "Duress PIN") defend against being
   forced to unlock on the spot, not against a forensic examination or a rooted phone.
@@ -820,8 +842,9 @@ uninstall to "fix" it without an exported backup, because uninstalling deletes t
 
 | Version | Storage format | Security fixes |
 |---|---|---|
-| 2.0.x | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
-| 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, reinstall 2.0 |
+| 3.0.x | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
+| 2.x | v3 vault, the same format | ❌ no; update in place to 3.0 (nothing to migrate) |
+| 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, uninstall and install 3.0 |
 
 Reports should include the exact app version (About screen), where it was installed from, and
 the Android version.

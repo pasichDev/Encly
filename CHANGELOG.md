@@ -16,7 +16,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 - Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
 - Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
 
-## [3.0.0] - 2026-11-18
+## [3.0.0] - 2026-11-19
 
 versionCode 30000.
 
@@ -48,6 +48,7 @@ versionCode 30000.
 - Backspace at the start of a list item joins it into the item above, so holding delete runs through a list without stopping ([#76](https://github.com/pasichDev/Encly/issues/76)).
 - A new look for tasks: grouped into to do, in progress and done, with the progress of their sub-tasks; editing a task no longer opens the keyboard by itself.
 - Sheets and dialogs move with the keyboard, hide when Encly locks, and the note sheet groups its actions; Delete and Save sit side by side in one row.
+- The long-press menu of a note now shows its actions as tiles, with colour and tags chosen in place.
 - Encly locks at once when the screen turns off, and on Android 14 and later the auto-lock delay also ends while the app sleeps in the background.
 - Copied note text is cleared only if it is still Encly's own copy, also when Encly locks or was closed by the system.
 

@@ -1,6 +1,6 @@
 # :shared
 
-Everything of the app that is not Android-specific, in Kotlin Multiplatform (Android and desktop JVM) with Compose
+Everything of the app that is not Android-specific, in Kotlin Multiplatform (Android, desktop JVM and iOS) with Compose
 Multiplatform.
 
 - `domain`: use cases and repository contracts.
@@ -12,8 +12,9 @@ Multiplatform.
   links, toasts, the sensitive clipboard, the window, the biometric host, the in-app language, the build's facts).
   The host gives the composables theirs through the `Local...` values around `EnclyApp`.
 
-It depends on `:core:*` and `:editor`, never on `:app` (`SharedBoundaryTest`). There is no iOS target while
-`:core:crypto` has none.
+It depends on `:core:*` and `:editor`, never on `:app` (`SharedBoundaryTest`). The iOS host (Metro graph, platform
+services, `MainViewController`) is in `iosMain` and is built into the `Shared` framework that `iosApp/` embeds.
+Only Android is released.
 
 | Target | Checked in |
 |---|---|

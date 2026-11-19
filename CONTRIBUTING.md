@@ -29,8 +29,12 @@ By taking part you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
    `local.properties` (see [README → Build](README.md#build)).
 3. Open the project in Android Studio or use `./gradlew`. Pick the `fdroidDebug` variant for
    day-to-day work.
-4. The desktop app (Windows, macOS, Linux) is the `:desktopApp` module: `./gradlew :desktopApp:run`, and
-   `:desktopApp:desktopTest` for its headless tests. See [desktopApp/README.md](desktopApp/README.md).
+4. Encly is a Kotlin Multiplatform project; the module map is in
+   [README → Project structure](README.md#project-structure). Only Android is released. The
+   desktop app (Windows, macOS, Linux) is the `:desktopApp` module: `./gradlew :desktopApp:run`, and
+   `:desktopApp:desktopTest` for its headless tests (see [desktopApp/README.md](desktopApp/README.md)).
+   The iOS app is built from Xcode on a Mac ([iosApp/README.md](iosApp/README.md)). Neither is
+   published or supported yet.
 
 ## Before you open a pull request
 
@@ -42,6 +46,7 @@ Run the same gates as CI:
 ./gradlew :app:detekt :editor:detekt                                  # config/detekt/detekt.yml
 ./gradlew :editor:desktopTest :editor:testAndroidHostTest :editor:koverVerify :editor:checkKotlinAbi   # the :editor module
 ./gradlew :shared:desktopTest :shared:testAndroidHostTest :shared:koverVerify :shared:detekt             # the UI and data logic
+./gradlew :core:security:koverVerify :core:database:koverVerify :core:crypto:koverVerify               # the core modules (CI runs each one's koverVerify, detekt and checkKotlinAbi)
 ./gradlew :app:lintFdroidRelease :app:lintPlayRelease                  # release lint
 ./gradlew assembleRelease                                              # R8 build
 ```
@@ -71,7 +76,9 @@ Run the same gates as CI:
   `onClicked`).
 - Android lint severities live in [`app/lint.xml`](app/lint.xml): hardcoded or untranslated
   text, unused resources and lint's security checks are errors.
-- Layers: `presentation` → `domain` → `data`; key handling lives in `core/security`.
+- Layers: `presentation` → `domain` → `data` (all in `:shared`); key handling lives in `:core:security`.
+  The common sources of the shared modules import nothing of Android or the JVM; each module's
+  `*BoundaryTest` (in `desktopTest`) enforces it.
 - Comments explain *why*, especially around cryptography and lifecycle.
 
 ## Git hooks
@@ -167,13 +174,13 @@ the build converts them (`ConvertAndroidStrings` in `build-logic`). Compose reso
    `values/strings_handoff.xml` and `values/strings_import.xml` of
    `core/resources/src/commonMain/strings/` to `values-<lang>/` and translate them,
    leaving out the entries marked `translatable="false"`;
-2. add `<locale android:name="<lang>" />` to `res/xml/locales_config.xml`;
-3. add an entry to `AppLanguage` (`core/locale/AppLanguage.kt`) and its own-language name as a
+2. add `<locale android:name="<lang>" />` to `app/src/main/res/xml/locales_config.xml`;
+3. add an entry to `AppLanguage` (`shared/src/commonMain/.../core/locale/AppLanguage.kt`) and its own-language name as a
    non-translatable `language_name_<lang>` string in `values/strings.xml`, and the language to
    `androidResources.localeFilters` in `app/build.gradle.kts`;
 4. add the language's CLDR plural categories to `REQUIRED_QUANTITIES` in
-   `TranslationCompletenessTest`, and the language, with a number for each category, to
-   `AndroidStrings.languages` and `QUANTITIES` in `AndroidStringsConversionTest`;
+   `TranslationCompletenessTest` (`:app`), and the language, with a number for each category, to
+   `AndroidStrings.languages` and `QUANTITIES` in `AndroidStringsConversionTest` (`:core:resources`);
 5. a right-to-left language sets `rightToLeft = true` in `AppLanguage`: the whole UI is then laid out
    right to left on every platform. The recovery words and the PIN keypad stay left to right.
 
@@ -232,7 +239,9 @@ upload this key instead of letting Google generate one).
 3. Write the store release notes (≤ 500 characters each) to
    `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` for **every** locale folder
    (`en-US`, `uk`, `de-DE`, `fr-FR`, `es-ES`, `it-IT`, `pl-PL`, `pt-PT`, `nl-NL`, `ar`);
-   `StoreMetadataTest` checks they exist and fit.
+   `StoreMetadataTest` checks they exist and fit. The iOS and desktop apps read their own notes from
+   `fastlane/metadata/{ios,desktop}/<locale>/changelogs/<versionCode>.txt`; they matter only once
+   those platforms ship.
    Add the version to `<releases>` in `desktopApp/packaging/flatpak/io.github.pasichdev.Encly.metainfo.xml`
    too; the Flatpak build in CI refuses a version that is not listed there.
 4. Test the release APK on a device.

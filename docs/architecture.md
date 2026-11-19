@@ -1,6 +1,9 @@
 # Architecture
 
-Encly is a local-first Android application. Its runtime direction is:
+Encly is a local-first application, released for Android. The code is Kotlin Multiplatform: a desktop
+app (`:desktopApp`) and an iOS app (`iosApp`) are built from the same shared modules, but neither is
+published or supported yet. This page describes the Android app unless it says otherwise. Its runtime
+direction is:
 
 ```
 presentation → domain/use cases → repositories → local data source → Room/SQLCipher
@@ -74,18 +77,22 @@ editor's `MarkdownBlockMapper` (shared with the importers) in its paste mode (no
 
 ## Platform boundary
 
-The shared core is three Kotlin Multiplatform modules, checked by a source-scan test each
+The shared core is Kotlin Multiplatform modules, checked by a source-scan test each
 (`CommonBoundaryTest`, `CryptoBoundaryTest`, `SecurityBoundaryTest` in the module's `desktopTest`):
 
 - `:core:common` (Android, desktop, iOS): `UiText`, `AppStrings`, `LoadState`, `KeyValueStore`,
   `MainThreadTimer`, `SensitiveDataCleaner`, `AppLogger`. No dependency on another module.
-- `:core:crypto` (Android, desktop): `Crypto` (AES-256-GCM, HKDF, PBKDF2, SHA-256, the CSPRNG) and BIP-39. The API
-  is common code; the implementation is JCA in `jvmAndAndroidMain`, shared by both targets. There is no iOS
-  target until AES-GCM exists there (Apple's public CommonCrypto has none).
-- `:core:security` (Android, desktop): the vault store, the PIN, wipe-PIN, duress and recovery slots, the
+- `:core:crypto` (Android, desktop, iOS): `Crypto` (AES-256-GCM, HKDF, PBKDF2, SHA-256, the CSPRNG) and BIP-39. The
+  API is common code; the implementation is JCA in `jvmAndAndroidMain`, shared by Android and desktop, and Apple's
+  own libraries in `iosMain` (CommonCrypto, and CryptoKit for AES-GCM through a small Swift file).
+- `:core:security` (Android, desktop, iOS): the vault store, the PIN, wipe-PIN, duress and recovery slots, the
   lockout, `SecurityManager`, `SessionLockManager`, `AutoLock`, and the backup file format and cipher. Locks are
-  atomicfu `SynchronizedObject`s. Only the vault file I/O and the backup JSON bytes are JVM code
-  (`jvmAndAndroidMain`).
+  atomicfu `SynchronizedObject`s. Only the vault file I/O and the backup JSON bytes are platform code
+  (`jvmAndAndroidMain`, `iosMain`).
+- `:core:keystore` (desktop): the OS secret store behind the PIN's device-bound key on Windows, macOS and Linux.
+  Android has its own Keystore implementation in `:app`, and iOS binds the Secure Enclave in `:shared`'s `iosMain`.
+- `:core:resources` (Android, desktop, iOS): every user-visible string, as Compose resources built from Android's
+  `strings.xml` files in `core/resources/src/commonMain/strings/values*/`.
 
 Their sources import nothing of Android and nothing of the JVM. What they need from the platform is an interface
 they declare, implemented in `:app` and bound in `core/di`: `KeyValueStore` (flags), `VaultFileIo` (the vault
@@ -95,7 +102,7 @@ file's fsync and atomic replace, `JvmVaultFileIo` in the module), `VaultDatabase
 
 The rest of the domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`) and the whole
 UI (design system, screens, dialogs, navigation, ViewModels) are the Kotlin Multiplatform module `:shared` (Android,
-desktop; no iOS target while `:core:crypto` has none). Its common sources are held to the same rule by
+desktop, iOS; the iOS host is in `iosMain`). Its common sources are held to the same rule by
 `SharedBoundaryTest` (`desktopTest`): no `android.`, `java.` or `androidx.activity|core|appcompat|fragment|biometric`
 import, none of `LocalContext`, `LocalActivity`, `LocalView` or `LocalConfiguration`, and no dependency on `:app`; the few
 platform source sets (`jvmAndAndroidMain`, `androidMain`, `desktopMain`) are listed there file by file, each with its
