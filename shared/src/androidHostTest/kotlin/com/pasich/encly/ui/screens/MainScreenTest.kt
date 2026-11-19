@@ -17,7 +17,6 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.about
 import com.pasich.encly.core.resources.delete
 import com.pasich.encly.core.resources.duplicate
-import com.pasich.encly.core.resources.edit
 import com.pasich.encly.core.resources.empty_notes
 import com.pasich.encly.core.resources.empty_notes_desc
 import com.pasich.encly.core.resources.empty_notes_tagged
@@ -31,6 +30,7 @@ import com.pasich.encly.core.resources.main_drawer_tags
 import com.pasich.encly.core.resources.main_drawer_tasks
 import com.pasich.encly.core.resources.main_drawer_trash
 import com.pasich.encly.core.resources.note_add
+import com.pasich.encly.core.resources.note_pin
 import com.pasich.encly.core.resources.open_menu
 import com.pasich.encly.core.resources.search_clear
 import com.pasich.encly.core.resources.search_nothing_matches
@@ -139,7 +139,7 @@ class MainScreenTest : ComposeScreenTest() {
         rule.onNode(hasText("Groceries") and hasClickAction()).performTouchInput { longClick() }
 
         waitForText(str(Res.string.duplicate))
-        rule.onNodeWithText(str(Res.string.edit)).assertIsDisplayed()
+        rule.onNodeWithText(str(Res.string.note_pin)).assertIsDisplayed()
         rule.onNodeWithText(str(Res.string.delete)).assertIsDisplayed()
     }
 
@@ -159,20 +159,6 @@ class MainScreenTest : ComposeScreenTest() {
         waitFor(describe = { "${visibleTexts().map(::textOf)} ${app.notes.updatedNotes}" }) {
             app.notes.updatedNotes.any { it.id == 1L && it.isTrash }
         }
-    }
-
-    @Test
-    fun editFromTheSheetOpensTheEditor() {
-        app.withNotes(note(7, "Groceries"))
-        show()
-        waitForText("Groceries")
-        rule.onNode(hasText("Groceries") and hasClickAction()).performTouchInput { longClick() }
-        waitForText(str(Res.string.edit))
-
-        rule.onNodeWithText(str(Res.string.edit)).performClick()
-
-        waitFor { currentRoute() == TestRoutes.EDIT_NOTE }
-        assertEquals(7L, rule.runOnIdle { nav.currentBackStackEntry?.arguments?.getLong("idNote") })
     }
 
     @Test

@@ -8,6 +8,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,13 +39,15 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.delete
 import com.pasich.encly.core.resources.duplicate
-import com.pasich.encly.core.resources.edit
 import com.pasich.encly.core.resources.main_drawer_tags
 import com.pasich.encly.core.resources.no_tag
 import com.pasich.encly.core.resources.note_archive
@@ -51,6 +55,7 @@ import com.pasich.encly.core.resources.note_color_title
 import com.pasich.encly.core.resources.note_description_none
 import com.pasich.encly.core.resources.note_description_placeholder
 import com.pasich.encly.core.resources.note_pin
+import com.pasich.encly.core.resources.note_tags_more
 import com.pasich.encly.core.resources.note_unarchive
 import com.pasich.encly.core.resources.note_unpin
 import com.pasich.encly.core.resources.save
@@ -62,22 +67,24 @@ import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.platform.vaultTextKeyboardOptions
 import com.pasich.encly.presentation.designsystem.EnclyBackButton
 import com.pasich.encly.presentation.designsystem.EnclyButton
+import com.pasich.encly.presentation.designsystem.EnclyChip
 import com.pasich.encly.presentation.designsystem.EnclyIcons
-import com.pasich.encly.presentation.designsystem.EnclyNoteColorGrid
+import com.pasich.encly.presentation.designsystem.EnclyNoteColorPicker
 import com.pasich.encly.presentation.designsystem.EnclySheetGroup
 import com.pasich.encly.presentation.designsystem.EnclySheetGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclySheetGroupRow
+import com.pasich.encly.presentation.designsystem.EnclySheetTiles
 import com.pasich.encly.presentation.designsystem.EnclyTextField
-import com.pasich.encly.presentation.designsystem.SheetGroupGap
+import com.pasich.encly.presentation.designsystem.SheetTile
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
 import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
-import com.pasich.encly.ui.theme.noteColorStyle
 import com.pasich.encly.utils.formatNoteDate
 import com.pasich.encly.utils.noteInstant
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 sealed class NoteAction {
@@ -93,17 +100,21 @@ sealed class NoteAction {
     data class ChangeDescription(val description: String) : NoteAction()
 }
 
-/** The test tag of the sheet's page area: the first page, or the tags, colour or description page. */
+/** The test tag of the sheet's page area: the first page, or the tags or description page. */
 internal const val NOTE_SHEET_PAGE_TAG = "note-sheet-page"
 
-/** What the sheet shows under the note's title: its rows, or one of the pages a row leads to. */
-private enum class NoteSheetPage { MAIN, TAGS, COLOR, DESCRIPTION }
+/** What the sheet shows under the note's title: its quick settings, or a page one of them leads to. */
+private enum class NoteSheetPage { MAIN, TAGS, DESCRIPTION }
+
+/** More tags than this fold into a "+N" chip that opens the full tags page. */
+private const val TAG_CHIPS_SHOWN = 6
 
 /**
- * Long-press actions for a note, as a grouped list: the note's tags, colour and description (each a row
- * that shows its value and leads to a page of its own inside the sheet), then its actions, then Delete.
- * A page slides in over the rows and Back, the system's or the page's, returns to them; every page is as
- * high as the rows, so the sheet never changes size as they swap.
+ * Long-press actions for a note: its title and date, quick action tiles (pin, archive, duplicate, delete),
+ * the colour swatches and tag chips that apply on a tap and leave the sheet open, and a description row.
+ * The description, and the full list of tags behind "+N", are pages that slide in over the first page and
+ * return with Back, the system's or the page's; every page is as high as the first, so the sheet never
+ * changes size as they swap.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,7 +126,7 @@ fun NoteCardBottomSheet(
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    // Per note and per opening: a sheet always opens on its rows.
+    // Per note and per opening: a sheet always opens on its first page.
     var page by remember(item.note.id, isVisible) { mutableStateOf(NoteSheetPage.MAIN) }
 
     if (isVisible) {
@@ -126,7 +137,7 @@ fun NoteCardBottomSheet(
             scrollable = true,
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ) {
-            // On a page Back returns to the rows; on the rows it closes the sheet, as ever.
+            // On a page Back returns to the first page; on it Back closes the sheet, as ever.
             BackHandler(enabled = page != NoteSheetPage.MAIN) { page = NoteSheetPage.MAIN }
             NoteActionHeader(item)
             NoteSheetPages(page = page, item = item, onAction = onAction, onPage = { page = it })
@@ -135,8 +146,8 @@ fun NoteCardBottomSheet(
 }
 
 /**
- * The rows and the pages they lead to, sliding sideways as they swap. The rows set the height: each page
- * is given the height the rows measured, and scrolls what does not fit in it.
+ * The first page and the pages it leads to, sliding sideways as they swap. The first page sets the height:
+ * each page is given the height it measured, and scrolls what does not fit in it.
  */
 @Composable
 private fun NoteSheetPages(
@@ -177,13 +188,6 @@ private fun NoteSheetPages(
                 modifier = asPage,
             )
 
-            NoteSheetPage.COLOR -> ColorPage(
-                selected = NoteColor.fromKey(item.note.color),
-                onSelect = { onAction(NoteAction.ChangeColor(it)) },
-                onBack = back,
-                modifier = asPage,
-            )
-
             NoteSheetPage.DESCRIPTION -> DescriptionPage(
                 initial = item.note.description,
                 // The keyboard is asked for once the page stands still, not under its slide.
@@ -199,7 +203,7 @@ private fun NoteSheetPages(
     }
 }
 
-/** The first page: what the note is set to, what can be done with it, and Delete on its own. */
+/** The first page: quick actions, colour, tags and the description, spaced as sections. */
 @Composable
 private fun NoteRows(
     item: NoteWithTags,
@@ -207,92 +211,153 @@ private fun NoteRows(
     onPage: (NoteSheetPage) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(SheetGroupGap)) {
-        NoteSettingRows(item, onPage)
-        NoteActionRows(item.note, onAction)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m)) {
+        EnclySheetTiles(
+            tiles = noteTiles(item.note, onAction),
+            // The sheet is `surfaceContainer`: tiles on the group colour stand out from it, as its groups do.
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        )
+        NoteSection(title = stringResource(Res.string.note_color_title)) {
+            EnclyNoteColorPicker(
+                selected = NoteColor.fromKey(item.note.color),
+                onSelect = { onAction(NoteAction.ChangeColor(it)) },
+                modifier = Modifier.bleed(EnclyTheme.spacing.gutter),
+                contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
+            )
+        }
+        NoteSection(title = stringResource(Res.string.main_drawer_tags)) {
+            NoteTagChips(
+                selectedTagIds = item.tags.mapTo(HashSet()) { it.id },
+                onToggle = { tagId, tagged -> onAction(NoteAction.ChangeTag(tagId, tagged)) },
+                onMore = { onPage(NoteSheetPage.TAGS) },
+            )
+        }
         EnclySheetGroup {
+            val shown = item.note.description.lineSequence().firstOrNull { it.isNotBlank() }?.trim()
+                ?: stringResource(Res.string.note_description_none)
+            // The row shows the description itself; read out, it is named first ("Description, ...").
+            val readOut = "${stringResource(Res.string.task_description_placeholder)}, $shown"
             EnclySheetGroupRow(
-                title = stringResource(Res.string.delete),
-                icon = EnclyIcons.Trash,
-                destructive = true,
-                confirmFirst = true,
-                onClick = { onAction(NoteAction.Delete) },
+                title = shown,
+                icon = EnclyIcons.Comment,
+                chevron = true,
+                onClick = { onPage(NoteSheetPage.DESCRIPTION) },
+                modifier = Modifier.semantics { contentDescription = readOut },
             )
         }
     }
 }
 
-/** Tags, colour and description: each shows its value and leads to its page. */
+/** A section of the first page: its small [title] label over its [content]. */
 @Composable
-private fun NoteSettingRows(item: NoteWithTags, onPage: (NoteSheetPage) -> Unit) {
-    val color = NoteColor.fromKey(item.note.color)
-    EnclySheetGroup {
-        EnclySheetGroupRow(
-            title = stringResource(Res.string.main_drawer_tags),
-            icon = EnclyIcons.Tag,
-            value = item.tags.joinToString { it.nameTag }.ifEmpty { stringResource(Res.string.no_tag) },
-            chevron = true,
-            onClick = { onPage(NoteSheetPage.TAGS) },
+private fun NoteSection(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.xxs).semantics { heading() },
         )
-        EnclySheetGroupDivider()
-        EnclySheetGroupRow(
-            title = stringResource(Res.string.note_color_title),
-            icon = EnclyIcons.Palette,
-            value = stringResource(color.labelRes),
-            valueDot = noteColorStyle(color, MaterialTheme.colorScheme)?.accent,
-            chevron = true,
-            onClick = { onPage(NoteSheetPage.COLOR) },
-        )
-        EnclySheetGroupDivider()
-        EnclySheetGroupRow(
-            title = stringResource(Res.string.task_description_placeholder),
-            icon = EnclyIcons.Comment,
-            value = item.note.description.lineSequence().firstOrNull { it.isNotBlank() }?.trim()
-                ?: stringResource(Res.string.note_description_none),
-            chevron = true,
-            onClick = { onPage(NoteSheetPage.DESCRIPTION) },
-        )
+        content()
     }
 }
 
-/** Edit, pin, archive and duplicate; a pinned note offers Unpin, an archived one Unarchive and no pin. */
+/**
+ * The quick actions: Pin (Unpin when pinned, none for an archived note), Archive (Unarchive), Duplicate and
+ * Delete, which needs a second tap. Edit is not among them: a tap on the note opens it.
+ */
 @Composable
-private fun NoteActionRows(note: Note, onAction: (NoteAction) -> Unit) {
-    EnclySheetGroup {
-        EnclySheetGroupRow(
-            title = stringResource(Res.string.edit),
-            icon = EnclyIcons.Edit,
-            onClick = { onAction(NoteAction.Edit) },
-        )
-        EnclySheetGroupDivider()
-        if (!note.isArchived) {
-            EnclySheetGroupRow(
-                title = stringResource(if (note.isPinned) Res.string.note_unpin else Res.string.note_pin),
+private fun noteTiles(note: Note, onAction: (NoteAction) -> Unit): List<SheetTile> = buildList {
+    if (!note.isArchived) {
+        add(
+            SheetTile(
+                label = stringResource(if (note.isPinned) Res.string.note_unpin else Res.string.note_pin),
                 icon = if (note.isPinned) EnclyIcons.PinOff else EnclyIcons.Pin,
+                active = note.isPinned,
                 onClick = { onAction(NoteAction.Pin(!note.isPinned)) },
-            )
-            EnclySheetGroupDivider()
-        }
-        EnclySheetGroupRow(
-            title = stringResource(if (note.isArchived) Res.string.note_unarchive else Res.string.note_archive),
+            ),
+        )
+    }
+    add(
+        SheetTile(
+            label = stringResource(if (note.isArchived) Res.string.note_unarchive else Res.string.note_archive),
             icon = if (note.isArchived) EnclyIcons.Unarchive else EnclyIcons.Archive,
             onClick = { onAction(NoteAction.Archive(!note.isArchived)) },
-        )
-        EnclySheetGroupDivider()
-        EnclySheetGroupRow(
-            title = stringResource(Res.string.duplicate),
+        ),
+    )
+    add(
+        SheetTile(
+            label = stringResource(Res.string.duplicate),
             icon = EnclyIcons.Duplicate,
             onClick = { onAction(NoteAction.Duplicate) },
+        ),
+    )
+    add(
+        SheetTile(
+            label = stringResource(Res.string.delete),
+            icon = EnclyIcons.Trash,
+            destructive = true,
+            confirmFirst = true,
+            onClick = { onAction(NoteAction.Delete) },
+        ),
+    )
+}
+
+/**
+ * The tags as chips, the note's ones selected; a tap puts a tag on or takes it off at once. Past
+ * [TAG_CHIPS_SHOWN] tags the rest fold into a "+N" chip that opens the full list; with no tags at all a
+ * muted "No tag" stands in. Until the tags are read nothing is shown: "No tag" must not flash before them.
+ */
+@Composable
+private fun NoteTagChips(
+    selectedTagIds: Set<Long>,
+    onToggle: (tagId: Long, tagged: Boolean) -> Unit,
+    onMore: () -> Unit,
+    modifier: Modifier = Modifier,
+    tagListViewModel: TagListViewModel = metroViewModel(),
+) {
+    val tags by tagListViewModel.state.collectAsState()
+    val all = tags.tagsLoad.valueOrNull() ?: return
+    if (all.isEmpty()) {
+        Text(
+            text = stringResource(Res.string.no_tag),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier.padding(horizontal = EnclyTheme.spacing.xxs),
         )
+        return
+    }
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs),
+    ) {
+        // The first tags in their order, and every tag the note has: a note must never look untagged
+        // because its tag sits past the fold.
+        val shown = all.filterIndexed { index, tag -> index < TAG_CHIPS_SHOWN || tag.id in selectedTagIds }
+        shown.forEach { tag ->
+            val tagged = tag.id in selectedTagIds
+            EnclyChip(label = tag.nameTag, selected = tagged, onClick = { onToggle(tag.id, !tagged) })
+        }
+        val hidden = all.size - shown.size
+        if (hidden > 0) {
+            EnclyChip(
+                label = "+$hidden",
+                selected = false,
+                onClick = onMore,
+                leadsTo = pluralStringResource(Res.plurals.note_tags_more, hidden, hidden),
+            )
+        }
     }
 }
 
-/** Title and last edit: the sheet's heading. */
+/** Title and last edit side by side: the sheet's heading. */
 @Composable
 private fun NoteActionHeader(item: NoteWithTags) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xxs),
-        modifier = Modifier.fillMaxWidth().padding(bottom = EnclyTheme.spacing.xs),
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s),
+        modifier = Modifier.fillMaxWidth().padding(bottom = EnclyTheme.spacing.m),
     ) {
         Text(
             text = item.note.title.ifEmpty { stringResource(Res.string.untitled) },
@@ -300,11 +365,14 @@ private fun NoteActionHeader(item: NoteWithTags) {
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = formatNoteDate(noteInstant(item.note.date)),
             style = EnclyTheme.typography.meta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            modifier = Modifier.padding(bottom = EnclyTheme.spacing.xxs),
         )
     }
 }
@@ -365,25 +433,6 @@ private fun TagsPage(
                     )
                 }
             }
-        }
-    }
-}
-
-/** The note's colour: every swatch at once, applied on a tap. */
-@Composable
-private fun ColorPage(
-    selected: NoteColor,
-    onSelect: (NoteColor) -> Unit,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    NotePage(title = stringResource(Res.string.note_color_title), onBack = onBack, modifier = modifier) {
-        EnclySheetGroup {
-            EnclyNoteColorGrid(
-                selected = selected,
-                onSelect = onSelect,
-                modifier = Modifier.padding(EnclyTheme.spacing.s),
-            )
         }
     }
 }

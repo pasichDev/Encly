@@ -1,6 +1,7 @@
 package com.pasich.encly.presentation.designsystem
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -23,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -121,6 +124,9 @@ fun EnclyCallout(
 /**
  * A filter chip: 36 dp, fully round. Selected: `primaryContainer`; unselected: transparent with a
  * 1 dp `outlineVariant` border. [count] is shown after the label in the data style.
+ *
+ * With [leadsTo] the chip is not a toggle but a button that leads on (a "+N" chip that opens the full list):
+ * [leadsTo] is what it is read out as, in place of its label.
  */
 @Composable
 fun EnclyChip(
@@ -129,6 +135,7 @@ fun EnclyChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     count: Int? = null,
+    leadsTo: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val content = if (selected) colors.onPrimaryContainer else colors.onSurface
@@ -145,7 +152,15 @@ fun EnclyChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier
                 .enclyInteractive(CircleShape)
-                .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
+                .then(
+                    if (leadsTo == null) {
+                        Modifier.toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
+                    } else {
+                        Modifier
+                            .clickable(role = Role.Button, onClick = onClick)
+                            .semantics { contentDescription = leadsTo }
+                    },
+                )
                 .heightIn(min = 36.dp)
                 .padding(horizontal = 14.dp, vertical = EnclyTheme.spacing.xs),
         ) {

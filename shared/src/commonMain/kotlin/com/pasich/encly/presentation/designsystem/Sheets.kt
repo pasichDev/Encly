@@ -52,7 +52,7 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 /** How long a destructive row waits for the confirming second tap. */
-private const val CONFIRM_WINDOW_MS = 5_000L
+internal const val CONFIRM_WINDOW_MS = 5_000L
 private const val TITLE_MAX_LINES = 3
 
 /** Elevation of the FAB and sheet shadow (design spec §1.4). */
