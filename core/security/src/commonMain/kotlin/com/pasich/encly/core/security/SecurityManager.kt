@@ -51,6 +51,9 @@ public enum class VaultUnlockResult {
 
     /** The store of the device-bound PIN key is locked or not running (a desktop keyring); the attempt was refunded. */
     KEY_STORE_UNAVAILABLE,
+
+    /** The device's key store failed on this attempt (it may pass); the attempt was refunded, the database is fine. */
+    KEY_STORE_FAILED,
     DB_ERROR,
 }
 
@@ -329,6 +332,8 @@ public class SecurityManager(
             PinUnlock.KeyLost -> VaultUnlockResult.PIN_KEY_LOST
 
             PinUnlock.KeyStoreUnavailable -> VaultUnlockResult.KEY_STORE_UNAVAILABLE
+
+            PinUnlock.KeyStoreFailed -> VaultUnlockResult.KEY_STORE_FAILED
 
             PinUnlock.Failed -> VaultUnlockResult.DB_ERROR
         }

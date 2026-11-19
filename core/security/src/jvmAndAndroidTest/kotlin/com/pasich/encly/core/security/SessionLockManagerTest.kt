@@ -11,6 +11,8 @@ import org.junit.Test
 import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.timeout
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -76,6 +78,28 @@ class SessionLockManagerTest {
         assertThrows(IllegalStateException::class.java) { manager.lockNow() }
 
         assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun aVaultThatFailsToCloseAfterTheSavesDoesNotBlockLaterLocks() {
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        manager.registerPreLockFlush { }
+        doThrow(IllegalStateException("close failed")).`when`(security).lock()
+
+        manager.lockNow()
+
+        // The failing close ran in the lock job; its exception must not leave the manager waiting for it.
+        val deadline = System.currentTimeMillis() + 5_000
+        while (manager.locking.value && System.currentTimeMillis() < deadline) Thread.sleep(10)
+        assertFalse(manager.locking.value)
+        assertTrue(manager.locked.value)
+
+        // A later lock is not swallowed as "already waiting for the editors".
+        reset(security)
+        `when`(security.isLockable()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        manager.lockNow()
+        verify(security, timeout(5_000)).lock()
     }
 
     @Test

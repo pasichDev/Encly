@@ -756,6 +756,13 @@ public final class com/pasich/encly/core/security/PinUnlock$KeyLost : com/pasich
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/pasich/encly/core/security/PinUnlock$KeyStoreFailed : com/pasich/encly/core/security/PinUnlock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$KeyStoreFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/pasich/encly/core/security/PinUnlock$KeyStoreUnavailable : com/pasich/encly/core/security/PinUnlock {
 	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$KeyStoreUnavailable;
 	public fun equals (Ljava/lang/Object;)Z
@@ -1057,6 +1064,7 @@ public final class com/pasich/encly/core/security/VaultStore$Editor {
 public final class com/pasich/encly/core/security/VaultUnlockResult : java/lang/Enum {
 	public static final field DB_ERROR Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field INVALID_CREDENTIAL Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static final field KEY_STORE_FAILED Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field KEY_STORE_UNAVAILABLE Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field LOCKED_OUT Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field PIN_KEY_LOST Lcom/pasich/encly/core/security/VaultUnlockResult;

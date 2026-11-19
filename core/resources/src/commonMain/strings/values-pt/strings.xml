@@ -118,6 +118,7 @@
     <string name="enter_url">Digite um link</string>
 
     <string name="error_database_open">Não foi possível abrir o banco de dados</string>
+    <string name="error_keystore_unavailable">O armazenamento seguro de chaves do dispositivo não respondeu. Tente novamente; se continuar falhando, reinicie o dispositivo.</string>
 
     <string name="expand">Expandir</string>
 

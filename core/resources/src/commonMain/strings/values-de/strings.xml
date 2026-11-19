@@ -118,6 +118,7 @@
     <string name="enter_url">Link eingeben</string>
 
     <string name="error_database_open">Die Datenbank konnte nicht geöffnet werden</string>
+    <string name="error_keystore_unavailable">Der sichere Schlüsselspeicher des Geräts hat nicht geantwortet. Versuche es erneut; wenn der Fehler bleibt, starte das Gerät neu.</string>
 
     <string name="expand">Ausklappen</string>
 

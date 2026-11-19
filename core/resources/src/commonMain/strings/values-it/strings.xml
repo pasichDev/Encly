@@ -118,6 +118,7 @@
     <string name="enter_url">Inserisci un link</string>
 
     <string name="error_database_open">Impossibile aprire il database</string>
+    <string name="error_keystore_unavailable">L\'archivio sicuro delle chiavi del dispositivo non ha risposto. Riprova; se l\'errore persiste, riavvia il dispositivo.</string>
 
     <string name="expand">Espandi</string>
 

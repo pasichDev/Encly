@@ -118,6 +118,7 @@
     <string name="enter_url">Введіть посилання</string>
 
     <string name="error_database_open">Не вдалося відкрити базу даних</string>
+    <string name="error_keystore_unavailable">Захищене сховище ключів пристрою не відповіло. Спробуйте ще раз; якщо помилка повторюється, перезавантажте пристрій.</string>
 
     <string name="expand">Розгорнути</string>
 

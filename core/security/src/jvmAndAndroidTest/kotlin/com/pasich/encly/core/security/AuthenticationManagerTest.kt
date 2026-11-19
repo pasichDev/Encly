@@ -89,7 +89,7 @@ class AuthenticationManagerTest {
         factor.failing = true
 
         repeat(AuthenticationManager.MAX_ATTEMPTS + 2) {
-            assertEquals(PinUnlock.Failed, manager.unlockWithPin(pin("123456")))
+            assertEquals(PinUnlock.KeyStoreFailed, manager.unlockWithPin(pin("123456")))
         }
         factor.failing = false
         assertTrue(manager.unlockWithPin(pin("123456")) is PinUnlock.Success)

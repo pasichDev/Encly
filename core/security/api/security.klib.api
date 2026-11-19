@@ -203,6 +203,7 @@ final enum class com.pasich.encly.core.security/VaultKind : kotlin/Enum<com.pasi
 final enum class com.pasich.encly.core.security/VaultUnlockResult : kotlin/Enum<com.pasich.encly.core.security/VaultUnlockResult> { // com.pasich.encly.core.security/VaultUnlockResult|null[0]
     enum entry DB_ERROR // com.pasich.encly.core.security/VaultUnlockResult.DB_ERROR|null[0]
     enum entry INVALID_CREDENTIAL // com.pasich.encly.core.security/VaultUnlockResult.INVALID_CREDENTIAL|null[0]
+    enum entry KEY_STORE_FAILED // com.pasich.encly.core.security/VaultUnlockResult.KEY_STORE_FAILED|null[0]
     enum entry KEY_STORE_UNAVAILABLE // com.pasich.encly.core.security/VaultUnlockResult.KEY_STORE_UNAVAILABLE|null[0]
     enum entry LOCKED_OUT // com.pasich.encly.core.security/VaultUnlockResult.LOCKED_OUT|null[0]
     enum entry PIN_KEY_LOST // com.pasich.encly.core.security/VaultUnlockResult.PIN_KEY_LOST|null[0]
@@ -394,6 +395,12 @@ sealed interface com.pasich.encly.core.security/PinUnlock { // com.pasich.encly.
         final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.security/PinUnlock.KeyLost.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // com.pasich.encly.core.security/PinUnlock.KeyLost.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // com.pasich.encly.core.security/PinUnlock.KeyLost.toString|toString(){}[0]
+    }
+
+    final object KeyStoreFailed : com.pasich.encly.core.security/PinUnlock { // com.pasich.encly.core.security/PinUnlock.KeyStoreFailed|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // com.pasich.encly.core.security/PinUnlock.KeyStoreFailed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // com.pasich.encly.core.security/PinUnlock.KeyStoreFailed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // com.pasich.encly.core.security/PinUnlock.KeyStoreFailed.toString|toString(){}[0]
     }
 
     final object KeyStoreUnavailable : com.pasich.encly.core.security/PinUnlock { // com.pasich.encly.core.security/PinUnlock.KeyStoreUnavailable|null[0]

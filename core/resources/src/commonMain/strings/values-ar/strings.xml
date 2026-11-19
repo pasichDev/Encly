@@ -104,6 +104,7 @@
     <string name="enter_url">أدخل رابطًا</string>
 
     <string name="error_database_open">تعذّر فتح قاعدة البيانات</string>
+    <string name="error_keystore_unavailable">لم يستجب مخزن المفاتيح الآمن في الجهاز. حاول مرة أخرى، وإذا استمر الفشل فأعد تشغيل الجهاز.</string>
 
     <string name="expand">توسيع</string>
 

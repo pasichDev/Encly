@@ -51,6 +51,9 @@ versionCode 30000.
 - The long-press menu of a note now shows its actions as tiles, with colour and tags chosen in place.
 - Encly locks at once when the screen turns off, and on Android 14 and later the auto-lock delay also ends while the app sleeps in the background.
 - Copied note text is cleared only if it is still Encly's own copy, also when Encly locks or was closed by the system.
+- Swiping Encly out of Recents, or pressing Back out of it on Android 11 and older, locks the vault at once.
+- "Erase all data" destroys the keys before the database.
+- Windows opened while screenshots are allowed are protected again at the next lock.
 
 ### Fixed
 
@@ -64,6 +67,8 @@ versionCode 30000.
 - Pressing Back twice quickly could close two screens at once.
 - A new note started from a template and left without any changes stayed in the list with only the outline; it is now dropped like a blank note.
 - After new fingerprints were added to the phone, the fingerprint button did nothing; the lock screen now says to unlock with the PIN and turn fingerprint unlock on again.
+- The decoy vault no longer shows the date of the real vault's last backup.
+- A temporary failure of the device's key storage no longer offers to erase the vault, and the lock screen says the key storage did not respond instead of that the database could not be opened.
 
 ## [2.3.1] - 2026-10-27
 

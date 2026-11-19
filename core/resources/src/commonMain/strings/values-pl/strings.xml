@@ -118,6 +118,7 @@
     <string name="enter_url">Wpisz link</string>
 
     <string name="error_database_open">Nie udało się otworzyć bazy danych</string>
+    <string name="error_keystore_unavailable">Bezpieczny magazyn kluczy urządzenia nie odpowiedział. Spróbuj ponownie; jeśli błąd się powtarza, uruchom urządzenie ponownie.</string>
 
     <string name="expand">Rozwiń</string>
 

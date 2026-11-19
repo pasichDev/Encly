@@ -81,7 +81,13 @@ public sealed interface PinUnlock {
      */
     public data object KeyStoreUnavailable : PinUnlock
 
-    /** The attempt could not be made (Keystore or storage failure); nothing was counted. */
+    /**
+     * The device's key store failed on this attempt (a Keystore error that may pass); nothing was counted.
+     * The key is not gone and the database was never touched: trying again may work.
+     */
+    public data object KeyStoreFailed : PinUnlock
+
+    /** The attempt could not be made (a storage failure); nothing was counted. */
     public data object Failed : PinUnlock
 }
 
@@ -328,7 +334,7 @@ public class AuthenticationManager(
                     return when {
                         e.lost -> PinUnlock.KeyLost
                         e.unavailable -> PinUnlock.KeyStoreUnavailable
-                        else -> PinUnlock.Failed
+                        else -> PinUnlock.KeyStoreFailed
                     }
                 }
                 try {

@@ -35,6 +35,7 @@ import kotlinx.coroutines.withContext
  * KEY_LOST: the device-bound PIN key is gone; only the recovery phrase (or fingerprint) unlocks.
  * KEY_STORE_UNAVAILABLE: the store of that key is locked or not running (a desktop keyring); nothing was counted,
  * the PIN works again once the user has unlocked it. Android never reports it.
+ * KEY_STORE_FAILED: the device's key store did not answer this time; nothing was counted and the database is fine.
  * DEVICE_LOCKED: the credential was right, but the operating system reports the screen as locked, so the vault was
  * closed again; the lock screen says so.
  */
@@ -44,6 +45,7 @@ enum class PinUnlockResult {
     LOCKED_OUT,
     KEY_LOST,
     KEY_STORE_UNAVAILABLE,
+    KEY_STORE_FAILED,
     DB_ERROR,
     BACKGROUNDED,
     DEVICE_LOCKED,
@@ -123,6 +125,7 @@ class LockViewModel(
                     VaultUnlockResult.LOCKED_OUT -> PinUnlockResult.LOCKED_OUT
                     VaultUnlockResult.PIN_KEY_LOST -> PinUnlockResult.KEY_LOST
                     VaultUnlockResult.KEY_STORE_UNAVAILABLE -> PinUnlockResult.KEY_STORE_UNAVAILABLE
+                    VaultUnlockResult.KEY_STORE_FAILED -> PinUnlockResult.KEY_STORE_FAILED
                     VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
                 }
             }

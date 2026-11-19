@@ -217,7 +217,7 @@ class DuressPinTest {
         repeat(2) { auth.unlockWithPin(pin("000000")) }
         factor.failing = true
 
-        assertEquals(PinUnlock.Failed, auth.unlockWithPin(pin("000000")))
+        assertEquals(PinUnlock.KeyStoreFailed, auth.unlockWithPin(pin("000000")))
 
         assertEquals(2, store.getInt(STRIKES, 0))
         factor.failing = false

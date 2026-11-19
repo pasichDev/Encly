@@ -223,6 +223,12 @@ class LockViewModelTest {
     }
 
     @Test
+    fun aFailedKeyStoreIsReportedApartFromADatabaseError() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.KEY_STORE_FAILED)
+        assertEquals(PinUnlockResult.KEY_STORE_FAILED, pin())
+    }
+
+    @Test
     fun anUnavailableKeyStoreIsReported() = runTest {
         `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.KEY_STORE_UNAVAILABLE)
         assertEquals(PinUnlockResult.KEY_STORE_UNAVAILABLE, pin())

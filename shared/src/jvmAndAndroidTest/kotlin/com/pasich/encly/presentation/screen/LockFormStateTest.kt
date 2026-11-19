@@ -1,6 +1,8 @@
 package com.pasich.encly.presentation.screen
 
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.error_database_open
+import com.pasich.encly.core.resources.error_keystore_unavailable
 import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.lock_device_locked
 import com.pasich.encly.core.resources.lock_pin_key_lost
@@ -92,6 +94,16 @@ class LockFormStateTest {
         assertEquals(Res.string.key_store_unavailable, form.pinError)
         assertNull(form.phraseError)
         assertFalse(form.lockedOut)
+    }
+
+    @Test
+    fun aFailedKeyStoreHasItsOwnMessageAndADatabaseFailureKeepsItsOwn() {
+        form.onPinResult(PinUnlockResult.KEY_STORE_FAILED, lockoutRemainingMillis = 0L)
+        assertEquals(Res.string.error_keystore_unavailable, form.pinError)
+        assertFalse(form.lockedOut)
+
+        form.onPinResult(PinUnlockResult.DB_ERROR, lockoutRemainingMillis = 0L)
+        assertEquals(Res.string.error_database_open, form.pinError)
     }
 
     @Test

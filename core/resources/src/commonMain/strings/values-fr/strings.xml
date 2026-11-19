@@ -118,6 +118,7 @@
     <string name="enter_url">Saisissez un lien</string>
 
     <string name="error_database_open">Impossible d\'ouvrir la base de données</string>
+    <string name="error_keystore_unavailable">Le stockage sécurisé des clés de l\'appareil n\'a pas répondu. Réessayez ; si l\'erreur persiste, redémarrez l\'appareil.</string>
 
     <string name="expand">Développer</string>
 

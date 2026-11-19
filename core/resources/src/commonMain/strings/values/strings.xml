@@ -135,6 +135,7 @@
     <string name="enter_url">Enter a link</string>
 
     <string name="error_database_open">Couldn\'t open the database</string>
+    <string name="error_keystore_unavailable">The device\'s secure key storage did not respond. Try again; if it keeps failing, restart the device.</string>
 
     <string name="expand">Expand</string>
 

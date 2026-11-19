@@ -118,6 +118,7 @@
     <string name="enter_url">Voer een link in</string>
 
     <string name="error_database_open">Kan de database niet openen</string>
+    <string name="error_keystore_unavailable">De beveiligde sleutelopslag van het apparaat reageerde niet. Probeer het opnieuw; als het blijft mislukken, start je het apparaat opnieuw op.</string>
 
     <string name="expand">Uitvouwen</string>
 

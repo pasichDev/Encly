@@ -336,9 +336,16 @@ public class SessionLockManager(
                 }
                 withTimeoutOrNull(LOCK_FLUSH_TIMEOUT_MS) { saves.joinAll() }
             } finally {
-                closeVault()
-                _locking.value = false
-                flushing.store(false)
+                // Reset whatever closing the vault does: a stuck flag would swallow every later lock.
+                try {
+                    closeVault()
+                } finally {
+                    try {
+                        _locking.value = false
+                    } finally {
+                        flushing.store(false)
+                    }
+                }
             }
         }
     }

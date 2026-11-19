@@ -118,6 +118,7 @@
     <string name="enter_url">Introduce un enlace</string>
 
     <string name="error_database_open">No se pudo abrir la base de datos</string>
+    <string name="error_keystore_unavailable">El almacén seguro de claves del dispositivo no respondió. Inténtalo de nuevo; si sigue fallando, reinicia el dispositivo.</string>
 
     <string name="expand">Expandir</string>
 

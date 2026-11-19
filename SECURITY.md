@@ -643,7 +643,7 @@ generic Markdown/TXT (Obsidian, Markor).
 - Within the delay the vault stays open in the background: the DEK and decrypted content are
   in memory, and the recents thumbnail is still blocked by `FLAG_SECURE`. Choose
   "Immediately" to close it the moment Encly leaves the screen. Swiping Encly away from Recents
-  closes the vault at once, whatever the delay.
+  closes the vault at once, whatever the delay; so does Back out of the app on Android 8-11.
 - The next foreground entry must unwrap the DEK again through PIN, biometric, or
   recovery.
 - A process started with a committed, closed vault starts in the locked state, and a central
