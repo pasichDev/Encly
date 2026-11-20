@@ -1,0 +1,5 @@
+Encly 3.0.1
+• Änderungen, die den Schutz schwächen (längere Auto-Sperre, strenge Tastatur aus, Notizvorschau, Biometrie), fragen jetzt zuerst nach der PIN.
+• Notiz-Menü mit TalkBack besser nutzbar: größere Label-Flächen, klare Löschbestätigung.
+• Einmaliger Hinweis beim Update von 2.x: Der Papierkorb leert sich jetzt nach 28 Tagen selbst.
+• Gleichmäßiger Abstand zwischen Kästchen oder Punkt und Text in langen Listen.

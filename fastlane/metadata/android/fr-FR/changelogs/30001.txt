@@ -1,0 +1,5 @@
+Encly 3.0.1
+• Les réglages qui affaiblissent la protection (verrouillage plus long, clavier strict désactivé, aperçus des notes, biométrie) demandent d'abord votre PIN.
+• Le menu de la note est plus accessible avec TalkBack : zones de libellés plus grandes, confirmation de suppression claire.
+• Avis unique pour ceux qui passent de la 2.x : la corbeille se vide désormais seule après 28 jours.
+• Espace constant entre la case ou la puce et son texte dans les longues listes.

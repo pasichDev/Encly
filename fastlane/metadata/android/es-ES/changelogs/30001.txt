@@ -1,0 +1,5 @@
+Encly 3.0.1
+• Los ajustes que debilitan la protección (bloqueo automático más largo, teclado estricto desactivado, vistas previas, biometría) piden primero tu PIN.
+• La hoja de la nota funciona mejor con TalkBack: etiquetas más grandes y confirmación de borrado clara.
+• Aviso único para quien actualiza desde la 2.x: la papelera ahora se vacía sola a los 28 días.
+• Espacio uniforme entre la casilla o viñeta y su texto en listas largas.

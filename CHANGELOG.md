@@ -11,14 +11,21 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+
+- Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
+- Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
+
+## [3.0.1] - 2026-11-20
+
+versionCode 30001.
+
 ### Security
 
 - Lengthening the auto-lock delay, turning strict keyboard privacy off, showing note previews and turning biometric unlock on now ask for your PIN first, so someone holding your unlocked phone cannot weaken your protection. Changes that make it stricter still apply at once ([#133](https://github.com/pasichDev/Encly/issues/133)).
 
 ### Added
 
-- Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
-- Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
 - After an update from a version before 3.0.0, a one-time notice tells you that the trash now deletes notes 28 days after they were moved there, how many notes are in it, and opens the trash for you ([#126](https://github.com/pasichDev/Encly/issues/126)).
 
 ### Changed
@@ -429,7 +436,10 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/pasichDev/Encly/compare/v3.0.0...v3.0.1
+[3.0.0]: https://github.com/pasichDev/Encly/compare/v2.3.1...v3.0.0
+[2.3.1]: https://github.com/pasichDev/Encly/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/pasichDev/Encly/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/pasichDev/Encly/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/pasichDev/Encly/releases/tag/v2.2.0
