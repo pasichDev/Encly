@@ -21,10 +21,11 @@ import java.security.UnrecoverableKeyException
 /**
  * The Keystore-backed PIN factor against an in-memory Keystore that fails on demand: what it
  * generates, which failures mean "the key is gone for good" and which may pass, and that a
- * failed generation never leaves a half-made key behind.
+ * failed generation never leaves a half-made key behind. Runs on Android 9 (the first with StrongBox and the
+ * unlocked-device requirement) and on 15; the case below Android 9 is [beforeAndroid9NoStrongBoxIsAskedFor].
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+@Config(sdk = [28, 35])
 class KeystorePinFactorTest {
     private val factor = KeystorePinFactor()
     private val aliasA = "encly_pin_factor_v3"
@@ -102,6 +103,18 @@ class KeystorePinFactorTest {
         assertTrue(spec.isUnlockedDeviceRequired)
         assertEquals(256, spec.keySize)
         assertEquals(android.security.keystore.KeyProperties.PURPOSE_SIGN, spec.purposes)
+    }
+
+    @Test
+    @Config(sdk = [26])
+    fun beforeAndroid9NoStrongBoxIsAskedForAndTheKeyIsStillMade() {
+        // StrongBox and the unlocked-device flag do not exist on Android 8: the spec is built without them.
+        assertTrue(factor.ensureKey(PinKeySlot.A))
+
+        assertEquals(1, FakeAndroidKeyStore.specs.size)
+        assertEquals(256, FakeAndroidKeyStore.specs.single().keySize)
+        assertTrue(FakeAndroidKeyStore.has(aliasA))
+        assertEquals(32, factor.mac(PinKeySlot.A, byteArrayOf(1)).size)
     }
 
     @Test

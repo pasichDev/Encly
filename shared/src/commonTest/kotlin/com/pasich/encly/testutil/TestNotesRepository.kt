@@ -52,10 +52,14 @@ internal class TestNotesRepository : NotesRepository {
     /** The `base` of every [updateEdited], in call order. */
     val updateBases = mutableListOf<Note?>()
 
+    /** When set, [updateEdited] waits for it after recording the call: a slow write a test finishes when it likes. */
+    var updateGate: CompletableDeferred<Unit>? = null
+
     override suspend fun updateEdited(note: Note, base: Note?): Result<Unit> {
         updateCalls += 1
         updatedNotes += note
         updateBases += base
+        updateGate?.await()
         return if (updateResult) Result.success(Unit) else Result.failure(IllegalStateException())
     }
 
@@ -126,8 +130,12 @@ internal class TestNotesRepository : NotesRepository {
     /** Every id passed to [deleteNoteById], in call order. */
     val deletedIds = mutableListOf<Long>()
 
+    /** Set to make [deleteNoteById] fail: the call is recorded, the note stays. */
+    var deleteNoteFails = false
+
     override suspend fun deleteNoteById(id: Long): Result<Unit> {
         deletedIds += id
+        if (deleteNoteFails) return Result.failure(IllegalStateException("disk"))
         return Result.success(Unit)
     }
 

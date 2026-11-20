@@ -148,6 +148,31 @@ class AuthenticationEdgeCasesTest {
         assertEquals(PinChange.FAILED, manager.changePin(NEW_PIN.toCharArray(), dek))
     }
 
+    @Test
+    fun aPinChangeThatIsCancelledAfterTheCurrentPinWasCheckedLeavesTheOldPinWorking() {
+        // The change starts by checking the current PIN; the user then backs out and nothing is stored.
+        assertTrue(auth.verifyPinAuth(PIN.toCharArray()))
+
+        val unlocked = auth.unlockWithPin(PIN.toCharArray())
+        assertTrue(unlocked is PinUnlock.Success)
+        (unlocked as PinUnlock.Success).dek.fill(0)
+        assertEquals(PinUnlock.WrongPin, auth.unlockWithPin(NEW_PIN.toCharArray()))
+    }
+
+    @Test
+    fun aPinChangeThatFailsToStoreLeavesTheOldPinWorking() {
+        val failingStore = tempVaultStore()
+        val manager = AuthenticationManager(failingStore, FakePinFactor(), FakeLockoutClock())
+        assertTrue(manager.configurePin(PIN.toCharArray(), dek))
+        failingStore.beforeRename = { throw java.io.IOException("disk full") }
+
+        assertEquals(PinChange.FAILED, manager.changePin(NEW_PIN.toCharArray(), dek))
+        failingStore.beforeRename = null
+
+        assertEquals(PinUnlock.WrongPin, manager.unlockWithPin(NEW_PIN.toCharArray()))
+        assertTrue(manager.unlockWithPin(PIN.toCharArray()) is PinUnlock.Success)
+    }
+
     // --- the wipe's progress marker and the retired key -------------------------------------
 
     @Test

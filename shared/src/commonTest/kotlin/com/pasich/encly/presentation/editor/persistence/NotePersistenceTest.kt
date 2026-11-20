@@ -498,6 +498,22 @@ class NotePersistenceTest {
     }
 
     @Test
+    fun aFailedDeleteIsReportedAndTheNoteIsStillThere() = runTest(dispatcher) {
+        storeNote(text("body"))
+        val persistence = persistence(loading = true)
+        persistence.load(NOTE_ID, isCopy = false) { blocks = it }
+        repository.deleteNoteFails = true
+
+        assertFalse(persistence.delete())
+
+        // The editor is not closed: a later delete, once the disk answers, goes through.
+        assertEquals(listOf(NOTE_ID), repository.deletedIds)
+        repository.deleteNoteFails = false
+        assertTrue(persistence.delete())
+        assertEquals(listOf(NOTE_ID, NOTE_ID), repository.deletedIds)
+    }
+
+    @Test
     fun aDuplicateIsStoredAsACopy() = runTest(dispatcher) {
         val persistence = persistence()
         persistence.updateNote { it.copy(title = "note") }

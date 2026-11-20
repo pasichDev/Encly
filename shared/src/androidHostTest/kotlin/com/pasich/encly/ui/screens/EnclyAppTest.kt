@@ -2,12 +2,15 @@ package com.pasich.encly.ui.screens
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModel
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.empty_notes
 import com.pasich.encly.core.resources.lock_title
 import com.pasich.encly.core.resources.main_drawer_settings
+import com.pasich.encly.core.resources.note_add
+import com.pasich.encly.core.resources.note_title_placeholder
 import com.pasich.encly.core.resources.settings_language
 import com.pasich.encly.core.security.InitialStatus
 import com.pasich.encly.presentation.navigation.EnclyApp
@@ -35,7 +38,8 @@ class EnclyAppTest : ComposeScreenTest() {
     private fun show(status: InitialStatus?, unlocked: Boolean = true) {
         `when`(app.security.isDatabaseUnlocked()).thenReturn(unlocked)
         `when`(app.security.hasRecoverySeed()).thenReturn(true)
-        val factory = Prebuilt(ThemeViewModel(app.settings), app.lock(), *app.home())
+        val factory =
+            Prebuilt(ThemeViewModel(app.settings), app.lock(), app.editor(), app.markdownExport(), *app.home())
         rule.setContent {
             CompositionLocalProvider(LocalMetroViewModelFactory provides factory) {
                 EnclyApp(status, app.security, app.sessionLock)
@@ -47,6 +51,8 @@ class EnclyAppTest : ComposeScreenTest() {
     private fun onLockScreen() = countText(str(Res.string.lock_title)) > 0
 
     private fun onHome() = countText(str(Res.string.empty_notes)) > 0
+
+    private fun onEditor() = countText(str(Res.string.note_title_placeholder)) > 0
 
     @Test
     fun anOpenVaultStartsOnHome() {
@@ -89,6 +95,32 @@ class EnclyAppTest : ComposeScreenTest() {
         // Something closed the database without the lock event arriving yet; the next vault screen must not show.
         `when`(app.security.isDatabaseUnlocked()).thenReturn(false)
         rule.onNodeWithContentDescription(str(Res.string.main_drawer_settings)).performClick()
+
+        waitFor { onLockScreen() }
+        assertEquals(0, countText(str(Res.string.settings_language)))
+    }
+
+    @Test
+    fun aLockWhileTheEditorIsOpenReplacesItWithTheLockScreen() {
+        show(InitialStatus.MAIN)
+        waitFor { onHome() }
+        rule.onNodeWithText(str(Res.string.note_add), useUnmergedTree = true).performClick()
+        waitFor { onEditor() }
+
+        rule.runOnIdle { app.sessionLock.requireUnlock() }
+
+        waitFor { onLockScreen() }
+        assertEquals(0, countText(str(Res.string.note_title_placeholder)))
+    }
+
+    @Test
+    fun aLockWhileASettingsScreenIsOpenReplacesItWithTheLockScreen() {
+        show(InitialStatus.MAIN)
+        waitFor { onHome() }
+        rule.onNodeWithContentDescription(str(Res.string.main_drawer_settings)).performClick()
+        waitForText(str(Res.string.settings_language))
+
+        rule.runOnIdle { app.sessionLock.requireUnlock() }
 
         waitFor { onLockScreen() }
         assertEquals(0, countText(str(Res.string.settings_language)))

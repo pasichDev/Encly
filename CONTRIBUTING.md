@@ -244,7 +244,9 @@ upload this key instead of letting Google generate one).
    those platforms ship.
    Add the version to `<releases>` in `desktopApp/packaging/flatpak/io.github.pasichdev.Encly.metainfo.xml`
    too; the Flatpak build in CI refuses a version that is not listed there.
-4. Test the release APK on a device.
+4. Test the release APK on a device. If a dependency or the app added or dropped a permission, the
+   "Check merged manifest permission set" step of CI fails: update its list on purpose and say why
+   in the pull request.
 5. Merge to `main`, then tag the merge commit `vX.Y.Z` and push the tag. The
    [release workflow](.github/workflows/release.yml) refuses a tag that does not match
    `version.properties`, fails when a signing secret or `ENCLY_CERT_SHA256` is missing, builds
