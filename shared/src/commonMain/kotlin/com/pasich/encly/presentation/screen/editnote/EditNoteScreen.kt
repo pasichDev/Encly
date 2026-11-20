@@ -20,7 +20,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -138,12 +137,12 @@ fun EditNoteScreen(
     val fontStyle by viewModel.fontStyle.collectAsStateWithLifecycle()
     val lineSpacing by viewModel.noteLineSpacing.collectAsStateWithLifecycle()
     val simpleEdit by viewModel.simpleEdit.collectAsStateWithLifecycle()
-    val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
-    val editedElsewhere by viewModel.editedElsewhere.collectAsState()
+    val contentLoadFailed by viewModel.contentLoadFailed.collectAsStateWithLifecycle()
+    val editedElsewhere by viewModel.editedElsewhere.collectAsStateWithLifecycle()
     val overlays = rememberEditorOverlays()
     val listState = rememberLazyListState()
     val focusRegistry = rememberBlockFocusRegistry(viewModel.blocks)
-    val findState = viewModel.find.collectAsState()
+    val findState = viewModel.find.collectAsStateWithLifecycle()
     val highlights = remember(findState) { FindHighlights(findState) }
     val controller = rememberEditorController()
     val host = remember(controller, focusRegistry, highlights) {
@@ -221,11 +220,11 @@ private fun EditorScaffold(
     viewModel: EditNoteViewModel = metroViewModel(),
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val lockEditor by viewModel.lockEditor.collectAsState()
-    val picking by viewModel.selectedBlocks.ids.collectAsState()
-    val textRange by viewModel.textRange.ends.collectAsState()
+    val lockEditor by viewModel.lockEditor.collectAsStateWithLifecycle()
+    val picking by viewModel.selectedBlocks.ids.collectAsStateWithLifecycle()
+    val textRange by viewModel.textRange.ends.collectAsStateWithLifecycle()
     val crossBlocks = textRange != null && viewModel.textRange.isCrossField
-    val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
+    val contentLoadFailed by viewModel.contentLoadFailed.collectAsStateWithLifecycle()
     val findOpen by rememberFindOpen()
     val pageColor = rememberPageColor()
     Scaffold(
@@ -272,7 +271,7 @@ private fun EditorScaffold(
  */
 @Composable
 private fun rememberPageColor(viewModel: EditNoteViewModel = metroViewModel()): Color {
-    val noteState = viewModel.state.collectAsState()
+    val noteState = viewModel.state.collectAsStateWithLifecycle()
     val colorKey by remember(noteState) { derivedStateOf { noteState.value.note.color } }
     val scheme = MaterialTheme.colorScheme
     val target = remember(colorKey, scheme) {
@@ -317,7 +316,7 @@ private fun EditorOverlays(
     val clipboard = LocalSensitiveClipboard.current
     val copyLabel = stringResource(Res.string.markdown_copy)
     val copyConfirmation = stringResource(Res.string.markdown_copied)
-    val lockEditor by viewModel.lockEditor.collectAsState()
+    val lockEditor by viewModel.lockEditor.collectAsStateWithLifecycle()
     EditorConfirmDialogs(
         visible = ConfirmationsVisible(
             delete = overlays.isDeleteDialogVisible,
@@ -412,13 +411,13 @@ private fun EditorBlocks(
     val spacing = LocalEditorTheme.current.lineSpacing
     val controller = rememberEditorController()
     val headerGap = if (spacing.isCompact) EnclyTheme.spacing.labelGap else 0.dp
-    val lockEditor by viewModel.lockEditor.collectAsState()
-    val contentLoadFailed by viewModel.contentLoadFailed.collectAsState()
-    val editedElsewhere by viewModel.editedElsewhere.collectAsState()
-    val editingLinkIds by viewModel.editingLinkIds.collectAsState()
-    val templatesOffered by viewModel.templatesOffered.collectAsState()
+    val lockEditor by viewModel.lockEditor.collectAsStateWithLifecycle()
+    val contentLoadFailed by viewModel.contentLoadFailed.collectAsStateWithLifecycle()
+    val editedElsewhere by viewModel.editedElsewhere.collectAsStateWithLifecycle()
+    val editingLinkIds by viewModel.editingLinkIds.collectAsStateWithLifecycle()
+    val templatesOffered by viewModel.templatesOffered.collectAsStateWithLifecycle()
     // Only whether it is loading: a save changing the status must not recompose the list.
-    val status = viewModel.status.collectAsState()
+    val status = viewModel.status.collectAsStateWithLifecycle()
     val loading by remember(status) { derivedStateOf { status.value == SaveStatusNote.LOADING } }
 
     CompositionLocalProvider(LocalOverscrollFactory provides null) {
@@ -486,11 +485,11 @@ private fun EditorOverline(
     tagViewModel: TagListViewModel = metroViewModel(),
 ) {
     // Read through derived state: a title keystroke or a save does not recompose the overline.
-    val noteState = viewModel.state.collectAsState()
-    val status = viewModel.status.collectAsState()
+    val noteState = viewModel.state.collectAsStateWithLifecycle()
+    val status = viewModel.status.collectAsStateWithLifecycle()
     val meta by remember(noteState) { derivedStateOf { noteState.value.note.let { it.tagIds to it.date } } }
     val notSaved by remember(status) { derivedStateOf { status.value == SaveStatusNote.FAILED } }
-    val tagState by tagViewModel.state.collectAsState()
+    val tagState by tagViewModel.state.collectAsStateWithLifecycle()
     val (tagIds, date) = meta
     NoteOverline(
         // In the tags' own order, the one of the tags screen.

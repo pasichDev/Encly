@@ -21,13 +21,13 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.delete_from_trash
 import com.pasich.encly.core.resources.edit_tags
@@ -71,8 +71,8 @@ internal fun EditorTagSheet(
     viewModel: EditNoteViewModel = metroViewModel(),
     tagViewModel: TagListViewModel = metroViewModel(),
 ) {
-    val tagState by tagViewModel.state.collectAsState()
-    val noteState by viewModel.state.collectAsState()
+    val tagState by tagViewModel.state.collectAsStateWithLifecycle()
+    val noteState by viewModel.state.collectAsStateWithLifecycle()
     NoteTagSheet(
         tags = tagState.listTags,
         selectedTagIds = noteState.note.tagIds,

@@ -7,13 +7,13 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.pasich.encly.core.di.appGraph
 import com.pasich.encly.core.locale.AppLocales
@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             // Auto re-lock and the navigation guards live in the shared UI (EnclyApp).
-            val strictKeyboard by keyboardPrivacy.strict.collectAsState()
+            val strictKeyboard by keyboardPrivacy.strict.collectAsStateWithLifecycle()
             hostServices.Provide(this, strictKeyboard) {
                 EnclyApp(
                     startStatus = initialStatus,

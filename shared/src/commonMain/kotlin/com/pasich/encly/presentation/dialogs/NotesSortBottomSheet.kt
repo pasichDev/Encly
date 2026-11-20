@@ -3,8 +3,8 @@ package com.pasich.encly.presentation.dialogs
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.sort_by
 import com.pasich.encly.core.resources.view_switch_to_grid
@@ -30,7 +30,7 @@ fun NotesSortBottomSheet(
     isBottomSheetVisible: Boolean = false,
     noteListViewModel: NoteListViewModel = metroViewModel(),
 ) {
-    val state by noteListViewModel.state.collectAsState()
+    val state by noteListViewModel.state.collectAsStateWithLifecycle()
 
     if (isBottomSheetVisible) {
         AdaptiveSheet(

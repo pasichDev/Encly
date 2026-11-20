@@ -3,8 +3,6 @@ package com.pasich.encly.presentation.components.tiles
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.tag_hidden
 import com.pasich.encly.data.model.Tag
@@ -29,8 +27,7 @@ fun TagItem(
         selected = isSelected,
         count = count,
         onClick = onItemClick,
-        modifier = modifier
-            .alpha(if (item.isVisible) 1f else HIDDEN_TAG_ALPHA)
-            .semantics { if (!item.isVisible) stateDescription = hiddenLabel },
+        stateDescription = if (item.isVisible) null else hiddenLabel,
+        modifier = modifier.alpha(if (item.isVisible) 1f else HIDDEN_TAG_ALPHA),
     )
 }

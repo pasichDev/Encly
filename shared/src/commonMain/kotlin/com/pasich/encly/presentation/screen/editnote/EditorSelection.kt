@@ -1,11 +1,11 @@
 package com.pasich.encly.presentation.screen.editnote
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.markdown_copied
 import com.pasich.encly.core.resources.markdown_copy
@@ -88,7 +88,7 @@ internal fun EditorSelectionBar(onMessage: (String) -> Unit, viewModel: EditNote
     val label = stringResource(Res.string.markdown_copy)
     val copied = stringResource(Res.string.selection_copied)
     val copiedMarkdown = stringResource(Res.string.markdown_copied)
-    val locked by viewModel.lockEditor.collectAsState()
+    val locked by viewModel.lockEditor.collectAsStateWithLifecycle()
     val actions = remember(viewModel, clipboard, label, copied, copiedMarkdown, locked) {
         SelectedBlocksActions(
             canEdit = viewModel.canEditBlocks,
@@ -115,7 +115,7 @@ internal fun EditorTextRangeBar(
     val label = stringResource(Res.string.markdown_copy)
     val copied = stringResource(Res.string.selection_copied)
     val copiedMarkdown = stringResource(Res.string.markdown_copied)
-    val locked by viewModel.lockEditor.collectAsState()
+    val locked by viewModel.lockEditor.collectAsStateWithLifecycle()
     val actions = remember(viewModel, clipboard, label, copied, copiedMarkdown, locked) {
         fun copy(markdown: Boolean, message: String) {
             if (copyBlocks(clipboard, viewModel, viewModel.textRangeBlocks(), markdown, label)) {
@@ -142,8 +142,8 @@ internal fun EditorTextRangeBar(
 /** Back leaves block selection mode, or a text selection across blocks, before it does anything else. */
 @Composable
 internal fun LeaveBlockSelectionOnBack(viewModel: EditNoteViewModel = metroViewModel()) {
-    val picking by viewModel.selectedBlocks.ids.collectAsState()
-    val textRange by viewModel.textRange.ends.collectAsState()
+    val picking by viewModel.selectedBlocks.ids.collectAsStateWithLifecycle()
+    val textRange by viewModel.textRange.ends.collectAsStateWithLifecycle()
     BackHandler(enabled = picking.isNotEmpty() || (textRange != null && viewModel.textRange.isCrossField)) {
         viewModel.selectedBlocks.clear()
         viewModel.textRange.clear()

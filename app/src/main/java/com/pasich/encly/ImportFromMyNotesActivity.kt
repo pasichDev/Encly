@@ -15,11 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.pasich.encly.core.di.appGraph
 import com.pasich.encly.core.locale.AppLocales
@@ -118,7 +118,7 @@ class ImportFromMyNotesActivity : AppCompatActivity() {
 
         setContent {
             if (!themeReady) return@setContent
-            val strictKeyboard by keyboardPrivacy.strict.collectAsState()
+            val strictKeyboard by keyboardPrivacy.strict.collectAsStateWithLifecycle()
             hostServices.Provide(this, strictKeyboard) {
                 AppTheme {
                     Box(

@@ -2,9 +2,9 @@ package com.pasich.encly.presentation.screen.settings
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.security_previews_desc
 import com.pasich.encly.core.resources.security_previews_title
@@ -26,7 +26,7 @@ internal fun NotePreviewsSetting(
     modifier: Modifier = Modifier,
     viewModel: NotePreviewsViewModel = metroViewModel(),
 ) {
-    val show by viewModel.show.collectAsState()
+    val show by viewModel.show.collectAsStateWithLifecycle()
     EnclyGroup(modifier = modifier) {
         EnclySwitchRow(
             title = stringResource(Res.string.security_previews_title),

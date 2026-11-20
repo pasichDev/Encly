@@ -13,7 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
@@ -24,6 +23,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.find_close
 import com.pasich.encly.core.resources.find_count
@@ -49,7 +49,7 @@ private const val FOCUS_FRAMES = 3
  */
 @Composable
 internal fun EditorFindBar(modifier: Modifier = Modifier, viewModel: EditNoteViewModel = metroViewModel()) {
-    val state by viewModel.find.collectAsState()
+    val state by viewModel.find.collectAsStateWithLifecycle()
     val focus = remember { FocusRequester() }
     LaunchedEffect(focus) {
         // The field is in the tree after a frame or two; asking for focus brings the keyboard up.

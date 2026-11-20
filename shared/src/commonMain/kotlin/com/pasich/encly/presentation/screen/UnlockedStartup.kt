@@ -2,8 +2,8 @@ package com.pasich.encly.presentation.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.platform.LocalHostPlatform
 import com.pasich.encly.presentation.dialogs.WhatsNewSheet
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
@@ -23,7 +23,7 @@ internal fun UnlockedStartup(viewModel: StartupViewModel = metroViewModel()) {
     val languageTag = currentLanguageTag()
     val bundled = Changelogs.bundledFor(LocalHostPlatform.current)
     LaunchedEffect(viewModel) { viewModel.onUnlocked(languageTag, bundled) }
-    val due by viewModel.whatsNewDue.collectAsState()
+    val due by viewModel.whatsNewDue.collectAsStateWithLifecycle()
     val revealing = LocalUnlockReveal.current?.running == true
     val locked = LocalVaultLocked.current
     val notes = due

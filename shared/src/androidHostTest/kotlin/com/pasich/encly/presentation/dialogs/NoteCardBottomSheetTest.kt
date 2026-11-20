@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.dialogs
 import androidx.activity.ComponentDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.remember
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -21,6 +22,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.back
 import com.pasich.encly.core.resources.delete
@@ -39,6 +41,7 @@ import com.pasich.encly.core.resources.note_tags_more
 import com.pasich.encly.core.resources.note_unarchive
 import com.pasich.encly.core.resources.note_unpin
 import com.pasich.encly.core.resources.save
+import com.pasich.encly.core.resources.tag_hidden
 import com.pasich.encly.core.resources.tap_again_to_delete
 import com.pasich.encly.core.resources.task_description_placeholder
 import com.pasich.encly.core.resources.untitled
@@ -59,6 +62,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.robolectric.shadows.ShadowDialog
 
@@ -212,6 +216,46 @@ class NoteCardBottomSheetTest : ComposeScreenTest() {
 
         rule.onNodeWithText(str(Res.string.tap_again_to_delete)).performClick()
         assertEquals(listOf<NoteAction>(NoteAction.Delete), actions)
+    }
+
+    @Test
+    fun anArmedDeleteTileIsALiveRegionSoTalkBackSpeaksTheNewLabel() {
+        show()
+        rule.onNodeWithText(str(Res.string.delete)).performClick()
+        rule.waitForIdle()
+
+        rule.onNode(hasText(str(Res.string.tap_again_to_delete)))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
+
+    @Test
+    fun aTagChipHasAtLeastA48DpTouchTarget() {
+        show()
+
+        // The pill stays 36 dp; the touch bounds around it are the 48 dp minimum.
+        val touch = rule.onNode(hasText("Work") and isOff()).fetchSemanticsNode().touchBoundsInRoot
+        val minimum = with(rule.density) { 48.dp.toPx() }
+        assertTrue("chip touch target is ${touch.height}px, needs $minimum", touch.height >= minimum - 1f)
+    }
+
+    @Test
+    fun aHiddenTagChipIsMarkedHiddenAndAPlainOneIsNot() {
+        show(allTags = listOf(Tag(id = 1, nameTag = "Work"), Tag(id = 2, nameTag = "Secret", isVisible = false)))
+
+        rule.onNode(hasText("Secret"))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, str(Res.string.tag_hidden)))
+        rule.onNode(hasText("Work"))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.StateDescription))
+    }
+
+    @Test
+    fun theSectionTitlesAreHeadings() {
+        show()
+
+        rule.onNode(hasText(str(Res.string.main_drawer_tags).uppercase()))
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
+        rule.onNode(hasText(str(Res.string.note_color_title).uppercase()))
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
     }
 
     @Test

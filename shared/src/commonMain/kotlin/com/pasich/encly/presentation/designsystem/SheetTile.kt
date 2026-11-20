@@ -26,7 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -135,6 +137,8 @@ private fun SheetTileButton(tile: SheetTile, containerColor: Color, modifier: Mo
             .semantics {
                 role = Role.Button
                 if (tile.active) selected = true
+                // Arming only changes the label: a live region makes TalkBack speak it ("Tap again to delete").
+                if (tile.confirmFirst) liveRegion = LiveRegionMode.Polite
             },
     ) {
         Column(
