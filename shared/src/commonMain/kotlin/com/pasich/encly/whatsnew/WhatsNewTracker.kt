@@ -25,17 +25,36 @@ class WhatsNewTracker(private val flags: KeyValueStore, private val appInfo: App
      * True once per version: when this version is newer than the one recorded (or none is recorded, an install
      * from before this existed). The version is recorded at once, so the next call is false.
      */
-    fun takeUnseen(): Boolean {
+    fun takeUnseen(): Boolean = takeUpdate() != null
+
+    /**
+     * Like [takeUnseen], but tells which version the update came from: null when nothing is due (same version, a
+     * downgrade or a fresh install), else the [VersionUpdate]. The version is recorded at once, so the next call
+     * is null.
+     */
+    fun takeUpdate(): VersionUpdate? {
         val last = flags.getString(LAST_SEEN_KEY, null)
         val current = appInfo.versionName
-        if (last == current) return false
+        if (last == current) return null
         record()
-        return last == null || isNewer(current, last)
+        return if (last == null || isNewer(current, last)) VersionUpdate(last) else null
     }
 
     private fun record() = flags.edit { putString(LAST_SEEN_KEY, appInfo.versionName) }
 
+    /** An update to this version from [previous]; null when nothing was recorded (an install from before this). */
+    class VersionUpdate(val previous: String?) {
+        /**
+         * True when the install came from a version below 3.0.0, which did not delete trashed notes after 28 days. A
+         * version that is not `MAJOR.MINOR.PATCH` is not counted: its trash is not known to be new to the person.
+         */
+        val fromBeforeTrashRetention: Boolean
+            get() = previous == null || code(previous)?.let { it < TRASH_RETENTION_VERSION_CODE } == true
+    }
+
     private companion object {
+        /** 3.0.0, the first version that empties the trash on its own. */
+        const val TRASH_RETENTION_VERSION_CODE = 30_000L
         const val LAST_SEEN_KEY = "whats_new_last_seen_version"
         val VERSION = Regex("""^(\d+)\.(\d+)\.(\d+)""")
 

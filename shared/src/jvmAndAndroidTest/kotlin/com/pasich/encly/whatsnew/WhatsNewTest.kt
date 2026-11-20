@@ -194,6 +194,7 @@ class WhatsNewTest {
     private fun startup(version: String, repository: TestNotesRepository = TestNotesRepository()) = StartupViewModel(
         tracker(version),
         PurgeExpiredTrashUseCase(repository, flags),
+        repository,
     )
 
     @Test
@@ -258,5 +259,66 @@ class WhatsNewTest {
         viewModel.onUnlocked("en", bundled = emptyMap())
 
         assertEquals(listOf(1L), repository.deletedIds)
+    }
+
+    private fun inTrash(count: Int) = TestNotesRepository().also { repository ->
+        repository.trashNotes.value =
+            List(count) { Note(id = it + 1L, isTrash = true, trashedAt = System.currentTimeMillis()) }
+    }
+
+    /** An install that last ran [from] (null: nothing recorded) and now runs [to], unlocked with [repository]. */
+    private fun unlockAfter(from: String?, to: String, repository: TestNotesRepository): StartupViewModel {
+        if (from != null) tracker(from).recordFreshInstall()
+        return startup(to, repository).also { it.onUnlocked("en", bundled = emptyMap()) }
+    }
+
+    @Test
+    fun anUpdateFromBeforeThreeNoticesTheTrashOnceAndNotAgain() {
+        val repository = inTrash(3)
+        val viewModel = unlockAfter("2.5.0", "3.0.1", repository)
+        assertEquals(3, viewModel.trashNoticeCount.value)
+
+        viewModel.dismissTrashNotice()
+        assertNull(viewModel.trashNoticeCount.value)
+        val again = startup("3.0.1", repository)
+        again.onUnlocked("en", bundled = emptyMap())
+        assertNull("the next unlock, a fresh ViewModel, has nothing to say", again.trashNoticeCount.value)
+    }
+
+    @Test
+    fun anInstallFromBeforeTheVersionWasRecordedIsTold() {
+        assertEquals(2, unlockAfter(null, "3.0.1", inTrash(2)).trashNoticeCount.value)
+    }
+
+    @Test
+    fun anUpdateFromThreeOrLaterIsNotToldBecauseItsCountdownIsRunning() {
+        assertNull(unlockAfter("3.0.0", "3.0.1", inTrash(3)).trashNoticeCount.value)
+        assertNull(unlockAfter("3.0.1", "3.1.0", inTrash(3)).trashNoticeCount.value)
+    }
+
+    @Test
+    fun aFreshInstallIsNotTold() {
+        val viewModel = startup("3.0.1", inTrash(3))
+        viewModel.onAppStart(freshInstall = true)
+        viewModel.onUnlocked("en", bundled = emptyMap())
+
+        assertNull(viewModel.trashNoticeCount.value)
+    }
+
+    @Test
+    fun anEmptyTrashIsNotTold() {
+        assertNull(unlockAfter("2.5.0", "3.0.1", inTrash(0)).trashNoticeCount.value)
+    }
+
+    @Test
+    fun theNoticeCountsWhatIsLeftAfterTheCleaningOfExpiredNotes() {
+        val repository = inTrash(2)
+        repository.trashNotes.value += Note(
+            id = 9,
+            isTrash = true,
+            trashedAt = System.currentTimeMillis() - TRASH_RETENTION_MILLIS - 60_000,
+        )
+
+        assertEquals(2, unlockAfter("2.5.0", "3.0.1", repository).trashNoticeCount.value)
     }
 }

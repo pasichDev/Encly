@@ -19,10 +19,15 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 - Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
 - Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
+- After an update from a version before 3.0.0, a one-time notice tells you that the trash now deletes notes 28 days after they were moved there, how many notes are in it, and opens the trash for you ([#126](https://github.com/pasichDev/Encly/issues/126)).
 
 ### Changed
 
 - The note's long-press sheet is easier to use with TalkBack and a finger: TalkBack announces "Tap again to delete", tag chips have a larger touch target, and hidden tags are marked so you can tell that tapping one hides the note from the main list ([#124](https://github.com/pasichDev/Encly/issues/124)).
+
+### Fixed
+
+- Ukrainian: tags are called «мітки» everywhere; some screens and the backup text said «теги».
 
 ## [3.0.0] - 2026-11-19
 

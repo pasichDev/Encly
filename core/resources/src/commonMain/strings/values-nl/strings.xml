@@ -699,6 +699,12 @@
     <string name="whats_new_title">Wat is er nieuw</string>
     <string name="whats_new_row_desc">De wijzigingen in deze versie</string>
     <string name="whats_new_dismiss">Begrepen</string>
+    <string name="trash_notice_title">De prullenbak leegt zichzelf nu</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">De prullenbak verwijdert notities nu definitief na 28 dagen. Er zit %d notitie in: die wordt 28 dagen na deze update verwijderd, tenzij je die herstelt.</item>
+        <item quantity="other">De prullenbak verwijdert notities nu definitief na 28 dagen. Er zitten %d notities in: die worden 28 dagen na deze update verwijderd, tenzij je ze herstelt.</item>
+    </plurals>
+    <string name="trash_notice_open">Prullenbak openen</string>
     <string name="faq_pin_length_q">Hoe lang mag mijn pincode zijn?</string>
     <string name="faq_pin_length_a">Tussen 6 en 12 cijfers, naar keuze. Kortere pincodes worden niet aangeboden: de blokkade en de sleutel van het apparaat beperken het aantal pogingen, en 6 cijfers is het kortste dat daarmee veilig blijft. Het vergrendelscherm toont nooit hoe lang je pincode is: je tikt op ‘Ontgrendelen’ als je klaar bent, en hetzelfde geldt voor de wis-pincode en de dwangpincode. Pincodes die je eerder instelde, blijven gewoon werken.</string>
     <string name="block_code">Code</string>

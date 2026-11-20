@@ -705,6 +705,13 @@
     <string name="whats_new_title">Novità</string>
     <string name="whats_new_row_desc">Le novità di questa versione</string>
     <string name="whats_new_dismiss">Ho capito</string>
+    <string name="trash_notice_title">Il cestino ora si svuota da solo</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">Il cestino ora elimina le note per sempre dopo 28 giorni. Contiene %d nota: verrà eliminata 28 giorni dopo questo aggiornamento, a meno che tu non la ripristini.</item>
+        <item quantity="many">Il cestino ora elimina le note per sempre dopo 28 giorni. Contiene %d note: verranno eliminate 28 giorni dopo questo aggiornamento, a meno che tu non le ripristini.</item>
+        <item quantity="other">Il cestino ora elimina le note per sempre dopo 28 giorni. Contiene %d note: verranno eliminate 28 giorni dopo questo aggiornamento, a meno che tu non le ripristini.</item>
+    </plurals>
+    <string name="trash_notice_open">Apri il cestino</string>
     <string name="faq_pin_length_q">Quanto può essere lungo il PIN?</string>
     <string name="faq_pin_length_a">Da 6 a 12 cifre, a tua scelta. PIN più corti non sono previsti: il blocco e la chiave del dispositivo limitano i tentativi, e 6 cifre è il minimo che resta sicuro con quei limiti. La schermata di blocco non mostra mai la lunghezza del PIN: tocchi «Sblocca» quando hai finito, e lo stesso vale per il PIN di cancellazione e il PIN di coercizione. I PIN impostati prima continuano a funzionare così come sono.</string>
     <string name="block_code">Codice</string>

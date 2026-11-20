@@ -711,6 +711,14 @@
     <string name="whats_new_title">Co nowego</string>
     <string name="whats_new_row_desc">Zmiany w tej wersji</string>
     <string name="whats_new_dismiss">Rozumiem</string>
+    <string name="trash_notice_title">Kosz opróżnia się teraz sam</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">Kosz usuwa teraz notatki na zawsze po 28 dniach. Jest w nim %d notatka: zostanie usunięta 28 dni po tej aktualizacji, chyba że ją przywrócisz.</item>
+        <item quantity="few">Kosz usuwa teraz notatki na zawsze po 28 dniach. Są w nim %d notatki: zostaną usunięte 28 dni po tej aktualizacji, chyba że je przywrócisz.</item>
+        <item quantity="many">Kosz usuwa teraz notatki na zawsze po 28 dniach. Jest w nim %d notatek: wszystkie zostaną usunięte 28 dni po tej aktualizacji, chyba że je przywrócisz.</item>
+        <item quantity="other">Kosz usuwa teraz notatki na zawsze po 28 dniach. Są w nim %d notatki: zostaną usunięte 28 dni po tej aktualizacji, chyba że je przywrócisz.</item>
+    </plurals>
+    <string name="trash_notice_open">Otwórz kosz</string>
     <string name="faq_pin_length_q">Jak długi może być mój PIN?</string>
     <string name="faq_pin_length_a">Od 6 do 12 cyfr, do wyboru. Krótszych PIN-ów nie oferujemy: blokada i klucz urządzenia ograniczają liczbę prób, a 6 cyfr to najkrótszy PIN, który przy tych ograniczeniach pozostaje bezpieczny. Ekran blokady nigdy nie pokazuje długości PIN-u: po wpisaniu stukasz „Odblokuj”, tak samo w przypadku PIN-u kasującego i przymusowego. PIN-y ustawione wcześniej działają bez zmian.</string>
     <string name="block_code">Kod</string>

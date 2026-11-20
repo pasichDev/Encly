@@ -216,6 +216,7 @@ internal class TestApp {
     fun startup(tracker: WhatsNewTracker = freshInstall()) = StartupViewModel(
         tracker,
         PurgeExpiredTrashUseCase(notes, InMemoryKeyValueStore()),
+        notes,
     )
 
     /** A tracker that has already recorded the version, as after the install: no "What's new" is due. */

@@ -705,6 +705,13 @@
     <string name="whats_new_title">Novidades</string>
     <string name="whats_new_row_desc">As alterações desta versão</string>
     <string name="whats_new_dismiss">Entendi</string>
+    <string name="trash_notice_title">A lixeira agora esvazia-se sozinha</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">A lixeira agora elimina as notas de vez ao fim de 28 dias. Tem %d nota: será eliminada 28 dias após esta atualização, a menos que a restaure.</item>
+        <item quantity="many">A lixeira agora elimina as notas de vez ao fim de 28 dias. Tem %d notas: serão eliminadas 28 dias após esta atualização, a menos que as restaure.</item>
+        <item quantity="other">A lixeira agora elimina as notas de vez ao fim de 28 dias. Tem %d notas: serão eliminadas 28 dias após esta atualização, a menos que as restaure.</item>
+    </plurals>
+    <string name="trash_notice_open">Abrir a lixeira</string>
     <string name="faq_pin_length_q">Qual pode ser o tamanho do meu PIN?</string>
     <string name="faq_pin_length_a">Entre 6 e 12 dígitos, à sua escolha. PINs mais curtos não são oferecidos: o bloqueio e a chave do dispositivo limitam as tentativas, e 6 dígitos é o mínimo que continua seguro com esses limites. A tela de bloqueio nunca mostra o tamanho do seu PIN: você toca em «Desbloquear» quando terminar, e o mesmo vale para o PIN de apagamento e o PIN de coação. Os PINs definidos antes continuam funcionando como estão.</string>
     <string name="block_code">Código</string>

@@ -9,8 +9,8 @@
     <string name="backup_import_summary">У цій копії: %1$s, %2$s і %3$s.</string>
     <string name="backup_merge_row_desc">Усе, що тут є, залишиться, а відсутнє додасться. Те, що вже є, буде пропущено.</string>
     <string name="backup_replace_all">Замінити все</string>
-    <string name="backup_replace_row_desc">Видалити всі нотатки, завдання й теги на цьому телефоні, а потім відновити копію.</string>
-    <string name="backup_intro_short">Збережіть усі нотатки, завдання й теги в одному зашифрованому файлі та відновіть їх на будь-якому телефоні.</string>
+    <string name="backup_replace_row_desc">Видалити всі нотатки, завдання й мітки на цьому телефоні, а потім відновити копію.</string>
+    <string name="backup_intro_short">Збережіть усі нотатки, завдання й мітки в одному зашифрованому файлі та відновіть їх на будь-якому телефоні.</string>
     <string name="backup_section_export">Експорт</string>
     <string name="backup_section_import">Імпорт</string>
     <string name="security_encryption_pin_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено).</string>
@@ -36,10 +36,10 @@
         <item quantity="other">%d завдання</item>
     </plurals>
     <plurals name="backup_count_tags">
-        <item quantity="one">%d тег</item>
-        <item quantity="few">%d теги</item>
-        <item quantity="many">%d тегів</item>
-        <item quantity="other">%d тега</item>
+        <item quantity="one">%d мітка</item>
+        <item quantity="few">%d мітки</item>
+        <item quantity="many">%d міток</item>
+        <item quantity="other">%d мітки</item>
     </plurals>
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">Ваш PIN більше не може розблокувати Encly на цьому телефоні: його апаратний ключ скинуто. Скористайтеся фразою відновлення (або відбитком пальця), а потім задайте новий PIN.</string>

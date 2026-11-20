@@ -699,6 +699,16 @@
     <string name="whats_new_title">ما الجديد</string>
     <string name="whats_new_row_desc">التغييرات في هذا الإصدار</string>
     <string name="whats_new_dismiss">فهمت</string>
+    <string name="trash_notice_title">سلة المحذوفات تُفرَّغ الآن تلقائيًا</string>
+    <plurals name="trash_notice_message">
+        <item quantity="zero">تحذف سلة المحذوفات الآن الملاحظات نهائيًا بعد 28 يومًا. فيها %d ملاحظة وستُحذف بعد 28 يومًا من هذا التحديث ما لم تستعدها.</item>
+        <item quantity="one">تحذف سلة المحذوفات الآن الملاحظات نهائيًا بعد 28 يومًا. فيها ملاحظة واحدة (%d) وستُحذف بعد 28 يومًا من هذا التحديث ما لم تستعدها.</item>
+        <item quantity="two">تحذف سلة المحذوفات الآن الملاحظات نهائيًا بعد 28 يومًا. فيها ملاحظتان (%d) وستُحذفان بعد 28 يومًا من هذا التحديث ما لم تستعدهما.</item>
+        <item quantity="few">تحذف سلة المحذوفات الآن الملاحظات نهائيًا بعد 28 يومًا. فيها %d ملاحظات وستُحذف بعد 28 يومًا من هذا التحديث ما لم تستعدها.</item>
+        <item quantity="many">تحذف سلة المحذوفات الآن الملاحظات نهائيًا بعد 28 يومًا. فيها %d ملاحظة وستُحذف بعد 28 يومًا من هذا التحديث ما لم تستعدها.</item>
+        <item quantity="other">تحذف سلة المحذوفات الآن الملاحظات نهائيًا بعد 28 يومًا. فيها %d ملاحظة وستُحذف بعد 28 يومًا من هذا التحديث ما لم تستعدها.</item>
+    </plurals>
+    <string name="trash_notice_open">فتح سلة المحذوفات</string>
     <string name="block_select">تحديد الكتلة</string>
     <string name="list_item_reorder">إعادة ترتيب العنصر</string>
     <string name="list_item_move_up">نقل العنصر لأعلى</string>

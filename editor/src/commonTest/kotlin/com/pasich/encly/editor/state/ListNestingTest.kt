@@ -409,6 +409,45 @@ class ListNestingTest {
         assertEquals(listOf(null, null), converted.items.value.map { it.kind })
     }
 
+    @Test
+    fun theChecklistToolOnAnEmptyTopItemConvertsTheWholeListAsItDoesOnAnItemWithText() {
+        fun converted(itemText: String): Block.ListBlock {
+            val list = list(BlockType.LIST_BULLET, row("a"), row(itemText), row("c"))
+            val editor = BlockEditorState { 0L }
+            editor.load(listOf(list))
+            editor.selection.onFocused(list.id)
+            editor.selection.onItemCaret(list.id, list.items.value[1].id, 0)
+            editor.applyTool(BlockType.LIST_CHECK)
+            return editor.blocks.single() as Block.ListBlock
+        }
+
+        val withText = converted("b")
+        val empty = converted("")
+
+        assertEquals(BlockType.LIST_CHECK, withText.blockType)
+        assertEquals(BlockType.LIST_CHECK, empty.blockType)
+        assertEquals(listOf("a", "", "c"), empty.items.value.map { it.value })
+        assertEquals(listOf(null, null, null), empty.items.value.map { it.kind })
+    }
+
+    @Test
+    fun theChecklistToolOnAnEmptyNestedItemSetsOnlyItsSubListAsItDoesOnAnItemWithText() {
+        fun checkKinds(itemText: String): List<BlockType?> {
+            val list = list(BlockType.LIST_BULLET, row("a"), row(itemText, 1), row("c", 1), row("d"))
+            editor.load(listOf(list))
+            editor.selection.onFocused(list.id)
+            editor.selection.onItemCaret(list.id, list.items.value[1].id, 0)
+            editor.applyTool(BlockType.LIST_CHECK)
+            assertTrue(editor.blocks.single() === list)
+            assertEquals(BlockType.LIST_BULLET, list.blockType)
+            return list.items.value.map { it.kind }
+        }
+
+        val check = BlockType.LIST_CHECK
+        assertEquals(listOf(null, check, check, null), checkKinds("b"))
+        assertEquals(listOf(null, check, check, null), checkKinds(""))
+    }
+
     // --- the item the toolbar acts on -------------------------------------------------------------
 
     @Test
