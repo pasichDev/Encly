@@ -5,6 +5,7 @@ import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.backup_phrase_exists
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.security_erase_failed
+import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
@@ -263,6 +264,105 @@ class BackupViewModelTest {
 
         assertEquals(BackupStep.Idle, viewModel.uiState.value.step)
         assertFalse(screenshots.allowed.value)
+    }
+
+    @Test
+    fun aWeakeningChangeAsksForThePinAndAppliesOnlyAfterTheRightOne() {
+        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        var applied = 0
+        viewModel.changeAutoLock(AutoLockDelay.SECONDS_15, AutoLockDelay.MINUTE_1) { applied++ }
+        assertEquals(BackupStep.Reauth(BackupAction.CONFIRM_SETTING, biometric = false), viewModel.uiState.value.step)
+        assertEquals(0, applied)
+
+        // A wrong PIN keeps the old value.
+        viewModel.reauthFlow.submitPin("111111".toCharArray())
+        waitForStep { it is BackupStep.Reauth && it.error != null }
+        assertEquals(0, applied)
+
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle }
+        assertEquals(1, applied)
+    }
+
+    @Test
+    fun cancellingAWeakeningChangeKeepsTheOldValue() {
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        var applied = 0
+        viewModel.changeStrictKeyboard(strict = false) { applied++ }
+
+        viewModel.cancel()
+        // A later PIN entry for another flow must not release the dropped change.
+        viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+        waitForStep { it == BackupStep.Idle }
+
+        assertEquals(0, applied)
+    }
+
+    @Test
+    fun aLockBetweenTheRequestAndThePinDiscardsTheChange() {
+        `when`(security.isLockable()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+            sessionLock.lockNow()
+            true
+        }
+        var applied = 0
+        viewModel.changeNotePreviews(show = true) { applied++ }
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle }
+        assertTrue(sessionLock.locked.value)
+        assertEquals(0, applied)
+    }
+
+    @Test
+    fun aLockWhileTheDialogIsOpenDropsTheChange() {
+        `when`(security.isLockable()).thenReturn(true)
+        `when`(security.isDatabaseUnlocked()).thenReturn(true)
+        var applied = 0
+        viewModel.changeNotePreviews(show = true) { applied++ }
+
+        sessionLock.lockNow()
+        assertEquals(BackupStep.Idle, viewModel.uiState.value.step)
+
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+        waitForStep { it == BackupStep.Idle }
+        assertEquals(0, applied)
+    }
+
+    @Test
+    fun strengtheningChangesApplyAtOnceWithoutAPrompt() {
+        viewModel.cancel()
+        var applied = 0
+
+        viewModel.changeAutoLock(AutoLockDelay.MINUTE_1, AutoLockDelay.SECONDS_15) { applied++ }
+        viewModel.changeAutoLock(AutoLockDelay.MINUTE_1, AutoLockDelay.MINUTE_1) { applied++ }
+        viewModel.changeStrictKeyboard(strict = true) { applied++ }
+        viewModel.changeNotePreviews(show = false) { applied++ }
+        viewModel.changeBiometric(enable = false) { applied++ }
+
+        assertEquals(5, applied)
+        assertEquals(BackupStep.Idle, viewModel.uiState.value.step)
+    }
+
+    @Test
+    fun enablingBiometricAsksForThePinBeforeTheEnrolment() {
+        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        var enrolled = 0
+        viewModel.changeBiometric(enable = true) { enrolled++ }
+        assertEquals(0, enrolled)
+        assertEquals(BackupStep.Reauth(BackupAction.CONFIRM_SETTING, biometric = false), viewModel.uiState.value.step)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle }
+        assertEquals(1, enrolled)
     }
 
     @Test

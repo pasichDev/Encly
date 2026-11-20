@@ -39,6 +39,7 @@ import com.pasich.encly.platform.BiometricWording
 import com.pasich.encly.platform.LocalBiometricHost
 import com.pasich.encly.platform.LocalBiometricWording
 import com.pasich.encly.platform.LocalScreenshotAllowance
+import com.pasich.encly.platform.ScreenBiometricHost
 import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -58,6 +59,10 @@ import com.pasich.encly.presentation.viewmodel.BackupAction
 import com.pasich.encly.presentation.viewmodel.BackupMessage
 import com.pasich.encly.presentation.viewmodel.BackupViewModel
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.presentation.viewmodel.changeAutoLock
+import com.pasich.encly.presentation.viewmodel.changeBiometric
+import com.pasich.encly.presentation.viewmodel.changeNotePreviews
+import com.pasich.encly.presentation.viewmodel.changeStrictKeyboard
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
@@ -109,15 +114,7 @@ fun SecuritySettingsScreen(
                     securityState = securityState,
                     options = options,
                     vaultBusy = vaultState.busy,
-                    actions = SecurityActions(
-                        onOpen = { route -> navController.openRoute(route.name) },
-                        onBiometric = { enabled ->
-                            if (host != null) securityViewModel.toggleBiometric(host, enabled)
-                        },
-                        onVaultAction = vaultViewModel::start,
-                        onStrictKeyboard = securityViewModel::setStrictKeyboard,
-                        onAutoLock = securityViewModel::setAutoLockDelay,
-                    ),
+                    actions = securityActions(navController, securityViewModel, vaultViewModel, host),
                     modifier = Modifier.padding(paddingValues),
                 )
             }
@@ -128,6 +125,30 @@ fun SecuritySettingsScreen(
     }
 }
 
+private fun securityActions(
+    navController: NavHostController,
+    securityViewModel: SecuritySettingsViewModel,
+    vaultViewModel: BackupViewModel,
+    host: ScreenBiometricHost?,
+) = SecurityActions(
+    onOpen = { route -> navController.openRoute(route.name) },
+    onBiometric = { enabled ->
+        if (host != null) {
+            vaultViewModel.changeBiometric(enabled) { securityViewModel.toggleBiometric(host, enabled) }
+        }
+    },
+    onVaultAction = vaultViewModel::start,
+    onStrictKeyboard = { strict ->
+        vaultViewModel.changeStrictKeyboard(strict) { securityViewModel.setStrictKeyboard(strict) }
+    },
+    onAutoLock = { delay ->
+        vaultViewModel.changeAutoLock(securityViewModel.autoLockDelay.value, delay) {
+            securityViewModel.setAutoLockDelay(delay)
+        }
+    },
+    onNotePreviews = vaultViewModel::changeNotePreviews,
+)
+
 /** What the security page can start. */
 private class SecurityActions(
     val onOpen: (NavRoutes) -> Unit,
@@ -135,6 +156,7 @@ private class SecurityActions(
     val onVaultAction: (BackupAction) -> Unit,
     val onStrictKeyboard: (Boolean) -> Unit,
     val onAutoLock: (AutoLockDelay) -> Unit,
+    val onNotePreviews: (Boolean, () -> Unit) -> Unit,
 )
 
 /** The page's own preferences: strict keyboard privacy, the auto-lock delay and the screenshots allowance. */
@@ -242,7 +264,7 @@ private fun SecurityRows(
         onStrictKeyboard = actions.onStrictKeyboard,
         screenshots = options.screenshots,
     )
-    NotePreviewsSetting()
+    NotePreviewsSetting(onChange = actions.onNotePreviews)
     ProtectionSection()
     EraseSection(busy = vaultBusy, onErase = { actions.onVaultAction(BackupAction.ERASE) })
 }

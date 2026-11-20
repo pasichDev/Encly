@@ -11,6 +11,10 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
+### Security
+
+- Lengthening the auto-lock delay, turning strict keyboard privacy off, showing note previews and turning biometric unlock on now ask for your PIN first, so someone holding your unlocked phone cannot weaken your protection. Changes that make it stricter still apply at once ([#133](https://github.com/pasichDev/Encly/issues/133)).
+
 ### Added
 
 - Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).

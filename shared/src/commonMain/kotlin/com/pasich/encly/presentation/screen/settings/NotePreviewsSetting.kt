@@ -16,9 +16,16 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import org.jetbrains.compose.resources.stringResource
 
-/** "Show note previews" (see NotePreviews): on by default; off, the note lists show no text of the notes. */
+/**
+ * "Show note previews" (see NotePreviews): on by default; off, the note lists show no text of the notes. A change
+ * goes through [onChange] with the value and the action that applies it, so showing the text can ask for the PIN first.
+ */
 @Composable
-internal fun NotePreviewsSetting(modifier: Modifier = Modifier, viewModel: NotePreviewsViewModel = metroViewModel()) {
+internal fun NotePreviewsSetting(
+    onChange: (show: Boolean, apply: () -> Unit) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: NotePreviewsViewModel = metroViewModel(),
+) {
     val show by viewModel.show.collectAsState()
     EnclyGroup(modifier = modifier) {
         EnclySwitchRow(
@@ -26,7 +33,7 @@ internal fun NotePreviewsSetting(modifier: Modifier = Modifier, viewModel: NoteP
             supporting = stringResource(Res.string.security_previews_desc),
             icon = EnclyIcons.Eye,
             checked = show,
-            onCheckedChange = viewModel::setShow,
+            onCheckedChange = { value -> onChange(value) { viewModel.setShow(value) } },
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
         )
     }

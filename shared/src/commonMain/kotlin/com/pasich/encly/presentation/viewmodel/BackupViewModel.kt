@@ -33,6 +33,7 @@ import kotlinx.coroutines.withContext
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 @ViewModelKey
 @Inject
+@Suppress("TooManyFunctions") // One entry point per flow of the page; the flows themselves are in BackupFlows.
 class BackupViewModel(
     backupManager: BackupManager,
     private val phraseSetup: BackupPhraseSetup,
@@ -56,6 +57,9 @@ class BackupViewModel(
     /** The session the re-authentication was started in, and the lock requests there had been by then. */
     private var reauthSession = SessionMark(generation = 0L, lockRequests = 0L)
 
+    /** A weakening setting change waiting for the re-authentication; never kept past a cancel or a lock. */
+    private val pendingSetting = PendingSetting()
+
     init {
         // A re-lock drops every plaintext buffer (a decrypted backup, new recovery words) at
         // once, even while the app is in the background and this screen is not composed. An
@@ -66,6 +70,7 @@ class BackupViewModel(
                     phraseFlow.drop()
                     importFlow.drop()
                     action = null
+                    pendingSetting.clear()
                     state.ui.update { it.copy(step = BackupStep.Idle, busy = false) }
                 }
             }
@@ -78,6 +83,15 @@ class BackupViewModel(
         reauthSession = sessionLockManager.mark()
         val biometric = securityManager.canReauthWithBiometric()
         state.go(BackupStep.Reauth(action, biometric))
+    }
+
+    /**
+     * Asks for the PIN (or biometric) before [apply], a change that weakens a security setting, runs. [apply] is
+     * dropped unapplied on cancel, on a wrong-PIN flow that is left, and on any lock; keep it to the value to set.
+     */
+    fun confirmSetting(apply: () -> Unit) {
+        start(BackupAction.CONFIRM_SETTING)
+        pendingSetting.hold(apply)
     }
 
     private suspend fun proceed(action: BackupAction) {
@@ -94,9 +108,15 @@ class BackupViewModel(
                 // with no delay), this must not switch the allowance on after the lock that ended it. A lock that
                 // still waits for the editors' saves has not set `locked` yet, so the lock requests are compared
                 // too, as an unlock does (SessionLockManager.onUnlocked).
-                if (!sessionLockManager.locked.value && sessionLockManager.mark() == reauthSession) {
+                if (sessionLockManager.unchangedSince(reauthSession)) {
                     screenshots.allow()
                 }
+                state.go(BackupStep.Idle)
+            }
+
+            // Same guard as above: a lock after the request, even one still waiting for the editors, discards it.
+            action == BackupAction.CONFIRM_SETTING -> {
+                pendingSetting.release(sessionLockManager.unchangedSince(reauthSession))
                 state.go(BackupStep.Idle)
             }
 
@@ -183,6 +203,7 @@ class BackupViewModel(
     }
 
     private fun dropPending() {
+        pendingSetting.clear()
         exportFlow.drop()
         phraseFlow.drop()
         importFlow.drop()
@@ -196,3 +217,6 @@ class BackupViewModel(
 private data class SessionMark(val generation: Long, val lockRequests: Long)
 
 private fun SessionLockManager.mark() = SessionMark(sessionGeneration, lockRequests())
+
+/** Unlocked, and no lock was asked for since [session] was marked (see [ALLOW_SCREENSHOTS] in `proceed`). */
+private fun SessionLockManager.unchangedSince(session: SessionMark) = !locked.value && mark() == session
