@@ -1,0 +1,2 @@
+/* Shown by the system when Encly asks to use Face ID. */
+"NSFaceIDUsageDescription" = "Encly używa Face ID, aby odblokować Twoje notatki bez wpisywania kodu PIN lub hasła. Dane Twojej twarzy zostają na tym urządzeniu, a kod PIN lub hasło nadal działają.";

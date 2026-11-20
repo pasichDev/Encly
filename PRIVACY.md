@@ -1,6 +1,6 @@
 # Privacy Policy
 
-_Effective: 2026-09-25 · Applies to Encly 2.0.0 and later (Android, package `com.pasich.encly`)._
+_Effective: 2026-11-18 · Applies to Encly 2.0.0 and later (Android, package `com.pasich.encly`)._
 
 Encly is an offline notes and tasks app. This policy explains what happens to your data.
 The short version: **everything stays on your device, encrypted, and nobody (including the
@@ -68,8 +68,9 @@ You can export a backup in **Settings → Backup**. Nothing is exported automati
 - **What it contains:** all your notes (title, content, trash, pin, archive and colour state,
   created and edited dates),
   tags (name, visibility, order) and tasks (title, description, completion, dates, priority,
-  order). It does **not** contain your PIN, your recovery phrase, biometric data, any encryption
-  key of the app itself, or app settings.
+  order), plus your display and behaviour preferences (theme, fonts, language, list layout,
+  auto-lock delay and similar). It does **not** contain your PIN, your recovery phrase, biometric
+  data, or any encryption key of the app itself.
 - **How it is protected:** the whole file is encrypted with AES-256-GCM under a key derived from
   your 12-word recovery phrase. There is no separate backup password; without the 12 words the
   file cannot be read or changed unnoticed, not even by the developer. If your vault has no

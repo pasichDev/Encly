@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Import from My Notes (one-way hand-off, see ImportFromMyNotesActivity). -->
+    <string name="handoff_title">الاستيراد من My Notes</string>
+    <string name="handoff_reading">جارٍ قراءة ملاحظاتك من My Notes…</string>
+    <string name="handoff_preview_title">انقل ملاحظاتك إلى Encly</string>
+    <string name="handoff_preview_body">يسلّم My Notes على هذا الهاتف %1$s و%2$s و%3$s. تُضاف إلى خزنتك المشفرة: لا شيء هنا يُستبدل، وأي شيء استُورد من قبل يُتخطى.</string>
+    <string name="handoff_preview_attachments">المرفقات التي تبقى في My Notes: %1$d. لا يستورد Encly الصور ولا الملفات.</string>
+    <string name="handoff_preview_pinned">الملاحظات المثبّتة التي لن تبقى مثبّتة: %1$d. لا يدعم Encly التثبيت.</string>
+    <string name="handoff_import">استيراد الملاحظات</string>
+    <string name="handoff_importing">جارٍ الاستيراد…</string>
+    <string name="handoff_done_title">تم الاستيراد</string>
+    <string name="handoff_done_hint">كل شيء ما زال في My Notes أيضًا. بعد أن تتحقق من ملاحظاتك هنا يمكنك مسحه هناك.</string>
+    <string name="handoff_error_title">لم يُستورد شيء</string>
+    <string name="handoff_error_unsupported">أرسل My Notes ملاحظاته بتنسيق أحدث. حدّث Encly، ثم ابدأ النقل من جديد في My Notes.</string>
+    <string name="handoff_error_invalid">تعذّرت قراءة البيانات القادمة من My Notes.</string>
+    <string name="handoff_error_too_large">البيانات القادمة من My Notes أكبر مما يستطيع Encly استيراده دفعة واحدة.</string>
+    <string name="handoff_error_failed">حدث خطأ أثناء الاستيراد. حاول مرة أخرى من My Notes.</string>
+    <string name="handoff_error_vault">لا يستطيع Encly فتح خزنتك هنا. افتح Encly وتأكد من أنه معدّ ومن أن قفله يُفتح، ثم ابدأ النقل من جديد في My Notes.</string>
+</resources>

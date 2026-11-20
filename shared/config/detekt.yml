@@ -1,0 +1,20 @@
+# Shared-module detekt rules, layered on config/detekt/detekt.yml. The module's tests live in the source sets
+# `commonTest`, `jvmAndAndroidTest`, `desktopTest` and `androidHostTest`. The root config already leaves the
+# complexity and style rules out of them; the tests are scenarios, not production code, so the same goes for the
+# rules that police how production code spends time or throws: they build arrays with a spread, loop over
+# ranges, throw bare exceptions from fakes and catch broadly to fail with a message.
+complexity:
+  excludes: &tests
+    - '**/commonTest/**'
+    - '**/jvmAndAndroidTest/**'
+    - '**/desktopTest/**'
+    - '**/androidHostTest/**'
+
+style:
+  excludes: *tests
+
+performance:
+  excludes: *tests
+
+exceptions:
+  excludes: *tests

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Hardened-runtime exceptions the JVM needs, used for the app and for its bundled runtime. No App Sandbox, no
+  network, no file or device entitlement: the app is not sandboxed and asks for nothing else.
+  - allow-jit, allow-unsigned-executable-memory: HotSpot generates and runs machine code.
+  - disable-library-validation: the app loads native libraries it extracts at run time (JNA, Skiko, SQLCipher)
+    that are not signed with our team ID.
+-->
+<plist version="1.0">
+    <dict>
+        <key>com.apple.security.cs.allow-jit</key>
+        <true/>
+        <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+        <true/>
+        <key>com.apple.security.cs.disable-library-validation</key>
+        <true/>
+    </dict>
+</plist>

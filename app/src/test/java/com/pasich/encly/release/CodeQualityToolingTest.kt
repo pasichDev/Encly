@@ -40,9 +40,12 @@ class CodeQualityToolingTest {
     @Test
     fun detektLoadsTheComposeRules() {
         val config = File(root, "config/detekt/detekt.yml").readText()
-        val build = File(root, "app/build.gradle.kts").readText()
+        val build = File(root, "build-logic/src/main/kotlin/encly.quality.gradle.kts").readText()
         assertTrue("detekt.yml must configure the Compose rule set", Regex("(?m)^Compose:$").containsMatchIn(config))
-        assertTrue("the Compose rules must be a detekt plugin", "detektPlugins(libs.compose.rules.detekt)" in build)
+        assertTrue(
+            "the Compose rules must be a detekt plugin",
+            """add("detektPlugins", libs.findLibrary("compose-rules-detekt")""" in build,
+        )
     }
 
     @Test

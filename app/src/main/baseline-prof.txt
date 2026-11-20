@@ -1,0 +1,5 @@
+# Encly's own code (the app, :shared, :editor and :core): compiled ahead of time on install, so the
+# first unlock, note and editor after an install or an update do not run interpreted. The libraries
+# ship their own profiles. F-Droid builds leave ART profiles out (see build.gradle.kts).
+HSPLcom/pasich/encly/**;->**(**)**
+Lcom/pasich/encly/**;

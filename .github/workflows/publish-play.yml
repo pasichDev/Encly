@@ -1,7 +1,8 @@
 name: Publish to Google Play
 
-# A release tag vX.Y.Z publishes the signed `play` bundle to the Google Play PRODUCTION track,
-# rolled out to 100% of users, with the R8 mapping file and the release notes.
+# A release tag vX.Y.Z publishes the signed `play` bundle to the Google Play PRODUCTION track
+# as a staged rollout to 10% of users (raise or halt it in Play Console), with the R8 mapping file
+# and the release notes.
 # It can be re-run by hand (Actions -> "Publish to Google Play" -> Run workflow, choosing the tag
 # under "Use workflow from"); a run from a branch fails.
 #
@@ -62,7 +63,7 @@ jobs:
           persist-credentials: false
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Tag must match version.properties
         id: version
@@ -97,13 +98,13 @@ jobs:
           exit $missing
 
       - name: Set up JDK 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           cache-read-only: true
 
@@ -185,7 +186,8 @@ jobs:
           workload_identity_provider: ${{ vars.PLAY_WIF_PROVIDER }}
           service_account: ${{ vars.PLAY_SERVICE_ACCOUNT }}
 
-      - name: Upload to Google Play (production, 100%)
+      # Staged rollout: the share is raised by hand in Play Console.
+      - name: Upload to Google Play (production, 10% staged rollout)
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
@@ -193,6 +195,7 @@ jobs:
           releaseFiles: play/app-play-release.aab
           releaseName: ${{ needs.build.outputs.name }}
           track: production
-          status: completed
+          status: inProgress
+          userFraction: 0.1
           mappingFile: play/mapping.txt
           whatsNewDirectory: play/whatsnew

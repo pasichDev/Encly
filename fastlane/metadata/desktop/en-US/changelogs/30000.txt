@@ -1,0 +1,4 @@
+Encly 3.0.0
+• The first release for Windows, macOS and Linux: encrypted notes and tasks, tags and a PIN of 6–12 digits.
+• The PIN is mixed with a secret kept in your system's keychain; your notes never leave the computer.
+• Encrypted backups with a 12-word recovery phrase, import from other note apps and export to PDF.

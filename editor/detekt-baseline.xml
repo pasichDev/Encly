@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:ListBlock.kt$firstItem != null &amp;&amp; firstItem.value.isEmpty() &amp;&amp; itemsList.size == 1 &amp;&amp; focusedItemIndex == null</ID>
+    <ID>CyclomaticComplexMethod:ListBlock.kt$@Composable fun ListBlock( block: Block.ListBlock, blockActions: BlockActions, index: Int, modifier: Modifier = Modifier, isLocked: Boolean = false, )</ID>
+    <ID>LongMethod:ActionLinkBottomSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ActionLinkBottomSheet( settings: SettingsBlockDialog, sheetState: SheetState, onAction: (ActionBlockDialog) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
+    <ID>LongMethod:ListBlock.kt$@Composable fun ListBlock( block: Block.ListBlock, blockActions: BlockActions, index: Int, modifier: Modifier = Modifier, isLocked: Boolean = false, )</ID>
+    <ID>MagicNumber:ListBlock.kt$0.7f</ID>
+    <ID>MagicNumber:ListBlock.kt$50</ID>
+    <ID>TooManyFunctions:BlockOperations.kt$BlockOperations</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,173 @@
+package com.pasich.encly.core.security
+
+import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
+import android.security.keystore.KeyProperties
+import com.pasich.encly.core.AppLogger
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import java.io.IOException
+import java.security.GeneralSecurityException
+import java.security.KeyStore
+import java.security.UnrecoverableKeyException
+import javax.crypto.KeyGenerator
+import javax.crypto.Mac
+import javax.crypto.SecretKey
+
+/**
+ * [PinHardwareFactor] on AndroidKeyStore: a non-exportable 256-bit HMAC key, in StrongBox
+ * when the device has one (falling back to the TEE), usable only while the device is unlocked
+ * (API 28+).
+ */
+// Keystore reports several failures (StrongBox missing, rejected parameters, provider errors)
+// as RuntimeExceptions; each one is mapped to a PinFactorException here, never let through.
+@Suppress("TooGenericExceptionCaught")
+@SingleIn(AppScope::class)
+@Inject
+class KeystorePinFactor : PinHardwareFactor {
+    private val keyStore by lazy { KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) } }
+
+    override fun ensureKey(slot: PinKeySlot): Boolean {
+        val exists = try {
+            keyStore.containsAlias(alias(slot))
+        } catch (e: GeneralSecurityException) {
+            throw PinFactorException(lost = false, cause = e)
+        } catch (e: IOException) {
+            // KeyStore.load can fail with a checked IOException.
+            throw PinFactorException(lost = false, cause = e)
+        } catch (e: RuntimeException) {
+            throw PinFactorException(lost = false, cause = e)
+        }
+        if (!exists) reset(slot)
+        return !exists
+    }
+
+    override fun reset(slot: PinKeySlot) {
+        delete(slot)
+        try {
+            generate(slot)
+        } catch (e: GeneralSecurityException) {
+            throw PinFactorException(lost = false, cause = e)
+        } catch (e: RuntimeException) {
+            throw PinFactorException(lost = false, cause = e)
+        }
+    }
+
+    override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray {
+        val key = try {
+            keyStore.getKey(alias(slot), null) as? SecretKey
+        } catch (e: UnrecoverableKeyException) {
+            throw PinFactorException(lost = !isKeystoreError(e), cause = e)
+        } catch (e: GeneralSecurityException) {
+            throw PinFactorException(lost = false, cause = e)
+        } catch (e: IOException) {
+            throw PinFactorException(lost = false, cause = e)
+        } ?: throw PinFactorException(lost = true)
+        return try {
+            Mac.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256).run {
+                init(key)
+                doFinal(data)
+            }
+        } catch (e: KeyPermanentlyInvalidatedException) {
+            throw PinFactorException(lost = true, cause = e)
+        } catch (e: GeneralSecurityException) {
+            throw PinFactorException(lost = false, cause = e)
+        } catch (e: RuntimeException) {
+            // Keystore reports some failures as ProviderException.
+            throw PinFactorException(lost = false, cause = e)
+        }
+    }
+
+    override fun delete(slot: PinKeySlot) {
+        val alias = alias(slot)
+        try {
+            if (keyStore.containsAlias(alias)) keyStore.deleteEntry(alias)
+        } catch (e: GeneralSecurityException) {
+            AppLogger.w(TAG, "PIN factor key could not be deleted", e)
+        } catch (e: IOException) {
+            AppLogger.w(TAG, "PIN factor key could not be deleted", e)
+        } catch (e: RuntimeException) {
+            AppLogger.w(TAG, "PIN factor key could not be deleted", e)
+        }
+    }
+
+    /**
+     * StrongBox first; a device without one (or whose StrongBox lacks HMAC) falls back to the
+     * TEE. The unlocked-device requirement is dropped only if the platform rejects it outright.
+     */
+    private fun generate(slot: PinKeySlot) {
+        val attempts = buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) add(Options(strongBox = true, unlockedOnly = true))
+            add(Options(strongBox = false, unlockedOnly = true))
+            add(Options(strongBox = false, unlockedOnly = false))
+        }
+        var last: Exception? = null
+        for (options in attempts) {
+            try {
+                KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, KEYSTORE_PROVIDER).run {
+                    init(spec(alias(slot), options))
+                    generateKey()
+                }
+                return
+            } catch (e: GeneralSecurityException) {
+                last = e
+            } catch (e: RuntimeException) {
+                // StrongBoxUnavailableException, and rejected parameters on some devices, are
+                // ProviderExceptions.
+                last = e
+            }
+            delete(slot)
+        }
+        throw last ?: error("no key generated")
+    }
+
+    private fun spec(alias: String, options: Options): KeyGenParameterSpec {
+        val builder = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_SIGN)
+            .setKeySize(HMAC_KEY_BITS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            builder.setIsStrongBoxBacked(options.strongBox)
+            builder.setUnlockedDeviceRequired(options.unlockedOnly)
+        }
+        return builder.build()
+    }
+
+    /**
+     * Whether [e], thrown by `KeyStore.getKey`, only passes on an error of the Keystore service: a system or
+     * binder failure, a daemon that was restarting. The platform wraps every such error in an
+     * [UnrecoverableKeyException] whose cause is its own `android.security.KeyStoreException`
+     * (`AndroidKeyStoreProvider.loadAndroidKeyStoreKeyFromKeystore`), and says nothing about the key, which may
+     * well be intact: that is a failure to retry, not a lost key. A key that is gone comes back as null instead,
+     * and a key the system invalidated as an [UnrecoverableKeyException] with no cause
+     * (`AndroidKeyStoreSpi.engineGetKey`); both stay lost.
+     */
+    private fun isKeystoreError(e: UnrecoverableKeyException): Boolean =
+        generateSequence(e.cause) { it.cause }.take(MAX_CAUSES).any { it.javaClass.name == KEYSTORE_ERROR }
+
+    private data class Options(val strongBox: Boolean, val unlockedOnly: Boolean)
+
+    private companion object {
+        const val TAG = "KeystorePinFactor"
+        const val KEYSTORE_PROVIDER = "AndroidKeyStore"
+
+        /** Slot A keeps the alias every vault has used since v3, so existing installs are untouched. */
+        const val KEY_ALIAS_A = "encly_pin_factor_v3"
+        const val KEY_ALIAS_B = "encly_pin_factor_v3b"
+        const val HMAC_KEY_BITS = 256
+
+        /**
+         * The platform's own Keystore error. By name: the class is public only from API 33, and is the cause
+         * of a failed `getKey` on every version.
+         */
+        const val KEYSTORE_ERROR = "android.security.KeyStoreException"
+
+        /** A cause chain is never this long; a bound, should one ever loop. */
+        const val MAX_CAUSES = 8
+
+        fun alias(slot: PinKeySlot): String = when (slot) {
+            PinKeySlot.A -> KEY_ALIAS_A
+            PinKeySlot.B -> KEY_ALIAS_B
+        }
+    }
+}

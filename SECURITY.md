@@ -1,7 +1,7 @@
 # Security
 
 Encly is a local encrypted notes application. This document describes the security model of
-Encly 2.0 (vault format v3), its trust boundaries, and known limitations.
+Encly 3.0 (vault format v3), its trust boundaries, and known limitations.
 
 ## Key hierarchy
 
@@ -27,7 +27,17 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
 
 ### PIN slot
 
-- The app requires a 6-digit PIN.
+- The PIN is 6 to 12 digits, the user's choice. Shorter PINs are not offered: the lockout and the
+  device-bound half below limit how many guesses anyone gets, and 6 digits is the shortest that
+  stays safe under those limits. The length is not stored anywhere: the KDF below is the same for
+  every length, so a PIN made when the PIN was fixed at 6 digits derives exactly the keys it did
+  (the golden tests pin that), and an attacker who copies the slot learns nothing about the length.
+  **The lock screen does not auto-submit and does not show how long the PIN is**: the dots start
+  at six rings and grow with each digit typed, and an *Unlock* button sends what was typed. A
+  stored length (to submit at it) would leak it, and would also make the wipe PIN and the duress
+  PIN, which may have another length than the PIN, impossible to enter. The wipe PIN and the
+  duress PIN follow the same 6 to 12 digit rule and the same KDF run, so nothing in the store or
+  on screen tells which of the three a PIN is.
 - The PIN KEK has two halves, mixed with HKDF-SHA256 (`info = "encly/pin/kek/v3"`, the slot's
   random 16-byte salt as HKDF salt):
   - **software:** PBKDF2-HMAC-SHA256 (600,000 iterations) of the PIN and the salt;
@@ -37,9 +47,11 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
 - That KEK wraps the DEK with **AES-256-GCM**. The slot is `version ‖ salt ‖ IV ‖ ciphertext`;
   the version and salt are authenticated as associated data (`"encly/pin/slot/v3"`).
 - No separate PIN hash is stored.
-- Because of the device-bound half, a copied slot cannot be attacked off the device: every PIN
-  guess needs this phone's secure hardware. PBKDF2 stays at full cost as defence in depth, for
-  the case where the Keystore key itself were ever extracted.
+- Because of the device-bound half, a copied slot cannot be attacked off the device: on Android
+  every PIN guess needs this phone's secure hardware (the iOS build gets the same property with
+  a different construction, see [iOS](#ios); the desktop build does not have it, see
+  [Desktop](#desktop)). PBKDF2 stays at full cost as defence in depth, for the case where the
+  Keystore key itself were ever extracted.
 - If the Keystore key is lost (a Keystore reset, a key the system invalidated), the PIN can no
   longer unlock. The lock screen says so and switches to the recovery phrase (or keeps
   fingerprint unlock); the vault without either routes to the damaged-vault screen. A new PIN
@@ -56,6 +68,101 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
   the only wipe is the optional **wipe PIN** below, and only when the user set one up.
 - Changing the PIN keeps the slot's salt (slots written before keep their own), so a wipe PIN
   set earlier keeps working.
+- **Downgrade and PIN length.** A PIN longer than 6 digits cannot be entered in versions before 3.0.0:
+  their keypad submits at the sixth digit, so every attempt with a longer PIN is a counted miss and
+  the lockout escalates, until the user turns to the recovery phrase. Upgrading again changes nothing:
+  the PIN and its slot are untouched. A PIN of 6 digits works in every version.
+- **Leftover entries.** Development builds briefly wrote a `pin.password.slot` entry (and
+  `pin.password.notice`). No release reads or writes them. A vault file that has them opens with its PIN
+  as before; the entries are ignored and dropped by the next PIN write or erase.
+
+#### Desktop
+
+The desktop build (in development) computes the same device-bound half, `HMAC-SHA256(deviceSecret, salt ‖ PIN)`,
+with a different key store. The `deviceSecret` is 32 random bytes from `SecureRandom`, created once per OS user
+(and once per PIN key slot) and kept **only** in the operating system's secret store of that user. Encly's own
+files never hold it unprotected, and it is never logged.
+
+| OS | Where the secret lives |
+|---|---|
+| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\pasichdev\Encly\` (the data folder, not the install folder `%LOCALAPPDATA%\Programs\Encly`, so an upgrade or uninstall of the app does not touch it; local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
+| macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
+| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure, not a lost key: the lock screen, the PIN setup in onboarding and the PIN change in Settings say "Unlock your system keyring and try again", and the PIN attempt that met it is not counted. Encly does not ask the keyring to unlock itself. |
+
+The second PIN key slot (used after a wipe-PIN unlock) keeps its own secret under the same names with a `-b` suffix.
+
+On Windows the DPAPI blob and the vault are in the local profile (`%LOCALAPPDATA%`), never the roaming one. In a domain,
+DPAPI master keys can be recovered with the domain's backup key, so domain administrators can obtain the secret of a
+domain user; that is part of the desktop trust boundary below. On macOS the data folder is excluded from Time Machine
+(the sticky `com.apple.metadata:com_apple_backup_excludeItem` attribute, set at every start).
+
+A secret that is missing or can no longer be read is the same state as a lost Keystore key above: the PIN no
+longer unlocks and the recovery phrase is needed. A store that is only locked or not running is a temporary
+failure, not a lost key.
+
+Difference from Android: this key is **software-bound to the OS user account, not hardware-bound**. It does not
+sit in a StrongBox or TEE, and the secret store releases it to any process running as the same user (macOS may
+ask the user on the first read by another program; DPAPI and the Secret Service do not). A copied vault slot is
+still useless on its own, since the secret never leaves the user's account, but malware running as the user, or
+anyone who has the user's OS login (a DPAPI master key follows the Windows password, the login keyring the
+session password), can obtain it and then guess PINs off the machine against PBKDF2 alone. Full-disk
+encryption and a strong OS login are part of the desktop trust boundary. Secure Enclave and TPM-bound keys are
+not used yet; they would need a signed app (Apple) or extra platform work.
+
+**The desktop process.** The app starts its JVM with `-XX:+DisableAttachMechanism`, so another process of the same user
+cannot attach to it (the Attach API: `jcmd`, a debugger, an agent) and run code inside the process that the macOS
+Keychain item trusts. The packaged runtime does not contain `java.instrument`, so an agent named in
+`JAVA_TOOL_OPTIONS` cannot be loaded either. What this does not stop: the environment variable can still add other JVM
+options, and code running as the same user can read the process in other ways, so it remains part of the desktop trust
+boundary above (it can act as Encly). The signed macOS app keeps the `disable-library-validation` entitlement: JNA,
+Skiko and the SQLCipher driver extract their native libraries at run time into a cache, where they are not signed
+with the team ID. Shipping them signed inside the `.app` (and loading them from there only) is the way to drop it; it
+is not done yet.
+
+**Quit, lock and clipboard.** Cmd+Q, the Dock's Quit and a logout on macOS end the app the same way the menu's Exit
+does (the editors are saved, the vault is locked and the clipboard is emptied of Encly's clip). A clip of Encly's that is
+still on the clipboard is also cleared when the vault locks, not only after 60 seconds. On Windows and macOS a copy is
+marked so that clipboard history, cloud sync and Universal Clipboard leave it out. On Linux it carries the
+`x-kde-passwordManagerHint` target, which Klipper and CopyQ honour; GPaste and other clipboard managers may still keep
+a copy that the wipe cannot reach. A plaintext export (Markdown, PDF) and a backup file that Encly creates on macOS or
+Linux are readable by their owner only (`0600`); a file that the save dialog had already created keeps its permissions.
+Once written, the file is outside Encly's control.
+
+#### iOS
+
+The device-bound half is computed by the **Secure Enclave** once per PIN guess, but not as an HMAC: the Enclave
+holds only EC keys and answers ECDH. Per PIN key slot the app makes a non-extractable **P-256** key inside the
+Enclave (`kSecAttrTokenIDSecureEnclave`, access control `privateKeyUsage` only, `WhenUnlockedThisDeviceOnly`:
+usable while the phone is unlocked, never in iCloud Keychain or a backup restored to another device, no
+biometry). For a guess, with `data = salt ‖ PIN`:
+
+```
+Q  = hash_to_curve("encly.ios.pin-factor.v2/hash-to-point" ‖ slot ‖ data)   (SHA-256, try-and-increment)
+Z  = x(d · Q)                                  one ECDH inside the Secure Enclave
+hw = HKDF-SHA256(Z, salt = info prefix, info = "encly.ios.pin-factor.v2/hw" ‖ data)   (32 bytes)
+```
+
+`hw` replaces the Android HMAC in the PIN KEK. Why this needs the Enclave for every guess: `Q` is a hash of the
+guess, so nobody knows its discrete logarithm, and `d · Q` cannot be computed without `d`, which exists only in the
+Enclave. Two simpler constructions were rejected because they let the PIN be searched without it: `Q = k·G`
+with `k` derived from the PIN gives `d·Q = k·(d·G)`, computable from the public key; and a fixed peer key with the
+PIN mixed in after the agreement gives a per-slot constant that one capture turns into an offline search.
+
+- A copy of the vault file, the Keychain and everything else on the phone except the Enclave does not let anyone test
+  PINs. The point `Q` is as sensitive as the PIN (10^6 SHA-256 calls recover the PIN from it) and is wiped after
+  use. Someone who can run code in the app while the phone is unlocked (a jailbreak, a debugger on a development
+  build) can still ask the Enclave one guess at a time; the guess rate is the Enclave's, not a GPU's, and the
+  app's lockout is not what protects against that attacker.
+- The Enclave key is gone when the phone is restored from a backup onto another one or the Enclave key is otherwise
+  lost. That is the lost-key state above: the PIN no longer unlocks and the recovery phrase is needed. Removing the
+  device passcode does not drop this key (`WhenUnlockedThisDeviceOnly` does not need a passcode); it deletes the
+  biometric item (`WhenPasscodeSetThisDeviceOnly`), so Face ID unlock ends and the PIN still works.
+- **No Enclave, no PIN.** Every iPhone that runs iOS 15 has a Secure Enclave. If a device cannot make the key, setting
+  a PIN fails; the app never falls back to a software key on a device. The iOS Simulator has no Enclave and uses a
+  software key in the Keychain so that the app and its tests can run; that code is compiled only for the Simulator and
+  gives no protection against someone who can read the Mac.
+- Not verified on hardware by the test suite: the Enclave key itself (the Simulator cannot run it). The
+  construction is tested with software P-256 keys against values computed independently with CryptoKit.
 
 ### Wipe PIN
 
@@ -77,7 +184,7 @@ and show me"), not against a forensic examination.
   costs a miss like a wrong guess, and the wipe and duress PIN cannot be set during a lockout.
 - **Same cost either way.** Each attempt runs PBKDF2 and the Keystore HMAC once, derives both
   KEKs and always tries both AES-GCM opens, without early exit.
-- **Rules.** 6 digits and different from the PIN (checked by opening the PIN slot with it).
+- **Rules.** 6 to 12 digits and different from the PIN (checked by opening the PIN slot with it).
   Changing the PIN to the wipe PIN turns the wipe PIN off (one PIN never opens both slots). A
   reset of the PIN's Keystore key (see above), or a new PIN set after that key was deleted and
   had to be created anew, turns it off too, since the slot can never open again; Settings then
@@ -135,7 +242,11 @@ and show me"), not against a forensic examination.
   filesystem journal, two snapshots taken before and after, or simply an empty vault on a phone
   where Encly was used for years. On a rooted, unlocked phone PIN guessing through the Keystore
   (see "Important limitations") finds the wipe PIN as well. Overwriting files on flash is not
-  reliable, which is why the erase relies on deleting keys first.
+  reliable, which is why the erase relies on deleting keys first. That crypto-erase covers the PIN
+  path only: it destroys the PIN's Keystore key, but the recovery slot of the previous state file
+  needs nothing but the 12 words. The old file is unlinked, not overwritten, so someone who holds
+  a previously written recovery phrase and can carve the deleted state file and database out of
+  flash could still recover the erased vault.
 - **Downgrade.** Older builds ignore the new store entries and keep opening a vault that never
   used the wipe PIN. After a wipe has happened (the PIN key moved to the second alias), an older
   build only knows the first alias: the PIN reports a lost key there and cannot unlock. A PIN
@@ -180,8 +291,11 @@ meant for "open the app and show me", not against a forensic examination.
   decoy vault. Without that, someone who was given the duress PIN could guess at the real
   PIN 4 times, type the duress PIN to reset the lockout, and repeat without limit. The cost is a
   tell after that many misses (a lockout sooner than the screen suggests), and a store-level
-  one: lockout failures at 0 while `pin.strikes` is not shows a non-PIN unlock since the misses.
-- **Rules.** 6 digits, different from the PIN and from the wipe PIN (checked by opening their
+  one: after misses, a duress unlock leaves `pin.strikes` in the state file with no lockout
+  failures, which a real PIN unlock never does, so anyone who can read the app's private files
+  can then see that a duress PIN exists and that the last unlock was a non-PIN one. A duress
+  unlock with no misses before it leaves the same entries as a real PIN unlock.
+- **Rules.** 6 to 12 digits, different from the PIN and from the wipe PIN (checked by opening their
   slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
   the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
   Keystore key, or a PIN set with a new salt (after a recovery-phrase unlock when the PIN slot
@@ -226,7 +340,9 @@ Biometric unlock is optional.
   versions use the equivalent per-use biometric validity configuration.
 - The DEK can only be wrapped/unwrapped through a `BiometricPrompt.CryptoObject`
   carrying the authenticated Cipher.
-- The biometric key is invalidated when biometric enrollment changes.
+- The biometric key is invalidated when biometric enrollment changes. The lock screen then drops the
+  fingerprint button, marks biometric unlock off and says to unlock with the PIN and turn it on
+  again in Settings.
 
 A successful biometric prompt by itself is therefore insufficient to open the
 database. The authenticated cryptographic operation must release the DEK.
@@ -250,6 +366,12 @@ Onboarding offers an optional BIP39 recovery slot.
 - The resulting recovery KEK wraps the same random DEK with AES-256-GCM.
 - Entering the correct recovery seed can therefore recover local database access even
   when the PIN is unavailable.
+- **After a recovery unlock** the PIN is no longer replaced by force. If the PIN slot still exists, is
+  not locked out and its device key is not lost (probed with one HMAC; a transient Keystore failure
+  counts as not lost), the user chooses *Keep my PIN* (the default) or *Set a new PIN*. Only when the
+  slot is missing, the key is lost or a lockout runs is a new PIN required before going on. *Keep* changes nothing in the store and
+  ends the session's permission to reset the PIN without the current one; the recovery phrase is
+  the proof of ownership either way, and the lockout is left alone (a new PIN ends it).
 
 Choosing "PIN only, no backups" during onboarding intentionally creates no recovery slot. One
 can be added later from an unlocked session (Settings → Security, or Settings → Backup before
@@ -260,8 +382,13 @@ seed that the user writes down and confirms.
 after PIN or biometric re-authentication, and a confirmation) generates 12 new words, shows
 them and checks three of them. Only then are the recovery slot and the backup-key slot rewritten
 for the new words, in one atomic write that drops the old recovery slot. The old words then
-open nothing on this device. Backups exported before still open **only with the old words**
-(their key derives from them); the UI says so before and during the replacement.
+open nothing in the state file as it is now. The database key is **not** rotated (replacing the
+phrase, like changing the PIN, re-wraps the same DEK), so someone who kept an earlier copy of
+`vault_state_v3.bin` and has the old words can still open that copy's recovery slot and read any
+later copy of the database. Replacing the phrase therefore does not protect data against anyone
+who already copied the state file; it limits what the old words open from now on. Backups
+exported before still open **only with the old words** (their key derives from them); the UI says
+so before and during the replacement.
 
 ## Encrypted backups
 
@@ -283,8 +410,22 @@ description, completion, created/completed dates, priority, order). Records carr
 stable random `uid`; links between them (note → tag, task → tag) are stored as uids, never as
 per-device database ids.
 
-A backup **never** contains the DEK, the PIN or biometric slots, lockout state, the recovery
-seed, the backup key, or app settings.
+It also carries the user's display and behaviour preferences (theme, palette, fonts, text size
+and spacing, list layout, sort order, swipe actions, language, auto-lock delay, strict keyboard
+privacy, note previews). They come from an explicit allow-list (`BackupSettings` in
+`:core:security`); a test fails for any preference key the app uses that is on neither the
+allow-list nor the documented exclusion list. A restore reads each value separately: an unknown
+key or a value outside the allowed set is ignored, and preferences are applied only after the
+notes were imported, and only by "replace all" and the first-run restore (a merge keeps the
+preferences of the install it lands in).
+
+A backup **never** contains the DEK, the PIN or biometric slots, lockout state, onboarding or
+vault-commit flags, the screenshot allowance, the recovery seed, the backup key, or any other
+state of the install or the vault.
+
+Payload schema 5 added the preferences section. A schema-4 file restores exactly as before. An app
+that reads only schema 4 reports a schema-5 file as "unsupported version, update the app": its
+strict reader cannot skip a section, and it never half-restores or reports the file as damaged.
 
 ### Key: the recovery seed, not a separate password
 
@@ -338,8 +479,11 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   first, then creates the new vault with those words as its recovery seed, and writes the
   backup once the mandatory PIN setup has opened the vault — **before** onboarding is
   committed. If the import fails, nothing is committed and the vault is closed; the user can
-  retry or continue with an empty vault. A process killed meanwhile restarts onboarding rather
-  than opening an empty vault. Until then the decrypted payload is held in memory only, and an
+  retry or continue with an empty vault. Before the new vault is opened for a staged restore, a
+  restore-pending marker is written to the vault state file and cleared only by the commit. A
+  process killed in between leaves the marker, and the next start does not count that vault as
+  committed even though its database exists: it is deleted and onboarding starts over, rather
+  than opening an empty or half-restored vault. Until then the decrypted payload is held in memory only, and an
   uncommitted setup vault is not re-locked by backgrounding (setup closes it itself if it
   finishes in the background).
 - The system file picker is another app, so the process briefly goes to the background.
@@ -475,16 +619,31 @@ generic Markdown/TXT (Obsidian, Markor).
 ## Session lifecycle
 
 - The database is not considered committed until mandatory PIN setup succeeds.
-- Interrupted first-run setup restarts onboarding and discards incomplete vault slots.
+- Interrupted first-run setup restarts onboarding and discards incomplete vault slots, including a
+  vault whose staged restore had not been committed (restore-pending marker).
 - When the app backgrounds, SQLCipher is closed and Encly's in-memory DEK copy is
   zeroized, after the user's auto-lock delay (Settings → Security: immediately, 15 s by
-  default, 30 s, 1 min or 2 min; measured on `elapsedRealtime`, so deep sleep counts). The
-  screen turning off or the device locking closes it at once, whatever the delay. ViewModels
-  holding decrypted content (notes list, tasks, editor, a decrypted backup, new recovery
-  words) drop it at that moment, not only when the UI resumes.
+  default, 30 s, 1 min, 2 min, 5 min, 10 min, 15 min or 30 min). The screen being off or the
+  keyguard being up when the app is found stopped closes it at once, whatever the delay or a
+  picker grace, and so does the screen turning off during the delay. Android 14+ freezes a cached
+  app about ten seconds after it left the screen, and a frozen process runs no handler timer and
+  hears no screen-off broadcast. The delay is therefore also set as an inexact `AlarmManager`
+  wake-up alarm (`setAndAllowWhileIdle`, no exact-alarm permission) that is delivered to a
+  non-exported receiver, which closes the vault on the main thread. The system may deliver an
+  inexact alarm a little late (up to minutes in Doze), never early, so the vault can stay open
+  a short while past the chosen delay while the app is frozen. The alarm replaces the timer only, not the screen-off signal: if the screen turns off while the
+  process is already frozen (Android 14+, about ten seconds after leaving), Encly does not hear
+  it. The vault then closes when the delay ends (the alarm) or when the app is next in front after the delay, not
+  at the moment the screen went off, and coming back inside the delay on an unlocked phone finds it
+  still open. The longer the delay, the longer that window; "Immediately" and a screen that is
+  already off when Encly stops are not affected. The alarm is cancelled when the
+  app comes back or the vault locks. When the app comes back, the elapsed time is measured again
+  on `elapsedRealtime` (deep sleep counts) and the vault is closed if the delay ran out. ViewModels holding decrypted content (notes list, tasks, editor,
+  a decrypted backup, new recovery words) drop it at that moment, not only when the UI resumes.
 - Within the delay the vault stays open in the background: the DEK and decrypted content are
   in memory, and the recents thumbnail is still blocked by `FLAG_SECURE`. Choose
-  "Immediately" to close it the moment Encly leaves the screen.
+  "Immediately" to close it the moment Encly leaves the screen. Swiping Encly away from Recents
+  closes the vault at once, whatever the delay; so does Back out of the app on Android 8-11.
 - The next foreground entry must unwrap the DEK again through PIN, biometric, or
   recovery.
 - A process started with a committed, closed vault starts in the locked state, and a central
@@ -497,8 +656,11 @@ generic Markdown/TXT (Obsidian, Markor).
 - The PIN typed on the lock screen is kept in a `CharArray` that is wiped after the attempt
   (never a `String`); unlock DEK copies are wiped after use. While open, the database accepts a
   second unlock call only with the same key, compared in constant time.
-- `FLAG_SECURE` is applied before the first Activity frame and cannot be disabled in
-  settings.
+- `FLAG_SECURE` is applied before the first Activity frame and is on by default. Since 3.0 the
+  user can allow screenshots until the app next locks (Settings → Security, after the PIN or a
+  biometric): the allowance lives in memory only, ends at every lock and never survives a
+  restart, open dialogs and sheets follow it, and the screens that show secrets (PIN entry, the
+  recovery phrase) stay protected whatever it says.
 - **Erase all data** (Settings → Security, danger zone) is held for 5 seconds, confirmed in a
   dialog, then re-authenticated with the PIN or a Class 3 biometric. It closes and deletes the
   database, every key slot, the lockout state, Encly's Keystore keys (both PIN factor aliases and
@@ -510,7 +672,8 @@ generic Markdown/TXT (Obsidian, Markor).
 
 Encly intentionally leaves out system-visible plaintext features:
 
-- no notifications at all: no notification permission, channel, alarm or scheduled work;
+- no notifications at all: no notification permission, channel or scheduled work, and no alarm that shows or
+  reads note content (the only alarm is the auto-lock wake-up above, which carries no data);
 - no seed clipboard, file, Drive, or generic share export (encrypted backups never contain the
   seed; see "Encrypted backups");
 - no share sheet and no plaintext note share flow: the only plaintext path is the Markdown
@@ -521,9 +684,14 @@ Encly intentionally leaves out system-visible plaintext features:
 
 **Clipboard.** Everything Encly puts on the clipboard (a text-field copy, a copied link) is
 marked sensitive (`ClipDescription.EXTRA_IS_SENSITIVE`, honoured from Android 13) and cleared
-after 60 seconds unless something else was copied since. When the system hides the clipboard
-from a backgrounded app, the clear happens without that check. A recovery phrase pasted into
-the 12 cells is removed from the clipboard right away.
+after 60 seconds unless something else was copied since. Only Encly's own clip is cleared: it is
+recognised by the timestamp of its description. From Android 10 the system hides that description
+from an app that is not in front, so a clear that falls due in the background is not done blindly:
+the stamp stays pending and the next time Encly comes to the foreground it clears the clip if the
+clipboard still carries it. The clip is also cleared when the vault locks (at the next foreground
+if the lock happened in the background), and a pending stamp survives a killed process in a small
+preferences file (a timestamp only, no content, excluded from every backup), so the next start
+clears it. A recovery phrase pasted into the 12 cells is removed from the clipboard right away.
 
 **Autofill, accessibility, overlays.** The window excludes itself and all its fields from
 autofill services. On Android 14+ its content is marked accessibility-data-sensitive, so only
@@ -539,6 +707,38 @@ suggestions, use no cloud prediction and receive no surrounding text. The residu
 keyboard itself: it still receives every key it types, and a malicious or non-compliant IME can
 ignore all of these flags (see "Important limitations"). The cost is no autocorrect, and some
 keyboards hide emoji or voice input in password fields.
+
+On iOS every text input is a Kotlin subclass of Compose's `CMPTextInputView`. At start, and again each time the
+keyboard appears (the subclasses may register with the Objective-C runtime late), the app walks the class list and
+replaces the trait getters on `CMPTextInputView` and on every class that descends from it, so they answer "no" for
+autocorrection, spell checking, smart quotes, smart dashes, smart insert/delete and inline predictions, and "none"
+for Writing Tools, whatever the field asked for: the system keyboard then has no suggestions to learn from. Free
+text fields use the plain text keyboard type there (Compose would turn the Android `Password` type into secure,
+ASCII-only entry), with autocorrection off. iOS has no "do not learn" flag and no password-like mode that fits a
+multi-line editor, so **Strict keyboard privacy** is not shown on iOS. Third-party keyboards are not loaded at all
+(the app refuses the keyboard extension point). If a Compose upgrade renames the class, the startup log line
+"keyboard privacy patched ..." shows fewer replacements than expected, and the review of the upgrade must catch it.
+Not verified on a device: that the system keyboard honours every trait.
+
+**iOS host behaviour.** What Android does with window flags and services, the iOS build does as follows.
+- *Screenshots and recordings.* iOS cannot refuse a screenshot taken by the user; the vault is locked whenever the
+  app is left, so nothing is exposed beyond what was on screen. While the screen is captured (recording, AirPlay,
+  mirroring) a cover window hides the content, from the user's own screen as well.
+- *App switcher snapshot.* A cover window above every other window goes up on `willResignActive`, before the system
+  snapshot. On an iPad where the app shares the screen (Split View, Slide Over, Stage Manager), `willResignActive`
+  also fires when the user only works in the other app while Encly stays visible; there the cover is raised at
+  `didEnterBackground` (still before the snapshot) so that the visible app is not blanked. Capture still covers it.
+- *Background.* iOS suspends an app seconds after it leaves the screen. A background task keeps the auto-lock timer
+  and the device-lock signal running; when iOS takes it back (about 30 s) the vault locks. An auto-lock delay longer
+  than that therefore locks at about 30 s; the delay choices above that are not offered on iOS.
+- *Pasteboard.* Encly's copies are `localOnly` (no Universal Clipboard) and carry an expiration date of 60 s; a timer
+  clears the pasteboard if it is still Encly's, and the clip is cleared when the vault locks.
+- *Backups.* The data directory is excluded from iCloud and iTunes/Finder backups.
+- *No device passcode.* Face ID unlock is not available (its Keychain item needs a passcode); the PIN works. The
+  Keychain and Enclave items are `ThisDeviceOnly` and not synced.
+- *Face ID.* A changed Face ID enrolment or a dropped item ends biometric unlock and the lock screen says so, as on
+  Android.
+- *Apple-silicon Macs.* The app opts out of running as an iPhone/iPad app on a Mac (the desktop app is the Mac build).
 
 The app requests no `INTERNET` permission and performs no analytics or sync.
 
@@ -598,14 +798,18 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - A rooted or fully compromised OS can observe process memory, UI input, or execute code
   in the app's security context. Encly cannot provide a trustworthy boundary against a
   hostile kernel / system image.
-- A numeric PIN has finite entropy (10^6 values). Off the device, a copied PIN slot is useless
+- A numeric PIN has finite entropy (10^6 to 10^12 values, by its length). Off the device, a copied PIN slot is useless
   without the Keystore factor. **On** a rooted device that is unlocked, an attacker can drive
   the Keystore key from the app's own security context: guesses then run at the secure
   hardware's HMAC speed (StrongBox is much slower than the TEE), the PBKDF2 half can be
   computed off the device, and the lockout file can be reset. A device that has never been
   unlocked since boot, or is locked (API 28+), refuses the key entirely. Where StrongBox is
   missing the key lives in the TEE; on devices without hardware-backed Keystore it is software
-  only.
+  only. Encly does not read back which protection level the key got, and falls back to weaker
+  key options without telling the user. Offline, the PIN is therefore protected by the hardware
+  keystore, not by PBKDF2 (which adds only about 19 bits, the size of a 6-digit PIN): a longer PIN (8 to 12
+  digits are supported) is the better choice, most of all on a device without a hardware-backed
+  Keystore.
 - The lockout is enforced by the app, not by the secure hardware.
 - The wipe PIN (see "Wipe PIN") and the duress PIN (see "Duress PIN") defend against being
   forced to unlock on the spot, not against a forensic examination or a rooted phone.
@@ -625,7 +829,8 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   no-personalized-learning flag (and, with strict keyboard privacy, a password-type field
   without suggestions), but an IME sees every key typed and may ignore these requests.
 - Clipboard clearing is best effort: a clipboard manager or another app may read or keep a
-  clip during its 60 seconds.
+  clip during its 60 seconds, and while Encly is in the background (or after it was killed) the
+  clip stays until Encly is next in front, because Android hides the clipboard from it.
 
 ## Distribution and signing
 
@@ -640,8 +845,9 @@ uninstall to "fix" it without an exported backup, because uninstalling deletes t
 
 | Version | Storage format | Security fixes |
 |---|---|---|
-| 2.0.x | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
-| 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, reinstall 2.0 |
+| 3.0.x | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
+| 2.x | v3 vault, the same format | ❌ no; update in place to 3.0 (nothing to migrate) |
+| 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, uninstall and install 3.0 |
 
 Reports should include the exact app version (About screen), where it was installed from, and
 the Android version.

@@ -6,7 +6,7 @@ PRIVÉ VANAF HET BEGIN
 • Geen account, geen registratie, geen analyse, geen advertenties, geen in-app-aankopen.
 • Echt offline: Encly vraagt de toestemming INTERNET niet aan en kan je notities dus nergens heen sturen.
 • Versleutelde notities: een SQLCipher-database (AES-256) met een willekeurige 256-bits sleutel.
-• Notities met wachtwoord: een 6-cijferige pincode, gebonden aan de beveiligde hardware van de telefoon, optioneel vingerafdruk of gezicht (alleen sterke biometrie).
+• Notities met wachtwoord: een pincode van 6 tot 12 cijfers, gebonden aan de beveiligde hardware van de telefoon, optioneel vingerafdruk of gezicht (alleen sterke biometrie).
 • Vergrendelt zichzelf: na het verlaten (standaard na 15 seconden, of meteen) of zodra het scherm uitgaat, wordt de database gesloten en de sleutel uit het geheugen gewist.
 • Screenshots, schermopnames en het voorbeeld bij recente apps zijn geblokkeerd. De cloudback-up van Android staat uit.
 
@@ -26,7 +26,7 @@ EEN VEILIG NOTITIEBLOK DAT PRETTIG SCHRIJFT
 OPEN SOURCE
 • Encly is open source (Apache-2.0): iedereen kan nagaan wat de app doet.
 • Werkt zonder Google Play-services. Android 8.0 of nieuwer.
-• 9 talen: Nederlands, Engels, Oekraïens, Duits, Frans, Spaans, Italiaans, Pools en Portugees. Kies een taal alleen voor Encly in Instellingen → Taal.
+• 10 talen: Nederlands, Engels, Oekraïens, Duits, Frans, Spaans, Italiaans, Pools, Portugees en Arabisch. Kies een taal alleen voor Encly in Instellingen → Taal.
 
 Encly: versleutelde notities die van jou blijven.
 

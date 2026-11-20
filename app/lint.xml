@@ -16,6 +16,13 @@
     <issue id="StringFormatMatches" severity="error" />
     <issue id="StringFormatCount" severity="error" />
 
+    <!-- The Compose detekt rules past 0.4.x need detekt 2 (see libs.versions.toml). Dokka 2.3.0 warns about
+         `@Composable` in the iOS sources on Linux, where the iOS targets are off, and the docs build fails on warnings. -->
+    <issue id="NewerVersionAvailable">
+        <ignore regexp="io\.nlopez\.compose\.rules" />
+        <ignore regexp="dokka" />
+    </issue>
+
     <!-- Unused code and resources. -->
     <issue id="UnusedResources" severity="error" />
     <issue id="UnusedIds" severity="error" />

@@ -3,16 +3,24 @@ package com.pasich.encly
 import android.app.Application
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.pasich.encly.core.AppLogger
+import com.pasich.encly.core.di.AppGraph
+import com.pasich.encly.core.di.AppGraphOwner
 import com.pasich.encly.core.di.ApplicationScope
+import com.pasich.encly.core.security.HandoffStagingSweeper
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.data.handoff.HandoffStagingSweeper
-import dagger.hilt.android.HiltAndroidApp
+import com.pasich.encly.platform.SensitiveClip
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltAndroidApp
-class MyApplication : Application() {
+class MyApplication :
+    Application(),
+    AppGraphOwner {
+
+    override val appGraph: AppGraph by lazy {
+        createGraphFactory<AppGraph.Factory>().create(this)
+    }
 
     // Observes process foreground/background to auto-lock the app when it is backgrounded.
     @Inject
@@ -27,11 +35,14 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        appGraph.inject(this)
         try {
             ProcessLifecycleOwner.get().lifecycle.addObserver(sessionLockManager)
         } catch (e: Exception) {
             AppLogger.e("MyApplication", "Failed to initialize application", e)
         }
+        // Encly's own clipboard clip: cleared at a lock, at a foreground after the background hid it, after a kill.
+        SensitiveClip.install(this, sessionLockManager.locked, appScope)
         // A My Notes hand-off (plaintext) that a killed process left in the cache; off the main thread.
         appScope.launch { handoffStaging.sweep() }
     }

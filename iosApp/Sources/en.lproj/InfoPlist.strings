@@ -1,0 +1,2 @@
+/* Shown by the system when Encly asks to use Face ID. */
+"NSFaceIDUsageDescription" = "Encly uses Face ID to unlock your notes without typing your PIN or password. Your face data stays on this device, and your PIN or password still works.";

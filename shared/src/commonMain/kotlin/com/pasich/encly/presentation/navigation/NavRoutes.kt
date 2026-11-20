@@ -1,0 +1,32 @@
+package com.pasich.encly.presentation.navigation
+
+enum class NavRoutes {
+    HomeRoute,
+    TrashRoute,
+    ArchiveRoute,
+    SettingsRoute,
+    EditNoteRoute,
+    EditTagRoute,
+    AboutRoute,
+    SupportRoute,
+    FaqRoute,
+    TasksRoute,
+    SecuritySettingsRoute,
+    OnboardingRoute,
+    LossDataRoute,
+    LegacyVaultRoute,
+    StorageUnreadableRoute,
+    PinCodeConfig,
+    RecoveryChoiceRoute,
+    WipePinRoute,
+    DuressPinRoute,
+    LockRoute,
+    BackupRoute,
+    AppearanceRoute,
+    LicensesRoute,
+    ImportNotesRoute,
+    EditorToolbarRoute,
+}
+
+/** Query argument of [NavRoutes.TasksRoute]: open the new-task sheet on arrival. */
+const val TASKS_ADD_ARG = "add"

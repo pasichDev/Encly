@@ -39,7 +39,7 @@ class StoreMetadataTest {
 
     @Test
     fun storeLocalesCoverExactlyTheShippedAppLanguages() {
-        val resDir = File(root, "app/src/main/res")
+        val resDir = File(root, "core/resources/src/commonMain/strings")
         val appLanguages = resDir.listFiles().orEmpty()
             .filter { it.isDirectory && APP_LOCALE_DIR.matches(it.name) }
             .map { it.name.removePrefix("values-").substringBefore('-') }
@@ -156,7 +156,7 @@ class StoreMetadataTest {
         const val PUBLISH_GUARD = "vars.PLAY_PUBLISH_ENABLED == 'true'"
 
         /** Google Play locale codes; F-Droid accepts the same folder names. */
-        val STORE_LOCALES = setOf("en-US", "uk", "de-DE", "fr-FR", "es-ES", "it-IT", "pl-PL", "pt-PT", "nl-NL")
+        val STORE_LOCALES = setOf("en-US", "uk", "de-DE", "fr-FR", "es-ES", "it-IT", "pl-PL", "pt-PT", "nl-NL", "ar")
 
         /** Play Console limits, in characters. */
         val LIMITS = mapOf(TITLE to 30, "short_description.txt" to 80, FULL_DESCRIPTION to 4000)

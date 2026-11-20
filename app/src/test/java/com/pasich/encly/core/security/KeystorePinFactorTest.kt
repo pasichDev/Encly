@@ -163,10 +163,45 @@ class KeystorePinFactorTest {
         assertTrue(e.cause is ProviderException)
     }
 
+    /** The platform's own Keystore error (hidden constructor), as the cause of a failed `getKey`. */
+    private fun keystoreError(code: Int): Throwable = Class.forName("android.security.KeyStoreException")
+        .getConstructor(Int::class.javaPrimitiveType, String::class.java)
+        .newInstance(code, "keystore error") as Throwable
+
     @Test
     fun anUnrecoverableKeyMeansTheKeyIsLost() {
         factor.ensureKey(PinKeySlot.A)
-        FakeAndroidKeyStore.getKeyFailure = UnrecoverableKeyException("gone")
+        // What AndroidKeyStoreSpi.engineGetKey makes of a permanently invalidated key: a message, no cause.
+        FakeAndroidKeyStore.getKeyFailure = UnrecoverableKeyException("User changed or deleted their auth credentials")
+
+        assertTrue(failure { factor.mac(PinKeySlot.A, byteArrayOf(1)) }.lost)
+    }
+
+    @Test
+    fun aKeystoreErrorWhileReadingTheKeyIsNotALostKey() {
+        factor.ensureKey(PinKeySlot.A)
+        // What the platform makes of any other Keystore error (here SYSTEM_ERROR): the key itself may be intact.
+        val failed = UnrecoverableKeyException("Failed to obtain information about key")
+        failed.initCause(keystoreError(code = 4))
+        FakeAndroidKeyStore.getKeyFailure = failed
+
+        val e = failure { factor.mac(PinKeySlot.A, byteArrayOf(1)) }
+
+        assertFalse("a system error is retried, the vault is not declared lost", e.lost)
+        assertTrue(e.cause is UnrecoverableKeyException)
+
+        // The Keystore answers again: the same key still signs.
+        FakeAndroidKeyStore.getKeyFailure = null
+        assertEquals(32, factor.mac(PinKeySlot.A, byteArrayOf(1)).size)
+    }
+
+    @Test
+    fun anUnrecoverableKeyWithAnotherCauseIsStillLost() {
+        factor.ensureKey(PinKeySlot.A)
+        // "Unsupported secret key type": the entry itself is unusable, which no retry mends.
+        val failed = UnrecoverableKeyException("Unsupported secret key type")
+        failed.initCause(IllegalArgumentException("algorithm"))
+        FakeAndroidKeyStore.getKeyFailure = failed
 
         assertTrue(failure { factor.mac(PinKeySlot.A, byteArrayOf(1)) }.lost)
     }

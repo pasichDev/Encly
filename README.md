@@ -2,6 +2,8 @@
 
 [![Android CI](https://github.com/pasichDev/Encly/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/pasichDev/Encly/actions/workflows/android.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#install)
+[![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white)](#project-structure)
 [![Latest release](https://img.shields.io/github/v/release/pasichDev/Encly?logo=github)](https://github.com/pasichDev/Encly/releases/latest)
 [![F-Droid](https://img.shields.io/f-droid/v/com.pasich.encly?logo=f-droid)](https://f-droid.org/packages/com.pasich.encly/)
 [![Google Play](https://img.shields.io/badge/Google%20Play-available-34A853?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.pasich.encly)
@@ -18,31 +20,38 @@ backup and, only when you ask for it, a readable Markdown export that is not enc
 ## Features
 
 - 🔒 **Encrypted at rest** — Room on SQLCipher with a random 256-bit database key.
-- 🔐 **Mandatory lock** — a 6-digit PIN bound to the phone's Android Keystore, plus optional
+- 🔐 **Mandatory lock** — a PIN of 6 to 12 digits bound to the phone's Android Keystore, plus optional
   Class 3 biometric unlock.
 - ⏱️ **Auto-lock** — the database closes and its key is wiped after you leave the app
-  (immediately up to 2 minutes, 15 s by default) and at once when the screen turns off.
+  (immediately up to 30 minutes, 15 s by default) and at once when the screen turns off.
 - 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN.
 - 💾 **Encrypted backups** — one file, sealed with the recovery phrase, saved wherever you choose.
 - 📝 **Markdown export** — one note as `.md`, or everything as a `.zip`, after a warning that the
   file is not encrypted and a PIN check. Saved through the system save dialog, never shared.
 - 📌 **Organize** — pin, archive and colour notes, with configurable swipe actions on the cards.
-- 🧩 **Block editor** — text, headings, quotes, checklists, bulleted / numbered lists, links,
-  separators.
-- 🏷️ **Tags & tasks** — local organization: tags for notes, tasks with priorities.
-- 🗑️ **Trash** — soft-delete with restore.
+- 🚨 **Wipe PIN and duress PIN** — optional PINs that erase the vault or open a decoy one, for
+  when you are forced to unlock.
+- 🧩 **Block editor** — text, headings, quotes, checklists, nested lists, tables, code blocks,
+  links, separators; select across blocks, find in note, and a toolbar you arrange yourself.
+- 🏷️ **Tags & tasks** — local organization: several tags per note, tasks with priorities and
+  sub-tasks.
+- 📥 **Import** — bring notes from Google Keep, Standard Notes, Joplin, Notesnook or Markdown
+  files, all offline.
+- 🗑️ **Trash** — soft-delete with restore; notes are deleted for good after 28 days.
 - 🎨 **5 themes** — Paper, Forest, Ocean, Graphite and Midnight; light, dark or system mode and
   three bundled font sets.
 - 📴 **Fully offline** — no `INTERNET` permission, cloud sync, analytics or downloadable fonts
   (editor fonts are bundled). The only links out (privacy policy, issue tracker, email, the
   open-source license pages, a note's link block and, in the `play` flavor, the store page or, in
   the `fdroid` flavor, the Ko-fi donation page) open in another app and only when you tap them.
-- 🛡️ **Protected UI** — `FLAG_SECURE` is enforced from the first Activity frame.
-- 🌍 **9 languages** — pick one in Settings → Language, independently of the system language.
+- 🛡️ **Protected UI** — `FLAG_SECURE` is on from the first Activity frame; screenshots can be allowed
+  only until the next lock, after the PIN or a biometric.
+- 🌍 **10 languages** — pick one in Settings → Language, independently of the system language;
+  Arabic is laid out right to left.
 
 ## Languages
 
-English (default), Українська, Deutsch, Français, Español, Italiano, Polski, Português and
+English (default), Українська, العربية, Deutsch, Français, Español, Italiano, Polski, Português and
 Nederlands.
 
 Encly follows the device language when it is one of these, and falls back to English otherwise.
@@ -52,7 +61,7 @@ it also appears in the system's per-app language settings.
 
 Translations are done on [Hosted Weblate](https://hosted.weblate.org/projects/encly/), which
 offers free hosting to open-source projects. Found a wrong or clumsy translation, or want to add
-a language? Fix it there, no Git needed. A pull request that edits the `values-<lang>/` files
+a language? Fix it there, no Git needed. A pull request that edits the `values-<lang>/` files of `core/resources/src/commonMain/strings`
 still works as a fallback: see [CONTRIBUTING.md → Translations](CONTRIBUTING.md#translations).
 Many thanks to [Weblate](https://weblate.org) for hosting Encly's translations as libre software.
 
@@ -89,6 +98,12 @@ exported backup: uninstalling deletes the vault.
 
 Requires Android 8.0 (API 26) or newer. Google Play Services are not needed.
 
+Android is the only platform Encly is released for. The repository also holds a desktop app
+(Windows, macOS, Linux) and an iOS app; they build, but they are **not published and not
+supported yet** ([#85](https://github.com/pasichDev/Encly/issues/85),
+[#106](https://github.com/pasichDev/Encly/issues/106),
+[#107](https://github.com/pasichDev/Encly/issues/107)).
+
 ## 💛 Support Encly
 
 Encly is free and open source, with no ads, no tracking and no accounts; donations are its only
@@ -105,7 +120,7 @@ Every release ships a `SHA256SUMS` file (and `SHA256SUMS.asc` when it is GPG-sig
 
 ```bash
 sha256sum -c --ignore-missing SHA256SUMS          # APK matches the published checksum
-apksigner verify --print-certs Encly-2.2.0-fdroid.apk
+apksigner verify --print-certs Encly-3.0.0-fdroid.apk
 ```
 
 `apksigner` (Android SDK build-tools) must print this release signing certificate SHA-256
@@ -119,15 +134,19 @@ Any other certificate means the APK is not an official Encly build.
 
 The release workflow refuses to publish an APK that is not signed with this certificate.
 
-## Coming from 1.x
+## Upgrading
 
-2.0 uses a new storage format and does **not** migrate 1.x data. 1.x never had public users;
-if you ran it yourself, uninstall it before installing 2.0.
+- **From 2.x:** update in place. The vault format is v3, as it has been since 2.0, and 3.0
+  does not change it: your PIN, biometrics, recovery phrase, notes and backups carry over.
+  There is no way back to 2.x after upgrading: Android refuses to install an older version over
+  a newer one, and uninstalling deletes the vault.
+- **From 1.x:** 1.x data is not migrated (a different storage format). 1.x never had public
+  users; if you ran it yourself, uninstall it before installing 3.0.
 
 ## Security model
 
-Encly 2.0 uses envelope encryption rather than deriving the SQLCipher key directly from
-a seed or PIN:
+Encly uses envelope encryption (vault format v3, unchanged since 2.0) rather than deriving the
+SQLCipher key directly from a seed or PIN:
 
 1. Onboarding creates a random 256-bit **DEK** (data-encryption key).
 2. SQLCipher is opened with that DEK.
@@ -167,11 +186,28 @@ See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and t
 
 ## Tech stack
 
-Kotlin · Jetpack Compose · Material 3 · Hilt · Room · SQLCipher · Coroutines ·
-kotlinx.serialization · BIP39 (kotlin-bip39)
+Kotlin Multiplatform · Compose Multiplatform · Material 3 · Metro · Room (KMP) · SQLCipher
+through the Sealite driver · Coroutines · kotlinx.serialization · BIP39 (own implementation)
 
 Clean architecture: `presentation` → `domain` → `data`, with `core/security`
 coordinating the key vault.
+
+## Project structure
+
+Encly 3.0 is a Kotlin Multiplatform codebase: nearly everything is shared, and each platform
+is a thin host around it. Details in [docs/architecture.md](docs/architecture.md).
+
+| Module | What it is |
+|---|---|
+| `app` | The Android app and its release flavors (`fdroid`, `play`): `MainActivity`, the Metro graph, Keystore and biometric adapters. |
+| `shared` | Domain, data, screens, navigation and ViewModels, in common code; the desktop and iOS hosts' parts live here too. |
+| `editor` | The block editor, independent of the app. |
+| `core:common`, `core:crypto`, `core:security` | Shared helpers; AES-GCM, HKDF, PBKDF2 and BIP39; the vault, PIN slots, lockout, auto-lock and the backup format. |
+| `core:database` | Room and the encrypted database (SQLCipher through Sealite), with the exported schemas. |
+| `core:keystore` | The desktop's OS secret store for the PIN's device key. |
+| `core:resources` | Every user-visible string (`src/commonMain/strings/values*/`) and the translations. |
+| `desktopApp`, `iosApp` | The desktop (Windows, macOS, Linux) and iOS hosts. Not released. |
+| `build-logic` | Gradle convention plugins. |
 
 ## Build
 
@@ -201,18 +237,26 @@ The app has two distribution flavors with the same application ID: `fdroid` (no 
 links, no baseline profile) and `play`.
 
 ```bash
-./gradlew assembleFdroidDebug                      # debug APK (com.pasich.encly.debug)
+./gradlew :app:assembleFdroidDebug                 # debug APK (com.pasich.encly.debug)
+./gradlew :app:assemblePlayDebug                   # the same, play flavor
 ./gradlew :app:testFdroidDebugUnitTest             # JVM unit tests
-./gradlew :app:koverVerifyFdroidDebug              # coverage gate (whole app, 85%)
+./gradlew :app:koverVerifyFdroidDebug              # coverage gate (the Android app: activities and adapters, 85%)
+./gradlew :shared:desktopTest :shared:testAndroidHostTest :shared:koverVerify   # the UI and data logic (85%)
+./gradlew :editor:desktopTest :editor:testAndroidHostTest :editor:koverVerify   # the editor module (100%)
 ./gradlew :app:detekt :app:lintFdroidRelease       # static analysis
 ./gradlew spotlessApply                            # format Kotlin/Gradle (ktlint; spotlessCheck in CI)
 ./gradlew assembleRelease                          # both release APKs, R8 enabled
 ./gradlew :app:bundlePlayRelease                   # Google Play App Bundle (play flavor)
-./gradlew :app:connectedFdroidDebugAndroidTest     # instrumented tests (emulator; wipes the debug app's data)
+./gradlew :core:database:desktopTest :core:database:testAndroidHostTest :core:database:koverVerify   # the database module (85%)
+./gradlew :core:database:connectedAndroidDeviceTest   # instrumented tests (emulator): native SQLCipher, migrations
 ```
 
 Outputs: `app/build/outputs/apk/<flavor>/<buildType>/`, and the bundle in
 `app/build/outputs/bundle/playRelease/`. Releasing: [CONTRIBUTING.md → Releasing](CONTRIBUTING.md#releasing).
+
+The desktop and iOS targets build too, but only Android is released: `./gradlew :desktopApp:run`
+starts the desktop app ([desktopApp/README.md](desktopApp/README.md)), and the iOS app is built
+from Xcode on a Mac ([iosApp/README.md](iosApp/README.md)).
 
 ### Release signing for local builds (optional)
 
@@ -255,6 +299,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - [Security model](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
+- [iOS app](iosApp/README.md) (not released yet)
+- [Desktop app](desktopApp/README.md) (Windows, macOS, Linux: run, package, data location, security notes; not released yet)
 
 ## Contributing
 
