@@ -319,7 +319,8 @@ private fun RegisterItem(
 @Composable
 private fun rememberListMarker(type: BlockType, count: Int): ListMarker {
     val font = listFontDp()
-    val wide = font * (if (count >= WIDE_MARKER_FROM) WIDE_MARKER_EXTRA else 0f)
+    // Only a numbered list has two-digit markers: a checkbox's or bullet's gap must not change as items are added.
+    val wide = font * (if (type == BlockType.LIST_NUMBER && count >= WIDE_MARKER_FROM) WIDE_MARKER_EXTRA else 0f)
     val metrics = rememberLineMetrics()
     return remember(type, font, wide, metrics) {
         ListMarker(

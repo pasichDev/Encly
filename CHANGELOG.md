@@ -27,6 +27,7 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ### Fixed
 
+- The gap between a checkbox or bullet and its text no longer gets wider once a list reaches ten items, and tighter again when it drops below ([#129](https://github.com/pasichDev/Encly/issues/129)).
 - Ukrainian: tags are called «мітки» everywhere; some screens and the backup text said «теги».
 
 ## [3.0.0] - 2026-11-19
