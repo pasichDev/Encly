@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +32,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.locale.AppLanguage
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.about
@@ -289,7 +289,7 @@ private fun ApplicationScope.EnclyWindow(
 
         // The menu titles are read when the bar is composed: a new language needs a new bar (the app below is keyed
         // on the same revision, see DesktopApp).
-        val languageRevision by graph.locales.revision.collectAsState()
+        val languageRevision by graph.locales.revision.collectAsStateWithLifecycle()
         key(languageRevision) { EnclyMenuBar(os, shortcuts, commands, session) }
 
         val appWindow = remember(composeWindow) {
@@ -391,7 +391,7 @@ private fun FrameWindowScope.EnclyMenuBar(
     commands: DesktopCommands,
     session: WindowSession,
 ) {
-    val noteOpen by session.services.navigation.editorOpen.collectAsState()
+    val noteOpen by session.services.navigation.editorOpen.collectAsStateWithLifecycle()
     MenuBar {
         FileMenu(os, shortcuts, commands, noteOpen)
         ViewMenu(commands)

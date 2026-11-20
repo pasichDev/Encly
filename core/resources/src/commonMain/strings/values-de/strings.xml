@@ -699,6 +699,12 @@
     <string name="whats_new_title">Neuigkeiten</string>
     <string name="whats_new_row_desc">Die Änderungen dieser Version</string>
     <string name="whats_new_dismiss">Verstanden</string>
+    <string name="trash_notice_title">Der Papierkorb leert sich jetzt selbst</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">Der Papierkorb löscht Notizen jetzt nach 28 Tagen endgültig. Darin liegt %d Notiz: Sie wird 28 Tage nach diesem Update gelöscht, wenn du sie nicht wiederherstellst.</item>
+        <item quantity="other">Der Papierkorb löscht Notizen jetzt nach 28 Tagen endgültig. Darin liegen %d Notizen: Sie werden 28 Tage nach diesem Update gelöscht, wenn du sie nicht wiederherstellst.</item>
+    </plurals>
+    <string name="trash_notice_open">Papierkorb öffnen</string>
     <string name="faq_pin_length_q">Wie lang darf meine PIN sein?</string>
     <string name="faq_pin_length_a">Zwischen 6 und 12 Ziffern, du entscheidest. Kürzere PINs werden nicht angeboten: Die Sperre und der Gerätschlüssel begrenzen die Zahl der Versuche, und 6 Ziffern sind die kürzeste PIN, die damit sicher bleibt. Der Sperrbildschirm zeigt nie, wie lang deine PIN ist: Du tippst auf „Entsperren“, wenn du fertig bist; das gilt auch für Lösch-PIN und Zwangs-PIN. PINs, die du vorher festgelegt hast, funktionieren unverändert.</string>
     <string name="block_code">Code</string>

@@ -16,7 +16,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +28,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.done
@@ -85,14 +85,14 @@ fun TasksScreen(
     openNewTask: Boolean = false,
     viewModel: TasksViewModel = metroViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var confirmClear by remember { mutableStateOf(false) }
 
     OpenOnArrival(openNewTask, viewModel::showAddTaskDialog)
     LaunchedEffect(viewModel) { showTaskMessages(viewModel, snackbarHostState) }
     val listState = rememberTasksListState(uiState)
-    val list = TasksListState(uiState, viewModel.stepsChosen.collectAsState().value, viewModel.inlineEdit)
+    val list = TasksListState(uiState, viewModel.stepsChosen.collectAsStateWithLifecycle().value, viewModel.inlineEdit)
     val itemActions = remember(viewModel) { taskItemActions(viewModel) }
     // Backgrounding re-locks the vault and drops this screen: save the inline field first (see OnPause).
     OnPause(viewModel::flushInlineEditForBackground)
@@ -145,8 +145,8 @@ fun TasksScreen(
 @Composable
 private fun TaskSheet(viewModel: TasksViewModel = metroViewModel()) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val visible by viewModel.showAddTaskDialog.collectAsState()
-    val editing by viewModel.editingTask.collectAsState()
+    val visible by viewModel.showAddTaskDialog.collectAsStateWithLifecycle()
+    val editing by viewModel.editingTask.collectAsStateWithLifecycle()
     val shown = remember { ShownTask() }
     if (visible) {
         shown.task = editing

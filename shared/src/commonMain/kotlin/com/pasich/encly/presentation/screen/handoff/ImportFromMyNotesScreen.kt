@@ -12,11 +12,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_count_notes
 import com.pasich.encly.core.resources.backup_count_tags
@@ -70,8 +70,8 @@ fun ImportFromMyNotesScreen(
     modifier: Modifier = Modifier,
     viewModel: ImportFromMyNotesViewModel = metroViewModel(),
 ) {
-    val locked by viewModel.locked.collectAsState()
-    val step by viewModel.step.collectAsState()
+    val locked by viewModel.locked.collectAsStateWithLifecycle()
+    val step by viewModel.step.collectAsStateWithLifecycle()
     // A failure shows even while the vault is closed: "nothing can open the vault" comes from
     // the lock screen itself, and nothing of the vault is on that page.
     if (locked && step !is HandoffStep.Failed) {

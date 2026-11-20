@@ -717,6 +717,12 @@
     <string name="whats_new_title">What\'s new</string>
     <string name="whats_new_row_desc">The changes in this version</string>
     <string name="whats_new_dismiss">Got it</string>
+    <string name="trash_notice_title">The trash now empties itself</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">The trash now deletes notes for good after 28 days. It holds %d note: it will be deleted 28 days after this update, unless you restore it.</item>
+        <item quantity="other">The trash now deletes notes for good after 28 days. It holds %d notes: they will be deleted 28 days after this update, unless you restore them.</item>
+    </plurals>
+    <string name="trash_notice_open">Open trash</string>
     <string name="faq_pin_length_q">How long can my PIN be?</string>
     <string name="faq_pin_length_a">Between 6 and 12 digits, your choice. Shorter PINs are not offered: the lockout and the device key limit how many guesses anyone gets, and 6 digits is the shortest that stays safe with those limits. The lock screen never shows how long your PIN is: you press Unlock when you are done, and the same goes for the wipe PIN and the duress PIN. PINs you set before this option keep working as they are.</string>
     <string name="block_code">Code</string>

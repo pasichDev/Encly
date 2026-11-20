@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,10 +39,10 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.common.valueOrNull
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.delete
@@ -65,6 +64,7 @@ import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.domain.model.NoteColor
 import com.pasich.encly.platform.vaultTextKeyboardOptions
+import com.pasich.encly.presentation.components.tiles.TagItem
 import com.pasich.encly.presentation.designsystem.EnclyBackButton
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyChip
@@ -75,6 +75,7 @@ import com.pasich.encly.presentation.designsystem.EnclySheetGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclySheetGroupRow
 import com.pasich.encly.presentation.designsystem.EnclySheetTiles
 import com.pasich.encly.presentation.designsystem.EnclyTextField
+import com.pasich.encly.presentation.designsystem.SectionOverline
 import com.pasich.encly.presentation.designsystem.SheetTile
 import com.pasich.encly.presentation.designsystem.bleed
 import com.pasich.encly.presentation.viewmodel.TagListViewModel
@@ -217,7 +218,7 @@ private fun NoteRows(
             // The sheet is `surfaceContainer`: tiles on the group colour stand out from it, as its groups do.
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         )
-        NoteSection(title = stringResource(Res.string.note_color_title)) {
+        SheetSection(title = stringResource(Res.string.note_color_title)) {
             EnclyNoteColorPicker(
                 selected = NoteColor.fromKey(item.note.color),
                 onSelect = { onAction(NoteAction.ChangeColor(it)) },
@@ -225,7 +226,7 @@ private fun NoteRows(
                 contentPadding = PaddingValues(horizontal = EnclyTheme.spacing.gutter),
             )
         }
-        NoteSection(title = stringResource(Res.string.main_drawer_tags)) {
+        SheetSection(title = stringResource(Res.string.main_drawer_tags)) {
             NoteTagChips(
                 selectedTagIds = item.tags.mapTo(HashSet()) { it.id },
                 onToggle = { tagId, tagged -> onAction(NoteAction.ChangeTag(tagId, tagged)) },
@@ -248,16 +249,11 @@ private fun NoteRows(
     }
 }
 
-/** A section of the first page: its small [title] label over its [content]. */
+/** A section of the first page: its [title] as a heading over its [content]. */
 @Composable
-private fun NoteSection(title: String, content: @Composable () -> Unit) {
+private fun SheetSection(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xs)) {
-        Text(
-            text = title.uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = EnclyTheme.spacing.xxs).semantics { heading() },
-        )
+        SectionOverline(text = title, modifier = Modifier.padding(horizontal = EnclyTheme.spacing.xxs))
         content()
     }
 }
@@ -316,7 +312,7 @@ private fun NoteTagChips(
     modifier: Modifier = Modifier,
     tagListViewModel: TagListViewModel = metroViewModel(),
 ) {
-    val tags by tagListViewModel.state.collectAsState()
+    val tags by tagListViewModel.state.collectAsStateWithLifecycle()
     val all = tags.tagsLoad.valueOrNull() ?: return
     if (all.isEmpty()) {
         Text(
@@ -337,7 +333,9 @@ private fun NoteTagChips(
         val shown = all.filterIndexed { index, tag -> index < TAG_CHIPS_SHOWN || tag.id in selectedTagIds }
         shown.forEach { tag ->
             val tagged = tag.id in selectedTagIds
-            EnclyChip(label = tag.nameTag, selected = tagged, onClick = { onToggle(tag.id, !tagged) })
+            // A hidden tag is faded and read out as hidden, as on the tags page: tapping it takes the note off
+            // the main list while the sheet stays open.
+            TagItem(isSelected = tagged, item = tag, onItemClick = { onToggle(tag.id, !tagged) })
         }
         val hidden = all.size - shown.size
         if (hidden > 0) {
@@ -410,7 +408,7 @@ private fun TagsPage(
     modifier: Modifier = Modifier,
     tagListViewModel: TagListViewModel = metroViewModel(),
 ) {
-    val state by tagListViewModel.state.collectAsState()
+    val state by tagListViewModel.state.collectAsStateWithLifecycle()
     NotePage(title = stringResource(Res.string.main_drawer_tags), onBack = onBack, modifier = modifier) {
         EnclySheetGroup(modifier = Modifier.weight(1f, fill = false)) {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {

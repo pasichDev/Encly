@@ -705,6 +705,13 @@
     <string name="whats_new_title">Nouveautés</string>
     <string name="whats_new_row_desc">Les changements de cette version</string>
     <string name="whats_new_dismiss">Compris</string>
+    <string name="trash_notice_title">La corbeille se vide désormais toute seule</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">La corbeille supprime désormais les notes définitivement au bout de 28 jours. Elle contient %d note : elle sera supprimée 28 jours après cette mise à jour, sauf si vous la restaurez.</item>
+        <item quantity="many">La corbeille supprime désormais les notes définitivement au bout de 28 jours. Elle contient %d notes : elles seront supprimées 28 jours après cette mise à jour, sauf si vous les restaurez.</item>
+        <item quantity="other">La corbeille supprime désormais les notes définitivement au bout de 28 jours. Elle contient %d notes : elles seront supprimées 28 jours après cette mise à jour, sauf si vous les restaurez.</item>
+    </plurals>
+    <string name="trash_notice_open">Ouvrir la corbeille</string>
     <string name="faq_pin_length_q">Quelle longueur peut avoir mon code PIN ?</string>
     <string name="faq_pin_length_a">Entre 6 et 12 chiffres, à votre choix. Les codes plus courts ne sont pas proposés : le blocage et la clé de l’appareil limitent le nombre d’essais, et 6 chiffres est le minimum qui reste sûr avec ces limites. L’écran de verrouillage n’indique jamais la longueur de votre code : vous touchez « Déverrouiller » quand vous avez fini, de même pour le PIN d’effacement et le PIN de contrainte. Les codes définis auparavant continuent de fonctionner tels quels.</string>
     <string name="block_code">Code</string>

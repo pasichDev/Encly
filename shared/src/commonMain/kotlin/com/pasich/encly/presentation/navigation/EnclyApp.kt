@@ -10,7 +10,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,8 +23,10 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.SavedState
 import androidx.savedstate.read
@@ -94,16 +95,21 @@ fun EnclyApp(
     val startup = metroViewModel<StartupViewModel>()
     val freshInstall = startStatus == InitialStatus.ONBOARDING || startStatus == InitialStatus.SETUP_AUTH
     LaunchedEffect(startup) { startup.onAppStart(freshInstall) }
+    // "Erase all data" and the loss-recovery wipe clear the recorded version and go back to onboarding in the same
+    // process: the vault made there is new too, so it must not be told it was updated (What's new, the trash notice).
+    val onOnboarding = navController.currentBackStackEntryAsState().value?.destination?.route ==
+        NavRoutes.OnboardingRoute.name
+    LaunchedEffect(startup, onOnboarding) { if (onOnboarding) startup.onAppStart(freshInstall = true) }
 
     // Auto re-lock. Collected without a lifecycle gate so the value is already true in
     // the first frame after returning from the background. That frame still composes
     // the pre-lock destination (e.g. an open note), so the shield below covers the
     // NavHost until the lock screen is the only visible entry. Navigation itself runs
     // after the frame, from this effect.
-    val locked by sessionLockManager.locked.collectAsState()
+    val locked by sessionLockManager.locked.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     // A lock still waiting for the editors' saves: nothing may show or run meanwhile (SessionLockManager.locking).
-    val locking by sessionLockManager.locking.collectAsState()
+    val locking by sessionLockManager.locking.collectAsStateWithLifecycle()
     val currentLocked by rememberUpdatedState(locked)
     val currentLocking by rememberUpdatedState(locking)
     val router = remember(navController, scope, sessionLockManager) {
@@ -116,7 +122,7 @@ fun EnclyApp(
     LockRouteGuard(navController, securityManager::isDatabaseUnlocked)
     HostNavigationRequests(navController, router, commandsAllowed)
     SessionResumeGuard(navController, sessionLockManager)
-    val visibleEntries by navController.visibleEntries.collectAsState()
+    val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
     // An empty list is the first frame of a restored back stack: shielded as well.
     val shielded = (locked || locking) && (
         visibleEntries.isEmpty() || visibleEntries.any { it.destination.route != NavRoutes.LockRoute.name }
@@ -325,8 +331,8 @@ private fun AppContent(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
         ) {
-            val showPreviews by metroViewModel<NotePreviewsViewModel>().show.collectAsState()
-            val toolbar by metroViewModel<EditorToolbarViewModel>().layout.collectAsState()
+            val showPreviews by metroViewModel<NotePreviewsViewModel>().show.collectAsStateWithLifecycle()
+            val toolbar by metroViewModel<EditorToolbarViewModel>().layout.collectAsStateWithLifecycle()
             val unlockReveal = remember { UnlockRevealState() }
             // A re-lock during the reveal ends it: no deferred navigation into the vault,
             // no reveal left covering the lock screen.

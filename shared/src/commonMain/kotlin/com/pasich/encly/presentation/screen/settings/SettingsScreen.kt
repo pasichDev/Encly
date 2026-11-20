@@ -12,10 +12,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.main_drawer_settings
@@ -47,13 +47,13 @@ fun SettingsScreen(
     settingViewState: SettingsViewModel = metroViewModel(),
     securityDisable: Boolean = false,
 ) {
-    val showTasks by settingViewState.showTasksFlow.collectAsState()
-    val simpleEdit by settingViewState.simpleEditFlow.collectAsState()
+    val showTasks by settingViewState.showTasksFlow.collectAsStateWithLifecycle()
+    val simpleEdit by settingViewState.simpleEditFlow.collectAsStateWithLifecycle()
 
-    val swipe by settingViewState.swipeSettings.collectAsState()
+    val swipe by settingViewState.swipeSettings.collectAsStateWithLifecycle()
     val swipeSettings = swipe ?: SwipeSettings()
-    val swipeDialogSide by settingViewState.swipeDialogSide.collectAsState()
-    val languageDialogVisible by settingViewState.languageDialogVisible.collectAsState()
+    val swipeDialogSide by settingViewState.swipeDialogSide.collectAsStateWithLifecycle()
+    val languageDialogVisible by settingViewState.languageDialogVisible.collectAsStateWithLifecycle()
 
     val settingsBuilder = remember { SettingsBuilder() }
     val settingsCategories = settingsBuilder.buildSettingsCategories(

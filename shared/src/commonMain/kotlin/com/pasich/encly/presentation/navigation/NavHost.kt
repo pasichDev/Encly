@@ -4,9 +4,9 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -292,7 +292,7 @@ private fun EditNoteDestination(
     entry: NavBackStackEntry,
     viewModel: EditNoteViewModel = metroViewModel(),
 ) {
-    val noteState by viewModel.state.collectAsState()
+    val noteState by viewModel.state.collectAsStateWithLifecycle()
     val eraseEpoch = LocalEraseEpoch.current
     LaunchedEffect(entry, noteState.note.id, eraseEpoch) {
         val state = entry.savedStateHandle
@@ -312,7 +312,7 @@ private fun StorageUnreadableRoute(
     navController: NavHostController,
     viewModel: StorageUnreadableViewModel = metroViewModel(),
 ) {
-    val stillUnreadable by viewModel.stillUnreadable.collectAsState()
+    val stillUnreadable by viewModel.stillUnreadable.collectAsStateWithLifecycle()
     StorageUnreadableScreen(
         stillUnreadable = stillUnreadable,
         onRetry = {

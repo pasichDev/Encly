@@ -1,0 +1,5 @@
+Encly 3.0.1
+• Wijzigingen die de beveiliging verzwakken (langere automatische vergrendeling, strikt toetsenbord uit, notitievoorbeelden, biometrie) vragen eerst om je pincode.
+• Het notitiemenu werkt beter met TalkBack: grotere labelvlakken, duidelijke verwijderbevestiging.
+• Eenmalige melding bij updaten van 2.x: de prullenbak leegt zich nu na 28 dagen vanzelf.
+• Gelijke ruimte tussen selectievakje of bolletje en tekst in lange lijsten.

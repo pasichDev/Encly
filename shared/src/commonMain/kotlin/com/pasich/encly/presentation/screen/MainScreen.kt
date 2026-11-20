@@ -23,7 +23,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,7 +84,7 @@ fun MainRootScreen(navController: NavHostController, modifier: Modifier = Modifi
         WidthClass.Medium -> MediumMainRoot(navController, modifier)
         WidthClass.Expanded -> ExpandedMainRoot(navController, modifier)
     }
-    UnlockedStartup()
+    UnlockedStartup(navController)
 }
 
 /** The phone layout: the notes, with the navigation drawer sliding over them. */
@@ -140,8 +139,8 @@ fun MainScreen(
     searchViewModel: NoteSearchViewModel = metroViewModel(),
     lockNowViewModel: LockNowViewModel = metroViewModel(),
 ) {
-    val isGrid by mainListStateViewModel.isGridNoteList.collectAsState()
-    val showTasks by settingsViewModel.showTasksFlow.collectAsState()
+    val isGrid by mainListStateViewModel.isGridNoteList.collectAsStateWithLifecycle()
+    val showTasks by settingsViewModel.showTasksFlow.collectAsStateWithLifecycle()
     // The field reads local state (a flow round trip can drop fast keystrokes); the ViewModel
     // gets every change.
     // Plain remember: a search query is note content and must not land in saved state.
@@ -189,7 +188,7 @@ fun MainScreen(
                 listScrollState = listScrollState,
                 gridScrollState = gridScrollState,
                 search = NotesSearch(query, searchResults),
-                swipe = settingsViewModel.swipeSettings.collectAsState().value ?: SwipeSettings.Off,
+                swipe = settingsViewModel.swipeSettings.collectAsStateWithLifecycle().value ?: SwipeSettings.Off,
                 onItemClick = { note -> notes.editNote(note.id) },
                 onSecondActionClick = { note -> notes.editNote(-1, "?copySource=${note.id}") },
                 tabs = notes.tabs(),

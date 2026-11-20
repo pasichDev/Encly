@@ -11,6 +11,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.pasich.encly.core.resources.Res
+import com.pasich.encly.core.resources.backup_reauth_title
+import com.pasich.encly.core.resources.cancel
 import com.pasich.encly.core.resources.security_previews_title
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTags
@@ -23,10 +25,12 @@ import com.pasich.encly.presentation.components.tiles.NoteItem
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.MainRootScreen
 import com.pasich.encly.presentation.screen.settings.SecuritySettingsScreen
+import com.pasich.encly.testutil.anyCharArray
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.`when`
 
 /** "Show note previews": off, a card is the title, tag and date; search still reads the whole note. */
 class NotePreviewsTest : ComposeScreenTest() {
@@ -124,7 +128,8 @@ class NotePreviewsTest : ComposeScreenTest() {
     }
 
     @Test
-    fun theSecuritySwitchTurnsPreviewsOffAndOn() {
+    fun theSecuritySwitchHidesPreviewsAtOnceAndShowingThemAsksForThePin() {
+        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
         setNavScreen(
             viewModels(app.securitySettings(), app.notePreviewsVm(), app.toolbarVm(), app.backup()),
             route = NavRoutes.SecuritySettingsRoute.name,
@@ -135,8 +140,19 @@ class NotePreviewsTest : ComposeScreenTest() {
 
         rule.onNode(isToggleable() and hasText(title)).performScrollTo().performClick()
         waitFor { !app.notePreviews.show.value }
+        assertEquals(0, countText(str(Res.string.backup_reauth_title)))
+
+        // Showing them again asks first, and the switch keeps its value until the PIN is right.
+        rule.onNode(isToggleable() and hasText(title)).performScrollTo().performClick()
+        waitForText(str(Res.string.backup_reauth_title))
+        assertTrue(!app.notePreviews.show.value)
+        rule.onNodeWithText(str(Res.string.cancel)).performClick()
+        rule.waitForIdle()
+        assertTrue(!app.notePreviews.show.value)
 
         rule.onNode(isToggleable() and hasText(title)).performScrollTo().performClick()
+        waitForText(str(Res.string.backup_reauth_title))
+        enterPin("123456")
         waitFor { app.notePreviews.show.value }
     }
 }

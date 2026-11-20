@@ -212,6 +212,21 @@ class ChecklistLayoutTest {
     }
 
     @Test
+    fun theGapDoesNotChangeWhenTheListGrowsToTenItemsAndBack() {
+        start("a")
+        show(EditorLineSpacing.DEFAULT, 16)
+        val density = rule.density.density
+        for (count in listOf(9, 10, 11, 9)) {
+            block.items.value = List(count) { ItemListBlock("item $it") }
+            rule.waitForIdle()
+            val box = rule.onAllNodesWithTag(CHECK_BOX_TAG, useUnmergedTree = true).fetchSemanticsNodes()
+                .first().boundsInRoot
+            val field = rule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().first().boundsInRoot
+            assertEquals(markerGap(fontDp).value * density, field.left - box.right, 1f, "$count items")
+        }
+    }
+
+    @Test
     fun aCheckedItemIsStruckByTheFieldNotByATextDecorationAComposingWordCouldReplace() {
         start("done")
         block.items.value = listOf(block.items.value.single().copy(isCheck = true))

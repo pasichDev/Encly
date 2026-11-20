@@ -2,9 +2,9 @@ package com.pasich.encly.presentation.screen.settings
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.security_previews_desc
 import com.pasich.encly.core.resources.security_previews_title
@@ -16,17 +16,24 @@ import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import org.jetbrains.compose.resources.stringResource
 
-/** "Show note previews" (see NotePreviews): on by default; off, the note lists show no text of the notes. */
+/**
+ * "Show note previews" (see NotePreviews): on by default; off, the note lists show no text of the notes. A change
+ * goes through [onChange] with the value and the action that applies it, so showing the text can ask for the PIN first.
+ */
 @Composable
-internal fun NotePreviewsSetting(modifier: Modifier = Modifier, viewModel: NotePreviewsViewModel = metroViewModel()) {
-    val show by viewModel.show.collectAsState()
+internal fun NotePreviewsSetting(
+    onChange: (show: Boolean, apply: () -> Unit) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: NotePreviewsViewModel = metroViewModel(),
+) {
+    val show by viewModel.show.collectAsStateWithLifecycle()
     EnclyGroup(modifier = modifier) {
         EnclySwitchRow(
             title = stringResource(Res.string.security_previews_title),
             supporting = stringResource(Res.string.security_previews_desc),
             icon = EnclyIcons.Eye,
             checked = show,
-            onCheckedChange = viewModel::setShow,
+            onCheckedChange = { value -> onChange(value) { viewModel.setShow(value) } },
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
         )
     }

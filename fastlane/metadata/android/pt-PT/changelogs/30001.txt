@@ -1,0 +1,5 @@
+Encly 3.0.1
+• As definições que enfraquecem a proteção (bloqueio automático mais longo, teclado estrito desativado, pré-visualizações, biometria) pedem primeiro o PIN.
+• A folha da nota funciona melhor com o TalkBack: etiquetas maiores e confirmação de eliminação clara.
+• Aviso único para quem atualiza da 2.x: o lixo passa a esvaziar-se sozinho ao fim de 28 dias.
+• Espaço uniforme entre a caixa ou o marcador e o texto em listas longas.

@@ -39,9 +39,19 @@ import org.jetbrains.compose.resources.StringResource
  * start from Settings → Security; they share the re-authentication and phrase steps with
  * backups. [EXPORT_MARKDOWN] is the plaintext export, run by [MarkdownExportViewModel] (it needs
  * no recovery phrase and writes no encrypted backup). [ALLOW_SCREENSHOTS] is "Allow screenshots until the app
- * locks": the re-authentication is the whole flow, then the allowance is on.
+ * locks": the re-authentication is the whole flow, then the allowance is on. [CONFIRM_SETTING] is a security
+ * setting changed to a weaker value: the change waits in [BackupViewModel.confirmSetting] and is applied after it.
  */
-enum class BackupAction { EXPORT, EXPORT_MARKDOWN, IMPORT, CREATE_PHRASE, REPLACE_PHRASE, ERASE, ALLOW_SCREENSHOTS }
+enum class BackupAction {
+    EXPORT,
+    EXPORT_MARKDOWN,
+    IMPORT,
+    CREATE_PHRASE,
+    REPLACE_PHRASE,
+    ERASE,
+    ALLOW_SCREENSHOTS,
+    CONFIRM_SETTING,
+}
 
 /** Where a backup or vault flow currently is. Each step is one dialog or system picker. */
 sealed interface BackupStep {

@@ -29,6 +29,7 @@ import javax.crypto.spec.SecretKeySpec
 internal object FakeAndroidKeyStore {
     private const val NAME = "AndroidKeyStore"
     private const val HMAC = "HmacSHA256"
+    private const val AES = "AES"
 
     private val keys = mutableMapOf<String, Key>()
 
@@ -85,7 +86,11 @@ internal object FakeAndroidKeyStore {
                 override fun newInstance(constructorParameter: Any?): Any = FakeKeyStoreSpi()
             })
             putService(object : Service(this, "KeyGenerator", HMAC, FakeKeyGenerator::class.java.name, null, null) {
-                override fun newInstance(constructorParameter: Any?): Any = FakeKeyGenerator()
+                override fun newInstance(constructorParameter: Any?): Any = FakeKeyGenerator(HMAC)
+            })
+            // The biometric slot's AES key: the spec it was asked for is recorded; the key is a plain software one.
+            putService(object : Service(this, "KeyGenerator", AES, FakeKeyGenerator::class.java.name, null, null) {
+                override fun newInstance(constructorParameter: Any?): Any = FakeKeyGenerator(AES)
             })
             putService(object : Service(this, "Mac", HMAC, FakeMac::class.java.name, null, null) {
                 override fun newInstance(constructorParameter: Any?): Any = FakeMac()
@@ -93,7 +98,7 @@ internal object FakeAndroidKeyStore {
         }
     }
 
-    private class FakeKeyGenerator : KeyGeneratorSpi() {
+    private class FakeKeyGenerator(private val algorithm: String) : KeyGeneratorSpi() {
         private var spec: KeyGenParameterSpec? = null
 
         override fun engineInit(random: SecureRandom?) = throw UnsupportedOperationException()
@@ -108,7 +113,7 @@ internal object FakeAndroidKeyStore {
             val current = checkNotNull(spec)
             specs += current
             onGenerate(current)
-            val key = SecretKeySpec(ByteArray(current.keySize / 8).also { SecureRandom().nextBytes(it) }, HMAC)
+            val key = SecretKeySpec(ByteArray(current.keySize / 8).also { SecureRandom().nextBytes(it) }, algorithm)
             keys[current.keystoreAlias] = key
             return key
         }

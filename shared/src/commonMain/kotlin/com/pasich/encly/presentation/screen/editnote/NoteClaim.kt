@@ -3,7 +3,6 @@ package com.pasich.encly.presentation.screen.editnote
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -11,6 +10,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.platform.LocalNoteEditClaims
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.first
 @Composable
 internal fun ClaimNoteForEditing(viewModel: EditNoteViewModel = metroViewModel()) {
     val claims = LocalNoteEditClaims.current ?: return
-    val state = viewModel.state.collectAsState()
+    val state = viewModel.state.collectAsStateWithLifecycle()
     val noteId by remember(state) { derivedStateOf { state.value.note.id } }
     if (viewModel.isReadTrashOnly || noteId <= 0L) return
     var retry by remember(noteId) { mutableIntStateOf(0) }

@@ -7,7 +7,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +21,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.editor.focus.BlockFocusRegistry
 import com.pasich.encly.editor.ui.FindHighlights
 import com.pasich.encly.editor.ui.sheets.BlockSheetKind
@@ -154,7 +154,7 @@ internal fun rememberBlockSheetState(): BlockSheetState {
 @Composable
 internal fun rememberFindOpen(viewModel: EditNoteViewModel = metroViewModel()): State<Boolean> {
     val open = remember(viewModel) { viewModel.find.map { it.isOpen }.distinctUntilChanged() }
-    return open.collectAsState(initial = false)
+    return open.collectAsStateWithLifecycle(initialValue = false)
 }
 
 /**
@@ -172,7 +172,7 @@ internal fun ScrollToFindMatch(
     // Keyed on the user's requests, not on the match: a refresh while typing can move the current index onto another
     // match, and the note must not scroll away from the caret for that.
     val request = remember(viewModel) { viewModel.find.map { it.revealRequest }.distinctUntilChanged() }
-    val revealRequest by request.collectAsState(initial = 0)
+    val revealRequest by request.collectAsStateWithLifecycle(initialValue = 0)
     val currentBlocksStart by rememberUpdatedState(blocksStart)
     LaunchedEffect(revealRequest) {
         val found = viewModel.find.value.currentMatch ?: return@LaunchedEffect
@@ -186,7 +186,7 @@ internal fun ScrollToFindMatch(
 @Composable
 internal fun CloseFindOrSlashOnBack(viewModel: EditNoteViewModel = metroViewModel()) {
     val findOpen by rememberFindOpen()
-    val slashMenu by viewModel.slashPicker.menu.collectAsState()
+    val slashMenu by viewModel.slashPicker.menu.collectAsStateWithLifecycle()
     val slashShown = slashMenu?.isShown == true
     BackHandler(enabled = findOpen || slashShown) {
         if (findOpen) viewModel.closeFind() else viewModel.slashPicker.dismiss()
@@ -200,7 +200,7 @@ internal fun CloseFindOrSlashOnBack(viewModel: EditNoteViewModel = metroViewMode
  */
 @Composable
 internal fun PaneTabBinding(pane: EditorPane, exits: EditorExits, viewModel: EditNoteViewModel = metroViewModel()) {
-    val noteState by viewModel.state.collectAsState()
+    val noteState by viewModel.state.collectAsStateWithLifecycle()
     val note = noteState.note
     LaunchedEffect(pane, note.id, note.title) { pane.tabs.report(pane.tabKey, note.id, note.title) }
     val currentExits by rememberUpdatedState(exits)

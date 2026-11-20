@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.security.InitialStatus
@@ -96,7 +96,7 @@ fun DesktopApp(
     DesktopHostServices(graph, appWindow, services) {
         // There is no Activity to recreate when the language changes: a new key makes every screen read its
         // strings again.
-        val revision by graph.locales.revision.collectAsState()
+        val revision by graph.locales.revision.collectAsStateWithLifecycle()
         // The place the user is at survives the rebuild: the replaced controller's back stack goes to the new one
         // (same entries, so the same ViewModels), instead of the window starting over from the launch-time status.
         val controllerOfWindow = remember { NavControllerOfWindow() }

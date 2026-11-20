@@ -1,0 +1,5 @@
+Encly 3.0.1
+• Zmiany osłabiające ochronę (dłuższa blokada, wyłączona ścisła klawiatura, podglądy notatek, biometria) najpierw proszą o PIN.
+• Menu notatki działa lepiej z TalkBack: większe pola etykiet, czytelne potwierdzenie usunięcia.
+• Jednorazowa informacja dla aktualizujących z 2.x: kosz sam się teraz opróżnia po 28 dniach.
+• Stały odstęp między polem wyboru lub punktorem a tekstem w długich listach.

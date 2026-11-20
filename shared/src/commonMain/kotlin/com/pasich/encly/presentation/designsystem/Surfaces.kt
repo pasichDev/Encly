@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.ui.theme.EnclyTheme
 
@@ -126,7 +129,8 @@ fun EnclyCallout(
  * 1 dp `outlineVariant` border. [count] is shown after the label in the data style.
  *
  * With [leadsTo] the chip is not a toggle but a button that leads on (a "+N" chip that opens the full list):
- * [leadsTo] is what it is read out as, in place of its label.
+ * [leadsTo] is what it is read out as, in place of its label. [stateDescription], when set, is read out as the
+ * chip's state (a hidden tag).
  */
 @Composable
 fun EnclyChip(
@@ -136,6 +140,7 @@ fun EnclyChip(
     modifier: Modifier = Modifier,
     count: Int? = null,
     leadsTo: String? = null,
+    stateDescription: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val content = if (selected) colors.onPrimaryContainer else colors.onSurface
@@ -144,7 +149,8 @@ fun EnclyChip(
         color = if (selected) colors.primaryContainer else Color.Transparent,
         contentColor = content,
         border = BorderStroke(1.dp, if (selected) colors.primaryContainer else colors.outlineVariant),
-        modifier = modifier,
+        // The pill stays 36 dp; the touch target around it is the 48 dp minimum.
+        modifier = modifier.minimumInteractiveComponentSize(),
     ) {
         // The toggle sits inside the Surface so its ripple is clipped to the pill, not a square.
         Row(
@@ -161,6 +167,7 @@ fun EnclyChip(
                             .semantics { contentDescription = leadsTo }
                     },
                 )
+                .semantics { if (stateDescription != null) this.stateDescription = stateDescription }
                 .heightIn(min = 36.dp)
                 .padding(horizontal = 14.dp, vertical = EnclyTheme.spacing.xs),
         ) {
@@ -178,14 +185,14 @@ fun EnclyChip(
 
 private const val COUNT_ALPHA = 0.85f
 
-/** A section heading: the uppercase data overline in `onSurfaceVariant`. */
+/** A section heading: the uppercase data overline in `onSurfaceVariant`, announced as a heading. */
 @Composable
 fun SectionOverline(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
+        modifier = modifier.semantics { heading() },
     )
 }
 

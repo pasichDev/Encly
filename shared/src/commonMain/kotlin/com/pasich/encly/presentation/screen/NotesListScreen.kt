@@ -25,7 +25,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -194,7 +193,9 @@ internal fun NoteActionsSheet(
     // The sheet shows the note as stored now, not as the list held it when the sheet opened: a tag
     // changed here moves the note out of this list, and the next action must still act on the right row.
     val activeId = sheet.active?.note?.id
-    val live by remember(activeId) { activeId?.let(observeNote) ?: emptyFlow() }.collectAsState(initial = null)
+    val live by remember(activeId) {
+        activeId?.let(observeNote) ?: emptyFlow()
+    }.collectAsStateWithLifecycle(initialValue = null)
 
     // The sheet slides away before it leaves the composition, and before its action runs.
     val close = rememberSheetCloser(bottomSheetState, onDismiss = sheet::close)

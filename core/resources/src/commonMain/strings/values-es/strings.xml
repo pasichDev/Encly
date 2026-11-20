@@ -705,6 +705,13 @@
     <string name="whats_new_title">Novedades</string>
     <string name="whats_new_row_desc">Los cambios de esta versión</string>
     <string name="whats_new_dismiss">Entendido</string>
+    <string name="trash_notice_title">La papelera ahora se vacía sola</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">La papelera ahora borra las notas para siempre a los 28 días. Tienes %d nota en ella: se borrará 28 días después de esta actualización, salvo que la restaures.</item>
+        <item quantity="many">La papelera ahora borra las notas para siempre a los 28 días. Tienes %d notas en ella: se borrarán 28 días después de esta actualización, salvo que las restaures.</item>
+        <item quantity="other">La papelera ahora borra las notas para siempre a los 28 días. Tienes %d notas en ella: se borrarán 28 días después de esta actualización, salvo que las restaures.</item>
+    </plurals>
+    <string name="trash_notice_open">Abrir la papelera</string>
     <string name="faq_pin_length_q">¿Qué longitud puede tener mi PIN?</string>
     <string name="faq_pin_length_a">Entre 6 y 12 dígitos, a tu elección. No se ofrecen PIN más cortos: el bloqueo y la clave del dispositivo limitan los intentos, y 6 dígitos es lo más corto que sigue siendo seguro con esos límites. La pantalla de bloqueo nunca muestra la longitud de tu PIN: pulsas «Desbloquear» cuando terminas, y lo mismo vale para el PIN de borrado y el PIN de coacción. Los PIN que ya tenías siguen funcionando igual.</string>
     <string name="block_code">Código</string>

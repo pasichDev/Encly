@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.block_duplicate
 import com.pasich.encly.core.resources.block_more_tools
@@ -90,7 +90,7 @@ fun NoteBottomBar(
 ) {
     var showMore by rememberSaveable { mutableStateOf(false) }
     // Re-evaluated when the block the user works on or the blocks (their order) change.
-    val interactedBlockId by viewModel.interactedBlockId.collectAsState()
+    val interactedBlockId by viewModel.interactedBlockId.collectAsStateWithLifecycle()
     val activeTool by remember(viewModel) {
         derivedStateOf { viewModel.blocks.firstOrNull { it.id == interactedBlockId }?.toolType() }
     }
@@ -98,7 +98,7 @@ fun NoteBottomBar(
         derivedStateOf { viewModel.blocks.firstOrNull { it.id == interactedBlockId }?.exactType() }
     }
     val checklistLock = rememberChecklistLock(viewModel, interactedBlockId)
-    val blockFocused = viewModel.focusedBlockId.collectAsState().value != null
+    val blockFocused = viewModel.focusedBlockId.collectAsStateWithLifecycle().value != null
     val anchor = rememberKeyboardAnchor()
     // A change that replaces the focused field runs inside the anchor, so the keyboard stays up.
     val keepingKeyboard: (() -> Unit) -> Unit = { change ->

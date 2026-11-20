@@ -1,0 +1,5 @@
+Encly 3.0.1
+• Changes that weaken security (longer auto-lock, strict keyboard off, note previews, biometric unlock) now ask for your PIN first.
+• Note sheet works with TalkBack: bigger tag targets, clear delete confirmation.
+• One-time notice for people updating from 2.x: the trash now empties itself after 28 days.
+• Even gap between a checkbox or bullet and its text in long lists.

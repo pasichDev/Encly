@@ -1,11 +1,11 @@
 package com.pasich.encly.presentation.components.editNote
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 internal fun rememberHistoryTools(viewModel: EditNoteViewModel, keepingKeyboard: (() -> Unit) -> Unit): HistoryTools {
-    val canUndo by viewModel.canUndo.collectAsState()
-    val canRedo by viewModel.canRedo.collectAsState()
+    val canUndo by viewModel.canUndo.collectAsStateWithLifecycle()
+    val canRedo by viewModel.canRedo.collectAsStateWithLifecycle()
     return HistoryTools(
         onUndo = if (canUndo) ({ keepingKeyboard { viewModel.undo() } }) else null,
         onRedo = if (canRedo) ({ keepingKeyboard { viewModel.redo() } }) else null,
@@ -76,7 +76,7 @@ internal fun rememberChecklistLock(viewModel: EditNoteViewModel, interactedBlock
         }
     }
     val lockState = remember(checklist) { checklist?.locked ?: MutableStateFlow(false) }
-    val locked by lockState.collectAsState()
+    val locked by lockState.collectAsStateWithLifecycle()
     return checklist?.let { list -> ChecklistLock(locked) { viewModel.toggleChecklistLock(list) } }
 }
 

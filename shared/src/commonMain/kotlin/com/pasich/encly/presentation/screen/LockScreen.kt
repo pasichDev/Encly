@@ -2,12 +2,12 @@ package com.pasich.encly.presentation.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.platform.LocalBiometricHost
@@ -93,7 +93,7 @@ private fun NavHostController.leaveForRecoveryStage(stage: RecoveryStage) {
 @Composable
 fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockViewModel = metroViewModel()) {
     val host = LocalBiometricHost.current
-    val busy by viewModel.busy.collectAsState()
+    val busy by viewModel.busy.collectAsStateWithLifecycle()
     // Above the loading view below: the forms' input and errors survive the credential check.
     val form = remember { LockFormState() }
 
@@ -101,7 +101,7 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
     // [LockExits.onBack], or nowhere: by default Back never leaves the lock screen.
     BackHandler(enabled = true) { onLockBack(busy, form, exits.onBack) }
 
-    val biometricInvalidated by viewModel.biometricInvalidated.collectAsState()
+    val biometricInvalidated by viewModel.biometricInvalidated.collectAsStateWithLifecycle()
     val biometricUsable = remember {
         viewModel.biometricEnabled() && viewModel.biometricAvailable()
     }

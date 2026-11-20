@@ -6,11 +6,13 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.auth_method_pin_title
 import com.pasich.encly.core.resources.auto_lock_title
+import com.pasich.encly.core.resources.back
 import com.pasich.encly.core.resources.backup_error_phrase_setup
 import com.pasich.encly.core.resources.backup_needs_phrase_title
 import com.pasich.encly.core.resources.backup_phrase_exists
@@ -254,6 +256,21 @@ class SecurityScreensTest : ComposeScreenTest() {
     }
 
     private fun biometricSwitch() = rule.onNode(isToggleable() and hasText(str(Res.string.security_biometric_title)))
+
+    @Test
+    fun cancellingAPinChangeAfterTheNewPinWasTypedStoresNothingAndKeepsTheOldPin() {
+        showPinChange()
+
+        enterPin("123456")
+        waitForText(str(Res.string.pin_create_title))
+        enterPin("654321")
+        waitForText(str(Res.string.pin_change_confirm_title))
+        rule.onNodeWithContentDescription(str(Res.string.back)).performClick()
+
+        waitFor { currentRoute() == NavRoutes.SecuritySettingsRoute.name }
+        // Only the current PIN was ever checked; the vault was never asked to change it.
+        verify(app.security, never()).changePin(anyCharArray())
+    }
 
     @Test
     fun aMismatchedConfirmationStartsTheNewPinAgain() {

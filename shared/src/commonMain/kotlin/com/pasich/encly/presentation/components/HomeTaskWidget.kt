@@ -3,11 +3,11 @@ package com.pasich.encly.presentation.components
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.home_tasks_none_open
 import com.pasich.encly.core.resources.home_tasks_open
@@ -38,7 +38,7 @@ fun HomeTaskWidget(
     onNewTask: () -> Unit = onTasksClick,
     viewModel: TasksViewModel = metroViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val preview = remember(uiState.activeTasks) { widgetTasks(uiState.activeTasks) }
     // Nothing until the first read, so the card does not flash "none open" over real tasks.
     if (uiState.isLoading) return

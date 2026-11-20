@@ -5,7 +5,7 @@
 [versions]
 agp = "9.5.1"
 kotlin = "2.4.21"
-ksp = "2.3.13"
+ksp = "2.3.14"
 metro = "1.6.0"
 detekt = "1.23.8"
 kover = "0.9.11"
@@ -39,7 +39,8 @@ datetime = "0.8.0"
 kotlinxIo = "0.9.3"
 # SynchronizedObject and synchronized {} for common code (the locks of :core:security); the Gradle plugin is not used.
 atomicfu = "0.33.0"
-sqlcipher = "4.20.0"
+# What 2.3.1 shipped; used only by the device tests that write a vault the way 2.3 did (the app itself uses Sealite).
+sqlcipher = "4.19.1"
 sealite = "1.0.1"
 sqliteKtx = "2.7.1"
 iconsLucide = "1.1.0"

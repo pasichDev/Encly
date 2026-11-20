@@ -499,6 +499,36 @@ jobs:
           done
           exit $found
 
+      # The exact set, not only "no INTERNET": a library that starts asking for a permission, or a new
+      # <uses-permission> in the app, must be a decision. Change the list below on purpose, in the same commit.
+      - name: Check merged manifest permission set
+        run: |
+          set -euo pipefail
+          manifests=$(find app/build/intermediates/merged_manifest app/build/intermediates/merged_manifests \
+            -name AndroidManifest.xml -path '*fdroidRelease*' 2>/dev/null || true)
+          if [ -z "$manifests" ]; then
+            echo "::error::No merged fdroidRelease manifest found to check"
+            exit 1
+          fi
+          expected=$(printf '%s\n' \
+            android.permission.HIDE_OVERLAY_WINDOWS \
+            android.permission.USE_BIOMETRIC \
+            android.permission.USE_FINGERPRINT \
+            com.pasich.encly.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION | sort)
+          status=0
+          for m in $manifests; do
+            actual=$(grep -oE '<uses-permission[^>]*android:name="[^"]+"' "$m" \
+              | sed -E 's/.*android:name="([^"]+)"/\1/' | sort -u)
+            echo "Permissions in $m:"
+            echo "$actual"
+            if [ "$actual" != "$expected" ]; then
+              echo "::error file=$m::Merged release permissions differ from the pinned set"
+              diff <(echo "$expected") <(echo "$actual") || true
+              status=1
+            fi
+          done
+          exit $status
+
       - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

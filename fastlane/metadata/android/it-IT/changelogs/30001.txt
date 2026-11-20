@@ -1,0 +1,5 @@
+Encly 3.0.1
+• Le impostazioni che riducono la protezione (blocco automatico più lungo, tastiera rigorosa disattivata, anteprime, biometria) chiedono prima il PIN.
+• Il menu della nota funziona meglio con TalkBack: etichette più grandi e conferma di eliminazione chiara.
+• Avviso una tantum per chi aggiorna dalla 2.x: il cestino ora si svuota da solo dopo 28 giorni.
+• Spazio uniforme tra casella o punto elenco e testo nelle liste lunghe.

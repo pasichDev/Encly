@@ -16,6 +16,27 @@ IzzyOnDroid) and used as the GitHub Release notes.
 - Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
 - Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
 
+## [3.0.1] - 2026-11-20
+
+versionCode 30001.
+
+### Security
+
+- Lengthening the auto-lock delay, turning strict keyboard privacy off, showing note previews and turning biometric unlock on now ask for your PIN first, so someone holding your unlocked phone cannot weaken your protection. Changes that make it stricter still apply at once ([#133](https://github.com/pasichDev/Encly/issues/133)).
+
+### Added
+
+- After an update from a version before 3.0.0, a one-time notice tells you that the trash now deletes notes 28 days after they were moved there, how many notes are in it, and opens the trash for you ([#126](https://github.com/pasichDev/Encly/issues/126)).
+
+### Changed
+
+- The note's long-press sheet is easier to use with TalkBack and a finger: TalkBack announces "Tap again to delete", tag chips have a larger touch target, and hidden tags are marked so you can tell that tapping one hides the note from the main list ([#124](https://github.com/pasichDev/Encly/issues/124)).
+
+### Fixed
+
+- The gap between a checkbox or bullet and its text no longer gets wider once a list reaches ten items, and tighter again when it drops below ([#129](https://github.com/pasichDev/Encly/issues/129)).
+- Ukrainian: tags are called «мітки» everywhere; some screens and the backup text said «теги».
+
 ## [3.0.0] - 2026-11-19
 
 versionCode 30000.
@@ -69,6 +90,12 @@ versionCode 30000.
 - After new fingerprints were added to the phone, the fingerprint button did nothing; the lock screen now says to unlock with the PIN and turn fingerprint unlock on again.
 - The decoy vault no longer shows the date of the real vault's last backup.
 - A temporary failure of the device's key storage no longer offers to erase the vault, and the lock screen says the key storage did not respond instead of that the database could not be opened.
+
+### ⚠️ Compatibility
+
+- The database moves to version 8 (the trash date, then several tags per note), migrated in place. Installing an older Encly over this version is not supported: it cannot open the newer database. Export a backup first if you might go back.
+- A backup made with this version is schema 6 (it carries your settings and several tags per note). Older Encly versions refuse it with "This backup was made by a newer version of Encly. Update the app and try again."
+- A note with a table or a code block opens read-only in versions before 3.0.0.
 
 ## [2.3.1] - 2026-10-27
 
@@ -409,7 +436,10 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/pasichDev/Encly/compare/v3.0.0...v3.0.1
+[3.0.0]: https://github.com/pasichDev/Encly/compare/v2.3.1...v3.0.0
+[2.3.1]: https://github.com/pasichDev/Encly/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/pasichDev/Encly/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/pasichDev/Encly/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/pasichDev/Encly/releases/tag/v2.2.0

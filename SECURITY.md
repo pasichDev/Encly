@@ -616,6 +616,26 @@ generic Markdown/TXT (Obsidian, Markor).
 - **Limits.** Like the editor and the backup import, parsed text passes through JVM strings that
   cannot be zeroized.
 
+## Settings that ask for re-authentication
+
+A phone left unlocked for a moment must not be able to weaken the protection of the vault. These
+changes on Settings → Security ask for the PIN first (or a Class 3 biometric confirmation when
+biometric unlock is on), through the same re-authentication as export and import:
+
+- lengthening the auto-lock delay;
+- turning strict keyboard privacy off;
+- turning "Show note previews" on;
+- turning biometric unlock on (the PIN is asked before the enrolment; turning it off keeps its
+  own strong-biometric confirmation);
+- "Allow screenshots until the app locks".
+
+Changes that strengthen protection (a shorter or equal delay, strict keyboard on, previews off,
+screenshots blocked again) never ask. The switch keeps its old value until the change is applied,
+so a cancel or a wrong PIN leaves it. The change is held in memory only and is discarded, not
+applied, by a cancel and by any lock between the request and the PIN, as for the screenshots
+allowance. A full backup restore applies the stored settings without asking: it already needs
+the recovery phrase and the same re-authentication.
+
 ## Session lifecycle
 
 - The database is not considered committed until mandatory PIN setup succeeds.

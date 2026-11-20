@@ -540,8 +540,8 @@
     <string name="step_add">Підзавдання</string>
     <string name="subtasks_show">Показати підзавдання</string>
     <string name="subtasks_hide">Сховати підзавдання</string>
-    <string name="empty_notes_tagged">Немає нотаток з тегом «%1$s»</string>
-    <string name="empty_notes_tagged_desc">Тут з’являться нотатки з цим тегом.</string>
+    <string name="empty_notes_tagged">Немає нотаток з міткою «%1$s»</string>
+    <string name="empty_notes_tagged_desc">Тут з’являться нотатки з цією міткою.</string>
     <string name="show_all_notes">Показати всі нотатки</string>
     <string name="empty_trash_title">Кошик порожній</string>
     <string name="delete_forever">Видалити назавжди</string>
@@ -555,13 +555,13 @@
     <string name="licenses_intro">Encly створено з цими бібліотеками та шрифтами. Натисніть, щоб прочитати ліцензію.</string>
     <string name="licenses_libraries">Бібліотеки</string>
     <string name="licenses_fonts">Шрифти</string>
-    <string name="tags_empty_title">Тегів ще немає</string>
-    <string name="tags_empty_desc">Теги групують нотатки. Створіть тег вище, а потім виберіть його для нотатки в меню довгого натискання.</string>
-    <string name="tags_hint">Натисніть тег, щоб перейменувати, приховати чи видалити. Тягніть за ручку, щоб змінити порядок.</string>
-    <string name="tag_add">Додати тег</string>
+    <string name="tags_empty_title">Міток ще немає</string>
+    <string name="tags_empty_desc">Мітки групують нотатки. Створіть мітку вище, а потім виберіть її для нотатки в меню довгого натискання.</string>
+    <string name="tags_hint">Натисніть мітку, щоб перейменувати, приховати чи видалити. Тягніть за ручку, щоб змінити порядок.</string>
+    <string name="tag_add">Додати мітку</string>
     <string name="tag_name_label">Назва</string>
     <string name="tag_show_in_list">Показувати в списку нотаток</string>
-    <string name="tag_show_in_list_desc">Коли тег прихований, його нотатки не показуються в списку, лише під його приглушеним фільтром</string>
+    <string name="tag_show_in_list_desc">Коли мітка прихована, її нотатки не показуються в списку, лише під її приглушеним фільтром</string>
     <string name="tag_drag_handle">Перетягніть, щоб змінити порядок</string>
     <string name="tag_move_up">Перемістити вгору</string>
     <string name="tag_move_down">Перемістити вниз</string>
@@ -711,6 +711,14 @@
     <string name="whats_new_title">Що нового</string>
     <string name="whats_new_row_desc">Зміни в цій версії</string>
     <string name="whats_new_dismiss">Зрозуміло</string>
+    <string name="trash_notice_title">Кошик тепер очищується сам</string>
+    <plurals name="trash_notice_message">
+        <item quantity="one">Кошик тепер видаляє нотатки назавжди через 28 днів. У ньому %d нотатка: її буде видалено через 28 днів після цього оновлення, якщо ви її не відновите.</item>
+        <item quantity="few">Кошик тепер видаляє нотатки назавжди через 28 днів. У ньому %d нотатки: їх буде видалено через 28 днів після цього оновлення, якщо ви їх не відновите.</item>
+        <item quantity="many">Кошик тепер видаляє нотатки назавжди через 28 днів. У ньому %d нотаток: їх буде видалено через 28 днів після цього оновлення, якщо ви їх не відновите.</item>
+        <item quantity="other">Кошик тепер видаляє нотатки назавжди через 28 днів. У ньому %d нотатки: їх буде видалено через 28 днів після цього оновлення, якщо ви їх не відновите.</item>
+    </plurals>
+    <string name="trash_notice_open">Відкрити кошик</string>
     <string name="faq_pin_length_q">Якої довжини може бути PIN?</string>
     <string name="faq_pin_length_a">Від 6 до 12 цифр на ваш вибір. Коротших PIN не пропонується: блокування й ключ пристрою обмежують кількість спроб, а 6 цифр — найкоротший PIN, що лишається безпечним за цих обмежень. Екран блокування ніколи не показує довжину вашого PIN: коли закінчите, натисніть «Розблокувати» — так само для PIN для стирання та PIN під примусом. PIN, задані раніше, працюють без змін.</string>
     <string name="block_code">Код</string>
