@@ -31,11 +31,13 @@ versionCode 30001.
 ### Changed
 
 - The note's long-press sheet is easier to use with TalkBack and a finger: TalkBack announces "Tap again to delete", tag chips have a larger touch target, and hidden tags are marked so you can tell that tapping one hides the note from the main list ([#124](https://github.com/pasichDev/Encly/issues/124)).
+- Screens stop watching your notes while Encly is in the background, and opening the app from My Notes no longer waits for the fingerprint prompt's texts to load ([#125](https://github.com/pasichDev/Encly/issues/125)).
 
 ### Fixed
 
 - The gap between a checkbox or bullet and its text no longer gets wider once a list reaches ten items, and tighter again when it drops below ([#129](https://github.com/pasichDev/Encly/issues/129)).
 - Ukrainian: tags are called «мітки» everywhere; some screens and the backup text said «теги».
+- After "Erase all data", the new or restored vault no longer shows "What's new" and the trash notice as if the app had just been updated.
 
 ## [3.0.0] - 2026-11-19
 
