@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.SavedState
 import androidx.savedstate.read
@@ -94,6 +95,11 @@ fun EnclyApp(
     val startup = metroViewModel<StartupViewModel>()
     val freshInstall = startStatus == InitialStatus.ONBOARDING || startStatus == InitialStatus.SETUP_AUTH
     LaunchedEffect(startup) { startup.onAppStart(freshInstall) }
+    // "Erase all data" and the loss-recovery wipe clear the recorded version and go back to onboarding in the same
+    // process: the vault made there is new too, so it must not be told it was updated (What's new, the trash notice).
+    val onOnboarding = navController.currentBackStackEntryAsState().value?.destination?.route ==
+        NavRoutes.OnboardingRoute.name
+    LaunchedEffect(startup, onOnboarding) { if (onOnboarding) startup.onAppStart(freshInstall = true) }
 
     // Auto re-lock. Collected without a lifecycle gate so the value is already true in
     // the first frame after returning from the background. That frame still composes
