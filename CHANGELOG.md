@@ -70,6 +70,12 @@ versionCode 30000.
 - The decoy vault no longer shows the date of the real vault's last backup.
 - A temporary failure of the device's key storage no longer offers to erase the vault, and the lock screen says the key storage did not respond instead of that the database could not be opened.
 
+### ⚠️ Compatibility
+
+- The database moves to version 8 (the trash date, then several tags per note), migrated in place. Installing an older Encly over this version is not supported: it cannot open the newer database. Export a backup first if you might go back.
+- A backup made with this version is schema 6 (it carries your settings and several tags per note). Older Encly versions refuse it with "This backup was made by a newer version of Encly. Update the app and try again."
+- A note with a table or a code block opens read-only in versions before 3.0.0.
+
 ## [2.3.1] - 2026-10-27
 
 versionCode 20301.
