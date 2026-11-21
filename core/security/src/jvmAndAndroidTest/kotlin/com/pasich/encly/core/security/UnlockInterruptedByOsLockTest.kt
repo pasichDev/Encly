@@ -121,6 +121,25 @@ class UnlockInterruptedByOsLockTest {
     }
 
     @Test
+    fun theScreenGoingOffAndOnDuringTheCheckWithAnInsecureKeyguardKeepsTheAppLocked() {
+        pins.forEach { (pin, kind) ->
+            val started = manager.lockRequests()
+            deviceLock.screenOn = false
+            manager.onStop(owner) // nothing is open yet; the lock request must still be counted
+            deviceLock.screenOn = true // an insecure keyguard: isDeviceLocked() stays false
+            manager.onStart(owner)
+            assertFalse(deviceLock.isDeviceLocked())
+            assertEquals(VaultUnlockResult.SUCCESS, check(pin))
+
+            assertFalse(manager.onUnlocked(started))
+
+            assertLockedWithNothingOpen()
+            assertNextUnlockWorks(pin, kind)
+            vault.security.lock()
+        }
+    }
+
+    @Test
     fun aBackgroundStopDuringTheCheckKeepsTheAppLocked() {
         pins.forEach { (pin, kind) ->
             val started = manager.lockRequests()

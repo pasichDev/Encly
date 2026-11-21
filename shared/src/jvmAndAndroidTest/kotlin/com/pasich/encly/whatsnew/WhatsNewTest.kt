@@ -1,5 +1,6 @@
 package com.pasich.encly.whatsnew
 
+import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.usecase.note.CleanTrashNotesUseCase
 import com.pasich.encly.domain.usecase.note.PurgeExpiredTrashUseCase
@@ -22,6 +23,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.mock
 import java.io.File
 import java.util.Properties
 
@@ -193,7 +195,7 @@ class WhatsNewTest {
 
     private fun startup(version: String, repository: TestNotesRepository = TestNotesRepository()) = StartupViewModel(
         tracker(version),
-        PurgeExpiredTrashUseCase(repository, flags),
+        PurgeExpiredTrashUseCase(repository, flags, mock(SecurityManager::class.java)),
         repository,
     )
 

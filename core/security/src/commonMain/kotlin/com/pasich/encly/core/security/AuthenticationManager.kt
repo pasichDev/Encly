@@ -947,6 +947,26 @@ public class AuthenticationManager(
         }
     }
 
+    /**
+     * One KDF run over [pin] with a random salt, result thrown away: what a decoy session spends before it
+     * refuses to change a PIN, so that the refusal takes as long as the real vault's own work. Nothing is
+     * read from or written to the store, and a failing key store is no different from a working one here.
+     * [pin] stays the caller's to wipe.
+     */
+    internal fun spendPinCost(pin: CharArray) {
+        if (!isWellFormed(pin)) return
+        val salt = Crypto.randomBytes(PIN_SALT_SIZE)
+        try {
+            derivePinKeys(pin, salt, activeKeySlot()).wipe()
+        } catch (_: PinFactorException) {
+            // The cost was spent up to the failure: nothing else to do.
+        } catch (_: CryptoException) {
+            // Same.
+        } finally {
+            SensitiveDataCleaner.clear(salt)
+        }
+    }
+
     /** HMAC of `salt ‖ pin` under the key in [keySlot]; the caller wipes the result. */
     private fun hardwareHalf(pin: CharArray, salt: ByteArray, keySlot: PinKeySlot): ByteArray {
         val macInput = ByteArray(salt.size + pin.size)

@@ -150,6 +150,7 @@ public object BackupSettings {
             "first-run setup marker: a staged restore is being imported into this install's vault",
         "whats_new_last_seen_version" to "what's-new marker of this install",
         "trash_last_purge_at" to "when the trash was last emptied of old notes on this install",
+        "trash_last_purge_at_d" to "the decoy vault's own trash purge time on this install",
         "backup_last_export_at" to "describes an export made from this install",
         "appearance_migrated_v1" to "one-time migration marker of this install",
         "window_width" to "device-bound desktop window geometry",

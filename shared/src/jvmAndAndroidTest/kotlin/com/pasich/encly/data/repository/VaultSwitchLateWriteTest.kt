@@ -1,5 +1,6 @@
 package com.pasich.encly.data.repository
 
+import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.backup.RoomVaultDataStore
 import com.pasich.encly.data.database.AppDatabase
 import com.pasich.encly.data.database.DatabaseLease
@@ -151,7 +152,7 @@ class VaultSwitchLateWriteTest {
     fun aTrashPurgeStartedInTheRealVaultAndCompletingInTheDecoyOneDeletesNothingAndRecordsNothing() = runBlocking {
         open(real)
         val flags = InMemoryKeyValueStore()
-        val purge = PurgeExpiredTrashUseCase(NotesRepositoryImpl(manager), flags)
+        val purge = PurgeExpiredTrashUseCase(NotesRepositoryImpl(manager), flags, mock(SecurityManager::class.java))
         val gate = CompletableDeferred<Unit>()
         val purging = async {
             gate.await()

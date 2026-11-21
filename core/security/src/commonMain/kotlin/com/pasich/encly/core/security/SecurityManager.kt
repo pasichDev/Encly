@@ -247,6 +247,8 @@ public class SecurityManager(
      */
     public fun changePin(pin: CharArray): PinChange {
         if (isDecoySession()) {
+            // Refused, but after the same KDF run the real vault does: an instant "no" would tell.
+            authenticationManager.spendPinCost(pin)
             SensitiveDataCleaner.clear(pin)
             return PinChange.FAILED
         }
@@ -579,7 +581,13 @@ public class SecurityManager(
      * PIN. [pin] is wiped.
      */
     public fun configureWipePin(pin: CharArray): WipePinChange = try {
-        if (!primarySessionOpen()) WipePinChange.FAILED else authenticationManager.configureWipePin(pin)
+        if (primarySessionOpen()) {
+            authenticationManager.configureWipePin(pin)
+        } else {
+            // In a decoy session the refusal costs the same KDF run as the real vault's set-up.
+            if (isDecoySession()) authenticationManager.spendPinCost(pin)
+            WipePinChange.FAILED
+        }
     } finally {
         SensitiveDataCleaner.clear(pin)
     }
@@ -597,6 +605,8 @@ public class SecurityManager(
         val dek = primarySessionKeyCopy()
         return try {
             if (dek == null) {
+                // In a decoy session the refusal costs the same KDF run as the real vault's set-up.
+                if (isDecoySession()) authenticationManager.spendPinCost(pin)
                 DuressPinChange.FAILED
             } else {
                 authenticationManager.configureDuressPin(pin, dek) {
