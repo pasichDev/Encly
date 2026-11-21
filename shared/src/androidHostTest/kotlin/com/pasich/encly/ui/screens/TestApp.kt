@@ -215,7 +215,7 @@ internal class TestApp {
     /** The start-up work of the home screen, with the trash and the version notes the tests control. */
     fun startup(tracker: WhatsNewTracker = freshInstall()) = StartupViewModel(
         tracker,
-        PurgeExpiredTrashUseCase(notes, InMemoryKeyValueStore()),
+        PurgeExpiredTrashUseCase(notes, InMemoryKeyValueStore(), mock(SecurityManager::class.java)),
         notes,
     )
 

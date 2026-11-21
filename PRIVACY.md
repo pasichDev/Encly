@@ -30,6 +30,37 @@ ignore these requests, so use one you trust.
 This data is stored in Encly's private app storage. Android cloud backup and device-to-device
 transfer are disabled for it, so it is not copied to Google Drive or another phone.
 
+## Duress PIN and decoy vault (optional)
+
+In **Settings → Security** you can set a **duress PIN**: a second PIN, typed on the lock screen
+like any other. Instead of your real vault it opens a **decoy vault**, a separate vault that
+starts empty and works like the real one, so you can show someone "the app" without showing your
+notes. It erases nothing, and your real vault stays closed and unchanged while the decoy is open.
+It is not meant to hide your real vault from someone who examines the phone's storage.
+
+What it keeps on your device, in the same private app storage as everything else:
+
+- **The decoy vault's notes, tags and tasks**, in a second database file of its own
+  (`vault_b.db`), encrypted with SQLCipher under its own random key. The file is created the
+  first time the duress PIN is used and kept between locks until you remove it.
+- **Two entries of security metadata:** the encrypted key envelope that the duress PIN opens, and
+  the decoy vault's key sealed under your real vault's key (so changing the duress PIN keeps the
+  decoy notes). Both exist, with the same size, whether or not you set a duress PIN, so the
+  metadata does not show whether you did. The duress PIN itself is never stored.
+- **The same app settings** (theme, sort order, editor font, auto-lock delay, keyboard privacy)
+  are used in both vaults.
+
+Inside the decoy vault, what belongs to your real vault does not work: changing the PINs,
+fingerprint unlock, the recovery phrase, encrypted backups and "Erase all data". Fingerprint
+unlock and the recovery phrase on the lock screen always open the real vault. An encrypted backup
+never contains decoy notes. Markdown export and notes import do work there, on the decoy vault's
+own notes, and the files they make are yours to keep or delete (see the export sections below).
+
+Turning the duress PIN off (Settings → Security, after your PIN and a confirmation) deletes the
+decoy vault and its notes. The wipe PIN and **Erase all data** delete the decoy vault together with
+the real one. See [SECURITY.md → Duress PIN](SECURITY.md#duress-pin) for the technical details and
+what it does not hide.
+
 ## Permissions
 
 | Permission | Why |
@@ -127,9 +158,9 @@ in a readable format first.
 ## Deleting your data
 
 Uninstalling Encly, or clearing its storage in Android settings, permanently deletes all of
-it, and so does **Settings → Security → Erase all data**. There is no copy anywhere else, apart
-from encrypted backups you exported yourself. If you did not keep a recovery seed, a forgotten
-PIN also means the data cannot be recovered.
+it, and so does **Settings → Security → Erase all data** (the decoy vault too, if you have one).
+There is no copy anywhere else, apart from encrypted backups you exported yourself. If you did not
+keep a recovery seed, a forgotten PIN also means the data cannot be recovered.
 
 ## Children
 

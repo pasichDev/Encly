@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.Application
 import android.content.Context
 import android.os.Looper
+import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -82,6 +83,45 @@ class AlarmMainThreadTimerTest {
 
         assertEquals(0, runs)
         assertNull(shadowOf(alarms).nextScheduledAlarm)
+    }
+
+    @Test
+    fun theAlarmsOfTheFifteenAndThirtyMinuteDelaysAreSetForThoseDelays() {
+        listOf(15L, 30L).forEach { minutes ->
+            val delay = TimeUnit.MINUTES.toMillis(minutes)
+            val before = SystemClock.elapsedRealtime()
+
+            val cancel = timer.schedule(delay) { runs++ }
+
+            val alarm = shadowOf(alarms).nextScheduledAlarm!!
+            assertTrue(
+                "$minutes min: ${alarm.triggerAtTime - before}",
+                alarm.triggerAtTime - before in delay..delay + 1_000,
+            )
+            assertEquals(AlarmManager.ELAPSED_REALTIME_WAKEUP, alarm.type)
+            assertTrue(alarm.isAllowWhileIdle)
+            cancel()
+            assertNull(shadowOf(alarms).nextScheduledAlarm)
+        }
+    }
+
+    @Test
+    fun aLongDelayHandlerThatNeverRanLeavesTheAlarmToRunTheAction() {
+        timer.schedule(TimeUnit.MINUTES.toMillis(30)) { runs++ }
+        val id = alarmId()
+
+        pass(TimeUnit.MINUTES.toMillis(29)) // a frozen process: in real life nothing would run here
+
+        assertEquals("not yet", 0, runs)
+        assertTrue(AlarmMainThreadTimer.fire(id))
+        assertEquals(1, runs)
+    }
+
+    @Test
+    fun anAlarmThatOutlivedItsProcessFindsNoActionAndDoesNothing() {
+        // The process died with the alarm pending: the new process has no action under that id.
+        assertFalse(AlarmMainThreadTimer.fire(Int.MAX_VALUE - 7))
+        assertEquals(0, runs)
     }
 
     private fun alarmId(): Int =

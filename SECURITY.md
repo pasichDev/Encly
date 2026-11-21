@@ -290,11 +290,14 @@ meant for "open the app and show me", not against a forensic examination.
   on every miss is locked out, escalating as above, even right after the duress PIN opened the
   decoy vault. Without that, someone who was given the duress PIN could guess at the real
   PIN 4 times, type the duress PIN to reset the lockout, and repeat without limit. The cost is a
-  tell after that many misses (a lockout sooner than the screen suggests), and a store-level
-  one: after misses, a duress unlock leaves `pin.strikes` in the state file with no lockout
-  failures, which a real PIN unlock never does, so anyone who can read the app's private files
-  can then see that a duress PIN exists and that the last unlock was a non-PIN one. A duress
-  unlock with no misses before it leaves the same entries as a real PIN unlock.
+  store-level tell: after misses, a duress unlock leaves `pin.strikes` in the state file with no
+  matching lockout failures, which a real PIN unlock never does, so anyone who can read the app's
+  private files can see that a duress PIN exists. The entry stays until the real PIN is typed
+  again (or a new PIN is set, or the wipe PIN erases the vault): later misses, fingerprint
+  unlocks and recovery-phrase unlocks do not clear it, so someone who unlocks mostly with a
+  fingerprint can carry it for weeks. On screen, from the 10th strike on every miss is locked out
+  (as above). A duress unlock with no misses before it leaves the same entries as a real PIN
+  unlock.
 - **Rules.** 6 to 12 digits, different from the PIN and from the wipe PIN (checked by opening their
   slots with it); a wipe PIN equal to the duress PIN is refused, and so is changing the PIN to
   the duress PIN, since either would silently orphan the decoy notes. A reset of the PIN's
@@ -305,12 +308,20 @@ meant for "open the app and show me", not against a forensic examination.
 - **Inside the decoy vault.** Notes, tags, tasks, trash, search, sorting and appearance work as
   usual. Settings shows the same entries as in the real vault, and everything that belongs
   to the real vault is refused by the security layer and fails like a storage error would, with
-  the usual generic message: changing the PIN, the wipe and duress PINs, fingerprint unlock, the
-  recovery phrase, encrypted backups (export and import) and "Erase all data". A PIN re-check
-  there accepts the duress PIN only, so the decoy vault itself cannot be used to test guesses
-  of the real PIN; on the lock screen the strikes above bound them. Fingerprint unlock and the recovery phrase on the lock screen always open the real
+  the usual generic message: changing the PIN, the wipe and duress PINs, the recovery phrase,
+  encrypted backups (export and import) and "Erase all data" (fingerprint unlock is the
+  exception, see the next item). A PIN re-check there accepts the duress PIN only, so the decoy
+  vault itself cannot be used to test guesses of the real PIN; on the lock screen the strikes
+  above bound them. A refused PIN change there runs the same KDF step as the real vault's own
+  work (one PBKDF2 and Keystore run over the PIN typed), so the refusal does not come back
+  faster. Fingerprint unlock and the recovery phrase on the lock screen always open the real
   vault, and nothing in the decoy vault offers a way to switch: to change vaults, lock and type
   the other PIN. App settings (theme, sorting, font, auto-lock, keyboard privacy) are shared.
+- **Fingerprint in the decoy vault (a known tell).** Settings there shows fingerprint unlock as
+  it is set in the app, but the decoy vault cannot use it: the PIN re-check dialogs (allowing
+  screenshots, Markdown export, confirming a weaker setting, erase) have no fingerprint key,
+  although the real vault's offer one, and turning the fingerprint switch on or off fails at once
+  with an error of its own and no system fingerprint prompt. Someone who knows the app can notice.
 - **Session isolation.** Only one database is open at a time. Every repository is bound to the
   opening it was created in (a lease revoked before Room closes), so nothing created in one
   vault reads or writes the other. Opening the other vault starts a new epoch, so the note that
@@ -318,7 +329,10 @@ meant for "open the app and show me", not against a forensic examination.
 - **Failures never fall back.** A decoy database that does not open fails the unlock; it is
   neither deleted nor replaced by the real vault. Turning the duress PIN off (after the PIN and a
   confirmation) forgets the decoy key first and then deletes `vault_b.db`; a kill in between
-  leaves a file nothing can open, which the next duress PIN set replaces.
+  leaves a file nothing can open, which the next duress PIN set replaces. The delete is
+  checked: the database file and its `-wal`, `-shm`, `-journal` and lock files must be gone, or
+  turning the duress PIN off reports a failure, and setting a new duress PIN (which also starts
+  by deleting an old `vault_b.db`) fails instead of leaving a PIN that opens a stale file.
 - **Wipe PIN.** The erase also replaces both decoy entries with random bytes and deletes
   `vault_b.db` with the real database: the empty vault has no decoy vault either.
 - **Limits.** The decoy vault does not hide that the real one exists from a forensic look: the
@@ -328,7 +342,38 @@ meant for "open the app and show me", not against a forensic examination.
   "Important limitations") finds the duress PIN as well.
 - **Downgrade.** Older builds ignore both entries and the second database and keep opening the
   real vault. A PIN changed in an older build gets a new salt, which silently turns the duress
-  PIN off; the decoy notes come back once it is set again in this version.
+  PIN off; the decoy notes come back once it is set again in this version. An erase in 2.1.x
+  (the wipe PIN or "Erase all data") predates the decoy vault and does not know `vault_b.db`, so
+  the file can stay on disk (encrypted) after it.
+
+#### What an observer can and cannot tell
+
+From the review of 2026-11-21 (someone made to see the app, or reading an image of the phone's
+storage).
+
+Checked and safe:
+
+- The state file has the same entries and sizes with or without a duress PIN, through setting it,
+  changing it, turning it off, a PIN change and the erase.
+- Every PIN attempt costs the same (one KDF run, all three slots tried), whichever PIN it is.
+- No data of the real vault is reachable from the decoy: it opens only its own database, every
+  operation of the real vault is refused there, and its PIN re-check accepts the duress PIN only.
+- Nothing outside the two databases records which vault was used: the shared settings hold
+  appearance and privacy choices, the what's-new version and the trash purge times (the decoy
+  vault's own one is written only after it purged), and there are no notifications, widgets,
+  shortcuts or attachments on disk.
+
+Still visible:
+
+- Fingerprint in the decoy vault (above).
+- `pin.strikes` in the state file after a duress unlock that followed misses (above).
+- Encrypted backups exported earlier are named `encly-backup-*` in shared storage and can show in
+  the file picker's recent list, which the decoy vault's Import screen opens. The decoy vault
+  itself says "never exported".
+- "What's new" and the trash notice after an update are shown to whichever vault is unlocked
+  first, so a duress unlock can use them up before the real vault shows them.
+- The second database file, its size and timestamps (see Limits).
+- The downgrade note above, for someone who goes back to 2.1.x.
 
 ### Biometric slot
 

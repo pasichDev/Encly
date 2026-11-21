@@ -204,7 +204,9 @@ public class SessionLockManager(
         // keyguard that came up) is already gone: neither the delay nor the picker grace may keep the vault open.
         // The watchers of suspend() only hear a screen-off that comes later.
         if (!deviceLock.isScreenOn() || deviceLock.isDeviceLocked()) {
-            if (isOpenAndLockable()) relock()
+            // Counted even with nothing open: an unlock still checking the PIN must not be published after the
+            // screen comes back on, which an insecure keyguard would not report as locked.
+            lockNow()
             return
         }
         val now = clock()

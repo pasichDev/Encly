@@ -1,6 +1,7 @@
 package com.pasich.encly.core.security
 
 import androidx.lifecycle.LifecycleOwner
+import com.pasich.encly.testutil.InMemoryKeyValueStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -8,6 +9,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.clearInvocations
 import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -179,10 +181,12 @@ class SessionLockManagerTest {
 
     private var now = 0L
     private var pendingTimer: (() -> Unit)? = null
+    private var timerDelay = -1L
 
     private fun withFakeTime() {
         manager.clock = { now }
-        manager.timer = { _, action ->
+        manager.timer = { delay, action ->
+            timerDelay = delay
             pendingTimer = action
             val cancel: () -> Unit = { pendingTimer = null }
             cancel
@@ -485,6 +489,172 @@ class SessionLockManagerTest {
 
         verify(security).lock()
         assertTrue(manager.locked.value)
+    }
+
+    // --- the 15 and 30 minute delays: process death, the alarm, the device lock ------------
+
+    private val longDelays = listOf(AutoLockDelay.MINUTES_15, AutoLockDelay.MINUTES_30)
+
+    /** Runs [check] once for each long delay, on a manager of its own and with the mock's calls forgotten. */
+    private fun forEachLongDelay(check: (AutoLockDelay) -> Unit) = longDelays.forEach { delay ->
+        clearInvocations(security)
+        now = 0L
+        pendingTimer = null
+        watcher.locked = false
+        watcher.screenOn = true
+        withDelay(delay.millis)
+        check(delay)
+    }
+
+    @Test
+    fun theTimerIsSetForExactlyTheLongDelay() = forEachLongDelay { delay ->
+        manager.onStop(owner)
+
+        assertEquals(delay.millis, timerDelay)
+        assertTrue(watcher.watching)
+        verify(security, never()).lock()
+    }
+
+    @Test
+    fun aMillisecondBeforeTheLongDelayTheVaultIsStillOpenOnReturn() = forEachLongDelay { delay ->
+        manager.onStop(owner)
+        now += delay.millis - 1
+        manager.onStart(owner)
+
+        verify(security, never()).lock()
+        assertFalse(manager.locked.value)
+        assertNull("the alarm is cancelled on return", pendingTimer)
+    }
+
+    @Test
+    fun atTheLongDelayTheVaultLocksOnReturnEvenIfTheAlarmNeverFired() = forEachLongDelay { delay ->
+        manager.onStop(owner)
+        now += delay.millis
+        manager.onStart(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun theAlarmFiringInTheBackgroundLocksTheVaultAtOnce() = forEachLongDelay { _ ->
+        manager.onStop(owner)
+        pendingTimer!!.invoke()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+        assertFalse(watcher.watching)
+    }
+
+    @Test
+    fun anAlarmThatFiresAfterTheUserCameBackInTimeDoesNothing() = forEachLongDelay { delay ->
+        manager.onStop(owner)
+        val alarm = pendingTimer!!
+        now += delay.millis / 2
+        manager.onStart(owner)
+
+        alarm.invoke() // the system delivers an alarm that was cancelled a moment too late
+
+        verify(security, never()).lock()
+        assertFalse(manager.locked.value)
+    }
+
+    @Test
+    fun theKeyguardComingUpWhileAwayLocksOnReturnWellInsideTheLongDelay() = forEachLongDelay { delay ->
+        manager.onStop(owner)
+        now += delay.millis / 3
+        watcher.locked = true
+        manager.onStart(owner)
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+    }
+
+    @Test
+    fun theScreenTurningOffWhileAwayLocksAtOnceAndTheAlarmThatFollowsDoesNothingMore() = forEachLongDelay { _ ->
+        manager.onStop(owner)
+        val alarm = pendingTimer!!
+
+        watcher.screenOff()
+
+        verify(security).lock()
+        assertTrue(manager.locked.value)
+        assertFalse(watcher.watching)
+        assertNull("the alarm is cancelled", pendingTimer)
+
+        alarm.invoke()
+        verify(security, times(1)).lock()
+    }
+
+    @Test
+    fun aScreenAlreadyOffOrAKeyguardAlreadyUpAtStopLocksAtOnceWithoutWaitingTheLongDelay() = forEachLongDelay { _ ->
+        watcher.screenOn = false
+        manager.onStop(owner)
+        verify(security).lock()
+        assertNull("no alarm was set", pendingTimer)
+
+        clearInvocations(security)
+        watcher.screenOn = true
+        watcher.locked = true
+        manager.onStart(owner)
+        manager.onStop(owner)
+        verify(security).lock()
+    }
+
+    @Test
+    fun afterProcessDeathTheStoredLongDelayIsTheOneTheTimerUses() {
+        longDelays.forEach { delay ->
+            val prefs = InMemoryKeyValueStore()
+            AutoLock(prefs).setDelay(delay) // chosen in the process that died
+
+            val restoredSecurity = mock(SecurityManager::class.java)
+            `when`(restoredSecurity.isLockable()).thenReturn(true)
+            val restored = SessionLockManager(restoredSecurity, watcher, autoLock = AutoLock(prefs))
+            restored.onStart(owner)
+            restored.clock = { now }
+            var scheduled = -1L
+            restored.timer = { delayMs, _ ->
+                scheduled = delayMs
+                ({})
+            }
+            restored.requireUnlock() // startup finds a committed vault that is not open
+            assertTrue(restored.locked.value)
+            `when`(restoredSecurity.isDatabaseUnlocked()).thenReturn(true)
+            assertTrue(restored.onUnlocked())
+
+            restored.onStop(owner)
+
+            assertEquals(delay.millis, scheduled)
+            verify(restoredSecurity, never()).lock()
+        }
+    }
+
+    @Test
+    fun aProcessKilledWhileAwayInsideTheLongDelayRestartsLockedAndStaysLockedUntilAnUnlock() {
+        longDelays.forEach { delay ->
+            // The old process: the vault is open and the app went to the background.
+            val prefs = InMemoryKeyValueStore()
+            AutoLock(prefs).setDelay(delay)
+            val oldSecurity = mock(SecurityManager::class.java)
+            `when`(oldSecurity.isLockable()).thenReturn(true)
+            `when`(oldSecurity.isDatabaseUnlocked()).thenReturn(true)
+            val old = SessionLockManager(oldSecurity, watcher, autoLock = AutoLock(prefs))
+            old.onStart(owner)
+            old.timer = { _, _ -> ({}) }
+            old.onStop(owner)
+            // The system kills the process here: nothing of the open vault, the session or the timer survives.
+
+            val newSecurity = mock(SecurityManager::class.java)
+            `when`(newSecurity.isLockable()).thenReturn(true)
+            `when`(newSecurity.isDatabaseUnlocked()).thenReturn(false)
+            val restored = SessionLockManager(newSecurity, watcher, autoLock = AutoLock(prefs))
+            restored.requireUnlock()
+            restored.onStart(owner) // the user comes back, with no suspension to resume
+
+            assertTrue("the lock screen comes first", restored.locked.value)
+            verify(newSecurity, never()).lock() // there is nothing open to close
+            assertEquals(delay.millis, AutoLock(prefs).delayMillis)
+        }
     }
 
     // --- the screenshot allowance ends with every lock ------------------------------------

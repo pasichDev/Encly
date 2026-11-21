@@ -153,20 +153,32 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
         }
     }
 
-    private fun deleteDatabaseFiles(file: VaultFile) {
+    /** Deletes the files of [file]; true when none of them is there afterwards (checked, not assumed). */
+    private fun deleteDatabaseFiles(file: VaultFile): Boolean {
         val dbFile = try {
             platform.databasePath(file).toString()
         } catch (_: Exception) {
-            return
+            return false
         }
+        var gone = true
         // Each file on its own: one that cannot be deleted must not spare the others.
         FILE_SUFFIXES.forEach { suffix ->
+            val path = Path(dbFile + suffix)
             try {
-                SystemFileSystem.delete(Path(dbFile + suffix), mustExist = false)
+                SystemFileSystem.delete(path, mustExist = false)
             } catch (_: Exception) {
-                // Best effort, as File.delete was: the next wipe tries again.
+                // The check below decides: the next wipe tries again.
             }
+            if (isStillThere(path)) gone = false
         }
+        return gone
+    }
+
+    /** A path that cannot be looked at counts as still there. */
+    private fun isStillThere(path: Path): Boolean = try {
+        SystemFileSystem.exists(path)
+    } catch (_: Exception) {
+        true
     }
 
     /**
@@ -207,15 +219,16 @@ public class SecureDatabaseManager(private val platform: DatabasePlatform) : Dat
     /**
      * Deletes the database files unless the database is open, checked and done under the same
      * lock [unlockDatabase] holds, so a database being opened (or just created) meanwhile is
-     * never deleted. True when they were deleted.
+     * never deleted. True when they were deleted: every file is checked to be gone, so a file
+     * that could not be removed is reported, not assumed away.
      *
      * With [only], just that file goes, refused only while that one is open: the decoy vault's
      * database is deleted from a session of the real vault, whose file is never touched.
      */
     public fun wipeIfClosed(only: VaultFile? = null): Boolean = synchronized(lock) {
         if (isUnlocked && (only == null || openFile == only)) return@synchronized false
-        (only?.let(::listOf) ?: VaultFile.entries).forEach(::deleteDatabaseFiles)
-        true
+        // Every file is tried, even after one that stays.
+        (only?.let(::listOf) ?: VaultFile.entries).map(::deleteDatabaseFiles).all { it }
     }
 
     private companion object {

@@ -150,4 +150,35 @@ class SecureDatabaseManagerTest {
 
         (files(VaultFile.PRIMARY) + files(VaultFile.DECOY)).forEach { assertFalse(it.path, it.exists()) }
     }
+
+    /** Makes the side file at [suffix] something a delete cannot remove: a directory with a file in it. */
+    private fun makeUndeletable(vault: VaultFile, suffix: String) {
+        val stuck = File(context.getDatabasePath(vault.fileName).path + suffix)
+        stuck.delete()
+        stuck.mkdirs()
+        File(stuck, "held").writeBytes(byteArrayOf(1))
+    }
+
+    @Test
+    fun wipeIfClosedReportsAFileThatCouldNotBeDeletedAndStillRemovesTheOthers() {
+        createFiles(VaultFile.DECOY)
+        makeUndeletable(VaultFile.DECOY, "-wal")
+
+        assertFalse("a file stayed, so it is not gone", manager.wipeIfClosed(only = VaultFile.DECOY))
+
+        assertFalse(File(context.getDatabasePath(VaultFile.DECOY.fileName).path).exists())
+        assertFalse(File(context.getDatabasePath(VaultFile.DECOY.fileName).path + "-journal").exists())
+        File(context.getDatabasePath(VaultFile.DECOY.fileName).path + "-wal").deleteRecursively()
+    }
+
+    @Test
+    fun wipeIfClosedOfOneVaultIsTrueWhenOnlyTheOtherVaultHasAStuckFile() {
+        createFiles(VaultFile.DECOY)
+        createFiles(VaultFile.PRIMARY)
+        makeUndeletable(VaultFile.PRIMARY, "-shm")
+
+        assertTrue(manager.wipeIfClosed(only = VaultFile.DECOY))
+
+        File(context.getDatabasePath(VaultFile.PRIMARY.fileName).path + "-shm").deleteRecursively()
+    }
 }

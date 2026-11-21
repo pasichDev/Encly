@@ -1,5 +1,6 @@
 package com.pasich.encly.domain.usecase.note
 
+import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.domain.repository.NotesRepository
 import com.pasich.encly.testutil.InMemoryKeyValueStore
@@ -17,7 +18,8 @@ import org.mockito.Mockito.`when`
 class TrashExpiryTest {
     private val repository = TestNotesRepository()
     private val flags = InMemoryKeyValueStore()
-    private val purge = PurgeExpiredTrashUseCase(repository, flags)
+    private val security = mock(SecurityManager::class.java)
+    private val purge = PurgeExpiredTrashUseCase(repository, flags, security)
 
     private fun trashed(id: Long, trashedAt: Long?) = Note(id = id, isTrash = true, trashedAt = trashedAt)
 
@@ -110,7 +112,7 @@ class TrashExpiryTest {
         val notes = mock(NotesRepository::class.java)
         `when`(notes.stampUntimedTrash(NOW)).thenReturn(Result.failure(IllegalStateException("disk")))
 
-        assertTrue(PurgeExpiredTrashUseCase(notes, flags)(NOW).isFailure)
+        assertTrue(PurgeExpiredTrashUseCase(notes, flags, security)(NOW).isFailure)
         verify(notes, never()).deleteTrashedBefore(anyLong())
     }
 
@@ -121,7 +123,7 @@ class TrashExpiryTest {
         `when`(notes.deleteTrashedBefore(NOW - TRASH_RETENTION_MILLIS))
             .thenReturn(Result.failure(IllegalStateException("vault locked")))
 
-        assertTrue(PurgeExpiredTrashUseCase(notes, flags)(NOW).isFailure)
+        assertTrue(PurgeExpiredTrashUseCase(notes, flags, security)(NOW).isFailure)
     }
 
     @Test
@@ -169,9 +171,46 @@ class TrashExpiryTest {
         `when`(notes.deleteTrashedBefore(NOW - TRASH_RETENTION_MILLIS))
             .thenReturn(Result.failure(IllegalStateException("vault locked")))
 
-        PurgeExpiredTrashUseCase(notes, flags)(NOW)
+        PurgeExpiredTrashUseCase(notes, flags, security)(NOW)
 
         assertEquals(0L, flags.getLong("trash_last_purge_at", 0L))
+    }
+
+    @Test
+    fun theDecoyVaultKeepsItsOwnPurgeTimeAndNeverMovesTheRealOne() = runTest {
+        purge(NOW) // the real vault purged once
+        `when`(security.isDecoySession()).thenReturn(true)
+
+        // The decoy is unlocked again and again with the clock a year ahead: 14 times is far more than 28 days.
+        repeat(20) { purge(NOW + 365 * DAY) }
+
+        assertEquals(NOW, flags.getLong("trash_last_purge_at", 0L))
+        assertEquals(NOW + 365 * DAY, flags.getLong("trash_last_purge_at_d", 0L))
+        `when`(security.isDecoySession()).thenReturn(false)
+        repository.purgeCutoffs.clear()
+        purge(NOW + 365 * DAY)
+        assertEquals(
+            "the real vault still advances two days at most",
+            listOf(NOW + 2 * DAY - TRASH_RETENTION_MILLIS),
+            repository.purgeCutoffs,
+        )
+    }
+
+    @Test
+    fun theRealVaultWritesNoDecoyKey() = runTest {
+        purge(NOW)
+
+        assertEquals(0L, flags.getLong("trash_last_purge_at_d", 0L))
+    }
+
+    @Test
+    fun theDecoyVaultWritesOnlyItsOwnKeyAndOnlyWhenItPurged() = runTest {
+        `when`(security.isDecoySession()).thenReturn(true)
+
+        purge(NOW)
+
+        assertEquals(0L, flags.getLong("trash_last_purge_at", 0L))
+        assertEquals(NOW, flags.getLong("trash_last_purge_at_d", 0L))
     }
 
     private companion object {
