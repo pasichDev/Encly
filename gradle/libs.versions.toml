@@ -20,7 +20,7 @@ ktlint = "1.8.0"
 composeRulesDetekt = "0.4.28"
 
 # The BOM pins every androidx.compose module to one tested set (ui, foundation, material3, tests).
-composeBom = "2026.09.00"
+composeBom = "2026.11.01"
 lifecycle = "2.11.0"
 activityCompose = "1.13.0"
 appcompat = "1.8.0"
