@@ -3,7 +3,7 @@
 # KSP releases use their own version scheme; keep the Kotlin/KSP pair compatible.
 
 [versions]
-agp = "9.5.1"
+agp = "9.5.3"
 kotlin = "2.4.21"
 ksp = "2.3.14"
 metro = "1.6.0"
