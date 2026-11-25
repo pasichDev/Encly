@@ -13,7 +13,7 @@ kover = "0.9.11"
 dokka = "2.2.0"
 # Compose Multiplatform, used by the :editor module; the app keeps the androidx BOM below.
 composeMultiplatform = "1.12.2"
-spotless = "8.11.0"
+spotless = "8.12.0"
 # ktlint and the Compose detekt rules are tool artifacts, not app dependencies (see build.gradle.kts).
 ktlint = "1.8.0"
 # 0.4.x is the line built against detekt 1.23.x; 0.5+ needs detekt 2.x.
