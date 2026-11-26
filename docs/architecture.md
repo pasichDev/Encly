@@ -243,7 +243,8 @@ For implementation details and limits, see [SECURITY.md](../SECURITY.md).
 
 Settings → Import notes (`data/importer`, `ImportNotesViewModel`) reads another app's export from
 files or a folder the user picks through the Storage Access Framework, entirely offline. The
-pipeline is all in memory: `ImportReader` (ZIP and TAR read sequentially from `ContentResolver`
+pipeline is all in memory (the bytes read, never a file; JSON exports are parsed one item at a
+time by `JsonScan`, not as one tree): `ImportReader` (ZIP and TAR read sequentially from `ContentResolver`
 streams by readers of our own, since `ZipInputStream` fails on the ZIP64 data descriptors that
 streaming exporters write, bounded by `ImportLimits` on the bytes actually read; unsafe paths, links and nested
 archives skipped) → `FormatDetector` (by content, never by extension alone; encrypted Standard
@@ -252,7 +253,8 @@ source (Google Keep, Standard Notes, Joplin, Notesnook, generic Markdown/TXT) �
 which builds the same `BackupPayload` as a backup with uids derived from the source's own ids, so
 `BackupImporter` MERGE (tags matched by name) skips what is already there and a repeated import
 adds nothing. The user reviews and ticks the notes first; only the ticked ones (and the tags they
-use) are written, in one transaction on the vault session bound when the read started. The read
+use) are written by `ImportMerger`, in batches inside one transaction (Cancel and a re-lock stop it
+between batches and roll back) on the vault session bound when the read started. The read
 files, parsed notes and selection live in the ViewModel only, are never put in saved state, and are
 dropped on cancel, on finish and when the vault locks. Import is available in a decoy session too
 and imports into whichever vault is open. The real exporters' files are the test fixtures

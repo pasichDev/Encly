@@ -84,8 +84,11 @@ internal class ParseContext(private val limits: ImportLimits) {
     /** Decodes [entry] as UTF-8; an invalid file is counted as unreadable and skipped. */
     fun text(entry: ImportEntry): String? = ImportText.utf8(entry.bytes).also { if (it == null) unreadable++ }
 
+    /** Whether [entry] is valid UTF-8, without decoding it; an invalid file is counted as unreadable. */
+    fun isText(entry: ImportEntry): Boolean = Utf8.isValid(entry.bytes).also { if (!it) unreadable++ }
+
     fun add(note: ImportedNote) {
-        if (note.title.isBlank() && note.blocks.none { it.hasContent() }) {
+        if (isEmpty(note)) {
             empty++
             return
         }
@@ -95,4 +98,9 @@ internal class ParseContext(private val limits: ImportLimits) {
 
     fun result() =
         ParsedNotes(notes, ImportSkips(unsupported = unsupported, unreadable = unreadable, empty = empty), extraLosses)
+
+    companion object {
+        /** A note with no title and no content: counted as empty, never added. */
+        fun isEmpty(note: ImportedNote): Boolean = note.title.isBlank() && note.blocks.none { it.hasContent() }
+    }
 }
