@@ -25,20 +25,23 @@ internal object DuressSlots {
     fun decoyKeyKek(primaryDek: ByteArray): ByteArray =
         Hkdf.sha256(ikm = primaryDek, salt = DECOY_KEY_SALT, info = DECOY_KEY_INFO, length = DEK_LENGTH)
 
-    /** `version ‖ iv ‖ AES-GCM(dek)`: the shape of the duress slot and the decoy key, 61 bytes. */
-    fun sealDecoy(dek: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray {
+    /**
+     * `version ‖ iv ‖ AES-GCM(dek)`: the shape of the duress slot and the decoy key, 61 bytes. [version] is the
+     * slot version byte: the decoy key is always version 3, the duress slot (and the wipe slot) that of the PIN slot.
+     */
+    fun sealDecoy(dek: ByteArray, kek: ByteArray, aad: ByteArray, version: Byte = SLOT_VERSION): ByteArray {
         val iv = Crypto.randomBytes(IV_LENGTH)
         val encrypted = Crypto.aesGcmSeal(kek, iv, aad, dek)
         return try {
-            byteArrayOf(SLOT_VERSION) + iv + encrypted
+            byteArrayOf(version) + iv + encrypted
         } finally {
             SensitiveDataCleaner.clear(iv)
             SensitiveDataCleaner.clear(encrypted)
         }
     }
 
-    fun openDecoy(sealed: ByteArray, kek: ByteArray, aad: ByteArray): ByteArray? {
-        if (sealed.size != DECOY_SLOT_LENGTH || sealed[0] != SLOT_VERSION) return null
+    fun openDecoy(sealed: ByteArray, kek: ByteArray, aad: ByteArray, version: Byte = SLOT_VERSION): ByteArray? {
+        if (sealed.size != DECOY_SLOT_LENGTH || sealed[0] != version) return null
         val iv = sealed.copyOfRange(1, 1 + IV_LENGTH)
         val ciphertext = sealed.copyOfRange(1 + IV_LENGTH, sealed.size)
         return try {
@@ -51,6 +54,10 @@ internal object DuressSlots {
 
     fun decoySlotAad(salt: ByteArray): ByteArray = DECOY_AAD + byteArrayOf(SLOT_VERSION) + salt
 
-    /** Random bytes shaped like a duress slot or decoy key: nothing opens them. */
-    fun randomSlot(): ByteArray = Crypto.randomBytes(DECOY_SLOT_LENGTH).also { it[0] = SLOT_VERSION }
+    /**
+     * Random bytes shaped like a duress slot or decoy key (and, the length being the same, a wipe slot) with
+     * [version] as byte 0: nothing opens them.
+     */
+    fun randomSlot(version: Byte = SLOT_VERSION): ByteArray =
+        Crypto.randomBytes(DECOY_SLOT_LENGTH).also { it[0] = version }
 }

@@ -52,7 +52,10 @@ public enum class VaultUnlockResult {
     /** The store of the device-bound PIN key is locked or not running (a desktop keyring); the attempt was refunded. */
     KEY_STORE_UNAVAILABLE,
 
-    /** The device's key store failed on this attempt (it may pass); the attempt was refunded, the database is fine. */
+    /**
+     * The device's key store failed on this attempt (it may pass), or the password stretch could not be made for lack
+     * of memory; the attempt was refunded, the database is fine.
+     */
     KEY_STORE_FAILED,
     DB_ERROR,
 }
@@ -205,9 +208,17 @@ public class SecurityManager(
     private fun isCommittedWithoutFlag(): Boolean = !isRestorePending() &&
         !seedPhraseManager.hasBootstrapKey() &&
         seedPhraseManager.hasStoredSeed() &&
-        (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()) &&
+        hasSlotData() &&
         // A wipe-PIN erase that has not created the empty database yet leaves none: the vault is still committed.
         (vaultDatabase.hasEncryptedDatabase() || authenticationManager.pendingWipe() != null)
+
+    /**
+     * Whether a secret slot or the recovery slot exists. A slot of a format this platform cannot use (a desktop vault
+     * of the PIN era) is still a vault's data: it makes a vault a damaged one, never "no vault, start over".
+     */
+    private fun hasSlotData(): Boolean = authenticationManager.hasPinSlot() ||
+        authenticationManager.hasStoredSlotEntry() ||
+        seedPhraseManager.hasRecoverySeed()
 
     /** True when first-run setup may (re)create the vault without destroying user data. */
     private fun isSafeToCreateVault(): Boolean = !vaultStore.isUnreadable() &&
@@ -237,6 +248,18 @@ public class SecurityManager(
      * may say so: Settings looks the same, and this layer refuses what belongs to the real vault.
      */
     public fun isDecoySession(): Boolean = sessionDek != null && sessionVault == VaultKind.DECOY
+
+    /** What this vault is unlocked with: a PIN (Android, iOS) or a password (desktop). */
+    public val secretKind: SecretKind get() = authenticationManager.secretKind
+
+    /** The most units a typed secret may have before it is refused unseen (12 for a PIN, 768 for a password). */
+    public val maxTypedUnits: Int get() = authenticationManager.maxTypedUnits
+
+    /** Whether [typed] may be set as a secret, and if not why; see [AuthenticationManager.checkNewSecret]. */
+    public fun checkNewSecret(typed: CharArray): SecretRule = authenticationManager.checkNewSecret(typed)
+
+    /** A fresh secret to offer the user, or null when this kind has none (a PIN). The caller wipes it. */
+    public fun suggestSecret(): CharArray? = authenticationManager.suggestSecret()
 
     /** Sets a new PIN slot around the live DEK. [pin] is wiped. */
     public fun configurePin(pin: CharArray): Boolean = changePin(pin) == PinChange.SET

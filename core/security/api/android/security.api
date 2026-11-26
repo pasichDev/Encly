@@ -410,7 +410,9 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public static final field MAX_LOCKOUT_MS J
 	public static final field STRIKE_GRACE I
 	public fun <init> (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)V
+	public fun <init> (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/UnlockSecretPolicy;)V
 	public final fun changePin ([C[B)Lcom/pasich/encly/core/security/PinChange;
+	public final fun checkNewSecret ([C)Lcom/pasich/encly/core/security/SecretRule;
 	public final fun clearPendingWipe ()Z
 	public final fun configureDuressPin ([C[BLkotlin/jvm/functions/Function0;)Lcom/pasich/encly/core/security/DuressPinChange;
 	public final fun configurePin ([C[B)Z
@@ -421,6 +423,8 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public final fun duressPinTurnedOff ([B)Z
 	public final fun ensureWipeSlot ()Z
 	public final fun getAuthType ()Lcom/pasich/encly/core/security/AuthType;
+	public final fun getMaxTypedUnits ()I
+	public final fun getSecretKind ()Lcom/pasich/encly/core/security/SecretKind;
 	public final fun hasDecoyVault ([B)Z
 	public final fun hasPinSlot ()Z
 	public final fun isAuthStrategy ()Lcom/pasich/encly/core/security/AuthStrategy;
@@ -432,6 +436,7 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public final fun remainingLockoutMillis ()J
 	public final fun removeDuressPin ()Z
 	public final fun removeWipePin ()Z
+	public final fun suggestSecret ()[C
 	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/PinUnlock;
 	public final fun verifyPinAuth ([CZ)Z
 	public static synthetic fun verifyPinAuth$default (Lcom/pasich/encly/core/security/AuthenticationManager;[CZILjava/lang/Object;)Z
@@ -446,16 +451,16 @@ public final class com/pasich/encly/core/security/AuthenticationManager$Companio
 
 public final class com/pasich/encly/core/security/AuthenticationManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
 	public static final field Companion Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory$Companion;
-	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public static final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory;
+	public synthetic fun <init> (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory;
 	public final fun invoke ()Lcom/pasich/encly/core/security/AuthenticationManager;
 	public synthetic fun invoke ()Ljava/lang/Object;
-	public static final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)Lcom/pasich/encly/core/security/AuthenticationManager;
+	public static final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/UnlockSecretPolicy;)Lcom/pasich/encly/core/security/AuthenticationManager;
 }
 
 public final class com/pasich/encly/core/security/AuthenticationManager$MetroFactory$Companion {
-	public final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory;
-	public final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)Lcom/pasich/encly/core/security/AuthenticationManager;
+	public final fun create (Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;Ldev/zacsweers/metro/Provider;)Lcom/pasich/encly/core/security/AuthenticationManager$MetroFactory;
+	public final fun newInstance (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/UnlockSecretPolicy;)Lcom/pasich/encly/core/security/AuthenticationManager;
 }
 
 public final class com/pasich/encly/core/security/AuthenticationManagerKt {
@@ -729,6 +734,45 @@ public final class com/pasich/encly/core/security/PinKeySlot : java/lang/Enum {
 	public static fun values ()[Lcom/pasich/encly/core/security/PinKeySlot;
 }
 
+public final class com/pasich/encly/core/security/PinSecretPolicy : com/pasich/encly/core/security/UnlockSecretPolicy {
+	public fun <init> ()V
+	public fun accepts (Lcom/pasich/encly/core/security/SlotHeader;)Z
+	public fun canonical ([C)[C
+	public fun factorInput ([C[B)[B
+	public fun getChargesForUnusableSlot ()Z
+	public fun getDecoyInfo ()[B
+	public fun getKekInfo ()[B
+	public fun getKind ()Lcom/pasich/encly/core/security/SecretKind;
+	public fun getMaxTypedUnits ()I
+	public fun getSlotVersion ()B
+	public fun getWipeInfo ()[B
+	public fun mayBeSet ([C)Lcom/pasich/encly/core/security/SecretRule;
+	public fun newHeader ([B)Lcom/pasich/encly/core/security/SlotHeader;
+	public fun stretch ([CLcom/pasich/encly/core/security/SlotHeader;)[B
+	public fun suggest ()[C
+}
+
+public abstract interface class com/pasich/encly/core/security/PinSecretPolicy$MetroContributionToDevzacsweersmetroappScopeocf15 {
+	public fun bindsAsUnlockSecretPolicy (Lcom/pasich/encly/core/security/PinSecretPolicy;)Lcom/pasich/encly/core/security/UnlockSecretPolicy;
+}
+
+public final class com/pasich/encly/core/security/PinSecretPolicy$MetroContributionToDevzacsweersmetroappScopeocf15$DefaultImpls {
+	public static fun bindsAsUnlockSecretPolicy (Lcom/pasich/encly/core/security/PinSecretPolicy$MetroContributionToDevzacsweersmetroappScopeocf15;Lcom/pasich/encly/core/security/PinSecretPolicy;)Lcom/pasich/encly/core/security/UnlockSecretPolicy;
+}
+
+public final class com/pasich/encly/core/security/PinSecretPolicy$MetroFactory : dev/zacsweers/metro/internal/Factory {
+	public static final field Companion Lcom/pasich/encly/core/security/PinSecretPolicy$MetroFactory$Companion;
+	public static final fun create ()Lcom/pasich/encly/core/security/PinSecretPolicy$MetroFactory;
+	public final fun invoke ()Lcom/pasich/encly/core/security/PinSecretPolicy;
+	public synthetic fun invoke ()Ljava/lang/Object;
+	public static final fun newInstance ()Lcom/pasich/encly/core/security/PinSecretPolicy;
+}
+
+public final class com/pasich/encly/core/security/PinSecretPolicy$MetroFactory$Companion {
+	public final fun create ()Lcom/pasich/encly/core/security/PinSecretPolicy$MetroFactory;
+	public final fun newInstance ()Lcom/pasich/encly/core/security/PinSecretPolicy;
+}
+
 public abstract interface class com/pasich/encly/core/security/PinUnlock {
 }
 
@@ -837,6 +881,31 @@ public final class com/pasich/encly/core/security/ScreenshotAllowance$MetroFacto
 	public final fun newInstance ()Lcom/pasich/encly/core/security/ScreenshotAllowance;
 }
 
+public final class com/pasich/encly/core/security/SecretKind : java/lang/Enum {
+	public static final field PASSWORD Lcom/pasich/encly/core/security/SecretKind;
+	public static final field PIN Lcom/pasich/encly/core/security/SecretKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/SecretKind;
+	public static fun values ()[Lcom/pasich/encly/core/security/SecretKind;
+}
+
+public final class com/pasich/encly/core/security/SecretRule : java/lang/Enum {
+	public static final field INVALID Lcom/pasich/encly/core/security/SecretRule;
+	public static final field OK Lcom/pasich/encly/core/security/SecretRule;
+	public static final field TOO_LONG Lcom/pasich/encly/core/security/SecretRule;
+	public static final field TOO_SHORT Lcom/pasich/encly/core/security/SecretRule;
+	public static final field TOO_SIMPLE Lcom/pasich/encly/core/security/SecretRule;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/SecretRule;
+	public static fun values ()[Lcom/pasich/encly/core/security/SecretRule;
+}
+
+public final class com/pasich/encly/core/security/SecretStretchException : java/lang/Exception {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
 public final class com/pasich/encly/core/security/SecurityManager {
 	public static final field Companion Lcom/pasich/encly/core/security/SecurityManager$Companion;
 	public fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;)V
@@ -848,6 +917,7 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun canReauthWithBiometric ()Z
 	public final fun canResetPinWithoutCurrent ()Z
 	public final fun changePin ([C)Lcom/pasich/encly/core/security/PinChange;
+	public final fun checkNewSecret ([C)Lcom/pasich/encly/core/security/SecretRule;
 	public final fun commitInitialSetup ()Z
 	public final fun completePendingWipe ()V
 	public final fun configureDuressPin ([C)Lcom/pasich/encly/core/security/DuressPinChange;
@@ -862,6 +932,8 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun eraseEpoch ()J
 	public final fun finishInitialSetup ()Z
 	public final fun generateMnemonicCode ()[C
+	public final fun getMaxTypedUnits ()I
+	public final fun getSecretKind ()Lcom/pasich/encly/core/security/SecretKind;
 	public final fun getSecurityStatus ()Lcom/pasich/encly/core/security/InitialStatus;
 	public final fun getSettingsAuth ()Lcom/pasich/encly/core/security/AuthSettings;
 	public final fun hasBackupKey ()Z
@@ -887,6 +959,7 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun resolveInitialStatus ()Lcom/pasich/encly/core/security/InitialStatus;
 	public final fun setOnboardingShown ()Z
 	public final fun setSecurityStatus (Lcom/pasich/encly/core/security/InitialStatus;)V
+	public final fun suggestSecret ()[C
 	public final fun takeBiometricInvalidated ()Z
 	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public final fun unlockWithRawKey ([BZ)Z
@@ -995,6 +1068,46 @@ public final class com/pasich/encly/core/security/SessionLockManagerKt {
 	public static final field LOCK_FLUSH_TIMEOUT_MS J
 }
 
+public final class com/pasich/encly/core/security/SlotHeader {
+	public static final field Companion Lcom/pasich/encly/core/security/SlotHeader$Companion;
+	public static final field FACTOR_OS_STORE_HMAC I
+	public static final field KDF_ARGON2ID I
+	public static final field KDF_PBKDF2 I
+	public static final field PASSWORD_VERSION B
+	public static final field PIN_VERSION B
+	public fun <init> (BIIJII[B)V
+	public synthetic fun <init> (BIIJII[BILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun copy ()Lcom/pasich/encly/core/security/SlotHeader;
+	public final fun getFactorId ()I
+	public final fun getKdfId ()I
+	public final fun getLanes ()I
+	public final fun getMemoryKiB ()J
+	public final fun getPasses ()I
+	public final fun getSalt ()[B
+	public final fun getVersion ()B
+	public final fun sameFormatAs (Lcom/pasich/encly/core/security/SlotHeader;)Z
+}
+
+public final class com/pasich/encly/core/security/SlotHeader$Companion {
+}
+
+public abstract interface class com/pasich/encly/core/security/UnlockSecretPolicy {
+	public abstract fun accepts (Lcom/pasich/encly/core/security/SlotHeader;)Z
+	public abstract fun canonical ([C)[C
+	public abstract fun factorInput ([C[B)[B
+	public abstract fun getChargesForUnusableSlot ()Z
+	public abstract fun getDecoyInfo ()[B
+	public abstract fun getKekInfo ()[B
+	public abstract fun getKind ()Lcom/pasich/encly/core/security/SecretKind;
+	public abstract fun getMaxTypedUnits ()I
+	public abstract fun getSlotVersion ()B
+	public abstract fun getWipeInfo ()[B
+	public abstract fun mayBeSet ([C)Lcom/pasich/encly/core/security/SecretRule;
+	public abstract fun newHeader ([B)Lcom/pasich/encly/core/security/SlotHeader;
+	public abstract fun stretch ([CLcom/pasich/encly/core/security/SlotHeader;)[B
+	public abstract fun suggest ()[C
+}
+
 public abstract interface class com/pasich/encly/core/security/VaultDatabase {
 	public abstract fun hasEncryptedDatabase (Lcom/pasich/encly/core/security/VaultKind;)Z
 	public static synthetic fun hasEncryptedDatabase$default (Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/VaultKind;ILjava/lang/Object;)Z
@@ -1090,5 +1203,9 @@ public final class com/pasich/encly/core/security/WipeStage : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/WipeStage;
 	public static fun values ()[Lcom/pasich/encly/core/security/WipeStage;
+}
+
+public final class metro/hints/ComPasichEnclyCoreSecurityPinSecretPolicyDev_zacsweers_metro_AppScopeKt {
+	public static final synthetic fun dev_zacsweers_metro_AppScope (Lcom/pasich/encly/core/security/PinSecretPolicy;)V
 }
 

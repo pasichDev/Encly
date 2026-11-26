@@ -5,19 +5,12 @@ import com.pasich.encly.core.crypto.CryptoException
 import com.pasich.encly.core.security.DuressSlots.DECOY_KEY_AAD
 import com.pasich.encly.core.security.DuressSlots.DECOY_KEY_OFF_AAD
 import com.pasich.encly.core.security.DuressSlots.decoyKeyKek
-import com.pasich.encly.core.security.DuressSlots.decoySlotAad
 import com.pasich.encly.core.security.DuressSlots.openDecoy
 import com.pasich.encly.core.security.DuressSlots.randomSlot
 import com.pasich.encly.core.security.DuressSlots.sealDecoy
 import com.pasich.encly.core.security.PinSlots.DEK_LENGTH
 import com.pasich.encly.core.security.PinSlots.PIN_SALT_SIZE
-import com.pasich.encly.core.security.PinSlots.ParsedSlot
-import com.pasich.encly.core.security.PinSlots.decoyWipeSlot
-import com.pasich.encly.core.security.PinSlots.openSlotOrNull
-import com.pasich.encly.core.security.PinSlots.opensWipeSlot
-import com.pasich.encly.core.security.PinSlots.parseSlot
-import com.pasich.encly.core.security.PinSlots.sealSlot
-import com.pasich.encly.core.security.PinSlots.sealWipeSlot
+import com.pasich.encly.core.security.SecretSlots.Parsed
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -82,8 +75,9 @@ public sealed interface PinUnlock {
     public data object KeyStoreUnavailable : PinUnlock
 
     /**
-     * The device's key store failed on this attempt (a Keystore error that may pass); nothing was counted.
-     * The key is not gone and the database was never touched: trying again may work.
+     * The device's key store failed on this attempt (a Keystore error that may pass), or the password stretch could
+     * not be made for lack of memory ([SecretStretchException]); nothing was counted. The key is not gone and the
+     * database was never touched: trying again may work.
      */
     public data object KeyStoreFailed : PinUnlock
 
@@ -186,7 +180,12 @@ public class AuthenticationManager(
     private val store: VaultStore,
     private val factor: PinHardwareFactor,
     private val clock: LockoutClock,
+    private val policy: UnlockSecretPolicy,
 ) {
+    /** The manager for the 6 to 12 digit PIN ([PinSecretPolicy]): slot version 3, as every vault so far has it. */
+    public constructor(store: VaultStore, factor: PinHardwareFactor, clock: LockoutClock) :
+        this(store, factor, clock, PinSecretPolicy())
+
     private val attemptLock = SynchronizedObject()
 
     /**
@@ -204,52 +203,66 @@ public class AuthenticationManager(
      * except that a new PIN equal to the duress PIN is refused ([PinChange.IN_USE]) rather than
      * turning it off: the decoy vault holds notes, which a PIN change must not silently orphan.
      */
-    @Suppress("ReturnCount", "CyclomaticComplexMethod") // Validation gates fail closed before any key is touched.
     public fun changePin(pin: CharArray, dek: ByteArray): PinChange = synchronized(attemptLock) {
-        if (!isWellFormed(pin) || dek.size != DEK_LENGTH) return PinChange.FAILED
+        withSettableSecret(pin, PinChange.FAILED) { secret -> sealNewSlot(secret, dek) }
+    }
+
+    @Suppress("ReturnCount", "CyclomaticComplexMethod") // Validation gates fail closed before any key is touched.
+    private fun sealNewSlot(secret: CharArray, dek: ByteArray): PinChange {
+        if (dek.size != DEK_LENGTH) return PinChange.FAILED
         val keySlot = activeKeySlot()
-        val keptSalt = currentSalt()
-        val salt = keptSalt ?: Crypto.randomBytes(PIN_SALT_SIZE)
+        val kept = currentHeader()
+        val header = policy.newHeader(kept?.salt ?: Crypto.randomBytes(PIN_SALT_SIZE))
         var keyReset = false
         val keys = try {
             // A key made here (deleted by the system, not just invalidated) is a reset too: the
             // wipe slot was sealed with the one that is gone.
             keyReset = factor.ensureKey(keySlot)
             try {
-                derivePinKeys(pin, salt, keySlot)
+                derivePinKeys(secret, header, keySlot)
             } catch (e: PinFactorException) {
                 // A key the system invalidated can be replaced: the PIN it served is lost anyway.
                 if (!e.lost) throw e
                 factor.reset(keySlot)
                 keyReset = true
-                derivePinKeys(pin, salt, keySlot)
+                derivePinKeys(secret, header, keySlot)
             }
         } catch (e: PinFactorException) {
-            SensitiveDataCleaner.clear(salt)
+            SensitiveDataCleaner.clear(header.salt)
             return if (e.unavailable) PinChange.KEY_STORE_UNAVAILABLE else PinChange.FAILED
+        } catch (_: SecretStretchException) {
+            // The stretch could not be made (memory): nothing was derived or counted. But a device key replaced on the
+            // way (made new, or reset after it was lost) has already made the kept wipe and duress slots impossible
+            // to open, and the retry would find the new key in place and keep them as if they worked: say so now.
+            if (keyReset && kept != null) turnOffDeadSlots(dek)
+            SensitiveDataCleaner.clear(header.salt)
+            return PinChange.FAILED
         }
         return try {
+            // A kept slot of another format (other costs) can not be opened by the wipe and duress secrets any more:
+            // their keys and their AAD are those of the old header. Like a reset key, in effect.
+            if (kept != null && !kept.sameFormatAs(header)) keyReset = true
             // Same key and salt: a duress slot this PIN opens would make it open two vaults.
-            if (!keyReset && keptSalt != null && opensDecoySlot(keys.decoyKek, salt)) {
+            if (!keyReset && kept != null && opensDecoySlot(keys.decoyKek, header)) {
                 return if (chargeMiss()) PinChange.IN_USE else PinChange.FAILED
             }
             val change = when {
-                keyReset && keptSalt != null -> WipeSlotChange.TURN_OFF_AND_TELL
-                keyReset || keptSalt == null -> WipeSlotChange.TURN_OFF
-                else -> wipeSlotChangeFor(keys.wipeKek, salt)
+                keyReset && kept != null -> WipeSlotChange.TURN_OFF_AND_TELL
+                keyReset || kept == null -> WipeSlotChange.TURN_OFF
+                else -> wipeSlotChangeFor(keys.wipeKek, header)
             }
             // The duress slot survives only what the wipe slot survives: same salt, same key.
             val decoyChange = when {
-                keyReset && keptSalt != null -> WipeSlotChange.TURN_OFF_AND_TELL
-                keyReset || keptSalt == null -> WipeSlotChange.TURN_OFF
+                keyReset && kept != null -> WipeSlotChange.TURN_OFF_AND_TELL
+                keyReset || kept == null -> WipeSlotChange.TURN_OFF
                 else -> WipeSlotChange.KEEP
             }
-            val written = writePinSlot(dek, keys.kek, salt, keySlot, SlotChanges(change, decoyChange))
+            val written = writePinSlot(dek, keys.kek, header, keySlot, SlotChanges(change, decoyChange))
             if (written) PinChange.SET else PinChange.FAILED
         } catch (_: CryptoException) {
             PinChange.FAILED
         } finally {
-            SensitiveDataCleaner.clear(salt)
+            SensitiveDataCleaner.clear(header.salt)
             keys.wipe()
         }
     }
@@ -318,34 +331,40 @@ public class AuthenticationManager(
     private fun attempt(pin: CharArray, purpose: Purpose): PinUnlock = synchronized(attemptLock) {
         if (remainingLockoutMillis() > 0) return PinUnlock.LockedOut
         val slot = store.getBytes(PIN_SLOT_KEY) ?: return PinUnlock.WrongPin
+        val parsed = SecretSlots.parse(slot)
+        // The slot this policy can try; any other is no slot of this vault's secret (see chargesForUnusableSlot).
+        val usable = parsed?.takeIf { policy.accepts(it.header) }
         try {
+            if (usable == null && !policy.chargesForUnusableSlot) return PinUnlock.WrongPin
             val previous = Misses(store.getInt(FAILURES_KEY, 0), store.getInt(STRIKES_KEY, 0))
             // Counted before the KDF: an attempt the app is killed during still counts.
             if (!chargeAttempt(previous.next())) return PinUnlock.Failed
-            if (!isWellFormed(pin)) return PinUnlock.WrongPin
-
-            val parsed = parseSlot(slot) ?: return PinUnlock.WrongPin
-            try {
+            // The caller's secret is copied (and the copy wiped) by the policy; a malformed one is a miss.
+            withCanonical(pin, PinUnlock.WrongPin) { secret ->
+                if (usable == null) return@withCanonical PinUnlock.WrongPin
                 val keys = try {
-                    derivePinKeys(pin, parsed.salt, activeKeySlot())
+                    derivePinKeys(secret, usable.header, activeKeySlot())
                 } catch (e: PinFactorException) {
                     // Not a guess: the hardware never answered. Give the attempt back.
                     refundAttempt(previous)
-                    return when {
+                    return@withCanonical when {
                         e.lost -> PinUnlock.KeyLost
                         e.unavailable -> PinUnlock.KeyStoreUnavailable
                         else -> PinUnlock.KeyStoreFailed
                     }
+                } catch (_: SecretStretchException) {
+                    // Not a guess either: the stretch could not run. Give the attempt back; trying again may work.
+                    refundAttempt(previous)
+                    return@withCanonical PinUnlock.KeyStoreFailed
                 }
                 try {
-                    checkSlots(pin, parsed, keys, Check(purpose, previous.strikes))
+                    checkSlots(secret, usable, keys, Check(purpose, previous.strikes))
                 } finally {
                     keys.wipe()
                 }
-            } finally {
-                parsed.wipe()
             }
         } finally {
+            parsed?.wipe()
             SensitiveDataCleaner.clear(slot)
         }
     }
@@ -357,33 +376,24 @@ public class AuthenticationManager(
      * counted as an attempt (the caller has the vault open and has checked the PIN), except
      * when refused for being another PIN; refused outright during a lockout.
      */
-    @Suppress("ReturnCount") // Fail-closed gates before the slot is written.
     public fun configureWipePin(wipePin: CharArray): WipePinChange = synchronized(attemptLock) {
-        if (!isWellFormed(wipePin) || remainingLockoutMillis() > 0) return WipePinChange.FAILED
-        val slot = store.getBytes(PIN_SLOT_KEY) ?: return WipePinChange.FAILED
-        val parsed = try {
-            parseSlot(slot)
-        } finally {
-            SensitiveDataCleaner.clear(slot)
-        } ?: return WipePinChange.FAILED
+        withSettableSecret(wipePin, WipePinChange.FAILED) { secret -> sealWipeSlotFor(secret) }
+    }
+
+    @Suppress("ReturnCount") // Fail-closed gates before the slot is written.
+    private fun sealWipeSlotFor(wipePin: CharArray): WipePinChange {
+        if (remainingLockoutMillis() > 0) return WipePinChange.FAILED
+        val parsed = readUsableSlot() ?: return WipePinChange.FAILED
         try {
             val keys = try {
-                derivePinKeys(wipePin, parsed.salt, activeKeySlot())
+                derivePinKeys(wipePin, parsed.header, activeKeySlot())
             } catch (_: PinFactorException) {
+                return WipePinChange.FAILED
+            } catch (_: SecretStretchException) {
                 return WipePinChange.FAILED
             }
             try {
-                // A wipe PIN that opens the PIN slot would only ever unlock.
-                val dek = openSlotOrNull(parsed, keys.kek)
-                if (dek != null) {
-                    SensitiveDataCleaner.clear(dek)
-                    return if (chargeMiss()) WipePinChange.SAME_AS_PIN else WipePinChange.FAILED
-                }
-                // Nor may it be the duress PIN, which opens the decoy vault first.
-                if (opensDecoySlot(keys.decoyKek, parsed.salt)) {
-                    return if (chargeMiss()) WipePinChange.IN_USE else WipePinChange.FAILED
-                }
-                writeWipeSlot(keys.wipeKek, parsed.salt)
+                return checkAndWriteWipeSlot(parsed, keys)
             } finally {
                 keys.wipe()
             }
@@ -392,9 +402,28 @@ public class AuthenticationManager(
         }
     }
 
+    private fun checkAndWriteWipeSlot(parsed: Parsed, keys: PinKeys): WipePinChange {
+        // A wipe PIN that opens the PIN slot would only ever unlock.
+        val dek = SecretSlots.open(parsed, keys.kek)
+        if (dek != null) SensitiveDataCleaner.clear(dek)
+        val refused = when {
+            dek != null -> WipePinChange.SAME_AS_PIN
+
+            // Nor may it be the duress PIN, which opens the decoy vault first.
+            opensDecoySlot(keys.decoyKek, parsed.header) -> WipePinChange.IN_USE
+
+            else -> null
+        }
+        return when {
+            refused == null -> writeWipeSlot(keys.wipeKek, parsed.header)
+            chargeMiss() -> refused
+            else -> WipePinChange.FAILED
+        }
+    }
+
     /** Turns the wipe PIN off: the wipe slot becomes a fresh decoy, as on a vault that never had one. */
     public fun removeWipePin(): Boolean {
-        val decoy = decoyWipeSlot()
+        val decoy = SecretSlots.wipeFiller(policy.slotVersion)
         return try {
             store.edit {
                 putBytes(WIPE_SLOT_KEY, decoy)
@@ -414,57 +443,78 @@ public class AuthenticationManager(
      * be left of an earlier decoy database, which nothing can open any more). Counted and refused
      * during a lockout like [configureWipePin].
      */
-    @Suppress("ReturnCount") // Fail-closed gates before the slot is written.
     public fun configureDuressPin(
         duressPin: CharArray,
         primaryDek: ByteArray,
         onNewVault: () -> Boolean,
-    ): DuressPinChange =
-        synchronized(attemptLock) {
-            if (!isWellFormed(duressPin) || primaryDek.size != DEK_LENGTH || remainingLockoutMillis() > 0) {
+    ): DuressPinChange = synchronized(attemptLock) {
+        withSettableSecret(duressPin, DuressPinChange.FAILED) { secret ->
+            sealDuressSlotFor(secret, primaryDek, onNewVault)
+        }
+    }
+
+    @Suppress("ReturnCount") // Fail-closed gates before the slot is written.
+    private fun sealDuressSlotFor(
+        duressPin: CharArray,
+        primaryDek: ByteArray,
+        onNewVault: () -> Boolean,
+    ): DuressPinChange {
+        if (primaryDek.size != DEK_LENGTH || remainingLockoutMillis() > 0) return DuressPinChange.FAILED
+        val parsed = readUsableSlot() ?: return DuressPinChange.FAILED
+        try {
+            val keys = try {
+                derivePinKeys(duressPin, parsed.header, activeKeySlot())
+            } catch (_: PinFactorException) {
+                return DuressPinChange.FAILED
+            } catch (_: SecretStretchException) {
                 return DuressPinChange.FAILED
             }
-            val slot = store.getBytes(PIN_SLOT_KEY) ?: return DuressPinChange.FAILED
-            val parsed = try {
-                parseSlot(slot)
-            } finally {
-                SensitiveDataCleaner.clear(slot)
-            } ?: return DuressPinChange.FAILED
             try {
-                val keys = try {
-                    derivePinKeys(duressPin, parsed.salt, activeKeySlot())
-                } catch (_: PinFactorException) {
-                    return DuressPinChange.FAILED
-                }
-                try {
-                    val dek = openSlotOrNull(parsed, keys.kek)
-                    if (dek != null) {
-                        SensitiveDataCleaner.clear(dek)
-                        return if (chargeMiss()) DuressPinChange.SAME_AS_PIN else DuressPinChange.FAILED
-                    }
-                    val wipeSlot = store.getBytes(WIPE_SLOT_KEY)
-                    val isWipePin = wipeSlot != null &&
-                        try {
-                            opensWipeSlot(wipeSlot, keys.wipeKek, parsed.salt)
-                        } finally {
-                            SensitiveDataCleaner.clear(wipeSlot)
-                        }
-                    if (isWipePin) return if (chargeMiss()) DuressPinChange.IN_USE else DuressPinChange.FAILED
-                    writeDuressSlot(keys.decoyKek, parsed.salt, primaryDek, onNewVault)
-                } finally {
-                    keys.wipe()
-                }
+                return checkAndWriteDuressSlot(parsed, keys, primaryDek, onNewVault)
             } finally {
-                parsed.wipe()
+                keys.wipe()
             }
+        } finally {
+            parsed.wipe()
         }
+    }
+
+    private fun checkAndWriteDuressSlot(
+        parsed: Parsed,
+        keys: PinKeys,
+        primaryDek: ByteArray,
+        onNewVault: () -> Boolean,
+    ): DuressPinChange {
+        val dek = SecretSlots.open(parsed, keys.kek)
+        if (dek != null) SensitiveDataCleaner.clear(dek)
+        val refused = when {
+            dek != null -> DuressPinChange.SAME_AS_PIN
+            opensStoredWipeSlot(keys.wipeKek, parsed.header) -> DuressPinChange.IN_USE
+            else -> null
+        }
+        return when {
+            refused == null -> writeDuressSlot(keys.decoyKek, parsed.header, primaryDek, onNewVault)
+            chargeMiss() -> refused
+            else -> DuressPinChange.FAILED
+        }
+    }
+
+    /** Whether [wipeKek] opens the stored wipe slot (a decoy never does). */
+    private fun opensStoredWipeSlot(wipeKek: ByteArray, header: SlotHeader): Boolean {
+        val wipeSlot = store.getBytes(WIPE_SLOT_KEY) ?: return false
+        return try {
+            SecretSlots.opensWipe(wipeSlot, wipeKek, header)
+        } finally {
+            SensitiveDataCleaner.clear(wipeSlot)
+        }
+    }
 
     /**
      * Turns the duress PIN off and forgets the decoy vault's key: both entries become random
      * bytes again, as on a vault that never had one. The caller then deletes the decoy database.
      */
     public fun removeDuressPin(): Boolean = synchronized(attemptLock) {
-        val slot = randomSlot()
+        val slot = randomSlot(policy.slotVersion)
         val key = randomSlot()
         try {
             store.edit {
@@ -516,8 +566,8 @@ public class AuthenticationManager(
         // The duress slot and the decoy key the same way: random bytes until a duress PIN is set.
         val needsDuress = hasPinSlot && (!store.contains(DECOY_SLOT_KEY) || !store.contains(DECOY_KEY_KEY))
         if (!needsDecoy && !needsKeySlot && !needsDuress) return true
-        val decoy = decoyWipeSlot()
-        val duressSlot = randomSlot()
+        val decoy = SecretSlots.wipeFiller(policy.slotVersion)
+        val duressSlot = randomSlot(policy.slotVersion)
         val decoyKey = randomSlot()
         return try {
             store.edit {
@@ -562,7 +612,43 @@ public class AuthenticationManager(
     /** The wipe-PIN erase is complete. */
     public fun clearPendingWipe(): Boolean = store.edit { remove(WIPE_PENDING_KEY) }
 
-    public fun hasPinSlot(): Boolean = store.contains(PIN_SLOT_KEY)
+    /**
+     * Whether the vault has a secret slot this policy can use. For the PIN (slot version 3) that is whether the entry
+     * exists, whatever it holds: a damaged slot still costs an attempt, as it always has. For the password (version 4)
+     * the slot must also be one the policy [accepts][UnlockSecretPolicy.accepts]: a version 3 slot, or a damaged or
+     * out-of-bounds one, is no secret slot on this platform, so the vault is opened by the recovery phrase and a
+     * new secret is set (or, with no recovery phrase, it is a damaged vault).
+     */
+    public fun hasPinSlot(): Boolean = store.contains(PIN_SLOT_KEY) &&
+        (policy.chargesForUnusableSlot || hasUsableSlot())
+
+    /**
+     * Whether the vault holds a secret slot entry of ANY format, usable or not. For "is there a vault at all" (a vault
+     * whose flags were lost is recognised by what it holds), not for what the lock screen offers: that is [hasPinSlot].
+     */
+    internal fun hasStoredSlotEntry(): Boolean = store.contains(PIN_SLOT_KEY)
+
+    private fun hasUsableSlot(): Boolean {
+        val parsed = readUsableSlot() ?: return false
+        parsed.wipe()
+        return true
+    }
+
+    /** What kind of secret this vault is unlocked with: what the lock screen asks for and Settings sets. */
+    public val secretKind: SecretKind get() = policy.kind
+
+    /** The most units a typed secret may have before it is refused unseen; see [UnlockSecretPolicy.maxTypedUnits]. */
+    public val maxTypedUnits: Int get() = policy.maxTypedUnits
+
+    /**
+     * Whether [typed] may be chosen as the vault's secret, the wipe secret or the duress secret, and if not why.
+     * Nothing is derived or counted. [typed] stays the caller's to wipe.
+     */
+    public fun checkNewSecret(typed: CharArray): SecretRule =
+        withCanonical(typed, SecretRule.INVALID) { secret -> policy.mayBeSet(secret) }
+
+    /** A fresh secret of this kind for the user to take, or null when this kind has none to offer (a PIN). */
+    public fun suggestSecret(): CharArray? = policy.suggest()
 
     public fun getAuthType(): AuthType {
         val ordinal = store.getInt(AUTH_TYPE_KEY, AuthType.NONE.ordinal)
@@ -634,23 +720,23 @@ public class AuthenticationManager(
      * slots; should it happen anyway, the order is PIN, duress, wipe: never the erase while a
      * PIN could also open a vault.
      */
-    private fun checkSlots(pin: CharArray, parsed: ParsedSlot, keys: PinKeys, check: Check): PinUnlock {
-        val dek = openSlotOrNull(parsed, keys.kek)
+    private fun checkSlots(secret: CharArray, parsed: Parsed, keys: PinKeys, check: Check): PinUnlock {
+        val dek = SecretSlots.open(parsed, keys.kek)
         // Both tried even when the PIN slot already opened: no early exit.
         val wipeSlot = store.getBytes(WIPE_SLOT_KEY)
         val wipeMatch = wipeSlot != null &&
             try {
-                opensWipeSlot(wipeSlot, keys.wipeKek, parsed.salt)
+                SecretSlots.opensWipe(wipeSlot, keys.wipeKek, parsed.header)
             } finally {
                 SensitiveDataCleaner.clear(wipeSlot)
             }
-        val decoyDek = openDecoySlotOrNull(keys.decoyKek, parsed.salt)
+        val decoyDek = openDecoySlotOrNull(keys.decoyKek, parsed.header)
         val matched = match(dek, decoyDek, wipeMatch, check.purpose)
         // Whatever was opened and not handed out is wiped here.
         if (dek != null && matched !is PinUnlock.Success) SensitiveDataCleaner.clear(dek)
         if (decoyDek != null && matched !is PinUnlock.Decoy) SensitiveDataCleaner.clear(decoyDek)
         return when (matched) {
-            null -> eraseVault(pin, parsed.salt, keys)
+            null -> eraseVault(secret, parsed.header, keys)
 
             is PinUnlock.Success -> {
                 store.edit {
@@ -691,19 +777,19 @@ public class AuthenticationManager(
      * lost. A store that cannot be written changes nothing and reports [PinUnlock.Failed]; the
      * key made for it is deleted again, so a failed erase leaves no extra Keystore key behind.
      */
-    private fun eraseVault(pin: CharArray, salt: ByteArray, keys: PinKeys): PinUnlock {
+    private fun eraseVault(secret: CharArray, header: SlotHeader, keys: PinKeys): PinUnlock {
         val keySlot = freshKeySlot(keys.keySlot)
-        val result = sealErasedVault(pin, salt, keys, keySlot)
+        val result = sealErasedVault(secret, header, keys, keySlot)
         if (result !is PinUnlock.Erased && keySlot != keys.keySlot) factor.delete(keySlot)
         return result
     }
 
     /** Phases 1 and 2 with the new key in [keySlot]; see [eraseVault]. */
-    private fun sealErasedVault(pin: CharArray, salt: ByteArray, keys: PinKeys, keySlot: PinKeySlot): PinUnlock {
+    private fun sealErasedVault(secret: CharArray, header: SlotHeader, keys: PinKeys, keySlot: PinKeySlot): PinUnlock {
         val kek = try {
-            val hardware = hardwareHalf(pin, salt, keySlot)
+            val hardware = hardwareHalf(secret, header.salt, keySlot)
             try {
-                expand(keys.stretched, hardware, salt, KEK_INFO)
+                expand(keys.stretched, hardware, header.salt, policy.kekInfo)
             } finally {
                 SensitiveDataCleaner.clear(hardware)
             }
@@ -711,13 +797,14 @@ public class AuthenticationManager(
             return PinUnlock.Failed
         }
         val dek = Crypto.randomBytes(DEK_LENGTH)
-        val decoy = decoyWipeSlot()
+        val decoy = SecretSlots.wipeFiller(policy.slotVersion)
         // The decoy vault goes with the erase: its slot and key become random bytes, and its
         // database is deleted with the old one (see SecurityManager.completePendingWipe).
-        val duressSlot = randomSlot()
+        val duressSlot = randomSlot(policy.slotVersion)
         val decoyKey = randomSlot()
         return try {
-            val slot = sealSlot(dek, kek, salt)
+            // The new slot has the header of the old one: the stretched half it is made from was made under it.
+            val slot = SecretSlots.seal(dek, kek, header)
             val erased = try {
                 store.edit {
                     putBytes(PIN_SLOT_KEY, slot)
@@ -751,13 +838,35 @@ public class AuthenticationManager(
     }
 
     /**
+     * The wipe and duress slots turned off with the notice, in one atomic store edit, exactly as a new slot after a
+     * reset key does (see [writePinSlot]); the PIN slot is left as it is. Best effort: the caller fails either way.
+     */
+    private fun turnOffDeadSlots(primaryDek: ByteArray) {
+        val wipe = SecretSlots.wipeFiller(policy.slotVersion)
+        val duress = randomSlot(policy.slotVersion)
+        val decoyKey = turnedOffDecoyKey(primaryDek)
+        try {
+            store.edit {
+                putBytes(WIPE_SLOT_KEY, wipe)
+                putBytes(DECOY_SLOT_KEY, duress)
+                putBytes(DECOY_KEY_KEY, decoyKey)
+                putBoolean(WIPE_NOTICE_KEY, true)
+            }
+        } finally {
+            SensitiveDataCleaner.clear(wipe)
+            SensitiveDataCleaner.clear(duress)
+            SensitiveDataCleaner.clear(decoyKey)
+        }
+    }
+
+    /**
      * For a new PIN whose wipe KEK is [wipeKek] (same salt, same key): the wipe slot stays only
      * if it exists and the new PIN does not open it, i.e. is not the wipe PIN.
      */
-    private fun wipeSlotChangeFor(wipeKek: ByteArray, salt: ByteArray): WipeSlotChange {
+    private fun wipeSlotChangeFor(wipeKek: ByteArray, header: SlotHeader): WipeSlotChange {
         val wipeSlot = store.getBytes(WIPE_SLOT_KEY) ?: return WipeSlotChange.TURN_OFF
         return try {
-            if (opensWipeSlot(wipeSlot, wipeKek, salt)) WipeSlotChange.TURN_OFF else WipeSlotChange.KEEP
+            if (SecretSlots.opensWipe(wipeSlot, wipeKek, header)) WipeSlotChange.TURN_OFF else WipeSlotChange.KEEP
         } finally {
             SensitiveDataCleaner.clear(wipeSlot)
         }
@@ -774,14 +883,14 @@ public class AuthenticationManager(
     private fun writePinSlot(
         dek: ByteArray,
         kek: ByteArray,
-        salt: ByteArray,
+        header: SlotHeader,
         keySlot: PinKeySlot,
         changes: SlotChanges,
     ): Boolean {
         val (change, decoyChange) = changes
-        val slot = sealSlot(dek, kek, salt)
-        val decoy = if (change == WipeSlotChange.KEEP) null else decoyWipeSlot()
-        val duressSlot = if (decoyChange == WipeSlotChange.KEEP) null else randomSlot()
+        val slot = SecretSlots.seal(dek, kek, header)
+        val decoy = if (change == WipeSlotChange.KEEP) null else SecretSlots.wipeFiller(header.version)
+        val duressSlot = if (decoyChange == WipeSlotChange.KEEP) null else randomSlot(header.version)
         // A dead duress slot is recorded in `decoy.key` (sealed again as turned off); without a
         // decoy vault it gets fresh random bytes instead, so the entry changes either way. A first
         // PIN (no salt yet) starts a vault without any decoy key either.
@@ -816,7 +925,7 @@ public class AuthenticationManager(
     @Suppress("ReturnCount")
     private fun writeDuressSlot(
         decoyKek: ByteArray,
-        salt: ByteArray,
+        header: SlotHeader,
         primaryDek: ByteArray,
         onNewVault: () -> Boolean,
     ): DuressPinChange {
@@ -825,7 +934,7 @@ public class AuthenticationManager(
         if (kept == null && !onNewVault()) return DuressPinChange.FAILED
         val decoyDek = kept ?: Crypto.randomBytes(DEK_LENGTH)
         return try {
-            val duressSlot = sealDecoy(decoyDek, decoyKek, decoySlotAad(salt))
+            val duressSlot = SecretSlots.sealDuress(decoyDek, decoyKek, header)
             val decoyKey = sealDecoyKey(decoyDek, primaryDek)
             val written = try {
                 store.edit {
@@ -848,9 +957,9 @@ public class AuthenticationManager(
         }
     }
 
-    private fun writeWipeSlot(wipeKek: ByteArray, salt: ByteArray): WipePinChange {
+    private fun writeWipeSlot(wipeKek: ByteArray, header: SlotHeader): WipePinChange {
         val wipeSlot = try {
-            sealWipeSlot(wipeKek, salt)
+            SecretSlots.sealWipe(wipeKek, header)
         } catch (_: CryptoException) {
             return WipePinChange.FAILED
         }
@@ -869,18 +978,30 @@ public class AuthenticationManager(
     private fun activeKeySlot(): PinKeySlot =
         PinKeySlot.entries.getOrNull(store.getInt(KEY_SLOT_KEY, PinKeySlot.A.ordinal)) ?: PinKeySlot.A
 
-    /** The salt of the current PIN slot, kept across PIN changes; null without a readable slot. */
-    private fun currentSalt(): ByteArray? {
+    /**
+     * The header (with a copy of the salt, the caller's to wipe) of the current PIN slot, whose salt is kept across
+     * PIN changes; null without a slot this policy can read.
+     */
+    private fun currentHeader(): SlotHeader? {
+        val parsed = readUsableSlot() ?: return null
+        val header = parsed.header.copy()
+        parsed.wipe()
+        return header
+    }
+
+    /** The current PIN slot cut apart, or null when there is none or this policy does not accept it. */
+    private fun readUsableSlot(): Parsed? {
         val slot = store.getBytes(PIN_SLOT_KEY) ?: return null
         val parsed = try {
-            parseSlot(slot)
+            SecretSlots.parse(slot)
         } finally {
             SensitiveDataCleaner.clear(slot)
         }
-        return parsed?.let {
-            val salt = it.salt.copyOf()
-            it.wipe()
-            salt
+        return if (parsed != null && policy.accepts(parsed.header)) {
+            parsed
+        } else {
+            parsed?.wipe()
+            null
         }
     }
 
@@ -913,30 +1034,47 @@ public class AuthenticationManager(
         }
     }
 
-    private fun isWellFormed(pin: CharArray): Boolean =
-        pin.size in MIN_PIN_LENGTH..MAX_PIN_LENGTH && pin.all { it in '0'..'9' }
+    /**
+     * [block] with the canonical form of [typed], wiped after it on every path; [refused] when [typed] can not be a
+     * secret of this policy's kind. [typed] itself is never touched: it stays the caller's to wipe.
+     */
+    private inline fun <T> withCanonical(typed: CharArray, refused: T, block: (CharArray) -> T): T {
+        val secret = policy.canonical(typed) ?: return refused
+        try {
+            return block(secret)
+        } finally {
+            SensitiveDataCleaner.clear(secret)
+        }
+    }
+
+    /** [withCanonical] for a secret that is being chosen: [refused] also when the policy says it may not be set. */
+    private inline fun <T> withSettableSecret(typed: CharArray, refused: T, block: (CharArray) -> T): T =
+        withCanonical(typed, refused) { secret ->
+            if (policy.mayBeSet(secret) == SecretRule.OK) block(secret) else refused
+        }
 
     /**
-     * One KDF run for both slots. [PinFactorException] leaves nothing behind; the result is
-     * the caller's to wipe.
+     * One KDF run for both slots. [PinFactorException] (the device factor) and [SecretStretchException] (the stretch)
+     * leave nothing behind; the result is the caller's to wipe.
      */
-    private fun derivePinKeys(pin: CharArray, salt: ByteArray, keySlot: PinKeySlot): PinKeys {
+    private fun derivePinKeys(secret: CharArray, header: SlotHeader, keySlot: PinKeySlot): PinKeys {
+        val salt = header.salt
         // The hardware half first: it is cheap, and a lost key fails before the PBKDF2 cost.
-        val hardware = hardwareHalf(pin, salt, keySlot)
+        val hardware = hardwareHalf(secret, salt, keySlot)
         var stretched: ByteArray? = null
         var ikm: ByteArray? = null
         var made = false
         try {
             // A throw from the KDF or the HKDF leaves nothing behind: the hardware half is wiped below, and the
             // stretched key unless it went into the result.
-            val derived = pbkdf2(pin, salt).also { stretched = it }
+            val derived = policy.stretch(secret, header).also { stretched = it }
             val material = (derived + hardware).also { ikm = it }
             val keys = PinKeys(
                 keySlot = keySlot,
                 stretched = derived,
-                kek = Hkdf.sha256(ikm = material, salt = salt, info = KEK_INFO, length = DEK_LENGTH),
-                wipeKek = Hkdf.sha256(ikm = material, salt = salt, info = WIPE_INFO, length = DEK_LENGTH),
-                decoyKek = Hkdf.sha256(ikm = material, salt = salt, info = DECOY_INFO, length = DEK_LENGTH),
+                kek = Hkdf.sha256(ikm = material, salt = salt, info = policy.kekInfo, length = DEK_LENGTH),
+                wipeKek = Hkdf.sha256(ikm = material, salt = salt, info = policy.wipeInfo, length = DEK_LENGTH),
+                decoyKek = Hkdf.sha256(ikm = material, salt = salt, info = policy.decoyInfo, length = DEK_LENGTH),
             )
             made = true
             return keys
@@ -949,29 +1087,32 @@ public class AuthenticationManager(
 
     /**
      * One KDF run over [pin] with a random salt, result thrown away: what a decoy session spends before it
-     * refuses to change a PIN, so that the refusal takes as long as the real vault's own work. Nothing is
+     * refuses to change a PIN, so that the refusal takes as long as the real vault's own work. It takes the real
+     * vault's decision first (a secret that cannot be typed or may not be set is refused at once, with no KDF, as
+     * there), so the two cost the same for every input. Nothing is
      * read from or written to the store, and a failing key store is no different from a working one here.
      * [pin] stays the caller's to wipe.
      */
     internal fun spendPinCost(pin: CharArray) {
-        if (!isWellFormed(pin)) return
-        val salt = Crypto.randomBytes(PIN_SALT_SIZE)
-        try {
-            derivePinKeys(pin, salt, activeKeySlot()).wipe()
-        } catch (_: PinFactorException) {
-            // The cost was spent up to the failure: nothing else to do.
-        } catch (_: CryptoException) {
-            // Same.
-        } finally {
-            SensitiveDataCleaner.clear(salt)
+        withSettableSecret(pin, Unit) { secret ->
+            val header = policy.newHeader(Crypto.randomBytes(PIN_SALT_SIZE))
+            try {
+                derivePinKeys(secret, header, activeKeySlot()).wipe()
+            } catch (_: PinFactorException) {
+                // The cost was spent up to the failure: nothing else to do.
+            } catch (_: SecretStretchException) {
+                // Same.
+            } catch (_: CryptoException) {
+                // Same.
+            } finally {
+                SensitiveDataCleaner.clear(header.salt)
+            }
         }
     }
 
     /** HMAC of `salt ‖ pin` under the key in [keySlot]; the caller wipes the result. */
-    private fun hardwareHalf(pin: CharArray, salt: ByteArray, keySlot: PinKeySlot): ByteArray {
-        val macInput = ByteArray(salt.size + pin.size)
-        salt.copyInto(macInput)
-        pin.forEachIndexed { index, c -> macInput[salt.size + index] = c.code.toByte() }
+    private fun hardwareHalf(secret: CharArray, salt: ByteArray, keySlot: PinKeySlot): ByteArray {
+        val macInput = policy.factorInput(secret, salt)
         return try {
             factor.mac(keySlot, macInput)
         } finally {
@@ -988,21 +1129,18 @@ public class AuthenticationManager(
         }
     }
 
-    private fun pbkdf2(pin: CharArray, salt: ByteArray): ByteArray =
-        Crypto.pbkdf2HmacSha256(pin, salt, PBKDF2_ITERATIONS, DEK_LENGTH)
-
     /** Whether [decoyKek] opens the duress slot; the DEK it holds is wiped at once. */
-    private fun opensDecoySlot(decoyKek: ByteArray, salt: ByteArray): Boolean {
-        val dek = openDecoySlotOrNull(decoyKek, salt) ?: return false
+    private fun opensDecoySlot(decoyKek: ByteArray, header: SlotHeader): Boolean {
+        val dek = openDecoySlotOrNull(decoyKek, header) ?: return false
         SensitiveDataCleaner.clear(dek)
         return true
     }
 
     /** The decoy DEK in the duress slot, or null when [decoyKek] does not open it. */
-    private fun openDecoySlotOrNull(decoyKek: ByteArray, salt: ByteArray): ByteArray? {
+    private fun openDecoySlotOrNull(decoyKek: ByteArray, header: SlotHeader): ByteArray? {
         val slot = store.getBytes(DECOY_SLOT_KEY) ?: return null
         return try {
-            openDecoy(slot, decoyKek, decoySlotAad(salt))
+            SecretSlots.openDuress(slot, decoyKek, header)
         } finally {
             SensitiveDataCleaner.clear(slot)
         }
@@ -1136,14 +1274,8 @@ public class AuthenticationManager(
         public const val STRIKE_GRACE: Int = 5
         private const val MAX_DOUBLINGS = 12
 
-        private const val PBKDF2_ITERATIONS = 600_000
-
         /** What [deviceKeyLost] asks the hardware to sign: any bytes will do, the answer is thrown away. */
         private val KEY_PROBE = "encly/key/probe/v1".encodeToByteArray()
-
-        private val KEK_INFO = "encly/pin/kek/v3".encodeToByteArray()
-        private val WIPE_INFO = "encly/pin/wipe/v3".encodeToByteArray()
-        private val DECOY_INFO = "encly/pin/decoy/v3".encodeToByteArray()
 
         /** Every other way back to an erased vault's DEK: recovery, backup-key and biometric slots. */
         private val ERASED_PREFIXES = listOf(
