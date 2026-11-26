@@ -138,7 +138,10 @@ flatpak install --user ./encly-*.flatpak   # any distribution with Flatpak
 ```
 
 The Flatpak has no network and no file-system permission; it talks to the Secret Service (GNOME
-Keyring, KWallet) for the device half of the vault key, so one of them must be running. On Linux
+Keyring, KWallet, KeePassXC) for the device half of the vault key, so one of them must be running; Encly checks it when
+onboarding starts and asks it to unlock or create its keyring in its own dialog. Encly needs an X11 display (XWayland on
+a Wayland session): without one it writes an error to stderr, sends a desktop notification and exits. Links open through
+the desktop portal, then `xdg-open` (outside a sandbox only). On Linux
 the vault is unlocked with a passphrase instead of a PIN: see
 [SECURITY.md](SECURITY.md#desktop).
 

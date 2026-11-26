@@ -147,8 +147,11 @@ three secret-derived slots are different: they are **slot version 4**. The recov
   normalisation to Unicode NFC (an emoji counts once), not only digits (digits of any script), with at least 5 distinct
   code points. Text with an unpaired surrogate is refused. NFC means that the same text typed with precomposed or
   decomposed letters, which keyboards and systems differ on, gives the same key.
-- **To unlock:** anything from 1 to 256 UTF-16 units is accepted and checked, so tightening the rule for setting a
-  passphrase can never lock anyone out. What is outside that range is a wrong attempt, counted like any other.
+- **To unlock:** what is typed is taken only up to 768 UTF-16 units (128 code points times the 6 units that one
+  character can take when written decomposed), then turned to NFC; anything from 1 to 256 UTF-16 units of that NFC form
+  is accepted and checked, so tightening the rule for setting a passphrase can never lock anyone out. What is outside
+  that range is a wrong attempt, counted like any other. When a passphrase is being **set**, an NFC form of more than
+  128 code points (but within the 768 units typed) is reported as too long, not as one that cannot be used.
 - **Suggest a passphrase** is offered wherever a new passphrase is chosen (onboarding, the new passphrase that a recovery-phrase unlock asks for, *Change passphrase*, the wipe passphrase and the duress passphrase). It gives five words drawn independently and uniformly from the
   2048-word BIP39 English list by the system's random generator (rejection sampling, so no word is likelier than
   another): 55 bits. The words are not the recovery phrase and are shown as such.
@@ -230,7 +233,7 @@ opens nothing, and a copy of the vault files alone cannot be attacked.
 |---|---|
 | Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\pasichdev\Encly\` (the data folder, not the install folder `%LOCALAPPDATA%\Programs\Encly`, so an upgrade or uninstall of the app does not touch it; local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
 | macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
-| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1` (`pin-factor-v1-b` for the second key slot) and `vault` = the absolute path of the data folder, so the secret is per OS user, per key slot and per data directory. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the passphrase cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure, not a lost key: the lock screen, the passphrase setup in onboarding and the passphrase change in Settings say "Unlock your system keyring and try again", and the attempt that met it is not counted. Encly calls `Unlock` on the collection and accepts only an answer that needs no prompt: when the service wants to ask the user (a prompt), Encly reports the keyring as unavailable and shows no prompt of its own. |
+| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1` (`pin-factor-v1-b` for the second key slot) and `vault` = the absolute path of the data folder, so the secret is per OS user, per key slot and per data directory. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the passphrase cannot be used; there is no fallback to a file. A locked default keyring, or a service that is not running, is a temporary failure, not a lost key: the lock screen, the passphrase setup in onboarding and the passphrase change in Settings say what is missing (for a locked keyring "Unlock your system keyring and try again"), and the attempt that met it is not counted. Encly calls `Unlock` on the collection and, when the service answers with a prompt, runs it (`Prompt.Prompt`, then waits for the `Completed` signal) and the service shows its own dialog; the wait is at most 120 seconds, and a lock of the vault dismisses the prompt (`Prompt.Dismiss`) and ends the wait. A prompt that is dismissed, left unanswered or ended by a lock reports the keyring as unavailable. A missing default collection is created through the service (`CreateCollection`, which prompts); reading and writing the item run the prompts the service asks for, and onboarding checks all of this before a secret is chosen. Deleting the item never prompts: a locked keyring leaves it. An item that is not found is not treated as a lost key on Linux (the item may be in another keyring, in one that is closed, or under another data folder): the lock screen says the key was not found and offers *Try again*, the recovery phrase when there is one, and, as the last resort, a hold-to-confirm wipe; nothing is counted. On Windows and macOS, whose builds are not published, a missing secret is still a lost key. |
 
 The second key slot (used after a wipe-passphrase unlock) keeps its own secret under the same names with a `-b` suffix.
 
@@ -240,18 +243,24 @@ domain user; that is part of the desktop trust boundary below. On macOS the data
 (the sticky `com.apple.metadata:com_apple_backup_excludeItem` attribute, set at every start).
 
 A secret that is missing or can no longer be read (a reset or replaced keyring, a new OS account, a profile restored
-elsewhere) is the same state as a lost Keystore key above: the passphrase no longer unlocks, the lock screen says so, and
-the recovery phrase is needed; after it a new passphrase is set (and a new device secret is made). Without a recovery
-phrase the vault cannot be opened. A store that is only locked or not running is a temporary failure, not a lost key.
+elsewhere) leaves the passphrase unable to unlock, as a lost Keystore key above does, and the recovery phrase is the way
+in; after it a new passphrase is set (and a new device secret is made). On Linux the lock screen says that the key was
+not found and does not call it lost (see the Linux row above); an item that is there but has the wrong size is still a
+lost key. Without a recovery phrase the vault cannot be opened, and the wipe is the only way on. A store that is only locked or
+not running is a temporary failure, not a lost key.
 
 Because the Linux secret is tied to the data directory, a vault that is moved to another path, opened with a changed
-`XDG_DATA_HOME`, or copied between the `.deb` and the Flatpak (their data folders differ) finds no item and behaves like
-a lost key: only the recovery phrase opens it, and a new passphrase makes a new secret for the new place.
+`XDG_DATA_HOME`, or copied between the `.deb` and the Flatpak (their data folders differ) finds no item: the key is
+reported as not found, *Try again* can succeed only if the item comes back, and otherwise only the recovery phrase opens
+it; a new passphrase then makes a new secret for the new place.
 
-**Erase all data** deletes the device secret from the store, but the deletion never reports a failure: with the keyring
-locked or not running, the erase succeeds and the item stays, without telling the user. It is only the device half, which
-is useless without the deleted vault, but to remove it, delete the item whose `application` attribute is
-`com.pasich.encly` (and `vault` the old data folder) in your keyring program (Passwords and Keys, KWalletManager,
+A new vault always makes a new device secret, replacing an item of the same name that an earlier erase could not delete,
+so the secret of an erased vault is never adopted by the next one.
+
+**Erase all data** deletes the device secret from the store, but the deletion never reports a failure and never prompts:
+with the keyring locked or not running, the erase succeeds and the item stays, without telling the user. It is only the
+device half, which is useless without the deleted vault, but to remove it, delete the item whose `application` attribute
+is `com.pasich.encly` (and `vault` the old data folder) in your keyring program (Passwords and Keys, KWalletManager,
 KeePassXC).
 
 This key is **software-bound to the OS user account, not hardware-bound**. It does not sit in a StrongBox, a TEE or a
@@ -336,7 +345,17 @@ Once written, the file is outside Encly's control.
 **Locking on Linux.** The vault locks on every lock that the session reports (logind's `Lock`, `PrepareForSleep` and
 `LockedHint`, and the `ActiveChanged` of the freedesktop, GNOME, Cinnamon and MATE screen savers), including every later one after a locker that
 never says it has ended (swaylock, or i3lock through xss-lock). logind is asked for the state rather than trusted to
-report its end, so a later lock is never swallowed as a repeat of one that is long over.
+report its end, so a later lock is never swallowed as a repeat of one that is long over. A screen saver whose bus name
+nobody owns is counted as not there (asked with `NameHasOwner`, not read and failed); one that is there and then fails
+to answer leaves the state unknown, and unknown is not read as unlocked. A "locked" that only a signal set, and that the
+OS cannot confirm, is dropped after 3 unanswered questions in a row spread over at least 30 seconds; a later lock report
+starts the count again. That cannot leave the vault open: the vault is closed by the lock signal itself, and the flag
+only decides whether an unlock typed into Encly's own window may complete, which behind a real lock screen cannot be
+typed. logind's `Lock`, `Unlock` and `PrepareForSleep` are taken only from this session's object path (from any
+session's, when this one cannot be found) and from the manager, and only when the sender is the current owner of
+`org.freedesktop.login1`; when the owner cannot be asked the signal is taken anyway, because a lock that is dropped
+leaves more open than one that is heard wrongly. Root is outside what this covers, and a locker that reports
+nothing is still not detected (see above).
 
 **A forced new secret.** While an unlock by the recovery phrase still owes a new passphrase (or the choice to keep the old
 one), the app cannot be taken past that screen from another window, and menu and keyboard commands other than Lock are
@@ -871,7 +890,9 @@ passphrase, and there is no biometric option):
 
 Changes that strengthen protection (a shorter or equal delay, strict keyboard on, previews off,
 screenshots blocked again) never ask. The switch keeps its old value until the change is applied,
-so a cancel or a wrong PIN leaves it. The change is held in memory only and is discarded, not
+so a cancel or a wrong PIN leaves it. A check that fails because the device key store did not answer (a locked or
+missing keyring, a key not found) says so and does not say the secret is wrong; as before, such an attempt is given back and
+not counted against the vault's attempts. The change is held in memory only and is discarded, not
 applied, by a cancel and by any lock between the request and the PIN, as for the screenshots
 allowance. A full backup restore applies the stored settings without asking: it already needs
 the recovery phrase and the same re-authentication.

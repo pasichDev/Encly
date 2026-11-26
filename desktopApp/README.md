@@ -28,15 +28,23 @@ The details and the limits are in [SECURITY.md](../SECURITY.md#desktop); this is
   *Unlock*; it never shows or stores how long your passphrase is. The wipe passphrase and the duress passphrase follow
   the same rule, and keep working after you change the passphrase unless the stored slot had a different format or costs
   (then both are turned off and the app says so). There is no biometric unlock.
-- **A Secret Service must be running** (GNOME Keyring, KWallet or KeePassXC, with its default keyring unlocked). It
-  keeps the device secret that is mixed into your passphrase, so a copy of the vault files alone is useless. There is no
-  fallback to a file: without a Secret Service Encly cannot unlock, and says "Unlock your system keyring and try again"
-  without counting the attempt.
+- **A Secret Service must be running** (GNOME Keyring, KWallet or KeePassXC). It keeps the device secret that is mixed
+  into your passphrase, so a copy of the vault files alone is useless. Encly checks it at the start of onboarding and
+  asks it to unlock its default keyring, or to create one, through the service's own dialog (waited for at most
+  120 seconds, and closed when the vault locks). There is no fallback to a file: without a Secret Service, or with a
+  keyring that stays locked, Encly cannot unlock, and says what is missing (for example "Unlock your system keyring and
+  try again") without counting the attempt.
+- **An X11 display is required** (XWayland on a Wayland session). On a Wayland session without XWayland Encly writes an
+  error to stderr, sends a desktop notification (the portal's, then `notify-send`) and exits. Links open through the
+  OpenURI portal, then `xdg-open`; AWT's browser call is used only outside a sandbox.
 - **If the keyring is reset or replaced** (a new keyring, a new OS account, the home directory restored without it, the
   vault copied to another computer). The secret is also tied to the data folder, so a vault moved to another path, a
   changed `XDG_DATA_HOME`, or a `.deb` vault copied into the Flatpak's folder (or the reverse) finds no secret either. In
-  all of these the passphrase no longer unlocks. Use your **recovery phrase** on the lock screen,
-  then set a new passphrase. Without a recovery phrase there is no way back, so keep the one that onboarding offers.
+  all of these the passphrase no longer unlocks. On Linux the lock screen says the key was not found, which does not by
+  itself mean it is gone for good: try again (for example after unlocking, or switching back to the keyring that holds
+  it), or use your **recovery phrase** on the lock screen, then set a new passphrase; a wipe, held to confirm, is the
+  last resort. Without a recovery phrase and without the keyring that holds the secret there is no way back, so keep
+  the phrase that onboarding offers.
 - **The strength is the passphrase's.** Argon2id makes each guess about nine times dearer than the PBKDF2 of the phone
   PIN, and does not make a short passphrase safe: use a long one.
 - Unlocking takes a moment and about 64 MiB of memory; if the computer cannot give it, Encly reports a failure of the key
@@ -228,6 +236,7 @@ The sandbox permissions are the minimum the app needs, and there is no network:
 | (none for files) | files are chosen with the FileChooser portal and arrive through the document portal; there is no `--filesystem` |
 | `--socket=x11`, `--share=ipc` | the bundled Java runtime draws through X11 only (XWayland on a Wayland session) |
 | `--device=dri` | OpenGL rendering of Compose (Skiko) |
+| `--socket=cups` | printing a note: the runtime's libcups reaches the host's print service through it; no network is shared |
 | `--talk-name=org.freedesktop.secrets` | the device-bound half of the vault key lives in the Secret Service |
 | `--talk-name=org.freedesktop.ScreenSaver`, `org.gnome.ScreenSaver`, `org.cinnamon.ScreenSaver`, `org.mate.ScreenSaver` | lock when the desktop's screen saver locks the session |
 | `--system-talk-name=org.freedesktop.login1` | lock on logind's `Lock` and on suspend |
