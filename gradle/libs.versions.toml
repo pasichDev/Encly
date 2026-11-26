@@ -49,6 +49,8 @@ iconsLucide = "1.1.0"
 jna = "5.19.1"
 dbusJava = "5.2.2"
 slf4j = "2.0.20"
+# Argon2id for the desktop password (MIT licence): only in the desktopMain source set of :core:keystore.
+bouncycastle = "1.86"
 # The desktop PDF writer and printer (Apache-2.0): builds the document in memory, with no network code.
 pdfbox = "3.0.8"
 # Arabic letter shaping and the bidirectional algorithm for the PDF (Unicode License): PDFBox has neither.
@@ -119,6 +121,7 @@ jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbusJava" }
 dbus-java-transport = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbusJava" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
+bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 icons-lucide = { module = "com.composables:icons-lucide", version.ref = "iconsLucide" }
