@@ -23,6 +23,9 @@ finish-args:
   - --share=ipc
   # Skiko (Compose's renderer) draws with OpenGL.
   - --device=dri
+  # Printing a note: the runtime's libcups reaches the host's print service through this socket and nothing else
+  # (no network is shared). Without it the print dialog finds no printer.
+  - --socket=cups
   # The device-bound half of the vault key, in the Secret Service (:core:keystore).
   - --talk-name=org.freedesktop.secrets
   # Lock when the session locks: the screen savers' ActiveChanged signal on the session bus ...

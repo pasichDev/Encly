@@ -25,6 +25,8 @@ anchor='    configure)'
 # The inserted line. Its presence marks a patched package.
 insert='        [ -d /usr/share/desktop-directories ] || mkdir -m 0755 -p /usr/share/desktop-directories'
 
+# Kept as given: the fakeroot session below starts this script again with the same arguments.
+args=("$@")
 in_place=false
 if [ "${1:-}" = "--in-place" ]; then in_place=true; shift; fi
 in="${1:?usage: harden-postinst.sh [--in-place] <in.deb> [<out.deb>]}"
@@ -43,7 +45,7 @@ else
 fi
 
 # dpkg-deb -R and -b must see the same (faked) file ownership: run everything inside one fakeroot session.
-if [ -z "${FAKEROOTKEY:-}" ]; then exec fakeroot -- "$0" "$@"; fi
+if [ -z "${FAKEROOTKEY:-}" ]; then exec fakeroot -- "$0" "${args[@]}"; fi
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
