@@ -195,6 +195,24 @@ terms precise and consistent within a language: *PIN*, *recovery phrase* / *seed
 (the 12 BIP39 words), *vault*, *encryption*, *biometrics*. Never put seed words or other secrets
 into resources.
 
+**Security wording:** a changed string about the vault, the PIN, the duress PIN, the wipe PIN, the
+recovery phrase or backups is checked by the maintainer before the Weblate pull request that
+carries it is merged. In the diff of that pull request look for:
+
+- the meaning is the same as the English text: a warning is not softened, a consequence (data is
+  erased, the phrase cannot be recovered) is not dropped, and nothing is added that the app does not do;
+- the terms match the style above and the other strings of that language, and the duress PIN and
+  the wipe PIN are not mixed up with the normal PIN or with each other;
+- format arguments (`%d`, `%s`, `%1$s`) are the same as in English,
+  and no seed word, PIN or other secret appears in a string.
+
+CI already enforces that the keys and the format arguments match English (see the rules above); it
+cannot judge meaning, so this check is done by reading. To change the English text of such a string,
+edit `values/` in a normal pull request; the translations are then reviewed the same way.
+
+How to merge, resolve a conflict in or reset a Weblate pull request:
+[docs/weblate-maintenance.md](docs/weblate-maintenance.md).
+
 ## Releasing
 
 (Maintainers.) Three channels ship the same source and the same application ID
