@@ -266,8 +266,9 @@ private fun PinFlowEntry(text: PinStepText, state: PinFlowState, onSubmit: () ->
         compact = true,
         bodyAtBottom = true,
         modifier = modifier,
-    ) {
+    ) { fit ->
         PinEntry(
+            fit = fit,
             entered = state.input.length,
             error = message != null && state.input.length == 0,
             shakeKey = state.shakeKey,

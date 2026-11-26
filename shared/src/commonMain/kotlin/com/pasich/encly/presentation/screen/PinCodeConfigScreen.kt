@@ -361,8 +361,9 @@ private fun MainPinContent(
         subtitleTicks = text.ticking,
         compact = entry.compact,
         bodyAtBottom = true,
-    ) {
+    ) { fit ->
         PinEntry(
+            fit = fit,
             entered = entered,
             error = message != null && entered == 0,
             shakeKey = entry.shakeKey,

@@ -99,8 +99,9 @@ private fun ReauthPinEntry(reauth: ReauthFlow, step: BackupStep.Reauth, entry: R
         subtitleTicks = entry.lockedOut,
         bodyAtBottom = true,
         modifier = Modifier.fillMaxSize(),
-    ) {
+    ) { fit ->
         PinEntry(
+            fit = fit,
             entered = input.length,
             error = entry.hasError && input.length == 0,
             shakeKey = step.failures,

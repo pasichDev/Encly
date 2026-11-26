@@ -113,8 +113,9 @@ private fun PinLockContent(form: LockFormState, capabilities: LockCapabilities, 
         subtitleIsError = form.lockedOut || shownError != null,
         subtitleTicks = form.lockedOut,
         busy = busy,
-    ) {
+    ) { fit ->
         PinEntry(
+            fit = fit,
             // The PIN is taken out of the form for the check; keep the dots as they were meanwhile.
             entered = if (busy) form.submittedLength else form.pinLength,
             error = shownError != null && form.pinLength == 0,
