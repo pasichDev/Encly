@@ -245,14 +245,15 @@ private class LogindLockSignals : OsLockSignals {
 
     override val asksTheOs: Boolean get() = true
 
-    override fun liveLocked(): Boolean {
-        // Bounded: a bus that does not answer must not hold up the unlock that asks.
-        val answer = reader.submit(Callable { live.isLocked() })
+    override fun liveLocked(): Boolean? {
+        // Bounded: a bus that does not answer must not hold up the unlock that asks. No answer is unknown (null), never
+        // "unlocked": the caller decides what unknown means (see DesktopDeviceLockWatcher.isDeviceLocked).
+        val answer = reader.submit(Callable { live.state() })
         return try {
             answer.get(READ_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
         } catch (_: Exception) {
             answer.cancel(true)
-            false
+            null
         }
     }
 

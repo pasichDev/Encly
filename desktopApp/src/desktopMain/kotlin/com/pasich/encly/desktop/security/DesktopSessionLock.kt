@@ -23,13 +23,16 @@ fun interface OsLockSignals {
      * Whether the session is locked right now, read from the OS, or null when this OS only reports changes through
      * [start] (the last reported change is then the state). A source that reports changes some lockers never send
      * (a lock that starts and is never told it ended) must answer here, or its last change stays the state for good.
+     * A source that can be asked ([asksTheOs]) answers null for "could not be read this time" (a timeout, an error);
+     * that is unknown, never "unlocked" (see [DesktopDeviceLockWatcher.isDeviceLocked]).
      */
     fun liveLocked(): Boolean? = null
 
     /**
-     * True when the OS can be asked ([liveLocked] never answers null) and so the last reported change is not the
-     * state: a locker that never says it ended (Linux: swaylock, i3lock through xss-lock) leaves the last report at
-     * "locked" for good. Every report of a lock is then a lock to act on, not only the first after an unlocked one.
+     * True when the OS can be asked ([liveLocked] answers null only when a read failed) and so the last reported
+     * change is not the state: a locker that never says it ended (Linux: swaylock, i3lock through xss-lock) leaves
+     * the last report at "locked" for good. Every report of a lock is then a lock to act on, not only the first after
+     * an unlocked one.
      */
     val asksTheOs: Boolean get() = false
 
@@ -67,21 +70,35 @@ class SleepDetector(private val clocks: () -> Clocks?, private val minSleepMilli
 }
 
 /**
- * What Linux can be asked about the session being locked, each source `null` when it cannot be read: logind's
+ * What Linux can be asked about the session being locked, each source `null` when it is not there: logind's
  * `LockedHint` of the session (kept right by most lockers: swaylock, hyprlock, i3lock through xss-lock and the
- * desktops' own), and whether a desktop screen saver is active. Locked when any source says so. A source that throws
- * answers "not locked": an unreadable state must not keep the vault from opening.
+ * desktops' own), and whether a desktop screen saver is active. [isLocked]: locked when any source says so; a source
+ * that throws answers "not locked" there. [state] keeps what [isLocked] cannot say: a source that threw, with no other
+ * saying "locked", leaves the state unknown (null), which the caller must not read as "unlocked".
  */
 class LinuxLiveLock(private val lockedHint: () -> Boolean?, private val screenSaversActive: List<() -> Boolean?>) {
+    /** What a source says: false when it is not there, null when reading it failed. */
     @Suppress("TooGenericExceptionCaught")
-    private fun says(source: () -> Boolean?): Boolean = try {
-        source() == true
+    private fun read(source: () -> Boolean?): Boolean? = try {
+        source() ?: false
     } catch (_: Exception) {
-        false
+        null
     }
+
+    private fun says(source: () -> Boolean?): Boolean = read(source) == true
 
     /** Whether the session is locked now. */
     fun isLocked(): Boolean = says(lockedHint) || screenSaversActive.any(::says)
+
+    /** True when any source says locked; null when none does and at least one could not be read; false otherwise. */
+    fun state(): Boolean? {
+        val answers = (listOf(lockedHint) + screenSaversActive).map(::read)
+        return when {
+            true in answers -> true
+            null in answers -> null
+            else -> false
+        }
+    }
 }
 
 /**
@@ -165,7 +182,10 @@ class DesktopDeviceLockWatcher(
         }
     }
 
-    // Where the OS can be asked, it is: the last signal can be stale for good (a locker that never says it ended).
+    // Where the OS can be asked, it is: the last signal can be stale for good (a locker that never says it ended). When
+    // it cannot answer this time (a timeout, an error: null) the state is unknown and the last report stands, so a
+    // slow bus never turns a known "locked" into "unlocked". Unknown is not forced to "locked" here: a read that fails
+    // every time would then refuse every unlock for good.
     override fun isDeviceLocked(): Boolean = signals.liveLocked() ?: locked
 
     override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit {

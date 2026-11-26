@@ -14,7 +14,17 @@ class LicensesTest {
     @Test
     fun `every desktop only library is on the licences screen`() {
         val names = DesktopLicenses.notices.map { it.name }
-        for (library in listOf("PDFBox", "ICU4J", "Noto Sans Arabic", "Commons Logging", "JNA", "dbus-java", "SLF4J")) {
+        val libraries = listOf(
+            "PDFBox",
+            "ICU4J",
+            "Noto Sans Arabic",
+            "Commons Logging",
+            "JNA",
+            "dbus-java",
+            "SLF4J",
+            "Bouncy Castle",
+        )
+        for (library in libraries) {
             assertTrue(names.any { library in it }, "$library is not listed: $names")
         }
         assertTrue(DesktopLicenses.notices.all { it.license.isNotBlank() && it.url.startsWith("https://") })
@@ -35,6 +45,7 @@ class LicensesTest {
             "jna-LGPL2.1.txt",
             "dbus-java-LICENSE.txt",
             "slf4j-LICENSE.txt",
+            "bouncycastle-LICENSE.txt",
         )
         for (name in expected) {
             val file = folder.resolve(name)

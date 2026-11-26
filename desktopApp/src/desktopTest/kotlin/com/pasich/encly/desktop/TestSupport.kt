@@ -4,6 +4,8 @@ import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.platform.MainThreadTimer
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.core.security.PinKeySlot
+import com.pasich.encly.core.security.PinSecretPolicy
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.desktop.platform.CaptureExclusion
 import com.pasich.encly.desktop.platform.DesktopAppLocaleController
 import com.pasich.encly.desktop.platform.DesktopEnvironment
@@ -229,6 +231,8 @@ fun testEnvironment(
     capture: CaptureExclusion = RecordingCapture(),
     lockSignals: OsLockSignals = OsLockSignals.None,
     bootClock: BootClockSource = FakeBootClock(),
+    // The tests that type a digit PIN keep the PIN policy; the one of the app is `DesktopPasswordPolicy`.
+    secretPolicy: UnlockSecretPolicy = PinSecretPolicy(),
 ): DesktopEnvironment = DesktopEnvironment(
     os = DesktopOs.LINUX,
     dataDirectory = directory,
@@ -240,4 +244,5 @@ fun testEnvironment(
     linkOpener = links,
     systemClipboard = { clipboard },
     timer = timer,
+    secretPolicy = secretPolicy,
 )

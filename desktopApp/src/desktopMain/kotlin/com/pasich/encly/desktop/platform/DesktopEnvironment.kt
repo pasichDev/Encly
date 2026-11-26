@@ -1,7 +1,9 @@
 package com.pasich.encly.desktop.platform
 
+import com.pasich.encly.core.keystore.DesktopPasswordPolicy
 import com.pasich.encly.core.platform.MainThreadTimer
 import com.pasich.encly.core.security.PinHardwareFactor
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.desktop.nativeos.NativeBootClock
 import com.pasich.encly.desktop.nativeos.NativeCaptureExclusion
 import com.pasich.encly.desktop.nativeos.NativeScreenLock
@@ -53,6 +55,12 @@ class DesktopEnvironment(
     val clipboardWriter: ClipboardWriter? = null,
     val timer: MainThreadTimer = SwingMainThreadTimer(),
     val dialogParent: DialogParent = DialogParent(),
+    /**
+     * What the vault is unlocked with: on the desktop a password stretched with Argon2id (slot version 4), unlike
+     * Android and iOS, which keep the PIN. The graph binds exactly this one (see `DesktopAppGraph`); tests that type a
+     * PIN pass the PIN policy.
+     */
+    val secretPolicy: UnlockSecretPolicy = DesktopPasswordPolicy(),
 ) {
     companion object {
         /**

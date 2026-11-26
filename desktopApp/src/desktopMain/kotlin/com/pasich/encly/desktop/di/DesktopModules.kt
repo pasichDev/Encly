@@ -13,6 +13,7 @@ import com.pasich.encly.core.security.HandoffStagingSweeper
 import com.pasich.encly.core.security.JvmVaultFileIo
 import com.pasich.encly.core.security.LockoutClock
 import com.pasich.encly.core.security.PinHardwareFactor
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.core.security.VaultStore
 import com.pasich.encly.data.database.DatabasePlatform
 import com.pasich.encly.data.database.DesktopDatabasePlatform
@@ -68,6 +69,7 @@ internal object DataFiles {
  * | Android (`:app`)                          | Desktop                                            |
  * |-------------------------------------------|----------------------------------------------------|
  * | KeystorePinFactor                         | `environment.pinFactor` (`DesktopPinFactor`)       |
+ * | PinSecretPolicy (contributed)             | `environment.secretPolicy` (`DesktopPasswordPolicy`) |
  * | KeystoreBiometricManager                  | [NoBiometricManager]                               |
  * | HandlerMainThreadTimer                    | `environment.timer` (Swing timer)                  |
  * | SystemLockoutClock                        | [OsUptimeClock]                                    |
@@ -106,6 +108,10 @@ object DesktopPlatformModule {
 
     @Provides
     fun providePinHardwareFactor(environment: DesktopEnvironment): PinHardwareFactor = environment.pinFactor
+
+    /** The one secret policy of the graph: `DesktopAppGraph` excludes the PIN policy that is contributed by default. */
+    @Provides
+    fun provideUnlockSecretPolicy(environment: DesktopEnvironment): UnlockSecretPolicy = environment.secretPolicy
 
     @Provides
     @SingleIn(AppScope::class)
