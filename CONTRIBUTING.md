@@ -267,11 +267,23 @@ upload this key instead of letting Google generate one).
    in the pull request.
 5. Merge to `main`, then tag the merge commit `vX.Y.Z` and push the tag. The
    [release workflow](.github/workflows/release.yml) refuses a tag that does not match
-   `version.properties`, fails when a signing secret or `ENCLY_CERT_SHA256` is missing, builds
-   both flavors unsigned, signs them with `apksigner` in a separate step (Gradle never sees
-   the keystore), checks the certificate against `ENCLY_CERT_SHA256`, and publishes the APKs
-   with `SHA256SUMS` (signed as `SHA256SUMS.asc` when the GPG secrets are set) and the R8
-   mapping files.
+   `version.properties` or whose commit is not on `main`, and fails when a signing secret or
+   `ENCLY_CERT_SHA256` is missing. It builds both Android flavors unsigned, signs them with
+   `apksigner` in a separate step (Gradle never sees the keystore), checks the certificate against
+   `ENCLY_CERT_SHA256`, and in parallel builds the Linux packages of the desktop app (the `.deb` and
+   the Flatpak bundle) and installs them on a clean runner to check them. Then one job creates the
+   GitHub Release as a draft, uploads the APKs, the R8 mapping files and the Linux packages, writes
+   one `SHA256SUMS` over all of them (signed as `SHA256SUMS.asc` when the GPG secrets are set),
+   attests the build provenance of every file, writes the notes ("Verify what you download") and
+   publishes the draft. The Linux files are unsigned and the Windows and macOS installers are not
+   released from here. If the Linux build or its check fails, the Release is published with the
+   Android files alone; add the Linux files afterwards by running the **Release** workflow by hand
+   (Actions, Release, Run workflow) with the tag, e.g. `v3.1.0`. That run builds only Linux, adds the
+   files to the existing Release, regenerates `SHA256SUMS` / `.asc`, and never touches Android or
+   Google Play. A failed Android job publishes nothing. Do not use "Re-run failed jobs" to add the Linux
+   files: it runs the release job again, which refuses a Release that is already published. The manual
+   run builds the tag's own packaging scripts, so it works for tags that contain this workflow and the Linux
+   checks (3.1.0 onwards); the workflow and the packaging changes must be on `main` before the tag.
 6. Google Play: the same tag runs [Publish to Google Play](.github/workflows/publish-play.yml),
    which builds and signs the `play` bundle and publishes it to production as a staged rollout to 10% of users (raise it in Play Console),
    with the R8 mapping file (so Play Console shows readable crash stack traces) and the release

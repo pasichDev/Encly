@@ -1,8 +1,27 @@
 name: Release
 
-# Pushing a tag vX.Y.Z builds both distribution flavors, signs them, and publishes a GitHub
-# Release with the APKs, SHA256SUMS and R8 mappings. A tag never publishes unsigned APKs: the run
-# fails before building when a signing secret or the certificate pin is missing.
+# Pushing a tag vX.Y.Z releases Encly: both Android flavors as signed APKs and the Linux packages of the desktop
+# app (a .deb and a Flatpak bundle), on one GitHub Release with one SHA256SUMS. A tag never publishes unsigned
+# APKs: the run fails before building when a signing secret or the certificate pin is missing.
+#
+#   verify-tag     the tag is the version in version.properties and its commit is on main. Every other job needs it.
+#   android-build  both flavors, built UNSIGNED by Gradle (which never sees the keystore), signed by a separate step
+#                  with apksigner, the certificate checked against the pin. Uploads the files as a workflow artifact.
+#   linux-build    the .deb and the Flatpak bundle, built the way the `desktop installer (ubuntu-latest)` job of
+#                  android.yml builds them. Uploads them as a workflow artifact. No secrets, read-only token.
+#   linux-verify   a clean runner installs the .deb and the bundle and checks what was installed (the GUI is not started).
+#   github-release holds the write token, the attestation permissions and the optional GPG key; runs no build code.
+#                  Creates the Release as a draft, uploads the files, writes ONE SHA256SUMS over all of them (signed as
+#                  SHA256SUMS.asc when the GPG secrets exist), attests the build provenance of every file, writes the
+#                  notes, and only then publishes the draft.
+#
+# The Linux files are an addition: if linux-build or linux-verify fails, github-release still runs and publishes
+# the Android files alone (see its `if:`); the Linux files are then added to that Release later with a manual run
+# of this workflow (Actions -> Release -> Run workflow, with the tag), which runs only the Linux jobs and
+# github-release in "add" mode. That run never builds Android and never touches Google Play: publish-play.yml
+# is a separate workflow with its own tag trigger and is not changed by anything here.
+# The Windows MSI and the macOS DMG are never released from here (they are unsigned).
+# The Linux packages are not code-signed; they are trusted through SHA256SUMS(.asc) and the attestations.
 #
 # Gradle builds the APKs UNSIGNED and never sees the keystore; a separate step signs them with
 # apksigner using only the signing secrets, then the certificate is checked against the pin.
@@ -24,38 +43,95 @@ name: Release
 on:
   push:
     tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag whose Linux packages are (re)built and added to its Release, e.g. v3.1.0'
+        required: true
+        type: string
 
-permissions:
-  contents: write
+# Every job asks for what it needs.
+permissions: {}
 
+# One run per tag at a time, also when the Linux part is re-run by hand while the tag run is still going.
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
-  release:
+  verify-tag:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.name }}
     steps:
+      # A pushed tag is the tag; a manual run names it. It is checked against a strict pattern before anything
+      # uses it, and reaches the shell only through the environment.
+      - name: Resolve the tag
+        id: tag
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then tag="$INPUT_TAG"; else tag="$REF_NAME"; fi
+          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$tag' is not a release tag vX.Y.Z"
+            exit 1
+          fi
+          echo "name=$tag" >> "$GITHUB_OUTPUT"
+
+      # The tag's own code, also when a manual run was started from another ref; the full history, to see main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The release is published with the action's own token; the build never needs git credentials.
+          ref: refs/tags/${{ steps.tag.outputs.name }}
+          fetch-depth: 0
           persist-credentials: false
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
-
-      - name: Tag must match version.properties
+      - name: The tag is the declared version, and its commit is on main
         id: version
+        env:
+          TAG: ${{ steps.tag.outputs.name }}
         run: |
           set -euo pipefail
           prop() { grep -E "^$1=" version.properties | cut -d= -f2 | tr -d ' \r'; }
           name="$(prop VERSION_MAJOR).$(prop VERSION_MINOR).$(prop VERSION_PATCH)"
-          if [ "v$name" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match version.properties (v$name)"
+          if [ "v$name" != "$TAG" ]; then
+            echo "::error::Tag $TAG does not match version.properties (v$name)"
             exit 1
           fi
-          echo "name=$name" >> "$GITHUB_OUTPUT"
+          commit="$(git rev-parse "refs/tags/$TAG^{commit}")"
+          if ! git merge-base --is-ancestor "$commit" origin/main; then
+            echo "::error::The commit of $TAG ($commit) is not on main. Tag the merge commit on main."
+            exit 1
+          fi
+          {
+            echo "tag=$TAG"
+            echo "name=$name"
+          } >> "$GITHUB_OUTPUT"
+
+  android-build:
+    # Android only, and only for a pushed tag: a manual run is the Linux re-run.
+    if: github.event_name == 'push'
+    needs: verify-tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.verify-tag.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The build never needs git credentials.
+          persist-credentials: false
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Signing secrets and certificate pin are set
         env:
@@ -89,7 +165,6 @@ jobs:
 
       - name: Sign APKs
         env:
-          VERSION: ${{ steps.version.outputs.name }}
           KEYSTORE_BASE64: ${{ secrets.ENCLY_KEYSTORE_BASE64 }}
           ENCLY_KEYSTORE_PASSWORD: ${{ secrets.ENCLY_KEYSTORE_PASSWORD }}
           ENCLY_KEY_ALIAS: ${{ secrets.ENCLY_KEY_ALIAS }}
@@ -137,61 +212,325 @@ jobs:
             fi
           done
 
-      - name: Checksums
+      # The keystore is gone from the runner by now; the release job only ever sees these files.
+      - name: Upload the signed APKs and mapping files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-release
+          path: dist
+          retention-days: 7
+          if-no-files-found: error
+
+  # The Linux packages of the desktop app. Independent of android-build: it neither delays nor can fail the Android
+  # build. Builds exactly what the `desktop installer (ubuntu-latest)` job of android.yml builds (the .deb with
+  # packageDeb, the Flatpak bundle with createDistributable + desktopApp/packaging/flatpak/build.sh), without
+  # signing anything. No secrets and a read-only token: this job runs the build.
+  linux-build:
+    name: linux packages (deb, flatpak)
+    needs: verify-tag
+    runs-on: ubuntu-latest
+    # Shorter than the Android build: github-release waits for this job and for linux-verify (see its `if:`), so a
+    # hang here holds the Android release back by at most 45 + 30 minutes (the two timeouts), never indefinitely.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.verify-tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-read-only: true
+
+      # fakeroot: jpackage builds the .deb with dpkg-deb and fakeroot. The rest is the Flatpak tooling;
+      # ubuntu-latest restricts unprivileged user namespaces, which bubblewrap (flatpak-builder) needs.
+      - name: Linux packaging tools
         run: |
           set -euo pipefail
-          cd dist
-          sha256sum *.apk *.txt > SHA256SUMS
-          cat SHA256SUMS
+          sudo apt-get update
+          sudo apt-get install -y fakeroot flatpak flatpak-builder appstream desktop-file-utils libxml2-utils
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
-      - name: Sign SHA256SUMS (optional)
+      - name: Package the .deb
+        run: ./gradlew :desktopApp:packageDeb
+
+      - name: App image
+        run: ./gradlew :desktopApp:createDistributable
+
+      - name: Flatpak
         env:
+          ENCLY_FLATPAK_SKIP_GRADLE: '1'
+          ENCLY_FLATPAK_REQUIRE_LINT: '1'
+        run: desktopApp/packaging/flatpak/build.sh
+
+      # Exactly one of each, copied to one folder, so the next jobs get plain file names.
+      - name: Collect the packages
+        run: |
+          set -euo pipefail
+          mkdir -p linux-dist
+          shopt -s nullglob
+          debs=(desktopApp/build/compose/binaries/main/deb/*.deb)
+          flatpaks=(desktopApp/build/flatpak/*.flatpak)
+          if [ "${#debs[@]}" -ne 1 ] || [ "${#flatpaks[@]}" -ne 1 ]; then
+            echo "::error::expected one .deb and one .flatpak, found ${#debs[@]} and ${#flatpaks[@]}"
+            exit 1
+          fi
+          cp "${debs[0]}" "${flatpaks[0]}" linux-dist/
+          ls -l linux-dist
+
+      - name: Upload the packages
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-release
+          path: linux-dist
+          retention-days: 7
+          if-no-files-found: error
+
+  # What a user gets, on a clean runner that has none of the build: the .deb installed with apt, the Flatpak bundle
+  # installed for the user, then the installed files and the metadata checked. The GUI is not started. The checks are
+  # desktopApp/packaging/verify-linux-packages.sh, which the pull request CI (android.yml) runs on every change too.
+  linux-verify:
+    name: linux verify
+    needs: [verify-tag, linux-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.verify-tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Download the packages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: linux-release
+          path: linux
+
+      - name: Install the packages and check them
+        run: desktopApp/packaging/verify-linux-packages.sh linux
+
+  github-release:
+    name: github release
+    needs: [verify-tag, android-build, linux-verify]
+    # Android is the release: on a pushed tag it must have been built and signed. The Linux files join only when
+    # linux-build AND linux-verify passed; if either failed or was skipped, this job still runs and publishes the
+    # Android files alone. On a manual run (android-build is skipped by design) the Linux files are all there is,
+    # so linux-verify must have passed. Nothing here depends on whether Linux succeeded for a pushed tag.
+    if: >-
+      ${{ !cancelled()
+      && needs.verify-tag.result == 'success'
+      && (needs.android-build.result == 'success'
+          || (github.event_name == 'workflow_dispatch' && needs.linux-verify.result == 'success')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write # sign the attestations
+      attestations: write
+    env:
+      TAG: ${{ needs.verify-tag.outputs.tag }}
+      VERSION: ${{ needs.verify-tag.outputs.version }}
+      HAS_LINUX: ${{ needs.linux-verify.result == 'success' }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.verify-tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Download the Android files
+        if: needs.android-build.result == 'success'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: android-release
+          path: release-files
+
+      - name: Download the Linux files
+        if: needs.linux-verify.result == 'success'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: linux-release
+          path: release-files
+
+      # A push creates the Release; a manual run only adds to the one that is already published.
+      - name: The Release state fits this run
+        id: state
+        run: |
+          set -euo pipefail
+          draft="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[] | select(.tag_name == env.TAG) | .draft')"
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            [ "$draft" = false ] || { echo "::error::$TAG has no published GitHub Release. A manual run only adds the Linux files to the Release the tag run published."; exit 1; }
+            echo "mode=add" >> "$GITHUB_OUTPUT"
+          else
+            [ "$draft" != false ] || { echo "::error::$TAG already has a published Release. To add the Linux files to it, run this workflow by hand with the tag."; exit 1; }
+            echo "mode=new" >> "$GITHUB_OUTPUT"
+          fi
+          ls -l release-files
+
+      # Signing goes through Sigstore (Fulcio, Rekor); a network timeout there fails the step, so the attestation
+      # gets a second try. Every file this run releases is a subject.
+      - name: Attest the build provenance
+        id: attest
+        continue-on-error: true
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ github.workspace }}/release-files/*
+      - name: Attest the build provenance (retry)
+        id: attest-retry
+        if: steps.attest.outcome == 'failure'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ github.workspace }}/release-files/*
+
+      # One SHA256SUMS over every file of the Release. A manual run starts from the published one (checked against
+      # its signature first), replaces the names it re-releases, and adds the new lines. Nothing is uploaded until
+      # the new file is complete and signed, so a SHA256SUMS never sits next to a stale .asc.
+      - name: SHA256SUMS (and its signature)
+        env:
+          MODE: ${{ steps.state.outputs.mode }}
           GPG_PRIVATE_KEY: ${{ secrets.ENCLY_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.ENCLY_GPG_PASSPHRASE }}
         run: |
           set -euo pipefail
-          if [ -z "${GPG_PRIVATE_KEY}" ]; then
-            echo "No GPG key configured; SHA256SUMS is published unsigned."
-            exit 0
+          have_asc=false
+          if [ "$MODE" = add ]; then
+            mkdir -p old
+            gh release download "$TAG" --dir old --pattern SHA256SUMS
+            if gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx 'SHA256SUMS.asc'; then
+              have_asc=true
+              gh release download "$TAG" --dir old --pattern SHA256SUMS.asc
+            fi
           fi
-          export GNUPGHOME="$RUNNER_TEMP/gnupg"
-          mkdir -m 700 -p "$GNUPGHOME"
-          echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
-          gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
-            --armor --detach-sign --output dist/SHA256SUMS.asc dist/SHA256SUMS
-          rm -rf "$GNUPGHOME"
 
-      - name: Release notes from CHANGELOG.md
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            export GNUPGHOME="$RUNNER_TEMP/gnupg"
+            mkdir -p "$GNUPGHOME"
+            chmod 700 "$GNUPGHOME"
+            trap 'rm -rf "$GNUPGHOME"' EXIT
+            echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+            if [ "$have_asc" = true ]; then
+              gpg --batch --verify old/SHA256SUMS.asc old/SHA256SUMS
+            fi
+          elif [ "$have_asc" = true ]; then
+            echo "::error::The Release has SHA256SUMS.asc but ENCLY_GPG_PRIVATE_KEY is not set: SHA256SUMS cannot be signed again, so it is left as it is and nothing is added."
+            exit 1
+          else
+            echo "No GPG key configured; SHA256SUMS is published unsigned."
+          fi
+
+          cd release-files
+          find . -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort | xargs -d '\n' sha256sum -- > ../new.sums
+          [ -s ../new.sums ] || { echo "::error::no file to release"; exit 1; }
+          if [ "$MODE" = add ]; then
+            # Old lines first (minus any with a re-released name), then the new lines.
+            awk 'NR == FNR { drop[$2] = 1; next } !($2 in drop)' ../new.sums ../old/SHA256SUMS > SHA256SUMS
+            cat ../new.sums >> SHA256SUMS
+          else
+            cp ../new.sums SHA256SUMS
+          fi
+          cat SHA256SUMS
+
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+              --armor --detach-sign --output SHA256SUMS.asc SHA256SUMS
+            gpg --batch --verify SHA256SUMS.asc SHA256SUMS
+          fi
+
+      - name: Release notes
         env:
-          VERSION: ${{ steps.version.outputs.name }}
+          MODE: ${{ steps.state.outputs.mode }}
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url || steps.attest-retry.outputs.attestation-url }}
         run: |
           set -euo pipefail
+          {
+            echo "### Linux packages"
+            echo
+            echo 'The `.deb` and the `.flatpak` bundle are not code-signed; their checksums are in `SHA256SUMS`'
+            echo '(signed as `SHA256SUMS.asc` when that file is present) and each file has an attested build provenance.'
+            echo 'Install with `sudo apt install ./encly_*.deb` or `flatpak install --user ./encly-*.flatpak`.'
+          } > linux-notes.md
+
+          if [ "$MODE" = add ]; then
+            body="$(gh release view "$TAG" --json body --jq .body)"
+            if ! grep -q '^### Linux packages' <<< "$body"; then
+              { printf '%s\n\n' "$body"; cat linux-notes.md; } > notes.md
+              echo "append=true" > notes.state
+            else
+              echo "append=false" > notes.state
+            fi
+            exit 0
+          fi
+
           awk -v v="$VERSION" '
             $0 ~ "^## \\[" v "\\]" { found = 1; next }
             found && /^## \[/ { exit }
             found { print }
-          ' CHANGELOG.md > dist/NOTES.md
-          if [ ! -s dist/NOTES.md ]; then
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
             echo "::error::CHANGELOG.md has no section for [$VERSION]"
             exit 1
           fi
+          if [ "$HAS_LINUX" = true ]; then { echo; cat linux-notes.md; } >> notes.md; fi
           {
             echo
-            echo "### Verify"
+            echo "### Verify what you download"
             echo
-            echo 'Download `SHA256SUMS` next to the APK and run `sha256sum -c --ignore-missing SHA256SUMS`.'
-            echo 'Check the signer with `apksigner verify --print-certs <apk>` against the certificate'
-            echo 'fingerprint published in the README.'
-          } >> dist/NOTES.md
+            echo 'Download `SHA256SUMS` next to the files and run `sha256sum --check --ignore-missing SHA256SUMS`.'
+            echo 'When `SHA256SUMS.asc` is present it is the GPG signature of that file.'
+            echo
+            echo 'Every file of this release has an attested build provenance:'
+            echo
+            echo '```'
+            echo "gh attestation verify <file> --repo $GITHUB_REPOSITORY"
+            echo '```'
+            if [ -n "$ATTESTATION_URL" ]; then
+              echo
+              echo "Attestation: $ATTESTATION_URL"
+            fi
+            echo
+            echo 'APKs: check the signer with `apksigner verify --print-certs <apk>` against the certificate'
+            echo 'fingerprint published in the [README](https://github.com/'"$GITHUB_REPOSITORY"'#verify-a-release).'
+          } >> notes.md
+          cat notes.md
 
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
-        with:
-          name: Encly ${{ steps.version.outputs.name }}
-          body_path: dist/NOTES.md
-          fail_on_unmatched_files: false
-          files: |
-            dist/*.apk
-            dist/*-mapping.txt
-            dist/SHA256SUMS
-            dist/SHA256SUMS.asc
+      # A push: the Release is created as a draft, gets every file, and becomes visible only in the last step, so a
+      # failure on the way leaves a draft and no half-published release. A manual run uploads into the published one.
+      - name: Create the draft, or add to the published Release
+        env:
+          MODE: ${{ steps.state.outputs.mode }}
+        run: |
+          set -euo pipefail
+          if [ "$MODE" = new ]; then
+            # A draft left by an earlier failed attempt of this tag is reused.
+            if ! gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[].tag_name' | grep -Fxq "$TAG"; then
+              gh release create "$TAG" --draft --title "Encly $VERSION" --notes-file notes.md --verify-tag
+            else
+              gh release edit "$TAG" --notes-file notes.md
+            fi
+          fi
+          # One call, with SHA256SUMS and its signature in it.
+          gh release upload "$TAG" --clobber -- release-files/*
+          if [ "$MODE" = add ] && [ "$(cat notes.state)" = append=true ]; then
+            gh release edit "$TAG" --notes-file notes.md
+          fi
+
+      # Last step: only here, with everything uploaded, the Release becomes visible.
+      - name: Publish the release
+        if: steps.state.outputs.mode == 'new'
+        run: gh release edit "$TAG" --draft=false --latest

@@ -444,6 +444,35 @@ jobs:
             security delete-keychain "$RUNNER_TEMP/encly-signing.keychain-db" 2> /dev/null || true
           fi
 
+  # The Linux packages of the desktop installer job, installed on a clean runner and checked (the same script the
+  # release workflow runs on a tag): the .deb with apt, the Flatpak bundle for the user, the installed files, the
+  # metadata, the sandbox permissions and the licence texts. The window is not opened.
+  desktop-linux-verify:
+    name: linux packages (verify)
+    needs: desktop-package
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download the .deb
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: encly-desktop-ubuntu-latest-unsigned
+          path: linux
+
+      - name: Download the Flatpak bundle
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: encly-desktop-flatpak-unsigned
+          path: linux
+
+      - name: Install the packages and check them
+        run: desktopApp/packaging/verify-linux-packages.sh linux
+
   release:
     name: release build (R8, lint, manifest)
     # Dependabot bumps (build(deps) / ci(deps)) don't run CI on their own PR: they are merged in

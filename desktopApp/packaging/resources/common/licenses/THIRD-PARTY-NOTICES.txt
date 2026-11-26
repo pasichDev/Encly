@@ -6,11 +6,11 @@ contains the following software, which is used under its own licence. The texts 
 The libraries and fonts that every Encly build contains (Kotlin, Compose Multiplatform, Okio, SQLCipher, ...) are
 listed in the app under About -> Licenses.
 
-Apache PDFBox, FontBox and PDFBox IO 3.0.5          Apache License 2.0
+Apache PDFBox, FontBox and PDFBox IO 3.0.8          Apache License 2.0
     Builds the PDF of a note and sends it to the printer.            https://pdfbox.apache.org/
     pdfbox-LICENSE.txt, pdfbox-NOTICE.txt
 
-ICU for Java (ICU4J) 78.3                            Unicode License v3
+ICU for Java (ICU4J) 79.1                            Unicode License v3
     Joins Arabic letters and orders mixed left-to-right and         https://icu.unicode.org/
     right-to-left text in the PDF of a note.
     icu4j-LICENSE.txt
@@ -19,7 +19,7 @@ Noto Sans Arabic                                     SIL Open Font License 1.1
     The Arabic letters in the PDF of a note (embedded in it).       https://github.com/notofonts/arabic
     NotoSansArabic-OFL.txt
 
-Apache Commons Logging 1.3.5                         Apache License 2.0
+Apache Commons Logging 1.4.0                         Apache License 2.0
     Used by PDFBox.                                                  https://commons.apache.org/proper/commons-logging/
     commons-logging-LICENSE.txt, commons-logging-NOTICE.txt
 
@@ -28,21 +28,33 @@ Java Native Access (JNA) and JNA Platform 5.19.1     Apache License 2.0 (also av
     the clipboard, window capture protection. Encly uses it under the Apache License 2.0.
     jna-LICENSE.txt, jna-AL2.0.txt, jna-LGPL2.1.txt
 
-dbus-java 5.1.1 (core and the native Unix socket transport)   MIT License
+dbus-java 5.2.2 (core and the native Unix socket transport)   MIT License
     Talks to the Secret Service, logind and the file chooser portal   https://github.com/hypfvieh/dbus-java
     on Linux over the local D-Bus socket.
     dbus-java-LICENSE.txt
 
-SLF4J 2.0.17 (API and the no-op binding)             MIT License
+SLF4J 2.0.20 (API and the no-op binding)             MIT License
     The logging facade of dbus-java; Encly binds it to nothing.      https://www.slf4j.org/
     slf4j-LICENSE.txt
 
-Skiko (the Skia bindings under Compose Multiplatform)    Apache License 2.0
-    Draws the window.                                                https://github.com/JetBrains/skiko
+Bouncy Castle Provider (bcprov-jdk18on) 1.86         MIT License
+    Computes Argon2id, which stretches the vault password.           https://www.bouncycastle.org/
+    bouncycastle-LICENSE.txt
+
+Skiko 0.150.2 (the Skia bindings under Compose Multiplatform)    Apache License 2.0
+    Draws the window. Its native library (libskiko) is built from Skia   https://github.com/JetBrains/skiko
+    (JetBrains/skia, m150-a3f509bf52), which is under the BSD 3-Clause licence.
+    skiko-LICENSE.txt, skiko-NOTICE.txt, skia-LICENSE.txt
+    Skia is built with code of other projects (for example FreeType, HarfBuzz, ICU, expat, zlib, libpng);
+    their own licence texts are not distributed with the Skiko artifacts and are not reproduced here.
 
 JetBrains Runtime API 1.9.0, JSpecify 1.0.0          Apache License 2.0
     Window and annotation support of Compose Desktop. The text of the licence is jna-AL2.0.txt.   https://jspecify.dev/
 
 OpenJDK runtime (bundled by the installer)           GNU General Public License v2 with the Classpath Exception
-    The Java runtime the app runs on. Its legal notices are in the runtime's own "legal" folder.
+    The Java runtime the app runs on: an OpenJDK 21 build (Eclipse Temurin in the release builds; the JetBrains
+    Runtime when a build is made with it), cut down to the modules the app needs. Its licence texts and the notices
+    of the components inside it are in the runtime's own "legal" folder, next to this one in the installer:
+      .deb      lib/runtime/legal and this folder, under /opt/encly (the jpackage layout)
+      Flatpak   /app/share/licenses/io.github.pasichdev.Encly/  (this folder, and openjdk/ for "legal")
     https://openjdk.org/legal/gplv2+ce.html

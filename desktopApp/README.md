@@ -111,6 +111,25 @@ socket can be made (a path too long for one) or the first one does not answer, t
 bundle id `com.pasich.encly`, a fixed Windows upgrade UUID, per-user MSI install, and the `.enclybak` file
 association with its own type `application/vnd.encly.backup` (never `application/octet-stream`).
 
+### Licences in the installers
+
+The licence and notice texts of what the installer bundles are files, not only the in-app screen (About, Licenses):
+
+| What | Where it comes from | In the `.deb` | In the Flatpak |
+|---|---|---|---|
+| PDFBox, FontBox, ICU4J, Noto Sans Arabic, Commons Logging, JNA, dbus-java, SLF4J, Skiko, Skia, and `THIRD-PARTY-NOTICES.txt` (what is what) | `packaging/resources/common/licenses/`, which Compose puts in the app's resources | `licenses/` in the app's resources, under `/opt/encly/` (jpackage layout) | `/app/share/licenses/io.github.pasichdev.Encly/` |
+| the Java runtime (OpenJDK: Eclipse Temurin in the CI builds) | the `legal/` folder of the runtime that jlink cuts, taken from the built image, not copied into the repository | `lib/runtime/legal/` under `/opt/encly/` | `/app/share/licenses/io.github.pasichdev.Encly/openjdk/` |
+| Encly's own licence | `LICENSE`, given to jpackage as the licence file | where jpackage puts it | `.../licenses/io.github.pasichdev.Encly/LICENSE` |
+
+The texts are taken from the libraries' own jars (PDFBox, Commons Logging, SLF4J), from the Skiko and Skia sources at the
+tags the release uses (Skiko `v0.150.2`, Skia `m150-a3f509bf52`; the Skiko jars carry no licence file), and from the
+runtime itself. When `libs.versions.toml` bumps one of them, refresh its file and the version in
+`THIRD-PARTY-NOTICES.txt`. `flatpak/build.sh` fails when the notices or the runtime's `legal/java.base/LICENSE` are not
+in the image, and the `linux verify` job of the release workflow checks that they are in both installed packages.
+Not included: the licences of the code Skia is built with (FreeType, HarfBuzz, ICU, expat, zlib, libpng ...), which the
+Skiko artifacts do not ship, and ICU4J 79.1 and dbus-java 5.2.2 have no licence file in their jars (the texts kept here are
+from the previous versions).
+
 ### Signing the desktop installers
 
 The `desktop-package` job (`.github/workflows/android.yml`) signs the installers when the repository has the
@@ -188,6 +207,19 @@ The sandbox permissions are the minimum the app needs, and there is no network:
 The Flatpak keeps its data in `~/.var/app/io.github.pasichdev.Encly/data/encly`, not in `~/.local/share/encly`: a vault
 of a `.deb` or tarball install is a different vault there. The bundle is not signed and is not on Flathub; a Flathub
 submission needs a build from source (Gradle offline with pinned dependencies) and screenshots in the metainfo.
+
+### Releasing the Linux packages
+
+A `v*` tag builds the `.deb` and the Flatpak bundle (`release.yml`, jobs `linux-build` and `linux-verify`: a clean
+runner installs both and checks the files, the metadata, the sandbox permissions and the licence files; the window is not
+opened) and attaches them to the GitHub Release of the tag next to the APKs. They are in the one `SHA256SUMS` (and
+`SHA256SUMS.asc`) and each file has a build-provenance attestation (`gh attestation verify <file> --repo pasichDev/Encly`).
+They are not code-signed. The MSI and the DMG are not attached to a release (they are unsigned).
+
+If the Linux build or its check fails, the Android files are published without them. To add the Linux files to that Release
+afterwards (or to replace them), run the **Release** workflow by hand (Actions, Release, Run workflow) with the tag, for
+example `v3.1.0`: it builds and checks only the Linux packages and adds them to the existing Release, and it never builds
+Android and never publishes to Google Play.
 
 ## No network
 
