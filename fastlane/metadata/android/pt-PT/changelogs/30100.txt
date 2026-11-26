@@ -1,0 +1,6 @@
+Encly 3.1.0
+• PIN de coação: o cofre falso tem o seu próprio temporizador do lixo e a mesma pausa antes de mudar os PIN.
+• Editor: um só par de alças após «Selecionar tudo», Copiar a partir do teclado leva toda a seleção, menos espaço acima das tabelas.
+• Listas: o botão de bloqueio fica sempre à mão; a nota desloca-se ao arrastar um item.
+• O ecrã de bloqueio cabe em ecrã dividido.
+• Importar ficheiros grandes usa menos memória.

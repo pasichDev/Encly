@@ -1,0 +1,6 @@
+Encly 3.1.0
+• Zwangs-PIN: Der Schein-Tresor hat einen eigenen Papierkorb-Timer und dieselbe Wartezeit vor PIN-Änderungen.
+• Editor: nur ein Paar Auswahlgriffe nach „Alles auswählen“, Kopieren über die Tastatur nimmt die ganze Auswahl, kleinerer Abstand über Tabellen.
+• Checklisten: Der Sperrknopf bleibt erreichbar; die Notiz scrollt beim Ziehen.
+• Der Sperrbildschirm passt in den geteilten Bildschirm.
+• Der Import großer Dateien braucht weniger Speicher.

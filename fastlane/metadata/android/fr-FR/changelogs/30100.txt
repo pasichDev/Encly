@@ -1,0 +1,6 @@
+Encly 3.1.0
+• PIN de contrainte : le coffre leurre a son propre minuteur de corbeille et le même délai avant de changer les PIN.
+• Éditeur : une seule paire de poignées après « Tout sélectionner », Copier depuis le clavier prend toute la sélection, moins d'espace au-dessus des tableaux.
+• Listes : le bouton de verrouillage reste à portée ; la note défile pendant le glissement.
+• L'écran de verrouillage tient en écran partagé.
+• L'import de gros fichiers utilise moins de mémoire.
