@@ -31,6 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.SavedState
 import androidx.savedstate.read
 import com.pasich.encly.core.security.InitialStatus
+import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.platform.HostNavigationRequests
@@ -82,7 +83,7 @@ fun EnclyApp(
     restoredNavState: SavedState? = null,
     onNavController: (NavHostController) -> Unit = {},
 ) {
-    val destination = startStatus?.let(::startRoute) ?: return
+    val destination = rememberStartRoute(startStatus, securityManager) ?: return
     val navController = rememberNavController()
     // A host that rebuilds the app under a new key (the desktop, on a language change) hands the back stack of the
     // controller it replaces to the new one, before its graph is set: the screens, and the entries' ViewModels, stay.
@@ -115,12 +116,16 @@ fun EnclyApp(
     val router = remember(navController, scope, sessionLockManager) {
         AppCommandRouter(scope, sessionLockManager::lockNow) { navController.startNewNote() }
     }
-    // A command is run only with the vault open: never from the lock screen, never in the shielded frame.
-    val commandsAllowed = remember(securityManager) {
+    // A command is run only with the vault open: never from the lock screen, never in the shielded frame, and, while
+    // a recovery-phrase unlock still owes a new PIN (or the choice to keep it), none that leaves that screen (see
+    // [commandAllowed]; the host's menu requests below are all of that kind).
+    val vaultOpen = remember(securityManager) {
         { !currentLocked && !currentLocking && securityManager.isDatabaseUnlocked() }
     }
     LockRouteGuard(navController, securityManager::isDatabaseUnlocked)
-    HostNavigationRequests(navController, router, commandsAllowed)
+    HostNavigationRequests(navController, router) {
+        vaultOpen() && securityManager.recoveryStage() == RecoveryStage.NONE
+    }
     SessionResumeGuard(navController, sessionLockManager)
     val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
     // An empty list is the first frame of a restored back stack: shielded as well.
@@ -133,7 +138,11 @@ fun EnclyApp(
 
     CompositionLocalProvider(LocalAppCommands provides router) {
         EnclyShortcutHost(
-            onCommand = { command -> command !in declinedCommands && commandsAllowed() && router.run(command) },
+            onCommand = { command ->
+                command !in declinedCommands &&
+                    commandAllowed(command, vaultOpen(), securityManager.recoveryStage()) &&
+                    router.run(command)
+            },
             modifier = modifier.fillMaxSize(),
             shortcuts = shortcuts,
         ) {
@@ -158,23 +167,10 @@ private fun NavHostController.startNewNote(): Boolean {
     return true
 }
 
-/** Where the app starts for [status]; null while there is nothing to show yet. */
-internal fun startRoute(status: InitialStatus): NavRoutes? = when (status) {
-    InitialStatus.MAIN -> NavRoutes.HomeRoute
-
-    // PIN setup is part of onboarding, which restarts until the vault is committed.
-    InitialStatus.ONBOARDING, InitialStatus.SETUP_AUTH -> NavRoutes.OnboardingRoute
-
-    InitialStatus.LOSS_DATABASE, InitialStatus.LOSS_CRYPTO -> NavRoutes.LossDataRoute
-
-    InitialStatus.AUTH -> NavRoutes.LockRoute
-
-    InitialStatus.LEGACY_VAULT -> NavRoutes.LegacyVaultRoute
-
-    InitialStatus.STORAGE_UNREADABLE -> NavRoutes.StorageUnreadableRoute
-
-    InitialStatus.NO -> null
-}
+/** The start route, read once when the status arrives: one that changes under a running NavHost rebuilds its graph. */
+@Composable
+private fun rememberStartRoute(status: InitialStatus?, securityManager: SecurityManager): NavRoutes? =
+    remember(status, securityManager) { status?.let { startRoute(it, securityManager.recoveryStage()) } }
 
 /**
  * Central route guard: whatever tries to show a vault screen while the database is closed (a

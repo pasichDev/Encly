@@ -243,6 +243,8 @@ private class LogindLockSignals : OsLockSignals {
         }
     }
 
+    override val asksTheOs: Boolean get() = true
+
     override fun liveLocked(): Boolean {
         // Bounded: a bus that does not answer must not hold up the unlock that asks.
         val answer = reader.submit(Callable { live.isLocked() })

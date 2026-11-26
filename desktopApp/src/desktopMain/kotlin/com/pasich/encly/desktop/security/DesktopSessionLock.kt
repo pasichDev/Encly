@@ -26,6 +26,13 @@ fun interface OsLockSignals {
      */
     fun liveLocked(): Boolean? = null
 
+    /**
+     * True when the OS can be asked ([liveLocked] never answers null) and so the last reported change is not the
+     * state: a locker that never says it ended (Linux: swaylock, i3lock through xss-lock) leaves the last report at
+     * "locked" for good. Every report of a lock is then a lock to act on, not only the first after an unlocked one.
+     */
+    val asksTheOs: Boolean get() = false
+
     /** An OS where nothing can be detected: only the idle and focus based locks apply. */
     object None : OsLockSignals {
         override fun start(onChange: (locked: Boolean) -> Unit): AutoCloseable = AutoCloseable { }
@@ -148,7 +155,9 @@ class DesktopDeviceLockWatcher(
     private fun onSignal(nowLocked: Boolean) {
         val wasLocked = locked
         locked = nowLocked
-        if (nowLocked && !wasLocked) {
+        // A source that can be asked is not trusted to say when a lock ended, so its second report of a lock is not
+        // swallowed as a repeat of one that is long over: that would leave the vault open behind the lock screen.
+        if (nowLocked && (!wasLocked || signals.asksTheOs)) {
             dispatch {
                 lockListeners.forEach { it() }
                 screenOffListeners.forEach { it() }
