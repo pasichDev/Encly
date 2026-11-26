@@ -14,9 +14,11 @@ import com.pasich.encly.core.resources.pdf_export_warning_body
 import com.pasich.encly.core.resources.pdf_export_warning_title
 import com.pasich.encly.core.resources.print_warning_body
 import com.pasich.encly.core.resources.print_warning_title
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.data.export.MarkdownExport
 import com.pasich.encly.platform.LocalDocumentPickers
 import com.pasich.encly.platform.PickerUnavailableException
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.viewmodel.BackupMessage
@@ -73,20 +75,23 @@ internal fun MarkdownExportHost(
         BackupStep.ConfirmPlainExport -> PlainExportWarning(
             onContinue = viewModel::confirmWarning,
             onCancel = viewModel::cancel,
+            kind = viewModel.reauthFlow.secretKind,
         )
 
         is BackupStep.ConfirmDocumentExport -> PlainExportWarning(
             onContinue = viewModel::confirmWarning,
             onCancel = viewModel::cancel,
+            kind = viewModel.reauthFlow.secretKind,
             title = stringResource(
                 if (step.print) Res.string.print_warning_title else Res.string.pdf_export_warning_title,
             ),
-            body = stringResource(
+            body = secretString(
+                viewModel.reauthFlow.secretKind,
                 if (step.print) Res.string.print_warning_body else Res.string.pdf_export_warning_body,
             ),
         )
 
-        is BackupStep.Reauth -> ReauthDialog(viewModel.reauthFlow, step, viewModel::cancel)
+        is BackupStep.Reauth -> ReauthDialog(viewModel.reauthFlow, step, viewModel::cancel, state.busy)
 
         else -> Unit
     }
@@ -99,8 +104,9 @@ private const val MIME_PDF = "application/pdf"
 private fun PlainExportWarning(
     onContinue: () -> Unit,
     onCancel: () -> Unit,
+    kind: SecretKind,
     title: String = stringResource(Res.string.markdown_export_warning_title),
-    body: String = stringResource(Res.string.markdown_export_warning_body),
+    body: String = secretString(kind, Res.string.markdown_export_warning_body),
 ) {
     EnclyDialog(
         title = title,

@@ -16,11 +16,14 @@ import com.pasich.encly.core.resources.onboarding_verify_confirm
 import com.pasich.encly.core.resources.onboarding_verify_show_again
 import com.pasich.encly.core.resources.restore
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretVariant
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.PinnedFooter
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
+import com.pasich.encly.presentation.screen.pincode.PassphraseInput
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import org.jetbrains.compose.resources.stringResource
@@ -30,6 +33,7 @@ internal fun footerSpec(
     actions: OnboardingActions,
     restorePhrase: RecoveryPhraseState,
     finishing: Boolean,
+    passphrase: PassphraseInput,
 ): FooterSpec {
     val busy = state.isLoading
     return when (state.step) {
@@ -40,14 +44,19 @@ internal fun footerSpec(
             onSecondary = actions.onStartRestore,
         )
 
-        OnboardingStep.PIN ->
-            FooterSpec(Res.string.action_continue, actions.pin.onSubmit, state.pinLength >= MIN_PIN_LENGTH, busy)
+        OnboardingStep.PIN -> FooterSpec(
+            Res.string.action_continue,
+            actions.pin.onSubmit,
+            // A PIN needs its digits; a passphrase only something typed: the policy says why one is refused.
+            if (state.secretKind == SecretKind.PASSWORD) passphrase.canSubmit else state.pinLength >= MIN_PIN_LENGTH,
+            busy,
+        )
 
         OnboardingStep.RECOVERY_INFO -> FooterSpec(
             Res.string.onboarding_recovery_create,
             actions.onCreatePhrase,
             loading = busy,
-            secondary = Res.string.onboarding_recovery_skip,
+            secondary = secretVariant(Res.string.onboarding_recovery_skip, state.secretKind),
             onSecondary = actions.onSkipPhrase,
             secondaryMuted = true,
         )

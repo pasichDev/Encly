@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.RecoveryStage
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.core.security.VaultUnlockResult
 import com.pasich.encly.platform.ScreenBiometricHost
 import dev.zacsweers.metro.AppScope
@@ -61,7 +64,15 @@ class LockViewModel(
     private val sessionLockManager: SessionLockManager,
     /** Where the rest of a wipe-PIN erase runs once the vault is open; outlives this screen. */
     @param:ApplicationScope private val appScope: CoroutineScope,
+    /** What the vault's secret is; the graph always passes the real policy, the default only spares tests. */
+    policy: UnlockSecretPolicy = PinSecretPolicy(),
 ) : ViewModel() {
+
+    /** What the user types to unlock: a PIN on the keypad or a passphrase in a field. */
+    val secretKind: SecretKind = policy.kind
+
+    /** The most UTF-16 units a typed passphrase may have: the field takes no more. */
+    val secretMaxUnits: Int = SecretChoice(policy).maxTypedUnits
 
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
@@ -115,7 +126,7 @@ class LockViewModel(
      */
     fun canReopenNote(savedEpoch: Long?): Boolean = savedEpoch != null && savedEpoch == securityManager.eraseEpoch()
 
-    /** Unlocks with [pin], which is wiped. */
+    /** Unlocks with [pin] (a passphrase is sent the same way), which is wiped. */
     fun authenticatePin(pin: CharArray, onResult: (PinUnlockResult) -> Unit) {
         launchUnlock(onResult) {
             val result = withContext(Dispatchers.Default) {

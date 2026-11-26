@@ -95,7 +95,7 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
     val host = LocalBiometricHost.current
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     // Above the loading view below: the forms' input and errors survive the credential check.
-    val form = remember { LockFormState() }
+    val form = remember { LockFormState(viewModel.secretMaxUnits) }
 
     // From the recovery form Back returns to the PIN pad; from the PIN pad it goes to
     // [LockExits.onBack], or nowhere: by default Back never leaves the lock screen.
@@ -139,6 +139,7 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
             biometricEnabled = biometricEnabled && host != null,
             recoveryAvailable = viewModel.recoveryAvailable(),
             biometricInvalidated = biometricInvalidated,
+            secretKind = viewModel.secretKind,
         ),
         actions = LockActions(
             checks = LockChecks(

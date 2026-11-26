@@ -14,6 +14,7 @@ import com.pasich.encly.core.resources.backup_phrase_check_wrong
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.security_recovery_replaced
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.data.backup.BackupDocuments
@@ -189,22 +190,31 @@ internal fun <T> withNormalizedPhrase(backupManager: BackupManager, input: CharA
 }
 
 /**
- * Re-authentication before any export or import: the PIN, or biometric when enabled.
- * [onAuthenticated] continues the flow that was started.
+ * Re-authentication before any export or import: the PIN (the passphrase, where that is the secret, [secretKind]), or
+ * biometric when enabled. [onAuthenticated] continues the flow that was started.
  */
 class ReauthFlow(
     private val state: BackupFlowState,
     private val securityManager: SecurityManager,
     private val onAuthenticated: suspend (BackupAction) -> Unit,
+    /** What the vault's secret is: the dialog shows the keypad for a PIN and a field for a passphrase. */
+    val secretKind: SecretKind = SecretKind.PIN,
+    /** The most UTF-16 units a typed passphrase may have: the dialog's field takes no more. */
+    val secretMaxUnits: Int = SecretChoice.DEFAULT_MAX_TYPED_UNITS,
 ) {
     fun pinLockoutRemainingMillis(): Long = securityManager.pinLockoutRemainingMillis()
 
     /**
-     * Checks [pin], which is wiped. During a PIN lockout nothing is verified (every attempt
-     * would be refused, even the right PIN), so no "wrong PIN" is shown either: the dialog shows
-     * the remaining lockout instead.
+     * Checks [pin] (a passphrase is sent the same way), which is wiped. During a lockout nothing is verified
+     * (every attempt would be refused, even the right PIN), so no "wrong PIN" is shown either: the dialog
+     * shows the remaining lockout instead.
      */
     fun submitPin(pin: CharArray) {
+        // A check takes time (a second or more for a passphrase): a second one is not started while one runs.
+        if (state.ui.value.busy) {
+            SensitiveDataCleaner.clear(pin)
+            return
+        }
         val step = state.step as? BackupStep.Reauth
         if (step == null || pinLockoutRemainingMillis() > 0L) {
             SensitiveDataCleaner.clear(pin)
@@ -225,6 +235,12 @@ class ReauthFlow(
                 state.go(step.copy(error = Res.string.lock_wrong_pin, failures = step.failures + 1))
             }
         }
+    }
+
+    /** An edit of the secret (a digit or a character): the error of the last attempt goes, so a repeat is announced. */
+    fun clearError() {
+        val step = state.step as? BackupStep.Reauth ?: return
+        if (step.error != null) state.go(step.copy(error = null))
     }
 
     fun withBiometric(host: ScreenBiometricHost) {

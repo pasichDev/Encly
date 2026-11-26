@@ -22,8 +22,10 @@ import com.pasich.encly.core.resources.lock_title
 import com.pasich.encly.core.resources.lock_unlock
 import com.pasich.encly.core.resources.lock_unlocking
 import com.pasich.encly.core.resources.lock_use_recovery_phrase
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
@@ -46,6 +48,8 @@ internal data class LockCapabilities(
     val recoveryAvailable: Boolean,
     /** The fingerprint slot was dropped because a new fingerprint was enrolled; the subtitle says so. */
     val biometricInvalidated: Boolean = false,
+    /** What the vault's secret is: the PIN pad is shown for a PIN, a passphrase field for a passphrase. */
+    val secretKind: SecretKind = SecretKind.PIN,
 )
 
 /** The checks of a secret the lock screen can send; each wipes what it is given. */
@@ -66,7 +70,7 @@ internal class LockActions(
     val onPromptBiometric: () -> Unit,
 )
 
-/** The form on show: the recovery phrase or the PIN pad. */
+/** The form on show: the recovery phrase, or the PIN pad (the passphrase field where the secret is a passphrase). */
 @Composable
 internal fun LockForms(
     form: LockFormState,
@@ -82,10 +86,13 @@ internal fun LockForms(
                 busy = busy,
                 authenticateSeed = actions.checks.seed,
                 onUnlock = actions.onRecoveryUnlock,
+                kind = capabilities.secretKind,
             )
             // Drawn over the phrase form rather than instead of it, so it keeps its state. The PIN
             // form shows the check in place (full dots, breathing logo) and hands over to the reveal.
             if (busy) AuthLoading(stringResource(Res.string.lock_unlocking))
+        } else if (capabilities.secretKind == SecretKind.PASSWORD) {
+            PassphraseLockContent(form, capabilities, busy, actions)
         } else {
             PinLockContent(form, capabilities, busy, actions)
         }
@@ -141,7 +148,7 @@ private fun PinLockContent(form: LockFormState, capabilities: LockCapabilities, 
  * Sends [secret] (the PIN) to be checked by [authenticate], unless a lockout runs. The ViewModel wipes it
  * once it is checked; [onFailure] shows a result that did not unlock, with the lockout left.
  */
-private fun submitSecret(
+internal fun submitSecret(
     secret: CharArray,
     authenticate: (CharArray, (PinUnlockResult) -> Unit) -> Unit,
     actions: LockActions,
@@ -171,6 +178,7 @@ private fun SeedLockContent(
     busy: Boolean,
     authenticateSeed: (phrase: CharArray, onResult: (SeedUnlockResult) -> Unit) -> Unit,
     onUnlock: () -> Unit,
+    kind: SecretKind,
 ) {
     ReleaseFocusWhile(busy)
     val submit = {
@@ -194,7 +202,7 @@ private fun SeedLockContent(
                 enabled = form.phrase.canSubmit && !busy,
             )
             EnclyTextButton(
-                text = stringResource(Res.string.lock_back_to_pin),
+                text = secretString(kind, Res.string.lock_back_to_pin),
                 onClick = form::leaveRecovery,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !busy,
@@ -204,7 +212,7 @@ private fun SeedLockContent(
         RecoveryPhraseInput(
             state = form.phrase,
             enabled = !busy,
-            error = form.phraseError?.let { hostString(it) },
+            error = form.phraseError?.let { secretString(kind, it) },
             onEdit = form::onPhraseEdited,
             onDone = submit,
             modifier = Modifier
@@ -214,7 +222,7 @@ private fun SeedLockContent(
     }
 }
 
-/** "Forgot your PIN? Use your recovery phrase" under the keypad. */
+/** "Recover access with your recovery phrase" under the keypad. */
 @Composable
 private fun RecoveryLink(onUseRecovery: () -> Unit) {
     EnclyTextButton(
@@ -233,7 +241,7 @@ private fun RecoveryLink(onUseRecovery: () -> Unit) {
  * field lets go of focus, so the keyboard closes and cannot type into it meanwhile.
  */
 @Composable
-private fun ReleaseFocusWhile(busy: Boolean) {
+internal fun ReleaseFocusWhile(busy: Boolean) {
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(busy) {

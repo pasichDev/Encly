@@ -21,20 +21,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.action_continue
+import com.pasich.encly.core.resources.passphrase_label
 import com.pasich.encly.core.resources.pin_change_current_title
 import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_mismatch_retry
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.EnclySnackbarHost
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.screen.pincode.PassphraseInput
+import com.pasich.encly.presentation.screen.pincode.PassphraseStep
+import com.pasich.encly.presentation.screen.pincode.PassphraseStepActions
+import com.pasich.encly.presentation.screen.pincode.PassphraseStepStyle
+import com.pasich.encly.presentation.screen.pincode.PassphraseStepText
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.screen.pincode.PinLockoutTicker
 import com.pasich.encly.presentation.screen.pincode.PinSubmit
+import com.pasich.encly.presentation.screen.pincode.clearWhenVaultLocks
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
+import com.pasich.encly.presentation.viewmodel.SecretRefusal
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -44,15 +54,29 @@ internal enum class PinStep { VERIFY, OPTIONS, NEW, CONFIRM }
 /**
  * Settings pages that set a second PIN (the wipe PIN, the duress PIN) share one flow: the real
  * PIN first, then an options page, then the new PIN typed twice. The PINs are CharArrays that
- * are wiped once used, never Strings (see [PinBuffer]).
+ * are wiped once used, never Strings (see [PinBuffer]). Where the secret is a passphrase ([kind]) the same steps run
+ * with a field in place of the keypad, and the new one is checked against the policy before it is asked for again.
  */
-internal class PinFlowState {
+internal class PinFlowState(
+    val kind: SecretKind = SecretKind.PIN,
+    maxPassphraseUnits: Int = PassphraseInput.MAX_TYPED_CHARS,
+) {
     var step by mutableStateOf(PinStep.VERIFY)
 
     /** The new PIN typed at [PinStep.NEW], until the confirmation is compared with it. */
     private var firstPin: CharArray? = null
 
     val input = PinBuffer()
+
+    /** The passphrase of the current step, where the secret is one. */
+    val passphrase = PassphraseInput(maxPassphraseUnits)
+
+    /** A secret is being checked or saved: nothing more is taken until the answer is here. */
+    var busy by mutableStateOf(false)
+    val isPassphrase: Boolean get() = kind == SecretKind.PASSWORD
+
+    /** Something complete enough to send is typed: a PIN of enough digits, or any passphrase (the policy decides). */
+    val canSubmit: Boolean get() = if (isPassphrase) passphrase.canSubmit else input.canSubmit
     var errorText by mutableStateOf<StringResource?>(null)
     var lockoutSeconds by mutableLongStateOf(0L)
 
@@ -64,7 +88,7 @@ internal class PinFlowState {
     /** A finished action to announce on the options page. */
     var message by mutableStateOf<StringResource?>(null)
 
-    val keysEnabled: Boolean get() = !(step == PinStep.VERIFY && lockoutSeconds > 0L)
+    val keysEnabled: Boolean get() = !(step == PinStep.VERIFY && lockoutSeconds > 0L) && !busy
 
     fun typeDigit(digit: Int) {
         if (keysEnabled) input.add(digit)
@@ -72,10 +96,14 @@ internal class PinFlowState {
 
     /** The PIN of the current step is complete: check it, keep it, or compare it. */
     fun onPinComplete(actions: PinFlowActions) {
+        if (busy || refusedAsNew(actions)) return
         // The ViewModel wipes what it is given; everything else is wiped here.
-        val pin = input.take()
+        val pin = if (isPassphrase) passphrase.take() else input.take()
         when (step) {
-            PinStep.VERIFY -> actions.verify(pin) { ok -> onCurrentPinChecked(ok, actions.lockoutMillis()) }
+            PinStep.VERIFY -> {
+                busy = true
+                actions.verify(pin) { ok -> onCurrentPinChecked(ok, actions.lockoutMillis()) }
+            }
 
             PinStep.NEW -> {
                 firstPin?.let(SensitiveDataCleaner::clear)
@@ -84,7 +112,13 @@ internal class PinFlowState {
                 step = PinStep.CONFIRM
             }
 
-            PinStep.CONFIRM -> confirm(pin, actions.save)
+            // A confirmation with nothing to compare it to is no step to be on: start the choice again.
+            PinStep.CONFIRM -> if (firstPin == null) {
+                SensitiveDataCleaner.clear(pin)
+                step = PinStep.NEW
+            } else {
+                confirm(pin, actions)
+            }
 
             PinStep.OPTIONS -> SensitiveDataCleaner.clear(pin)
         }
@@ -97,12 +131,14 @@ internal class PinFlowState {
 
     /** The new PIN was saved: announce [text] on the options page. */
     fun saved(text: StringResource) {
+        busy = false
         message = text
         step = PinStep.OPTIONS
     }
 
     /** The new PIN was refused: ask for another, with [error]. */
     fun restartNew(error: StringResource) {
+        busy = false
         errorText = error
         shakeKey++
         step = PinStep.NEW
@@ -120,11 +156,23 @@ internal class PinFlowState {
     /** Typed or kept digits do not outlive the screen. */
     fun clear() {
         input.clear()
+        passphrase.clear()
         firstPin?.let(SensitiveDataCleaner::clear)
         firstPin = null
     }
 
+    /** The vault locked: what is typed and kept is dropped, and a step that asks for a new secret is left. */
+    fun lock() {
+        clear()
+        busy = false
+        if (step == PinStep.NEW || step == PinStep.CONFIRM) {
+            errorText = null
+            step = PinStep.OPTIONS
+        }
+    }
+
     private fun onCurrentPinChecked(ok: Boolean, lockoutMillis: Long) {
+        busy = false
         val lockout = lockoutSecondsLeft(lockoutMillis)
         errorText = null
         when {
@@ -143,18 +191,46 @@ internal class PinFlowState {
         }
     }
 
-    private fun confirm(pin: CharArray, save: (CharArray) -> Unit) {
+    private fun confirm(pin: CharArray, actions: PinFlowActions) {
         val first = firstPin
         firstPin = null
-        val matches = first != null && pin.contentEquals(first)
+        val matches = first != null && actions.same(first, pin)
         first?.let(SensitiveDataCleaner::clear)
         if (!matches) {
             SensitiveDataCleaner.clear(pin)
             restartNew(Res.string.pin_mismatch_retry)
             return
         }
-        save(pin)
+        busy = true
+        actions.save(pin)
     }
+}
+
+/** A passphrase the policy refuses as the new one: say why and leave the text, so it can be fixed by editing. */
+private fun PinFlowState.refusedAsNew(actions: PinFlowActions): Boolean {
+    val refusal = if (isPassphrase && step == PinStep.NEW) {
+        val typed = passphrase.peek()
+        try {
+            actions.refusal(typed)
+        } finally {
+            SensitiveDataCleaner.clear(typed)
+        }
+    } else {
+        null
+    }
+    refusal?.let {
+        errorText = it.message
+        shakeKey++
+    }
+    return refusal != null
+}
+
+/** "Suggest a passphrase" on the new-passphrase step: puts the suggestion, in clear, in the field. */
+internal fun PinFlowState.suggest(actions: PinFlowActions) {
+    val suggestion = actions.suggest() ?: return
+    passphrase.fill(suggestion)
+    SensitiveDataCleaner.clear(suggestion)
+    errorText = null
 }
 
 /** What a PIN flow calls out to; [save] takes over the confirmed PIN (and wipes it). */
@@ -163,6 +239,12 @@ internal class PinFlowActions(
     val lockoutMillis: () -> Long,
     val save: (CharArray) -> Unit,
     val close: () -> Unit,
+    /** Why a passphrase typed as the new secret is refused, or null; a PIN never is. */
+    val refusal: (CharArray) -> SecretRefusal? = { null },
+    /** Whether two entries are the same secret. */
+    val same: (CharArray, CharArray) -> Boolean = { a, b -> a.contentEquals(b) },
+    /** A passphrase to offer, or null where there is none (a PIN). */
+    val suggest: () -> CharArray? = { null },
 )
 
 /** The strings of a PIN flow's steps. */
@@ -190,31 +272,52 @@ internal fun PinFlowScaffold(
     BackHandler(enabled = state.step == PinStep.NEW || state.step == PinStep.CONFIRM) { state.back() }
     PinLockoutTicker(state.lockoutSeconds > 0L, actions.lockoutMillis) { state.lockoutSeconds = it }
     DisposableEffect(state) { onDispose { state.clear() } }
-    PinFlowMessageEffect(state.message, state.snackbarHostState, onShow = { state.message = null })
+    PinFlowMessageEffect(state.message, state.kind, state.snackbarHostState, onShow = { state.message = null })
+    // Locked in the middle of the flow: what was typed goes at once, and nothing takes keys under the shield.
+    val locked = clearWhenVaultLocks { state.lock() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { EnclyTopBar(title = stringResource(texts.title), onBack = { if (!state.back()) actions.close() }) },
+        topBar = {
+            EnclyTopBar(title = secretString(state.kind, texts.title), onBack = { if (!state.back()) actions.close() })
+        },
         snackbarHost = { EnclySnackbarHost(state.snackbarHostState) },
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->
         if (state.step == PinStep.OPTIONS) {
             options(paddingValues)
         } else {
-            PinFlowEntry(
-                text = pinFlowStepText(state, texts),
-                state = state,
-                onSubmit = { if (state.input.canSubmit) state.onPinComplete(actions) },
-                modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues),
-            )
+            val entryModifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues)
+            if (state.isPassphrase) {
+                PassphraseFlowEntry(
+                    text = pinFlowStepText(state, texts),
+                    state = state,
+                    actions = actions,
+                    locked = locked,
+                    modifier = entryModifier,
+                )
+            } else {
+                PinFlowEntry(
+                    text = pinFlowStepText(state, texts),
+                    state = state,
+                    onSubmit = { if (state.canSubmit && !state.busy) state.onPinComplete(actions) },
+                    locked = locked,
+                    modifier = entryModifier,
+                )
+            }
         }
     }
 }
 
 /** Shows [message] once as a snackbar; [onShow] clears it. */
 @Composable
-private fun PinFlowMessageEffect(message: StringResource?, snackbarHostState: SnackbarHostState, onShow: () -> Unit) {
-    val messageText = message?.let { stringResource(it) }
+private fun PinFlowMessageEffect(
+    message: StringResource?,
+    kind: SecretKind,
+    snackbarHostState: SnackbarHostState,
+    onShow: () -> Unit,
+) {
+    val messageText = message?.let { secretString(kind, it) }
     val currentOnShow by rememberUpdatedState(onShow)
     // Clearing the message restarts this effect, which must not cancel the snackbar it opened.
     val snackbarScope = rememberCoroutineScope()
@@ -239,7 +342,7 @@ private fun pinFlowStepText(state: PinFlowState, texts: PinFlowTexts): PinStepTe
     val lockout = state.lockoutSeconds
         .takeIf { it > 0L && state.step == PinStep.VERIFY }
         ?.let { pinLockoutText(it) }
-    val error = state.errorText?.let { stringResource(it) }
+    val error = state.errorText?.let { secretString(state.kind, it) }
     return when (state.step) {
         PinStep.VERIFY -> PinStepText(
             Res.string.pin_change_current_title,
@@ -255,15 +358,22 @@ private fun pinFlowStepText(state: PinFlowState, texts: PinFlowTexts): PinStepTe
 }
 
 @Composable
-private fun PinFlowEntry(text: PinStepText, state: PinFlowState, onSubmit: () -> Unit, modifier: Modifier = Modifier) {
+private fun PinFlowEntry(
+    text: PinStepText,
+    state: PinFlowState,
+    onSubmit: () -> Unit,
+    locked: Boolean,
+    modifier: Modifier = Modifier,
+) {
     val message = text.message
     PinEntryScaffold(
-        title = stringResource(text.title),
+        title = secretString(state.kind, text.title),
         // An error or the lockout countdown takes the sub-heading slot, as on the lock screen.
-        subtitle = message ?: stringResource(text.subtitle),
+        subtitle = message ?: secretString(state.kind, text.subtitle),
         subtitleIsError = message != null,
         subtitleTicks = text.ticking,
         compact = true,
+        busy = state.busy,
         bodyAtBottom = true,
         modifier = modifier,
     ) { fit ->
@@ -272,7 +382,7 @@ private fun PinFlowEntry(text: PinStepText, state: PinFlowState, onSubmit: () ->
             entered = state.input.length,
             error = message != null && state.input.length == 0,
             shakeKey = state.shakeKey,
-            enabled = state.keysEnabled,
+            enabled = state.keysEnabled && !locked,
             actions = PinEntryActions(onDigit = state::typeDigit, onBackspace = state.input::deleteLast),
             submit = PinSubmit(
                 text = stringResource(Res.string.action_continue),
@@ -281,4 +391,40 @@ private fun PinFlowEntry(text: PinStepText, state: PinFlowState, onSubmit: () ->
             ),
         )
     }
+}
+
+/** The passphrase twin of [PinFlowEntry]: the same texts, a field and a button in place of the dots and keys. */
+@Composable
+private fun PassphraseFlowEntry(
+    text: PinStepText,
+    state: PinFlowState,
+    actions: PinFlowActions,
+    locked: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val kind = state.kind
+    val message = text.message
+    PassphraseStep(
+        text = PassphraseStepText(
+            title = secretString(kind, text.title),
+            // An error or the lockout countdown takes the sub-heading slot, as on the lock screen.
+            subtitle = message ?: secretString(kind, text.subtitle),
+            label = stringResource(Res.string.passphrase_label),
+            submit = stringResource(Res.string.action_continue),
+            subtitleIsError = message != null,
+            subtitleTicks = text.ticking,
+        ),
+        input = state.passphrase,
+        actions = PassphraseStepActions(
+            onSubmit = { if (state.canSubmit && !state.busy) state.onPinComplete(actions) },
+            onEdit = { state.errorText = null },
+            // Only where the new passphrase is chosen; never next to the current or the confirming one.
+            onSuggest = { state.suggest(actions) }.takeIf { state.step == PinStep.NEW },
+        ),
+        style = PassphraseStepStyle(
+            enabled = state.keysEnabled && !locked,
+            busy = state.busy,
+        ),
+        modifier = modifier,
+    )
 }

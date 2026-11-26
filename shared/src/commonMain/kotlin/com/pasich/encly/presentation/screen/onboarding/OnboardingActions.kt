@@ -1,5 +1,6 @@
 package com.pasich.encly.presentation.screen.onboarding
 
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel
 
 /** Every user action of the onboarding screens, so the steps never see the ViewModel. */
@@ -31,7 +32,11 @@ internal fun onboardingActions(
     onLanguage: () -> Unit,
     onOpenNotebook: () -> Unit,
     onRetryBiometric: () -> Unit,
+    onSubmitPassphrase: () -> Unit,
+    onSuggestPassphrase: () -> Unit,
 ): OnboardingActions = object : OnboardingActions {
+    private val isPassphrase = viewModel.uiState.value.secretKind == SecretKind.PASSWORD
+
     override val onBack = viewModel::back
     override val onLanguage = onLanguage
     override val onGetStarted = viewModel::getStarted
@@ -40,7 +45,10 @@ internal fun onboardingActions(
         onDigit = viewModel::onPinDigit,
         onBackspace = viewModel::onPinBackspace,
         onBiometricChange = viewModel::setBiometricRequested,
-        onSubmit = viewModel::submitPin,
+        // Where the secret is a passphrase the PIN step is the field: its send is the screen's (it owns the text).
+        onSubmit = if (isPassphrase) onSubmitPassphrase else viewModel::submitPin,
+        onPassphraseEdited = viewModel::onPassphraseEdited,
+        onSuggest = onSuggestPassphrase,
     )
     override val onCreatePhrase = viewModel::createPhrase
     override val onSkipPhrase = viewModel::skipPhrase

@@ -15,6 +15,7 @@ import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
+import com.pasich.encly.presentation.screen.pincode.PassphraseInput
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
@@ -22,14 +23,14 @@ import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import org.jetbrains.compose.resources.StringResource
 
 /**
- * What the lock screen's forms show: the PIN typed so far, the recovery phrase, and the last
- * error of each. Held by [LockScreen] itself, above the "Unlocking…" view that replaces the
+ * What the lock screen's forms show: the PIN typed so far (or the passphrase, where the secret is one), the recovery
+ * phrase, and the last error of each. Held by [LockScreen] itself, above the "Unlocking…" view that replaces the
  * forms while a credential is checked, so a wrong PIN or phrase is still shown afterwards
  * instead of being lost with the form that asked for it.
  */
 @Stable
 @Suppress("TooManyFunctions") // One small handler per field of the PIN and phrase forms.
-internal class LockFormState {
+internal class LockFormState(maxPassphraseUnits: Int = PassphraseInput.MAX_TYPED_CHARS) {
     /** The recovery-phrase form is shown instead of the PIN pad. */
     var useRecovery by mutableStateOf(false)
 
@@ -39,6 +40,9 @@ internal class LockFormState {
 
     /** The digits typed so far, wiped when taken or cleared (see [PinBuffer]). */
     private val pinDigits = PinBuffer()
+
+    /** The passphrase typed so far, where the unlock secret is one (see [PassphraseInput]). */
+    val passphrase = PassphraseInput(maxPassphraseUnits)
 
     /** How many PIN digits are typed. */
     val pinLength: Int get() = pinDigits.length
@@ -78,8 +82,22 @@ internal class LockFormState {
         return pinDigits.take()
     }
 
-    /** Forgets the typed digits. */
-    fun clearPin() = pinDigits.clear()
+    /** Something is typed in the passphrase field; the Unlock button is on from here, nothing is sent by itself. */
+    val canSubmitPassphrase: Boolean get() = passphrase.canSubmit
+
+    /** The passphrase, taken out of the field to be checked, which is emptied. The caller wipes the copy. */
+    fun takePassphrase(): CharArray = passphrase.take()
+
+    /** An edit of the passphrase; the first one of a new attempt clears the last error. */
+    fun onPassphraseEdited() {
+        if (pinError != null) pinError = null
+    }
+
+    /** Forgets the typed digits, and the typed passphrase. */
+    fun clearPin() {
+        pinDigits.clear()
+        passphrase.clear()
+    }
 
     fun onPinResult(result: PinUnlockResult, lockoutRemainingMillis: Long) {
         when (result) {

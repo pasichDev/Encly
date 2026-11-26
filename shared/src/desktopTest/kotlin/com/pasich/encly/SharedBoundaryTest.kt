@@ -192,6 +192,7 @@ class SharedBoundaryTest {
             "com/pasich/encly/ui/theme/PointerFirst.android.kt" to "touch first: no mouse and keyboard density",
             "com/pasich/encly/presentation/designsystem/EdgeToEdgeDialog.android.kt" to
                 "a full-screen dialog draws under the system bars (DialogProperties.decorFitsSystemWindows)",
+            "com/pasich/encly/platform/CapsLock.android.kt" to "a touch keyboard has no Caps Lock state to report",
         )
 
         /** The desktop actuals. */
@@ -209,6 +210,8 @@ class SharedBoundaryTest {
             "com/pasich/encly/ui/theme/PointerFirst.desktop.kt" to "mouse and keyboard first: the desktop density",
             "com/pasich/encly/presentation/designsystem/EdgeToEdgeDialog.desktop.kt" to
                 "no system bars under a dialog window on the desktop",
+            "com/pasich/encly/platform/CapsLock.desktop.kt" to
+                "java.awt.Toolkit reports the Caps Lock state, which the passphrase field hints at",
         )
     }
 }

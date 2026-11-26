@@ -17,11 +17,15 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.ScreenshotAllowance
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.platform.ScreenBiometricHost
+import com.pasich.encly.platform.secretVariant
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -43,7 +47,26 @@ class SecuritySettingsViewModel(
     private val keyboardPrivacy: KeyboardPrivacy,
     private val autoLock: AutoLock,
     private val screenshots: ScreenshotAllowance,
+    /** What the vault's secret is; the graph always passes the real policy, the default only spares tests. */
+    policy: UnlockSecretPolicy = PinSecretPolicy(),
 ) : ViewModel() {
+
+    private val secrets = SecretChoice(policy)
+
+    /** What the user types to unlock and to set the wipe and duress secrets: a PIN or a passphrase. */
+    val secretKind: SecretKind = secrets.kind
+
+    /** The most UTF-16 units a typed passphrase may have: the field takes no more. */
+    val secretMaxUnits: Int = secrets.maxTypedUnits
+
+    /** Why [typed] may not be the new secret (a passphrase the policy refuses), or null. [typed] stays the caller's. */
+    fun refusalOf(typed: CharArray): SecretRefusal? = secrets.refusal(typed)
+
+    /** Whether the two entries are the same secret. Both stay the caller's. */
+    fun sameSecret(first: CharArray, second: CharArray): Boolean = secrets.same(first, second)
+
+    /** A passphrase to offer, or null for a PIN. The caller wipes it. */
+    fun suggestSecret(): CharArray? = secrets.suggest()
 
     private val _uiState = MutableStateFlow(SecuritySettingsUiState())
     val uiState: StateFlow<SecuritySettingsUiState> = _uiState.asStateFlow()
@@ -113,7 +136,9 @@ class SecuritySettingsViewModel(
                 }
             }
             if (!ok) {
-                _uiState.value = _uiState.value.copy(error = UiText.of(Res.string.pin_current_wrong))
+                _uiState.value = _uiState.value.copy(
+                    error = UiText.of(secretVariant(Res.string.pin_current_wrong, secretKind)),
+                )
             }
             onResult(ok)
         }
@@ -137,7 +162,7 @@ class SecuritySettingsViewModel(
 
                 PinChange.FAILED ->
                     _uiState.value =
-                        _uiState.value.copy(error = UiText.of(Res.string.pin_update_failed))
+                        _uiState.value.copy(error = UiText.of(secretVariant(Res.string.pin_update_failed, secretKind)))
 
                 PinChange.KEY_STORE_UNAVAILABLE ->
                     _uiState.value =

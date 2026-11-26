@@ -35,12 +35,14 @@ import com.pasich.encly.core.resources.security_title
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.platform.BiometricWording
 import com.pasich.encly.platform.LocalBiometricHost
 import com.pasich.encly.platform.LocalBiometricWording
 import com.pasich.encly.platform.LocalScreenshotAllowance
 import com.pasich.encly.platform.ScreenBiometricHost
 import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -164,6 +166,8 @@ private class SecurityOptions(
     val strictKeyboard: Boolean,
     val autoLock: AutoLockDelay,
     val screenshots: ScreenshotsSetting?,
+    /** What the vault's secret is: its rows and descriptions say "PIN" or "passphrase". */
+    val secretKind: SecretKind,
 )
 
 @Composable
@@ -184,6 +188,7 @@ private fun rememberSecurityOptions(
             onTurnOn = { vaultViewModel.start(BackupAction.ALLOW_SCREENSHOTS) },
             onTurnOff = securityViewModel::stopAllowingScreenshots,
         ).takeIf { screenshotsOffered },
+        secretKind = securityViewModel.secretKind,
     )
 }
 
@@ -204,6 +209,27 @@ private fun SecurityContent(
     }
 }
 
+/** The wipe and the duress secret rows, each under a divider. */
+@Composable
+private fun SecondSecretRows(
+    securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
+    kind: SecretKind,
+    actions: SecurityActions,
+) {
+    EnclyGroupDivider()
+    WipePinRow(
+        turnedOff = securityState.wipePinTurnedOff,
+        kind = kind,
+        onClick = { actions.onOpen(NavRoutes.WipePinRoute) },
+    )
+    EnclyGroupDivider()
+    DuressPinRow(
+        turnedOff = securityState.duressPinTurnedOff,
+        kind = kind,
+        onClick = { actions.onOpen(NavRoutes.DuressPinRoute) },
+    )
+}
+
 @Composable
 private fun SecurityRows(
     securityState: SecuritySettingsViewModel.SecuritySettingsUiState,
@@ -213,7 +239,8 @@ private fun SecurityRows(
 ) {
     EncryptionStatusCard(
         title = stringResource(Res.string.security_encryption_active),
-        text = hostString(
+        text = secretString(
+            options.secretKind,
             if (securityState.isUserCreatedSeedKey) {
                 Res.string.security_encryption_seed_plain
             } else {
@@ -227,8 +254,8 @@ private fun SecurityRows(
     )
     EnclyGroup {
         EnclyNavigationRow(
-            title = stringResource(Res.string.auth_method_pin_title),
-            supporting = stringResource(Res.string.auth_method_pin_desc),
+            title = secretString(options.secretKind, Res.string.auth_method_pin_title),
+            supporting = secretString(options.secretKind, Res.string.auth_method_pin_desc),
             icon = EnclyIcons.Key,
             onClick = { actions.onOpen(NavRoutes.PinCodeConfig) },
             modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
@@ -238,19 +265,13 @@ private fun SecurityRows(
             EnclyGroupDivider()
             BiometricSetting(securityState, actions.onBiometric)
         }
-        if (securityState.hasPinSlot) {
-            EnclyGroupDivider()
-            WipePinRow(turnedOff = securityState.wipePinTurnedOff, onClick = { actions.onOpen(NavRoutes.WipePinRoute) })
-            EnclyGroupDivider()
-            DuressPinRow(turnedOff = securityState.duressPinTurnedOff, onClick = {
-                actions.onOpen(NavRoutes.DuressPinRoute)
-            })
-        }
+        if (securityState.hasPinSlot) SecondSecretRows(securityState, options.secretKind, actions)
         EnclyGroupDivider()
         AutoLockRow(current = options.autoLock, onSelect = actions.onAutoLock)
         EnclyGroupDivider()
         RecoveryPhraseRow(
             hasRecoveryPhrase = securityState.isUserCreatedSeedKey,
+            kind = options.secretKind,
             busy = vaultBusy,
             onStart = actions.onVaultAction,
         )
@@ -265,7 +286,7 @@ private fun SecurityRows(
         screenshots = options.screenshots,
     )
     NotePreviewsSetting(onChange = actions.onNotePreviews)
-    ProtectionSection()
+    ProtectionSection(options.secretKind)
     EraseSection(busy = vaultBusy, onErase = { actions.onVaultAction(BackupAction.ERASE) })
 }
 

@@ -44,7 +44,8 @@ import com.pasich.encly.core.resources.duress_pin_title
 import com.pasich.encly.core.resources.duress_pin_turned_off
 import com.pasich.encly.core.resources.pin_in_use
 import com.pasich.encly.core.security.DuressPinChange
-import com.pasich.encly.platform.hostString
+import com.pasich.encly.core.security.SecretKind
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyButton
@@ -78,7 +79,7 @@ fun DuressPinScreen(
     modifier: Modifier = Modifier,
     securityViewModel: SecuritySettingsViewModel = metroViewModel(),
 ) {
-    val state = remember { PinFlowState() }
+    val state = remember { PinFlowState(securityViewModel.secretKind, securityViewModel.secretMaxUnits) }
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
     val flowActions = remember(state, securityViewModel) {
         PinFlowActions(
@@ -86,6 +87,9 @@ fun DuressPinScreen(
             lockoutMillis = securityViewModel::pinLockoutRemainingMillis,
             save = { pin -> securityViewModel.setDuressPin(pin) { result -> state.onDuressPinResult(result) } },
             close = { navController.popBack() },
+            refusal = securityViewModel::refusalOf,
+            same = securityViewModel::sameSecret,
+            suggest = securityViewModel::suggestSecret,
         )
     }
 
@@ -96,7 +100,11 @@ fun DuressPinScreen(
         modifier = modifier,
     ) { paddingValues ->
         DuressPinOptions(
-            info = DuressPinInfo(turnedOff = securityState.duressPinTurnedOff, isSet = securityState.hasDuressPin),
+            info = DuressPinInfo(
+                turnedOff = securityState.duressPinTurnedOff,
+                isSet = securityState.hasDuressPin,
+                kind = securityViewModel.secretKind,
+            ),
             actions = DuressPinActions(
                 onSet = state::startNew,
                 onRemove = {
@@ -121,12 +129,13 @@ private fun PinFlowState.onDuressPinResult(result: DuressPinChange) {
 }
 
 /** What the options page shows besides the actions; [isSet]: a decoy vault exists, live or [turnedOff]. */
-private class DuressPinInfo(val turnedOff: Boolean, val isSet: Boolean)
+private class DuressPinInfo(val turnedOff: Boolean, val isSet: Boolean, val kind: SecretKind)
 
 private class DuressPinActions(val onSet: () -> Unit, val onRemove: () -> Unit)
 
 @Composable
-private fun DuressPinInfo.statusText(): String = stringResource(
+private fun DuressPinInfo.statusText(): String = secretString(
+    kind,
     if (isSet && !turnedOff) Res.string.duress_pin_status_on else Res.string.duress_pin_status_off,
 )
 
@@ -136,6 +145,7 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
     var confirmingRemove by rememberSaveable { mutableStateOf(false) }
     if (confirmingRemove) {
         RemoveDuressPinDialog(
+            kind = info.kind,
             onConfirm = {
                 confirmingRemove = false
                 actions.onRemove()
@@ -149,16 +159,16 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
         contentPadding = PaddingValues(horizontal = spacing.gutter, vertical = spacing.s),
     ) {
         if (info.turnedOff) {
-            EnclyCallout(text = stringResource(Res.string.duress_pin_turned_off), tone = CalloutTone.WARNING)
+            EnclyCallout(text = secretString(info.kind, Res.string.duress_pin_turned_off), tone = CalloutTone.WARNING)
         }
         Text(
-            text = stringResource(Res.string.duress_pin_intro),
+            text = secretString(info.kind, Res.string.duress_pin_intro),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        EnclyCallout(text = hostString(Res.string.duress_pin_real_vault))
+        EnclyCallout(text = secretString(info.kind, Res.string.duress_pin_real_vault))
         Text(
-            text = stringResource(Res.string.duress_pin_limits),
+            text = secretString(info.kind, Res.string.duress_pin_limits),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -172,12 +182,15 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
             modifier = Modifier.fillMaxWidth().padding(top = spacing.s),
         ) {
             EnclyButton(
-                text = stringResource(if (info.isSet) Res.string.duress_pin_change else Res.string.duress_pin_set),
+                text = secretString(
+                    info.kind,
+                    if (info.isSet) Res.string.duress_pin_change else Res.string.duress_pin_set,
+                ),
                 onClick = actions.onSet,
             )
             if (info.isSet) {
                 EnclyTextButton(
-                    text = stringResource(Res.string.duress_pin_remove),
+                    text = secretString(info.kind, Res.string.duress_pin_remove),
                     onClick = { confirmingRemove = true },
                     destructive = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -189,9 +202,9 @@ private fun DuressPinOptions(info: DuressPinInfo, actions: DuressPinActions, mod
 
 /** Turning it off deletes the decoy vault; the real vault is not affected. */
 @Composable
-private fun RemoveDuressPinDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun RemoveDuressPinDialog(kind: SecretKind, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     EnclyDialog(
-        title = stringResource(Res.string.duress_pin_remove_confirm_title),
+        title = secretString(kind, Res.string.duress_pin_remove_confirm_title),
         text = stringResource(Res.string.duress_pin_remove_confirm_body),
         onDismissRequest = onDismiss,
         confirm = DialogAction(stringResource(Res.string.duress_pin_remove_confirm), onConfirm, destructive = true),
