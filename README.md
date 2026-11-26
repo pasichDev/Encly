@@ -1,21 +1,61 @@
 # Encly
 
 [![Android CI](https://github.com/pasichDev/Encly/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/pasichDev/Encly/actions/workflows/android.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#install)
-[![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white)](#project-structure)
 [![Latest release](https://img.shields.io/github/v/release/pasichDev/Encly?logo=github)](https://github.com/pasichDev/Encly/releases/latest)
-[![F-Droid](https://img.shields.io/f-droid/v/com.pasich.encly?logo=f-droid)](https://f-droid.org/packages/com.pasich.encly/)
-[![Google Play](https://img.shields.io/badge/Google%20Play-available-34A853?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.pasich.encly)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white)](#project-structure)
 [![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/pasichdev)
 
-**Offline encrypted notes and tasks for Android.**
+**Offline encrypted notes and tasks for Android and Linux.**
 
 Encly keeps notes and tasks encrypted on-device. There is no account, sync, telemetry,
 notification pipeline, share sheet, or network access. Access is protected by a mandatory app
-PIN and, optionally, strong biometrics. The only ways data leaves the phone are an encrypted
-backup and, only when you ask for it, a readable Markdown export that is not encrypted.
+PIN (a passphrase on the computer) and, on the phone, optionally by strong biometrics. The only
+ways data leaves the device are an encrypted backup and, only when you ask for it, a readable
+Markdown export that is not encrypted.
+
+[![Support Encly on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/pasichdev)
+
+## Screenshots
+
+<p>
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="24%" alt="Notes list" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="24%" alt="Lock screen" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="24%" alt="Editor" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" width="24%" alt="Appearance" />
+</p>
+
+All eight, with captions in every store language, are in
+[`fastlane/metadata/android`](fastlane/metadata/android) (`<locale>/images/phoneScreenshots`).
+
+## Platforms
+
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](#install)
+[![Linux](https://img.shields.io/badge/Linux-.deb%20%C2%B7%20Flatpak-FCC624?logo=linux&logoColor=black)](#install)
+[![Windows](https://img.shields.io/badge/Windows-in%20development-lightgrey)](https://github.com/pasichDev/Encly/issues/106)
+[![macOS](https://img.shields.io/badge/macOS-in%20development-lightgrey?logo=apple&logoColor=white)](https://github.com/pasichDev/Encly/issues/106)
+[![iOS](https://img.shields.io/badge/iOS-in%20development-lightgrey?logo=apple&logoColor=white)](https://github.com/pasichDev/Encly/issues/107)
+
+| Platform | Status | Where |
+|---|---|---|
+| **Android** 8.0+ (API 26) | released | [Google Play](https://play.google.com/store/apps/details?id=com.pasich.encly), [F-Droid](https://f-droid.org/packages/com.pasich.encly/), [GitHub Releases](https://github.com/pasichDev/Encly/releases/latest) |
+| **Linux** (x86-64) | released | `.deb` and Flatpak bundle on [GitHub Releases](https://github.com/pasichDev/Encly/releases/latest) |
+| **Windows** | in development | builds in CI, not published ([#106](https://github.com/pasichDev/Encly/issues/106)) |
+| **macOS** | in development | builds in CI, not published ([#106](https://github.com/pasichDev/Encly/issues/106)) |
+| **iOS** | in development | not published ([#107](https://github.com/pasichDev/Encly/issues/107)) |
+
+Every platform has its own vault; nothing syncs between them. An encrypted backup made on one
+restores on another with the recovery phrase.
+
+## 💛 Support Encly
+
+Encly is free and open source, with no ads, no tracking and no accounts; donations are its only
+income. They go to test devices and to time for releases and fixes.
+
+[![Support Encly on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/pasichdev)
+
+Card or PayPal, one-off or monthly. The `fdroid` build shows the same link on its Support screen;
+the `play` build has no in-app donation link, by Google Play policy.
 
 ## Features
 
@@ -67,18 +107,6 @@ Many thanks to [Weblate](https://weblate.org) for hosting Encly's translations a
 
 [![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
 
-## Screenshots
-
-<p>
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="24%" alt="Notes list" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="24%" alt="Lock screen" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="24%" alt="Editor" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" width="24%" alt="Appearance" />
-</p>
-
-All eight, with captions in every store language, are in
-[`fastlane/metadata/android`](fastlane/metadata/android) (`<locale>/images/phoneScreenshots`).
-
 ## Install
 
 [<img src="https://img.shields.io/github/v/release/pasichDev/Encly?label=GitHub%20Releases&logo=github" alt="Get it on GitHub" height="28">](https://github.com/pasichDev/Encly/releases/latest)
@@ -98,21 +126,24 @@ exported backup: uninstalling deletes the vault.
 
 Requires Android 8.0 (API 26) or newer. Google Play Services are not needed.
 
-Android is the only platform Encly is released for. The repository also holds a desktop app
-(Windows, macOS, Linux) and an iOS app; they build, but they are **not published and not
-supported yet** ([#85](https://github.com/pasichDev/Encly/issues/85),
-[#106](https://github.com/pasichDev/Encly/issues/106),
+### Linux
+
+Download from [GitHub Releases](https://github.com/pasichDev/Encly/releases/latest) and verify the
+file (below) before installing.
+
+```bash
+sudo apt install ./encly_*.deb             # Debian, Ubuntu and derivatives
+flatpak install --user ./encly-*.flatpak   # any distribution with Flatpak
+```
+
+The Flatpak has no network and no file-system permission; it talks to the Secret Service (GNOME
+Keyring, KWallet) for the device half of the vault key, so one of them must be running. On Linux
+the vault is unlocked with a passphrase instead of a PIN: see
+[SECURITY.md](SECURITY.md#desktop).
+
+The Windows, macOS and iOS apps are in the repository and build in CI, but they are **not
+published and not supported yet** ([#106](https://github.com/pasichDev/Encly/issues/106),
 [#107](https://github.com/pasichDev/Encly/issues/107)).
-
-## 💛 Support Encly
-
-Encly is free and open source, with no ads, no tracking and no accounts; donations are its only
-income. They go to test devices and to time for releases and fixes.
-
-[![Support Encly on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/pasichdev)
-
-Card or PayPal, one-off or monthly. The `fdroid` build shows the same link on its Support screen;
-the `play` build has no in-app donation link, by Google Play policy.
 
 ## Verify a release
 
