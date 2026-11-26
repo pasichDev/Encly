@@ -21,7 +21,9 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -29,9 +31,14 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -60,6 +67,7 @@ private val GripSize = 18.dp
 /** Where the grip stands in a block with no text to line it up with. */
 private val GripTop = 4.dp
 private val LockSize = 28.dp
+private val LockMargin = 4.dp
 private val HighlightInset = 8.dp
 private val HighlightRadius = 8.dp
 private const val HIGHLIGHT_ALPHA = 0.16f
@@ -76,6 +84,7 @@ private const val GRIP_ALPHA = 0.5f
 internal fun BlockChrome(
     block: Block,
     controller: EditorController,
+    highlights: FindHighlights,
     isLocked: Boolean,
     content: @Composable () -> Unit,
 ) {
@@ -84,25 +93,72 @@ internal fun BlockChrome(
     val picked = block.id in ids
     val picking = ids.isNotEmpty()
     val firstLine = remember { mutableIntStateOf(NO_LINE) }
-    BlockSelectAllIme(onSelectAll = controller::selectAllText) {
+    val worksOn = controller.interactedBlockId.collectAsState().value == block.id
+    // Only the checklist the lock is shown on needs to know which part of it is on screen.
+    val visible = remember { VisiblePart() }
+    val showsLock = worksOn && !picking && !isLocked && block.isChecklist()
+    BlockSelectAllIme(
+        onSelectAll = controller::selectAllText,
+        onCopy = { controller.copiesAcrossBlocks { copyTextRange(markdown = false) } },
+        onCut = { controller.copiesAcrossBlocks { cutTextRange() } },
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .pickedBackground(picked, MaterialTheme.colorScheme.primary.copy(alpha = HIGHLIGHT_ALPHA))
                 .semantics { selected = picked }
-                .readFirstLine(firstLine),
+                .readFirstLine(firstLine)
+                .then(if (showsLock) Modifier.onGloballyPositioned { visible.update(it) } else Modifier),
         ) {
             content()
             if (picking) {
                 PickOverlay(picked) { selection.toggle(block.id) }
             } else {
-                val worksOn = controller.interactedBlockId.collectAsState().value == block.id
                 BlockHandle(worksOn, { firstLine.intValue }) { selection.select(block.id) }
-                if (worksOn && !isLocked) ChecklistLockToggle(block, controller)
+                if (showsLock) ChecklistLockToggle(block, controller, visible, highlights)
             }
         }
     }
 }
+
+/**
+ * Runs [action] on a text selection that runs across blocks, true; false (and nothing run) while there is none, so the
+ * field's own copy or cut goes ahead. Taken even when [action] cannot (a locked list is in the selection): the field's
+ * own selection is not what the user selected.
+ */
+internal inline fun EditorController.copiesAcrossBlocks(action: EditorController.() -> Boolean): Boolean =
+    textRange.isCrossField.also { if (it) action() }
+
+/**
+ * The part of a block that shows in its list: where the block is placed, asked when it is needed (a lock being drawn),
+ * since the block's layout does not tell when its list scrolls.
+ */
+internal class VisiblePart {
+    private var coordinates by mutableStateOf<LayoutCoordinates?>(null)
+
+    /** The block's place, from its layout. */
+    fun update(coordinates: LayoutCoordinates) {
+        this.coordinates = coordinates
+    }
+
+    /**
+     * Where the top of a [lock] px tall button sits to end [margin] px above the visible part of the block, inside the
+     * block: the bounds of the block in the window are clipped by its list, so what has scrolled out is not counted.
+     */
+    fun lockTop(lock: Float, margin: Float): Float {
+        val placed = coordinates?.takeIf { it.isAttached } ?: return 0f
+        val bottom = placed.boundsInRoot().bottom - placed.positionInRoot().y
+        return lockTop(placed.size.height.toFloat(), bottom, lock, margin)
+    }
+
+    companion object {
+        /** [lockTop] for a block [height] px tall that shows down to [bottom] px from its top. */
+        fun lockTop(height: Float, bottom: Float, lock: Float, margin: Float): Float =
+            (bottom - lock - margin).coerceIn(0f, (height - lock).coerceAtLeast(0f))
+    }
+}
+
+private fun Block.isChecklist() = this is Block.ListBlock && blockType == BlockType.LIST_CHECK
 
 private const val NO_LINE = -1
 
@@ -179,11 +235,17 @@ private fun BoxScope.BlockHandle(marked: Boolean, firstLine: () -> Int, onSelect
 }
 
 /**
- * The lock of a checklist, at the end of its first item while the user works in it: the same lock as the block's
- * menu entry. It shows the state the checklist is in, and a press changes it. Nothing for any other block.
+ * The lock of a checklist, at the end of the visible part of its list while the user works in it, so it stays in
+ * reach on a long list however it is scrolled: the same lock as the block's menu entry. It shows the state the
+ * checklist is in, and a press changes it. Nothing for any other block.
  */
 @Composable
-private fun BoxScope.ChecklistLockToggle(block: Block, controller: EditorController) {
+private fun BoxScope.ChecklistLockToggle(
+    block: Block,
+    controller: EditorController,
+    visible: VisiblePart,
+    highlights: FindHighlights,
+) {
     val checklist = (block as? Block.ListBlock)?.takeIf { it.blockType == BlockType.LIST_CHECK } ?: return
     val locked by checklist.locked.collectAsState()
     val items by checklist.items.collectAsState()
@@ -197,6 +259,11 @@ private fun BoxScope.ChecklistLockToggle(block: Block, controller: EditorControl
         // Beside the drag handle of the first item, not over it.
         modifier = Modifier
             .align(Alignment.TopEnd)
+            .graphicsLayer {
+                // Where the list is scrolled to is what moves the lock: it is read to be drawn again with the list.
+                highlights.listScroll()
+                translationY = visible.lockTop(LockSize.toPx(), LockMargin.toPx())
+            }
             .padding(end = contentEndInset + if (items.size > 1 && !locked) ReorderHandleWidth else 0.dp),
     ) {
         Surface(

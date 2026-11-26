@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.click
@@ -406,9 +407,10 @@ class TextRangeUiTest {
         rule.waitForIdle()
         assertFalse(range().isActive)
 
+        // The cursor is at the end of "alpha": Delete joins the paragraph below, and takes nothing else away.
         fields()[0].performKeyInput { pressKey(Key.Delete) }
         fields()[0].performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.C) } }
-        assertEquals(listOf("alpha", "beta"), shown())
+        assertEquals(listOf("alphabeta"), shown())
         assertTrue(controller.copies.isEmpty())
     }
 
@@ -587,5 +589,68 @@ class TextRangeUiTest {
 
         rule.onNodeWithTag(RANGE_START_TAG).assertDoesNotExist()
         rule.onNodeWithTag(RANGE_END_TAG).assertDoesNotExist()
+    }
+
+    private fun ownSelection(index: Int) =
+        fields()[index].fetchSemanticsNode().config[SemanticsProperties.TextSelectionRange]
+
+    // The field's own handles would be a second pair beside the one of the selection across blocks.
+    @Test
+    fun theFieldsOwnSelectionEndsOnceTheSelectionRunsAcrossFields() {
+        show(text("alpha"), text("beta"))
+        fields()[0].performClick()
+        setSelection(0, 0, 5)
+        assertEquals(0 to 5, ownSelection(0).let { it.start to it.end })
+
+        rule.runOnIdle { range().select(point(0, 0), point(1, 4)) }
+        rule.waitForIdle()
+
+        assertTrue(range().isCrossField)
+        assertTrue(ownSelection(0).collapsed)
+        // The selection across blocks is untouched and still has its handles.
+        assertEquals(point(1, 4), range().ends.value!!.head)
+        rule.onNodeWithTag(RANGE_START_TAG).assertExists()
+        rule.onNodeWithTag(RANGE_END_TAG).assertExists()
+    }
+
+    @Test
+    fun aSelectionInsideOneFieldStaysTheFieldsOwnToo() {
+        show(text("alpha"), text("beta"))
+        fields()[0].performClick()
+        setSelection(0, 1, 4)
+
+        assertFalse(range().isCrossField)
+        assertEquals(1 to 4, ownSelection(0).let { it.start to it.end })
+    }
+
+    @Test
+    fun typingOverASelectionAcrossFieldsStillReplacesItOnceTheFieldsOwnEnded() {
+        show(text("alpha"), text("beta"), text("gamma"))
+        fields()[0].performClick()
+        setSelection(0, 0, 5)
+        rule.runOnIdle { range().selectAll() }
+        rule.waitForIdle()
+        assertTrue(ownSelection(0).collapsed)
+
+        fields()[0].performTextInput("x")
+        rule.waitForIdle()
+
+        assertEquals(listOf("x"), shown())
+    }
+
+    // What the keyboard's Copy and Cut do (see SelectAllConnection): the editor's, while a selection runs across blocks.
+    @Test
+    fun theKeyboardsCopyAndCutActOnASelectionAcrossBlocksAndOnlyOnThat() {
+        show(text("alpha"), text("beta"))
+
+        assertFalse(controller.copiesAcrossBlocks { error("there is no selection across blocks") })
+
+        selectAcross(0, point(0, 2), point(1, 2))
+        assertTrue(controller.copiesAcrossBlocks { copyTextRange(markdown = false) })
+        assertEquals(listOf(false to "pha\n\nbe"), controller.copies.toList())
+
+        assertTrue(controller.copiesAcrossBlocks { cutTextRange() })
+        rule.waitForIdle()
+        assertEquals(listOf("alta"), shown())
     }
 }

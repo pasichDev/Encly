@@ -73,6 +73,27 @@ class EditorGapsUiTest {
     }
 
     @Test
+    fun deleteAtTheEndOfAParagraphJoinsTheParagraphBelow() {
+        show(text("ab"), text("cd"), text("ef"))
+
+        press(0, Key.Delete, selection = 2)
+
+        assertEquals(listOf("abcd", "ef"), state.blocks.map { (it as Block.TextBlock).text.value })
+        state.undo()
+        assertEquals(listOf("ab", "cd", "ef"), state.blocks.map { (it as Block.TextBlock).text.value })
+    }
+
+    @Test
+    fun deleteInTheMiddleOfAParagraphIsLeftToTheFieldAndTheLastParagraphHasNothingBelow() {
+        show(text("ab"), text("cd"))
+
+        press(0, Key.Delete, selection = 1)
+        press(1, Key.Delete, selection = 2)
+
+        assertEquals(listOf("a", "cd"), state.blocks.map { (it as Block.TextBlock).text.value })
+    }
+
+    @Test
     fun cursorKeysLeaveAParagraphFromItsEdges() {
         show(text("a"), text("b"), text("c"))
 

@@ -13,7 +13,9 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -21,6 +23,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -30,6 +33,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.rightClick
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.withKeyDown
 import com.pasich.encly.editor.model.Block
 import com.pasich.encly.editor.model.BlockType
@@ -406,6 +410,55 @@ class BlockSelectionUiTest {
         rule.waitForIdle()
 
         rule.onNodeWithContentDescription("Unlock checklist").assertExists()
+    }
+
+    @Test
+    fun theLockStaysAtTheBottomOfTheVisiblePartOfALongChecklistAsItScrolls() {
+        val long = Block.ListBlock(
+            MutableStateFlow((0..199).map { ItemListBlock("item $it") }),
+            BlockType.LIST_CHECK,
+        )
+        show(text("above"), long)
+        rule.runOnIdle { state.selection.onInteraction(long.id) }
+        rule.waitForIdle()
+        val listBottom = rule.onRoot().fetchSemanticsNode().boundsInRoot.bottom
+        val reach = 40 * rule.density.density
+
+        fun lockBottom() = rule.onNodeWithTag(CHECKLIST_LOCK_TAG).fetchSemanticsNode().boundsInRoot.bottom
+
+        assertTrue(lockBottom() in listBottom - reach..listBottom, "at the bottom: ${lockBottom()}, $listBottom")
+
+        rule.onRoot().performTouchInput { swipeUp() }
+        rule.waitForIdle()
+
+        assertTrue(lockBottom() in listBottom - reach..listBottom, "after a scroll: ${lockBottom()}, $listBottom")
+    }
+
+    @Test
+    fun touchingALockedChecklistLeavesNoCaretBlinkingInTheFieldThatHadFocus() {
+        val checks = checklist().also { it.locked.value = true }
+        show(text("above"), checks)
+        fields()[0].performClick()
+        rule.waitForIdle()
+        fields()[0].assertIsFocused()
+
+        rule.onNodeWithText("x").performClick()
+        rule.waitForIdle()
+
+        fields()[0].assertIsNotFocused()
+        rule.onNodeWithContentDescription("Unlock checklist").assertExists()
+    }
+
+    @Test
+    fun touchingAnUnlockedChecklistKeepsTheFocusItTakes() {
+        show(text("above"), checklist())
+        fields()[0].performClick()
+        rule.waitForIdle()
+
+        fields()[1].performClick()
+        rule.waitForIdle()
+
+        fields()[1].assertIsFocused()
     }
 
     @Test

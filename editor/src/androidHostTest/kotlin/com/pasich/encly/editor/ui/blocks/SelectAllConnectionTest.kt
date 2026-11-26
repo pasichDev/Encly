@@ -32,7 +32,15 @@ class SelectAllConnectionTest {
     private val target = mock(InputConnection::class.java)
     private var asked = 0
     private var takes = true
-    private val connection = SelectAllConnection(target) { asked++ >= 0 && takes }
+    private var copies = 0
+    private var cuts = 0
+    private var acrossBlocks = false
+    private val connection = SelectAllConnection(
+        target,
+        onSelectAll = { asked++ >= 0 && takes },
+        onCopy = { acrossBlocks.also { if (it) copies++ } },
+        onCut = { acrossBlocks.also { if (it) cuts++ } },
+    )
 
     private fun selecting(text: String, start: Int, end: Int) {
         val extracted = ExtractedText().apply {
@@ -108,12 +116,39 @@ class SelectAllConnectionTest {
 
     @Test
     fun otherMenuActionsGoStraightToTheField() {
-        `when`(target.performContextMenuAction(android.R.id.copy)).thenReturn(true)
+        `when`(target.performContextMenuAction(android.R.id.paste)).thenReturn(true)
 
-        assertTrue(connection.performContextMenuAction(android.R.id.copy))
+        assertTrue(connection.performContextMenuAction(android.R.id.paste))
 
         assertEquals(0, asked)
         verify(target, never()).getExtractedText(any(), anyInt())
+    }
+
+    // The keyboard's Select all, pressed twice, leaves the field's own selection on the one paragraph.
+    @Test
+    fun copyAndCutOverASelectionAcrossBlocksAreTheEditorsNotTheFields() {
+        acrossBlocks = true
+
+        assertTrue(connection.performContextMenuAction(android.R.id.copy))
+        assertTrue(connection.performContextMenuAction(android.R.id.cut))
+
+        assertEquals(1, copies)
+        assertEquals(1, cuts)
+        verify(target, never()).performContextMenuAction(android.R.id.copy)
+        verify(target, never()).performContextMenuAction(android.R.id.cut)
+    }
+
+    @Test
+    fun copyAndCutWithoutOneGoToTheField() {
+        `when`(target.performContextMenuAction(android.R.id.copy)).thenReturn(true)
+        `when`(target.performContextMenuAction(android.R.id.cut)).thenReturn(true)
+
+        assertTrue(connection.performContextMenuAction(android.R.id.copy))
+        assertTrue(connection.performContextMenuAction(android.R.id.cut))
+
+        assertEquals(0, copies + cuts)
+        verify(target).performContextMenuAction(android.R.id.copy)
+        verify(target).performContextMenuAction(android.R.id.cut)
     }
 
     @Test
@@ -124,7 +159,7 @@ class SelectAllConnectionTest {
             target
         }
 
-        val made = selectAllRequest(request) { true }.createInputConnection(info)
+        val made = selectAllRequest(request, onSelectAll = { true }).createInputConnection(info)
 
         assertTrue(made is SelectAllConnection)
     }

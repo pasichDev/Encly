@@ -45,6 +45,12 @@ internal interface BlockActions {
     /** Backspace with the cursor at the start of this block's field; false when it does nothing. */
     fun onBackspaceAtStart(): Boolean
 
+    /**
+     * Delete (forward delete) with the cursor at the end of this block's field: the paragraph below joins this block,
+     * as Backspace at its start does. False when there is no such paragraph, or it cannot be joined.
+     */
+    fun onForwardDeleteAtEnd(): Boolean
+
     /** A mark typed at the start of this paragraph, which now reads [typed]; true when applied. */
     fun onShortcut(typed: String, shortcut: Shortcut): Boolean
 

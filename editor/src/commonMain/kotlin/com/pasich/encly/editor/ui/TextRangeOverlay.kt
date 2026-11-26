@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,8 +48,8 @@ private const val SCROLL_PER_FRAME = 24f
 /**
  * What goes over the list of blocks while a text selection exists: a handle at each end of it, which a finger drags
  * into other blocks, and the list scrolling by itself while a drag (a handle's or the mouse's) is held near its top
- * or bottom edge. Place it in a box over [listState]'s list, filling the same area. It takes no touch except on its
- * handles.
+ * or bottom edge (a list item's drag as well). Place it in a box over [listState]'s list, filling the same area. It
+ * takes no touch except on its handles.
  */
 @Composable
 public fun TextRangeOverlay(host: EditorBlocksHost, listState: LazyListState, modifier: Modifier = Modifier) {
@@ -59,6 +60,10 @@ public fun TextRangeOverlay(host: EditorBlocksHost, listState: LazyListState, mo
     var size by remember { mutableStateOf(IntSize.Zero) }
     val zone = with(LocalDensity.current) { EdgeZone.toPx() }
     var handles by remember { mutableStateOf<Pair<Offset?, Offset?>>(null to null) }
+    DisposableEffect(highlights, listState) {
+        highlights.listScroll = { listState.firstVisibleItemIndex + listState.firstVisibleItemScrollOffset }
+        onDispose { highlights.listScroll = NoListScroll }
+    }
     // The fields move when the list scrolls: the handles are placed again once the list has settled in its new place.
     LaunchedEffect(ends, listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }.collectLatest {
@@ -73,7 +78,11 @@ public fun TextRangeOverlay(host: EditorBlocksHost, listState: LazyListState, mo
         snapshotFlow { highlights.drag.pointer }.collectLatest { pointer ->
             while (pointer != null) {
                 val speed = autoScrollSpeed(pointer.y - origin.y, size.height.toFloat(), zone)
-                if (speed != 0f) listState.scrollBy(speed)
+                val scrolled = if (speed == 0f) 0f else listState.scrollBy(speed)
+                // Out of the edge strips, or at the end of the list, there is nothing to do until the pointer moves.
+                if (scrolled == 0f) break
+                // The drag goes on under the pointer as the note moves under it.
+                highlights.drag.onScroll(scrolled)
                 highlights.drag.update(pointer)
                 withFrameNanos { }
             }

@@ -64,6 +64,11 @@ internal class BlockActionsImpl(
 
     override fun onBackspaceAtStart(): Boolean = controller.onBackspaceAtStart(block)
 
+    override fun onForwardDeleteAtEnd(): Boolean {
+        val below = controller.blocks.getOrNull(controller.indexOfBlock(block) + 1) as? Block.TextBlock
+        return below != null && controller.onBackspaceAtStart(below)
+    }
+
     override fun onShortcut(typed: String, shortcut: Shortcut): Boolean = controller.onShortcut(block, typed, shortcut)
 
     override fun onLinkPasted(pasted: String, link: LinkDataBlock): Boolean =

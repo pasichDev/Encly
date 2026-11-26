@@ -454,6 +454,23 @@ class TablesAndCodeUiTest {
         assertTrue(first > second, "the first column is on the right: $first, $second")
     }
 
+    // The menu button had a row of its own above the grid: a tall strip nothing could be tapped in.
+    @Test
+    fun theTableMenuTakesNoRowOfItsOwnAboveTheGrid() {
+        show(code("x"), code("y"), table(listOf("a", "b"), listOf("c", "d")))
+
+        val first = fields()[0].fetchSemanticsNode().boundsInRoot
+        val second = fields()[1].fetchSemanticsNode().boundsInRoot
+        val firstCell = fields()[2].fetchSemanticsNode().boundsInRoot
+        val lastCell = fields()[5].fetchSemanticsNode().boundsInRoot
+        val menu = rule.onNodeWithTag(TABLE_MENU_TAG).fetchSemanticsNode().boundsInRoot
+
+        assertTrue(menu.top < firstCell.bottom, "level with the first row: ${menu.top}, ${firstCell.bottom}")
+        assertTrue(menu.left >= lastCell.right - 1f, "beside the grid: ${menu.left}, ${lastCell.right}")
+        // No wider a gap above the table than between two code blocks, which are padded on both sides.
+        assertTrue(firstCell.top - second.bottom <= second.top - first.bottom, "gap above the table")
+    }
+
     // --- code ---------------------------------------------------------------------------------------------
 
     @Test

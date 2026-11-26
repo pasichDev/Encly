@@ -125,6 +125,7 @@ fun NoteBottomBar(
                 if (more) {
                     MoreTools(
                         layout = layout,
+                        activeExactType = activeExactType,
                         blockTools = blockTools,
                         onApply = toolApplier(checklistLock) { type ->
                             keepingKeyboard { viewModel.applyTool(type, exact = true) }
@@ -309,10 +310,14 @@ private fun HistoryButtons(history: HistoryTools) {
     )
 }
 
-/** Behind the toggle: close, paragraph, heading levels, link and separator, move, duplicate and delete. */
+/**
+ * Behind the toggle: close, paragraph, heading levels (the one of the block in use, [activeExactType], marked), link
+ * and separator, move, duplicate and delete.
+ */
 @Composable
 private fun MoreTools(
     layout: ToolbarLayout,
+    activeExactType: BlockType?,
     blockTools: BlockMoveTools,
     onApply: ((BlockType) -> Unit)?,
     onClose: () -> Unit,
@@ -327,7 +332,7 @@ private fun MoreTools(
             val tool = entry.toBlockTool()
             BlockToolButton(
                 tool = tool,
-                active = false,
+                active = entry.headingLevel != null && tool.type == activeExactType,
                 onClick = onApply?.let { apply ->
                     {
                         apply(tool.type)

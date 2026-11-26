@@ -33,6 +33,12 @@ public class FindHighlights(private val state: State<FindState>) {
     /** Where the cursor of the field that has focus stands, when it selects nothing; Shift+click extends from it. */
     internal var caret: TextPoint? = null
 
+    /**
+     * The scroll position of the note's list, set by the overlay that scrolls it. Reading it where something is drawn
+     * or placed redraws that when the list scrolls, which the layout of a block does not tell on its own.
+     */
+    internal var listScroll by mutableStateOf(NoListScroll)
+
     /** A drag that extends the selection: where the pointer is, and what it does with a new pointer position. */
     internal val drag = RangeDrag()
 
@@ -83,11 +89,20 @@ private const val REVEAL_FRAMES = 5
 /** How far [y] is above or below these bounds; 0 inside them. */
 private fun Rect.verticalDistance(y: Float): Float = maxOf(top - y, y - bottom, 0f)
 
-/** The drag that extends a text selection: the pointer's window position (null when none) and what it moves. */
+/**
+ * A drag that makes the note scroll while the pointer is held near an edge of its list: a drag that extends a text
+ * selection, or one of a list item. The pointer's window position (null when none) and what the drag moves.
+ */
 internal class RangeDrag {
     /** The pointer's position in the window while it drags; null otherwise. */
     var pointer by mutableStateOf<Offset?>(null)
 
     /** Applies a new pointer position to the selection; set for the drag that is going on. */
     var update: (Offset) -> Unit = {}
+
+    /** Told how far (in pixels, down is positive) the note was scrolled to follow the pointer; set like [update]. */
+    var onScroll: (Float) -> Unit = {}
 }
+
+/** The list scroll position while no overlay reports one. */
+internal val NoListScroll: () -> Int = { 0 }
