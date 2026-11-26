@@ -208,7 +208,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, task: packageDeb, pattern: 'desktopApp/build/compose/binaries/main/deb/*.deb' }
+          # The .deb is built on ubuntu-22.04, the oldest supported system: jpackage writes the package's `Depends:`
+          # from the machine it runs on, and on Ubuntu 24.04 and later that names `libasound2t64` and the like, which
+          # Ubuntu 22.04 and Debian 12 do not have (release.yml builds it the same way). The Flatpak bundle is built
+          # on ubuntu-latest, with the newer flatpak-builder; its leg uploads the bundle, not an installer.
+          - { os: ubuntu-22.04, task: packageDeb, pattern: 'desktopApp/build/compose/binaries/main/deb/*.deb' }
+          - { os: ubuntu-latest, task: createDistributable, flatpak: true }
           - { os: windows-latest, task: packageMsi, pattern: 'desktopApp/build/compose/binaries/main/msi/*.msi' }
           - { os: macos-15, task: packageDmg, pattern: 'desktopApp/build/compose/binaries/main/dmg/*.dmg' }
     defaults:
@@ -289,7 +294,7 @@ jobs:
 
       # jpackage builds a .deb with dpkg-deb and fakeroot.
       - name: Linux packaging tools
-        if: runner.os == 'Linux'
+        if: matrix.task == 'packageDeb' && runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y fakeroot
 
       # macOS: the Developer ID certificate goes into a keychain of its own that exists for this job only
@@ -328,6 +333,18 @@ jobs:
       - name: Package
         if: runner.os != 'macOS' || steps.signing.outputs.signed != 'true'
         run: ./gradlew :desktopApp:${{ matrix.task }}
+
+      # jpackage's postinst fails on a machine without a desktop menu directory (a bare window manager); the finished
+      # .deb is patched before it is uploaded, so the file that is verified is the file that ships (release.yml does
+      # the same). desktopApp/README.md, "The .deb's postinst".
+      - name: Patch the .deb's postinst
+        if: matrix.task == 'packageDeb'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          debs=(desktopApp/build/compose/binaries/main/deb/*.deb)
+          [ "${#debs[@]}" -eq 1 ] || { echo "::error::expected one .deb, found ${#debs[@]}"; exit 1; }
+          desktopApp/packaging/deb/harden-postinst.sh --in-place "${debs[0]}"
 
       # Gradle signs the app image (every binary, hardened runtime, desktopApp/packaging/macos/entitlements.plist)
       # and the DMG; notarizeDmg submits it to Apple with notarytool, waits, and staples the ticket.
@@ -388,6 +405,7 @@ jobs:
           "$signtool" verify /pa /v "$(cygpath -w "$msi")"
 
       - name: Upload the installer
+        if: ${{ !matrix.flatpak }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: encly-desktop-${{ matrix.os }}${{ steps.signing.outputs.suffix }}
@@ -395,22 +413,19 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      # Linux only: the Flatpak bundle (desktopApp/packaging/flatpak). flatpak-builder installs the freedesktop
+      # The ubuntu-latest leg only: the Flatpak bundle (desktopApp/packaging/flatpak). flatpak-builder installs the freedesktop
       # runtime from Flathub; ubuntu-latest restricts unprivileged user namespaces, which bubblewrap needs.
       - name: Flatpak tooling
-        if: runner.os == 'Linux'
+        if: matrix.flatpak
         run: |
           set -euo pipefail
+          sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils libxml2-utils
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
-      - name: App image
-        if: runner.os == 'Linux'
-        run: ./gradlew :desktopApp:createDistributable
-
       - name: Flatpak
-        if: runner.os == 'Linux'
+        if: matrix.flatpak
         env:
           ENCLY_FLATPAK_SKIP_GRADLE: '1'
           ENCLY_FLATPAK_REQUIRE_LINT: '1'
@@ -419,7 +434,7 @@ jobs:
       # For information only: Flathub's linter. It expects a source build and screenshots, so it reports things
       # that do not apply to this bundle; it never fails the job.
       - name: Flatpak lint
-        if: runner.os == 'Linux'
+        if: matrix.flatpak
         continue-on-error: true
         run: |
           flatpak install --user -y flathub org.flatpak.Builder
@@ -427,7 +442,7 @@ jobs:
           flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo desktopApp/build/flatpak/repo
 
       - name: Upload the Flatpak bundle
-        if: runner.os == 'Linux'
+        if: matrix.flatpak
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: encly-desktop-flatpak-unsigned
@@ -444,34 +459,22 @@ jobs:
             security delete-keychain "$RUNNER_TEMP/encly-signing.keychain-db" 2> /dev/null || true
           fi
 
-  # The Linux packages of the desktop installer job, installed on a clean runner and checked (the same script the
-  # release workflow runs on a tag): the .deb with apt, the Flatpak bundle for the user, the installed files, the
-  # metadata, the sandbox permissions and the licence texts. The window is not opened.
+  # The Linux packages of the desktop installer jobs, installed on clean machines and checked (_verify-linux.yml, the
+  # same checks the release workflow runs on a tag): the .deb with apt on every Ubuntu LTS runner image and in Debian 12
+  # and 13 containers, the Flatpak bundle for the user, the installed files, the metadata, the sandbox permissions and
+  # the licence texts. The window is not opened. It runs when the installer job did not fail on the Linux legs, even if
+  # the Windows or macOS leg failed (a matrix cannot be depended on per leg); a missing Linux artifact then fails the
+  # download with a clear message.
   desktop-linux-verify:
     name: linux packages (verify)
     needs: desktop-package
-    if: github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    if: ${{ !cancelled() && github.actor != 'dependabot[bot]' && needs.desktop-package.result != 'skipped' }}
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Download the .deb
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: encly-desktop-ubuntu-latest-unsigned
-          path: linux
-
-      - name: Download the Flatpak bundle
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: encly-desktop-flatpak-unsigned
-          path: linux
-
-      - name: Install the packages and check them
-        run: desktopApp/packaging/verify-linux-packages.sh linux
+    uses: ./.github/workflows/_verify-linux.yml
+    with:
+      deb-artifact: encly-desktop-ubuntu-22.04-unsigned
+      flatpak-artifact: encly-desktop-flatpak-unsigned
 
   release:
     name: release build (R8, lint, manifest)

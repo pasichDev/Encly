@@ -1,0 +1,97 @@
+name: Verify the Linux packages
+
+# Called by android.yml (pull requests, main) and release.yml (a tag), so both run exactly the same checks:
+# desktopApp/packaging/verify-linux-packages.sh on clean machines. It installs the .deb the way a user does and checks
+# the installed files; the Flatpak bundle is installed and checked on one machine. The window is never opened.
+#
+#   ubuntu   the .deb on every Ubuntu LTS runner image (22.04 is the oldest supported system, see desktopApp/README.md;
+#            `ubuntu-latest` is 26.04 at the time of writing and moves on by itself), and on `ubuntu-latest` also
+#            the Flatpak bundle.
+#   debian   the .deb in Debian containers (12 is the oldest supported one).
+#
+# The artifacts are those of the calling workflow run (they are named by the inputs).
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref whose desktopApp/packaging/verify-linux-packages.sh is run (empty: the ref of the run)'
+        type: string
+        default: ''
+      deb-artifact:
+        description: 'Name of the workflow artifact that holds the .deb'
+        type: string
+        required: true
+      flatpak-artifact:
+        description: 'Name of the workflow artifact that holds the .flatpak'
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  ubuntu:
+    name: ubuntu ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, flatpak: '0' }
+          - { os: ubuntu-24.04, flatpak: '0' }
+          - { os: ubuntu-latest, flatpak: '1' }
+    env:
+      ENCLY_VERIFY_FLATPAK: ${{ matrix.flatpak }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Download the .deb
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.deb-artifact }}
+          path: linux
+
+      - name: Download the Flatpak bundle
+        if: matrix.flatpak == '1'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.flatpak-artifact }}
+          path: linux
+
+      - name: Install the packages and check them
+        run: desktopApp/packaging/verify-linux-packages.sh linux
+
+  debian:
+    name: debian ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    # A minimal Debian has no desktop and no system menu directory, like a bare window-manager install.
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:12', 'debian:13']
+    env:
+      ENCLY_VERIFY_FLATPAK: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Download the .deb
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.deb-artifact }}
+          path: linux
+
+      - name: Install the package and check it
+        run: desktopApp/packaging/verify-linux-packages.sh linux

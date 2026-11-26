@@ -7,15 +7,18 @@ name: Release
 #   verify-tag     the tag is the version in version.properties and its commit is on main. Every other job needs it.
 #   android-build  both flavors, built UNSIGNED by Gradle (which never sees the keystore), signed by a separate step
 #                  with apksigner, the certificate checked against the pin. Uploads the files as a workflow artifact.
-#   linux-build    the .deb and the Flatpak bundle, built the way the `desktop installer (ubuntu-latest)` job of
-#                  android.yml builds them. Uploads them as a workflow artifact. No secrets, read-only token.
-#   linux-verify   a clean runner installs the .deb and the bundle and checks what was installed (the GUI is not started).
+#   linux-deb      the .deb, built on ubuntu-22.04: jpackage takes the dependencies from the machine it runs on, and
+#                  a newer base names libraries "...t64" that older systems do not have (see desktopApp/README.md).
+#   linux-flatpak  the Flatpak bundle, built the way the `desktop installer` job of android.yml builds it.
+#                  Both upload their file as a workflow artifact; no secrets, read-only token.
+#   linux-verify   _verify-linux.yml: clean machines install the .deb (every Ubuntu LTS runner image, Debian 12 and 13)
+#                  and the bundle and check the installed files (the GUI is not started). The same file runs on pull requests.
 #   github-release holds the write token, the attestation permissions and the optional GPG key; runs no build code.
 #                  Creates the Release as a draft, uploads the files, writes ONE SHA256SUMS over all of them (signed as
 #                  SHA256SUMS.asc when the GPG secrets exist), attests the build provenance of every file, writes the
 #                  notes, and only then publishes the draft.
 #
-# The Linux files are an addition: if linux-build or linux-verify fails, github-release still runs and publishes
+# The Linux files are an addition: if linux-deb, linux-flatpak or linux-verify fails, github-release still runs and publishes
 # the Android files alone (see its `if:`); the Linux files are then added to that Release later with a manual run
 # of this workflow (Actions -> Release -> Run workflow, with the tag), which runs only the Linux jobs and
 # github-release in "add" mode. That run never builds Android and never touches Google Play: publish-play.yml
@@ -96,12 +99,18 @@ jobs:
         id: version
         env:
           TAG: ${{ steps.tag.outputs.name }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           prop() { grep -E "^$1=" version.properties | cut -d= -f2 | tr -d ' \r'; }
           name="$(prop VERSION_MAJOR).$(prop VERSION_MINOR).$(prop VERSION_PATCH)"
           if [ "v$name" != "$TAG" ]; then
             echo "::error::Tag $TAG does not match version.properties (v$name)"
+            exit 1
+          fi
+          # The manual run that adds Linux files builds the tag's own packaging scripts, which exist from 3.1.0 on.
+          if [ "$EVENT_NAME" = workflow_dispatch ] && [ "$(printf '%s\n3.1.0\n' "$name" | sort -V | head -n1)" != 3.1.0 ]; then
+            echo "::error::$TAG is older than v3.1.0: it has no Linux packaging and verification scripts, so Linux files cannot be added to its Release."
             exit 1
           fi
           commit="$(git rev-parse "refs/tags/$TAG^{commit}")"
@@ -221,16 +230,21 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  # The Linux packages of the desktop app. Independent of android-build: it neither delays nor can fail the Android
-  # build. Builds exactly what the `desktop installer (ubuntu-latest)` job of android.yml builds (the .deb with
-  # packageDeb, the Flatpak bundle with createDistributable + desktopApp/packaging/flatpak/build.sh), without
-  # signing anything. No secrets and a read-only token: this job runs the build.
-  linux-build:
-    name: linux packages (deb, flatpak)
+  # The Linux packages of the desktop app. Independent of android-build: they neither delay nor can fail the Android
+  # build. Each is built the way the `desktop installer` jobs of android.yml build it, without signing anything. No
+  # secrets and a read-only token: these jobs run the build.
+  #
+  # The .deb is built on ubuntu-22.04, the oldest supported system: jpackage writes the package's `Depends:` from the
+  # machine it runs on, and on Ubuntu 24.04 and later that names `libasound2t64`, `libpng16-16t64`, which Ubuntu 22.04
+  # and Debian 12 do not have. The pre-t64 names (`libasound2`, `libpng16-16`) that 22.04 produces are also satisfied
+  # by the t64 packages, which `Provides: libasound2 (= version)` (checked in the Ubuntu noble and Debian trixie
+  # package indexes). The Flatpak is built on ubuntu-latest, whose flatpak-builder is the newer one.
+  linux-deb:
+    name: linux .deb
     needs: verify-tag
-    runs-on: ubuntu-latest
-    # Shorter than the Android build: github-release waits for this job and for linux-verify (see its `if:`), so a
-    # hang here holds the Android release back by at most 45 + 30 minutes (the two timeouts), never indefinitely.
+    runs-on: ubuntu-22.04
+    # Shorter than the Android build: github-release waits for the Linux jobs (see its `if:`), so a hang here
+    # holds the Android release back by at most this long plus linux-verify's.
     timeout-minutes: 45
     permissions:
       contents: read
@@ -254,18 +268,77 @@ jobs:
         with:
           cache-read-only: true
 
-      # fakeroot: jpackage builds the .deb with dpkg-deb and fakeroot. The rest is the Flatpak tooling;
-      # ubuntu-latest restricts unprivileged user namespaces, which bubblewrap (flatpak-builder) needs.
+      # jpackage builds the .deb with dpkg-deb and fakeroot.
       - name: Linux packaging tools
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y fakeroot flatpak flatpak-builder appstream desktop-file-utils libxml2-utils
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+        run: sudo apt-get update && sudo apt-get install -y fakeroot
 
       - name: Package the .deb
         run: ./gradlew :desktopApp:packageDeb
+
+      # jpackage's postinst fails on a machine without a desktop menu directory (a bare window manager); the finished
+      # package is patched before anything is uploaded, so the file that is verified is the file that ships.
+      # desktopApp/README.md, "The .deb's postinst".
+      - name: Patch the .deb's postinst
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          debs=(desktopApp/build/compose/binaries/main/deb/*.deb)
+          [ "${#debs[@]}" -eq 1 ] || { echo "::error::expected one .deb, found ${#debs[@]}"; exit 1; }
+          desktopApp/packaging/deb/harden-postinst.sh --in-place "${debs[0]}"
+
+      - name: Collect the .deb
+        run: |
+          set -euo pipefail
+          mkdir -p linux-dist
+          shopt -s nullglob
+          debs=(desktopApp/build/compose/binaries/main/deb/*.deb)
+          [ "${#debs[@]}" -eq 1 ] || { echo "::error::expected one .deb, found ${#debs[@]}"; exit 1; }
+          cp "${debs[0]}" linux-dist/
+          ls -l linux-dist
+
+      - name: Upload the .deb
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-deb
+          path: linux-dist
+          retention-days: 7
+          if-no-files-found: error
+
+  linux-flatpak:
+    name: linux flatpak
+    needs: verify-tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.verify-tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-read-only: true
+
+      # ubuntu-latest restricts unprivileged user namespaces, which bubblewrap (flatpak-builder) needs.
+      - name: Flatpak tooling
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils libxml2-utils
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
       - name: App image
         run: ./gradlew :desktopApp:createDistributable
@@ -276,59 +349,43 @@ jobs:
           ENCLY_FLATPAK_REQUIRE_LINT: '1'
         run: desktopApp/packaging/flatpak/build.sh
 
-      # Exactly one of each, copied to one folder, so the next jobs get plain file names.
-      - name: Collect the packages
+      - name: Collect the bundle
         run: |
           set -euo pipefail
           mkdir -p linux-dist
           shopt -s nullglob
-          debs=(desktopApp/build/compose/binaries/main/deb/*.deb)
           flatpaks=(desktopApp/build/flatpak/*.flatpak)
-          if [ "${#debs[@]}" -ne 1 ] || [ "${#flatpaks[@]}" -ne 1 ]; then
-            echo "::error::expected one .deb and one .flatpak, found ${#debs[@]} and ${#flatpaks[@]}"
-            exit 1
-          fi
-          cp "${debs[0]}" "${flatpaks[0]}" linux-dist/
+          [ "${#flatpaks[@]}" -eq 1 ] || { echo "::error::expected one .flatpak, found ${#flatpaks[@]}"; exit 1; }
+          cp "${flatpaks[0]}" linux-dist/
           ls -l linux-dist
 
-      - name: Upload the packages
+      - name: Upload the bundle
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: linux-release
+          name: linux-flatpak
           path: linux-dist
           retention-days: 7
           if-no-files-found: error
 
-  # What a user gets, on a clean runner that has none of the build: the .deb installed with apt, the Flatpak bundle
-  # installed for the user, then the installed files and the metadata checked. The GUI is not started. The checks are
-  # desktopApp/packaging/verify-linux-packages.sh, which the pull request CI (android.yml) runs on every change too.
+  # What a user gets, on clean machines that have none of the build (_verify-linux.yml, the same checks as on a pull
+  # request): the .deb installed with apt on every Ubuntu LTS runner image and in Debian 12 and 13 containers, the
+  # Flatpak bundle installed for the user, then the installed files and the metadata checked. The GUI is not started.
   linux-verify:
     name: linux verify
-    needs: [verify-tag, linux-build]
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    needs: [verify-tag, linux-deb, linux-flatpak]
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: refs/tags/${{ needs.verify-tag.outputs.tag }}
-          persist-credentials: false
-
-      - name: Download the packages
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: linux-release
-          path: linux
-
-      - name: Install the packages and check them
-        run: desktopApp/packaging/verify-linux-packages.sh linux
+    uses: ./.github/workflows/_verify-linux.yml
+    with:
+      ref: refs/tags/${{ needs.verify-tag.outputs.tag }}
+      deb-artifact: linux-deb
+      flatpak-artifact: linux-flatpak
 
   github-release:
     name: github release
     needs: [verify-tag, android-build, linux-verify]
     # Android is the release: on a pushed tag it must have been built and signed. The Linux files join only when
-    # linux-build AND linux-verify passed; if either failed or was skipped, this job still runs and publishes the
+    # linux-deb, linux-flatpak AND linux-verify passed; if any failed or was skipped, this job still runs and publishes the
     # Android files alone. On a manual run (android-build is skipped by design) the Linux files are all there is,
     # so linux-verify must have passed. Nothing here depends on whether Linux succeeded for a pushed tag.
     if: >-
@@ -354,26 +411,68 @@ jobs:
           ref: refs/tags/${{ needs.verify-tag.outputs.tag }}
           persist-credentials: false
 
+      # Each artifact goes into a directory of its own; nothing reaches release-files except through the allow-list
+      # below, so a build job cannot publish a file under another job's name (an APK, SHA256SUMS, SHA256SUMS.asc).
       - name: Download the Android files
         if: needs.android-build.result == 'success'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: android-release
-          path: release-files
+          path: incoming/android
 
       - name: Download the Linux files
         if: needs.linux-verify.result == 'success'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: linux-release
-          path: release-files
+          pattern: linux-*
+          merge-multiple: true
+          path: incoming/linux
+
+      # The files of this release, by name: the APKs and mapping files the Android job writes for this version, and
+      # exactly one .deb and one .flatpak of this version. Anything else (another name, a directory, a link, a second
+      # file) fails the job, and a name that is already in release-files is a collision.
+      - name: Allow-listed files only
+        env:
+          ANDROID: ${{ needs.android-build.result == 'success' }}
+        run: |
+          set -euo pipefail
+          mkdir -p release-files
+          v="${VERSION//./\\.}"
+          take() { # take <dir> <regex>... : every entry of <dir> must be a regular file matching one regex
+            local dir="$1" entry name re ok
+            shift
+            while IFS= read -r -d '' entry; do
+              name="$(basename "$entry")"
+              [ -f "$entry" ] && [ ! -L "$entry" ] || { echo "::error::$entry is not a regular file"; exit 1; }
+              ok=false
+              for re in "$@"; do if [[ "$name" =~ $re ]]; then ok=true; fi; done
+              [ "$ok" = true ] || { echo "::error::unexpected file $name in $dir"; exit 1; }
+              [ ! -e "release-files/$name" ] || { echo "::error::$name is in more than one artifact"; exit 1; }
+              cp -- "$entry" "release-files/$name"
+            done < <(find "$dir" -mindepth 1 -print0)
+          }
+          if [ "$ANDROID" = true ]; then
+            take incoming/android "^Encly-${v}-(fdroid|play)\.apk$" "^Encly-${v}-(fdroid|play)-mapping\.txt$"
+            for f in "Encly-$VERSION-fdroid.apk" "Encly-$VERSION-play.apk" "Encly-$VERSION-fdroid-mapping.txt" "Encly-$VERSION-play-mapping.txt"; do
+              [ -f "release-files/$f" ] || { echo "::error::the Android artifact has no $f"; exit 1; }
+            done
+          fi
+          if [ -d incoming/linux ]; then
+            take incoming/linux "^encly_${v}-[0-9]+_amd64\.deb$" "^encly-${v}-x86_64\.flatpak$"
+            [ "$(find release-files -name '*.deb' | wc -l)" -eq 1 ] || { echo "::error::expected exactly one .deb"; exit 1; }
+            [ "$(find release-files -name '*.flatpak' | wc -l)" -eq 1 ] || { echo "::error::expected exactly one .flatpak"; exit 1; }
+          fi
+          ls -l release-files
 
       # A push creates the Release; a manual run only adds to the one that is already published.
       - name: The Release state fits this run
         id: state
         run: |
           set -euo pipefail
+          # Read into a variable first (no pipeline into grep -q: with several pages gh may still be writing when grep
+          # exits, and the pipeline would end with 141 under pipefail).
           draft="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[] | select(.tag_name == env.TAG) | .draft')"
+          if [ -n "$draft" ]; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             [ "$draft" = false ] || { echo "::error::$TAG has no published GitHub Release. A manual run only adds the Linux files to the Release the tag run published."; exit 1; }
             echo "mode=add" >> "$GITHUB_OUTPUT"
@@ -381,7 +480,6 @@ jobs:
             [ "$draft" != false ] || { echo "::error::$TAG already has a published Release. To add the Linux files to it, run this workflow by hand with the tag."; exit 1; }
             echo "mode=new" >> "$GITHUB_OUTPUT"
           fi
-          ls -l release-files
 
       # Signing goes through Sigstore (Fulcio, Rekor); a network timeout there fails the step, so the attestation
       # gets a second try. Every file this run releases is a subject.
@@ -412,7 +510,8 @@ jobs:
           if [ "$MODE" = add ]; then
             mkdir -p old
             gh release download "$TAG" --dir old --pattern SHA256SUMS
-            if gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx 'SHA256SUMS.asc'; then
+            asset_names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+            if grep -qx 'SHA256SUMS.asc' <<< "$asset_names"; then
               have_asc=true
               gh release download "$TAG" --dir old --pattern SHA256SUMS.asc
             fi
@@ -462,7 +561,7 @@ jobs:
             echo "### Linux packages"
             echo
             echo 'The `.deb` and the `.flatpak` bundle are not code-signed; their checksums are in `SHA256SUMS`'
-            echo '(signed as `SHA256SUMS.asc` when that file is present) and each file has an attested build provenance.'
+            echo '(signed as `SHA256SUMS.asc` when that file is present) and each package has an attested build provenance.'
             echo 'Install with `sudo apt install ./encly_*.deb` or `flatpak install --user ./encly-*.flatpak`.'
           } > linux-notes.md
 
@@ -494,7 +593,8 @@ jobs:
             echo 'Download `SHA256SUMS` next to the files and run `sha256sum --check --ignore-missing SHA256SUMS`.'
             echo 'When `SHA256SUMS.asc` is present it is the GPG signature of that file.'
             echo
-            echo 'Every file of this release has an attested build provenance:'
+            echo 'Every APK, mapping file and Linux package of this release has an attested build provenance'
+            echo '(`SHA256SUMS` is covered by its GPG signature `SHA256SUMS.asc`, not by an attestation):'
             echo
             echo '```'
             echo "gh attestation verify <file> --repo $GITHUB_REPOSITORY"
@@ -514,14 +614,20 @@ jobs:
       - name: Create the draft, or add to the published Release
         env:
           MODE: ${{ steps.state.outputs.mode }}
+          EXISTS: ${{ steps.state.outputs.exists }}
         run: |
           set -euo pipefail
           if [ "$MODE" = new ]; then
-            # A draft left by an earlier failed attempt of this tag is reused.
-            if ! gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[].tag_name' | grep -Fxq "$TAG"; then
-              gh release create "$TAG" --draft --title "Encly $VERSION" --notes-file notes.md --verify-tag
-            else
+            if [ "$EXISTS" = true ]; then
+              # A draft left by an earlier failed attempt of this tag: nothing in it is public. Every asset is
+              # removed first, so no file of that attempt (a Linux package, an old SHA256SUMS.asc) survives into this one.
+              old_assets="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+              while IFS= read -r name; do
+                [ -z "$name" ] || gh release delete-asset "$TAG" "$name" --yes
+              done <<< "$old_assets"
               gh release edit "$TAG" --notes-file notes.md
+            else
+              gh release create "$TAG" --draft --title "Encly $VERSION" --notes-file notes.md --verify-tag
             fi
           fi
           # One call, with SHA256SUMS and its signature in it.
